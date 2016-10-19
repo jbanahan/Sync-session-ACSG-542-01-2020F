@@ -7,13 +7,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     "INV#;;;20160203T0405+0100;;;PO#;7;#{order_type};987654321;;;IN;50;;;2000;500;;REF NO;;;;;;;;;10000"
   end
 
+  let! (:master_setup) {
+    stub_master_setup
+  }
+  let(:hm) { Factory(:importer, system_code: "HENNE") }
+  let(:hm_fenix) {Factory(:importer, fenix_customer_number: "887634400RM0001")}
+  let(:ca) { Factory(:country, iso_code: "CA")}
+  let(:us) { Factory(:country, iso_code: "US")}
+  
+  let (:cdefs) {
+    subject.instance_variable_get(:@cdefs)
+  }
+  let (:entry) {
+    entry = Factory(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF")
+    inv = Factory(:commercial_invoice, entry: entry, invoice_number: "987654")
+    line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID")
+
+    entry
+  }
+
   describe "parse" do
     let(:ca_file) { make_csv_file("ZSTO") }
     let(:us_file) { make_csv_file("ZRET") }
-    let(:hm) { Factory(:importer, system_code: "HENNE") }
-    let!(:hm_fenix) {Factory(:importer, fenix_customer_number: "887634400RM0001")}
-    let(:ca) { Factory(:country, iso_code: "CA")}
-    let(:us) { Factory(:country, iso_code: "US")}
     let(:product) { Factory(:product, importer: hm, unique_identifier: "HENNE-1234567", name: "Description") }
     let(:ca_product) { 
       p = product
@@ -27,15 +42,11 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       t = c.tariff_records.create! hts_1: "9876543210"
       p 
     }
-    let (:cdefs) {
-      subject.instance_variable_get(:@cdefs)
-    }
-    let (:entry) {
-      entry = Factory(:entry, importer: hm, customer_number: "HENNE")
-      inv = Factory(:commercial_invoice, entry: entry, invoice_number: "987654")
-      line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID")
-    }
 
+    before :each do
+      hm_fenix
+    end
+    
     def set_product_custom_values product, product_value, value_order_number, canada_description
       cdefs = subject.instance_variable_get(:@cdefs)
       product.update_custom_value! cdefs[:prod_value], product_value
@@ -47,7 +58,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       nil
     end
 
-    context "with canadian shipment" do
+    context "with canadian shipment" do 
 
       before :each do 
         hm
@@ -92,6 +103,13 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(l.unit_price).to eq BigDecimal("999999.99")
         expect(l.customer_reference).to eq "REF NO"
         expect(l.line_number).to eq 7
+
+        expect(ActionMailer::Base.deliveries.length).to eq 1
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.subject).to eq "H&M Commercial Invoice INV#"
+        expect(mail.attachments["Invoice INV#.xls"]).not_to be_nil
+        expect(mail.attachments["INV# Exceptions.xls"]).not_to be_nil
       end
 
       it "finds tariff associated with part number and uses it" do
@@ -311,6 +329,38 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       expect(sheet.row(1)).to eq ["INV", "12345", "DESC", "MID", "COO", "1234.56.7890", 800, "G", 20.50, 10, 100.40]
       expect(sheet.row(2)).to eq ["INV", "123456", "DESC2", "MID2", "COO2", "9876.54.3210", 800, "G", 21.50, 10.1, 200.40]
       expect(sheet.row(3)).to eq ["", "", "", "", "", "", 1600, "", "", 20.1, 300.80]
+    end
+  end
+
+  describe "build_missing_product_spreadsheet" do
+    let(:ca_product) { 
+      p = Factory(:product, importer: hm, unique_identifier: "HENNE-CA-Product", name: "CA Description")
+      c = p.classifications.create! country_id: ca.id
+      t = c.tariff_records.create! hts_1: "1234567890"
+      # This is the PO number/Invoice number to use for the entry lookup (make sure the code handles splitting multiple out)
+      p.update_custom_value! cdefs[:prod_po_numbers], "987654\n Another PO"
+      p
+    }
+    let(:us_product) {
+      p = Factory(:product, importer: hm, unique_identifier: "HENNE-US-Product", name: "US Description")
+      c = p.classifications.create! country_id: us.id
+      t = c.tariff_records.create! hts_1: "9876543210"
+      p 
+    }
+
+    it "reports on products missing classifications" do
+      missing_products = [{product: ca_product, part_number: "12345"}, {product: us_product, part_number: "9876"}, {product: nil}]
+      entry
+
+      wb = subject.build_missing_product_spreadsheet "INV", missing_products
+
+      expect(wb.worksheets.length).to eq 1
+      expect(wb.worksheets.first.name).to eq "INV Exceptions"
+      sheet = wb.worksheets.first
+
+      expect(sheet.row(0)).to eq ["Part Number", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Link", "US Entry Links", "Resolution"]
+      expect(sheet.row(1)).to eq ["12345", "CA Description", "987654, Another PO", "", "1234.56.7890", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "Use Part Number and PO Number(s) (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."]
+      expect(sheet.row(2)).to eq ["9876", "US Description", "", "9876.54.3210", "", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
     end
   end
 end

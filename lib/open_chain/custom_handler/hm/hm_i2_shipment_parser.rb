@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   end
 
   def initialize 
-    @cdefs = self.class.prep_custom_definitions [:prod_value_order_number, :prod_value, :class_customs_description]
+    @cdefs = self.class.prep_custom_definitions [:prod_value_order_number, :prod_value, :class_customs_description, :prod_po_numbers]
   end
 
   def parse file_contents, forward_to_entry_system: true
@@ -26,12 +26,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # for the Fenix / Kewill file transfers
     invoice = make_invoice(system, rows.first)
 
-    # The index position of the invoice line must correlate with the index of the row from the file do to how we're pulling
+    # The index position of the invoice line must correlate with the index of the row from the file due to how we're pulling
     # some data from the rows for the pdf and excel sheets.
     #
     # In other words, don't process the rows in any other order than what they came in from the file.
+    missing_product_data = []
     rows.each do |row|
-      set_invoice_line_info(system, invoice.commercial_invoice_lines.build, row)
+      product_values = set_invoice_line_info(system, invoice.commercial_invoice_lines.build, row)
+      missing_product_data << product_values if product_values[:missing_data]
     end
 
     set_totals(invoice)
@@ -40,7 +42,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       if system == :fenix
         OpenChain::CustomHandler::FenixNdInvoiceGenerator.generate invoice
         # Generate the files for the carrier and send them
-        generate_and_send_ca_files invoice, rows
+        generate_and_send_ca_files invoice, rows, missing_product_data
       else
         # Send to Kewill Customs
         g = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
@@ -97,7 +99,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i.value = (i.quantity.to_f > 0 && i.unit_price.to_f > 0) ? (i.unit_price * i.quantity) : 0
 
     i.commercial_invoice_tariffs.build hts_code: values[:hts], tariff_description: values[:description], gross_weight: net_weight
-    nil
+    
+    values
   end
 
   def set_totals invoice
@@ -135,9 +138,11 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     value_multiplier = BigDecimal("1.3")
 
     importer = product_importer
-    product = Product.where(importer_id: importer.id, unique_identifier: "#{importer.system_code}-#{part_number}").first
-    values = {}
+    unique_identifier = "#{importer.system_code}-#{part_number}"
+    product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first
+    values = {part_number: part_number, unique_identifier: unique_identifier}
     if product
+      values[:product] = product
       values[:product_value] = product.custom_value(@cdefs[:prod_value])
       values[:product_value] = (BigDecimal(values[:product_value].to_s) * value_multiplier) if values[:product_value]
       values[:order_number] = product.custom_value(@cdefs[:prod_value_order_number])
@@ -157,6 +162,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
           values[:description] = classification.custom_value(@cdefs[:class_customs_description])
         end
       end
+    else
+      values[:missing_data] = true
     end
 
     if system == :kewill && values[:order_number]
@@ -167,10 +174,17 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       end
     end
 
-    # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
-    # the EDI 810 feed we use to feed the data to Fenix, so we're using an absurd value to indicate that it's missing
-    if system == :fenix && values[:product_value].nil?
-      values[:product_value] = BigDecimal("999999.99")
+    
+    if system == :fenix 
+      # What really matters here is that product_value is found and the canadian tariff is presen
+      values[:missing_data] = values[:hts].blank? || values[:product_value].nil?
+
+      # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
+      # the EDI 810 feed we use to feed the data to Fenix, so we're using an absurd value to indicate that it's missing,
+      # and then sending an exception report to CA ops indicating missing data.
+      if values[:product_value].nil?
+        values[:product_value] = BigDecimal("999999.99")
+      end
     end
 
     values
@@ -194,14 +208,38 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
-  def generate_and_send_ca_files invoice, rows
+  def generate_and_send_ca_files invoice, rows, missing_product_data
     spreadsheet = build_addendum_spreadsheet(invoice, rows)
-    Tempfile.open(["HM-Invoice", ".xls"]) do |wb|
-      wb.binmode
-      spreadsheet.write wb
-      Attachment.add_original_filename_method wb, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xls"
-      OpenMailer.send_simple_html(["hm_ca@vandegriftinc.com"], "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice for invoice # #{invoice.invoice_number} is attached to this email.", wb).deliver!
+    exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data) if missing_product_data.length > 0
+
+    files = []
+    begin
+      files << create_tempfile_report(spreadsheet, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xls")
+      files << create_tempfile_report(exception_spreadsheet, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xls") if exception_spreadsheet
+
+      OpenMailer.send_simple_html(["hm_ca@vandegriftinc.com"], "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice #{exception_spreadsheet ? " and the Exception report " : ""}for invoice # #{invoice.invoice_number} is attached to this email.", files).deliver!
+    ensure
+      files.each do |f|
+        f.close! unless f.closed?
+      end
     end
+  end
+
+  def create_tempfile_report workbook, filename
+    tf = nil
+    written = false
+    begin
+      tf = Tempfile.open([File.basename(filename, ".*"), File.extname(filename)])
+      tf.binmode
+      Attachment.add_original_filename_method tf, filename
+      workbook.write tf
+      tf.flush
+      written = true
+    ensure
+      tf.close! unless written || tf.closed?
+    end
+
+    tf
   end
 
   def make_pdf_info invoice, rows
@@ -287,6 +325,42 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     XlsMaker.add_body_row sheet, (counter += 1), ["", "", "", "", "", "", totals[:weight], "", "", totals[:quantity], totals[:value]], widths
+
+    wb
+  end
+
+  def build_missing_product_spreadsheet invoice_number, missing_products
+    wb, sheet = XlsMaker.create_workbook_and_sheet "#{invoice_number} Exceptions", ["Part Number", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Link", "US Entry Links", "Resolution"]
+    counter = 0
+    widths = [50, 50, 50, 50, 50, 50, 50, 50]
+    missing_products.each do |prod|
+      part_number = prod[:part_number]
+
+      if prod[:product]
+        product = prod[:product]
+        
+        ca_classification = product.classifications.find {|c| c.country.try(:iso_code) == "CA"}
+        ca_tariff = ca_classification.try(:tariff_records).try(:first).try(:hts_1)
+        us_tariff = product.classifications.find {|c| c.country.try(:iso_code) == "US" }.try(:tariff_records).try(:first).try(:hts_1)
+        po_numbers = product.custom_value(@cdefs[:prod_po_numbers]).to_s.split("\n").map(&:strip)
+
+        resolution = nil
+        if us_tariff.blank?
+          resolution = "Use Part Number and PO Number(s) (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."
+        elsif ca_tariff.blank?
+          resolution = "Use linked Product and add Canadian classifiction in VFI Track."
+        end
+
+        entry = nil
+        if po_numbers.length > 0
+          entry = Entry.joins(commercial_invoices: [:commercial_invoice_lines]).where(source_system: "Alliance", customer_number: "HENNE").where(commercial_invoices: {invoice_number: po_numbers}).order("file_logged_date DESC").first
+        end
+
+        XlsMaker.add_body_row sheet, (counter +=1), [part_number, product.name, po_numbers.join(", "), us_tariff.try(:hts_format), ca_tariff.try(:hts_format), XlsMaker.create_link_cell(product.excel_url, part_number), (entry ? XlsMaker.create_link_cell(entry.excel_url, entry.broker_reference) : ""), resolution], widths
+      else
+        XlsMaker.add_body_row sheet, (counter +=1), [part_number, "", "", "", "", "", "", "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."], widths
+      end
+    end
 
     wb
   end
