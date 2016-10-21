@@ -30,6 +30,7 @@ class DataCrossReference < ActiveRecord::Base
   OUTBOUND_315_EVENT ||= '315'
   PO_FINGERPRINT ||= 'po_id'
   EXPORT_CARRIER ||= 'export_carriers'
+  US_HTS_TO_CA ||= 'us_hts_to_ca'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -204,6 +205,17 @@ class DataCrossReference < ActiveRecord::Base
       raise "Unknown Model type encountered: #{obj.class}.  Unable to generate 315 cross reference key."
     end
   end
+
+  def self.create_hm_us_hts_to_ca! us_hts, ca_hts
+    co = Company.where(alliance_customer_number: "HENNE").first
+    add_xref! US_HTS_TO_CA, TariffRecord.clean_hts(us_hts), TariffRecord.clean_hts(ca_hts), co.id
+  end
+
+  def self.find_hm_us_hts_to_ca us_hts
+    co = Company.where(alliance_customer_number: "HENNE").first
+    find_unique(where(cross_reference_type: US_HTS_TO_CA, key: us_hts, company_id: co.id))
+  end
+
   private_class_method :milestone_key
 
   def self.find_po_fingerprint order

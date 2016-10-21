@@ -135,6 +135,32 @@ describe DataCrossReference do
       expect(d.company_id).to eq(1)
     end
   end
+  describe "find_hm_us_hts_to_ca" do
+    it "finds" do
+      c = Factory(:company, alliance_customer_number: "HENNE")
+      described_class.create!(key: '1111111111', value: '2222222222', cross_reference_type: described_class::US_HTS_TO_CA, company: c)
+      expect(described_class.find_hm_us_hts_to_ca('1111111111')).to eq '2222222222'
+    end
+  end
+  describe "create_hm_us_hts_to_ca!" do
+    let!(:co) { Factory(:company, alliance_customer_number: "HENNE") }
+    
+    it "creates" do
+      described_class.create_hm_us_hts_to_ca! '1111111111', '2222222222'
+      cr = DataCrossReference.first
+      expect(cr.key).to eq '1111111111'
+      expect(cr.value).to eq '2222222222'
+      expect(cr.company).to eq co
+    end
+
+    it "strips dots" do
+      described_class.create_hm_us_hts_to_ca! '1111.11.1111', '2222.22.2222'
+      cr = DataCrossReference.first
+      expect(cr.key).to eq '1111111111'
+      expect(cr.value).to eq '2222222222'
+      expect(cr.company).to eq co
+    end
+  end
 
   describe "has_key?" do
     it "determines if an xref key is present in the db table" do
