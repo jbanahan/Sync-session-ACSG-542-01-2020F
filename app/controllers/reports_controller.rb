@@ -528,6 +528,7 @@ class ReportsController < ApplicationController
       query_params[:season] = params[:season]
     else
       error_redirect "You must include either styles or a season."
+      return
     end
     run_report "UA Duty Planning", OpenChain::Report::UaDutyPlanningReport, query_params, []
   end
