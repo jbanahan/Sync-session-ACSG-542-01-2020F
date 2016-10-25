@@ -4,9 +4,14 @@ describe OpenChain::Ec2 do
 
   subject { described_class }
 
+  let (:client_config) { {'region' => "us-notaregion-1"} }
+
   let (:ec2_resource) { 
     resource = instance_double(Aws::EC2::Resource)
+    client = instance_double(Aws::EC2::Client)
     allow(subject).to receive(:ec2_resource).and_return resource
+    allow(resource).to receive(:client).and_return client
+    allow(client).to receive(:config).and_return(client_config)
     resource
   }
 
@@ -65,6 +70,14 @@ describe OpenChain::Ec2 do
       snapshots = subject.find_tagged_snapshots "id", tag_keys: ["key1", "key2"], tags: {"Key" => "value", "Key2"=>["1", "2"]}
       expect(snapshots.first.snapshot_id).to eq "snapshot-id"
     end
+
+    it "uses given region" do
+      expect(subject).to receive(:ec2_resource).with(region: 'aregion').and_return ec2_resource
+      expect(ec2_resource).to receive(:snapshots).with(owner_ids: ["id"], max_results: 1000).and_return [ec2_snapshot]
+
+      snapshots = subject.find_tagged_snapshots "id", region: 'aregion'
+      expect(snapshots.first.snapshot_id).to eq "snapshot-id"
+    end
   end
 
   describe "create_snapshots_for_instance" do
@@ -83,6 +96,7 @@ describe OpenChain::Ec2 do
 
       client = instance_double(Aws::EC2::Client)
       allow(subject).to receive(:ec2_client).and_return client
+      allow(client).to receive(:config).and_return client_config
 
       snapshot1 = instance_double(Aws::EC2::Types::Snapshot)
       allow(snapshot1).to receive(:snapshot_id).and_return "snapshot-1"
@@ -96,9 +110,12 @@ describe OpenChain::Ec2 do
       expect(client).to receive(:create_tags).with(resources: ["snapshot-1"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
       expect(client).to receive(:create_tags).with(resources: ["snapshot-2"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
 
-      snapshot_ids = subject.create_snapshots_for_instance "instance", "Snapshot Description", tags: {"Key" => "Value", "Key2" => "Value2"}
-      expect(snapshot_ids["volume-1"]).to eq "snapshot-1"
-      expect(snapshot_ids["volume-2"]).to eq "snapshot-2"
+      expect(subject).to receive(:find_snapshot).with("snapshot-1", region: "us-notaregion-1").and_return snapshot1
+      expect(subject).to receive(:find_snapshot).with("snapshot-2", region: "us-notaregion-1").and_return snapshot2
+
+      snapshots = subject.create_snapshots_for_instance "instance", "Snapshot Description", tags: {"Key" => "Value", "Key2" => "Value2"}
+      expect(snapshots["volume-1"].snapshot_id).to eq "snapshot-1"
+      expect(snapshots["volume-2"].snapshot_id).to eq "snapshot-2"
     end
 
     it "filters volumes based on given volume ids" do
@@ -115,6 +132,7 @@ describe OpenChain::Ec2 do
       expect(instance).to receive(:volumes).and_return [volume1, volume2]
 
       client = instance_double(Aws::EC2::Client)
+      allow(client).to receive(:config).and_return client_config
       allow(subject).to receive(:ec2_client).and_return client
 
       snapshot1 = instance_double(Aws::EC2::Types::Snapshot)
@@ -123,8 +141,9 @@ describe OpenChain::Ec2 do
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
       expect(client).not_to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-2")
 
-      snapshot_ids = subject.create_snapshots_for_instance "instance", "Snapshot Description", volume_ids: ["volume-1"]
-      expect(snapshot_ids).to eq({"volume-1" => "snapshot-1"})
+      snapshots = subject.create_snapshots_for_instance "instance", "Snapshot Description", volume_ids: ["volume-1"]
+      expect(snapshots.length).to eq 1
+      expect(snapshots["volume-1"].snapshot_id).to eq "snapshot-1"
     end
 
     it "receives an Ec2Instance, and snapshots it" do
@@ -139,6 +158,7 @@ describe OpenChain::Ec2 do
       expect(instance).to receive(:volumes).and_return [volume1]
 
       client = instance_double(Aws::EC2::Client)
+      allow(client).to receive(:config).and_return client_config
       allow(subject).to receive(:ec2_client).and_return client
 
       snapshot1 = instance_double(Aws::EC2::Types::Snapshot)
@@ -146,7 +166,9 @@ describe OpenChain::Ec2 do
 
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
       
-      expect(subject.create_snapshots_for_instance instance, "Snapshot Description").to eq({"volume-1" => "snapshot-1"})
+      snapshots = subject.create_snapshots_for_instance instance, "Snapshot Description"
+      expect(snapshots.size).to eq 1
+      expect(snapshots["volume-1"].snapshot_id).to eq "snapshot-1"
     end
 
     it "waits for snapshot to be visible to create_snapshot method" do
@@ -161,13 +183,15 @@ describe OpenChain::Ec2 do
       expect(instance).to receive(:volumes).and_return [volume1]
 
       client = instance_double(Aws::EC2::Client)
+      allow(client).to receive(:config).and_return client_config
       allow(subject).to receive(:ec2_client).and_return client
 
       snapshot1 = instance_double(Aws::EC2::Types::Snapshot)
       allow(snapshot1).to receive(:snapshot_id).and_return "snapshot-1"
 
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
-
+      expect(subject).to receive(:find_snapshot).with("snapshot-1", region: "us-notaregion-1").and_return snapshot1
+      
       times = 0
       # Raise the expected error the first time the method is called, then don't raise the next time...
       expect(client).to receive(:create_tags).exactly(2).times do |opts|
@@ -177,7 +201,34 @@ describe OpenChain::Ec2 do
       end
       expect(subject).to receive(:sleep).with(1).once
 
-      expect(subject.create_snapshots_for_instance instance, "Snapshot Description", tags: {"Key" => "Value"}).to eq({"volume-1" => "snapshot-1"})
+      snapshots = subject.create_snapshots_for_instance instance, "Snapshot Description", tags: {"Key" => "Value"}
+      expect(snapshots.size).to eq 1
+      expect(snapshots['volume-1'].snapshot_id).to eq 'snapshot-1'
+    end
+  end
+
+  describe "copy_snapshot_to_region" do
+    let(:destination_region) { "not-a-dest-region-1" }
+    let (:client) { 
+      client = instance_double(Aws::EC2::Client) 
+      allow(client).to receive(:config).and_return(client_config)
+      client
+    }
+    before :each do
+      allow(subject).to receive(:ec2_client).with(region: destination_region).and_return client
+    end
+
+    it "invokes copy_snapshot API and tags destination snapshot" do
+      dest_snapshot = instance_double(Aws::EC2::Types::Snapshot)
+
+      expect(client).to receive(:copy_snapshot).with(source_region: "source-region", source_snapshot_id: "snapshot-id", description: "snapshot-description").and_return dest_snapshot
+      allow(dest_snapshot).to receive(:snapshot_id).and_return "dest-snapshot"
+      expect(client).to receive(:create_tags).with(resources: ["dest-snapshot"], tags: [{key: "Key", value: "Value"}, {key: "Key2", value: "Value2"}])
+
+      snap = OpenChain::Ec2::Ec2Snapshot.new(ec2_snapshot, "source-region")
+      allow(snap).to receive(:tags).and_return({"Key" => "Value", "Key2" => "Value2"})
+
+      subject.copy_snapshot_to_region(snap, destination_region)
     end
   end
 

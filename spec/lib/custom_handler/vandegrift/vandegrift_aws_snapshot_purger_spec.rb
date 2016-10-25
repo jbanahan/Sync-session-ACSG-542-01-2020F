@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotPurger do
 
-  let (:setup) { {"owner_id" => "12345", "tag_keys" => ["Application", "Environment"], "tags" => {"Environment" => "Production"}} }
+  let (:setup) { {"owner_id" => "12345", "tag_keys" => ["Application", "Environment"], "tags" => {"Environment" => "Production"}, "region" => "us-notaregion-1"} }
   let (:snapshot) {
     s = instance_double(OpenChain::Ec2::Ec2Snapshot)
     # AWS returns a UTC Time instance, so make sure we do the same clocked to midnight in Eastern time zone.
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotPurger do
   describe "purge_snapshots" do
 
     it "finds all snapshots with given tags and purges them if they are past their RetentionDays value" do
-      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}).and_return [snapshot]
+      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}, region: 'us-notaregion-1').and_return [snapshot]
       expect(OpenChain::Ec2).to receive(:delete_snapshot).with(snapshot)
 
       subject.purge_snapshots setup, Date.new(2016, 9, 7)
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotPurger do
     end
 
     it "does not purge snapshot that are not ready to be purged" do
-      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}).and_return [snapshot]
+      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}, region: 'us-notaregion-1').and_return [snapshot]
       expect(OpenChain::Ec2).not_to receive(:delete_snapshot).with(snapshot)
 
       subject.purge_snapshots setup, Date.new(2016, 9, 6)
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotPurger do
     end
 
     it "converts current time to time in US East for purge comparison" do
-      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}).and_return [snapshot]
+      expect(OpenChain::Ec2).to receive(:find_tagged_snapshots).with("12345", tag_keys: ["RetentionDays", "Application", "Environment"], tags: {"Environment" => "Production"}, region: 'us-notaregion-1').and_return [snapshot]
       expect(OpenChain::Ec2).not_to receive(:delete_snapshot).with(snapshot)
 
       # Set the time where the snapshot would technically be purged if we kept the UTC date,

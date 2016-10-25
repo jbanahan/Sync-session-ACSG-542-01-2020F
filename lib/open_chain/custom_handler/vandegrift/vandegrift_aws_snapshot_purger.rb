@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
     tag_keys = ["RetentionDays"]
     tag_keys.push(*setup['tag_keys']) unless setup['tag_keys'].blank?
 
-    snapshots = OpenChain::Ec2.find_tagged_snapshots setup['owner_id'], tag_keys: tag_keys, tags: setup['tags']
+    snapshots = OpenChain::Ec2.find_tagged_snapshots setup['owner_id'], tag_keys: tag_keys, tags: setup['tags'], region: setup['region']
     snapshots.each do |snapshot|
       # See if we can find a snapshot reference (we might not, since it's possible we're purging snapshots created manually or some other way - which is fine)
       if can_purge?(snapshot, current_date)
@@ -37,6 +37,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
   private
     def validate_purge_descriptor s
       raise "An 'owner_id' value must be present." if s['owner_id'].blank?
+      raise "A 'region' value must be present." if s['region'].blank?
+
       tag_key_count = Array.wrap(s['tag_keys']).length
       tag_count = Array.wrap(s['tags']).length
       raise "At least one 'tags' or 'tag-keys' AWS snapshot filter value must be present." if (tag_key_count + tag_count) == 0
