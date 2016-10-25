@@ -38,6 +38,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_short_description: {label: "Short Description", data_type: :string, module_type: "Product"},
     prod_sku_number: {label: "SKU Number", data_type: :string, module_type: "Product"},
     prod_suggested_tariff: {label: "Suggested Tariff", data_type: :string, module_type: "Product"},
+    prod_system_classified: {label: "System Classified", data_type: :boolean, module_type: "Product"},
     prod_units_per_set: {label: "Units Per Set", data_type: :integer, module_type: "Product"},
     prod_value_order_number: {label: "Value Order Number", data_type: :string, module_type: "Product"},
     prod_value: {label: "Product Value", data_type: :decimal, module_type: "Product"},

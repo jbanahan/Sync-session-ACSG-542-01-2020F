@@ -3,8 +3,8 @@ require 'spec_helper'
 describe OpenChain::BillingComparators::ProductComparator do
   let :base_hash do
     {"entity"=>{"core_module"=>"Product", "record_id"=>1, "children"=>
-                    [{"entity"=>{"core_module"=>"Classification", "record_id"=>1, "model_fields"=>{"class_cntry_iso"=>"US"}, "children" =>
-                        [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>1, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"1111"}}}]}}]}}
+                    [{"entity"=>{"core_module"=>"Classification", "record_id"=>2, "model_fields"=>{"class_cntry_iso"=>"US"}, "children" =>
+                        [{"entity"=>{"core_module"=>"TariffRecord", "record_id"=>3, "model_fields"=>{"hts_line_number"=>1, "hts_hts_1"=>"1111"}}}]}}]}}
   end
 
   describe "compare" do
@@ -65,31 +65,12 @@ describe OpenChain::BillingComparators::ProductComparator do
 
   describe "get_classifications" do
     it "returns hash list of id/iso_code pairs associated with classifications belonging to product with an hts_1" do
-      expect(described_class.get_classifications(base_hash)).to eq [{id: 1, iso_code: 'US'}]
+      expect(described_class.get_classifications(base_hash)).to eq [{id: 2, iso_code: 'US'}]
     end
 
     it "returns empty if product has no classifications" do
       base_hash = {"entity"=>{"core_module"=>"Product", "record_id"=>1}}
       expect(described_class.get_classifications(base_hash)).to be_empty
-    end
-  end
-
-  describe "contains_hts_1?" do
-      
-    it "returns true if classification hash contains a tariff with an hts_1 field" do
-      class_hash = base_hash["entity"]["children"].first
-      expect(described_class.contains_hts_1?(class_hash)).to eq true
-    end
-
-    it "returns false if tariff lacks an hts_1" do
-      class_hash = base_hash["entity"]["children"].first
-      class_hash["entity"]["children"].first["entity"]["model_fields"].merge!({"hts_hts_1" => "", "hts_hts_2" => "1111"})
-      expect(described_class.contains_hts_1?(class_hash)).to eq false
-    end
-
-    it "returns false if tariff is missing altogether" do
-      class_hash = {"entity"=>{"core_module"=>"Classification", "record_id"=>1, "model_fields"=>{"class_cntry_iso"=>"CA"}}}
-      expect(described_class.contains_hts_1?(class_hash)).to eq false
     end
   end
 

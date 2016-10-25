@@ -1,11 +1,11 @@
 require 'open_chain/entity_compare/product_comparator'
 require 'open_chain/entity_compare/comparator_helper'
-require 'open_chain/custom_handler/hm/hm_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProductComparator
   extend OpenChain::EntityCompare::ProductComparator
   extend OpenChain::EntityCompare::ComparatorHelper
-  include OpenChain::CustomHandler::Hm::HmCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type == 'Product'
@@ -34,19 +34,27 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
       tr = classi.tariff_records.first_or_create!
       if tr.hts_1.blank?
         tr.update_attributes(hts_1: ca_hts)
-        cdef = prep_custom_definitions([:prod_system_classified])[:prod_system_classified]
-        prod.update_custom_value!(cdef, true)
+        flag_cdef, descr_cdef = get_cdefs
+        prod.update_custom_value!(flag_cdef, true)
+        classi.update_custom_value!(descr_cdef, get_description("CA", ca_hts))
         prod.create_snapshot User.integration, nil, "HmSystemClassifyProductComparator"
       end
     end
+  end
+
+  private
+
+  def self.get_cdefs
+    cdefs = prep_custom_definitions([:prod_system_classified, :class_customs_description ])
+    [cdefs[:prod_system_classified], cdefs[:class_customs_description]]
   end
 
   def self.get_classi prod_hsh, iso_code
     json_child_entities(prod_hsh, "Classification").find{|cl| mf(cl, "class_cntry_iso") == iso_code}
   end
 
-  def self.get_hts classi_hsh
-    json_child_entities(classi_hsh, "TariffRecord").first.try(:[], "model_fields").try(:[],"hts_hts_1")
+  def self.get_description iso_code, hts
+    OfficialTariff.joins(:country).where(:hts_code=>hts).where("countries.iso_code = ?", iso_code).first.try(:remaining_description)
   end
 
 end; end; end; end

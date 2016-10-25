@@ -26,21 +26,10 @@ module OpenChain; module BillingComparators; class ProductComparator
   end
 
   def self.get_classifications product_hash
-    classis = product_hash.presence ? (product_hash["entity"]["children"] || []) : []
-    classis_with_hts = classis.select{ |classi| contains_hts_1? classi }
-    classis_with_hts.map do |classi|
-      {id: classi["entity"]["record_id"], iso_code: classi["entity"]["model_fields"]["class_cntry_iso"]}
-    end
-  end
-
-  def self.contains_hts_1? class_hsh
-    hts_1_found = false
-    tariff_records = class_hsh["entity"]["children"] || []
-    tariff_records.each do |t|
-      hts = t["entity"]["model_fields"] || {}
-      hts_1_found = true if hts["hts_hts_1"].presence
-    end
-    hts_1_found
+    json_child_entities(product_hash, "Classification").map do |classi|
+      hts = get_hts(classi)
+      hts ? {id: classi["record_id"], iso_code: mf(classi, "class_cntry_iso")} : nil
+    end.compact
   end
 
   def self.filter_new_classifications old_class_list, new_class_list
