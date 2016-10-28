@@ -178,7 +178,17 @@ describe EntriesController do
     end
     describe 'as non-sysadmin' do
       describe 'request_entry_data' do
-        it 'should do nothing' do
+        it 'allows access to users under master account' do
+          expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(nil, [entry.id])
+
+          post :request_entry_data, 'id'=>entry.id
+          expect(response).to redirect_to(entry)
+          expect(flash[:errors]).to be_blank
+          expect(flash[:notices]).to include("Updated entry has been requested.  Please allow 10 minutes for it to appear.")
+        end
+
+        it 'does not allow access to users not under master account' do
+          @u.company.update_attributes! master: false
           expect(OpenChain::KewillSqlProxyClient).not_to receive(:delayed_bulk_entry_data)
           post :request_entry_data, 'id'=>entry.id
           expect(response).to redirect_to(entry)

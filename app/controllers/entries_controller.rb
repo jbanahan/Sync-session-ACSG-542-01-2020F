@@ -171,7 +171,7 @@ class EntriesController < ApplicationController
 
   def request_entry_data
     @entry = Entry.find params[:id]
-    if current_user.sys_admin?
+    if current_user.company.master? && @entry.can_view?(current_user)
       OpenChain::KewillSqlProxyClient.delayed_bulk_entry_data nil, [@entry.id]
       add_flash :notices, "Updated entry has been requested.  Please allow 10 minutes for it to appear."
     end
