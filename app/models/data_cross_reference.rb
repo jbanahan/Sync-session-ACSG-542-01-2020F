@@ -35,7 +35,8 @@ class DataCrossReference < ActiveRecord::Base
   def self.xref_edit_hash user
     all_editable_xrefs = [
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
-      xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false)
+      xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
+      xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true)
     ]
 
     user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
@@ -46,7 +47,7 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.xref_attributes identifier, title, description, options = {}
-    options = {key_label: "Key", value_label: "Value", show_value_column: true, allow_duplicate_keys: false}.merge options
+    options = {key_label: "Key", value_label: "Value", show_value_column: true, allow_duplicate_keys: false, require_company: false}.merge options
 
     # Title is what is displayed as the link/button to access the page
     # Description is text/instructions included at the top of the list/edit screen.
@@ -67,6 +68,8 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       (Rails.env.development? || MasterSetup.get.system_code == "polo")
+    when US_HTS_TO_CA
+      (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
     else
       false
     end
@@ -206,14 +209,12 @@ class DataCrossReference < ActiveRecord::Base
     end
   end
 
-  def self.create_hm_us_hts_to_ca! us_hts, ca_hts
-    co = Company.where(alliance_customer_number: "HENNE").first
-    add_xref! US_HTS_TO_CA, TariffRecord.clean_hts(us_hts), TariffRecord.clean_hts(ca_hts), co.id
+  def self.create_us_hts_to_ca! us_hts, ca_hts, importer_id
+    add_xref! US_HTS_TO_CA, TariffRecord.clean_hts(us_hts), TariffRecord.clean_hts(ca_hts), importer_id
   end
 
-  def self.find_hm_us_hts_to_ca us_hts
-    co = Company.where(alliance_customer_number: "HENNE").first
-    find_unique(where(cross_reference_type: US_HTS_TO_CA, key: us_hts, company_id: co.id))
+  def self.find_us_hts_to_ca us_hts, importer_id
+    find_unique(where(cross_reference_type: US_HTS_TO_CA, key: us_hts, company_id: importer_id))
   end
 
   private_class_method :milestone_key
@@ -289,5 +290,50 @@ class DataCrossReference < ActiveRecord::Base
   def self.compound_key_token
     "*~*"
   end
+
+  def self.generate_csv xref_type, user
+    output = nil
+    if can_view? xref_type, user
+      cfg = xref_edit_hash(user)[xref_type]
+      recs = run_csv_query xref_type
+      output = CSV.generate do |csv|
+        csv << create_csv_header(cfg)
+        recs.each { |r| csv << create_csv_row(r, cfg) }
+      end
+    end
+    output
+  end
+
+  def self.run_csv_query xref_type
+    qry = 
+      <<-SQL
+        SELECT dcr.key, value, dcr.updated_at, CONCAT(c.name, IF(c.system_code IS NOT NULL && RTRIM(c.system_code) <> '', 
+                                                                CONCAT(" (",c.system_code,")"), 
+                                                                '')) AS company
+        FROM data_cross_references dcr 
+          LEFT OUTER JOIN companies c ON c.id = dcr.company_id
+        WHERE cross_reference_type = #{ActiveRecord::Base.sanitize xref_type} ORDER BY dcr.key
+        LIMIT 25000
+      SQL
+    ActiveRecord::Base.connection.exec_query qry
+  end
+
+  def self.create_csv_header xref_edit_hsh
+    h = [xref_edit_hsh[:key_label]]
+    h << xref_edit_hsh[:value_label] if xref_edit_hsh[:show_value_column]
+    h << "Company" if xref_edit_hsh[:require_company]
+    h << "Last Updated"
+  end
+
+  def self.create_csv_row row, xref_edit_hsh
+    r = [row["key"]]
+    r << row["value"] if xref_edit_hsh[:show_value_column]
+    r << row["company"] if xref_edit_hsh[:require_company]
+    r << row["updated_at"]
+  end
+
+  private_class_method :run_csv_query
+  private_class_method :create_csv_header
+  private_class_method :create_csv_row
 
 end

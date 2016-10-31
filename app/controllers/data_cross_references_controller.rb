@@ -22,22 +22,27 @@ class DataCrossReferencesController < ApplicationController
 
     action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
       xref.assign_attributes params[:data_cross_reference]
-      if validate_non_duplicate(xref) && xref.save
+      if xref_hash(xref.cross_reference_type, current_user)[:require_company] && xref.company.nil?
+        add_flash(:errors, "You must assign a company.")
+      elsif validate_non_duplicate(xref) && xref.save
         add_flash :notices, "Cross Reference was successfully updated."
         redirect_to data_cross_references_path(cross_reference_type: params[:data_cross_reference][:cross_reference_type])
+        return
       else
-        @xref = xref
-        @xref_info = xref_hash xref.cross_reference_type, current_user
         errors_to_flash xref, now: true
-        render action: :edit
       end
+      @xref = xref
+      @xref_info = xref_hash xref.cross_reference_type, current_user
+      render action: :edit
     end
   end
 
   def create
     action_secure(DataCrossReference.can_view?(params[:data_cross_reference][:cross_reference_type], current_user), nil, {:verb => "create", :lock_check => false, :module_name=>"cross reference"}) do
       xref = DataCrossReference.new params[:data_cross_reference]
-      if validate_non_duplicate(xref) && xref.save
+      if xref_hash(xref.cross_reference_type, current_user)[:require_company] && xref.company.nil?
+        error_redirect "You must assign a company."
+      elsif validate_non_duplicate(xref) && xref.save
         add_flash :notices, "Cross Reference was successfully created."
         redirect_to data_cross_references_path(cross_reference_type: params[:data_cross_reference][:cross_reference_type])
       else
@@ -62,6 +67,21 @@ class DataCrossReferencesController < ApplicationController
     end
   end
 
+  def download
+    xref_type = params[:cross_reference_type]
+    if DataCrossReference.can_view?(xref_type, current_user)
+      csv = DataCrossReference.generate_csv xref_type, current_user
+      filename = "xref_#{xref_type}_#{Date.today.strftime("%m-%d-%Y")}.csv"
+      send_data csv, filename: filename, type: 'text/csv', disposition: "attachment"
+    else
+      error_redirect "You do not have permission to download this file."
+    end
+  end
+
+  def get_importers
+    Company.uniq.where(importer: true).joins(:importer_products).order("companies.name")
+  end
+
   private
 
     def xref_hash xref_type, user
@@ -73,6 +93,7 @@ class DataCrossReferencesController < ApplicationController
       action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
         @xref_info = xref_hash xref.cross_reference_type, current_user
         @xref = xref
+        @importers = get_importers
       end
     end
 

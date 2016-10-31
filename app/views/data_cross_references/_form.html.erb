@@ -5,17 +5,23 @@
 <button class='btn_link' link_to='<%=data_cross_references_path(cross_reference_type: xref.cross_reference_type)%>' key_map='c'>Cancel</button>
 <button class='form_to' form_id='xref_form' key_map='s'>Save</button>
 <%end-%>
-<h1><%=xref_info[:title]%></h1>
-<h3><%=xref_info[:description]%></h3>
 
-<div class="container" style="margin-top: 2em;">
-<%= form_for xref, html: {id:'xref_form', class:'form'} do |f| %>
-<%=f.hidden_field(:cross_reference_type)%>
-<table>
-  <%=field_row xref_info[:key_label], f.text_field(:key)%>
-  <% if xref_info[:show_value_column] %>
-    <%=field_row xref_info[:value_label], f.text_field(:value)%>
+<div class="container">
+  <h1><%=xref_info[:title]%></h1>
+  <h3><%=xref_info[:description]%></h3>
+
+  <div class="container" style="margin-top: 2em;">
+  <%= form_for xref, html: {id:'xref_form', class:'form'} do |f| %>
+  <%=f.hidden_field(:cross_reference_type)%>
+  <table>
+    <%=field_row xref_info[:key_label], f.text_field(:key)%>
+    <% if xref_info[:show_value_column] %>
+      <%=field_row xref_info[:value_label], f.text_field(:value)%>
+    <% end %>
+    <% if xref_info[:require_company] %>
+      <%=field_row "Importer Name (System Code)", f.select('company_id', options_from_collection_for_select(@importers, 'id', :name_with_system_code, xref.company.try(:id)))%>
+    <% end %>
+  </table>
   <% end %>
-</table>
-<% end %>
+  </div>
 </div>

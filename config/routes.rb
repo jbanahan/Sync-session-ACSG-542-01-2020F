@@ -176,6 +176,7 @@ OpenChain::Application.routes.draw do
       delete "/:base_object_type/:base_object_id/attachment/:id" => "attachments#destroy"
       get "/:base_object_type/:base_object_id/attachment/:id/download" => "attachments#download"
       get "/:base_object_type/:base_object_id/attachment_types" => "attachments#attachment_types"
+      get "/data_cross_references/count_xrefs" => "data_cross_references#count_xrefs"
 
       match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
 
@@ -950,6 +951,7 @@ OpenChain::Application.routes.draw do
 
   resources :data_cross_references do
     get 'show' => "data_cross_references#edit"
+    get 'download', on: :collection
   end
 
   resources :search_templates, only: [:index,:destroy]

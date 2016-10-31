@@ -1,39 +1,70 @@
+<%content_for :javascript do -%>
+  $(function () {
+    $('#download_btn').click(function () {
+      $.ajax( {
+                type: "GET",
+                url: "/api/v1/data_cross_references/count_xrefs", 
+                headers: { Accept: "application/json", "Content-Type": "application/json"},
+                data: {cross_reference_type: "<%=@xref_info[:identifier]%>"}, 
+                success: function(data) {
+                  if (data["count"] > 25000 )
+                    $('#main-container').prepend(Chain.makeErrorPanel("This download is limited to the first 25,000 rows."));
+                  location.replace("<%=download_data_cross_references_path(cross_reference_type: @xref_info[:identifier])%>");
+                }
+              }
+            );
+    })
+  });
+<% end %>
 <%content_for :action_bar do-%>
   <button class='btn_link' link_to='<%=new_data_cross_reference_path(cross_reference_type: @xref_info[:identifier])%>'>New</button>
+  <button class='btn_link' id='download_btn' title='Download'><i class='fa fa-download'></i></button>
 <% end %>
-<h1><%=@xref_info[:title]%></h1>
+<div class="container" id="main-container">
+  <h1><%=@xref_info[:title]%></h1>
 
-<% content_for(:search_form) do %>
-  <input type="hidden" name="cross_reference_type" value="<%=@xref_info[:identifier]%>">
-<% end %>
+  <% content_for(:search_form) do %>
+    <input type="hidden" name="cross_reference_type" value="<%=@xref_info[:identifier]%>">
+  <% end %>
 
-<%= render :partial => 'shared/search_box' %>
+  <%= render :partial => 'shared/search_box' %>
 
-<div class="container">
-  <table class="table table-striped table-hover">
-    <thead>
-      <tr>
-        <th>&nbsp;</th>
-        <th><%=sortable_search_heading 'd_key'%></th>
-      <% if @xref_info[:show_value_column] %>
-        <th><%=sortable_search_heading 'd_value'%></th>
-      <% end %>
-        <th>Last Updated</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%- @xrefs.each do |xref| %>
-      <tr>
-        <td><%= link_to "Edit", edit_data_cross_reference_path(xref) %></td>
-        <td><%=xref.key %></td>
-      <% if @xref_info[:show_value_column] %>
-        <td><%=xref.value %></td>
-      <% end %>
-        <td><%=xref.updated_at.strftime("%Y-%m-%d %I:%M %p")%></td>
-      </tr>
-      <%- end %>
-    </tbody>
-  </table>
-  <%=will_paginate @xrefs%>
+  <div class="container">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          <th><%=sortable_search_heading 'd_key'%></th>
+        <% if @xref_info[:show_value_column] %>
+          <th><%=sortable_search_heading 'd_value'%></th>
+        <% end %>
+        <% if @xref_info[:require_company]%>
+          <th>Importer Name (System Code)</th>
+        <% end %>
+          <th>Last Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%- @xrefs.each do |xref| %>
+        <tr>
+          <td><%= link_to "Edit", edit_data_cross_reference_path(xref) %></td>
+          <td><%=xref.key %></td>
+        <% if @xref_info[:show_value_column] %>
+          <td><%=xref.value %></td>
+        <% end %>
+        <% if @xref_info[:require_company]%>
+          <td>
+            <% if xref.company.presence %>
+              <%= xref.company.name_with_system_code %>
+            <% end %>
+           </td>
+        <% end %>
+          <td><%=xref.updated_at.strftime("%Y-%m-%d %I:%M %p")%></td>
+        </tr>
+        <%- end %>
+      </tbody>
+    </table>
+    <%=will_paginate @xrefs%>
+  </div>
 </div>
 

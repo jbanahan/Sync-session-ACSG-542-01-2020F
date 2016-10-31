@@ -135,18 +135,18 @@ describe DataCrossReference do
       expect(d.company_id).to eq(1)
     end
   end
-  describe "find_hm_us_hts_to_ca" do
+  describe "find_us_hts_to_ca" do
     it "finds" do
-      c = Factory(:company, alliance_customer_number: "HENNE")
+      c = Factory(:company, alliance_customer_number: "ACME")
       described_class.create!(key: '1111111111', value: '2222222222', cross_reference_type: described_class::US_HTS_TO_CA, company: c)
-      expect(described_class.find_hm_us_hts_to_ca('1111111111')).to eq '2222222222'
+      expect(described_class.find_us_hts_to_ca('1111111111', c.id)).to eq '2222222222'
     end
   end
-  describe "create_hm_us_hts_to_ca!" do
-    let!(:co) { Factory(:company, alliance_customer_number: "HENNE") }
+  describe "create_us_hts_to_ca!" do
+    let!(:co) { Factory(:company, alliance_customer_number: "ACME") }
     
     it "creates" do
-      described_class.create_hm_us_hts_to_ca! '1111111111', '2222222222'
+      described_class.create_us_hts_to_ca! '1111111111', '2222222222', co.id
       cr = DataCrossReference.first
       expect(cr.key).to eq '1111111111'
       expect(cr.value).to eq '2222222222'
@@ -154,7 +154,7 @@ describe DataCrossReference do
     end
 
     it "strips dots" do
-      described_class.create_hm_us_hts_to_ca! '1111.11.1111', '2222.22.2222'
+      described_class.create_us_hts_to_ca! '1111.11.1111', '2222.22.2222', co.id
       cr = DataCrossReference.first
       expect(cr.key).to eq '1111111111'
       expect(cr.value).to eq '2222222222'
@@ -186,15 +186,27 @@ describe DataCrossReference do
   end
 
   describe "xref_edit_hash" do
-    it "returns information about xref screens user has access to" do
-      # At the moment, only polo system has xrefs
-      allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
+    context "polo system" do      
+      it "returns information about xref screens user has access to" do
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
 
-      xrefs = DataCrossReference.xref_edit_hash User.new
+        xrefs = DataCrossReference.xref_edit_hash User.new
 
-      expect(xrefs.size).to eq 2
-      expect(xrefs['rl_fabric']).to eq title: "MSL+ Fabric Cross References", description: "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", identifier: 'rl_fabric', key_label: "Failure Fiber", value_label: "Approved Fiber", show_value_column: true, allow_duplicate_keys: false
-      expect(xrefs['rl_valid_fabric']).to eq title: "MSL+ Valid Fabric List", description: "Only values included in this list are allowed to be sent to to MSL+.", identifier: 'rl_valid_fabric', key_label: "Approved Fiber", value_label: "Value", show_value_column: false, allow_duplicate_keys: false
+        expect(xrefs.size).to eq 2
+        expect(xrefs['rl_fabric']).to eq title: "MSL+ Fabric Cross References", description: "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", identifier: 'rl_fabric', key_label: "Failure Fiber", value_label: "Approved Fiber", show_value_column: true, allow_duplicate_keys: false, require_company: false
+        expect(xrefs['rl_valid_fabric']).to eq title: "MSL+ Valid Fabric List", description: "Only values included in this list are allowed to be sent to to MSL+.", identifier: 'rl_valid_fabric', key_label: "Approved Fiber", value_label: "Value", show_value_column: false, allow_duplicate_keys: false, require_company: false
+      end
+    end
+
+    context "vfi system" do
+      it "returns information about xref screens user has access to" do
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+        
+        xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
+        
+        expect(xrefs.size).to eq 1
+        expect(xrefs['us_hts_to_ca']).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true
+      end
     end
   end
 
@@ -211,7 +223,20 @@ describe DataCrossReference do
       it "allows access to RL Value Fabirc xref for anyone" do
         expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_truthy
       end
+    end
 
+    context "vfi system" do
+      before :each do
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+      end
+
+      it "allows access to US-to-CA xref for sys admins" do
+        expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to be_truthy
+      end
+
+      it "prevents access for anyone else" do
+        expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to be_falsey
+      end
     end
   end
 
@@ -244,6 +269,52 @@ describe DataCrossReference do
       DataCrossReference.create_po_fingerprint o, "fingerprint"
       xref = DataCrossReference.find_po_fingerprint o
       expect(xref.value).to eq "fingerprint"
+    end
+  end
+
+  describe "generate_csv" do
+    let(:u) { Factory(:sys_admin_user) }
+    let!(:co) { Factory(:company, name: "ACME", system_code: "AC") }
+    let!(:dcr_1) { DataCrossReference.create!(key: "1111111111", value: "2222222222", cross_reference_type: "xref_name", company: co) }
+    let!(:dcr_2) { DataCrossReference.create!(key: "3333333333", value: "4444444444", cross_reference_type: "xref_name", company: co) }
+
+    it "returns nil to unauthorized user" do
+      allow(DataCrossReference).to receive(:can_view?).and_return false
+      allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", value_label: "VALUE LABEL", show_value_column: true, require_company: true}})
+      
+      expect(described_class.generate_csv("xref_name", u)).to be_nil
+    end
+
+    it "returns 4-col layout for xref types with companies" do
+      allow(DataCrossReference).to receive(:can_view?).and_return true
+      allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", value_label: "VALUE LABEL", show_value_column: true, require_company: true}})
+      csv = described_class.generate_csv("xref_name", u).split("\n")
+      
+      expect(csv[0].split(",")).to eq ["KEY LABEL", "VALUE LABEL", "Company", "Last Updated"]
+      expect(csv[1].split(",").take(3)).to eq ["1111111111", "2222222222", "ACME (AC)"]
+      expect(csv[2].split(",").take(3)).to eq ["3333333333", "4444444444", "ACME (AC)"]
+    end
+
+    it "returns 3-col layout for xref types without companies" do
+      allow(DataCrossReference).to receive(:can_view?).and_return true
+      allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", value_label: "VALUE LABEL", show_value_column: true, require_company: false}})
+      dcr_1.update_attributes(company: nil)
+      dcr_2.update_attributes(company: nil)
+      csv = described_class.generate_csv("xref_name", u).split("\n")
+      
+      expect(csv[0].split(",")).to eq ["KEY LABEL", "VALUE LABEL", "Last Updated"]
+      expect(csv[1].split(",").take(2)).to eq ["1111111111", "2222222222"]
+      expect(csv[2].split(",").take(2)).to eq ["3333333333", "4444444444"]
+    end
+
+    it "returns 3-col layout for xref types that hide value column" do
+      allow(DataCrossReference).to receive(:can_view?).and_return true
+      allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", show_value_column: false, require_company: true}})
+      csv = described_class.generate_csv("xref_name", u).split("\n")
+      
+      expect(csv[0].split(",")).to eq ["KEY LABEL", "Company", "Last Updated"]
+      expect(csv[1].split(",").take(2)).to eq ["1111111111", "ACME (AC)"]
+      expect(csv[2].split(",").take(2)).to eq ["3333333333", "ACME (AC)"]
     end
   end
 end

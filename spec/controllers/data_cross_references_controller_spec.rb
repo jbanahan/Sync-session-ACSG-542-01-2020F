@@ -48,12 +48,14 @@ describe DataCrossReferencesController do
 
   describe "edit" do
     it "shows edit page" do
+      Factory(:importer, importer_products: [Factory(:product)])
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
 
       get :edit, id: xref.id
       expect(response).to be_success
       expect(assigns(:xref_info)).to eq DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access
       expect(assigns(:xref)).to eq xref
+      expect(assigns(:importers).count).to eq 1
     end
 
     it "rejects user without access" do
@@ -68,11 +70,14 @@ describe DataCrossReferencesController do
 
   describe "new" do
     it "shows new page" do
+      Factory(:importer, importer_products: [Factory(:product)])
+
       get :new, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to be_success
       expect(assigns(:xref_info)).to eq DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access
       expect(assigns(:xref)).not_to be_nil
       expect(assigns(:xref).cross_reference_type).to eq DataCrossReference::RL_VALIDATED_FABRIC
+      expect(assigns(:importers).count).to eq 1
     end
 
     it "rejects user without access" do
@@ -124,6 +129,17 @@ describe DataCrossReferencesController do
       expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
       expect(assigns(:xref)).not_to be_nil
     end
+
+    it "errors if missing required company" do
+      allow(DataCrossReference).to receive(:can_view?).and_return true
+      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::US_HTS_TO_CA, key: "KEY", value: "VALUE"
+      
+      post :update, id: xref.id, data_cross_reference: {key: "KEY", value: "VALUE2", cross_reference_type: xref.cross_reference_type}
+      expect(response).to be_success
+      expect(flash[:errors]).to include "You must assign a company."
+      expect(assigns(:xref)).not_to be_nil
+      expect(DataCrossReference.where(key: "KEY").first.value).to eq "VALUE"
+    end
   end
 
   describe "create" do
@@ -148,6 +164,14 @@ describe DataCrossReferencesController do
       expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
       expect(assigns(:xref)).not_to be_nil
     end
+
+    it "errors if missing required company" do
+      allow(DataCrossReference).to receive(:can_view?).and_return true
+
+      post :create, data_cross_reference: {key: "KEY", value: "CREATE", cross_reference_type: DataCrossReference::US_HTS_TO_CA}
+      expect(response).to redirect_to request.referer
+      expect(flash[:errors]).to include "You must assign a company."
+    end
   end
 
   describe "destroy" do
@@ -165,6 +189,45 @@ describe DataCrossReferencesController do
       post :destroy, id: xref.id
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to include "You do not have permission to delete this cross reference."
+    end
+  end
+
+  describe "download" do
+    let!(:xref) { DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE" }
+
+    it "returns CSV file" do
+      get :download, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      expect(response).to be_success
+      expect(response.body.split("\n").count).to eq 2
+    end
+
+    it "rejects user without access" do
+      expect(DataCrossReference).to receive(:can_view?).with(DataCrossReference::RL_VALIDATED_FABRIC, @user).and_return false
+
+      get :download, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      expect(response).to redirect_to request.referer
+      expect(flash[:errors]).to include "You do not have permission to download this file."
+    end
+  end
+
+  describe "get_importers" do
+    it "returns an array of importers with products, sorted by name" do
+      co_1 = Factory(:company)
+      prod_1 = Factory(:product, importer: co_1)
+      
+      co_2 = Factory(:importer, name: "Substandard Ltd.")
+      prod_2 = Factory(:product, importer: co_2)
+      
+      co_3 = Factory(:importer, name: "ACME")
+      prod_3 = Factory(:product, importer: co_3)
+      prod_4 = Factory(:product, importer: co_3)
+
+      co_4 = Factory(:importer, name: "Nothing-to-See")
+      
+      results = described_class.new.get_importers
+      expect(results.count).to eq 2
+      expect(results[0]).to eq co_3
+      expect(results[1]).to eq co_2
     end
   end
 
