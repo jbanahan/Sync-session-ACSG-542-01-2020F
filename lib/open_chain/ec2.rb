@@ -1,8 +1,10 @@
 require 'aws-sdk'
 require 'open_chain/aws_config_support'
+require 'open_chain/aws_util_support'
 
 module OpenChain; class Ec2
   extend OpenChain::AwsConfigSupport
+  extend OpenChain::AwsUtilSupport
 
   def self.find_tagged_instances tag_hash
     ec2_resource.instances(filters: convert_tag_hash_to_filters_param(tag_hash)).map {|instance| Ec2Instance.new instance }
@@ -137,18 +139,9 @@ module OpenChain; class Ec2
   end
 
   def self.delete_snapshot ec2_snapshot
-    ec2_client.delete_snapshot snapshot_id: ec2_snapshot.snapshot_id
+    ec2_client(ec2_snapshot.region).delete_snapshot snapshot_id: ec2_snapshot.snapshot_id
+    true
   end
-
-  def self.convert_tag_hash_to_key_value_hash tags
-    tags.map {|k, v| {key: k, value: v} }
-  end
-  private_class_method :convert_tag_hash_to_key_value_hash
-
-  def self.convert_tag_hash_to_filters_param tags
-    tags.blank? ? [] : tags.map { |k, v| {name: "tag:#{k}", values: Array.wrap(v)} }
-  end
-  private_class_method :convert_tag_hash_to_filters_param
 
   def self.ec2_resource region: nil
     Aws::EC2::Resource.new client: ec2_client(region: region)
