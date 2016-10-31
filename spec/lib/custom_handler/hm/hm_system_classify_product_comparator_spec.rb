@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
   let(:u) { Factory(:user, username: "integration") }
-  let!(:company) { Factory(:company, alliance_customer_number: "HENNE")}
+  let!(:company) { Factory(:company, alliance_customer_number: "HENNE", system_code: "HENNE")}
   let!(:country_ca) { Factory(:country, iso_code: "CA")}
   let!(:country_us) { Factory(:country, iso_code: "US")}
 
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
   end
 
   describe "check_classification" do
-    let!(:dcr) { DataCrossReference.create_hm_us_hts_to_ca! "1111111111", "3333333333" }
+    let!(:dcr) { DataCrossReference.create_us_hts_to_ca! "1111111111", "3333333333", company.id}
     let!(:prod_hsh) do
       {"entity"=>{"core_module"=>"Product", 
                   "record_id"=>1, 

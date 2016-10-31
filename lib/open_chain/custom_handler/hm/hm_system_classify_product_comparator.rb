@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
     if ca_hts.blank?
       us_hts = TariffRecord.clean_hts get_hts(get_classi prod_hsh, "US")
       return if us_hts.blank?
-      new_ca_hts = DataCrossReference.find_hm_us_hts_to_ca(us_hts)
+      new_ca_hts = DataCrossReference.find_us_hts_to_ca(us_hts, Company.where(system_code: "HENNE").first.id)
       if new_ca_hts
         prod_id = prod_hsh["entity"]["record_id"]
         update_product! prod_id, new_ca_hts
