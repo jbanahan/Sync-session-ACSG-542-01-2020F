@@ -15,16 +15,112 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     new.parse(file)
   end
 
-  def initialize 
-    @cdefs = self.class.prep_custom_definitions [:prod_value_order_number, :prod_value, :class_customs_description, :prod_po_numbers]
-  end
-
   def parse file_contents, forward_to_entry_system: true
     rows = foreach(file_contents, skip_blank_lines: true)
     system = determine_system(rows.first)
+
+    # Canadian customs requires that electronically filed PARS entries must be under 999 lines (WTF, eh?).
+    # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
+    # a completely separate file.
+    files = split_file(system, rows)
+    files.each_with_index do |file, x|
+      process_file(system, file, x + 1, forward_to_entry_system)
+    end
+
+    nil
+  end
+
+  def cdefs
+    @cdefs ||= self.class.prep_custom_definitions [:prod_value_order_number, :prod_value, :class_customs_description, :prod_po_numbers]
+    @cdefs
+  end
+
+  def split_file(system, rows)
+    system == :fenix ? fenix_split(system, rows) : [rows]
+  end
+
+  def fenix_split(system, rows) 
+    # So, we need to split the rows in the file at around 999 lines...the wrinkle is that we 
+    # can't split it across PO numbers.  So, if we're at line 997 and the next PO has 4 lines..
+    # we need to split the file at 997.
+
+    # The file comes in with shipment numbers interlaced together (WTF)...so lets sort them based
+    # on the shipment number and then line number
+    rows = rows.sort {|row1, row2|
+      val = row1[0].to_s.strip <=> row2[0].to_s.strip
+      if val == 0
+        val = row1[1].to_i <=> row2[1].to_i
+      end
+      val
+    }
+
+    all_files = []
+    current_file_rows = []
+    current_po_row_list = []
+    current_shipment = nil
+    current_po = nil
+
+    list_swap_lambda = lambda do 
+      # We have a new PO here...so we need to figure out what to do w/ the current po row list...
+      # If the list can't be added to our current file rows, since it would make it too long, then create a new file
+      if current_file_rows.length + current_po_row_list.length > max_fenix_invoice_length
+        all_files << current_file_rows
+        current_file_rows = current_po_row_list
+      else
+        # Append the contents of the po list to our current file list
+        current_file_rows.push *current_po_row_list
+      end
+    end
+
+    rows.each_with_index do |row, index|
+      shipment_number = text_value(row[0]).to_s.strip
+
+      # If the shipment number changes, that means we need to start a new file.
+      if current_shipment.nil?
+        current_shipment = shipment_number
+      elsif current_shipment != shipment_number
+        list_swap_lambda.call
+        # If we have any lines in the current_file_rows...then flush them out to the file list since we need
+        # a new file after the shipment number changes.
+        all_files << current_file_rows if current_file_rows.length > 0
+        current_po_row_list = []
+        current_file_rows = []
+        current_shipment = shipment_number
+      end
+
+      po = text_value(row[6]).to_s.strip
+
+      if current_po.nil? || current_po == po
+        current_po = po if current_po.nil?
+      else
+        list_swap_lambda.call
+
+        # reset the current po list, since we got a new PO to deal with.
+        current_po = po
+        current_po_row_list = []
+      end
+
+      current_po_row_list << row
+
+      # If we're at the last row....
+      if index + 1 >= rows.length
+        list_swap_lambda.call
+        # If we have any lines in the current_file_rows...then flush them out to the file list
+        all_files << current_file_rows if current_file_rows.length > 0
+      end
+    end
+
+    all_files
+  end
+
+  def max_fenix_invoice_length
+    999
+  end
+
+  def process_file system, rows, file_counter, forward_to_entry_system
     # NOTE: the invoices we're creating here are NOT saved...we're just using the datastructure as a passthrough
     # for the Fenix / Kewill file transfers
-    invoice = make_invoice(system, rows.first)
+    invoice = make_invoice(system, rows.first, file_counter)
 
     # The index position of the invoice line must correlate with the index of the row from the file due to how we're pulling
     # some data from the rows for the pdf and excel sheets.
@@ -67,10 +163,12 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
-  def make_invoice system, line
+  def make_invoice system, line, file_counter
     invoice = CommercialInvoice.new
     invoice.importer = importer(system)
     invoice.invoice_number = text_value(line[0])
+    invoice.invoice_number += "-#{file_counter.to_s.rjust(2, "0")}" if system == :fenix
+
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
     invoice.currency = "USD"
     
@@ -143,14 +241,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     values = {part_number: part_number, unique_identifier: unique_identifier}
     if product
       values[:product] = product
-      values[:product_value] = product.custom_value(@cdefs[:prod_value])
+      values[:product_value] = product.custom_value(cdefs[:prod_value])
       values[:product_value] = (BigDecimal(values[:product_value].to_s) * value_multiplier) if values[:product_value]
-      values[:order_number] = product.custom_value(@cdefs[:prod_value_order_number])
+      values[:order_number] = product.custom_value(cdefs[:prod_value_order_number])
 
       classification = product.classifications.find {|c| c.country.try(:iso_code) == (system == :fenix ? "CA" : "US") }
       if classification
         # Tariff description is not sent to Kewill, so don't bother making the custom value lookup
-        values[:description] = classification.custom_value(@cdefs[:class_customs_description]) if system == :fenix
+        values[:description] = classification.custom_value(cdefs[:class_customs_description]) if system == :fenix
         values[:hts] = classification.tariff_records.first.try(:hts_1)
       end
 
@@ -159,7 +257,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         # We'll use the better description on the invoice addendum excel file
         classification = product.classifications.find {|c| c.country.try(:iso_code) == "CA" }
         if classification
-          values[:description] = classification.custom_value(@cdefs[:class_customs_description])
+          values[:description] = classification.custom_value(cdefs[:class_customs_description])
         end
       end
     else
@@ -342,7 +440,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         ca_classification = product.classifications.find {|c| c.country.try(:iso_code) == "CA"}
         ca_tariff = ca_classification.try(:tariff_records).try(:first).try(:hts_1)
         us_tariff = product.classifications.find {|c| c.country.try(:iso_code) == "US" }.try(:tariff_records).try(:first).try(:hts_1)
-        po_numbers = product.custom_value(@cdefs[:prod_po_numbers]).to_s.split("\n").map(&:strip)
+        po_numbers = product.custom_value(cdefs[:prod_po_numbers]).to_s.split("\n").map(&:strip)
 
         resolution = nil
         if us_tariff.blank?

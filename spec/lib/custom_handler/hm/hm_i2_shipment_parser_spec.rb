@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   let(:us) { Factory(:country, iso_code: "US")}
   
   let (:cdefs) {
-    subject.instance_variable_get(:@cdefs)
+    described_class.new.cdefs
   }
   let (:entry) {
     entry = Factory(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF")
@@ -48,7 +48,6 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     end
     
     def set_product_custom_values product, product_value, value_order_number, canada_description
-      cdefs = subject.instance_variable_get(:@cdefs)
       product.update_custom_value! cdefs[:prod_value], product_value
       product.update_custom_value! cdefs[:prod_value_order_number], value_order_number
       if !canada_description.blank?
@@ -72,7 +71,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         described_class.parse ca_file
 
         expect(invoice).not_to be_nil
-        expect(invoice.invoice_number).to eq "INV#"
+        expect(invoice.invoice_number).to eq "INV#-01"
         expect(invoice.importer).to eq hm_fenix
         expect(invoice.invoice_date).to eq Time.zone.parse("2016-02-03 03:05:00")
         expect(invoice.gross_weight).to eq 4
@@ -107,9 +106,9 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(ActionMailer::Base.deliveries.length).to eq 1
         mail = ActionMailer::Base.deliveries.first
         expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
-        expect(mail.subject).to eq "H&M Commercial Invoice INV#"
-        expect(mail.attachments["Invoice INV#.xls"]).not_to be_nil
-        expect(mail.attachments["INV# Exceptions.xls"]).not_to be_nil
+        expect(mail.subject).to eq "H&M Commercial Invoice INV#-01"
+        expect(mail.attachments["Invoice INV#-01.xls"]).not_to be_nil
+        expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
       end
 
       it "finds tariff associated with part number and uses it" do
@@ -145,6 +144,40 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         t = l.commercial_invoice_tariffs.first
         expect(t).not_to be_nil
         expect(t.tariff_description).to eq "Description"
+      end
+
+      it "splits the source file into multiple files and processes each individually" do
+        split_file = CSV.parse(ca_file, col_sep: ";")
+        expect_any_instance_of(described_class).to receive(:split_file).and_return [[split_file[0]], [split_file[1]]]
+
+        invoices = []
+        allow(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |inv|
+          invoices << inv
+        end
+
+        described_class.parse ca_file
+
+        expect(invoices.length).to eq 2
+        # Just validate that the invoice numbers match what we expect...then we'll validate the number of files that go out.
+        expect(invoices.first.invoice_number).to eq "INV#-01"
+        expect(invoices.first.commercial_invoice_lines.first.part_number).to eq "1234567"
+        
+        # Make sure the 
+        expect(invoices.second.invoice_number).to eq "INV#-02"
+        expect(invoices.second.commercial_invoice_lines.first.part_number).to eq "9876543"
+
+        expect(ActionMailer::Base.deliveries.length).to eq 2
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.subject).to eq "H&M Commercial Invoice INV#-01"
+        expect(mail.attachments["Invoice INV#-01.xls"]).not_to be_nil
+        expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
+
+        mail = ActionMailer::Base.deliveries.second
+        expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.subject).to eq "H&M Commercial Invoice INV#-02"
+        expect(mail.attachments["Invoice INV#-02.xls"]).not_to be_nil
+        expect(mail.attachments["INV#-02 Exceptions.xls"]).not_to be_nil
       end
     end
 
@@ -361,6 +394,112 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       expect(sheet.row(0)).to eq ["Part Number", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Link", "US Entry Links", "Resolution"]
       expect(sheet.row(1)).to eq ["12345", "CA Description", "987654, Another PO", "", "1234.56.7890", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "Use Part Number and PO Number(s) (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."]
       expect(sheet.row(2)).to eq ["9876", "US Description", "", "9876.54.3210", "", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
+    end
+  end
+
+  describe "split_file" do
+    it "splits a 'file' at 999 rows for fenix" do
+      file_rows = []
+      # column 6 is the PO number which we can't split across, so we'll make it unique.
+      (1..1000).each { |x| file_rows << ["ship", nil, nil, nil, nil, nil, x] }
+
+      files = subject.split_file(:fenix, file_rows)
+      expect(files.length).to eq 2
+      expect(files.first.length).to eq 999
+      expect(files.first.first[6]).to eq 1
+      expect(files.first.last[6]).to eq 999
+
+      expect(files.second.first[6]).to eq 1000
+      expect(files.second.last[6]).to eq 1000
+      expect(files.second.length).to eq 1
+    end
+
+    it "doesn't split anything for kewill" do
+      file = []
+      (1..1000).each { |x| file << [x] }
+
+      files = subject.split_file(:kewill, file)
+
+      expect(files.length).to eq 1
+      expect(files.first.length).to eq 1000
+    end
+
+    it "splits a file to prevent a PO number from getting split across multiple files" do
+      file_rows = [
+        ["ship", nil, nil, nil, nil, nil, "PO1"],
+        ["ship", nil, nil, nil, nil, nil, "PO2"],
+        ["ship", nil, nil, nil, nil, nil, "PO2"]
+      ]
+
+      expect(subject).to receive(:max_fenix_invoice_length).at_least(:once).and_return 2
+
+      files = subject.split_file(:fenix, file_rows)
+
+      expect(files.length).to eq 2
+      expect(files.first.length).to eq 1
+      expect(files.first.first[6]).to eq "PO1"
+
+      expect(files.second.length).to eq 2
+      expect(files.second.first[6]).to eq "PO2"
+      expect(files.second.last[6]).to eq "PO2"
+    end
+
+    it "doesn't split a file that doesn't need splitting" do
+      file_rows = [
+        ["ship", nil, nil, nil, nil, nil, "PO1"],
+        ["ship", nil, nil, nil, nil, nil, "PO2"],
+        ["ship", nil, nil, nil, nil, nil, "PO2"]
+      ]
+
+      expect(subject).to receive(:max_fenix_invoice_length).at_least(:once).and_return 3
+
+      files = subject.split_file(:fenix, file_rows)
+
+      expect(files.length).to eq 1
+      expect(files.first.length).to eq 3
+      expect(files.first[0][6]).to eq "PO1"
+      expect(files.first[1][6]).to eq "PO2"
+      expect(files.first[2][6]).to eq "PO2"
+    end
+
+    it "starts a new file when shipment number changes (regardless of what the PO is)" do
+      file_rows = [
+        ["ship1", nil, nil, nil, nil, nil, "PO1"],
+        ["ship2", nil, nil, nil, nil, nil, "PO2"],
+        ["ship3", nil, nil, nil, nil, nil, "PO2"]
+      ]
+
+      expect(subject).to receive(:max_fenix_invoice_length).at_least(:once).and_return 3
+
+      files = subject.split_file(:fenix, file_rows)
+
+      expect(files.length).to eq 3
+      expect(files[0].length).to eq 1
+      expect(files[0][0][0]).to eq "ship1"
+      expect(files[1][0][0]).to eq "ship2"
+      expect(files[2][0][0]).to eq "ship3"
+    end
+
+    it "sorts the file rows based on the shipment and then line number" do
+      file_rows = [
+        ["ship3", nil, nil, nil, nil, nil, "PO2"],
+        ["ship1", 2, nil, nil, nil, nil, "PO1"],
+        ["ship2", nil, nil, nil, nil, nil, "PO2"],
+        ["ship1", 1, nil, nil, nil, nil, "PO1"]
+      ]
+
+      expect(subject).to receive(:max_fenix_invoice_length).at_least(:once).and_return 3
+
+      files = subject.split_file(:fenix, file_rows)
+
+      expect(files.length).to eq 3
+      expect(files[0].length).to eq 2
+      expect(files[0][0][0]).to eq "ship1"
+      expect(files[0][0][1]).to eq 1
+      expect(files[0][1][1]).to eq 2
+
+      expect(files[1][0][0]).to eq "ship2"
+      expect(files[2][0][0]).to eq "ship3"
     end
   end
 end
