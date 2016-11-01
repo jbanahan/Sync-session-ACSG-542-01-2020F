@@ -46,6 +46,11 @@ class BusinessValidationRule < ActiveRecord::Base
                   {
                     label: 'Quaker Entry PO Number Unique',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}  
+                  },
+                'OpenChain::CustomHandler::Hm::ValidationRuleHmInvoiceLineFieldFormat'.to_sym=>
+                  {
+                    label: 'H&M Invoice Line Field Format',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='www-vfitrack-net'}  
                   }
               }
 
@@ -89,3 +94,4 @@ end
 # need require statements at end because they depend on the class existing
 require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_vendor_variant'
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
+require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line_field_format'
