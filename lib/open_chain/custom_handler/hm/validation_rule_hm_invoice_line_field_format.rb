@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Hm; class ValidationRuleHmInvoice
         end
       end
     end
-    bad_lines
+    bad_lines.uniq
   end
 
   def generate_output bad_lines, mf, pattern, positive_regex
