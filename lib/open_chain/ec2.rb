@@ -139,7 +139,7 @@ module OpenChain; class Ec2
   end
 
   def self.delete_snapshot ec2_snapshot
-    ec2_client(ec2_snapshot.region).delete_snapshot snapshot_id: ec2_snapshot.snapshot_id
+    ec2_client(region: ec2_snapshot.region).delete_snapshot snapshot_id: ec2_snapshot.snapshot_id
     true
   end
 

@@ -232,6 +232,19 @@ describe OpenChain::Ec2 do
     end
   end
 
+  describe "delete_snapshot" do
+    it "deletes a snapshot" do
+      snap = instance_double(OpenChain::Ec2::Ec2Snapshot)
+      allow(snap).to receive(:region).and_return "snapshot-region"
+      allow(snap).to receive(:snapshot_id).and_return "snapshot-id"
+      client = instance_double(Aws::EC2::Client)
+      expect(subject).to receive(:ec2_client).with(region: "snapshot-region").and_return client
+      expect(client).to receive(:delete_snapshot).with(snapshot_id: "snapshot-id")
+
+      expect(subject.delete_snapshot(snap)).to be_truthy
+    end
+  end
+
   # Nothing is mocked out below when accessing the AWS services, we're excluding these in our normal CI runs, if you update the AWS lib
   # or need to double check that everything is working, right, uncomment the following lines and make sure
   # the tests point to real ec2 instances/tags and make sure the test cases run.
