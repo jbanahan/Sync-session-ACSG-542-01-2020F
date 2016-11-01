@@ -5,7 +5,7 @@ module OpenChain
       include OpenChain::Report::ReportHelper
 
       def self.run_schedulable opts_hash={}
-        recipients = User.where(admin: true, disabled: [false, nil]).map(&:email)
+        recipients = User.where(admin: true, disabled: [false, nil]).pluck(:email)
         self.new.send_email('email' => recipients)
       end
 
@@ -19,7 +19,7 @@ module OpenChain
         wb = create_workbook
         
         workbook_to_tempfile wb, 'MonthlyUserAudit-' do |t|
-          subject = "#{Time.now.strftime('%B')} VFI Track User Audit Report"
+          subject = "#{Time.now.strftime('%B')} VFI Track User Audit Report for #{MasterSetup.get.system_code}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
           OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
         end

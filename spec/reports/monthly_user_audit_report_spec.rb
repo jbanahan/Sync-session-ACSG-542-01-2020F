@@ -14,7 +14,7 @@ describe OpenChain::Report::MonthlyUserAuditReport do
     mail = ActionMailer::Base.deliveries.pop
     
     expect(mail.to).to eq [ "soldier@vandegriftinc.com", "rich_man@vandegriftinc.com" ]
-    expect(mail.subject).to eq "#{month} VFI Track User Audit Report"
+    expect(mail.subject).to eq "#{month} VFI Track User Audit Report for test"
     expect(mail.attachments.count).to eq 1
     
     Tempfile.open('attachment') do |t|
