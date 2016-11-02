@@ -12,24 +12,24 @@ describe StateToggleButtonsController do
     end
 
     it "lists STBs and user/date-field labels for a sys-admin" do
-      expect(u).to receive(:sys_admin?).and_return true
+      expect(u).to receive(:admin?).and_return true
       get :index
       expect(assigns(:buttons)).to eq [{'stb' => stb, 'user_field' => 'Closed By', 'date_field' => 'Closed At'}]
       expect(response).to render_template :index
     end
 
     it "prevents access by non-sys-admins" do
-      expect(u).to receive(:sys_admin?).and_return false
+      expect(u).to receive(:admin?).and_return false
       get :index
       expect(assigns(:buttons)).to be_nil
       expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "Only system admins can do this."
+      expect(flash[:errors]).to include "Only administrators can do this."
     end
   end
 
   describe "new" do
-    it "renders STB new view for a sys-admin" do
-      expect(u).to receive(:sys_admin?).and_return true
+    it "renders STB new view for an admin" do
+      expect(u).to receive(:admin?).and_return true
       cm_prod = instance_double("CoreModule")
       allow(cm_prod).to receive(:class_name).and_return "Product"
       cm_entry = instance_double("CoreModule")
@@ -45,18 +45,18 @@ describe StateToggleButtonsController do
       expect(response).to render_template :new
     end
 
-    it "prevents access by non-sys-admins" do
-      expect(u).to receive(:sys_admin?).and_return false
+    it "prevents access by non admins" do
+      expect(u).to receive(:admin?).and_return false
       get :new
       expect(assigns(:button)).to be_nil
       expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "Only system admins can do this."
+      expect(flash[:errors]).to include "Only administrators can do this."
     end
   end
 
   describe "create" do
-    it "creates STB for a sys-admin" do
-      expect(u).to receive(:sys_admin?).and_return true
+    it "creates STB for an admin" do
+      expect(u).to receive(:admin?).and_return true
       post :create, {module_type: "Order"}
       stb =  StateToggleButton.last
       expect(stb.module_type).to eq "Order"
@@ -64,47 +64,47 @@ describe StateToggleButtonsController do
       expect(response).to redirect_to edit_state_toggle_button_path(stb)
     end
 
-    it "prevents access by non-sys-admins" do
-      expect(u).to receive(:sys_admin?).and_return false
+    it "prevents access by non-admins" do
+      expect(u).to receive(:admin?).and_return false
       post :create, {module_type: "Order"}
       expect(StateToggleButton.count).to eq 0
       expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "Only system admins can do this."
+      expect(flash[:errors]).to include "Only administrators can do this."
     end
   end
 
   describe "edit" do
     let!(:stb) { Factory(:state_toggle_button) }
-      it "renders the page for a sys-admin" do
-        expect(u).to receive(:sys_admin?).and_return true
+      it "renders the page for an admin" do
+        expect(u).to receive(:admin?).and_return true
         get :edit, id: stb.id
         expect(response).to render_template :edit
       end
       
-      it "prevents access by non-sys-admins" do
-        expect(u).to receive(:sys_admin?).and_return false
+      it "prevents access by non-admins" do
+        expect(u).to receive(:admin?).and_return false
         get :edit, id: stb.id
         expect(response).to redirect_to request.referrer
-        expect(flash[:errors]).to include "Only system admins can do this."
+        expect(flash[:errors]).to include "Only administrators can do this."
       end
   end
 
   describe "destroy" do
     let!(:stb) { Factory(:state_toggle_button) }
 
-    it "deletes STB for a sys-admin" do
-      expect(u).to receive(:sys_admin?).and_return true
+    it "deletes STB for an admin" do
+      expect(u).to receive(:admin?).and_return true
       delete :destroy, id: stb.id
       expect(StateToggleButton.count).to eq 0
       expect(response).to redirect_to(state_toggle_buttons_path)
     end
 
-    it "prevents access by non-sys-admins" do
-      expect(u).to receive(:sys_admin?).and_return false
+    it "prevents access by non-admins" do
+      expect(u).to receive(:admin?).and_return false
       delete :destroy, id: stb.id
       expect(StateToggleButton.count).to eq 1
       expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "Only system admins can do this."
+      expect(flash[:errors]).to include "Only administrators can do this."
     end
   end
 end

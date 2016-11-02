@@ -26,13 +26,13 @@ $(function() {
   <tbody>
     <%@buttons.each do |b|%>
       <tr class='hover'>
-        <td><%=link_to b[:stb].module_type%></td>
-        <td><%=link_to b[:user_field] || ""%></td>
-        <td><%=link_to b[:date_field] || ""%></td>
-        <td><%=link_to b[:stb].permission_group_system_codes || ""%></td>
-        <td><%=link_to b[:stb].activate_text || ""%></td>
-        <td><%=link_to b[:stb].deactivate_text || ""%></td>
-        <td><%=link_to b[:stb].search_criterions.count%></td>
+        <td><%=b[:stb].module_type%></td>
+        <td><%=b[:user_field] || ""%></td>
+        <td><%=b[:date_field] || ""%></td>
+        <td><%=b[:stb].permission_group_system_codes || ""%></td>
+        <td><%=b[:stb].activate_text || ""%></td>
+        <td><%=b[:stb].deactivate_text || ""%></td>
+        <td><%=b[:stb].search_criterions.count%></td>
         <td><%=link_to "edit", edit_state_toggle_button_path(b[:stb])%></td>
         <td><%=link_to "delete", state_toggle_button_path(b[:stb]), :confirm => 'Delete this state toggle button?', :method => :delete %></td>
       </tr>

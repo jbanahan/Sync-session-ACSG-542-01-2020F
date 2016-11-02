@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Api::V1::Admin::StateToggleButtonsController do
-  let!(:user) { Factory(:sys_admin_user) }
+  let!(:user) { Factory(:admin_user) }
   before do
     allow_api_user user
     use_json
@@ -10,7 +10,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   describe "edit" do
     let!(:stb) { Factory(:state_toggle_button) }
 
-    it "renders template JSON for a sys-admin" do
+    it "renders template JSON for a admin" do
       sc_mfs = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}]
       user_mfs = [{mfid: "ord_closed_by", label: "Closed By"}]
       date_mfs = [{mfid: "ord_closed_at", label: "Closed At"}]
@@ -33,11 +33,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       expect(response.body).to eq(output.to_json)
     end
 
-    it "prevents access by non-sys-admins" do
-      allow_api_access Factory(:admin_user)
-      get :edit, id: 1, :format => "json"
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
-
+    it "prevents access by non-admins" do
       allow_api_access Factory(:user)
       get :edit, id: 1, :format => "json"
       expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
@@ -52,7 +48,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
         @stb = StateToggleButton.first
         @stb.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
       end
-      it "replaces search criterions for sys-admins" do
+      it "replaces search criterions for admins" do
         put :update, id: @stb.id, stb: {}, criteria: @stb_new_criteria
         @stb.reload
         criteria = @stb.search_criterions
@@ -63,8 +59,8 @@ describe Api::V1::Admin::StateToggleButtonsController do
         expect(JSON.parse(response.body)["ok"]).to eq "ok"
       end
 
-      it "prevents access by non-sys-admins" do
-        allow_api_access Factory(:admin_user)
+      it "prevents access by non-admins" do
+        allow_api_access Factory(:user)
         put :update, id: @stb.id, stb: {}, criteria: @stb_new_criteria
         @stb.reload
         criteria = @stb.search_criterions
@@ -91,7 +87,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
          deactivate_confirmation_text: "deactivate sure? updated"}
       end
 
-      it "replaces other fields for sys-admins, except module_type" do
+      it "replaces other fields for admins, except module_type" do
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
         
@@ -102,8 +98,8 @@ describe Api::V1::Admin::StateToggleButtonsController do
         expect(stb.deactivate_confirmation_text).to eq "deactivate sure? updated"
       end
 
-      it "prevents access by non-sys-admins" do
-        allow_api_access Factory(:admin_user)
+      it "prevents access by non-admins" do
+        allow_api_access Factory(:user)
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
         
@@ -117,7 +113,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       let!(:stb) { Factory(:state_toggle_button, user_attribute: "ord_closed_by", date_custom_definition: Factory(:custom_definition))}
       let!(:new_cdef) { Factory(:custom_definition) }
 
-      context "for sys-admins" do
+      context "for admins" do
         it "updates mfs/cdefs with existing values" do
           put :update, id: stb.id, stb: {user_attribute: "ord_accepted_by", date_custom_definition_id: new_cdef.id }, criteria: {}
           stb.reload
@@ -154,9 +150,9 @@ describe Api::V1::Admin::StateToggleButtonsController do
         end
       end
 
-      context "for non sys-admins" do
+      context "for non-admins" do
         it "doesn't update mfs/cdefs" do
-          allow_api_access Factory(:admin_user)
+          allow_api_access Factory(:user)
           current_cdef = stb.date_custom_definition
           put :update, id: stb.id, stb: {user_attribute: "ord_accepted_by", date_custom_definition_id: new_cdef.id }, criteria: {}
           stb.reload

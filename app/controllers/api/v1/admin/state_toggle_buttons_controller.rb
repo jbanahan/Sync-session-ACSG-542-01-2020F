@@ -1,5 +1,5 @@
 module Api; module V1; module Admin; class StateToggleButtonsController < Api::V1::Admin::AdminApiController
-  before_filter :require_sys_admin
+  before_filter :require_admin
   
   def edit
     button = StateToggleButton.find params[:id]
