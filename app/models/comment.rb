@@ -40,6 +40,14 @@ class Comment < ActiveRecord::Base
     {can_view: comment.can_view?(user), can_edit: comment.can_edit?(user), can_delete: comment.can_delete?(user)}
   end
 
+  def self.gather_since obj, since
+    Comment.unscoped
+           .where(commentable_id: obj)
+           .where("updated_at >= \"#{since.utc.to_s(:db)}\"")
+           .order("updated_at DESC")
+           .map{ |com| "#{com.updated_at.in_time_zone(Time.zone.name).strftime('%m-%d %H:%M')} #{com.subject}: #{com.body}" }.join("\n \n")
+  end
+
   private 
 
     def publish_comment_create
