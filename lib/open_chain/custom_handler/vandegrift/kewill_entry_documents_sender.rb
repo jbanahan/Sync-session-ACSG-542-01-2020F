@@ -9,22 +9,24 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
       OpenChain::S3.download_to_tempfile(bucket, key, version: version, original_filename: File.basename(key)) do |file|
         file_info = validate_file(key)
 
-        if file_info[:errors].blank?
-          # All's good...ftp this file to kewill imaging
-          kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_.#{file_info[:extension]}"
-          ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
-        else
-          # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
-          email_to = OpenChain::S3.metadata("owner", bucket, key, version)
+        begin
+          if file_info[:errors].blank?
+            # All's good...ftp this file to kewill imaging
+            kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_.#{file_info[:extension]}"
+            ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
+          else
+            # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
+            email_to = OpenChain::S3.metadata("owner", bucket, key, version)
 
-          # If we can't find the owner, use the bug email address (not sure why we wouldn't be able to unless something's up with the imaging client
-          #  or possibly google drive - where the client fetches the owner email from)
-          email_to = OpenMailer::BUG_EMAIL if email_to.blank?
+            # If we can't find the owner, use the bug email address (not sure why we wouldn't be able to unless something's up with the imaging client
+            #  or possibly google drive - where the client fetches the owner email from)
+            email_to = OpenMailer::BUG_EMAIL if email_to.blank?
 
-          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file.original_filename, file).deliver!
+            OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file.original_filename, file).deliver!
+          end
+        ensure
+          OpenChain::S3.delete bucket, key, version
         end
-
-        OpenChain::S3.delete bucket, key, version
       end
     end
   end

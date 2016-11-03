@@ -84,7 +84,12 @@ module OpenChain; class S3
   end
 
   def self.metadata metadata_key, bucket, key, version = nil
-    Client.s3_versioned_object(bucket, key, version).metadata[metadata_key]
+    if version.nil?
+      Client.s3_file(bucket, key).metadata[metadata_key]
+    else
+      # Versioned Objects don't support direct metadata retrieval
+      Client.s3_versioned_object(bucket, key, version).head.metadata[metadata_key]
+    end
   end
   
   # Downloads the AWS S3 data specified by the bucket and key (and optional version).  The tempfile
