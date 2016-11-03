@@ -113,8 +113,8 @@ module OpenChain
         add_element prod, "species_5", row[29]
         add_element prod, "cites_origin_5", row[14]
         add_element prod, "cites_source_5", row[19]
-        add_element prod, "stitch_count_2cm_vertical", row[30]
-        add_element prod, "stitch_count_2cm_horizontal", row[31]
+        add_element prod, "stitch_count_2cm_vertical", "", allow_blank: true
+        add_element prod, "stitch_count_2cm_horizontal", "", allow_blank: true
         add_element prod, "allocation_category", row[32]
         knit_woven = row[33]
         if !knit_woven.blank?

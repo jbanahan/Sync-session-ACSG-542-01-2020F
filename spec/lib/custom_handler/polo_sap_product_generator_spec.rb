@@ -139,8 +139,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       expect(prod.text("species_5")).to eq "scientific_name_5"
       expect(prod.text("cites_origin_5")).to eq "fish_wildlife_origin_5"
       expect(prod.text("cites_source_5")).to eq "fish_wildlife_source_5"
-      expect(prod.text("stitch_count_2cm_vertical")).to eq "stitch_count_vertical"
-      expect(prod.text("stitch_count_2cm_horizontal")).to eq "stitch_count_horizontal"
+      expect(prod.text("stitch_count_2cm_vertical")).to be_nil
+      expect(prod.text("stitch_count_2cm_horizontal")).to be_nil
       expect(prod.text("allocation_category")).to eq "allocation_category"
       expect(prod.text("knit_woven")).to eq "KNT"
 
