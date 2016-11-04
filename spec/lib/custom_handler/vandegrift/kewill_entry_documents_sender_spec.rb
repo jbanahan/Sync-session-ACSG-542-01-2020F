@@ -90,5 +90,35 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       expect(email).not_to be_nil
       expect(email.to).to eq [OpenMailer::BUG_EMAIL]
     end
+
+    it "handles no such key error as a no-op" do
+      expect(OpenChain::S3).to receive(:download_to_tempfile).and_raise OpenChain::S3::NoSuchKeyError
+      expect(subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")).to be_nil
+    end
+  end
+
+  describe "run_schedulable" do
+
+    it "monitors given bucket and sends docs to kewill" do
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("testing").and_yield "key", "version"
+      expect(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:send_s3_document_to_kewill).with("testing", "key", "version")
+
+      subject.run_schedulable({"bucket" => "testing"})
+    end
+
+    it "monitors multiple buckets if supplied" do
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test").and_yield "key", "version"
+      expect(OpenChain::S3).to receive(:each_file_in_bucket).with("test2").and_yield "key2", "version2"
+      expect(subject).to receive(:delay).at_least(:once).and_return subject
+      expect(subject).to receive(:send_s3_document_to_kewill).with("test", "key", "version")
+      expect(subject).to receive(:send_s3_document_to_kewill).with("test2", "key2", "version2")
+
+      subject.run_schedulable({"bucket" => ["test", "test2"]})
+    end
+
+    it "raises an error if bucket option is not set" do
+      expect { subject.run_schedulable }.to raise_error StandardError, "A 'bucket' option value must be set."
+    end
   end
 end

@@ -91,6 +91,12 @@ module OpenChain; class S3
       Client.s3_versioned_object(bucket, key, version).head.metadata[metadata_key]
     end
   end
+
+  def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil)
+    objects = Client.list_objects(bucket, max_files: max_files, prefix: prefix)
+    objects.each {|o| yield o[:key], o[:version] }
+    nil
+  end
   
   # Downloads the AWS S3 data specified by the bucket and key (and optional version).  The tempfile
   # created will attempt to use the key as a template for naming the tempfile created.
@@ -203,6 +209,21 @@ module OpenChain; class S3
     end
   end
 
+  class AwsErrors < StandardError; end
+
+  class NoSuchKeyError < AwsErrors
+    attr_reader :bucket, :key, :version
+
+    def initialize bucket, key, version, message
+      message = "#{message} (Bucket: #{bucket} / Key: #{key} / Version: #{version})"
+      super(message)
+      @bucket = bucket
+      @key = key
+      @version = version
+    end
+
+  end
+
   # Any direct interactions with aws lib should occur inside this class, any code outside of OpenChain::S3 should NOT
   # directly interact with this code.
   class Client
@@ -268,6 +289,10 @@ module OpenChain; class S3
           response.body.read
         end
       end
+    rescue Aws::S3::Errors::NoSuchKey, Aws::S3::Errors::NoSuchVersion => e
+      err = NoSuchKeyError.new(bucket, key, version, e.message)
+      err.set_backtrace(e.backtrace)
+      raise err
     end
 
     # You can use this method to front any handling of s3 data that is used for versioning where both 
@@ -297,6 +322,31 @@ module OpenChain; class S3
     def self.delete bucket, key, version = nil
       obj = s3_versioned_object(bucket, key, version)
       obj.delete
+    end
+
+    def self.list_objects bucket, prefix: nil, max_files: nil
+      # Just set some arbitrarily high value here if max_objects isn't sent
+      max_files = 100000 if max_files.nil?
+
+      objects = []
+      continue_listing = true
+      version_id_marker = nil
+      key_marker = nil
+
+      begin
+        max_keys = [(max_files - objects.length), 1000].min
+        resp = s3_client.list_object_versions(bucket: bucket, max_keys: max_keys, prefix: prefix, key_marker: key_marker, version_id_marker: version_id_marker)
+        key_marker = resp.next_key_marker
+        version_id_marker = resp.next_version_id_marker
+        resp.versions.each do |v|
+          objects << {last_modified: v.last_modified, key: v.key, version: v.version_id}
+          break if objects.length == max_files
+        end
+        continue_listing = objects.length < max_files && resp.is_truncated
+      end while continue_listing
+      
+      # Now sort all the objects by last_modified_date
+      objects.sort_by {|k| k[:last_modified] }
     end
 
     def self.s3_action_with_retries total_attempts: 3, retry_lambda: nil

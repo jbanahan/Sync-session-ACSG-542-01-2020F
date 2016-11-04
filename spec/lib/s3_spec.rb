@@ -3,30 +3,47 @@ require 'open_chain/s3'
 
 describe OpenChain::S3, s3: true do
 
-  let! (:bucket) { OpenChain::S3.bucket_name 'test' }
+  let! (:bucket) { test_bucket }
   let (:tempfile_content) { "#{Time.now.to_f}" }
-  let (:test_tempfile) { Tempfile.new('abc') }
   let (:key) { "s3_io_#{Time.now.to_f}.txt" }
+  let (:uploaded_files) { [] }
 
-  def upload_tempfile options = {}
-    test_tempfile.write tempfile_content
-    test_tempfile.flush
-
-    file = OpenChain::S3.upload_file bucket, key, test_tempfile, options
-    @uploaded = true
-    file
+  def test_bucket
+    OpenChain::S3.bucket_name 'test' 
   end
 
-  before :each do
-    @uploaded = false
+  def upload_tempfile options = {}
+    if options[:key]
+      upload_key = options[:key]
+    elsif uploaded_files.length > 0
+      upload_key = "s3_io_#{Time.now.to_f}.txt"
+    else
+      upload_key = key
+    end
+
+    file = Tempfile.new([File.basename(upload_key), ".txt"])
+    file << tempfile_content
+    file.flush
+
+    f = OpenChain::S3.upload_file bucket, upload_key, file, options
+    uploaded_files << {bucket: f.bucket, key: f.key, version: f.version, file: file}
+
+    f
   end
 
   after(:each) do
-    if @uploaded
-      OpenChain::S3.delete bucket, key
+    uploaded_files.each do |v|
+      begin
+        OpenChain::S3.delete v[:bucket], v[:key], v[:version]
+      ensure
+        v[:file].close! unless v[:file].closed?
+      end
     end
+  end
 
-    test_tempfile.close! unless test_tempfile.closed?
+  after :all do
+    # Make sure to clear out the test bucket (just in case)
+    OpenChain::S3.each_file_in_bucket(test_bucket) {|key, version| OpenChain::S3.delete(test_bucket, key, version) }
   end
 
   describe 'bucket name' do
@@ -116,6 +133,72 @@ describe OpenChain::S3, s3: true do
       expect(io).to receive(:rewind).exactly(2).times
       expect(OpenChain::S3::Client).to receive(:s3_client).exactly(3).times.and_raise "Failure"
       expect {OpenChain::S3.get_data(bucket, key, io)}.to raise_error "Failure"
+    end
+
+    it "raises NoSuchKeyError if file is not found" do
+      begin
+        OpenChain::S3.get_data(bucket, "notafile")
+        fail("Should have raised an error.")
+      rescue OpenChain::S3::NoSuchKeyError => e
+        expect(e.bucket).to eq bucket
+        expect(e.key).to eq "notafile"
+        expect(e.version).to be_nil
+        expect(e.backtrace.length).not_to eq 0
+      end
+    end
+
+    it "raises NoSuchKeyError if file is not found with a version" do
+      begin
+        OpenChain::S3.get_versioned_data(bucket, "notafile", "q1bO4tK4AidgAWkyd7uYg2vI3w14ytk5")
+        fail("Should have raised an error.")
+      rescue OpenChain::S3::NoSuchKeyError => e
+        expect(e.bucket).to eq bucket
+        expect(e.key).to eq "notafile"
+        expect(e.version).to eq "q1bO4tK4AidgAWkyd7uYg2vI3w14ytk5"
+        expect(e.backtrace.length).not_to eq 0
+      end
+    end
+  end
+
+  describe "each_file_in_bucket" do
+    it "yields key, version for all objects in the bucket" do
+      f = upload_tempfile
+      f2 = upload_tempfile
+
+      objects = []
+      OpenChain::S3.each_file_in_bucket(bucket) do |key, version|
+        objects << [key, version]
+      end
+
+      expect(objects.length).to eq 2
+      keys = objects.map {|o| o[0]}
+      expect(keys).to include f.key
+      expect(keys).to include f2.key
+    end
+
+    it "does not list more files than asked for" do
+      f = upload_tempfile
+      f2 = upload_tempfile
+      objects = []
+      OpenChain::S3.each_file_in_bucket(bucket, max_files: 1) do |key, version|
+        objects << [key, version]
+      end
+
+      expect(objects.length).to eq 1
+      expect(objects[0][0]).to eq f.key
+    end
+
+    it "only returns keys with prefix" do
+      f = upload_tempfile
+      f2 = upload_tempfile(key: "prefix-key.txt")
+
+      objects = []
+      OpenChain::S3.each_file_in_bucket(bucket, prefix: "prefix") do |key, version|
+        objects << [key, version]
+      end
+
+      expect(objects.length).to eq 1
+      expect(objects[0][0]).to eq f2.key
     end
   end
 
@@ -233,6 +316,8 @@ describe OpenChain::S3, s3: true do
   end
 
   describe 'integration keys' do
+    let (:test_tempfile) { Tempfile.new('abc') }
+
     context "with single subfolder" do
       let(:keys) { ["2011-12/26/subfolder/2/a.txt","2011-12/26/subfolder/2/b.txt"] }
 

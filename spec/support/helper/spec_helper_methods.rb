@@ -21,6 +21,9 @@ module Helpers
   end
 
   class MockS3
+    class AwsErrors < StandardError; end
+    class NoSuchKeyError < AwsErrors; end 
+
     def self.parse_full_s3_path path
       # We're expecting the path to be like "/bucket/path/to/file.pdf"
       # The first path segment of the file is the bucket, everything after that is the path to the actual file
