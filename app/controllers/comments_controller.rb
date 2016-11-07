@@ -19,7 +19,7 @@ class CommentsController < ApplicationController
       end
       cmt.user = current_user
       if cmt.save
-        add_flash :errors, "Email address missing or invalid" unless email(cmt)
+        add_flash :errors, "Email address is invalid." unless params[:to].empty? || email(cmt)
       end
       OpenChain::WorkflowProcessor.async_process(commentable)
       errors_to_flash cmt

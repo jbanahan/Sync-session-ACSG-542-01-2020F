@@ -28,16 +28,17 @@ describe CommentsController do
         expect(ActionMailer::Base.deliveries.count).to eq 1
         expect(response).to redirect_to(product_path(@prod))
       end
-      it "add flash error if email address is missing" do
+      it "redirects without error if email address is missing" do
         post :create, to: "", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
         expect(ActionMailer::Base.deliveries.count).to eq 0
-        expect(flash[:errors]).to eq ["Email address missing or invalid"]
+        expect(response).to redirect_to(product_path(@prod))
+        expect(flash[:errors]).to be_nil
       end
 
       it "adds flash error if email address is invalid" do
         post :create, to: "nigeltufnelstonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
         expect(ActionMailer::Base.deliveries.count).to eq 0
-        expect(flash[:errors]).to eq ["Email address missing or invalid"]
+        expect(flash[:errors]).to eq ["Email address is invalid."]
       end
     end
 
