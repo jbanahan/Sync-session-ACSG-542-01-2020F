@@ -26,6 +26,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
                 ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
                 ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
+                ValidationRuleProductClassificationFieldFormat: {label:"Product Classification Field Format"},
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
                   {
