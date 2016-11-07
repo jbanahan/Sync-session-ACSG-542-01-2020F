@@ -101,4 +101,16 @@ RSpec.configure do |config|
   #       # Equivalent to being in spec/controllers
   #     end
   config.infer_spec_type_from_file_location!
+
+  # Add a way to cleanly disable delay'ing jobs via rspec metadata.
+  # Add :disable_delay_jobs to the rspec describe block.
+  config.around(:each, :disable_delayed_jobs) do |example|
+    value = Delayed::Worker.delay_jobs
+
+    Delayed::Worker.delay_jobs = false
+
+    example.run
+
+    Delayed::Worker.delay_jobs = value
+  end
 end

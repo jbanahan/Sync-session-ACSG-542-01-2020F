@@ -323,7 +323,7 @@ describe SurveyResponsesController do
     end
   end
 
-  describe "remind" do
+  describe "remind", :disable_delayed_jobs do
     before(:each) do
       @u = Factory(:user)
       sign_in_as @u
@@ -331,11 +331,7 @@ describe SurveyResponsesController do
       @email_to = "joe@test.com sue@test.com"
       @email_subject = "Reminder: Important Survey"
       @email_body = "Please follow the link below to complete your survey."
-      @dj = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
     end
-
-    after(:each) { Delayed::Worker.delay_jobs = @dj }
     
     it "restricts access" do
       post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body

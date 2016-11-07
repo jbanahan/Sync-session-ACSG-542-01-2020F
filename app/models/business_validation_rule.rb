@@ -4,7 +4,11 @@ class BusinessValidationRule < ActiveRecord::Base
   attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending
 
   has_many :search_criterions, dependent: :destroy
-  has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
+  # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)
+  # so we must manually delete the results.  The after_destroy callback below handles this.
+  has_many :business_validation_rule_results, inverse_of: :business_validation_rule
+
+  after_destroy { |rule| destroy_rule_dependents rule }
 
   SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: {label:"Entry Invoice Line Field Format"},
                 ValidationRuleEntryInvoiceLineMatchesPoLine: {label:"Entry Invoice Line Matches PO Line"},
@@ -86,9 +90,20 @@ class BusinessValidationRule < ActiveRecord::Base
     true
   end
 
-  def self.async_destroy id
-    rule = find_by_id id
-    rule.destroy if rule
+  def destroy_rule_dependents validation_rule
+    self.class.delay.destroy_rule_results validation_rule.id
+  end
+
+  def self.destroy_rule_results rule_id
+    # There's far too many business_validation_rule_results linked to a single rule to be able to cascade and delete in a single transaction (.ie directly 
+    # via a destroy and a defined dependents destroy in the relation definition).
+    # Destroy them in groups of 1000 in their own distinct asynchronous transactions
+
+    # Do the "newer" ones first
+    ids = BusinessValidationRuleResult.where(business_validation_rule_id: rule_id).order("id DESC").pluck :id
+    ids.each_slice(1000).each do |id_group|
+      BusinessValidationRuleResult.delay.destroy_batch id_group
+    end
   end
 end
 

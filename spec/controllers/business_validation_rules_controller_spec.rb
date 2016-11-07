@@ -166,27 +166,13 @@ describe BusinessValidationRulesController do
       @u.admin = false
       @u.save!
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      expect_any_instance_of(BusinessValidationRule).not_to receive(:delay)
+      expect_any_instance_of(BusinessValidationRule).not_to receive(:destroy)
       expect(response).to be_redirect
     end
 
     it "should delete the correct rule" do
-      dj_status = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
-
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       expect(BusinessValidationRule.find_by_id(@bvr.id)).to be_nil
-
-      Delayed::Worker.delay_jobs = dj_status
-    end
-
-    it "sets delete_pending flag and executes destroy as a delayed job" do
-      d = double("delay")
-      expect(BusinessValidationRule).to receive(:delay).and_return d
-      expect(d).to receive(:async_destroy).with @bvr.id
-      post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
-      @bvr.reload
-      expect(@bvr.delete_pending).to eq true
     end
 
   end

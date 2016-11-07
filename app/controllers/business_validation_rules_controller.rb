@@ -59,7 +59,7 @@ class BusinessValidationRulesController < ApplicationController
       @bvr = BusinessValidationRule.find(params[:id])
       @bvt = @bvr.business_validation_template
       @bvr.update_attribute(:delete_pending, true)
-      BusinessValidationRule.delay.async_destroy @bvr.id
+      @bvr.destroy
       redirect_to edit_business_validation_template_path(@bvt)
     end
   end

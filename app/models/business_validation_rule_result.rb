@@ -19,7 +19,9 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   end
 
   def run_validation obj
-    return if self.overridden_at || self.business_validation_rule.delete_pending?
+    # validation rule can be nil if it's in the process of getting deleted (which can take time since there's
+    # potentially hundreds of thousands of rule results).
+    return if self.overridden_at || self.business_validation_rule.delete_pending? || self.business_validation_rule.nil?
     if self.business_validation_rule.should_skip? obj
       self.message = nil
       self.state = 'Skipped'
@@ -45,6 +47,12 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     self.overridden_at = nil
     self.note = nil
     save!
+  end
+
+  def self.destroy_batch ids
+    BusinessValidationRuleResult.where(id: ids).find_each do |rule_result|
+      rule_result.destroy
+    end
   end
 
   private

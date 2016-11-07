@@ -110,20 +110,14 @@ describe CompaniesController do
       expect(flash[:errors]).to be_blank
       expect(Delayed::Job.all.size).to eq(1)
     end
-    it "should push products" do
-      dj_state = Delayed::Worker.delay_jobs
-      begin
-        Delayed::Worker.delay_jobs = false
-        expect(OpenChain::CustomHandler::GenericAllianceProductGenerator).to receive(:sync).with(@c.id)
-        post :push_alliance_products, :id=>@c.id
-        expect(response).to redirect_to @c
-        expect(flash[:notices].size).to eq(1)
-        expect(flash[:errors]).to be_blank
-        @c.reload
-        expect(@c.last_alliance_product_push_at).to be > 1.minute.ago
-      ensure
-        Delayed::Worker.delay_jobs = dj_state
-      end
+    it "should push products", :disable_delayed_jobs do
+      expect(OpenChain::CustomHandler::GenericAllianceProductGenerator).to receive(:sync).with(@c.id)
+      post :push_alliance_products, :id=>@c.id
+      expect(response).to redirect_to @c
+      expect(flash[:notices].size).to eq(1)
+      expect(flash[:errors]).to be_blank
+      @c.reload
+      expect(@c.last_alliance_product_push_at).to be > 1.minute.ago
     end
     it "should reject if alliance custom feature isn't enabled" do
       MasterSetup.get.update_attributes(:custom_features=>"")

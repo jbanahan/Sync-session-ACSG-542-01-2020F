@@ -30,14 +30,9 @@ describe CoreObjectSupport do
       expect(ent.business_rules_state).to eq 'Fail'
     end
   end
-  describe "process_linked_attachments" do
+  describe "process_linked_attachments", :disable_delayed_jobs do
     before :each do
       LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num')
-      @ws = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
-    end
-    after :each do
-      Delayed::Worker.delay_jobs = @ws
     end
     it "should kick off job if import rule exists for this module" do
       expect(LinkedAttachment).to receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))

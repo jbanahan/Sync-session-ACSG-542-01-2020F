@@ -443,14 +443,7 @@ describe AdvancedSearchController do
       expect(response.headers['Content-Type']).to eq("application/vnd.ms-excel")
       expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"#{@ss.name}.xls\"")
     end
-    context "delayed_job" do
-      before :each do
-        @dj_status = Delayed::Worker.delay_jobs
-        Delayed::Worker.delay_jobs = false
-      end
-      after :each do
-        Delayed::Worker.delay_jobs = @dj_status
-      end
+    context "delayed_job", :disable_delayed_jobs do
       it "should delay running file for json" do
         expect(ReportResult).to receive(:run_report!).with(@ss.name, @user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@ss.id })
         get :download, :id=>@ss.id, :format=>:json

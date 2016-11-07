@@ -20,14 +20,9 @@ describe DrawbackUploadFilesController do
       expect(response).to be_success
     end
   end
-  describe "create" do
+  describe "create", :disable_delayed_jobs do
     before :each do
       @file = fixture_file_upload('/files/test.txt', 'text/plain')
-      @dj = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
-    end
-    after :each do
-      Delayed::Worker.delay_jobs = @dj
     end
     context "don't process" do
       before :each do

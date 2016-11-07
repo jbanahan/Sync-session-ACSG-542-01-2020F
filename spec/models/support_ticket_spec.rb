@@ -49,17 +49,12 @@ describe SupportTicket do
       expect(@st.can_edit?(@u)).to be_falsey
     end
   end
-  context "notifications" do
+  context "notifications", :disable_delayed_jobs do
     before :each do
-      @dj_state = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
       @requestor = Factory(:user)
       @agent = Factory(:user,:support_agent=>true)
       @st = Factory(:support_ticket,:requestor=>@requestor,:agent=>@agent,:email_notifications=>true)
       @mock_email = double(:email)
-    end
-    after :each do
-      Delayed::Worker.delay_jobs = @dj_state
     end
     it "should notify agent when requestor is_last_saved_by" do
       expect(@mock_email).to receive(:deliver)

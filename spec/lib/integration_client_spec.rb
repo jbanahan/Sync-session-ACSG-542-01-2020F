@@ -95,14 +95,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
   let! (:master_setup) { stub_master_setup }
   let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
 
-  context 'request type: remote_file' do
-    before(:each) do
-      @ws = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
-    end
-    after(:each) do
-      Delayed::Worker.delay_jobs = @ws
-    end
+  context 'request type: remote_file', :disable_delayed_jobs do
     context "ecellerate" do
       it "should send data to eCellerate router" do
         expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'

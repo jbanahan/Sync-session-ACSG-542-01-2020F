@@ -64,13 +64,7 @@ describe ReportsController do
       end
     end
 
-    context "run" do
-      before(:each) do
-        Delayed::Worker.delay_jobs = false
-      end
-      after :each do
-        Delayed::Worker.delay_jobs = true
-      end
+    context "run", :disable_delayed_jobs do
       it "should call report with tariff ids in settings" do
         allow_any_instance_of(ReportResult).to receive(:execute_report)
         old_ts = TariffSet.first

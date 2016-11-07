@@ -41,26 +41,31 @@ describe ReportResult do
     end
   end
 
-  describe "run report" do
+  describe "run report", :disable_delayed_jobs do
     class SampleReport
+      cattr_reader :tempfiles
+
       def self.run_report user, opts
-        loc = 'spec/support/tmp/sample_report.txt'
-        f = File.new loc, "w"
-        f << "mystring"
-        f.flush
-        f.rewind
-        f
+        @@tempfiles ||= []
+
+        tempfile = Tempfile.open(["sample_report", ".txt"])
+        tempfile << "mystring"
+        tempfile.flush
+        tempfile.rewind
+        Attachment.add_original_filename_method tempfile, "sample_report.txt"
+
+        @@tempfiles << tempfile
+
+        tempfile
       end
     end
 
     before :each do
-      @file_location = 'spec/support/tmp/sample_report.txt'
-      File.delete @file_location if File.exists? @file_location
       @report_class = SampleReport
-      Delayed::Worker.delay_jobs = false
     end
     after :each do
-      Delayed::Worker.delay_jobs = true
+      Array.wrap(SampleReport.tempfiles).each {|t| t.close! unless t.closed? }
+      SampleReport.tempfiles.clear if SampleReport.tempfiles
     end
     it "should write data on report run" do
       allow_any_instance_of(ReportResult).to receive(:execute_report)
@@ -86,7 +91,8 @@ describe ReportResult do
     end
     it "deletes the underlying file when report is finished" do
       ReportResult.run_report! 'del', @u, @report_class
-      expect(File.exists?(@file_location)).to be_falsey
+      expect(SampleReport.tempfiles.length).to eq 1
+      expect(SampleReport.tempfiles[0]).to be_closed
     end
     it "attaches report content to ReportResult", paperclip: true, s3: true do
       ReportResult.run_report! 'cont', @u, @report_class
@@ -165,30 +171,39 @@ describe ReportResult do
     end
 
     describe "error handling" do
-      before(:each) do
-        allow(SampleReport).to receive(:run_report).and_raise('some error message')
+      
+      context "report fails" do
+        before(:each) do
+          allow(SampleReport).to receive(:run_report).and_raise('some error message')
+        end
+
+        it "sets reports that threw exceptions as failed" do
+          ReportResult.run_report! 'fail', @u, @report_class
+          found = ReportResult.find_by_name 'fail'
+          expect(found.status).to eq("Failed")
+        end
+        it "writes report errors when failing" do
+          ReportResult.run_report! 'err msg', @u, @report_class
+          found = ReportResult.find_by_name 'err msg'
+          expect(found.run_errors).to eq('some error message')
+        end
+        it "writes a user message containing the word failed in the subject when report fails" do
+          ReportResult.run_report! 'um', @u, @report_class
+          m = @u.messages
+          expect(m.size).to eq(1)
+          expect(m.first.subject).to include "FAILED"
+          found = ReportResult.find_by_name 'um'
+          expect(m.first.body).to include "/report_results/#{found.id}"
+        end
       end
-      it "sets reports that threw exceptions as failed" do
-        ReportResult.run_report! 'fail', @u, @report_class
-        found = ReportResult.find_by_name 'fail'
-        expect(found.status).to eq("Failed")
-      end
-      it "writes report errors when failing" do
-        ReportResult.run_report! 'err msg', @u, @report_class
-        found = ReportResult.find_by_name 'err msg'
-        expect(found.run_errors).to eq('some error message')
-      end
-      it "deletes the underlying file when report fails" do
-        ReportResult.run_report! 'uf', @u, @report_class
-        expect(File.exists?(@file_location)).to be_falsey
-      end
-      it "writes a user message containing the word failed in the subject when report fails" do
-        ReportResult.run_report! 'um', @u, @report_class
-        m = @u.messages
-        expect(m.size).to eq(1)
-        expect(m.first.subject).to include "FAILED"
-        found = ReportResult.find_by_name 'um'
-        expect(m.first.body).to include "/report_results/#{found.id}"
+      
+      context "report handling fails" do
+        it "deletes the underlying file when report completion fails" do
+          expect_any_instance_of(ReportResult).to receive(:complete_report).and_raise "Error"
+          ReportResult.run_report! 'uf', @u, @report_class
+          expect(SampleReport.tempfiles.length).to eq 1
+          expect(SampleReport.tempfiles[0]).to be_closed
+        end
       end
     end
   end

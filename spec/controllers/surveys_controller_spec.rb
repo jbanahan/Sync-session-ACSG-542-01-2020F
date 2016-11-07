@@ -243,15 +243,10 @@ describe SurveysController do
       expect(flash[:errors].size).to eq(1)
     end
   end
-  describe "assign" do
+  describe "assign", :disable_delayed_jobs do
     before :each do 
-      @dj_state = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
       @s = Factory(:survey)
       allow_any_instance_of(SurveyResponse).to receive(:invite_user!) #don't want to deal with this except in the notify test
-    end
-    after :each do
-      Delayed::Worker.delay_jobs = @dj_state
     end
     it "should assign if user can edit survey" do
       u2 = Factory(:user)
@@ -335,14 +330,9 @@ describe SurveysController do
       expect(flash[:errors]).to include "You must assign this survey to at least one user or group."
     end
   end
-  describe "toggle subscription" do
+  describe "toggle subscription", :disable_delayed_jobs do
     before :each do 
-      @dj_state = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
       @s = Factory(:survey, :company_id => @u.company_id)
-    end
-    after :each do
-      Delayed::Worker.delay_jobs = @dj_state
     end
     it "should not create subscription if user cannot see surveys" do
       @u = Factory(:user,:survey_view => false)

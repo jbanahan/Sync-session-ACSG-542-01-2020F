@@ -25,11 +25,23 @@ describe BusinessValidationRule do
       ci = CommercialInvoiceLine.new
       expect {bvr.should_skip? ci}.to raise_error /Invalid object expected Entry got CommercialInvoiceLine/
     end
-  describe "async_destroy" do
+  describe "destroy" do
     it "destroys record" do
       rule = Factory(:business_validation_rule)
-      described_class.async_destroy rule.id
+      rule.destroy
       expect(described_class.count).to eq 0
+    end
+
+    context "validate result deletes", :disable_delayed_jobs do
+
+      it "destroys validation rule and dependents" do
+        rule_result = Factory(:business_validation_rule_result)
+        rule = rule_result.business_validation_rule
+
+        rule.destroy
+
+        expect(BusinessValidationRuleResult.where(id: rule_result).first).to be_nil
+      end
     end
   end
 

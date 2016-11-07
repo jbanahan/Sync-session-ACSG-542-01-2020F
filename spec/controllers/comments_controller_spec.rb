@@ -5,14 +5,10 @@ describe CommentsController do
     @u = Factory(:user)
     sign_in_as @u
   end
-  describe "#create" do
+  describe "#create", :disable_delayed_jobs do
     before do 
       @prod = Factory(:product)
-      @dj = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
     end
-
-    after { Delayed::Worker.delay_jobs = @dj }
     
     context "with authorized user" do
       before do
@@ -81,18 +77,13 @@ describe CommentsController do
     end
   end
 
-  describe "#send_email" do
-    before do
+  describe "#send_email", :disable_delayed_jobs do
+    before :each do
       prod = Factory(:product)
       allow_any_instance_of(Comment).to receive(:publish_comment_create)
       @comment = Comment.create!(:commentable => prod, :user => @u, :subject => "what it's about", :body => "what is there to say?")
       expect_any_instance_of(Product).to receive(:can_view?).with(@u).and_return true
-      
-      @dj = Delayed::Worker.delay_jobs
-      Delayed::Worker.delay_jobs = false
     end
-
-    after { Delayed::Worker.delay_jobs = @dj }
     
     it "sends message if email list contains at least one valid email" do
       post :send_email, {id: @comment.id, to: "tufnel@stonehenge.biz"}
