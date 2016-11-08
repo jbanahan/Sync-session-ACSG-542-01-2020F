@@ -9,7 +9,7 @@ module OpenChain
         def initialize
            @cust_id = Company.where(alliance_customer_number: 'HENNE').first.id
            @cdefs = (self.class.prep_custom_definitions [:prod_po_numbers, :prod_sku_number, :prod_earliest_ship_date, :prod_earliest_arrival_date, 
-            :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin])
+            :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin, :prod_set, :prod_fabric_content, :prod_units_per_set])
         end
 
         def self.parse file_content, opts = {}
@@ -41,6 +41,10 @@ module OpenChain
           product.name = row[5]
           product.find_and_set_custom_value cdefs[:prod_suggested_tariff], row[6]
           cv_concat product, :prod_countries_of_origin, row[7], cdefs
+          product.find_and_set_custom_value(cdefs[:prod_fabric_content], row[8].to_s.strip) unless row[8].blank?
+          product.find_and_set_custom_value(cdefs[:prod_units_per_set], row[9].to_s.strip.to_i) unless row[9].blank?
+          product.find_and_set_custom_value(cdefs[:prod_set], row[10].to_s.strip.downcase == "yes") unless row[10].blank?
+
           product.save!
           product
         end
