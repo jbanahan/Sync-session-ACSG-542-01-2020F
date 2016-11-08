@@ -120,6 +120,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
       slack = instance_double(OpenChain::SlackClient)
       expect(subject).to receive(:slack_client).and_return slack
       expect(slack).to receive(:send_message!).with("it-alerts-warnings", "An error occurred attempting to sync snapshots for testing RDS database.")
+      expect_any_instance_of(StandardError).to receive(:log_me).with(nil, nil, true)
 
       subject.sync_rds_snapshots setup
 
@@ -141,6 +142,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
       slack = instance_double(OpenChain::SlackClient)
       expect(subject).to receive(:slack_client).and_return slack
       expect(slack).to receive(:send_message!).with("it-alerts-warnings", "An error occurred attempting to sync snapshots for testing RDS database.")
+      expect_any_instance_of(StandardError).to receive(:log_me).with(nil, nil, true)
 
       subject.sync_rds_snapshots setup
 

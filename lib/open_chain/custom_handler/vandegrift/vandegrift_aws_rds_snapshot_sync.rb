@@ -123,7 +123,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
 
   def handle_errors error: nil, error_message: nil, database_identifier: nil
     begin
-      error.log_me unless error.nil?
+      # Send now, so the error object isn't serialized (sending now is fine since this'll be running from the backend anyway)
+      # Apparently some AWS errors when serialized are enormous due to the object references they contain and they overflow the 
+      # delayed_jobs handler column.
+      error.log_me(nil, nil, true) unless error.nil?
       error_message = error.message if error_message.nil? && !error.nil?
       email_body = "<p>An error occurred attempting to sync RDS snapshots for database #{database_identifier}.</p><p>Error: #{error_message}"
       if error

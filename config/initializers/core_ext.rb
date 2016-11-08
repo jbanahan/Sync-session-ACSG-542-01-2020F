@@ -95,7 +95,7 @@ Exception.class_eval do
           OpenMailer.delay.send_generic_exception(self,msgs,self.message,self.backtrace)
         end
       else
-        OpenMailer.send_generic_exception(self,msgs,self.message,self.backtrace,attachment_paths).deliver
+        OpenMailer.send_generic_exception(self,msgs,self.message,self.backtrace,Array.wrap(attachment_paths)).deliver
       end
     end
   end
