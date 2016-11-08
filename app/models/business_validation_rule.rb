@@ -102,7 +102,8 @@ class BusinessValidationRule < ActiveRecord::Base
     # Do the "newer" ones first
     ids = BusinessValidationRuleResult.where(business_validation_rule_id: rule_id).order("id DESC").pluck :id
     ids.each_slice(1000).each do |id_group|
-      BusinessValidationRuleResult.delay.destroy_batch id_group
+      # Give these a very low priority.
+      BusinessValidationRuleResult.delay(priority: 100).destroy_batch id_group
     end
   end
 end
