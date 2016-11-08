@@ -7,6 +7,10 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
   extend OpenChain::EntityCompare::ComparatorHelper
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
+  def self.accept? snapshot
+    super && snapshot.recordable.try(:importer).try(:system_code) == "HENNE" 
+  end
+
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type == 'Product'
     prod_hsh = get_json_hash(new_bucket, new_path, new_version)

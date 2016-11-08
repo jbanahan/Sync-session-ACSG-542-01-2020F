@@ -2,9 +2,28 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
   let(:u) { Factory(:user, username: "integration") }
-  let!(:company) { Factory(:company, alliance_customer_number: "HENNE", system_code: "HENNE")}
+  let!(:company) { Factory(:company, system_code: "HENNE")}
   let!(:country_ca) { Factory(:country, iso_code: "CA")}
   let!(:country_us) { Factory(:country, iso_code: "US")}
+
+  describe "accept?" do
+    let!(:prod) { Factory(:product, importer: company) }
+    let(:snap) { Factory(:entity_snapshot, recordable: prod) }
+
+    it "returns true if snapshot belongs to an H&M product" do
+      expect(described_class.accept?(snap)).to be true
+    end
+
+    it "returns false if the product isn't H&M" do
+      company.update_attributes(system_code: "ACME")
+      expect(described_class.accept?(snap)).to be false
+    end
+    
+    it "returns false if the snapshot doesn't belong to a product" do
+      snap.update_attributes(recordable: Factory(:entry))
+      expect(described_class.accept?(snap)).to be false
+    end
+  end
 
   describe "compare" do
     it "exits if the type isn't a product" do
