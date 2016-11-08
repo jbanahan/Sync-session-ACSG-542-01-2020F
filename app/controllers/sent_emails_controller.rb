@@ -9,7 +9,7 @@ class SentEmailsController < ApplicationController
   }
 
   def index
-    sys_admin_secure {
+    admin_secure {
       sp = SEARCH_PARAMS.clone
       s = build_search(sp, 'subject', 'date', 'd')
       respond_to do |format|
@@ -22,7 +22,7 @@ class SentEmailsController < ApplicationController
   end
 
   def show
-    sys_admin_secure {
+    admin_secure {
       @sent_email = SentEmail.find(params[:id])
       respond_to do |format|
         format.html # show.html.erb
@@ -33,7 +33,7 @@ class SentEmailsController < ApplicationController
   def body 
     # In order to actually render the email's content on the page we're using an iframe to render it
     # with it's src pointing to this method
-    sys_admin_secure {
+    admin_secure {
       email = SentEmail.find(params[:id])
       render :inline => email.email_body.to_s
     }

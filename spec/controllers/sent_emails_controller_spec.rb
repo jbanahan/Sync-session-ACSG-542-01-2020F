@@ -2,12 +2,11 @@ require 'spec_helper'
 
 describe SentEmailsController do
 
-  let(:user) { Factory(:sys_admin_user, :company => Factory(:company, :master=>true)) }
+  let(:user) { Factory(:admin_user, :company => Factory(:company, :master=>true)) }
   let(:email) { Factory(:sent_email, email_body: "content") }
 
   before :each do
     sign_in_as user
-    email
   end
 
   describe "GET 'index'" do
@@ -16,8 +15,8 @@ describe SentEmailsController do
       expect(response).to be_success
     end
 
-    it "should reject if user isn't sys admin" do
-      user.sys_admin = false
+    it "should reject if user isn't admin" do
+      user.admin = false
       user.save!
 
       get :index
@@ -33,8 +32,8 @@ describe SentEmailsController do
       expect(assigns(:sent_email)).to eq email
     end
 
-    it "rejects if user isn't sys admin" do
-      user.sys_admin = false
+    it "rejects if user isn't admin" do
+      user.admin = false
       user.save!
 
       get :show, :id=> email.id
@@ -51,7 +50,7 @@ describe SentEmailsController do
     end
 
     it "rejects if user is not an admin" do
-      user.sys_admin = false
+      user.admin = false
       user.save!
 
       get :body, id: email.id
