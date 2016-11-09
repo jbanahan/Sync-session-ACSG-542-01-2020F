@@ -145,6 +145,10 @@
     <tr class='hover'><td><%=link_to "Lumber Actualized Charges Report", reports_show_lumber_actualized_charges_report_path%></td>
     <td>Shows actualized entry charges on a per container basis.</td></tr>
   <%end%>
+  <%if OpenChain::Report::EntriesWithHoldsReport.permission?(current_user)%>
+    <tr class='hover'><td><%=link_to "US Customs Hold Report", reports_show_entries_with_holds_report_path%></td>
+    <td>Shows entries that have had US Customs holds/exams applied to them.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

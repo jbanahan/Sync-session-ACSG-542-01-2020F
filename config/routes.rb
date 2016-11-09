@@ -631,6 +631,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_ua_duty_planning_report" => "reports#run_ua_duty_planning_report"
   get "/reports/show_lumber_actualized_charges_report" => "reports#show_lumber_actualized_charges_report"
   post "/reports/run_lumber_actualized_charges_report" => "reports#run_lumber_actualized_charges_report"
+  get "/reports/show_entries_with_holds_report" => "reports#show_entries_with_holds_report"
+  post "/reports/run_entries_with_holds_report" => "reports#run_entries_with_holds_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member

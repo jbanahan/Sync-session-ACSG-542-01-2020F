@@ -558,6 +558,29 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_entries_with_holds_report
+    if OpenChain::Report::EntriesWithHoldsReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_entries_with_holds_report
+    # Validate the start / end dates are not more than a year apart.
+      start_date = params[:start_date].to_s.to_date
+      end_date = params[:end_date].to_s.to_date
+      customer_numbers = params[:customer_numbers].split(/[\s\n\r]+/)
+
+      if start_date.nil? || end_date.nil?
+        error_redirect "You must enter a start and end date."
+      elsif customer_numbers.blank?
+        error_redirect "You must enter at least one customer number."
+      else
+        run_report "Entries with Holds Report", OpenChain::Report::EntriesWithHoldsReport, {start_date: start_date.to_s, end_date: end_date.to_s, customer_numbers: params[:customer_numbers]}, ["Arrival Date on or after #{start_date} and before #{end_date} for customers #{customer_numbers}"]
+      end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

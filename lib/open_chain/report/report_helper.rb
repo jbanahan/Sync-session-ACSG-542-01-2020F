@@ -76,16 +76,10 @@ module OpenChain
       # You'll want to specify a time zone in cases where the column you're reporting against is a Datetime
       # since the date selected is more than likely not expected to be UTC based (ie. db times)
       def sanitize_date_string dstr, time_zone_name = nil
-        d = Date.parse(dstr.to_s)
         if time_zone_name
-          # This translates to the time in the zone specified and then returns a datetime string converted to the 
-          # db timezone suitable to be directly placed into a query.
-          Time.use_zone(time_zone_name) do
-            d = d.to_time_in_current_zone.in_time_zone(OpenChain::Application.config.time_zone).to_s(:db)
-          end
-          d
+          ActiveSupport::TimeZone[time_zone_name].parse(dstr.to_s).to_s(:db)
         else
-          d.strftime("%Y-%m-%d")
+          Date.parse(dstr.to_s).strftime("%Y-%m-%d")
         end
       end
 
