@@ -55,6 +55,11 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       reader = alt_subject.file_reader custom_file
       expect(reader.reader_options).to eq({'test'=> "xls"})
     end
+
+    it "raises a NoFileReaderError if a reader doesn't exist for the given file type" do
+      allow(custom_file).to receive(:path).and_return "FILE.pdf"
+      expect { subject.file_reader custom_file }.to raise_error OpenChain::CustomHandler::CustomFileCsvExcelParser::NoFileReaderError, "No file reader exists for '.pdf' file types."
+    end
   end
 
   describe OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader do

@@ -320,6 +320,18 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(m.subject).to eq "CI Load Processing Complete With Errors"
         expect(m.body).to eq "CI Load File 'test.csv' has finished processing.\n\nBad Data"
       end
+
+      it "handles invalid file reader" do
+        expect(subject).to receive(:parse_and_send).and_raise OpenChain::CustomHandler::CustomFileCsvExcelParser::NoFileReaderError, "No File Reader"
+
+        subject.process user
+
+        expect(user.messages.size).to eq 1
+        m = user.messages.first
+
+        expect(m.subject).to eq "CI Load Processing Complete With Errors"
+        expect(m.body).to eq "CI Load File 'test.csv' has finished processing.\n\nNo File Reader\nPlease ensure the file is an Excel or CSV file and the filename ends with .xls, .xlsx or .csv."
+      end
     end
 
     context "full integration" do

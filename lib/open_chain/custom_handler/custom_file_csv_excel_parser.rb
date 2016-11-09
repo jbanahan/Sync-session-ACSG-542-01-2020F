@@ -6,6 +6,8 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
   extend ActiveSupport::Concern
   include OpenChain::CustomHandler::CsvExcelParser
 
+  class NoFileReaderError < StandardError; end
+
   def file_reader custom_file
     case File.extname(custom_file.path).downcase
     when ".csv", ".txt"
@@ -21,7 +23,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
       end
       excel_reader custom_file, options
     else
-      raise "No file reader exists for #{File.extname(custom_file.path).downcase} file types."
+      raise NoFileReaderError, "No file reader exists for '#{File.extname(custom_file.path).downcase}' file types."
     end
   end
 

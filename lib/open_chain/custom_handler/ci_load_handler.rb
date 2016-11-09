@@ -25,6 +25,9 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       results = parse_and_send @custom_file
     rescue OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError => e
       errors << e.message
+    rescue OpenChain::CustomHandler::CustomFileCsvExcelParser::NoFileReaderError => e
+      errors << e.message
+      errors << "Please ensure the file is an Excel or CSV file and the filename ends with .xls, .xlsx or .csv."
     rescue
       errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
       raise
