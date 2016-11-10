@@ -1,0 +1,25 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter both dates.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=reports_path%>">Back</button>
+<%end%>
+<h2>Ralph Lauren Jira Report</h2>
+<%=form_tag reports_run_rl_jira_report_path, :id=>'frm_run' do -%>
+  Issue Create Date on or after <%=text_field_tag :start_date, nil, :class=>'isdate'%> and before <%=text_field_tag :end_date, nil, :class=>'isdate'%>.
+<%end%>

@@ -568,17 +568,42 @@ class ReportsController < ApplicationController
 
   def run_entries_with_holds_report
     # Validate the start / end dates are not more than a year apart.
+    start_date = params[:start_date].to_s.to_date
+    end_date = params[:end_date].to_s.to_date
+    customer_numbers = params[:customer_numbers].split(/[\s\n\r]+/)
+
+    if start_date.nil? || end_date.nil?
+      error_redirect "You must enter a start and end date."
+    elsif customer_numbers.blank?
+      error_redirect "You must enter at least one customer number."
+    else
+      run_report "Entries with Holds Report", OpenChain::Report::EntriesWithHoldsReport, {start_date: start_date.to_s, end_date: end_date.to_s, customer_numbers: params[:customer_numbers]}, ["Arrival Date on or after #{start_date} and before #{end_date} for customers #{customer_numbers}"]
+    end
+  end
+
+  def show_rl_jira_report
+    if OpenChain::CustomHandler::Polo::PoloJiraEntryReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_rl_jira_report
+    if OpenChain::CustomHandler::Polo::PoloJiraEntryReport.permission? current_user
+      # Validate the start / end dates are not more than a year apart.
       start_date = params[:start_date].to_s.to_date
       end_date = params[:end_date].to_s.to_date
-      customer_numbers = params[:customer_numbers].split(/[\s\n\r]+/)
-
-      if start_date.nil? || end_date.nil?
-        error_redirect "You must enter a start and end date."
-      elsif customer_numbers.blank?
-        error_redirect "You must enter at least one customer number."
+      if start_date.nil? || end_date.nil? || (start_date + 1.year < end_date)
+        add_flash :errors, "You must enter a start and end date that are no more than 1 year apart."
+        redirect_to reports_show_rl_jira_report_path
       else
-        run_report "Entries with Holds Report", OpenChain::Report::EntriesWithHoldsReport, {start_date: start_date.to_s, end_date: end_date.to_s, customer_numbers: params[:customer_numbers]}, ["Arrival Date on or after #{start_date} and before #{end_date} for customers #{customer_numbers}"]
+        run_report "RL Jira Report", OpenChain::CustomHandler::Polo::PoloJiraEntryReport, {start_date: start_date.to_s, end_date: end_date.to_s}, ["Created on or after #{start_date} and before #{end_date}"]
       end
+
+    else
+      error_redirect "You do not have permission to view this report"
+    end
   end
 
   private

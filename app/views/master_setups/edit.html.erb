@@ -118,7 +118,9 @@ $(function() {
         <thead>
           <tr><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
         </thead>
-        <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
+        <%
+          # Show all running jobs at the top of the list, then show jobs in the order the queue will be processing them 
+          Delayed::Job.order("locked_at ASC, priority ASC, run_at ASC").limit(100).each do |dj| %>
           <tr>
             <%-if dj.last_error && dj.locked_at.blank? && @job_groups[dj.id].count > 1 -%>
               <td><button class='btn btn-sm btn-danger btn-bulk-destroy' data-id='<%=dj.id%>' data-count='<%=@job_groups[dj.id].count%>'>Delete</button></td>

@@ -149,6 +149,10 @@
     <tr class='hover'><td><%=link_to "US Customs Hold Report", reports_show_entries_with_holds_report_path%></td>
     <td>Shows entries that have had US Customs holds/exams applied to them.</td></tr>
   <%end%>
+  <%if OpenChain::CustomHandler::Polo::PoloJiraEntryReport.permission?(current_user)%>
+    <tr class='hover'><td><%=link_to "Polo Jira Report", reports_show_rl_jira_report_path%></td>
+    <td>Reports on Ralph Lauren Jira support issues.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
