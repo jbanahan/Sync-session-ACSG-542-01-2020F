@@ -225,7 +225,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         email = ActionMailer::Base.deliveries.first
         expect(email).not_to be_nil
 
-        expect(email.to).to eq ["Brampton-H&M@ohl.com", "OnlineDCPlainfield@hm.com"]
+        expect(email.to).to eq ["Brampton-H&M.cl.us@geodis.com", "dlusonline@hm.com", "OnlineDCPlainfield@hm.com"]
         expect(email.bcc).to eq ["nb@vandegriftinc.com"]
         expect(email.reply_to).to eq ["nb@vandegriftinc.com"]
         expect(email.subject).to eq "[VFI Track] H&M Returns Shipment # INV#"
