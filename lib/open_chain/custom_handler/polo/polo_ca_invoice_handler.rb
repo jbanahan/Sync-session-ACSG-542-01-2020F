@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Polo
         end
       rescue
         error = "Errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
-        raise 
+        raise
       ensure
         body = "RL Canada Invoice File '#{@custom_file.attached_file_name}' has finished processing."
         body += "\n#{error}" if error
@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module Polo
     end
 
     def parse s3_path, suppress_fenix_send = false
-      # The standard spreadsheet gem will not read the RL invoice files, I'm not entirely sure why, but if you try and open 
+      # The standard spreadsheet gem will not read the RL invoice files, I'm not entirely sure why, but if you try and open
       # the file the CPU spikes to 100% and the system attempts to endlessly allocate memory and eventually crashes the ruby process.
       # Luckily, the XLServer / POI library seems to be able to handle the files.
       xl = xl_client s3_path
@@ -96,7 +96,7 @@ module OpenChain; module CustomHandler; module Polo
         po_number = v(column_map, invoice_row, "PO #")
 
         # Find the "country of export" and Terms of Sale / Currency cells
-        begin 
+        begin
           row = get_row_values(xl, (counter += 1))
 
           if row[0].to_s =~ /Country of Export/i
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def parse_summary xl, summary_start_row, invoice
-        # We could sum the invoice lines to come up with the value, but we should probably take the value 
+        # We could sum the invoice lines to come up with the value, but we should probably take the value
         # listed in the spreadsheet.  That way if there are any issues at all w/ bad data in the individual lines, we at least
         # may have the correct value in the total
 
@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; module Polo
         invoice.invoice_value = get_row_values(xl, summary_start_row).reverse.find {|v| v.to_i > 0 }
 
         # Now find where the quantity and the cartons are offset from the summary start
-        counter = summary_start_row 
+        counter = summary_start_row
         carton_row = nil
         weight_row = nil
         begin
@@ -131,7 +131,7 @@ module OpenChain; module CustomHandler; module Polo
 
         if carton_row
           invoice.total_quantity = carton_row[0]
-          invoice.total_quantity_uom = "CTNS"  
+          invoice.total_quantity_uom = "CTNS"
         end
 
         if weight_row
@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module Polo
           # We'll assume at this point we can try and parse a date out of whatever value we got.
           Date.strptime(value.to_s, "%m/%d/%Y") rescue value = nil
         end
-        value 
+        value
       end
 
       def parse_currency value
@@ -202,7 +202,7 @@ module OpenChain; module CustomHandler; module Polo
           raise PoloParserError.new 'Unable to locate where invoice detail lines begin.  Detail lines should begin after a row with columns named "Style Number", "HTS", and "Description of Goods".'
         end
 
-        # All this while condition does is get the next row value, increment the row counter and validate that we haven't 
+        # All this while condition does is get the next row value, increment the row counter and validate that we haven't
         # hit the totals line (ie. we're past the details section)
         row = nil
         rollup = {}
@@ -217,10 +217,17 @@ module OpenChain; module CustomHandler; module Polo
           end
 
           if valid_detail_line? row
-            key = "#{v(column_map, row, "STYLE")} ~~~ "
-            key << "#{v(column_map, row, "COUNTRY")} ~~~ "
-            key << "#{hts_value(v(column_map, row, "HTS"))} ~~~ "
-            key << "#{decimal_value(v(column_map, row, "UNIT"))}"
+            keys = generate_rollup_keys(column_map, row)
+            key = ''
+
+            keys.each do |rollup_key|
+              next if rollup[rollup_key].blank?
+              key = rollup_key
+            end
+
+            # We are defaulting to the unit price listed, if no key is found.
+            key = keys[1] if key.blank?
+
             if rollup[key].blank?
               line = invoice.commercial_invoice_lines.build
               tariff = line.commercial_invoice_tariffs.build
@@ -235,12 +242,16 @@ module OpenChain; module CustomHandler; module Polo
               rollup[key] = line
             else
               rollup[key].quantity += decimal_value(v(column_map, row, "QTY"))
+
+              # Let's check if the unit_price on the line is less than the current price
+              unit_price = decimal_value(v(column_map, row, "UNIT"))
+              rollup[key].unit_price = unit_price if rollup[key].unit_price < unit_price
             end
           end
         end
 
         raise PoloParserError.new "Invoice contains more than 999 rows." unless rollup.length < 1000
-        # The detail_header_row now indicates the totals row, which is what we want to return 
+        # The detail_header_row now indicates the totals row, which is what we want to return
         # so that we can parse some information out of the summary section of the invoice
         detail_header_row
       end
@@ -280,6 +291,18 @@ module OpenChain; module CustomHandler; module Polo
         end
 
         hts
+      end
+
+      def generate_rollup_keys(column_map, row)
+        keys = []
+        ['-0.01', '0.0', '0.01'].each do |val|
+          key = "#{v(column_map, row, "STYLE")} ~~~ "
+          key << "#{v(column_map, row, "COUNTRY")} ~~~ "
+          key << "#{hts_value(v(column_map, row, "HTS"))} ~~~ "
+          key << "#{decimal_value(v(column_map, row, "UNIT")) + BigDecimal(val)}"
+          keys << key
+        end
+        keys
       end
 
       def detail_column_map header_row
