@@ -36,9 +36,33 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
         expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
-        subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+        end
 
-        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_.pdf"
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
+        expect(opts[:server]).to eq "connect.vfitrack.net"
+        expect(opts[:folder]).to eq "to_ecs/kewill_imaging"
+      end
+
+      it "allows user to add random info after the customer number" do
+        allow(downloaded_file).to receive(:original_filename).and_return "12345 - CUST Some Random Info (1).pdf"
+        opts = nil
+        expect(subject).to receive(:ftp_file) do |file, ftp_options|
+          expect(file).to eq downloaded_file
+          opts = ftp_options
+        end
+        
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", version: "version", original_filename: "12345 - CUST Some Random Info (1).pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", "version")
+
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", "version")
+        end
+
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
         expect(opts[:server]).to eq "connect.vfitrack.net"
         expect(opts[:folder]).to eq "to_ecs/kewill_imaging"
       end

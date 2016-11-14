@@ -25,8 +25,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
         file_info = validate_file(key)
 
         if file_info[:errors].blank?
-          # All's good...ftp this file to kewill imaging
-          kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_.#{file_info[:extension]}"
+          # All's good...ftp this file to kewill imaging...use the current timestamp as the comment field so that any files that would be named
+          # the same go through w/ unique filenames due to the timestamp portion of the filename
+          kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_#{Time.zone.now.to_f.to_s.gsub(".", "-")}.#{file_info[:extension]}"
           ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
         else
           # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
@@ -36,7 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
           #  or possibly google drive - where the client fetches the owner email from)
           email_to = OpenMailer::BUG_EMAIL if email_to.blank?
 
-          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file.original_filename, file).deliver!
+          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file_info[:attachment_type], file.original_filename, file).deliver!
         end
       end
 
@@ -53,6 +54,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     filename = File.basename file_path
     file_info = validate_filename filename 
     attachment_type = path.parent.basename.to_s
+    file_info[:attachment_type] = attachment_type
     doc_code = document_code attachment_type
 
     if doc_code.blank?
@@ -66,11 +68,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   private_class_method :validate_file
 
   def self.validate_filename filename
+    # The filename needs to start with digits representing the file number, then the custoemr number and then the extension.
+    # Alternately, we're allowing the users to add information AFTER the customer number.  If a space is present after some letters
+    # numbers, we're going to strip everything from the space until the extension.
     matches = filename.scan(/\A(\d+)\s*[-_]\s*(.*)\.([^.]+)\z/i).first
     value = {errors: []}
     if matches.try(:length) == 3
       value[:entry_number] = matches[0].to_s.strip
-      value[:customer_number] = matches[1].to_s.strip
+      # For the customer number...strip everything after the first space
+      if matches[1].to_s.strip =~ /^(\S*)\s/
+        value[:customer_number] = $1
+      else
+        value[:customer_number] = matches[1].to_s.strip
+      end
+      
       value[:extension] = matches[2].to_s.strip
 
       if !["pdf", "tif"].include? value[:extension].to_s.downcase 
