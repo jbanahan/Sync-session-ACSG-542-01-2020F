@@ -1,4 +1,4 @@
-<p>VFI Track was unable to send the attached file, <%=@filename%>, to Kewill Imaging for the following <%="reason".pluralize(@errors.length)%>:
+<p>VFI Track was unable to send the attached <%=@file_type%> file, <%=@filename%>, to Kewill Imaging for the following <%="reason".pluralize(@errors.length)%>:
   <br>
   <ol>
   <% @errors.each do |error| %>

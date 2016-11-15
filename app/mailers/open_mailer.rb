@@ -434,9 +434,10 @@ EOS
   end
 
 
-  def send_kewill_imaging_error email_to, errors, filename, file
+  def send_kewill_imaging_error email_to, errors, file_type, filename, file
     @errors = errors
     @filename = filename
+    @file_type = file_type.blank? ? "Unknown" : file_type
 
     local_attachments = process_attachments(file, email_to)
     
