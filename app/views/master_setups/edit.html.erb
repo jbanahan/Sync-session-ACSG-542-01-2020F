@@ -113,14 +113,22 @@ $(function() {
         <% end %>
       </table>
       <h2 id='dj_head' style='cursor:pointer;'>Delayed Job</h2>
-      <p><%= "#{Delayed::Job.count(:conditions => 'locked_at is null and failed_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
+      <%
+        # Show all errored jobs at the top of the list, then running jobs, then show jobs in the order the queue will be processing them
+        max_results = 100
+        errored = Delayed::Job.where("last_error IS NOT NULL").order("attempts DESC, priority ASC, run_at ASC").limit(max_results).to_a
+        running = Delayed::Job.where("last_error IS NULL AND locked_at IS NOT NULL").order("locked_at ASC, priority ASC, run_at ASC").limit(max_results - errored.length).to_a if errored.length < max_results
+        running = [] if running.nil?
+
+        queued = Delayed::Job.where("last_error IS NULL AND locked_at IS NULL").order("priority ASC, run_at ASC").limit(max_results - errored.length - running.length).to_a if (errored.length + running.try(:length).to_i) < max_results
+        queued = [] if queued.nil?
+      %>
+      <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{queued.length} queued #{"job".pluralize(queued.length)}" %></p>
       <table id='dj_tbl' class='table table-condensed'>
         <thead>
           <tr><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
         </thead>
-        <%
-          # Show all errored jobs at the top of the list, then running jobs, then show jobs in the order the queue will be processing them 
-          Delayed::Job.order("attempts DESC, locked_at ASC, priority ASC, run_at ASC").limit(100).each do |dj| %>
+        <% (errored + running + queued).each do |dj| %>
           <tr>
             <%-if dj.last_error && dj.locked_at.blank? && @job_groups[dj.id].count > 1 -%>
               <td><button class='btn btn-sm btn-danger btn-bulk-destroy' data-id='<%=dj.id%>' data-count='<%=@job_groups[dj.id].count%>'>Delete</button></td>
