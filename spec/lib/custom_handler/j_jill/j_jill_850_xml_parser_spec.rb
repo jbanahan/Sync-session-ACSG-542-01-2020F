@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
-      
+
       vend = o.vendor
       expect(vend.system_code).to eq "JJILL-0044198"
       expect(vend.name).to eq "CENTRALAND LMTD"
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.get_custom_value(cdefs[:ship_type]).value).to eq 'Boat'
       expect(o.get_custom_value(cdefs[:original_gac_date]).date_value).to eq o.ship_window_end
       expect(o.product_category).to eq 'Other'
-      
+
       st  = o.ship_to
       expect(st.system_code).to eq '0101'
       expect(st.name).to eq 'J JILL'
@@ -88,6 +88,9 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
       expect(p1.get_custom_value(cdefs[:importer_style]).value).to eq '014932'
       # expect(p1.get_custom_value(cdefs[:fish_wildlife]).value).to be_true
+
+      expected_fingerprint = described_class.new.generate_order_fingerprint o
+      expect(DataCrossReference.find_jjill_order_fingerprint(o)).to eq expected_fingerprint
 
       expect(EntitySnapshot.count).to eq 1
     end

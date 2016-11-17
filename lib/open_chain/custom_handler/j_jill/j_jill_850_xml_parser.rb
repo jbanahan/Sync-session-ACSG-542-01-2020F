@@ -6,7 +6,7 @@ require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
 module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::JJill::JJillSupport
-  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport  
+  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
   SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
@@ -38,19 +38,19 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date}
   end
 
-  private 
+  private
   def parse_order order_root, extract_date
     @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
-    Lock.acquire(ord_num) do 
+    Lock.acquire(ord_num) do
       ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
-    
+
       update_lines = true
       update_header = true
       po_assigned_to_shipment = false
-      #skip orders already on shipments    
+      #skip orders already on shipments
       if ord && ord.shipping?
         update_header = @inner_opts[:force_header_updates]
         update_lines = false
@@ -61,11 +61,11 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       return if ord.last_exported_from_source && ord.last_exported_from_source > extract_date
 
       if update_header
-        update_order_header ord, extract_date, cust_ord, order_root 
+        update_order_header ord, extract_date, cust_ord, order_root
         agents = ord.available_agents
         ord.agent = agents.first if agents.size == 1
       end
-      
+
       if update_lines
         ord.order_lines.destroy_all
         parse_lines ord, order_root
@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
       if update_header || update_lines
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
-        ord.save! 
+        ord.save!
         ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
         ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
         if ord.ship_window_end && ord.get_custom_value(@cdefs[:original_gac_date]).value.blank?
@@ -95,6 +95,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       fp = DataCrossReference.find_jjill_order_fingerprint(ord)
       if fp.blank?
         ord.post_create_logic! @user
+        DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
       elsif fingerprint!=fp
         ord.post_update_logic! @user
         if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
@@ -164,7 +165,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   def add_placeholder_fields_to_order_line ol, po1_el
     #we can't write the custom values to the order lines until they're saved in the database,
-    #so we'll store the values in placeholder fields that we can then loop through in the 
+    #so we'll store the values in placeholder fields that we can then loop through in the
     #update_line_custom_values field after the save is done
     def ol.ph_color= x; @ph_color = x; end
     def ol.ph_color; @ph_color; end
@@ -191,12 +192,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     po1_el = REXML::XPath.first(group_11,'PO1')
     prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO111'}"
     p = Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!
-   
+
     # update product attributes
     product_name = REXML::XPath.first(group_11,'LIN/LIN03').text
     uom = et po1_el, 'PO103'
     update_product_if_needed(p,product_name,uom)
-   
+
     cv = p.get_custom_value(@cdefs[:vendor_style])
     vendor_style = et(po1_el,'PO111')
     @vendor_styles << vendor_style unless vendor_style.blank?
