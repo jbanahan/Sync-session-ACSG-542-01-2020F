@@ -39,7 +39,7 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   def self.date_time_operators_requiring_timezone
-    ['lt', 'gt', 'eq', 'nq']
+    ['lt', 'gt', 'gteq', 'eq', 'nq']
   end
 
   #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)

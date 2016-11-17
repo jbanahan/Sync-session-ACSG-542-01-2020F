@@ -93,6 +93,7 @@ var OCSearch = (function() {
     }
     var validations = {
       gt:numDateVal,
+      gteq:numDateVal,
       lt:numDateVal,
       eq:numDateVal,
       nq:numDateVal,
@@ -145,7 +146,7 @@ var OCSearch = (function() {
       if(dt=="date" || dt=="datetime") {
         h += "<option value='eq'>Equals</option>";
         h += "<option value='nq'>Not Equal To</option>";
-        h += "<option value='gt'>After</option>";
+        h += "<option value=" + (dt=="date" ? "'gt'" : "'gteq'") + ">After</option>";
         h += "<option value='lt'>Before</option>";
         h += "<option value='bda'>Before _ Days Ago</option>";
         h += "<option value='ada'>After _ Days Ago</option>";

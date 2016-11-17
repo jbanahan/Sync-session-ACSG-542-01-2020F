@@ -55,6 +55,7 @@ class CriterionOperator
   OPERATORS = [
     new("eq","_fn_ = ?","Equals"),
     new("gt","_fn_ > ?","Greater Than"),
+    new("gteq","_fn_ >= ?","Greater Than (Inclusive)"),
     new("lt","_fn_ < ?","Less Than"),
     new("co","_fn_ LIKE ?","Contains"),
     new("nc","NOT _fn_ LIKE ?","Doesn't Contain"),
