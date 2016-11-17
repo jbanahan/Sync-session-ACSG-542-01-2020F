@@ -416,6 +416,7 @@ OpenChain::Application.routes.draw do
   match "/my_subscriptions" => "users#event_subscriptions"
   match "/settings" => "settings#index", :as => :settings
   match "/tools" => "settings#tools", :as => :tools
+  get "/settings/system_summary" => "settings#system_summary"
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"

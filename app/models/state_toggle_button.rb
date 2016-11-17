@@ -108,4 +108,13 @@ class StateToggleButton < ActiveRecord::Base
     errors.add(:base, "Button can not have both user and custom user values.") if !self.user_attribute.blank? && !self.user_custom_definition.blank?
   end
   private :one_user_field
+
+  def user_field
+    user_attribute ? ModelField.find_by_uid(user_attribute) : CustomDefinition.find_by_id(user_custom_definition_id)
+  end
+
+  def date_field
+    date_attribute ? ModelField.find_by_uid(date_attribute) : CustomDefinition.find_by_id(date_custom_definition_id)
+  end
+
 end

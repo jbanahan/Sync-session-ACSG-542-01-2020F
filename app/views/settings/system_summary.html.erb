@@ -1,0 +1,271 @@
+<div class="container-fluid">
+  <div class="col-md-12">
+    <h1>Settings Summary</h1>
+    <hr>
+    
+    <ol>
+      <li><a href="#att-types">Attachment Types</a></li>
+      <li><a href="#validations">Business Validation Templates</a></li>
+      <li><a href="#custom-fields">Custom Fields</a></li>
+      <li><a href="#groups">Groups</a></li>
+      <li><a href="#import-countries">Import Countries</a></li>
+      <li><a href="#model-fields">Model Fields</a></li>
+      <li><a href="#schedulable">Schedulable Jobs</a></li>
+      <li><a href="#search-table">Search Table Configs</a></li>
+      <li><a href="#state-toggle">State Toggle Buttons</a></li>
+    </ol>
+    <hr>
+    
+    <div class="col-md-10 offset-md-2">
+      <h2 id="att-types">Attachment Types</h2>
+      <table class="table">
+        <tr>
+          <th>Attachment Type</th>
+        </tr>
+        <% @collections[:attachment_type].each do |att| %>
+          <tr>
+            <td><%= att.name %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="validations">Business Validation Templates</h2>
+      <% @collections[:business_validation_template].each do |bvt| %>
+        <br>
+        <h3><%= bvt.name %></h3>
+        <h4>Template Criteria</h4>
+        <ul>
+          <% bvt.search_criterions.each do |sc| %>
+            <li><%= sc.model_field.label %> <%= CriterionOperator.find_by_key(sc.operator).label %> <%= sc.value %></li>
+          <% end %>
+        </ul>
+        <h4>Rules</h4>
+          <table class="table">
+            <tr>
+              <th>Description</th>
+              <th>Criteria</th>
+              <th>JSON</th>
+              <th>Class</th>
+            </tr>
+          <% bvt.business_validation_rules.each do |bvr| %>
+            <tr>
+              <td><%= bvr.description %></td>
+              <td>
+                <ul>
+                  <% bvr.search_criterions.each do |sc| %>
+                    <li><%= sc.model_field.label %> <%= CriterionOperator.find_by_key(sc.operator).label %> <%= sc.value %></li>
+                  <% end %>
+                </ul>
+              </td>
+              <td><%= bvr.rule_attributes_json %></td>
+              <td><%= bvr.type %></td>
+            </tr>
+          <% end %>
+          </table>
+      <% end %>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="custom-fields">Custom Fields</h2>
+      <table class="table">
+        <tr>
+          <th></th>
+          <th>Field</th>
+          <th>Data Type</th>
+          <th>Field Validator</th>
+        </tr>
+        <% @collections[:custom_definition].each_pair do |module_name, collection| %>
+          <% count = 0 %>
+          <% collection.each do |cdef| %>
+            <tr>
+              <% count += 1 %>
+              <% if count == 1 %>
+                <td><%= module_name %></td>
+              <% else %>
+                <td></td>
+              <% end %>
+              <td><%= cdef.label %></td>
+              <td><%= cdef.data_type.to_s %></td>
+              <td>
+                <% if cdef.field_validator_rules.presence %>
+                  <ul>
+                    <% cdef.field_validator_rules[0].string_hsh.each_pair do |k, v| %>
+                      <li><%=v%></li>      
+                    <% end %>
+                  </ul>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="groups">Groups</h2>
+      <table class="table">
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>System Code</th>
+          <th>Members</th>
+        </tr>
+        <% @collections[:group].each do |group| %>          
+          <tr>
+            <td></td>
+            <td><%= group.name %></td>
+            <td><%= group.description %></td>
+            <td><%= group.system_code %></td>
+            <td><%= group.users.map{|u| u.full_name}.join(", ") %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="import-countries">Import Countries</h2>
+      <table class="table">
+        <tr>
+          <th>Name</th>
+          <th>ISO Code</th>
+        </tr>
+        <% @collections[:import_country].each do |cntry| %>
+          <tr>
+            <td><%= cntry.name %></td>
+            <td><%= cntry.iso_code %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="model-fields">Model Fields</h2>
+      <table class="table">
+        <tr>
+          <th></th>
+          <th>Field</th>
+          <th>Data Type</th>
+          <th>Field Validator</th>
+        </tr>
+        <% @collections[:model_field].each_pair do |module_name, collection| %>
+          <% count = 0%>
+          <% collection.each do |mf| %>
+            <tr>
+              <% count += 1 %>
+              <% if count == 1 %>
+                <td><%= module_name %></td>
+              <% else %>
+                <td></td>
+              <% end %>
+              <td><%= mf.label %></td>
+              <td><%= mf.data_type.to_s %></td>
+              <td>
+                <% if mf.field_validator_rule %>
+                  <ul>
+                    <% mf.field_validator_rule.string_hsh.each_pair do |k, v| %>
+                      <li><%= v %></li>      
+                    <% end %>
+                  </ul>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+    
+    <div class="col-md-10 offset-md-2">
+      <h2 id="schedulable">Schedulable Jobs</h2>
+      <table class="table">
+        <tr>
+          <th>Class</th>
+          <th>Last Run</th>
+          <th>Next Run</th>
+          <th>Options</th>
+        </tr>
+        <% @collections[:schedulable_job].each do |sj| %>
+          <tr>
+            <td><%= sj.run_class.to_s.split("::").last %></td>
+            <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
+            <td><%=sj.next_run_time.blank? ? (sj.stopped? ? "Stopped" : "Never") : sj.next_run_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
+            <td><%=sj.opts%></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+    <hr>
+
+    <div class="col-md-10 offset-md-2">
+      <h2 id="search-table">Search Table Configs</h2>
+      <table class="table">
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Page UID</th>
+          <th>Company</th>
+          <th>JSON</th>
+        </tr>
+        <% @collections[:search_table_config].each do |stc| %>
+          <tr>
+            <td></td>
+            <td><%= stc.name %></td>
+            <td><%= stc.page_uid %></td>
+            <td><%= stc.company.name %></td>
+            <td><%= stc.config_json %></td> 
+          </tr>        
+        <% end %>
+      </table>
+    </div>
+    <hr>
+    
+    <div class="col-md-10 offset-md-2">
+      <h2 id="state-toggle">State Toggle Buttons</h2>
+      <table class="table">
+        <tr>
+          <th></th>
+          <th>Activate Text</th>
+          <th>Deactivate Text</th>
+          <th>User Field</th>
+          <th>Date Field</th>
+          <th>Permission Group System Codes</th>
+          <th>Parameters</th>
+        </tr>
+        <% @collections[:state_toggle_button].each_pair do |module_name, collection| %>
+            <% count = 0 %>
+            <% collection.each do |stb| %>
+              <tr>
+                <% count += 1 %>
+                <% if count == 1 %>
+                  <td><%= module_name %></td>
+                <% else %>
+                  <td></td>
+                <% end %>
+                <td><%= stb.activate_text %></td>
+                <td><%= stb.deactivate_text %></td>
+                <td><%= stb.user_field.try(:label) %></td>
+                <td><%= stb.date_field.try(:label) %></td>
+                <td><%= stb.permission_group_system_codes %></td>
+                <td>
+                  <ul>
+                    <% stb.search_criterions.each do |sc| %>
+                      <li><%= sc.model_field.label %> <%= CriterionOperator.find_by_key(sc.operator).label %> <%= sc.value %></li>
+                    <% end %>
+                  </ul>
+                </td>
+              </tr>
+            <% end %>
+        <% end %>
+      </table>
+    </div>
+    
+  </div>
+</div>

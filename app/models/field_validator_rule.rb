@@ -106,6 +106,36 @@ class FieldValidatorRule < ActiveRecord::Base
     end
   end
 
+  def string_hsh
+    out = {}
+    #general
+    out[:comment] = "Comment: #{comment}" unless comment.blank?
+    out[:custom_message] = "Custom Error Message: #{custom_message}" unless custom_message.blank?
+    out[:xml_tag_name] = "Custom XML Tag: #{xml_tag_name}" unless xml_tag_name.blank?
+    out[:read_only] = "Read Only: #{read_only}" unless read_only.blank?
+    out[:required] = "Required: #{required}" unless required.blank?
+    out[:disabled] = "Disabled For All Users: #{disabled}" unless disabled.blank?
+    out[:can_view_groups] = "Groups That Can View Field: #{can_view_groups.gsub(/\n/, ", ")}" unless can_view_groups.blank?
+    out[:can_edit_groups] = "Groups That Can Edit Field: #{can_edit_groups.gsub(/\n/, ", ")}" unless can_edit_groups.blank?
+    #decimal/integer
+    out[:greater_than] = "Greater Than #{greater_than}" unless greater_than.blank?
+    out[:less_than] = "Less Than #{less_than}" unless less_than.blank?
+    #date/datetime
+    out[:more_than_ago] = "More Than #{more_than_ago} #{more_than_ago != 1 ? more_than_ago_uom.pluralize : more_than_ago_uom} ago" unless more_than_ago.blank?
+    out[:less_than_from_now] = "Less Than #{less_than_from_now} #{less_than_from_now != 1 ? less_than_from_now_uom.pluralize : less_than_from_now_uom} from now" unless less_than_from_now.blank?
+    out[:greater_than_date] = "After #{greater_than_date.to_s}" unless greater_than_date.blank?
+    out[:less_than_date] = "Before #{less_than_date.to_s}" unless less_than_date.blank?
+    #string/text
+    out[:minimum_length] = "Minimum Length: #{minimum_length}" unless minimum_length.blank?
+    out[:maximum_length] = "Maximum Length: #{maximum_length}" unless maximum_length.blank?
+    out[:starts_with] = "Starts With '#{starts_with}'" unless starts_with.blank?
+    out[:ends_with] = "Ends With '#{ends_with}'" unless ends_with.blank?
+    out[:contains] = "Contains '#{contains}'" unless contains.blank?
+    out[:one_of] = "Is One Of: #{one_of.gsub(/\n/, ", ")}" unless one_of.blank?
+
+    out
+  end
+
   private
   def update_cache
     FieldValidatorRule.write_module_cache CoreModule.find_by_class_name self.module_type

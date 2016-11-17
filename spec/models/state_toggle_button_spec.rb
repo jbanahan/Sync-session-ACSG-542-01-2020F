@@ -187,4 +187,45 @@ describe StateToggleButton do
       expect{btn.save!}.to raise_error(/both user and custom user/)
     end
   end
+
+  context "field getters" do
+    let!(:user_cdef) { Factory(:custom_definition, module_type: "Order", data_type: "integer", label: "Custom User")}
+    let!(:date_cdef) { Factory(:custom_definition, module_type: "Order", data_type: "datetime", label: "Custom Date")}
+    let(:stb) { Factory(:state_toggle_button, module_type: "Order") }
+    
+    describe "user_field" do
+      
+      it "retrieves model field if the button has a user_attribute" do
+        stb.update_attributes(user_custom_definition_id: nil, user_attribute: "ord_closed_by")
+        expect(stb.user_field.label).to eq "Closed By"
+      end
+
+      it "retrieves custom definition if the button has a user_custom_definition_id" do
+        stb.update_attributes(user_custom_definition_id: user_cdef.id, user_attribute: nil)
+        expect(stb.user_field.label).to eq "Custom User"
+      end
+
+      it "returns nil if the button has neither user_attribute nor user_custom_definition_id" do
+        stb.update_attributes(user_custom_definition_id: nil, user_attribute: nil)
+        expect(stb.user_field).to be_nil
+      end
+    end
+
+    describe "date_field" do
+      it "retrieves model field if the button has a date_attribute" do
+        stb.update_attributes(date_custom_definition_id: nil, date_attribute: "ord_closed_at")
+        expect(stb.date_field.label).to eq "Closed At"
+      end
+
+      it "retrieves custom definition if the button has a date_custom_definition_id" do
+        stb.update_attributes(date_custom_definition_id: date_cdef.id, date_attribute: nil)
+        expect(stb.date_field.label).to eq "Custom Date"
+      end
+
+      it "returns nil if the button has neither date_attribute nor date_custom_definition_id" do
+        stb.update_attributes(user_custom_definition_id: nil, user_attribute: nil)
+        expect(stb.date_field).to be_nil
+      end
+    end
+  end
 end

@@ -19,6 +19,7 @@ module Api; module V1; module Admin; class SettingsController < Api::V1::Admin::
                search_templates: search_templates_path,
                status_rules: status_rules_path,
                show_system_message_master_setups: show_system_message_master_setups_path,
+               settings_system_summary: settings_system_summary_path,
                tariff_sets: tariff_sets_path,
                user_manuals: user_manuals_path,
                user_templates: user_templates_path,
