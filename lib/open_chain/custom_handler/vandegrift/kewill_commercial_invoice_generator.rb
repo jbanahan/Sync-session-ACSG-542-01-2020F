@@ -41,8 +41,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
           l.quantity_1 = tar.classification_qty_1
           l.quantity_2 = tar.classification_qty_2
           # If gross weight is given in grams, we must convert it to KGS
+          # If we're converting, always use 1 KG as the floor for weight.
           if opts[:gross_weight_uom].to_s.upcase == "G"
             l.gross_weight = (BigDecimal(tar.gross_weight.to_s) / BigDecimal("1000")).round(2)
+            l.gross_weight = BigDecimal("1") if l.gross_weight < 1
           else
             l.gross_weight = tar.gross_weight
           end
