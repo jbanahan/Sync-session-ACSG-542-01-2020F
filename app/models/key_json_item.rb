@@ -25,6 +25,7 @@ class KeyJsonItem < ActiveRecord::Base
   # Siemens Billing File Counter
   SIEMENS_BILLING_FILE_COUNTER ||= 'siemens_billing'
   POLLING_JOB ||= "polling_job"
+  ENTRY_DOCUMENT_COUNTS ||= "ent_doc_count"
 
 
   # turn the object into a json string and store it in the json_data field
@@ -44,4 +45,5 @@ class KeyJsonItem < ActiveRecord::Base
   scope :usc_periodic_dates, lambda {|logical_key| where(:key_scope=>PERIODIC_MONTHLY_DATES).where(:logical_key=>logical_key)}
   scope :siemens_billing, lambda {|logical_key| where(:key_scope=>SIEMENS_BILLING_FILE_COUNTER).where(:logical_key=>logical_key)}
   scope :polling_job, lambda {|logical_key| where(:key_scope=>POLLING_JOB).where(:logical_key=>logical_key)}
+  scope :entry_document_counts, lambda {|logical_key| where(key_scope: ENTRY_DOCUMENT_COUNTS).where(logical_key: logical_key) }
 end

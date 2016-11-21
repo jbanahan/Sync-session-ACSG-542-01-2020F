@@ -27,8 +27,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
         if file_info[:errors].blank?
           # All's good...ftp this file to kewill imaging...use the current timestamp as the comment field so that any files that would be named
           # the same go through w/ unique filenames due to the timestamp portion of the filename
-          kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}__N_#{Time.zone.now.to_f.to_s.gsub(".", "-")}.#{file_info[:extension]}"
-          ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
+          with_suffix_value(file_info[:entry], file_info[:attachment_type_obj]) do |suffix|
+            kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}_#{suffix}_N_#{Time.zone.now.to_f.to_s.gsub(".", "-")}.#{file_info[:extension]}"
+            ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
+          end
+          
         else
           # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
           email_to = OpenChain::S3.metadata("owner", bucket, key, version)
@@ -55,11 +58,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     file_info = validate_filename filename 
     attachment_type = path.parent.basename.to_s
     file_info[:attachment_type] = attachment_type
-    doc_code = document_code attachment_type
+    file_info[:attachment_type_obj] = document_type(attachment_type)
+
+    doc_code = file_info[:attachment_type_obj].try(:kewill_document_code)
 
     if doc_code.blank?
-      file_info[:errors] << "No Kewill Imaging document code is configured for #{attachment_type}." if doc_code.nil?
+      file_info[:errors] << "No Kewill Imaging document code is configured for #{attachment_type}."
     else
+      # If the document type does not have a kewill_attachment_type value...then it's been set up wrong...raise an error
+      file_info[:errors] << "Attachment Type '#{attachment_type}' is missing a Kewill Attachment Type cross-reference value.  Please forward this error to IT Support." if file_info[:attachment_type_obj].kewill_attachment_type.blank?
       file_info[:document_code] = doc_code
     end
 
@@ -89,6 +96,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
       end
 
       entry = Entry.where(customer_number: value[:customer_number], broker_reference: value[:entry_number], source_system: Entry::KEWILL_SOURCE_SYSTEM).first
+      value[:entry] = entry
       if entry.nil?
         value[:errors] << "No entry found for File # #{value[:entry_number]} under Customer account #{value[:customer_number]}."
       end
@@ -101,9 +109,38 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   end
   private_class_method :validate_filename
 
-  def self.document_code attachment_type
-    AttachmentType.where(name: attachment_type).first.try(:kewill_document_code)
+  def self.document_type attachment_type
+    AttachmentType.where(name: attachment_type).first
   end
-  private_class_method :document_code
+  private_class_method :document_type
+
+  def self.with_suffix_value entry, attachment_type
+    if attachment_type.disable_multiple_kewill_docs?
+      yield ""
+    else
+      Lock.acquire("DocCounter-#{entry.broker_reference}") do 
+        document_code = attachment_type.kewill_document_code
+        # We need a cross reference from drive name to "actual" name of type used by kewill
+        existing_entry_suffix = entry.attachments.where(attachment_type: attachment_type.kewill_attachment_type).order("alliance_suffix DESC").first.try(:alliance_suffix).to_i
+
+        item = KeyJsonItem.entry_document_counts(entry.broker_reference).first_or_initialize
+        counts = item.data
+        counts = {} if counts.blank?
+        # The first document suffix always needs to start at 1, as that's what Kewill does too when generating docs internally.
+        json_suffix = counts[document_code].to_i + 1
+        if json_suffix < existing_entry_suffix
+          json_suffix = existing_entry_suffix + 1
+        end
+
+        counts[document_code] = json_suffix
+        item.data = counts
+        # This is inside of a transaction (and a cross process lock), so we should be good to save the value right away and rely on a transaction
+        # rollback to undo the setting should any issue occur
+        item.save!
+
+        yield json_suffix
+      end
+    end
+  end
 
 end; end; end; end

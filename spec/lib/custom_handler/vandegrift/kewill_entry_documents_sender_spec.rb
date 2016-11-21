@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       allow(tf).to receive(:original_filename).and_return "12345 - CUST.pdf"
       tf
     }
-    let (:attachment_type) { AttachmentType.create! name: "Document Type", kewill_document_code: "11111"}
+    let (:attachment_type) { AttachmentType.create! name: "Document Type", kewill_document_code: "11111", kewill_attachment_type: "Document Type"}
     let (:entry) { Entry.create! customer_number: "CUST", source_system: "Alliance", broker_reference: "12345"}
 
     after :each do
@@ -41,9 +41,57 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
         end
 
-        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111_1_N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
         expect(opts[:server]).to eq "connect.vfitrack.net"
         expect(opts[:folder]).to eq "to_ecs/kewill_imaging"
+
+        # Make sure a key json item was created...
+        item = KeyJsonItem.entry_document_counts("12345").first
+        expect(item.data).to eq({"11111"=> 1})
+      end
+
+      it "uses next suffix value for multiple documents" do
+        KeyJsonItem.entry_document_counts("12345").create! json_data: {"11111"=> 1}.to_json
+
+        opts = nil
+        expect(subject).to receive(:ftp_file) do |file, ftp_options|
+          expect(file).to eq downloaded_file
+          opts = ftp_options
+        end
+
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+        end
+
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111_2_N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
+        item = KeyJsonItem.entry_document_counts("12345").first
+        expect(item.data).to eq({"11111"=> 2})
+      end
+
+      it "does not use a suffix lower than one already attached to an entry" do
+        entry.attachments.create! alliance_suffix: "005", attachment_type: "Document Type"
+
+        opts = nil
+        expect(subject).to receive(:ftp_file) do |file, ftp_options|
+          expect(file).to eq downloaded_file
+          opts = ftp_options
+        end
+
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+        end
+
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111_6_N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
+        item = KeyJsonItem.entry_document_counts("12345").first
+        expect(item.data).to eq({"11111"=> 6})
       end
 
       it "allows user to add random info after the customer number" do
@@ -62,9 +110,33 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", "version")
         end
 
+        expect(opts[:remote_file_name]).to eq "I_IE_12345__11111_1_N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
+        expect(opts[:server]).to eq "connect.vfitrack.net"
+        expect(opts[:folder]).to eq "to_ecs/kewill_imaging"
+      end
+
+      it "does not use a suffix for document types that don't allow multiple docs" do
+        attachment_type.update_attributes! disable_multiple_kewill_docs: true
+
+        opts = nil
+        expect(subject).to receive(:ftp_file) do |file, ftp_options|
+          expect(file).to eq downloaded_file
+          opts = ftp_options
+        end
+        
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+
+        now = Time.zone.now
+        Timecop.freeze(now) do
+          subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
+        end
+
         expect(opts[:remote_file_name]).to eq "I_IE_12345__11111__N_#{now.to_f.to_s.gsub(".", "-")}.pdf"
         expect(opts[:server]).to eq "connect.vfitrack.net"
         expect(opts[:folder]).to eq "to_ecs/kewill_imaging"
+
+        expect(KeyJsonItem.entry_document_counts("12345").first).to be_nil
       end
     end
 
@@ -118,6 +190,21 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
     it "handles no such key error as a no-op" do
       expect(OpenChain::S3).to receive(:download_to_tempfile).and_raise OpenChain::S3::NoSuchKeyError
       expect(subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")).to be_nil
+    end
+
+    it "errors if attachment type is missing kewill document cross-reference" do
+      attachment_type.update_attributes! kewill_attachment_type: ""
+      entry
+
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", version: "version", original_filename: "12345 - CUST.txt").and_yield downloaded_file
+      expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version").and_return "you@there.com"
+      expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
+
+      subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
+
+      email = ActionMailer::Base.deliveries.first
+      expect(email).not_to be_nil
+      expect(email.body.raw_source).to include ERB::Util.html_escape("Attachment Type 'Document Type' is missing a Kewill Attachment Type cross-reference value.  Please forward this error to IT Support.")
     end
   end
 
