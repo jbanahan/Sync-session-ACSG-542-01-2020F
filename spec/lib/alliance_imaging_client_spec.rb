@@ -118,6 +118,21 @@ describe OpenChain::AllianceImagingClient do
       expect(entry.attachments[0].source_system_timestamp).not_to be_nil
     end
 
+    it 'should generate shell entry records when an entry is missing and the source system is Alliance' do
+      @e1.destroy
+      entry = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      expect(entry.broker_reference).to eq(@hash["file_number"])
+      expect(entry.source_system).to eq('Alliance')
+      expect(entry.file_logged_date).to be_nil
+
+      expect(entry.attachments.size).to eq(1)
+      expect(entry.attachments[0].attached_content_type).to eq("application/pdf")
+      expect(entry.attachments[0].attached_file_name).to eq("file.pdf")
+      expect(entry.attachments[0].attachment_type).to eq(@hash["doc_desc"])
+      expect(entry.attachments[0].source_system_timestamp).not_to be_nil
+    end
+
     it "skips alliance files that already have revisions higher than the one received" do
       @hash['suffix'] = '00000'
 
@@ -239,23 +254,30 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "consume_images" do
+
+    let (:config) {
+      {"sqs_receive_queue" => "sqs"}.with_indifferent_access
+    }
+
     it "should use SQS queue to download messages and use the S3 client with tempfile to download the file" do
-      # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
+      # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}
       t = double
-      expect(OpenChain::SQS).to receive(:poll).with("https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
+      expect(OpenChain::SQS).to receive(:poll).with("sqs").and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
+      allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
 
       OpenChain::AllianceImagingClient.consume_images
     end
 
     it "passes s3 version if present" do
-      # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
+      # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key", "s3_version" => "version"}
       t = double
-      expect(OpenChain::SQS).to receive(:poll).with("https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
+      expect(OpenChain::SQS).to receive(:poll).with("sqs").and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(t)
+      allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
 
       OpenChain::AllianceImagingClient.consume_images

@@ -41,12 +41,13 @@ class OpenChain::AllianceImagingClient
   
   #not unit tested since it'll all be mocks
   def self.request_images file_number, message_options = {}
-    OpenChain::SQS.send_json "https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}, message_options
+    conf = imaging_config
+    OpenChain::SQS.send_json conf["sqs_send_queue"], {"file_number"=>file_number, "sqs_queue"=>conf[:sqs_receive_queue], "s3_bucket" => conf[:s3_bucket]}, message_options
   end
   
   #not unit tested since it'll all be mocks
   def self.consume_images
-    OpenChain::SQS.poll "https://sqs.us-east-1.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
+    OpenChain::SQS.poll imaging_config[:sqs_receive_queue] do |hsh|
       bucket = hsh["s3_bucket"]
       key = hsh["s3_key"]
       version = hsh["s3_version"]
@@ -87,14 +88,19 @@ class OpenChain::AllianceImagingClient
     attachment_type = hsh["doc_desc"]
 
     delete_previous_file_versions = nil
+
+    # In the VAST majority of cases, the entry is going to be there already, so I don't want to utilize a global lock
+    # literally every time we look up the entry...so for the very few cases where the entry isn't present, we'll do a double lookup
+    # Create a shell entry record if there wasn't one, so we can actually attach the image.
     if source_system == OpenChain::FenixParser::SOURCE_CODE
       # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
-
-      # Create a shell entry record if there wasn't one, so we can actually attach the image.
-      # We don't do this for Alliance files because Chain initiates the imaging extracts for it, so
-      # there's no real valid scenario where an entry doesn't already exist in Chain.
-
-      entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
+      entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first
+      if entry.nil?
+        # Use the same lock name as the Fenix parser so we ensure we're not double creating a file
+        Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
+          entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
+        end
+      end
 
       # If we have an "Automated" attachment type for fenix files, use the file name to determine what type of document
       # this is, either a B3 or RNS
@@ -111,8 +117,16 @@ class OpenChain::AllianceImagingClient
             delete_previous_file_versions = true
         end
       end
+
     else
-      entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], source_system
+      entry = Entry.where(source_system: source_system, broker_reference: hsh["file_number"]).first
+      if entry.nil?
+        Lock.acquire(Lock::ALLIANCE_PARSER) do 
+          # I'm purposefully leaving out the file logged date setting here for Kewill entries...this value comes from an actual field in Kewill, so don't
+          # set it.
+          entry = Entry.where(source_system: source_system, broker_reference: hsh["file_number"]).first_or_create!
+        end
+      end
     end
 
     if entry
@@ -403,4 +417,9 @@ class OpenChain::AllianceImagingClient
       @@stitcher_info[key]
     end
     private_class_method :stitcher_info
+
+    def self.imaging_config 
+      @@imaging_config ||= YAML.load_file("config/kewill_imaging.yml").with_indifferent_access
+      @@imaging_config[Rails.env]
+    end
 end

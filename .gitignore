@@ -31,6 +31,7 @@ config/fenix_sql_proxy.yml
 config/vfi-canada.asc
 config/support_request.yml
 config/fenix_b3_forwarding.yml
+config/kewill_imaging.yml
 .idea
 dump.rdb
 .byebug_history

@@ -1,8 +1,9 @@
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::FenixDocumentsRequester do
+describe OpenChain::CustomHandler::KewillDocumentsRequester do
 
   describe "run_schedulable" do
+
     let(:config) { {'s3_bucket' => "bucket", 'sqs_receive_queue' => "receive_queue"}.with_indifferent_access }
 
     before :each do 
@@ -14,7 +15,7 @@ describe OpenChain::CustomHandler::FenixDocumentsRequester do
       e_time = Time.zone.now
       expect(described_class).to receive(:poll).with(polling_offset: 300).and_yield(s_time, e_time)
 
-      sql_proxy = double("OpenChain::FenixSqlProxyClient")
+      sql_proxy = instance_double(OpenChain::KewillSqlProxyClient)
       expect(described_class).to receive(:sql_proxy_client).and_return sql_proxy
       expect(sql_proxy).to receive(:request_images_added_between).with(s_time, e_time, "bucket", "receive_queue")
       described_class.run_schedulable
@@ -25,7 +26,7 @@ describe OpenChain::CustomHandler::FenixDocumentsRequester do
       e_time = Time.zone.now
       expect(described_class).to receive(:poll).with(polling_offset: 0).and_yield(s_time, e_time)
 
-      sql_proxy = double("OpenChain::FenixSqlProxyClient")
+      sql_proxy = instance_double(OpenChain::KewillSqlProxyClient)
       expect(described_class).to receive(:sql_proxy_client).and_return sql_proxy
       expect(sql_proxy).to receive(:request_images_added_between).with(s_time, e_time, "bucket", "receive_queue")
       described_class.run_schedulable({'polling_offset' => 0})

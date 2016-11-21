@@ -70,6 +70,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
       # for 5 minutes.
       if MasterSetup.get.custom_feature?("Kewill Imaging")
+        # This can actually be removed at some point in the near future once we're sure the Kewill imaging push process is working fine
+        # Once it's workign fine, there's no reason at that point to be doing pull requests when the documents should be pushing over just
+        # fine...we're just double requesting every file and taxing the system more.  The "Request Images" button will still remain on the
+        # entry screen too.
         OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 300) unless opts[:imaging] == false
       end
       entry.broadcast_event(:save)
