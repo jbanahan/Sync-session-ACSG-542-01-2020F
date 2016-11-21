@@ -1,0 +1,36 @@
+<%content_for :javascript do %>
+  $(function() {
+    $("[id^=short_log_]").click(function(event) {
+      var logId = $(event.target).parent().attr('id').split("_")[2];
+      var log = $("#mod_log");
+      log.html($('#full_log_' + logId).text());
+      log.dialog({title: "Log", autoOpen: false, modal: false}).dialog('open');
+    });
+  })
+<%end%>
+
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'name'%></th>
+    <th><%=sortable_search_heading 'start_time'%></th>
+    <th><%=sortable_search_heading 'end_time'%></th>
+    <th><%=sortable_search_heading 'log'%></th>
+    <th><%=sortable_search_heading 'created_at'%></th>
+  </thead>
+
+  <% @aws_backup_sessions.each do |abs| %>
+    <tr class='hover'>
+      <td><%= link_to abs.name, abs %></td>
+      <td><%= abs.start_time %></td>
+      <td><%= abs.end_time %></td>
+      <td id="short_log_<%= abs.id %>"><%= abs.log.length > 70 ? link_to((abs.log.slice(0,70) + "..."), '#') : abs.log %></td>
+      <td id="full_log_<%= abs.id %>" style="display:none"><%= abs.log %></td>
+      <td><%= abs.created_at %></td>
+    </tr>
+  <% end %>
+</table>
+<%= will_paginate @aws_backup_sessions %> 
+
+<div id='mod_log' style='display:none;'>
+</div>

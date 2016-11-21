@@ -1,0 +1,23 @@
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%= aws_backup_sessions_path %>' key_map='b'>Back</button>
+<% end %>
+
+<h3>AWS Backup Session: <%= @aws_backup_session.name %></h3> 
+<p>(Start Time: <%= @aws_backup_session.start_time %> / End Time: <%= @aws_backup_session.end_time %>)</p>
+<br><br>
+
+<% @aws_backup_session.aws_snapshots.each do |snap| %>
+  <table>
+    <%= field_row "Snapshot ID", snap.snapshot_id %>
+    <%= field_row "Description", snap.description %>
+    <%= field_row "Instance ID", snap.instance_id %>
+    <%= field_row "Volume ID", snap.volume_id %>
+    <%= field_row "Tags JSON", snap.tags_json %>
+    <%= field_row "Start Time", snap.start_time %>
+    <%= field_row "End Time", snap.end_time %>
+    <%= field_row "Errored", snap.errored %>
+    <%= field_row "Purged At", snap.purged_at %>
+    <%= field_row "Created At", snap.created_at %>
+  </table>
+  <br><br>
+<% end %>

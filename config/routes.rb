@@ -238,6 +238,7 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :aws_backup_sessions, only: [:index, :show]
   namespace :customer do
     match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
   end

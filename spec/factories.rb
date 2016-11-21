@@ -546,3 +546,8 @@ Factory.define :folder do |f|
   f.base_object :order
   f.created_by :user
 end
+Factory.define :aws_backup_session do |f|
+end
+Factory.define :aws_snapshot do |f|
+  f.association :aws_backup_session
+end

@@ -38,7 +38,9 @@ module Api; module V1; module Admin; class SettingsController < Api::V1::Admin::
                custom_view_templates: custom_view_templates_path,
                state_toggle_buttons: state_toggle_buttons_path,
                search_table_configs: search_table_configs_path,
-               milestone_notification_configs: MasterSetup.get.custom_feature?("Entry 315") ? milestone_notification_configs_path : nil
+               milestone_notification_configs: MasterSetup.get.custom_feature?("Entry 315") ? milestone_notification_configs_path : nil,
+               aws_backup_sessions: aws_backup_sessions_path
+
              
            }
     render json: urls
