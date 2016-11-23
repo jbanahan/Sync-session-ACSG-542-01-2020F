@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::KewillDocumentsRequester do
       e_time = Time.zone.now
       expect(described_class).to receive(:poll).with(polling_offset: 300).and_yield(s_time, e_time)
 
-      sql_proxy = instance_double(OpenChain::KewillSqlProxyClient)
+      sql_proxy = instance_double(OpenChain::KewillImagingSqlProxyClient)
       expect(described_class).to receive(:sql_proxy_client).and_return sql_proxy
       expect(sql_proxy).to receive(:request_images_added_between).with(s_time, e_time, "bucket", "receive_queue")
       described_class.run_schedulable
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::KewillDocumentsRequester do
       e_time = Time.zone.now
       expect(described_class).to receive(:poll).with(polling_offset: 0).and_yield(s_time, e_time)
 
-      sql_proxy = instance_double(OpenChain::KewillSqlProxyClient)
+      sql_proxy = instance_double(OpenChain::KewillImagingSqlProxyClient)
       expect(described_class).to receive(:sql_proxy_client).and_return sql_proxy
       expect(sql_proxy).to receive(:request_images_added_between).with(s_time, e_time, "bucket", "receive_queue")
       described_class.run_schedulable({'polling_offset' => 0})

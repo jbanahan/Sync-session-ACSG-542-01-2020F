@@ -32,6 +32,7 @@ config/vfi-canada.asc
 config/support_request.yml
 config/fenix_b3_forwarding.yml
 config/kewill_imaging.yml
+config/kewill_imaging_sql_proxy.yml
 .idea
 dump.rdb
 .byebug_history
