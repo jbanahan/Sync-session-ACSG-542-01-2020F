@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
   let (:importer) { Factory(:importer, system_code: "HENNE")}
-  let (:entry) { Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF") }
+  let (:entry) { Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) }
   let (:snapshot) { entry.create_snapshot user }
   let (:user) { Factory(:user) }
 
@@ -30,9 +30,11 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
     let (:tempfile) { Tempfile.new(['testfile', '.pdf']) }
     let (:cdefs) { subject.instance_variable_get("@cdefs")}
     let (:us) { Country.where(iso_code: "US").first_or_create! }
+    let (:official_tariff) { OfficialTariff.create! country_id: us.id, hts_code: "1234567890"}
 
     before :each do
       us
+      official_tariff
       invoice = Factory(:commercial_invoice, entry: entry, invoice_number: "12345")
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5)
       invoice_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description")
@@ -154,6 +156,30 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
       subject.compare nil, nil, nil, new_snapshot.bucket, new_snapshot.doc_path, new_snapshot.version
       products = Product.where(importer_id: importer.id).all
       expect(products.size).to eq 0
+    end
+
+    it "does not replace classifications if product was updated by a newer entry" do
+      new_entry = Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-23 00:00"))
+      prod = Factory(:classification, country: us, product: Factory(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+      prod.classifications.first.tariff_records.create! hts_1: "9876543210"
+      prod.update_custom_value! cdefs[:prod_classified_from_entry], "NEWER REF"
+
+      subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+
+      prod.reload
+      expect(prod.classifications.first.tariff_records.first.hts_1).to eq "9876543210"
+    end
+
+    it "replaces the classification if entry is newer than existing entry link" do
+      new_entry = Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "NEWER REF", file_logged_date: Time.zone.parse("2016-11-21 00:00"))
+      prod = Factory(:classification, country: us, product: Factory(:product, importer: importer, unique_identifier: "HENNE-PART")).product
+      prod.classifications.first.tariff_records.create! hts_1: "9876543210"
+      prod.update_custom_value! cdefs[:prod_classified_from_entry], "NEWER REF"
+
+      subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+
+      prod.reload
+      expect(prod.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
     end
 
     context "with class compare method" do

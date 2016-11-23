@@ -44,6 +44,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_value: {label: "Product Value", data_type: :decimal, module_type: "Product"},
     prod_set: {label: "Set?", data_type: :boolean, module_type: "Product"},
     prod_fabric_content: {label: "Fabric Content", data_type: :text, module_type: "Product"},
+    prod_classified_from_entry: {label: "Classified From Entry", data_type: :string, module_type: "Product"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification"},
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification"},
     class_special_program_indicator: {label: "Special Program Indicator", data_type: :string, module_type: "Classification"},

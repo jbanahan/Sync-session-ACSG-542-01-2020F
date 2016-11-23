@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
   def make_csv_file order_type
-    "INV#;;;20160203T0405+0100;;;PO#;6;#{order_type};1234567890;;;CN;25;;;1500.1;400;;REF NO;;;;;;;;;6990\n" +
+    "INV#;;;20160203T0405+0100;;;PO#;6;#{order_type};1234567890;;;CN;25;;;1500.1;400;;987654;;;;;;;;;6990\n" +
     "INV#;;;20160203T0405+0100;;;PO#;7;#{order_type};987654321;;;IN;50;;;2000;500;;REF NO;;;;;;;;;10000"
   end
 
@@ -19,9 +19,10 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     described_class.new.cdefs
   }
   let (:entry) {
-    entry = Factory(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF")
+    entry = Factory(:entry, importer: hm, customer_number: "HENNE", source_system: "Alliance", broker_reference: "REF", release_date: Time.zone.now)
     inv = Factory(:commercial_invoice, entry: entry, invoice_number: "987654")
-    line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID")
+    line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: "1234567", mid: "MID", quantity: 10, country_origin_code: "CN")
+    tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "9999999999", tariff_description: "Invoice Desc", entered_value: "100")
 
     entry
   }
@@ -85,7 +86,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(l.country_origin_code).to eq "CN"
         expect(l.quantity).to eq BigDecimal(25)
         expect(l.unit_price).to eq BigDecimal("999999.99")
-        expect(l.customer_reference).to eq "REF NO"
+        expect(l.customer_reference).to eq "987654"
         expect(l.line_number).to eq 6
 
         # Always create a tariff line, even if it has no info...it's expected the
@@ -111,13 +112,33 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
       end
 
-      it "finds tariff associated with part number and uses it" do
+      it "prefers the US entry's commercial invoice unit price over the product data" do
+        entry
+        ca_product
+        set_product_custom_values ca_product, BigDecimal("1.5"), "12345", "Description"
+        invoice = nil
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
+          invoice = id
+        end
+        described_class.parse ca_file
+
+        expect(invoice).not_to be_nil
+        l = invoice.commercial_invoice_lines.first
+        expect(l).not_to be_nil
+        expect(l.unit_price).to eq BigDecimal("13.00")
+        t = l.commercial_invoice_tariffs.first
+        expect(t).not_to be_nil
+        expect(t.hts_code).to eq "1234567890"
+        expect(t.tariff_description).to eq "Description"
+      end
+
+      it "uses product data if invoice is not present" do
         invoice = nil
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
         ca_product
-        set_product_custom_values ca_product, BigDecimal("1.5"), "12345", nil
+        set_product_custom_values ca_product, BigDecimal("1.5"), "12345", "Description"
         described_class.parse ca_file
 
         expect(invoice).not_to be_nil
@@ -128,21 +149,6 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         t = l.commercial_invoice_tariffs.first
         expect(t).not_to be_nil
         expect(t.hts_code).to eq "1234567890"
-        expect(t.tariff_description).to be_blank
-      end
-
-      it "uses customs description from product" do
-        invoice = nil
-        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
-          invoice = id
-        end
-        ca_product.classifications.first.update_custom_value! cdefs[:class_customs_description], "Description"
-        described_class.parse ca_file
-        expect(invoice).not_to be_nil
-
-        l = invoice.commercial_invoice_lines.first
-        t = l.commercial_invoice_tariffs.first
-        expect(t).not_to be_nil
         expect(t.tariff_description).to eq "Description"
       end
 
@@ -190,13 +196,13 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         ca_product
       end
 
-      def set_us_product_custom_values product_value, value_order_number, canada_description
-        set_product_custom_values us_product, product_value, value_order_number, canada_description
+      def set_us_product_custom_values product_value, value_order_number
+        set_product_custom_values us_product, product_value, value_order_number, nil
       end
 
-      it "creates an invoice using product US classification and entry information" do
+      it "creates an invoice using entry information and product data" do
         entry
-        set_us_product_custom_values 10.00, "987654", "Canada Desc"
+        set_us_product_custom_values 10.00, "987654"
         invoice = nil
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           expect(file_number).to eq "INV#"
@@ -210,13 +216,95 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         line = invoice.commercial_invoice_lines.first
         expect(line.commercial_invoice_tariffs.length).to eq 1
         expect(line.mid).to eq "MID"
-        # Value equals 3 because of the 30% value multiplier applied to the 10 value above
+        # Value equals 13 because of the 30% value multiplier applied to the 10 value above
         expect(line.unit_price).to eq 13
         expect(line.value).to eq 325
 
         tar = line.commercial_invoice_tariffs.first
         expect(tar.hts_code).to eq "9876543210"
-        expect(tar.tariff_description).to eq "Canada Desc"
+        expect(tar.tariff_description).to eq "Invoice Desc"
+      end
+
+      it "falls back to matching without part number if US entry's invoice doesn't have one" do
+        line = entry.commercial_invoices.first.commercial_invoice_lines.first
+        line.update_attributes! part_number: ""
+
+        set_us_product_custom_values 10.00, "987654"
+        invoice = nil
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
+          expect(file_number).to eq "INV#"
+          invoice = inv
+        end
+
+        described_class.parse us_file
+        expect(invoice).not_to be_nil
+
+        expect(invoice.commercial_invoice_lines.length).to eq 2
+        line = invoice.commercial_invoice_lines.first
+        expect(line.commercial_invoice_tariffs.length).to eq 1
+        expect(line.mid).to eq "MID"
+        # Value equals 13 because of the 30% value multiplier applied to the 10 value above
+        expect(line.unit_price).to eq 13
+        expect(line.value).to eq 325
+
+        tar = line.commercial_invoice_tariffs.first
+        expect(tar.hts_code).to eq "9876543210"
+        expect(tar.tariff_description).to eq "Invoice Desc"
+      end
+
+      it "fails to match to US entry without part number if invoice has multiple lines" do
+        invoice = entry.commercial_invoices.first
+        invoice.commercial_invoice_lines.first.update_attributes! part_number: ""
+        invoice.commercial_invoice_lines.create! mid: "MID", quantity: 10, country_origin_code: "CN"
+        
+        set_us_product_custom_values 20, "987654"
+        product.classifications.first.update_custom_value!(cdefs[:class_customs_description], "US Description")
+        
+        invoice = nil
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
+          expect(file_number).to eq "INV#"
+          invoice = inv
+        end
+
+        described_class.parse us_file
+        expect(invoice).not_to be_nil
+
+        expect(invoice.commercial_invoice_lines.length).to eq 2
+        line = invoice.commercial_invoice_lines.first
+        expect(line.commercial_invoice_tariffs.length).to eq 1
+        expect(line.mid).to be_blank
+        # Value equals 13 because of the 30% value multiplier applied to the 10 value above
+        expect(line.unit_price).to eq 26
+        expect(line.value).to eq 650
+
+        tar = line.commercial_invoice_tariffs.first
+        expect(tar.hts_code).to eq "9876543210"
+        expect(tar.tariff_description).to eq "US Description"
+      end
+
+      it "falls back to product data if entry isn't present" do
+        set_us_product_custom_values 20, "987654"
+        product.classifications.first.update_custom_value!(cdefs[:class_customs_description], "US Description")
+        invoice = nil
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
+          expect(file_number).to eq "INV#"
+          invoice = inv
+        end
+
+        described_class.parse us_file
+        expect(invoice).not_to be_nil
+
+        expect(invoice.commercial_invoice_lines.length).to eq 2
+        line = invoice.commercial_invoice_lines.first
+        expect(line.commercial_invoice_tariffs.length).to eq 1
+        expect(line.mid).to be_nil
+        # Value equals 263 because of the 30% value multiplier applied to the 10 value above
+        expect(line.unit_price).to eq 26
+        expect(line.value).to eq 650
+
+        tar = line.commercial_invoice_tariffs.first
+        expect(tar.hts_code).to eq "9876543210"
+        expect(tar.tariff_description).to eq "US Description"
       end
 
       it "sends shipping docs" do

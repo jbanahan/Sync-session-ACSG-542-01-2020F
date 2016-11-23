@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
 
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions([:prod_part_number, :prod_value_order_number, :prod_value, :class_customs_description])
+    @cdefs = self.class.prep_custom_definitions([:prod_part_number, :prod_value_order_number, :prod_value, :prod_classified_from_entry, :class_customs_description])
   end
 
 
@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       user = User.integration
       products = []
       extract_part_data(new_json).each do |data|
-        product = find_or_create_product(data, user)
+        product = find_or_create_product(data, user, entry)
         products << product if product
       end
 
@@ -131,7 +131,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
   end
 
 
-  def find_or_create_product part_data, user
+  def find_or_create_product part_data, user, entry
     # Return nil if any of the part data is blank, technically, there should be a business rule blocking
     # these from even making it to this point, but the rule cuts off semi-recently and some really old
     # HM entries are getting updated still.
@@ -165,23 +165,36 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
     end
 
     Lock.with_lock_retry(product) do
-      classification = product.classifications.find {|c| c.country_id == @us.id}
-
       desc_updated = false
-      if !part_data[:tariff_description].blank?  && classification.custom_value(@cdefs[:class_customs_description]) != part_data[:tariff_description]
-        classification.update_custom_value! @cdefs[:class_customs_description], part_data[:tariff_description]
-        desc_updated = true
-      end      
-
       tariff_saved = false
-      part_data[:tariffs].each do |tariff|
-        tariff = tariff.to_s.gsub(".", "")
-        next if tariff.blank?
+      # Don't even bother saving tariff information if the classification that's already present is newer than the entry we're processing.
+      # The per_piece_value is under a different po# based restriction, so don't worry about that.
+      if can_update_classification?(product, entry)
 
-        tariff_record = classification.tariff_records.find {|t| t.hts_1.to_s == tariff}
-        if tariff_record.nil?
-          classification.tariff_records.create! hts_1: tariff
-          tariff_saved = true
+        classification = product.classifications.find {|c| c.country_id == @us.id}
+
+        if !part_data[:tariff_description].blank?  && classification.custom_value(@cdefs[:class_customs_description]) != part_data[:tariff_description]
+          classification.update_custom_value! @cdefs[:class_customs_description], part_data[:tariff_description]
+          desc_updated = true
+        end
+
+        part_data[:tariffs].each do |tariff|
+          tariff = tariff.to_s.gsub(".", "")
+          next if tariff.blank?
+
+          tariff_record = classification.tariff_records.find {|t| t.hts_1.to_s == tariff}
+          if tariff_record.nil?
+            # Validate that this tariff number is still valid
+            ot = OfficialTariff.where(country_id: @us.id, hts_code: tariff).first
+            if ot
+              # delete any other tariff records...then create this new one
+              classification.tariff_records.destroy_all
+              classification.tariff_records.create! hts_1: tariff
+
+              tariff_saved = true
+              break # never add more than one tariff
+            end
+          end
         end
       end
 
@@ -198,6 +211,21 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
     product
   end
 
+  def can_update_classification? product, entry
+    return false if entry.file_logged_date.nil?
+
+    classified_from = product.custom_value(@cdefs[:prod_classified_from_entry])
+
+    can_update = false
+    if classified_from.blank? || classified_from == entry.broker_reference
+      can_update = true
+    else
+      # Find the entry that is referenced by the product and validate that its logged date is prior to 
+      # this file's logged date.
+      other_entry = Entry.where(source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: classified_from).first
+      can_update = other_entry.nil? || other_entry.file_logged_date.nil? || entry.file_logged_date > other_entry.file_logged_date
+    end
+  end
 
   def set_po_information product, part_data
     value_order_number = product.custom_value(@cdefs[:prod_value_order_number])

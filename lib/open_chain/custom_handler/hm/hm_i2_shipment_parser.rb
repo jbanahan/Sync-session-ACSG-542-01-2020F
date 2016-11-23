@@ -190,7 +190,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     
     i.line_number = decimal_value(line[7]).to_i
 
-    values = product_values(system, i.part_number)
+    # 19 is the H&M Order number, which can be used to map back to an entry invoice line
+    values = product_values(system, i.part_number, i.country_origin_code, text_value(line[19]))
 
     i.mid = values[:mid]
     i.unit_price = values[:product_value]
@@ -232,49 +233,49 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
-  def product_values system, part_number
+  def product_values system, part_number, country_origin_code, order_number
     value_multiplier = BigDecimal("1.3")
 
-    importer = product_importer
-    unique_identifier = "#{importer.system_code}-#{part_number}"
-    product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first
+    invoice_line = find_invoice_line(order_number, country_origin_code, part_number)
+    tariff = invoice_line.commercial_invoice_tariffs.first if invoice_line
+
+    unique_identifier = "#{product_importer.system_code}-#{part_number}"
+
+    # Product should NEVER be missing as all these products should come through on the I1 feed before making it 
+    # through on an I2
+    product = Product.where(importer_id: product_importer.id, unique_identifier: unique_identifier).first
     values = {part_number: part_number, unique_identifier: unique_identifier}
     if product
       values[:product] = product
-      values[:product_value] = product.custom_value(cdefs[:prod_value])
+
+      # Product value comes from the US invoice line first...then fall back to the product if we can't determine a value
+      if tariff.try(:entered_value).try(:nonzero?) && invoice_line.try(:quantity).try(:nonzero?)
+        values[:product_value] = (tariff.entered_value / invoice_line.quantity).round(2)
+      else
+        values[:product_value] = product.custom_value(cdefs[:prod_value])
+      end
       values[:product_value] = (BigDecimal(values[:product_value].to_s) * value_multiplier) if values[:product_value]
-      values[:order_number] = product.custom_value(cdefs[:prod_value_order_number])
+      values[:mid] = invoice_line.try(:mid)
 
       classification = product.classifications.find {|c| c.country.try(:iso_code) == (system == :fenix ? "CA" : "US") }
       if classification
         # Tariff description is not sent to Kewill, so don't bother making the custom value lookup
-        values[:description] = classification.custom_value(cdefs[:class_customs_description]) if system == :fenix
+        values[:description] = classification.custom_value(cdefs[:class_customs_description])
         values[:hts] = classification.tariff_records.first.try(:hts_1)
       end
 
-      if system == :kewill
-        # Canada's customs description is "better" than the US one we use (which is just the tariff chapter notes)
-        # We'll use the better description on the invoice addendum excel file
-        classification = product.classifications.find {|c| c.country.try(:iso_code) == "CA" }
-        if classification
-          values[:description] = classification.custom_value(cdefs[:class_customs_description])
-        end
-      end
+      # Fall back to the commercial invoice line if the product doesn't have tariff description / hts filled in
+      # Can't use HTS for fenix, since the invoice line is from the US tariff
+      values[:description] = tariff.try(:tariff_description) if values[:description].blank?
+      values[:hts] = tariff.try(:hts_code) if system == :fenix && values[:hts].blank?
+
     else
       values[:missing_data] = true
     end
 
-    if system == :kewill && values[:order_number]
-      # Need to pull the MID from the Entry
-      invoice_line = CommercialInvoiceLine.joins(:entry).where(part_number: part_number).where(commercial_invoices: {invoice_number: values[:order_number]}, entries: {importer_id: product_importer.id}).order("entries.release_date desc").first
-      if invoice_line
-        values[:mid] = invoice_line.mid
-      end
-    end
-
     
     if system == :fenix 
-      # What really matters here is that product_value is found and the canadian tariff is presen
+      # What really matters here is that product_value is found and the canadian tariff is present
       values[:missing_data] = values[:hts].blank? || values[:product_value].nil?
 
       # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
@@ -286,6 +287,29 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     values
+  end
+
+  def find_invoice_line order_number, country_origin, part_number
+    base_query = CommercialInvoiceLine.joins(:entry, :commercial_invoice).
+      where(entries: {importer_id: product_importer.id}).where("entries.release_date IS NOT NULL").
+      where(commercial_invoices: {invoice_number: order_number}).
+      where(country_origin_code: country_origin).
+      order("entries.release_date DESC")
+      
+    matched_line = nil
+    matched_line = base_query.where(part_number: part_number).first
+    if matched_line.nil?
+      partial_matches = base_query.all
+      # Whoever is keying HM entries doesn't always key the part number, but the way H&M orders work is generally
+      # to only have a single line on the order (which equates to our commercial invoice).  
+      # These means that we can consider the invoice line a match if there's a only single line on the invoice.
+      partial_matches.each do |pm|
+        matched_line = pm if pm.commercial_invoice.commercial_invoice_lines.length == 1
+        break unless matched_line.nil?
+      end
+    end
+
+    matched_line
   end
 
   def generate_and_send_us_files invoice, rows
