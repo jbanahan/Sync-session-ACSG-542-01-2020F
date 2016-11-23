@@ -86,7 +86,7 @@ describe BusinessRuleSnapshot do
                 "name" => "Broker Reference",
                 "description" => "Rule Description 2",
                 "state" => "Fail",
-                "message" => "Broker Reference must match 'ABC' format, but was 'REF'",
+                "message" => "Broker Reference must match 'ABC' format but was 'REF'.",
                 "note" => "I overrode it.",
                 "overridden_by_id" => user.id,
                 "overridden_at" => now_json,
