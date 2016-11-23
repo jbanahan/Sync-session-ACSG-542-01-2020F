@@ -168,7 +168,7 @@ class EntitySnapshot < ActiveRecord::Base
     if parent
       parent_core_module = CoreModule.find_by_object parent
       c_lam = parent_core_module.child_lambdas[core_module]
-      c_lam.call(parent) << obj
+      c_lam.call(parent) << obj if c_lam
     end
     obj
   end
