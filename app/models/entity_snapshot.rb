@@ -147,9 +147,10 @@ class EntitySnapshot < ActiveRecord::Base
           raise "Recursive restore cannot be used with modules that contain sibling modules."
         end
       end
-      
+
       good_children.each do |cm,good_ids|
-        core_module.child_lambdas[cm].call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all
+        l = core_module.child_lambdas[cm]
+        l.call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all if l
       end
 
       # Then we create/update children based on hash
