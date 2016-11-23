@@ -12,7 +12,13 @@ class ValidationRuleAnyEntryInvoiceLineHasFieldFormat < BusinessValidationRule
     # any lines actually matched.
     super
 
-    @matched ? nil : "At least one #{model_field.label} value must match '#{match_expression}' format."
+    return nil if @matched
+    
+    if rule_attribute('fail_if_matches')
+      "At least one #{model_field.label} value must NOT match '#{match_expression}' format."
+    else
+      "At least one #{model_field.label} value must match '#{match_expression}' format."
+    end
   end
 
   def run_child_validation invoice_line

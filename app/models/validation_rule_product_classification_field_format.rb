@@ -4,9 +4,13 @@ class ValidationRuleProductClassificationFieldFormat < BusinessValidationRule
   include ValidatesFieldFormat
 
   def run_child_validation classification
-    validate_field_format(classification) do |mf, val, regex|
+    validate_field_format(classification) do |mf, val, regex, fail_if_matches|
       stop_validation
-      "All #{mf.label} values do not match '#{regex}' format."
+      if fail_if_matches
+        "At least one #{mf.label} value matches '#{regex}' format."
+      else
+        "All #{mf.label} values do not match '#{regex}' format."
+      end
     end
   end
 end

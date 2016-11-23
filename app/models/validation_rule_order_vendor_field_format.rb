@@ -6,8 +6,12 @@ class ValidationRuleOrderVendorFieldFormat < BusinessValidationRule
     if vend.nil?
       return "Vendor must be set."
     end
-    validate_field_format(vend) do |mf, val, regex|
-      "All #{mf.label} value does not match '#{regex}' format for Vendor #{vend.name}."
+    validate_field_format(vend) do |mf, val, regex, fail_if_matches|
+      if fail_if_matches
+        "At least one #{mf.label} value matches '#{regex}' format for Vendor #{vend.name}."
+      else
+        "All #{mf.label} value does not match '#{regex}' format for Vendor #{vend.name}."
+      end
     end
   end
 end

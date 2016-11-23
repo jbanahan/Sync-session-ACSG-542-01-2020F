@@ -17,4 +17,22 @@ describe ValidationRuleOrderLineProductFieldFormat do
 
     expect(vr.run_validation(ol.order)).to be_nil
   end
+
+  context "fail_if_matches" do
+    let(:vr) { described_class.create!(rule_attributes_json:{model_field_uid: :prod_uid, regex: "ABC", fail_if_matches: true}.to_json)  }
+
+    it "fails when product matches" do
+      p = Factory(:product,unique_identifier:'ABC')
+      ol = Factory(:order_line,product:p)
+
+      expect(vr.run_validation(ol.order)).to eq "At least one Unique Identifier value matches 'ABC' format for Product ABC."
+    end
+
+    it "passes when product doesn't match" do
+      p = Factory(:product,unique_identifier:'px')
+      ol = Factory(:order_line,product:p)
+
+      expect(vr.run_validation(ol.order)).to be_nil
+    end
+  end
 end

@@ -32,28 +32,62 @@ describe ValidatesFieldFormat do
     context "failure" do
       before(:each) { expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return 'foo' }
 
-      it "returns result of block if yield_failures enabled" do
-        expect(@rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to eq "All HTS Code values do not match 'ABC' format."
-      end
+      context "without fail_if_matches" do
+        it "returns result of block if yield_failures enabled" do
+          expect(@rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to eq "All HTS Code values do not match 'ABC' format."
+        end
+
+        it "returns form message if yield_failures not enabled" do
+          expect(@rule.validate_field_format(@order_line, {yield_failures: false}, &@block)).to eq "HTS Code must match 'ABC' format but was 'foo'."
+        end
       
-      it "returns form message if yield_failures not enabled" do
-        expect(@rule.validate_field_format(@order_line, {yield_failures: false}, &@block)).to eq "HTS Code must match 'ABC' format, but was 'foo'"
+        it "returns form message if block missing" do
+          expect(@rule.validate_field_format(@order_line, yield_failures: true)).to eq "HTS Code must match 'ABC' format but was 'foo'."
+        end
       end
-      
-      it "returns form message if block missing" do
-        expect(@rule.validate_field_format(@order_line, yield_failures: true)).to eq "HTS Code must match 'ABC' format, but was 'foo'"
-      end
+
+      context "with fail_if_matches" do
+        let(:rule) { Rule.new('regex' => 'foo', 'model_field_uid' => 'ordln_hts', 'fail_if_matches' => true) }
+        let(:block) { Proc.new {|mf, val, regex| "At least one #{mf.label} value matches '#{regex}' format."} }
+        
+        it "returns result of block if yield_failures enabled" do
+          expect(rule.validate_field_format(@order_line, {yield_failures: true}, &block)).to eq "At least one HTS Code value matches 'foo' format."
+        end
+
+        it "returns form message if yield_failures not enabled" do
+          expect(rule.validate_field_format(@order_line, {yield_failures: false}, &block)).to eq "HTS Code must NOT match 'foo' format."
+        end
+        
+        it "returns form message if block missing" do
+          expect(rule.validate_field_format(@order_line, yield_failures: true)).to eq "HTS Code must NOT match 'foo' format."
+        end
+      end  
     end
 
     context "success" do
       before(:each) { expect(@mf_double).to receive(:process_export).with(@order_line, nil, true).and_return 'ABC' }
 
-      it "executes block if yield_matches enabled" do
-        expect{ |block| @rule.validate_field_format(@order_line, {yield_matches: true}, &block) }.to yield_with_args(@mf_double, 'ABC', 'ABC')
+      context "without fail_if_matches" do
+        it "executes block if yield_matches enabled" do
+          expect{ |block| @rule.validate_field_format(@order_line, {yield_matches: true}, &block) }.to yield_with_args(@mf_double, 'ABC', 'ABC', nil)
+        end
+
+        it "returns nil if yield_matches enabled" do
+          expect(@rule.validate_field_format(@order_line, {yield_matches: true}, &@block)).to be_nil
+        end
       end
 
-      it "returns nil if yield_matches enabled" do
-        expect(@rule.validate_field_format(@order_line, {yield_matches: true}, &@block)).to be_nil
+      context "with fail_if_matches" do
+        let(:rule) { Rule.new('regex' => 'foo', 'model_field_uid' => 'ordln_hts', 'fail_if_matches' => true) }
+        let(:blk) { Proc.new {|mf, val, not_regex| "At least one #{mf.label} value matches '#{not_regex}' format."} }
+        
+        it "executes block if yield_matches enabled" do
+          expect{ |block| rule.validate_field_format(@order_line, {yield_matches: true}, &block) }.to yield_with_args(@mf_double, 'ABC', 'foo', true)
+        end
+
+        it "returns nil if yield_matches enabled" do
+          expect(rule.validate_field_format(@order_line, {yield_matches: true}, &blk)).to be_nil
+        end
       end
     end
 
@@ -71,15 +105,29 @@ describe ValidatesFieldFormat do
         expect(@mf_double_3).to receive(:process_export).with(@order_line, nil, true).and_return 'baz'
         expect(ModelField).to receive(:find_by_uid).with('ordln_sku').and_return @mf_double_3
       end
+    
+      context "with one match-type" do
+        it "returns all errors if none of the validations match" do
+          rule = Rule.new({'ordln_hts' => {'regex' => 'ABC'}, 'ordln_currency' => {'regex' => 'DEF'}, 'ordln_sku' => {'regex' => 'GHI'}})
+          expect(rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to eq "All HTS Code values do not match 'ABC' format.\nAll Currency values do not match 'DEF' format.\nAll SKU values do not match 'GHI' format."
+        end
 
-      it "returns all errors if none of the validations match" do
-        @rule = Rule.new({'ordln_hts' => {'regex' => 'ABC'}, 'ordln_currency' => {'regex' => 'DEF'}, 'ordln_sku' => {'regex' => 'GHI'}})
-        expect(@rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to eq "All HTS Code values do not match 'ABC' format.\nAll Currency values do not match 'DEF' format.\n""All SKU values do not match 'GHI' format."
+        it "returns no errors if any of the validations match" do
+          rule = Rule.new({'ordln_hts' => {'regex' => 'foo'}, 'ordln_currency' => {'regex' => 'DEF'}, 'ordln_sku' => {'regex' => 'GHI'}})
+          expect(rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to be_nil
+        end
       end
 
-      it "returns no errors if any of the validations match" do
-        @rule = Rule.new({'ordln_hts' => {'regex' => 'foo'}, 'ordln_currency' => {'regex' => 'DEF'}, 'ordln_sku' => {'regex' => 'GHI'}})
-        expect(@rule.validate_field_format(@order_line, {yield_failures: true}, &@block)).to be_nil
+      context "with both match-types" do
+        it "returns all errors if none of the validations match" do 
+          rule = Rule.new({'ordln_hts' => {'regex' => 'ABC'}, 'ordln_currency' => {'regex' => 'bar', 'fail_if_matches' => true}, 'ordln_sku' => {'regex' => 'GHI'}})
+          expect(rule.validate_field_format(@order_line, {yield_failures: true})).to eq "HTS Code must match 'ABC' format but was 'foo'.\nCurrency must NOT match 'bar' format.\nSKU must match 'GHI' format but was 'baz'."
+        end
+
+        it "returns no errors if any of the validations match" do
+          rule = Rule.new({'ordln_hts' => {'regex' => 'ABC'}, 'ordln_currency' => {'regex' => 'DEF', 'fail_if_matches' => true}, 'ordln_sku' => {'regex' => 'GHI'}})
+          expect(rule.validate_field_format(@order_line, {yield_failures: true})).to be_nil
+        end
       end
     end
 

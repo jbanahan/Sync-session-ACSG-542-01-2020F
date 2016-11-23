@@ -16,6 +16,19 @@ describe ValidationRuleOrderLineFieldFormat do
     expect(@rule.run_validation(@ol.order)).to eq("All Order Line - HTS Code values do not match 'ABC' format.")
   end
 
+  context "fail_if_matches" do
+    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts',regex:'ABC', fail_if_matches: true}.to_json) }
+
+    it "passes if all lines are valid" do
+      @ol.update_attributes(hts: "foo")
+      expect(rule.run_validation(@ol.order)).to be_nil
+    end
+
+    it "fails if any line is not valid" do
+      expect(rule.run_validation(@ol.order)).to eq("At least one Order Line - HTS Code value matches 'ABC' format.")
+    end
+  end
+
   it 'should not allow blanks by default' do
     @ol.update_attributes(hts: '')
     expect(@rule.run_validation(@ol.order)).to eq("All Order Line - HTS Code values do not match 'ABC' format.")

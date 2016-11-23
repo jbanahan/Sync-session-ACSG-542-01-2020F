@@ -18,6 +18,20 @@ describe ValidationRuleEntryInvoiceLineTariffFieldFormat do
       expect(@rule.run_validation tariff.commercial_invoice_line.entry).to eq "Invoice # INV #{ModelField.find_by_uid(:cit_hts_code).label} value 'ABC' does not match '\\d{4}' format."
     end
 
+    context "fail_if_matches" do
+      let(:rule) { ValidationRuleEntryInvoiceLineTariffFieldFormat.new rule_attributes_json:{model_field_uid: :cit_hts_code, regex:'\d{4}', fail_if_matches: true}.to_json }
+
+      it "validates tariff-level field formats" do
+        tariff = Factory(:commercial_invoice_tariff, hts_code: "abcd", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))
+        expect(rule.run_validation tariff.commercial_invoice_line.entry).to be_nil
+      end
+
+      it "reports invalid field formats" do
+        tariff = Factory(:commercial_invoice_tariff, hts_code: "1234", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))
+        expect(rule.run_validation tariff.commercial_invoice_line.entry).to eq "Invoice # INV #{ModelField.find_by_uid(:cit_hts_code).label} value should not match '\\d{4}' format."
+      end
+    end
+
     it "reports only reports one invalid field formats" do
       # Just make sure we're stopping after a single line fails
       tariff = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))

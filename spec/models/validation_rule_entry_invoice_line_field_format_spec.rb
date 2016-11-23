@@ -29,6 +29,21 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
   end
 
+  context "fail_if_matches" do
+    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'cil_part_number',regex:'ABC', fail_if_matches: true}.to_json) }
+
+    it "passes if all lines are valid" do
+      @ci_line.update_attributes(part_number: 'foo')
+      @ci_line2.update_attributes(part_number: 'bar')
+      expect(rule.run_validation(@ci_line.entry)).to be_nil
+    end
+
+    it "fails if any line is not valid" do
+      @ci_line.update_attributes(part_number: 'foo')
+      expect(rule.run_validation(@ci_line.entry)).to eq "Invoice # INV #{ModelField.find_by_uid(:cil_part_number).label} value should not match 'ABC' format."
+    end
+  end
+
   describe "should_skip?" do
     it "should skip on entry level validation" do
       @ci_line.entry.update_attributes(entry_number:'31612345678')
