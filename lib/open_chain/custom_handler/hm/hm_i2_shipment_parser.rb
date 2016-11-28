@@ -267,7 +267,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       # Fall back to the commercial invoice line if the product doesn't have tariff description / hts filled in
       # Can't use HTS for fenix, since the invoice line is from the US tariff
       values[:description] = tariff.try(:tariff_description) if values[:description].blank?
-      values[:hts] = tariff.try(:hts_code) if system == :fenix && values[:hts].blank?
+      values[:hts] = tariff.try(:hts_code) if system == :kewill && values[:hts].blank?
 
     else
       values[:missing_data] = true

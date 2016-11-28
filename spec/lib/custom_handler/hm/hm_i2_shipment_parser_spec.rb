@@ -152,6 +152,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(t.tariff_description).to eq "Description"
       end
 
+      it "does not use hts code from invoice line if product data is missing" do
+        entry
+        ca_product
+        set_product_custom_values ca_product, BigDecimal("1.5"), "12345", "Description"
+        ca_product.classifications.first.tariff_records.first.update_attributes! hts_1: ""
+
+        invoice = nil
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
+          invoice = id
+        end
+        described_class.parse ca_file
+
+        expect(invoice).not_to be_nil
+        l = invoice.commercial_invoice_lines.first
+        expect(l).not_to be_nil
+        expect(l.unit_price).to eq BigDecimal("13.00")
+        t = l.commercial_invoice_tariffs.first
+        expect(t).not_to be_nil
+        expect(t.hts_code).to be_blank
+        expect(t.tariff_description).to eq "Description"
+      end
+
       it "splits the source file into multiple files and processes each individually" do
         split_file = CSV.parse(ca_file, col_sep: ";")
         expect_any_instance_of(described_class).to receive(:split_file).and_return [[split_file[0]], [split_file[1]]]
