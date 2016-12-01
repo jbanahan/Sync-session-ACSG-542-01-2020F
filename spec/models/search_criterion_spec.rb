@@ -397,7 +397,6 @@ describe SearchCriterion do
           @product.update_attributes(:created_at=>1.month.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
           v = sc.apply(Product.where("1=1"))
-          byebug
           expect(v.all).to include @product
         end
         it "should not find something created in the future" do
