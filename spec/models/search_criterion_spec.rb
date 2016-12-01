@@ -392,11 +392,12 @@ describe SearchCriterion do
           v = sc.apply(TariffRecord.where("1=1"))
           expect(v.all).to include t
         end
-  
+
         it "should find something created last month with val = 1" do
           @product.update_attributes(:created_at=>1.month.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
           v = sc.apply(Product.where("1=1"))
+          byebug
           expect(v.all).to include @product
         end
         it "should not find something created in the future" do
@@ -820,17 +821,19 @@ describe SearchCriterion do
       expect(sc.apply(Product.where("1=1")).to_sql).to match(/#{expected_value}/)
     end
 
-    it "should translate datetime values to UTC for gt operator" do
-      # Make sure we're also allowing actual time values as well
-      tz = "Hawaii"
-      date = "2012-01-01 07:08:09"
-      value = date + " " + tz
-      expected_value = Time.use_zone(tz) do
-        Time.zone.parse(date).utc.to_formatted_s(:db)
+    it "should translate datetime values to UTC for gt, geteq operator" do
+      ['gt','gteq'].each do |op|
+        # Make sure we're also allowing actual time values as well
+        tz = "Hawaii"
+        date = "2012-01-01 07:08:09"
+        value = date + " " + tz
+        expected_value = Time.use_zone(tz) do
+          Time.zone.parse(date).utc.to_formatted_s(:db)
+        end
+        sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>op, :value=>value)
+        sql = sc.apply(Product.where("1=1")).to_sql
+        expect(sql).to match(/#{expected_value}/)
       end
-      sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
-      sql = sc.apply(Product.where("1=1")).to_sql
-      expect(sql).to match(/#{expected_value}/)
     end
 
     it "should translate datetime values to UTC for eq operator" do
@@ -848,13 +851,16 @@ describe SearchCriterion do
       expect(sc.apply(Product.where("1=1")).to_sql).to match(/#{expected_value}/)
     end
 
-    it "should not translate date values to UTC for lt, gt, or eq operators" do
+    it "should not translate date values to UTC for lt, gt, gteq, or eq operators" do
       value = "2012-01-01"
       # There's no actual date field in product, we'll use Entry.duty_due_date instead
       sc = SearchCriterion.new(:model_field_uid=>:ent_duty_due_date, :operator=>"eq", :value=>value)
       expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
 
       sc.operator = "lt"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
+
+      sc.operator = "gteq"
       expect(sc.apply(Entry.where("1=1")).to_sql).to match(/#{value}/)
 
       sc.operator = "gt"
@@ -885,21 +891,23 @@ describe SearchCriterion do
     end
 
     it "should use current timezone to compare object field" do
-      tz = "Hawaii"
-      date = "2013-01-01"
-      value = date + " " + tz
+      ['gt','gteq'].each do |op|
+        tz = "Hawaii"
+        date = "2013-01-01"
+        value = date + " " + tz
 
 
-      sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
-      p = Product.new
-      # Hawaii is 10 hours behind UTC so adjust our created at to make sure
-      # the offset is being calculated
-      p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 10:01"
+        sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>op, :value=>value)
+        p = Product.new
+        # Hawaii is 10 hours behind UTC so adjust our created at to make sure
+        # the offset is being calculated
+        p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 10:01"
 
-      Time.use_zone(tz) do
-        expect(sc.test?(p)).to be_truthy
-        p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 09:59"
-        expect(sc.test?(p)).to be_falsey
+        Time.use_zone(tz) do
+          expect(sc.test?(p)).to be_truthy
+          p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 09:59"
+          expect(sc.test?(p)).to be_falsey
+        end
       end
     end
 

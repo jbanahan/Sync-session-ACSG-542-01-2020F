@@ -322,6 +322,8 @@ class SearchCriterion < ActiveRecord::Base
         return vt == self_val
       elsif self.operator == "gt"
         return vt > self_val
+      elsif self.operator == "gteq"
+        return vt >= self_val
       elsif self.operator == "lt"
         return vt < self_val
       elsif self.operator == "bda"
