@@ -346,6 +346,13 @@ EOS
     end
   end
 
+  def send_support_request_to_helpdesk to, support_request
+    @request = support_request
+    mail(:to=>to, :reply_to => support_request.user.email, :subject=>"[Support Request ##{@request.ticket_number}]") do |format|
+      format.html
+    end
+  end
+
   def send_tariff_set_change_notification tariff_set, user
     @ts = tariff_set
     mail(to:user.email,subject:"[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|
@@ -528,7 +535,8 @@ EOS
         # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
         email_attachment = ""
 
-        attachment_text = "* The attachment #{File.basename(file)} was excluded because it was empty."
+        filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file)
+        attachment_text = "* The attachment '#{filename}' was excluded because it was empty."
         attachment_text = attachment_text.html_safe
       end
 
@@ -569,16 +577,36 @@ EOS
     end
 
     def large_attachment? file
-      File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
+      file_exists?(file) && file_size(file) > ATTACHMENT_LIMIT
     end
 
     def blank_attachment? file
-      File.size(file) == 0 || File.size(file) == nil
+      file_size(file) == 0
+    end
+
+    def file_size file
+      if file.is_a?(String)
+        File.size(file).to_i
+      elsif file.respond_to?(:to_path)
+        File.size(file.to_path.to_s).to_i
+      else
+        File.size(file).to_i
+      end
+    end
+
+    def file_exists? file
+      if file.is_a?(String)
+        File.exist? file
+      elsif file.respond_to?(:to_path)
+        File.exist? file.to_path.to_s
+      else
+        File.exist? file
+      end
     end
 
     def create_attachment data, data_is_file = true
       if data_is_file
-        data = File.open((data.respond_to?(:path) ? data.path : data), "rb") {|io| io.read}
+        data = IO.read((data.respond_to?(:path) ? data.path : (data.respond_to?(:to_path) ? data.to_path.to_s : data)), mode: "rb")
       end
       # When using the native Rails mail attachments you no longer have to base64 encode the data, the 
       # postmark library handles that behind the scenes for us now.

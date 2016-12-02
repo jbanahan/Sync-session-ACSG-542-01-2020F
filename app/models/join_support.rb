@@ -30,7 +30,7 @@ module JoinSupport
         p = add_model_field p, mf_two
       end
     end
-      
+
     p
   end
 
@@ -39,21 +39,22 @@ module JoinSupport
   def add_model_field query, mf
     mf_cm = mf.core_module
     unless @module_chain.nil?
-      query = add_parent_joins query, @module_chain, mf_cm 
+      query = add_parent_joins query, @module_chain, mf_cm
     end
 
     unless mf.join_statement.nil?
-      query = query.joins(mf.join_statement) 
+      query = query.joins(mf.join_statement)
     end
 
     query
   end
 
   def add_parent_joins(p,module_chain,target_module)
+    return p if module_chain.first == target_module
     add_parent_joins_recursive p, module_chain, target_module, module_chain.first
   end
-  
-  def add_parent_joins_recursive(p, module_chain, target_module, current_module) 
+
+  def add_parent_joins_recursive(p, module_chain, target_module, current_module)
     new_p = p
     child_module = module_chain.child current_module
 

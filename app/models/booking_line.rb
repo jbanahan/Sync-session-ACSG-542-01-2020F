@@ -4,10 +4,11 @@ class BookingLine < ActiveRecord::Base
   belongs_to :product
   belongs_to :order
   belongs_to :order_line
+  belongs_to :variant
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
 
-  validate :order_line_takes_priority
+  before_validation :set_product_and_order
 
   def customer_order_number
     this_order = self.order || self.order_line.try(:order)
@@ -41,9 +42,10 @@ class BookingLine < ActiveRecord::Base
     return :shipment_id => self.shipment.id
   end
 
-  def order_line_takes_priority
-    if order_line_id && (product_id || order_id)
-      errors.add :order_line_id, "Booking Lines with Order Lines cannot have Products or Orders directly associated"
+  def set_product_and_order
+    if self.order_line
+      self.product = self.order_line.product
+      self.order = self.order_line.order
     end
   end
 

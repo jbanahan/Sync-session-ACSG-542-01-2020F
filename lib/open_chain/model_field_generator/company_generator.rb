@@ -3,7 +3,7 @@ module OpenChain; module ModelFieldGenerator; module CompanyGenerator
     # The id field is created pretty much solely so the screens can make select boxes using the id as the value parameter
     # and reference the field like prod_imp_id.
     r = [
-      [rank_start,"#{uid_prefix}_#{short_prefix}_id".to_sym,"#{association_name}_id".to_sym,"#{description} Name",{:history_ignore=>true, user_accessible: false}]
+      [rank_start,"#{uid_prefix}_#{short_prefix}_id".to_sym,"#{association_name}_id".to_sym,"#{description} DB ID",{:history_ignore=>true, data_type: :integer}]
     ]
     r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
@@ -64,5 +64,8 @@ module OpenChain; module ModelFieldGenerator; module CompanyGenerator
   end
   def make_factory_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, 'factory', 'Factory', 'factory'
+  end
+  def make_forwarder_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, 'fwd', 'Forwarder', 'forwarder'
   end
 end; end; end

@@ -5,10 +5,19 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
       [2,:shpln_shipped_qty,:quantity,"Quantity Shipped",{:data_type=>:decimal}],
       [3,:shpln_container_number,:container_number,"Container Number",{data_type: :string,
         export_lambda: lambda {|sl| sl.container ? sl.container.container_number : ''},
-        import_lambda: lambda {|o,d| "Container Number cannot be set via import."},
-        qualified_field_name: "(SELECT container_number FROM containers WHERE containers.id = shipment_lines.container_id)"
+        import_lambda: lambda {|sl,d|
+          if d.blank?
+            sl.container = nil
+            return "Container removed from line."
+          end
+          c = sl.shipment.containers.find {|c| c.container_number==d.strip}
+          return "Container #{d} not found on shipment." unless c
+          sl.container = c
+          return "Container set to #{d}."
         },
-        read_only:true],
+        qualified_field_name: "(SELECT container_number FROM containers WHERE containers.id = shipment_lines.container_id)"
+        }
+      ],
       [4,:shpln_container_size,:container_size,"Container Size",{data_type: :string,
         export_lambda: lambda {|sl| sl.container ? sl.container.container_size : ''},
         import_lambda: lambda {|o,d| "Container Size cannot be set via import."},

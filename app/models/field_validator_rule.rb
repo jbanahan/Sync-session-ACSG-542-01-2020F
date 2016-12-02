@@ -1,8 +1,12 @@
 class FieldValidatorRule < ActiveRecord::Base
   include HoldsCustomDefinition
   before_validation :set_module_type, on: :create
-  after_save :reset_model_fields
-  after_commit :update_cache
+  if Rails.env=='test'
+    # needs to fire on save to make test cases work because they run inside transactions
+    after_save :update_cache
+  else
+    after_commit :update_cache
+  end
   validates :model_field_uid, :presence=>true, :uniqueness => true
   validates :module_type, :presence=>true
 
@@ -140,6 +144,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def update_cache
     FieldValidatorRule.write_module_cache CoreModule.find_by_class_name self.module_type
     FieldValidatorRule.write_field_cache self.model_field_uid
+    reset_model_fields
   end
   def validate_regex val, model_field, nested
     generic_validate model_field, nested, val, self.regex,"#{model_field.label} must match expression #{self.regex}.", lambda {val.to_s.match(self.regex)}

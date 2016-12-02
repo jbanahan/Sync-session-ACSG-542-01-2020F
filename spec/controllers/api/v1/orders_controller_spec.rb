@@ -54,12 +54,13 @@ describe Api::V1::OrdersController do
     end
     it "should set permission hash" do
       o = Factory(:order)
-      allow_any_instance_of(Order).to receive(:can_view?).and_return true
-      allow_any_instance_of(Order).to receive(:can_edit?).and_return true
-      allow_any_instance_of(Order).to receive(:can_accept?).and_return false
-      allow_any_instance_of(Order).to receive(:can_be_accepted?).and_return true
-      allow_any_instance_of(Order).to receive(:can_attach?).and_return true
-      allow_any_instance_of(Order).to receive(:can_comment?).and_return false
+      expect_any_instance_of(Order).to receive(:can_view?).at_least(:once).and_return true
+      expect_any_instance_of(Order).to receive(:can_edit?).and_return true
+      expect_any_instance_of(Order).to receive(:can_accept?).and_return false
+      expect_any_instance_of(Order).to receive(:can_be_accepted?).and_return true
+      expect_any_instance_of(Order).to receive(:can_attach?).and_return true
+      expect_any_instance_of(Order).to receive(:can_comment?).and_return false
+      expect_any_instance_of(Order).to receive(:can_book?).and_return true
 
       expected_permissions = {
         'can_view'=>true,
@@ -67,7 +68,8 @@ describe Api::V1::OrdersController do
         'can_accept'=>false,
         'can_be_accepted'=>true,
         'can_attach'=>true,
-        'can_comment'=>false
+        'can_comment'=>false,
+        'can_book'=>true
       }
 
       expect(get :show, id: o.id).to be_success
@@ -152,21 +154,6 @@ describe Api::V1::OrdersController do
       get :by_order_number, order_number: "NOTANORDER"
       expect(response).not_to be_success
       expect(response.status).to eq 404
-    end
-  end
-
-  describe "validate" do
-    it "runs validations and returns result hash" do
-      MasterSetup.get.update_attributes(:order_enabled=>true)
-      u = Factory(:master_user, order_view: true)
-      allow_api_access u
-      ord = Factory(:order)
-      bvt = BusinessValidationTemplate.create!(module_type:'Order')
-      bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
-
-      post :validate, id: ord.id, :format => 'json'
-      expect(bvt.business_validation_results.first.validatable).to eq ord
-      expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Order"
     end
   end
 end

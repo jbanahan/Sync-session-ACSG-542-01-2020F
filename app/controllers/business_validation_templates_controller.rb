@@ -105,16 +105,16 @@ class BusinessValidationTemplatesController < ApplicationController
 
     bt_json = JSON.parse(bt.to_json)
     bt_json["business_validation_template"]["search_criterions"] = bt.search_criterions.collect {|sc| sc.json(current_user)}
-    
+
     return bt_json
   end
 
   def make_model_fields_hashes
-    @model_fields = ModelField.find_by_module_type(BusinessValidationTemplate.find(params[:id]).module_type.capitalize.to_sym)
+    @model_fields = ModelField.find_by_module_type(BusinessValidationTemplate.find(params[:id]).module_type.capitalize.to_sym).sort_by(&:label)
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {
-          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s, 
+          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s,
           :label => model_field.label, :datatype => model_field.data_type.to_s
           }
     end

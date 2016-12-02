@@ -4,6 +4,7 @@ describe BusinessValidationResult do
   describe "can_view" do
     it "should allow users who can view results" do
       u = Factory(:master_user)
+      u.company.update_attributes(show_business_rules:true)
       expect(described_class.new.can_view?(u)).to be_truthy
     end
     it "should not allow who can't view results" do
@@ -14,6 +15,7 @@ describe BusinessValidationResult do
   describe "can_edit" do
     it "should allow users from master company" do
       u = Factory(:master_user)
+      u.company.update_attributes(show_business_rules:true)
       expect(described_class.new.can_edit?(u)).to be_truthy
     end
     it "should not allow users not from master company" do
@@ -33,7 +35,7 @@ describe BusinessValidationResult do
       rr2.state = 'Fail'
       rr3.state = 'Review'
       rr4.state = 'Skipped'
-      
+
       bvr = described_class.new
       bvr.validatable = o
 
@@ -52,7 +54,7 @@ describe BusinessValidationResult do
 
       rr1.state = 'Pass'
       rr2.state = 'Pass'
-      
+
       bvr = described_class.new
       bvr.validatable = o
 

@@ -4,6 +4,7 @@ describe BusinessValidationRuleResult do
   describe "can_view" do
     it "should allow users who can view results" do
       u = Factory(:master_user)
+      u.company.update_attributes(show_business_rules:true)
       expect(described_class.new.can_view?(u)).to be_truthy
     end
     it "should not allow who can't view results" do

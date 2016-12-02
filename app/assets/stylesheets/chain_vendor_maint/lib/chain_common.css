@@ -1,7 +1,17 @@
+/*! ChainCommon */
+/*! Build Time: Wed Oct 19 2016 10:39:16 GMT-0400 (EDT) */
+/*! Git SHA: 02063acd8543dcb83c96f6ec344eb5d4c1e3203a */
+/*! Git Branch: master */
+
 .chain-address-name {
   font-weight: bold; }
 
 /*# sourceMappingURL=chain_address.css.map */
+
+.clickable-list-item {
+  cursor: pointer; }
+
+/*# sourceMappingURL=chain_common.css.map */
 
 i.required-icon {
   color: #CC0000;

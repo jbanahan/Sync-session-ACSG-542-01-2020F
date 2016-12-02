@@ -142,6 +142,7 @@ describe FakeJsonController, :type => :controller do
     end
 
     it "returns results hash" do
+      @u.company.update_attributes(show_business_rules:true)
       obj = Factory(:entry)
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       post :show, id: obj.id, :format => 'json'

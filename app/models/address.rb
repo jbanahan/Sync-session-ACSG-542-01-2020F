@@ -43,9 +43,9 @@ class Address < ActiveRecord::Base
 		return self.where(["shipping = ?",true])
   end
 
-  def full_address
-    ary = []
-    [self.name,self.line_1,self.line_2,self.line_3].each {|x| ary << x unless x.blank?}
+  def full_address_array skip_name: false
+    ary = skip_name ? [] : [self.name]
+    [self.line_1,self.line_2,self.line_3].each {|x| ary << x unless x.blank?}
 
     #last line is combined
     last_line = ""
@@ -59,7 +59,11 @@ class Address < ActiveRecord::Base
     last_line.strip!
     ary << last_line unless last_line.blank?
 
-    r = ary.join("\n")
+    ary
+  end
+
+  def full_address
+    r = full_address_array.join("\n")
     r = "" if r.nil?
     r
   end

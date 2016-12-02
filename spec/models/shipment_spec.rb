@@ -1,19 +1,46 @@
 require 'spec_helper'
 
 describe Shipment do
+  let :order_booking do
+    obr = Class.new do
+      def self.can_book? s, u
+      end
+    end
+    OpenChain::OrderBookingRegistry.register obr
+    obr
+  end
+  describe '#generate_reference' do
+    it 'should generate random reference number' do
+      expect(Shipment.generate_reference).to match(/^[0-9A-F]{8}$/)
+    end
+    it 'should try again if reference is taken' do
+      expect(SecureRandom).to receive(:hex).and_return('01234567','87654321')
+      Factory(:shipment,reference:'01234567')
+      expect(Shipment.generate_reference).to eq '87654321'
+    end
+  end
+
   describe "can_view?" do
-    it "should not allow view if user not master and linked to importer (even if the company is one of the other parties" do
-      imp = Factory(:company)
+    it "should not allow view if user not master and not linked to importer (even if the company is one of the other parties)" do
+      imp = Factory(:company,importer:true)
       c = Factory(:company,vendor:true)
       s = Factory(:shipment,vendor:c,importer:imp)
       u = Factory(:user,shipment_view:true,company:c)
       expect(s.can_view?(u)).to be_falsey
    end
    it "should allow view if user from importer company" do
-     imp = Factory(:company)
+     imp = Factory(:company,importer:true)
      u = Factory(:user,shipment_view:true,company:imp)
      s = Factory(:shipment,importer:imp)
-     expect(s.can_view?(u)).to be_falsey
+     expect(s.can_view?(u)).to be_truthy
+   end
+   it "should allow view if user from forwarder company" do
+     fwd = Factory(:company,forwarder:true)
+     imp = Factory(:company,importer:true)
+     imp.linked_companies << fwd
+     u = Factory(:user,shipment_view:true,company:fwd)
+     s = Factory(:shipment,importer:imp,forwarder:fwd)
+     expect(s.can_view?(u)).to be_truthy
    end
   end
   describe "search_secure" do
@@ -44,6 +71,11 @@ describe Shipment do
     it "should allow carrier who is linked to shipment" do
       u = Factory(:user)
       s = Factory(:shipment,carrier:u.company)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
+    end
+    it "should allow forwarder who is linked to shipment" do
+      u = Factory(:user)
+      s = Factory(:shipment,forwarder:u.company)
       expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
     end
     it "should not allow non linked user" do
@@ -178,12 +210,14 @@ describe Shipment do
   describe "uncancel_shipment!" do
     it "should remove cancellation" do
       u = Factory(:user)
-      s = Factory(:shipment,canceled_by:u,canceled_date:Time.now)
+      s = Factory(:shipment,canceled_by:u,canceled_date:Time.now,cancel_requested_at:Time.now,cancel_requested_by:u)
       expect(s).to receive(:create_snapshot_with_async_option).with false, u
       s.uncancel_shipment! u
       s.reload
       expect(s.canceled_by).to be_nil
       expect(s.canceled_date).to be_nil
+      expect(s.cancel_requested_at).to be_nil
+      expect(s.cancel_requested_by).to be_nil
     end
     it "should restore cancelled order line links" do
       u = Factory(:user)
@@ -208,16 +242,41 @@ describe Shipment do
     end
   end
 
+  describe '#request_cancel' do
+    it "should call hook" do
+      ob = order_booking
+      expect(ob).to receive(:post_request_cancel_hook) do |s,u|
+        s.do_something(u)
+      end
+      u = User.new
+      s = Shipment.new
+      expect(s).to receive(:do_something).with(u)
+      expect(s).to receive(:save!)
+      allow(s).to receive(:create_snapshot_with_async_option)
+      s.request_cancel! u
+    end
+  end
+
   describe "request booking" do
-    it "should set booking received date and booking request by" do
-      u = Factory(:user)
-      s = Factory(:shipment)
+    it "should set booking fields" do
+      u = User.new
+      s = Shipment.new
+      expect(s).to receive(:save!)
       expect(s).to receive(:create_snapshot_with_async_option).with false, u
       expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_booking_request,s)
       s.request_booking! u
-      s.reload
       expect(s.booking_received_date).to_not be_nil
       expect(s.booking_requested_by).to eq u
+      expect(s.booking_request_count).to eq 1
+    end
+    it "should call callback" do
+      u = User.new
+      s = Shipment.new
+      allow(s).to receive(:save!)
+      allow(s).to receive(:create_snapshot_with_async_option)
+      allow(OpenChain::EventPublisher).to receive(:publish)
+      expect(order_booking).to receive(:request_booking_hook).with(s,u)
+      s.request_booking! u
     end
   end
 
@@ -362,7 +421,7 @@ describe Shipment do
     end
   end
 
-  describe "can_revise_booking" do
+  describe "can_revise_booking?" do
     it "should allow user to revise if approved but not confirmed and user can request_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
@@ -410,12 +469,20 @@ describe Shipment do
       s.shipment_lines.build
       expect(s.can_revise_booking?(u)).to be_falsey
     end
+    it "should defer to OrderBookingRegistry" do
+      ob = order_booking
+      def ob.can_revise_booking_hook(s,u); s.do_something(u); true; end
+      s = Shipment.new
+      u = double('user')
+      expect(s).to receive(:do_something).with(u)
+      expect(s.can_revise_booking?(u)).to be true
+    end
   end
   describe "revise booking" do
     it "should remove received, requested, approved and confirmed date and 'by' fields" do
       u = Factory(:user)
       original_receive= Time.zone.now
-      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now)
+      s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now,booking_request_count:1)
       expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
       s.revise_booking! u
       s.reload
@@ -426,6 +493,72 @@ describe Shipment do
       expect(s.booking_received_date).to eq original_receive.to_date
       expect(s.booking_requested_by).to eq u
       expect(s.booking_revised_date).to eq Time.zone.now.to_date
+      expect(s.booking_request_count).to eq 2
+    end
+    it "should call order booking registry" do
+      ob = order_booking
+      def ob.revise_booking_hook(s,u); s.do_something(u); true; end
+      s = Shipment.new
+      expect(s).to receive(:save!)
+      expect(s).to receive(:create_snapshot_with_async_option)
+      u = User.new
+      expect(s).to receive(:do_something).with(u)
+      s.revise_booking!(u)
+    end
+  end
+
+  context 'shipment instructions' do
+    describe '#can_send_shipment_instructions?' do
+      let :shipment_without_lines do
+        s = Shipment.new(vendor:Company.new,booking_received_date:Time.now)
+        allow(s).to receive(:can_edit?).and_return true
+        s
+      end
+      let :shipment do
+        shipment_without_lines.shipment_lines.build(line_number:1)
+        shipment_without_lines
+      end
+      let :user do
+        u = User.new
+        u.company = shipment_without_lines.vendor
+        u
+      end
+      it "should allow if user is from vendor and booking has been sent and shipment lines exist and user can edit" do
+        expect(shipment.can_send_shipment_instructions?(user)).to be_truthy
+      end
+      it "should not allow if user cannot edit" do
+        expect(shipment).to receive(:can_edit?).with(user).and_return false
+        expect(shipment.can_send_shipment_instructions?(user)).to be_falsey
+      end
+      it "should not allow if shipment does not have lines" do
+        expect(shipment_without_lines.can_send_shipment_instructions?(user)).to be_falsey
+      end
+      it "should not allow if user is not from vendor" do
+        user.company = Company.new
+        expect(shipment.can_send_shipment_instructions?(user)).to be_falsey
+      end
+      it "should not allow if booking has not been sent" do
+        shipment.booking_received_date = nil
+        expect(shipment.can_send_shipment_instructions?(user)).to be_falsey
+      end
+      it "should not allow if shipment is canceled" do
+        shipment.canceled_date = Time.now
+        expect(shipment.can_send_shipment_instructions?(user)).to be_falsey
+      end
+    end
+    describe '#send_shipment_instructions!' do
+      it "should set shipment instructions fields, publish event, and create snapshot" do
+        s = Factory(:shipment)
+        u = Factory(:user)
+        expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_instructions_send,s)
+        expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
+
+        s.send_shipment_instructions! u
+
+        s.reload
+        expect(s.shipment_instructions_sent_date).to_not be_nil
+        expect(s.shipment_instructions_sent_by).to eq u
+      end
     end
   end
 
@@ -442,7 +575,7 @@ describe Shipment do
       expect(s).to receive(:can_edit?).with(u).and_return false
       expect(s.can_add_remove_booking_lines?(u)).to be_falsey
     end
-    
+
     context "editable shipment" do
       let(:shipment) do
         s = Shipment.new
@@ -454,17 +587,17 @@ describe Shipment do
       let(:user) { double("user") }
 
       it "should allow adding booking lines if booking is approved" do
-        s = shipment.tap {|s| s.booking_approved_date = Time.now }
+        s = shipment.tap {|shp| shp.booking_approved_date = Time.now }
         expect(s.can_add_remove_booking_lines? user).to be_truthy
       end
 
       it "should allow adding lines if booking is confirmed" do
-        s = shipment.tap {|s| s.booking_confirmed_date = Time.now }
+        s = shipment.tap {|shp| shp.booking_confirmed_date = Time.now }
         expect(s.can_add_remove_booking_lines? user).to be_truthy
       end
 
       it "disallows adding lines if shipment has actual shipment lines on it" do
-        s = shipment.tap {|s| s.shipment_lines.build }
+        s = shipment.tap {|shp| shp.shipment_lines.build }
         expect(s.can_add_remove_booking_lines?(user)).to be_falsey
       end
     end

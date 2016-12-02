@@ -51,6 +51,35 @@ describe Address do
     end
   end
 
+  describe "full_address_array" do
+    let (:address) {
+      Address.new(name:'Vandegrift',line_1:'234 Market St',line_2:'5th Floor',line_3:nil,city:'Philadelphia',state:'PA',postal_code:'19106',country:Factory(:country,iso_code:'US'))
+    }
+
+    it "renders full address fields as an array of lines" do
+      expect(address.full_address_array).to eq ["Vandegrift", "234 Market St", "5th Floor", "Philadelphia, PA 19106 US"]
+    end
+
+    it "skips address name if instructed" do
+      expect(address.full_address_array(skip_name: true)).to eq ["234 Market St", "5th Floor", "Philadelphia, PA 19106 US"]
+    end
+
+    it "skips blank address lines" do
+      address.line_2 = "  "
+      expect(address.full_address_array(skip_name: true)).to eq ["234 Market St", "Philadelphia, PA 19106 US"]
+    end
+
+    it "handles missing city" do
+      address.city = ""
+      expect(address.full_address_array.last).to eq "PA 19106 US"
+    end
+
+    it "handles missing country" do
+      address.country = nil
+      expect(address.full_address_array.last).to eq "Philadelphia, PA 19106"
+    end
+  end
+
   context "validations" do
     it "should not allow destroy if in use" do
       a = Factory(:address)

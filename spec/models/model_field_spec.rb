@@ -87,6 +87,7 @@ describe ModelField do
       fvr.read_only = true
       fvr.model_field_uid = "*cf_#{cd.id}"
       fvr.save!
+      ModelField.reload
       expect(ModelField.find_by_uid("*cf_#{cd.id}")).to be_read_only
     end
     it "should not set read_only for custom_definition that isn't read only" do
@@ -98,7 +99,8 @@ describe ModelField do
     it "should set read_only for normal read_only field" do
       mf = ModelField.find_by_uid :prod_uid
       expect(mf).not_to be_read_only
-      fvr = FieldValidatorRule.create!(model_field_uid: :prod_uid, read_only: true)
+      FieldValidatorRule.create!(model_field_uid: :prod_uid, read_only: true)
+      ModelField.reload
       mf = ModelField.find_by_uid :prod_uid
       expect(mf).to be_read_only
     end
@@ -1035,7 +1037,8 @@ describe ModelField do
       end
 
       it "lists failed business rule names on export" do
-        expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, Factory(:master_user))).to eq "A Test\n Test"
+        c = Factory(:company,show_business_rules:true)
+        expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, Factory(:user,company:c))).to eq "A Test\n Test"
       end
 
       it "finds results using failed rules as criterion" do
@@ -1068,25 +1071,25 @@ describe ModelField do
       let(:ent) { Factory(:entry) }
       let!(:u) { Factory(:master_user,entry_view:true) }
       let(:ss) { SearchSetup.new(module_type:'Entry',user:u) }
-      
+
       it "returns user-note string with date/time adjusted to user's timezone" do
         moment = Time.utc(2016, 1, 1)
         eastern_time_str = moment.in_time_zone("Eastern Time (US & Canada)").to_s
         EntryComment.create!(entry: ent, body: "comment body", generated_at: moment, username: "NTUFNEL", public_comment: true)
-        
+
         Time.use_zone("Eastern Time (US & Canada)") do
           ss.search_columns.build(model_field_uid:'ent_user_notes')
           row = SearchQuery.new(ss,u).execute.first[:result]
           eastern_time_comment = "comment body (#{eastern_time_str} - NTUFNEL)"
-          
+
           # PENDING FEEDBACK FROM CIRCLE
-          # expect(row.first).to eq eastern_time_comment  
+          # expect(row.first).to eq eastern_time_comment
 
           export = user_notes.process_export(ent, User.integration)
           expect(export).to eq eastern_time_comment
         end
       end
-    
+
       it "returns user-note string without date/time if generated_at field is NULL" do
         EntryComment.create!(entry: ent, body: "comment body", generated_at: nil, username: "NTUFNEL", public_comment: true)
         ss.search_columns.build(model_field_uid:'ent_user_notes')

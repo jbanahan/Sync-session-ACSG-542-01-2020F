@@ -76,18 +76,4 @@ describe Api::V1::CompaniesController do
       end
     end
   end
-
-  describe "validate" do
-    it "runs validations and returns result hash" do
-      u = Factory(:master_user)
-      allow_api_access u
-      co = u.company
-      bvt = BusinessValidationTemplate.create!(module_type:'Company')
-      bvt.search_criterions.create! model_field_uid: "cmp_name", operator: "nq", value: "XXXXXXXXXX"
-      
-      post :validate, id: co.id, :format => 'json'
-      expect(bvt.business_validation_results.first.validatable).to eq co
-      expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Company"
-    end
-  end
 end

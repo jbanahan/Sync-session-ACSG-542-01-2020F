@@ -4,6 +4,9 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
+  
+  class OnShipmentError < StandardError; end
+  
   VALID_ROOT_ELEMENTS ||= [
     '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
     'ORDERS05' #before June 2016
@@ -37,7 +40,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def parse_dom dom
-    @first_expected_delivery_date = nil
     root = dom.root
     raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
 
@@ -51,68 +53,101 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     # envelope info
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
+    
+    order = nil
 
-    find_order(order_number, @imp, ext_time) do |o|
-
-      # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
-      vend = nil
-      Lock.acquire("Vendor-#{vendor_system_code}") do
-        vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
-        @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
+    begin
+      ActiveRecord::Base.transaction do
+        @first_expected_delivery_date = nil
+        
+        order = find_order(order_number, @imp, ext_time) do |o|
+    
+          # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
+          vend = nil
+          Lock.acquire("Vendor-#{vendor_system_code}") do
+            vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
+            @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
+          end
+    
+          o.last_file_bucket = @opts[:bucket]
+          o.last_file_path = @opts[:key]
+    
+          o.customer_order_number = o.order_number
+          o.vendor = vend
+          o.order_date = order_date(base)
+          o.currency = et(order_header,'CURCY')
+          o.terms_of_payment = payment_terms_description(base)
+          o.terms_of_sale = ship_terms(base)
+          o.order_from_address = order_from_address(base,vend)
+    
+          header_ship_to = ship_to_address(base,@imp)
+    
+          lines_on_shipment = o.order_lines.find {|ol| !ol.booking_lines.empty? || !ol.shipment_lines.empty?}
+    
+          order_lines_processed = []
+          REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, lines_on_shipment).line_number.to_i}
+          o.order_lines.each {|ol|
+            if !order_lines_processed.include?(ol.line_number.to_i)
+              if lines_on_shipment
+                raise OnShipmentError, "Line #{ol.line_number} can't be deleted, it's already on a shipment."
+              else
+                ol.mark_for_destruction 
+              end
+            end
+          }
+    
+    
+          o.save!
+          o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
+          o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
+          o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
+          buyer_name, buyer_phone = buyer_info(base)
+          o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
+          o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
+          o.associate_vendor_and_products! @user
+    
+          set_header_dates_from_lines(base,o)
+    
+          o.save!
+    
+          o.reload
+          validate_line_totals(o,base)
+    
+          setup_folders o
+          o
+        end
       end
+      order.create_snapshot @user if order
+    rescue OnShipmentError
+      # mailer here
+      send_on_shipment_error dom, order_number, $!.message
+    end
 
-      o.last_file_bucket = @opts[:bucket]
-      o.last_file_path = @opts[:key]
-
-      o.vendor = vend
-      o.order_date = order_date(base)
-      o.currency = et(order_header,'CURCY')
-      o.terms_of_payment = payment_terms_description(base)
-      o.terms_of_sale = ship_terms(base)
-      o.order_from_address = order_from_address(base,vend)
-
-      header_ship_to = ship_to_address(base,@imp)
-
-      order_lines_processed = []
-      REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to).line_number.to_i}
-      o.order_lines.each {|ol|
-        ol.mark_for_destruction unless order_lines_processed.include?(ol.line_number.to_i)
-      }
-
-
-      o.save!
-      o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
-      o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
-      o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
-      buyer_name, buyer_phone = buyer_info(base)
-      o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
-      o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
-      o.associate_vendor_and_products! @user
-
-      set_header_dates_from_lines(base,o)
-
-      o.save!
-
-      o.reload
-      validate_line_totals(o,base)
-
-      setup_folders o
-
-      o.create_snapshot @user
+    
+  end
+  
+  def send_on_shipment_error dom, order_number, message
+    Tempfile.open(["ll_sap_order-#{order_number}",'.xml']) do |f|
+      f << dom.to_s
+      f.flush
+      subject = "Order #{order_number} XML rejected."
+      body = "Order #{order_number} was rejected: #{message}"
+      to = 'll-support@vandegriftinc.com'
+      OpenMailer.send_simple_html(to,subject,body,[f]).deliver!
     end
   end
 
   def setup_folders order
     folder_list = [{folder_name: 'Quality', group_name: 'Quality', group_system_code: 'QUALITY' },
                    {folder_name: 'Lacey Docs', group_name: 'RO/Product Compliance', group_system_code: 'ROPRODCOMP'}]
-    
+
     already_existing_folders = order.folders.map(&:name)
     folder_list.each do |f|
       if !already_existing_folders.include?(f[:folder_name])
         new_folder = order.folders.create!(name: f[:folder_name], created_by_id: @user.id)
         new_folder.groups << Group.use_system_group(f[:group_system_code], name: f[:group_name])
       end
-    end    
+    end
     nil
   end
 
@@ -392,16 +427,38 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el, importer, header_ship_to
+    def process_line order, line_el, importer, header_ship_to, lines_on_shipment
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
-      ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) unless ol
+      if !ol
+        if lines_on_shipment
+          raise OnShipmentError, "Cannot add line #{line_number} because other lines from this order are already on a shipment."
+        else
+          ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) 
+        end
+      end
 
       product = find_product(line_el)
+      qty = BigDecimal(et(line_el,'MENGE'),4)
+      uom = convert_uom(et(line_el,'MENEE'))
+      
+      # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
+      price_per_unit = nil
+      extended_cost_text = et(line_el,'NETWR')
+      if !extended_cost_text.blank?
+        extended_cost = BigDecimal(extended_cost_text,4)
+        price_per_unit = extended_cost / qty
+      end
+      
+      validate_line_not_changed(ol,product,qty,uom,price_per_unit) if lines_on_shipment
+
+      ol.price_per_unit = price_per_unit
       ol.product = product
-      ol.quantity = BigDecimal(et(line_el,'MENGE'),4)
-      ol.unit_of_measure = convert_uom(et(line_el,'MENEE'))
+      ol.quantity = qty
+      ol.unit_of_measure = uom
+
+
 
       # There is a possibility these may change between runs. We do not want the part_name or old_article_number
       # to change once they are set.
@@ -413,14 +470,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article]).value
       end
 
-      # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
-      price_per_unit = nil
-      extended_cost_text = et(line_el,'NETWR')
-      if !extended_cost_text.blank?
-        extended_cost = BigDecimal(extended_cost_text,4)
-        price_per_unit = extended_cost / ol.quantity
-      end
-      ol.price_per_unit = price_per_unit
 
       exp_del = expected_delivery_date(line_el)
       if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
@@ -433,6 +482,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ol.ship_to = header_ship_to if ol.ship_to.nil?
 
       return ol
+    end
+    
+    def validate_line_not_changed ol, product, qty, uom, price_per_unit
+      changed = false
+      changed = true if ol.product != product
+      changed = true if ol.quantity != qty
+      changed = true if ol.unit_of_measure != uom
+      changed = true if ol.price_per_unit != price_per_unit.round(2)
+      raise OnShipmentError, "Order Line #{ol.line_number} already on a shipment." if changed
     end
 
     def find_product order_line_el

@@ -34,6 +34,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
         expect(oar).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance)
         OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
       end
+      it 'should register order booking' do
+        expect(OpenChain::OrderBookingRegistry).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking)
+        OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
+      end
 
     end
   end

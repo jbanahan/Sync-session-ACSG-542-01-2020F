@@ -54,15 +54,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.set_forecasted_handover_date ord
-    cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date]
+    cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start]
     current_forecasted_handover_date = ord.get_custom_value(cdefs[:ord_forecasted_handover_date]).value
     planned_handover_date = ord.get_custom_value(cdefs[:ord_planned_handover_date]).value
     if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date-7.days)
       return true
     end
     if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end-7.days)
       return true
     end
     return false
@@ -150,7 +152,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
-    attr_accessor :ship_from_address, :planned_handover_date
+    attr_accessor :ship_from_address, :planned_handover_date, :variant_map
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -167,6 +169,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       (ORDER_MODEL_FIELDS + ORDER_CUSTOM_FIELDS).each do |uid|
         elements << order_hash[uid.to_s]
       end
+      variant_map = {}
       if entity_hash['entity']['children']
         entity_hash['entity']['children'].each do |child|
           next unless child['entity']['core_module'] == 'OrderLine'
@@ -175,11 +178,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
             prefix = uid==:ordln_line_number ? '~' : '' #double tilde to start each order line in fingerprint
             elements << "#{prefix}#{child_hash[uid.to_s]}"
           end
+          variant_map[child_hash['ordln_line_number']] = child_hash['ordln_varuid']
         end
       end
       od = self.new(elements.join('~'))
       od.ship_from_address = order_hash['ord_ship_from_full_address']
       od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
+      od.variant_map = variant_map
       return od
     end
 
@@ -211,7 +216,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return new_hash.keys if old_data.ship_from_address!=new_data.ship_from_address
 
       lines_to_check = new_hash.keys & old_hash.keys
-      lines_to_check.reject {|line_number| old_hash[line_number] == new_hash[line_number]}
+      need_reset = lines_to_check.reject {|line_number| old_hash[line_number] == new_hash[line_number]}
+      new_data.variant_map.each do |k,v|
+        need_reset << k if old_data.variant_map[k] != v
+      end
+      need_reset.uniq.compact
     end
 
     def self.needs_new_pdf? old_data, new_data

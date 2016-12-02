@@ -7,7 +7,7 @@ describe AdvancedSearchController do
     sign_in_as @user
   end
 
-  describe "destroy" do 
+  describe "destroy" do
     it "should destroy and return id of previous search" do
       old_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
       new_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
@@ -60,7 +60,7 @@ describe AdvancedSearchController do
     end
     it "should 404 for wrong user" do
       ss = Factory(:search_setup)
-      expect {put :update, :id=>ss.id, :search_setup=>{:name=>'q'}}.to raise_error ActionController::RoutingError 
+      expect {put :update, :id=>ss.id, :search_setup=>{:name=>'q'}}.to raise_error ActionController::RoutingError
     end
     it "returns error if sort is submitted without search criterion" do
       put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[{:mfid=>'prod_name'}]}
@@ -86,7 +86,7 @@ describe AdvancedSearchController do
       expect(@ss.search_schedules).to be_empty
     end
     it "should update name" do
-      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:no_time=>true} 
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:no_time=>true}
       expect(response).to be_success
       @ss.reload
       expect(@ss.name).to eq("Y")
@@ -110,7 +110,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:model_field_uid=>:prod_uid,:rank=>1,:descending=>false)
       put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[
         {:mfid=>'prod_name',:label=>'NM',:rank=>1,:descending=>true},
-        {:mfid=>'prod_uid',:label=>'UID',:rank=>2,:descending=>false}], 
+        {:mfid=>'prod_uid',:label=>'UID',:rank=>2,:descending=>false}],
         :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       expect(response).to be_success
       @ss.reload
@@ -169,14 +169,14 @@ describe AdvancedSearchController do
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
-    
+
     it "should return last search updated if no search_runs" do
       ss_first = Factory(:search_setup,:user=>@user,updated_at:1.day.ago)
       ss_second = Factory(:search_setup,:user=>@user,updated_at:1.year.ago)
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
-   
+
     it "should return 0 if no search setups" do
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq("0")
@@ -236,6 +236,7 @@ describe AdvancedSearchController do
           "download_format"=>"xls","day_of_month"=>11}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
+      no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
       expected_model_fields = ModelField.sort_by_label(no_non_accessible).collect {|mf|
         x = {}
         x['mfid'] = mf.uid.to_s
@@ -252,7 +253,7 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, 
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,
                                   :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
@@ -277,7 +278,7 @@ describe AdvancedSearchController do
     end
     it "should 404 if not for correct user" do
       ss = Factory(:search_setup)
-      expect {get :show, :id=>ss.id, :format=>:json}.to raise_error ActionController::RoutingError 
+      expect {get :show, :id=>ss.id, :format=>:json}.to raise_error ActionController::RoutingError
     end
     it "should set allow ftp to true for admin" do
       ss = Factory(:search_setup,:user=>@user)
@@ -375,7 +376,7 @@ describe AdvancedSearchController do
           end
           expected_bulk_actions << h
         end
-        expect(r['bulk_actions']).to eq(expected_bulk_actions) 
+        expect(r['bulk_actions']).to eq(expected_bulk_actions)
       end
       it "should 404 if not for current_user" do
         u = Factory(:user)
@@ -468,14 +469,14 @@ describe AdvancedSearchController do
     end
     it "should 404 if user doesn't own search setup" do
       ss = Factory(:search_setup)
-      expect {get :download, :id=>ss.id, :format=>:xls}.to raise_error ActionController::RoutingError 
+      expect {get :download, :id=>ss.id, :format=>:xls}.to raise_error ActionController::RoutingError
     end
   end
 
   describe "send_email" do
-    before(:each) do 
+    before(:each) do
       @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
-        :module_type=>"Product") 
+        :module_type=>"Product")
       allow_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true
     end
 
@@ -494,14 +495,14 @@ describe AdvancedSearchController do
 
     it "errors if email missing" do
       expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
-      
+
       post :send_email, :id=>@ss.id, :mail_fields=> {}
       expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
 
     it "errors if one or more emails aren't valid" do
       expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
-      
+
       post :send_email, :id=>@ss.id, :mail_fields=> {'to' => 'tufnel@stonehenge.biz, st-hubbins.com'}
       expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid and separated by commas."
     end

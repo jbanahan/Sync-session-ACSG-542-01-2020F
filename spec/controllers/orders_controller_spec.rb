@@ -110,6 +110,9 @@ describe OrdersController do
     before :each do
       @ord = Factory(:order,order_number:'123456')
       @rule_result = Factory(:business_validation_rule_result)
+      allow_any_instance_of(Order).to receive(:can_view?).with(@u).and_return true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
+      allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return true
       @bvr = @rule_result.business_validation_result
       @bvr.state = 'Fail'
       @bvr.validatable = @ord
@@ -152,12 +155,12 @@ describe OrdersController do
     end
   describe 'bulk_update_fields' do
     it "returns list of model fields for user to edit" do
-      post :bulk_update_fields 
+      post :bulk_update_fields
       expect(JSON.parse(response.body)["mf_hsh"]).to include({"ord_ord_date" => "Order Date"})
     end
     it "skips model fields that user isn't authorized to edit" do
       allow_any_instance_of(ModelField).to receive(:can_edit?).and_return false
-      post :bulk_update_fields 
+      post :bulk_update_fields
       expect(JSON.parse(response.body)["mf_hsh"]).to be_empty
     end
     it 'should get count for specific items from #get_bulk_count' do

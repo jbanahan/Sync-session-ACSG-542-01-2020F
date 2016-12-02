@@ -94,24 +94,28 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   end
 
   describe '#set_forecasted_handover_date' do
+    # PER SOW 1100 (2016-11-04), Forecasted Handover Date is being relabelled as Forecasted Ship Window End, but we're leaving the variables in the code alone
+    # all tests also confirm that forecasted ship window start is set to 7 days prior to forecasted handover date
     before :each do
-      @cdefs = described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date])
-      @o = Factory(:order,ship_window_end:Date.new(2016,5,1))
+      @cdefs = described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_forecasted_ship_window_start])
+      @o = Factory(:order,ship_window_end:Date.new(2016,5,10))
     end
     it "should set forecasted handover date to planned_handover_date if planned_handover_date is not blank" do
       @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
       expect(described_class.set_forecasted_handover_date(@o)).to eq true
       expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,15)
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,8)
     end
     it "should set forecasted handover date to ship_window_end if planned_handover_date is blank" do
       expect(described_class.set_forecasted_handover_date(@o)).to eq true
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,1)
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,10)
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,3)
     end
     it "should return false if did not change" do
-      @o.update_custom_value!(@cdefs[:ord_forecasted_handover_date],Date.new(2016,5,1))
+      @o.update_custom_value!(@cdefs[:ord_forecasted_handover_date],Date.new(2016,5,10))
       expect(described_class.set_forecasted_handover_date(@o)).to eq false
       @o.reload
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,1)
+      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,10)
     end
   end
 
@@ -355,7 +359,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       end
       it 'should create order data from hash' do
         p = Factory(:product,unique_identifier:'px')
-        ol = Factory(:order_line,line_number:1,product:p,quantity:10,unit_of_measure:'EA',price_per_unit:5)
+        variant = Factory(:variant,product:p,variant_identifier:'VIDX')
+        ol = Factory(:order_line,line_number:1,product:p,variant:variant,quantity:10,unit_of_measure:'EA',price_per_unit:5)
         Factory(:order_line,order:ol.order,line_number:2,product:p,quantity:50,unit_of_measure:'FT',price_per_unit:7)
         o = ol.order
         o.update_attributes(order_number:'ON1',
@@ -375,6 +380,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
         od = described_class::OrderData.build_from_hash(h)
         expect(od.fingerprint).to eq expected_fingerprint
+        expected_variant_map = {1=>variant.variant_identifier,2=>nil}
+        expect(od.variant_map).to eq expected_variant_map
       end
     end
 
@@ -421,9 +428,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
         old_data = described_class::OrderData.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
+        old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
         new_data = described_class::OrderData.new(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
+        new_data.variant_map = old_data.variant_map
         # don't return line 1 because it stayed the same
         # don't return line 3 because it was deleted
         # don't return line 4 because it was added
@@ -433,10 +442,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
         old_data = described_class::OrderData.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
+        old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
         new_data = described_class::OrderData.new(new_fingerprint)
         new_data.ship_from_address = 'other'
+        new_data.variant_map = old_data.variant_map
         expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','2','4']
+      end
+      it 'should return lines with different variants' do
+        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_data = described_class::OrderData.new(old_fingerprint)
+        old_data.ship_from_address = 'abc'
+        old_data.variant_map = {'1'=>'10','2'=>'11'}
+        new_data = described_class::OrderData.new(old_fingerprint)
+        new_data.ship_from_address = old_data.ship_from_address
+        new_data.variant_map = {'1'=>'OTHER','2'=>'11','3'=>'NEW'}
+        expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','3']
       end
     end
 

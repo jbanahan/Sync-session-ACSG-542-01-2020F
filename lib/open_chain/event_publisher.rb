@@ -98,6 +98,11 @@ module OpenChain; class EventPublisher
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
         lambda {|obj| "Shipment #{obj.reference} cancellation requested."},
         lambda {|obj| "Shipment #{obj.reference} cancellation requested."}
+      ),
+      shipment_instructions_send: MessageType.new('SHIPMENT_INSTRUCTIONS_SEND',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/shipments/#{obj.id}"},
+        lambda {|obj| "Shipment #{obj.reference} instructions sent."},
+        lambda {|obj| "Shipment #{obj.reference} instructions sent."}
       )
     }
 

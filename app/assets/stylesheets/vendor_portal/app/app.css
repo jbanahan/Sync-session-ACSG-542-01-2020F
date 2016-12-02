@@ -1,6 +1,9 @@
 .numeric {
   font-family: monospace; }
 
+ul.nav-tabs a[data-target] {
+  cursor: pointer; }
+
 /*# sourceMappingURL=base.css.map */
 
 @charset "UTF-8";

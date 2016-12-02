@@ -1,0 +1,8 @@
+<% mfs.each_pair do |field_name, model| %>
+    <div>
+      <div class='col-md-6'>
+        <label class='control-label'><%= model.label %></label>
+        <%= model_field_editor(User.current, Order.new, model, "mf_hsh[#{field_name}]", {})%>
+      </div>
+    </div>
+<% end %>

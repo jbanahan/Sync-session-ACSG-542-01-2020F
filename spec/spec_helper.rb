@@ -63,6 +63,9 @@ RSpec.configure do |config|
 
     #clear ComparatorRegistry
     OpenChain::EntityCompare::ComparatorRegistry.clear
+
+    # clear OrderBookingRegistry
+    OpenChain::OrderBookingRegistry.clear
   end
 
   # Clears out the deliveries array before every test..which is only done automatically

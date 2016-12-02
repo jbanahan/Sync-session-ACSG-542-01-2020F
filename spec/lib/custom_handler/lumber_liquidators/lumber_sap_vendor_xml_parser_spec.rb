@@ -24,6 +24,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       expect(c.system_code).to eq '0000100003'
       expect(c.get_custom_value(@cdefs[:cmp_sap_company]).value).to eq '0000100003'
       expect(c.name).to eq 'KIDRON INTERNATIONAL'
+      expect(c.show_business_rules).to be_truthy
       expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_falsey
       expect(c.get_custom_value(@cdefs[:cmp_sap_blocked_status]).value).to be_falsey
       expect(c).to be_vendor

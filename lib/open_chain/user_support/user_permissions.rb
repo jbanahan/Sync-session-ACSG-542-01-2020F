@@ -16,6 +16,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_orders?
     when CoreModule::SHIPMENT
       return self.view_shipments?
+    when CoreModule::CONTAINER
+      return self.view_shipments?
     when CoreModule::PRODUCT
       return self.view_products?
     when CoreModule::SALE
@@ -25,6 +27,8 @@ module OpenChain; module UserSupport; module UserPermissions
     when CoreModule::ORDER_LINE
       return self.view_orders?
     when CoreModule::SHIPMENT_LINE
+      return self.view_shipments?
+    when CoreModule::BOOKING_LINE
       return self.view_shipments?
     when CoreModule::DELIVERY_LINE
       return self.view_deliveries?
@@ -80,7 +84,7 @@ module OpenChain; module UserSupport; module UserPermissions
 
   #permissions
   def view_business_validation_results?
-    self.company.master? || (self.company.importer? && self.company.show_business_rules?)
+    self.company.show_business_rules?
   end
   def edit_business_validation_results?
     self.view_business_validation_results?

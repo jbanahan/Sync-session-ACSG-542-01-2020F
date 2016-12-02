@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     raise "Missing SAP Number. All vendors must have SAP Number at XPATH //E1LFA1M/LIFNR" if sap_code.blank?
     name = et(base,'NAME1')
     ActiveRecord::Base.transaction do
-      c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true)
+      c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true,show_business_rules:true)
 
       master = Company.find_by_master(true)
       master.linked_companies << c unless master.linked_companies.include?(c)

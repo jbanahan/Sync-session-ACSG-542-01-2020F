@@ -44,6 +44,19 @@ describe OpenMailer do
       end
     end
   end
+  describe 'send_support_request_to_helpdesk' do
+    it "sends request to helpdesk" do
+      request = Factory(:support_request, ticket_number: "42", body: "request body", severity: "urgent", referrer_url: "ref url", external_link: "ext link")
+      OpenMailer.send_support_request_to_helpdesk("support@vandegriftinc.com", request).deliver!
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["support@vandegriftinc.com"]
+      expect(mail.reply_to).to eq [request.user.email]
+      expect(mail.subject).to eq "[Support Request ##{request.ticket_number}]"
+      expect(mail.body).to include request.user.full_name
+      expect(mail.body).to include "request body"
+      expect(mail.body).to include "ref url"
+    end
+  end
   describe "send_ack_file_exception" do
     it "should attach file for ack file exceptions" do
       @tempfile = Tempfile.new ["s3_content", ".txt"]

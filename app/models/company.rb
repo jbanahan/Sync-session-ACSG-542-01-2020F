@@ -395,6 +395,6 @@ class Company < ActiveRecord::Base
     master_setup.delivery_enabled && (self.master? || self.carrier?)
   end
   def company_view_edit_shipments?
-    master_setup.shipment_enabled && (self.master? || self.vendor? || self.carrier? || self.agent? || self.importer?)
+    master_setup.shipment_enabled && (self.master? || self.vendor? || self.carrier? || self.agent? || self.importer? || self.forwarder?)
   end
 end

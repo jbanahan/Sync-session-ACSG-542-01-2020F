@@ -28,7 +28,7 @@ describe SupportRequest do
       end
     end
 
-    describe "send_ticket!" do
+    describe "send_request" do
       it "uses TrelloTicketSender to send a ticket" do
         card = double("Trello::Card")
         expect(card).to receive(:short_url).and_return "http://short.en/me"
@@ -41,6 +41,36 @@ describe SupportRequest do
         expect(support_request).to be_persisted
         expect(support_request.ticket_number).to eq support_request.id.to_s
         expect(support_request.external_link).to eq "http://short.en/me"
+      end
+    end
+  end
+
+  context "with email config" do
+    let(:config) {
+      {"email" => {"addresses" => "support@vandegriftinc.com"}}
+    }
+
+    before :each do
+      allow(Rails.env).to receive(:test?).and_return false
+      expect(described_class).to receive(:support_request_config).and_return config
+    end
+
+    describe "request_sender" do
+      it "returns email sender" do
+        sender = described_class.request_sender
+        expect(sender).to be_a(SupportRequest::EmailSender)
+        expect(sender.addresses).to eq "support@vandegriftinc.com"
+      end
+    end
+
+    describe "send_request" do
+      it "uses EmailRequestSender to send a request" do
+        support_request.send_request!
+        support_request.reload
+        expect(support_request).to be_persisted
+        expect(support_request.ticket_number).to eq support_request.id.to_s
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq "[Support Request ##{support_request.ticket_number}]"
       end
     end
   end

@@ -16,13 +16,11 @@ describe CustomReportAnnSapChanges do
     end
     it "should allow product, classification fields" do
       avail = described_class.column_fields_available(@u)
-      expect(avail.size).to eq(CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size)
       expect(avail).to include(ModelField.find_by_uid(:prod_uid))
       expect(avail).to include(ModelField.find_by_uid(:class_cntry_iso))
     end
     it "should allow parameters from product, classifcation" do
       avail = described_class.criterion_fields_available(@u)
-      expect(avail.size).to eq(CoreModule::PRODUCT.model_fields.values.size + CoreModule::CLASSIFICATION.model_fields.values.size)
       expect(avail).to include(ModelField.find_by_uid(:prod_uid))
       expect(avail).to include(ModelField.find_by_uid(:class_cntry_iso))
     end
@@ -96,7 +94,7 @@ describe CustomReportAnnSapChanges do
       @rc.search_criterions.build(model_field_uid:'prod_uid',operator:'eq',value:find_me.unique_identifier)
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)
-      expect(arrays[1][0]).to eq(find_me.unique_identifier) 
+      expect(arrays[1][0]).to eq(find_me.unique_identifier)
     end
     it "should handle records with no snapshots" do
       p = make_eligible_product
@@ -112,7 +110,7 @@ describe CustomReportAnnSapChanges do
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)
-      expect(arrays[1][2]).to eq("") 
+      expect(arrays[1][2]).to eq("")
     end
     it "should use most recent snapshot before approved date" do
       p = make_eligible_product

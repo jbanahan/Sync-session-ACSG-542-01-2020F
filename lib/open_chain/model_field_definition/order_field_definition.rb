@@ -81,21 +81,33 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         },
         qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT shipments.reference ORDER BY shipments.reference SEPARATOR \"\n\") FROM order_lines INNER JOIN piece_sets ON piece_sets.order_line_id = order_lines.id INNER JOIN shipment_lines ON shipment_lines.id = piece_sets.shipment_line_id INNER JOIN shipments ON shipments.id = shipment_lines.shipment_id WHERE order_lines.order_id = orders.id)"
       }],
-      [31, :ord_comment_last_7_hrs, :comment_last_7_hrs, "Comments - Last 7 Hours", :data_type=>:string, :read_only=>true,
-        :import_lambda => lambda {|a,b| return "Last 7 Hours of Comments cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj| Comment.gather_since(obj, DateTime.now - 7.hours)},
-        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c.subject,\": \",c.body) ORDER BY c.updated_at DESC SEPARATOR \"\n \n\") FROM comments c WHERE c.commentable_id = orders.id AND DATE_SUB(NOW(), INTERVAL 7 DAY_HOUR) <= c.updated_at)"
+      [31, :ord_comment_last_7_days, :comment_last_7_days, "Comments - Last 7 Days", :data_type=>:string, :read_only=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 7 Days cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, DateTime.now - 7.days)},
+        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c.subject,\": \",c.body) ORDER BY c.updated_at DESC SEPARATOR \"\n \n\") FROM comments c WHERE c.commentable_id = orders.id AND DATE_SUB(NOW(), INTERVAL 7 DAY) <= c.updated_at)"
       ],
-      [32, :ord_comment_last_14_hrs, :comment_last_14_hrs, "Comments - Last 14 Hours", :data_type=>:string, :read_only=>true,
-        :import_lambda => lambda {|a,b| return "Last 14 Hours of Comments cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj| Comment.gather_since(obj, DateTime.now - 14.hours)},
-        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c.subject,\": \",c.body) ORDER BY c.updated_at DESC SEPARATOR \"\n \n\") FROM comments c WHERE c.commentable_id = orders.id AND DATE_SUB(NOW(), INTERVAL 14 DAY_HOUR) <= c.updated_at)"
-      ],
-      [33, :ord_comment_last_24_hrs, :comment_last_24_hrs, "Comments - Last 24 Hours", :data_type=>:string, :read_only=>true,
-        :import_lambda => lambda {|a,b| return "Last 24 Hours of Comments cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj| Comment.gather_since(obj, DateTime.now - 24.hours)},
+      [32, :ord_comment_last_24_hrs, :comment_last_24_hrs, "Comments - Last 24 Hours", :data_type=>:string, :read_only=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 24 Hours cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, DateTime.now - 24.hours)},
         :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c.subject,\": \",c.body) ORDER BY c.updated_at DESC SEPARATOR \"\n \n\") FROM comments c WHERE c.commentable_id = orders.id AND DATE_SUB(NOW(), INTERVAL 24 DAY_HOUR) <= c.updated_at)"
-      ]
+      ],
+      [33, :ord_comment_last_25, :comment_last_25, "Comments - Last 25", :data_type=>:string, :read_only=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 25 cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, nil, 25)},
+        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c.subject,\": \",c.body) ORDER BY c.updated_at DESC SEPARATOR \"\n \n\") FROM comments c WHERE c.commentable_id = orders.id LIMIT 25)"
+      ],
+      [34,:ord_has_variants,:has_variants,"Has Variants",{
+        data_type: :boolean,
+        read_only: true,
+        history_ignore: true,
+        export_lambda: lambda {|ord|
+          ord.order_lines.each do |ol|
+            return true if ol.product && !ol.product.variants.empty?
+          end
+          return false
+        },
+        qualified_field_name: "(SELECT IF((SELECT count(*) FROM order_lines INNER JOIN products ON order_lines.product_id = products.id INNER JOIN variants ON variants.product_id = products.id where order_lines.order_id = orders.id)>0,1,null))"
+      }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")

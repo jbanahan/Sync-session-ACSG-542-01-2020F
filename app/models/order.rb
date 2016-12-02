@@ -1,5 +1,6 @@
 require 'open_chain/event_publisher'
 require 'open_chain/order_acceptance_registry'
+require 'open_chain/order_booking_registry'
 class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
@@ -21,6 +22,7 @@ class Order < ActiveRecord::Base
 
 	has_many	 :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
 	has_many   :piece_sets, :through => :order_lines
+  has_many   :booking_lines_by_order_line, :through => :order_lines, source: :booking_lines
 
   accepts_nested_attributes_for :order_lines, :allow_destroy => true
 
@@ -134,6 +136,15 @@ class Order < ActiveRecord::Base
   end
   def can_close? user
     user.edit_orders? && (user.company == self.importer || user.company.master?)
+  end
+
+  #######
+  # Order Booking Logic
+  #######
+  def can_book? user
+    return false unless user.edit_shipments?
+    OpenChain::OrderBookingRegistry.registered.each {|r| return false unless r.can_book?(self,user)}
+    return true
   end
 
   def associate_vendor_and_products! user

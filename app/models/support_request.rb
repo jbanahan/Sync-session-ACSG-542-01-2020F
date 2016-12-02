@@ -20,6 +20,9 @@ class SupportRequest < ActiveRecord::Base
       if "trello" == sender
         config = config[key]
         return TrelloTicketSender.new(config['board_id'], config['list_name'], config['severity_colors'])
+      elsif "email" == sender
+        config = config[key]
+        return EmailSender.new(config['addresses'])
       elsif "null" == sender
         return NullSender.new
       else
@@ -67,6 +70,27 @@ class SupportRequest < ActiveRecord::Base
       support_request.update_attributes! ticket_number: support_request.id.to_s, external_link: card.short_url
       support_request
     end
+  end
+
+  class EmailSender
+
+    attr_reader :addresses
+
+    def initialize addresses
+      @addresses = addresses
+    end
+
+    def send_request support_request
+      # Need to do this to generate the id, so we have an actual ticket number below in cases where 
+      # the support request may not have been saved yet.
+      if !support_request.persisted?
+        support_request.save!
+      end
+      support_request.update_attributes! ticket_number: support_request.id.to_s
+      OpenMailer.send_support_request_to_helpdesk(@addresses, support_request).deliver!
+      support_request
+    end
+
   end
 
 

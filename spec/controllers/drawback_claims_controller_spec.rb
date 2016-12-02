@@ -152,7 +152,7 @@ describe DrawbackClaimsController do
     before :each do
       MasterSetup.get.update_attributes(:drawback_enabled => true)
       @u = Factory(:drawback_user)
-      @u.company.update_attributes! master: true
+      @u.company.update_attributes! master: true, show_business_rules: true
       sign_in_as @u
 
       @dc = Factory(:drawback_claim, name:'test_dc')

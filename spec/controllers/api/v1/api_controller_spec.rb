@@ -38,6 +38,22 @@ describe Api::V1::ApiController do
     end
   end
 
+  describe "model_field_reload" do
+    controller do
+      def index
+        render json: {ok: 'ok'}
+      end
+    end
+    it "should reload stale model fields" do
+      u = Factory(:user)
+      allow_api_access u
+      expect(ModelField).to receive(:reload_if_stale)
+      get :index
+      expect(response).to be_success
+      expect(ModelField.web_mode).to be_truthy
+    end
+  end
+
   describe "action_secure" do
     controller do
       def index

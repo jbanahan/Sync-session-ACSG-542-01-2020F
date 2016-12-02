@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Order do
   before :each do
     OpenChain::OrderAcceptanceRegistry.clear
+    OpenChain::OrderBookingRegistry.clear
   end
   describe 'display_order_number' do
     it "shoud show order_number if no customer order number" do
@@ -51,6 +52,40 @@ describe Order do
       expect(@o).to receive(:create_snapshot_with_async_option).with(true,@u)
       @o.async_post_update_logic!(@u)
     end
+  end
+  describe 'can_book?' do
+    let :user do
+      u = double(:user)
+      allow(u).to receive(:edit_shipments?).and_return true
+      u
+    end
+    let :book_registry_array do
+      r1 = double(:b1)
+      r2 = double(:b2)
+      r = [r1,r2]
+      r.each do |x|
+        allow(x).to receive(:can_book?).with(instance_of(Order),user).and_return true
+        OpenChain::OrderBookingRegistry.register(x)
+      end
+    end
+    it "should return true if can edit shipments and all OrderBookingRegistry entries return true" do
+      book_registry_array
+      expect(Order.new.can_book?(user)).to be_truthy
+    end
+    it "should return false if user cannot edit shipments" do
+      u = user
+      allow(u).to receive(:edit_shipments?).and_return false
+      book_registry_array
+      expect(Order.new.can_book?(user)).to be_falsey
+    end
+    it "should return false if any OrderBookingRegistry returns false" do
+      book_registry_array
+      x = double(:false_booking)
+      expect(x).to receive(:can_book?).with(instance_of(Order),user).and_return false
+      OpenChain::OrderBookingRegistry.register x
+      expect(Order.new.can_book?(user)).to be_falsey
+    end
+
   end
   describe 'accept' do
     before :each do

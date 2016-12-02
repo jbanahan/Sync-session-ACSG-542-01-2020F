@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/isf_xml_generator'
+require 'open_chain/order_booking_registry'
 
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
   include ActionView::Helpers::NumberHelper
@@ -9,6 +10,35 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def core_module
     CoreModule::SHIPMENT
+  end
+
+  def create_booking_from_order
+    lines, order = make_booking_lines_for_order(params[:order_id])
+    h = {
+      shp_ref: Shipment.generate_reference,
+      shp_imp_id: order.importer_id,
+      shp_ven_id: order.vendor_id,
+      shp_ship_from_id: order.ship_from_id,
+      booking_lines: lines
+    }
+    OpenChain::OrderBookingRegistry.registered.each {|r| r.book_from_order_hook(h,order,lines)}
+    params['shipment'] = h.with_indifferent_access
+    do_create core_module
+  end
+
+  def book_order
+    lines, order = make_booking_lines_for_order(params[:order_id])
+    s = Shipment.find params[:id]
+    raise StatusableError.new('Order and shipment importer must match.',400) unless s.importer == order.importer
+    raise StatusableError.new('Order and shipment vendor must match.',400) unless s.vendor == order.vendor
+    raise StatusableError.new('Order and shipment must have same ship from address.',400) unless s.ship_from = order.ship_from
+    h = {
+      id: s.id,
+      booking_lines: lines
+    }
+    OpenChain::OrderBookingRegistry.registered.each {|r| r.book_from_order_hook(h,order,lines)}
+    params['shipment'] = h.with_indifferent_access
+    do_update core_module
   end
 
   def available_orders
@@ -112,6 +142,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {'ok'=>'ok'}
   end
 
+  def send_shipment_instructions
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have to send shipment instructions.",:forbidden) unless s.can_send_shipment_instructions?(current_user)
+    s.async_send_shipment_instructions! current_user
+    render json: {'ok'=>'ok'}
+  end
+
   def send_isf
     shipment = Shipment.find params[:id]
     if shipment.valid_isf?
@@ -143,110 +180,128 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
   def obj_to_json_hash s
     headers_to_render = limit_fields([
-      :shp_ref,
-      :shp_importer_reference,
-      :shp_mode,
-      :shp_ven_name,
-      :shp_ven_syscode,
-      :shp_ship_to_name,
-      :shp_ship_from_name,
-      :shp_car_name,
-      :shp_car_syscode,
-      :shp_imp_name,
-      :shp_imp_syscode,
-      :shp_imp_id,
-      :shp_master_bill_of_lading,
-      :shp_house_bill_of_lading,
-      :shp_booking_number,
-      :shp_receipt_location,
-      :shp_freight_terms,
-      :shp_lcl,
-      :shp_shipment_type,
-      :shp_booking_shipment_type,
-      :shp_booking_mode,
-      :shp_vessel,
-      :shp_voyage,
-      :shp_vessel_carrier_scac,
-      :shp_vessel_nationality,
-      :shp_booking_received_date,
+      :shp_arrival_port_date,
+      :shp_booked_order_ids,
+      :shp_booked_orders,
+      :shp_booked_quantity,
+      :shp_booking_approved_by_full_name,
+      :shp_booking_approved_date,
+      :shp_booking_cargo_ready_date,
+      :shp_booking_carrier,
+      :shp_booking_confirmed_by_full_name,
       :shp_booking_confirmed_date,
       :shp_booking_cutoff_date,
       :shp_booking_est_arrival_date,
       :shp_booking_est_departure_date,
-      :shp_docs_received_date,
-      :shp_cargo_on_hand_date,
-      :shp_est_departure_date,
-      :shp_departure_date,
-      :shp_est_arrival_port_date,
-      :shp_arrival_port_date,
-      :shp_est_delivery_date,
-      :shp_delivered_date,
-      :shp_comment_count,
-      :shp_dest_port_name,
-      :shp_dest_port_id,
-      :shp_cargo_ready_date,
+      :shp_booking_first_port_receipt_name,
+      :shp_booking_mode,
+      :shp_booking_number,
+      :shp_booking_received_date,
+      :shp_booking_request_count,
       :shp_booking_requested_by_full_name,
-      :shp_booking_confirmed_by_full_name,
-      :shp_booking_approved_by_full_name,
-      :shp_booking_approved_date,
-      :shp_booked_quantity,
+      :shp_booking_requested_equipment,
+      :shp_booking_revised_by_full_name,
+      :shp_booking_revised_date,
+      :shp_booking_shipment_type,
+      :shp_booking_vessel,
+      :shp_buyer_address_full_address,
+      :shp_buyer_address_id,
+      :shp_buyer_address_name,
+      :shp_cancel_requested_at,
+      :shp_cancel_requested_by_full_name,
       :shp_canceled_by_full_name,
       :shp_canceled_date,
-      :shp_first_port_receipt_name,
-      :shp_first_port_receipt_id,
-      :shp_lading_port_name,
-      :shp_lading_port_id,
-      :shp_last_foreign_port_name,
-      :shp_last_foreign_port_id,
-      :shp_unlading_port_name,
-      :shp_unlading_port_id,
-      :shp_marks_and_numbers,
-      :shp_number_of_packages,
-      :shp_number_of_packages_uom,
-      :shp_gross_weight,
-      :shp_booking_vessel,
-      :shp_booking_carrier,
-      :shp_delay_reason_codes,
-      :shp_cutoff_date,
-      :shp_fish_and_wildlife,
-      :shp_volume,
-      :shp_dimensional_weight,
+      :shp_car_name,
+      :shp_car_syscode,
+      :shp_cargo_on_hand_date,
+      :shp_cargo_ready_date,
       :shp_chargeable_weight,
-      :shp_cancel_requested_by_full_name,
-      :shp_cancel_requested_at,
-      :shp_manufacturer_address_name,
-      :shp_buyer_address_name,
-      :shp_seller_address_name,
-      :shp_ship_to_address_name,
-      :shp_container_stuffing_address_name,
-      :shp_consolidator_address_name,
-      :shp_manufacturer_address_full_address,
-      :shp_buyer_address_full_address,
-      :shp_seller_address_full_address,
-      :shp_ship_to_address_full_address,
-      :shp_container_stuffing_address_full_address,
+      :shp_comment_count,
+      :shp_confirmed_on_board_origin_date,
       :shp_consolidator_address_full_address,
-      :shp_isf_sent_at,
+      :shp_consolidator_address_id,
+      :shp_consolidator_address_name,
+      :shp_container_stuffing_address_full_address,
+      :shp_container_stuffing_address_id,
+      :shp_container_stuffing_address_name,
+      :shp_cutoff_date,
+      :shp_delay_reason_codes,
+      :shp_delivered_date,
+      :shp_departure_date,
+      :shp_departure_last_foreign_port_date,
+      :shp_dest_port_id,
+      :shp_dest_port_name,
+      :shp_dimensional_weight,
+      :shp_docs_received_date,
+      :shp_est_arrival_port_date,
+      :shp_est_delivery_date,
+      :shp_est_departure_date,
+      :shp_est_inland_port_date,
       :shp_est_load_date,
       :shp_eta_last_foreign_port_date,
-      :shp_departure_last_foreign_port_date,
+      :shp_export_license_required,
       :shp_final_dest_port_id,
       :shp_final_dest_port_name,
-      :shp_confirmed_on_board_origin_date,
-      :shp_buyer_address_id,
-      :shp_seller_address_id,
-      :shp_ship_to_address_id,
-      :shp_container_stuffing_address_id,
-      :shp_consolidator_address_id,
-      :shp_booking_revised_date,
-      :shp_booking_revised_by_full_name,
+      :shp_first_port_receipt_id,
+      :shp_first_port_receipt_name,
+      :shp_fish_and_wildlife,
+      :shp_freight_terms,
       :shp_freight_total,
-      :shp_invoice_total,
+      :shp_fwd_id,
+      :shp_fwd_name,
+      :shp_fwd_syscode,
+      :shp_gross_weight,
+      :shp_hazmat,
+      :shp_house_bill_of_lading,
+      :shp_imp_id,
+      :shp_imp_name,
+      :shp_imp_syscode,
+      :shp_importer_reference,
       :shp_inland_dest_port,
-      :shp_est_inland_port_date,
-      :shp_inland_port_date,
       :shp_inland_dest_port_id,
       :shp_inland_dest_port_name,
+      :shp_inland_port_date,
+      :shp_invoice_total,
+      :shp_isf_sent_at,
+      :shp_lacey,
+      :shp_lading_port_id,
+      :shp_lading_port_name,
+      :shp_last_foreign_port_id,
+      :shp_last_foreign_port_name,
+      :shp_lcl,
+      :shp_manufacturer_address_full_address,
+      :shp_manufacturer_address_name,
+      :shp_marks_and_numbers,
+      :shp_master_bill_of_lading,
+      :shp_mode,
+      :shp_number_of_packages,
+      :shp_number_of_packages_uom,
+      :shp_receipt_location,
+      :shp_ref,
+      :shp_requested_equipment,
+      :shp_seller_address_full_address,
+      :shp_seller_address_id,
+      :shp_seller_address_name,
+      :shp_ship_from_id,
+      :shp_ship_from_name,
+      :shp_ship_from_full_address,
+      :shp_ship_to_full_address,
+      :shp_ship_to_id,
+      :shp_ship_to_name,
+      :shp_shipment_instructions_sent_date,
+      :shp_shipment_instructions_sent_by_full_name,
+      :shp_shipment_type,
+      :shp_swpm,
+      :shp_unlading_port_id,
+      :shp_unlading_port_name,
+      :shp_ven_id,
+      :shp_ven_name,
+      :shp_ven_syscode,
+      :shp_vessel,
+      :shp_vessel_carrier_scac,
+      :shp_vessel_nationality,
+      :shp_volume,
+      :shp_voyage
     ] + custom_field_keys(CoreModule::SHIPMENT))
 
     container_fields_to_render = ([
@@ -287,6 +342,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       h['comments'] = render_comments(s, current_user)
     end
     h['permissions'] = render_permissions(s)
+    custom_view = OpenChain::CustomHandler::CustomViewSelector.shipment_view(s,current_user)
+    if !custom_view.blank?
+      h['custom_view'] = custom_view
+    end
     h
   end
 
@@ -327,7 +386,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       orders = s.available_orders current_user
       results = orders.where('customer_order_number LIKE ? OR order_number LIKE ?',"%#{params[:n]}%", "%#{params[:n]}%").
                   limit(10).
-                  collect {|order| 
+                  collect {|order|
                     # Use whatever field matched as the title that's getting returned
                     title = (order.customer_order_number.to_s.upcase.include?(params[:n].to_s.upcase) ? order.customer_order_number : order.order_number)
                     {order_number:(title), id:order.id}
@@ -385,16 +444,20 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def booking_line_fields_to_render
     limit_fields([
-         :bkln_line_number,
-         :bkln_quantity,
-         :bkln_puid,
-         :bkln_carton_qty,
-         :bkln_gross_kgs,
-         :bkln_cbms,
-         :bkln_carton_set_id,
-         :bkln_order_and_line_number,
-         :bkln_order_id,
-         :bkln_container_size
+      :bkln_line_number,
+      :bkln_quantity,
+      :bkln_puid,
+      :bkln_carton_qty,
+      :bkln_gross_kgs,
+      :bkln_cbms,
+      :bkln_carton_set_id,
+      :bkln_order_and_line_number,
+      :bkln_order_id,
+      :bkln_container_size,
+      :bkln_var_db_id,
+      :bkln_varuid,
+      :bkln_order_line_id,
+      :bkln_product_db_id
      ] + custom_field_keys(CoreModule::BOOKING_LINE))
   end
 
@@ -412,7 +475,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shpln_carton_qty,
       :shpln_carton_set_uid,
       :shpln_manufacturer_address_name,
-      :shpln_manufacturer_address_full_address
+      :shpln_manufacturer_address_full_address,
+      :shpln_cust_ord_no
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
   end
 
@@ -433,7 +497,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_cancel:shipment.can_cancel?(current_user),
       can_uncancel:shipment.can_uncancel?(current_user),
       can_send_isf:shipment.can_approve_booking?(current_user, true),
-      enabled_booking_types:shipment.enabled_booking_types
+      enabled_booking_types:shipment.enabled_booking_types,
+      can_send_shipment_instructions:shipment.can_send_shipment_instructions?(current_user)
     }
   end
   def render_shipment_lines?
@@ -515,7 +580,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         olh = {'allocated_quantity'=>ps.quantity,
           'order_id'=>order.id,
           'ord_ord_num'=>export_field(:ord_ord_num,order),
-          'ord_cust_ord_no'=>export_field(:ord_cust_ord_no,order)
+          'ord_cust_ord_no'=>export_field(:ord_cust_ord_no,order),
+          'id'=>ol.id
         }
         line_fields = limit_fields([
           :ordln_line_number,
@@ -610,7 +676,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         cs = shipment.send(collection_name).find { |obj| match_numbers? ln['id'], obj.id }
         cs = shipment.send(collection_name).build if cs.nil?
         if ln['_destroy']
-          if cs.shipment_lines.empty?
+          if all_shipment_lines_will_be_deleted?(cs.shipment_lines,h['lines'])
             cs.mark_for_destruction
             next
           else
@@ -621,6 +687,20 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       end
     end
   end
+  
+  def all_shipment_lines_will_be_deleted? line_collection, line_array
+    line_collection.each do |ln|
+      l_a = line_array ? line_array : []
+      ln_hash = l_a.find {|lh| lh['id'].to_s == ln.id.to_s}
+      
+      # if the hash has the _destroy then keep going to the next line
+      next if ln_hash && ln_hash['_destroy']
+      
+      # didn't find a _destroy for this line, so fail
+      return false
+    end
+  end
+  
 
   def match_numbers? hash_val, number
     hash_val.present? && hash_val.to_s == number.to_s
@@ -679,5 +759,20 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def render_comments s, user
     s.comments.map {|c| c.comment_json(user) }
+  end
+
+  def make_booking_lines_for_order order_id
+    o = Order.includes(:order_lines).where(id:order_id).first
+    raise StatusableError.new("Order not found",404) unless o.can_view?(current_user)
+    raise StatusableError.new("You do not have permission to book this order.",403) unless o.can_book?(current_user)
+    lines = []
+    o.order_lines.each do |ol|
+      bl = HashWithIndifferentAccess.new
+      bl[:bkln_order_line_id] = ol.id
+      bl[:bkln_quantity] = ol.quantity
+      bl[:bkln_var_db_id] = ol.variant_id
+      lines << bl
+    end
+    [lines, o]
   end
 end; end; end

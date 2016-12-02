@@ -19,7 +19,16 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
       [10,:ordln_total_cost, :total_cost, "Total Price", {data_type: :decimal, read_only: true,
         qualified_field_name: OrderLine::TOTAL_COST_SUBQUERY
       }],
-      [11,:ordln_unit_of_measure,:unit_of_measure,'Unit of Measure',{data_type: :string}]
+      [11,:ordln_unit_of_measure,:unit_of_measure,'Unit of Measure',{data_type: :string}],
+      [12,:ordln_has_variants,:has_variants,"Has Variants",{
+        data_type: :boolean,
+        read_only: true,
+        history_ignore: true,
+        export_lambda: lambda {|ol|
+          ol.product && !ol.product.variants.empty?
+        },
+        qualified_field_name: "(SELECT IF((SELECT count(*) FROM products INNER JOIN variants ON variants.product_id = products.id where order_lines.product_id = products.id)>0,1,null))"
+      }]
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
     add_fields CoreModule::ORDER_LINE, make_ship_to_arrays(200,"ordln","order_lines")

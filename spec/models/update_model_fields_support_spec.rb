@@ -6,7 +6,7 @@ describe UpdateModelFieldsSupport do
   end
 
   describe "update_model_field_attributes" do
-    before :each do 
+    before :each do
       @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
       @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
       @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
@@ -88,7 +88,7 @@ describe UpdateModelFieldsSupport do
       }
 
       expect(p.update_model_field_attributes params).to be_truthy
-      
+
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
 
@@ -192,10 +192,24 @@ describe UpdateModelFieldsSupport do
       expect(p.errors.full_messages).to include "Unique identifier can't be blank"
       expect(p.errors.full_messages).to include "fail"
     end
+
+    it "skips fields that user cannot edit" do
+      p = Factory(:product,name:'XYZ')
+      mf = ModelField.find_by_uid(:prod_name)
+      u = Factory(:user)
+      allow(mf).to receive(:can_edit?).with(u).and_return false
+
+      attrs = { prod_name: 'ABC'}
+      opts = {user:u,skip_not_editable:true}
+      expect(p.update_model_field_attributes(attrs,opts))
+      expect(p.errors.blank?).to be_truthy
+      p.reload
+      expect(p.name).to eq 'XYZ'
+    end
   end
 
   describe "update_model_field_attributes!" do
-    before :each do 
+    before :each do
       @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
       @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
       @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
@@ -453,7 +467,7 @@ describe UpdateModelFieldsSupport do
   end
 
   describe "assign_model_field_attributes" do
-    before :each do 
+    before :each do
       @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
       @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
       @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
@@ -562,7 +576,7 @@ describe UpdateModelFieldsSupport do
       }
 
       expect(p.update_model_field_attributes params).to be_truthy
-      
+
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
       expect(classifications.first.get_custom_value(@class_cd).value).to be_nil
@@ -600,7 +614,7 @@ describe UpdateModelFieldsSupport do
       }
 
       expect(p.update_model_field_attributes params).to be_truthy
-      
+
       classifications = p.classifications.collect {|c| c}
       expect(classifications.length).to eq 1
       expect(classifications.first.get_custom_value(@class_cd).value).to be_nil

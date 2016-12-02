@@ -38,6 +38,13 @@ describe Api::V1::ShipmentsController do
       expect(sj['shp_mode']).to eq 'Air'
       expect(sj['shp_importer_reference']).to eq 'DEF'
     end
+    it "should append custom_view to shipment if not nil" do
+      allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:shipment_view).and_return 'abc'
+      s = Factory(:shipment)
+      get :show, id: s.id
+      j = JSON.parse response.body
+      expect(j['shipment']['custom_view']).to eq 'abc'
+    end
     it "should render permissions" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
@@ -249,6 +256,25 @@ describe Api::V1::ShipmentsController do
       expect(@s).not_to receive(:async_revise_booking!)
       post :revise_booking, id: '1'
       expect(response.status).to eq 403
+    end
+  end
+  describe "send_shipment_instructions" do
+    let :shipment do
+      s = double('shipment')
+      allow(Shipment).to receive(:find).with('1').and_return s
+      s
+    end
+    it "should call async_send_shipment_instructions" do
+      expect(shipment).to receive(:can_send_shipment_instructions?).with(@u).and_return true
+      expect(shipment).to receive(:async_send_shipment_instructions!).with(@u)
+      post :send_shipment_instructions, id: 1
+      expect(response).to be_success
+    end
+    it "should fail if user cannot send" do
+      expect(shipment).to receive(:can_send_shipment_instructions?).with(@u).and_return false
+      expect(shipment).to_not receive(:async_send_shipment_instructions!)
+      post :send_shipment_instructions, id: 1
+      expect(response).to_not be_success
     end
   end
   describe "cancel" do
@@ -550,6 +576,14 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(Container.find_by_id(con.id)).to_not be_nil
     end
+    it "should allow containers to be deleted if associated shipment lines are going to be deleted too" do
+      con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
+      sl = Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1,container:con)
+      @s_hash['containers'] = [{'id'=>con.id,'_destroy'=>true}]
+      @s_hash['lines'] = [{'id'=>sl.id,'_destroy'=>true}]
+      expect{put :update, id: @shipment.id, shipment: @s_hash}.to change(Container,:count).from(1).to(0)
+      expect(response).to be_success
+    end
 
     context "with booking lines" do
 
@@ -575,38 +609,8 @@ describe Api::V1::ShipmentsController do
         expect(line.cbms).to eq 10
         expect(line.carton_qty).to eq 1
       end
-
-      it "skips order_id and product_id on booking lines if order_line_id is set" do
-        bl = shipment_data['booking_lines'].first
-        bl['bkln_order_id'] = 12345
-        bl['bkln_prod_id'] = 54321
-
-        put :update, id: @shipment.id, shipment: shipment_data
-        expect(response).to be_success
-        @shipment.reload
-        expect(@shipment.booking_lines.length).to eq 1
-        line = @shipment.booking_lines.first
-        expect(line.order_line).not_to be_nil
-        expect(line.order_id).to be_nil
-        expect(line.product_id).to be_nil
-      end
-
-      it "supports setting order id and product id if order_line_id is not present" do
-        bl = shipment_data['booking_lines'].first
-        bl['bkln_order_line_id'] = nil
-        bl['bkln_order_id'] = order_line.order.id
-        bl['bkln_prod_id'] = @product.id
-
-        put :update, id: @shipment.id, shipment: shipment_data
-        expect(response).to be_success
-        @shipment.reload
-        expect(@shipment.booking_lines.length).to eq 1
-        line = @shipment.booking_lines.first
-        expect(line.order).to eq order_line.order
-        expect(line.product).to eq @product
-      end
     end
-    
+
   end
   describe "available_orders" do
     it "should return all orders available from shipment.available_orders" do
@@ -689,7 +693,7 @@ describe Api::V1::ShipmentsController do
       expect(result[0]['ordln_line_number']).to eq bline1.line_number
       expect(result[0]['ordln_puid']).to eq bline1.product_identifier
       expect(result[0]['ordln_sku']).to eq oline1.sku
-      expect(result[0]['ordln_ordered_qty']).to eq bline1.quantity
+      expect(result[0]['ordln_ordered_qty']).to eq bline1.quantity.to_s
       expect(result[0]['linked_line_number']).to eq oline1.line_number
       expect(result[0]['linked_cust_ord_no']).to eq order.customer_order_number
     end
@@ -925,6 +929,154 @@ describe Api::V1::ShipmentsController do
       expect_any_instance_of(Shipment).to receive(:can_view?).and_return false
       get :booking_lines, id: @shipment.id
       expect(response.status).to eq 404
+    end
+  end
+
+  context 'order booking' do
+    let :booking_callback do
+      order_booking = Class.new do
+        def self.can_book? user
+          return true
+        end
+        def self.book_from_order_hook ship_hash, order, booking_lines
+          ship_hash[:shp_master_bill_of_lading] = 'mbol'
+        end
+      end
+      OpenChain::OrderBookingRegistry.register order_booking
+      order_booking
+    end
+    let :importer do
+      Factory(:company,importer:true)
+    end
+    let :vendor do
+      Factory(:company,vendor:true)
+    end
+    let :shipment do
+      Factory(:shipment,importer:importer,vendor:vendor,ship_from:order.ship_from)
+    end
+    let :order do
+      Factory(:order,importer:importer,vendor:vendor,ship_from:Factory(:address,company:vendor))
+    end
+    let :product do
+      Factory(:product)
+    end
+    let :order_line do
+      Factory(:order_line,order:order,quantity:100,variant:Factory(:variant,product:product),product:product)
+    end
+
+    describe "#create_booking_from_order" do
+      before :each do
+        allow_any_instance_of(Order).to receive(:can_book?).and_return true
+      end
+      it 'should create booking' do
+        booking_callback
+        expect(Shipment).to receive(:generate_reference).and_return '12345678'
+
+        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to change(Shipment,:count).from(0).to(1)
+
+        o = order_line.order
+        expect(response).to be_success
+        s = Shipment.first
+        expect(s.reference).to eq '12345678'
+        expect(s.importer).to eq importer
+        expect(s.vendor).to eq vendor
+        expect(s.booking_lines.count).to eq 1
+        expect(s.ship_from).to eq o.ship_from
+        expect(s.master_bill_of_lading).to eq 'mbol' #proves callback was run
+        bl = s.booking_lines.first
+        expect(bl.order_line).to eq order_line
+        expect(bl.quantity).to eq 100
+      end
+      it 'should fail if user cannot edit shipment' do
+        expect_any_instance_of(Shipment).to receive(:can_edit?).and_return false
+        allow(Shipment).to receive(:generate_reference).and_return '12345678'
+
+        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if user cannot view order' do
+        expect_any_instance_of(Order).to receive(:can_view?).and_return false
+        allow(Shipment).to receive(:generate_reference).and_return '12345678'
+
+        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if user cannot book order' do
+        expect_any_instance_of(Order).to receive(:can_book?).and_return false
+        allow(Shipment).to receive(:generate_reference).and_return '12345678'
+
+        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+
+        expect(response).to_not be_success
+      end
+    end
+
+    describe '#book_order' do
+      before :each do
+        allow_any_instance_of(Order).to receive(:can_book?).and_return true
+      end
+      it 'should add order to booking' do
+        booking_callback
+        s = shipment
+        ol = order_line
+
+        expect{put :book_order, id: s.id.to_s, order_id: order_line.order_id.to_s}.to change(BookingLine,:count).from(0).to(1)
+
+        expect(response).to be_success
+        s.reload
+        expect(s.master_bill_of_lading).to eq 'mbol' #proves callback was run
+        expect(s.booking_lines.count).to eq 1
+        bl = s.booking_lines.first
+        expect(bl.order_line).to eq ol
+        expect(bl.quantity).to eq 100
+        expect(bl.variant).to eq ol.variant
+      end
+      it 'should fail if user cannot book order' do
+        expect_any_instance_of(Order).to receive(:can_book?).and_return false
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if order ship from is different than shipment ship from' do
+        order.update_attributes(ship_from_id:Factory(:address,company:vendor))
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if user cannot view order' do
+        expect_any_instance_of(Order).to receive(:can_view?).and_return false
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if user cannot edit shipment' do
+        expect_any_instance_of(Shipment).to receive(:can_edit?).and_return false
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+      end
+      it 'should fail if shipment has different importer as order' do
+        order_line.order.update_attributes(importer_id:Factory(:company,importer:true).id)
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+        expect(response.body).to match(/importer must/)
+      end
+      it 'should fail if shipment has different vendor than order' do
+        order_line.order.update_attributes(vendor_id:Factory(:company,vendor:true).id)
+
+        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+
+        expect(response).to_not be_success
+        expect(response.body).to match(/vendor must/)
+      end
     end
   end
 end

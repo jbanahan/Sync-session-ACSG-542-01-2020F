@@ -11,6 +11,7 @@ class OrderLine < ActiveRecord::Base
 
   has_many  :histories, :dependent => :destroy
   has_many  :shipment_lines, :through => :piece_sets
+  has_many  :booking_lines
 
   validates_uniqueness_of :line_number, :scope => :order_id
   validates_with OpenChain::Validator::VariantLineIntegrityValidator

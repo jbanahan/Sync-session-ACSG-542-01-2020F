@@ -35,7 +35,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
     raise StatusableError.new("Object with id #{h['id']} not found.",404) if ord.nil?
-    ord.assign_model_field_attributes(h)
+    ord.assign_model_field_attributes(h,skip_not_editable:true)
     raise StatusableError.new("You do not have permission to save this Order.",:forbidden) unless ord.can_edit?(current_user)
     ord.save! if ord.errors.full_messages.blank?
     ord
@@ -45,10 +45,12 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     headers_to_render = limit_fields([
       :ord_ord_num,
       :ord_cust_ord_no,
+      :ord_imp_id,
       :ord_imp_name,
       :ord_imp_syscode,
       :ord_mode,
       :ord_ord_date,
+      :ord_ven_id,
       :ord_ven_name,
       :ord_ven_syscode,
       :ord_window_start,
@@ -69,7 +71,8 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       :ord_rule_state,
       :ord_closed_at,
       :ord_tppsr_db_id,
-      :ord_tppsr_name
+      :ord_tppsr_name,
+      :ord_rule_state
     ] + custom_field_keys(CoreModule::ORDER))
     line_fields_to_render = limit_fields([
       :ordln_line_number,
@@ -112,7 +115,8 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
       can_accept: order.can_accept?(cu),
       can_be_accepted: order.can_be_accepted?,
       can_attach: order.can_attach?(cu),
-      can_comment: order.can_comment?(cu)
+      can_comment: order.can_comment?(cu),
+      can_book: order.can_book?(cu)
     }
   end
 

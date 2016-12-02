@@ -10,7 +10,17 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
       read_only = cdi[:read_only]
       cdi.delete :read_only
       if cdi
-        cust_def = CustomDefinition.where(label:cdi[:label],data_type:cdi[:data_type],module_type:cdi[:module_type]).first
+        cust_def = nil
+        if cdi[:cdef_uid]
+          cust_def = CustomDefinition.find_by_cdef_uid(cdi[:cdef_uid])
+        end
+        if !cust_def
+          cust_def = CustomDefinition.where(label:cdi[:label],data_type:cdi[:data_type],module_type:cdi[:module_type]).first
+          # if we find a custom definition that should have had a UID, add the UID
+          if cust_def && cdi[:cdef_uid]
+            cust_def.update_attributes(cdef_uid:cdi[:cdef_uid])
+          end
+        end
         if !cust_def
           cust_def = CustomDefinition.create!(cdi)
           cust_def.reset_cache

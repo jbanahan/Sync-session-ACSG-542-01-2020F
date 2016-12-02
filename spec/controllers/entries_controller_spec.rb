@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe EntriesController do
 
-  before :each do 
+  before :each do
     MasterSetup.get.update_attributes(:entry_enabled=>true)
-    c = Factory(:company,:master=>true)
+    c = Factory(:company,:master=>true,show_business_rules:true)
     @u = Factory(:master_user,entry_view:true,:company=>c)
 
     sign_in_as @u
@@ -22,7 +22,7 @@ describe EntriesController do
     end
   end
 
-  describe 'validation_results' do 
+  describe 'validation_results' do
     before :each do
       @ent = Factory(:entry, broker_reference:'123456')
       @rule_result = Factory(:business_validation_rule_result)
@@ -95,7 +95,7 @@ describe EntriesController do
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
-      
+
       expect(response).to redirect_to("blah")
       expect(flash[:errors]).to be_blank
       expect(flash[:notices].first).to eq("Updated images have been requested.  Please allow 10 minutes for them to appear.")
@@ -106,7 +106,7 @@ describe EntriesController do
       entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
-      
+
       expect(response).to redirect_to("/")
       expect(flash[:errors]).to be_blank
       expect(flash[:notices].first).to eq("Updated images have been requested.  Please allow 10 minutes for them to appear.")
@@ -273,7 +273,7 @@ describe EntriesController do
       expect(response).to be_success
       expect(response.headers['Content-Type']).to eq Mime::Type.lookup_by_extension("xls").to_s
       expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"#{e.broker_reference}.xls\"")
-      
+
       wb = Spreadsheet.open StringIO.new(response.body)
 
       # Also verify this is a US spreadsheet
@@ -335,7 +335,7 @@ describe EntriesController do
     end
 
     describe "ca_activity_summary" do
-      before(:each) do 
+      before(:each) do
         @iso = 'ca'
         @us_companies.each{ |co| co.save! }
       end
@@ -365,7 +365,7 @@ describe EntriesController do
     end
 
     describe "us_activity_summary" do
-      before(:each) do 
+      before(:each) do
         @iso = 'us'
         @ca_companies.each{ |co| co.save! }
       end
@@ -396,7 +396,7 @@ describe EntriesController do
   end
 
   describe "by_release_range" do
-    before :each do 
+    before :each do
       @country = Factory(:country, iso_code: 'US')
     end
 
@@ -450,11 +450,11 @@ describe EntriesController do
   end
 
   describe "purge" do
-    before(:each) do 
+    before(:each) do
       c = Factory.create(:country)
-      @entry = Factory.create(:entry, 
-                                broker_reference: "1234567", 
-                                import_country_id: c.id, 
+      @entry = Factory.create(:entry,
+                                broker_reference: "1234567",
+                                import_country_id: c.id,
                                 source_system: "SomeSystem")
     end
 
@@ -482,7 +482,7 @@ describe EntriesController do
         get :purge, id: @entry
         expect(flash[:notices]).to include("Entry purged")
         expect(response).to redirect_to entries_path
-      end  
+      end
     end
 
     context "as a non-sysadmin" do
@@ -498,7 +498,7 @@ describe EntriesController do
         expect(flash[:errors]).to be_present
       end
     end
-    
+
   end
 
   describe "us_duty_detail" do

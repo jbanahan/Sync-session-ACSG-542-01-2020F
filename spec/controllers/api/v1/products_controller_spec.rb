@@ -133,12 +133,12 @@ describe Api::V1::ProductsController do
   end
 
   context "api_controller" do
-    # These are tests that basically just isolate some functionality in the api_controller to test 
+    # These are tests that basically just isolate some functionality in the api_controller to test
     # it.  I can't figure out how to do this straight up without being part of another controller test
-    # class.  It has something to do w/ an rspec and/or authlogic expectation that there's only a single 
+    # class.  It has something to do w/ an rspec and/or authlogic expectation that there's only a single
     # application controller in use for all of the app.
     before :each do
-      # Set a baseline for the test of a valid state, then we can back out expected 
+      # Set a baseline for the test of a valid state, then we can back out expected
       allow_api_access @user
     end
 
@@ -193,7 +193,7 @@ describe Api::V1::ProductsController do
         expect(json['errors']).to eq ['Access denied.']
       end
 
-      it "executes the action with valid authorization header" do        
+      it "executes the action with valid authorization header" do
         expect(controller).to receive(:show) do
           controller.render json: {'ok'=>true}
         end
@@ -205,7 +205,7 @@ describe Api::V1::ProductsController do
     end
 
     context "has valid api token" do
-      before :each do 
+      before :each do
         allow_api_access @user
       end
 
@@ -277,7 +277,9 @@ describe Api::V1::ProductsController do
         end
 
         it "handles all other exceptions as server errors" do
-          allow(Rails).to receive(:env).and_return('not_test') #errors are raised in test
+          env = 'not_test'
+          allow(env).to receive(:production?).and_return false
+          allow(Rails).to receive(:env).and_return(env) #errors are raised in test
           expect(controller).to receive(:show) do
             raise "Oops, something weird happened!"
           end
@@ -437,20 +439,6 @@ describe Api::V1::ProductsController do
       expect(response).to be_forbidden
       j = JSON.parse response.body
       expect(j['errors'].first).to eq "You do not have permission to save this Product."
-    end
-  end
-
-  describe "validate" do
-    it "runs validations and returns result hash" do
-      u = Factory(:master_user, product_view:true)
-      allow_api_access u
-      prod = Factory(:product)
-      bvt = BusinessValidationTemplate.create!(module_type:'Product')
-      bvt.search_criterions.create! model_field_uid: "prod_uid", operator: "nq", value: "XXXXXXXXXX"
-      
-      post :validate, id: prod.id, :format => 'json'
-      expect(bvt.business_validation_results.first.validatable).to eq prod
-      expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Product"
     end
   end
 end

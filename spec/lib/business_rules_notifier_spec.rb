@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::BusinessRulesNotifier do
   before do
-    Factory(:master_company)
+    Factory(:master_company,show_business_rules:true)
     @fake_client = double('Slack::Web::Client')
     allow(OpenChain::SlackClient).to receive(:slack_client).and_return @fake_client
   end

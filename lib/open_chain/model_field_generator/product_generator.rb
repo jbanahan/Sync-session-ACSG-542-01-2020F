@@ -55,6 +55,15 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       :data_type => :integer
     }]
     r << [rank_start+4, "#{uid_prefix}_prod_db_id".to_sym, :product_id, "Product DB ID", {read_only:true}]
+    r << [rank_start+5, "#{uid_prefix}_prod_var_count".to_sym, :variant_count, "Product Variant Count",{
+      read_only: true,
+      data_type: :integer,
+      history_ignore: true,
+      qualified_field_name: "(SELECT count(*) FROM variants WHERE product_id = #{table_name}.id)",
+      export_lambda: lambda {|detail|
+        detail.product.variants.size
+      }
+    }]
     r
   end
 end; end; end

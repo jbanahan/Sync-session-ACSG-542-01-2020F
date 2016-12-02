@@ -77,7 +77,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
       }],
       [42,:shp_vessel_nationality, :vessel_nationality, 'Nationality of Ship', {data_type: :string}],
-      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :string}],
+      [43,:shp_marks_and_numbers, :marks_and_numbers, 'Marks & Numbers', {data_type: :text}],
       [44,:shp_number_of_packages, :number_of_packages, 'Number of Packages', {data_type: :integer}],
       [45,:shp_number_of_packages_uom, :number_of_packages_uom, 'Number of Packages UOM', {data_type: :string}],
       [46, :shp_gross_weight, :gross_weight, 'Gross Weight (KGs)', {data_type: :decimal}],
@@ -86,7 +86,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
             read_only: true,
             import_lambda: lambda {|obj,val| "Booked Orders is read only."},
             export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:customer_order_number).compact.uniq.sort.join("\n ")},
-            qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.order_number ORDER BY orders.order_number SEPARATOR '\n ')
+            qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR '\n ')
           FROM booking_lines
           INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
           INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
@@ -96,8 +96,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              data_type: :text,
              read_only: true,
              import_lambda: lambda {|obj,val| "Shipped Orders is read only."},
-             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:order_number).compact.uniq.sort.join("\n ")},
-             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.order_number ORDER BY orders.order_number SEPARATOR '\n ')
+             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:customer_order_number).compact.uniq.sort.join("\n ")},
+             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR '\n ')
           FROM shipment_lines
           INNER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
           INNER JOIN order_lines ON piece_sets.order_line_id = order_lines.id
@@ -130,7 +130,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [53, :shp_delay_reason_codes, :delay_reason_codes, "Delay Reason", {data_type: :string}],
       [54, :shp_cutoff_date, :shipment_cutoff_date, "Shipment Cutoff Date", {data_type: :date}],
       [55, :shp_fish_and_wildlife, :fish_and_wildlife, "Fish And Wildlife", {data_type: :boolean}],
-      [56, :shp_volume, :volume, "Volume", {data_type: :decimal}],
+      [56, :shp_volume, :volume, "Volume (CBMs)", {data_type: :decimal}],
       [57, :shp_dimensional_weight, :dimensional_weight, "Dimensional Weight", {
              data_type: :decimal,
              read_only: true,
@@ -180,7 +180,48 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [69, :shp_freight_total, :freight_total, "Freight Total", {data_type: :decimal}],
       [70, :shp_invoice_total, :invoice_total, "Invoice Total", {data_type: :decimal}],
       [71, :shp_est_inland_port_date, :est_inland_port_date, "Est Inland Port Date", {data_type: :date}],
-      [72, :shp_inland_port_date, :inland_port_date, "Inland Port Date", {data_type: :date}]
+      [72, :shp_inland_port_date, :inland_port_date, "Inland Port Date", {data_type: :date}],
+      [73, :shp_booked_order_ids,:booked_orders,"Booked Order DB IDs",{
+            data_type: :text,
+            read_only: true,
+            import_lambda: lambda {|obj,val| "Booked Orders is read only."},
+            export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:id).compact.uniq.sort.join("\n ")},
+            qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
+          FROM booking_lines
+          INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
+          INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
+          WHERE booking_lines.shipment_id = shipments.id)"
+        }],
+      [74, :shp_shipped_order_ids,:shipped_orders,"Shipped Order DB IDs",{
+             data_type: :text,
+             read_only: true,
+             import_lambda: lambda {|obj,val| "Shipped Orders is read only."},
+             export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:id).compact.uniq.sort.join("\n ")},
+             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
+          FROM shipment_lines
+          INNER JOIN piece_sets ON piece_sets.shipment_line_id = shipment_lines.id
+          INNER JOIN order_lines ON piece_sets.order_line_id = order_lines.id
+          INNER JOIN orders ON orders.id = order_lines.order_id
+          WHERE shipment_lines.shipment_id = shipments.id)"
+        }],
+      [75, :shp_requested_equipment,:requested_equipment,"Requested Equipment",{data_type: :text }],
+      [76, :shp_booking_requested_equipment,:booking_requested_equipment,"Requested Equipment - Booked",{data_type: :text }],
+      [77, :shp_booking_request_count,:booking_request_count,"Booking Request Count",{data_type: :integer, read_only:true}],
+      [78, :shp_booking_cargo_ready_date, :booking_cargo_ready_date,"Cargo Ready Date - Booked",{data_type: :date}],
+      [79, :shp_hazmat, :hazmat, "Hazardous Materials",{data_type: :boolean}],
+      [80, :shp_swpm, :solid_wood_packing_materials, "Solid Wood Packing Materials",{data_type: :boolean}],
+      [81, :shp_lacey, :lacey_act, "Lacey Act Applies",{data_type: :boolean}],
+      [82, :shp_export_license_required, :export_license_required, "Export License Required",{data_type: :boolean}],
+      [83, :shp_shipment_instructions_sent_date, :shipment_instructions_sent_date, "Shipment Instructions Sent Date", {data_type: :date, read_only: true}],
+      [84, :shp_shipment_instructions_sent_by_full_name,:username,"Shipment Instructions Sent By", {
+        :export_lambda => lambda {|obj|
+          u = obj.shipment_instructions_sent_by
+          u.blank? ? "" : u.full_name
+        },
+        :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.shipment_instructions_sent_by_id)",
+        :data_type=>:string,
+        :read_only=>true
+      }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -190,7 +231,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
     add_fields CoreModule::SHIPMENT, make_port_arrays(700, 'shp_dest_port','shipments','destination_port','Discharge Port')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt')
+    add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt',port_selector:Port.where(active_origin:true))
+    add_fields CoreModule::SHIPMENT, make_port_arrays(850, 'shp_booking_first_port_receipt','shipments','booking_first_port_receipt','First Port of Receipt - Booked',port_selector:Port.where(active_origin:true))
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Origin Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','Port of Unlading')
@@ -201,6 +243,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_address_arrays(1300,'shp','shipments','ship_to')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1350,'shp','shipments','container_stuffing')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
+    add_fields CoreModule::SHIPMENT, make_forwarder_arrays(1500,'shp','shipments')
 
   end
 end; end; end

@@ -1,0 +1,7 @@
+<h1>Support Ticket #<%=@request.ticket_number%></h1>
+<b>User: <%=@request.user.full_name%>, <%@request.user.company.name%></b><br />
+<b>Referrer: <%=@request.referrer_url%></b><br />
+<b>Request:</b>
+<div>
+  <%=RedCloth.new(@request.body).to_html.html_safe%>
+</div>

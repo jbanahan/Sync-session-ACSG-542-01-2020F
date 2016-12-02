@@ -27,18 +27,32 @@
               Delivery Date <span class='pull-right'>{{order.ord_window_start}}</span>
             </li>
             <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start!=order.ord_window_end'>
-              Ship Window Start <span class='pull-right'>{{order.ord_window_start}}</span>
+              Contractual Ship Window Start <span class='pull-right'>{{order.ord_window_start}}</span>
             </li>
             <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
-              Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
+              Contractual Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
             </li>
-            <li class='list-group-item' ng-if='order.permissions.can_edit'>
-              <label>Planned Handover Date</label>
-              <chain-field-input model='order' field='dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0]' input-class='form-control'></chain-field-input>
+            <li class='list-group-item'>
+              Production Start Date - Planned
+              <div>
+                <chain-field-input model="order" field="dictionary.fieldsByAttribute('label','Production Start Date - Planned',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0]" input-class="form-control"></chain-field-input>
+              </div>
             </li>
-            <li class='list-group-item' ng-if='!order.permissions.can_edit'>
-              Planned Handover Date
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute("label","Planned Handover Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            <li class='list-group-item'>
+              Forecasted Ship Window Start
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window Start',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
+            <li class='list-group-item'>
+              Forecasted Ship Window End
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window End',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
+            <li class='list-group-item'>
+              Compliance Docs Posted Date
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted Date',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
+            <li class='list-group-item'>
+              Compliance Docs Posted By
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted By (Name)',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class="list-group-item">
               Vendor No.
@@ -75,14 +89,15 @@
           </div>
           <ul class='list-group'>
             <li class='list-group-item'>
-              Lumber Liquidators Data Updates
+              Business Rules
               <span class='pull-right'>
-                <i class='fa {{order.ord_fob_point && order.ord_terms && order[dictionary.fieldsByAttribute("label","Country of Origin",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid] ? "fa-check-square text-success" : "fa-clock-o" }}'></i>
+                <chain-business-rules-basic-modal core-object='order' module-type='Order'></chain-business-rules-basic-modal>
               </span>
             </li>
             <li class='list-group-item'>
               Vendor Approval
-              <span class='pull-right'>{{order.ord_approval_status}}
+              <span class='pull-right {{order.ord_approval_status=="Accepted" ? "text-success" : ""}}'>
+                {{order.ord_approval_status}}
                 <a class='label label-default' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
                   Not Ready
                 </a>
@@ -98,7 +113,16 @@
                   <i class="fa fa-square-o"></i>
                 </a>
               </span>
+            <li class='list-group-item'>
+              Bookings
+              <div class='text-right'>
+                <chain-vp-bookings order='order'></chain-vp-bookings>
+              </div>
             </li>
+          </li>
+          <li class='list-group-item text-right'>
+            <chain-state-toggle-buttons button-classes='btn-sm btn-primary' api-object-name='Order' object='order' toggle-callback='reload'></chain-state-toggle-buttons>
+          </li>
           </ul>
       </div>
     </div>
@@ -162,6 +186,7 @@
             <tr>
               <th>Line Num</th>
               <th>Article</th>
+              <th>Variant</th>
               <th ng-if='order.ord_ship_to_count > 1'>Ship To</th>
               <th>Quantity</th>
               <th>UM</th>
@@ -177,17 +202,19 @@
                 <small>{{ol[dictionary.fieldsByAttribute('label','Old Article Number',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
                 {{ol[dictionary.fieldsByAttribute('label', 'Part Name',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}
               </td>
+              <td>
+              </td>
               <td ng-if='order.ord_ship_to_count > 1'>
                 <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
               </td>
               <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
               <td>{{ol.ordln_unit_of_measure}}</td>
-              <td class='text-right numeric'>{{ol.ordln_ppu}}</td>
-              <td class='text-right numeric'>{{ol.ordln_total_cost}}</td>
+              <td class='text-right numeric'>{{ol.ordln_ppu | currency}}</td>
+              <td class='text-right numeric'>{{ol.ordln_total_cost | currency}}</td>
             </tr>
             <tr>
-              <td class='text-right' colspan='5'>Total</td>
-              <td class='text-right numeric'>{{order.ord_total_cost}}</td>
+              <td class='text-right' colspan='6'>Total</td>
+              <td class='text-right numeric'>{{order.ord_total_cost | currency}}</td>
             </tr>
           </tbody>
         </table>

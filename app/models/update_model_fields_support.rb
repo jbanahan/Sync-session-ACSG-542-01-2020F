@@ -33,7 +33,7 @@ module UpdateModelFieldsSupport
   end
 
 
-  # Basically, this is a replacement for ActiveRecord::Base.update_attributes where 
+  # Basically, this is a replacement for ActiveRecord::Base.update_attributes where
   # the keys are model field uids and the values are all set via the model field process_import
   # methods.
   #
@@ -45,14 +45,14 @@ module UpdateModelFieldsSupport
   # The only real difference is that any hash intended to create a new nested object (.ie classification / tariff)
   # MUST ALWAYS include the model field uid indicated by the CoreModule#key_attribute_field_uid method
   # for the core module being created.
-  # 
+  #
   # For example, if when updating a product, your child hash doesn't include an 'id' key for a classification, then it MUST
   # include the 'class_cntry_id' field/value in order to generate a new classification under the product.
   #
   # Options:
   # user: if present, uses given user, otherwise uses the value currently set in User.current
   # set_last_updated_by: if true (default), the last_updated_by attribute of this object is set to the user.  If false, last_updated_by is not set
-  # exclude_blank_values: if true (false by default), any values from the hash that evaluate to blank? will be skipped.  This includes both custom and 
+  # exclude_blank_values: if true (false by default), any values from the hash that evaluate to blank? will be skipped.  This includes both custom and
   # and "standard" model field values.
   # exclude_custom_fields: if true (false by default), any values related to custom fields will be ignored.
   def update_model_field_attributes object_parameters, opts = {}
@@ -77,7 +77,7 @@ module UpdateModelFieldsSupport
 
   # See #update_model_field_attributes
   #
-  # This method (like the standard update_attributes!) raises an error if 
+  # This method (like the standard update_attributes!) raises an error if
   # any save issues occur.
   def update_model_field_attributes! object_parameters, opts = {}
     opts = {user: User.current}.merge opts
@@ -95,8 +95,8 @@ module UpdateModelFieldsSupport
         e.record.errors[:base].push *pre_save_errors if pre_save_errors.size > 0
         raise e
       end
-      
-      # save! won't actually raise validation errors caused from our 
+
+      # save! won't actually raise validation errors caused from our
       # model assignments, so raise manually here if there are any errors[:base] messages
       if pre_save_errors.size > 0
         errors[:base].push *pre_save_errors
@@ -134,14 +134,14 @@ module UpdateModelFieldsSupport
     end
   end
 
-  private 
+  private
 
-    # Basically, this is a replacement for ActiveRecord::Base.assign_attributes where 
+    # Basically, this is a replacement for ActiveRecord::Base.assign_attributes where
     # the keys are model field uids and the values are all set via the model field process_import
     # methods.
     #
     # The object HAS NOT been saved after completion of this method, hence the comparison to the
-    # assign_attributes ActiveRecord method and not update_attributes.  
+    # assign_attributes ActiveRecord method and not update_attributes.
     #
     # If any process_import errors occur (at any heirarchical level), error messages are added
     # to the errors[:base] of the root parent object passed to this method.
@@ -151,8 +151,8 @@ module UpdateModelFieldsSupport
       opts = {user: User.current, set_last_updated_by: true}.merge opts
 
       # Basically, what we're doing here is stripping out all the non-key model field uids
-      # from the hash, turning the uids into their corresponding field name, 
-      # then running assign_attributes so that it will create new objects, destroy 
+      # from the hash, turning the uids into their corresponding field name,
+      # then running assign_attributes so that it will create new objects, destroy
       # ones marked for deletion..all the good stuff that rails gives us automatically.
 
       # After that, we're going through the core module heirarchy and using model field
@@ -214,8 +214,8 @@ module UpdateModelFieldsSupport
           end
         else
           mf = model_fields[name.to_sym]
-          next if mf.nil? || mf.blank? || (opts[:exclude_custom_fields] === true && mf.custom?)
-          
+          next if mf.nil? || mf.blank? || (opts[:exclude_custom_fields] === true && mf.custom?) || (opts[:skip_not_editable] && !mf.can_edit?(user))
+
           result = mf.process_import base_object, value, user
           root_object.errors[:base] = result if result.error? && opts[:no_validation] != true
         end
@@ -228,9 +228,9 @@ module UpdateModelFieldsSupport
       if child_parameters['id'] && (child_id = child_parameters['id'].to_i) != 0
         return children.find {|c| c.id == child_id}
       elsif !(key_param = child_parameters[:virtual_identifier]).blank?
-        # Don't bother with field validation at this point (plus, I don't really see any scenario occurring 
+        # Don't bother with field validation at this point (plus, I don't really see any scenario occurring
         # where the user doesn't have access to at least view a key field)
-        # Make sure we're also not returning a field w/ an id already set, since then an id param should 
+        # Make sure we're also not returning a field w/ an id already set, since then an id param should
         # have been set in the data already
         return children.find {|c| (c.id.nil? || c.id == 0) && c.virtual_identifier == key_param}
       end
@@ -266,13 +266,13 @@ module UpdateModelFieldsSupport
 
               if child_hash.is_a?(Hash)
                 # If we're rejecting, then we want to remove the attributes from the hash we ultimately intend to pass to the active record
-                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that 
+                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that
                 # we also skip it there.
                 if rejects_child_assignment? core_module, child_hash
                   value.delete child_index
                   child_original_params[rejected_key] = true
                 else
-                  clean_params_for_active_record_attribute_assignment(child_hash, child_original_params, child_core_module, false) 
+                  clean_params_for_active_record_attribute_assignment(child_hash, child_original_params, child_core_module, false)
                 end
               end
             end
@@ -285,7 +285,7 @@ module UpdateModelFieldsSupport
               child_original_params = model_field_params[name][idx]
               if child_hash.is_a?(Hash)
                 # If we're rejecting, then we want to remove the attributes from the hash we ultimately intend to pass to the active record
-                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that 
+                # assign_attributes call and then mark it in the original hash that will go to our sythesized attribute assignment so that
                 # we also skip it there.
                 if rejects_child_assignment? core_module, child_hash
                   child_original_params[rejected_key] = true
@@ -304,7 +304,7 @@ module UpdateModelFieldsSupport
         end
       end
 
-      # We don't need to add an id to the outermost layer..for the most part, this isn't an issue, but 
+      # We don't need to add an id to the outermost layer..for the most part, this isn't an issue, but
       # it becomes one when you add this module onto a non-CoreModule.
       if !parent && !id_found
         # What we're doing here is adding in an identifier when no 'id' key was found (which when Rails
@@ -375,12 +375,12 @@ module UpdateModelFieldsSupport
 
         child_vals = value.respond_to?(:values) ? value.values : value.each
         child_vals.each do |vals|
-          normalize_params(vals, data[:child_core_module])  
+          normalize_params(vals, data[:child_core_module])
         end
       end
     end
-    
-    # This method exist largely as extension points to shoe-horn this update attributes stuff onto 
+
+    # This method exist largely as extension points to shoe-horn this update attributes stuff onto
     # base objects that are not core modules, but have core module children (See InstantClassification)
     def core_module_info object_or_core_module
       core_module = nil
@@ -389,7 +389,7 @@ module UpdateModelFieldsSupport
       else
         core_module = CoreModule.find_by_object(object_or_core_module)
       end
-      
+
       model_fields = core_module.every_model_field
 
       child_core_module = core_module.children.first
@@ -404,7 +404,7 @@ module UpdateModelFieldsSupport
       {model_fields: model_fields, child_core_module: child_core_module, child_association: child_association, child_association_key: child_association_key, core_module: core_module}
     end
 
-    # This method exists largely as extension points to shoe-horn this update attributes stuff onto 
+    # This method exists largely as extension points to shoe-horn this update attributes stuff onto
     # base objects that are not core modules, but have core module children (See InstantClassification)
     def child_objects parent_object, child_core_module
       parent_core_module = CoreModule.find_by_object parent_object

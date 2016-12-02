@@ -4,6 +4,8 @@ module Api; module V1; class ApiController < ActionController::Base
   before_filter :validate_format
   around_filter :validate_authtoken
   around_filter :set_user_settings
+  before_filter :new_relic
+  before_filter :prep_model_fields
 
   def current_user
     @user
@@ -159,6 +161,19 @@ module Api; module V1; class ApiController < ActionController::Base
 
         raise error if Rails.env == 'test'
       end
+    end
+
+    def new_relic
+      if Rails.env.production?
+        m = MasterSetup.get
+        attrs = {uuid: m.uuid, system_code: m.system_code}
+        attrs[:user] = current_user.username unless current_user.nil?
+        NewRelic::Agent.add_custom_attributes attrs
+      end
+    end
+    def prep_model_fields
+      ModelField.reload_if_stale
+      ModelField.web_mode = true
     end
 
 end; end; end

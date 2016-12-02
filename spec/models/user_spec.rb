@@ -220,27 +220,27 @@ describe User do
       end
     end
     context "business_validation_results" do
-      it "should allow master users" do
-        u = Factory(:master_user)
+      it "allows user if company has business rules viewing allowed" do
+        u = User.new
+        c = Company.new
+        u.company = c
+        c.show_business_rules = true
         expect(u.view_business_validation_results?).to be_truthy
         expect(u.edit_business_validation_results?).to be_truthy
       end
-      it "should not allow non-master users" do
-        u = Factory(:importer_user)
+      it "doesn't allow if company cannot view business rules" do
+        u = User.new
+        c = Company.new
+        u.company = c
+        c.show_business_rules = false
         expect(u.view_business_validation_results?).to be_falsey
         expect(u.edit_business_validation_results?).to be_falsey
-      end
-      it "allows importer user if company has business rules viewing allowed" do
-        u = Factory(:importer_user)
-        u.company.update_attributes! show_business_rules: true
-
-        expect(u.view_business_validation_results?).to be_truthy
-        expect(u.edit_business_validation_results?).to be_truthy
       end
     end
     context "business_validation_rule_results" do
       it "should allow master users" do
         u = Factory(:master_user)
+        u.company.update_attributes(show_business_rules:true)
         expect(u.view_business_validation_rule_results?).to be_truthy
         expect(u.edit_business_validation_rule_results?).to be_truthy
       end

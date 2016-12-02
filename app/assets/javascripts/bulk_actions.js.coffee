@@ -65,10 +65,7 @@ makeBulkActions = ->
       createBulkCommentModal = (data) ->
         $('body').append("<div class='modal fade' id='bulk-ord-update-modal' tabindex='-1' role='dialog' aria-labelledby='' aria-hidden='true'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h4 class='modal-title'>Update Orders</h4></div><div class='modal-body'><div id='bulk-ord-update-fields' class='row' style='line-height: 2.5'></div></div><div class='modal-footer'><button type='button' class='btn btn-default' data-dismiss='modal'>Close</button><button type='button' class='btn btn-primary' id='bulk-ord-update-modal-submit'>Save</button></div></div></div></div>
 ")
-        fields = $('#bulk-ord-update-fields')
-        for k,v of data["mf_hsh"]
-          field = "<div><div class='col-md-6'><label class='control-label'>#{v}</label><input type='text' class='form-control isdate' name='mf_hsh[#{k}]' value='' /></div></div>"
-          fields.append field
+        $('#bulk-ord-update-fields').html(data.html)
         $('.isdate').datepicker()
 
         $('#bulk-ord-update-modal-submit').click(BulkActions.completeBulkOrderUpdate)
@@ -92,7 +89,7 @@ makeBulkActions = ->
       sba.children(':not(input[type="hidden"])').remove()
       for obj in fields
         for n,v of obj
-          inputTag = mod.find("input[name='#{n}']")
+          inputTag = mod.find("input[name='#{n}']").clone(true)
           inputTag.attr('value', v)
           sba.append inputTag
 
@@ -103,6 +100,7 @@ makeBulkActions = ->
       RailsHelper.prepRailsForm sba, '/orders/bulk_update', 'POST'
       sba.unbind("ajax:success",BulkActions.handleBulkOrderUpdate)
       sba.submit()
+      mod.find('input').val('')
       mod.modal('hide')
       window.alert('Your updates have been submitted in the background. They may take a few minutes to post.')
     

@@ -2,7 +2,11 @@ require 'spec_helper'
 
 describe BusinessValidationRuleResultsController do
 
-  let (:user) { Factory(:admin_user) }
+  let (:user) {
+    au = Factory(:admin_user)
+    au.company.update_attributes(show_business_rules:true)
+    au
+  }
   let (:entry) { Factory(:entry, broker_reference: "REF") }
   let! (:business_rule) {
     t = BusinessValidationTemplate.create! name: "Test", module_type: "Entry", description: "Test Template"

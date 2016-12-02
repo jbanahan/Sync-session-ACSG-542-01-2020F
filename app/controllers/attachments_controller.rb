@@ -6,7 +6,7 @@ class AttachmentsController < ApplicationController
   include PolymorphicFinders
 
   skip_before_filter :portal_redirect, only: [:download]
-  
+
   def create
     if params[:attachment][:attached].nil?
       add_flash :errors, "Please choose a file before uploading."
@@ -75,7 +75,7 @@ class AttachmentsController < ApplicationController
 
   def download_last_integration_file
     downloaded = false
-    if current_user.sys_admin? && params[:attachable_type].presence && params[:attachable_id].presence
+    if current_user.admin? && params[:attachable_type].presence && params[:attachable_id].presence
       begin
         obj = get_attachable params[:attachable_type], params[:attachable_id]
         if obj.respond_to?(:last_file_secure_url) && obj.can_view?(current_user)

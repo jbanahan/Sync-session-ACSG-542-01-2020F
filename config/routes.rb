@@ -1,4 +1,11 @@
 OpenChain::Application.routes.draw do
+  # redirect bootstrap glyphicon fonts to public path
+  get '/assets/:subpath/fonts/:font.woff2', to: redirect('/%{subpath}/fonts/%{font}.woff2', status: 302)
+  get '/assets/:subpath/fonts/:font.woff', to: redirect('/%{subpath}/fonts/%{font}.woff', status: 302)
+  get '/assets/:subpath/fonts/:font.ttf', to: redirect('/%{subpath}/fonts/%{font}.ttf', status: 302)
+  get '/assets/:subpath/fonts/:font.svg', to: redirect('/%{subpath}/fonts/%{font}.svg', status: 302)
+  get '/assets/:subpath/fonts/:font.eot', to: redirect('/%{subpath}/fonts/%{font}.eot', status: 302)
+
   match '/hts/subscribed_countries' => 'hts#subscribed_countries', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
@@ -11,6 +18,7 @@ OpenChain::Application.routes.draw do
   namespace :api do
     namespace :v1 do
       match '/business_rules/for_module/:module_type/:id' => 'business_rules#for_module', via: :get
+      match '/business_rules/refresh/:module_type/:id' => 'business_rules#refresh', via: :post
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
       get "/emails/validate_email_list" => "emails#validate_email_list"
@@ -46,6 +54,11 @@ OpenChain::Application.routes.draw do
           post :create_address
           get :shipment_lines
           get :booking_lines
+          post :send_shipment_instructions
+          put 'book_order/:order_id' => 'shipments#book_order'
+        end
+        collection do
+          post 'booking_from_order/:order_id' => 'shipments#create_booking_from_order'
         end
       end
       resources :fields, only: [:index]
@@ -515,7 +528,7 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ascena_ca_invoices" => "custom_features#ascena_ca_invoices_index", :via=>:get
   match "/custom_features/ascena_ca_invoices/upload" => "custom_features#ascena_ca_invoices_upload", :via => :post
   match "/custom_features/ascena_ca_invoices/:id/download" => "custom_features#ascena_ca_invoices_download", :via => :get
-  
+
   get "/custom_features/hm_po_line_parser" => "custom_features#hm_po_line_parser_index"
   post "/custom_features/hm_po_line_parser/upload" => "custom_features#hm_po_line_parser_upload"
   get "/custom_features/hm_po_line_parser/:id/download" => "custom_features#hm_po_line_parser_download"
