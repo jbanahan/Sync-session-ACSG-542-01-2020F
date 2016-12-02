@@ -785,11 +785,11 @@ describe SearchCriterion do
       u = Factory(:master_user)
       cd = Factory(:custom_definition,module_type:'Product',data_type:'date')
       @product.update_custom_value! cd, Time.now
-      p2 = Factory(:product)
+      Factory(:product)
       p3 = Factory(:product)
       p3.custom_values.create!(:custom_definition_id=>cd.id)
       ss = SearchSetup.new(module_type:'Product',user:u)
-      sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'notnull')
+      ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'notnull')
       sq = SearchQuery.new ss, u
       h = sq.execute
       expect(h.collect {|r| r[:row_key]}).to eq([@product.id])
@@ -802,7 +802,7 @@ describe SearchCriterion do
       p3 = Factory(:product)
       p3.custom_values.create!(:custom_definition_id=>cd.id)
       ss = SearchSetup.new(module_type:'Product',user:u)
-      sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'null')
+      ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'null')
       sq = SearchQuery.new ss, u
       h = sq.execute
       expect(h.collect {|r| r[:row_key]}.sort).to eq([p2.id,p3.id])
@@ -832,6 +832,16 @@ describe SearchCriterion do
         sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>op, :value=>value)
         sql = sc.apply(Product.where("1=1")).to_sql
         expect(sql).to match(/#{expected_value}/)
+      end
+    end
+    it "should return false for nil values for comparison operators" do
+      ent = Entry.new
+      ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm","gteq"].each do |op|
+        sc = SearchCriterion.new(model_field_uid: :ent_file_logged_date, value:'2016-01-01')
+        sc.operator = op
+        expect(sc.test?(ent)).to be_falsey
+        sc.include_empty = true
+        expect(sc.test?(ent)).to be_truthy        
       end
     end
 

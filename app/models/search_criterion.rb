@@ -260,7 +260,7 @@ class SearchCriterion < ActiveRecord::Base
     # If we include empty values, Returns true for nil, blank strings (ie. only whitespace), or anything that equals zero
     return true if (self.include_empty && ((value_to_test.blank? && value_to_test != false) || value_to_test == 0))
     #all of these operators should return false if value_to_test is nil
-    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm"].include?(self.operator)
+    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm"].include?(self.operator)
 
     # Does the given value pass the criterion test (this is primarily for boolean fields)
     # Since we're considering blank strings as empty, we should also consider 0 (ie. blank number) as empty as well
