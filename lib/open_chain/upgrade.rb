@@ -94,13 +94,16 @@ module OpenChain
         capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
         @@upgraded = true
         upgrade_completed = true
-      rescue
+      rescue => e
         # If the delayed job upgrade fails at some point we'll need to remove the upgrade_running.txt file in order to get the upgrade
         # to start again, however, if we do that the dj_monitor.sh script may actually restart delayed job queues prior to the environment being ready for that.
         # Therefore, use the presence of another upgrade_error.txt flag file to tell it not to start the queue.
         capture_and_log "touch #{Upgrade.upgrade_error_file_path}" if delayed_job_upgrade
-        @log.error $!.message
-        raise $!
+        # There's not a lot of point to logging an error on an upgrade, since the notification queue will, in all likelihood 
+        # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).  
+        # Send via slack.
+        send_slack_failure(MasterSetup.get, e)
+        raise e
       ensure
         finish_upgrade_log
       end
@@ -204,11 +207,15 @@ module OpenChain
         host = `hostname`.strip
         msg = "<!group>: Upgrade failed for server: #{host}, instance: #{master_setup.system_code}"
         msg << ", error: #{error.message}" if error
-        OpenChain::SlackClient.new.send_message('it-dev',msg,{icon_emoji:':loudspeaker:'})
-      rescue
+        slack_client.send_message('it-dev',msg,{icon_emoji:':loudspeaker:'})
+      rescue => e
         #don't interrupt, just log
-        $!.log_me
+        e.log_me
       end
+    end
+
+    def slack_client
+      OpenChain::SlackClient.new
     end
 
     def log_me txt

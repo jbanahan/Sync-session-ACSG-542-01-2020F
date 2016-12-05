@@ -2,6 +2,8 @@ require 'spec_helper'
 require 'fileutils'
 
 describe OpenChain::Upgrade do
+  subject { described_class.new("TARGET_VERSION") }
+
   describe 'upgrade if needed' do
     it 'should run upgrade if need_upgrade? returns true' do
       expect(MasterSetup).to receive(:need_upgrade?).and_return(true)
@@ -18,7 +20,7 @@ describe OpenChain::Upgrade do
     end
   end
 
-  context "in_progress?" do
+  describe "in_progress?" do
     context "file_present" do
       before :each do 
         FileUtils.touch 'tmp/upgrade_running.txt'
@@ -38,7 +40,7 @@ describe OpenChain::Upgrade do
     end
   end
 
-  context "errored?" do
+  describe "errored?" do
     after :each do
       FileUtils.rm('tmp/upgrade_error.txt') if File.exist?('tmp/upgrade_error.txt')
     end
@@ -52,5 +54,18 @@ describe OpenChain::Upgrade do
       expect(OpenChain::Upgrade.errored?).to be_falsey
     end
     
+  end
+
+  describe "send_slack_failure" do
+    let (:master_setup) { stub_master_setup }
+    let (:error) { StandardError.new "Error Message"}
+    let (:slack) { instance_double(OpenChain::SlackClient) }
+
+    it "forwards error message to slack" do
+      expect(subject).to receive(:slack_client).and_return slack
+      expect(slack).to receive(:send_message).with('it-dev', "<!group>: Upgrade failed for server: #{`hostname`.strip}, instance: #{master_setup.system_code}, error: Error Message", {icon_emoji:':loudspeaker:'})
+      
+      subject.send_slack_failure master_setup, error
+    end
   end
 end
