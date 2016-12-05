@@ -348,7 +348,8 @@ EOS
 
   def send_support_request_to_helpdesk to, support_request
     @request = support_request
-    mail(:to=>to, :reply_to => support_request.user.email, :subject=>"[Support Request ##{@request.ticket_number}]") do |format|
+    @system_code = MasterSetup.get.system_code
+    mail(:to=>to, :reply_to => support_request.user.email, :subject=>"[Support Request ##{@request.ticket_number} (#{@system_code})]") do |format|
       format.html
     end
   end
