@@ -119,7 +119,7 @@ EOS
       :subject => "[VFI Track] #{search_name} Result",
       :from => 'do-not-reply@vfitrack.net')
     unless attachment_saved
-      m.attachments[File.basename(file_path)] = create_attachment file_path
+      m.attachments[attachment_filename(file_path)] = create_attachment file_path
     end
     m
   end
@@ -132,7 +132,7 @@ EOS
       :reply_to => @user.email,
       :subject => subject)
     unless attachment_saved
-      m.attachments[File.basename(file_path)] = create_attachment file_path
+      m.attachments[attachment_filename(file_path)] = create_attachment file_path
     end
     m
   end
@@ -254,7 +254,7 @@ EOS
       if save_large_attachment ap, 'bug@vandegriftinc.com' 
         @additional_messages << @body_text
       else
-        local_attachments[File.basename(ap)] = create_attachment ap
+        local_attachments[attachment_filename(ap)] = create_attachment ap
       end
     end  
     m = mail(:to=>"bug@vandegriftinc.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
@@ -395,8 +395,7 @@ EOS
         if email_attachment
           @attachment_messages << attachment_text
         else
-          filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
-          local_attachments[filename] = create_attachment(file)
+          local_attachments[attachment_filename(file)] = create_attachment(file)
         end
       end
     end
@@ -503,14 +502,19 @@ EOS
           if email_attachment
             @attachment_messages << attachment_text
           else
-            # Use original_filename if the object answers to the method, else use the path's basename.
-            filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+            
+            filename = attachment_filename(file)
             local_attachments[filename] = create_attachment(file)
           end
         end
       end
 
       local_attachments
+    end
+
+    def attachment_filename file
+      # Use original_filename if the object answers to the method, else use the path's basename.
+      ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
     end
 
     def save_large_attachment(file, registered_emails)
@@ -534,9 +538,7 @@ EOS
 
         # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
         email_attachment = ""
-
-        filename = file.respond_to?(:original_filename) ? file.original_filename : File.basename(file)
-        attachment_text = "* The attachment '#{filename}' was excluded because it was empty."
+        attachment_text = "* The attachment '#{attachment_filename(file)}' was excluded because it was empty."
         attachment_text = attachment_text.html_safe
       end
 

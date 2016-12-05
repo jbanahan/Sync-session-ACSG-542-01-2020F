@@ -60,14 +60,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
     context "with canadian shipment" do 
 
+      let!(:data_cross_reference) {
+        DataCrossReference.add_hm_pars_number "PARS"
+      }
+
       before :each do 
         hm
+        # Turn off pars notifications for now
+        expect_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
       end
 
       it "creates an invoice" do
         invoice = nil
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
+        end
+
+        invoice_data = nil
+        expect(OpenChain::CustomHandler::Hm::HmParsPdfGenerator).to receive(:generate_pars_pdf) do |data, file|
+          invoice_data = data
+          # Write something to the file or it won't get sent...since we don't email blank files.
+          file << "testing"
+          file.flush
         end
         described_class.parse ca_file
 
@@ -104,12 +118,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(l.customer_reference).to eq "REF NO"
         expect(l.line_number).to eq 7
 
-        expect(ActionMailer::Base.deliveries.length).to eq 1
+        expect(ActionMailer::Base.deliveries.length).to eq 2
         mail = ActionMailer::Base.deliveries.first
         expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
         expect(mail.subject).to eq "H&M Commercial Invoice INV#-01"
         expect(mail.attachments["Invoice INV#-01.xls"]).not_to be_nil
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
+
+        mail = ActionMailer::Base.deliveries.second
+        expect(mail.to).to eq ["geodis@geodis.com"]
+        expect(mail.cc).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
+        expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.body).to include "See attached PDF file for the list of PARS numbers to utilize."
+        expect(mail.attachments["PARS Coversheet - 2016-02-03.pdf"]).not_to be_nil
+
+        expect(invoice_data.length).to eq 1
+        expect(invoice_data.first.invoice_number).to eq "INV#-01"
+        expect(invoice_data.first.pars_number).to eq "PARS"
+        expect(invoice_data.first.cartons).to eq 1
+        expect(invoice_data.first.weight).to eq 4
+
+        expect(data_cross_reference.reload.value).to eq "1"
       end
 
       it "prefers the US entry's commercial invoice unit price over the product data" do
@@ -194,7 +224,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(invoices.second.invoice_number).to eq "INV#-02"
         expect(invoices.second.commercial_invoice_lines.first.part_number).to eq "9876543"
 
-        expect(ActionMailer::Base.deliveries.length).to eq 2
+        expect(ActionMailer::Base.deliveries.length).to eq 3
         mail = ActionMailer::Base.deliveries.first
         expect(mail.to).to eq ["hm_ca@vandegriftinc.com"]
         expect(mail.subject).to eq "H&M Commercial Invoice INV#-01"
@@ -206,6 +236,23 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.subject).to eq "H&M Commercial Invoice INV#-02"
         expect(mail.attachments["Invoice INV#-02.xls"]).not_to be_nil
         expect(mail.attachments["INV#-02 Exceptions.xls"]).not_to be_nil
+      end
+
+      it "sends email regarding PARS numbers being needed" do
+        p = described_class.new
+
+        allow(p).to receive(:pars_threshold).and_return 30
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
+        p.parse ca_file
+
+        expect(ActionMailer::Base.deliveries.length).to eq 3
+        mail = ActionMailer::Base.deliveries.last
+
+        expect(mail.to).to eq ["terri.bandy@purolator.com", "mdevitt@purolator.com", "Jessica.Webber@purolator.com"]
+        expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"]
+        expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
+        expect(mail.subject).to eq "More PARS Numbers Required"
+        expect(mail.body).to include "0 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
       end
     end
 

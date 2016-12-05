@@ -317,4 +317,42 @@ describe DataCrossReference do
       expect(csv[2].split(",").take(2)).to eq ["3333333333", "ACME (AC)"]
     end
   end
+
+  context "HM Pars" do
+
+    let (:used_data_cross_reference) {
+      DataCrossReference.create! cross_reference_type: DataCrossReference::HM_PARS_NUMBER, key: "PARS-USED", value: "1"
+    }
+
+    let (:unused_data_cross_reference) {
+      DataCrossReference.add_hm_pars_number("Pars-Unused")
+    }
+
+    describe "find_and_mark_next_unused_hm_pars_number" do
+      it "finds the next cross reference and marks it as being used" do
+        used_data_cross_reference
+        unused_data_cross_reference
+
+        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to eq "Pars-Unused"
+        expect(unused_data_cross_reference.reload.value).to eq "1"
+
+        # If the cross reference was marked as used...then there should be no more left and nil shoudl be returned
+        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to be_nil
+      end
+    end
+
+    describe "unused_pars_count" do
+      it "returns correct count of unused pars numbers" do
+        used_data_cross_reference
+        unused_data_cross_reference
+
+        expect(DataCrossReference.unused_pars_count).to eq 1
+      end
+
+      it "returns zero if all pars numbers are utilized" do
+        used_data_cross_reference
+        expect(DataCrossReference.unused_pars_count).to eq 0
+      end
+    end
+  end
 end

@@ -12,7 +12,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   include ActionView::Helpers::NumberHelper
 
   def self.parse file, opts = {}
-    new.parse(file)
+    if opts[:forward_to_entry_system].blank?
+      opts[:forward_to_entry_system] = true
+    end
+    new.parse(file, forward_to_entry_system: opts[:forward_to_entry_system])
   end
 
   def parse file_contents, forward_to_entry_system: true
@@ -23,11 +26,26 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
     # a completely separate file.
     files = split_file(system, rows)
+    totals = []
     files.each_with_index do |file, x|
-      process_file(system, file, x + 1, forward_to_entry_system)
+      totals << process_file(system, file, x + 1, forward_to_entry_system)
+    end
+
+    if system == :fenix
+      generate_and_send_pars_pdf(totals)
+
+      # Check PARS totals...
+      pars_count = DataCrossReference.unused_pars_count
+      if pars_count < pars_threshold
+        OpenMailer.send_simple_html(["terri.bandy@purolator.com", "mdevitt@purolator.com", "Jessica.Webber@purolator.com"], "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], cc: ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"], reply_to: "hm_support@vandegriftinc.com").deliver!
+      end
     end
 
     nil
+  end
+
+  def pars_threshold
+    100
   end
 
   def cdefs
@@ -117,6 +135,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     999
   end
 
+  class HmShipmentData
+    attr_accessor :invoice_number, :pars_number, :cartons, :weight, :invoice_date
+  end
+
   def process_file system, rows, file_counter, forward_to_entry_system
     # NOTE: the invoices we're creating here are NOT saved...we're just using the datastructure as a passthrough
     # for the Fenix / Kewill file transfers
@@ -148,6 +170,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         generate_and_send_us_files invoice, rows
       end
     end
+
+    generate_file_totals(invoice)
   end
 
   def determine_system first_line
@@ -211,6 +235,34 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
     # gross weight is now in grams...divide it by 1000 to get KG's and round to the nearest KG
     invoice.gross_weight = (totals[:gross_weight] / BigDecimal("1000")).round
+
+    if invoice.gross_weight.nil? || invoice.gross_weight.to_f == 0
+      # Never show that the weight is zero, just round it to one if it is.  The zero
+      # has to do with the converting from grams to KG's.  This may happen in a case where the file has 1000 lines
+      # and is split at 999 and the 1 line shipment has a weight < .5 KG.  Weight isn't THAT important, so we just
+      # don't want to have the sheet say zero on it (since every product has some sort of weight.)
+      invoice.gross_weight = 1
+    end
+  end
+
+  def generate_file_totals invoice
+    data = HmShipmentData.new
+    data.invoice_number = invoice.invoice_number
+    data.invoice_date = invoice.invoice_date
+    data.pars_number = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+    data.weight = invoice.gross_weight
+
+    # For every unique PO number, count it as a single carton...for the time being, since cartons,
+    # are not on the I2...we just have to guestimate the carton count.
+    po_numbers = Set.new
+
+    invoice.commercial_invoice_lines.each do |line|
+      po_numbers << line.po_number unless line.po_number.blank?
+    end
+
+    data.cartons = po_numbers.size
+
+    data
   end
 
   def file_reader file
@@ -486,5 +538,20 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
     wb
   end
+
+  def generate_and_send_pars_pdf file_data
+    Tempfile.open(["ParsCoversheet", ".pdf"]) do |tempfile|
+      tempfile.binmode
+      OpenChain::CustomHandler::Hm::HmParsPdfGenerator.generate_pars_pdf(file_data, tempfile)
+      # Use the first invoice date from the data 
+      data = file_data.find {|d| !d.invoice_date.nil? }
+      date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
+      filename = "PARS Coversheet - #{date}.pdf"
+      Attachment.add_original_filename_method(tempfile, filename)
+      OpenMailer.send_simple_html(["geodis@geodis.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+    end
+  end
+
+
 
 end; end; end; end;

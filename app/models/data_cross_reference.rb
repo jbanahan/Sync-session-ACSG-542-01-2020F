@@ -31,6 +31,7 @@ class DataCrossReference < ActiveRecord::Base
   PO_FINGERPRINT ||= 'po_id'
   EXPORT_CARRIER ||= 'export_carriers'
   US_HTS_TO_CA ||= 'us_hts_to_ca'
+  HM_PARS_NUMBER ||= 'hm_pars'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -215,6 +216,22 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_us_hts_to_ca us_hts, importer_id
     find_unique(where(cross_reference_type: US_HTS_TO_CA, key: us_hts, company_id: importer_id))
+  end
+
+  def self.find_and_mark_next_unused_hm_pars_number
+    Lock.acquire("HM-Pars-Number") do 
+      pars = DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER, value: nil).order(:id).first
+      pars.update_attributes!(value: "1") if pars
+      pars.try(:key)
+    end
+  end
+
+  def self.unused_pars_count
+    DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER).where("`value` IS NULL OR `value` = ''").count
+  end
+
+  def self.add_hm_pars_number pars_number
+    add_xref! HM_PARS_NUMBER, pars_number, nil
   end
 
   private_class_method :milestone_key

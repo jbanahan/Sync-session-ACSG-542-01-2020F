@@ -1,7 +1,8 @@
-require 'prawn'
+require 'open_chain/custom_handler/pdf_generator_support'
 require 'combine_pdf'
 
 module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
+  extend OpenChain::CustomHandler::PdfGeneratorSupport
 
   ADDRESS ||= Struct.new :name, :line_1, :line_2, :line_3
 
@@ -36,7 +37,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
   end
 
   def self.render_invoice_content invoice
-    d = Prawn::Document.new page_size: "LETTER", margin: [0, 0, 0, 0]
+    d = pdf_document(document_options: {margin: [0, 0, 0, 0]})
 
     d.font_size = 12
     d.font("Courier") do 
@@ -80,19 +81,6 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
     
 
     d.render
-  end
-
-  def self.text_box document, text, at, width, height, overflow: :shrink_to_fit, align: :left
-    document.text_box text.to_s.strip, at: at, width: width, height: height, overflow: overflow, align: align
-  end
-
-
-  def self.b_text_box document, text, at, width, height, overflow: :shrink_to_fit, align: :left
-    document.bounding_box([at[0], at[1]], width: width, height: height) do 
-      document.stroke_bounds
-    end
-
-    text_box document, text, at, width, height, overflow: overflow, align: align
   end
 
   def self.address_text address

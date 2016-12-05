@@ -1,4 +1,4 @@
-require 'prawn'
+require 'open_chain/custom_handler/pdf_generator_support'
 # Technically prawn/table isn't required to be require, but this class will fail HARD if it's not included and I wanted some
 # concrete location in the code to reflect the dependency
 require 'prawn/table'
@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderPdfGenerator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   include ActionView::Helpers::NumberHelper
+  include OpenChain::CustomHandler::PdfGeneratorSupport
 
   def self.create! order, user
     Tempfile.open(['foo', '.pdf']) do |file|
@@ -32,7 +33,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   def render order, user, open_file_object
     # This document will be a standard 8 1/2" x 11" letter size with 1/2" margins (72 pts. per Inch)
     # We've added more bottom margin to force the table to wrap to a new page before the Terms and conditions stamp
-    d = Prawn::Document.new page_size: "LETTER", margin: [36, 36, 72, 36]
+    d = pdf_document(document_options: {margin: [36, 36, 72, 36]})
 
     page_width = d.bounds.width.to_f # w/ Letter (minus margins), this is 540
     page_height = d.bounds.height.to_f # w/ Letter (minus margins), this is 720
@@ -116,7 +117,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       d.text_box "#{Time.now.utc.to_s} UTC", align: :right, at: [page_width - 85, -45], height: d.font_size + 2
     end
 
-    d.number_pages "<page> of <total>", width: 50, at: [(page_width / 2) - 25, -45], align: :center
+    add_page_numbers d, at: [(page_width / 2) - 25, -45]
 
     d.render open_file_object
     open_file_object.flush
