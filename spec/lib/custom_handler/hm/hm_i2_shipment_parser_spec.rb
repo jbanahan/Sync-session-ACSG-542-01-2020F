@@ -636,27 +636,5 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       expect(files[1][0][0]).to eq "ship2"
       expect(files[2][0][0]).to eq "ship3"
     end
-
-    it "sorts the file rows based on the shipment and then line number" do
-      file_rows = [
-        ["ship3", nil, nil, nil, nil, nil, "PO2"],
-        ["ship1", 2, nil, nil, nil, nil, "PO1"],
-        ["ship2", nil, nil, nil, nil, nil, "PO2"],
-        ["ship1", 1, nil, nil, nil, nil, "PO1"]
-      ]
-
-      expect(subject).to receive(:max_fenix_invoice_length).at_least(:once).and_return 3
-
-      files = subject.split_file(:fenix, file_rows)
-
-      expect(files.length).to eq 3
-      expect(files[0].length).to eq 2
-      expect(files[0][0][0]).to eq "ship1"
-      expect(files[0][0][1]).to eq 1
-      expect(files[0][1][1]).to eq 2
-
-      expect(files[1][0][0]).to eq "ship2"
-      expect(files[2][0][0]).to eq "ship3"
-    end
   end
 end

@@ -61,17 +61,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # So, we need to split the rows in the file at around 999 lines...the wrinkle is that we 
     # can't split it across PO numbers.  So, if we're at line 997 and the next PO has 4 lines..
     # we need to split the file at 997.
-
-    # The file comes in with shipment numbers interlaced together (WTF)...so lets sort them based
-    # on the shipment number and then line number
-    rows = rows.sort {|row1, row2|
-      val = row1[0].to_s.strip <=> row2[0].to_s.strip
-      if val == 0
-        val = row1[1].to_i <=> row2[1].to_i
-      end
-      val
-    }
-
     all_files = []
     current_file_rows = []
     current_po_row_list = []
