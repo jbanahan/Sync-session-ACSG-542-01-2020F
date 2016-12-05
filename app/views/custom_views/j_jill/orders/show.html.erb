@@ -130,15 +130,11 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
             <div><%=field_value @order, :ord_ord_date%></div>
           </td>
           <td>
-            <label>Open</label>
+            <label>LGAC Date</label>
             <div><%=field_value @order, :ord_window_start%></div>
           </td>
           <td>
-            <label>Close</label>
-            <div><%=field_value @order, :ord_window_end%></div>
-          </td>
-          <td>
-            <label>Requested Delivery</label>
+            <label>DC Due Date</label>
             <div><%=field_value @order, :ord_first_exp_del%></div>
           </td>
           <td>
@@ -146,7 +142,7 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
             <div><%=field_value @order, :ord_factory_name%></div>
           </td>
           <td>
-            <label>Total PO</label>
+            <label>Total PO First Cost</label>
             <div>$<%=@order.order_lines.inject(0) { |mem, var| mem+var.total_cost }%></div>
           </td>
           <td>
@@ -172,10 +168,6 @@ cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_st
           <td>
             <label>Origin Country</label>
             <div><%=field_value @order, :ord_fob_point%></div>
-          </td>
-          <td>
-            <label>Destination Port</label>
-            <div><%=field_value @order, cdefs[:entry_port_name].model_field_uid.to_sym%></div>
           </td>
           <td>
             <label>Ship Via</label>
