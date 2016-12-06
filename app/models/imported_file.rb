@@ -343,18 +343,13 @@ class ImportedFile < ActiveRecord::Base
       unless messages.blank?
         msg_sql = []
         messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
-        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")};"
-        begin
-          ActiveRecord::Base.connection.execute sql
-          ActiveRecord::Base.connection.execute "UPDATE file_import_results SET rows_processed = #{row_number - (@imported_file.starting_row - 1)} WHERE ID = #{@fr.id};"
-        rescue
-          $!.log_me
-        end
+        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")};"    
+        ActiveRecord::Base.connection.execute sql
+        ActiveRecord::Base.connection.execute "UPDATE file_import_results SET rows_processed = #{row_number - (@imported_file.starting_row - 1)} WHERE ID = #{@fr.id};"
       end
       
       object.update_attributes(:last_updated_by_id=>@fr.run_by.id) if object.respond_to?(:last_updated_by_id)
-      object.create_snapshot(@fr.run_by,@imported_file) if object.respond_to?(:create_snapshot)
-      
+      object.create_snapshot(@fr.run_by,@imported_file, @imported_file.note) if object.respond_to?(:create_snapshot)
     end
 
     def process_start time

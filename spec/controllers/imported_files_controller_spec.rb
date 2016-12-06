@@ -23,7 +23,7 @@ describe ImportedFilesController do
       p1 = Factory(:product)
       p2 = Factory(:product)
       dont_find = Factory(:product)
-      f = Factory(:imported_file,:user=>@u)
+      f = Factory(:imported_file,:user=>@u,:note=>"nota bene", :search_setup=>Factory(:search_setup, name: "search!"))
       finished_at = 1.minute.ago
       fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
       [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
@@ -32,6 +32,7 @@ describe ImportedFilesController do
       expect(response).to be_success
       r = JSON.parse response.body
       expect(r['id']).to eq(f.id)
+      expect(r['note']).to eq "nota bene"
       expect(r['uploaded_at']).to eq(0.seconds.ago.strftime("%Y-%m-%d %H:%M"))
       expect(r['uploaded_by']).to eq(@u.full_name)
       expect(r['total_rows']).to eq(3)

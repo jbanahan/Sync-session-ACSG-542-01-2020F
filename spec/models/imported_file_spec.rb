@@ -355,4 +355,66 @@ describe ImportedFile do
       expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to process imported file with original path '#{path}'."]
     end
   end
+
+  describe ImportedFile::FileImportProcessorListener do
+    describe "process_row" do
+      let!(:user) { Factory(:user) }
+      let!(:imported_file) { Factory(:imported_file, module_type: "Product", starting_row: 2, note: "nota bene") }
+      let(:obj) { Factory(:product) }
+      let(:listener) do 
+        l = described_class.new(imported_file, user.id)
+        l.process_start Time.now
+        l
+      end
+      let(:messages) do
+        mf_value = "mf value"
+        def mf_value.unique_identifier?; true end
+        [mf_value, "msg 1", "msg 2"]
+      end
+
+      it "creates/assigns a change record to the object and file import result" do
+        expect{listener.process_row 3, obj, messages, true}.to change(ChangeRecord, :count).by(1)
+        cr = ChangeRecord.first
+        expect(cr.unique_identifier).to eq "mf value"
+        expect(cr.record_sequence_number).to eq 3
+        expect(cr.recordable).to eq obj
+        expect(cr.failed).to be true
+        expect(cr.file_import_result).to eq(imported_file.file_import_results.first)
+      end
+
+      it "creates change record messages" do
+        listener.process_row 3, obj, messages
+        cr = ChangeRecord.first
+        cr_msgs = cr.change_record_messages
+        expect(cr_msgs.count).to eq 2
+        expect(cr_msgs[0].change_record).to eq cr
+        expect(cr_msgs[0].message).to eq "msg 1"
+        expect(cr_msgs[1].change_record).to eq cr
+        expect(cr_msgs[1].message).to eq "msg 2"
+      end
+
+      it "updates row number on file import result" do
+        listener.process_row 3, obj, messages
+        res = imported_file.file_import_results.first
+        expect(res.rows_processed).to eq 2
+      end
+      
+      it "updates object and creates snapshot" do
+        listener.process_row 3, obj, messages
+        expect(obj.last_updated_by).to eq user
+        snap = obj.entity_snapshots.first
+        expect(snap.user).to eq user
+        expect(snap.context).to eq "nota bene"
+        expect(snap.recordable).to eq obj
+      end
+      
+      it "doesn't create change record messages or update file import results if there are no messages" do
+        listener.process_row 3, obj, []
+        expect(ChangeRecordMessage.count).to eq 0
+        res = imported_file.file_import_results.first
+        expect(res.rows_processed).to be nil
+      end
+    end
+  end
+
 end

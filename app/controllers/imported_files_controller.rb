@@ -56,6 +56,7 @@ class ImportedFilesController < ApplicationController
         raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
         r = {:id=>f.id,
           :file_name=>f.attached_file_name,
+          :note=>f.note,
           :show_email_button=>(f.attached_file_name && (f.attached_file_name.downcase.ends_with?(".xls") || f.attached_file_name.downcase.ends_with?(".xlsx"))),
           :uploaded_at=>f.created_at.strftime("%Y-%m-%d %H:%M"),
           :uploaded_by=>f.user.full_name,
