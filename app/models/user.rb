@@ -35,7 +35,8 @@ class User < ActiveRecord::Base
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
     :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids,
-    :portal_mode
+    :portal_mode,
+    :system_user
 
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -74,7 +75,8 @@ class User < ActiveRecord::Base
         username:'ApiAdmin',
         first_name:'API',
         last_name:'Admin',
-        email:'bug+api_admin@vandegriftinc.com'
+        email:'bug+api_admin@vandegriftinc.com',
+        system_user: true
         )
       u.admin = true
       pwd = generate_authtoken(u)
@@ -95,7 +97,8 @@ class User < ActiveRecord::Base
         username:'integration',
         first_name:'Integration',
         last_name:'User',
-        email:'bug+integration@vandegriftinc.com'
+        email:'bug+integration@vandegriftinc.com',
+        system_user: true
       }
       add_all_permissions_to_hash h
       u = Company.find_master.users.build(h)

@@ -8,6 +8,7 @@ describe OpenChain::Report::MonthlyUserAuditReport do
     Factory(:admin_user, company: Factory(:company, name: "b"), username: "Soldier", email: "soldier@vandegriftinc.com")
     Factory(:admin_user, company: Factory(:company, name: "a"), username: "Sailor", email: "sailor@vandegriftinc.com", disabled: true)
     Factory(:admin_user, company: Factory(:company, name: "d"), username: "Rich Man", email: "rich_man@vandegriftinc.com")
+    Factory(:sys_admin_user, company: Factory(:company, name: "f"), username: "Poor Man", email: "poor_man@vandegriftinc.com", system_user: true)
     month = Time.now.strftime('%B')
 
     OpenChain::Report::MonthlyUserAuditReport.run_schedulable
@@ -24,12 +25,13 @@ describe OpenChain::Report::MonthlyUserAuditReport do
       sheet = wb.worksheet(0)
       
       expect(sheet.row(0).count).to eq 65
-      expect(sheet.count).to eq 6
+      expect(sheet.count).to eq 7
       expect(sheet.row(1)[7]).to eq "Soldier"
       expect(sheet.row(2)[7]).to eq "Tinker"
       expect(sheet.row(3)[7]).to eq "Rich Man"
       expect(sheet.row(4)[7]).to eq "Tailor"
-      expect(sheet.row(5)[7]).to eq "Sailor"
+      expect(sheet.row(5)[7]).to eq "Poor Man"
+      expect(sheet.row(6)[7]).to eq "Sailor"
     end
   end
 end

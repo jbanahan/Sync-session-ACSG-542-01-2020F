@@ -5,7 +5,7 @@ module OpenChain
       include OpenChain::Report::ReportHelper
 
       def self.run_schedulable opts_hash={}
-        recipients = User.where(admin: true, disabled: [false, nil]).pluck(:email)
+        recipients = User.where(admin: true, system_user: [false, nil], disabled: [false, nil]).pluck(:email)
         self.new.send_email('email' => recipients)
       end
 

@@ -92,6 +92,7 @@ describe User do
       expect(u.first_name).to eq 'API'
       expect(u.last_name).to eq 'Admin'
       expect(u.email).to eq 'bug+api_admin@vandegriftinc.com'
+      expect(u.system_user).to be true
       expect(u.company).to be_master
       expect(u).to be_admin
       expect(u.api_auth_token).to_not be_blank
@@ -110,6 +111,7 @@ describe User do
       expect(u.first_name).to eq 'Integration'
       expect(u.last_name).to eq 'User'
       expect(u.email).to eq 'bug+integration@vandegriftinc.com'
+      expect(u.system_user).to be true
       expect(u.company).to be_master
       expect(u).to be_admin
       expect(u.api_auth_token).to_not be_blank
