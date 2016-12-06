@@ -254,12 +254,14 @@ class ModelField
 
   #get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
   def label(force_label=nil)
-    do_prefix = force_label.nil? && self.core_module ? self.core_module.show_field_prefix : force_label
-    r = do_prefix ? "#{self.core_module.label} - " : ""
-    return "#{r}#{@label_override}" unless @label_override.nil?
-    "#{r}#{self.base_label}"
-  end
+    prefix = ""
+    if self.core_module
+      do_prefix = force_label.nil? ? self.core_module.show_field_prefix : force_label
+      prefix = do_prefix ? "#{self.core_module.label} - " : ""
+    end
 
+    "#{prefix}#{@label_override.nil? ? self.base_label : @label_override}"
+  end
 
   #get the basic label content from the FieldLabel if available
   def base_label

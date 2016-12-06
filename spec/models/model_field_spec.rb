@@ -1292,4 +1292,48 @@ describe ModelField do
       expect(search_result.to_a).to eq [@ad.company]
     end
   end
+
+  describe "label" do
+    before :each do
+      ModelField.reload
+    end
+
+    it "returns the label for the field on a top level core module" do
+      expect(ModelField.find_by_uid("prod_name").label).to eq "Name"
+    end
+
+    it "utilizes the label override" do
+      FieldLabel.set_label "prod_name", "Override"
+      expect(ModelField.find_by_uid("prod_name").label).to eq "Override"
+    end
+
+    it "forces the module name as a prefix" do
+      expect(ModelField.find_by_uid("prod_name").label(true)).to eq "Product - Name"
+    end
+
+    it "returns the label for a child core module" do
+      expect(ModelField.find_by_uid("ci_invoice_number").label).to eq "Invoice - Invoice Number"
+    end
+
+    it "disables the label for a child core module if instructed" do
+      expect(ModelField.find_by_uid("ci_invoice_number").label(false)).to eq "Invoice Number"
+    end
+
+    it "handles blank fields" do
+      expect(ModelField.find_by_uid("_blank").label).to eq "[blank]"
+    end
+
+    it "no-ops the force prefix parameter for blank fields" do
+      expect(ModelField.find_by_uid("_blank").label(true)).to eq "[blank]"
+    end
+
+    it "handles disabled fields" do
+      expect(ModelField.find_by_uid("notafieldname").label).to eq "[Disabled]"
+    end
+
+    it "no-ops the force prefix parameter for disabled fields" do
+      expect(ModelField.find_by_uid("notafieldname").label(true)).to eq "[Disabled]"
+    end
+
+  end
 end
