@@ -65,12 +65,13 @@ describe SupportRequest do
 
     describe "send_request" do
       it "uses EmailRequestSender to send a request" do
+        stub_master_setup
         support_request.send_request!
         support_request.reload
         expect(support_request).to be_persisted
         expect(support_request.ticket_number).to eq support_request.id.to_s
         mail = ActionMailer::Base.deliveries.pop
-        expect(mail.subject).to eq "[Support Request ##{support_request.ticket_number}]"
+        expect(mail.subject).to eq "[Support Request ##{support_request.ticket_number} (test)]"
       end
     end
   end
