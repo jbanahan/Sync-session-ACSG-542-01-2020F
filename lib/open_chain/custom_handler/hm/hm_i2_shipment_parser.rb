@@ -156,7 +156,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         g.generate_and_send_invoices invoice.invoice_number, invoice, gross_weight_uom: "G"
 
         # Generate the files for the carrier and send them
-        generate_and_send_us_files invoice, rows
+        generate_and_send_us_files invoice, rows, missing_product_data
       end
     end
 
@@ -181,8 +181,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     invoice.importer = importer(system)
     invoice.invoice_number = text_value(line[0])
     invoice.invoice_number += "-#{file_counter.to_s.rjust(2, "0")}" if system == :fenix
-
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
+
+    # If the invoice date is missing, the translation in the EDI process to an 810 fed into Fenix fails,
+    # so just put a REALLY old date that sticks out as bad in there so that doesn't fail.
+    if system == :fenix && invoice.invoice_date.nil?
+      invoice.invoice_date = ActiveSupport::TimeZone["America/New_York"].parse "1900-01-01 00:00"
+    end
+
     invoice.currency = "USD"
     
     invoice
@@ -285,7 +291,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # Product should NEVER be missing as all these products should come through on the I1 feed before making it 
     # through on an I2
     product = Product.where(importer_id: product_importer.id, unique_identifier: unique_identifier).first
-    values = {part_number: part_number, unique_identifier: unique_identifier}
+    values = {part_number: part_number, unique_identifier: unique_identifier, order_number: order_number, country_origin: country_origin_code}
     if product
       values[:product] = product
 
@@ -310,21 +316,22 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       values[:description] = tariff.try(:tariff_description) if values[:description].blank?
       values[:hts] = tariff.try(:hts_code) if system == :kewill && values[:hts].blank?
 
+      # What really matters here is that product_value is found and the tariff is present
+      values[:missing_data] = values[:hts].blank? || values[:product_value].nil? || values[:description].blank?
     else
       values[:missing_data] = true
     end
 
     
     if system == :fenix 
-      # What really matters here is that product_value is found and the canadian tariff is present
-      values[:missing_data] = values[:hts].blank? || values[:product_value].nil?
-
       # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
       # the EDI 810 feed we use to feed the data to Fenix, so we're using an absurd value to indicate that it's missing,
       # and then sending an exception report to CA ops indicating missing data.
       if values[:product_value].nil?
         values[:product_value] = BigDecimal("999999.99")
       end
+    elsif system == :kewill
+      values[:missing_data] = values[:mid].blank?
     end
 
     values
@@ -353,7 +360,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     matched_line
   end
 
-  def generate_and_send_us_files invoice, rows
+  def generate_and_send_us_files invoice, rows, missing_product_data
     pdf_data = make_pdf_info(invoice, rows)
     spreadsheet = build_addendum_spreadsheet(invoice, rows)
     Tempfile.open(["HM-Invoice", ".pdf"]) do |file|
@@ -369,11 +376,21 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         OpenMailer.send_simple_html(["Brampton-H&M.cl.us@geodis.com", "OnlineDCPlainfield@hm.com"], "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", [file, wb], reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver!
       end
     end
+
+    if missing_product_data.length > 0
+      exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data, :kewill) 
+      Tempfile.open(["HM-Invoice-Exceptions", ".xls"]) do |wb|
+        wb.binmode
+        exception_spreadsheet.write wb
+        Attachment.add_original_filename_method wb, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xls"
+        OpenMailer.send_simple_html(["nb@vandegriftinc.com"], "[VFI Track] H&M Commercial Invoice #{invoice.invoice_number} Exceptions", "The Exception report for invoice # #{invoice.invoice_number} is attached to this email.", [wb]).deliver!
+      end
+    end
   end
 
   def generate_and_send_ca_files invoice, rows, missing_product_data
     spreadsheet = build_addendum_spreadsheet(invoice, rows)
-    exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data) if missing_product_data.length > 0
+    exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data, :fenix) if missing_product_data.length > 0
 
     files = []
     begin
@@ -492,10 +509,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     wb
   end
 
-  def build_missing_product_spreadsheet invoice_number, missing_products
-    wb, sheet = XlsMaker.create_workbook_and_sheet "#{invoice_number} Exceptions", ["Part Number", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Link", "US Entry Links", "Resolution"]
+  def build_missing_product_spreadsheet invoice_number, missing_products, destination_system
+    wb, sheet = XlsMaker.create_workbook_and_sheet "#{invoice_number} Exceptions", ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
     counter = 0
-    widths = [50, 50, 50, 50, 50, 50, 50, 50]
+    widths = [50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
     missing_products.each do |prod|
       part_number = prod[:part_number]
 
@@ -508,10 +525,17 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         po_numbers = product.custom_value(cdefs[:prod_po_numbers]).to_s.split("\n").map(&:strip)
 
         resolution = nil
-        if us_tariff.blank?
-          resolution = "Use Part Number and PO Number(s) (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."
-        elsif ca_tariff.blank?
-          resolution = "Use linked Product and add Canadian classifiction in VFI Track."
+        if destination_system == :fenix
+          if us_tariff.blank?
+            resolution = "Use Part Number and H&M Order # (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."
+          elsif ca_tariff.blank?
+            resolution = "Use linked Product and add Canadian classifiction in VFI Track."
+          elsif prod[:product_value].nil? || prod[:product_value].zero? || prod[:product_value] >= BigDecimal("999999.99")
+            # If value is missing, we put an absurdly high value in, otherwise the EDI fails.  Fenix will flag this value too, or so we're told.
+            resolution = "The Product Value field must be filled in on the linked Product using information from any US Entries the product appears on."
+          end
+        elsif destination_system == :kewill
+          resolution = "Use Part Number and the H&M Order # (Invoice Number in US Entry) to lookup the missing information from the source US Entry."
         end
 
         entry = nil
@@ -519,9 +543,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
           entry = Entry.joins(commercial_invoices: [:commercial_invoice_lines]).where(source_system: "Alliance", customer_number: "HENNE").where(commercial_invoices: {invoice_number: po_numbers}).order("file_logged_date DESC").first
         end
 
-        XlsMaker.add_body_row sheet, (counter +=1), [part_number, product.name, po_numbers.join(", "), us_tariff.try(:hts_format), ca_tariff.try(:hts_format), XlsMaker.create_link_cell(product.excel_url, part_number), (entry ? XlsMaker.create_link_cell(entry.excel_url, entry.broker_reference) : ""), resolution], widths
+        XlsMaker.add_body_row sheet, (counter +=1), [part_number, prod[:order_number], prod[:country_origin], product.name, po_numbers.join(", "), us_tariff.try(:hts_format), ca_tariff.try(:hts_format), prod[:product_value], prod[:mid], XlsMaker.create_link_cell(product.excel_url, part_number), (entry ? XlsMaker.create_link_cell(entry.excel_url, entry.broker_reference) : ""), resolution], widths
       else
-        XlsMaker.add_body_row sheet, (counter +=1), [part_number, "", "", "", "", "", "", "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."], widths
+        XlsMaker.add_body_row sheet, (counter +=1), [part_number, prod[:order_number], prod[:country_origin], "", "", "", "", prod[:product_value], prod[:mid], "", "", "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."], widths
       end
     end
 
@@ -537,7 +561,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
-      OpenMailer.send_simple_html(["geodis@geodis.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(["H&M_supervisors@ohl.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
     end
   end
 

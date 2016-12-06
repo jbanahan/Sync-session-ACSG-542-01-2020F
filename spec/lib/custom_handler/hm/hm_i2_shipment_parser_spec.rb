@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
 
         mail = ActionMailer::Base.deliveries.second
-        expect(mail.to).to eq ["geodis@geodis.com"]
+        expect(mail.to).to eq ["H&M_supervisors@ohl.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"]
         expect(mail.cc).to eq ["hm_ca@vandegriftinc.com"]
         expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
         expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
@@ -254,6 +254,19 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.subject).to eq "More PARS Numbers Required"
         expect(mail.body).to include "0 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
       end
+
+      it "handles invalid invoice date" do
+        file = ca_file.gsub("20160203T0405+0100", "T")
+
+        invoice = nil
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
+          invoice = id
+        end
+        described_class.parse file
+
+        expect(invoice).not_to be_nil
+        expect(invoice.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].parse "1900-01-01 00:00"
+      end
     end
 
     context "with us shipment" do
@@ -349,6 +362,15 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         tar = line.commercial_invoice_tariffs.first
         expect(tar.hts_code).to eq "9876543210"
         expect(tar.tariff_description).to eq "US Description"
+
+        # If there was no entry match, an exception report should have been generated (since MID will be blank)
+        email = ActionMailer::Base.deliveries.first
+        expect(email).not_to be_nil
+        expect(email.subject).to eq "[VFI Track] H&M Returns Shipment # INV#"
+
+        email = ActionMailer::Base.deliveries.second
+        expect(email).not_to be_nil
+        expect(email.subject).to eq "[VFI Track] H&M Commercial Invoice INV# Exceptions"
       end
 
       it "falls back to product data if entry isn't present" do
@@ -538,19 +560,54 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       p 
     }
 
-    it "reports on products missing classifications" do
-      missing_products = [{product: ca_product, part_number: "12345"}, {product: us_product, part_number: "9876"}, {product: nil}]
-      entry
+    context "with fenix data" do
+      it "reports on products missing classifications" do
+        missing_products = [{product: ca_product, part_number: "12345", order_number: "23456", country_origin: "BD"}, {product: us_product, part_number: "9876", order_number: "345678", country_origin: "IN"}, {product: nil}]
+        entry
 
-      wb = subject.build_missing_product_spreadsheet "INV", missing_products
+        wb = subject.build_missing_product_spreadsheet "INV", missing_products, :fenix
 
-      expect(wb.worksheets.length).to eq 1
-      expect(wb.worksheets.first.name).to eq "INV Exceptions"
-      sheet = wb.worksheets.first
+        expect(wb.worksheets.length).to eq 1
+        expect(wb.worksheets.first.name).to eq "INV Exceptions"
+        sheet = wb.worksheets.first
 
-      expect(sheet.row(0)).to eq ["Part Number", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Link", "US Entry Links", "Resolution"]
-      expect(sheet.row(1)).to eq ["12345", "CA Description", "987654, Another PO", "", "1234.56.7890", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "Use Part Number and PO Number(s) (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."]
-      expect(sheet.row(2)).to eq ["9876", "US Description", "", "9876.54.3210", "", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
+        expect(sheet.row(0)).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
+        expect(sheet.row(1)).to eq ["12345", "23456", "BD", "CA Description", "987654, Another PO", "", "1234.56.7890", "", "", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "Use Part Number and H&M Order # (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."]
+        expect(sheet.row(2)).to eq ["9876", "345678", "IN", "US Description", "", "9876.54.3210", "", "","", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
+      end
+
+      it "reports missing product value if classifications are present" do
+        cl = ca_product.classifications.create! country_id: us.id
+        t = cl.tariff_records.create! hts_1: "1234567890"
+
+        missing_products = [{product: ca_product, part_number: "12345", order_number: "23456", country_origin: "BD", product_value: BigDecimal("999999.99"), mid: "MID"}]
+        entry
+
+        wb = subject.build_missing_product_spreadsheet "INV", missing_products, :fenix
+
+        expect(wb.worksheets.length).to eq 1
+        expect(wb.worksheets.first.name).to eq "INV Exceptions"
+        sheet = wb.worksheets.first
+
+        expect(sheet.row(0)).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
+        expect(sheet.row(1)).to eq ["12345", "23456", "BD", "CA Description", "987654, Another PO", "1234.56.7890", "1234.56.7890", 999999.99, "MID", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "The Product Value field must be filled in on the linked Product using information from any US Entries the product appears on."]
+      end
+    end
+
+    context "with kewill data" do
+      it "reports on products missing classifications" do
+        missing_products = [{product: us_product, part_number: "9876", order_number: "345678", country_origin: "IN", product_value: BigDecimal("1"), mid: "MID"}]
+        entry
+
+        wb = subject.build_missing_product_spreadsheet "INV", missing_products, :kewill
+
+        expect(wb.worksheets.length).to eq 1
+        expect(wb.worksheets.first.name).to eq "INV Exceptions"
+        sheet = wb.worksheets.first
+
+        expect(sheet.row(0)).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
+        expect(sheet.row(1)).to eq ["9876", "345678", "IN", "US Description", "", "9876.54.3210", "", 1, "MID", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use Part Number and the H&M Order # (Invoice Number in US Entry) to lookup the missing information from the source US Entry."]
+      end
     end
   end
 
