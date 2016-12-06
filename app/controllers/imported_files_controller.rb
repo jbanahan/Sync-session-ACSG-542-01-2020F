@@ -68,6 +68,7 @@ class ImportedFilesController < ApplicationController
           :processing_error_count=>(fir ? fir.error_count : ''),
           :current_user=>{'id'=>current_user.id,'full_name'=>current_user.full_name,'email'=>current_user.email},
           :search_criterions=>f.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
+          :search_setup_name=>f.search_setup.try(:name),
           :model_fields => ModelField.sort_by_label(f.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}},
           :file_import_result => {}
         } 

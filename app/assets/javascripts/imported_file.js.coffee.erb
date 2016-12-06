@@ -5,7 +5,7 @@ importedFileApp = angular.module('ImportedFileApp',['ngRoute','ChainComponents']
     when('/:fileId/:page',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'})
 ])
 
-importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', '$window', ($scope,$routeParams,$http,$location,chainSearchOperators,$window) ->
+importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$routeParams', '$http', '$location', 'chainSearchOperators', '$window', ($scope,$timeout,$routeParams,$http,$location,chainSearchOperators,$window) ->
   
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -44,6 +44,16 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   $scope.showEmailCurrent = false
   $scope.emailCurrentSettings = {to:'',subject:'[VFI Track] Current File Data',body:''}
 
+  $scope.reloadWhenProcessed = () ->  
+    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').success((data) ->
+      importedFile = data
+      if importedFile.last_processed == ''
+        $scope.importedFile = importedFile
+        $timeout (-> $scope.reloadWhenProcessed()), 5000
+      else
+        $window.location.reload()
+    )
+
   $scope.enableEmailCurrent = () ->
     $scope.showEmailCurrent = true
 
@@ -76,8 +86,9 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   $scope.process = () ->
     $scope.showPreviewBox = false
     $http.post('/imported_files/'+$scope.importedFile.id+"/process_file.json").success(() ->
-      $scope.notices.push "Your file is being processed. You'll receive a system message when it is complete."
       $scope.showEmailCurrent=false
+      $scope.notices.push "Your file is being processed. The screen will reload when it's finished."
+      $scope.reloadWhenProcessed()
     ).error(() ->
       $scope.errors.push "There was an error processing the file. Please contact support."
     )
@@ -110,6 +121,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
           $scope.errors.push "There was an error processing this file. Please contact support."
         )
     )
+
 
   #
   # WATCHES

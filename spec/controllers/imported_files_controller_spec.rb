@@ -41,6 +41,7 @@ describe ImportedFilesController do
       expect(r['processing_error_count']).to eq(61)
       expect(r['current_user']).to eq({'id'=>@u.id,'full_name'=>@u.full_name,'email'=>@u.email})
       expect(r['file_import_result']).to eq({'id'=>fir.id})
+      expect(r['search_setup_name']).to eq "search!"
     end
     it "should return search_criterions" do
       f = Factory(:imported_file,:user=>@u)
