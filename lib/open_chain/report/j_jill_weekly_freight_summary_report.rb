@@ -217,6 +217,7 @@ QRY
 SELECT
 shipments.receipt_location as 'Origin',
 shipments.booking_number as 'Booking #',
+shipments.master_bill_of_lading as 'Master Bill #',
 shipments.booking_mode as 'Booked Mode',
 shipments.booking_shipment_type as 'Booked Load',
 shipments.booking_carrier as 'Booked Carrier',
