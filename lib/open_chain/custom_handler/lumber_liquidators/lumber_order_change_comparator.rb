@@ -213,7 +213,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       new_hash = new_data.line_hash
 
       # if the ship from changed, then all lines need to be re-approved
-      return new_hash.keys if old_data.ship_from_address!=new_data.ship_from_address
+      return new_hash.keys if ship_from_changed?(old_data,new_data)
 
       lines_to_check = new_hash.keys & old_hash.keys
       need_reset = lines_to_check.reject {|line_number| old_hash[line_number] == new_hash[line_number]}
@@ -221,6 +221,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         need_reset << k if old_data.variant_map[k] != v
       end
       need_reset.uniq.compact
+    end
+
+    def self.ship_from_changed? old_data, new_data
+      osa = old_data.ship_from_address
+      nsa = new_data.ship_from_address
+      osa = '' if osa.blank?
+      nsa = '' if nsa.blank?
+
+      # ignore whitespace differences
+      old_address = osa.gsub(/\s/, '')
+      new_address = nsa.gsub(/\s/, '')
+
+      return old_address!=new_address
     end
 
     def self.needs_new_pdf? old_data, new_data

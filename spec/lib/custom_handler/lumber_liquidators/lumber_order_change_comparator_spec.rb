@@ -449,6 +449,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         new_data.variant_map = old_data.variant_map
         expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','2','4']
       end
+      it 'should not return lines where the only change to the ship from address is whitespace' do
+        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_data = described_class::OrderData.new(old_fingerprint)
+        old_data.ship_from_address = 'abc def'
+        old_data.variant_map = {'1'=>'10','2'=>'11'}
+        new_data = described_class::OrderData.new(old_fingerprint)
+        new_data.ship_from_address = " ab c\nde\r\nf"
+        new_data.variant_map = old_data.variant_map.clone
+        expect(described_class::OrderData.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
+      end
       it 'should return lines with different variants' do
         old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
         old_data = described_class::OrderData.new(old_fingerprint)
