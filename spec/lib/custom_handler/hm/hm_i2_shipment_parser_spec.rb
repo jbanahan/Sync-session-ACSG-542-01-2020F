@@ -126,8 +126,8 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
 
         mail = ActionMailer::Base.deliveries.second
-        expect(mail.to).to eq ["H&M_supervisors@ohl.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"]
-        expect(mail.cc).to eq ["hm_ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["H&M_supervisors@ohl.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"]
+        expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"]
         expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
         expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
         expect(mail.body).to include "See attached PDF file for the list of PARS numbers to utilize."
@@ -411,6 +411,22 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(email.body.raw_source).to include "The Commercial Invoice printout and addendum for invoice # INV# is attached to this email."
         expect(email.attachments["Invoice INV#.pdf"]).not_to be_nil
         expect(email.attachments["Invoice Addendum INV#.xls"]).not_to be_nil
+      end
+
+      it "translates MM country code to BU" do
+        file = us_file.gsub(";CN;", ";MM;")
+
+        entry
+        set_us_product_custom_values 10.00, "987654"
+
+        invoice = nil
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
+          invoice = inv
+        end
+        described_class.parse file
+
+        expect(invoice).not_to be_nil
+        expect(invoice.commercial_invoice_lines.first.country_origin_code).to eq "BU"
       end
     end
 

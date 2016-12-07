@@ -198,7 +198,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i.po_number = text_value(line[6])
     # The sku needs to be trimmed to 7 chars (We don't track color / size info for HM (which is the remaining X digits of the sku))
     i.part_number = text_value(line[9])[0..6]
-    i.country_origin_code = text_value(line[12])
+    i.country_origin_code = country_origin(system, text_value(line[12]))
     i.quantity = decimal_value(line[13])
     i.customer_reference = text_value(line[19])
     # Net Weight is grams..convert to KG later...this is primarily because the gross weight tariff field is an integer
@@ -219,6 +219,21 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i.commercial_invoice_tariffs.build hts_code: values[:hts], tariff_description: values[:description], gross_weight: net_weight
     
     values
+  end
+
+  def country_origin system, code
+    # The US code for Burma/Myanmaar is still BU, however, Geodis/H&M are sending MM.  We're just going to 
+    # translate it to BU internally.
+    @@country_map ||= {"MM" => "BU"}
+    code = code.to_s.strip.upcase
+
+    if system == :kewill
+      mapped_country = @@country_map[code]
+      mapped_country.nil? ? code : mapped_country
+    else
+      code
+    end
+    
   end
 
   def set_totals invoice
@@ -561,7 +576,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
-      OpenMailer.send_simple_html(["H&M_supervisors@ohl.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(["H&M_supervisors@ohl.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
     end
   end
 
