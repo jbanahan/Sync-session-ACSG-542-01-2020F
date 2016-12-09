@@ -42,13 +42,6 @@ describe Api::V1::ModelFieldsController do
       fld = h['fields'].find {|f| f['uid']=='class_comp_cnt'}
       expect(fld['label']).to eq "Component Count"
     end
-    it "should not get model fields that are not user accessible" do
-      expect(get :index).to be_success
-
-      h = JSON.parse(response.body)
-      div_id = h['fields'].find {|fld| fld['uid']=='prod_div_id'}
-      expect(div_id).to be_nil
-    end
     it "should not get model fields that the current user can't see" do
       allow(CoreModule::ENTRY).to receive(:view?).and_return(true)
       allow_any_instance_of(Company).to receive(:broker?).and_return(false)

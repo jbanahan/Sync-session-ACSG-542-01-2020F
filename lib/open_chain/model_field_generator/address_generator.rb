@@ -3,7 +3,7 @@ module OpenChain; module ModelFieldGenerator; module AddressGenerator
     raise "Invalid shipping from/to indicator provided: #{ft}" unless ["from","to"].include?(ft)
     ftc = ft.titleize
     r = [
-      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} Database ID",{history_ignore: true, data_type: :integer}]
+      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} Database ID",{history_ignore: true, data_type: :integer,user_accessible:false}]
     ]
     r << [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"Ship #{ftc} Name", {
       :read_only => true,

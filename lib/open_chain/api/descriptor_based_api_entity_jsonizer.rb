@@ -27,9 +27,7 @@ module OpenChain; module Api; class DescriptorBasedApiEntityJsonizer < ApiEntity
       # since this would open us up to a memory exhaustion DOS (since symbols aren't garbage collected)
       core_module = CoreModule.find_by_class_name(descriptor.entity_class.name)
 
-      # Purposefully NOT passing the user here since there's no need to validate access to every model field
-      # since we're generally only accessing a small portion of them.  Individual model_field access is checked below.
-      model_fields = core_module.model_fields {|mf| mf.user_accessible? }
+      model_fields = core_module.every_model_field
 
       # Only include fields the user selected and are allowed to be accessed by the user
       hash[entity_hash_key(core_module)] = model_fields.keys.collect {|k| ((include_all || requested_model_fields.include?(k) || requested_model_fields.include?(k.to_s)) && model_fields[k].can_view?(user)) ? model_fields[k] : nil}.compact

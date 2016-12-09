@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::Api::ApiEntityJsonizer do
 
-  describe '#entity_to_json' do 
+  describe '#entity_to_json' do
     before :each do
       @country_1 = Factory(:country)
       @country_2 = Factory(:country)
@@ -12,7 +12,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
       @tariff_record = Factory(:tariff_record, classification: @classification, hts_1: '1234567890')
 
       @classification_2 = Factory(:classification, country: @country_2, product: @product)
-      @tariff_record_2 = Factory(:tariff_record, classification: @classification_2, hts_1: '1234567890')    
+      @tariff_record_2 = Factory(:tariff_record, classification: @classification_2, hts_1: '1234567890')
 
       @user = Factory(:master_user)
     end
@@ -28,14 +28,14 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'classifications' => [
             {
               "id" => @classification.id,
-              "class_cntry_iso" => @country_1.iso_code, 
+              "class_cntry_iso" => @country_1.iso_code,
               "tariff_records" => [
                 {'id' => @tariff_record.id, 'hts_hts_1' => @tariff_record.hts_1.hts_format}
               ]
             },
             {
               "id" => @classification_2.id,
-              "class_cntry_iso" => @country_2.iso_code, 
+              "class_cntry_iso" => @country_2.iso_code,
               "tariff_records" => [
                 {'id' => @tariff_record_2.id, 'hts_hts_1' => @tariff_record_2.hts_1.hts_format}
               ]
@@ -66,11 +66,11 @@ describe OpenChain::Api::ApiEntityJsonizer do
           'classifications' => [
             {
               "id" => @classification.id,
-              "class_cntry_iso" => @country_1.iso_code, 
+              "class_cntry_iso" => @country_1.iso_code,
             },
             {
               "id" => @classification_2.id,
-              "class_cntry_iso" => @country_2.iso_code, 
+              "class_cntry_iso" => @country_2.iso_code,
             }
           ]
         }
@@ -162,14 +162,14 @@ describe OpenChain::Api::ApiEntityJsonizer do
             'classifications' => [
               {
                 "id" => @classification.id,
-                "*cf_#{@c_def.id}" => Date.new(2013, 12, 20).to_s, 
+                "*cf_#{@c_def.id}" => Date.new(2013, 12, 20).to_s,
                 "tariff_records" => [
                   {"id" => @tariff_record.id, "*cf_#{@t_def.id}" => BigDecimal.new("10.99").to_s}
                 ]
               },
               {
                 "id" => @classification_2.id,
-                "*cf_#{@c_def.id}" => nil, 
+                "*cf_#{@c_def.id}" => nil,
                 "tariff_records" => [
                   {"id" => @tariff_record_2.id, "*cf_#{@t_def.id}" => nil}
                 ]
@@ -191,17 +191,17 @@ describe OpenChain::Api::ApiEntityJsonizer do
       json = OpenChain::Api::ApiEntityJsonizer.new.model_field_list_to_json @user, CoreModule::PRODUCT
 
       model_fields = ActiveSupport::JSON.decode(json)
-      cm_fields = CoreModule::PRODUCT.model_fields(@user)
+      cm_fields = CoreModule::PRODUCT.every_model_field {|mf| mf.can_view?(@user)}
 
       expect(model_fields['product'].size).to eq cm_fields.size
-      expect(model_fields['classification'].size).to eq CoreModule::CLASSIFICATION.model_fields(@user).size
-      expect(model_fields['tariff_record'].size).to eq CoreModule::TARIFF.model_fields(@user).size
+      expect(model_fields['classification'].size).to eq CoreModule::CLASSIFICATION.every_model_field {|mf| mf.can_view?(@user)}.size
+      expect(model_fields['tariff_record'].size).to eq CoreModule::TARIFF.every_model_field {|mf| mf.can_view?(@user)}.size
 
       # We can pretty much just check one of the model fields for the correct values now that we've
       # shown we're listing them all.
       mf = cm_fields[cm_fields.keys[0]]
       expect(model_fields['product'][0]).to eq ({
-        'uid' => mf.uid.to_s, 
+        'uid' => mf.uid.to_s,
         'label' => mf.label(false),
         'data_type' => mf.data_type.to_s
       })
@@ -296,4 +296,4 @@ describe OpenChain::Api::ApiEntityJsonizer do
       expect(time).to eq t.in_time_zone("Hawaii")
     end
   end
-end 
+end

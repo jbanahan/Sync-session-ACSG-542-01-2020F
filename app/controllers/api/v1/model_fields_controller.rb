@@ -34,7 +34,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
         cm_class_name = cm.class_name
         h['recordTypes'] << {'uid'=>cm_class_name,label:cm.label}
         ModelField.find_by_core_module(cm).each do |mf|
-          next if !mf.can_view?(cu) || !mf.user_accessible
+          next if !mf.can_view?(cu)
           mf_h = {'uid'=>mf.uid, 'label'=>mf.label(false), 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
           select_opts = mf.select_options
           mf_h['select_options'] = select_opts
@@ -53,6 +53,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
           mf_h['user_field'] = true if mf.user_field?
           mf_h['user_full_name_field'] = true if mf.user_full_name_field?
           mf_h['required'] = true if mf.required?
+          mf_h['user_accessible'] = mf.user_accessible?
           h['fields'] << mf_h
         end
       end
