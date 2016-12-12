@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -291,7 +291,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -331,7 +331,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -435,7 +435,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job = ExportJob.all.first
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).to_not be_nil
-        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"]
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -686,7 +686,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices :factory_stores, Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
-        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "william.walsh@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"]
         sheet = get_workbook_sheet mail.attachments.first
         # Just check the columns that should be different than the other documents
         # .ie most of the account codes
