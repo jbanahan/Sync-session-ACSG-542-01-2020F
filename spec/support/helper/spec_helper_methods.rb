@@ -48,7 +48,7 @@ module Helpers
       raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
     end
 
-    def self.url_for bucket, path, expires_in
+    def self.url_for bucket, path, expires_in, options = {}
       "http://#{bucket}.s3.com/#{path}?expires_in=#{expires_in.to_i}"
     end
     
