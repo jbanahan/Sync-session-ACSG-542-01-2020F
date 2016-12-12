@@ -1,9 +1,12 @@
 require 'open_chain/s3'
 
 module DownloadS3ObjectSupport
-
-  def download_attachment attachment, proxy_download: MasterSetup.get.custom_feature?('Attachment Mask'), disposition: 'attachment'
+  # The deal with the dispositions below is that pretty much all our downloads for attachments come through this code and any system (like www.vfitrack.net)
+  # has always done inline downloads.  When we added proxied_downloads the decision was made to make those download as attachments.  So in order to force
+  # the disposition and disposition parameter is required on the HTTP request for the attachments_controller.
+  def download_attachment attachment, proxy_download: MasterSetup.get.custom_feature?('Attachment Mask'), disposition: nil
     if proxy_download
+      disposition = "attachment" if disposition.blank?
       # This is a sub-optimal method for sending the files.  We're now buffering the entire file's contents into memory.
       # Unfortunately, rails 3 doesn't really give us many options for doing anything else besides short-circuiting the
       # render pipeline and writing an object directly to the response_body that answers to :each.  I'll take the rails
@@ -13,12 +16,14 @@ module DownloadS3ObjectSupport
         send_data data.read, stream: true, buffer_size: 4096, disposition: disposition, filename: attachment.attached_file_name, type: attachment.attached_content_type
       end
     else
-      redirect_to attachment.secure_url
+      disposition = "inline" if disposition.blank?
+      redirect_to attachment.secure_url(90.seconds, response_content_disposition: disposition)
     end
   end
 
-  def download_s3_object bucket, path, proxy_download: MasterSetup.get.custom_feature?('Attachment Mask'), expires_in: 1.minute, filename: nil, content_type: nil, disposition: 'attachment'
+  def download_s3_object bucket, path, proxy_download: MasterSetup.get.custom_feature?('Attachment Mask'), expires_in: 1.minute, filename: nil, content_type: nil, disposition: nil
     if proxy_download
+      disposition = "attachment" if disposition.blank?
       OpenChain::S3.download_to_tempfile(bucket, path) do |data|
         name = filename.to_s.blank? ? File.basename(path) : filename
         opts = {stream: true, buffer_size: 4096, disposition: disposition, filename: name}
@@ -27,7 +32,8 @@ module DownloadS3ObjectSupport
         send_data data.read, opts
       end
     else
-      redirect_to OpenChain::S3.url_for(bucket, path, expires_in)
+      disposition = "inline" if disposition.blank?
+      redirect_to OpenChain::S3.url_for(bucket, path, expires_in, response_content_disposition: disposition)
     end
   end
 end

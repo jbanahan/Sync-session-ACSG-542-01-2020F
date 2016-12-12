@@ -11,7 +11,7 @@
   <tr class='hover'>
     <td><%= link_to ftp_session.username, ftp_session %></td>
     <td><%= ftp_session.server %></td>
-    <td><%= ftp_session.file_name %></td>
+    <td><%= link_to ftp_session.file_name, download_attachment_path(ftp_session.attachment, disposition: "attachment") %></td>
     <td><%= ftp_session.created_at %></td>
   </tr>
 <% end %>

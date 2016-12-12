@@ -67,7 +67,13 @@ class AttachmentsController < ApplicationController
   def download
     att = Attachment.find(params[:id])
     if att.can_view?(current_user)
-      download_attachment att
+      disposition = params[:disposition].to_s.downcase
+      if ["attachment", "inline"].include? disposition
+        download_attachment att, disposition: disposition
+      else
+        download_attachment att
+      end
+      
     else
       error_redirect "You do not have permission to download this attachment."
     end

@@ -231,10 +231,9 @@ describe AttachmentsController do
   describe "download" do
     let (:secure_url) { "http://my.secure.url"}
     let (:attachment) { double(:attachment, secure_url: secure_url) }
-    let (:user) { Factory(:user) }
+    let! (:user) { u = Factory(:user); sign_in_as(u); u }
 
     it "downloads an attachment via s3 redirect" do
-      sign_in_as user
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
 
@@ -243,8 +242,6 @@ describe AttachmentsController do
     end
 
     it "directly downloads an attachment when master setup is proxying downloads" do
-      sign_in_as user
-
       ms = double("MasterSetup")
       allow(ms).to receive(:custom_feature?).with("Attachment Mask").and_return true
       allow(MasterSetup).to receive(:get).and_return ms
@@ -263,13 +260,36 @@ describe AttachmentsController do
     end
 
     it "redirects if user can't access attachment" do
-      sign_in_as user
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return false
 
       get :download, id: 1
       expect(response).to redirect_to root_path
       expect(flash[:errors]).to include "You do not have permission to download this attachment."
+    end
+
+    it "handles inline disposition parameter" do
+      expect(Attachment).to receive(:find).with("1").and_return attachment
+      expect(attachment).to receive(:can_view?).with(user).and_return true
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: "inline").and_call_original
+
+      get :download, id: 1, disposition: "inline"
+    end
+
+    it "handles attachment disposition parameter" do
+      expect(Attachment).to receive(:find).with("1").and_return attachment
+      expect(attachment).to receive(:can_view?).with(user).and_return true
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: "attachment").and_call_original
+
+      get :download, id: 1, disposition: "attachment"
+    end
+
+    it "ignores other disposition parameters" do
+      expect(Attachment).to receive(:find).with("1").and_return attachment
+      expect(attachment).to receive(:can_view?).with(user).and_return true
+      expect(subject).to receive(:download_attachment).with(attachment).and_call_original
+
+      get :download, id: 1, disposition: "whatevs"
     end
   end
 end
