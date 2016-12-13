@@ -78,15 +78,16 @@ module OpenChain; module CustomHandler; module UnderArmour
       q = "SELECT products.id,
       '' as 'Log Winshuttle RUNNER for TRANSACTION 10.2\nMM02-Change HTS Code.TxR\n#{Time.now.strftime('%-m/%-d/%Y %l:%M %p')}\nMode:  Batch\nPRD-100, pmckeldin',
       products.unique_identifier as 'Material Number',
-      custom_values.text_value as 'Plant', 
+      plant.text_value as 'Plant', 
       tr.hts_1 as 'HTS Code',
       classifications.country_id as '',
-      (SELECT text_value FROM custom_values where custom_definition_id = #{@colors_cd.id} AND customizable_id = products.id) as ''
+      color.text_value as ''
       FROM products
       #{Product.need_sync_join_clause(sync_code)} 
-      INNER JOIN classifications on products.id = classifications.product_id AND classifications.country_id in (select countries.id from countries inner join data_cross_references on data_cross_references.cross_reference_type = '#{DataCrossReference::UA_PLANT_TO_ISO}' AND countries.iso_code = data_cross_references.value)
+      INNER JOIN classifications on products.id = classifications.product_id AND classifications.country_id in (select distinct countries.id from countries inner join data_cross_references on data_cross_references.cross_reference_type = '#{DataCrossReference::UA_PLANT_TO_ISO}' AND countries.iso_code = data_cross_references.value)
       INNER JOIN (select * FROM tariff_records where line_number = 1) as tr on classifications.id = tr.classification_id
-      INNER JOIN custom_values on custom_values.customizable_type = 'Product' AND custom_values.customizable_id = products.id AND custom_values.custom_definition_id = #{@plant_cd.id} AND length(text_value) > 0
+      INNER JOIN custom_values as plant on plant.customizable_type = 'Product' AND plant.customizable_id = products.id AND plant.custom_definition_id = #{@plant_cd.id} AND length(plant.text_value) > 0
+      INNER JOIN custom_values as color on color.customizable_type = 'Product' AND color.customizable_id = products.id AND color.custom_definition_id = #{@colors_cd.id} AND length(color.text_value) > 0
       "
       if @custom_where.blank?
         q << "WHERE #{Product.need_sync_where_clause()}"
