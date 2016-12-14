@@ -36,6 +36,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       defaults_changed = true
     end
 
+    ord.reload if clear_planned_handover_date ord, old_data, new_data
     ord.reload if set_forecasted_handover_date ord
     ord.reload if reset_vendor_approvals ord, old_data, new_data
     ord.reload if reset_product_compliance_approvals ord, old_data, new_data
@@ -53,6 +54,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     create_pdf(ord,old_data,new_data) unless defaults_changed
   end
 
+  def self.clear_planned_handover_date ord, old_data, new_data
+    cdefs = self.prep_custom_definitions [:ord_planned_handover_date]
+    return false unless ord.custom_value(cdefs[:ord_planned_handover_date])
+    if old_data.ship_window_start!=new_data.ship_window_start || old_data.ship_window_end!=new_data.ship_window_end
+      ord.update_custom_value!(cdefs[:ord_planned_handover_date],nil)
+      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Clear Planned Handover")
+      return true
+    end
+    return false
+  end
+
   def self.set_forecasted_handover_date ord
     cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start]
     current_forecasted_handover_date = ord.get_custom_value(cdefs[:ord_forecasted_handover_date]).value
@@ -60,11 +72,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
       ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date-7.days)
+      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Forecasted Window Update")
       return true
     end
     if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
       ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end-7.days)
+      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Forecasted Window Update")
       return true
     end
     return false
@@ -152,7 +166,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
-    attr_accessor :ship_from_address, :planned_handover_date, :variant_map
+    attr_accessor :ship_from_address, :planned_handover_date, :variant_map, :ship_window_start, :ship_window_end
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -181,7 +195,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           variant_map[child_hash['ordln_line_number']] = child_hash['ordln_varuid']
         end
       end
+
+      # Create return object
       od = self.new(elements.join('~'))
+      od.ship_window_start = order_hash['ord_window_start']
+      od.ship_window_end = order_hash['ord_window_end']
       od.ship_from_address = order_hash['ord_ship_from_full_address']
       od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
       od.variant_map = variant_map

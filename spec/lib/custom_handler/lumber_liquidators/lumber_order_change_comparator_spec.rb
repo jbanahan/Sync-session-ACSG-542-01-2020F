@@ -40,6 +40,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
       # stub all business logic methods, then in each test we use should_receive for the one we're testing
       allow(described_class).to receive(:set_defaults).and_return false
+      allow(described_class).to receive(:clear_planned_handover_date).and_return false
       allow(described_class).to receive(:set_forecasted_handover_date).and_return false
       allow(described_class).to receive(:update_autoflow_approvals).and_return false
       allow(described_class).to receive(:reset_vendor_approvals).and_return false
@@ -55,6 +56,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
     it 'should set defaults' do
       expect(described_class).to receive(:set_defaults).with(@o,@new_data)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+    it 'should clear planned handover date' do
+      expect(described_class).to receive(:clear_planned_handover_date).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
     it 'should set forecasted handover date' do
@@ -93,6 +98,53 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
   end
 
+  describe '#clear_planned_handover_date' do
+    before :each do
+      @cdefs = described_class.prep_custom_definitions([:ord_planned_handover_date])
+      @o = Factory(:order)
+      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,10,1))
+    end
+    def base_data dates=[Date.new(2016,8,15),Date.new(2016,9,1)]
+      data = double(:data)
+      allow(data).to receive(:ship_window_start).and_return dates[0]
+      allow(data).to receive(:ship_window_end).and_return dates[1]
+      data
+    end
+    it "should clear planned handover date if ship window start changes" do
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Clear Planned Handover")
+      old_data = base_data
+      new_data = base_data([Date.new(2016,8,10),Date.new(2016,9,1)])
+      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_truthy
+      @o.reload
+      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+    end
+    it "should clear planned handover date if ship window end changes" do
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Clear Planned Handover")
+      old_data = base_data
+      new_data = base_data([Date.new(2016,8,15),Date.new(2016,9,10)])
+      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_truthy
+      @o.reload
+      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+    end
+    it "should not clear if ship window stays the same" do
+      expect_any_instance_of(Order).to_not receive(:create_snapshot)
+      old_data = base_data
+      new_data = base_data
+      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_falsey
+      @o.reload
+      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to_not be_blank
+    end
+    it "should return immediately if planned_handover_date is empty" do
+      expect_any_instance_of(Order).to_not receive(:create_snapshot)
+      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],nil)
+      old_data = base_data
+      new_data = base_data([Date.new(2016,8,15),Date.new(2016,9,10)])
+      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_falsey
+      @o.reload
+      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+    end
+  end
+
   describe '#set_forecasted_handover_date' do
     # PER SOW 1100 (2016-11-04), Forecasted Handover Date is being relabelled as Forecasted Ship Window End, but we're leaving the variables in the code alone
     # all tests also confirm that forecasted ship window start is set to 7 days prior to forecasted handover date
@@ -101,17 +153,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       @o = Factory(:order,ship_window_end:Date.new(2016,5,10))
     end
     it "should set forecasted handover date to planned_handover_date if planned_handover_date is not blank" do
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Forecasted Window Update")
       @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
       expect(described_class.set_forecasted_handover_date(@o)).to eq true
       expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,15)
       expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,8)
     end
     it "should set forecasted handover date to ship_window_end if planned_handover_date is blank" do
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Forecasted Window Update")
       expect(described_class.set_forecasted_handover_date(@o)).to eq true
       expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,10)
       expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,3)
     end
     it "should return false if did not change" do
+      expect_any_instance_of(Order).to_not receive(:create_snapshot)
       @o.update_custom_value!(@cdefs[:ord_forecasted_handover_date],Date.new(2016,5,10))
       expect(described_class.set_forecasted_handover_date(@o)).to eq false
       @o.reload
@@ -382,6 +437,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od.fingerprint).to eq expected_fingerprint
         expected_variant_map = {1=>variant.variant_identifier,2=>nil}
         expect(od.variant_map).to eq expected_variant_map
+        expect(od.ship_window_start).to eq '2015-01-01'
+        expect(od.ship_window_end).to eq '2015-01-10'
       end
     end
 
