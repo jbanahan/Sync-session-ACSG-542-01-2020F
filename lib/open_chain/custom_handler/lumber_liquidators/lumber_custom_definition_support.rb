@@ -120,6 +120,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_comp_docs_posted_date: {label: 'Compliance Docs Posted Date', data_type: :datetime, module_type: 'Order', read_only: true},
     ord_comp_docs_submitted_date: {label: 'Compliance Docs Submitted Date', data_type: :date, module_type: 'Order'},
     ord_comp_docs_receipt_confirmed_date: {label: 'Compliance Docs Receipt Confirmed Date', data_type: :date, module_type: 'Order'},
+    ord_customs_entry_note: {cdef_uid:'ord_customs_entry_note',label:'Customs Entry Notes', data_type: :text, module_type: 'Order'},
     ord_inspection_requested_date: {label: 'Inspection Requested Date', data_type: :date, module_type: 'Order'},
     ord_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Order'},
     ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'},
@@ -142,6 +143,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_planned_expected_delivery_date: {label: "Planned Expected Delivery Date", data_type: :date, module_type: "Order", read_only:true},
     ord_planned_handover_date: {label: "Planned Handover Date", data_type: :date, module_type: "Order"},
     ord_po_escalation: {label: "PO Escalation", data_type: :boolean, module_type: 'Order'},
+    ord_price_revised_date: {cdef_uid:'ord_price_revised_date',label: "Price Revised Date", data_type: :datetime, module_type:'Order',read_only: true},
     ord_production_start_date_planned: {label: "Production Start Date - Planned", data_type: :date, module_type: 'Order'},
     ord_production_start_date_actual: {label: "Production Start Date - Actual", data_type: :date, module_type: 'Order'},
     ord_production_delay: {label: "Production Delay", data_type: :boolean, module_type: 'Order'},
@@ -161,6 +163,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine'},
     ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine'},
     ordln_pc_approved_date_executive: {label: 'PC Approved Date - Executive', data_type: :datetime, module_type: 'OrderLine'},
+    ordln_price_revised_date: {cdef_uid:'ordln_price_revised_date',label: "Price Revised Date", data_type: :datetime, module_type:'OrderLine',read_only: true},
     ordln_qa_approved_by: {label: 'QA Approved By', data_type: :integer, module_type: 'OrderLine', read_only: true, is_user: true},
     ordln_qa_approved_date: {label: 'QA Approved DAte', data_type: :datetime, module_type: 'OrderLine', read_only: true},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant'}

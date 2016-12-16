@@ -41,6 +41,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     ord.reload if reset_vendor_approvals ord, old_data, new_data
     ord.reload if reset_product_compliance_approvals ord, old_data, new_data
     ord.reload if update_autoflow_approvals ord
+    ord.reload if set_price_revised_dates ord, old_data, new_data
     ord.reload if reset_po_cancellation ord
 
     generate_ll_xml(ord,old_data,new_data)
@@ -52,6 +53,27 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     # and update_autoflow_approvals since those don't change the fingerprint, so their snapshots won't
     # try to create a new PDF
     create_pdf(ord,old_data,new_data) unless defaults_changed
+  end
+
+  def self.set_price_revised_dates ord, old_data, new_data
+    line_ids = OrderData.lines_with_changed_price(old_data,new_data)
+    r_val = false
+    sap_extract_date = new_data.sap_extract_date
+    cdefs = self.prep_custom_definitions([:ord_sap_extract,:ord_price_revised_date,:ordln_price_revised_date])
+    line_ids.each do |line_id|
+      ol = ord.order_lines.find {|order_line| order_line.line_number==line_id}
+      next unless ol
+      ol.update_custom_value!(cdefs[:ordln_price_revised_date],sap_extract_date)
+      r_val = true
+    end
+    if r_val
+      header_revised_date = ord.custom_value(cdefs[:ord_price_revised_date])
+      if !header_revised_date || header_revised_date.to_i < sap_extract_date.to_i
+        ord.update_custom_value!(cdefs[:ord_price_revised_date],sap_extract_date)
+      end
+      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Update Price Revised Dates")
+    end
+    return r_val
   end
 
   def self.clear_planned_handover_date ord, old_data, new_data
@@ -163,10 +185,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
     # using array so we can dynamically build but not have to
     PLANNED_HANDOVER_DATE_UID ||= []
+    SAP_EXTRACT_DATE_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
-    attr_accessor :ship_from_address, :planned_handover_date, :variant_map, :ship_window_start, :ship_window_end
+    attr_accessor :ship_from_address, :planned_handover_date, :variant_map, :ship_window_start, :ship_window_end, :price_map, :sap_extract_date
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -174,9 +197,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.build_from_hash entity_hash
       if ORDER_CUSTOM_FIELDS.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date])
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract])
         ORDER_CUSTOM_FIELDS << cdefs[:ord_country_of_origin].model_field_uid.to_sym
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
+        SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
       end
       elements = []
       order_hash = entity_hash['entity']['model_fields']
@@ -184,6 +208,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         elements << order_hash[uid.to_s]
       end
       variant_map = {}
+      price_map = {}
       if entity_hash['entity']['children']
         entity_hash['entity']['children'].each do |child|
           next unless child['entity']['core_module'] == 'OrderLine'
@@ -192,7 +217,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
             prefix = uid==:ordln_line_number ? '~' : '' #double tilde to start each order line in fingerprint
             elements << "#{prefix}#{child_hash[uid.to_s]}"
           end
-          variant_map[child_hash['ordln_line_number']] = child_hash['ordln_varuid']
+          line_number = child_hash['ordln_line_number']
+          variant_map[line_number] = child_hash['ordln_varuid']
+          price_map[line_number] = child_hash['ordln_ppu']
         end
       end
 
@@ -202,7 +229,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.ship_window_end = order_hash['ord_window_end']
       od.ship_from_address = order_hash['ord_ship_from_full_address']
       od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
+      sap_extract_str = order_hash[SAP_EXTRACT_DATE_UID.first]
+      od.sap_extract_date =  sap_extract_str ? DateTime.iso8601(sap_extract_str) : nil
       od.variant_map = variant_map
+      od.price_map = price_map
       return od
     end
 
@@ -257,6 +287,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def self.needs_new_pdf? old_data, new_data
       return true if old_data.nil?
       return (old_data.fingerprint != new_data.fingerprint) || (old_data.ship_from_address != new_data.ship_from_address)
+    end
+
+    def self.lines_with_changed_price old_data, new_data
+      nh = new_data.price_map
+      oh = old_data ? old_data.price_map : {}
+      r_val = []
+      nh.each do |k,v|
+        r_val << k unless v == oh[k]
+      end
+      return r_val
     end
   end
 end; end; end; end
