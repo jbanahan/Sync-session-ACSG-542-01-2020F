@@ -31,7 +31,7 @@ module OpenChain; module EntityCompare; class EntityComparator
 
       old_bucket = old_path = old_version = nil
 
-      last_processed = rec.entity_snapshots.where('not compared_at is null').order('compared_at desc').limit(1).first
+      last_processed = rec.entity_snapshots.where('not compared_at is null').order('compared_at desc, id desc').limit(1).first
 
 
       if last_processed

@@ -92,6 +92,15 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq []
     end
+    it "should handle newest when two processed from the same time" do
+      old_time = 2.days.ago
+      EntitySnapshot.create!(compared_at: old_time, created_at: old_time, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
+      # match this one
+      EntitySnapshot.create!(compared_at: old_time, created_at: old_time, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv2')
+      to_process = EntitySnapshot.create!(created_at: Time.now, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
+      described_class.process(to_process)
+      expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv2','ob2','od2','ov2']]
+    end
   end
 
   describe "handle_snapshot" do
