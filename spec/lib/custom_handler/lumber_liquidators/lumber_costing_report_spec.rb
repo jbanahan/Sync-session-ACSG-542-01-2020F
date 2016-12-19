@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
 
     it "generates invoice data for an entry id" do
-      e, data = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry
       expect(e).not_to be_nil
       expect(data.size).to eq 1
       expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "100.000", "200.000", "110.000", "120.000", nil, nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       end
 
       it "prorates charge values" do
-        e, data = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry
         expect(data.first[9]).to eq "33.334"
         expect(data[1][9]).to eq "33.333"
         expect(data[2][9]).to eq "33.333"
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "does not add prorated amounts to lines with no entred value" do
         line = invoice.commercial_invoice_lines.create! po_number: "PO", part_number: "000123", quantity: 10, value: 100
 
-        e, data = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry
         expect(data.first[9]).to eq "33.334"
         expect(data[1][9]).to eq "33.333"
         expect(data[2][9]).to eq "33.333"
@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       it "uses the correct output charge column for code #{charge.keys.first}" do
         entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: charge.keys.first
 
-        e, data = subject.generate_entry_data entry.id
+        e, data = subject.generate_entry_data entry
         expect(data.first[charge.values.first]).to eq "100.000"
       end
     end
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     it "errors when order line cannot be found" do
       expect(api).to receive(:find_by_order_number).with('PO', [:ord_ord_num, :ordln_line_number, :ordln_puid]).and_return invalid_api_response
 
-      expect {subject.generate_entry_data entry.id}.to raise_error "Unable to find Lumber PO Line Number for PO # 'PO' and Part '000123'."
+      expect {subject.generate_entry_data entry}.to raise_error "Unable to find Lumber PO Line Number for PO # 'PO' and Part '000123'."
     end
 
     it "does not generate data if validation rules have failures" do
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
       entry.reload
 
-      e, data = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry
       expect(e).to eq entry
       expect(data).to be_blank
     end
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
       entry.reload
 
-      e, data = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry
       expect(e).to eq entry
       expect(data).to be_blank
     end
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
       entry.reload
 
-      e, data = subject.generate_entry_data entry.id
+      e, data = subject.generate_entry_data entry
       expect(e).to eq entry
       expect(data).not_to be_blank
     end
@@ -145,10 +145,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       after :each do
         expect(subject).to receive(:generate_and_send_entry_data).with entry.id
         subject.run start_time: Time.zone.parse("2016-01-17 12:00")
-      end
-
-      it "finds entry and generates and sends results" do 
-
       end
 
       it "finds entry, generates and sends results when sync record has been marked for resend" do
@@ -197,7 +193,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     let(:ftped_filenames) { [] }
 
     before :each do
-      allow(subject).to receive(:generate_entry_data).with(entry.id).and_return([entry, [["data", "data"],["d", "d"]]])
+      allow(subject).to receive(:generate_entry_data).with(entry).and_return([entry, [["data", "data"],["d", "d"]]])
       allow(subject).to receive(:ftp_file) {|file| ftped_file << file.read; ftped_filenames << file.original_filename }
     end
 
@@ -213,12 +209,89 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       expect(sr.trading_partner).to eq "LL_COST_REPORT"
       expect(sr.confirmed_at).to be_within(2.minutes).of(Time.zone.now)
     end
+
+    it "sends manual po" do
+      entry.commercial_invoice_lines.first.update_attributes! po_number: "MANUAL"
+
+      subject.generate_and_send_entry_data entry.id
+      # Just make sure the email was sent and sent w/ the expected subject,
+      # everything else is test cased elsewhere
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      expect(ActionMailer::Base.deliveries.first.subject).to eq "Manual Billing for File # #{entry.broker_reference}"
+    end
   end
 
   describe "run_schedulable" do
     it "intializes the report class and runs it" do
       expect_any_instance_of(described_class).to receive(:run)
       described_class.run_schedulable
+    end
+  end
+
+  describe "has_manual_po?" do
+    let (:entry) {
+      line = CommercialInvoiceLine.new po_number: " MaNual"
+      inv = CommercialInvoice.new
+      inv.commercial_invoice_lines << line
+
+      e = Entry.new
+      e.commercial_invoices << inv
+
+      e
+    }
+
+    it "returns true if PO Number is 'MANUAL'" do
+      expect(subject.has_manual_po? entry).to eq true
+    end
+
+    it "returns false if PO Number is not manual on a single line" do
+      entry.commercial_invoices.first.commercial_invoice_lines.first.po_number = "NOT_MANUAL"
+      expect(subject.has_manual_po? entry).to eq false
+    end
+  end
+
+  describe "send_manual_po" do
+    let (:attachment_content) {
+      t = Tempfile.new(["temp"])
+      t << "Testing"
+      t.flush
+      t.rewind
+      Attachment.add_original_filename_method t, "file.pdf"
+      t
+    }
+
+    after :each do 
+      attachment_content.close! unless attachment_content.closed?
+    end
+
+    it "attaches all broker invoice docs and emails them" do
+      att = entry.attachments.create! attachment_type: "Billing Invoice", attached_file_name: "name.pdf"
+      att2 = entry.attachments.create! attachment_type: "Not a billing invoice"
+
+      download_attachment = nil
+      expect_any_instance_of(Attachment).to receive(:download_to_tempfile) do |inst|
+        download_attachment = inst
+        attachment_content
+      end
+
+      subject.send_manual_po entry
+
+      expect(entry.sync_records.length).to eq 1
+      sr = entry.sync_records.first
+      expect(sr.trading_partner).to eq "LL_COST_REPORT"
+      expect(sr.sent_at).not_to be_nil
+      expect(sr.confirmed_at).not_to be_nil
+
+      expect(download_attachment).to eq att
+
+      mail = ActionMailer::Base.deliveries.first
+      expect(mail).not_to be_nil
+      expect(mail.to).to eq ["ll-ap@vandegriftinc.com"]
+      expect(mail.reply_to).to eq ["ll-support@vandegriftinc.com"]
+      expect(mail.subject).to eq "Manual Billing for File # #{entry.broker_reference}"
+      expect(mail.attachments["file.pdf"]).not_to be_nil
+
+      expect(attachment_content).to be_closed
     end
   end
 end

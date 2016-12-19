@@ -38,7 +38,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   end
 
   def generate_and_send_entry_data id
-    entry, data = generate_entry_data(id)
+    begin
+      entry = find_entry(id)
+
+      if has_manual_po?(entry)
+        send_manual_po(entry)
+      else
+        send_cost_file(entry)
+      end
+
+    rescue => e
+      raise e if Rails.env.test?
+      e.log_me
+    end
+  end
+
+  def send_cost_file entry
+    entry, data = generate_entry_data(entry)
     if !data.blank?
       sync_record = entry.sync_records.where(trading_partner: self.class.sync_code).first_or_initialize
 
@@ -73,12 +89,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
             end
           end
         end
-        
       end
     end
-  rescue => e
-    raise e if Rails.env.test?
-    e.log_me
   end
 
   def find_entry_ids start_time
@@ -104,9 +116,49 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     v.pluck :id
   end
 
-  def generate_entry_data entry_id 
-    entry = Entry.where(id: entry_id).includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]], broker_invoices: [:broker_invoice_lines]).first
+  def find_entry entry_id
+    Entry.where(id: entry_id).includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]], broker_invoices: [:broker_invoice_lines]).first
+  end
 
+  def has_manual_po? entry
+    entry.commercial_invoices.each do |i|
+      i.commercial_invoice_lines.each do |l|
+        return true if l.po_number.to_s.strip.upcase == "MANUAL"
+      end
+    end
+
+    false
+  end
+
+  def send_manual_po entry
+    # In this case, the entry has been flagged as needing to be manually billed.  Manually billed means
+    # that we cannot build a cost file for the entry.  This is pretty much exclusively because a part on the entry
+    # does not appear on a LL PO - this tends to happen on sample shipments.  In this case, the billing files will be 
+    # emailed to Lumber and they will handle it on their end.
+    invoices = []
+    begin
+      entry.attachments.where(attachment_type: "BILLING INVOICE").each do |attachment|
+        invoices << attachment.download_to_tempfile
+      end
+
+      body = "<p>Please find attached #{invoices.length} invoice #{"document".pluralize(invoices.length)} for Entry # #{entry.entry_number}.</p>"
+      body += "<p>This entry contains shipment information that cannot be found on a Lumber Liquidators Purchase Order and, therefore, cannot be sent via the standard cost file interface.</p>"
+      body += "<p>Please find attached to this email the following #{"attachment".pluralize(invoices.length)}:<ul>"
+      invoices.each {|i| body += "<li>#{i.original_filename}</li>" }
+      body += "</ul></p>"
+      OpenMailer.send_simple_html("ll-ap@vandegriftinc.com", "Manual Billing for File # #{entry.broker_reference}", body.html_safe, invoices, reply_to: "ll-support@vandegriftinc.com").deliver!
+
+      # We need to add a sync record SOLELY for the entry.  We don't add any for the invoices since we didn't invoice them via the cost report.
+      sr = entry.sync_records.first_or_initialize trading_partner: self.class.sync_code
+      sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+    ensure
+      invoices.each do |file|
+        file.close! if file && !file.closed?
+      end
+    end
+  end
+
+  def generate_entry_data entry
     entry_data = []
     values = []
 

@@ -193,12 +193,14 @@ end
   def download_to_tempfile
     if attached
       # Attachments are always in chain-io bucket regardless of environment
+      opts = {}
+      opts[:original_filename] = self.attached_file_name if self.attached_file_name
       if block_given?
-        return OpenChain::S3.download_to_tempfile(bucket, path) do |f|
+        return OpenChain::S3.download_to_tempfile(bucket, path, opts) do |f|
           yield f
         end
       else
-        return OpenChain::S3.download_to_tempfile(bucket, path)
+        return OpenChain::S3.download_to_tempfile(bucket, path, opts)
       end
     end
   end
