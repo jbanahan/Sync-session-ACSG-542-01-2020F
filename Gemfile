@@ -8,7 +8,7 @@ gem 'aws-sdk', '~> 2.6'
 gem 'heroic-sns', '~> 1.1'
 gem 'will_paginate', '3.0.4'
 # AWS SDK V1 is ONLY needed for Paperclip - all of our code should be using v2
-# Paperclip v5 added support for aws-sdk V2 - v5 only supports rails >= 4.2 (not the 3 series) 
+# Paperclip v5 added support for aws-sdk V2 - v5 only supports rails >= 4.2 (not the 3 series)
 gem 'aws-sdk-v1', '~> 1.66'
 gem 'paperclip', '3.5.1'
 gem 'uuidtools', '2.1.4'
@@ -85,6 +85,9 @@ gem 'slack-ruby-client', '~> 0.2.1'
 gem 'ruby-trello', '1.3.0'
 
 gem 'email_validator', '~> 1.6.0'
+
+# EDI Processor
+gem 'REX12', '~> 0.1.3'
 
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'

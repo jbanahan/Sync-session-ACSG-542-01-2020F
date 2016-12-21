@@ -103,6 +103,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
     end
+    context "ascena" do
+      it "should send data to ascena apll 856 parser if path contains _ascena_apll_asn" do
+        k = OpenChain::CustomHandler::Ascena::Apll856Parser
+        expect(master_setup).to receive(:custom_feature?).with('Ascena APLL ASN').and_return(true)
+        expect(k).to receive(:delay).and_return(k)
+        expect(k).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name, '12345')
+        cmd = {'request_type'=>'remote_file','path'=>'/_ascena_apll_asn/a.txt','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+    end
     context "hm" do
       it "should send data to H&M I1 Interface if feature enabled and path contains _hm_i1" do
         expect(master_setup).to receive(:custom_feature?).with('H&M I1 Interface').and_return(true)

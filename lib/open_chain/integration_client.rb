@@ -4,6 +4,7 @@ require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
+require 'open_chain/custom_handler/ascena/apll_856_parser'
 require 'open_chain/custom_handler/ecellerate_xml_router'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
@@ -113,45 +114,48 @@ module OpenChain
       remote_path = command['remote_path']
       status_msg = 'success'
       response_type = 'remote_file'
-      if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
+      master_setup = MasterSetup.get
+      if command['path'].include?('_alliance/') && master_setup.custom_feature?('alliance')
         # Just no-op if we get alliance files...the kewill_entry_parser feed handles these now.
-      elsif command['path'].include?('_alliance_day_end_invoices/') && MasterSetup.get.custom_feature?('alliance')
+      elsif command['path'].include?('_alliance_day_end_invoices/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-       elsif command['path'].include?('_alliance_day_end_checks/') && MasterSetup.get.custom_feature?('alliance')
+      elsif command['path'].include?('_alliance_day_end_checks/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_fenix_invoices/') && MasterSetup.get.custom_feature?('fenix')
+      elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
+        OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, remote_path)
+      elsif command['path'].include?('_fenix_invoices/') && master_setup.custom_feature?('fenix')
         OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_fenix/') && (MasterSetup.get.custom_feature?('fenix') || MasterSetup.get.custom_feature?("Fenix B3 Files"))
+      elsif command['path'].include?('_fenix/') && (master_setup.custom_feature?('fenix') || master_setup.custom_feature?("Fenix B3 Files"))
         OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_hm_i1/') && MasterSetup.get.custom_feature?('H&M I1 Interface')
+      elsif command['path'].include?('_hm_i1/') && master_setup.custom_feature?('H&M I1 Interface')
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?("/_hm_i2") && MasterSetup.get.custom_feature?('H&M I2 Interface')
+      elsif command['path'].include?("/_hm_i2") && master_setup.custom_feature?('H&M I2 Interface')
         OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
+      elsif command['path'].include?('_kewill_isf/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_gtn_asn_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+      elsif command['path'].include?('/_gtn_asn_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_vendor_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+      elsif command['path'].include?('/_sap_vendor_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_po_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+      elsif command['path'].include?('/_sap_po_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_article_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+      elsif command['path'].include?('/_sap_article_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_pir_xml') && MasterSetup.get.custom_feature?('Lumber SAP')
+      elsif command['path'].include?('/_sap_pir_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
+      elsif command['path'].include?('/_from_msl/') && master_setup.custom_feature?('MSL+')
         if fname.to_s.match /-ack/
           OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
         else
           OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, remote_path, fname.to_s
         end
-      elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
+      elsif command['path'].include?('_csm_sync/') && master_setup.custom_feature?('CSM Sync')
         OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
+      elsif command['path'].include?('_from_csm/ACK') && master_setup.custom_feature?('CSM Sync')
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
-      elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
+      elsif command['path'].include?('/_efocus_ack/') && master_setup.custom_feature?("e-Focus Products")
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
-      elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
+      elsif command['path'].include?('/_from_sap/') && master_setup.custom_feature?('Ann SAP')
         if fname.to_s.match /^zym_ack/
           OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
         else
@@ -159,7 +163,7 @@ module OpenChain
         end
       elsif command['path'].include? '/_polo_850/'
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_850/') && MasterSetup.get.custom_feature?("RL 850")
+      elsif command['path'].include?('/_850/') && master_setup.custom_feature?("RL 850")
         OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
@@ -167,30 +171,30 @@ module OpenChain
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_eb_ftz_ack/'
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
-      elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
+      elsif command['path'].include?('/_lenox_product/') && master_setup.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
+      elsif command['path'].include?('/_lenox_po/') && master_setup.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_polo_tradecard_810'
         OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_jjill_850/') && MasterSetup.get.custom_feature?('JJill')
+      elsif command['path'].include?('/_jjill_850/') && master_setup.custom_feature?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_ecellerate_shipment')
         OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lands_end_parts/') && MasterSetup.get.custom_feature?('Lands End Parts')
+      elsif command['path'].include?('/_lands_end_parts/') && master_setup.custom_feature?('Lands End Parts')
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lands_end_canada_plus/') && MasterSetup.get.custom_feature?('Lands End Canada Plus')
+      elsif command['path'].include?('/_lands_end_canada_plus/') && master_setup.custom_feature?('Lands End Canada Plus')
         OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
       elsif command['path'].include? '/to_chain/'
         ImportedFile.delay.process_integration_imported_file bucket, remote_path, command['path']
-      elsif command['path'].include?('/_test_from_msl') && MasterSetup.get.custom_feature?('MSL+')
+      elsif command['path'].include?('/_test_from_msl') && master_setup.custom_feature?('MSL+')
         #prevent errors; don't do anything else
       elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
-      elsif command['path'].include?('/_kewill_exports/') && MasterSetup.get.custom_feature?('alliance')
+      elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
       else
         response_type = 'error'
