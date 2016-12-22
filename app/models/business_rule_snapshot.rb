@@ -74,6 +74,8 @@ class BusinessRuleSnapshot < ActiveRecord::Base
 
       result.business_validation_rule_results.each do |rule_result|
         key, data = *rule_data(rule_result)
+        next if key.nil?
+
         template_obj[:rules][key] = data
       end
     end
@@ -94,6 +96,8 @@ class BusinessRuleSnapshot < ActiveRecord::Base
 
   def self.rule_data result
     rule = result.business_validation_rule
+    # Rule could technically be nil if were in a state where the rule was deleted and its in the process of getting cleaned up
+    return nil if rule.nil?
     ["rule_#{rule.id}", {type: rule.try(:type), name: rule.try(:name), description: rule.description, state: result.state, message: result.message, note: result.note, overridden_by_id: result.overridden_by_id, overridden_at: result.overridden_at, created_at: result.created_at, updated_at: result.updated_at }]
   end
   private_class_method :rule_data
