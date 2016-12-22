@@ -61,7 +61,6 @@ module OpenChain
         end
 
         header_row = preprocess_header_row header_row
-
         rt.each_with_index do |vals,i|
           fingerprint = nil
           if has_fingerprint
@@ -200,7 +199,89 @@ module OpenChain
         end
       end
 
-      
+      def sync_xml
+        # We're going to force the implementing class to require the specific xml declarations (or they can include xml_builder)
+        # rather than having them declared here and xml required for all that may not need it.
+        f = Tempfile.new(['ProductSync-', ".xml"])
+        cursor = 0
+        column_names = nil
+        error = false
+        xml, root = nil
+        begin
+          sync do |rv|
+            row = []
+            (0..rv.keys.sort.last).each do |i|
+              row << rv[i]
+            end
+          
+            # Even if we're not using the default XML output, there's no need to pass the headers as the first row to that method.
+            if column_names.nil? && cursor == 0
+              column_names = row
+            else
+              if xml.nil?
+                xml, root = xml_document_and_root_element
+              end
+
+              if self.respond_to?(:write_row_to_xml)
+                write_row_to_xml(root, cursor, row)
+              else
+                default_write_xml_elements(root, cursor, column_names, row)
+              end
+              cursor += 1
+            end
+          end
+        rescue => e
+          error = true
+          raise e
+        ensure
+          if error || cursor == 0
+            f.close! if f && !f.closed?
+            # If we return nil when an error is raised, it actually stops the error from propigating...which we don't want.
+            return nil unless error
+          else
+            formatter = xml_formatter
+            formatter.write(xml, f)
+            f.flush
+            f.rewind
+            return f
+          end
+        end
+      end
+
+      def xml_document_and_root_element
+        xml_declaration = '<?xml version="1.0" encoding="UTF-8"?>'
+        doc = REXML::Document.new("#{xml_declaration}<#{default_root_element_name}/>")
+        [doc, doc.root]
+      end
+
+      def default_root_element_name
+        "Products"
+      end
+
+      def default_product_xml_element_name
+        "Product"
+      end
+
+      def xml_formatter
+        REXML::Formatters::Default.new
+      end
+
+      def default_write_xml_elements parent, cursor, column_names, values
+        # By default, we're just going to use the column names from the query as element names..
+        child = parent.add_element(default_product_xml_element_name)
+
+        if self.respond_to?(:before_xml_write)
+          values = before_xml_write(cursor, values)
+        end
+
+        column_names.each_with_index do |name, index|
+          value = values[index]
+          unless value.nil?
+            el = child.add_element(name)
+            el.text = value
+          end
+        end
+      end
 
       # Generate a subselect representing a custom value based on custom definition id
       def cd_s cd_id, opts = {}

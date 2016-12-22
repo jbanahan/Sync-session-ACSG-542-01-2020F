@@ -1,9 +1,9 @@
 require 'open_chain/ftp_file_support'
 require 'open_chain/fixed_position_generator'
-require 'open_chain/xml_builder'
+require 'open_chain/custom_handler/vandegrift/kewill_web_services_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercialInvoiceGenerator < OpenChain::FixedPositionGenerator
-  include OpenChain::XmlBuilder
+  include OpenChain::CustomHandler::Vandegrift::KewillWebServicesSupport
   include OpenChain::FtpFileSupport
 
   CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices)
@@ -104,18 +104,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
     private 
 
     def build_base_xml
-      doc, xml = build_xml_document "requests"
-      add_element(xml, "password", "lk5ijl9")
-      add_element(xml, "userID", "kewill_edi")
-      request = add_element(xml, "request")
-      add_element(request, "action", "KC")
-      add_element(request, "category", "EdiShipment")
-      add_element(request, "subAction", "CreateUpdate")
-      kc_data = add_element(request, "kcData")
+      doc, kc_data = create_document category: "EdiShipment", subAction: "CreateUpdate"
       edi_shipments = add_element(kc_data, "ediShipments")
 
-
-      [xml, edi_shipments]
+      [doc, edi_shipments]
     end
 
     def generate_header parent, entry, invoice, lines

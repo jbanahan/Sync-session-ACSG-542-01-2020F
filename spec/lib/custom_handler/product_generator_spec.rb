@@ -363,4 +363,92 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(sync_3.created_at).to be < (DateTime.now - 1.day)
     end
   end
+
+  describe "sync_xml" do
+    let (:header) { {1 => "Col1", 0 => "Col0", 2=>"Col2", 3 => "Col3", 4 => "Col4", 5 => "Col5", 6 => "Col6"} }
+    let (:row) { {1 => "Val1", 0 => true, 2 => Time.zone.now, 3 => Time.zone.now.to_date, 4 => BigDecimal("1.25"), 5 => "", 6 => nil} }
+
+    after :each do
+      @file.close! if @file && !@file.closed?
+    end
+
+    it "writes XML file" do
+      expect(subject).to receive(:sync).and_yield(header).and_yield(row)
+      @file = subject.sync_xml
+
+      expect(@file).not_to be_nil
+      xml = REXML::Document.new(@file.read).root
+      expect(xml.name).to eq "Products"
+      expect(xml.text "Product/Col0").to eq "true"
+      expect(xml.text "Product/Col1").to eq "Val1"
+      expect(xml.text "Product/Col2").to eq row[2].strftime("%Y-%m-%d %H:%M")
+      expect(xml.text "Product/Col3").to eq row[3].strftime("%Y-%m-%d")
+      expect(xml.text "Product/Col4").to eq "1.25"
+      # Blank strings evaluate to <Col5/>, which is then read back as nil
+      expect(xml.text "Product/Col5").to be_nil
+      # Col6 shouldn't be added because its value was nil
+      expect(REXML::XPath.each(xml, "Product/Col6").size).to eq 0
+    end
+
+    it "calls write_row_to_xml to add elements to XML if implemented" do
+      root_element, cursor_val, row_val = nil
+      allow(subject).to receive(:write_row_to_xml) do |root, cursor, row|
+        row_val = row
+        cursor_val = cursor
+
+        t = root.add_element("Test")
+        t.text = "Testing"
+      end
+
+      expect(subject).to receive(:sync).and_yield(header).and_yield(row)
+      @file = subject.sync_xml
+
+      expect(@file).not_to be_nil
+      xml = REXML::Document.new(@file.read).root
+      expect(xml.name).to eq "Products"
+      expect(xml.text "Test").to eq "Testing"
+
+      expect(row_val).to eq [row[0], row[1], row[2], row[3], row[4], row[5], row[6]]
+      expect(cursor_val).to eq 0
+    end
+
+    it "calls before_xml_write if implemented before writing data to xml" do
+      cursor_val, vals = nil
+      allow(subject).to receive(:before_xml_write) do |cursor, values|
+        cursor_val = cursor
+        vals = values
+
+        (0..6).to_a
+      end
+
+      expect(subject).to receive(:sync).and_yield(header).and_yield(row)
+      @file = subject.sync_xml
+
+      expect(@file).not_to be_nil
+      xml = REXML::Document.new(@file.read).root
+      expect(xml.name).to eq "Products"
+      expect(xml.text "Product/Col0").to eq "0"
+      expect(xml.text "Product/Col1").to eq "1"
+      expect(xml.text "Product/Col2").to eq "2"
+      expect(xml.text "Product/Col3").to eq "3"
+      expect(xml.text "Product/Col4").to eq "4"
+      expect(xml.text "Product/Col5").to eq "5"
+      expect(xml.text "Product/Col6").to eq "6"
+
+      # Make sure the vals passed to the method is the array'ization of the row map yield by the sync method
+      expect(vals).to eq row.keys.sort.map {|k| row[k]}
+    end
+
+    it "allows for overriding root element name" do
+      allow(subject).to receive(:default_root_element_name).and_return "ROOT_ELEMENT"
+
+      expect(subject).to receive(:sync).and_yield(header).and_yield(row)
+      @file = subject.sync_xml
+
+      expect(@file).not_to be_nil
+      xml = REXML::Document.new(@file.read).root
+      expect(xml.name).to eq "ROOT_ELEMENT"
+    end
+
+  end
 end
