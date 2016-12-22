@@ -31,6 +31,7 @@ require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
 require 'open_chain/custom_handler/kewill_export_shipment_parser'
 require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handler'
 require 'open_chain/custom_handler/polo/polo_850_parser'
+require 'open_chain/custom_handler/ascena/ascena_po_parser'
 
 module OpenChain
   class IntegrationClient
@@ -121,6 +122,8 @@ module OpenChain
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_alliance_day_end_checks/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
+      elsif command['path'].include?('_ascena_po/') && MasterSetup.get.custom_feature?('Ascena PO')
+        OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
         OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, remote_path)
       elsif command['path'].include?('_fenix_invoices/') && master_setup.custom_feature?('fenix')

@@ -96,6 +96,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
   let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
 
   context 'request type: remote_file', :disable_delayed_jobs do
+    context "ascena" do
+      it "sends data to Ascena PO parser" do
+        klass = OpenChain::CustomHandler::Ascena::AscenaPoParser
+        expect(master_setup).to receive(:custom_feature?).with('Ascena PO').and_return(true)
+        expect(klass).to receive(:delay).and_return klass
+        expect(klass).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name, '12345')
+        cmd = {'request_type'=>'remote_file','path'=>'/_ascena_po/a.csv', 'remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+    end
     context "ecellerate" do
       it "should send data to eCellerate router" do
         expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
