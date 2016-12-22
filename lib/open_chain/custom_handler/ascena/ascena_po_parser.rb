@@ -14,7 +14,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   def initialize
     @user = User.integration
     @importer = Company.where(system_code: "ASCE").first
-    @cdefs = self.class.prep_custom_definitions CDEF_LABELS
     @errors = {missing_shipped_order_lines: []}
   end
   
@@ -27,6 +26,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   end
 
   def process_file(pipe_delimited_content, opts={})
+    # Initialize the fields only when needed - primarily this just speeds up unit tests
+    @cdefs ||= self.class.prep_custom_definitions CDEF_LABELS
+
     po_rows = []
     row_num = 0
     CSV.parse(pipe_delimited_content, col_sep:"|") do |row|
@@ -166,7 +168,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   end
 
   def newer_revision? persisted_ord, header
-    header[:ord_revision].to_i > persisted_ord.get_custom_value(cdefs[:ord_revision]).value.to_i
+    # Use >= so we allow for reprocessing the latest file
+    header[:ord_revision].to_i >= persisted_ord.get_custom_value(cdefs[:ord_revision]).value.to_i
   end
 
   def get_or_create_product detail, header, opts
