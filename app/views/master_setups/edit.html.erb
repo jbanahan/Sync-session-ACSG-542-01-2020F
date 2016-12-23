@@ -120,15 +120,16 @@ $(function() {
         running = Delayed::Job.where("last_error IS NULL AND locked_at IS NOT NULL").order("locked_at ASC, priority ASC, run_at ASC").limit(max_results - errored.length).to_a if errored.length < max_results
         running = [] if running.nil?
 
-        queued = Delayed::Job.where("last_error IS NULL AND locked_at IS NULL").order("priority ASC, run_at ASC").limit(max_results - errored.length - running.length).to_a if (errored.length + running.try(:length).to_i) < max_results
-        queued = [] if queued.nil?
+        queued_list = Delayed::Job.where("last_error IS NULL AND locked_at IS NULL").order("priority ASC, run_at ASC").limit(max_results - errored.length - running.length).to_a if (errored.length + running.try(:length).to_i) < max_results
+        queued_list = [] if queued_list.nil?
+        total_queued = Delayed::Job.count - errored.length - running.length
       %>
-      <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{queued.length} queued #{"job".pluralize(queued.length)}" %></p>
+      <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{total_queued} queued #{"job".pluralize(total_queued)}" %></p>
       <table id='dj_tbl' class='table table-condensed'>
         <thead>
           <tr><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
         </thead>
-        <% (errored + running + queued).each do |dj| %>
+        <% (errored + running + queued_list).each do |dj| %>
           <tr>
             <%-if dj.last_error && dj.locked_at.blank? && @job_groups[dj.id].count > 1 -%>
               <td><button class='btn btn-sm btn-danger btn-bulk-destroy' data-id='<%=dj.id%>' data-count='<%=@job_groups[dj.id].count%>'>Delete</button></td>
