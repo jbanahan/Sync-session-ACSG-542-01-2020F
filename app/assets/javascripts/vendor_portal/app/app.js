@@ -460,7 +460,7 @@
       };
       $scope.showOrder = function(ord, $event) {
         var url;
-        if ($event.ctrlKey) {
+        if ($event && $event.ctrlKey) {
           url = $state.href('showOrder', {
             id: ord.id
           });
