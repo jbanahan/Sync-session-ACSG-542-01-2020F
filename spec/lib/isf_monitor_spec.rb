@@ -17,13 +17,13 @@ RSpec.describe 'ISF Monitor' do
     it 'considers the ftp backed up if oldest date is before current date' do
       future_date = 10.minutes.from_now.utc
 
-      expect(OpenChain::IsfMonitor.new.is_backed_up?(future_date)).to be true
+      expect(OpenChain::IsfMonitor.new.is_backed_up?(future_date, 15)).to be true
     end
 
     it 'considers the ftp backed up if oldest date is older than now - 15 minutes' do
       past_date = 16.minutes.ago
 
-      expect(OpenChain::IsfMonitor.new.is_backed_up?(past_date)).to be true
+      expect(OpenChain::IsfMonitor.new.is_backed_up?(past_date, 15)).to be true
     end
   end
 
