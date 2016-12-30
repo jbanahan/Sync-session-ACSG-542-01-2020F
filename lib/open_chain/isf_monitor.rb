@@ -65,7 +65,9 @@ module OpenChain
     end
 
     def ftp_connection(hostname)
-      Net::FTP.new(hostname)
+      ftp = Net::FTP.new(hostname)
+      ftp.passive = true
+      ftp
     end
 
     def ftp_login(ftp, username, password)
