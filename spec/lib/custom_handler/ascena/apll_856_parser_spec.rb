@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
 
   describe '#process_shipment' do
     let :ascena do
-      Factory(:company,system_code:'ASCENA')
+      Factory(:company,system_code:'ASCE')
     end
     let :product do
       Factory(:product,unique_identifier:'ASCENA-415012')
@@ -94,6 +94,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(s.lading_port).to eq ports[:cnxmn]
       expect(s.unlading_port).to eq ports[:uslgb]
       expect(s.shipment_type).to eq "CY/CY"
+      expect(s.importer).to eq ascena
 
       # container details
       expect(s.containers.count).to eq 1

@@ -63,7 +63,8 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           mode:find_mode(shipment_segments),
           lading_port:find_port(shipment_segments,'L'),
           unlading_port:find_port(shipment_segments,'D'),
-          shipment_type:shipment_type
+          shipment_type:shipment_type,
+          importer_id:Company.where(system_code: "ASCE").first_or_create!(name:'ASCENA TRADE SERVICES LLC',importer:true).id
         )
         shp.save!
 

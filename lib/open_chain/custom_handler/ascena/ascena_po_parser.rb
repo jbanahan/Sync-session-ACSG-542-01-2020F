@@ -197,15 +197,17 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     [ok_to_delete, has_shipments]
   end
 
-  def update_or_create_vendor header
-    vendor = Company.where('system_code = ?', header[:ord_vend_system_code]).first || Company.new(system_code: header[:ord_vend_system_code])
-    vendor.update_attributes!(name: header[:ord_vend_name])
+  def update_or_create_vendor system_code, name
+    vendor = Company.where(system_code:system_code).first_or_create!(name:name)
+    vendor.update_attributes!(name: name) unless vendor.name == name
     vendor
   end
 
-  def update_or_create_factory header
-    factory = Company.where('system_code = ?', header[:ord_fact_system_code]).first || Company.new(system_code: header[:ord_fact_system_code])
-    factory.update_attributes!(mid: header[:ord_fact_mid], name: header[:ord_fact_name])
+  def update_or_create_factory system_code, name, mid
+    factory = Company.where(system_code: system_code).first_or_create!(name: name, mid: mid)
+    # intentionally not updating MID in case we manually update based on better data from
+    # compliance department
+    factory.update_attributes!(name: name) unless factory.name == name
     factory
   end
 
@@ -227,8 +229,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   def update_order ord, header, opts
     Lock.with_lock_retry(ord) do
       if newer_revision? ord, header
-        vendor = update_or_create_vendor(header)
-        factory = update_or_create_factory(header) if header[:ord_fact_system_code].presence
+        vendor = update_or_create_vendor(header[:ord_vend_system_code],header[:ord_vend_name])
+        factory = update_or_create_factory(header[:ord_fact_system_code],header[:ord_fact_name],header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
 
         ord.assign_attributes(order_date: date_parse(header[:ord_order_date]), vendor: vendor, terms_of_sale: header[:ord_terms_of_sale],
                               mode: header[:ord_mode], ship_window_start: date_parse(header[:ord_ship_window_start]),
