@@ -653,13 +653,19 @@ class ModelField
     end
 
     # There's little point to running a reload here if we just reloaded above
-    unless reloaded || dont_retry
+    unless reloaded || dont_retry || !allow_reload_double_check
       #reload and try again
       ModelField.reload true
       find_by_uid uid, true
     end
 
     return blank_model_field
+  end
+
+  # Should the find_by_uid method double check by reloading for missing fields
+  # Defaults to true for non-test environment
+  def self.allow_reload_double_check
+    !Rails.env.test?
   end
 
   def self.viewable_model_fields user, fields
