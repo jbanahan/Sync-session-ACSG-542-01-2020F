@@ -2,6 +2,7 @@ require 'open_chain/integration_client_parser'
 require 'rex12'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
+  extend OpenChain::IntegrationClientParser
   IGNORE_SEGMENTS = ['ISA','GS','GE','IEA']
   def self.parse data, opts={}
     errors = []

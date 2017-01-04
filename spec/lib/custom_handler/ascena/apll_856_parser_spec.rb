@@ -11,6 +11,11 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
   let :cdefs do
     {}
   end
+  context 'IntegrationClientParser' do
+    it "should respond to process_from_s3" do
+      expect(described_class.respond_to?(:process_from_s3)).to be_truthy
+    end
+  end
   describe '#parse' do
     it "should split shipments and process" do
       expected_start_segments = []
