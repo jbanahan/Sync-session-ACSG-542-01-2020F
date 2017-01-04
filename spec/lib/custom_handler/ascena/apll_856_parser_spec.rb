@@ -15,6 +15,9 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
     it "should respond to process_from_s3" do
       expect(described_class.respond_to?(:process_from_s3)).to be_truthy
     end
+    it "should set integration folder" do
+      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
+    end
   end
   describe '#parse' do
     it "should split shipments and process" do
@@ -38,7 +41,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(REX12::Document).to receive(:parse).with(base_data).and_raise REX12::ParseError.new("Parsing problem here.")
       described_class.parse(base_data)
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena-us@vandegriftinc.com','edisupport@vandegriftinc.com']
+      expect(mail.to).to eq ['ascena_us@vandegriftinc.com','edisupport@vandegriftinc.com']
       expect(mail.subject).to match(/Ascena\/APLL ASN EDI Processing Error/)
       expect(mail.body).to match(/Parsing problem here/)
     end
@@ -51,7 +54,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       described_class.parse(base_data)
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena-us@vandegriftinc.com','edisupport@vandegriftinc.com']
+      expect(mail.to).to eq ['ascena_us@vandegriftinc.com','edisupport@vandegriftinc.com']
       expect(mail.subject).to match(/Ascena\/APLL ASN EDI Processing Error/)
       expect(mail.body).to match(/Some shipment problem 1/)
       expect(mail.body).to match(/Some shipment problem 9/)
@@ -124,7 +127,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       order #prep order data
       expect {described_class.process_shipment(first_shipment_array,cdefs)}.to change(Shipment,:count).from(0).to(1)
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena-us@vandegriftinc.com']
+      expect(mail.to).to eq ['ascena_us@vandegriftinc.com']
       expect(mail.subject).to eq 'Ascena shipment with unknown port code(s)'
       expect(mail.body.raw_source).to match 'Ascena shipment for BOL XM1007980 had the following unknown port codes.  Please contact IT to have them added to the database.'
     end

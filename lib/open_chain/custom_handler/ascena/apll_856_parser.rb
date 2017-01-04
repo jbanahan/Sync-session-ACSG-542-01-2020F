@@ -4,6 +4,11 @@ require 'rex12'
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   extend OpenChain::IntegrationClientParser
   IGNORE_SEGMENTS = ['ISA','GS','GE','IEA']
+
+  def self.integration_folder
+    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
+  end
+
   def self.parse data, opts={}
     errors = []
     isa_code = 'UNKNOWN'
@@ -32,7 +37,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           f.flush
           body = "There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.\n\nErrors:\n"
           errors.each {|err| body << "#{err.message}\n"}
-          to = "ascena-us@vandegriftinc.com,edisupport@vandegriftinc.com"
+          to = "ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
           OpenMailer.send_simple_html(to, subject, body, [f]).deliver!
         end
@@ -80,7 +85,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
   def self.send_port_code_email hbol
     OpenMailer.send_simple_text(
-      'ascena-us@vandegriftinc.com',
+      'ascena_us@vandegriftinc.com',
       'Ascena shipment with unknown port code(s)',
       "Ascena shipment for BOL #{hbol} had the following unknown port codes.  Please contact IT to have them added to the database."
     ).deliver!

@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       send_shipped_lines_error_email(pipe_delimited_content) if errors[:missing_shipped_order_lines].presence
     rescue
       $!.log_me
-      send_generic_error_email pipe_delimited_content,'ascena-us@vandegriftinc.com,edisupport@vandegriftinc.com',"The attached file could not be processed by the Ascena PO Parser:\n#{$!.message}", "Error loading Ascena order file."
+      send_generic_error_email pipe_delimited_content,'ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com',"The attached file could not be processed by the Ascena PO Parser:\n#{$!.message}", "Error loading Ascena order file."
     end
   end
 
@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   end
 
   def send_shipped_lines_error_email(file_content)
-    to = "ascena-us@vandegriftinc.com"
+    to = "ascena_us@vandegriftinc.com"
     body = "The following missing order lines have an associated shipment: "
     subject = []
     errors[:missing_shipped_order_lines].each do |err|
