@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, house_bill_of_lading: "HB")
+    shipment = Factory(:shipment, house_bill_of_lading: "HB", reference: "REF/REF")
     shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
 
     shipment.reload
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       received_spreadsheet = nil
       expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
         expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Ascena CI Load/HB.xls"
+        expect(path).to eq "Ascena CI Load/REF_REF.xls"
         received_spreadsheet = Spreadsheet.open file.path
       end
 

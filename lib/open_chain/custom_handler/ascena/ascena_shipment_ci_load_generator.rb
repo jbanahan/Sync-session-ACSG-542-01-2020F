@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
   def generate_and_send shipment
     entry_data = generate_entry_data shipment
     wb = kewill_generator.generate_xls entry_data
-    send_xls_to_google_drive wb, "#{shipment.house_bill_of_lading}.xls"
+    send_xls_to_google_drive wb, "#{Attachment.get_sanitized_filename(shipment.reference)}.xls"
     nil
   end
 
