@@ -164,6 +164,23 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
   end
 
+  describe "destroy" do
+    let!(:stb) { Factory(:state_toggle_button) }
+
+    it "deletes STB for an admin" do
+      delete :destroy, id: stb.id
+      expect(StateToggleButton.count).to eq 0
+      expect(JSON.parse(response.body)["ok"]).to eq "ok"
+    end
+
+    it "prevents access by non-admins" do
+      allow_api_access Factory(:user)
+      delete :destroy, id: stb.id
+      expect(StateToggleButton.count).to eq 1
+      expect(JSON.parse(response.body)["errors"]).to include "Access denied."
+    end
+  end
+
   describe "get_mf_digest" do
     it "returns hash containing stb, search criteria, user and date mfs/cdefs" do
       stb = double("stb")

@@ -212,7 +212,7 @@ OpenChain::Application.routes.draw do
 
         resources :custom_view_templates, only: [:edit, :update]
 
-        resources :state_toggle_buttons, only: [:edit, :update]
+        resources :state_toggle_buttons, only: [:edit, :update, :destroy]
 
         resources :kewill_entry_documents, only: [] do
           collection do
@@ -997,7 +997,7 @@ OpenChain::Application.routes.draw do
 
   resources :custom_view_templates, except: [:show, :update]
 
-  resources :state_toggle_buttons, except: [:show, :update]
+  resources :state_toggle_buttons, except: [:show, :update, :destroy]
 
   resources :search_table_configs
 

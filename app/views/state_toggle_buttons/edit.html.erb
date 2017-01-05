@@ -9,11 +9,26 @@
     $("#btn_cancel").click(function() {
       window.location = '<%=url_for action: 'index'%>';
     });
+    $("#btn_delete").click(function() {
+      var confirmed = window.confirm("Delete this state toggle button?");
+      if (confirmed) {
+        $.ajax('/api/v1/admin/state_toggle_buttons/' + id, {
+            method:'DELETE',
+            headers: { 
+              Accept : "application/json",
+              "Content-Type": "application/json"
+            }
+          }).done(function () {
+              window.location = '<%=url_for action: 'index'%>';
+            });
+      }
+    });
   });
 <% end %>
 
 <% content_for :action_bar do %>
   <button id='btn_save'>Save</button>
+  <button id='btn_delete'>Delete</button>
   <button id='btn_cancel'>Cancel</button>
 <% end %>
 

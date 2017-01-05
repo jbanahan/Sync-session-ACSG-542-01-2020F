@@ -3,8 +3,8 @@ describe 'StateToggleButtonApp', () ->
 
   describe 'service', () ->
     svc = http = null
-    beforeEach inject(($httpBackend,stateToggleButtonSvc) ->
-      svc = stateToggleButtonSvc
+    beforeEach inject(($httpBackend,stateToggleButtonMaintSvc) ->
+      svc = stateToggleButtonMaintSvc
       http = $httpBackend
     )
 
@@ -46,10 +46,10 @@ describe 'StateToggleButtonApp', () ->
   describe 'controller', () ->
     ctrl = svc = $scope = q = loc = null
 
-    beforeEach inject(($rootScope,$controller,$location,$q,stateToggleButtonSvc,chainSearchOperators) ->
+    beforeEach inject(($rootScope,$controller,$location,$q,stateToggleButtonMaintSvc,chainSearchOperators) ->
       loc = $location
       $scope = $rootScope.$new()
-      svc = stateToggleButtonSvc
+      svc = stateToggleButtonMaintSvc
       ctrl = $controller('stateToggleButtonCtrl',{$scope:$scope})
       q = $q
     )

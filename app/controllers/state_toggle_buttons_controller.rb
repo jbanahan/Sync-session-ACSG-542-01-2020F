@@ -26,11 +26,4 @@ class StateToggleButtonsController < ApplicationController
       redirect_to edit_state_toggle_button_path(button)
     }
   end
-
-  def destroy
-    admin_secure { 
-      StateToggleButton.find(params[:id]).destroy
-      redirect_to state_toggle_buttons_path
-    }
-  end
 end

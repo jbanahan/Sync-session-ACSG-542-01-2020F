@@ -31,6 +31,11 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
     render json: {ok: 'ok'}
   end
 
+  def destroy
+    StateToggleButton.find(params[:id]).destroy
+    render json: {ok: 'ok'}
+  end
+
   def get_mf_digest stb
     user_mfs, date_mfs = get_user_and_date_mfs(stb)
     user_cdefs, date_cdefs = get_user_and_date_cdefs(stb)
