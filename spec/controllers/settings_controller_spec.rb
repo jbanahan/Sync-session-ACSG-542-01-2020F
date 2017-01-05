@@ -12,7 +12,6 @@ describe SettingsController do
       allow(CoreModule).to receive(:all).and_return([ord_cm])
       expect(ord_cm).to receive(:model_fields).and_return({ord_closed_by: mf})
 
-      cdef = Factory(:custom_definition, module_type: "Order", data_type: "string", label: "Custom Field Label")
       stb = Factory(:state_toggle_button, module_type: "Order")
       stc = Factory(:search_table_config)
       group = Factory(:group)
@@ -25,7 +24,6 @@ describe SettingsController do
       get :system_summary
       expect(response).to be_success
       expect(assigns(:collections)).to eq({ model_field: {"Order" => [mf]}, 
-                                            custom_definition: {"Order" => [cdef]}, 
                                             state_toggle_button: {"Order" => [stb]}, 
                                             group: [group], 
                                             search_table_config: [stc], 

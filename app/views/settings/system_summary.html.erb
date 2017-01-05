@@ -6,7 +6,6 @@
     <ol>
       <li><a href="#att-types">Attachment Types</a></li>
       <li><a href="#validations">Business Validation Templates</a></li>
-      <li><a href="#custom-fields">Custom Fields</a></li>
       <li><a href="#groups">Groups</a></li>
       <li><a href="#import-countries">Import Countries</a></li>
       <li><a href="#model-fields">Model Fields</a></li>
@@ -70,43 +69,6 @@
     <hr>
 
     <div class="col-md-10 offset-md-2">
-      <h2 id="custom-fields">Custom Fields</h2>
-      <table class="table">
-        <tr>
-          <th></th>
-          <th>Field</th>
-          <th>Data Type</th>
-          <th>Field Validator</th>
-        </tr>
-        <% @collections[:custom_definition].each_pair do |module_name, collection| %>
-          <% count = 0 %>
-          <% collection.each do |cdef| %>
-            <tr>
-              <% count += 1 %>
-              <% if count == 1 %>
-                <td><%= module_name %></td>
-              <% else %>
-                <td></td>
-              <% end %>
-              <td><%= cdef.label %></td>
-              <td><%= cdef.data_type.to_s %></td>
-              <td>
-                <% if cdef.field_validator_rules.presence %>
-                  <ul>
-                    <% cdef.field_validator_rules[0].string_hsh.each_pair do |k, v| %>
-                      <li><%=v%></li>      
-                    <% end %>
-                  </ul>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-        <% end %>
-      </table>
-    </div>
-    <hr>
-
-    <div class="col-md-10 offset-md-2">
       <h2 id="groups">Groups</h2>
       <table class="table">
         <tr>
@@ -154,6 +116,7 @@
           <th>Field</th>
           <th>Data Type</th>
           <th>Field Validator</th>
+          <th>Custom?</th>
         </tr>
         <% @collections[:model_field].each_pair do |module_name, collection| %>
           <% count = 0%>
@@ -174,6 +137,11 @@
                       <li><%= v %></li>      
                     <% end %>
                   </ul>
+                <% end %>
+              </td>
+              <td>
+                <% if mf.custom? %>
+                  <i class='fa fa-check'></i>
                 <% end %>
               </td>
             </tr>
