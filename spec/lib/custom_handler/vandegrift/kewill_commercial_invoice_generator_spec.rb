@@ -73,10 +73,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       entry_data.invoices.first.invoice_lines.first.buyer_customer_number = "BUY"
       entry_data.invoices.first.invoice_lines.first.seller_mid = "MID"
 
-      subject.generate_entry_xml xml_root, entry_data
+      subject.generate_entry_xml xml_root, entry_data, add_entry_info: false
 
       t = REXML::XPath.first xml_root, "/root/ediShipment/EdiInvoiceHeaderList"
       expect(t).not_to be_nil
+
+
+      # Make sure entry / shipment information is not in the xml
+      expect(t.text "EdiShipmentHeader/custNo").to be_nil
 
       t = REXML::XPath.first t, "EdiInvoiceHeader"
       expect(t.text "manufacturerId").to eq "597549"
@@ -346,6 +350,26 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
 
       subject.generate_and_send_invoices("12345", invoice)
       expect(entry.invoices.first.invoice_lines.first.gross_weight).to eq 0
+    end
+  end
+
+  describe "generate_xls" do
+    it "generates an excel workbook" do
+      l = entry_data.invoices.first.invoice_lines.first
+      l.seller_mid = "SELLER"
+      l.buyer_customer_number = "BUYER"
+
+      wb = subject.generate_xls [entry_data]
+      expect(wb).not_to be_nil
+
+      sheet = wb.worksheet("CI Load")
+      expect(sheet).not_to be_nil
+
+      expect(sheet.row(0)).to eq ["File #", "Customer", "Invoice #", "Invoice Date", "Country of Origin", "Part # / Style", "Pieces", "MID", "Tariff #", "Cotton Fee (Y/N)", "Invoice Foreign Value", "Quantity 1", "Quantity 2", "Gross Weight", "PO #", "Cartons", "First Sale Amount", "NDC / MMV", "Department", "SPI", "Buyer Cust No", "Seller MID"]
+      expect(sheet.row(1)).to eq ['597549', 'SALOMON', '15MSA10', '2015-11-01', "PH", "PART", 93.0, "PHMOUINS2106BAT", "4202.92.3031", "N", 3177.86, 93.0, 52.0, 78.0, "5301195481", 10, 218497.20, 20.0, 1.0, "JO", "BUYER", "SELLER"]
+      # just make sure the second line has the second part and retains the entry/invoice info
+      expect(sheet.row(2)[0..5]).to eq ['597549', 'SALOMON', '15MSA10', '2015-11-01', "PH", "PART2"]
+      expect(sheet.row(3)).to eq []
     end
   end
 end

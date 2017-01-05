@@ -87,9 +87,10 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       ports #prep port data
       expect_any_instance_of(Shipment).to receive(:create_snapshot)
       expect(Lock).to receive(:acquire).with(expected_reference).and_yield
-      expect {described_class.process_shipment(first_shipment_array,cdefs)}.to change(Shipment,:count).from(0).to(1)
+      expect {described_class.process_shipment(first_shipment_array,cdefs, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment,:count).from(0).to(1)
       s = Shipment.first
       expect(s.reference).to eq expected_reference
+      expect(s.importer).to eq ascena
       expect(s.house_bill_of_lading).to eq 'XM1007980'
       expect(s.booking_number).to eq 'HK956641'
       expect(s.est_departure_date).to eq Date.new(2016,11,22)
@@ -102,6 +103,8 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(s.lading_port).to eq ports[:cnxmn]
       expect(s.unlading_port).to eq ports[:uslgb]
       expect(s.shipment_type).to eq "CY/CY"
+      expect(s.last_file_bucket).to eq "bucket"
+      expect(s.last_file_path).to eq "path"
       expect(s.importer).to eq ascena
 
       # container details
@@ -123,13 +126,9 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
 
       expect(ActionMailer::Base.deliveries.count).to eq 0
     end
-    it "should email but not fail on unknown LOCODE" do
+    it "should not fail on unknown LOCODE" do
       order #prep order data
       expect {described_class.process_shipment(first_shipment_array,cdefs)}.to change(Shipment,:count).from(0).to(1)
-      mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena_us@vandegriftinc.com']
-      expect(mail.subject).to eq 'Ascena shipment with unknown port code(s)'
-      expect(mail.body.raw_source).to match 'Ascena shipment for BOL XM1007980 had the following unknown port codes.  Please contact IT to have them added to the database.'
     end
     it "should fail on update to existing shipment" do
       order #prep order data
