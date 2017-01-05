@@ -14,7 +14,7 @@ describe OpenChain::FixedPositionGenerator do
     end
     it "should raise exception on too long string with flag set" do
       expect{described_class.new(exception_on_truncate:true).str('xyz',2)}.
-        to raise_error StandardError, "String 'xyz' is longer than 2 characters"
+        to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "String 'xyz' is longer than 2 characters"
     end
     it "should handle nil as blank" do
       expect(subject.str(nil,2)).to eq '  '
@@ -52,7 +52,7 @@ describe OpenChain::FixedPositionGenerator do
     end
     it "should raise exception on too long string with flag set" do
       expect{described_class.new(exception_on_truncate:true).string('xyz',2)}.
-        to raise_error StandardError, "String 'xyz' is longer than 2 characters"
+        to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "String 'xyz' is longer than 2 characters"
     end
     it "should handle nil as blank" do
       expect(subject.string(nil,2)).to eq '  '
@@ -110,10 +110,10 @@ describe OpenChain::FixedPositionGenerator do
       expect(subject.num(BigDecimal('523.27'),5,1,round_mode:BigDecimal::ROUND_FLOOR)).to eq '523.2'
     end
     it "should raise exception on truncate regardless of exception_on_truncate flag" do
-      expect{subject.num(5000,3,2)}.to raise_error StandardError, "Number 5000.00 doesn't fit in 3 character field"
+      expect{subject.num(5000,3,2)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 5000.00 doesn't fit in 3 character field"
     end
     it "raises exception on truncate with implied decimal readout" do
-      expect{subject.num(5000,3,2, numeric_strip_decimals: true)}.to raise_error StandardError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
+      expect{subject.num(5000,3,2, numeric_strip_decimals: true)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
     end
     it "accepts a different pad char as an option" do
       expect(subject.num(1, 6, 2, numeric_pad_char: '*')).to eq '**1.00'
@@ -151,10 +151,10 @@ describe OpenChain::FixedPositionGenerator do
       expect(subject.number(BigDecimal('523.27'),5, decimal_places: 1, round_mode:BigDecimal::ROUND_FLOOR)).to eq '523.2'
     end
     it "should raise exception on truncate regardless of exception_on_truncate flag" do
-      expect{subject.number(5000,3, decimal_places: 2)}.to raise_error StandardError, "Number 5000.00 doesn't fit in 3 character field"
+      expect{subject.number(5000,3, decimal_places: 2)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 5000.00 doesn't fit in 3 character field"
     end
     it "raises exception on truncate with implied decimal readout" do
-      expect{subject.number(5000,3, decimal_places: 2, strip_decimals: true)}.to raise_error StandardError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
+      expect{subject.number(5000,3, decimal_places: 2, strip_decimals: true)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
     end
     it "accepts a different pad char as an option" do
       expect(subject.number(1, 6, decimal_places: 2, pad_char: '*')).to eq '**1.00'
@@ -197,10 +197,10 @@ describe OpenChain::FixedPositionGenerator do
       expect(subject.number(BigDecimal('523.27'),5, decimal_places: 1, round_mode:BigDecimal::ROUND_FLOOR)).to eq '523.2'
     end
     it "should raise exception on truncate regardless of exception_on_truncate flag" do
-      expect{subject.number(5000,3, decimal_places: 2)}.to raise_error StandardError, "Number 5000.00 doesn't fit in 3 character field"
+      expect{subject.number(5000,3, decimal_places: 2)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 5000.00 doesn't fit in 3 character field"
     end
     it "raises exception on truncate with implied decimal readout" do
-      expect{subject.number(5000,3, decimal_places: 2, strip_decimals: true)}.to raise_error StandardError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
+      expect{subject.number(5000,3, decimal_places: 2, strip_decimals: true)}.to raise_error OpenChain::FixedPositionGenerator::DataTruncationError, "Number 500000 (2 implied decimals) doesn't fit in 3 character field"
     end
     it "accepts a different pad char as an option" do
       expect(subject.number(1, 6, decimal_places: 2, pad_char: '*')).to eq '**1.00'

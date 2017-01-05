@@ -235,6 +235,22 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       expect(r.text "request/category").to eq "EdiShipment"
       expect(r.text "request/subAction").to eq "CreateUpdate"
     end
+
+    it "catches data overflow errors and re-raises them as MissingCiLoadDataError" do
+      # File number overflows at 15 chars
+      entry_data.file_number = "1234567890123456"
+
+      ex = nil
+      begin
+        subject.generate_and_send [entry_data]
+        fail("Should have raised an error.")
+      rescue OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError => e
+        ex = e
+      end
+
+      expect(ex.message).to eq "String '#{entry_data.file_number}' is longer than 15 characters"
+      expect(ex.backtrace).not_to be_blank
+    end
   end
 
   describe "ftp_credentials" do

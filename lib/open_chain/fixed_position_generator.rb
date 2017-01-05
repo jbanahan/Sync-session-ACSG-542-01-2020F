@@ -1,6 +1,10 @@
 module OpenChain; class FixedPositionGenerator
   include ActionView::Helpers::NumberHelper # in Rails 4.x this should change to ActiveSupport::NumberHelper
 
+  class FixedPositionGeneratorError < StandardError; end
+
+  class DataTruncationError < FixedPositionGeneratorError; end
+
   def initialize opts={}
     @opts = {
       exception_on_truncate:false,
@@ -34,7 +38,7 @@ module OpenChain; class FixedPositionGenerator
       v = encode_string(replace_newlines(s.to_s), encoding, encoding_replacment_char)
 
       if v.length > max_length
-        raise "String '#{v}' is longer than #{max_length} characters" if opts_val(exception_on_truncate, :exception_on_truncate) && !force_truncate
+        raise DataTruncationError, "String '#{v}' is longer than #{max_length} characters" if opts_val(exception_on_truncate, :exception_on_truncate) && !force_truncate
         v = v[0, max_length]
       end
     else
@@ -115,7 +119,7 @@ module OpenChain; class FixedPositionGenerator
       r = s
     end
 
-    raise "Number #{r}#{strip_decimals ? " (#{decimal_places} implied decimals) " : " "}doesn't fit in #{width} character field" if r.size > width
+    raise DataTruncationError, "Number #{r}#{strip_decimals ? " (#{decimal_places} implied decimals) " : " "}doesn't fit in #{width} character field" if r.size > width
     r
   end
 

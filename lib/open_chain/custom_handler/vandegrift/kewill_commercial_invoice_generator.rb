@@ -64,6 +64,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
         end
       end
     end
+    nil
+  # Just rescue any sort of fixed position generation error and re-raise it as a missing data error, that way callers only really
+  # have one exception to deal with that covers all cases and don't need to know internals of how this class generates data
+  rescue OpenChain::FixedPositionGenerator::FixedPositionGeneratorError => e
+    raise MissingCiLoadDataError, e.message, e.backtrace
   end
 
   def ftp_credentials
