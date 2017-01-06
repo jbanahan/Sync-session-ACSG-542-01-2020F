@@ -48,7 +48,7 @@ module OpenChain
     end
 
     def is_backed_up?(date, minutes_to_check)
-      Time.zone.now.utc < date || date < minutes_to_check.minutes.ago.utc
+      date < minutes_to_check.minutes.ago.utc
     end
 
     def sort_utc_dates(dates)
