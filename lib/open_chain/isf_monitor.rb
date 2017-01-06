@@ -20,11 +20,12 @@ module OpenChain
       ftp_chdir(ftp, directory)
       contents = ftp.ls
       return unless contents.present?
-      sorted_dates = process_ftp_ls(contents)
+      sorted_dates, est_dates = process_ftp_ls(contents)
+      est_dates = est_dates.sort { |a, b| a <=> b }
       if is_backed_up?(sorted_dates[0], minutes_to_check)
         to = ['isf@vandegriftinc.com', 'mzeitlin@vandegriftinc.com', 'agriffin@vandegriftinc.com', 'bglick@vandegriftinc.com', 'support@vandegriftinc.com']
         subject = "ISF PROCESSING STUCK"
-        body = "Kewill EDI ISF processing is suck. The oldest file in the folder is from #{sorted_dates[0]} and there are #{contents.length} files in the folder<br />Please call Brian Glick - 215-821-6595 to escalate."
+        body = "Kewill EDI ISF processing is suck. The oldest file in the folder is from #{est_dates[0]} and there are #{contents.length} files in the folder<br />Please call Brian Glick - 215-821-6595 to escalate."
         OpenMailer::send_simple_html(to, subject, body).deliver
       end
     end
@@ -37,7 +38,7 @@ module OpenChain
       dates = parse_ftp_dates(contents)
       est_dates = ftp_dates_to_est(dates)
       utc_dates = est_dates_to_utc_dates(est_dates)
-      sort_utc_dates(utc_dates)
+      [sort_utc_dates(utc_dates), est_dates]
     end
 
     def sort_utc_dates(dates)
@@ -49,7 +50,7 @@ module OpenChain
     end
 
     def ftp_dates_to_est(dates)
-      dates.map { |a| Time.parse(a).in_time_zone('Eastern Time (US & Canada)') }
+      dates.map { |a| Time.use_zone("Eastern Time (US & Canada)") { Time.zone.parse(a) } }
     end
 
     def parse_ftp_dates(contents)

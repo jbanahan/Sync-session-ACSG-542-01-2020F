@@ -21,7 +21,7 @@ RSpec.describe 'ISF Monitor' do
     end
 
     it 'considers the ftp backed up if oldest date is older than now - 15 minutes' do
-      past_date = 16.minutes.ago
+      past_date = 16.minutes.ago.utc
 
       expect(OpenChain::IsfMonitor.new.is_backed_up?(past_date, 15)).to be true
     end
@@ -52,9 +52,9 @@ RSpec.describe 'ISF Monitor' do
 
   describe '#ftp_dates_to_est' do
     it 'converts the ftp times to eastern time' do
-      date1 = Time.parse("08:57").in_time_zone('Eastern Time (US & Canada)')
-      date2 = Time.parse("08:56").in_time_zone('Eastern Time (US & Canada)')
-      date3 = Time.parse("08:58").in_time_zone('Eastern Time (US & Canada)')
+      date1 = Time.use_zone("Eastern Time (US & Canada)") { Time.zone.parse("08:57") }
+      date2 = Time.use_zone("Eastern Time (US & Canada)") { Time.zone.parse("08:56") }
+      date3 = Time.use_zone("Eastern Time (US & Canada)") { Time.zone.parse("O8:58") }
 
       times = OpenChain::IsfMonitor.new.parse_ftp_dates(ls_output)
       expect(OpenChain::IsfMonitor.new.ftp_dates_to_est(times)).to eql([date1, date2, date3])
