@@ -1003,6 +1003,8 @@ OpenChain::Application.routes.draw do
 
   resources :trade_lanes, only: [:index]
 
+  resources :product_vendor_assignments, only: [:index]
+
   get "/:recordable_type/:recordable_id/business_rule_snapshots" => "business_rule_snapshots#index"
 
   #Griddler inbound email processing

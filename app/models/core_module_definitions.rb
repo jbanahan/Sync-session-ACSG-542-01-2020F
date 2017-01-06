@@ -462,8 +462,8 @@ module CoreModuleDefinitions
    })
 
   PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
-    default_search_columns: [:pva_ven_name, :pva_puid, :pva_pname],
-    key_model_field_uids: [:pva_ven_name, :pva_puid]
+    default_search_columns: [:prodven_ven_name, :prodven_puid, :prodven_pname],
+    key_model_field_uids: [:prodven_ven_name, :prodven_puid]
   })
 
   # ATTACHMENT core module is present solely for use in snapshotting, it is not meant to be used

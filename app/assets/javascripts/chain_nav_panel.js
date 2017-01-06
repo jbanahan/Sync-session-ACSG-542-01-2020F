@@ -218,6 +218,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
       var items;
       items = [];
       makeItemIf(u.permissions.view_vendors, items, 'vendor-view', 'Search', '/vendors');
+      makeItemIf(u.permissions.view_products && u.permissions.view_vendors, items, 'prod-ven-assignment-view', 'Vendor/Product Search', '/product_vendor_assignments?force_search=true');
       makeItemIf(u.permissions.create_vendors, items, 'vendor-new', 'New', '/vendors/new');
       return makeMenuIf(cat, 'nav-cat-vendor', 'Vendor', items);
     };
