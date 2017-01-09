@@ -26,17 +26,35 @@ module OpenChain; module Report; class HmStatisticsReport
   def run run_by, settings
     start_date = sanitize_date_string settings['start_date'], run_by.time_zone
     end_date = sanitize_date_string settings['end_date'], run_by.time_zone
+    wb = XlsMaker.new_workbook
+    
+    add_summary_sheet wb, start_date, end_date
+    add_ocean_sheet wb, start_date, end_date
+    add_air_sheet wb, start_date, end_date
+    
+    workbook_to_tempfile wb, 'HmStatisticsReport-'
+  end
 
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet :name=>'Statistics'
+  def add_ocean_sheet wb, start_date, end_date
+    XlsMaker.create_sheet wb, "Ocean"
+    table_from_query wb.worksheets.last, raw_ocean_query(start_date, end_date)
+  end
+
+  def add_air_sheet wb, start_date, end_date
+    XlsMaker.create_sheet wb, "Air"
+    table_from_query wb.worksheets.last, raw_air_query(start_date, end_date)
+  end
+
+  def add_summary_sheet wb, start_date, end_date
+    sheet = XlsMaker.create_sheet wb, "Statistics"
     
     mh = Hash.new
     load_order_data mh, start_date, end_date
     load_air_tu_data mh, start_date, end_date
     load_ocean_tu_data mh, start_date, end_date
 
-    XlsMaker.add_body_row sheet, 0, ["","Order","","","","Transport Units"]
-    XlsMaker.add_body_row sheet, 1, ["Export Country","AIR","OCEAN","Total Orders","","AIR","OCEAN","Total TU"]
+    XlsMaker.add_body_row sheet, 0, [nil,"Order",nil,nil,nil,"Transport Units"]
+    XlsMaker.add_body_row sheet, 1, ["Export Country","AIR","OCEAN","Total Orders",nil,"AIR","OCEAN","Total TU"]
 
     cursor = 2
     mh.keys.sort.each do |country|
@@ -64,15 +82,15 @@ module OpenChain; module Report; class HmStatisticsReport
     XlsMaker.add_body_row sheet, cursor, ["Total Duty",totals[1]]
     cursor += 1
     XlsMaker.add_body_row sheet, cursor, ["Total Entered Value",totals[0]]
-
-    workbook_to_tempfile wb, 'HmStatisticsReport-'
   end
 
-  private
-
   def total_values start_date, end_date
-    qry = <<-SQL
-      SELECT SUM(IFNULL(t.entered_value, 0)), 
+    ActiveRecord::Base.connection.execute(totals_query(start_date, end_date)).first
+  end
+
+  def totals_query start_date, end_date
+    <<-SQL
+      SELECT SUM(IFNULL(t.entered_value, 0)) AS entered_value, 
              SUM(IFNULL(t.duty_amount, 0) + IFNULL(l.hmf, 0) + IFNULL(l.prorated_mpf, 0) + IFNULL(l.cotton_fee, 0))
       FROM entries e
           INNER JOIN commercial_invoices i ON e.id = i.entry_id
@@ -82,11 +100,28 @@ module OpenChain; module Report; class HmStatisticsReport
           AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
           AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
     SQL
-    ActiveRecord::Base.connection.execute(qry).first
   end
   
   def load_order_data master_hash, start_date, end_date
-    orders_qry = <<-SQL
+    result_set = ActiveRecord::Base.connection.execute orders_query(start_date, end_date)
+    load_order_dh result_set, master_hash
+  end
+
+  def load_order_dh result_set, master_hash
+    result_set.each do |row|
+      dh = data_holder master_hash, row[0]
+      case row[1]
+      when 'AIR'
+        dh.air_order = row[2]
+      when 'OCEAN'
+        dh.ocean_order = row[2]
+      end
+      dh.total_order = dh.total_order + row[2]
+    end       
+  end
+
+  def orders_query start_date, end_date
+    <<-SQL
       SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
         (CASE e.transport_mode_code 
           WHEN 40 THEN "AIR" 
@@ -103,23 +138,25 @@ module OpenChain; module Report; class HmStatisticsReport
         AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY mode, ecc
     SQL
-    result_set = ActiveRecord::Base.connection.execute orders_qry
-    result_set.each do |row|
-      dh = data_holder master_hash, row[0]
-      case row[1]
-      when 'AIR'
-        dh.air_order = row[2]
-      when 'OCEAN'
-        dh.ocean_order = row[2]
-      end
-      dh.total_order = dh.total_order + row[2]
-    end       
   end
 
   def load_ocean_tu_data master_hash, start_date, end_date
-    ocean_tu_query = <<-SQL
+    result_set = ActiveRecord::Base.connection.execute ocean_tu_query(start_date, end_date)
+    load_ocean_tu_dh result_set, master_hash
+  end
+
+  def load_ocean_tu_dh result_set, master_hash
+    result_set.each do |row|
+      dh = data_holder master_hash, row[0]
+      dh.ocean_unit = row[1]
+      dh.total_unit += dh.ocean_unit
+    end
+  end
+
+  def ocean_tu_query start_date, end_date
+    <<-SQL
       SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc', 
-        COUNT(DISTINCT c.id)
+        COUNT(DISTINCT c.container_number)
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN containers c ON e.id = c.entry_id
@@ -129,20 +166,58 @@ module OpenChain; module Report; class HmStatisticsReport
         AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY ecc
     SQL
-
-    result_set = ActiveRecord::Base.connection.execute ocean_tu_query
-    result_set.each do |row|
-      dh = data_holder master_hash, row[0]
-      dh.ocean_unit = row[1]
-      dh.total_unit += dh.ocean_unit
-    end
   end
 
   def load_air_tu_data master_hash, start_date, end_date
-    air_tu_query = <<-SQL
-      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
-        e.house_bills_of_lading AS 'house_bills',
-        e.master_bills_of_lading AS 'master_bills'
+    result_set = ActiveRecord::Base.connection.execute raw_air_query(start_date, end_date)
+    load_air_tu_dh result_set, master_hash
+  end
+
+  def load_air_tu_dh result_set, master_hash
+    bills = Hash.new do |hash, key| 
+      hash[key] = Hash.new{ |h, k| h[k] = [] }
+    end
+    result_set.each do |row| 
+      if row[1].blank? 
+        bills[row[0]][:master].concat(row[2].try(:split, "\n ") || []) 
+      else 
+        bills[row[0]][:house].concat(row[1].try(:split, "\n ") || [])
+      end
+    end
+    bills.each do |ctry, blz| 
+      dh = data_holder master_hash, ctry
+      dh.air_unit = blz[:master].uniq.count + blz[:house].uniq.count
+      dh.total_unit += dh.air_unit
+    end
+  end
+
+  def raw_ocean_query start_date, end_date
+    <<-SQL
+     SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes', 
+            e.transport_mode_code "Transport Mode Code", 
+            e.release_date "Release Date", 
+            ci.invoice_number "Invoice No.", 
+            c.container_number "Container No.", 
+            e.entry_number "Entry No."
+     FROM entries e
+       INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
+       INNER JOIN containers c ON e.id = c.entry_id
+     WHERE e.customer_number = 'HENNE'
+       AND e.transport_mode_code IN (10, 11)
+       AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
+       AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+    SQL
+  end
+
+  def raw_air_query start_date, end_date
+    <<-SQL
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes', 
+             e.house_bills_of_lading "House Bills", 
+             e.master_bills_of_lading "Master Bills", 
+             e.transport_mode_code "Transport Mode Code", 
+             e.release_date "Release Date", 
+             ci.invoice_number "Invoice No.", 
+             e.entry_number "Entry No."
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
       WHERE e.customer_number = 'HENNE'
@@ -150,17 +225,6 @@ module OpenChain; module Report; class HmStatisticsReport
         AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
         AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
     SQL
-    
-    bills = Hash.new do |hash, key| 
-      hash[key] = Hash.new{ |h, k| h[k] = [] }
-    end
-    result_set = ActiveRecord::Base.connection.execute air_tu_query
-    result_set.each { |row| row[1].blank? ? bills[row[0]][:master].concat(row[2].split "\n ") : bills[row[0]][:house].concat(row[1].split "\n ") }
-    bills.each do |ctry, blz| 
-      dh = data_holder master_hash, ctry
-      dh.air_unit = blz[:master].uniq.count + blz[:house].uniq.count
-      dh.total_unit += dh.air_unit
-    end
   end
 
   def data_holder master_hash, country_code
