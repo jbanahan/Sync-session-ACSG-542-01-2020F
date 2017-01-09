@@ -1,0 +1,44 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if($("textarea[name='customer_numbers']").val().length == 0) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter both dates and at least one customer number.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Duty Savings Report</h2>
+<%=form_tag reports_run_duty_savings_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="start_date">Release Date Start:</label></div>
+    <div class="col-md-3"><%=text_field_tag :start_date,"", :class=>'form-control isdate'%></div>
+    <div class="col-md-2"><label class="control-label" for="end_date">Release Date End:</label></div>
+    <div class="col-md-3"><%=text_field_tag :end_date, "", :class=>'form-control isdate' %></div>
+  </div>
+  <br>
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="customer_numbers">Customer Numbers:</label></div>
+    <div class="col-md-3">
+      <%=text_area_tag(:customer_numbers, "", :class=>'form-control', cols: 20, rows: 5)%>
+      <small>One per line</small>
+    </div>
+  </div>
+</div>
+<%end%>
+</div>
