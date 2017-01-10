@@ -3,7 +3,6 @@ require 'rex12'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   extend OpenChain::IntegrationClientParser
-  IGNORE_SEGMENTS = ['ISA','GS','GE','IEA']
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
@@ -15,17 +14,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     begin
       cdefs = {}
       shipment_segments = []
-      REX12::Document.parse(data) do |seg|
-        isa_code = seg.elements[13].value if seg.segment_type=='ISA'
-        next if IGNORE_SEGMENTS.include?(seg.segment_type)
-        shipment_segments << seg
-        if seg.segment_type=='SE'
-          begin
-            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
-          rescue
-            errors << $!
-          end
-          shipment_segments = []
+      REX12::Document.each_transaction(data) do |transaction|
+        isa_code = transaction.isa_segment.elements[13].value
+        begin
+          process_shipment(transaction.segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
+        rescue
+          errors << $!
         end
       end
     rescue

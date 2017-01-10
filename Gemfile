@@ -87,7 +87,7 @@ gem 'ruby-trello', '1.3.0'
 gem 'email_validator', '~> 1.6.0'
 
 # EDI Processor
-gem 'REX12', '~> 0.1.3'
+gem 'REX12', '~> 0.1.4'
 
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'
