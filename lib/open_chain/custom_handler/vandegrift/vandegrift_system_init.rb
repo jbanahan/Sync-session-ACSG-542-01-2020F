@@ -8,7 +8,7 @@ require 'open_chain/custom_handler/ascena/ascena_shipment_comparator'
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSystemInit
 
   def self.init
-    #return unless MasterSetup.get.system_code == 'www-vfitrack-net'
+    return unless MasterSetup.get.system_code == 'www-vfitrack-net'
 
     register_change_comparators
   end
