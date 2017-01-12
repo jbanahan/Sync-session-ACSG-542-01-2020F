@@ -207,5 +207,33 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     it "errors if invalid customer number given" do
       expect { subject.run_schedulable "alliance_customer_number" => "Invalid" }.to raise_error "No importer found with Kewill customer number 'Invalid'."
     end
+
+    it "strips leading zeros on part number" do
+      p = create_product ("000001")
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "strip_leading_zeros" => true
+      expect(data).not_to be_nil
+      doc = REXML::Document.new(data)
+
+      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "1"
+    end
+
+    it "uses unique_identifier instead of part number" do
+      p = create_product ("000001")
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "use_unique_identifier" => true
+      expect(data).not_to be_nil
+      doc = REXML::Document.new(data)
+
+      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "CUST-000001"
+    end
   end
 end
