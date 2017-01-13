@@ -235,5 +235,22 @@ describe CustomReportsController do
       }
       expect(CustomReport.first.user).to eq(@u)
     end
+
+    it "handles validation errors" do
+      # Just use a report type we know errors without specific params
+      allow(CustomReportIsfStatus).to receive(:can_view?).and_return(true)
+      post :create, {:custom_report_type=>'CustomReportIsfStatus',:custom_report=>
+        {:name=>'ABC',
+          :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
+          :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
+        }
+      }
+
+      expect(response).to be_success
+      expect(flash[:errors]).not_to be_blank
+      expect(response).to render_template("new")
+      expect(assigns(:report_obj)).to be_a CustomReportIsfStatus
+      expect(assigns(:custom_report_type)).to eq('CustomReportIsfStatus')
+    end
   end
 end

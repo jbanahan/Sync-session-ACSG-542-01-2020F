@@ -84,6 +84,41 @@ describe ReportsController do
     end
   end
 
+  describe "Duty Savings Report" do
+    context "show" do
+      it "doesn't render page for users who don't have permission" do
+        get :show_duty_savings_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for users who have permission" do
+        u = Factory(:master_user)
+        sign_in_as u
+        expect(u).to receive(:view_entries?).and_return true
+        get :show_duty_savings_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      let(:settings) { {"start_date" => "2016-01-01", "end_date" => "2016-02-01", "customer_numbers" => "ACME,\nKonvenientz; \nFoodMarmot"} }
+      
+      it "doesn't run for users who don't have permission" do
+        post :run_duty_savings_report, settings
+        expect(flash[:errors].first).to eq("You do not have permission to view this report.")
+      end
+
+      it "runs for users who have permission" do
+        u = Factory(:master_user)
+        sign_in_as u
+        expect(u).to receive(:view_entries?).and_return true
+        post :run_duty_savings_report, settings
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
   describe "H&M Statistics Report" do
     before (:each) do
       @admin = Factory(:user)

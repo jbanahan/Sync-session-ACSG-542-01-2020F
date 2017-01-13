@@ -3,6 +3,7 @@ require 'open_chain/custom_handler/vandegrift/vandegrift_ace_entry_comparator'
 require 'open_chain/custom_handler/hm/hm_entry_docs_comparator'
 require 'open_chain/billing_comparators/product_comparator'
 require 'open_chain/custom_handler/hm/hm_system_classify_product_comparator'
+require 'open_chain/custom_handler/ascena/ascena_shipment_comparator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSystemInit
 
@@ -17,6 +18,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryDocsComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::BillingComparators::ProductComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Ascena::AscenaShipmentComparator
   end
   private_class_method :register_change_comparators
 

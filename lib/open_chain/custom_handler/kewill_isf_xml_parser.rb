@@ -202,8 +202,8 @@ module OpenChain
       end
 
       def process_manufacturer_names root
-        s = Set.new REXML::XPath.each(root, "entities[PARTY_TYPE_CD = 'MF']/PARTY_NAME").map {|el| el.text.strip}
-        return s.to_a.join(" \n")
+        s = Set.new REXML::XPath.each(root, "entities[PARTY_TYPE_CD = 'MF']/PARTY_NAME").map {|el| el.text.to_s.strip }
+        return s.to_a.select {|t| !t.blank? }.join(" \n")
       end
 
       def process_events parent

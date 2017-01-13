@@ -1115,14 +1115,20 @@ describe ModelField do
       expect(mf).to be_blank
     end
 
+    it "should not allow reload double check on test" do
+      expect(ModelField).to_not receive(:reload)
+      ModelField.find_by_uid "not a model field"
+    end
+
     it "reloads model fields on an initial lookup failure" do
+      expect(ModelField).to receive(:allow_reload_double_check).and_return true
       expect(ModelField).to receive(:reload).with(true)
-      mf = ModelField.find_by_uid "not a model field"
+      ModelField.find_by_uid "not a model field"
     end
 
     it "ensures model field lists are not stale" do
       expect(ModelField).to receive(:reload_if_stale).and_return true
-      mf = ModelField.find_by_uid "not a model field"
+      ModelField.find_by_uid "not a model field"
     end
 
     it "returns a blank model field if '_blank' uid used" do

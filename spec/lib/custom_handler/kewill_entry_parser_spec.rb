@@ -108,7 +108,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99212, 'date'=>201503020700},
           {'date_no'=>99310, 'date'=>201503020800},
           {'date_no'=>99311, 'date'=>201503020900},
-          {'date_no'=>99202, 'date'=>201503021000}
+          {'date_no'=>99202, 'date'=>201503021000},
+          {'date_no'=>5023, 'date'=>201701051200}
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -420,6 +421,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.monthly_statement_paid_date).to eq tz.parse("201503020900").to_date
       expect(entry.first_release_date).to eq tz.parse "201503021000"
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
+      expect(entry.cancelled_date).to eq tz.parse "201701051200"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"

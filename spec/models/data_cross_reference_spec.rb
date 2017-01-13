@@ -355,4 +355,30 @@ describe DataCrossReference do
       end
     end
   end
+
+  context "UN Locodes" do
+    let (:importer) { Factory(:importer) }
+    let! (:importer_locode) { DataCrossReference.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USLAX", value: "LAX", company_id: importer.id }
+    let! (:locode) { DataCrossReference.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USORD", value: "ORD" }
+  
+    describe "find_us_port_code" do
+
+      # Should not find a company specific xref 
+      it "finds a generic xref" do
+        expect(DataCrossReference.find_us_port_code "USORD").to eq "ORD"
+      end
+      
+      it "finds a company specific xref" do
+        expect(DataCrossReference.find_us_port_code "USLAX", company: importer).to eq "LAX"
+      end
+
+      it "falls back to a generic xref if no company specific one is present" do
+        expect(DataCrossReference.find_us_port_code "USORD", company: importer).to eq "ORD"
+      end
+
+      it "does not find a company specific xref if company is not passed as a param" do
+        expect(DataCrossReference.find_us_port_code "USLAX").to be_nil
+      end
+    end
+  end
 end

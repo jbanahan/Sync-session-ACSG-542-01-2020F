@@ -100,8 +100,16 @@ class CustomReportsController < ApplicationController
       #add user parameter
       params[:custom_report][:user_id] = current_user.id
 
-      rpt = klass.create!(params[:custom_report])
-      redirect_to custom_report_path(rpt)
+      rpt = klass.create(params[:custom_report])
+
+      if rpt.errors.any?
+        errors_to_flash rpt
+        @report_obj = rpt
+        @custom_report_type = type
+        render action: "new"
+      else
+        redirect_to custom_report_path(rpt)  
+      end
     end
   end
   def destroy

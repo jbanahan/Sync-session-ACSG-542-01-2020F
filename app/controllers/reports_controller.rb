@@ -282,6 +282,25 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_duty_savings_report
+    if OpenChain::Report::DutySavingsReport.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_duty_savings_report
+    if OpenChain::Report::DutySavingsReport.permission?(current_user)
+      settings = {"start_date" => params[:start_date], 
+                  "end_date" => params[:end_date], 
+                  "customer_numbers" => params[:customer_numbers].delete("\r\;, ").split("\n")}
+      run_report "Duty Savings Report", OpenChain::Report::DutySavingsReport, settings, []
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
   def show_hm_statistics
     if OpenChain::Report::HmStatisticsReport.permission?(current_user)
       render

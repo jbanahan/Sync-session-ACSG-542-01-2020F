@@ -2,40 +2,45 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerator do
 
-  describe "sync_fixed_position" do
+  describe "run_schedulable" do
+    subject { described_class }
+
     let (:us) { Factory(:country, iso_code: "US")}
-    let (:product) {
-      p = Factory(:product, unique_identifier: "0000000123", name: "Description")
+    let (:importer) { Factory(:importer, alliance_customer_number: "LUMBER")}
+    let! (:product) {
+      p = Factory(:product, importer: importer, unique_identifier: "0000000123", name: "Description")
       c = p.classifications.create! country: us
       c.tariff_records.create! hts_1: "12345678"
 
       p
     }
 
-    after :each do
-      @tempfile.close! if @tempfile && !@tempfile.closed?
-    end
-
     it "finds files to sync and sends them" do
-      product 
-      @tempfile = subject.sync_fixed_position
-      expect(@tempfile).not_to be_nil
-      @tempfile.rewind
-      file = @tempfile.readlines
-      expect(file.length).to eq 1
-      expect(file[0][0, 15]).to eq "123            "
-      expect(file[0][15, 40]).to eq "Description                             "
-      expect(file[0][55, 10]).to eq "12345678  "
-      # Make sure nothing comes after the name field
-      expect(file[0][66]).to be_nil
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
 
-      product.reload
-      expect(product.sync_records.where(trading_partner: "Kewill").length).to eq 1
+      subject.run_schedulable
+
+      expect(data).not_to be_nil
+      doc = REXML::Document.new(data)
+
+      parent = REXML::XPath.first doc, "/requests/request/kcData/parts/part"
+      expect(parent.text "id/partNo").to eq "123"
+      expect(parent.text "id/custNo").to eq "LUMBER"
+      expect(parent.text "id/dateEffective").to eq "20140101"
+      expect(parent.text "dateExpiration").to eq "20991231"
+      expect(parent.text "styleNo").to eq "123"
+      expect(parent.text "descr").to eq "Description"
+      expect(parent.text "CatTariffClassList/CatTariffClass/seqNo").to eq "1"
+      expect(parent.text "CatTariffClassList/CatTariffClass/tariffNo").to eq "12345678"
     end
 
     it "does not sync previously synced products" do
       product.sync_records.create! sent_at: Time.zone.now, trading_partner: "Kewill", confirmed_at: (Time.zone.now + 1.minute)
-      expect(subject.sync_fixed_position).to be_nil
+      expect_any_instance_of(subject).not_to receive(:ftp_file)
+      subject.run_schedulable
     end
   end
 end

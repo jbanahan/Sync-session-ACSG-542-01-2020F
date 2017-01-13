@@ -212,7 +212,7 @@ OpenChain::Application.routes.draw do
 
         resources :custom_view_templates, only: [:edit, :update]
 
-        resources :state_toggle_buttons, only: [:edit, :update]
+        resources :state_toggle_buttons, only: [:edit, :update, :destroy]
 
         resources :kewill_entry_documents, only: [] do
           collection do
@@ -650,6 +650,9 @@ OpenChain::Application.routes.draw do
   post "/reports/run_entries_with_holds_report" => "reports#run_entries_with_holds_report"
   get "/reports/show_rl_jira_report" => "reports#show_rl_jira_report"
   post "/reports/run_rl_jira_report" => "reports#run_rl_jira_report"
+  get "/reports/show_duty_savings_report" => "reports#show_duty_savings_report"
+  post "/reports/run_duty_savings_report" => "reports#run_duty_savings_report"
+
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member
@@ -997,11 +1000,13 @@ OpenChain::Application.routes.draw do
 
   resources :custom_view_templates, except: [:show, :update]
 
-  resources :state_toggle_buttons, except: [:show, :update]
+  resources :state_toggle_buttons, except: [:show, :update, :destroy]
 
   resources :search_table_configs
 
   resources :trade_lanes, only: [:index]
+
+  resources :product_vendor_assignments, only: [:index]
 
   get "/:recordable_type/:recordable_id/business_rule_snapshots" => "business_rule_snapshots#index"
 

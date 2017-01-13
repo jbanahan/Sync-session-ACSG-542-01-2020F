@@ -32,6 +32,7 @@ class DataCrossReference < ActiveRecord::Base
   EXPORT_CARRIER ||= 'export_carriers'
   US_HTS_TO_CA ||= 'us_hts_to_ca'
   HM_PARS_NUMBER ||= 'hm_pars'
+  UN_LOCODE_TO_US_CODE ||= "locode_to_us"
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -242,6 +243,17 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.create_po_fingerprint order, fingerprint
     add_xref! PO_FINGERPRINT, order.order_number, fingerprint
+  end
+
+  def self.find_us_port_code locode, company: nil
+    val = nil
+    if company
+      val = find_unique(DataCrossReference.where("company_id = ?", company), key: locode, xref_type: UN_LOCODE_TO_US_CODE)
+    end
+
+    val = find_unique(DataCrossReference.where("company_id IS NULL"), key: locode, xref_type: UN_LOCODE_TO_US_CODE) if val.nil?
+
+    val
   end
 
   def self.has_key? key, cross_reference_type

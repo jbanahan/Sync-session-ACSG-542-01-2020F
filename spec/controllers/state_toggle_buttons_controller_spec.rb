@@ -88,23 +88,4 @@ describe StateToggleButtonsController do
         expect(flash[:errors]).to include "Only administrators can do this."
       end
   end
-
-  describe "destroy" do
-    let!(:stb) { Factory(:state_toggle_button) }
-
-    it "deletes STB for an admin" do
-      expect(u).to receive(:admin?).and_return true
-      delete :destroy, id: stb.id
-      expect(StateToggleButton.count).to eq 0
-      expect(response).to redirect_to(state_toggle_buttons_path)
-    end
-
-    it "prevents access by non-admins" do
-      expect(u).to receive(:admin?).and_return false
-      delete :destroy, id: stb.id
-      expect(StateToggleButton.count).to eq 1
-      expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "Only administrators can do this."
-    end
-  end
 end

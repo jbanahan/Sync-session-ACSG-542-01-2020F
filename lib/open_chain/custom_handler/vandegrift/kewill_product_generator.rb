@@ -8,6 +8,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.run_schedulable opts = {}
+    opts = opts.with_indifferent_access
     sync opts['alliance_customer_number'], opts
   end
 
@@ -35,6 +36,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @alliance_customer_number = alliance_customer_number
     @custom_where = opts[:custom_where]
     @strip_leading_zeros = opts[:strip_leading_zeros].to_s.to_boolean
+    @use_unique_identifier = opts[:use_unique_identifier].to_s.to_boolean
   end
 
   def custom_defs
@@ -158,7 +160,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def query
     qry = <<-QRY
 SELECT products.id,
-#{cd_s custom_defs[:prod_part_number].id},
+#{@use_unique_identifier ? "products.unique_identifier" : cd_s(custom_defs[:prod_part_number].id)},
 products.name,
 tariff_records.hts_1,
 IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true},""),

@@ -2,7 +2,13 @@ require 'open_chain/integration_client_parser'
 require 'rex12'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
+  extend OpenChain::IntegrationClientParser
   IGNORE_SEGMENTS = ['ISA','GS','GE','IEA']
+
+  def self.integration_folder
+    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
+  end
+
   def self.parse data, opts={}
     errors = []
     isa_code = 'UNKNOWN'
@@ -10,12 +16,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       cdefs = {}
       shipment_segments = []
       REX12::Document.parse(data) do |seg|
-        isa_code = seg[13] if !isa_code && seg.segment_type=='ISA'
+        isa_code = seg.elements[13].value if seg.segment_type=='ISA'
         next if IGNORE_SEGMENTS.include?(seg.segment_type)
         shipment_segments << seg
         if seg.segment_type=='SE'
           begin
-            process_shipment(shipment_segments,cdefs)
+            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
           rescue
             errors << $!
           end
@@ -31,7 +37,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           f.flush
           body = "There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.\n\nErrors:\n"
           errors.each {|err| body << "#{err.message}\n"}
-          to = "ascena-us@vandegriftinc.com,edisupport@vandegriftinc.com"
+          to = "ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
           OpenMailer.send_simple_html(to, subject, body, [f]).deliver!
         end
@@ -39,7 +45,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     end
   end
 
-  def self.process_shipment shipment_segments, cdefs
+  def self.process_shipment shipment_segments, cdefs, last_file_path: nil, last_file_bucket: nil
     ActiveRecord::Base.transaction do
       hbol = find_ref_value(shipment_segments,'BM')
       booking_number = find_ref_value(shipment_segments,'CR')
@@ -63,25 +69,18 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           mode:find_mode(shipment_segments),
           lading_port:find_port(shipment_segments,'L'),
           unlading_port:find_port(shipment_segments,'D'),
-          shipment_type:shipment_type
+          shipment_type:shipment_type,
+          importer_id: importer.id,
+          last_file_bucket: last_file_bucket,
+          last_file_path: last_file_path
         )
         shp.save!
 
         equipments.each {|eq| process_equipment(shp,eq)}
 
         shp.create_snapshot User.integration, nil, "APLL 856 Parser"
-
-        send_port_code_email(shp.house_bill_of_lading) if shp.lading_port.blank? || shp.unlading_port.blank?
       end
     end
-  end
-
-  def self.send_port_code_email hbol
-    OpenMailer.send_simple_text(
-      'ascena-us@vandegriftinc.com',
-      'Ascena shipment with unknown port code(s)',
-      "Ascena shipment for BOL #{hbol} had the following unknown port codes.  Please contact IT to have them added to the database."
-    ).deliver!
   end
 
   def self.process_equipment shp, e_segs
@@ -187,5 +186,9 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   def self.find_element_by_qualifier segments, segment_type, qualifier, qualifier_position, value_position
     found = segments.find {|seg| seg.segment_type==segment_type && seg.elements[qualifier_position].value==qualifier}
     return found ? found.elements[value_position].value : nil
+  end
+
+  def self.importer
+    @importer ||= Company.where(system_code: "ASCE").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
   end
 end; end; end; end

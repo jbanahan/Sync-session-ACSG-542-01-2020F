@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       parser.send_shipped_lines_error_email file
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq([ "ascena-us@vandegriftinc.com" ])
+      expect(mail.to).to eq([ "ascena_us@vandegriftinc.com" ])
       expect(mail.subject).to eq("Error loading Ascena order file for ACME #12345, Konvenientz #54321")
       expect(mail.body).to match(/The following missing order lines have an associated shipment: ACME #12345/)
       expect(mail.attachments.count).to eq 1
@@ -247,7 +247,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(OrderLine.count).to eq 2
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq([ "ascena-us@vandegriftinc.com" ])
+      expect(mail.to).to eq([ "ascena_us@vandegriftinc.com" ])
       expect(mail.subject).to eq("Error loading Ascena order file for MG PRODUCTS PTE. LTD #ASCENA-37109")
       expect(mail.body).to match(/The following missing order lines have an associated shipment: MG PRODUCTS PTE/)
       expect(mail.attachments.count).to eq 1
@@ -336,7 +336,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(CSV).to receive(:parse).and_raise "something bad"
       described_class.new.process_file(file)
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq([ "ascena-us@vandegriftinc.com","edisupport@vandegriftinc.com" ])
+      expect(mail.to).to eq([ "ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com" ])
       expect(mail.subject).to eq("Error loading Ascena order file.")
       expect(mail.body.to_s).to match(/The attached file could not be processed by the Ascena PO Parser:/)
       expect(mail.attachments.count).to eq 1

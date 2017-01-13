@@ -1,6 +1,6 @@
 app = angular.module('StateToggleButtonApp',['ChainComponents'])
 
-app.factory 'stateToggleButtonSvc', ['$http', ($http) ->
+app.factory 'stateToggleButtonMaintSvc', ['$http', ($http) ->
   {
     loadButton: (id) ->
       $http.get('/api/v1/admin/state_toggle_buttons/' + id + '/' + 'edit.json')
@@ -10,14 +10,14 @@ app.factory 'stateToggleButtonSvc', ['$http', ($http) ->
   }
 ]
 
-app.controller 'stateToggleButtonCtrl', ['$scope', '$location', '$window', 'stateToggleButtonSvc', 'chainSearchOperators', ($scope,$location,$window,stateToggleButtonSvc,chainSearchOperators) ->
+app.controller 'stateToggleButtonCtrl', ['$scope', '$location', '$window', 'stateToggleButtonMaintSvc', 'chainSearchOperators', ($scope,$location,$window,stateToggleButtonMaintSvc,chainSearchOperators) ->
 
   $scope.getId = (url) ->
     m = url.match(/\d+(?=\/edit)/)
     m[0] if m
 
   $scope.loadButton = (id) ->
-    p = stateToggleButtonSvc.loadButton id
+    p = stateToggleButtonMaintSvc.loadButton id
     p.then (resp) ->
       basicButton = resp["data"]["button"]["state_toggle_button"]
       $scope.stb = 
@@ -40,7 +40,7 @@ app.controller 'stateToggleButtonCtrl', ['$scope', '$location', '$window', 'stat
       $scope.dateCdefs = resp["data"]["date_cdefs"]
 
   $scope.updateButton = (id, params) ->
-    p = stateToggleButtonSvc.updateButton id, params
+    p = stateToggleButtonMaintSvc.updateButton id, params
     p.then () ->
       $window.location = '/state_toggle_buttons'
 
