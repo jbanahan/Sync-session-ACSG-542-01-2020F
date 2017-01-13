@@ -235,5 +235,22 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
       expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "CUST-000001"
     end
+
+    it "allows finding products without importer id restrictions" do
+      p = create_product ("000001")
+      p.update_attributes! importer_id: nil
+
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "disable_importer_check" => true
+
+      expect(data).not_to be_nil
+      doc = REXML::Document.new(data)
+
+      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "000001"
+    end
   end
 end

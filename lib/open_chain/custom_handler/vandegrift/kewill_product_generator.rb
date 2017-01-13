@@ -37,6 +37,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @custom_where = opts[:custom_where]
     @strip_leading_zeros = opts[:strip_leading_zeros].to_s.to_boolean
     @use_unique_identifier = opts[:use_unique_identifier].to_s.to_boolean
+    # Combined with the use_inique_identifier flag, this allows us to run this on customer specific systems
+    # (like DAS) where the products aren't linked to any importer - since the whole system is a single importer's system.
+    @disable_importer_check = opts[:disable_importer_check].to_s.to_boolean
   end
 
   def custom_defs
@@ -47,10 +50,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def sync_xml
-    @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
-    raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+    if !@disable_importer_check
+      @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
+      raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+    end
+    
     val = super
-    @importer.update_attributes! :last_alliance_product_push_at => Time.zone.now
+    @importer.update_attributes!(:last_alliance_product_push_at => Time.zone.now) if @importer
     val
   end
 
@@ -193,7 +199,8 @@ WHERE
       qry += "WHERE #{@custom_where} "
     end
     
-    qry += "AND products.importer_id = #{@importer.id} AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0"
+    qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0"
+    qry += " AND products.importer_id = #{@importer.id}" unless @disable_importer_check
 
     
     if @custom_where.blank?

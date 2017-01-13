@@ -48,8 +48,8 @@ $(function() {
     <% else -%>
       <button class='btn_link' link_to='<%=new_company_attachment_archive_setup_path(@company)%>'>Attachment Archive Setup</button>
     <% end -%>
-    <% if MasterSetup.get.custom_feature?('alliance') && !@company.alliance_customer_number.blank? && @company.importer_products.first-%>
-      <button class='form_to' form_id='frm_alliance'>Products To Alliance</button>
+    <% if MasterSetup.get.custom_feature?('Kewill Product Push') && !@company.alliance_customer_number.blank? && @company.importer_products.first-%>
+      <button class='form_to' form_id='frm_alliance'>Products To Kewill</button>
     <% end -%>
   <%end%>
   <button id='btn_poas'>POAs</button>
