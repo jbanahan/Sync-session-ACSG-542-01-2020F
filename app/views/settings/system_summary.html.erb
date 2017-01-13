@@ -187,7 +187,7 @@
             <td></td>
             <td><%= stc.name %></td>
             <td><%= stc.page_uid %></td>
-            <td><%= stc.company.name %></td>
+            <td><%= stc.company.try(:name) %></td>
             <td><%= stc.config_json %></td> 
           </tr>        
         <% end %>
