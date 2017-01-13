@@ -249,7 +249,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
                                          INNER JOIN commercial_invoice_lines cil ON inv.id = cil.commercial_invoice_id
                                          WHERE entries.id = inv.entry_id AND cil.contract_amount > 0), 0)"
       }],
-      [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}]
+      [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}],
+      [165,:ent_arrival_notice_receipt_date, :arrival_notice_receipt_date, "Arrival Notice Receipt Date", {:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

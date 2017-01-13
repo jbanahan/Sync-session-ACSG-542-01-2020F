@@ -19,6 +19,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     98 => {attribute: :docs_received_date, datatype: :date},
     4 => :file_logged_date,
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
+    10 => :arrival_notice_receipt_date,
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
     19 => :release_date,
