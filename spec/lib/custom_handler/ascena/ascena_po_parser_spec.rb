@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header_2) { ["H","11152016","PEACE","","37109","1991","","FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS","","","","USD","","","",""] }
   let(:detail_2) { ["D","","2","","","820799","451152","AB-YING YANG IRRI","618","GRAY","2","11","","","13010848311526700486","","","2","","3.02","4.46","4.13","8.00","","","","","","","","","","","","","",""] }
 
-  let!(:importer) { Factory(:company, system_code: "ASCENA") }
+  let(:importer) { Factory(:company, system_code: "ASCENA") }
 
   def convert_pipe_delimited array_of_str
     array_of_str.map { |arr| arr.join("|") }.join("\n")
@@ -83,6 +83,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   end
 
   describe "parse" do
+    let!(:importer) { Factory(:company, system_code: "ASCENA") }
     before(:all) do
       @cdefs = described_class.prep_custom_definitions [:ord_line_season,:ord_buyer,:ord_division,:ord_revision,:ord_revision_date,:ord_assigned_agent,
                                                 :ord_selling_agent,:ord_selling_channel,:ord_type,:ord_line_color,:ord_line_color_description,
