@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header_2) { ["H","11152016","PEACE","","37109","1991","","FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS","","","","USD","","","",""] }
   let(:detail_2) { ["D","","2","","","820799","451152","AB-YING YANG IRRI","618","GRAY","2","11","","","13010848311526700486","","","2","","3.02","4.46","4.13","8.00","","","","","","","","","","","","","",""] }
 
-  let!(:importer) { Factory(:company, system_code: "ASCE") }
+  let!(:importer) { Factory(:company, system_code: "ASCENA") }
 
   def convert_pipe_delimited array_of_str
     array_of_str.map { |arr| arr.join("|") }.join("\n")
@@ -20,11 +20,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
   describe '#initialize' do
     it "should create importer company if it doesn't exist" do
-      Company.where(system_code:'ASCE').destroy_all
       parser = nil
-      expect{parser = described_class.new}.to change(Company.where(system_code:'ASCE'),:count).from(0).to(1)
-      expect(Company.where(system_code:"ASCE",name:"ASCENA TRADE SERVICES LLC",importer:true).count).to eq 1
-      expect(parser.importer.system_code).to eq 'ASCE'
+      expect{parser = described_class.new}.to change(Company.where(system_code:'ASCENA'),:count).from(0).to(1)
+      expect(Company.where(system_code:"ASCENA",name:"ASCENA TRADE SERVICES LLC",importer:true).count).to eq 1
+      expect(parser.importer.system_code).to eq 'ASCENA'
     end
     it "should use existing company if it exists" do
       # intialize company

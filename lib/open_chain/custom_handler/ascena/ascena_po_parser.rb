@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def initialize
     @user = User.integration
-    @importer = Company.where(system_code: "ASCE").first_or_create!(name:'ASCENA TRADE SERVICES LLC',importer:true)
+    @importer = Company.where(system_code: "ASCENA").first_or_create!(name:'ASCENA TRADE SERVICES LLC',importer:true)
     @errors = {missing_shipped_order_lines: []}
   end
 

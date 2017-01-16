@@ -189,6 +189,6 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.importer
-    @importer ||= Company.where(system_code: "ASCE").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
+    @importer ||= Company.where(system_code: "ASCENA").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
   end
 end; end; end; end
