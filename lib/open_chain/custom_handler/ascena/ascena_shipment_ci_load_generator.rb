@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :ord_type])
+    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :ord_type, :prod_department_code])
   end
 
   def generate_entry_data shipment
@@ -27,7 +27,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
     invoice.invoice_lines = []
     shipment.shipment_lines.each do |line|
       cil = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-      cil.part_number = line.product.custom_value(cdefs[:prod_part_number]) if line.product
+      if line.product
+        cil.part_number = line.product.custom_value(cdefs[:prod_part_number])
+        cil.department = line.product.custom_value(cdefs[:prod_department_code])
+      end
       cil.cartons = line.carton_qty
       cil.gross_weight = line.gross_kgs
       cil.pieces = line.quantity

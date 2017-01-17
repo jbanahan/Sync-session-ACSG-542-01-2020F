@@ -9,6 +9,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   let (:product) {
     product = Factory(:product)
     product.update_custom_value! cdefs[:prod_part_number], "PARTNO"
+    product.update_custom_value! cdefs[:prod_department_code], "DEPT"
     product
   }
 
@@ -40,6 +41,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       line = ci_load.invoices.first.invoice_lines.first
 
       expect(line.part_number).to eq "PARTNO"
+      expect(line.department).to eq "DEPT"
       expect(line.cartons).to eq 10
       expect(line.gross_weight).to eq BigDecimal("100.50")
       expect(line.pieces).to eq 99
