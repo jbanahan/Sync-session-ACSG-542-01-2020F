@@ -271,6 +271,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(ol.get_custom_value(cdefs[:ord_line_estimated_unit_landing_cost]).value).to be_nil
       expect(ol.unit_msrp).to be_nil
     end
+
+    it "handles a missing vendor code" do
+      header[14] = ""
+
+      described_class.parse(convert_pipe_delimited [header, detail])
+      order = Order.first
+
+      expect(order.vendor).to be_nil
+    end
   end
 
   context "data validation" do
@@ -298,11 +307,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect{described_class.validate_header(header_map,1)}.to raise_error "Customer order number missing on row 1"
       end
 
-      it "errors if header vendor system_code is missing" do
-        header[14] = ""
-        expect{described_class.validate_header(header_map,1)}.to raise_error "Vendor system code missing on row 1"
-      end
-
       it "errors if detail part number is missing" do
         detail[5] = ""
         expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Part number missing on row 1"
@@ -316,11 +320,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       it "errors if detail order line number is missing" do
         detail[2] = ""
         expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Line number missing on row 1"
-      end
-
-      it "errors if detail price_per_unit is missing and order type isn't 'NONAGS'" do
-        detail[19] = ""
-        expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Price per unit missing on row 1"
       end
 
       it "throws no exception if detail price_per_unit is missing and order type is 'NONAGS'" do

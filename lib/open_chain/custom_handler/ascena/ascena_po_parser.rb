@@ -72,11 +72,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def self.validate_header header, row_num
     raise "Customer order number missing on row #{row_num}" if header[:ord_customer_order_number].blank?
-    raise "Vendor system code missing on row #{row_num}" if header[:ord_vend_system_code].blank?
   end
 
   def self.validate_detail detail, header, row_num
-    raise "Price per unit missing on row #{row_num}" if detail[:ordln_price_per_unit].blank? && header[:ord_type] != "NONAGS"
     raise "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
     raise "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
     raise "Line number missing on row #{row_num}" if detail[:ordln_line_number].blank?
@@ -198,6 +196,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   end
 
   def update_or_create_vendor system_code, name
+    # System code can be blank some times, so we won't create a vendor in those cases.
+    return nil if system_code.blank?
+
     vendor = Company.where(system_code:system_code).first_or_create!(name:name)
     vendor.update_attributes!(name: name) unless vendor.name == name
     vendor
