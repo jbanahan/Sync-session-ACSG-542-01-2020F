@@ -103,7 +103,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
         :import_lambda=>lambda{ |o,d| "Container Number ignored (read only)"},
         :export_lambda=>lambda{ |obj| obj.container.try(:container_number) },
         :qualified_field_name=> "(SELECT container_number FROM containers where containers.id = commercial_invoice_lines.container_id)"
-        }]
+        }],
+      [58, :cil_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}]
     ]
   end
 end; end; end

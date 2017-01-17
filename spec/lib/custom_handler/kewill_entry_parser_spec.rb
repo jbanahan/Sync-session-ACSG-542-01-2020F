@@ -157,6 +157,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'value_tot' => 12500,
             'qty' => 99,
             'qty_uom' => 'PCS',
+            'non_dutiable_amt' => 12345,
             'lines' => [
               {
                 'ci_line_no' => 10,
@@ -182,6 +183,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "value_foreign" => 99999,
                 "container_no" => "CONT1",
                 'value_appraisal_method' => "F",
+                'non_dutiable_amt' => 12345,
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -286,6 +288,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'value_tot' => 12500,
             'qty' => 99,
             'qty_uom' => 'PCS',
+            'non_dutiable_amt' => 12345,
             'lines' => [
               {
                 'ci_line_no' => 10,
@@ -432,6 +435,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.house_bills_of_lading).to eq "HOUSE\n SCAC2HOUSE2\n SCACHOUSE"
       expect(entry.sub_house_bills_of_lading).to eq "SUB\n SUB2"
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
+      expect(entry.total_non_dutiable_amount).to eq BigDecimal("246.9")
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -537,6 +541,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(ci.total_quantity_uom).to eq 'PCS'
       # MID is pulled up from the first line.
       expect(ci.mfid).to eq "MANFU"
+      expect(ci.non_dutiable_amount).to eq BigDecimal("123.45")
 
       line = ci.commercial_invoice_lines.first
       expect(line.line_number).to eq 1
@@ -580,6 +585,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.fda_release_date).to be_nil
       expect(line.value_appraisal_method).to eq "F"
       expect(line.first_sale).to be_truthy
+      expect(line.non_dutiable_amount).to eq BigDecimal("123.45")
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"

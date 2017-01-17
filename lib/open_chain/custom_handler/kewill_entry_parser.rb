@@ -371,6 +371,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.commercial_invoices.each do |ci|
         accumulations[:commercial_invoice_numbers] << ci.invoice_number
         totals[:total_invoiced_value] += ci.invoice_value_foreign unless ci.invoice_value_foreign.nil?
+        totals[:total_non_dutiable_amount] += ci.non_dutiable_amount unless ci.non_dutiable_amount.nil?
         accumulations[:total_packages_uom] << ci.total_quantity_uom
 
         ci.commercial_invoice_lines.each do |il|
@@ -468,6 +469,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.total_cvd = value if value.nonzero?
         when :total_add
           entry.total_add = value if value.nonzero?
+        when :total_non_dutiable_amount
+          entry.total_non_dutiable_amount = value if value.nonzero?
         end
       end
 
@@ -616,6 +619,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       inv.invoice_value = inv.invoice_value_foreign * inv.exchange_rate
       inv.total_quantity = i[:qty]
       inv.total_quantity_uom = i[:qty_uom]
+      inv.non_dutiable_amount = parse_decimal(i[:non_dutiable_amt])
 
       # Find the first line w/ a non-blank mid and use that
       mid = Array.wrap(i[:lines]).find {|l| !l[:mid].blank?}.try(:[], :mid)
@@ -651,6 +655,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
       line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
       line.value_appraisal_method = l[:value_appraisal_method]
+      line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i

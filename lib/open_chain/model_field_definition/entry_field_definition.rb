@@ -250,7 +250,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
                                          WHERE entries.id = inv.entry_id AND cil.contract_amount > 0), 0)"
       }],
       [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}],
-      [165,:ent_arrival_notice_receipt_date, :arrival_notice_receipt_date, "Arrival Notice Receipt Date", {:data_type=>:datetime}]
+      [165,:ent_arrival_notice_receipt_date, :arrival_notice_receipt_date, "Arrival Notice Receipt Date", {:data_type=>:datetime}],
+      [166, :ent_total_non_dutiable_amount, :total_non_dutiable_amount, "Total Non-Dutiable Amount", {data_type: :decimal, currency: :usd}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
