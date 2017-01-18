@@ -82,7 +82,8 @@ describe OpenChain::Report::DutySavingsReport do
     it "calculates previous n months" do
       today = Date.today
       two_months_ago = today.beginning_of_month - 2.months
-      expect_any_instance_of(described_class).to receive(:create_workbook).with(two_months_ago, today, nil)
+      this_month = today.beginning_of_month
+      expect_any_instance_of(described_class).to receive(:create_workbook).with(two_months_ago, this_month, nil)
       allow_any_instance_of(described_class).to receive(:workbook_to_tempfile)
       described_class.run_schedulable({'previous_n_months' => 2})
     end

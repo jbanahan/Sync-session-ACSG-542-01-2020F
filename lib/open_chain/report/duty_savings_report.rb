@@ -14,7 +14,7 @@ module OpenChain; module Report; class DutySavingsReport
   #requires 'email', 'customer_numbers' array, and EITHER 'previous_n_days' OR 'previous_n_months'
   def self.run_schedulable settings={}
     start_date = calculate_start_date(settings['previous_n_days'], settings['previous_n_months'])
-    end_date = Date.today
+    end_date = calculate_end_date(settings['previous_n_days'], settings['previous_n_months'])
     self.new.send_email(settings['email'], start_date, end_date, settings['customer_numbers'])
   end
 
@@ -23,6 +23,14 @@ module OpenChain; module Report; class DutySavingsReport
       Date.today - previous_n_days.days
     elsif previous_n_months
       Date.today.beginning_of_month - previous_n_months.months
+    end
+  end
+
+  def self.calculate_end_date previous_n_days, previous_n_months
+    if previous_n_days
+      Date.today
+    elsif previous_n_months
+      Date.today.beginning_of_month
     end
   end
   
