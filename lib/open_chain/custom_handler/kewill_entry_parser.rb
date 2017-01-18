@@ -639,6 +639,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.related_parties = l[:related_parties].to_s.upcase == "Y"
       line.vendor_name = l[:mid_name]
       line.volume = parse_decimal l[:volume]
+      if line.quantity && line.quantity.nonzero? && line.value
+        line.unit_price = (line.value / line.quantity).round(2)
+      end
+      
       # Contract is sent with decimal places, so don't do the offset stuff when parsing
       line.contract_amount = parse_decimal l[:contract], no_offset: true
       line.department = l[:department] unless l[:department].to_s == "0"

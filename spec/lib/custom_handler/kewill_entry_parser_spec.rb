@@ -586,6 +586,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.value_appraisal_method).to eq "F"
       expect(line.first_sale).to be_truthy
       expect(line.non_dutiable_amount).to eq BigDecimal("123.45")
+      expect(line.unit_price).to eq BigDecimal("95.23")
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -1037,6 +1038,24 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       @e['commercial_invoices'].first['lines'].first['containers'].first["container_no"] = "NOTACONTAINER"
       entry = subject.process_entry @e
       expect(entry.commercial_invoices.first.commercial_invoice_lines.first.container.container_number).to eq "CONT1"
+    end
+
+    it "handles missing quantity value when calculating unit_price" do
+      @e['commercial_invoices'].first['lines'].first['qty'] = nil
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to be_nil
+    end
+
+    it "handles zero quantity value when calculating unit_price" do
+      @e['commercial_invoices'].first['lines'].first['qty'] = 0
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to be_nil
+    end
+
+    it "handles missing value when calculating unit price" do
+      @e['commercial_invoices'].first['lines'].first['value_us'] = nil
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to eq 0
     end
   end
 
