@@ -35,11 +35,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         Tempfile.create(["APLLEDI-#{isa_code}",'.txt']) do |f|
           f << data
           f.flush
-          body = "There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.\n\nErrors:\n"
-          errors.each {|err| body << "#{err.message}\n"}
+          body = "<p>There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.</p><p>Errors:<br><ul>"
+          errors.each {|err| body << "<li>#{ERB::Util.html_escape(err.message)}</li>"}
+          body << "</ul></p>"
           to = "ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
-          OpenMailer.send_simple_html(to, subject, body, [f]).deliver!
+          OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver!
         end
       end
     end
