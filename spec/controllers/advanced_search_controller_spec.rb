@@ -307,6 +307,7 @@ describe AdvancedSearchController do
       expect(list.collect {|ss| ss['id']}).to eq([ss2.id,ss.id])
     end
     it "should not show model fields that user cannot view" do
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       ss = Factory(:search_setup,:user=>@user,:module_type=>'Entry')
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body

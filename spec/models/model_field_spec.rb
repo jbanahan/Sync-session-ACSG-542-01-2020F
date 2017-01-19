@@ -916,12 +916,12 @@ describe ModelField do
       end
       it "should allow duty due date if user is broker company" do
         u = @broker_user
-        expect(ModelField.find_by_uid(:ent_duty_due_date).can_view?(u)).to be_truthy
+        expect(ModelField.find_by_uid(:ent_census_warning).can_view?(u)).to be_truthy
         expect(ModelField.find_by_uid(:bi_duty_due_date).can_view?(u)).to be_truthy
       end
       it "should not allow duty due date if user is not a broker" do
         u = @non_broker_user
-        expect(ModelField.find_by_uid(:ent_duty_due_date).can_view?(u)).to be_falsey
+        expect(ModelField.find_by_uid(:ent_census_warning).can_view?(u)).to be_falsey
         expect(ModelField.find_by_uid(:bi_duty_due_date).can_view?(u)).to be_falsey
       end
       it "should secure error_free_release" do

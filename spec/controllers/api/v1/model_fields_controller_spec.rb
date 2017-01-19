@@ -43,6 +43,7 @@ describe Api::V1::ModelFieldsController do
       expect(fld['label']).to eq "Component Count"
     end
     it "should not get model fields that the current user can't see" do
+      allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       allow(CoreModule::ENTRY).to receive(:view?).and_return(true)
       allow_any_instance_of(Company).to receive(:broker?).and_return(false)
 
