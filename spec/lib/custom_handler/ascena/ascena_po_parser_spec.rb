@@ -3,8 +3,8 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header) { ["H","11142016","JUSTICE","","37109","1990","","FRANCHISE","pgroup","82","SUM 2015","","2","12082016","000256","LF PRODUCTS PTE. LTD","Smith","001423","IDSELKAU0105BEK","JIASHAN JSL CASE & BAG CO., LTD","000022","YCHOI","FCA","CHINA (MAINLAND)","OCN","01172017","01172018","HONG KONG","AGS","","","","USD","","","",""] }
   let(:detail) { ["D","","1","","","820799","351152","CB-YING YANG IRRI 3\"","617","SILVER","1","10","","","03010848311526700486","","","0","","2.02","3.46","3.13","7.00","","","","","","","","","","","","","",""] }
-  let(:header_2) { ["H","11152016","PEACE","","37109","1991","","FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS","","","","USD","","","",""] }
-  let(:detail_2) { ["D","","2","","","820799","451152","AB-YING YANG IRRI","618","GRAY","2","11","","","13010848311526700486","","","2","","3.02","4.46","4.13","8.00","","","","","","","","","","","","","",""] }
+  let(:header_2) { ["H","11152016","PEACE",nil,"37109","1991",nil,"FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS",nil,nil,nil,"USD",nil,nil,nil,nil] }
+  let(:detail_2) { ["D",nil,"2",nil,nil,"820799","451152","AB-YING YANG IRRI","618","GRAY","2","11",nil,nil,"13010848311526700486",nil,nil,"2",nil,"3.02","4.46","4.13","8.00",nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil] }
 
   let(:importer) { Factory(:company, system_code: "ASCENA") }
 
@@ -60,28 +60,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
   end
 
-  describe "send_shipped_lines_error_email" do
-    let(:parser) { described_class.new }
-
-    it "extracts and emails data from error hash" do
-      parser.errors = {missing_shipped_order_lines: [{vendor: "ACME", ord_num: "12345", line_num: 1, ship_ref: ["Pinafore"]}, {vendor: "Konvenientz", ord_num: "54321", line_num: 2, ship_ref: ["Bounty"]}]}
-      file = convert_pipe_delimited([header, detail])
-      parser.send_shipped_lines_error_email file
-
-      mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq([ "ascena_us@vandegriftinc.com" ])
-      expect(mail.subject).to eq("Error loading Ascena order file for ACME #12345, Konvenientz #54321")
-      expect(mail.body).to match(/The following missing order lines have an associated shipment: ACME #12345/)
-      expect(mail.attachments.count).to eq 1
-      Tempfile.open("Attachment") do |t|
-        t.binmode
-        t << mail.attachments.first.read
-        t.flush
-        expect(IO.read t.path).to eq file
-      end
-    end
-  end
-
   describe "parse" do
     let!(:importer) { Factory(:company, system_code: "ASCENA") }
     before(:all) do
@@ -114,13 +92,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"path")
       expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration,nil,"path")
 
-      expect {
-        described_class.parse convert_pipe_delimited([header, detail]), bucket: "bucket", key: "path"
-      }.to change(Order,:count).from(0).to(1)
-      expect(OrderLine.count).to eq 1
-      expect(Product.count).to eq 1
-
-      o = Order.includes(:custom_values,:order_lines=>:custom_values).first
+      described_class.parse convert_pipe_delimited([header, detail]), bucket: "bucket", key: "path"
+      o = Order.where(customer_order_number: "37109").first
+      expect(o).not_to be_nil
       expect(o.importer).to eq importer
       expect(o.order_date).to eq Date.new(2016,11,14)
       expect(o.customer_order_number).to eq "37109"
@@ -173,22 +147,19 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(p.name).to eq detail[7]
     end
 
-    it "updates existing orders, replaces order lines, leaves product unchanged" do
-      expect {
-        described_class.parse convert_pipe_delimited([header, detail, detail_2]), bucket: "bucket", key: "path"
-      }.to change(Order,:count).from(0).to(1)
-      expect {
-        described_class.parse convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
-      }.to_not change(Order,:count)
+    it "updates existing orders, replaces order lines, uses existing product" do
+      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = Factory(:order_line, order: o, line_number: 2, product: product)
 
-      expect(OrderLine.count).to eq 1
-      expect(Product.count).to eq 1
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"path 2")
+      # The product shouldn't be snapshotted, we didn't update it
+      expect_any_instance_of(Product).not_to receive(:create_snapshot)
 
-      o = Order.includes(:custom_values,:order_lines=>:custom_values).first
-      expect(o.importer).to eq importer
+      described_class.parse convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
+
+      o.reload
       expect(o.order_date).to eq Date.new(2016,11,15)
-      expect(o.customer_order_number).to eq "37109"
-      expect(o.order_number).to eq "ASCENA-37109"
       expect(o.custom_value(cdefs[:ord_selling_channel])).to eq "FRANCH"
       expect(o.custom_value(cdefs[:ord_division])).to eq "83"
       expect(o.custom_value(cdefs[:ord_revision])).to eq 4
@@ -210,6 +181,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.last_file_bucket).to eq "bucket 2"
       expect(o.last_file_path).to eq "path 2"
 
+      expect(o.order_lines.length).to eq 1
+
       ol = o.order_lines.first
       expect(ol.custom_value(cdefs[:ord_line_department_code])).to eq "PEACE"
       expect(ol.custom_value(cdefs[:ord_line_destination_code])).to eq "1991"
@@ -229,28 +202,85 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(ol.unit_of_measure).to eq "Each"
 
       p = ol.product
-      expect(p.importer).to eq importer
-      expect(p.custom_value(cdefs[:prod_product_group])).to eq "pgroup"
-      expect(p.custom_value(cdefs[:prod_part_number])).to eq "820799"
-      expect(p.unique_identifier).to eq "ASCENA-820799"
-      expect(p.custom_value(cdefs[:prod_vendor_style])).to eq "351152"
-      expect(p.name).to eq detail[7]
+      expect(ol.product).to eq product
+      # We don't update anything on the product from the order if it already existed...so this should all be nil
+      expect(p.custom_value(cdefs[:prod_product_group])).to be_nil
+      expect(p.custom_value(cdefs[:prod_vendor_style])).to be_nil
+      expect(p.name).to be_nil
     end
 
     it "doesn't delete the order line, sends warning email if line is associated with shipment" do
-      described_class.parse convert_pipe_delimited([header, detail, detail_2]), bucket: "bucket", key: "path"
-      ol = OrderLine.first
-      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: ol.product)
-      PieceSet.create!(quantity: 1, order_line: ol, shipment_line: sl)
+      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = Factory(:order_line, order: o, line_number: 2, product: product)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
+      PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
+
       described_class.parse convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
 
-      expect(OrderLine.count).to eq 2
+      o.reload
+      # Make sure a new line wasn't added (was a bug that was in there previously that wasn't skpping shipped lines)
+      expect(o.order_lines.length).to eq 1
 
       mail = ActionMailer::Base.deliveries.pop
+      expect(mail).not_to be_nil
       expect(mail.to).to eq([ "ascena_us@vandegriftinc.com" ])
-      expect(mail.subject).to eq("Error loading Ascena order file for MG PRODUCTS PTE. LTD #ASCENA-37109")
-      expect(mail.body).to match(/The following missing order lines have an associated shipment: MG PRODUCTS PTE/)
+      expect(mail.subject).to eq("Ascena PO # 37109 Lines Already Shipped")
+      expect(mail.body).to match(/The following order lines from the Ascena PO # 37109 are already shipping and could not be updated:/)
       expect(mail.attachments.count).to eq 1
+
+      # Make sure the attachment is the data that was processed
+      file = mail.attachments.first.read
+      expect(file).not_to be_nil
+      rows = CSV.parse(file, col_sep: "|", quote_char: "\x00")
+      expect(rows.length).to eq 2
+      expect(rows[0]).to eq header_2
+      expect(rows[1]).to eq detail_2
+    end
+
+    it "skips shipped lines, adds other lines from file that weren't shipping" do
+      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = Factory(:order_line, order: o, line_number: 2, product: product)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
+      PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
+
+      described_class.parse convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
+
+      o.reload
+      expect(o.order_lines.length).to eq 2
+      line = o.order_lines.find {|l| l.line_number == 1 }
+      expect(line).not_to be_nil
+      expect(line.product).to eq product
+      expect(line.sku).to eq "03010848311526700486"
+    end
+
+    it "skips shipped lines, updates other lines from file that weren't shipping" do
+      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
+      order_line = Factory(:order_line, order: o, line_number: 2, product: product)
+      order_line_2 = Factory(:order_line, order: o, line_number: 1, product: product)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
+      PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
+
+      described_class.parse convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
+
+      o.reload
+      expect(o.order_lines.length).to eq 2
+      line = o.order_lines.find {|l| l.line_number == 1 }
+      expect(line).not_to be_nil
+      expect(line.product).to eq product
+      expect(line.sku).to eq "03010848311526700486"
+      expect(line).not_to eq order_line_2
+    end
+
+    it "skips blank lines in the CSV file" do
+      # This would have raised an error previously, so we can pretty much just check that an order was saved and if 
+      # so, then it's all good.
+      described_class.parse convert_pipe_delimited([header_2, [], ["", ""], detail_2]), bucket: "bucket 2", key: "path 2"
+
+      o = Order.where(customer_order_number: "37109").first
+      expect(o).not_to be_nil
     end
 
     it "doesn't create parties if already present" do
@@ -291,59 +321,62 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
     context "check that methods are called" do
       it "should fail on header validation issue" do
-        expect(described_class).to receive(:validate_header).with(instance_of(Hash),1).and_raise "some error"
-        expect{described_class.parse(convert_pipe_delimited [header, detail])}.to change(ErrorLogEntry,:count).by(1)
+        expect(described_class).to receive(:validate_header).with(instance_of(Hash)).and_raise "some error"
+        described_class.parse(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
+
         expect(Order.count).to eq 0
+
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail).not_to be_nil
+        expect(mail.to).to eq ["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"]
+        expect(mail.subject).to eq "Ascena PO # 37109 Errors"
+        expect(mail.body).to include("An error occurred attempting to process Ascena PO # 37109 from the file file.txt.")
+
+        # Make sure the email includes the file that was being processed
+        file = mail.attachments.first.read
+        expect(file).not_to be_nil
+        rows = CSV.parse(file, col_sep: "|", quote_char: "\x00")
+        expect(rows.length).to eq 2
+        expect(rows[0]).to eq header_2
+        expect(rows[1]).to eq detail_2
       end
       it "should fail on detail validation issue" do
-        expect(described_class).to receive(:validate_detail).with(instance_of(Hash),instance_of(Hash),2).and_raise "some error"
-        expect{described_class.parse(convert_pipe_delimited [header, detail])}.to change(ErrorLogEntry,:count).by(1)
+        expect(described_class).to receive(:validate_detail).with(instance_of(Hash),1).and_raise "some error"
+
+        described_class.parse(convert_pipe_delimited [header, detail])
+
         expect(Order.count).to eq 0
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail).not_to be_nil
+        expect(mail.to).to eq ["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"]
+        expect(mail.subject).to eq "Ascena PO # 37109 Errors"
       end
     end
     context "check validations" do
       it "errors if header order number missing" do
         header[4] = ""
-        expect{described_class.validate_header(header_map,1)}.to raise_error "Customer order number missing on row 1"
+        expect{described_class.validate_header(header_map)}.to raise_error "Customer order number missing"
       end
 
       it "errors if detail part number is missing" do
         detail[5] = ""
-        expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Part number missing on row 1"
+        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Part number missing on row 1"
       end
 
       it "errors if detail quantity is missing" do
         detail[17] = ""
-        expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Quantity missing on row 1"
+        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Quantity missing on row 1"
       end
 
       it "errors if detail order line number is missing" do
         detail[2] = ""
-        expect{described_class.validate_detail(detail_map,header_map,1)}.to raise_error "Line number missing on row 1"
+        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Line number missing on row 1"
       end
 
       it "throws no exception if detail price_per_unit is missing and order type is 'NONAGS'" do
         header[28] = "NONAGS"
         detail[19] = ""
-        expect{described_class.validate_detail(detail_map,header_map,1)}.to_not raise_error
-      end
-    end
-  end
-  context 'errors' do
-    it "should email on CSV Parse error" do
-      file = 'bad content'
-      expect(CSV).to receive(:parse).and_raise "something bad"
-      described_class.new.process_file(file)
-      mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq([ "ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com" ])
-      expect(mail.subject).to eq("Error loading Ascena order file.")
-      expect(mail.body.to_s).to match(/The attached file could not be processed by the Ascena PO Parser:/)
-      expect(mail.attachments.count).to eq 1
-      Tempfile.open("Attachment") do |t|
-        t.binmode
-        t << mail.attachments.first.read
-        t.flush
-        expect(IO.read t.path).to eq file
+        expect{described_class.validate_detail(detail_map, 1)}.to_not raise_error
       end
     end
   end

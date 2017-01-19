@@ -30,25 +30,23 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     @cdefs ||= self.class.prep_custom_definitions CDEF_LABELS
 
     po_rows = []
-    row_num = 0
     begin
-      # setting zero byte as quote character since there's no quoting in the file
-      # and the text will include " characters to represent inches
-      CSV.parse(pipe_delimited_content, col_sep:"|", quote_char: "\x00") do |row|
-        row_num += 1
+      CSV.parse(pipe_delimited_content, csv_options) do |row|
+        next if blank_row?(row)
         if(row[0] == 'H')
           if po_rows.length > 0
-            process_po(po_rows, row_num, opts)
+            process_po(po_rows, opts)
             po_rows = []
           end
         end
         po_rows << row
       end
-      process_po(po_rows, row_num, opts) if po_rows.length > 0
-      send_shipped_lines_error_email(pipe_delimited_content) if errors[:missing_shipped_order_lines].presence
-    rescue
-      $!.log_me
-      send_generic_error_email pipe_delimited_content,'ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com',"The attached file could not be processed by the Ascena PO Parser:\n#{$!.message}", "Error loading Ascena order file."
+      process_po(po_rows, opts) if po_rows.length > 0
+    rescue => e
+      raise e unless Rails.env.production?
+      # Log the error and don't bother attempting to reprocess the file...by adding the file path into the error,
+      # we can always reproc when the error email is received if the error warrants it.
+      e.log_me ["Ascena PO File #{opts[:key]}"]
     end
   end
 
@@ -57,27 +55,19 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     (date && date.year < 2000) ? nil : date
   end
 
-  def send_shipped_lines_error_email(file_content)
-    to = "ascena_us@vandegriftinc.com"
-    body = "The following missing order lines have an associated shipment: "
-    subject = []
-    errors[:missing_shipped_order_lines].each do |err|
-      body << "#{err[:vendor]} ##{err[:ord_num]}, line: #{err[:line_num]}, ship_ref: #{err[:ship_ref].join(", ")} --- "
-      subject << "#{err[:vendor]} ##{err[:ord_num]}"
-    end
-    body << "Please contact IT."
-    subject = "Error loading Ascena order file for " + subject.join(", ")
-    send_generic_error_email(file_content,to,body,subject)
+  def blank_row? row
+    return true if row.blank?
+    row.find {|c| !c.blank? }.nil?
   end
 
-  def self.validate_header header, row_num
-    raise "Customer order number missing on row #{row_num}" if header[:ord_customer_order_number].blank?
+  def self.validate_header header
+    raise "Customer order number missing" if header[:ord_customer_order_number].blank?
   end
 
-  def self.validate_detail detail, header, row_num
+  def self.validate_detail detail, row_num
     raise "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
     raise "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
-    raise "Line number missing on row #{row_num}" if detail[:ordln_line_number].blank?
+    raise "Line number missing on row #{row_num}" if detail[:ordln_line_number].nil? || detail[:ordln_line_number].zero?
   end
 
 
@@ -114,7 +104,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def self.map_detail row
     hsh = {}
-    hsh[:ordln_line_number] = row[2]
+    hsh[:ordln_line_number] = row[2].to_i
     hsh[:prod_part_number] = row[5]
     hsh[:prod_vendor_style] = row[6]
     hsh[:prod_name] = row[7]
@@ -133,25 +123,69 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   private
 
-  def send_generic_error_email file_content, to, body, subject
+  def process_po rows, opts
+    po_number = nil
+    begin
+      ActiveRecord::Base.transaction do
+        header = self.class.map_header rows.first
+        po_number = header[:ord_customer_order_number]
 
-    Tempfile.create(["Ascena",'.txt']) do |f|
-      f << file_content
-      f.flush
-      OpenMailer.send_simple_html(to, subject, body, [f]).deliver!
+        self.class.validate_header(header)
+        shipped_lines = []
+        ord = update_or_create_order(header, opts) do |saved_ord|
+          # First row is the header, so remove it when processing the details
+          shipped_lines = process_detail_rows(rows[1..-1], header, saved_ord, opts)
+        end
+        ord.create_snapshot user, nil, opts[:key]
+
+        if shipped_lines.length > 0
+          notify_about_shipped_lines rows, po_number, shipped_lines
+        end
+      end
+    rescue => e
+      handle_process_po_error(rows, po_number, e, opts[:key])
     end
   end
 
-  def process_po rows, row_num, opts
-    ActiveRecord::Base.transaction do
-      header = self.class.map_header rows.first
-      header_row_num = row_num - (rows.count - 1)
+  def csv_options
+    # setting zero byte as quote character since there's no quoting in the file
+    # and the text will include " characters to represent inches
+    {col_sep:"|", quote_char: "\x00"}
+  end
 
-      self.class.validate_header(header, header_row_num)
-      ord = update_or_create_order(header, opts) do |saved_ord|
-        process_detail_rows(rows.drop(1), header, header_row_num + 1, saved_ord, opts)
+  def handle_process_po_error rows, po_number, err, file_name
+    temp_file_data(rows, po_number) do |f|
+      body = "<p>An error occurred attempting to process Ascena PO # #{po_number} from the file #{file_name}.</p>"
+      body += "<p>Error:<br>#{ERB::Util.html_escape(err.message)}</p>"
+      body += "<p>The CSV lines for this PO were extracted from the Ascena file and are attached.</p>"
+
+      OpenMailer.send_simple_html(["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"], "Ascena PO # #{po_number} Errors", body.html_safe, [f]).deliver!
+    end
+  end
+
+  def temp_file_data rows, po_number
+    # convert the rows to a pipe delimited CSV
+    Tempfile.open(["Ascena-PO-#{po_number}", ".csv"]) do |f|
+      csv = CSV.new(f, csv_options)
+      rows.each {|r| csv << r }
+      f.flush
+
+      yield f
+    end
+  end
+
+  def notify_about_shipped_lines rows, po_number, shipped_lines
+    temp_file_data(rows, po_number) do |f|
+      to = "ascena_us@vandegriftinc.com"
+      body = "<p>The following order lines from the Ascena PO # #{po_number} are already shipping and could not be updated:</p>"
+      body += "<p><ul>"
+      shipped_lines.each do |line|
+        body += "<li>Line ##{line[:ordln_line_number]} / Style # #{line[:prod_part_number]} / Shipment # #{Array.wrap(line[:shp_reference]).join(", ")}</li>"
       end
-      ord.create_snapshot user, nil, opts[:key]
+      body += "</ul></p>"
+      body += "<p>The CSV lines for this PO were extracted from the Ascena file and are attached.</p>"
+
+      OpenMailer.send_simple_html("ascena_us@vandegriftinc.com", "Ascena PO # #{po_number} Lines Already Shipped", body.html_safe, [f]).deliver!
     end
   end
 
@@ -160,39 +194,52 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     return Product.where(importer_id:importer.id).where("products.unique_identifier IN (?)",part_numbers).includes(:custom_values)
   end
 
-  def process_detail_rows detail_rows, header, row_num, ord, opts
+  def process_detail_rows detail_rows, header, ord, opts
     details = detail_rows.map { |dr| self.class.map_detail dr }
 
     product_cache = make_product_cache(details)
 
-    lines = ord.order_lines
-    unless lines.empty?
-      lines_to_delete, shipped_lines = separate_missing_shipped_order_lines(lines, details)
+    shipped_line_numbers = Set.new
+    unless ord.order_lines.empty?
+      # We can't update any lines that have already shipped...so we'll notify of this happening if that occurs.
+      lines_to_delete, shipped_lines = separate_shipped_lines(ord.order_lines, details)
+      shipped_line_numbers = Set.new(shipped_lines.map {|l| l.line_number })
       lines_to_delete.each(&:destroy)
-      shipped_lines.each do |sl|
-        errors[:missing_shipped_order_lines] << {vendor: header[:ord_vend_name], ord_num: "ASCENA-#{header[:ord_customer_order_number]}", line_num: sl.line_number,
-                                                 ship_ref: sl.shipment_lines.map{|s| s.shipment.reference }}
-      end
-
     end
 
+    shipped_lines = []
     details.each_with_index do |detail, i|
-      self.class.validate_detail(detail, header, row_num + i)
-      product = get_or_create_product(detail, header, product_cache,opts[:key])
-      create_order_line(ord, detail, header, product)
+      # Skip any line that does not reference a line that was deleted (.ie the line data references a shipped line)
+      if shipped_line_numbers.include?(detail[:ordln_line_number])
+        shipped_lines << detail
+      else
+        self.class.validate_detail(detail, i + 1)
+        product = get_or_create_product(detail, header, product_cache,opts[:key])
+        create_order_line(ord, detail, header, product)
+      end
     end
+
+    shipped_lines
   end
 
-  def separate_missing_order_lines order_lines, details
-    detail_line_nums = details.map{ |d| d[:ordln_line_number] }
-    order_lines.partition { |ol| detail_line_nums.include? ol.line_number }
-  end
+  def separate_shipped_lines order_lines, file_details
+    shipped_lines = []
+    ok_to_delete = []
 
-  def separate_missing_shipped_order_lines order_lines, details
-    included, missing = separate_missing_order_lines(order_lines, details)
-    no_shipments, has_shipments = missing.partition { |ol| ol.shipment_lines.empty?}
-    ok_to_delete = included + no_shipments
-    [ok_to_delete, has_shipments]
+    order_lines.each do |line|
+      detail = file_details.find {|d| d[:ordln_line_number] == line.line_number }
+      if detail
+        if line.shipment_lines.empty? 
+          ok_to_delete << line
+        else
+          # add the shipment references to the detail here so we can reference them later in an error message
+          detail[:shp_reference] = line.shipment_lines.map {|l| l.shipment.reference }.compact
+          shipped_lines << line
+        end
+      end
+    end
+
+    [ok_to_delete, shipped_lines]
   end
 
   def update_or_create_vendor system_code, name
@@ -214,41 +261,44 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def update_or_create_order header, opts, &block
     ord = nil
-    continue = true
+    continue = false
     Lock.acquire("ASCENA-#{header[:ord_customer_order_number]}") do
       ord = Order.where("order_number = ? AND importer_id = #{importer.id}", "ASCENA-#{header[:ord_customer_order_number]}")
                  .includes([:custom_values,:order_lines=>{:product=>:custom_values}])
                  .first_or_initialize(order_number: "ASCENA-#{header[:ord_customer_order_number]}", customer_order_number: header[:ord_customer_order_number],
                                       importer: importer)
-      continue = false if ord.persisted? && !newer_revision?(ord, header)
+      continue = (!ord.persisted? || newer_revision?(ord, header))
       ord.save! if continue
     end
-    update_order(ord, header, opts, &block) if continue
+    if continue
+      Lock.with_lock_retry(ord) do
+        update_order(ord, header, opts, &block) 
+      end
+    end
+    
     ord
   end
 
   def update_order ord, header, opts
-    Lock.with_lock_retry(ord) do
-      if newer_revision? ord, header
-        vendor = update_or_create_vendor(header[:ord_vend_system_code],header[:ord_vend_name])
-        factory = update_or_create_factory(header[:ord_fact_system_code],header[:ord_fact_name],header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
+    if newer_revision? ord, header
+      vendor = update_or_create_vendor(header[:ord_vend_system_code],header[:ord_vend_name])
+      factory = update_or_create_factory(header[:ord_fact_system_code],header[:ord_fact_name],header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
 
-        ord.assign_attributes(order_date: date_parse(header[:ord_order_date]), vendor: vendor, terms_of_sale: header[:ord_terms_of_sale],
-                              mode: header[:ord_mode], ship_window_start: date_parse(header[:ord_ship_window_start]),
-                              ship_window_end: date_parse(header[:ord_ship_window_end]), fob_point: header[:ord_fob_point],
-                              last_file_bucket: opts[:bucket], last_file_path: opts[:key])
-        ord.factory = factory if factory
-        ord.find_and_set_custom_value(cdefs[:ord_selling_channel], header[:ord_selling_channel])
-        ord.find_and_set_custom_value(cdefs[:ord_division], header[:ord_division])
-        ord.find_and_set_custom_value(cdefs[:ord_revision], header[:ord_revision])
-        ord.find_and_set_custom_value(cdefs[:ord_revision_date], date_parse(header[:ord_revision_date]))
-        ord.find_and_set_custom_value(cdefs[:ord_assigned_agent], header[:ord_assigned_agent])
-        ord.find_and_set_custom_value(cdefs[:ord_selling_agent], header[:ord_selling_agent])
-        ord.find_and_set_custom_value(cdefs[:ord_buyer], header[:ord_buyer])
-        ord.find_and_set_custom_value(cdefs[:ord_type], header[:ord_type])
-        ord.save!
-        yield ord
-      end
+      ord.assign_attributes(order_date: date_parse(header[:ord_order_date]), vendor: vendor, terms_of_sale: header[:ord_terms_of_sale],
+                            mode: header[:ord_mode], ship_window_start: date_parse(header[:ord_ship_window_start]),
+                            ship_window_end: date_parse(header[:ord_ship_window_end]), fob_point: header[:ord_fob_point],
+                            last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+      ord.factory = factory if factory
+      ord.find_and_set_custom_value(cdefs[:ord_selling_channel], header[:ord_selling_channel])
+      ord.find_and_set_custom_value(cdefs[:ord_division], header[:ord_division])
+      ord.find_and_set_custom_value(cdefs[:ord_revision], header[:ord_revision])
+      ord.find_and_set_custom_value(cdefs[:ord_revision_date], date_parse(header[:ord_revision_date]))
+      ord.find_and_set_custom_value(cdefs[:ord_assigned_agent], header[:ord_assigned_agent])
+      ord.find_and_set_custom_value(cdefs[:ord_selling_agent], header[:ord_selling_agent])
+      ord.find_and_set_custom_value(cdefs[:ord_buyer], header[:ord_buyer])
+      ord.find_and_set_custom_value(cdefs[:ord_type], header[:ord_type])
+      ord.save!
+      yield ord
     end
   end
 
