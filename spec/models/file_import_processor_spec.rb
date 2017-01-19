@@ -343,11 +343,28 @@ describe FileImportProcessor do
   describe "process_file" do
     context "CSVImportProcessor" do
       it "skips blank lines in CSV files" do
-        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.xlsx")
+        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
         p = FileImportProcessor::CSVImportProcessor.new f, "a,b\n,,,\nc,d\n, , , ,,\n,,,,,\n\n", []
         rows = []
         p.get_rows {|r| rows << r}
         expect(rows).to eq [["a", "b"], ["c", "d"]]
+      end
+
+      it "converts from Windows-1252 if 'invalid byte sequence' is found" do
+        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
+        data = "a,\x80\nc,d\n"
+        p = FileImportProcessor::CSVImportProcessor.new f, data, []
+        rows = []
+        p.get_rows {|r| rows << r}
+        expect(rows).to eq [["a", "€"], ["c", "d"]]
+      end
+
+      it "doesn't rescue non-encoding exceptions" do
+        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
+        p = FileImportProcessor::CSVImportProcessor.new f, "data", []
+        expect(p).to receive(:utf_8_parse).and_raise("some other kind of problem")
+        expect(p).not_to receive(:windows_1252_parse)      
+        expect{ p.get_rows{|r| rows << r} }.to raise_error("some other kind of problem")
       end
     end
   end
