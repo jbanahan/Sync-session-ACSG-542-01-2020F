@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         shipment_segments << seg
         if seg.segment_type=='SE'
           begin
-            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
+            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
           rescue
             errors << $!
           end

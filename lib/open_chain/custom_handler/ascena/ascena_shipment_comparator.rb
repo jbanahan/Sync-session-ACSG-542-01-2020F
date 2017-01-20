@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCompa
   def self.accept? snapshot
     accept = super
 
-    accept && snapshot.try(:recordable).try(:importer).try(:system_code) == "ASCE"
+    accept && snapshot.try(:recordable).try(:importer).try(:system_code) == "ASCENA"
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

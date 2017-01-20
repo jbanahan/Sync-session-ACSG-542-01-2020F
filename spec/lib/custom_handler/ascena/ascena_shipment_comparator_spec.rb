@@ -4,12 +4,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentComparator do
 
   subject { described_class }
 
-  let (:ascena) { Factory(:importer, system_code: "ASCE") }
+  let (:ascena) { Factory(:importer, system_code: "ASCENA") }
   let (:shipment) { Factory(:shipment, importer: ascena) }
 
   describe "accept?" do
-    let (:ascena) { Factory(:importer, system_code: "ASCE") }
-    let (:shipment) { Factory(:shipment, importer: ascena) }
     let (:non_ascena_shipment) { Factory(:shipment, importer: Factory(:importer)) }
     let (:user) { Factory(:user)}
 
