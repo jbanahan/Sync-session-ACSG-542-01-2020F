@@ -19,18 +19,20 @@ module OpenChain; module Report; class DutySavingsReport
   end
 
   def self.calculate_start_date previous_n_days, previous_n_months
+    today = Time.now.in_time_zone("Eastern Time (US & Canada)").beginning_of_day
     if previous_n_days
-      Date.today - previous_n_days.days
+      today - previous_n_days.days
     elsif previous_n_months
-      Date.today.beginning_of_month - previous_n_months.months
+      today.beginning_of_month - previous_n_months.months
     end
   end
 
   def self.calculate_end_date previous_n_days, previous_n_months
+    today = Time.now.in_time_zone("Eastern Time (US & Canada)").beginning_of_day
     if previous_n_days
-      Date.today
+      today
     elsif previous_n_months
-      Date.today.beginning_of_month
+      today.beginning_of_month
     end
   end
   
@@ -44,7 +46,7 @@ module OpenChain; module Report; class DutySavingsReport
   def send_email email, start_date, end_date, customer_numbers
     wb = create_workbook(start_date, end_date, customer_numbers)
     workbook_to_tempfile wb, 'DutySavings-', file_name: "Duty Savings Report.xls" do |t|
-      subject = "Duty Savings Report"
+      subject = "Duty Savings Report: #{start_date.strftime("%m-%d-%Y")} through #{(end_date - 1.minute).strftime("%m-%d-%Y")}"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
       OpenMailer.send_simple_html(email, subject, body, t).deliver!
     end
@@ -73,7 +75,7 @@ module OpenChain; module Report; class DutySavingsReport
         INNER JOIN commercial_invoice_lines cil ON cil.commercial_invoice_id = ci.id
         INNER JOIN commercial_invoice_tariffs cit ON cit.commercial_invoice_line_id = cil.id
       WHERE ent.customer_number IN (#{customer_numbers.map{|c| ActiveRecord::Base.sanitize c}.join(', ')})
-        AND ent.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+        AND ent.release_date >= '#{start_date}' AND ent.release_date < '#{end_date}'
         AND (cil.contract_amount IS NULL OR cil.contract_amount = 0)
       GROUP BY cil.id
       ORDER BY ent.release_date

@@ -56,14 +56,15 @@ describe OpenChain::Report::DutySavingsReport do
   describe "run_schedulable" do
     it "sends email with attachment" do
       create_data arrival_date, release_date
-      now = release_date.beginning_of_day + 2.days
+      now = release_date.in_time_zone("Eastern Time (US & Canada)").to_datetime.beginning_of_day + 2.days
+
       Timecop.freeze(now) do
         described_class.run_schedulable({'email' => ['test@vandegriftinc.com'], 'previous_n_days' => 3, 'customer_numbers' => ["cust num"]})
       end
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [ "test@vandegriftinc.com" ]
-      expect(mail.subject).to eq "Duty Savings Report"
+      expect(mail.subject).to eq "Duty Savings Report: 01-14-2016 through 01-16-2016"
       expect(mail.attachments.count).to eq 1
 
       Tempfile.open('attachment') do |t|
@@ -80,7 +81,7 @@ describe OpenChain::Report::DutySavingsReport do
     end
 
     it "calculates previous n months" do
-      today = Date.today
+      today = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.beginning_of_day
       two_months_ago = today.beginning_of_month - 2.months
       this_month = today.beginning_of_month
       expect_any_instance_of(described_class).to receive(:create_workbook).with(two_months_ago, this_month, nil)
@@ -89,7 +90,7 @@ describe OpenChain::Report::DutySavingsReport do
     end
 
     it "calculates previous n days" do
-      today = Date.today  
+      today = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.beginning_of_day
       two_days_ago = today - 2.days
       expect_any_instance_of(described_class).to receive(:create_workbook).with(two_days_ago, today, nil)
       allow_any_instance_of(described_class).to receive(:workbook_to_tempfile)
