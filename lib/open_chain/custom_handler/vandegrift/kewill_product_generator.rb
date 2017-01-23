@@ -40,6 +40,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # Combined with the use_inique_identifier flag, this allows us to run this on customer specific systems
     # (like DAS) where the products aren't linked to any importer - since the whole system is a single importer's system.
     @disable_importer_check = opts[:disable_importer_check].to_s.to_boolean
+    @allow_blank_tariffs = opts[:allow_blank_tariffs].to_s.to_boolean
   end
 
   def custom_defs
@@ -92,7 +93,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     tariff_class = add_element(add_element(p, "CatTariffClassList"), "CatTariffClass")
     add_kewill_keys(tariff_class, row)
     add_element(tariff_class, "seqNo", "1")
-    write_data(tariff_class, "tariffNo", row[2], 10, error_on_trim: true)
+    # Since we're allowing blank tariffs, just take part of the join condition for 8 char tariffs and recreate here, dropping
+    # anything that's lesst than 8 chars (.ie not a good tariff)
+    write_data(tariff_class, "tariffNo", (row[2].to_s.length >= 8 ? row[2] : ""), 10, error_on_trim: true)
 
     if row[5] == "Y"
       fda = add_element(add_element(tariff_class, "CatFdaEsList"), "CatFdaEs")
@@ -189,8 +192,14 @@ IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})
 #{cd_s custom_defs[:prod_fda_temperature].id} 
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
-INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id AND tariff_records.line_number = 1
 QRY
+
+    if @allow_blank_tariffs
+      qry += "LEFT OUTER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id AND tariff_records.line_number = 1\n"
+    else
+      qry += "INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id AND tariff_records.line_number = 1\n"
+    end
+
     if @custom_where.blank?
       qry += "#{Product.need_sync_join_clause(sync_code)} 
 WHERE 
@@ -199,7 +208,7 @@ WHERE
       qry += "WHERE #{@custom_where} "
     end
     
-    qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0"
+    qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless @use_unique_identifier
     qry += " AND products.importer_id = #{@importer.id}" unless @disable_importer_check
 
     

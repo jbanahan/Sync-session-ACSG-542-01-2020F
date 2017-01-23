@@ -220,4 +220,11 @@
     </div>
   </div>
   <%-end-%>
+   <%-if OpenChain::CustomHandler::Ascena::AscenaProductUploadParser.can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Ascena Parts Upload", '/custom_features/ascena_product', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
 </div>

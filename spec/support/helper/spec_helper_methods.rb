@@ -176,4 +176,8 @@ module Helpers
   def json_date date
     ActiveSupport::JSON.encode(date).gsub(/"/, "")
   end
+
+  def expect_custom_value obj, cdef, value
+    expect(obj.custom_value(cdef)).to eq value
+  end
 end
