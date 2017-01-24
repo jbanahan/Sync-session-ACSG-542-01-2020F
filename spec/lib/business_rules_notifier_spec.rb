@@ -1,17 +1,25 @@
 require 'spec_helper'
 
 describe OpenChain::BusinessRulesNotifier do
-  before do
-    Factory(:master_company,show_business_rules:true)
-    @fake_client = double('Slack::Web::Client')
-    allow(OpenChain::SlackClient).to receive(:slack_client).and_return @fake_client
+  subject { described_class }
+
+  let (:slack_client) {
+    instance_double(OpenChain::SlackClient)
+  }
+  let! (:company) {
+    Factory(:master_company, show_business_rules:true)
+  }
+
+  before(:each) do
+    allow(subject).to receive(:slack_client).and_return slack_client
   end
 
-  it 'catches all errors and returns only one error' do
-    Factory(:entry, customer_number:'12345')
-    Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1')
-    Factory(:entry, customer_number:'23456')
-    Factory(:company, alliance_customer_number: '23456', slack_channel: 'company2')
+  it "logs all errors" do
+    imp1 = Factory(:importer, alliance_customer_number: '12345', slack_channel: 'company1')
+    imp2 = Factory(:company, alliance_customer_number: '23456', slack_channel: 'company2')
+    Factory(:entry, customer_number:'12345', importer: imp1)
+    Factory(:entry, customer_number:'23456', importer: imp2)
+    
 
     bvt1 = generate_business_rule('12345')
     bvt2 = generate_business_rule('23456')
@@ -19,21 +27,30 @@ describe OpenChain::BusinessRulesNotifier do
     bvt1.create_results! true
     bvt2.create_results! true
 
-    expect(@fake_client).to receive(:chat_postMessage).ordered.and_raise("Error 1")
-    expect(@fake_client).to receive(:chat_postMessage).ordered.and_raise("Error 2")
+    expect(slack_client).to receive(:send_message!).ordered.and_raise(StandardError, "Error 1")
+    expect(slack_client).to receive(:send_message!).ordered.and_raise(StandardError, "Error 2")
 
-    expect { OpenChain::BusinessRulesNotifier.run_schedulable }.to raise_error("Error 1")
+
+    messages = []
+    expect(subject).to receive(:log_error).exactly(2).times do |error, message|
+      messages << message
+    end
+
+    subject.run_schedulable
+
+    expect(messages.length).to eq 2
+    expect(messages.first).to eq "Failed to post to the 'company1' slack channel."
+    expect(messages.second).to eq "Failed to post to the 'company2' slack channel."
   end
 
-  it 'sends to the company\'s slack channel' do
-    @entry = Factory(:entry, customer_number:'12345')
-    @company = Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1')
+  it "sends to the company's slack channel" do
+    entry = Factory(:entry, customer_number:'12345')
+    company = Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1', name: "My Company")
     bvt = generate_business_rule('12345')
 
     bvt.create_results! true
 
-    expected = {as_user: true, channel:@company.slack_channel, text: "DEV MESSAGE: #{@company.name_with_customer_number} has 1 failed business rules"}
-    expect(@fake_client).to receive(:chat_postMessage).with(expected)
+    expect(slack_client).to receive(:send_message!).with(company.slack_channel, "My Company (12345) has 1 failed business rule.")
     OpenChain::BusinessRulesNotifier.run_schedulable
   end
 

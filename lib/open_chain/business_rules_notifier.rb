@@ -9,14 +9,12 @@ module OpenChain
 
         if rule_fail_count > 0
           begin
-            OpenChain::SlackClient.new.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business rules")
-          rescue Exception => exception
-            slack_exception ||= exception
+            slack_client.send_message!(company.slack_channel, "#{company.name_with_customer_number} has #{rule_fail_count} failed business #{"rule".pluralize(rule_fail_count)}.")
+          rescue StandardError => e
+            log_error(e, "Failed to post to the '#{company.slack_channel}' slack channel.")
           end
         end
       end
-
-      raise slack_exception if slack_exception.present?
     end
 
     private
@@ -28,6 +26,15 @@ module OpenChain
       ss.search_criterions.build(model_field_uid:'ent_rule_state',operator:'eq',value:'Fail')
       ss.search_criterions.build(model_field_uid:'ent_cust_num',operator:'eq',value:customer_number)
       SearchQuery.new(ss,User.integration).count
+    end
+
+    def self.slack_client
+      OpenChain::SlackClient.new
+    end
+
+    def log_error e, message
+      # This method is mostly broken out for ease of testing
+      e.log_me [message]
     end
   end
 end
