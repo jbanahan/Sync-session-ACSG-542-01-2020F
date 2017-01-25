@@ -29,20 +29,24 @@ module OpenChain; module Report; class HmStatisticsReport
     wb = XlsMaker.new_workbook
     
     add_summary_sheet wb, start_date, end_date
-    add_ocean_sheet wb, start_date, end_date
-    add_air_sheet wb, start_date, end_date
+    add_ocean_sheet(wb, start_date, end_date, run_by.time_zone)
+    add_air_sheet(wb, start_date, end_date, run_by.time_zone)
     
     workbook_to_tempfile wb, 'HmStatisticsReport-'
   end
 
-  def add_ocean_sheet wb, start_date, end_date
-    XlsMaker.create_sheet wb, "Ocean"
-    table_from_query wb.worksheets.last, raw_ocean_query(start_date, end_date)
+  def conversions(time_zone)
+    {"Release Date" => datetime_translation_lambda(time_zone)}
   end
 
-  def add_air_sheet wb, start_date, end_date
+  def add_ocean_sheet wb, start_date, end_date, time_zone
+    XlsMaker.create_sheet wb, "Ocean"
+    table_from_query wb.worksheets.last, raw_ocean_query(start_date, end_date), conversions(time_zone)
+  end
+
+  def add_air_sheet wb, start_date, end_date, time_zone
     XlsMaker.create_sheet wb, "Air"
-    table_from_query wb.worksheets.last, raw_air_query(start_date, end_date)
+    table_from_query wb.worksheets.last, raw_air_query(start_date, end_date), conversions(time_zone)
   end
 
   def add_summary_sheet wb, start_date, end_date
@@ -97,7 +101,7 @@ module OpenChain; module Report; class HmStatisticsReport
           INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
           INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
       WHERE e.customer_number = 'HENNE'
-          AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+          AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
           AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
     SQL
   end
@@ -135,7 +139,7 @@ module OpenChain; module Report; class HmStatisticsReport
         INNER JOIN commercial_invoices ci ON ci.entry_id = e.id 
           AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
       WHERE e.customer_number = 'HENNE'
-        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+        AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY mode, ecc
     SQL
   end
@@ -163,7 +167,7 @@ module OpenChain; module Report; class HmStatisticsReport
       WHERE e.customer_number = 'HENNE'
         AND e.transport_mode_code IN (10, 11)
         AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+        AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
       GROUP BY ecc
     SQL
   end
@@ -205,7 +209,7 @@ module OpenChain; module Report; class HmStatisticsReport
      WHERE e.customer_number = 'HENNE'
        AND e.transport_mode_code IN (10, 11)
        AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-       AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+       AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
     SQL
   end
 
@@ -223,7 +227,7 @@ module OpenChain; module Report; class HmStatisticsReport
       WHERE e.customer_number = 'HENNE'
         AND e.transport_mode_code IN (40, 41)
         AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
-        AND (e.release_date > '#{start_date}' AND e.release_date < '#{end_date}')
+        AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
     SQL
   end
 
