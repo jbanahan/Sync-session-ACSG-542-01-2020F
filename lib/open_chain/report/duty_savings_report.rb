@@ -67,9 +67,9 @@ module OpenChain; module Report; class DutySavingsReport
         cil.vendor_name AS 'Vendor Name',
         cil.po_number AS 'PO Number',
         cil.value AS 'Invoice Line Value',
-        MAX(cit.entered_value) AS 'Entered Value',
-        cil.value - cit.entered_value AS 'Cost Savings',
-        IF(ROUND(SUM((cil.value * cit.duty_rate) - cit.duty_amount),2)< 1,0,ROUND(SUM((cil.value * cit.duty_rate) - cit.duty_amount),2)) AS 'Duty Savings'
+        SUM(cit.entered_value) AS 'Entered Value',
+        cil.value - SUM(cit.entered_value) AS 'Cost Savings',
+        IF((SUM(cit.entered_value) = 0) OR ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)< 1,0,ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)) AS 'Duty Savings'
       FROM entries ent
         INNER JOIN commercial_invoices ci ON ci.entry_id = ent.id
         INNER JOIN commercial_invoice_lines cil ON cil.commercial_invoice_id = ci.id

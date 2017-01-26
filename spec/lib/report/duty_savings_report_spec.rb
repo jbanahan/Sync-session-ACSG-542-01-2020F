@@ -104,11 +104,19 @@ describe OpenChain::Report::DutySavingsReport do
     it "generates expected results" do
       r = ActiveRecord::Base.connection.execute report.query('2016-01-01', '2016-02-01', ["cust num"])
       expect(r.count).to eq 1
-      expect(r.first[0..8]).to eq ["brok ref",arrival_date,release_date,"ACME","PO num",10,8,2,149] #for some reason datetime doesn't evaluate properly without range
+      expect(r.first[0..8]).to eq ["brok ref",arrival_date,release_date,"ACME","PO num",25,15,10,2] #for some reason datetime doesn't evaluate properly without range
     end
 
-    it "doesn't produce negative values for 'duty savings'" do
-      @cit2.update_attributes(duty_amount: 1000)
+    it "assigns 0 to 'duty savings' if calculation < 1" do
+      @cil.update_attributes(value: 16)
+      r = ActiveRecord::Base.connection.execute report.query('2016-01-01', '2016-02-01', ["cust num"])
+      expect(r.count).to eq 1
+      expect(r.first[8]).to eq 0
+    end
+
+    it "doesn't produce null values for 'duty savings'" do
+      @cit1.update_attributes(entered_value: 0)
+      @cit2.update_attributes(entered_value: 0)
       r = ActiveRecord::Base.connection.execute report.query('2016-01-01', '2016-02-01', ["cust num"])
       expect(r.count).to eq 1
       expect(r.first[8]).to eq 0
@@ -141,9 +149,9 @@ describe OpenChain::Report::DutySavingsReport do
   def create_data arrival_date, release_date
     @ent = Factory(:entry, broker_reference: "brok ref", arrival_date: arrival_date, release_date: release_date, customer_number: "cust num")
     @ci = Factory(:commercial_invoice, entry: @ent)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, vendor_name: "ACME", po_number: "PO num", value: 10, contract_amount: 0)
-    @cit1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 8, duty_rate: 9, duty_amount: 12)
-    @cit2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 7, duty_rate: 8, duty_amount: 9)
+    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, vendor_name: "ACME", po_number: "PO num", value: 25, contract_amount: 0)
+    @cit1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 8, duty_amount: 2)
+    @cit2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 7, duty_amount: 1)
   end
 
 end
