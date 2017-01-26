@@ -57,27 +57,39 @@ class Order < ActiveRecord::Base
   ########
 
   def accept! user, async_snapshot = false
-    mark_order_as_accepted
-    self.accepted_by = user
-    self.accepted_at = Time.now
+    accept_logic(user)
     self.save!
     OpenChain::EventPublisher.publish :order_accept, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
+  def accept_logic user
+    mark_order_as_accepted
+    self.accepted_by = user
+    self.accepted_at = Time.zone.now
+  end
+
   def async_accept! user
     self.accept! user, true
   end
+
   def unaccept! user, async_snapshot = false
-    self.approval_status = nil
-    self.accepted_by = nil
-    self.accepted_at = nil
+    unaccept_logic(user)
     self.save!
     OpenChain::EventPublisher.publish :order_unaccept, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
+  def unaccept_logic user
+    self.approval_status = nil
+    self.accepted_by = nil
+    self.accepted_at = nil
+  end
+
   def async_unaccept! user
     self.unaccept! user, true
   end
+
   # can the order be accepted (regardless of user permissions)
   def can_be_accepted?
     OpenChain::OrderAcceptanceRegistry.registered_for_can_be_accepted.each do |oa|
@@ -112,22 +124,35 @@ class Order < ActiveRecord::Base
   scope :not_closed, where('orders.closed_at is null')
   #set the order as closed and take a snapshot and save!
   def close! user, async_snapshot=false
-    self.closed_by = user
-    self.closed_at = Time.now
+    close_logic(user)
     self.save!
     OpenChain::EventPublisher.publish :order_close, self
-    self.create_snapshot_with_async_option async_snapshot, user
+    self.create_snapshot_with_async_option async_snapshot, user, nil
   end
+
+  def close_logic user
+    self.closed_by = user
+    self.closed_at = Time.zone.now
+    nil
+  end
+
   #set the order as closed, save!, and take an snapshot in another thread
   def async_close! user
     self.close! user, true
   end
   def reopen! user, async_snapshot = false
-    self.closed_by = self.closed_at = nil
+    reopen_logic(user)
     self.save!
     OpenChain::EventPublisher.publish :order_reopen, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
+  def reopen_logic user
+    self.closed_by = nil
+    self.closed_at = nil
+    nil
+  end
+
   def async_reopen! user
     self.reopen! user, true
   end

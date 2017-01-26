@@ -5,8 +5,18 @@ describe OpenChain::EdiParserSupport do
     Class.new { include OpenChain::EdiParserSupport }.new
   }
 
+  let (:file_path) { 'spec/support/bin/ascena_apll_856.txt' }
+
   let (:segments) {
-    REX12::Document.read 'spec/support/bin/ascena_apll_856.txt'
+    REX12::Document.read file_path
+  }
+
+  let (:first_transaction) {
+    REX12::Document.each_transaction(IO.read(file_path)).first
+  }
+
+  let (:first_transaction_segments) {
+    first_transaction.segments
   }
 
   describe "with_qualified_segments" do
@@ -201,6 +211,169 @@ describe OpenChain::EdiParserSupport do
 
     it "raises an error if bad coordinates are given" do
       expect { subject.parse_edi_coordinate("ABC") }.to raise_error ArgumentError, "Invalid EDI coordinate value received: 'ABC'."
+    end
+  end
+
+  describe "extract_loop" do
+
+    # Use the burlington po edi for this as it's more succint, and actually uncovered
+    # a bug in the looping.
+    let (:segments) { REX12::Document.read 'spec/fixtures/files/burlington_850_standard.edi'}
+
+    it "extracts all described loops from given segments" do
+      loops = subject.extract_loop segments, ["N1", "N2", "N3", "N4", "PER"]
+      expect(loops.length).to eq 5
+
+      n1 = loops.last
+      # The last N1 in the file has an N1, N2, N3, N4, PER segment.
+      expect(n1.length).to eq 5
+      expect(n1[0].segment_type).to eq "N1"
+      expect(n1[1].segment_type).to eq "N2"
+      expect(n1[2].segment_type).to eq "N3"
+      expect(n1[3].segment_type).to eq "N4"
+      expect(n1[4].segment_type).to eq "PER"
+    end
+
+    it "uses the stop element to break processing when a specific segment is seen" do
+      # Only extract the non-n1 level segments 
+      loops = subject.extract_loop segments, ["PER"], stop_segments: "FOB"
+
+      expect(loops.size).to eq 2
+      expect(loops[0][0].elements[1].value).to eq "BD"
+      expect(loops[1][0].elements[1].value).to eq "AA"
+    end
+
+    it "allows for multiple stop segments" do 
+      # Only extract the "header" level segments 
+      loops = subject.extract_loop segments, ["PER"], stop_segments: ["PO1", "FOB"]
+
+      expect(loops.size).to eq 2
+    end
+  end
+
+  describe "find_segment_qualified_value" do
+
+    let (:segment) { REX12::Segment.new "SLN|1||I|3|EA|10.75|WE||IN|14734100|IT|87027|BO|QIXELS|IZ|QTY|PU|QIXELS S3 KINGDOM WEAPON|BL|QIXELS|VA|87027|VE|QIXELS|SZ|QTY", "|", "~", 1 }
+
+    it "returns the qualfied element's value" do
+      expect(subject.find_segment_qualified_value(segment, "IT")).to eq "87027"
+    end
+
+    it "returns nil if not found" do
+      expect(subject.find_segment_qualified_value(segment, "BLAH")).to be_nil
+    end
+  end
+
+  describe "find_segment" do
+
+    it "returns the expected segment" do
+      seg = subject.find_segment segments, "ST"
+      expect(seg).not_to be_nil
+      expect(seg.elements[2].value).to eq "0001"
+    end
+
+    it "yields the expected segment" do
+      seg = nil
+      expect(subject.find_segment(segments, "ST") {|s| seg = s }).to be_nil
+      expect(seg).not_to be_nil
+      expect(seg.elements[2].value).to eq "0001"
+    end
+
+    it "returns nil if segment is not found" do
+      expect(subject.find_segment(segments, "BLAH")).to be_nil
+    end
+  end
+
+  describe "extract_n1_loop" do
+
+    let (:order_segment) {
+      loops = subject.extract_loop(first_transaction_segments, ["HL", "PRF", "PO4", "N1", "N2", "N3", "N4", "PER"])
+      loops.find {|l| l.first.elements[3].value == "O"}
+    }
+
+    it "extracts all n1 segments" do
+      n1_loops = subject.extract_n1_loops(order_segment)
+      expect(n1_loops.length).to eq 2
+
+      l = n1_loops.first
+      expect(l.length).to eq 5
+      expect(l[0].segment_type).to eq "N1"
+      expect(l[1].segment_type).to eq "N2"
+      expect(l[2].segment_type).to eq "N3"
+      expect(l[3].segment_type).to eq "N4"
+      expect(l[4].segment_type).to eq "PER"
+    end
+
+    it "extracts specific qualified n1 segment" do
+      n1 = subject.extract_n1_loops(order_segment, qualifier: "TE")
+      expect(n1.length).to eq 1
+
+      expect(n1.first.length).to eq 3
+      expect(n1.first.first.elements[1].value).to eq "TE"
+    end
+
+    it "returns blank array if nothing found" do
+      expect(subject.extract_n1_loops(order_segment, qualifier: "XX")).to eq []
+    end
+  end
+
+  describe "iso_code" do
+    it "returns isa code from transaction" do
+      expect(subject.isa_code(first_transaction)).to eq "000004837"
+    end
+  end
+
+  describe "write_transaction" do
+    it "writes transaction to given IO stream" do
+      io = StringIO.new
+      subject.write_transaction first_transaction, io
+      io.rewind
+
+      transactions = REX12::Document.each_transaction(io.read)
+      expect(transactions.length).to eq 1
+      expect(transactions.first.segments.length).to eq first_transaction.segments.length
+    end
+
+    it "allows for alternate segment terminators" do
+      io = StringIO.new
+      subject.write_transaction first_transaction, io, segment_terminator: "^"
+      io.rewind
+      data = io.read
+
+      transactions = REX12::Document.each_transaction(data)
+      expect(transactions.length).to eq 1
+      expect(transactions.first.segments.length).to eq first_transaction.segments.length
+
+      # So, read up to the first segment terminator from the data we read and make sure its the exact
+      # same values as those in our original transaction
+      data =~ /(.*?)\^/
+      expect($1).to eq first_transaction.isa_segment.value
+    end
+  end
+
+  describe "send_error_email" do
+    let (:error) { 
+      e = StandardError.new "Error"
+      e.set_backtrace Kernel.caller
+      e
+    }
+
+    it "sends an error email comprised of the transaction" do
+      subject.send_error_email(first_transaction, error, "Parser", "file.edi")
+
+      m = ActionMailer::Base.deliveries.first
+
+      expect(m).not_to be_nil
+      expect(m.subject).to eq "Parser EDI Processing Error (ISA: 000004837)"
+      expect(m.to).to eq ["edisupport@vandegriftinc.com"]
+      expect(m.body.raw_source).to include "There was a problem processing the attached Parser EDI. A recreation of only the specific EDI transaction file the file that errored is attached."
+      expect(m.attachments["file.edi"]).not_to be_nil
+      file = m.attachments["file.edi"].read
+      transaction = StringIO.new
+      subject.write_transaction(first_transaction, transaction)
+      transaction.rewind
+
+      expect(m.attachments["file.edi"].read).to eq transaction.read
     end
   end
 end

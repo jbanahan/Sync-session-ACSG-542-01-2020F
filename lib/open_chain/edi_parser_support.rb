@@ -67,6 +67,18 @@ module OpenChain; module EdiParserSupport
     find_ref_values(segments, qualifier).first
   end
 
+  # Searches the given segment for the qualifier in its elements and then returns
+  # the value found in the adjacent element.  You see this pattern PO1 / SLN segments
+  # where the segment itself can contain multiple reference/value pairs stacked next
+  # to each other.
+  def find_segment_qualified_value segment, qualifier
+    segment.elements.each_with_index do |el, i|
+      return segment.elements[i+1].try(:value) if el.value == qualifier
+    end
+
+    nil
+  end
+
   # Finds every value in the given segment list that has a given coordinate.
   # .ie Find every BEG01 -> find_element_values(segments, "BEG01")
   def find_element_values segments, edi_position
@@ -163,7 +175,7 @@ module OpenChain; module EdiParserSupport
   # Find every given segment type from the list of segments provided.
   # Yields any matched segments if a block is provided.
   def find_segments segments, *segment_types
-    types = Set.new(Array.wrap(segment_types).map {|t| t.to_s.upcase } )
+    types = Set.new(Array.wrap(segment_types))
     found = block_given? ? nil : []
     segments.each do |seg|
       if types.include?(seg.segment_type)
@@ -177,6 +189,74 @@ module OpenChain; module EdiParserSupport
     found
   end
 
+  # Returns the first segment found matching the given segment type
+  def find_segment segments, segment_type
+    found = nil
+    segments.each do |seg|
+      if segment_type == seg.segment_type
+        if block_given?
+          yield seg
+          break
+        else
+          found = seg
+          break
+        end
+      end
+    end
+
+    found
+  end
+
+  def extract_loop segments, sub_element_list, stop_segments: nil
+    sub_element_list = Array.wrap(sub_element_list)
+    raise ArgumentError, "At least one loop sub-element must be passed." if sub_element_list.length == 0
+
+    loop_start = sub_element_list[0]
+    sub_elements = sub_element_list.length > 1 ? Set.new(sub_element_list[1..-1]) : Set.new 
+
+    stop_segments = Set.new(Array.wrap(stop_segments))
+
+    loops = []
+    current_loop = []
+
+    segments.each do |seg|
+      break if stop_segments.include?(seg.segment_type)
+
+      # The only thing we're looking for if we have a blank current loop
+      # is the starting segment...that's IT.
+      if current_loop.blank?
+        if loop_start == seg.segment_type
+          current_loop << seg
+        end
+      else
+        # If we got a new starting segment, then flush what we've been buffering
+        # and start a new buffer
+        if loop_start == seg.segment_type
+          loops << current_loop
+          current_loop = [seg]
+        elsif sub_elements.include?(seg.segment_type)
+          current_loop << seg
+        else
+          # If we've encountered an element that's not part of our sub_element list, then
+          # we need to stop collecting elements for the current loop
+          loops << current_loop
+          current_loop = []
+        end
+      end
+    end
+
+    loops << current_loop if current_loop.length > 0
+
+    loops
+  end
+
+  def extract_n1_loops segments, qualifier: nil, stop_segments: nil
+    loops = extract_loop(segments, ["N1", "N2", "N3", "N4", "PER"], stop_segments: stop_segments)
+    return loops if qualifier.nil?
+
+    loops.find_all {|l| l.first.elements[1].try(:value) == qualifier }
+  end
+
   # Parses a given EDI position (coordinate) into the segment type and index provided.
   # Example: parse_edi_coordinate("BEG01") -> ["BEG", 1]
   def parse_edi_coordinate coord
@@ -184,6 +264,52 @@ module OpenChain; module EdiParserSupport
       [$1, $2.to_i]
     else
       raise ArgumentError, "Invalid EDI coordinate value received: '#{coord}'."
+    end
+  end
+
+  def isa_code transaction
+    self.class.isa_code(transaction)
+  end
+
+  def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com"
+    self.class.send_error_email transaction, error, parser_name, filename, to_address: to_address
+  end
+
+  def write_transaction transaction, io, segment_terminator: "\n"
+    self.class.write_transaction(transaction, io, segment_terminator: segment_terminator)
+  end
+
+  module ClassMethods
+
+    def isa_code transaction
+      transaction.isa_segment.elements[13].value
+    end
+
+    def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com"
+      Tempfile.create(["EDI-#{isa_code(transaction)}-",'.edi']) do |f|
+        write_transaction transaction, f
+        f.rewind
+        Attachment.add_original_filename_method(f, filename)
+
+        body = "<p>There was a problem processing the attached #{parser_name} EDI. A recreation of only the specific EDI transaction file the file that errored is attached.</p><p>Error:"
+        body += ERB::Util.html_escape(error.message)
+        body += "<br>"
+        body += error.backtrace.map {|t| ERB::Util.html_escape(t)}.join "<br>"
+        body += "</p>"
+
+        OpenMailer.send_simple_html(to_address, "#{parser_name} EDI Processing Error (ISA: #{isa_code(transaction)})", body.html_safe, [f]).deliver!
+      end
+    end
+
+    # This method exists mostly for error reporting reaons, it takes a REX12::Transaction and 
+    # generates (pseudo) EDI from it.
+    def write_transaction transaction, io, segment_terminator: "\n"
+      io << transaction.isa_segment.value + segment_terminator
+      io << transaction.gs_segment.value + segment_terminator
+      transaction.segments.each {|s| io << s.value + segment_terminator }
+      io.flush
+
+      nil
     end
   end
 

@@ -68,6 +68,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_revision_date: {label: "Revision Date", data_type: :date, module_type: "Order"},
     ord_selling_agent: {label: "Selling Agent", data_type: :string, module_type: "Order"},
     ord_selling_channel: {label: "Selling Channel", data_type: :string, module_type: "Order"},
+    ord_planned_forwarder: {label: "Planned Forwarder", data_type: :string, module_type: "Order", cdef_uid: "ord_planned_forwarder"},
     ord_type: {label: "Type", data_type: :string, module_type: "Order"},
     ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine"},
     ord_line_color: {label: "Color", data_type: :string, module_type: "OrderLine"},
@@ -79,7 +80,10 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_line_season: {label: "Season", data_type: :string, module_type: "OrderLine"},
     ord_line_size: {label: "Size", data_type: :string, module_type: "OrderLine"},
     ord_line_size_description: {label: "Size Description", data_type: :string, module_type: "OrderLine"},
-    ord_line_wholesale_unit_price: {label: "Wholesale Unit Price", data_type: :decimal, module_type: "OrderLine"}
+    ord_line_wholesale_unit_price: {label: "Wholesale Unit Price", data_type: :decimal, module_type: "OrderLine"},
+    ord_line_prepacks_ordered: {label: "Prepacks Ordered", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_prepacks_ordered"},
+    ord_line_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_units_per_inner_pack"},
+    ord_line_retail_unit_price: {label: "Retail Unit Price", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_retail_unit_price"}
   } 
   
   def self.included(base)
