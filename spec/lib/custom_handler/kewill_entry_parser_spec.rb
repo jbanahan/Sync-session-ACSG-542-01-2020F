@@ -16,6 +16,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       @e = {
         'cust_no' => 'TEST',
+        'irs_no' => "12-23456789",
         'file_no' => 12345,
         'entry_no' => '316123456',
         'cr_certification_output_mess' => 'CERT MESSAGE',
@@ -356,6 +357,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.fda_message).to eq "FDA MESSAGE"
       expect(entry.customer_number).to eq "TEST"
       expect(entry.customer_name).to eq "CUST NAME"
+      expect(entry.importer_tax_id).to eq "12-23456789"
       importer = Company.where(importer: true, alliance_customer_number: "TEST").first
       expect(importer).not_to be_nil
       expect(entry.importer).to eq importer

@@ -264,6 +264,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.customer_number = e[:cust_no]
       entry.entry_number = e[:entry_no]
       entry.customer_number = e[:cust_no]
+      entry.importer_tax_id = e[:irs_no]
       entry.customer_name = e[:cust_name]
       entry.importer = get_importer entry.customer_number, entry.customer_name
       entry.merchandise_description = e[:desc_of_goods]
