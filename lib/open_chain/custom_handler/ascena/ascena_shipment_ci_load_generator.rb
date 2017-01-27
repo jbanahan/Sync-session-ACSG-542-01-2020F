@@ -6,8 +6,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
 
   def generate_and_send shipment
     entry_data = generate_entry_data shipment
-    wb = kewill_generator.generate_xls entry_data
-    send_xls_to_google_drive wb, "#{Attachment.get_sanitized_filename(shipment.reference)}.xls"
+    kewill_generator.generate_and_send entry_data
     nil
   end
 
@@ -18,6 +17,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
   def generate_entry_data shipment
     entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new
     entry.customer = "ASCE"
+    entry.file_number = shipment.booking_number
 
     # There is no invoice number being mapped...
     invoice  = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new

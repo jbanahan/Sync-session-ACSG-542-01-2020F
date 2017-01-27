@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
   end
 
   def generate_and_send entries 
-    entries.each do |entry|
+    Array.wrap(entries).each do |entry|
       if entry.invoices.length > 0
         doc, shipments = build_base_xml
         generate_entry_xml(shipments, entry, add_entry_info: false)

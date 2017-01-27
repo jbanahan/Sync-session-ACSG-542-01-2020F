@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, house_bill_of_lading: "HB", reference: "REF/REF")
+    shipment = Factory(:shipment, booking_number: "CargoReference")
     shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
 
     shipment.reload
@@ -35,6 +35,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       expect(ci_load).not_to be_nil
 
       expect(ci_load.customer).to eq "ASCE"
+      expect(ci_load.file_number).to eq "CargoReference"
       expect(ci_load.invoices.length).to eq 1
 
       expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
@@ -78,54 +79,17 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
     end
   end
 
-  describe "send_xls_to_google_drive" do
-    let (:wb) {
-      wb, sheet = XlsMaker.create_workbook_and_sheet "sheet", ["header"]
-      wb
-    }
-
-    it "passes tempfile of given spreadsheet object to drive class" do
-      received_spreadsheet = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Ascena CI Load/file.xls"
-        received_spreadsheet = Spreadsheet.open file.path
-      end
-
-      subject.send_xls_to_google_drive wb, "file.xls"
-
-      expect(received_spreadsheet).not_to be_nil
-      expect(received_spreadsheet.worksheet("sheet")).not_to be_nil
-    end
-  end
-
   describe "generate_and_send" do
 
-    let (:wb) {
-      wb, sheet = XlsMaker.create_workbook_and_sheet "sheet", ["header"]
-      wb
-    }
-
     let (:generator) {
-      g = instance_double(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator)
-      expect(g).to receive(:generate_xls).and_return wb
-      g
+      instance_double(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator)
     }
 
-    it "generates xls data and sends it to google drive" do
-      received_spreadsheet = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Ascena CI Load/REF_REF.xls"
-        received_spreadsheet = Spreadsheet.open file.path
-      end
+    it "generates data and sends it to the kewill generator" do
+      expect(generator).to receive(:generate_and_send).with(instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry))
 
       expect(subject).to receive(:kewill_generator).and_return generator
       subject.generate_and_send shipment
-
-      # Just make sure the spreadsheet has the expected sheet name and header row
-      expect(received_spreadsheet).not_to be_nil
-      expect(received_spreadsheet.worksheet("sheet")).not_to be_nil
     end
   end
 end
