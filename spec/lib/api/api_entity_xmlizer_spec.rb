@@ -11,7 +11,7 @@ describe OpenChain::Api::ApiEntityXmlizer do
     e = double('entity')
     m = double('model_field_uids')
     j = double('jsonizer')
-    eh = double('entity_hash')
+    eh = {}
     expect(OpenChain::Api::ApiEntityJsonizer).to receive(:new).with(opts).and_return j
     expect(j).to receive(:entity_to_hash).with(u,e,m).and_return eh
     expect_any_instance_of(described_class).to receive(:make_xml).with(e,eh).and_return 'xml'
@@ -20,6 +20,7 @@ describe OpenChain::Api::ApiEntityXmlizer do
 
   context 'with data' do
     before :each do
+      Timecop.freeze
       @order = Factory(:order,order_number:'ORDNUM',order_date:Date.new(2016,5,1))
       @product = Factory(:product,unique_identifier:'PUID')
       @order_line = Factory(:order_line,line_number:1,quantity:10,product:@product,order:@order)
@@ -30,22 +31,10 @@ describe OpenChain::Api::ApiEntityXmlizer do
         :ordln_puid,
         :ordln_ordered_qty
       ]
-      @expected_xml = <<-xml
-<?xml version="1.0" encoding="UTF-8"?>
-<order>
-  <id type="integer">#{@order.id}</id>
-  <order-lines type="array">
-    <order-line>
-      <id type="integer">#{@order_line.id}</id>
-      <ordln-line-number type="integer">1</ordln-line-number>
-      <ordln-ordered-qty type="decimal">10.0</ordln-ordered-qty>
-      <ordln-puid>PUID</ordln-puid>
-    </order-line>
-  </order-lines>
-  <ord-ord-date type="date">2016-05-01</ord-ord-date>
-  <ord-ord-num>ORDNUM</ord-ord-num>
-</order>
-xml
+      @expected_timestamp = Time.now.utc.strftime("%Y-%m-%dT%l:%M:%S:%L%z")
+    end
+    after :each do
+      Timecop.return
     end
     it 'should create xml with base tag names' do
       expected_xml = <<-xml
@@ -60,6 +49,7 @@ xml
       <ordln-puid>PUID</ordln-puid>
     </order-line>
   </order-lines>
+  <xml-generated-time>#{@expected_timestamp}</xml-generated-time>
   <ord-ord-num>ORDNUM</ord-ord-num>
   <ord-ord-date type="date">2016-05-01</ord-ord-date>
 </order>
@@ -80,6 +70,7 @@ xml
       <custom-tag>myval</custom-tag>
     </order-line>
   </order-lines>
+  <xml-generated-time>#{@expected_timestamp}</xml-generated-time>
   <ord-ord-num>ORDNUM</ord-ord-num>
   <ord-ord-date type="date">2016-05-01</ord-ord-date>
 </order>

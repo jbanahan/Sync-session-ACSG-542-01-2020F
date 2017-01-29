@@ -6,6 +6,7 @@ module OpenChain; module Api; class ApiEntityXmlizer
 
   def entity_to_xml user, entity, model_field_uids
     entity_hash = @jsonizer.entity_to_hash(user,entity,model_field_uids)
+    entity_hash['xml-generated-time'] = Time.now.utc.strftime("%Y-%m-%dT%l:%M:%S:%L%z")
     make_xml entity, entity_hash
   end
 

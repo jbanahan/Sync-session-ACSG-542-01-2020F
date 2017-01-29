@@ -5,7 +5,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   attr_accessible :message, :note, :overridden_at, :overridden_by, :state
 
   after_destroy { |rr| delete_parent_bvre rr }
-  
+
   def can_view? user
     user.view_business_validation_rule_results?
   end
@@ -18,23 +18,24 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     end
   end
 
+  # updates the state of the object based on the validation and returns true if it changed
   def run_validation obj
+    original_value = self.state
     # validation rule can be nil if it's in the process of getting deleted (which can take time since there's
     # potentially hundreds of thousands of rule results).
-    return if self.overridden_at || self.business_validation_rule.nil? || self.business_validation_rule.delete_pending?
+    return false if self.overridden_at || self.business_validation_rule.nil? || self.business_validation_rule.delete_pending?
     if self.business_validation_rule.should_skip? obj
       self.message = nil
       self.state = 'Skipped'
-      return
+      return self.state != original_value
     end
     self.message = self.business_validation_rule.run_validation(obj)
     if self.message.nil?
       self.state = 'Pass'
-    elsif self.business_validation_rule.fail_state.blank?
-      self.state = 'Fail'
     else
-      self.state = self.business_validation_rule.fail_state
+      self.state = self.business_validation_rule.fail_state || 'Fail'
     end
+    return self.state != original_value
   end
 
   def override override_user

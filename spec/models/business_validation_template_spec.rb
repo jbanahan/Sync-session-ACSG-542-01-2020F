@@ -20,15 +20,16 @@ describe BusinessValidationTemplate do
     end
     it "should create results for entries that match search criterions and don't have business_validation_result" do
       match = Factory(:entry,customer_number:'12345')
-      dont_match = Factory(:entry,customer_number:'54321')
+      # don't match
+      Factory(:entry,customer_number:'54321')
       @bvt.create_results!
       expect(BusinessValidationResult.scoped.count).to eq 1
       expect(BusinessValidationResult.first.validatable).to eq match
       expect(BusinessValidationResult.first.state).to be_nil
     end
     it "should run validation if flag set" do
-      match = Factory(:entry,customer_number:'12345')
-      @bvt.create_results! true
+      Factory(:entry,customer_number:'12345')
+      expect{@bvt.create_results! true}.to change(BusinessValidationResult,:count).from(0).to(1)
       expect(BusinessValidationResult.first.state).not_to be_nil
     end
     it "should update results for entries that match search criterions and have old business_validation_result" do
@@ -85,6 +86,7 @@ describe BusinessValidationTemplate do
       @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
       @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       @bvt.reload
+      allow_any_instance_of(Order).to receive(:create_snapshot)
     end
 
     it "should create result based on rules" do
@@ -113,6 +115,7 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationRuleResult.count).to eq 0
     end
     it "should run validation if attribute passed" do
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"Business Rule Update")
       @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
       bvr = @bvt.create_result! @o, true
       expect(bvr.validatable).to eq @o

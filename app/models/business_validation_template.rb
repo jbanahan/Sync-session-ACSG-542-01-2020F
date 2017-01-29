@@ -1,5 +1,5 @@
 require 'open_chain/stat_client'
-# This is kind of weird but because of the way the invoice line rule extends the validation rule the load ordering 
+# This is kind of weird but because of the way the invoice line rule extends the validation rule the load ordering
 # matters here, so the validation rule is required first
 require 'business_validation_rule'
 # Any customer specific business rule should be required below here
@@ -11,7 +11,7 @@ require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique
 class BusinessValidationTemplate < ActiveRecord::Base
   attr_accessible :description, :module_type, :name, :delete_pending
   validates :module_type, presence: true
-  
+
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
   has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
@@ -24,8 +24,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
   # call create_results! for all templates
   def self.create_all! run_validation = false
     OpenChain::StatClient.wall_time 'bvt_create_all' do
-      self.all.each do |b| 
-        b.create_results!(run_validation) 
+      self.all.each do |b|
+        b.create_results!(run_validation)
       end
     end
   end
@@ -48,10 +48,10 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
     return if self.search_criterions.length == 0
-    
+
     cm = CoreModule.find_by_class_name(self.module_type)
-    klass = cm.klass 
-    # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be 
+    klass = cm.klass
+    # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be
     # distinct is the core module's id.
     srch = klass.select("DISTINCT #{cm.table_name}.id").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
     srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id AND business_validation_results.business_validation_template_id = #{self.id}")
@@ -114,7 +114,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
       end
 
       if run_validation
-        bvr.run_validation
+        state_changed = bvr.run_validation
         bvr.updated_at = Time.zone.now #force save
         bvr.save!
 
@@ -123,9 +123,13 @@ class BusinessValidationTemplate < ActiveRecord::Base
         # infrequently enough that I'm not worrying about it now (only 750 total of 100K's of records we have are linked to multiple
         # templates - pretty sure even those are due to bad initial template setups)
         BusinessRuleSnapshot.create_from_entity(obj)
+
+        if state_changed
+          bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
+        end
       end
     end
-    
+
     bvr
   end
 
