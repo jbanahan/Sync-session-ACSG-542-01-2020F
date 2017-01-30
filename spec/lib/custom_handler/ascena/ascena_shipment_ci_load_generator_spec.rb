@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   let (:product) {
     product = Factory(:product)
     product.update_custom_value! cdefs[:prod_part_number], "PARTNO"
-    product.update_custom_value! cdefs[:prod_department_code], "DEPT"
+    product.update_custom_value! cdefs[:prod_department_code], 1
     product
   }
 
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       line = ci_load.invoices.first.invoice_lines.first
 
       expect(line.part_number).to eq "PARTNO"
-      expect(line.department).to eq "DEPT"
+      expect(line.department).to eq 1
       expect(line.cartons).to eq 10
       expect(line.gross_weight).to eq BigDecimal("100.50")
       expect(line.pieces).to eq 99
@@ -77,6 +77,30 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       expect(line.pieces).to eq 99
       expect(line.buyer_customer_number).to eq "ASCE"
     end
+
+    it "looks up country iso code by name if PO country origin is over 2 chars" do
+      order.order_lines.first.update_attributes! country_of_origin: "Guatemala"
+      Factory(:country, iso_code: "GT", name: "Guatemala")
+
+      ci_load = subject.generate_entry_data shipment
+      expect(ci_load.invoices.length).to eq 1
+
+      expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
+      line = ci_load.invoices.first.invoice_lines.first
+      expect(line.country_of_origin).to eq "GT"
+    end
+
+    it "blanks country of origin if non-iso PO value used with no country found" do
+      order.order_lines.first.update_attributes! country_of_origin: "Guatemala"
+
+      ci_load = subject.generate_entry_data shipment
+      expect(ci_load.invoices.length).to eq 1
+
+      expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
+      line = ci_load.invoices.first.invoice_lines.first
+      expect(line.country_of_origin).to be_nil
+    end
+
   end
 
   describe "generate_and_send" do

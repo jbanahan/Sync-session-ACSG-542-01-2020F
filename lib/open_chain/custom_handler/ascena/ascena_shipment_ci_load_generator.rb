@@ -29,7 +29,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
       cil = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
       if line.product
         cil.part_number = line.product.custom_value(cdefs[:prod_part_number])
-        cil.department = line.product.custom_value(cdefs[:prod_department_code])
+        dept = line.product.custom_value(cdefs[:prod_department_code])
+        cil.department = dept ? dept.to_i : nil
       end
       cil.cartons = line.carton_qty
       cil.gross_weight = line.gross_kgs
@@ -45,6 +46,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
         # with dubious data in them.
         if order.custom_value(cdefs[:ord_type]).to_s.strip != "NONAGS"
           cil.country_of_origin = ol.country_of_origin
+
+          # If the country of origin is more than 2 chars...then attempt to look up the Country
+          # by the value given.
+          if cil.country_of_origin.to_s.length > 2
+            country = Country.where(name: cil.country_of_origin).first
+            cil.country_of_origin = country ? country.iso_code : nil
+          end
 
           if ol.price_per_unit.to_f != 0 && cil.pieces.to_f != 0
             cil.foreign_value = ol.price_per_unit * cil.pieces

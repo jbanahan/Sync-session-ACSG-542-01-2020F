@@ -213,7 +213,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   end
 
   def nonzero? val
-    val.try(:nonzero?)
+    val.to_f.try(:nonzero?)
   end
 
   class MissingCiLoadDataError < StandardError
