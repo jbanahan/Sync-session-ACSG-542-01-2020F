@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_po"
+    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"
   end
 
   def self.parse data, opts={}
@@ -320,9 +320,8 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     end
 
     Lock.with_lock_retry(product) do 
-      # Don't update descriptions for prepacks, the is because the descriptions include the size and the color
-      # which means every prepack with multiple lines will update (and snapshot) the product for every subline.
-      product.name = description if product.name.blank? || !(style_segment.segment_type == "SLN")
+      # Don't set the description from the PO...the description is a marketing description and is not suitable
+      # for customs usage.
 
       cl = nil
       tariff = nil

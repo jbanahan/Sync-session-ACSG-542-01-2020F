@@ -63,7 +63,6 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
       p = line.product
       expect(p.unique_identifier).to eq "BURLI-9050-E"
-      expect(p.name).to eq "PARIS CRIB N CHANGER"
       expect(p.classifications.length).to eq 1
       expect(p.classifications.first.tariff_records.length).to eq 1
       t = p.classifications.first.tariff_records.first
@@ -161,11 +160,8 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.line_number).to eq 1002
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "RED"
 
-      # Now, make sure the product was created and the description was not updated
-      # to match the second subline's color (so every subline doesn't change the
-      # description).
+      # Now, make sure the product was created 
       p = line.product
-      expect(p.name).to eq "BEADOS S4 4 COLOR PEN"
       expect(p.entity_snapshots.length).to eq 1
     end
 
@@ -259,6 +255,12 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
       existing_order.reload
       expect(existing_order.order_lines.length).to eq 0
+    end
+  end
+
+  describe "integration_folder" do
+    it "uses the correct folder" do
+      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"
     end
   end
 end
