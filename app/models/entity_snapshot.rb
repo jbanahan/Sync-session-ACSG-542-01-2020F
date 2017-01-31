@@ -20,8 +20,15 @@ class EntitySnapshot < ActiveRecord::Base
     es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
     es.write_s3 json
     es.save
+    write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')
     OpenChain::EntityCompare::EntityComparator.handle_snapshot es
     es
+  end
+
+  def self.write_snapshot_caller es
+    bucket_name = "#{Rails.env}.#{MasterSetup.get.system_code}.snapshot_callers.vfitrack.net"
+    OpenChain::S3.create_bucket!(bucket_name, versioning: false) unless OpenChain::S3.bucket_exists?(bucket_name)
+    OpenChain::S3.upload_data(bucket_name,"#{es.recordable_type}/#{es.id}.txt",caller.join("\n"))
   end
 
   def snapshot_json as_string = false
