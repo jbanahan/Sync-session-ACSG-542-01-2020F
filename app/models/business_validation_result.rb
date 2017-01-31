@@ -12,6 +12,7 @@ class BusinessValidationResult < ActiveRecord::Base
   end
 
   def run_validation
+    original_state = self.state
     base_state = 'Skipped'
     results = self.business_validation_rule_results
     validation_states = results.collect do |r|
@@ -21,7 +22,9 @@ class BusinessValidationResult < ActiveRecord::Base
     validation_states.uniq.each do |vs|
       base_state = self.class.worst_state(base_state,vs)
     end
-    self.state = base_state 
+    self.state = base_state
+    # return true if state changed
+    return original_state != self.state
   end
 
   def self.worst_state s1, s2
