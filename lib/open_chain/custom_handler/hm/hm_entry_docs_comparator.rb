@@ -115,8 +115,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
           data[:tariff_description] = mf(tariff, 'cit_tariff_description').to_s
 
           if data[:per_piece_value].nil?
-            entered_value = BigDecimal.new(mf(tariff, 'cit_entered_value').to_s)
-            pieces = BigDecimal.new(mf(line, 'cil_units').to_s)
+            entered_value = mf(tariff, 'cit_entered_value')
+            pieces = mf(line, 'cil_units')
 
             if pieces.nonzero?
               data[:per_piece_value] = (entered_value / pieces).round(2)

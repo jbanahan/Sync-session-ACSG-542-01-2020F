@@ -137,7 +137,7 @@ class Entry < ActiveRecord::Base
   end
 
   def first_sale_savings
-    commercial_invoice_lines.sum{|cil| cil.first_sale_savings }
+    commercial_invoice_lines.map {|cil| cil.first_sale_savings }.compact.sum
   end
 
   private

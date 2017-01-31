@@ -569,6 +569,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload", :via => :post
   match "/custom_features/eddie_bauer_7501/:id/download" => "custom_features#eddie_bauer_7501_download", :via => :get
 
+  match "/custom_features/ascena_product" => "custom_features#ascena_product_index", :via => :get
+  match "/custom_features/ascena_product/upload" => "custom_features#ascena_product_upload", :via => :post
+  match "/custom_features/ascena_product/:id/download" => "custom_features#ascena_product_download", :via => :get
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

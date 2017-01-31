@@ -29,6 +29,7 @@ require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
+require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -58,6 +59,7 @@ class CustomFeaturesController < ApplicationController
   LUMBER_ORDER_CLOSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser'
   EDDIE_7501_AUDIT ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler'
   HM_PO_LINE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmPoLineParser'
+  ASCENA_PARTS_PARSER ||= 'OpenChain::CustomHandler::Ascena::AscenaProductUploadParser'
 
   def index
     render :layout=>'one_col'
@@ -521,6 +523,18 @@ class CustomFeaturesController < ApplicationController
 
   def hm_po_line_parser_download
     generic_download "H&M PO Lines"
+  end
+
+  def ascena_product_index
+    generic_index OpenChain::CustomHandler::Ascena::AscenaProductUploadParser.new(nil), ASCENA_PARTS_PARSER, "Ascena Product Upload"
+  end
+
+  def ascena_product_upload
+    generic_upload ASCENA_PARTS_PARSER, "Ascena Product Upload", "ascena_product"
+  end
+
+  def ascena_product_download
+    generic_download "Ascena Product Upload"
   end
 
   private

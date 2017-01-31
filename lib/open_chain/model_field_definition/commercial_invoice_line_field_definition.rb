@@ -84,25 +84,28 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [55, :cil_first_sale_savings, :first_sale_savings, "First Sale Savings", {data_type: :decimal, :read_only=>true,
         :import_lambda=>lambda{|o,d| "First Sale Savings ignored (read only)"},
         :export_lambda=>lambda { |obj| obj.first_sale_savings },
-        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0, 
-                                    (SELECT ROUND((cil.contract_amount - cil.value) * (cit.duty_amount / cit.entered_value), 2)
+        :qualified_field_name=>"(SELECT ROUND((cil.contract_amount - cil.value) * (cit.duty_amount / cit.entered_value), 2)
                                      FROM commercial_invoice_lines cil 
                                        INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id 
                                      WHERE cil.id = commercial_invoice_lines.id 
-                                     LIMIT 1 ))"
+                                     LIMIT 1)"
       }],
       [56, :cil_first_sale_difference, :first_sale_difference, "First Sale Difference", {data_type: :decimal, :read_only=>true,
         :import_lambda=>lambda{|o,d| "First Sale Difference ignored (read only)"},
         :export_lambda=>lambda { |obj| obj.first_sale_difference },
-        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0,
-                                    (SELECT ROUND((cil.contract_amount - cil.value), 2)
-                                     FROM commercial_invoice_lines cil
-                                     WHERE cil.id = commercial_invoice_lines.id))"
+        :qualified_field_name=>"ROUND((commercial_invoice_lines.contract_amount - commercial_invoice_lines.value), 2)"
       }],
       [57, :cil_con_container_number, :container_number, "Container Number", {:data_type=>:string, :read_only=>true,
         :import_lambda=>lambda{ |o,d| "Container Number ignored (read only)"},
         :export_lambda=>lambda{ |obj| obj.container.try(:container_number) },
         :qualified_field_name=> "(SELECT container_number FROM containers where containers.id = commercial_invoice_lines.container_id)"
+        }],
+      [58, :cil_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}],
+      [59, :cil_contract_amount_unit_price, :cil_contract_amount_unit_price, "Contract Amount / Unit", {data_type: :decimal, read_only: true,
+        import_lambda: lambda {|o,d| "Contract Amount / Unit ignored (read only)"},
+        export_lambda: lambda {|obj| obj.first_sale_unit_price },
+        # Purposefully allowing for null values here because if quantity or contract amount is null I want this value to also be null
+        qualified_field_name: "ROUND((commercial_invoice_lines.contract_amount / commercial_invoice_lines.quantity), 2)"
         }]
     ]
   end

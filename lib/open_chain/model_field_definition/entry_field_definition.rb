@@ -26,7 +26,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [18,:ent_hbols,:house_bills_of_lading,"House Bills",{:data_type=>:text}],
       [19,:ent_sbols,:sub_house_bills_of_lading,"Sub House Bills",{:data_type=>:text}],
       [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}],
-      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date}],
       [22,:ent_carrier_code,:carrier_code,"Carrier Code",{:data_type=>:string}],
       [23,:ent_total_packages,:total_packages,"Total Packages",{:data_type=>:integer}],
       [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal,:currency=>:usd}],
@@ -139,7 +139,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       ],
       [93,:ent_total_gst,:total_gst,"Total GST",{:data_type=>:decimal}],
       [94,:ent_total_duty_gst,:total_duty_gst,"Total Duty & GST",{:data_type=>:decimal}],
-      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"First Summary Sent Date",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"First Summary Sent Date",{:data_type=>:datetime}],
       [96,:ent_paperless_release,:paperless_release,"Paperless Entry Summary",{:data_type=>:boolean}],
       [97,:ent_census_warning,:census_warning,"Census Warning",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [98,:ent_error_free_release,:error_free_release,"Error Free Release",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
@@ -249,7 +249,9 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
                                          INNER JOIN commercial_invoice_lines cil ON inv.id = cil.commercial_invoice_id
                                          WHERE entries.id = inv.entry_id AND cil.contract_amount > 0), 0)"
       }],
-      [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}]
+      [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}],
+      [165,:ent_arrival_notice_receipt_date, :arrival_notice_receipt_date, "Arrival Notice Receipt Date", {:data_type=>:datetime}],
+      [166, :ent_total_non_dutiable_amount, :total_non_dutiable_amount, "Total Non-Dutiable Amount", {data_type: :decimal, currency: :usd}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

@@ -1,0 +1,31 @@
+<% content_for :head_tags do %>
+<style type="text/css">
+  #layout thead td {padding-left: 3px; padding-right: 3px; font-size: 75%; border: 1px solid black;}
+  #layout {margin-top: 20px; margin-bottom: 25px;}
+</style>
+<% end %>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY Part Files in Excel or CSV format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
+<table id="layout">
+  <thead>
+    <tr>
+      <td>A = Brand</td>
+      <td>B = Item Number</td>
+      <td>C = Garment Type</td>
+      <td>D = ParentID</td>
+      <td>E = Department</td>
+      <td>F = Class</td>
+      <td>G = Description</td>
+      <td>H = Composition</td>
+      <td>I = MFG Country</td>
+      <td>J = HTS Code</td>
+      <td>Column K - AL = Anything</td>
+      <td>AM = Customs Description</td>
+    </tr>
+  </thead>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Ascena Parts Upload", custom_feature: "ascena_product"} %>

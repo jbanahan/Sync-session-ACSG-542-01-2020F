@@ -29,15 +29,26 @@ class CommercialInvoiceLine < ActiveRecord::Base
   end
 
   def first_sale_savings
+    return BigDecimal("0") if contract_amount.try(:zero?)
+
+    # If we don't have a contract amount (.ie it's nil), then any calculation based off it should be nil too
     cit = commercial_invoice_tariffs.first
-    if contract_amount.nil? || cit.nil? || contract_amount.zero?
-      0
+    if contract_amount.nil? || cit.nil?
+      nil
     else
       ((contract_amount - value) * (cit.duty_amount / cit.entered_value)).round(2)
     end
   end
 
   def first_sale_difference
-    contract_amount.nil? || contract_amount.zero? ? 0 : (contract_amount - value).round(2)
+    return BigDecimal("0") if contract_amount.try(:zero?)
+
+    # If we don't have a contract amount (.ie it's nil), then any calculation based off it should be nil too
+    contract_amount.nil? ? nil : (contract_amount - value).round(2)
+  end
+
+  def first_sale_unit_price
+    # If we don't have a contract amount (.ie it's nil), then any calculation based off it should be nil too
+    (contract_amount.nil? || quantity.nil? || quantity.zero?) ? nil : (contract_amount / quantity).round(2)
   end
 end

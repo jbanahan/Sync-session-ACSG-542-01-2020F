@@ -270,16 +270,43 @@ class FileImportProcessor
       @data.lines.count - (@import_file.starting_row - 1)
     end
     def get_rows &block
-      r = 0
       start_row = @import_file.starting_row - 1
-      CSV.parse(@data,{:skip_blanks=>true}) do |row|
-        # Skip blanks apparently only skips lines consisting solely of a newline,
-        # it doesn't skip lines that solely consist of commas.
-        # If find returns any non-blank value then we can process the line.
-        has_values = row.find {|c| !c.blank?}
-        yield row if r >= start_row && has_values
-        r += 1
+      begin        
+        utf_8_parse @data, start_row, block
+      rescue ArgumentError => e
+        if e.message =~ /invalid byte sequence in UTF-8/
+          windows_1252_parse @data, start_row, block
+        else
+          raise e
+        end
       end
+    end
+
+    private
+
+    def utf_8_parse data, start_row, block
+      row_num = 0
+      CSV.parse(@data, skip_blanks: true) do |row|
+        skip_comma_blanks row, row_num, start_row, block
+        row_num += 1
+      end
+    end
+
+    def windows_1252_parse data, start_row, block
+      row_num = 0
+      CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
+        converted_row = row.map {|r| r.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?") if r }
+        skip_comma_blanks converted_row, row_num, start_row, block
+        row_num += 1
+      end      
+    end
+
+    def skip_comma_blanks row, row_num, start_row, block
+      # Skip blanks apparently only skips lines consisting solely of a newline,
+      # it doesn't skip lines that solely consist of commas.
+      # If find returns any non-blank value then we can process the line.
+      has_values = row.find {|c| !c.blank?}
+      block.call row if row_num >= start_row && has_values
     end
   end
 

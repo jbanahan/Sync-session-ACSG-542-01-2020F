@@ -19,6 +19,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     98 => {attribute: :docs_received_date, datatype: :date},
     4 => :file_logged_date,
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
+    10 => :arrival_notice_receipt_date,
     11 => {attribute: :eta_date, datatype: :date},
     12 => :arrival_date,
     19 => :release_date,
@@ -263,6 +264,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.customer_number = e[:cust_no]
       entry.entry_number = e[:entry_no]
       entry.customer_number = e[:cust_no]
+      entry.importer_tax_id = e[:irs_no]
       entry.customer_name = e[:cust_name]
       entry.importer = get_importer entry.customer_number, entry.customer_name
       entry.merchandise_description = e[:desc_of_goods]
@@ -370,6 +372,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.commercial_invoices.each do |ci|
         accumulations[:commercial_invoice_numbers] << ci.invoice_number
         totals[:total_invoiced_value] += ci.invoice_value_foreign unless ci.invoice_value_foreign.nil?
+        totals[:total_non_dutiable_amount] += ci.non_dutiable_amount unless ci.non_dutiable_amount.nil?
         accumulations[:total_packages_uom] << ci.total_quantity_uom
 
         ci.commercial_invoice_lines.each do |il|
@@ -467,6 +470,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.total_cvd = value if value.nonzero?
         when :total_add
           entry.total_add = value if value.nonzero?
+        when :total_non_dutiable_amount
+          entry.total_non_dutiable_amount = value if value.nonzero?
         end
       end
 
@@ -615,6 +620,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       inv.invoice_value = inv.invoice_value_foreign * inv.exchange_rate
       inv.total_quantity = i[:qty]
       inv.total_quantity_uom = i[:qty_uom]
+      inv.non_dutiable_amount = parse_decimal(i[:non_dutiable_amt])
 
       # Find the first line w/ a non-blank mid and use that
       mid = Array.wrap(i[:lines]).find {|l| !l[:mid].blank?}.try(:[], :mid)
@@ -634,6 +640,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.related_parties = l[:related_parties].to_s.upcase == "Y"
       line.vendor_name = l[:mid_name]
       line.volume = parse_decimal l[:volume]
+      if line.quantity && line.quantity.nonzero? && line.value
+        line.unit_price = (line.value / line.quantity).round(2)
+      end
+      
       # Contract is sent with decimal places, so don't do the offset stuff when parsing
       line.contract_amount = parse_decimal l[:contract], no_offset: true
       line.department = l[:department] unless l[:department].to_s == "0"
@@ -650,6 +660,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
       line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
       line.value_appraisal_method = l[:value_appraisal_method]
+      line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i

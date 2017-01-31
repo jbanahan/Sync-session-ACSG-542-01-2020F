@@ -70,12 +70,12 @@ describe CommercialInvoiceLine do
 
     it "returns 0 when contract amount is nil" do
       line.update_attributes(contract_amount: nil)
-      expect(line.first_sale_savings).to eq 0
+      expect(line.first_sale_savings).to be_nil
     end
 
-    it "returns 0 when there's no tariff" do
+    it "returns nil when there's no tariff" do
       line.update_attributes(commercial_invoice_tariffs: [])
-      expect(line.first_sale_savings).to eq 0
+      expect(line.first_sale_savings).to be_nil
     end
   end
 
@@ -91,9 +91,31 @@ describe CommercialInvoiceLine do
       expect(line.first_sale_difference).to eq 0
     end
 
-    it "returns 0 when contract amount is nil" do
+    it "returns nil when contract amount is nil" do
       line.update_attributes(contract_amount: nil)
-      expect(line.first_sale_difference).to eq 0
+      expect(line.first_sale_difference).to be_nil
+    end
+  end
+
+  describe "first_sale_unit_price" do
+    it "detrmines unit price from contract amount / quantity" do
+      expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 3).first_sale_unit_price).to eq BigDecimal("33.33")
+    end
+
+    it "returns nil if contract amount is missing" do
+      expect(Factory(:commercial_invoice_line, quantity: 3).first_sale_unit_price).to be_nil
+    end
+
+    it "returns 0 if contract amount is zero" do
+      expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("0"), quantity: 3).first_sale_unit_price).to eq BigDecimal("0")
+    end
+
+    it "returns nil if quantity is nil" do
+      expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("100")).first_sale_unit_price).to be_nil
+    end
+
+    it "returns nil if quantity is 0" do
+      expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 0).first_sale_unit_price).to be_nil
     end
   end
 end

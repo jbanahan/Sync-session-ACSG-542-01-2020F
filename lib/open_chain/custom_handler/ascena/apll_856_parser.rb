@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         shipment_segments << seg
         if seg.segment_type=='SE'
           begin
-            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
+            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
           rescue
             errors << $!
           end
@@ -35,11 +35,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         Tempfile.create(["APLLEDI-#{isa_code}",'.txt']) do |f|
           f << data
           f.flush
-          body = "There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.\n\nErrors:\n"
-          errors.each {|err| body << "#{err.message}\n"}
+          body = "<p>There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.</p><p>Errors:<br><ul>"
+          errors.each {|err| body << "<li>#{ERB::Util.html_escape(err.message)}</li>"}
+          body << "</ul></p>"
           to = "ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
-          OpenMailer.send_simple_html(to, subject, body, [f]).deliver!
+          OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver!
         end
       end
     end
@@ -189,6 +190,6 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.importer
-    @importer ||= Company.where(system_code: "ASCE").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
+    @importer ||= Company.where(system_code: "ASCENA").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
   end
 end; end; end; end

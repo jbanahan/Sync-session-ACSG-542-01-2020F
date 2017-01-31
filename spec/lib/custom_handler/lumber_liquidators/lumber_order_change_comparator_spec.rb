@@ -214,30 +214,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   end
 
   describe '#generate ll xml' do
-    it 'should send xml to ll if ord_planned_handover_date has changed' do
-      o = double ('order')
+    it 'should send xml if OrderData.send_sap_update? returns true' do
+      o = double('order')
       od = double('OrderData-Old')
-      allow(od).to receive(:planned_handover_date).and_return Date.new(2016,5,1)
       nd = double('OrderData-New')
-      allow(nd).to receive(:planned_handover_date).and_return Date.new(2016,5,2)
+      expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return true
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
       described_class.generate_ll_xml(o,od,nd)
     end
-
-    it "sends xml if old data is blank and new data has planned handover date" do
-      o = double ('order')
+    it 'should not send xml OrderData.send_sap_update? returns false' do
+      o = double('order')
+      od = double('OrderData-Old')
       nd = double('OrderData-New')
-      allow(nd).to receive(:planned_handover_date).and_return Date.new(2016,5,2)
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
-      described_class.generate_ll_xml(o,nil,nd)
-    end
-
-    it "does not sends xml if old data is blank and new data does not have planned handover date" do
-      o = double ('order')
-      nd = double('OrderData-New')
-      allow(nd).to receive(:planned_handover_date).and_return nil
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
-      described_class.generate_ll_xml(o,nil,nd)
+      expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return false
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to_not receive(:send_order).with(o)
+      described_class.generate_ll_xml(o,od,nd)
     end
   end
 
@@ -463,11 +454,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         currency:'USD',
         terms_of_payment:'NT30',
         terms_of_sale:'FOB',
-        fob_point:'Shanghai'
+        fob_point:'Shanghai',
+        approval_status:'Approved'
         )
         o.update_custom_value!(@cdefs[:ord_country_of_origin],'CN')
         sap_extract = Time.now.utc
         o.update_custom_value!(@cdefs[:ord_sap_extract],sap_extract)
+        expect(o).to receive(:business_rules_state).and_return('Fail')
         o.reload
 
         expected_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0"
@@ -483,6 +476,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od.sap_extract_date.to_i).to eq sap_extract.to_i
         expect(od.ship_window_start).to eq '2015-01-01'
         expect(od.ship_window_end).to eq '2015-01-10'
+        expect(od.business_rule_state).to eq 'Fail'
+        expect(od.approval_status).to eq 'Approved'
       end
     end
 
@@ -538,6 +533,43 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       it 'should return false if old_data is nil' do
         nd = double(:nd)
         expect(order_data_klass.vendor_approval_reset_fields_changed?(nil,nd)).to be_falsey
+      end
+    end
+
+    describe '#send_sap_update?' do
+      def make_data data_name
+        r = double(data_name)
+        allow(r).to receive(:approval_status).and_return ''
+        allow(r).to receive(:business_rule_state).and_return 'Pass'
+        allow(r).to receive(:planned_handover_date).and_return Date.new(2017,1,2)
+        r
+      end
+      it 'should return true if old_data is nil' do
+        nd = make_data('new-data')
+        expect(order_data_klass.send_sap_update?(nil,nd)).to be_truthy
+      end
+      it 'should return true if approval status changed' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:approval_status).and_return 'Approved'
+        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+      end
+      it 'should return true if business rule state changed' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:business_rule_state).and_return 'Fail'
+        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+      end
+      it 'should return true if planned handover date changed' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:planned_handover_date).and_return Date.new(2017,1,3)
+        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+      end
+      it 'should return false if no changes' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(order_data_klass.send_sap_update?(od,nd)).to be_falsey
       end
     end
 

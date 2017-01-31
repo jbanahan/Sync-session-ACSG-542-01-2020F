@@ -57,7 +57,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
   end
 
   # Simple helper to reach into the entity hash and extract model fields
-  def mf(entity_hash, field_name)
+  def mf(entity_hash, field_name, coerce: true)
     entity_hash = unwrap_entity(entity_hash)
 
     fields = entity_hash.try(:[], 'model_fields')
@@ -65,6 +65,11 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     if fields
       value = fields.try(:[], field_name)
     end
+
+    if value && coerce
+      value = coerce_model_field_value(field_name, value)
+    end
+
     value
   end
 
@@ -84,6 +89,35 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     end
 
     obj
+  end
+
+  # This method assumes the values given are coming raw from a snapshot JSON,
+  # and then converts that value back to the data type that is expected that the model
+  # field represents.  This largely exists for decimal, date, datetime fields.
+  def coerce_model_field_value model_field_uid, value
+    return nil if value.nil?
+
+    # Handled just in case we remove a model field...in this case we just want the raw value returned
+    field = ModelField.find_by_uid model_field_uid
+    return value if field.blank?
+
+    case field.data_type.to_sym
+    when :date
+      return value.blank? ? nil : Date.strptime(value, "%Y-%m-%d")
+    when :datetime
+      # The date value should all be written out in UTC, so make sure they're read back as such, but then
+      # make sure they're returned to the caller using the current Time.zone value
+      return value.blank? ? nil : ActiveSupport::TimeZone["UTC"].parse(value).in_time_zone(Time.zone)
+    when :decimal
+      # Rails stores decimals as string (due to double rounding issues in javascript),
+      # so handle the datatype conversion back to BigDecimal
+      return value.blank? ? nil : BigDecimal(value.to_s)
+    else
+      # all other object types are handled natively by json, so we don't have
+      # to do anything with them here (integer, string, boolean)
+      return value
+    end
+
   end
 
 

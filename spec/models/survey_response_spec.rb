@@ -152,53 +152,72 @@ describe SurveyResponse do
     end
   end
   describe "invite_user!" do
-    before :each do
-      MasterSetup.get.update_attributes(:request_host=>"a.b.c")
-      @survey = Factory(:question).survey
-      @survey.update_attributes(:email_subject=>"TEST SUBJ",:email_body=>"EMLBDY")
-      @u = Factory(:user)
-    end
+    let! (:master_setup) { stub_master_setup }
+    let (:survey) {
+      survey = Factory(:question).survey
+      survey.update_attributes(:email_subject=>"TEST SUBJ",:email_body=>"EMLBDY")
+      survey
+    }
+    let (:user) { Factory(:user) }
+
     context "assigned to a user" do
+      let (:now) { Time.zone.now }
+      let (:response) { 
+        response = survey.generate_response! user
+        response.invite_user!
+        response
+      }
+
       before :each do
-        @response = @survey.generate_response! @u
-        @response.invite_user!
+        Timecop.freeze(now) do 
+          response
+        end
       end
-      it "should log that notification was sent" do
-        expect(@response.survey_response_logs.collect{ |log| log.message}).to include("Invite sent to #{@u.email}")
+
+      it "logs that notification was sent" do
+        expect(response.survey_response_logs.collect{ |log| log.message}).to include("Invite sent to #{user.email}")
       end
-      it "should update email_sent_date if not set" do
-        @response.reload
-        expect(@response.email_sent_date).to be > 1.second.ago
+
+      it "updates email_sent_date if not set" do
+        response.reload
+        expect(response.email_sent_date.to_i).to eq now.to_i
       end
-      it "should email user with survey email, body, and link" do
+      it "emails user with survey email, body, and link" do
         last_delivery = ActionMailer::Base.deliveries.last
-        expect(last_delivery.to).to eq [@u.email]
-        expect(last_delivery.subject).to eq @survey.email_subject
-        expect(last_delivery.body.raw_source).to include(@survey.email_body)
-        expect(last_delivery.body.raw_source).to include("<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>")
+        expect(last_delivery.to).to eq [user.email]
+        expect(last_delivery.subject).to eq survey.email_subject
+        expect(last_delivery.body.raw_source).to include(survey.email_body)
+        expect(last_delivery.body.raw_source).to include("<a href='http://localhost:3000/survey_responses/#{response.id}'>http://localhost:3000/survey_responses/#{response.id}</a>")
       end
     end
 
     context "assigned to a group" do
-      before :each do
-        @group = Factory(:group)
-        @u.groups << @group
-        @u2 = Factory(:user, groups: [@group])
+      let (:user2) { Factory(:user) }
 
-        @response = @survey.generate_group_response! @group
-        @response.invite_user!
-      end
+      let (:group) {
+        group = Factory(:group)
+        user.groups << group
+        user2
+        user2.groups << group
+        group
+      }
+
+      let (:response) {
+        response = survey.generate_group_response! group
+        response.invite_user!
+        response
+      }
 
       it "sends an email notification to all members of the group" do
-        @response.reload
-        expect(@response.survey_response_logs.collect{ |log| log.message}).to include "Invite sent to #{@u.email}, #{@u2.email}"
-        expect(@response.email_sent_date.to_date).to eq Time.zone.now.to_date
+        response.reload
+        expect(response.survey_response_logs.collect{ |log| log.message}).to include "Invite sent to #{user.email}, #{user2.email}"
+        expect(response.email_sent_date.to_date).to eq Time.zone.now.to_date
 
         last_delivery = ActionMailer::Base.deliveries.last
-        expect(last_delivery.to).to eq [@u.email, @u2.email]
-        expect(last_delivery.subject).to eq @survey.email_subject
-        expect(last_delivery.body.raw_source).to include @survey.email_body
-        expect(last_delivery.body.raw_source).to include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
+        expect(last_delivery.to).to eq [user.email, user2.email]
+        expect(last_delivery.subject).to eq survey.email_subject
+        expect(last_delivery.body.raw_source).to include survey.email_body
+        expect(last_delivery.body.raw_source).to include "<a href='http://localhost:3000/survey_responses/#{response.id}'>http://localhost:3000/survey_responses/#{response.id}</a>"
       end
     end
   end

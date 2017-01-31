@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 describe OpenChain::Report::HmStatisticsReport do
-  let!(:day_before) {DateTime.new(2016,01,14)}
-  let!(:assigned_day) {DateTime.new(2016,01,15)}
-  let!(:day_after) {DateTime.new(2016,01,16)}
+  let!(:day_before) {ActiveSupport::TimeZone["UTC"].local(2016,01,14)}
+  let!(:assigned_day) {ActiveSupport::TimeZone["UTC"].local(2016,01,15)}
+  let!(:day_after) {ActiveSupport::TimeZone["UTC"].local(2016,01,16)}
   let!(:report) { described_class.new }
 
   describe "run_report" do
@@ -37,12 +37,13 @@ describe OpenChain::Report::HmStatisticsReport do
       ocean = wb.worksheets[1]
       expect(ocean.name).to eq "Ocean"
       expect(ocean.row(0)).to eq ["Export Country Codes", "Transport Mode Code", "Release Date", "Invoice No.", "Container No.", "Entry No."]
-      expect(ocean.row(1)[0..5]).to eq [ "US", "10", assigned_day, "123456", "cont num", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..5]'
+      tz_adj_assigned_day = assigned_day.in_time_zone(u.time_zone).strftime("%Y-%m-%d %H:%M")
+      expect(ocean.row(1)[0..5]).to eq [ "US", "10", tz_adj_assigned_day, "123456", "cont num", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..5]'
       
       air = wb.worksheets[2]
       expect(air.name).to eq "Air"
       expect(air.row(0)).to eq ["Export Country Codes", "House Bills", "Master Bills", "Transport Mode Code", "Release Date", "Invoice No.", "Entry No."]
-      expect(air.row(1)[0..6]).to eq ["US", "house", "master", "40", assigned_day, "123456", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..6]'
+      expect(air.row(1)[0..6]).to eq ["US", "house", "master", "40", tz_adj_assigned_day, "123456", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..6]'
     end
   end
 
@@ -54,8 +55,8 @@ describe OpenChain::Report::HmStatisticsReport do
       adjusted_end = "2016-02-01 05:00:00"
       expect(Spreadsheet::Workbook).to receive(:new).and_return wb
       expect(report).to receive(:add_summary_sheet).with(wb, adjusted_start, adjusted_end)
-      expect(report).to receive(:add_ocean_sheet).with(wb, adjusted_start, adjusted_end)
-      expect(report).to receive(:add_air_sheet).with(wb, adjusted_start, adjusted_end)
+      expect(report).to receive(:add_ocean_sheet).with(wb, adjusted_start, adjusted_end, u.time_zone)
+      expect(report).to receive(:add_air_sheet).with(wb, adjusted_start, adjusted_end, u.time_zone)
       expect(report).to receive(:workbook_to_tempfile)
       report.run(u, {'start_date' => '2016-01-01', 'end_date' => '2016-02-01'})
     end

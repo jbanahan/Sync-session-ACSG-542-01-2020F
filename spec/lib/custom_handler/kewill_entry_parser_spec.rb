@@ -16,6 +16,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       @e = {
         'cust_no' => 'TEST',
+        'irs_no' => "12-23456789",
         'file_no' => 12345,
         'entry_no' => '316123456',
         'cr_certification_output_mess' => 'CERT MESSAGE',
@@ -109,7 +110,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99310, 'date'=>201503020800},
           {'date_no'=>99311, 'date'=>201503020900},
           {'date_no'=>99202, 'date'=>201503021000},
-          {'date_no'=>5023, 'date'=>201701051200}
+          {'date_no'=>5023, 'date'=>201701051200},
+          {'date_no'=>10, 'date'=>201701031200}
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -156,6 +158,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'value_tot' => 12500,
             'qty' => 99,
             'qty_uom' => 'PCS',
+            'non_dutiable_amt' => 12345,
             'lines' => [
               {
                 'ci_line_no' => 10,
@@ -181,6 +184,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "value_foreign" => 99999,
                 "container_no" => "CONT1",
                 'value_appraisal_method' => "F",
+                'non_dutiable_amt' => 12345,
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -285,6 +289,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             'value_tot' => 12500,
             'qty' => 99,
             'qty_uom' => 'PCS',
+            'non_dutiable_amt' => 12345,
             'lines' => [
               {
                 'ci_line_no' => 10,
@@ -352,6 +357,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.fda_message).to eq "FDA MESSAGE"
       expect(entry.customer_number).to eq "TEST"
       expect(entry.customer_name).to eq "CUST NAME"
+      expect(entry.importer_tax_id).to eq "12-23456789"
       importer = Company.where(importer: true, alliance_customer_number: "TEST").first
       expect(importer).not_to be_nil
       expect(entry.importer).to eq importer
@@ -422,6 +428,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.first_release_date).to eq tz.parse "201503021000"
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
       expect(entry.cancelled_date).to eq tz.parse "201701051200"
+      expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
@@ -430,6 +437,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.house_bills_of_lading).to eq "HOUSE\n SCAC2HOUSE2\n SCACHOUSE"
       expect(entry.sub_house_bills_of_lading).to eq "SUB\n SUB2"
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
+      expect(entry.total_non_dutiable_amount).to eq BigDecimal("246.9")
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -535,6 +543,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(ci.total_quantity_uom).to eq 'PCS'
       # MID is pulled up from the first line.
       expect(ci.mfid).to eq "MANFU"
+      expect(ci.non_dutiable_amount).to eq BigDecimal("123.45")
 
       line = ci.commercial_invoice_lines.first
       expect(line.line_number).to eq 1
@@ -578,6 +587,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.fda_release_date).to be_nil
       expect(line.value_appraisal_method).to eq "F"
       expect(line.first_sale).to be_truthy
+      expect(line.non_dutiable_amount).to eq BigDecimal("123.45")
+      expect(line.unit_price).to eq BigDecimal("95.23")
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -1029,6 +1040,24 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       @e['commercial_invoices'].first['lines'].first['containers'].first["container_no"] = "NOTACONTAINER"
       entry = subject.process_entry @e
       expect(entry.commercial_invoices.first.commercial_invoice_lines.first.container.container_number).to eq "CONT1"
+    end
+
+    it "handles missing quantity value when calculating unit_price" do
+      @e['commercial_invoices'].first['lines'].first['qty'] = nil
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to be_nil
+    end
+
+    it "handles zero quantity value when calculating unit_price" do
+      @e['commercial_invoices'].first['lines'].first['qty'] = 0
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to be_nil
+    end
+
+    it "handles missing value when calculating unit price" do
+      @e['commercial_invoices'].first['lines'].first['value_us'] = nil
+      entry = subject.process_entry @e
+      expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to eq 0
     end
   end
 

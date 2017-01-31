@@ -9,6 +9,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   let (:product) {
     product = Factory(:product)
     product.update_custom_value! cdefs[:prod_part_number], "PARTNO"
+    product.update_custom_value! cdefs[:prod_department_code], 1
     product
   }
 
@@ -21,7 +22,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, house_bill_of_lading: "HB", reference: "REF/REF")
+    shipment = Factory(:shipment, booking_number: "CargoReference")
     shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
 
     shipment.reload
@@ -34,12 +35,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       expect(ci_load).not_to be_nil
 
       expect(ci_load.customer).to eq "ASCE"
+      expect(ci_load.file_number).to eq "CargoReference"
       expect(ci_load.invoices.length).to eq 1
 
       expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
       line = ci_load.invoices.first.invoice_lines.first
 
       expect(line.part_number).to eq "PARTNO"
+      expect(line.department).to eq 1
       expect(line.cartons).to eq 10
       expect(line.gross_weight).to eq BigDecimal("100.50")
       expect(line.pieces).to eq 99
@@ -74,56 +77,43 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentCiLoadGenerator do
       expect(line.pieces).to eq 99
       expect(line.buyer_customer_number).to eq "ASCE"
     end
-  end
 
-  describe "send_xls_to_google_drive" do
-    let (:wb) {
-      wb, sheet = XlsMaker.create_workbook_and_sheet "sheet", ["header"]
-      wb
-    }
+    it "looks up country iso code by name if PO country origin is over 2 chars" do
+      order.order_lines.first.update_attributes! country_of_origin: "Guatemala"
+      Factory(:country, iso_code: "GT", name: "Guatemala")
 
-    it "passes tempfile of given spreadsheet object to drive class" do
-      received_spreadsheet = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Ascena CI Load/file.xls"
-        received_spreadsheet = Spreadsheet.open file.path
-      end
+      ci_load = subject.generate_entry_data shipment
+      expect(ci_load.invoices.length).to eq 1
 
-      subject.send_xls_to_google_drive wb, "file.xls"
-
-      expect(received_spreadsheet).not_to be_nil
-      expect(received_spreadsheet.worksheet("sheet")).not_to be_nil
+      expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
+      line = ci_load.invoices.first.invoice_lines.first
+      expect(line.country_of_origin).to eq "GT"
     end
+
+    it "blanks country of origin if non-iso PO value used with no country found" do
+      order.order_lines.first.update_attributes! country_of_origin: "Guatemala"
+
+      ci_load = subject.generate_entry_data shipment
+      expect(ci_load.invoices.length).to eq 1
+
+      expect(ci_load.invoices.first.invoice_lines.try(:length)).to eq 1
+      line = ci_load.invoices.first.invoice_lines.first
+      expect(line.country_of_origin).to be_nil
+    end
+
   end
 
   describe "generate_and_send" do
 
-    let (:wb) {
-      wb, sheet = XlsMaker.create_workbook_and_sheet "sheet", ["header"]
-      wb
-    }
-
     let (:generator) {
-      g = instance_double(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator)
-      expect(g).to receive(:generate_xls).and_return wb
-      g
+      instance_double(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator)
     }
 
-    it "generates xls data and sends it to google drive" do
-      received_spreadsheet = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Ascena CI Load/REF_REF.xls"
-        received_spreadsheet = Spreadsheet.open file.path
-      end
+    it "generates data and sends it to the kewill generator" do
+      expect(generator).to receive(:generate_and_send).with(instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry))
 
       expect(subject).to receive(:kewill_generator).and_return generator
       subject.generate_and_send shipment
-
-      # Just make sure the spreadsheet has the expected sheet name and header row
-      expect(received_spreadsheet).not_to be_nil
-      expect(received_spreadsheet.worksheet("sheet")).not_to be_nil
     end
   end
 end

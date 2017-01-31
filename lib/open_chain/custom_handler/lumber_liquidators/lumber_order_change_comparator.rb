@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.generate_ll_xml ord, old_data, new_data
-    if new_data.planned_handover_date && (old_data.nil? || old_data.planned_handover_date != new_data.planned_handover_date)
+    if OrderData.send_sap_update?(old_data,new_data)
       OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order ord
     end
   end
@@ -189,7 +189,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint
-    attr_accessor :ship_from_address, :planned_handover_date, :variant_map, :ship_window_start, :ship_window_end, :price_map, :sap_extract_date
+    attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
+      :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
+      :approval_status, :business_rule_state
 
     def initialize fingerprint
       @fingerprint = fingerprint
@@ -228,6 +230,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.ship_window_start = order_hash['ord_window_start']
       od.ship_window_end = order_hash['ord_window_end']
       od.ship_from_address = order_hash['ord_ship_from_full_address']
+      od.business_rule_state = order_hash['ord_rule_state']
+      od.approval_status = order_hash['ord_approval_status']
       od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
       sap_extract_str = order_hash[SAP_EXTRACT_DATE_UID.first]
       od.sap_extract_date =  sap_extract_str ? DateTime.iso8601(sap_extract_str) : nil
@@ -297,6 +301,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         r_val << k unless v == oh[k]
       end
       return r_val
+    end
+
+    def self.send_sap_update? old_data, new_data
+      return true if old_data.nil?
+      return true if old_data.planned_handover_date!=new_data.planned_handover_date
+      return true if old_data.approval_status!=new_data.approval_status
+      return true if old_data.business_rule_state!=new_data.business_rule_state
+      return false
     end
   end
 end; end; end; end

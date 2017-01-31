@@ -1,6 +1,7 @@
 require 'open_chain/business_rule_validation_results_support'
-require 'open_chain/custom_handler/generic_alliance_product_generator'
+require 'open_chain/custom_handler/vandegrift/kewill_product_generator'
 require 'open_chain/workflow_processor'
+
 class CompaniesController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
 
@@ -145,18 +146,16 @@ class CompaniesController < ApplicationController
 
   #send the generic fixed position file to Alliance for this importer
   def push_alliance_products
+    raise ActionController::RoutingError.new('Not Found') unless MasterSetup.get.custom_feature?("Kewill Product Push")
+
     c = Company.find params[:id]
     admin_secure do
-      if !MasterSetup.get.custom_feature? 'alliance'
-        add_flash :errors, "Cannot push file because \"alliance\" custom feature is not enabled."
-      elsif c.alliance_customer_number.blank?
+      if c.alliance_customer_number.blank?
         add_flash :errors, "Cannot push file because company doesn't have an alliance customer number."
-      elsif c.last_alliance_product_push_at && c.last_alliance_product_push_at > 10.minutes.ago
-        add_flash :errors, "Cannot push file because last push was less than 10 minutes ago."
       else
-        OpenChain::CustomHandler::GenericAllianceProductGenerator.delay.sync(c.id)
-        c.update_attributes :last_alliance_product_push_at => 0.seconds.ago
-        add_flash :notices, "Product file has been queued to be sent to alliance."
+        OpenChain::CustomHandler::Vandegrift::KewillProductGenerator.delay.sync(c.alliance_customer_number)
+        c.update_attributes! :last_alliance_product_push_at => Time.zone.now
+        add_flash :notices, "Product file has been queued to be sent to Kewill."
       end
       redirect_to c
     end

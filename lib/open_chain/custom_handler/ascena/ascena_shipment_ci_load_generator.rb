@@ -6,18 +6,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
 
   def generate_and_send shipment
     entry_data = generate_entry_data shipment
-    wb = kewill_generator.generate_xls entry_data
-    send_xls_to_google_drive wb, "#{Attachment.get_sanitized_filename(shipment.reference)}.xls"
+    kewill_generator.generate_and_send entry_data
     nil
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :ord_type])
+    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :ord_type, :prod_department_code])
   end
 
   def generate_entry_data shipment
     entry = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new
     entry.customer = "ASCE"
+    entry.file_number = shipment.booking_number
 
     # There is no invoice number being mapped...
     invoice  = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new
@@ -27,7 +27,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
     invoice.invoice_lines = []
     shipment.shipment_lines.each do |line|
       cil = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-      cil.part_number = line.product.custom_value(cdefs[:prod_part_number]) if line.product
+      if line.product
+        cil.part_number = line.product.custom_value(cdefs[:prod_part_number])
+        dept = line.product.custom_value(cdefs[:prod_department_code])
+        cil.department = dept ? dept.to_i : nil
+      end
       cil.cartons = line.carton_qty
       cil.gross_weight = line.gross_kgs
       cil.pieces = line.quantity
@@ -42,6 +46,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaShipmentCiLoa
         # with dubious data in them.
         if order.custom_value(cdefs[:ord_type]).to_s.strip != "NONAGS"
           cil.country_of_origin = ol.country_of_origin
+
+          # If the country of origin is more than 2 chars...then attempt to look up the Country
+          # by the value given.
+          if cil.country_of_origin.to_s.length > 2
+            country = Country.where(name: cil.country_of_origin).first
+            cil.country_of_origin = country ? country.iso_code : nil
+          end
 
           if ol.price_per_unit.to_f != 0 && cil.pieces.to_f != 0
             cil.foreign_value = ol.price_per_unit * cil.pieces

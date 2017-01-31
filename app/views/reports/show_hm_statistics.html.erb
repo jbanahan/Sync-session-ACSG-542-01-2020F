@@ -23,7 +23,7 @@ $(function() {
 <%=form_tag reports_run_hm_statistics_path, :id=>'frm_run' do -%>
 <div class="container">
   <div class="row" style="line-height: 2.5">
-    <div class="col-md-2"><label class="control-label" for="start_date">After:</label></div>
+    <div class="col-md-2"><label class="control-label" for="start_date">After(inclusive):</label></div>
     <div class="col-md-3"><%=text_field_tag :start_date,"", :class=>'form-control isdate'%></div>
     <div class="col-md-2"><label class="control-label" for="end_date">Before:</label></div>
     <div class="col-md-3"><%=text_field_tag :end_date, "", :class=>'form-control isdate' %></div>

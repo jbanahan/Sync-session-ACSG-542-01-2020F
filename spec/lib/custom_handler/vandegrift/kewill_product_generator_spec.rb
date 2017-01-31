@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     let (:row) {
       # This is what a file row without FDA information will look like.
-      ["STYLE", "DESCRIPTION", "TARIFF", "CO", "BRAND"]
+      ["STYLE", "DESCRIPTION", "TARIFF123", "CO", "BRAND"]
     }
     
     let (:fda_row) {
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/descr").to eq "DESCRIPTION"
       expect(parent.text "part/productLine").to eq "BRAND"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/seqNo").to eq "1"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "TARIFF"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "TARIFF123"
 
       # Make sure no FDA information was written - even though blank tags would techincally be fine
       # I want to make sure the size of these files is as small as possible to allow for more data in them before
@@ -134,12 +134,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     let (:us) { Factory(:country, iso_code: "US") }
     let (:importer) { Factory(:importer, alliance_customer_number: "CUST") }
 
-    def create_product style
+    def create_product style, part_number: true
       p = Factory(:product, unique_identifier: "CUST-#{style}", importer: importer)
       c = Factory(:classification, product: p, country: us)
       c.tariff_records.create! hts_1: "1234567890"
 
-      p.update_custom_value! described_class.new(nil).custom_defs[:prod_part_number], style
+      p.update_custom_value!(described_class.new(nil).custom_defs[:prod_part_number], style) if part_number
       p
     end
 
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "strips leading zeros on part number" do
-      p = create_product ("000001")
+      p = create_product("000001")
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
         data = file.read
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "uses unique_identifier instead of part number" do
-      p = create_product ("000001")
+      p = create_product("000001", part_number: false)
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
         data = file.read
@@ -234,6 +234,23 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       doc = REXML::Document.new(data)
 
       expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "CUST-000001"
+    end
+
+    it "allows finding products without importer id restrictions" do
+      p = create_product("000001")
+      p.update_attributes! importer_id: nil
+
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "disable_importer_check" => true
+
+      expect(data).not_to be_nil
+      doc = REXML::Document.new(data)
+
+      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "000001"
     end
   end
 end

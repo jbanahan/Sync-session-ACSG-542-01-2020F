@@ -14,15 +14,25 @@ module OpenChain; module Report; class DutySavingsReport
   #requires 'email', 'customer_numbers' array, and EITHER 'previous_n_days' OR 'previous_n_months'
   def self.run_schedulable settings={}
     start_date = calculate_start_date(settings['previous_n_days'], settings['previous_n_months'])
-    end_date = Date.today
+    end_date = calculate_end_date(settings['previous_n_days'], settings['previous_n_months'])
     self.new.send_email(settings['email'], start_date, end_date, settings['customer_numbers'])
   end
 
   def self.calculate_start_date previous_n_days, previous_n_months
+    today = Time.now.in_time_zone("Eastern Time (US & Canada)").beginning_of_day
     if previous_n_days
-      Date.today - previous_n_days.days
+      today - previous_n_days.days
     elsif previous_n_months
-      Date.today.beginning_of_month - previous_n_months.months
+      today.beginning_of_month - previous_n_months.months
+    end
+  end
+
+  def self.calculate_end_date previous_n_days, previous_n_months
+    today = Time.now.in_time_zone("Eastern Time (US & Canada)").beginning_of_day
+    if previous_n_days
+      today
+    elsif previous_n_months
+      today.beginning_of_month
     end
   end
   
@@ -36,7 +46,7 @@ module OpenChain; module Report; class DutySavingsReport
   def send_email email, start_date, end_date, customer_numbers
     wb = create_workbook(start_date, end_date, customer_numbers)
     workbook_to_tempfile wb, 'DutySavings-', file_name: "Duty Savings Report.xls" do |t|
-      subject = "Duty Savings Report"
+      subject = "Duty Savings Report: #{start_date.strftime("%m-%d-%Y")} through #{(end_date - 1.minute).strftime("%m-%d-%Y")}"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
       OpenMailer.send_simple_html(email, subject, body, t).deliver!
     end
@@ -57,15 +67,15 @@ module OpenChain; module Report; class DutySavingsReport
         cil.vendor_name AS 'Vendor Name',
         cil.po_number AS 'PO Number',
         cil.value AS 'Invoice Line Value',
-        MAX(cit.entered_value) AS 'Entered Value',
-        cil.value - cit.entered_value AS 'Cost Savings',
-        IF(ROUND(SUM((cil.value * cit.duty_rate) - cit.duty_amount),2)< 1,0,ROUND(SUM((cil.value * cit.duty_rate) - cit.duty_amount),2)) AS 'Duty Savings'
+        SUM(cit.entered_value) AS 'Entered Value',
+        cil.value - SUM(cit.entered_value) AS 'Cost Savings',
+        IF((SUM(cit.entered_value) = 0) OR ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)< 1,0,ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)) AS 'Duty Savings'
       FROM entries ent
         INNER JOIN commercial_invoices ci ON ci.entry_id = ent.id
         INNER JOIN commercial_invoice_lines cil ON cil.commercial_invoice_id = ci.id
         INNER JOIN commercial_invoice_tariffs cit ON cit.commercial_invoice_line_id = cil.id
       WHERE ent.customer_number IN (#{customer_numbers.map{|c| ActiveRecord::Base.sanitize c}.join(', ')})
-        AND ent.release_date BETWEEN '#{start_date}' AND '#{end_date}'
+        AND ent.release_date >= '#{start_date}' AND ent.release_date < '#{end_date}'
         AND (cil.contract_amount IS NULL OR cil.contract_amount = 0)
       GROUP BY cil.id
       ORDER BY ent.release_date
