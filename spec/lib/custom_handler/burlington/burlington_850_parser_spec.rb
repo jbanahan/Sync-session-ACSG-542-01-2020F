@@ -132,6 +132,61 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(existing_product.entity_snapshots.length).to eq 0
     end
 
+    it "strips hts lines not referenced in the PO" do
+      c = existing_product.classifications.create! country: us
+      t = c.tariff_records.create! hts_1: "9403509049", line_number: 1
+      t2 = c.tariff_records.create! hts_1: "9403509048", line_number: 2
+
+      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+
+      existing_product.reload
+      expect(existing_product.entity_snapshots.length).to eq 1
+      expect(existing_product.classifications.first.tariff_records.length).to eq 1
+      t.reload
+      expect(t.hts_1).to eq "9403509041"
+      
+      expect {t2.reload}.to raise_error ActiveRecord::RecordNotFound
+    end
+
+    it "handles multiple HTS values per line on standard lines" do
+      edi = standard_edi.gsub("TC2|J|9403.50.9041", "TC2|J|9403.50.9041\nTC2|J|9403.50.9042")
+
+      c = existing_product.classifications.create! country: us
+      t = c.tariff_records.create! hts_1: "9403509040", line_number: 1
+      t2 = c.tariff_records.create! hts_1: "9403509041", line_number: 2
+
+      subject.parse edi, bucket: "bucket", key: "file.edi"
+
+      order = Order.where(order_number: "BURLI-364225101").first
+      expect(order).not_to be_nil
+      line = order.order_lines.first
+      expect(line.hts).to eq "MULTI"
+
+      existing_product.reload
+      expect(existing_product.entity_snapshots.length).to eq 1
+      expect(existing_product.classifications.first.tariff_records.length).to eq 2
+      expect(t.reload.hts_1).to eq "9403509041"
+      expect(t2.reload.hts_1).to eq "9403509042"
+    end
+
+    it "handles multiple HTS values per line on prepack lines" do
+      edi = prepack_edi.gsub("TC2|J|9503.00.0073", "TC2|J|9503.00.0074\nTC2|J|9503.00.0075")
+      existing_prepack_product
+
+      subject.parse edi, bucket: "bucket", key: "file.edi"
+
+      order = Order.where(order_number: "BURLI-364225101").first
+      expect(order).not_to be_nil
+      line = order.order_lines.first
+      expect(line.hts).to eq "MULTI"
+
+      existing_prepack_product.reload
+      expect(existing_prepack_product.entity_snapshots.length).to eq 1
+      expect(existing_prepack_product.classifications.first.tariff_records.length).to eq 2
+      expect(existing_prepack_product.classifications.first.tariff_records.first.hts_1).to eq "9503000074"
+      expect(existing_prepack_product.classifications.first.tariff_records.second.hts_1).to eq "9503000075"
+    end
+
     it "parses edi with prepack lines" do
       subject.parse prepack_edi, bucket: "bucket", key: "file.edi"
 

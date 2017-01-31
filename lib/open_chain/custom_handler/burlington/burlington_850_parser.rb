@@ -193,7 +193,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     style = find_segment_qualified_value(po1, "IT")
 
     line.product = product_cache[style]
-    line.hts = find_element_value(segments, "TC202")
+    hts_values = find_element_values(segments, "TC202")
+    if hts_values.length > 0
+      line.hts = hts_values.length == 1 ? hts_values.first : "MULTI"
+    end
     line.find_and_set_custom_value(cdefs[:ord_line_department_code], department)
     line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(po1, "BO"))
     line.find_and_set_custom_value(cdefs[:ord_line_size], find_segment_qualified_value(po1, "IZ"))
@@ -220,7 +223,6 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       # Because we're dealing with a subline (and our line_number in order is an integer [bad choice])
       # We're going to make the line number a function of the max number of possible sublines (according to the edi spec, which is 1000)
       sln = find_segment(subline_segments, "SLN")
-      tc2 = find_segment(subline_segments, "TC2")
 
       subline_number = (line_number*1000) + sln.elements[1].value.to_i
 
@@ -253,7 +255,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       style = find_segment_qualified_value(sln, "IT")
       line.product = product_cache[style]
 
-      line.hts = find_element_value(subline_segments, "TC202")
+      hts_values = find_element_values(subline_segments, "TC202")
+      if hts_values.length > 0
+        line.hts = hts_values.length == 1 ? hts_values.first : "MULTI"
+      end
 
       lines << line
     end
@@ -279,13 +284,13 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
         if prepack? po1
           extract_prepack_loops(segments).each do |subline_segments|
             sln = find_segment(subline_segments, "SLN")
-            style, product = find_or_create_product(user, filename, sln, find_segment(subline_segments, "TC2"), products)
+            style, product = find_or_create_product(user, filename, sln, find_segments(subline_segments, "TC2"), products)
             products[style] = product if product
           end
         else
           # The way the EDI spec is formulated, the TC2 segment can only be looped under the
           # SLN segment...however, in actual documents, it's sent in the PO1 loop too...bad spec.
-          style, product = find_or_create_product(user, filename, po1, find_segment(segments, "TC2"), products)
+          style, product = find_or_create_product(user, filename, po1, find_segments(segments, "TC2"), products)
           products[style] = product if product
         end
       end
@@ -299,14 +304,15 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     extract_loop(all_line_segments, ["SLN", "TC2", "CTP", "SAC", "CUR", "N1", "N2", "N3", "N4", "PER"])
   end
 
-  def find_or_create_product user, filename, style_segment, hts_segment, cache
+  def find_or_create_product user, filename, style_segment, hts_segments, cache
     style = find_segment_qualified_value(style_segment, "IT")
 
     return [style, cache[style]] if cache[style]
 
     description = find_segment_qualified_value(style_segment, "PU").to_s.strip
 
-    hts = hts_segment.elements[2].value.to_s.gsub(".", "") if hts_segment
+    # In order to keep the tariffs in a consistent order if we have multiple ones (.ie sets), sort them.
+    hts_values = Array.wrap(hts_segments).map {|v| v.elements[2].value.to_s.gsub(".", "") }.sort
 
     product = nil
     unique_identifier = "BURLI-#{style}"
@@ -322,23 +328,37 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     Lock.with_lock_retry(product) do 
       # Don't set the description from the PO...the description is a marketing description and is not suitable
       # for customs usage.
-
       cl = nil
-      tariff = nil
-      if !hts.blank?
+      tariffs = []
+      tariffs_destroyed = false
+      if hts_values.length > 0
         cl = product.classifications.find {|c| c.country_id == us.id }
         if cl.nil?
           cl = product.classifications.build country_id: us.id
         end
 
-        tariff = cl.tariff_records.find {|t| t.line_number == 1 }
-        if tariff.nil?
-          tariff = cl.tariff_records.build line_number: 1
+        hts_values.each_with_index do |hts, i|
+          tariff = cl.tariff_records.find {|t| t.line_number == (i+1) }
+          if tariff.nil?
+            tariff = cl.tariff_records.build line_number: (i+1)
+          end
+          tariff.hts_1 = hts
+
+          tariffs << tariff
         end
-        tariff.hts_1 = hts
+
+        # Now destroy any tariffs that have line numbers greater than the number
+        # of passed in hts numbers (in other words, the set used to have something like 5 HTS numbers and now has fewer,
+        # so we need to remove some tariffs)
+        cl.tariff_records.each do |t|
+          if t.line_number > hts_values.length
+            t.destroy
+            tariffs_destroyed = true
+          end
+        end        
       end
 
-      if product.changed? || cl.try(:changed?) || tariff.try(:changed?)
+      if product.changed? || cl.try(:changed?) || tariffs.any?(&:changed?) || tariffs_destroyed
         product.save!
         product.create_snapshot user, nil, filename
       end
