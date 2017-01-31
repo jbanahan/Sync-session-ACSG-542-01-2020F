@@ -11,3 +11,8 @@ if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setup
   require 'open_chain/custom_handler/masterbrand/masterbrand_system_init'
   OpenChain::CustomHandler::Masterbrand::MasterbrandSystemInit.init
 end
+
+if Rails.env.development?
+  require 'open_chain/custom_handler/dev_system_init'
+  OpenChain::CustomHandler::DevSystemInit.init
+end

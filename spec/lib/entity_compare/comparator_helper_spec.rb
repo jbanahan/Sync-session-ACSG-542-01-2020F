@@ -108,6 +108,15 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "returns nil if model field is not present" do
       expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}, "testing")).to be_nil
     end
+
+    it "coerces value to model field's given datatype" do
+      # All the coercions are tested elsewhere, just make sure this works if enabled.
+      expect(subject.mf({"entity" => {"core_module" => "Child", "model_fields"=> {"ent_duty_due_date" => "2017-01-11"}}}, "ent_duty_due_date")).to eq Date.new(2017, 1, 11)
+    end
+
+    it "does not coerce if instructed" do
+      expect(subject.mf({"entity" => {"core_module" => "Child", "model_fields"=> {"ent_duty_due_date" => "2017-01-11"}}}, "ent_duty_due_date", coerce: false)).to eq "2017-01-11"
+    end
   end
 
   describe "find_entity_object" do
@@ -125,6 +134,54 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "returns nil if record is not found" do
       json['record_id'] = -1
       expect(subject.find_entity_object(json)).to be_nil
+    end
+  end
+
+  describe "coerce_model_field_value" do
+    it "converts date values" do
+      expect(subject.coerce_model_field_value "ent_duty_due_date", "2017-01-11").to eq Date.new(2017, 1, 11)
+    end
+
+    it "handles blank date values" do
+      expect(subject.coerce_model_field_value "ent_duty_due_date", "").to be_nil
+    end
+
+    it "converts date time values" do
+      # Make sure it handles time zone conversion too
+      Time.use_zone("America/Chicago") do 
+        expect(subject.coerce_model_field_value "ent_arrival_date", "2017-01-11T10:42:48Z").to eq ActiveSupport::TimeZone["America/Chicago"].parse "2017-01-11T04:42:48"
+      end
+    end
+
+    it "handles blank datetime values" do
+      expect(subject.coerce_model_field_value "ent_arrival_date", "").to be_nil
+    end
+
+    it "converts decimal values" do
+      expect(subject.coerce_model_field_value "ent_total_duty", "128.123").to eq BigDecimal("128.123")
+    end
+
+    it "handles blank decimal values" do
+      expect(subject.coerce_model_field_value "ent_total_duty", "").to be_nil
+    end
+
+    it "handles string values" do
+      r = "REF"
+      # We shouldn't be changing the object if it's a string
+      expect(subject.coerce_model_field_value "ent_brok_ref", r).to be r
+    end
+
+    it "handles boolean values" do
+      expect(subject.coerce_model_field_value "ent_paperless_release", true).to be true
+    end
+
+    it "handles integer values" do
+      expect(subject.coerce_model_field_value "ent_ci_line_count", 10).to be 10
+    end
+
+    it "handles missing model fields" do
+      r = "1234"
+      expect(subject.coerce_model_field_value "notafield", r).to be r
     end
   end
 end
