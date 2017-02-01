@@ -58,6 +58,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_department_code])).to eq "Kids"
       expect(line.custom_value(cdefs[:ord_line_size])).to eq "QTY"
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "ESPRESSO"
+      expect(line.custom_value(cdefs[:ord_line_color_description])).to eq "PARIS CRIB N CHANGER"
       expect(line.custom_value(cdefs[:ord_line_estimated_unit_landing_cost])).to eq BigDecimal("131.88")
       expect(line.custom_value(cdefs[:ord_line_retail_unit_price])).to eq BigDecimal("199.99")
 
@@ -198,6 +199,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
       line = order.order_lines.first
       expect(line.line_number).to eq 1001
+      expect(line.unit_of_measure).to eq "EA"
       expect(line.quantity).to eq BigDecimal("716")
       expect(line.hts).to eq "9503.00.0073"
       expect(line.price_per_unit).to eq BigDecimal("7")
@@ -210,7 +212,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_units_per_inner_pack])).to eq BigDecimal("4")
 
       # I copy/pasted a second line into the EDI...so everything (except color) will be literally the 
-      # same values...so just check that the line numbes are as expected
+      # same values...so just check that the line numbers are as expected
       line = order.order_lines.second
       expect(line.line_number).to eq 1002
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "RED"

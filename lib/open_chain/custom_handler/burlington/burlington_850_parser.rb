@@ -199,6 +199,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     end
     line.find_and_set_custom_value(cdefs[:ord_line_department_code], department)
     line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(po1, "BO"))
+    line.find_and_set_custom_value(cdefs[:ord_line_color_description], find_segment_qualified_value(po1, "PU"))
     line.find_and_set_custom_value(cdefs[:ord_line_size], find_segment_qualified_value(po1, "IZ"))
 
     find_segments(segments, "CTP") do |ctp|
@@ -236,6 +237,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       prepack_quantity = BigDecimal(sln.elements[4].value)
       line.quantity = order_quantity * prepack_quantity
       line.price_per_unit = BigDecimal(sln.elements[6].value)
+      # Even though technically the UOM on the PO isn't eaches, since we're exploding the prepacks into
+      # individual lines and then showing the quantities as the total prepack quantity, technically we're
+      # showing them as eaches now, so code this to EA.
+      line.unit_of_measure = "EA"
       line.find_and_set_custom_value(cdefs[:ord_line_prepacks_ordered], order_quantity)
       line.find_and_set_custom_value(cdefs[:ord_line_units_per_inner_pack], prepack_quantity)
       line.find_and_set_custom_value(cdefs[:ord_line_department_code], department)
