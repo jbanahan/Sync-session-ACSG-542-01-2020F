@@ -1,9 +1,10 @@
-require 'open_chain/integration_client_parser'
 require 'rex12'
+require 'open_chain/integration_client_parser'
+require 'open_chain/edi_parser_support'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   extend OpenChain::IntegrationClientParser
-  IGNORE_SEGMENTS = ['ISA','GS','GE','IEA']
+  extend OpenChain::EdiParserSupport
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
@@ -15,17 +16,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     begin
       cdefs = {}
       shipment_segments = []
-      REX12::Document.parse(data) do |seg|
-        isa_code = seg.elements[13].value if seg.segment_type=='ISA'
-        next if IGNORE_SEGMENTS.include?(seg.segment_type)
-        shipment_segments << seg
-        if seg.segment_type=='SE'
-          begin
-            process_shipment(shipment_segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
-          rescue
-            errors << $!
-          end
-          shipment_segments = []
+      REX12::Document.each_transaction(data) do |transaction|
+        isa_code = transaction.isa_segment.elements[13].value
+        begin
+          process_shipment(transaction.segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
+        rescue
+          errors << $!
         end
       end
     rescue
@@ -64,9 +60,9 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           est_departure_date:get_date(shipment_segments,'369'),
           departure_date:get_date(shipment_segments,'370'),
           est_arrival_port_date:est_arrival_port_date,
-          vessel:find_element_value(shipment_segments,'V1',2),
-          voyage:find_element_value(shipment_segments,'V1',4),
-          vessel_carrier_scac:find_element_value(shipment_segments,'V1',5),
+          vessel:find_element_value(shipment_segments,'V102'),
+          voyage:find_element_value(shipment_segments,'V104'),
+          vessel_carrier_scac:find_element_value(shipment_segments,'V105'),
           mode:find_mode(shipment_segments),
           lading_port:find_port(shipment_segments,'L'),
           unlading_port:find_port(shipment_segments,'D'),
@@ -85,23 +81,23 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.process_equipment shp, e_segs
-    container_scac = find_element_value(e_segs,'TD3',2)
-    container_num = find_element_value(e_segs,'TD3',3)
+    container_scac = find_element_value(e_segs,'TD302')
+    container_num = find_element_value(e_segs,'TD303')
     con = shp.containers.build(
       container_number:"#{container_scac}#{container_num}",
-      seal_number:find_element_value(e_segs,'TD3',9)
+      seal_number:find_element_value(e_segs,'TD309')
     )
     con.save!
     find_subloop(e_segs,'O').each {|o_segs| process_order(shp,con,o_segs)}
   end
 
   def self.process_order shp, con, o_segs
-    ord_num = find_element_value(o_segs,'PRF',1)
+    ord_num = find_element_value(o_segs,'PRF01')
     find_subloop(o_segs,'I').each {|i_segs| process_item(shp,con,ord_num,i_segs)}
   end
 
   def self.process_item shp, con, order_number, i_segs
-    style = find_element_value(i_segs,'LIN',3)
+    style = find_element_value(i_segs,'LIN03')
     raise "Style number is required in LIN segment position 4." if style.blank?
     ol = OrderLine.joins(:order,:product).
       where("orders.order_number = ?","ASCENA-#{order_number}").
@@ -111,10 +107,10 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     sl = shp.shipment_lines.build(
       product:ol.product,
       container: con,
-      quantity:find_element_by_qualifier(i_segs, 'SLN', 'Q1', 1, 4),
-      carton_qty:find_element_by_qualifier(i_segs, 'SLN', 'Q2', 1, 4),
-      cbms:find_element_by_qualifier(i_segs, 'SLN', 'Q3', 1, 4),
-      gross_kgs:find_element_by_qualifier(i_segs, 'SLN', 'Q4', 1, 4),
+      quantity:find_value_by_qualifier(i_segs, 'SLN01', 'Q1', value_index: 4),
+      carton_qty:find_value_by_qualifier(i_segs, 'SLN01', 'Q2', value_index: 4),
+      cbms:find_value_by_qualifier(i_segs, 'SLN01', 'Q3', value_index: 4),
+      gross_kgs:find_value_by_qualifier(i_segs, 'SLN01', 'Q4', value_index: 4)
     )
     sl.linked_order_line_id = ol.id
     sl.save!
@@ -148,8 +144,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.find_mode segments
-    val = find_element_value(segments,'V1',9)
-    return case val
+    case find_element_values(segments,'V109').first
     when 'O'
       'Ocean'
     when 'A'
@@ -162,31 +157,13 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.find_port segments, qualifier
-    port_code = find_element_by_qualifier(segments,'R4',qualifier,1,3)
+    port_code = find_value_by_qualifier(segments, "R401", qualifier, value_index: 3)
     port_code ? Port.find_by_unlocode(port_code) : nil
-  end
-  def self.find_ref_value segments, qualifier
-    find_element_by_qualifier(segments,'REF',qualifier,1,2)
   end
 
   def self.get_date segments, qualifier
-    dt = find_element_by_qualifier(segments,'DTM',qualifier,1,2)
-    dt ? Date.new(dt[0..3].to_i,dt[4..5].to_i,dt[6..7].to_i) : nil
-  end
-
-  def self.find_element_value segments, type, element_position
-    val = nil
-    found = segments.find {|seg| seg.segment_type==type}
-    if found
-      el = found.elements[element_position]
-      val = el ? el.value : nil
-    end
-    val
-  end
-
-  def self.find_element_by_qualifier segments, segment_type, qualifier, qualifier_position, value_position
-    found = segments.find {|seg| seg.segment_type==segment_type && seg.elements[qualifier_position].value==qualifier}
-    return found ? found.elements[value_position].value : nil
+    dt = find_date_value(segments, qualifier)
+    dt.nil? ? nil : dt.to_date
   end
 
   def self.importer

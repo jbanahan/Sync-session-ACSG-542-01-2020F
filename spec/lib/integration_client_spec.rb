@@ -445,6 +445,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/polo/_850/file.dat','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+
+    it "handles burlington 850 files" do
+      expect(master_setup).to receive(:custom_feature?).with('Burlington 850').and_return(true)
+      p = class_double("OpenChain::CustomHandler::Burlington::Burlington850Parser")
+      expect(OpenChain::CustomHandler::Burlington::Burlington850Parser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_burlington_850/file.dat','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
   end
 
   it 'should return error if bad request type' do
