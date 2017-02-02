@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(REX12::Document).to receive(:parse).with(base_data).and_raise REX12::ParseError.new("Parsing problem here.")
       described_class.parse(base_data)
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena_us@vandegriftinc.com','edisupport@vandegriftinc.com']
+      expect(mail.to).to eq ['edisupport@vandegriftinc.com']
       expect(mail.subject).to match(/Ascena\/APLL ASN EDI Processing Error/)
       expect(mail.body).to match(/Parsing problem here/)
     end
@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       described_class.parse(base_data)
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['ascena_us@vandegriftinc.com','edisupport@vandegriftinc.com']
+      expect(mail.to).to eq ['edisupport@vandegriftinc.com']
       expect(mail.subject).to match(/Ascena\/APLL ASN EDI Processing Error/)
       expect(mail.body).to match(/Some shipment problem 1/)
       expect(mail.body).to match(/Some shipment problem 9/)
@@ -129,18 +129,20 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       order #prep order data
       expect {described_class.process_shipment(first_shipment_array,cdefs)}.to change(Shipment,:count).from(0).to(1)
     end
-    it "should fail on update to existing shipment" do
-      order #prep order data
+    it "should not update existing shipments" do
+      ascena
       Factory(:shipment,reference:'ASCENA-XM1007980-HK956641')
-      expect{described_class.process_shipment(first_shipment_array,cdefs)}.to raise_error(/Cannot update existing shipment/)
+      expect(described_class.process_shipment(first_shipment_array,cdefs)).to be_nil
     end
-    it "should fail on missing order" do
-      expect{described_class.process_shipment(first_shipment_array,cdefs)}.to raise_error(/Order Line not found for order/)
+    it "should record missing order in shipment" do
+      shipment = described_class.process_shipment(first_shipment_array,cdefs)
+      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-415012"
     end
     it "should fail if style not on order" do
       order
       base_data.gsub!('415012','999999')
-      expect{described_class.process_shipment(first_shipment_array,cdefs)}.to raise_error(/Order Line not found for order/)
+      shipment = described_class.process_shipment(first_shipment_array,cdefs)
+      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-999999"
     end
   end
 end
