@@ -385,6 +385,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           accumulations[:part_numbers] << il.part_number
           accumulations[:departments] << il.department
           accumulations[:store_names] << il.store_name
+          accumulations[:product_lines] << il.product_line
           totals[:total_units] += il.quantity unless il.quantity.nil?
           totals[:total_cvd] += il.cvd_duty_amount unless il.cvd_duty_amount.nil?
           totals[:total_add] += il.add_duty_amount unless il.add_duty_amount.nil?
@@ -455,6 +456,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.store_names = vals
         when :fcl_lcls
           entry.fcl_lcl = v.size > 1 ? "Mixed" : (v.first.upcase == "L" ? "LCL" : "FCL") unless v.blank?
+        when :product_lines
+          entry.product_lines = vals
         end
       end
 
