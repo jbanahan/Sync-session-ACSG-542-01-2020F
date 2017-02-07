@@ -41,6 +41,10 @@
     <tr class='hover'><td><%=link_to "Drawback Exports Without Imports", reports_show_drawback_exports_without_imports_path%></td>
     <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::DailyFirstSaleExceptionReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Daily First Sale Exception Report", reports_show_daily_first_sale_exception_report_path%></td>
+    <td>Daily First Sale Exception report.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::DasBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "DAS Canada Billing Summary", reports_show_das_billing_summary_path%></td>
     <td>DAS Billing Summary report.</td></tr>

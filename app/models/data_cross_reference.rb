@@ -33,12 +33,14 @@ class DataCrossReference < ActiveRecord::Base
   US_HTS_TO_CA ||= 'us_hts_to_ca'
   HM_PARS_NUMBER ||= 'hm_pars'
   UN_LOCODE_TO_US_CODE ||= "locode_to_us"
+  ASCE_MID ||= 'asce_mid'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
-      xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true)
+      xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true),
+      xref_attributes(ASCE_MID, "Ascena MID List", "MIDs on this list are used to generate the Daily First Sale Exception report", key_label: "MID", show_value_column: false)
     ]
 
     user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
@@ -71,6 +73,8 @@ class DataCrossReference < ActiveRecord::Base
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       (Rails.env.development? || MasterSetup.get.system_code == "polo")
     when US_HTS_TO_CA
+      (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
+    when ASCE_MID
       (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
     else
       false

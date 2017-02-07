@@ -204,8 +204,9 @@ describe DataCrossReference do
         
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
-        expect(xrefs.size).to eq 1
+        expect(xrefs.size).to eq 2
         expect(xrefs['us_hts_to_ca']).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true
+        expect(xrefs['asce_mid']).to eq title: "Ascena MID List", description: "MIDs on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
       end
     end
   end
@@ -230,13 +231,27 @@ describe DataCrossReference do
         allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
       end
 
-      it "allows access to US-to-CA xref for sys admins" do
-        expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to be_truthy
+      context "us_to_ca" do
+        it "allows access to US-to-CA xref for sys admins" do
+          expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to be_truthy
+        end
+        
+        it "prevents access for anyone else" do
+          expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to be_falsey
+        end
       end
 
-      it "prevents access for anyone else" do
-        expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to be_falsey
+
+      context "asce_mid" do
+        it "allows access to ASCE MID xref for sys admins" do
+          expect(DataCrossReference.can_view? 'asce_mid', Factory(:sys_admin_user)).to be_truthy
+        end
+
+        it "prevents access for anyone else" do
+          expect(DataCrossReference.can_view? 'asce_mid', User.new).to be_falsey
+        end
       end
+
     end
   end
 
