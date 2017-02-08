@@ -282,6 +282,22 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_daily_first_sale_exception_report
+    if OpenChain::Report::DailyFirstSaleExceptionReport.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_daily_first_sale_exception_report
+    if OpenChain::Report::DailyFirstSaleExceptionReport.permission?(current_user)
+      run_report "Daily First Sale Exception Report", OpenChain::Report::DailyFirstSaleExceptionReport, {}, []
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+  
   def show_duty_savings_report
     if OpenChain::Report::DutySavingsReport.permission?(current_user)
       render

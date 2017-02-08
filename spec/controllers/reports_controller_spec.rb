@@ -84,6 +84,41 @@ describe ReportsController do
     end
   end
 
+  describe "Daily First Sale Exception Report" do
+    let(:report_class) { OpenChain::Report::DailyFirstSaleExceptionReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user}
+    
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_daily_first_sale_exception_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_daily_first_sale_exception_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        post :run_daily_first_sale_exception_report
+        expect(flash[:errors].first).to eq("You do not have permission to view this report.")
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        post :run_daily_first_sale_exception_report
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
   describe "Duty Savings Report" do
     context "show" do
       it "doesn't render page for users who don't have permission" do

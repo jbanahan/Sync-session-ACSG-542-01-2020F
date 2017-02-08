@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           body = "<p>There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.</p><p>Errors:<br><ul>"
           errors.each {|err| body << "<li>#{ERB::Util.html_escape(err.message)}</li>"}
           body << "</ul></p>"
-          to = "ascena_us@vandegriftinc.com,edisupport@vandegriftinc.com"
+          to = "edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
           OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver!
         end
@@ -47,12 +47,14 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def self.process_shipment shipment_segments, cdefs, last_file_path: nil, last_file_bucket: nil
+    shipment = nil
     ActiveRecord::Base.transaction do
       hbol = find_ref_value(shipment_segments,'BM')
       booking_number = find_ref_value(shipment_segments,'CR')
       reference = "ASCENA-#{hbol}-#{booking_number}"
       Lock.acquire(reference) do
-        raise "Cannot update existing shipment #{reference}" unless Shipment.where(reference: reference).empty?
+        # We never update shipments...
+        return unless Shipment.where(reference: reference).empty?
         est_arrival_port_date = get_date(shipment_segments,'056')
         est_arrival_port_date = get_date(shipment_segments,'AA2') unless est_arrival_port_date
         equipments = find_subloop(shipment_segments,'E')
@@ -77,11 +79,21 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         )
         shp.save!
 
-        equipments.each {|eq| process_equipment(shp,eq)}
+        errors = []
+        equipments.each do |eq| 
+          equip_errors = process_equipment(shp,eq)
+          errors.push *equip_errors
+        end
+
+        shp.marks_and_numbers = errors.length > 0 ? "* #{errors.join("\n* ")}" : nil
 
         shp.create_snapshot User.integration, nil, "APLL 856 Parser"
+
+        shipment = shp
       end
     end
+
+    shipment
   end
 
   def self.process_equipment shp, e_segs
@@ -92,12 +104,31 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       seal_number:find_element_value(e_segs,'TD3',9)
     )
     con.save!
-    find_subloop(e_segs,'O').each {|o_segs| process_order(shp,con,o_segs)}
+    errors = []
+    find_subloop(e_segs,'O').each do |o_segs| 
+      order_errors = process_order(shp,con,o_segs)
+      errors.push *order_errors
+    end
+
+    errors
   end
 
   def self.process_order shp, con, o_segs
     ord_num = find_element_value(o_segs,'PRF',1)
-    find_subloop(o_segs,'I').each {|i_segs| process_item(shp,con,ord_num,i_segs)}
+    errors = []
+    find_subloop(o_segs,'I').each do |i_segs| 
+      begin
+        process_item(shp,con,ord_num,i_segs)
+      rescue OrderMissingError => e
+        errors << e.message
+      end
+    end
+
+    errors
+  end
+
+  class OrderMissingError < StandardError
+
   end
 
   def self.process_item shp, con, order_number, i_segs
@@ -107,7 +138,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       where("orders.order_number = ?","ASCENA-#{order_number}").
       where("products.unique_identifier = ?","ASCENA-#{style}").
       first
-    raise "Order Line not found for order ASCENA-#{order_number}, style ASCENA-#{style}" if ol.nil?
+    raise OrderMissingError, "Order Line not found for order ASCENA-#{order_number}, style ASCENA-#{style}" if ol.nil?
     sl = shp.shipment_lines.build(
       product:ol.product,
       container: con,

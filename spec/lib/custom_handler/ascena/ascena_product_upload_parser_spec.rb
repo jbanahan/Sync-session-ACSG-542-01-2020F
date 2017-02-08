@@ -67,7 +67,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect_custom_value(prod, cdefs[:prod_part_number], "Style")
       expect_custom_value(prod, cdefs[:prod_reference_number], "ParentID")
       expect_custom_value(prod, cdefs[:prod_department_code], "300")
-      expect_custom_value(prod, cdefs[:prod_country_of_origin], "CO")
 
       expect(prod.classifications.length).to eq 1
       c = prod.classifications.first
@@ -93,13 +92,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect_custom_value(prod, cdefs[:prod_part_number], "ParentID")
       expect_custom_value(prod, cdefs[:prod_reference_number], nil)
       expect_custom_value(prod, cdefs[:prod_department_code], "300")
-      expect_custom_value(prod, cdefs[:prod_country_of_origin], "CO")
 
       expect(prod.classifications.length).to eq 1
       c = prod.classifications.first
       expect(c.country).to eq us
       expect_custom_value(c, cdefs[:class_customs_description], "Customs Description")
-      expect_custom_value(c, cdefs[:prod_country_of_origin], nil)
 
       expect(c.tariff_records.length).to eq 1
       t = c.tariff_records.first

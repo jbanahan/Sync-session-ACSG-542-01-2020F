@@ -438,6 +438,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.sub_house_bills_of_lading).to eq "SUB\n SUB2"
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
       expect(entry.total_non_dutiable_amount).to eq BigDecimal("246.9")
+      expect(entry.product_lines).to eq "PRODUCT\n PRODUCT2"
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4

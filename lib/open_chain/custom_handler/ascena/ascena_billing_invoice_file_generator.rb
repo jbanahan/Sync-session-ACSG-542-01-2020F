@@ -216,6 +216,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       invoices = []
       broker_invoice_snapshots.each do |bi|
         broker_invoice = find_entity_object(bi)
+        next if broker_invoice.nil?
+        
         sr = broker_invoice.sync_records.find {|s| s.trading_partner == "ASCE_BILLING" }
         invoices << bi if sr.nil? || sr.sent_at.nil?
       end

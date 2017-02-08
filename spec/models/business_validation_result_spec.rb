@@ -44,7 +44,7 @@ describe BusinessValidationResult do
         expect(x).to receive(:run_validation).with(o)
       end
 
-      bvr.run_validation
+      expect(bvr.run_validation).to be_truthy
       expect(bvr.state).to eq 'Fail'
     end
     it "should pass if all rules pass" do
@@ -63,7 +63,24 @@ describe BusinessValidationResult do
         expect(x).to receive(:run_validation).with(o)
       end
 
-      bvr.run_validation
+      expect(bvr.run_validation).to be_truthy
+      expect(bvr.state).to eq 'Pass'
+    end
+    it "should return false if the state doesn't change" do
+      o = Order.new
+      rr1 = BusinessValidationRuleResult.new
+
+      rr1.state = 'Pass'
+
+      bvr = described_class.new(state:'Pass')
+      bvr.validatable = o
+
+      [rr1].each do |x|
+        bvr.business_validation_rule_results << x
+        expect(x).to receive(:run_validation).with(o)
+      end
+
+      expect(bvr.run_validation).to be_falsey
       expect(bvr.state).to eq 'Pass'
     end
   end

@@ -3,10 +3,11 @@ require 'spec_helper'
 describe OpenChain::Report::MonthlyYoyReport do
   
   let(:report) { described_class.new }
-  let!(:co1) { Factory(:country, iso_code: "CA") }
-  let!(:co2) { Factory(:country, iso_code: "US") }
-  let!(:month_ago) { Date.today - 1.month }
-  let!(:two_months_ago) { month_ago - 1.month }
+  let(:co1) { Factory(:country, iso_code: "CA") }
+  let(:co2) { Factory(:country, iso_code: "US") }
+  let(:today) { Date.new(2016,5,15) }
+  let(:month_ago) { today - 1.month }
+  let(:two_months_ago) { month_ago - 1.month }
   let!(:e1) { Factory(:entry, file_logged_date: two_months_ago, division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co1) }
   let!(:e2) { Factory(:entry, file_logged_date: month_ago, division_number: '2', customer_number: '2', transport_mode_code: '10', import_country: co1) }
   let!(:e3) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '3', transport_mode_code: '10', import_country: co1) }
@@ -15,7 +16,7 @@ describe OpenChain::Report::MonthlyYoyReport do
 
   describe "send_email" do
     it "sends email with attached xls" do
-      report.send_email({"email" => "test@vandegriftinc.com"})
+      Timecop.freeze(today) { report.send_email({"email" => "test@vandegriftinc.com"}) }
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [ "test@vandegriftinc.com" ]
       expect(mail.subject).to eq "Monthly YOY Report"
@@ -36,7 +37,8 @@ describe OpenChain::Report::MonthlyYoyReport do
 
   describe "query" do
     it "produces expected data" do
-      res = ActiveRecord::Base.connection.execute(report.query)
+      res = nil
+      Timecop.freeze(today) { res = ActiveRecord::Base.connection.execute(report.query) }
       results = []
       res.each { |r| results << r }
       expect(results.count).to eq 5
@@ -48,14 +50,16 @@ describe OpenChain::Report::MonthlyYoyReport do
     end
 
     it "skips entries with file_logged_date earlier than January two years ago" do
-      e1.update_attributes(file_logged_date: Date.new(Date.today.year - 3,12,30))
-      results = ActiveRecord::Base.connection.execute(report.query)
+      e1.update_attributes(file_logged_date: today - 3.years)
+      results = nil
+      Timecop.freeze(today) { results = ActiveRecord::Base.connection.execute(report.query) }
       expect(results.count).to eq 4
     end
 
     it "skips entries with file_logged_date more recent than the last day of the previous month" do
       e1.update_attributes(file_logged_date: Date.today.at_beginning_of_month)
-      results = ActiveRecord::Base.connection.execute(report.query) 
+      results = nil
+      Timecop.freeze(today) { results = ActiveRecord::Base.connection.execute(report.query) }
       expect(results.count).to eq 4
     end
   end
