@@ -201,6 +201,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(po1, "BO"))
     line.find_and_set_custom_value(cdefs[:ord_line_color_description], find_segment_qualified_value(po1, "PU"))
     line.find_and_set_custom_value(cdefs[:ord_line_size], find_segment_qualified_value(po1, "IZ"))
+    line.find_and_set_custom_value(cdefs[:ord_line_buyer_item_number], find_segment_qualified_value(po1, "IN"))
 
     find_segments(segments, "CTP") do |ctp|
       case ctp.elements[2].value
@@ -247,6 +248,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(sln, "BO"))
       line.find_and_set_custom_value(cdefs[:ord_line_size], find_segment_qualified_value(sln, "IZ"))
       line.find_and_set_custom_value(cdefs[:ord_line_color_description], find_segment_qualified_value(sln, "PU"))
+      line.find_and_set_custom_value(cdefs[:ord_line_buyer_item_number], find_segment_qualified_value(sln, "IN"))
 
       find_segments(subline_segments, "CTP") do |ctp|
         case ctp.elements[2].value
@@ -381,7 +383,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered, :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color, :ord_line_units_per_inner_pack, :ord_line_color_description, :prod_part_number])
+    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered, :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color, :ord_line_units_per_inner_pack, :ord_line_color_description, :ord_line_buyer_item_number, :prod_part_number])
   end
 
   def importer

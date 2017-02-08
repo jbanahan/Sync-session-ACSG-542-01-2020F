@@ -61,6 +61,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_color_description])).to eq "PARIS CRIB N CHANGER"
       expect(line.custom_value(cdefs[:ord_line_estimated_unit_landing_cost])).to eq BigDecimal("131.88")
       expect(line.custom_value(cdefs[:ord_line_retail_unit_price])).to eq BigDecimal("199.99")
+      expect(line.custom_value(cdefs[:ord_line_buyer_item_number])).to eq "13347530"
 
       p = line.product
       expect(p.unique_identifier).to eq "BURLI-9050-E"
@@ -210,6 +211,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_retail_unit_price])).to eq BigDecimal("10.99")
       expect(line.custom_value(cdefs[:ord_line_prepacks_ordered])).to eq BigDecimal("179")
       expect(line.custom_value(cdefs[:ord_line_units_per_inner_pack])).to eq BigDecimal("4")
+      expect(line.custom_value(cdefs[:ord_line_buyer_item_number])).to eq "14734003"
 
       # I copy/pasted a second line into the EDI...so everything (except color) will be literally the 
       # same values...so just check that the line numbers are as expected
