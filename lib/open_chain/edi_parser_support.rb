@@ -257,6 +257,53 @@ module OpenChain; module EdiParserSupport
     loops.find_all {|l| l.first.elements[1].try(:value) == qualifier }
   end
 
+  # This method attempts to assemble HL segements into a heirarchy using the HL01 (ID) and the
+  # HL02 (Parent ID) elements to build the heirarchy.  It is assumed that every segment encountered
+  # after an HL and prior to the next HL (or any stop element) belongs to the currently processing
+  # HL segment.
+  def extract_hl_loops segments, stop_segments: nil
+    # Keys will be the HL's ID, values will be a hash of sub-segments and the parent id
+    hl_entities = {}
+
+    stop_segments =  Set.new Array.wrap(stop_segments)
+
+    current_entity = nil
+
+    segments.each do |seg|
+      break if stop_segments.include? seg.segment_type
+
+      if seg.segment_type == "HL"
+        if current_entity
+          hl_entities[current_entity[:id]] = current_entity
+        end
+
+        current_entity = {id: seg.elements[1].value, hl_level: seg.elements[3].value, hl_segment: seg, segments: [], hl_children: [], parent_id: seg.elements[2].value}
+        hl_entities[current_entity[:id]] = current_entity
+      elsif !current_entity.nil?
+        current_entity[:segments] << seg
+      end
+    end
+
+
+    # The best way to do this is work backwards through the entity key list and then add the entity 
+    # to its parent's children list.
+    top_level = nil
+
+    hl_entities.keys.reverse.each do |id|
+      child_entity = hl_entities[id]
+      parent_entity = hl_entities[child_entity[:parent_id]]
+
+      # If the parent entity is nil, it means we're at the apex HL segment.
+      if parent_entity.nil?
+        top_level = child_entity
+      else
+        parent_entity[:hl_children].unshift child_entity
+      end
+    end
+
+    top_level
+  end
+
   # Parses a given EDI position (coordinate) into the segment type and index provided.
   # Example: parse_edi_coordinate("BEG01") -> ["BEG", 1]
   def parse_edi_coordinate coord

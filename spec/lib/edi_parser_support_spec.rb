@@ -376,4 +376,54 @@ describe OpenChain::EdiParserSupport do
       expect(m.attachments["file.edi"].read).to eq transaction.read
     end
   end
+
+  describe "extract_hl_loops" do
+    let (:file_path) { 'spec/fixtures/files/burlington_856.edi' }
+    let (:segments) { REX12::Document.read file_path }
+
+    it "creates hl heirarchy structure" do
+      heirarchy = subject.extract_hl_loops segments
+
+      # The top level should be the shipment
+      expect(heirarchy[:hl_level]).to eq "S"
+
+      # It should have 10 segments below it
+      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD3", "REF", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
+
+      # It should have 2 sub-hl Orders below it
+      expect(heirarchy[:hl_children].length).to eq 2
+
+      order = heirarchy[:hl_children].first
+      expect(order[:hl_level]).to eq "O"
+      expect(order[:segments].map {|s| s.segment_type}).to eq ["PRF", "TD1"]
+      expect(order[:hl_children].length).to eq 2
+
+      pack = order[:hl_children].first
+      expect(pack[:hl_level]).to eq "P"
+      expect(pack[:segments].map {|s| s.segment_type}).to eq ["MAN"]
+      expect(pack[:hl_children].length).to eq 1
+
+      item = pack[:hl_children].first
+      expect(item[:hl_level]).to eq "I"
+      expect(item[:segments].map {|s| s.segment_type}).to eq ["LIN", "SN1"]
+    end
+
+    it "stops at given stop segment" do
+      # Just use a stop element that's in the hl loop to make sure it stops where we instruct
+      heirarchy = subject.extract_hl_loops segments, stop_segments: "TD1"
+
+      # The top level should be the shipment
+      expect(heirarchy[:hl_level]).to eq "S"
+
+      # It should have 10 segments below it
+      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD3", "REF", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
+
+      # It should have 2 sub-hl Orders below it
+      expect(heirarchy[:hl_children].length).to eq 1
+      order = heirarchy[:hl_children].first
+      expect(order[:hl_level]).to eq "O"
+      expect(order[:segments].map {|s| s.segment_type}).to eq ["PRF"]
+      expect(order[:hl_children].length).to eq 0
+    end
+  end
 end
