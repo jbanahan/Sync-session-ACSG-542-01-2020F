@@ -33,16 +33,22 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
   def self.update_product! prod_id, ca_hts
     ca = Country.where(iso_code: "CA").first
     prod = Product.find prod_id
-    Product.transaction do
+    Lock.with_lock_retry(prod) do
       classi = prod.classifications.where(country_id: ca.id).first_or_create!
       tr = classi.tariff_records.first_or_create!
       if tr.hts_1.blank?
         tr.update_attributes(hts_1: ca_hts)
         flag_cdef, descr_cdef = get_cdefs
         prod.update_custom_value!(flag_cdef, true)
-        classi.update_custom_value!(descr_cdef, get_description("CA", ca_hts))
+        update_classi! classi, descr_cdef, ca_hts, prod.importer_id
         prod.create_snapshot User.integration, nil, "HmSystemClassifyProductComparator"
       end
+    end
+  end
+
+  def self.update_classi! classi, descr_cdef, ca_hts, importer_id
+    unless classi.get_custom_value(descr_cdef).value.presence
+      classi.update_custom_value!(descr_cdef, get_description(ca_hts, importer_id))
     end
   end
 
@@ -57,8 +63,8 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
     json_child_entities(prod_hsh, "Classification").find{|cl| mf(cl, "class_cntry_iso") == iso_code}
   end
 
-  def self.get_description iso_code, hts
-    OfficialTariff.joins(:country).where(:hts_code=>hts).where("countries.iso_code = ?", iso_code).first.try(:remaining_description)
+  def self.get_description hts, importer_id
+    DataCrossReference.find_ca_hts_to_descr hts, importer_id
   end
 
 end; end; end; end
