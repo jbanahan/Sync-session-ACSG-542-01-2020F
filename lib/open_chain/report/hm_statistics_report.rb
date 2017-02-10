@@ -117,10 +117,11 @@ module OpenChain; module Report; class HmStatisticsReport
       case row[1]
       when 'AIR'
         dh.air_order = row[2]
+        dh.total_order += row[2]
       when 'OCEAN'
         dh.ocean_order = row[2]
+        dh.total_order += row[2]
       end
-      dh.total_order = dh.total_order + row[2]
     end       
   end
 

@@ -351,7 +351,7 @@ describe OpenChain::Report::HmStatisticsReport do
   describe "load_order_dh" do
     it "loads master hash" do
       mh = Hash.new
-      results = [["US", "OCEAN", 1], ["US", "AIR", 2]]
+      results = [["US", "OCEAN", 1], ["US", "AIR", 2], ["US", "OTHER", 1]]
       report.load_order_dh results, mh
 
       expect(mh["US"].ocean_order).to eq 1
