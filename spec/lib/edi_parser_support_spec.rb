@@ -375,6 +375,16 @@ describe OpenChain::EdiParserSupport do
 
       expect(m.attachments["file.edi"].read).to eq transaction.read
     end
+
+    it "handles blank filenames" do
+      # The attachment in this case just takes the tempfile name...which is fine, this just used
+      # to crash the reporter and we don't want that.
+      subject.send_error_email(first_transaction, error, "Parser", nil)
+      m = ActionMailer::Base.deliveries.first
+
+      expect(m).not_to be_nil
+      expect(m.attachments.size).to eq 1
+    end
   end
 
   describe "extract_hl_loops" do

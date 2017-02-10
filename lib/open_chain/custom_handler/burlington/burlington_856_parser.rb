@@ -303,6 +303,8 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   end
 
   def prorate_order_weight total_weight, styles
+    return {} if styles.size == 0
+    
     # Styles should be a hash containing the style numbers associated with the # of items shipped for the po.
     total_quantity = styles.values.sum
 
