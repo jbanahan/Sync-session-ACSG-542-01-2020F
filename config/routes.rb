@@ -658,6 +658,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_duty_savings_report" => "reports#run_duty_savings_report"
   get "/reports/show_daily_first_sale_exception_report" => "reports#show_daily_first_sale_exception_report"
   post "/reports/run_daily_first_sale_exception_report" => "reports#run_daily_first_sale_exception_report"
+  get "/reports/show_ticket_tracking_report" => "reports#show_ticket_tracking_report"
+  post "/reports/run_ticket_tracking_report" => "reports#run_ticket_tracking_report"
 
 
   resources :report_results, :only => [:index,:show] do

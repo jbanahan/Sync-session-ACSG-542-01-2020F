@@ -450,8 +450,30 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_ticket_tracking_report
+    klass = OpenChain::Report::TicketTrackingReport
+    if klass.permission? current_user
+      @project_keys = klass.get_project_keys current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ticket_tracking_report
+    if OpenChain::Report::TicketTrackingReport.permission? current_user
+      run_report "Ticket Tracking Report", OpenChain::Report::TicketTrackingReport, {start_date: params[:start_date], end_date: params[:end_date], project_keys: params[:project_keys]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def run_monthly_entry_summation
-    run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
+    if OpenChain::Report::MonthlyEntrySummation.permission? current_user
+      run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
   end
 
   def show_container_cost_breakdown
