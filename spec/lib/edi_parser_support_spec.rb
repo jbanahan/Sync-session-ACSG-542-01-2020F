@@ -426,4 +426,24 @@ describe OpenChain::EdiParserSupport do
       expect(order[:hl_children].length).to eq 0
     end
   end
+
+  describe "value" do 
+    let (:segment) { segments.first }
+
+    it "returns given element index's value" do
+      expect(subject.value(segment, 6)).to eq "ACSPROD        "
+    end
+
+    it "handles Ranges" do
+      expect(subject.value(segment, (6..7))).to eq ["ACSPROD        ", "02"]
+    end
+
+    it "handles nil" do
+      expect(subject.value(nil, 1)).to be_nil
+    end
+
+    it "handles Ranges outside segment's size" do
+      expect(subject.value(segment, (12..20))).to eq ["00401", "000004837", "0", "P", ">"]
+    end
+  end
 end

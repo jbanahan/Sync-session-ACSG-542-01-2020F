@@ -98,6 +98,18 @@ module OpenChain; module EdiParserSupport
     find_element_values(segments, edi_position).first
   end
 
+  # Returns the value specified at the given segments index.
+  # This method works pretty much exactly like the Array#[] method.
+  # .ie pass a range and you will get back an Array, pass a numeric and you'll
+  # get back a single value.
+  def value segment, index
+    return nil if segment.nil?
+
+    vals = Array.wrap(segment.elements[index]).map {|element| element.value }
+
+    vals.length > 1 ? vals : vals[0]
+  end
+
   # Finds DTM segments using the qualifier specified and then parses the date/time
   # from it relative to the specified time zone.  If nil, UTC is used.
   #
