@@ -19,7 +19,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
     'SOUTHEAST ASIA' => 'SG',
     'LATIN AMERICA' => 'PA',
     'JAPAN' => 'JP',
-    "KOREA" => "KR"
+    "KOREA" => "KR",
+    "ARGENTINA" => "AR"
   }
 
   def initialize custom_file
