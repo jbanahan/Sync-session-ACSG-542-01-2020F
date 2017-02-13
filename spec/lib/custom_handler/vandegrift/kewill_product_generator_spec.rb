@@ -7,8 +7,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
   describe "write_row_to_xml" do
 
     let (:row) {
-      # This is what a file row without FDA information will look like.
-      ["STYLE", "DESCRIPTION", "TARIFF123", "CO", "BRAND"]
+      # This is what a file row without FDA information will look like (description should upcase)
+      ["STYLE", "description", "TARIFF123", "CO", "BRAND"]
     }
     
     let (:fda_row) {

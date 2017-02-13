@@ -82,7 +82,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # to determine which record to utilize for a part.
     add_element(p, "dateExpiration", "20991231") 
     write_data(p, "styleNo", row[0], 40, error_on_trim: true)
-    write_data(p, "descr", row[1], 40)
+    write_data(p, "descr", row[1].to_s.upcase, 40)
     write_data(p, "countryOrigin", row[3], 2)
     # This is blanked unless FDA Flag is true, so we're ok to always send it (see preprocess_row)
     write_data(p, "manufacturerId", row[9], 15)
