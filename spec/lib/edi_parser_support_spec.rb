@@ -398,7 +398,7 @@ describe OpenChain::EdiParserSupport do
       expect(heirarchy[:hl_level]).to eq "S"
 
       # It should have 10 segments below it
-      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD3", "REF", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
+      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD5", "TD5", "TD5", "TD3", "REF", "REF", "DTM", "DTM", "DTM", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
 
       # It should have 2 sub-hl Orders below it
       expect(heirarchy[:hl_children].length).to eq 2
@@ -426,7 +426,7 @@ describe OpenChain::EdiParserSupport do
       expect(heirarchy[:hl_level]).to eq "S"
 
       # It should have 10 segments below it
-      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD3", "REF", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
+      expect(heirarchy[:segments].map {|s| s.segment_type}).to eq ["TD5", "TD5", "TD5", "TD5", "TD3", "REF", "REF", "DTM", "DTM", "DTM", "DTM", "N1", "N3", "N4", "N1", "N3", "N4"]
 
       # It should have 2 sub-hl Orders below it
       expect(heirarchy[:hl_children].length).to eq 1
