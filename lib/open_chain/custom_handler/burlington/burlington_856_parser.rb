@@ -175,7 +175,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
             # carton for every line..We'll work around that by just putting the carton amount on the first prepack
             # line and leaving the others with 0 cartons
             added_carton = false
+            subline_count = 0
             find_segments(item_loop[:segments], "SLN") do |prepack|
+              subline_count +=1
               style = find_segment_qualified_value(prepack, "IN")
               quantity = BigDecimal(value(prepack, 4))
               po_data[style][:quantity] += quantity
@@ -184,7 +186,32 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
                 added_carton = true
               end
             end
-            
+
+            # Stunningly, some Burlington vendors "can't" send subline prepack data on the 856, so they just
+            # send the outer pack data.  In this case, we have to hit the PO and "explode" the prepack lines on
+            # to this 856.
+            if subline_count == 0
+              outer_pack_quantity = find_element_value(item_loop[:segments], "SN102").to_i
+
+              order_lines = explode_prepack(po_number, find_segment_qualified_value(find_segment(item_loop[:segments], "LIN"), "IN"))
+              order_lines.each do |l|
+                style = l.product.custom_value(cdefs[:prod_part_number])
+                ordered_inner_packs = l.custom_value(cdefs[:ord_line_units_per_inner_pack]).to_i
+                
+                # It appears that what's happening here in this case is the PO has the same styles although the sizes are different (different skus)
+                # then on the 856 there's no subline references to the distinct prepack line.  So, what happens then is that every
+                # line has the same style.  Ultimately we'd like the 856 to link to distinct prepacks, so what we'll do is actually
+                # include the order line on the po_data and just use the order/line number as the hash key so that we get the 
+                # correct # of shipment lines added
+                key = "#{po_number}*~*#{l.line_number}"
+                po_data[key][:quantity] += BigDecimal(outer_pack_quantity * ordered_inner_packs)
+                po_data[key][:order_line] = l unless po_data[key][:order_line]
+                unless added_carton
+                  po_data[key][:cartons] += 1
+                  added_carton = true
+                end
+              end
+            end
           else
             # Standard packs
             style = find_segment_qualified_value(find_segment(item_loop[:segments], "LIN"), "IN")
@@ -240,13 +267,42 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
           # carton for every line..We'll work around that by just putting the carton amount on the first prepack
           # line and leaving the others with 0 cartons
           added_carton = false
+          subline_count = 0
           find_segments(item_loop[:segments], "SLN") do |prepack|
+            subline_count += 1
             style = find_segment_qualified_value(prepack, "IN")
             quantity = BigDecimal(value(prepack, 4))
             po_data[style][:quantity] += quantity
             unless added_carton
               po_data[style][:cartons] += cartons
               added_carton = true
+            end
+          end
+
+          # Stunningly, some Burlington vendors "can't" send subline prepack data on the 856, so they just
+          # send the outer pack data.  In this case, we have to hit the PO and "explode" the prepack lines on
+          # to this 856.
+          # We can figure out the carton count, but we can't figure the quantity or the weight
+          if subline_count == 0
+            outer_pack_quantity = find_element_value(item_loop[:segments], "SN102").to_i
+
+            order_lines = explode_prepack(po_number, find_segment_qualified_value(find_segment(item_loop[:segments], "LIN"), "IN"))
+            order_lines.each do |l|
+              style = l.product.custom_value(cdefs[:prod_part_number])
+              ordered_inner_packs = l.custom_value(cdefs[:ord_line_units_per_inner_pack]).to_i
+              
+              # It appears that what's happening here in this case is the PO has the same styles although the sizes are different (different skus)
+              # then on the 856 there's no subline references to the distinct prepack line.  So, what happens then is that every
+              # line has the same style.  Ultimately we'd like the 856 to link to distinct prepacks, so what we'll do is actually
+              # include the order line on the po_data and just use the order/line number as the hash key so that we get the 
+              # correct # of shipment lines added
+              key = "#{po_number}*~*#{l.line_number}"
+              po_data[key][:quantity] += BigDecimal(outer_pack_quantity * ordered_inner_packs)
+              po_data[key][:order_line] = l unless po_data[key][:order_line]
+              unless added_carton
+                po_data[key][:cartons] += cartons
+                added_carton = true
+              end
             end
           end
           
@@ -264,6 +320,16 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     process_po_data shipment, po, po_weights
   end
 
+  def explode_prepack order_number, outer_pack_identifier
+    order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
+    raise "Burlington 856 references missing Order # '#{order_number}'." unless order
+
+    order_lines = order.order_lines.find_all {|l| l.custom_value(cdefs[:ord_line_outer_pack_identifier]) == outer_pack_identifier}
+    raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Outer Pack Identifier '#{outer_pack_identifier}'." if order_lines.length == 0
+
+    order_lines
+  end
+
   def process_po_data shipment, po, po_weights
     # For each po / style combination we'll generate a distinct shipment line
     # Due to the 1 PO per line style that Burlington employs, Any po that has more than one style
@@ -276,7 +342,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
         style = styles.keys.first
         style_data = styles[style]
 
-        process_shipment_line_data shipment, po_number, style_data[:cartons], style, style_data[:quantity], po_weight
+        process_shipment_line_data shipment, po_number, style_data[:cartons], style, style_data[:quantity], po_weight, style_data[:order_line]
       else
         # Prepacks
         prepack_quantities = {}
@@ -285,7 +351,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
         weights = prorate_order_weight(po_weight, prepack_quantities)
 
         styles.each_pair do |style, style_data|
-          process_shipment_line_data shipment, po_number, style_data[:cartons], style, style_data[:quantity], weights[style]
+          process_shipment_line_data shipment, po_number, style_data[:cartons], style, style_data[:quantity], weights[style], style_data[:order_line]
         end
       end
     end
@@ -303,10 +369,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   end
 
   def prorate_order_weight total_weight, styles
-    return {} if styles.size == 0
-    
     # Styles should be a hash containing the style numbers associated with the # of items shipped for the po.
     total_quantity = styles.values.sum
+
+    # We may have no quantities if we get prepacks without any prepack data
+    return {} if total_quantity.nil? || total_quantity == 0
 
     proration = total_weight / total_quantity
     weights = {}
@@ -340,12 +407,14 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     weights
   end
 
-  def process_shipment_line_data shipment, order_number, cartons, buyer_style, item_quantity, weight
-    order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
-    raise "Burlington 856 references missing Order # '#{order_number}'." unless order
+  def process_shipment_line_data shipment, order_number, cartons, buyer_style, item_quantity, weight, order_line
+    if order_line.nil?
+      order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
+      raise "Burlington 856 references missing Order # '#{order_number}'." unless order
 
-    order_line = order.order_lines.find {|l| l.custom_value(cdefs[:ord_line_buyer_item_number]) == buyer_style}
-    raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number '#{buyer_style}'." unless order_line
+      order_line = order.order_lines.find {|l| l.custom_value(cdefs[:ord_line_buyer_item_number]) == buyer_style}
+      raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number '#{buyer_style}'." unless order_line
+    end
 
     container = shipment.containers.first
     line = shipment.shipment_lines.build
@@ -420,7 +489,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_line_buyer_item_number])
+    @cd ||= self.class.prep_custom_definitions([:ord_line_buyer_item_number, :ord_line_outer_pack_identifier, :ord_line_units_per_inner_pack, :prod_part_number])
   end
 
   def importer

@@ -87,7 +87,8 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_line_prepacks_ordered: {label: "Prepacks Ordered", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_prepacks_ordered"},
     ord_line_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_units_per_inner_pack"},
     ord_line_retail_unit_price: {label: "Retail Unit Price", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_retail_unit_price"},
-    ord_line_buyer_item_number: {label: "Buyer Item Number", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_buyer_item_number"}
+    ord_line_buyer_item_number: {label: "Buyer Item Number", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_buyer_item_number"},
+    ord_line_outer_pack_identifier: {label: "Outer Pack Identifier", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_outer_pack_identifier"}
   } 
   
   def self.included(base)

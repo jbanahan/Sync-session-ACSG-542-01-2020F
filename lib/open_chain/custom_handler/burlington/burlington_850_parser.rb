@@ -250,6 +250,12 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       line.find_and_set_custom_value(cdefs[:ord_line_color_description], find_segment_qualified_value(sln, "PU"))
       line.find_and_set_custom_value(cdefs[:ord_line_buyer_item_number], find_segment_qualified_value(sln, "IN"))
 
+      # We also need to store off the IN value from the po1 line, because some vendors are incapable of sending prepack
+      # lines on the 856.  In that case they send the PO1 segment's IN value (which I'm calling the outer pack identifier).
+      # We then explode out all the prepacks onto distinct shipment lines.
+      line.find_and_set_custom_value(cdefs[:ord_line_outer_pack_identifier], find_segment_qualified_value(po1, "IN"))
+
+
       find_segments(subline_segments, "CTP") do |ctp|
         case ctp.elements[2].value
         when "ELC"
@@ -383,7 +389,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered, :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color, :ord_line_units_per_inner_pack, :ord_line_color_description, :ord_line_buyer_item_number, :prod_part_number])
+    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered, 
+      :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color, 
+      :ord_line_units_per_inner_pack, :ord_line_color_description, :ord_line_buyer_item_number, :ord_line_outer_pack_identifier, :prod_part_number])
   end
 
   def importer

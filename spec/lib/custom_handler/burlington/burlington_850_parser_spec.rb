@@ -212,6 +212,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_prepacks_ordered])).to eq BigDecimal("179")
       expect(line.custom_value(cdefs[:ord_line_units_per_inner_pack])).to eq BigDecimal("4")
       expect(line.custom_value(cdefs[:ord_line_buyer_item_number])).to eq "14734003"
+      expect(line.custom_value(cdefs[:ord_line_outer_pack_identifier])).to eq "PO3636924LN10"
 
       # I copy/pasted a second line into the EDI...so everything (except color) will be literally the 
       # same values...so just check that the line numbers are as expected

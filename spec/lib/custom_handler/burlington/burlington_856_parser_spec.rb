@@ -297,6 +297,93 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         expect(line.gross_kgs).to eq 3206
       end
     end
+
+    context "with prepacks missing SLN segments" do
+      let (:segments) { REX12::Document.parse IO.read 'spec/fixtures/files/burlington_prepack_856_missing_sln.edi'}
+      let! (:order) {
+        o = Factory(:order, order_number: "BURLI-641585114", importer: importer)
+        ol = o.order_lines.create! product: product_1, quantity: 100
+        ol.update_custom_value! cdefs[:ord_line_outer_pack_identifier], "PO6415851LN14"
+        ol.update_custom_value! cdefs[:ord_line_units_per_inner_pack], 4
+        ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150180"
+
+        ol = o.order_lines.create! product: product_2, quantity: 100
+        ol.update_custom_value! cdefs[:ord_line_outer_pack_identifier], "PO6415851LN14"
+        ol.update_custom_value! cdefs[:ord_line_units_per_inner_pack], 4
+        ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150181"
+
+        ol = o.order_lines.create! product: product_3, quantity: 100
+        ol.update_custom_value! cdefs[:ord_line_outer_pack_identifier], "PO6415851LN14"
+        ol.update_custom_value! cdefs[:ord_line_units_per_inner_pack], 4
+        ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150182"
+
+        o
+      }
+      
+      let (:product_1) {
+        p = Factory(:product, unique_identifier: "BURLI-PART1")
+        p.update_custom_value! cdefs[:prod_part_number], "16150180"
+        p
+      }
+
+      let (:product_2) {
+        p = Factory(:product, unique_identifier: "BURLI-PART2")
+        p.update_custom_value! cdefs[:prod_part_number], "16150181"
+        p
+      }
+
+      let (:product_3) {
+        p = Factory(:product, unique_identifier: "BURLI-PART3")
+        p.update_custom_value! cdefs[:prod_part_number], "16150182"
+        p
+      }
+
+      it "parses edi" do
+        shipment = subject.process_shipment user, segments, "bucket", "file.edi"
+        expect(shipment).not_to be_nil
+
+        expect(shipment.number_of_packages_uom).to eq "CTN"
+        expect(shipment.number_of_packages).to eq 2
+        expect(shipment.gross_weight).to eq 1230
+
+        expect(shipment.shipment_lines.length).to eq 3
+
+        line = shipment.shipment_lines.first
+        expect(line.product).to eq product_1
+        expect(line.order_lines.first).to eq order.order_lines.first
+        expect(line.quantity).to eq 8
+        expect(line.carton_qty).to eq 2
+        expect(line.gross_kgs).to eq 410
+
+        line = shipment.shipment_lines.second
+        expect(line.product).to eq product_2
+        expect(line.order_lines.first).to eq order.order_lines.second
+        expect(line.quantity).to eq 8
+        # Carton quantity is zero on all lines but the first because technically the 3 lines from
+        # the same prepack item HL loop are all in the same carton
+        expect(line.carton_qty).to eq 0
+        expect(line.gross_kgs).to eq 410
+
+        line = shipment.shipment_lines[2]
+        expect(line.product).to eq product_3
+        expect(line.order_lines.first).to eq order.order_lines[2]
+        expect(line.quantity).to eq 8
+        # Carton quantity is zero on all lines but the first because technically the 3 lines from
+        # the same prepack item HL loop are all in the same carton
+        expect(line.carton_qty).to eq 0
+        expect(line.gross_kgs).to eq 410
+      end
+
+      it "raises an error if order line is not found" do
+        order.order_lines.destroy_all
+        expect { subject.process_shipment user, segments, "bucket", "file.edi" }.to raise_error "Burlington 856 references missing Order Line from Order '641585114' with Outer Pack Identifier 'PO6415851LN14'."
+      end
+
+      it "raises an error if order is not found" do
+        order.destroy
+        expect { subject.process_shipment user, segments, "bucket", "file.edi" }.to raise_error "Burlington 856 references missing Order # '641585114'."
+      end
+    end
   end
 
 
