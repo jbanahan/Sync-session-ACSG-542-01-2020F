@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
       expect(parent.text "id/dateEffective").to eq "20140101"
       expect(parent.text "dateExpiration").to eq "20991231"
       expect(parent.text "styleNo").to eq "123"
-      expect(parent.text "descr").to eq "Description"
+      expect(parent.text "descr").to eq "DESCRIPTION"
       expect(parent.text "CatTariffClassList/CatTariffClass/seqNo").to eq "1"
       expect(parent.text "CatTariffClassList/CatTariffClass/tariffNo").to eq "12345678"
     end
