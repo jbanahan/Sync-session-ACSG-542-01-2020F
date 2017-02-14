@@ -33,6 +33,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def initialize alliance_customer_number, opts = {}
+    opts = opts.with_indifferent_access
     @alliance_customer_number = alliance_customer_number
     @custom_where = opts[:custom_where]
     @strip_leading_zeros = opts[:strip_leading_zeros].to_s.to_boolean
@@ -41,6 +42,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # (like DAS) where the products aren't linked to any importer - since the whole system is a single importer's system.
     @disable_importer_check = opts[:disable_importer_check].to_s.to_boolean
     @allow_blank_tariffs = opts[:allow_blank_tariffs].to_s.to_boolean
+    @allow_multiple_tariffs = opts[:allow_multiple_tariffs].to_s.to_boolean
   end
 
   def custom_defs
@@ -51,13 +53,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def sync_xml
+    imp = nil
     if !@disable_importer_check
-      @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
-      raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+      imp = importer
     end
     
     val = super
-    @importer.update_attributes!(:last_alliance_product_push_at => Time.zone.now) if @importer
+    imp.update_attributes!(:last_alliance_product_push_at => Time.zone.now) if imp
     val
   end
 
@@ -88,45 +90,58 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(p, "manufacturerId", row[9], 15)
     write_data(p, "productLine", row[4], 30)
 
-    # If we ever add the ability to add multiple HTS #'s, this bit becomes a loop over the HTS values
-    # and each successive one has an incrementing sequence number (not entirely sure how things like FDA work though)
-    tariff_class = add_element(add_element(p, "CatTariffClassList"), "CatTariffClass")
-    add_kewill_keys(tariff_class, row)
-    add_element(tariff_class, "seqNo", "1")
-    # Since we're allowing blank tariffs, just take part of the join condition for 8 char tariffs and recreate here, dropping
-    # anything that's lesst than 8 chars (.ie not a good tariff)
-    write_data(tariff_class, "tariffNo", (row[2].to_s.length >= 8 ? row[2] : ""), 10, error_on_trim: true)
+    # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
+    # here into individual classification fields.
+    hts_values = row[2].to_s.split tariff_separator
+    classification_list_element = add_element(p, "CatTariffClassList")
 
-    if row[5] == "Y"
-      fda = add_element(add_element(tariff_class, "CatFdaEsList"), "CatFdaEs")
-      add_kewill_keys fda, row
-      # This is the CatTariffClass "key"...whoever designed this XML was dumb.
-      add_element(fda, "seqNo", "1")
-      add_element(fda, "fdaSeqNo", "1")
-      write_data(fda, "productCode", row[6], 7)
-      write_data(fda, "fdaUom1", row[7], 4)
-      write_data(fda, "countryProduction", row[8], 2)
-      write_data(fda, "manufacturerId", row[9], 15)
-      write_data(fda, "shipperId", row[10], 15)
-      write_data(fda, "desc1Ci", row[11], 70)
-      write_data(fda, "establishmentNo", row[12], 12)
-      write_data(fda, "containerDimension1", row[13], 4)
-      write_data(fda, "containerDimension2", row[14], 4)
-      write_data(fda, "containerDimension3", row[15], 4)
-      write_data(fda, "contactName", row[16], 10)
-      write_data(fda, "contactPhone", row[17], 10)
-      write_data(fda, "cargoStorageStatus", row[20], 1)
-      if !row[18].blank?
-        aff_comp = add_element(add_element(fda, "CatFdaEsComplianceList"), "CatFdaEsCompliance")
-        add_kewill_keys(aff_comp, row)
-        add_element(aff_comp, "seqNo", "1")
-        add_element(aff_comp, "fdaSeqNo", "1")
-        add_element(aff_comp, "seqNoEntryOrder", "1")
-        write_data(aff_comp, "complianceCode", row[18], 3)
-        # It appears Kewill named qualifier incorrectly...as the qualifier is actually the affirmation of compliance number/value
-        write_data(aff_comp, "complianceQualifier", row[19], 25)
+    hts_values.each_with_index do |hts, index|
+      tariff_seq = index + 1
+      tariff_class = write_tariff classification_list_element, hts, tariff_seq, row
+
+      if row[5] == "Y"
+        fda = add_element(add_element(tariff_class, "CatFdaEsList"), "CatFdaEs")
+        add_kewill_keys fda, row
+        # This is the CatTariffClass "key"...whoever designed this XML was dumb.
+        add_element(fda, "seqNo", tariff_seq)
+        add_element(fda, "fdaSeqNo", "1")
+        write_data(fda, "productCode", row[6], 7)
+        write_data(fda, "fdaUom1", row[7], 4)
+        write_data(fda, "countryProduction", row[8], 2)
+        write_data(fda, "manufacturerId", row[9], 15)
+        write_data(fda, "shipperId", row[10], 15)
+        write_data(fda, "desc1Ci", row[11], 70)
+        write_data(fda, "establishmentNo", row[12], 12)
+        write_data(fda, "containerDimension1", row[13], 4)
+        write_data(fda, "containerDimension2", row[14], 4)
+        write_data(fda, "containerDimension3", row[15], 4)
+        write_data(fda, "contactName", row[16], 10)
+        write_data(fda, "contactPhone", row[17], 10)
+        write_data(fda, "cargoStorageStatus", row[20], 1)
+        if !row[18].blank?
+          aff_comp = add_element(add_element(fda, "CatFdaEsComplianceList"), "CatFdaEsCompliance")
+          add_kewill_keys(aff_comp, row)
+          add_element(aff_comp, "seqNo", "1")
+          add_element(aff_comp, "fdaSeqNo", "1")
+          add_element(aff_comp, "seqNoEntryOrder", "1")
+          write_data(aff_comp, "complianceCode", row[18], 3)
+          # It appears Kewill named qualifier incorrectly...as the qualifier is actually the affirmation of compliance number/value
+          write_data(aff_comp, "complianceQualifier", row[19], 25)
+        end
       end
     end
+  end
+
+  def write_tariff parent_element, hts, sequence, row
+    tariff_class = add_element(parent_element, "CatTariffClass")
+    add_kewill_keys(tariff_class, row)
+    add_element(tariff_class, "seqNo", sequence)
+
+    # Since we're allowing blank tariffs, just take part of the join condition for 8 char tariffs and recreate it here, dropping
+    # anything that's less than 8 chars (.ie not a good tariff)
+    write_data(tariff_class, "tariffNo", (hts.to_s.length >= 8 ? hts : ""), 10, error_on_trim: true)
+    
+    tariff_class
   end
 
   def xml_document_and_root_element
@@ -166,12 +181,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     date ? date.strftime("%Y%m%d") : nil
   end
 
+  def importer
+    @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
+    raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+
+    @importer
+  end
+
   def query
     qry = <<-QRY
 SELECT products.id,
 #{@use_unique_identifier ? "products.unique_identifier" : cd_s(custom_defs[:prod_part_number].id)},
 products.name,
-tariff_records.hts_1,
+#{@allow_multiple_tariffs ? "(SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '*~*') FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8 )" : "(SELECT tar.hts_1 FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8 and tar.line_number = 1)" },
 IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true},""),
 #{cd_s custom_defs[:prod_brand].id},
 #{cd_s(custom_defs[:prod_fda_product].id, boolean_y_n: true)},
@@ -194,12 +216,6 @@ FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 QRY
 
-    if @allow_blank_tariffs
-      qry += "LEFT OUTER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id AND tariff_records.line_number = 1\n"
-    else
-      qry += "INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id AND tariff_records.line_number = 1\n"
-    end
-
     if @custom_where.blank?
       qry += "#{Product.need_sync_join_clause(sync_code)} 
 WHERE 
@@ -209,8 +225,12 @@ WHERE
     end
     
     qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless @use_unique_identifier
-    qry += " AND products.importer_id = #{@importer.id}" unless @disable_importer_check
+    qry += " AND products.importer_id = #{importer.id}" unless @disable_importer_check
 
+
+    unless @allow_blank_tariffs
+      qry += " AND LENGTH((SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '#{tariff_separator}') FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8)) >= 0"
+    end
     
     if @custom_where.blank?
       # Now that we're using XML, documents get really big, really quickly...so limit to X at a time per file
@@ -218,5 +238,9 @@ WHERE
     end
 
     qry
+  end
+
+  def tariff_separator
+    "*~*"
   end
 end; end; end; end

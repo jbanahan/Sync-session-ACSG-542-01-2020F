@@ -126,6 +126,31 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       row[2] = "12345678901"
       expect { subject.write_row_to_xml parent, 1, row }.to raise_error "tariffNo cannot be over 10 characters.  It was '12345678901'."
     end
+
+    it "sends multiple tariffs" do
+      # Include FDA information, so we know it's written to both classifications
+      fda_row[2] = "12345678*~*987654321"
+      subject.write_row_to_xml parent, 1, fda_row
+
+      tariffs = []
+      parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+      expect(tariffs.length).to eq 2
+
+      t = tariffs.first
+      expect(t.text "seqNo").to eq "1"
+      expect(t.text "tariffNo").to eq "12345678"
+      # Just check that the fda info is present and has the correct seq identifier
+      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to eq "1"
+      expect(t.text "CatFdaEsList/CatFdaEs/fdaSeqNo").to eq "1"
+      expect(t.text "CatFdaEsList/CatFdaEs/productCode").to eq "FDACODE"
+
+      t = tariffs.second
+      expect(t.text "seqNo").to eq "2"
+      expect(t.text "tariffNo").to eq "987654321"
+      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to eq "2"
+      expect(t.text "CatFdaEsList/CatFdaEs/fdaSeqNo").to eq "1"
+      expect(t.text "CatFdaEsList/CatFdaEs/productCode").to eq "FDACODE"
+    end
   end
 
   describe "run_schedulable" do
@@ -251,6 +276,22 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       doc = REXML::Document.new(data)
 
       expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "000001"
+    end
+
+    it "allows for sending multiple tarifs" do
+      p = create_product("000001")
+      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210"
+
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "allow_multiple_tariffs" => true
+
+      doc = REXML::Document.new(data)
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "1234567890"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "9876543210"
     end
   end
 end
