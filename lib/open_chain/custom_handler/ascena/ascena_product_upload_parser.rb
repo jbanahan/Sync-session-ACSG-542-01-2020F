@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def cdefs 
-    @cdefs ||= self.class.prep_custom_definitions [:prod_part_number, :prod_reference_number, :prod_department_code, :class_customs_description, :class_classification_notes]
+    @cdefs ||= self.class.prep_custom_definitions [:prod_part_number, :prod_reference_number, :prod_department_code, :prod_fda_product_code, :prod_fda_product, :class_customs_description, :class_classification_notes]
   end
 
   def process_file custom_file, user
@@ -103,6 +103,16 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     nil
   end
 
+  def assign_fda product, cdef_prod_code, cdef_prod_code_flag, data, changed
+    if data.presence
+      set_custom_value(product, cdefs[:prod_fda_product_code], data, changed)
+      set_custom_value(product, cdefs[:prod_fda_product], true, changed)
+    else
+      set_custom_value(product, cdefs[:prod_fda_product_code], nil, changed)
+      set_custom_value(product, cdefs[:prod_fda_product], nil, changed)
+    end
+  end
+
   def text v
     text_value(v).to_s.strip
   end
@@ -141,6 +151,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
 
       set_custom_value(product, cdefs[:prod_reference_number], parent_id, changed)
       set_custom_value(product, cdefs[:prod_department_code], text(row[4]), changed)
+      assign_fda(product, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], text(row[33]), changed)
 
       classification = product.classifications.find {|c| c.country_id == us.id }
       if classification.nil?
