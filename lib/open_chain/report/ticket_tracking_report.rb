@@ -15,10 +15,14 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def self.get_project_keys user
-    codes = user.company.master? ? VANDEGRIFT_PROJECT_KEYS : []
-    codes << user.company.ticketing_system_code
-    user.company.linked_companies.each { |lc| codes << lc.ticketing_system_code }
-    codes.compact.sort
+    if user.company.master?
+      codes = VANDEGRIFT_PROJECT_KEYS + Company.where("ticketing_system_code <> '' AND ticketing_system_code IS NOT NULL")
+                                               .pluck(:ticketing_system_code)
+    else
+      codes = [user.company.ticketing_system_code]
+      user.company.linked_companies.each { |lc| codes << lc.ticketing_system_code }
+    end
+    codes.compact.sort_by(&:upcase)
   end
 
   def self.run_report run_by, settings

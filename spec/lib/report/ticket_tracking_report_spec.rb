@@ -84,17 +84,18 @@ describe OpenChain::Report::TicketTrackingReport do
   end
 
   describe "get_project_keys" do
-    let(:linked) { Factory(:company, ticketing_system_code: "FOO") }
-    let(:co) { Factory(:company, ticketing_system_code: "BAR", linked_companies: [linked]) }
-    let(:user) { Factory(:user, company: co)}
+    let!(:linked) { Factory(:company, ticketing_system_code: "FOO") }
+    let!(:co) { Factory(:company, ticketing_system_code: "BAR", linked_companies: [linked]) }
+    let!(:other_co) { Factory(:company, ticketing_system_code: "BAZ") }
+    let!(:user) { Factory(:user, company: co)}
     
-    it "returns codes belonging to user's company and linked companies" do
-      expect(described_class.get_project_keys user).to eq ["BAR", "FOO"]
+    it "returns codes of all companies as well as default list for master user" do
+      co.update_attributes(master: true)
+      expect(described_class.get_project_keys user).to eq ["BAR", "BAZ", "DEMO", "FOO", "IT", "TP"]
     end
 
-    it "also returns default list for users belonging to master company" do
-      co.update_attributes(master: true)
-      expect(described_class.get_project_keys user).to eq ["BAR", "DEMO","FOO", "IT", "TP"]
+    it "returns codes belonging to non-master user's company and linked companies" do
+      expect(described_class.get_project_keys user).to eq ["BAR", "FOO"]
     end
   end
 
