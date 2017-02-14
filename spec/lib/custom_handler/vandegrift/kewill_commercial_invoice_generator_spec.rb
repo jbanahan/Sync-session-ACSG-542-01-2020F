@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
   describe "ftp_credentials" do
     it "uses credentials for connect.vfitrack.net" do
       expect(subject.ftp_credentials).to eq(
-        {server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$', folder: "to_ecs/ci_load_xml", protocol: 'sftp', port: 2222}
+        {server: 'connect.vfitrack.net', username: 'ecs', password: 'wzuomlo', folder: "kewill_edi/to_kewill", protocol: 'sftp', port: 2222}
       )
     end
   end

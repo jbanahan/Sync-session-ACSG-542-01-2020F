@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def ftp_credentials
-    connect_vfitrack_net('to_ecs/kewill_products')
+    ecs_connect_vfitrack_net('kewill_edi/to_kewill')
   end
 
   def sync_code
