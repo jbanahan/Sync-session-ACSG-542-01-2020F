@@ -116,7 +116,7 @@
         <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
         <%=field_bootstrap vendor_name_fld.label, link_to(vendor_name_fld.process_export(@order, User.current), vendor_path(@order.vendor)) %>
       <% end %>
-      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_accepted_at, :ord_accepted_by, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_fob_point] %>
+      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_accepted_at, :ord_accepted_by, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_mode, :ord_terms, :ord_fob_point, :ord_payment_terms, :ord_season, :ord_product_category] %>
     </div>
     <div class="col-md-6">
       <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
@@ -161,7 +161,11 @@
           <%= show_model_fields(line, [:ordln_sku, :ordln_ordered_qty], table: true, editor_only: true) %>
           <td class="has_numeric"><%=number_with_precision(line.shipped_qty, precision: 5, strip_insignificant_zeros: true)%></td>
           <td class="has_numeric"><%=number_with_precision(line.received_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+        <% if line.product.unit_of_measure.blank? && !line.unit_of_measure.blank? %>
+          <%= show_model_fields(line, :ordln_unit_of_measure, table: true, editor_only: true) %>
+        <% else %>
           <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+        <% end %>
           <%= show_model_fields(line, [:ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, editor_only: true) %>
           <td>
             <% if @order.can_edit?(current_user) && !@order.locked?%>
