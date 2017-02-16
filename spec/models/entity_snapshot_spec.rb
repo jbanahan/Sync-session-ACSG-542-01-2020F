@@ -325,6 +325,22 @@ describe EntitySnapshot, :snapshot do
       u = Factory(:user)
       es = EntitySnapshot.create_from_entity(ent,u)
     end
+
+    context "with business validations" do
+      let! (:bvt) { 
+        bvt = Factory(:business_validation_template, module_type: "Entry") 
+        bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
+        bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+        bvt.reload
+      }
+      let (:entry) { Factory(:entry, customer_number: "12345") }
+      let (:user) { Factory(:user) }
+      
+      it "runs business validations" do
+        EntitySnapshot.create_from_entity entry, user
+        expect(entry.failed_business_rules.length).to eq 1
+      end
+    end
   end
 
   describe "expected_s3_path" do

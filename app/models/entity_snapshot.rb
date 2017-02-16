@@ -16,9 +16,24 @@ class EntitySnapshot < ActiveRecord::Base
 
   class DefaultSnapshotWriterImpl
     def self.entity_json entity
+      # In order to ensure that entity snapshots contain up-to-date data about business rules
+      # we're always going to run business rules prior to generating the snapshot.  This ensures
+      # that ALL snapshots always contain the current business rule states in them and the comparators
+      # can operate under the assumption that the rule states in the snapshot they're processing
+      # are current to the snapshot state.  
+
+      # In essense, what this ensure is that there's not a moment in time where the actual data for the snapshot
+      # may be failing business rules, but because the business rules haven't been run yet by an asynchronous process, 
+      # the state of the rules aren't correctly reflected in the snapshot.
+      run_business_rules(entity)
+
       cm = CoreModule.find_by_class_name entity.class.to_s
       raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
       cm.entity_json(entity)
+    end
+
+    def self.run_business_rules entity
+      BusinessValidationTemplate.create_results_for_object! entity
     end
   end
 
