@@ -106,12 +106,14 @@ describe ReportsController do
     context "run" do
       it "doesn't run for unauthorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
         post :run_daily_first_sale_exception_report
         expect(flash[:errors].first).to eq("You do not have permission to view this report.")
       end
 
       it "runs for authorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Daily First Sale Exception Report", user, OpenChain::Report::DailyFirstSaleExceptionReport, :settings=>{}, :friendly_settings=>[])
         post :run_daily_first_sale_exception_report
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -439,6 +441,46 @@ describe ReportsController do
         post :run_sg_duty_due_report, {customer_number: "SGOLD"}
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
         expect(response).to be_redirect
+      end
+    end
+  end
+
+  describe "Ticket Tracking Report" do
+    let(:report_class) { OpenChain::Report::TicketTrackingReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_ticket_tracking_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        co = user.company
+        co.update_attributes(ticketing_system_code: "FOO")
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_ticket_tracking_report
+        expect(response).to be_success
+        expect(assigns(:project_keys)).to eq ["FOO"]
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_ticket_tracking_report, start_date: "start", end_date: "end", project_keys: ["CODES"]
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Ticket Tracking Report", user, OpenChain::Report::TicketTrackingReport, :settings=>{start_date: "start", end_date: "end", project_keys: ["CODES"]}, :friendly_settings=>[])
+        post :run_ticket_tracking_report, start_date: "start", end_date: "end", project_keys: ["CODES"]
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end
     end
   end

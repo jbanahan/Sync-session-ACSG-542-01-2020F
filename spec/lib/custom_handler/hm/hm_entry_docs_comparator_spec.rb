@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
   end
 
 
-  describe "compare" do
+  describe "compare", :snapshot do
 
     let (:tempfile) { Tempfile.new(['testfile', '.pdf']) }
     let (:cdefs) { subject.instance_variable_get("@cdefs")}

@@ -1,0 +1,43 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var datesFilled = true;
+    var codesFilled = true;
+    if($("input[name='start_date']").val().length < 10)
+      datesFilled = false;
+    if($("input[name='end_date']").val().length < 10)
+      datesFilled = false;
+    if (!$('#project_keys option:selected').val())
+      codesFilled = false;
+    if(!datesFilled || !codesFilled) {
+      window.alert("You must enter both dates and at least one project key.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Ticket Tracking Report</h2><br>
+<%=form_tag reports_run_ticket_tracking_report_path, :id=>'frm_run' do -%>
+  <div class="container">
+    <div class="col-md-12">
+      <div class="row" style="line-height: 2.5">
+        <div class="col-md-3"><label class="control-label" for="start_date">Issue created on or after</label></div>
+        <div class="col-md-2"><%=text_field_tag :start_date,"", :class=>'form-control isdate'%></div>
+        <div class="col-md-2"><label class="control-label" for="end_date">and prior to</label></div>
+        <div class="col-md-2"><%=text_field_tag :end_date, "", :class=>'form-control isdate' %></div>
+      </div>
+      <br>
+      <div class="row">
+        <div class="col-md-3"><label class="control-label" for="sys_codes">Project Keys</label></div>
+        <div class="col-md-2">
+          <%= select_tag "project_keys", options_for_select(@project_keys, @project_keys.first), multiple: true, style: "width: 100%" %>
+        </div>
+      </div>
+    </div>
+  </div>
+<%end%>
+</div>

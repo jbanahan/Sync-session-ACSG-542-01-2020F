@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe EntitySnapshotsController do
-  describe "restore" do
+  describe "restore", :snapshot do
     before :each do
       @u = Factory(:user)
       @p = Factory(:product,:name=>'nm')

@@ -20,8 +20,8 @@ module SnapshotS3Support
 
     # write_to_s3 and s3_path is sort of a public API for snapshot-like objects to use so they're stored in the same bucke and manner as "real"
     # snapshots.
-    def write_to_s3 snapshot_json, recordable
-      upload_response = OpenChain::S3.upload_data(bucket_name, s3_path(recordable), snapshot_json)
+    def write_to_s3 snapshot_json, recordable, path_prefix: nil
+      upload_response = OpenChain::S3.upload_data(bucket_name, s3_path(recordable, path_prefix: path_prefix), snapshot_json)
 
       # Technically, version can be nil if uploading to an unversioned bucket..
       # If that happens though, then the bucket we're trying to use is set up wrong.
@@ -31,7 +31,7 @@ module SnapshotS3Support
       {bucket: upload_response.bucket, key: upload_response.key, version: upload_response.version}
     end
 
-    def s3_path recordable
+    def s3_path recordable, path_prefix: nil
       raise "A snapshot path cannot be created for objects that do not have an id value. Entity Data = #{recordable.inspect}" if recordable.id.blank?
 
       mod = CoreModule.find_by_object(recordable)
@@ -44,7 +44,8 @@ module SnapshotS3Support
       # Not entirely sure why this gsub is here since an id is never going to not have a numeric value, but 
       # I'm leaving it in for potential legacy reasons, as it's not hurting anything
       # (I suspect the keybase used to be a more complex value in the original pass at the code.)
-      "#{class_name}/#{recordable.id.to_s.strip.gsub(/\W/,'_').downcase}.json"
+      path = "#{class_name}/#{recordable.id.to_s.strip.gsub(/\W/,'_').downcase}.json"
+      path_prefix.nil? ? path : "#{path_prefix}/#{path}"
     end
 
     def retrieve_snapshot_data_from_s3 snapshot

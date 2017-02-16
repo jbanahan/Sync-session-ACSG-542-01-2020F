@@ -115,6 +115,9 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationRuleResult.count).to eq 0
     end
     it "should run validation if attribute passed" do
+      expect(Lock).to receive(:with_lock_retry).ordered.with(@bvt).and_yield
+      expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield
+      expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"Business Rule Update")
       @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
       bvr = @bvt.create_result! @o, true

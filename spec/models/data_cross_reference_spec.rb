@@ -143,7 +143,7 @@ describe DataCrossReference do
     end
   end
   describe "create_us_hts_to_ca!" do
-    let!(:co) { Factory(:company, alliance_customer_number: "ACME") }
+    let(:co) { Factory(:company, alliance_customer_number: "ACME") }
     
     it "creates" do
       described_class.create_us_hts_to_ca! '1111111111', '2222222222', co.id
@@ -158,6 +158,33 @@ describe DataCrossReference do
       cr = DataCrossReference.first
       expect(cr.key).to eq '1111111111'
       expect(cr.value).to eq '2222222222'
+      expect(cr.company).to eq co
+    end
+  end
+  
+  describe "find_ca_hts_to_descr" do
+    it "finds" do
+      c = Factory(:company, alliance_customer_number: "ACME")
+      described_class.create!(key: '1111111111', value: 'asbestos car', cross_reference_type: described_class::CA_HTS_TO_DESCR, company: c)
+      expect(described_class.find_ca_hts_to_descr('1111111111', c.id)).to eq 'asbestos car'
+    end
+  end
+  describe "create_ca_hts_to_descr" do
+    let(:co) { Factory(:company, alliance_customer_number: "ACME") }
+
+    it "creates" do
+      described_class.create_ca_hts_to_descr! '1111111111', 'asbestos car', co.id
+      cr = DataCrossReference.first
+      expect(cr.key).to eq '1111111111'
+      expect(cr.value).to eq 'asbestos car'
+      expect(cr.company).to eq co
+    end
+
+    it "strips dots from key" do
+      described_class.create_ca_hts_to_descr! '1111.11.1111', 'asbestos.car', co.id
+      cr = DataCrossReference.first
+      expect(cr.key).to eq '1111111111'
+      expect(cr.value).to eq 'asbestos.car'
       expect(cr.company).to eq co
     end
   end
@@ -199,7 +226,7 @@ describe DataCrossReference do
     end
 
     context "vfi system" do
-      it "returns information about xref screens user has access to" do
+      it "returns information about xref screens sys-admin user has access to" do
         allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
         
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
@@ -207,6 +234,17 @@ describe DataCrossReference do
         expect(xrefs.size).to eq 2
         expect(xrefs['us_hts_to_ca']).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true
         expect(xrefs['asce_mid']).to eq title: "Ascena MID List", description: "MIDs on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+      end
+
+      it "returns info about xref screens xref-maintenance group member has access to" do
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+        
+        g = Factory(:group, system_code: "xref-maintenance")
+        u = Factory(:user, groups: [g])
+
+        xrefs = DataCrossReference.xref_edit_hash(u)
+        expect(xrefs.size).to eq 1
+        expect(xrefs['ca_hts_to_descr']).to eq title: "System Classification Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true
       end
     end
   end
@@ -231,7 +269,7 @@ describe DataCrossReference do
         allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
       end
 
-      context "us_to_ca" do
+      context "us_hts_to_ca" do
         it "allows access to US-to-CA xref for sys admins" do
           expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to be_truthy
         end
@@ -241,7 +279,6 @@ describe DataCrossReference do
         end
       end
 
-
       context "asce_mid" do
         it "allows access to ASCE MID xref for sys admins" do
           expect(DataCrossReference.can_view? 'asce_mid', Factory(:sys_admin_user)).to be_truthy
@@ -249,6 +286,21 @@ describe DataCrossReference do
 
         it "prevents access for anyone else" do
           expect(DataCrossReference.can_view? 'asce_mid', User.new).to be_falsey
+        end
+      end
+
+      context "ca_hts_to_descr" do
+        let(:user) { Factory(:user) }
+        before { allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net" }
+
+        it "allows access for members of group 'Cross Reference Maintenance'" do
+          group = Factory(:group, system_code: "xref-maintenance")
+          user.groups << group
+          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to be_truthy
+        end
+
+        it "prevents access for anyone else" do
+          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to be_falsey
         end
       end
 

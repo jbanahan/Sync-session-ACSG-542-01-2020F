@@ -61,6 +61,10 @@ RSpec.configure do |config|
       stub_email_logging
     end
 
+    unless example.metadata[:snapshot]
+      stub_snapshots
+    end
+
     #clear ComparatorRegistry
     OpenChain::EntityCompare::ComparatorRegistry.clear
 
@@ -75,6 +79,8 @@ RSpec.configure do |config|
     unless example.metadata[:s3]
       unstub_s3
     end
+
+    unstub_snapshots
   end
 
   config.after(:each, :type => :controller) do

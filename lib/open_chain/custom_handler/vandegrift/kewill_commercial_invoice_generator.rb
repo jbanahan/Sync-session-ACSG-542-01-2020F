@@ -72,7 +72,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
   end
 
   def ftp_credentials
-    connect_vfitrack_net('to_ecs/ci_load_xml')
+    ecs_connect_vfitrack_net('kewill_edi/to_kewill')
   end
 
   # Generates a CI Load worksheet in the standard column layout

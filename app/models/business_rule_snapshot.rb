@@ -54,7 +54,7 @@ class BusinessRuleSnapshot < ActiveRecord::Base
   # Creates a snapshot of all the business rules states associated with the given entity
   def self.create_from_entity entity
     snapshot_hash = generate_snapshot_data entity
-    s3_data = write_to_s3 ActiveSupport::JSON.encode(snapshot_hash), entity
+    s3_data = write_to_s3 ActiveSupport::JSON.encode(snapshot_hash), entity, path_prefix: "business_rule"
     BusinessRuleSnapshot.create! bucket: s3_data[:bucket], version: s3_data[:version], doc_path: s3_data[:key], recordable: entity
   end
 

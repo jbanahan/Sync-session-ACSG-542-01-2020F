@@ -113,6 +113,10 @@
     <tr class='hover'><td><%=link_to "SG Duty Due Report", reports_show_sg_duty_due_report_path%></td>
     <td>List all outstanding duty owed (PDF).</td></tr>
   <%end-%>
+  <%if OpenChain::Report::TicketTrackingReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Ticket Tracking Report", reports_show_ticket_tracking_report_path%></td>
+    <td>Shows Jira support tickets with corresponding VFI Track entry data.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::MonthlyEntrySummation.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Monthly Entry Summation", reports_show_monthly_entry_summation_path%></td>
     <td>Sums entry data by month.</td></tr>

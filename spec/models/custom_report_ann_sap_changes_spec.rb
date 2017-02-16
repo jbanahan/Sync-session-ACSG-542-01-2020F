@@ -54,7 +54,7 @@ describe CustomReportAnnSapChanges do
       expect(arrays[1][0]).to eq(p.unique_identifier)
       expect(arrays[1][1]).to eq(p.classifications.first.country.iso_code)
     end
-    it "should write difference columns" do
+    it "should write difference columns", :snapshot do
       p = make_eligible_product
       diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
@@ -102,7 +102,7 @@ describe CustomReportAnnSapChanges do
       expect(arrays.size).to eq(2)
       expect(arrays[1][2]).to eq("")
     end
-    it "should handle records with no snapshots before approved date" do
+    it "should handle records with no snapshots before approved date", :snapshot do
       p = make_eligible_product
       diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
@@ -112,7 +112,7 @@ describe CustomReportAnnSapChanges do
       expect(arrays.size).to eq(2)
       expect(arrays[1][2]).to eq("")
     end
-    it "should use most recent snapshot before approved date" do
+    it "should use most recent snapshot before approved date", :snapshot do
       p = make_eligible_product
       diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "REALYOLD-#{d}" }

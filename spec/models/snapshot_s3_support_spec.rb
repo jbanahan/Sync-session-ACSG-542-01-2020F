@@ -48,18 +48,26 @@ describe SnapshotS3Support do
       e
     }
 
-    it "writes snapshot data to S3" do
+    let (:s3_obj) {
       s3_obj = double("OpenChain::S3::UploadResult")
       allow(s3_obj).to receive(:key).and_return "stubbed-key"
       allow(s3_obj).to receive(:bucket).and_return "stubbed-bucket"
       allow(s3_obj).to receive(:version).and_return "stubbed-version"
+      s3_obj
+    }
 
+    it "writes snapshot data to S3" do
       expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return s3_obj
 
       values = subject.write_to_s3 "json", entity
       expect(values[:bucket]).to eq "stubbed-bucket"
       expect(values[:key]).to eq "stubbed-key"
       expect(values[:version]).to eq "stubbed-version"
+    end
+
+    it "allows passing in path prefix" do
+      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "prefix/entry/100.json", "json").and_return s3_obj
+      values = subject.write_to_s3 "json", entity, path_prefix: 'prefix'
     end
 
     it "raises an error if upload does not return a version" do
@@ -95,6 +103,10 @@ describe SnapshotS3Support do
       a.id = 1
 
       expect(subject.s3_path(a)).to eq "answer_comment/1.json"
+    end
+
+    it "allows passing a path prefix" do
+      expect(subject.s3_path(entity, path_prefix: "path/prefix")).to eq "path/prefix/entry/100.json"
     end
   end
 end

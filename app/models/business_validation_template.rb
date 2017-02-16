@@ -114,18 +114,22 @@ class BusinessValidationTemplate < ActiveRecord::Base
       end
 
       if run_validation
-        state_changed = bvr.run_validation
-        bvr.updated_at = Time.zone.now #force save
-        bvr.save!
+        # We want to also make sure we're locking the actual object so that we
+        # prevent updates to the data while we're evaluating the rules.
+        Lock.with_lock_retry(obj) do
+          state_changed = bvr.run_validation
+          bvr.updated_at = Time.zone.now #force save
+          bvr.save!
 
-        # Because of the way we're embedding this inside result_result! (which runs only for a single template), objects
-        # that have multiple rule templates associated with them will have extra snapshots.  This situation occurs
-        # infrequently enough that I'm not worrying about it now (only 750 total of 100K's of records we have are linked to multiple
-        # templates - pretty sure even those are due to bad initial template setups)
-        BusinessRuleSnapshot.create_from_entity(obj)
+          # Because of the way we're embedding this inside rule_result! (which runs only for a single template), objects
+          # that have multiple rule templates associated with them will have extra snapshots.  This situation occurs
+          # infrequently enough that I'm not worrying about it now (only 750 total of 100K's of records we have are linked to multiple
+          # templates - pretty sure even those are due to bad initial template setups)
+          BusinessRuleSnapshot.create_from_entity(obj)
 
-        if state_changed
-          bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
+          if state_changed
+            bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
+          end
         end
       end
     end

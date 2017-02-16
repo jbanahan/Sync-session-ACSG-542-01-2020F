@@ -19,7 +19,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
     'SOUTHEAST ASIA' => 'SG',
     'LATIN AMERICA' => 'PA',
     'JAPAN' => 'JP',
-    "KOREA" => "KR"
+    "KOREA" => "KR",
+    "ARGENTINA" => "AR",
+    "RUSSIA" => "RU"
   }
 
   def initialize custom_file
@@ -130,6 +132,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   private :merge_custom_value
 
   def get_division_id name
+    return nil if name.blank?
+    
     @division_cache ||= {}
     d = @division_cache[name.upcase]
     if d.nil?

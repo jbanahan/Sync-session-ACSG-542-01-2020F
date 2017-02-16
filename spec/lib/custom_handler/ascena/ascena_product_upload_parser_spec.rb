@@ -44,6 +44,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
   describe "process_file" do
     let (:file_row) do 
       row = [nil, "Style", "Garment Type", "ParentID", 300, nil, "Description", nil, "CO", "1234.56.7890"]
+      row[33] = "FDA Product Code"
       row[38] = "Customs Description"
 
       row
@@ -67,6 +68,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect_custom_value(prod, cdefs[:prod_part_number], "Style")
       expect_custom_value(prod, cdefs[:prod_reference_number], "ParentID")
       expect_custom_value(prod, cdefs[:prod_department_code], "300")
+      expect_custom_value(prod, cdefs[:prod_fda_product_code], "FDA Product Code")
+      expect_custom_value(prod, cdefs[:prod_fda_product], true)
 
       expect(prod.classifications.length).to eq 1
       c = prod.classifications.first
@@ -174,6 +177,29 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect_custom_value(c, cdefs[:class_classification_notes], "A Garment Type 2: 1234.56.7800\n Garment Type: 1234.56.7890")
 
       expect(c.tariff_records.first).to be_nil
+    end
+  end
+
+  describe "assign_fda" do
+    let(:cdefs) { subject.cdefs }
+    let(:prod)  { Factory(:product) }
+    let(:changed) { MutableBoolean.new(false) }
+
+    it "sets FDA Product Code, FDA Product? when there's a value" do
+      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], "FDA CODE", changed
+      expect_custom_value(prod, cdefs[:prod_fda_product_code], "FDA CODE")
+      expect_custom_value(prod, cdefs[:prod_fda_product], true)
+      expect(changed.value).to eq true
+    end
+
+    it "sets FDA Product Code, FDA Product? when value is blank" do
+      prod.update_custom_value!(cdefs[:prod_fda_product_code], "foo")
+      prod.update_custom_value!(cdefs[:prod_fda_product], true)
+      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], "", changed
+      
+      expect_custom_value(prod, cdefs[:prod_fda_product_code], nil)
+      expect_custom_value(prod, cdefs[:prod_fda_product], nil)
+      expect(changed.value).to eq true
     end
   end
 end

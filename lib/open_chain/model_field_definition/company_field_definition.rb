@@ -47,6 +47,9 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
       [19,:cmp_forwarder,:forwarder,"Is Forwarder",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
       }],
+      [20, :cmp_ticketing_system_code, :ticketing_system_code, "Ticketing System Code", {data_type: :string, 
+        can_edit_lambda: admin_edit_lambda()
+      }]
     ]
     add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
     add_fields CoreModule::COMPANY, make_business_rule_arrays(200,'cmp','companies','Company')

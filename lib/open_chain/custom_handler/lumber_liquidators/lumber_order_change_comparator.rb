@@ -46,13 +46,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     generate_ll_xml(ord,old_data,new_data)
 
+    update_change_log(ord,old_data,new_data)
+
     # if we changed the default values then the PDF should be generated from the comparator
     # that is triggered by that snapshot.  Otherwise, we'll get 2 PDFs.
     #
     # we don't need to worry about this for reset_vendor_approvals, reset_product_compliance_approvals,
     # and update_autoflow_approvals since those don't change the fingerprint, so their snapshots won't
     # try to create a new PDF
-    create_pdf(ord,old_data,new_data) unless defaults_changed
+    if !defaults_changed
+      create_pdf(ord,old_data,new_data)
+    end
   end
 
   def self.set_price_revised_dates ord, old_data, new_data
@@ -153,12 +157,77 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.create_pdf ord, old_data, new_data
-    if OrderData.needs_new_pdf?(old_data,new_data)
+    if OrderData.vendor_visible_fields_changed?(old_data,new_data)
       OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create!(ord, User.integration)
       return true
     end
     return false
   end
+
+  def self.update_change_log ord, old_data, new_data
+    return unless old_data #don't make change log for first entry
+    if OrderData.vendor_visible_fields_changed?(old_data,new_data)
+      change_log_entries = []
+      old_fph = old_data.fingerprint_hash
+      new_fph = new_data.fingerprint_hash
+      old_fph.each do |uid,old_val|
+        next if uid.to_s == 'lines'
+        new_val = new_fph[uid]
+        if new_val != old_val
+          change_log_entries << "#{ModelField.find_by_uid(uid).label} changed from \"#{old_val}\" to \"#{new_val}\""
+        end
+      end
+      old_lines = old_fph['lines']
+      new_lines = new_fph['lines']
+      change_log_entries.push(*make_lines_added_messages(old_lines,new_lines))
+      change_log_entries.push(*make_lines_removed_messages(old_lines,new_lines))
+      change_log_entries.push(*make_lines_changed_messages(old_lines,new_lines))
+      append_change_log(ord,change_log_entries)
+    end
+    return false
+  end
+
+  def self.append_change_log ord, new_log_entries
+    return if new_log_entries.blank?
+    new_log_entries.each {|nle| nle.prepend("\t")} #indent lines
+    cd = self.prep_custom_definitions([:ord_change_log])[:ord_change_log]
+    new_log_entries.unshift(0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M (UTC):'))
+    current_log = ord.custom_value(cd) || ''
+    ord.update_custom_value!(cd,"#{new_log_entries.join("\n")}\n\n#{current_log}")
+    ord.create_snapshot(User.integration, nil, "System Job: Order Change Comparator")
+  end
+  private_class_method :append_change_log
+
+  def self.make_lines_added_messages old_lines, new_lines
+    new_lines.keys.find_all {|id| !old_lines.keys.include?(id)}.map {|id| "Added line number #{id}"}
+  end
+  private_class_method :make_lines_added_messages
+
+  def self.make_lines_removed_messages old_lines, new_lines
+    old_lines.keys.find_all {|id| !new_lines.keys.include?(id)}.map {|id| "Removed line number #{id}"}
+  end
+  private_class_method :make_lines_removed_messages
+
+  def self.make_lines_changed_messages old_lines, new_lines
+    line_changed_messages = []
+    old_lines.each do |k,old_line|
+      line_entries = []
+      new_line = new_lines[k]
+      next unless new_line
+      old_line.each do |uid,old_val|
+        new_val = new_line[uid]
+        if new_val != old_val
+          line_entries << "#{ModelField.find_by_uid(uid).label} changed from \"#{old_val}\" to \"#{new_val}\""
+        end
+      end
+      if !line_entries.blank?
+        line_changed_messages << "Line #{k}"
+        line_entries.each {|ln| line_changed_messages << "\t#{ln}"}
+      end
+    end
+    line_changed_messages
+  end
+  private_class_method :make_lines_changed_messages
 
   def self.reset_po_cancellation ord
     ActiveRecord::Base.transaction do
@@ -181,33 +250,33 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   class OrderData
     ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms,:ord_fob_point]
-    ORDER_CUSTOM_FIELDS ||= []
     ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
     # using array so we can dynamically build but not have to
     PLANNED_HANDOVER_DATE_UID ||= []
     SAP_EXTRACT_DATE_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
-    attr_reader :fingerprint
+    attr_reader :fingerprint, :fingerprint_hash
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
-      :approval_status, :business_rule_state
+      :approval_status, :business_rule_state, :country_of_origin
 
-    def initialize fingerprint
-      @fingerprint = fingerprint
+    def initialize fp_hash
+      @fingerprint_hash = fp_hash
+      @fingerprint = fp_hash.to_json
+      @cdefs = self.class.prep_custom_definitions([:ord_country_of_origin])
     end
 
     def self.build_from_hash entity_hash
-      if ORDER_CUSTOM_FIELDS.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract])
-        ORDER_CUSTOM_FIELDS << cdefs[:ord_country_of_origin].model_field_uid.to_sym
+      fingerprint_hash = {'lines'=>{}}
+      cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract])
+      if PLANNED_HANDOVER_DATE_UID.empty?
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
         SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
       end
-      elements = []
       order_hash = entity_hash['entity']['model_fields']
-      (ORDER_MODEL_FIELDS + ORDER_CUSTOM_FIELDS).each do |uid|
-        elements << order_hash[uid.to_s]
+      ORDER_MODEL_FIELDS.each do |uid|
+        fingerprint_hash[uid] = order_hash[uid.to_s]
       end
       variant_map = {}
       price_map = {}
@@ -215,24 +284,26 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         entity_hash['entity']['children'].each do |child|
           next unless child['entity']['core_module'] == 'OrderLine'
           child_hash = child['entity']['model_fields']
+          line_fp_hash = {}
           ORDER_LINE_MODEL_FIELDS.each do |uid|
-            prefix = uid==:ordln_line_number ? '~' : '' #double tilde to start each order line in fingerprint
-            elements << "#{prefix}#{child_hash[uid.to_s]}"
+            line_fp_hash[uid] = child_hash[uid.to_s]
           end
           line_number = child_hash['ordln_line_number']
+          fingerprint_hash['lines'][line_number] = line_fp_hash
           variant_map[line_number] = child_hash['ordln_varuid']
           price_map[line_number] = child_hash['ordln_ppu']
         end
       end
 
       # Create return object
-      od = self.new(elements.join('~'))
+      od = self.new(fingerprint_hash)
       od.ship_window_start = order_hash['ord_window_start']
       od.ship_window_end = order_hash['ord_window_end']
       od.ship_from_address = order_hash['ord_ship_from_full_address']
       od.business_rule_state = order_hash['ord_rule_state']
       od.approval_status = order_hash['ord_approval_status']
       od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
+      od.country_of_origin = order_hash[cdefs[:ord_country_of_origin].model_field_uid.to_s]
       sap_extract_str = order_hash[SAP_EXTRACT_DATE_UID.first]
       od.sap_extract_date =  sap_extract_str ? DateTime.iso8601(sap_extract_str) : nil
       od.variant_map = variant_map
@@ -241,16 +312,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     def has_blank_defaults?
-      fingerprint_elements = @fingerprint.split('~')
-      return [5,6,7].any? {|pos| fingerprint_elements[pos].blank? }
-    end
-
-    def line_hash
-      lines = @fingerprint.split('~~')
-      lines.shift
-      h = {}
-      lines.each {|ln| h[ln.split('~').first] = ln}
-      h
+      return true if ['ord_terms','ord_fob_point'].find {|fld| @fingerprint_hash[fld].blank? }
+      return true if self.country_of_origin.blank?
+      return false
     end
 
     def self.vendor_approval_reset_fields_changed? old_data, new_data
@@ -261,8 +325,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def self.lines_needing_pc_approval_reset old_data, new_data
       return [] unless old_data
 
-      old_hash = old_data.line_hash
-      new_hash = new_data.line_hash
+      old_hash = old_data.fingerprint_hash['lines']
+      new_hash = new_data.fingerprint_hash['lines']
 
       # if the ship from changed, then all lines need to be re-approved
       return new_hash.keys if ship_from_changed?(old_data,new_data)
@@ -288,9 +352,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return old_address!=new_address
     end
 
-    def self.needs_new_pdf? old_data, new_data
+    def self.vendor_visible_fields_changed? old_data, new_data
       return true if old_data.nil?
-      return (old_data.fingerprint != new_data.fingerprint) || (old_data.ship_from_address != new_data.ship_from_address)
+      return (old_data.fingerprint != new_data.fingerprint) || ship_from_changed?(old_data,new_data)
     end
 
     def self.lines_with_changed_price old_data, new_data

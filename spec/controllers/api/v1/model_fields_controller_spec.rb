@@ -115,6 +115,16 @@ describe Api::V1::ModelFieldsController do
       fld = h['fields'].find {|f| f['uid']=='prod_ent_type'}
       expect(fld['select_options']).to eq [['PT','PT']]
     end
+    it "should get cdef_uid" do
+      cd = Factory(:custom_definition,module_type:'Product',cdef_uid:'xyz')
+      ModelField.reload
+      expect(get :index).to be_success
+
+      h = JSON.parse(response.body)
+      # byebug
+      fld = h['fields'].find {|f| f['uid']=="*cf_#{cd.id}"}
+      expect(fld['cdef_uid']).to eq 'xyz'
+    end
   end
 
   describe "cache_key" do

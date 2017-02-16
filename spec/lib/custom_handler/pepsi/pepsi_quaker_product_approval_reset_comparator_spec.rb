@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiQuakerProductApprovalResetCompara
     end
   end
 
-  describe 'fingerprint' do
+  describe 'fingerprint', :snapshot do
     it 'should make fingerprint' do
       prod_cdef_keys = [:prod_shipper_name, :prod_prod_code, :prod_us_broker, :prod_us_alt_broker, :prod_alt_prod_code,
         :prod_coo, :prod_tcsa, :prod_recod, :prod_first_sale, :prod_related, :prod_fda_pn, :prod_fda_uom_1, :prod_fda_uom_2,
