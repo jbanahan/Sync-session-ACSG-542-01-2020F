@@ -126,6 +126,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_type: {label: 'Order Type', data_type: :string, module_type: 'Order'},
     ord_buyer_name: {label: 'Buyer Name', data_type: :string, module_type: 'Order'},
     ord_buyer_phone: {label: 'Buyer Phone', data_type: :string, module_type: 'Order'},
+    ord_change_log: {cdef_uid:'ord_change_log', label: 'Change Log', data_type: :text, module_type: 'Order', read_only:true},
     ord_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Order'},
     ord_dhl_push_date: {label: "DHL PO Push Date", data_type: :date, module_type: "Order", read_only: true},
     # this label is being changed in config migration 20161106, but we can't change it here yet because

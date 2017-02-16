@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email, :ordln_old_art_number, :ordln_part_name])
+    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email, :ordln_old_art_number, :ordln_part_name, :ord_change_log])
   end
 
   def render order, user, open_file_object
@@ -103,6 +103,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         t.column(2).width = 140
       end
     end
+
+    # change log
+    d.start_new_page
+    d.formatted_text [
+      {text: "Change Log\n\n", styles: [:bold], size: 14},
+      {text: "#{order.custom_value(@cdefs[:ord_change_log])}".gsub("\t",Array.new(4,Prawn::Text::NBSP).join('')), size: 12}
+    ]
 
     d.repeat(:all) do
       height = 33

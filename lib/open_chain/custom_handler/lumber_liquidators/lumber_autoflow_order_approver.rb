@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
     risk_level = get_line_risk(ol,cdefs)
     # if it has auto-flow as it's risk
-    if risk_level == 'Auto-Flow'
+    if !risk_level.blank? && risk_level.match(/Auto-Flow/)
       # if it is not approved, then approve with auto-flow user
       if approved_by.blank?
         ol.update_custom_value!(cdefs[:ordln_pc_approved_by],autoflow_user.id)

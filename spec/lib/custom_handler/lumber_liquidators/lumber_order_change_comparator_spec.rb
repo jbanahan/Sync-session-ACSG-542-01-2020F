@@ -52,6 +52,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       allow(described_class).to receive(:generate_ll_xml)
       allow(described_class).to receive(:reset_po_cancellation).and_return false
       allow(described_class).to receive(:create_pdf).and_return false
+      allow(described_class).to receive(:update_change_log).and_return false
     end
     it 'should return if order does not exist' do
       allow(Order).to receive(:find_by_id).and_return nil
@@ -102,6 +103,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
     it 'should generate xml' do
       expect(described_class).to receive(:generate_ll_xml).with(@o,@old_data,@new_data)
+      described_class.execute_business_logic(1,@old_data,@new_data)
+    end
+    it 'should update change log' do
+      expect(described_class).to receive(:update_change_log).with(@o,@old_data,@new_data)
       described_class.execute_business_logic(1,@old_data,@new_data)
     end
   end
@@ -421,59 +426,243 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       allow(User).to receive(:integration).and_return(@integration)
       @k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator
     end
-    it 'should create pdf if OrderData#needs_new_pdf?' do
-      expect(order_data_klass).to receive(:needs_new_pdf?).with(@od,@nd).and_return true
+    it 'should create pdf if OrderData#vendor_visible_fields_changed?' do
+      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(@od,@nd).and_return true
       expect(@k).to receive(:create!).with(@o,@integration)
       expect(described_class.create_pdf(@o,@od,@nd)).to be_truthy
     end
-    it 'should not create pdf if !OrderData#needs_new_pdf?' do
-      expect(order_data_klass).to receive(:needs_new_pdf?).with(@od,@nd).and_return false
+    it 'should not create pdf if !OrderData#vendor_visible_fields_changed?' do
+      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(@od,@nd).and_return false
       expect(@k).not_to receive(:create!)
       expect(described_class.create_pdf(@o,@od,@nd)).to be_falsey
     end
   end
 
-  describe 'OrderData' do
-    describe '#build_from_hash' do
-      before :each do
-        @cdefs = described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract])
-        # constant is loaded with custom definition model field IDs which change
-        # each run in test because the CustomDefinitions are regenerated, so we
-        # manually clear it. No need to do this in dev/production.
-        described_class::OrderData::ORDER_CUSTOM_FIELDS.clear
+  describe '#update_change_log' do
+    let :cdefs do
+      described_class.prep_custom_definitions [:ord_country_of_origin,:ord_change_log]
+    end
+    let :fingerprint_hash do
+      {
+        'ord_ord_num' => 'ON1',
+        'ord_window_start' => '2015-01-01',
+        'ord_window_end' => '2015-01-10',
+        'ord_currency' => 'USD',
+        'ord_payment_terms' => 'NT30',
+        'ord_terms' => 'FOB',
+        'ord_fob_point' => 'Shanghai',
+        cdefs[:ord_country_of_origin].model_field_uid.to_s => 'CN',
+        'lines' => {
+          '1' => {
+            'ordln_line_number' => 1,
+            'ordln_puid' => 'px',
+            'ordln_ordered_qty' => '10.0',
+            'ordln_unit_of_measure' => 'EA',
+            'ordln_ppu' => '5.0'
+          },
+          '2' => {
+            'ordln_line_number' => 2,
+            'ordln_puid' => 'px',
+            'ordln_ordered_qty' => '50.0',
+            'ordln_unit_of_measure' => 'FT',
+            'ordln_ppu' => '7.0'
+          }
+        }
+      }
+    end
+    let :order do
+      double('order')
+    end
+    let :old_data do
+      double('old_data')
+    end
+    let :new_data do
+      double('new_data')
+    end
+    it "should do nothing if !vendor_visible_fields_changed?" do
+      expect(described_class::OrderData).to receive(:vendor_visible_fields_changed?).with(old_data,new_data).and_return false
+      described_class.update_change_log(order,old_data,new_data)
+      # no assertions because nothing should happen and doubles will fail if methods are called
+    end
+    it "should do nothing on first snapshot" do
+      expect(described_class::OrderData).to_not receive(:vendor_visible_fields_changed?)
+      described_class.update_change_log(order,nil,new_data)
+      # no assertions because nothing should happen and doubles will fail if methods are called
+    end
+    it "should append changed header fields to change log" do
+      Timecop.freeze do
+        expect(described_class::OrderData).to receive(:vendor_visible_fields_changed?).with(old_data,new_data).and_return true
+        old_hash = fingerprint_hash.clone
+        new_hash = fingerprint_hash.clone
+        new_hash['ord_terms'] = 'DDP'
+        new_hash['ord_fob_point'] = 'Richmond'
+        expect(old_data).to receive(:fingerprint_hash).and_return old_hash
+        expect(new_data).to receive(:fingerprint_hash).and_return new_hash
+
+        expected_values = [
+          "#{0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M')} (UTC):\n",
+          "\t#{ModelField.find_by_uid(:ord_terms).label} changed from \"FOB\" to \"DDP\"\n",
+          "\t#{ModelField.find_by_uid(:ord_fob_point).label} changed from \"Shanghai\" to \"Richmond\"\n"
+        ]
+        expect(order).to receive(:custom_value).with(cdefs[:ord_change_log]).and_return ""
+        expect(order).to receive(:update_custom_value!) do |cdef,new_val|
+          expect(cdef).to eq cdefs[:ord_change_log]
+          nva = new_val.lines.delete_if {|ln| ln=="\n"}
+
+          # first line must be first, and the remaining lines can be in any order
+          # so we test by resorting them an checking array equality.
+          expect(nva[0]).to eq expected_values[0]
+          expect(nva.sort).to eq expected_values.sort
+        end
+        expect(order).to receive(:create_snapshot)
+        described_class.update_change_log(order,old_data,new_data)
       end
+    end
+    it "should note added line" do
+      Timecop.freeze do
+        expect(described_class::OrderData).to receive(:vendor_visible_fields_changed?).with(old_data,new_data).and_return true
+        old_hash = fingerprint_hash.clone
+        old_hash['lines'] = old_hash['lines'].clone
+        old_hash['lines'].delete('1')
+        new_hash = fingerprint_hash.clone
+        expect(old_data).to receive(:fingerprint_hash).and_return old_hash
+        expect(new_data).to receive(:fingerprint_hash).and_return new_hash
+
+        expected_values = [
+          "#{0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M')} (UTC):\n",
+          "\tAdded line number 1\n",
+        ]
+        expect(order).to receive(:custom_value).with(cdefs[:ord_change_log]).and_return ""
+        expect(order).to receive(:update_custom_value!) do |cdef,new_val|
+          expect(cdef).to eq cdefs[:ord_change_log]
+          nva = new_val.lines.delete_if {|ln| ln=="\n"}
+          expect(nva).to eq expected_values
+        end
+        expect(order).to receive(:create_snapshot)
+        described_class.update_change_log(order,old_data,new_data)
+      end
+    end
+    it "should note deleted line" do
+      Timecop.freeze do
+        expect(described_class::OrderData).to receive(:vendor_visible_fields_changed?).with(old_data,new_data).and_return true
+        old_hash = fingerprint_hash.clone
+        new_hash = fingerprint_hash.clone
+        new_hash['lines'] = new_hash['lines'].clone
+        new_hash['lines'].delete('1')
+        expect(old_data).to receive(:fingerprint_hash).and_return old_hash
+        expect(new_data).to receive(:fingerprint_hash).and_return new_hash
+
+        expected_values = [
+          "#{0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M')} (UTC):\n",
+          "\tRemoved line number 1\n",
+        ]
+        expect(order).to receive(:custom_value).with(cdefs[:ord_change_log]).and_return ""
+        expect(order).to receive(:update_custom_value!) do |cdef,new_val|
+          expect(cdef).to eq cdefs[:ord_change_log]
+          nva = new_val.lines.delete_if {|ln| ln=="\n"}
+          expect(nva).to eq expected_values
+        end
+        expect(order).to receive(:create_snapshot)
+        described_class.update_change_log(order,old_data,new_data)
+      end
+    end
+    it "should note change in line field" do
+      Timecop.freeze do
+        expect(described_class::OrderData).to receive(:vendor_visible_fields_changed?).with(old_data,new_data).and_return true
+        old_hash = fingerprint_hash.deep_dup
+        new_hash = fingerprint_hash.deep_dup
+        new_hash['lines']['1']['ordln_ppu'] = "77.4"
+        expect(old_data).to receive(:fingerprint_hash).and_return old_hash
+        expect(new_data).to receive(:fingerprint_hash).and_return new_hash
+
+        expected_values = [
+          "#{0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M')} (UTC):\n",
+          "\tLine 1\n",
+          "\t\t#{ModelField.find_by_uid(:ordln_ppu).label} changed from \"5.0\" to \"77.4\"\n"
+        ]
+        expect(order).to receive(:custom_value).with(cdefs[:ord_change_log]).and_return ""
+        expect(order).to receive(:update_custom_value!) do |cdef,new_val|
+          expect(cdef).to eq cdefs[:ord_change_log]
+          nva = new_val.lines.delete_if {|ln| ln=="\n"}
+          expect(nva).to eq expected_values
+        end
+        expect(order).to receive(:create_snapshot)
+        described_class.update_change_log(order,old_data,new_data)
+      end
+    end
+  end
+
+  describe 'OrderData' do
+    let :cdefs do
+      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract])
+    end
+    let :sap_extract_date do
+      Time.now.utc
+    end
+    let :base_order do
+      p = Factory(:product,unique_identifier:'px')
+      variant = Factory(:variant,product:p,variant_identifier:'VIDX')
+      ol = Factory(:order_line,line_number:1,product:p,variant:variant,quantity:10,unit_of_measure:'EA',price_per_unit:5)
+      Factory(:order_line,order:ol.order,line_number:2,product:p,quantity:50,unit_of_measure:'FT',price_per_unit:7)
+      o = ol.order
+      o.update_attributes(order_number:'ON1',
+      ship_window_start:Date.new(2015,1,1),
+      ship_window_end:Date.new(2015,1,10),
+      currency:'USD',
+      terms_of_payment:'NT30',
+      terms_of_sale:'FOB',
+      fob_point:'Shanghai',
+      approval_status:'Approved'
+      )
+      o.update_custom_value!(cdefs[:ord_country_of_origin],'CN')
+      o.update_custom_value!(cdefs[:ord_sap_extract],sap_extract_date)
+      expect(o).to receive(:business_rules_state).and_return('Fail')
+      o.reload
+      o
+    end
+    let :coo_cdef_uid do
+      cdefs[:ord_country_of_origin].model_field_uid.to_s
+    end
+    let :base_fingerprint_hash do
+      {
+        'ord_ord_num' => 'ON1',
+        'ord_window_start' => '2015-01-01',
+        'ord_window_end' => '2015-01-10',
+        'ord_currency' => 'USD',
+        'ord_payment_terms' => 'NT30',
+        'ord_terms' => 'FOB',
+        'ord_fob_point' => 'Shanghai',
+        'lines' => {
+          '1' => {
+            'ordln_line_number' => 1,
+            'ordln_puid' => 'px',
+            'ordln_ordered_qty' => '10.0',
+            'ordln_unit_of_measure' => 'EA',
+            'ordln_ppu' => '5.0'
+          },
+          '2' => {
+            'ordln_line_number' => 2,
+            'ordln_puid' => 'px',
+            'ordln_ordered_qty' => '50.0',
+            'ordln_unit_of_measure' => 'FT',
+            'ordln_ppu' => '7.0'
+          }
+        }
+      }
+    end
+    describe '#build_from_hash' do
+
       it 'should create order data from hash' do
-        p = Factory(:product,unique_identifier:'px')
-        variant = Factory(:variant,product:p,variant_identifier:'VIDX')
-        ol = Factory(:order_line,line_number:1,product:p,variant:variant,quantity:10,unit_of_measure:'EA',price_per_unit:5)
-        Factory(:order_line,order:ol.order,line_number:2,product:p,quantity:50,unit_of_measure:'FT',price_per_unit:7)
-        o = ol.order
-        o.update_attributes(order_number:'ON1',
-        ship_window_start:Date.new(2015,1,1),
-        ship_window_end:Date.new(2015,1,10),
-        currency:'USD',
-        terms_of_payment:'NT30',
-        terms_of_sale:'FOB',
-        fob_point:'Shanghai',
-        approval_status:'Approved'
-        )
-        o.update_custom_value!(@cdefs[:ord_country_of_origin],'CN')
-        sap_extract = Time.now.utc
-        o.update_custom_value!(@cdefs[:ord_sap_extract],sap_extract)
-        expect(o).to receive(:business_rules_state).and_return('Fail')
-        o.reload
-
-        expected_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0"
-
-        h = JSON.parse(CoreModule::ORDER.entity_json(o))
+        h = JSON.parse(CoreModule::ORDER.entity_json(base_order))
 
         od = order_data_klass.build_from_hash(h)
-        expect(od.fingerprint).to eq expected_fingerprint
+        expect(JSON.parse(od.fingerprint)).to eq base_fingerprint_hash
+        variant = base_order.order_lines.first.product.variants.first
         expected_variant_map = {1=>variant.variant_identifier,2=>nil}
         expect(od.variant_map).to eq expected_variant_map
         expected_price_map = {1=>"5.0",2=>"7.0"}
         expect(od.price_map).to eq expected_price_map
-        expect(od.sap_extract_date.to_i).to eq sap_extract.to_i
+        expect(od.sap_extract_date.to_i).to eq sap_extract_date.to_i
         expect(od.ship_window_start).to eq '2015-01-01'
         expect(od.ship_window_end).to eq '2015-01-10'
         expect(od.business_rule_state).to eq 'Fail'
@@ -483,37 +672,41 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     describe '#lines_with_changed_price' do
       it "should return lines added" do
-        od = order_data_klass.new('fingerprint')
+        od = order_data_klass.new(base_fingerprint_hash)
         od.price_map = {1=>5,2=>7}
-        nd = order_data_klass.new('fingerprint')
+        nd = order_data_klass.new(base_fingerprint_hash)
         nd.price_map = {1=>5,2=>7,3=>2}
         expect(order_data_klass.lines_with_changed_price(od,nd)).to eq [3]
       end
       it "should return lines changed" do
-        od = order_data_klass.new('fingerprint')
+        od = order_data_klass.new(base_fingerprint_hash)
         od.price_map = {1=>5,2=>7}
-        nd = order_data_klass.new('fingerprint')
+        nd = order_data_klass.new(base_fingerprint_hash)
         nd.price_map = {1=>5,2=>4}
         expect(order_data_klass.lines_with_changed_price(od,nd)).to eq [2]
       end
     end
 
     describe '#has_blank_defaults?' do
+      let :order_data do
+        od = order_data_klass.new(base_fingerprint_hash)
+        od.country_of_origin = 'CN'
+        od
+      end
       it 'should be false if none of the fields defaulted from the vendor are blank' do
-        fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN'
-        expect(order_data_klass.new(fp).has_blank_defaults?).to be_falsey
+        expect(order_data.has_blank_defaults?).to be_falsey
       end
       it 'should be true if ship terms are blank' do
-        fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~~Shanghai~CN'
-        expect(order_data_klass.new(fp).has_blank_defaults?).to be_truthy
+        base_fingerprint_hash['ord_terms'] = ''
+        expect(order_data.has_blank_defaults?).to be_truthy
       end
       it 'should be true if fob point is blank' do
-        fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~~CN'
-        expect(order_data_klass.new(fp).has_blank_defaults?).to be_truthy
+        base_fingerprint_hash['ord_fob_point'] = ''
+        expect(order_data.has_blank_defaults?).to be_truthy
       end
       it 'should be true if country of origin is blank' do
-        fp = 'ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~'
-        expect(order_data_klass.new(fp).has_blank_defaults?).to be_truthy
+        order_data.country_of_origin = nil
+        expect(order_data.has_blank_defaults?).to be_truthy
       end
     end
 
@@ -575,11 +768,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     describe '#lines_needing_pc_approval_reset' do
       it 'should return lines in both hashes with different key values' do
-        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_fingerprint = base_fingerprint_hash.deep_dup
+        old_fingerprint['lines']['3'] = {'ordln_ppu'=>"100"}
         old_data = order_data_klass.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
-        new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
+        new_fingerprint = base_fingerprint_hash.deep_dup
+        new_fingerprint['lines']['2'] = {'ordln_ppu'=>"1000"}
+        new_fingerprint['lines']['4'] = {'ordln_ppu'=>"90"}
         new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
         new_data.variant_map = old_data.variant_map
@@ -589,57 +785,60 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['2']
       end
       it 'should return all lines in new fingerprint if ship from address changed' do
-        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_fingerprint = base_fingerprint_hash.deep_dup
         old_data = order_data_klass.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
-        new_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~22.0~FT~7.0~~4~px~50.0~FT~7.0"
+        new_fingerprint = base_fingerprint_hash.deep_dup
+        new_fingerprint['lines']['4'] = {'ordln_ppu'=>"90"}
         new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = 'other'
         new_data.variant_map = old_data.variant_map
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','2','4']
       end
       it 'should not return lines where the only change to the ship from address is whitespace' do
-        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_fingerprint = base_fingerprint_hash.deep_dup
         old_data = order_data_klass.new(old_fingerprint)
-        old_data.ship_from_address = 'abc def'
-        old_data.variant_map = {'1'=>'10','2'=>'11'}
-        new_data = order_data_klass.new(old_fingerprint)
+        old_data.ship_from_address = 'abcdef'
+        old_data.variant_map = {1=>'10',2=>'11'}
+        new_fingerprint = base_fingerprint_hash.deep_dup
+        new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = " ab c\nde\r\nf"
         new_data.variant_map = old_data.variant_map.clone
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
       end
       it 'should return lines with different variants' do
-        old_fingerprint = "ON1~2015-01-01~2015-01-10~USD~NT30~FOB~Shanghai~CN~~1~px~10.0~EA~5.0~~2~px~50.0~FT~7.0~~3~px~50.0~FT~7.0"
+        old_fingerprint = base_fingerprint_hash.deep_dup
         old_data = order_data_klass.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {'1'=>'10','2'=>'11'}
-        new_data = order_data_klass.new(old_fingerprint)
+        new_fingerprint = base_fingerprint_hash.deep_dup
+        new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
         new_data.variant_map = {'1'=>'OTHER','2'=>'11','3'=>'NEW'}
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','3']
       end
     end
 
-    describe '#needs_new_pdf?' do
+    describe '#vendor_visible_fields_changed?' do
       before :each do
         @od = double('old_data')
         @nd = double('new_data')
       end
       it 'should return true if fingerprints are different' do
         [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return(i.to_s); allow(d).to receive(:ship_from_address).and_return('sf')}
-        expect(order_data_klass.needs_new_pdf?(@od,@nd)).to be_truthy
+        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_truthy
       end
       it 'should return true if ship from addresses are different' do
         [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return(i.to_s)}
-        expect(order_data_klass.needs_new_pdf?(@od,@nd)).to be_truthy
+        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_truthy
       end
       it 'should return true if old_data is nil' do
-        expect(order_data_klass.needs_new_pdf?(nil,@nd)).to be_truthy
+        expect(order_data_klass.vendor_visible_fields_changed?(nil,@nd)).to be_truthy
       end
       it 'should return false if fingerprints are the same and the ship from addresss are the same' do
         [@od,@nd].each {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return('sf')}
-        expect(order_data_klass.needs_new_pdf?(@od,@nd)).to be_falsey
+        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_falsey
       end
     end
   end
