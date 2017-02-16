@@ -20,6 +20,14 @@ module Helpers
     allow_any_instance_of(Paperclip::Attachment).to receive(:destroy).and_return true
   end
 
+  def stub_snapshots
+    EntitySnapshot.snapshot_writer_impl = FakeSnapshotWriterImpl
+  end
+
+  def unstub_snapshots
+    EntitySnapshot.snapshot_writer_impl = EntitySnapshot::DefaultSnapshotWriterImpl
+  end
+
   class MockS3
     class AwsErrors < StandardError; end
     class NoSuchKeyError < AwsErrors; end 
@@ -179,5 +187,11 @@ module Helpers
 
   def expect_custom_value obj, cdef, value
     expect(obj.custom_value(cdef)).to eq value
+  end
+
+  class FakeSnapshotWriterImpl
+    def self.entity_json entity
+      "{\"fake\":#{entity.id}}"
+    end
   end
 end

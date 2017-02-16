@@ -69,7 +69,7 @@ describe Product do
     end
   end
 
-  describe "wto6_changed_after?" do
+  describe "wto6_changed_after?", :snapshot do
     before :each do
       @u = Factory(:user)
       @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')

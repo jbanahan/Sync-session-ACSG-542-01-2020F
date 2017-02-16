@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe EntitySnapshot do
+describe EntitySnapshot, :snapshot do
 
   describe "diff" do
     before :each do

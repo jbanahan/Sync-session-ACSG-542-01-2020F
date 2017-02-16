@@ -3,6 +3,8 @@ require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
+  cattr_accessor :snapshot_writer_impl
+
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
   belongs_to :imported_file
@@ -12,11 +14,27 @@ class EntitySnapshot < ActiveRecord::Base
   validates :recordable, :presence => true
   validates :user, :presence => true
 
+  class DefaultSnapshotWriterImpl
+    def self.entity_json entity
+      cm = CoreModule.find_by_class_name entity.class.to_s
+      raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
+      cm.entity_json(entity)
+    end
+  end
+
+  def self.snapshot_writer
+    # This is primarily here so that our test cases can swap in a null writer implementation.
+    impl = snapshot_writer_impl
+    if impl.nil?
+      impl = DefaultSnapshotWriterImpl
+    end
+
+    impl
+  end
+
   # This is the main method for creating snapshots
   def self.create_from_entity entity, user=User.current, imported_file=nil, context=nil
-    cm = CoreModule.find_by_class_name entity.class.to_s
-    raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
-    json = cm.entity_json(entity)
+    json = snapshot_writer.entity_json(entity)
     es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
     es.write_s3 json
     es.save

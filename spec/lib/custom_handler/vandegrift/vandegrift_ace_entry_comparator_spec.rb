@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator do
       g
     }
 
-    context "with non-Ace comment" do
+    context "with non-Ace comment", :snapshot do
 
       before :each do
         group
