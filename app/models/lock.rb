@@ -130,17 +130,17 @@ class Lock
     lock_manager = Redlock::Client.new [redis]
     lock_info = nil
     lock_auto_exiration_millis = lock_auto_exiration_seconds * 1000
-    begin 
+    begin
       lock_info = lock_manager.lock(lock_name, lock_auto_exiration_millis)
-      unless lock_info || Time.zone.now > connection_timeout_at
-        sleep(0.3)
+      # lock_info is boolean false if the manager lock call failed to acquire the lock
+      unless lock_info
+        if Time.zone.now > connection_timeout_at
+          raise Timeout::Error
+        else
+          sleep(0.3)
+        end
       end
     end while !lock_info
-
-    if Time.zone.now >= connection_timeout_at
-      lock_manager.unlock(lock_info) unless lock_info.nil?
-      raise Timeout::Error
-    end
 
     block_completed = false
     
