@@ -13,6 +13,14 @@ describe ValidationRuleOrderLineFieldFormat do
 
   it 'should fail if any line is not valid' do
     @ol.update_attributes(hts: 'xyz')
+    expect(@rule).to receive(:stop_validation)
+    expect(@rule.run_validation(@ol.order)).to eq("All Order Line - HTS Code values do not match 'ABC' format.")
+  end
+
+  it 'does not stop validation if validate_all flag is used' do
+    @ol.update_attributes(hts: 'xyz')
+    @rule.rule_attributes_json = {model_field_uid:'ordln_hts',regex:'ABC', validate_all: true}.to_json
+    expect(@rule).not_to receive(:stop_validation)
     expect(@rule.run_validation(@ol.order)).to eq("All Order Line - HTS Code values do not match 'ABC' format.")
   end
 

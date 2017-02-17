@@ -15,6 +15,14 @@ describe ValidationRuleEntryInvoiceLineTariffFieldFormat do
 
     it "reports invalid field formats" do
       tariff = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))
+      expect(@rule).to receive(:stop_validation)
+      expect(@rule.run_validation tariff.commercial_invoice_line.entry).to eq "Invoice # INV #{ModelField.find_by_uid(:cit_hts_code).label} value 'ABC' does not match '\\d{4}' format."
+    end
+
+    it "reports invalid field formats" do
+      tariff = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))
+      @rule.rule_attributes_json = {model_field_uid: :cit_hts_code, regex:'\d{4}', validate_all: true}.to_json
+      expect(@rule).not_to receive(:stop_validation)
       expect(@rule.run_validation tariff.commercial_invoice_line.entry).to eq "Invoice # INV #{ModelField.find_by_uid(:cit_hts_code).label} value 'ABC' does not match '\\d{4}' format."
     end
 
@@ -37,7 +45,7 @@ describe ValidationRuleEntryInvoiceLineTariffFieldFormat do
       tariff = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV")))
       tariff2 = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: tariff.commercial_invoice_line)
       tariff3 = Factory(:commercial_invoice_tariff, hts_code: "ABC", commercial_invoice_line: Factory(:commercial_invoice_line, commercial_invoice: tariff.commercial_invoice_line.commercial_invoice))
-
+      expect(@rule).to receive(:stop_validation).and_call_original
       expect(@rule.run_validation tariff.commercial_invoice_line.entry).to eq "Invoice # INV #{ModelField.find_by_uid(:cit_hts_code).label} value 'ABC' does not match '\\d{4}' format."
     end
 

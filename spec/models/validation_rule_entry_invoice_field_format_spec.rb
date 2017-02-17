@@ -34,6 +34,13 @@ describe ValidationRuleEntryInvoiceFieldFormat do
     expect(@rule.run_validation(@ci.entry)).to be_nil
   end
 
+  it "evaluates all invoices if instructed" do
+    expect(@rule).not_to receive(:stop_validation)
+    @rule.rule_attributes_json = {model_field_uid:'ci_issue_codes',regex:'ABC', validate_all: "true"}.to_json
+    @ci.update_attributes(issue_codes: 'xyz')
+    expect(@rule.run_validation(@ci.entry)).to eq("All Invoice - Issue Tracking Codes values do not match 'ABC' format.")
+  end
+
   context "fail_if_matches" do
     let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes',regex:'ABC', fail_if_matches: true}.to_json) }
     

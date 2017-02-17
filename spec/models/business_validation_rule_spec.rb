@@ -10,6 +10,7 @@ describe BusinessValidationRule do
       expect(a.find {|a| a[1]=='ValidationRuleManual'}).to_not be_nil
     end
   end
+
   describe "should_skip?" do
     it "should base should_skip? on search_criterions" do
       pass_ent = Entry.new(entry_number:'9')
@@ -25,6 +26,8 @@ describe BusinessValidationRule do
       ci = CommercialInvoiceLine.new
       expect {bvr.should_skip? ci}.to raise_error /Invalid object expected Entry got CommercialInvoiceLine/
     end
+  end
+
   describe "destroy" do
     it "destroys record" do
       rule = Factory(:business_validation_rule)
@@ -45,5 +48,24 @@ describe BusinessValidationRule do
     end
   end
 
+  describe "has_flag?" do
+    [true, "1", "true"].each do |v|
+      it "returns true of attribute flag value is set with boolean true value #{v}" do
+        subject.rule_attributes_json = {value: v}.to_json
+        expect(subject.has_flag? "value").to eq true
+      end
+    end
+
+    [false, "0", "false", nil].each do |v|
+      it "returns false of attribute flag value is set with boolean false value #{v}" do
+        subject.rule_attributes_json = {value: v}.to_json
+        expect(subject.has_flag? "value").to eq false
+      end
+    end
+
+    it "returns false if flag is not set" do
+      expect(subject.has_flag? "value").to eq false
+    end
+    
   end
 end

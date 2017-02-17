@@ -11,7 +11,7 @@ class ValidationRuleEntryInvoiceLineTariffFieldFormat < BusinessValidationRule
       break if stop
       message = validate_field_format(tariff) do |mf, val, regex, fail_if_matches|
         stop = true
-        stop_validation
+        stop_validation unless has_flag?("validate_all")
         if fail_if_matches
           "Invoice # #{invoice_line.commercial_invoice.invoice_number} #{mf.label} value should not match '#{regex}' format."
         else

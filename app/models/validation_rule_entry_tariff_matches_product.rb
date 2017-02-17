@@ -11,8 +11,7 @@ class ValidationRuleEntryTariffMatchesProduct < BusinessValidationRule
     #collect all part/hts combinations
     part = invoice_line.part_number
     if part.blank?
-      stop_validation
-      return "Part number is empty for commercial invoice line."
+      return error "Part number is empty for commercial invoice line."
     end
     unique_identifier = get_uid(part)
     entry = invoice_line.entry
@@ -26,15 +25,18 @@ class ValidationRuleEntryTariffMatchesProduct < BusinessValidationRule
     invoice_line.commercial_invoice_tariffs.each do |ct|
       hts = ct.hts_code
       if hts.blank?
-        stop_validation
-        return "HTS code is blank for line." 
+        return error("HTS code is blank for line.")
       end
       if !good_hts_vals.include?(hts.gsub(/\./,'').strip)
-        stop_validation
-        return "Invalid HTS #{ct.hts_code} for part #{part}"
+        return error("Invalid HTS #{ct.hts_code} for part #{part}")
       end
     end
     return nil
+  end
+
+  def error msg
+    stop_validation unless has_flag?("validate_all")
+    msg
   end
 
   private

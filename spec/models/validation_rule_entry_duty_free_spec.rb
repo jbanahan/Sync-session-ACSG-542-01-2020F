@@ -22,6 +22,14 @@ describe ValidationRuleEntryDutyFree do
 
   it "fails if tariffs have the specified SPI but invoice line is not duty-free" do
     @ci_tariff_1.update_attributes(duty_amount: 10)
+    expect(@rule).to receive(:stop_validation)
+    expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice line with SPI 8 should be duty free."
+  end
+
+  it "does not stop validation if validate_all flag is utilized" do
+    @ci_tariff_1.update_attributes(duty_amount: 10)
+    @rule.rule_attributes_json = {spi_primary: '8', validate_all: true}.to_json
+    expect(@rule).not_to receive(:stop_validation)
     expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice line with SPI 8 should be duty free."
   end
 
