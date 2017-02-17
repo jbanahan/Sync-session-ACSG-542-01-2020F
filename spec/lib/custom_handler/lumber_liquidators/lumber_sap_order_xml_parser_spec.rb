@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         expect(Order.first.order_lines.count).to eq 3
       end
     end
-  
+
     context "updates to shipped" do
       let :prep_mailer do
         m = double('mail')
@@ -290,6 +290,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       o = Order.first
       expect(o.order_lines.size).to eq(3)
+    end
+    it "should ignore blank inco terms" do
+      base_order.update_attributes(terms_of_sale:'DDP')
+      @test_data.gsub!('LKOND>FOB','LKOND>')
+      dom = REXML::Document.new(@test_data)
+      expect{described_class.new.parse_dom(dom)}.to_not change(Order,:count)
+      base_order.reload
+      expect(base_order.terms_of_sale).to eq 'DDP'
     end
     context 'assigned agent' do
       let :gelowell do

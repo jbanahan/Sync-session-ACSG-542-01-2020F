@@ -18,16 +18,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
     end
 
-    # inco terms
-    current_inco_terms = ord.terms_of_sale
-    if current_inco_terms.blank?
-      vendor_inco_terms = v.get_custom_value(cdefs[:cmp_default_inco_term]).value
-      if !vendor_inco_terms.blank?
-        ord.terms_of_sale = vendor_inco_terms
-        save_order = true
-      end
-    end
-
     # ship_from
     current_ship_from = ord.ship_from_id
     address_search = v.addresses.where(shipping:true)

@@ -4,9 +4,9 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
-  
+
   class OnShipmentError < StandardError; end
-  
+
   VALID_ROOT_ELEMENTS ||= [
     '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
     'ORDERS05' #before June 2016
@@ -53,37 +53,38 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     # envelope info
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
-    
+
     order = nil
 
     begin
       ActiveRecord::Base.transaction do
         @first_expected_delivery_date = nil
-        
+
         order = find_order(order_number, @imp, ext_time) do |o|
-    
+
           # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
           vend = nil
           Lock.acquire("Vendor-#{vendor_system_code}") do
             vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
             @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
           end
-    
+
           o.last_file_bucket = @opts[:bucket]
           o.last_file_path = @opts[:key]
-    
+
           o.customer_order_number = o.order_number
           o.vendor = vend
           o.order_date = order_date(base)
           o.currency = et(order_header,'CURCY')
           o.terms_of_payment = payment_terms_description(base)
-          o.terms_of_sale = ship_terms(base)
+          terms_of_sale = ship_terms(base)
+          o.terms_of_sale = terms_of_sale unless terms_of_sale.blank? 
           o.order_from_address = order_from_address(base,vend)
-    
+
           header_ship_to = ship_to_address(base,@imp)
-    
+
           lines_on_shipment = o.order_lines.find {|ol| !ol.booking_lines.empty? || !ol.shipment_lines.empty?}
-    
+
           order_lines_processed = []
           REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, lines_on_shipment).line_number.to_i}
           o.order_lines.each {|ol|
@@ -91,12 +92,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
               if lines_on_shipment
                 raise OnShipmentError, "Line #{ol.line_number} can't be deleted, it's already on a shipment."
               else
-                ol.mark_for_destruction 
+                ol.mark_for_destruction
               end
             end
           }
-    
-    
+
+
           o.save!
           o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
           o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
@@ -105,14 +106,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
           o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
           o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
           o.associate_vendor_and_products! @user
-    
+
           set_header_dates_from_lines(base,o)
-    
+
           o.save!
-    
+
           o.reload
           validate_line_totals(o,base)
-    
+
           setup_folders o
           o
         end
@@ -123,9 +124,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       send_on_shipment_error dom, order_number, $!.message
     end
 
-    
+
   end
-  
+
   def send_on_shipment_error dom, order_number, message
     Tempfile.open(["ll_sap_order-#{order_number}",'.xml']) do |f|
       f << dom.to_s
@@ -435,14 +436,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         if lines_on_shipment
           raise OnShipmentError, "Cannot add line #{line_number} because other lines from this order are already on a shipment."
         else
-          ol = order.order_lines.build(line_number:line_number,total_cost_digits:2) 
+          ol = order.order_lines.build(line_number:line_number,total_cost_digits:2)
         end
       end
 
       product = find_product(line_el)
       qty = BigDecimal(et(line_el,'MENGE'),4)
       uom = convert_uom(et(line_el,'MENEE'))
-      
+
       # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
       price_per_unit = nil
       extended_cost_text = et(line_el,'NETWR')
@@ -450,7 +451,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         extended_cost = BigDecimal(extended_cost_text,4)
         price_per_unit = extended_cost / qty
       end
-      
+
       validate_line_not_changed(ol,product,qty,uom,price_per_unit) if lines_on_shipment
 
       ol.price_per_unit = price_per_unit
@@ -483,7 +484,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       return ol
     end
-    
+
     def validate_line_not_changed ol, product, qty, uom, price_per_unit
       changed = false
       changed = true if ol.product != product
