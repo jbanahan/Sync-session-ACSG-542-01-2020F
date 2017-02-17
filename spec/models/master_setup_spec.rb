@@ -70,4 +70,73 @@ describe MasterSetup do
       expect(MasterSetup.need_upgrade?).to be_falsey
     end
   end
+
+  describe "get_migration_lock" do
+    let! (:master_setup) { MasterSetup.create! }
+    subject { described_class }
+
+    it "sets hostname into a blank migration lock" do
+      expect(MasterSetup.get_migration_lock host: "host").to eq true
+      expect(MasterSetup.first.migration_host).to eq "host"
+    end
+
+    it "does not set hostname if it's already set" do 
+      master_setup.update_attributes! migration_host: "host2"
+      expect(MasterSetup.get_migration_lock host: "host").to eq false
+      expect(MasterSetup.first.migration_host).to eq "host2"
+    end
+
+    it "uses locking" do
+      expect(Lock).to receive(:with_lock_retry).with(an_instance_of(MasterSetup)).and_yield
+      expect(subject. get_migration_lock host: "host").to eq true
+    end
+
+    it "uses hostname syscall if host is not provided" do
+      expect(subject).to receive(:hostname).with(nil).and_return 'host'
+
+      expect(subject.get_migration_lock).to eq true
+      expect(MasterSetup.first.migration_host).to eq "host"
+    end
+  end
+
+  describe "release_migration_lock" do
+    let! (:master_setup) { MasterSetup.create! }
+    subject { described_class }
+
+    it "clears the migration host if it's set to the current host" do
+      master_setup.update_attributes! migration_host: "host"
+      subject.release_migration_lock host: "host"
+
+      master_setup.reload
+      expect(master_setup.migration_host).to be_nil
+    end
+
+    it "does not clear the host if the hostname is different" do
+      master_setup.update_attributes! migration_host: "host"
+      subject.release_migration_lock host: "host2"
+
+      master_setup.reload
+      expect(master_setup.migration_host).to eq "host"
+    end
+
+    it "uses locking" do
+      master_setup.update_attributes! migration_host: "host"
+      expect(Lock).to receive(:with_lock_retry).with(an_instance_of(MasterSetup)).and_yield
+      subject.release_migration_lock host: "host"
+    end
+
+    it "uses hostname syscall if host is not provided" do
+      expect(subject).to receive(:hostname).with(nil).and_return 'host'
+
+      subject.release_migration_lock
+    end
+
+    it "allows force releasing" do
+      master_setup.update_attributes! migration_host: "host"
+      subject.release_migration_lock host: "host2", force_release: true
+
+      master_setup.reload
+      expect(master_setup.migration_host).to be_nil
+    end
+  end
 end

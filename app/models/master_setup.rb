@@ -34,16 +34,20 @@ class MasterSetup < ActiveRecord::Base
     m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
 
-  def self.get_migration_lock hostname=nil
-    h = hostname.blank? ? `hostname`.strip : hostname
-    c = MasterSetup.connection
+  def self.get_migration_lock host: nil
+    h = hostname(host)
     begin
-      c.execute "LOCK TABLES master_setups WRITE;"
-      c.execute "UPDATE master_setups SET migration_host = '#{h}' WHERE migration_host is null;"
-      found_host = c.execute("SELECT migration_host FROM master_setups;").first.first
+      found_host = nil
+      ms = MasterSetup.first
+      Lock.with_lock_retry(ms) do
+        if ms.migration_host.nil?
+          ms.update_column(:migration_host, h)
+        end
+        found_host = ms.migration_host
+      end
+
       return found_host==h
     ensure
-      c.execute "UNLOCK TABLES;"
       MasterSetup.first #makes sure the after_find callback is called to update the cache
     end
   end
@@ -53,13 +57,19 @@ class MasterSetup < ActiveRecord::Base
     !ms.target_version.blank? && current_code_version.strip!=ms.target_version.strip
   end
 
-  def self.release_migration_lock
-    c = MasterSetup.connection
+  def self.hostname hostname = nil
+    hostname.blank? ? `hostname`.strip : hostname
+  end
+
+  def self.release_migration_lock host: nil, force_release: false
+    h = hostname(host)
     begin
-      c.execute "LOCK TABLES master_setups WRITE;"
-      c.execute "UPDATE master_setups SET migration_host = null;"
+      ms = MasterSetup.first
+      Lock.with_lock_retry(ms) do
+        # Don't clobber the migration host if it's someone else's, unless specifically told to
+        ms.update_column(:migration_host, nil) if force_release || ms.migration_host == h
+      end
     ensure
-      c.execute "UNLOCK TABLES;"
       MasterSetup.first #makes sure the after_find callback is called to update the cache
     end
   end
