@@ -5,6 +5,7 @@ require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/ascena/apll_856_parser'
+require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
 require 'open_chain/custom_handler/ecellerate_xml_router'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
@@ -127,6 +128,8 @@ module OpenChain
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
         OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, remote_path)
+      elsif command['path'].include?('baillie/_po_xml')
+        OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser.delay.process_from_s3(bucket, remote_path)
       elsif command['path'].include?('_fenix_invoices/') && master_setup.custom_feature?('fenix')
         OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_fenix/') && (master_setup.custom_feature?('fenix') || master_setup.custom_feature?("Fenix B3 Files"))
