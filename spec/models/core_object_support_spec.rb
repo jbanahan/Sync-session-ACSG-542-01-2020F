@@ -30,23 +30,41 @@ describe CoreObjectSupport do
       expect(ent.business_rules_state).to eq 'Fail'
     end
   end
-  describe "process_linked_attachments", :disable_delayed_jobs do
-    before :each do
-      LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num')
+  describe "process_linked_attachments" do
+
+    let! (:order_rule) { LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num') }
+
+    it "is referenced in save callback " do 
+      inst = nil
+      expect_any_instance_of(Order).to receive(:process_linked_attachments) do |i|
+        inst = i
+      end
+
+      order = Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
+
+      expect(inst).to eq order
     end
+
     it "should kick off job if import rule exists for this module" do
-      expect(LinkedAttachment).to receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))
-      Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
+      klass, id = nil
+      expect(LinkedAttachment).to receive(:delay).with(priority: 600).and_return LinkedAttachment
+      expect(LinkedAttachment).to receive(:create_from_attachable_by_class_and_id) do |k, i|
+        klass = k
+        id = i
+      end
+
+      Order.new(:order_number=>'onum').process_linked_attachments
     end
+
     it "should not kick off job if only import rules are for another module" do
-      expect(LinkedAttachment).not_to receive(:create_from_attachable_by_class_and_id)
-      Product.create!(:unique_identifier=>"PLA")
+      expect(LinkedAttachment).not_to receive(:delay)
+      Product.new(unique_identifier: "PLA").process_linked_attachments
     end
     it "should not kick off job if don't process linked attachments = true" do
-      expect(LinkedAttachment).not_to receive(:create_from_attachable_by_class_and_id)
-      o = Order.new(order_number:'onum',vendor_id:Factory(:company,:vendor=>true).id)
+      expect(LinkedAttachment).not_to receive(:delay)
+      o = Order.new(:order_number=>'onum')
       o.dont_process_linked_attachments = true
-      o.save!
+      o.process_linked_attachments
     end
   end
   describe "need_sync" do

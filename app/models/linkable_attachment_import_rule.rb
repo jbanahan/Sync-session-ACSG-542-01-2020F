@@ -3,10 +3,16 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   validates :path, :presence=>true, :uniqueness=>true
   validates :model_field_uid, :presence=>true
 
+  after_destroy :load_cache
+
+  @@lock = Monitor.new
+  @@link_cache = Set.new
+  @@link_cache_updated_at = nil
+
   # Are there any linkable attachment import rules for model fields associated with the given class
   def self.exists_for_class? klass
-    reload_cache
-    @@link_cache.include?(klass)
+    cache = reload_cache
+    cache.include?(klass)
   end
   # import the give file to create a LinkableAttachment based on the first matching rule
   # file_obj = the file or file's path
@@ -46,22 +52,55 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   end
 
   def self.reload_cache
-    @@link_cache ||= nil
-    @@link_cache_updated_at ||= nil
     last_rule = LinkableAttachmentImportRule.order('updated_at DESC').first
-    return if !@@link_cache.nil? && (last_rule.nil? || @@link_cache_updated_at == last_rule.updated_at)
-    load_cache
+    # If there isn't a last rule in the system, then there should be no cache (since there's no rules)
+    if last_rule.nil?
+      Set.new
+    elsif !cache_updated?(last_rule.updated_at)
+      dup_cache
+    else
+      load_cache
+    end
+  end
+
+  def load_cache
+    self.class.load_cache
   end
 
   def self.load_cache
-    @@link_cache = Set.new
-    @@link_cache_updated_at = nil
-    LinkableAttachmentImportRule.scoped.each do |r|
-      @@link_cache_updated_at = r.updated_at if @@link_cache_updated_at.nil? || r.updated_at > @@link_cache_updated_at
-      mf = ModelField.find_by_uid(r.model_field_uid)
-      next if mf.blank?
-      @@link_cache << mf.core_module.klass
+    cache = nil
+    @@lock.synchronize do
+      clear_cache
+      LinkableAttachmentImportRule.scoped.each do |r|
+        @@link_cache_updated_at = r.updated_at if @@link_cache_updated_at.nil? || r.updated_at > @@link_cache_updated_at
+        mf = ModelField.find_by_uid(r.model_field_uid)
+        next if mf.blank?
+        @@link_cache << mf.core_module.klass
+      end
+
+      cache = dup_cache
     end
+
+    cache
+  end
+
+  def self.clear_cache
+    @@lock.synchronize do 
+      @@link_cache.clear
+      @@link_cache_updated_at = nil
+    end
+  end
+
+  def self.dup_cache
+    cache = nil
+    @@lock.synchronize { cache = @@link_cache.dup }
+    cache
+  end
+
+  def self.cache_updated? most_recent_update
+    updated = false
+    @@lock.synchronize { updated = @@link_cache_updated_at != most_recent_update }
+    updated
   end
 
   def self.process_from_s3 bucket, path, opts = {}
