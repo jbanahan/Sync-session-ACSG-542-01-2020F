@@ -24,8 +24,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignm
       described_class.compare 'ProductVendorAssignment', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
 
     end
-    it "should call autoflow comparator if risk level has changed and the old value was Auto-Flow" do
-      old_h = JSON.parse @base_data.gsub(/PVRVAL/,'Auto-Flow')
+    it "should call autoflow comparator if risk level has changed and the old value has Auto-Flow in it" do
+      old_h = JSON.parse @base_data.gsub(/PVRVAL/,'Some Sort of Auto-Flow')
       new_h = JSON.parse @base_data
       expect(described_class).to receive(:get_json_hash).with('ob','op','ov').and_return old_h
       expect(described_class).to receive(:get_json_hash).with('nb','np','nv').and_return new_h
