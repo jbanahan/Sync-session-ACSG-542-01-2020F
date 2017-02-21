@@ -244,7 +244,7 @@ describe DataCrossReference do
 
         xrefs = DataCrossReference.xref_edit_hash(u)
         expect(xrefs.size).to eq 1
-        expect(xrefs['ca_hts_to_descr']).to eq title: "System Classification Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true
+        expect(xrefs['ca_hts_to_descr']).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true
       end
     end
   end
