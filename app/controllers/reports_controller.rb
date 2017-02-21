@@ -468,6 +468,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_ascena_entry_audit_report
+    if OpenChain::Report::AscenaEntryAuditReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ascena_entry_audit_report
+    klass = OpenChain::Report::AscenaEntryAuditReport
+    if klass.permission? current_user
+      run_report "Ascena Entry Audit Report", klass, {start_date: params[:start_date], end_date: params[:end_date]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def run_monthly_entry_summation
     if OpenChain::Report::MonthlyEntrySummation.permission? current_user
       run_report "Monthly Entry Summation", OpenChain::Report::MonthlyEntrySummation, params.slice(:start_date, :end_date, :customer_number), []
