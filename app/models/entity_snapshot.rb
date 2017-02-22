@@ -33,7 +33,8 @@ class EntitySnapshot < ActiveRecord::Base
     end
 
     def self.run_business_rules entity
-      BusinessValidationTemplate.create_results_for_object! entity
+      # Disable snapshot'ing the entity since we're literally going to snapshot that same entity in about 2 lines of code anyway.
+      BusinessValidationTemplate.create_results_for_object! entity, snapshot_entity: false
     end
   end
 

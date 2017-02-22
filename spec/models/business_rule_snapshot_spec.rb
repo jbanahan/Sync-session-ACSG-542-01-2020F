@@ -29,7 +29,7 @@ describe BusinessRuleSnapshot do
       now = Time.zone.now
       # Timecop used so the rule's result changed/updated at values will be consistent with expectations
       Timecop.freeze(now) do
-        BusinessValidationTemplate.create_all! true
+        BusinessValidationTemplate.create_all! run_validation: true
         # Make the second rule result be overridden
         result = entry.business_validation_results.where(business_validation_template_id: business_rule_2.business_validation_template.id).first
         rule_result = result.business_validation_rule_results.first
