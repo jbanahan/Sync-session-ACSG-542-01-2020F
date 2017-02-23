@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
-    class PoloOmlogV2ProductGenerator < ProductGenerator
+    class PoloOmlogProductGenerator < ProductGenerator
       include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
       def self.run_schedulable opts={}
@@ -9,10 +9,10 @@ module OpenChain
         h.ftp_file h.sync_csv
       end
       def sync_code
-        "omlog-product-v2"
+        "omlog-product"
       end
       def ftp_credentials
-        {:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'}
+        {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
       end
       #overriding to handle special splitting of CSM numbers
       def sync_csv include_headers=true
@@ -20,7 +20,7 @@ module OpenChain
         cursor = 0
         sync do |rv|
           if include_headers || cursor > 0
-            csm_numbers = rv[1].blank? ? [''] : rv[1].split("\n")
+            csm_numbers = rv[1] ? rv[1].split("\n") : []
             csm_numbers.each do |c|
               max_col = rv.keys.sort.last
               row = []
@@ -45,7 +45,7 @@ module OpenChain
       end
       def query
         @cdefs = self.class.prep_custom_definitions [:clean_fiber_content]
-        q = "SELECT products.id, 
+        q = "SELECT products.id,
 #{cd_s 101},
 #{cd_s CustomDefinition.find_by_label('CSM Number').id},
 #{cd_s 2},
@@ -65,15 +65,16 @@ tariff_records.hts_2 as 'Tariff - HTS Code 2',
 tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
-        ((9..79).to_a + [132, 137, 142, 147, 84, 102] + (85..95).to_a).each do |i|
+        ((9..79).to_a + [132, 137, 142, 147, 84, 102] + (85..94).to_a).each do |i|
           q << cd_s(i)+","
         end
-        q << "tariff_records.line_number as 'Tariff - HTS Row'"
+        q << cd_s(95) 
         q << "
 FROM products
 INNER JOIN classifications ON classifications.product_id = products.id
 INNER JOIN countries on classifications.country_id = countries.id AND countries.iso_code = 'IT'
-INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND length(tariff_records.hts_1) > 0"
+INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND length(tariff_records.hts_1) > 0
+INNER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id AND length(csm_v.text_value) > 0 "
         # If we have a custom where, then don't add the need_sync join clauses.
         if @custom_where.blank?
           q << "\n#{Product.need_sync_join_clause(sync_code)} "
