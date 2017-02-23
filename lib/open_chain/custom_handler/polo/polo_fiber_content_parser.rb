@@ -543,6 +543,13 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def update_or_create_cfv(product, fiber_hash, results)
+      hts = nil
+      classification = product.classifications.first
+      tariff_record = classification.tariff_records.first if classification.present?
+      hts = [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3] if tariff_record.present?
+
+      return unless hts.present? && (hts.grep(/^61/).present? || hts.grep(/^62/).present?)
+
       footwear = results[:algorithm] == 'footwear'
       cd = @cdefs[:clean_fiber_content]
       if fiber_hash.present?
