@@ -259,13 +259,17 @@ describe OpenChain::AllianceImagingClient do
       {"sqs_receive_queue" => "sqs"}.with_indifferent_access
     }
 
+    let (:hash) { {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"} }
+
+    before :each do 
+      allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
+    end
+
     it "should use SQS queue to download messages and use the S3 client with tempfile to download the file" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
-      hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}
       t = double
-      expect(OpenChain::SQS).to receive(:poll).with("sqs").and_yield hash
+      expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
-      allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
 
       OpenChain::AllianceImagingClient.consume_images
@@ -273,12 +277,19 @@ describe OpenChain::AllianceImagingClient do
 
     it "passes s3 version if present" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
-      hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key", "s3_version" => "version"}
+      hash["s3_version"] = "version"
       t = double
-      expect(OpenChain::SQS).to receive(:poll).with("sqs").and_yield hash
+      expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(t)
-      allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash)
+
+      OpenChain::AllianceImagingClient.consume_images
+    end
+
+    it "handles errors and retries polling" do
+      error = StandardError.new
+      expect(OpenChain::SQS).to receive(:poll).exactly(10).times.and_raise error
+      expect(error).to receive(:log_me).with(["Alliance imaging client hash: "]).exactly(10).times
 
       OpenChain::AllianceImagingClient.consume_images
     end

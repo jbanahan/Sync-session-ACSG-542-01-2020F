@@ -47,34 +47,46 @@ class OpenChain::AllianceImagingClient
   
   #not unit tested since it'll all be mocks
   def self.consume_images
-    OpenChain::SQS.poll imaging_config[:sqs_receive_queue] do |hsh|
-      bucket = hsh["s3_bucket"]
-      key = hsh["s3_key"]
-      version = hsh["s3_version"]
+    hash = nil
+    retry_count = 0
+    begin
+      # visibility timeout indicates how long after the poll message is received the message will become
+      # visible again to be re-picked up.  This comes into play if the message errors.  If that happens,
+      # the message won't get deleted (as raising from the poll block causes the message to stay in the queue),
+      # thus, after 5 minutes the message will get retried.  This allows for transient errors to be 
+      # retried after a lengthy wait.
+      OpenChain::SQS.poll(imaging_config[:sqs_receive_queue], visibility_timeout: 300) do |hsh|
+        hash = hsh
+        bucket = hsh["s3_bucket"]
+        key = hsh["s3_key"]
+        version = hsh["s3_version"]
 
-      next if bucket.blank? || key.blank?
+        next if bucket.blank? || key.blank?
 
-      opts = {}
-      if !version.blank?
-        opts[:version] = version
-      end
+        opts = {}
+        if !version.blank?
+          opts[:version] = version
+        end
 
-      t = OpenChain::S3.download_to_tempfile bucket, key, opts
-      begin
+        file = OpenChain::S3.download_to_tempfile bucket, key, opts
         entry = nil
         if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
-          entry = process_fenix_nd_image_file t, hsh
+          entry = process_fenix_nd_image_file file, hsh
         else
-          entry = process_image_file t, hsh
+          entry = process_image_file file, hsh
         end
 
         entry.create_snapshot(User.integration) if entry
-      rescue => e
-        # If there's an error we should catch it, otherwise the message won't get pulled from the message queue
-        raise e unless Rails.env.production?
-        e.log_me ["Alliance imaging client hash: #{hsh}"], [t]
+        hash = nil
       end
+    rescue => e
+      e.log_me ["Alliance imaging client hash: #{hash}"]
+      
+      # retry the poll to continue processing messages even after an error was raised.  The errored message
+      # is now invisible for a period of time so it's not blocking the head of the queue
+      retry if (retry_count += 1) < 10
     end
+    
   end
 
   # The file passed in here must have the correct file extension for content type discovery or
