@@ -18,32 +18,32 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   def self.run_schedulable opts = {}
     opts = {'run_validation' => true}.merge opts
-    create_all! opts['run_validation'] != false
+    create_all! run_validation: (opts['run_validation'] != false)
   end
 
   # call create_results! for all templates
-  def self.create_all! run_validation = false
+  def self.create_all! run_validation: false
     OpenChain::StatClient.wall_time 'bvt_create_all' do
       self.all.each do |b|
-        b.create_results!(run_validation)
+        b.create_results!(run_validation: run_validation)
       end
     end
   end
 
   # call create_result for all templates with matching module types
   # for the given object
-  def self.create_results_for_object! obj
+  def self.create_results_for_object! obj, snapshot_entity: true
     cm = CoreModule.find_by_object(obj)
     return if cm.nil?
     BusinessValidationTemplate.where(module_type:cm.class_name).each do |bvt|
-      bvt.create_result!(obj,true)
+      bvt.create_result!(obj, run_validation: true, snapshot_entity: snapshot_entity)
     end
 
     nil
   end
 
   #run create
-  def create_results! run_validation = false
+  def create_results! run_validation: false, snapshot_entity: true
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
@@ -61,7 +61,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
       begin
         # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
         obj = klass.where(id: id.id).first
-        self.create_result!(obj, run_validation) unless obj.nil?
+        self.create_result!(obj, run_validation: run_validation) unless obj.nil?
       rescue => e
         # Don't let one bad object spoil the whole rule run
         if obj
@@ -73,7 +73,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
   end
 
-  def create_result! obj, run_validation = false
+  def create_result! obj, run_validation: false, snapshot_entity: true
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
@@ -127,7 +127,9 @@ class BusinessValidationTemplate < ActiveRecord::Base
           # templates - pretty sure even those are due to bad initial template setups)
           BusinessRuleSnapshot.create_from_entity(obj)
 
-          if state_changed
+          # There's times where you might not want to snapshot the entity when evaluating business rules (say like when
+          # you're actually in the process of generating a snapshot for the entity)
+          if snapshot_entity && state_changed
             bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
           end
         end

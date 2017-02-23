@@ -202,7 +202,7 @@ describe Lock do
     it "raises timeout error when waiting for the lock times out" do
       done = false
       lockAcquired = false
-      end_time = Time.now + 3.seconds
+      end_time = Time.now + 10.seconds
       t1 = Thread.new {
         ActiveRecord::Base.connection_pool.with_connection do
           Lock.acquire('LockSpec') do
@@ -215,6 +215,8 @@ describe Lock do
       sleep(0.1) unless t1.alive?
 
       error = nil
+      start_time = Time.zone.now
+      error_time = nil
       t2 = Thread.new {
         sleep (0.1) while !lockAcquired
         begin
@@ -224,6 +226,7 @@ describe Lock do
         rescue => e
           done = true
           error = e
+          error_time = Time.zone.now
         end
       }
 
@@ -235,6 +238,10 @@ describe Lock do
       # Just verify the first frame of the backtrace comes from lock.rb, which means our code raised it
       # after a mutex timeout
       expect(error.backtrace.first).to include("lock.rb")
+      # We should also verify that 10 seconds did not pass before the error was raised (if 10 seconds
+      # did pass it would mean our looping functionality in the lock is not working correctly and the error
+      # is just raised after the loop completes and the lock was actually retrieved)
+      expect(start_time).to be_within(3.seconds).of error_time
     end
 
     it "attempts to retry connecting if server is not reachable" do

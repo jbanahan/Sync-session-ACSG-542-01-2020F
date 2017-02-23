@@ -17,19 +17,28 @@ describe ValidationRuleEntryTariffMatchesProduct do
       )
     end
     it "should pass when product exists with HTS for country" do
-      expect(described_class.new.run_validation(@ct.entry)).to be_nil
+      expect(subject.run_validation(@ct.entry)).to be_nil
     end
     it "should fail if wrong HTS for country in product database" do
       @ct.update_attributes(hts_code:'1234567891')
-      expect(described_class.new.run_validation(@ct.entry)).to match /1234567891/
+      expect(subject).to receive(:stop_validation)
+      expect(subject.run_validation(@ct.entry)).to match /1234567891/
+    end
+    it "does not call stop validation if validate_all flag is used" do
+      @ct.update_attributes(hts_code:'1234567891')
+      r = described_class.new rule_attributes_json: {validate_all: true}.to_json
+      expect(r).not_to receive(:stop_validation)
+      expect(r.run_validation(@ct.entry)).to match /1234567891/
     end
     it "should fail if part_number is empty" do
       @ct.commercial_invoice_line.update_attributes(:part_number=>'')
-      expect(described_class.new.run_validation(@ct.entry)).to match /Part number is empty/
+      expect(subject).to receive(:stop_validation)
+      expect(subject.run_validation(@ct.entry)).to match /Part number is empty/
     end
     it "should fail if no product found" do
       @ct.commercial_invoice_line.update_attributes(:part_number=>'ZZZ')
-      expect(described_class.new.run_validation(@ct.entry)).to match /Invalid HTS/
+      expect(subject).to receive(:stop_validation)
+      expect(subject.run_validation(@ct.entry)).to match /Invalid HTS/
     end
     it "should pass with part_nubmer_mask" do
       @t.product.update_attributes(unique_identifier:'X-1234')
@@ -46,7 +55,8 @@ describe ValidationRuleEntryTariffMatchesProduct do
       cls = @t.classification
       cls.country= country2
       cls.save!
-      expect(described_class.new.run_validation(@ct.entry)).to match /Invalid HTS/
+      expect(subject).to receive(:stop_validation)
+      expect(subject.run_validation(@ct.entry)).to match /Invalid HTS/
     end
   end
 end

@@ -24,8 +24,8 @@ describe OpenChain::BusinessRulesNotifier do
     bvt1 = generate_business_rule('12345')
     bvt2 = generate_business_rule('23456')
 
-    bvt1.create_results! true
-    bvt2.create_results! true
+    bvt1.create_results! run_validation: true
+    bvt2.create_results! run_validation: true
 
     expect(slack_client).to receive(:send_message!).ordered.and_raise(StandardError, "Error 1")
     expect(slack_client).to receive(:send_message!).ordered.and_raise(StandardError, "Error 2")
@@ -48,7 +48,7 @@ describe OpenChain::BusinessRulesNotifier do
     company = Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1', name: "My Company")
     bvt = generate_business_rule('12345')
 
-    bvt.create_results! true
+    bvt.create_results! run_validation: true
 
     expect(slack_client).to receive(:send_message!).with(company.slack_channel, "My Company (12345) has 1 failed business rule.")
     OpenChain::BusinessRulesNotifier.run_schedulable

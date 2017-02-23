@@ -1,17 +1,14 @@
 module OpenChain; module Report; class DailyFirstSaleExceptionReport
   include OpenChain::Report::ReportHelper
 
-  ALLIANCE_CUSTOMER_NUMBER = "ASCE"
-
-  def initialize
-    @import_country ||= self.class.get_country
-    @importer ||= self.class.get_importer
-  end
+  ALLIANCE_CUSTOMER_NUMBER ||= "ASCE"
 
   def self.permission? user
-    imp = get_importer
+    ascena = Company.importers.where(alliance_customer_number: ALLIANCE_CUSTOMER_NUMBER).first
+    return false unless ascena
+
     (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
-    (user.view_entries? && (user.company.master? || imp.can_view?(user)))
+    (user.view_entries? && (user.company.master? || ascena.can_view?(user)))
   end
 
   def self.run_report run_by, settings={}
@@ -20,18 +17,6 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
 
   def self.run_schedulable settings={}
     self.new.send_email(settings['email'])
-  end
-
-  def self.get_importer
-    importer = Company.importers.where(alliance_customer_number: ALLIANCE_CUSTOMER_NUMBER).first
-    raise "Unable to find importer account with alliance_customer_number '#{ALLIANCE_CUSTOMER_NUMBER}'" unless importer
-    importer
-  end
-
-  def self.get_country
-    country = Country.where(iso_code: 'US').first
-    raise "Unable to find country with iso_code 'US'" unless country
-    country
   end
 
   def self.get_mids
@@ -93,8 +78,9 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
         INNER JOIN commercial_invoices ci ON ci.entry_id = e.id
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
-      WHERE e.import_country_id = #{@import_country.id}
-        AND e.customer_number = "#{ALLIANCE_CUSTOMER_NUMBER}"
+        INNER JOIN countries c on e.import_country_id = c.id and c.iso_code = 'US'
+      WHERE 
+        e.customer_number = "#{ALLIANCE_CUSTOMER_NUMBER}"
         AND e.release_date IS NOT NULL
         AND e.duty_due_date <= NOW()
         AND (cil.contract_amount = 0 OR cil.contract_amount IS NULL)

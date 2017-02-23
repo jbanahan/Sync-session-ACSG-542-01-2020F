@@ -44,6 +44,7 @@ RSpec.configure do |config|
     CustomDefinition.skip_reload_trigger = true
     stub_event_publisher
     Time.zone = ActiveSupport::TimeZone["UTC"]
+    LinkableAttachmentImportRule.clear_cache
     # What the following does is totally prevent any specs from accidentally saving to S3 via
     # the paperclip gem.  This shaves off a fair bit of runtime on the specs as well as not having
     # to rely on the AWS services in the test cases.

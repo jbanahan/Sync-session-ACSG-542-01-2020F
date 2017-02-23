@@ -48,6 +48,14 @@ describe ValidationRuleCanadaGpt do
       expect(described_class.new.run_validation @entry).to eq "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{@l.country_origin_code} HTS: #{@t.hts_code}"
     end
 
+    it "does not stop if validate_all attribute is used" do
+      @l.update_attributes! country_origin_code: "AF"
+      t2 =  Factory(:commercial_invoice_tariff, hts_code: "1234567890", spi_primary: "0", commercial_invoice_line: @l)
+      r = described_class.new rule_attributes_json: {validate_all: "true"}.to_json
+      expect(r).not_to receive(:stop_validation)
+      expect(r.run_validation @entry).to eq "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{@l.country_origin_code} HTS: #{@t.hts_code}"
+    end
+
     it "caches the official tariff lookup" do
       @l.update_attributes! country_origin_code: "AF"
       rule = described_class.new

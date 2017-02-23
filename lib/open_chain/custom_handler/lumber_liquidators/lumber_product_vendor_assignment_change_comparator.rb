@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     new_risk = get_risk_value(risk_cdef,get_json_hash(new_bucket,new_path,new_version))
     old_risk = get_risk_value(risk_cdef,get_json_hash(old_bucket,old_path,old_version))
 
-    if new_risk!=old_risk && (new_risk=='Auto-Flow' || old_risk=='Auto-Flow')
+    if new_risk != old_risk && [new_risk, old_risk].any? {|m| m =~ /auto-flow/i}
       find_linked_orders(id).each do |ord|
         OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.process(ord)
       end

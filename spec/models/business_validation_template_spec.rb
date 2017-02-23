@@ -7,8 +7,8 @@ describe BusinessValidationTemplate do
     end
     it "should run all templates" do
       Factory(:business_validation_template)
-      expect_any_instance_of(BusinessValidationTemplate).to receive(:create_results!).with(boolean())
-      BusinessValidationTemplate.create_all! true
+      expect_any_instance_of(BusinessValidationTemplate).to receive(:create_results!).with(run_validation: true)
+      BusinessValidationTemplate.create_all! run_validation: true
     end
   end
   describe "create_results!" do
@@ -29,18 +29,18 @@ describe BusinessValidationTemplate do
     end
     it "should run validation if flag set" do
       Factory(:entry,customer_number:'12345')
-      expect{@bvt.create_results! true}.to change(BusinessValidationResult,:count).from(0).to(1)
+      expect{@bvt.create_results! run_validation: true}.to change(BusinessValidationResult,:count).from(0).to(1)
       expect(BusinessValidationResult.first.state).not_to be_nil
     end
     it "should update results for entries that match search criterions and have old business_validation_result" do
       match = Factory(:entry,customer_number:'12345')
-      @bvt.create_results! true
+      @bvt.create_results! run_validation: true
       bvr = BusinessValidationResult.first
       expect(bvr.validatable).to eq match
       expect(bvr.state).to eq 'Fail'
       match.update_attributes(entry_number:'X')
       bvr.update_attributes(updated_at:10.seconds.ago)
-      @bvt.create_results! true
+      @bvt.create_results! run_validation: true
       bvr.reload
       expect(bvr.state).to eq 'Pass'
     end
@@ -48,7 +48,7 @@ describe BusinessValidationTemplate do
       match = Factory(:entry,customer_number:'12345')
       Factory(:commercial_invoice,entry:match)
       Factory(:commercial_invoice,entry:match)
-      @bvt.create_results! true
+      @bvt.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 1
     end
     it 'rescues exceptions raise in create_result! call' do
@@ -120,7 +120,7 @@ describe BusinessValidationTemplate do
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"Business Rule Update")
       @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
-      bvr = @bvt.create_result! @o, true
+      bvr = @bvt.create_result! @o, run_validation: true
       expect(bvr.validatable).to eq @o
       expect(bvr.state).not_to be_nil
     end
@@ -147,6 +147,17 @@ describe BusinessValidationTemplate do
       @o.reload
       expect(@o.business_validation_results.length).to eq 0
     end
+
+    it "does not snapshot the entity if instructed not to" do
+      @o = Factory(:order, order_number: "ajklsdfajl")
+      @bvt = described_class.create!(module_type:'Order')
+      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      @bvt.reload
+
+      expect_any_instance_of(Order).not_to receive(:create_snapshot)
+      @bvt.create_result! @o
+    end
   end
 
   describe "create_results_for_object!" do
@@ -159,22 +170,35 @@ describe BusinessValidationTemplate do
       bvt_ignore = described_class.create!(module_type:'Entry')
 
       ord = Factory(:order, order_number: "ABCD")
-
+      expect_any_instance_of(Order).to receive(:create_snapshot).exactly(2).times
       expect{described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult,:count).from(0).to(2)
       [bvt1,bvt2].each do |b|
         b.reload
         expect(b.business_validation_results.first.validatable).to eq ord
       end
     end
+
+    it "does not snapshot the entity if flag is utilized" do
+      bvt1 = described_class.create!(module_type:'Order')
+      bvt1.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      bvt2 = described_class.create!(module_type:'Order')
+      bvt2.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      bvt_ignore = described_class.create!(module_type:'Entry')
+
+      ord = Factory(:order, order_number: "ABCD")
+
+      expect_any_instance_of(Order).not_to receive(:create_snapshot)
+      described_class.create_results_for_object!(ord, snapshot_entity: false)
+    end
   end
   describe "run_schedulable" do
     it "implements schedulable job interface" do
-      expect(BusinessValidationTemplate).to receive(:create_all!).with true
+      expect(BusinessValidationTemplate).to receive(:create_all!).with(run_validation: true)
       BusinessValidationTemplate.run_schedulable
     end
 
     it "allows setting run_validation param via opts to false" do
-      expect(BusinessValidationTemplate).to receive(:create_all!).with false
+      expect(BusinessValidationTemplate).to receive(:create_all!).with(run_validation: false)
       BusinessValidationTemplate.run_schedulable 'run_validation' => false
     end
   end

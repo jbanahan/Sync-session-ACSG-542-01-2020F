@@ -1,0 +1,82 @@
+<Order>
+  <ImporterId>CLIENTCODE</ImporterId>
+  <VendorName>International Lumber Supplier Inc</VendorName>
+  <VendorNumber>ILSI</VendorNumber>
+  <OrderNumber>ABC12345</OrderNumber>
+  <CustomerOrderNumber>ABC-12345</CustomerOrderNumber>
+  <OrderDate>2015-07-31</OrderDate>
+  <SystemExtractDate>2015-08-31T13:26:00-04:00</SystemExtractDate>
+  <Mode>Ocean</Mode>
+  <ShipWindowStartDate>2015-08-15</ShipWindowStartDate>
+  <ShipWindowEndDate>2015-08-22</ShipWindowEndDate>
+  <FirstExpectedDeliveryDate>2015-09-10</FirstExpectedDeliveryDate>
+  <HandoverPoint>SHANGHAI</HandoverPoint>
+  <ClosedDate>2015-11-16T07:14:00-05:00</ClosedDate>
+  <TermsOfSale>FOB</TermsOfSale>
+  <TermsOfPayment>NET30</TermsOfPayment>
+  <Currency>USD</Currency>
+  <Address type="ship-from">
+    <Name>ILS Factory #1</Name>
+    <Line1>100 Any Street</Line1>
+    <Line2>Shanghai Economic Development Zone</Line2>
+    <Line3>Building 301</Line3>
+    <City>Shanghai</City>
+    <State>Shanghai</State>
+    <PostalCode>ABC123</PostalCode>
+    <Country>CN</Country>
+  </Address>
+  <OrderLine>
+    <LineNumber>1</LineNumber>
+    <OrderedQuantity>307.4</OrderedQuantity>
+    <PricePerUnit>1.21</PricePerUnit>
+    <UnitOfMeasure>FT2</UnitOfMeasure>
+    <CountryOfOrigin>CN</CountryOfOrigin>
+    <CountryOfHarvest>BR</CountryOfHarvest>
+    <HTSCode>4418904685</HTSCode>
+    <SKU>BRCHERFL0318</SKU>
+    <Address type="ship-to">
+      <Name>Yard 1</Name>
+      <Line1>4 Pennsylvania Plaza</Line1>
+      <City>New York</City>
+      <State>NY</State>
+      <PostalCode>10001</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Product>
+      <UniqueIdentifier>BRCHERFL</UniqueIdentifier>
+      <Name>Brazilian Cherry Flooring</Name>
+      <Genus>Hymenaea</Genus>
+      <Species>courbaril</Species>
+      <CITES>Y</CITES>
+    </Product>
+  </OrderLine>
+  <OrderLine>
+    <LineNumber>2</LineNumber>
+    <OrderedQuantity>401.5</OrderedQuantity>
+    <PricePerUnit>1.11</PricePerUnit>
+    <UnitOfMeasure>FT2</UnitOfMeasure>
+    <CountryOfOrigin>CN</CountryOfOrigin>
+    <CountryOfHarvest>BR</CountryOfHarvest>
+    <HTSCode>4418904685</HTSCode>
+    <SKU>XXBRCHERFL0305</SKU>
+    <Address type="ship-to">
+      <Name>Yard 1</Name>
+      <Line1>4 Pennsylvania Plaza</Line1>
+      <City>New York</City>
+      <State>NY</State>
+      <PostalCode>10001</PostalCode>
+      <Country>US</Country>
+    </Address>
+    <Product>
+      <UniqueIdentifier>XXBRCHERFL</UniqueIdentifier>
+      <Name>XBrazilian Cherry Flooring</Name>
+      <Genus>Hymenaea</Genus>
+      <Species>courbaril</Species>
+      <CITES>N</CITES>
+    </Product>
+  </OrderLine>
+  <Summary>
+    <TotalLines>2</TotalLines>
+    <Quantity>708.9</Quantity>
+  </Summary>
+</Order>

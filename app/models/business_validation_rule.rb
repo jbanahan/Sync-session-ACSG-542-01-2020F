@@ -72,6 +72,12 @@ class BusinessValidationRule < ActiveRecord::Base
     @parsed_rule_attributes
   end
 
+  # All this method really does is return true if a rule attribute key
+  # is set with a boolean or string that evaluates to a true boolean (#to_boolean)
+  def has_flag? flag_key
+    (rule_attributes[flag_key].presence || false).to_s.to_boolean
+  end
+
   # override to allow your business rule to skip objects
   def should_skip? obj
     self.search_criterions.each do |sc|

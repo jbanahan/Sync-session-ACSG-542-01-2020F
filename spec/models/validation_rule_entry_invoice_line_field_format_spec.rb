@@ -11,7 +11,13 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
   end
   it "should fail if any line is not valid" do
     @ci_line2.update_attributes(part_number:'123')
+    expect(@rule).to receive(:stop_validation)
     expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice # INV #{ModelField.find_by_uid(:cil_part_number).label} value '123' does not match 'ABC' format."
+  end
+  it "stops at first invalid line by default" do
+    @ci_line.update_attributes(part_number:'987')
+    @ci_line2.update_attributes(part_number:'123')
+    expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice # INV #{ModelField.find_by_uid(:cil_part_number).label} value '987' does not match 'ABC' format."
   end
   it "should not allow blanks by default" do
     @ci_line2.update_attributes(part_number:'')
@@ -27,6 +33,11 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
     @ci_line.commercial_invoice.update_attributes(invoice_number:'123')
     bad_ci_line = Factory(:commercial_invoice_line,part_number:'789',commercial_invoice:Factory(:commercial_invoice,invoice_number:'456',entry:@ci_line.entry))
     expect(@rule.run_validation(@ci_line.entry)).to be_nil
+  end
+
+  it "should evaluate all lines when instructed" do
+    @rule.update_attributes! rule_attributes_json: {model_field_uid:'cil_part_number',regex:'YYZ', validate_all: true}.to_json
+    expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice # INV Invoice Line - Part Number value 'ABC123' does not match 'YYZ' format.\nInvoice # INV Invoice Line - Part Number value '123ABC' does not match 'YYZ' format."
   end
 
   context "fail_if_matches" do
