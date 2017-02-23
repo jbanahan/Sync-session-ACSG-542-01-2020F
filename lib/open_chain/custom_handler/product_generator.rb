@@ -71,7 +71,17 @@ module OpenChain
           row = {}
           clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
 
-          processed_rows = preprocess_row row, last_result: (rt.size == (i + 1)), product_id: vals[0]
+          processed_rows = nil
+          preprocessed = false
+          # What we're doing here is allowing preprocess_row to throw a :mark_synced symbol to denote
+          # that there's no output from preprocess_row, but that it DOES want the row to be marked as synced.
+          # This is handy in cases where output is buffered inside preprocess_row, since if it doesn't return
+          # a value, the product won't have its ID recorded in the synced_products hash
+          catch(:mark_synced) do 
+            processed_rows = preprocess_row row, last_result: (rt.size == (i + 1)), product_id: vals[0]
+            preprocessed = true
+          end
+          
           # Allow for preprocess_row to "reject" the row and not process it in this sync pass.
           # Allows for more complicated code based handling of sync data that might not be able to be
           # done via the query.
@@ -90,6 +100,8 @@ module OpenChain
               yield r
               @row_count += 1
             end
+          elsif !preprocessed
+            synced_products[clean_vals[0]] = fingerprint
           end
           
         end

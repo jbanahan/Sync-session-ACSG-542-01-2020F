@@ -91,6 +91,21 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
         @inst.sync {|row| nil}
       end
+
+      it "handles cases when preprocess row throws :mark_synced and syncs the record that was being processed" do
+        def @inst.preprocess_row row, opts={}
+          throw :mark_synced
+        end
+
+        def @inst.sync_code 
+          "code"
+        end
+
+        @inst.sync {|row| nil}
+        @p1.reload
+        expect(@p1.sync_records.length).to eq 1
+      end
+
     end
     context "preprocess_header_row" do
       before :each do

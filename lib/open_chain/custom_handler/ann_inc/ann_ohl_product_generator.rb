@@ -74,6 +74,12 @@ module OpenChain
             @row_buffer.clear
             # Now put the new record in the buffer
             @row_buffer << outer_row unless opts[:last_result]
+          else
+            # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no 
+            # output is returned sometimes.  This ends up confusing it and it doesn't mark the product as having been synced.
+            # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always 
+            # mark the record as synced even if no preprocess output is given
+            throw :mark_synced
           end
 
           rows          

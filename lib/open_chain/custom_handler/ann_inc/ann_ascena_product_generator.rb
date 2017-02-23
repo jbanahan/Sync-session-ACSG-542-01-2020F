@@ -82,6 +82,12 @@ module OpenChain
             @row_buffer.clear
             # Now put the new record in the buffer
             @row_buffer << outer_row unless opts[:last_result]
+          else
+            # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no 
+            # output is returned sometimes.  This ends up confusing it and it doesn't mark the product as having been synced.
+            # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always 
+            # mark the record as synced even if no preprocess output is given
+            throw :mark_synced
           end
 
           rows          
@@ -121,11 +127,15 @@ INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso
   INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (\"US\",\"CA\")
 ) as classifications on classifications.product_id = products.id
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-#{Product.need_sync_join_clause(sync_code)}
 INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:approved_date].id} AND a_date.customizable_id = classifications.id and a_date.date_value is not null
 "
-          w = "WHERE #{Product.need_sync_where_clause()}"
-          r << (@custom_where ? @custom_where : w)
+          if @custom_where.blank?
+            r << Product.need_sync_join_clause(sync_code)
+            r << " WHERE #{Product.need_sync_where_clause()}"
+          else
+            r << @custom_where
+          end
+
           #US must be in file before Canada per OHL spec
           r << " ORDER BY products.id, classifications.iso_code DESC, tariff_records.line_number"
           r

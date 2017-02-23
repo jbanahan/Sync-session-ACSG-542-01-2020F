@@ -174,6 +174,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnAscenaProductGenerator do
       expect(r.length).to eq 2
       expect(r[0][0]).to eq p.unique_identifier
       expect(r[1][0]).to eq p2.unique_identifier
+
+      # verify that each product also has a sync record
+      expect(p.sync_records.length).to eq 1
+      expect(p2.sync_records.length).to eq 1
     end
   end
 
