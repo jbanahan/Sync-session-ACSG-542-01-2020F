@@ -251,21 +251,34 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   end
 
   describe '#generate ll xml' do
-    it 'should send xml if OrderData.send_sap_update? returns true' do
+    ["NB", "ZMSP"].each do |type|
+      it "should send xml if OrderData.send_sap_update? returns true and type is #{type}" do
+        o = double('order')
+        od = double('OrderData-Old')
+        nd = double('OrderData-New')
+        allow(nd).to receive(:order_type).and_return type
+        expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with o, snapshot_entity: false
+        expect(order_data_klass).to receive(:send_sap_update?).with(o, od,nd).and_return true
+        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
+        subject.generate_ll_xml(o,od,nd)
+      end
+    end
+    
+    it 'should not send xml if OrderData.send_sap_update? returns false' do
       o = double('order')
       od = double('OrderData-Old')
       nd = double('OrderData-New')
-      expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return true
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
+      allow(nd).to receive(:order_type).and_return "NB"
+      expect(order_data_klass).to receive(:send_sap_update?).with(o, od,nd).and_return false
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
       subject.generate_ll_xml(o,od,nd)
     end
-    it 'should not send xml OrderData.send_sap_update? returns false' do
-      o = double('order')
-      od = double('OrderData-Old')
+
+    it "should not send xml if order type is not 'NB' or 'ZMSP'" do
       nd = double('OrderData-New')
-      expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return false
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to_not receive(:send_order).with(o)
-      subject.generate_ll_xml(o,od,nd)
+      allow(nd).to receive(:order_type).and_return "SOME OTHER TYPE"
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
+      subject.generate_ll_xml(nil,nil,nd)
     end
   end
 
@@ -624,7 +637,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe 'OrderData' do
     let :cdefs do
-      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract])
+      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type])
     end
     let :sap_extract_date do
       Time.now.utc
@@ -646,6 +659,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       )
       o.update_custom_value!(cdefs[:ord_country_of_origin],'CN')
       o.update_custom_value!(cdefs[:ord_sap_extract],sap_extract_date)
+      o.update_custom_value!(cdefs[:ord_planned_handover_date], Date.new(2015, 2, 2))
+      o.update_custom_value!(cdefs[:ord_type],'Type')
       expect(o).to receive(:business_rules_state).and_return('Fail')
       o.reload
       o
@@ -697,6 +712,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od.ship_window_end).to eq '2015-01-10'
         expect(od.business_rule_state).to eq 'Fail'
         expect(od.approval_status).to eq 'Approved'
+        expect(od.order_type).to eq "Type"
       end
     end
 
@@ -764,36 +780,84 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         r = double(data_name)
         allow(r).to receive(:approval_status).and_return ''
         allow(r).to receive(:business_rule_state).and_return 'Pass'
-        allow(r).to receive(:planned_handover_date).and_return Date.new(2017,1,2)
+        allow(r).to receive(:planned_handover_date).and_return "2017-01-02"
         r
       end
+      let (:order) {
+        order = Factory(:order, approval_status: "")
+        order.update_custom_value! handover_cdef, Date.new(2017,1,2)
+        allow(order).to receive(:business_rules_state).and_return "Pass"
+        order
+      }
+
+      let (:handover_uid) { 
+        handover_cdef.model_field_uid
+      }
+
+      let (:handover_cdef) {
+        described_class::OrderData.prep_custom_definitions([:ord_planned_handover_date])[:ord_planned_handover_date]
+      }
+
+      before :each do
+        allow(described_class::OrderData).to receive(:planned_handover_date_uid).and_return handover_uid
+      end
+
+      it 'should return false if no changes' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq false
+      end
+
       it 'should return true if old_data is nil' do
         nd = make_data('new-data')
-        expect(order_data_klass.send_sap_update?(nil,nd)).to be_truthy
+        expect(order_data_klass.send_sap_update?(order, nil,nd)).to eq true
       end
       it 'should return true if approval status changed' do
         nd = make_data('new-data')
         od = make_data('old-data')
         expect(od).to receive(:approval_status).and_return 'Approved'
-        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
+
+      it "should return true if approval status has been updated in order object" do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        order.approval_status = "Pass"
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
+      end
+
       it 'should return true if business rule state changed' do
         nd = make_data('new-data')
         od = make_data('old-data')
         expect(od).to receive(:business_rule_state).and_return 'Fail'
-        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
+
+      it "should return true if business rule state changes in the order" do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:business_rule_state).and_return 'Fail'
+        expect(nd).to receive(:business_rule_state).and_return 'Fail'
+        expect(order).to receive(:business_rules_state).and_return "Pass"
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
+      end
+
       it 'should return true if planned handover date changed' do
         nd = make_data('new-data')
         od = make_data('old-data')
-        expect(od).to receive(:planned_handover_date).and_return Date.new(2017,1,3)
-        expect(order_data_klass.send_sap_update?(od,nd)).to be_truthy
+        expect(od).to receive(:planned_handover_date).and_return "2017-01-03"
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
-      it 'should return false if no changes' do
+
+      it 'should return true if planned handover date changed in the order' do
         nd = make_data('new-data')
         od = make_data('old-data')
-        expect(order_data_klass.send_sap_update?(od,nd)).to be_falsey
+        expect(od).to receive(:planned_handover_date).and_return "2017-01-03"
+        expect(nd).to receive(:planned_handover_date).and_return "2017-01-03"
+        order.find_and_set_custom_value handover_cdef, Date.new(2017, 1, 4)
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
+      
     end
 
     describe '#lines_needing_pc_approval_reset' do

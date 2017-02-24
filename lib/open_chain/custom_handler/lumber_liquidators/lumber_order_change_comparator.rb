@@ -38,6 +38,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       updated_by = []
       field_updates = false
 
+      # The reason for running this logic in a single monolithic series is because when running it
+      # over the course of several micro-transactions initiated by many snapshot's is that the logic
+      # ordering became non-deterministic and sometimes flipped business rule statuses back and forth
+      # over the course of several snapshots.  This also caused the history to get VERY hard to read
+      # AND caused multiple XML files to get generated out.
+
+      # By putting them all in a single discreet ordered series, we can ensure that this all runs 
+      # in a predefined order and a single snapshot, xml send and pdf generation results from the logic.
       Array.wrap(logic_steps).each do |step|
         updated = false
         logic_name = nil
@@ -142,9 +150,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     return false
   end
 
-  def self.generate_ll_xml ord, old_data, new_data
-    if OrderData.send_sap_update?(old_data,new_data)
-      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order ord
+  def self.generate_ll_xml order, old_data, new_data
+    # SOW # 1182 - Filtering XML sends based on Order Type 
+    return unless ["NB", "ZMSP"].include? new_data.order_type.to_s.upcase
+
+    # Before sending the order, update the business rules because it's very likely that some of the other logic
+    # in this comparator has updated some states.  If this happens, we'll want to send out the current 
+    # business rule state.
+    BusinessValidationTemplate.create_results_for_object! order, snapshot_entity: false
+    if OrderData.send_sap_update?(order, old_data,new_data)
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order order
     end
   end
 
@@ -286,12 +301,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     # using array so we can dynamically build but not have to
     PLANNED_HANDOVER_DATE_UID ||= []
     SAP_EXTRACT_DATE_UID ||= []
+    COUNTRY_ORIGIN_UID ||= []
+    ORDER_TYPE_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint, :fingerprint_hash
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
-      :approval_status, :business_rule_state, :country_of_origin
+      :approval_status, :business_rule_state, :country_of_origin, :order_type
 
     def initialize fp_hash
       @fingerprint_hash = fp_hash
@@ -301,11 +318,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.build_from_hash entity_hash
       fingerprint_hash = {'lines'=>{}}
-      cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract])
-      if PLANNED_HANDOVER_DATE_UID.empty?
-        PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
-        SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
-      end
       order_hash = entity_hash['entity']['model_fields']
       ORDER_MODEL_FIELDS.each do |uid|
         fingerprint_hash[uid] = order_hash[uid.to_s]
@@ -334,13 +346,45 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.ship_from_address = order_hash['ord_ship_from_full_address']
       od.business_rule_state = order_hash['ord_rule_state']
       od.approval_status = order_hash['ord_approval_status']
-      od.planned_handover_date = order_hash[PLANNED_HANDOVER_DATE_UID.first]
-      od.country_of_origin = order_hash[cdefs[:ord_country_of_origin].model_field_uid.to_s]
-      sap_extract_str = order_hash[SAP_EXTRACT_DATE_UID.first]
+      od.planned_handover_date = order_hash[planned_handover_date_uid]
+      od.country_of_origin = order_hash[country_origin_uid]
+      od.order_type = order_hash[order_type_uid]
+      sap_extract_str = order_hash[sap_extract_date_uid]
       od.sap_extract_date =  sap_extract_str ? DateTime.iso8601(sap_extract_str) : nil
       od.variant_map = variant_map
       od.price_map = price_map
+
       return od
+    end
+
+    def self.planned_handover_date_uid
+      prep_class_cust_defs
+      PLANNED_HANDOVER_DATE_UID.first
+    end
+
+    def self.sap_extract_date_uid
+      prep_class_cust_defs
+      SAP_EXTRACT_DATE_UID.first
+    end
+
+    def self.country_origin_uid
+      prep_class_cust_defs
+      COUNTRY_ORIGIN_UID.first
+    end
+
+    def self.order_type_uid
+      prep_class_cust_defs
+      ORDER_TYPE_UID.first
+    end
+
+    def self.prep_class_cust_defs
+      if PLANNED_HANDOVER_DATE_UID.empty?
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type])
+        PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
+        SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
+        COUNTRY_ORIGIN_UID << cdefs[:ord_country_of_origin].model_field_uid
+        ORDER_TYPE_UID << cdefs[:ord_type].model_field_uid
+      end
     end
 
     def has_blank_defaults?
@@ -399,12 +443,29 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return r_val
     end
 
-    def self.send_sap_update? old_data, new_data
+    def self.send_sap_update? order, old_data, new_data
       return true if old_data.nil?
-      return true if old_data.planned_handover_date!=new_data.planned_handover_date
-      return true if old_data.approval_status!=new_data.approval_status
-      return true if old_data.business_rule_state!=new_data.business_rule_state
+      # The idea here is that we'll want to generate the XML update as soon as possible, so if anything from the actual entity
+      # object itself has been updated while the comparator has been running, we'll also want to send the XML now.
+
+      # The XML generator will use a fingerprint to determine if any data inside the XML has actually changed or not and only
+      # then send the XML if the fingerprint is new...so even if we get a secondary run of the comparator where the dates
+      # show as changed...if the XML data iself isn't different, it won't get sent.
+      return true if snapshot_or_entity_value_changed?(order, planned_handover_date_uid, old_data.planned_handover_date, new_data.planned_handover_date)
+      return true if snapshot_or_entity_value_changed?(order, :ord_approval_status, old_data.approval_status, new_data.approval_status)
+      return true if snapshot_or_entity_value_changed?(order, :ord_rule_state, old_data.business_rule_state, new_data.business_rule_state)
+
       return false
+    end
+
+    def self.snapshot_or_entity_value_changed? o, model_field, old_value, new_value
+      updated = old_value != new_value
+      if !updated
+        current_value = SnapshotWriter.new.field_value(o, ModelField.find_by_uid(model_field), json_string: true)
+        updated = current_value != new_value
+      end
+      
+      updated
     end
   end
 end; end; end; end
