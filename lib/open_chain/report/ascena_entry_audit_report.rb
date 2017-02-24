@@ -7,11 +7,11 @@ module OpenChain; module Report; class AscenaEntryAuditReport
 
   def self.permission? user
     (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
-      (user.view_entries? && (user.company.master? || user.company.system_code == "ASCE" || linked_to_ascena?(user.company)))
+      (user.view_entries? && (user.company.master? || user.company.system_code == "ASCENA" || linked_to_ascena?(user.company)))
   end
 
   def self.linked_to_ascena? co
-    ascena = Company.where(system_code: "ASCE").first
+    ascena = Company.where(system_code: "ASCENA").first
     return false unless ascena
     co.linked_companies.to_a.include? ascena
   end

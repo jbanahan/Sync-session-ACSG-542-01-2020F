@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::Report::AscenaEntryAuditReport do
 
   let(:report) { described_class.new }
-  let(:co) { Factory(:company, system_code: "ASCE")}
+  let(:co) { Factory(:company, system_code: "ASCENA")}
   let(:date_1) { DateTime.new(2016,03,15) }
   let(:date_2) { DateTime.new(2016,03,16) }
   let(:date_3) { DateTime.new(2016,03,17) }
@@ -60,14 +60,14 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     end
 
     it "allows access for Ascena users who can view entries" do
-      co = Factory(:company, system_code: "ASCE")
+      co = Factory(:company, system_code: "ASCENA")
       u = Factory(:user, company: co)
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission? u).to eq true
     end
 
     it "allows access for users of Ascena's parent companies" do
-      ascena = Factory(:company, system_code: "ASCE")
+      ascena = Factory(:company, system_code: "ASCENA")
       parent = Factory(:company, linked_companies: [ascena])
       u = Factory(:user, company: parent)
       expect(u).to receive(:view_entries?).and_return true
