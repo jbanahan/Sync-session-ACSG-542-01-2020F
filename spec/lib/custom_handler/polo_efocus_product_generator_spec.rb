@@ -13,6 +13,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       h.generate
     end
   end
+
   describe "ftp_credentials" do
     it "should send credentials" do
       expect(subject.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'})
@@ -32,6 +33,52 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
 
     after :all do
       @cdefs.values.each(&:destroy)
+    end
+
+    describe "clean fiber handling" do
+      before :each do
+        @us = Factory(:country,:iso_code=>'US')
+        @classification = Factory(:classification, :country_id=>@us.id)
+        @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
+        @match_product = @classification.product
+        @barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
+        @test_style = CustomDefinition.where(label: "Test Style").first
+        @set_type = CustomDefinition.where(label: "Set Type").first
+
+        @match_product.update_custom_value! @barthco_cust, '100'
+      end
+
+      it "should always remove the clean fiber content header field" do
+        @match_product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
+        @tmp = subject.sync_xls
+        sheet = Spreadsheet.open(@tmp).worksheet(0)
+        r = sheet.row(0)
+
+        expect(r).to_not include('Clean Fiber Content')
+        expect(r.length).to eql(106)
+      end
+
+      it "should remove the clean_fiber_content field if it is empty" do
+        @match_product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
+        @match_product.update_custom_value! @cdefs[:clean_fiber_content], ""
+        @tmp = subject.sync_xls
+        sheet = Spreadsheet.open(@tmp).worksheet(0)
+        r = sheet.row(1)
+
+        expect(r[6]).to eql('fibercontent')
+        expect(r.length).to eql(106)
+      end
+
+      it "should replace fiber_content with clean_fiber_content" do
+        @match_product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
+        @match_product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
+        @tmp = subject.sync_xls
+        sheet = Spreadsheet.open(@tmp).worksheet(0)
+        r = sheet.row(1)
+
+        expect(r[6]).to eql('cleanfibercontent')
+        expect(r[6]).to_not eql('fibercontent')
+      end
     end
 
     describe "query" do
