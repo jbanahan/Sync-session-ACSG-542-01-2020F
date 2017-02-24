@@ -4,10 +4,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   extend OpenChain::FtpFileSupport
   def self.send_order order
     xml = generate(User.integration,order)
-    Tempfile.open(['po_','.xml']) do |tf|
+    Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
       tf.write xml
       tf.flush
       ftp_file tf
+
+      # Add a sync record so we can track when files are sent to SAP
+      Lock.with_lock_retry(order) do 
+        sr = order.sync_records.first_or_initialize trading_partner: "SAP PO"
+        sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+      end
     end
   end
 

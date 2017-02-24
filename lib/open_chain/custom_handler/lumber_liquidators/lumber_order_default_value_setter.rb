@@ -1,7 +1,9 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
+
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderDefaultValueSetter
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  def self.set_defaults ord
+
+  def self.set_defaults ord, entity_snapshot: true
     cdefs = prep_custom_definitions([:cmp_default_inco_term,:cmp_default_handover_port,:cmp_default_country_of_origin,:ord_country_of_origin])
     v = ord.vendor
     return if v.nil?
@@ -11,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     # fob point
     current_fob = ord.fob_point
     if current_fob.blank?
-      vendor_fob = v.get_custom_value(cdefs[:cmp_default_handover_port]).value
+      vendor_fob = v.custom_value(cdefs[:cmp_default_handover_port])
       if !vendor_fob.blank?
         ord.fob_point = vendor_fob
         save_order = true
@@ -34,20 +36,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     # country of origin
-    current_coo = ord.get_custom_value(cdefs[:ord_country_of_origin]).value
+    current_coo = ord.custom_value(cdefs[:ord_country_of_origin])
     if current_coo.blank?
-      vendor_coo = v.get_custom_value(cdefs[:cmp_default_country_of_origin]).value
+      vendor_coo = v.custom_value(cdefs[:cmp_default_country_of_origin])
       if !vendor_coo.blank?
         ord.update_custom_value!(cdefs[:ord_country_of_origin],vendor_coo)
         run_snapshot = true
       end
     end
 
-    if run_snapshot
-      ord.create_snapshot(User.integration, nil, "System Job: Order Default Value Setter")
-      return true
-    else
-      return false
-    end
+    ord.create_snapshot(User.integration, nil, "System Job: Order Default Value Setter") if entity_snapshot && run_snapshot
+
+    run_snapshot
   end
 end; end; end; end

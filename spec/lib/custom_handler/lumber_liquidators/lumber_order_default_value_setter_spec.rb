@@ -21,6 +21,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSet
       @order.reload
       expect(@order.get_custom_value(@cdefs[:ord_country_of_origin]).value).to eq 'CN'
     end
+    it "allows disabling snapshot even if order changed" do
+      @vendor.update_custom_value!(@cdefs[:cmp_default_handover_port],'Shanghai')
+      expect(@order).not_to receive(:create_snapshot)
+      expect(described_class.set_defaults(@order, entity_snapshot: false)).to eq true
+    end
     context "ship_from" do
       it "should set the ship from if the vendor only has one shipping address" do
         a = Factory(:address,shipping:true,company:@vendor)

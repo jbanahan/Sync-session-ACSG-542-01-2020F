@@ -57,74 +57,73 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     order = nil
 
     begin
-      ActiveRecord::Base.transaction do
-        @first_expected_delivery_date = nil
+      @first_expected_delivery_date = nil
+      vend = find_vendor(@imp, vendor_system_code)
+      order = find_order(order_number, @imp, ext_time) do |o|
+        o.last_file_bucket = @opts[:bucket]
+        o.last_file_path = @opts[:key]
 
-        order = find_order(order_number, @imp, ext_time) do |o|
+        o.customer_order_number = o.order_number
+        o.vendor = vend
+        o.order_date = order_date(base)
+        o.currency = et(order_header,'CURCY')
+        o.terms_of_payment = payment_terms_description(base)
+        terms_of_sale = ship_terms(base)
+        o.terms_of_sale = terms_of_sale unless terms_of_sale.blank? 
+        o.order_from_address = order_from_address(base,vend)
 
-          # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
-          vend = nil
-          Lock.acquire("Vendor-#{vendor_system_code}") do
-            vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
-            @imp.linked_companies << vend unless @imp.linked_companies.include?(vend)
-          end
+        header_ship_to = ship_to_address(base,@imp)
 
-          o.last_file_bucket = @opts[:bucket]
-          o.last_file_path = @opts[:key]
+        lines_on_shipment = o.order_lines.find {|ol| !ol.booking_lines.empty? || !ol.shipment_lines.empty?}
 
-          o.customer_order_number = o.order_number
-          o.vendor = vend
-          o.order_date = order_date(base)
-          o.currency = et(order_header,'CURCY')
-          o.terms_of_payment = payment_terms_description(base)
-          terms_of_sale = ship_terms(base)
-          o.terms_of_sale = terms_of_sale unless terms_of_sale.blank? 
-          o.order_from_address = order_from_address(base,vend)
-
-          header_ship_to = ship_to_address(base,@imp)
-
-          lines_on_shipment = o.order_lines.find {|ol| !ol.booking_lines.empty? || !ol.shipment_lines.empty?}
-
-          order_lines_processed = []
-          REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, lines_on_shipment).line_number.to_i}
-          o.order_lines.each {|ol|
-            if !order_lines_processed.include?(ol.line_number.to_i)
-              if lines_on_shipment
-                raise OnShipmentError, "Line #{ol.line_number} can't be deleted, it's already on a shipment."
-              else
-                ol.mark_for_destruction
-              end
+        order_lines_processed = []
+        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, lines_on_shipment).line_number.to_i}
+        o.order_lines.each {|ol|
+          if !order_lines_processed.include?(ol.line_number.to_i)
+            if lines_on_shipment
+              raise OnShipmentError, "Line #{ol.line_number} can't be deleted, it's already on a shipment."
+            else
+              ol.mark_for_destruction
             end
-          }
+          end
+        }
 
 
-          o.save!
-          o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
-          o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
-          o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
-          buyer_name, buyer_phone = buyer_info(base)
-          o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
-          o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
-          o.associate_vendor_and_products! @user
+        o.save!
+        o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
+        o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
+        o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
+        buyer_name, buyer_phone = buyer_info(base)
+        o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
+        o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
+        o.associate_vendor_and_products! @user
 
-          set_header_dates_from_lines(base,o)
+        set_header_dates_from_lines(base,o)
 
-          o.save!
+        o.save!
 
-          o.reload
-          validate_line_totals(o,base)
+        o.reload
+        validate_line_totals(o,base)
 
-          setup_folders o
-          o
-        end
+        setup_folders o
+        o
       end
       order.create_snapshot @user if order
     rescue OnShipmentError
       # mailer here
       send_on_shipment_error dom, order_number, $!.message
     end
+  end
 
 
+  def find_vendor importer, vendor_system_code
+    vend = nil
+    Lock.acquire("Vendor-#{vendor_system_code}") do
+      # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
+      vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
+      importer.linked_companies << vend unless importer.linked_companies.include?(vend)
+    end
+    vend
   end
 
   def send_on_shipment_error dom, order_number, message
@@ -405,11 +404,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         po = Order.where(order_number: order_number).first_or_create! importer: importer
 
         if process_file?(extract_time, po)
-          Lock.with_lock_retry(po) do
-            o = yield po
+          o = po
+        end
+      end
+
+      if o
+        Lock.with_lock_retry(o) do
+          if process_file?(extract_time, o)
+            o = yield o
           end
         end
       end
+
       o
     end
 

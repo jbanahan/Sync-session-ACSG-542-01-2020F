@@ -25,38 +25,74 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     OrderData.build_from_hash(h)
   end
 
-  def self.execute_business_logic id, old_data, new_data
+  def self.all_logic_steps
+    [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
+                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+  end
+
+  def self.execute_business_logic id, old_data, new_data, logic_steps = nil
     ord = Order.find_by_id id
     return unless ord
+    Lock.with_lock_retry(ord) do 
+      logic_steps = all_logic_steps if logic_steps.blank?
+      updated_by = []
+      field_updates = false
 
-    # ordering of these calls matters to the logical flow
-    defaults_changed = false
-    if set_defaults ord, new_data
-      ord.reload
-      defaults_changed = true
+      Array.wrap(logic_steps).each do |step|
+        updated = false
+        logic_name = nil
+        case step
+        when :set_defaults
+          logic_name = "Order Default Value Setter"
+          updated = set_defaults(ord, new_data)
+        when :planned_handover
+          logic_name = "Clear Planned Handover"
+          updated = clear_planned_handover_date(ord, old_data, new_data)
+        when :forecasted_handover
+          logic_name = "Forecasted Window Update"
+          updated = set_forecasted_handover_date(ord)
+        when :vendor_approvals
+          logic_name = "Vendor Approval Reset"
+          updated = reset_vendor_approvals(ord, old_data, new_data)
+        when :compliance_approvals
+          logic_name = "Compliance Approval Reset"
+          updated = reset_product_compliance_approvals(ord, old_data, new_data)
+        when :autoflow_approvals
+          logic_name = "Autoflow Order Approver"
+          updated = update_autoflow_approvals(ord)
+        when :price_revised_dates
+          logic_name = "Update Price Revised Dates"
+          updated = set_price_revised_dates(ord, old_data, new_data)
+        when :reset_po_cancellation
+          logic_name = "PO Cancellation Reset"
+          updated = reset_po_cancellation(ord)
+        when :update_change_log
+          logic_name = "Change Log"
+          updated = update_change_log(ord,old_data,new_data)
+        when :generate_ll_xml
+          # Generating XML won't set any order values, so we don't have to do the update handling in here
+          generate_ll_xml(ord,old_data,new_data)
+        else
+          raise "Unexpected logic step of '#{step}' received."
+        end
+
+        if updated
+          updated_by << logic_name
+          field_updates = true
+          ord.reload
+        end
+      end
+
+      if field_updates
+        create_pdf(ord,old_data,new_data)
+        create_snapshot(ord, User.integration, updated_by)
+      end
     end
+  end
 
-    ord.reload if clear_planned_handover_date ord, old_data, new_data
-    ord.reload if set_forecasted_handover_date ord
-    ord.reload if reset_vendor_approvals ord, old_data, new_data
-    ord.reload if reset_product_compliance_approvals ord, old_data, new_data
-    ord.reload if update_autoflow_approvals ord
-    ord.reload if set_price_revised_dates ord, old_data, new_data
-    ord.reload if reset_po_cancellation ord
-
-    generate_ll_xml(ord,old_data,new_data)
-
-    update_change_log(ord,old_data,new_data)
-
-    # if we changed the default values then the PDF should be generated from the comparator
-    # that is triggered by that snapshot.  Otherwise, we'll get 2 PDFs.
-    #
-    # we don't need to worry about this for reset_vendor_approvals, reset_product_compliance_approvals,
-    # and update_autoflow_approvals since those don't change the fingerprint, so their snapshots won't
-    # try to create a new PDF
-    if !defaults_changed
-      create_pdf(ord,old_data,new_data)
-    end
+  def self.create_snapshot order, user, updated_list
+    snapshot_context = "System Job: Order Change Comparator: #{updated_list.join " / "}"
+    order.create_snapshot user, nil, snapshot_context
   end
 
   def self.set_price_revised_dates ord, old_data, new_data
@@ -75,7 +111,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       if !header_revised_date || header_revised_date.to_i < sap_extract_date.to_i
         ord.update_custom_value!(cdefs[:ord_price_revised_date],sap_extract_date)
       end
-      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Update Price Revised Dates")
     end
     return r_val
   end
@@ -85,7 +120,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     return false unless ord.custom_value(cdefs[:ord_planned_handover_date])
     if old_data.ship_window_start!=new_data.ship_window_start || old_data.ship_window_end!=new_data.ship_window_end
       ord.update_custom_value!(cdefs[:ord_planned_handover_date],nil)
-      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Clear Planned Handover")
       return true
     end
     return false
@@ -93,18 +127,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.set_forecasted_handover_date ord
     cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start]
-    current_forecasted_handover_date = ord.get_custom_value(cdefs[:ord_forecasted_handover_date]).value
-    planned_handover_date = ord.get_custom_value(cdefs[:ord_planned_handover_date]).value
+    current_forecasted_handover_date = ord.custom_value(cdefs[:ord_forecasted_handover_date])
+    planned_handover_date = ord.custom_value(cdefs[:ord_planned_handover_date])
     if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
       ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date-7.days)
-      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Forecasted Window Update")
       return true
     end
     if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
       ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end-7.days)
-      ord.create_snapshot(User.integration,nil,"System Job: Order Change Comparator: Forecasted Window Update")
       return true
     end
     return false
@@ -118,11 +150,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   # set default values based on the vendor setup if they're blank
   def self.set_defaults ord, new_data
-    return new_data.has_blank_defaults? && OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter.set_defaults(ord)
+    return new_data.has_blank_defaults? && OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter.set_defaults(ord, entity_snapshot: false)
   end
 
   def self.update_autoflow_approvals ord
-    return OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.process(ord)
+    return OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover.process(ord, entity_snapshot: false)
   end
 
   def self.reset_vendor_approvals ord, old_data, new_data
@@ -142,7 +174,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       ol = ord.order_lines.find_by_line_number(line_number)
       next unless ol
       cdefs.values.each do |cd|
-        if !ol.get_custom_value(cd).value.blank?
+        if !ol.custom_value(cd).blank?
           ol.update_custom_value!(cd,nil)
           values_changed = true
         end
@@ -150,8 +182,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
     if values_changed
       ord.update_custom_value!(header_cdef,'')
-      ord.reload
-      ord.create_snapshot(User.integration, nil, "System Job: Order Change Comparator")
     end
     return values_changed
   end
@@ -165,8 +195,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.update_change_log ord, old_data, new_data
-    return unless old_data #don't make change log for first entry
-    if OrderData.vendor_visible_fields_changed?(old_data,new_data)
+    updated_change_log = false
+    #don't make change log for first entry
+    if old_data && OrderData.vendor_visible_fields_changed?(old_data,new_data)
       change_log_entries = []
       old_fph = old_data.fingerprint_hash
       new_fph = new_data.fingerprint_hash
@@ -182,19 +213,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       change_log_entries.push(*make_lines_added_messages(old_lines,new_lines))
       change_log_entries.push(*make_lines_removed_messages(old_lines,new_lines))
       change_log_entries.push(*make_lines_changed_messages(old_lines,new_lines))
-      append_change_log(ord,change_log_entries)
+      updated_change_log = append_change_log(ord,change_log_entries)
     end
-    return false
+    updated_change_log
   end
 
   def self.append_change_log ord, new_log_entries
-    return if new_log_entries.blank?
+    return false if new_log_entries.blank?
+
     new_log_entries.each {|nle| nle.prepend("\t")} #indent lines
     cd = self.prep_custom_definitions([:ord_change_log])[:ord_change_log]
     new_log_entries.unshift(0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M (UTC):'))
     current_log = ord.custom_value(cd) || ''
     ord.update_custom_value!(cd,"#{new_log_entries.join("\n")}\n\n#{current_log}")
-    ord.create_snapshot(User.integration, nil, "System Job: Order Change Comparator")
+    true
   end
   private_class_method :append_change_log
 
@@ -232,7 +264,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   def self.reset_po_cancellation ord
     ActiveRecord::Base.transaction do
       cdef = prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
-      cancel_date = ord.get_custom_value(cdef).value
+      cancel_date = ord.custom_value(cdef)
       num_lines = ord.order_lines.length
 
       if num_lines > 0 && cancel_date

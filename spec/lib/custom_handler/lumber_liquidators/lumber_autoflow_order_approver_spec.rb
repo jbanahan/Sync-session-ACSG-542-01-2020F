@@ -14,9 +14,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       ord = Factory(:order,vendor:v)
       ol = Factory(:order_line,product:p,order:ord)
 
-      snapshot_support = double('snapshot support')
-      expect(snapshot_support).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
-      expect(ord).to receive(:delay).and_return(snapshot_support)
+      expect(ord).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
 
       # create another product with an empty risk assignment. Nothing should happen to this one
       other_product = Factory(:product)
@@ -51,9 +49,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       ord = Factory(:order,vendor:v)
       ol = Factory(:order_line,product:p,order:ord)
 
-      snapshot_support = double('snapshot support')
-      expect(snapshot_support).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
-      expect(ord).to receive(:delay).and_return(snapshot_support)
+      expect(ord).to receive(:create_snapshot).with(u, nil, "System Job: Autoflow Order Approver")
 
       # create another product with an empty risk assignment. Nothing should happen to this one
       other_product = Factory(:product)
@@ -69,21 +65,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
 
       [ol,other_ol,low_ol].each {|line| line.reload}
 
-      expect(ol.get_custom_value(@cdefs[:ordln_pc_approved_by]).value).to eq u.id
-      expect(ol.get_custom_value(@cdefs[:ordln_pc_approved_date]).value).to_not be_blank
+      expect(ol.custom_value(@cdefs[:ordln_pc_approved_by])).to eq u.id
+      expect(ol.custom_value(@cdefs[:ordln_pc_approved_date])).to_not be_blank
 
-      expect(other_ol.get_custom_value(@cdefs[:ordln_pc_approved_by]).value).to be_blank
-      expect(other_ol.get_custom_value(@cdefs[:ordln_pc_approved_date]).value).to be_blank
+      expect(other_ol.custom_value(@cdefs[:ordln_pc_approved_by])).to be_blank
+      expect(other_ol.custom_value(@cdefs[:ordln_pc_approved_date])).to be_blank
 
-      expect(low_ol.get_custom_value(@cdefs[:ordln_pc_approved_by]).value).to be_blank
-      expect(low_ol.get_custom_value(@cdefs[:ordln_pc_approved_date]).value).to be_blank
+      expect(low_ol.custom_value(@cdefs[:ordln_pc_approved_by])).to be_blank
+      expect(low_ol.custom_value(@cdefs[:ordln_pc_approved_date])).to be_blank
     end
 
     it "should auto flow QA if no assigned agent" do
       ol = Factory(:order_line)
       described_class.process(ol.order)
-      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_by]).value).to_not be_blank
-      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_date]).value).to_not be_blank
+      expect(ol.custom_value(@cdefs[:ordln_qa_approved_by])).to_not be_blank
+      expect(ol.custom_value(@cdefs[:ordln_qa_approved_date])).to_not be_blank
     end
 
     it "should not auto flow QA if assigned agent" do
@@ -92,8 +88,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
 
       described_class.process(ol.order)
 
-      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_by]).value).to be_blank
-      expect(ol.get_custom_value(@cdefs[:ordln_qa_approved_date]).value).to be_blank
+      expect(ol.custom_value(@cdefs[:ordln_qa_approved_by])).to be_blank
+      expect(ol.custom_value(@cdefs[:ordln_qa_approved_date])).to be_blank
     end
 
     it "should create Auto Flow user" do
@@ -107,6 +103,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       described_class.process(ord)
 
       expect(User.find(ol.get_custom_value(@cdefs[:ordln_pc_approved_by]).value).username).to eq 'autoflow'
+    end
+
+    it "allows disabling the snapshot" do
+      u = Factory(:master_user,username:'autoflow')
+      p = Factory(:product)
+      v = Factory(:company,name:'vendor')
+      pva = p.product_vendor_assignments.create!(vendor_id:v.id)
+      pva.update_custom_value!(@cdefs[:prodven_risk],'Auto-Flow')
+      ord = Factory(:order,vendor:v)
+      ol = Factory(:order_line,product:p,order:ord)
+
+      expect(ord).not_to receive(:create_snapshot)
+
+      expect(described_class.process(ord, entity_snapshot: false)).to eq true
     end
   end
 end

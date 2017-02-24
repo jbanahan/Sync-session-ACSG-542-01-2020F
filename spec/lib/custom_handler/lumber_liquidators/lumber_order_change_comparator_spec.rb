@@ -1,9 +1,15 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator do
+  subject { described_class }
   let :order_data_klass do
     described_class::OrderData
   end
+
+  before :each do 
+    allow(Lock).to receive(:with_lock_retry).and_yield
+  end
+
   describe '#compare' do
     it 'should do nothing if not an Order type' do
       expect(described_class).not_to receive(:run_changes)
@@ -33,188 +39,214 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   end
 
   describe '#execute_business_logic' do
-    before :each do
-      @order_id = 1
-      @o = double('order')
-      allow(@o).to receive(:reload)
-      @old_data = double('od')
-      @new_data = double('nd')
-      allow(Order).to receive(:find_by_id).and_return @o
+    let (:order_id) { 1 }
+    let (:order) {
+      o = instance_double(Order)
+      allow(o).to receive(:reload)
+      allow(Order).to receive(:find_by_id).with(order_id).and_return o
+      o
+    }
+    let (:old_data) { instance_double(described_class::OrderData) }
+    let (:new_data) { instance_double(described_class::OrderData) }
 
+    before :each do
       # stub all business logic methods, then in each test we use should_receive for the one we're testing
-      allow(described_class).to receive(:set_defaults).and_return false
-      allow(described_class).to receive(:clear_planned_handover_date).and_return false
-      allow(described_class).to receive(:set_forecasted_handover_date).and_return false
-      allow(described_class).to receive(:update_autoflow_approvals).and_return false
-      allow(described_class).to receive(:reset_vendor_approvals).and_return false
-      allow(described_class).to receive(:reset_product_compliance_approvals).and_return false
-      allow(described_class).to receive(:set_price_revised_dates).and_return false
-      allow(described_class).to receive(:generate_ll_xml)
-      allow(described_class).to receive(:reset_po_cancellation).and_return false
-      allow(described_class).to receive(:create_pdf).and_return false
-      allow(described_class).to receive(:update_change_log).and_return false
+      allow(subject).to receive(:set_defaults).and_return false
+      allow(subject).to receive(:clear_planned_handover_date).and_return false
+      allow(subject).to receive(:set_forecasted_handover_date).and_return false
+      allow(subject).to receive(:update_autoflow_approvals).and_return false
+      allow(subject).to receive(:reset_vendor_approvals).and_return false
+      allow(subject).to receive(:reset_product_compliance_approvals).and_return false
+      allow(subject).to receive(:set_price_revised_dates).and_return false
+      allow(subject).to receive(:generate_ll_xml)
+      allow(subject).to receive(:reset_po_cancellation).and_return false
+      allow(subject).to receive(:create_pdf).and_return false
+      allow(subject).to receive(:update_change_log).and_return false
     end
     it 'should return if order does not exist' do
       allow(Order).to receive(:find_by_id).and_return nil
-      expect(described_class).not_to receive(:set_defaults)
-      expect(described_class.execute_business_logic(1,@old_data,@new_data)).to be_falsey
+      expect(subject).not_to receive(:set_defaults)
+      expect(subject.execute_business_logic(1, old_data, new_data)).to be_falsey
     end
     it 'should set defaults' do
-      expect(described_class).to receive(:set_defaults).with(@o,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:set_defaults).with(order, new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
+      subject.execute_business_logic(1, old_data, new_data)
     end
     it 'should clear planned handover date' do
-      expect(described_class).to receive(:clear_planned_handover_date).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:clear_planned_handover_date).with(order,old_data,new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Clear Planned Handover"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should set forecasted handover date' do
-      expect(described_class).to receive(:set_forecasted_handover_date).with(@o)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:set_forecasted_handover_date).with(order).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Forecasted Window Update"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should reset vendor approvals' do
-      expect(described_class).to receive(:reset_vendor_approvals).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:reset_vendor_approvals).with(order,old_data,new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Vendor Approval Reset"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should reset PC / Exec PC approvals' do
-      expect(described_class).to receive(:reset_product_compliance_approvals).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:reset_product_compliance_approvals).with(order,old_data,new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Compliance Approval Reset"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should set price revised dates' do
-      expect(described_class).to receive(:set_price_revised_dates).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:set_price_revised_dates).with(order,old_data,new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Update Price Revised Dates"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should autoflow' do
-      expect(described_class).to receive(:update_autoflow_approvals).with(@o)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:update_autoflow_approvals).with(order).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Autoflow Order Approver"
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should reset PO cancellation' do
-      expect(described_class).to receive(:reset_po_cancellation).with(@o)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:reset_po_cancellation).with(order).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: PO Cancellation Reset"
+      subject.execute_business_logic(1,old_data,new_data)
     end
-    it 'should generate new PDF' do
-      allow(described_class).to receive(:set_defaults).and_return false
-      expect(described_class).to receive(:create_pdf).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+    it 'should generate new PDF if values were updated' do
+      allow(subject).to receive(:set_defaults).and_return true
+      expect(subject).to receive(:create_pdf).with(order,old_data,new_data)
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
+      subject.execute_business_logic(1,old_data,new_data)
     end
-    it 'should not generate new PDF if default values were updated' do
-      allow(described_class).to receive(:set_defaults).and_return true
-      expect(described_class).not_to receive(:create_pdf)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+    it 'should not generate new PDF if no values were updated' do
+      allow(subject).to receive(:set_defaults).and_return false
+      expect(subject).not_to receive(:create_pdf)
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should generate xml' do
-      expect(described_class).to receive(:generate_ll_xml).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:generate_ll_xml).with(order,old_data,new_data).and_return true
+      subject.execute_business_logic(1,old_data,new_data)
     end
     it 'should update change log' do
-      expect(described_class).to receive(:update_change_log).with(@o,@old_data,@new_data)
-      described_class.execute_business_logic(1,@old_data,@new_data)
+      expect(subject).to receive(:update_change_log).with(order,old_data,new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Change Log"
+      subject.execute_business_logic(1,old_data,new_data)
+    end
+
+    it "allows specifying exact logic rules to run" do
+      expect(subject).to receive(:set_defaults).with(order, new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
+      expect(subject).to receive(:generate_ll_xml).with(order,old_data,new_data).and_return true
+
+      subject.execute_business_logic(1,old_data,new_data, [:set_defaults, :generate_ll_xml])
+    end
+
+    it "appends all logic rule names that modified data to snapshot context" do
+      expect(subject).to receive(:set_defaults).with(order, new_data).and_return true
+      expect(subject).to receive(:update_autoflow_approvals).with(order).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter / Autoflow Order Approver"
+      subject.execute_business_logic(1,old_data,new_data)
     end
   end
 
   describe '#set_price_revised_dates' do
-    before :each do
-      @cdefs = described_class.prep_custom_definitions([:ord_sap_extract,:ord_price_revised_date,:ordln_price_revised_date])
-      @o = Factory(:order_line,line_number:1).order
-      @extract_timestamp = Time.now.utc
-    end
+    let (:order) {
+      order = Factory(:order_line,line_number:1).order
+      expect(order).not_to receive(:snapshot)
+      order
+    }
+    let (:cdefs) { subject.prep_custom_definitions([:ord_sap_extract,:ord_price_revised_date,:ordln_price_revised_date]) }
+    let (:extract_timestamp) { Time.zone.now }
 
     it "should do nothing if price didn't change" do
-      expect(@o).to_not receive(:create_snapshot)
       od = double('old_data')
       nd = double('new_data')
-      allow(nd).to receive(:sap_extract_date).and_return @extract_timestamp
+      allow(nd).to receive(:sap_extract_date).and_return extract_timestamp
       expect(order_data_klass).to receive(:lines_with_changed_price).with(od,nd).and_return []
-      expect(described_class.set_price_revised_dates(@o,od,nd)).to be_falsey
-      o = Order.find @o.id
-      expect(o.custom_value(@cdefs[:ord_price_revised_date])).to be_nil
-      expect(o.order_lines.first.custom_value(@cdefs[:ordln_price_revised_date])).to be_nil
+      expect(subject.set_price_revised_dates(order,od,nd)).to be_falsey
+      o = Order.find order.id
+      expect(o.custom_value(cdefs[:ord_price_revised_date])).to be_nil
+      expect(o.order_lines.first.custom_value(cdefs[:ordln_price_revised_date])).to be_nil
     end
     it "should update if price on existing line changed" do
-      expect(@o).to receive(:create_snapshot)
       od = double('old_data')
       nd = double('new_data')
-      expect(nd).to receive(:sap_extract_date).and_return @extract_timestamp
+      expect(nd).to receive(:sap_extract_date).and_return extract_timestamp
       expect(order_data_klass).to receive(:lines_with_changed_price).with(od,nd).and_return [1]
-      expect(described_class.set_price_revised_dates(@o,od,nd)).to be_truthy
-      o = Order.find @o.id
-      expect(o.custom_value(@cdefs[:ord_price_revised_date]).to_i).to eq @extract_timestamp.to_i
-      expect(o.order_lines.first.custom_value(@cdefs[:ordln_price_revised_date]).to_i).to eq @extract_timestamp.to_i
+      expect(subject.set_price_revised_dates(order,od,nd)).to be_truthy
+      o = Order.find order.id
+      expect(o.custom_value(cdefs[:ord_price_revised_date]).to_i).to eq extract_timestamp.to_i
+      expect(o.order_lines.first.custom_value(cdefs[:ordln_price_revised_date]).to_i).to eq extract_timestamp.to_i
     end
   end
 
   describe '#clear_planned_handover_date' do
-    before :each do
-      @cdefs = described_class.prep_custom_definitions([:ord_planned_handover_date])
-      @o = Factory(:order)
-      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,10,1))
-    end
+    let (:order) { 
+      order = Factory(:order)
+      order.update_custom_value!(cdefs[:ord_planned_handover_date],Date.new(2016,10,1))
+      order
+      expect(order).not_to receive(:create_snapshot)
+      order
+    }
+
+    let (:cdefs) { described_class.prep_custom_definitions([:ord_planned_handover_date]) }
+
     def base_data dates=[Date.new(2016,8,15),Date.new(2016,9,1)]
       data = double(:data)
       allow(data).to receive(:ship_window_start).and_return dates[0]
       allow(data).to receive(:ship_window_end).and_return dates[1]
       data
     end
+
     it "should clear planned handover date if ship window start changes" do
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Clear Planned Handover")
       old_data = base_data
       new_data = base_data([Date.new(2016,8,10),Date.new(2016,9,1)])
-      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_truthy
-      @o.reload
-      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+      expect(subject.clear_planned_handover_date(order,old_data,new_data)).to be_truthy
+      order.reload
+      expect(order.custom_value(cdefs[:ord_planned_handover_date])).to be_blank
     end
     it "should clear planned handover date if ship window end changes" do
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Clear Planned Handover")
       old_data = base_data
       new_data = base_data([Date.new(2016,8,15),Date.new(2016,9,10)])
-      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_truthy
-      @o.reload
-      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+      expect(subject.clear_planned_handover_date(order,old_data,new_data)).to be_truthy
+      order.reload
+      expect(order.custom_value(cdefs[:ord_planned_handover_date])).to be_blank
     end
     it "should not clear if ship window stays the same" do
-      expect_any_instance_of(Order).to_not receive(:create_snapshot)
       old_data = base_data
       new_data = base_data
-      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_falsey
-      @o.reload
-      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to_not be_blank
+      expect(subject.clear_planned_handover_date(order,old_data,new_data)).to be_falsey
+      order.reload
+      expect(order.custom_value(cdefs[:ord_planned_handover_date])).to_not be_blank
     end
     it "should return immediately if planned_handover_date is empty" do
-      expect_any_instance_of(Order).to_not receive(:create_snapshot)
-      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],nil)
+      order.update_custom_value!(cdefs[:ord_planned_handover_date],nil)
       old_data = base_data
       new_data = base_data([Date.new(2016,8,15),Date.new(2016,9,10)])
-      expect(described_class.clear_planned_handover_date(@o,old_data,new_data)).to be_falsey
-      @o.reload
-      expect(@o.custom_value(@cdefs[:ord_planned_handover_date])).to be_blank
+      expect(described_class.clear_planned_handover_date(order,old_data,new_data)).to be_falsey
+      order.reload
+      expect(order.custom_value(cdefs[:ord_planned_handover_date])).to be_blank
     end
   end
 
   describe '#set_forecasted_handover_date' do
     # PER SOW 1100 (2016-11-04), Forecasted Handover Date is being relabelled as Forecasted Ship Window End, but we're leaving the variables in the code alone
     # all tests also confirm that forecasted ship window start is set to 7 days prior to forecasted handover date
-    before :each do
-      @cdefs = described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_forecasted_ship_window_start])
-      @o = Factory(:order,ship_window_end:Date.new(2016,5,10))
-    end
+    let (:cdefs) { described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_forecasted_ship_window_start]) }
+    let (:order) { Factory(:order,ship_window_end:Date.new(2016,5,10)) }
+     
     it "should set forecasted handover date to planned_handover_date if planned_handover_date is not blank" do
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Forecasted Window Update")
-      @o.update_custom_value!(@cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
-      expect(described_class.set_forecasted_handover_date(@o)).to eq true
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,15)
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,8)
+      order.update_custom_value!(cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
+      expect(subject.set_forecasted_handover_date(order)).to eq true
+      expect(order.custom_value(cdefs[:ord_forecasted_handover_date])).to eq Date.new(2016,5,15)
+      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,8)
     end
     it "should set forecasted handover date to ship_window_end if planned_handover_date is blank" do
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(instance_of(User),nil,"System Job: Order Change Comparator: Forecasted Window Update")
-      expect(described_class.set_forecasted_handover_date(@o)).to eq true
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,10)
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_ship_window_start]).value).to eq Date.new(2016,5,3)
+      expect(subject.set_forecasted_handover_date(order)).to eq true
+      expect(order.custom_value(cdefs[:ord_forecasted_handover_date])).to eq Date.new(2016,5,10)
+      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,3)
     end
     it "should return false if did not change" do
-      expect_any_instance_of(Order).to_not receive(:create_snapshot)
-      @o.update_custom_value!(@cdefs[:ord_forecasted_handover_date],Date.new(2016,5,10))
-      expect(described_class.set_forecasted_handover_date(@o)).to eq false
-      @o.reload
-      expect(@o.get_custom_value(@cdefs[:ord_forecasted_handover_date]).value).to eq Date.new(2016,5,10)
+      order.update_custom_value!(cdefs[:ord_forecasted_handover_date],Date.new(2016,5,10))
+      expect(subject.set_forecasted_handover_date(order)).to eq false
+      order.reload
+      expect(order.custom_value(cdefs[:ord_forecasted_handover_date])).to eq Date.new(2016,5,10)
     end
   end
 
@@ -225,7 +257,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       nd = double('OrderData-New')
       expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return true
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
-      described_class.generate_ll_xml(o,od,nd)
+      subject.generate_ll_xml(o,od,nd)
     end
     it 'should not send xml OrderData.send_sap_update? returns false' do
       o = double('order')
@@ -233,208 +265,210 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       nd = double('OrderData-New')
       expect(order_data_klass).to receive(:send_sap_update?).with(od,nd).and_return false
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to_not receive(:send_order).with(o)
-      described_class.generate_ll_xml(o,od,nd)
+      subject.generate_ll_xml(o,od,nd)
     end
   end
 
   describe '#set_defaults' do
-    before :each do
-      @k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter
-    end
+    let (:k) { OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter }
+
     it 'should call if order_data#has_blank_defaults?' do
       o = double('order')
       d = double('OrderData')
       expect(d).to receive(:has_blank_defaults?).and_return true
-      expect(@k).to receive(:set_defaults).with(o).and_return true
+      expect(k).to receive(:set_defaults).with(o, entity_snapshot: false).and_return true
       expect(described_class.set_defaults(o,d)).to be_truthy
     end
     it 'should return false if has_blank_defaults? but nothing is changed' do
       o = double('order')
       d = double('OrderData')
       expect(d).to receive(:has_blank_defaults?).and_return true
-      expect(@k).to receive(:set_defaults).with(o).and_return false
+      expect(k).to receive(:set_defaults).with(o, entity_snapshot: false).and_return false
       expect(described_class.set_defaults(o,d)).to be_falsey
     end
     it 'should not call if !order_data#has_blank_defaults?' do
       o = double('order')
       d = double('OrderData')
       expect(d).to receive(:has_blank_defaults?).and_return false
-      expect(@k).not_to receive(:set_defaults)
+      expect(k).not_to receive(:set_defaults)
       expect(described_class.set_defaults(o,d)).to be_falsey
     end
 
   end
 
   describe 'reset_po_cancellation' do
-    before :each do
-      @cdef = described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date]
-      @ord = Factory(:order, closed_at: nil)
-      @ord.update_custom_value! @cdef, nil
-    end
+    let (:cdef) { described_class.prep_custom_definitions([:ord_cancel_date])[:ord_cancel_date] }
+    let (:order) { 
+      order = Factory(:order, closed_at: nil)
+      order.update_custom_value! cdef, nil
+      order
+    }
 
     it "reopens and uncancels order if it has lines and a cancel date, returns 'true'" do
-      Factory(:order_line, order: @ord)
-      @ord.update_custom_value! @cdef, Date.today
-      @ord.update_attributes(closed_at: DateTime.now)
+      Factory(:order_line, order: order)
+      order.update_custom_value! cdef, Date.today
+      order.update_attributes(closed_at: DateTime.now)
 
-      expect(described_class.reset_po_cancellation @ord).to eq true
-      cancel_date = @ord.get_custom_value @cdef
+      expect(subject.reset_po_cancellation order).to eq true
+      cancel_date = order.get_custom_value cdef
       expect(cancel_date.value).to be_nil
-      expect(@ord.closed_at).to be_nil
+      expect(order.closed_at).to be_nil
     end
 
     it "closes and cancels order if it is doesn't have lines or a cancel date, returns true" do
-      expect(described_class.reset_po_cancellation @ord).to eq true
-      cancel_date = @ord.get_custom_value @cdef
+      expect(described_class.reset_po_cancellation order).to eq true
+      cancel_date = order.get_custom_value cdef
       expect(cancel_date.value).not_to be_nil
-      expect(@ord.closed_at).not_to be_nil
+      expect(order.closed_at).not_to be_nil
     end
 
     it "makes no change if order has lines but no cancel date, returns 'false'" do
       closed = DateTime.now - 10
-      @ord.update_attributes(closed_at: closed)
-      Factory(:order_line, order: @ord)
-      expect(described_class.reset_po_cancellation @ord).to eq false
-      cancel_date = @ord.get_custom_value @cdef
+      order.update_attributes(closed_at: closed)
+      Factory(:order_line, order: order)
+      expect(described_class.reset_po_cancellation order).to eq false
+      cancel_date = order.get_custom_value cdef
       expect(cancel_date.value).to be_nil
-      expect(@ord.closed_at).to eq closed
+      expect(order.closed_at).to eq closed
     end
 
     it "makes no change if order has a cancel date and no lines, returns 'false'" do
       closed = DateTime.now - 10
-      @ord.update_attributes(closed_at: closed)
-      @ord.update_custom_value! @cdef, Date.today
-      expect(described_class.reset_po_cancellation @ord).to eq false
-      cancel_date = @ord.get_custom_value @cdef
+      order.update_attributes(closed_at: closed)
+      order.update_custom_value! cdef, Date.today
+      expect(described_class.reset_po_cancellation order).to eq false
+      cancel_date = order.get_custom_value cdef
       expect(cancel_date.value).to eq Date.today
-      expect(@ord.closed_at).to eq closed
+      expect(order.closed_at).to eq closed
     end
   end
 
   describe '#update_autoflow_approvals' do
     it 'should call AutoFlowApprover' do
       o = double('order')
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o).and_return true
-      expect(described_class.update_autoflow_approvals(o)).to be_truthy
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o, entity_snapshot: false).and_return true
+      expect(subject.update_autoflow_approvals(o)).to be_truthy
     end
     it 'should return value of AutoFlowApprover' do
       o = double('order')
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o).and_return false
-      expect(described_class.update_autoflow_approvals(o)).to be_falsey
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover).to receive(:process).with(o, entity_snapshot: false).and_return false
+      expect(subject.update_autoflow_approvals(o)).to be_falsey
     end
   end
 
   describe '#reset_vendor_approvals' do
-    before :each do
-      @nd = double('newdata')
-      @od = double('olddata')
-      @o = double(:order)
-      @u = double(:user)
-      allow(User).to receive(:integration).and_return @u
-    end
+    let (:nd) { instance_double(described_class::OrderData) }
+    let (:od) { instance_double(described_class::OrderData) }
+    let (:order) { instance_double(Order) }
+    let (:user) { 
+      u = instance_double(User)
+      allow(User).to receive(:integration).and_return u
+      u
+    }
     it 'should reset if OrderData#vendor_approval_reset_fields_changed? and order is accepted' do
-      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
-      expect(@o).to receive(:approval_status).and_return 'Accepted'
-      expect(@o).to receive(:unaccept!).with(@u)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_truthy
+      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(od, nd).and_return true
+      expect(order).to receive(:approval_status).and_return 'Accepted'
+      expect(order).to receive(:unaccept!).with(user)
+      expect(subject.reset_vendor_approvals(order,od, nd)).to be_truthy
     end
     it 'should not reset if !OrderData#vendor_approval_reset_fields_changed?' do
-      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return false
-      expect(@o).not_to receive(:unaccept!)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_falsey
+      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(od, nd).and_return false
+      expect(order).not_to receive(:unaccept!)
+      expect(subject.reset_vendor_approvals(order,od, nd)).to be_falsey
     end
     it 'should not reset if OrderData#vendor_approval_reset_fields_changed? && order not accepted' do
-      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(@od,@nd).and_return true
-      expect(@o).to receive(:approval_status).and_return ''
-      expect(@o).not_to receive(:unaccept!)
-      expect(described_class.reset_vendor_approvals(@o,@od,@nd)).to be_falsey
+      expect(order_data_klass).to receive(:vendor_approval_reset_fields_changed?).with(od, nd).and_return true
+      expect(order).to receive(:approval_status).and_return ''
+      expect(order).not_to receive(:unaccept!)
+      expect(subject.reset_vendor_approvals(order,od, nd)).to be_falsey
     end
   end
 
   describe '#reset_product_compliance_approvals' do
-    before :each do
-      @od = double(:old_data)
-      @nd = double(:new_data)
-      @ord = Factory(:order)
-      @ol1 = Factory(:order_line,order:@ord,line_number:'1')
-      @ol2 = Factory(:order_line,order:@ord,line_number:'2')
-      @ord.reload
-      @u = Factory(:user)
-      @integration = double('integration user')
-      allow(User).to receive(:integration).and_return(@integration)
-      @cdefs = described_class.prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
+    let (:nd) { instance_double(described_class::OrderData) }
+    let (:od) { instance_double(described_class::OrderData) }
+    let! (:order) { Factory(:order) }
+    let! (:line1) { Factory(:order_line,order:order,line_number:'1') }
+    let! (:line2) { Factory(:order_line,order:order,line_number:'2') }
+    let (:user) { 
+      u = Factory(:user)
+      allow(User).to receive(:integration).and_return u
+      u
+    }
+    let (:cdefs) { described_class.prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive]) }
+    
+    before :each do 
+      order.reload
     end
+
     it 'should reset lines that changed' do
       header_cdef = described_class.prep_custom_definitions([:ord_pc_approval_recommendation]).values.first
-      @ord.update_custom_value!(header_cdef,'Approve')
-      lines = [@ol1,@ol2]
+      order.update_custom_value!(header_cdef,'Approve')
+      lines = [line1, line2]
       [:ordln_pc_approved_by,:ordln_pc_approved_by_executive].each do |uid|
-        lines.each {|ln| ln.update_custom_value!(@cdefs[uid],@u.id)}
+        lines.each {|ln| ln.update_custom_value!(cdefs[uid], user.id)}
       end
       [:ordln_pc_approved_date,:ordln_pc_approved_date_executive].each do |uid|
-        lines.each {|ln| ln.update_custom_value!(@cdefs[uid],Time.now)}
+        lines.each {|ln| ln.update_custom_value!(cdefs[uid],Time.now)}
       end
 
-      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
-      expect(@ord).to receive(:create_snapshot).with(@integration, nil, "System Job: Order Change Comparator")
+      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return ['1']
 
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_truthy
+      expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_truthy
 
-      @ol1.reload
-      @ol2.reload
-      @cdefs.values.each do |cd|
-        expect(@ol1.get_custom_value(cd).value).to be_blank
-        expect(@ol2.get_custom_value(cd).value).to_not be_blank
+      [order, line1, line2].each &:reload
+
+      cdefs.values.each do |cd|
+        expect(line1.custom_value(cd)).to be_blank
+        expect(line2.custom_value(cd)).to_not be_blank
       end
 
-      @ord.reload
-      expect(@ord.custom_value(header_cdef)).to be_blank
+      expect(order.custom_value(header_cdef)).to be_blank
 
     end
     it 'should return false if lines changed but they were not approved' do
-      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return ['1']
-      expect(@ord).not_to receive(:create_snapshot)
-
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_falsey
-
+      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return ['1']
+      expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_falsey
     end
+
     it 'should return false if no lines changed' do
       [:ordln_pc_approved_by,:ordln_pc_approved_by_executive].each do |uid|
-        @ol1.update_custom_value!(@cdefs[uid],@u.id)
+        line1.update_custom_value!(cdefs[uid],user.id)
       end
       [:ordln_pc_approved_date,:ordln_pc_approved_date_executive].each do |uid|
-        @ol1.update_custom_value!(@cdefs[uid],Time.now)
+        line1.update_custom_value!(cdefs[uid],Time.now)
       end
 
-      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(@od,@nd).and_return []
-      expect(@ord).not_to receive(:create_snapshot)
+      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return []
 
-      expect(described_class.reset_product_compliance_approvals(@ord,@od,@nd)).to be_falsey
+      expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_falsey
 
-      @cdefs.values.each do |cd|
-        expect(@ol1.get_custom_value(cd).value).to_not be_blank
+      cdefs.values.each do |cd|
+        expect(line1.custom_value(cd)).to_not be_blank
       end
     end
   end
 
   describe '#create_pdf' do
-    before :each do
-      @o = double('order')
-      @od = double('old_data')
-      @nd = double('new_data')
-      @integration = double('integration user')
-      allow(User).to receive(:integration).and_return(@integration)
-      @k = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator
-    end
+    let (:nd) { instance_double(described_class::OrderData) }
+    let (:od) { instance_double(described_class::OrderData) }
+    let (:order) { instance_double(Order) }
+    let (:user) { 
+      u = Factory(:user)
+      allow(User).to receive(:integration).and_return u
+      u
+    }
+    let (:k) { OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator }
+
     it 'should create pdf if OrderData#vendor_visible_fields_changed?' do
-      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(@od,@nd).and_return true
-      expect(@k).to receive(:create!).with(@o,@integration)
-      expect(described_class.create_pdf(@o,@od,@nd)).to be_truthy
+      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(od, nd).and_return true
+      expect(k).to receive(:create!).with(order, user)
+      expect(described_class.create_pdf(order,od, nd)).to be_truthy
     end
     it 'should not create pdf if !OrderData#vendor_visible_fields_changed?' do
-      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(@od,@nd).and_return false
-      expect(@k).not_to receive(:create!)
-      expect(described_class.create_pdf(@o,@od,@nd)).to be_falsey
+      expect(order_data_klass).to receive(:vendor_visible_fields_changed?).with(od, nd).and_return false
+      expect(k).not_to receive(:create!)
+      expect(described_class.create_pdf(order, od, nd)).to be_falsey
     end
   end
 
@@ -514,7 +548,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
           expect(nva[0]).to eq expected_values[0]
           expect(nva.sort).to eq expected_values.sort
         end
-        expect(order).to receive(:create_snapshot)
         described_class.update_change_log(order,old_data,new_data)
       end
     end
@@ -538,7 +571,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
           nva = new_val.lines.delete_if {|ln| ln=="\n"}
           expect(nva).to eq expected_values
         end
-        expect(order).to receive(:create_snapshot)
         described_class.update_change_log(order,old_data,new_data)
       end
     end
@@ -562,7 +594,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
           nva = new_val.lines.delete_if {|ln| ln=="\n"}
           expect(nva).to eq expected_values
         end
-        expect(order).to receive(:create_snapshot)
         described_class.update_change_log(order,old_data,new_data)
       end
     end
@@ -586,7 +617,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
           nva = new_val.lines.delete_if {|ln| ln=="\n"}
           expect(nva).to eq expected_values
         end
-        expect(order).to receive(:create_snapshot)
         described_class.update_change_log(order,old_data,new_data)
       end
     end
@@ -821,24 +851,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     end
 
     describe '#vendor_visible_fields_changed?' do
-      before :each do
-        @od = double('old_data')
-        @nd = double('new_data')
-      end
+
+      let (:nd) { instance_double(described_class::OrderData) }
+      let (:od) { instance_double(described_class::OrderData) }
+
       it 'should return true if fingerprints are different' do
-        [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return(i.to_s); allow(d).to receive(:ship_from_address).and_return('sf')}
-        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_truthy
+        [od, nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return(i.to_s); allow(d).to receive(:ship_from_address).and_return('sf')}
+        expect(order_data_klass.vendor_visible_fields_changed?(od, nd)).to be_truthy
       end
       it 'should return true if ship from addresses are different' do
-        [@od,@nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return(i.to_s)}
-        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_truthy
+        [od, nd].each_with_index {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return(i.to_s)}
+        expect(order_data_klass.vendor_visible_fields_changed?(od, nd)).to be_truthy
       end
       it 'should return true if old_data is nil' do
-        expect(order_data_klass.vendor_visible_fields_changed?(nil,@nd)).to be_truthy
+        expect(order_data_klass.vendor_visible_fields_changed?(nil,nd)).to be_truthy
       end
       it 'should return false if fingerprints are the same and the ship from addresss are the same' do
-        [@od,@nd].each {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return('sf')}
-        expect(order_data_klass.vendor_visible_fields_changed?(@od,@nd)).to be_falsey
+        [od, nd].each {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return('sf')}
+        expect(order_data_klass.vendor_visible_fields_changed?(od, nd)).to be_falsey
       end
     end
   end

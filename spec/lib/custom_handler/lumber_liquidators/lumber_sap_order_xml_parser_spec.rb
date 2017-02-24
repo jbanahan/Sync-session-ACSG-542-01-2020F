@@ -474,8 +474,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       dom = REXML::Document.new(td)
 
       expect{described_class.new.parse_dom(dom)}.to raise_error(/total/)
-
-      expect(Order.count).to eq 0
     end
 
     it "should allow zero costs for missing NETWR element" do

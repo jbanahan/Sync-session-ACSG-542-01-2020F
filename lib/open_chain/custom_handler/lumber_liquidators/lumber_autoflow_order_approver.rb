@@ -1,7 +1,9 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
+
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAutoflowOrderApprover
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  def self.process order
+  
+  def self.process order, entity_snapshot: true
     u = find_or_create_autoflow_user
     cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,:ord_assigned_agent,:ordln_qa_approved_by,:ordln_qa_approved_date])
     has_changes = false
@@ -12,11 +14,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
     end
 
     if has_changes
-
-      # need to delay this so it runs in a different transaction than the
-      # change comparator that calls this class
-      order.delay.create_snapshot(u, nil, "System Job: Autoflow Order Approver")
-
+      # This used to delay, so it wouldn't run in the same "transaction" as the change comparator,
+      # the change comparator actually disables snapshots now, so I'm not delaying this any longer.
+      order.create_snapshot(u, nil, "System Job: Autoflow Order Approver") if entity_snapshot
       return true
     else
       return false
