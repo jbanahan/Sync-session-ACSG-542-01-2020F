@@ -9,9 +9,25 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
     h.generate
   end
 
+  def preprocess_header_row row, opts = {}
+    row.delete(8)
+    trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6, 7)
+    trailing_hash.each do |k, v|
+      row[k - 1] = v
+    end
+    [row]
+  end
+
   def preprocess_row row, opts = {}
     if row[8].present?
-      row.delete(7)
+      row[7] = row[8]
+      row.delete(8)
+    else
+      row.delete(8)
+    end
+    trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6, 7)
+    trailing_hash.each do |k, v|
+      row[k - 1] = v
     end
     [row]
   end

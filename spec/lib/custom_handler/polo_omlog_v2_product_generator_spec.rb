@@ -30,6 +30,24 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       @tmp.close! if @tmp && !@tmp.closed?
     end
 
+    it "should always remove the clean fiber content header field" do
+      product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
+      @tmp = subject.sync_csv
+
+      a = CSV.parse IO.read @tmp.path
+      expect(a[0]).to_not include('Clean Fiber Content')
+    end
+
+    it "should remove the clean_fiber_content field if it is empty" do
+      product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
+      product.update_custom_value! @cdefs[:clean_fiber_content], ""
+      @tmp = subject.sync_csv
+
+      a = CSV.parse IO.read @tmp.path
+
+      expect(a[1][7]).to eql('fibercontent')
+    end
+
     it "should replace fiber_content with clean_fiber_content" do
       product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
       product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
@@ -37,8 +55,8 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
 
       a = CSV.parse IO.read @tmp.path
 
-      expect(a[1]).to contain('cleanfibercontent')
-      expect(a[1]).to_not contain('fibercontent')
+      expect(a[1][7]).to eql('cleanfibercontent')
+      expect(a[1][7]).to_not eql('fibercontent')
     end
 
     it "should split CSM numbers" do
