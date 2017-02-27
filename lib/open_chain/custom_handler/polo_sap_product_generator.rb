@@ -83,12 +83,10 @@ module OpenChain
         # Since we're mimic'ing the to_csv values we used to send, by default, to_csv just does a String(val) to convert values to string, so we're doing the same
         row = row.map {|s| String(s) }
 
-        fiber_content = row[4].present? ? row[4] : row[1]
-
         prod = add_element parent_element, "product"
         add_element prod, "style", row[0]
         add_element prod, "long_description", row[6]
-        add_element prod, "fiber_content", fiber_content
+        add_element prod, "fiber_content", row[34].present? ? row[34] : row[1]
         add_element prod, "down_indicator", row[5]
         add_element prod, "country_of_origin", row[8]
         add_element prod, "hts", row[3]
@@ -259,12 +257,12 @@ INNER JOIN tariff_records on tariff_records.classification_id = classifications.
       end
 
       def self.cdefs
-        [:fiber_content, :clean_fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type,
+        [:fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type,
          :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_origin_4, :fish_wildlife_origin_5,
          :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
          :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
          :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
-         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven]
+         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven, :clean_fiber_content]
       end
 
       def custom_def_query_fields

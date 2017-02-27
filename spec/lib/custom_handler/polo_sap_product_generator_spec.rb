@@ -100,6 +100,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
         p.update_custom_value! @cdefs[key], value
       end
 
+      p.update_custom_value! @cdefs[:clean_fiber_content], nil
+
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
       root = doc.root
