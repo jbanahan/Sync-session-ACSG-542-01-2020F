@@ -364,7 +364,9 @@ module OpenChain; module EdiParserSupport
     # generates (pseudo) EDI from it.
     def write_transaction transaction, io, segment_terminator: "\n"
       io << transaction.isa_segment.value + segment_terminator
-      io << transaction.gs_segment.value + segment_terminator
+      if transaction.gs_segment
+        io << transaction.gs_segment.value + segment_terminator
+      end
       transaction.segments.each {|s| io << s.value + segment_terminator }
       io.flush
 
