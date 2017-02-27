@@ -302,7 +302,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod = Factory(:product)
       @tariff = @prod.classifications.create(country: usa).tariff_records.create(hts_1: '6134567890')
 
-      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status, :clean_fiber_content]
+      @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status, :clean_fiber_content, :set_type]
       
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
       @prod.update_custom_value! @test_cds[:fabric_type_2], "Type2"
@@ -326,6 +326,22 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
         expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
       end
+    end
+
+    it 'does not set clean_fiber_content if set_type is set' do
+      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      @tariff.update_attribute(:hts_1, "6134567890")
+      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+      @prod.update_custom_value! @test_cds[:set_type], "X"
+      changed_at = 1.day.ago
+      @prod.update_column :changed_at, changed_at
+      @prod.update_column :updated_at, changed_at
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+
+      @prod.reload
+
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
     end
 
     it 'does not set clean_fiber_content if product has no classification' do

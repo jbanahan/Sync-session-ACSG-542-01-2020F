@@ -182,6 +182,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         end
         cdefs << :fiber_content
         cdefs << :clean_fiber_content
+        cdefs << :set_type
         cdefs << :msl_fiber_failure
         cdefs << :msl_fiber_status
         @cdefs = self.class.prep_custom_definitions cdefs
@@ -548,7 +549,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       tariff_record = classification.tariff_records.first if classification.present?
       hts = [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3] if tariff_record.present?
 
-      return unless hts.present? && (hts.grep(/^61/).present? || hts.grep(/^62/).present?)
+      return if hts.blank? || (hts.grep(/^61/).blank? && hts.grep(/^62/).blank?) || product.custom_value(@cdefs[:set_type]).present?
 
       footwear = results[:algorithm] == 'footwear'
       cd = @cdefs[:clean_fiber_content]
