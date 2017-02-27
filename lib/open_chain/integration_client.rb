@@ -34,6 +34,7 @@ require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handle
 require 'open_chain/custom_handler/polo/polo_850_parser'
 require 'open_chain/custom_handler/ascena/ascena_po_parser'
 require 'open_chain/custom_handler/burlington/burlington_850_parser'
+require 'open_chain/custom_handler/burlington/burlington_856_parser'
 
 module OpenChain
   class IntegrationClient
@@ -203,8 +204,10 @@ module OpenChain
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
       elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_burlington_850/') && master_setup.custom_feature?("Burlington 850")
+      elsif command['path'].include?('/_burlington_850/') && master_setup.custom_feature?("Burlington")
         OpenChain::CustomHandler::Burlington::Burlington850Parser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_burlington_856/') && master_setup.custom_feature?("Burlington")
+        OpenChain::CustomHandler::Burlington::Burlington856Parser.delay.process_from_s3 bucket, remote_path
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"
