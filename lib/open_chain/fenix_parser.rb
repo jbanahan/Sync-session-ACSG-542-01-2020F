@@ -72,8 +72,10 @@ module OpenChain
       begin
         entry_lines = []
         current_file_number = ""
-        CSV.parse(file_content) do |line|
-
+        file_content.force_encoding "Windows-1252"
+        CSV.parse(file_content) do |row|
+          # The file we get from Fenix uses Windows "ASNSI" encoding, we want to transcode it to UTF-8
+          line = row.map {|r| r.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?") if r }
           if line[0] == "T"
             opts[:timestamp] = parse_timestamp line
             next

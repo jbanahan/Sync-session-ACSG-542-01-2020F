@@ -42,7 +42,7 @@ describe OpenChain::FenixParser do
     @invoice_page = 1
     @invoice_line = 1
     @part_number = '123BBB'
-    @tariff_desc = "Tariff Description"
+    @tariff_desc = "Tariff Description With Windows-1252 Char 100µl"
     @header_po = '123531'
     @detail_po = ''
     @container = 'cont'
@@ -137,7 +137,7 @@ describe OpenChain::FenixParser do
         end
       end
 
-      data
+      data.encode "Windows-1252"
     }
 
     @broadcasted_event = nil
