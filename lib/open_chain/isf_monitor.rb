@@ -19,6 +19,7 @@ module OpenChain
       ftp_login(ftp, username, password)
       ftp_chdir(ftp, directory)
       contents = ftp.nlst
+      debug_info = ftp.list.join('<br>')
 
       return unless contents.present?
 
@@ -28,7 +29,7 @@ module OpenChain
       if is_backed_up?(file_dates[0], minutes_to_check)
         to = ['isf@vandegriftinc.com', 'mzeitlin@vandegriftinc.com', 'agriffin@vandegriftinc.com', 'bglick@vandegriftinc.com', 'support@vandegriftinc.com']
         subject = "ISF PROCESSING STUCK"
-        body = "Kewill EDI ISF processing is suck. The oldest file in the folder is from #{oldest_est_date} and there are #{contents.length} files in the folder. Please use this solution to troubleshoot: https://vandegrift.freshservice.com/solution/articles/4000017674-isf-processing-stuck-warnings"
+        body = "Kewill EDI ISF processing is suck. The oldest file in the folder is from #{oldest_est_date} and there are #{contents.length} files in the folder. Please use this solution to troubleshoot: https://vandegrift.freshservice.com/solution/articles/4000017674-isf-processing-stuck-warnings<p>The files stuck are: #{debug_info}.</p>".html_safe
         OpenMailer::send_simple_html(to, subject, body).deliver
       end
     end
