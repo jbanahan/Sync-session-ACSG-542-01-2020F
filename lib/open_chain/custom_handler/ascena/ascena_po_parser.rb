@@ -3,19 +3,6 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
-  attr_accessor :importer, :user, :cdefs, :errors
-
-  CDEF_LABELS = [ :ord_line_season, :ord_buyer,:ord_division,:ord_revision, :ord_revision_date, :ord_assigned_agent,
-                  :ord_selling_agent, :ord_selling_channel, :ord_type, :ord_line_color, :ord_line_color_description,
-                  :ord_line_department_code,:ord_line_destination_code, :ord_line_size_description,:ord_line_size,
-                  :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost,:prod_part_number,
-                  :prod_product_group,:prod_vendor_style ]
-
-  def initialize
-    @user = User.integration
-    @importer = Company.where(system_code: "ASCENA").first_or_create!(name:'ASCENA TRADE SERVICES LLC',importer:true)
-    @errors = {missing_shipped_order_lines: []}
-  end
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"
@@ -25,13 +12,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     self.new.process_file(pipe_delimited_content, opts)
   end
 
-  def process_file(pipe_delimited_content, opts={})
-    # Initialize the fields only when needed - primarily this just speeds up unit tests
-    @cdefs ||= self.class.prep_custom_definitions CDEF_LABELS
-
+  def process_file pipe_delimited_content, opts={}
     po_rows = []
+    user = User.integration
     begin
-      CSV.parse(pipe_delimited_content, csv_options) do |row|
+      # setting zero byte as quote character since there's no quoting in the file
+      # and the text will include " characters to represent inches
+      CSV.parse(pipe_delimited_content, {col_sep:"|", quote_char: "\x00"}) do |row|
         next if blank_row?(row)
         if(row[0] == 'H')
           if po_rows.length > 0
@@ -41,7 +28,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
         end
         po_rows << row
       end
-      process_po(po_rows, opts) if po_rows.length > 0
+      process_po(user, po_rows, opts) if po_rows.length > 0
     rescue => e
       raise e unless Rails.env.production?
       # Log the error and don't bother attempting to reprocess the file...by adding the file path into the error,
@@ -60,18 +47,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     row.find {|c| !c.blank? }.nil?
   end
 
-  def self.validate_header header
+  def validate_header header
     raise "Customer order number missing" if header[:ord_customer_order_number].blank?
   end
 
-  def self.validate_detail detail, row_num
+  def validate_detail detail, row_num
     raise "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
     raise "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
     raise "Line number missing on row #{row_num}" if detail[:ordln_line_number].nil? || detail[:ordln_line_number].zero?
   end
 
 
-  def self.map_header row
+  def map_header row
     hsh = {}
     hsh[:ord_order_date] = row[1]
     hsh[:ord_line_department_code] = row[2]
@@ -102,7 +89,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     hsh
   end
 
-  def self.map_detail row
+  def map_detail row
     hsh = {}
     hsh[:ordln_line_number] = row[2].to_i
     hsh[:prod_part_number] = row[5]
@@ -123,34 +110,35 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   private
 
-  def process_po rows, opts
+  def process_po user, rows, opts
     po_number = nil
     begin
-      ActiveRecord::Base.transaction do
-        header = self.class.map_header rows.first
-        po_number = header[:ord_customer_order_number]
+      header = map_header rows.first
+      po_number = header[:ord_customer_order_number]
 
-        self.class.validate_header(header)
-        shipped_lines = []
-        ord = update_or_create_order(header, opts) do |saved_ord|
-          # First row is the header, so remove it when processing the details
-          shipped_lines = process_detail_rows(rows[1..-1], header, saved_ord, opts)
-        end
-        ord.create_snapshot user, nil, opts[:key]
+      validate_header(header)
+      detail_rows = []
+      # First row is the header, so remove it when processing the details
+      rows[1..-1].each_with_index do |dr, x| 
+        row = map_detail dr
+        validate_detail row, x + 1
+        detail_rows << row
+      end
+      product_cache = make_product_cache(user, header, detail_rows, opts[:key])
 
-        if shipped_lines.length > 0
-          notify_about_shipped_lines rows, po_number, shipped_lines
-        end
+      shipped_lines = []
+      ord = update_or_create_order(header, opts) do |saved_ord|
+        
+        shipped_lines = process_detail_rows(detail_rows, header, saved_ord, product_cache, opts)
+      end
+      ord.create_snapshot user, nil, opts[:key]
+
+      if shipped_lines.length > 0
+        notify_about_shipped_lines rows, po_number, shipped_lines
       end
     rescue => e
       handle_process_po_error(rows, po_number, e, opts[:key])
     end
-  end
-
-  def csv_options
-    # setting zero byte as quote character since there's no quoting in the file
-    # and the text will include " characters to represent inches
-    {col_sep:"|", quote_char: "\x00"}
   end
 
   def handle_process_po_error rows, po_number, err, file_name
@@ -166,7 +154,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   def temp_file_data rows, po_number
     # convert the rows to a pipe delimited CSV
     Tempfile.open(["Ascena-PO-#{po_number}", ".csv"]) do |f|
-      csv = CSV.new(f, csv_options)
+      csv = CSV.new(f, {col_sep:"|"})
       rows.each {|r| csv << r }
       f.flush
 
@@ -189,32 +177,33 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     end
   end
 
-  def make_product_cache detail_hashes
-    part_numbers = detail_hashes.collect {|d| "ASCENA-#{d[:prod_part_number]}"}
-    return Product.where(importer_id:importer.id).where("products.unique_identifier IN (?)",part_numbers).includes(:custom_values)
+  def make_product_cache user, header, detail_hashes, file_name
+    cache = {}
+    detail_hashes.each do |detail_row|
+      product = get_or_create_product(user, header, detail_row, file_name)
+      cache[product.unique_identifier] = product
+    end
+    
+    cache
   end
 
-  def process_detail_rows detail_rows, header, ord, opts
-    details = detail_rows.map { |dr| self.class.map_detail dr }
-
-    product_cache = make_product_cache(details)
+  def process_detail_rows detail_rows, header, ord, product_cache, opts
 
     shipped_line_numbers = Set.new
     unless ord.order_lines.empty?
       # We can't update any lines that have already shipped...so we'll notify of this happening if that occurs.
-      lines_to_delete, shipped_lines = separate_shipped_lines(ord.order_lines, details)
+      lines_to_delete, shipped_lines = separate_shipped_lines(ord.order_lines, detail_rows)
       shipped_line_numbers = Set.new(shipped_lines.map {|l| l.line_number })
       lines_to_delete.each(&:destroy)
     end
 
     shipped_lines = []
-    details.each_with_index do |detail, i|
+    detail_rows.each_with_index do |detail, i|
       # Skip any line that does not reference a line that was deleted (.ie the line data references a shipped line)
       if shipped_line_numbers.include?(detail[:ordln_line_number])
         shipped_lines << detail
       else
-        self.class.validate_detail(detail, i + 1)
-        product = get_or_create_product(detail, header, product_cache,opts[:key])
+        product = product_cache["ASCENA-#{detail[:prod_part_number]}"]
         create_order_line(ord, detail, header, product)
       end
     end
@@ -307,31 +296,25 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     header[:ord_revision].to_i >= persisted_ord.get_custom_value(cdefs[:ord_revision]).value.to_i
   end
 
-  def get_or_create_product detail, header, product_cache, file_key
+  def get_or_create_product user, header, detail, file_key
+    product = nil
     prod_uid = "ASCENA-#{detail[:prod_part_number]}"
-    already_existed = false
-    product = product_cache.find {|p| p.unique_identifier==prod_uid}
-    if product
-      already_existed = true
-    else
-      Lock.acquire(prod_uid) do
-        product = Product.where("unique_identifier = ? AND importer_id = ?", prod_uid, importer.id).first_or_initialize
-        already_existed = product.persisted?
-        product = Product.create!(unique_identifier: prod_uid) unless already_existed
-      end
+    Lock.acquire(prod_uid) do
+      p = Product.where("unique_identifier = ? AND importer_id = ?", prod_uid, importer.id).first_or_initialize
+      return p if p.persisted?
+
+      product = Product.create!(unique_identifier: prod_uid, importer_id: importer.id)
     end
 
-    unless already_existed
-      Lock.with_lock_retry(product) do
-        product.assign_attributes(name: detail[:prod_name], importer: importer)
-        product.find_and_set_custom_value(cdefs[:prod_part_number], detail[:prod_part_number])
-        product.find_and_set_custom_value(cdefs[:prod_product_group], header[:prod_product_group])
-        product.find_and_set_custom_value(cdefs[:prod_vendor_style], detail[:prod_vendor_style])
-        product.save!
-      end
-      product.create_snapshot user, nil, file_key
-      product_cache << product
+    Lock.with_lock_retry(product) do
+      product.assign_attributes(name: detail[:prod_name], importer: importer)
+      product.find_and_set_custom_value(cdefs[:prod_part_number], detail[:prod_part_number])
+      product.find_and_set_custom_value(cdefs[:prod_product_group], header[:prod_product_group])
+      product.find_and_set_custom_value(cdefs[:prod_vendor_style], detail[:prod_vendor_style])
+      product.save!
     end
+    product.create_snapshot user, nil, file_key
+
     product
   end
 
@@ -354,6 +337,20 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def create_nonags_lambda val
     lambda { |input, fail_output| val == "NONAGS" ? fail_output : input }
+  end
+
+  def importer
+    @importer ||= Company.where(system_code: "ASCENA", importer: true).first
+    raise "No Importer company found with system code 'ASCENA'." unless @importer
+    @importer
+  end
+
+  def cdefs
+    @cdefs ||= self.class.prep_custom_definitions [:ord_line_season, :ord_buyer,:ord_division,:ord_revision, :ord_revision_date, 
+      :ord_assigned_agent, :ord_selling_agent, :ord_selling_channel, :ord_type, :ord_line_color, :ord_line_color_description,
+      :ord_line_department_code,:ord_line_destination_code, :ord_line_size_description,:ord_line_size,
+      :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost,:prod_part_number,
+      :prod_product_group,:prod_vendor_style ]
   end
 
 

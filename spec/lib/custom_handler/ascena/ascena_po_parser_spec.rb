@@ -18,22 +18,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     allow_any_instance_of(Product).to receive(:create_snapshot)
   end
 
-  describe '#initialize' do
-    it "should create importer company if it doesn't exist" do
-      parser = nil
-      expect{parser = described_class.new}.to change(Company.where(system_code:'ASCENA'),:count).from(0).to(1)
-      expect(Company.where(system_code:"ASCENA",name:"ASCENA TRADE SERVICES LLC",importer:true).count).to eq 1
-      expect(parser.importer.system_code).to eq 'ASCENA'
-    end
-    it "should use existing company if it exists" do
-      # intialize company
-      importer
-      parser = nil
-      expect{parser = described_class.new}.to_not change(Company,:count)
-      expect(parser.importer).to eq importer
-    end
-  end
-
   describe "integration folder" do
     it "uses integration folder" do
       expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"
@@ -61,18 +45,16 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   end
 
   describe "parse" do
-    let!(:importer) { Factory(:company, system_code: "ASCENA") }
+    let!(:importer) { Factory(:company, system_code: "ASCENA", importer: true) }
+
     before(:all) do
-      @cdefs = described_class.prep_custom_definitions [:ord_line_season,:ord_buyer,:ord_division,:ord_revision,:ord_revision_date,:ord_assigned_agent,
-                                                :ord_selling_agent,:ord_selling_channel,:ord_type,:ord_line_color,:ord_line_color_description,
-                                                :ord_line_department_code,:ord_line_destination_code,:ord_line_size_description,:ord_line_size,
-                                                :ord_line_wholesale_unit_price,:ord_line_estimated_unit_landing_cost,:prod_part_number,
-                                                :prod_product_group,:prod_vendor_style]
+      @cdefs = described_class.new.send(:cdefs)
     end
 
     after(:all) do
       CustomDefinition.delete_all
     end
+
     def cdefs
       @cdefs
     end
@@ -82,10 +64,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       ord = Factory(:order, importer: importer, order_number: "ASCENA-37109")
       ord.update_custom_value!(cdefs[:ord_revision], 3)
       described_class.parse(convert_pipe_delimited [header, detail])
-      expect(Order.count).to eq 1
-      expect(Order.first.order_date).to be_nil
-      expect(OrderLine.count).to eq 0
-      expect(Product.count).to eq 0
+      ord.reload
+      # If nothign on the order header or no order lines were added, that shows nothign was updated
+      # on the order
+      expect(ord.order_date).to be_nil
+      expect(ord.order_lines.length).to eq 0
     end
 
     it "creates new orders, order lines, products matching input, product/order snapshots" do
@@ -314,15 +297,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
   context "data validation" do
     let :header_map do
-      described_class.map_header header
+      subject.map_header header
     end
     let :detail_map do
-      described_class.map_detail detail
+      subject.map_detail detail
     end
     context "check that methods are called" do
       it "should fail on header validation issue" do
-        expect(described_class).to receive(:validate_header).with(instance_of(Hash)).and_raise "some error"
-        described_class.parse(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
+        expect(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise "some error"
+        subject.process_file(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
 
         expect(Order.count).to eq 0
 
@@ -341,9 +324,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect(rows[1]).to eq detail_2
       end
       it "should fail on detail validation issue" do
-        expect(described_class).to receive(:validate_detail).with(instance_of(Hash),1).and_raise "some error"
+        expect(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise "some error"
 
-        described_class.parse(convert_pipe_delimited [header, detail])
+        subject.process_file(convert_pipe_delimited [header, detail])
 
         expect(Order.count).to eq 0
         mail = ActionMailer::Base.deliveries.first
@@ -355,28 +338,28 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     context "check validations" do
       it "errors if header order number missing" do
         header[4] = ""
-        expect{described_class.validate_header(header_map)}.to raise_error "Customer order number missing"
+        expect{subject.validate_header(header_map)}.to raise_error "Customer order number missing"
       end
 
       it "errors if detail part number is missing" do
         detail[5] = ""
-        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Part number missing on row 1"
+        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Part number missing on row 1"
       end
 
       it "errors if detail quantity is missing" do
         detail[17] = ""
-        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Quantity missing on row 1"
+        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Quantity missing on row 1"
       end
 
       it "errors if detail order line number is missing" do
         detail[2] = ""
-        expect{described_class.validate_detail(detail_map, 1)}.to raise_error "Line number missing on row 1"
+        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Line number missing on row 1"
       end
 
       it "throws no exception if detail price_per_unit is missing and order type is 'NONAGS'" do
         header[28] = "NONAGS"
         detail[19] = ""
-        expect{described_class.validate_detail(detail_map, 1)}.to_not raise_error
+        expect{subject.validate_detail(detail_map, 1)}.to_not raise_error
       end
     end
   end
