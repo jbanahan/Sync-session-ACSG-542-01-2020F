@@ -10,6 +10,8 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def preprocess_header_row row, opts = {}
+    # Since index 8 is clean_fiber_content, and that ends up under fiber_content, we do not want clean_fiber_content
+    # as a header. I am removing it from the header, then moving all the other elements back into their normal positions.
     row.delete(8)
     trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6, 7)
     trailing_hash.each do |k, v|
@@ -19,6 +21,9 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def preprocess_row row, opts = {}
+    # Index 8 is clean_fiber_content. We want to make sure that, if that is present, that gets placed under fiber_content.
+    # I am replacing fiber_content with clean_fiber_content (If present) then removing the clean_fiber_content row and moving
+    # all elements back to where they were.
     if row[8].present?
       row[7] = row[8]
       row.delete(8)

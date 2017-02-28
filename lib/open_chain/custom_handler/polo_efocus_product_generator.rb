@@ -20,6 +20,8 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
   end
 
   def preprocess_header_row row, opts = {}
+    # Since index 7 is clean_fiber_content, and that ends up under fiber_content, we do not want clean_fiber_content
+    # as a header. I am removing it from the header, then moving all the other elements back into their normal positions.
     row.delete(7)
     trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6)
     trailing_hash.each do |k, v|
@@ -29,6 +31,9 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
   end
 
   def preprocess_row row, opts = {}
+    # Index 7 is clean_fiber_content. We want to make sure that, if that is present, that gets placed under fiber_content.
+    # I am replacing fiber_content with clean_fiber_content (If present) then removing the clean_fiber_content row and moving
+    # all elements back to where they were.
     if row[7].present?
       row[6] = row[7]
       row.delete(7)
