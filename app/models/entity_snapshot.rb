@@ -51,9 +51,17 @@ class EntitySnapshot < ActiveRecord::Base
   # This is the main method for creating snapshots
   def self.create_from_entity entity, user=User.current, imported_file=nil, context=nil
     json = snapshot_writer.entity_json(entity)
-    es = EntitySnapshot.new(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
-    es.write_s3 json
-    es.save
+    es = EntitySnapshot.create!(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
+    begin
+      es.write_s3 json
+      es.save!
+    rescue Exception => e
+      # It is absolutely imperitive that all snapshots are stored in some manner, so if the write to s3 fails
+      # we'll buffer the files on disk.  We'll have to write some process to clean them off later.
+      FileUtils.mkdir_p("tmp/snapshots") unless Dir.exists?("tmp/snapshots")
+      File.open("tmp/snapshots/#{es.id}-#{entity.class}-#{entity.id}.json", "wb") {|f| f << json}
+    end
+
     write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')
     OpenChain::EntityCompare::EntityComparator.handle_snapshot es
     es
