@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
         next if blank_row?(row)
         if(row[0] == 'H')
           if po_rows.length > 0
-            process_po(po_rows, opts)
+            process_po(user, po_rows, opts)
             po_rows = []
           end
         end
