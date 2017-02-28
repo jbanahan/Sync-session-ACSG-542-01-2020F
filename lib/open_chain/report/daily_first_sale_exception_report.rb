@@ -20,8 +20,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   end
 
   def self.get_mids
-    #ensures query's IN clause receives string input even with empty list
-    DataCrossReference.get_all_pairs("asce_mid").keys.presence || ""
+    DataCrossReference.get_all_pairs("asce_mid").keys.presence || []
   end
   
   def run run_by, settings
@@ -85,7 +84,16 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
         AND e.duty_due_date <= NOW()
         AND (cil.contract_amount = 0 OR cil.contract_amount IS NULL)
         AND (cit.entered_value = cil.value)
-        AND cil.mid in (#{mid_list.map{|m| ActiveRecord::Base.sanitize m}.join(",")})
+        AND cil.mid in (#{format_mids(mid_list)})
     SQL
   end
+
+  private
+
+  def format_mids mid_list
+    mids = mid_list.map{|m| ActiveRecord::Base.sanitize m}.join(",")
+    mids.blank? ? "''" : mids
+  end
+
+
 end; end; end;

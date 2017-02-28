@@ -65,7 +65,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     end
 
     it "returns empty string if list is empty" do
-      expect(described_class.get_mids).to eq ""
+      expect(described_class.get_mids).to eq []
     end
   end
 
@@ -158,6 +158,11 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
 
     it "omits invoice lines whose mfid isn't specified" do
       db_result = ActiveRecord::Base.connection.execute report.query(['foo'])
+      expect(db_result.count).to eq 0
+    end
+
+    it "handles a blank mfid list" do
+      db_result = ActiveRecord::Base.connection.execute report.query([])
       expect(db_result.count).to eq 0
     end
   end

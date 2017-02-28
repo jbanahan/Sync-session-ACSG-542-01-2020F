@@ -46,8 +46,8 @@
     <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td></tr>
   <%end-%>
   <%if OpenChain::Report::DailyFirstSaleExceptionReport.permission? current_user-%>
-    <tr class='hover'><td><%=link_to "Daily First Sale Exception Report", reports_show_daily_first_sale_exception_report_path%></td>
-    <td>Daily First Sale Exception report.</td></tr>
+    <tr class='hover'><td><%=link_to "Ascena Daily First Sale Exception Report", reports_show_daily_first_sale_exception_report_path%></td>
+    <td>Ascena Daily First Sale Exception report.</td></tr>
   <%end-%>
   <%if OpenChain::Report::DasBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "DAS Canada Billing Summary", reports_show_das_billing_summary_path%></td>
