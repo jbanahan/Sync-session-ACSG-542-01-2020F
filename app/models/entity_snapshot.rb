@@ -56,10 +56,10 @@ class EntitySnapshot < ActiveRecord::Base
       es.write_s3 json
       es.save!
     rescue Exception => e
-      # It is absolutely imperitive that all snapshots are stored in some manner, so if the write to s3 fails
-      # we'll buffer the files on disk.  We'll have to write some process to clean them off later.
-      FileUtils.mkdir_p("tmp/snapshots") unless Dir.exists?("tmp/snapshots")
-      File.open("tmp/snapshots/#{es.id}-#{entity.class}-#{entity.id}.json", "wb") {|f| f << json}
+      # If we fail to write the snapshot to S3, buffer the data in the database and then 
+      # another service will come along and process it, push it to s3 and then relink the s3 data to the
+      # snapshot.
+      EntitySnapshotFailure.create! snapshot: es, snapshot_json: json
     end
 
     write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')

@@ -341,6 +341,20 @@ describe EntitySnapshot, :snapshot do
         expect(entry.failed_business_rules.length).to eq 1
       end
     end
+
+    it "writes snapshot failure when uploads to s3 fail" do
+      expect_any_instance_of(described_class).to receive(:write_s3) do |inst, json|
+        raise Exception, "Error"
+      end
+      expect(OpenChain::EntityCompare::EntityComparator).to receive(:handle_snapshot)
+
+      ent = Factory(:entry)
+      u = Factory(:user)
+      es = EntitySnapshot.create_from_entity(ent,u)
+
+      failure = EntitySnapshotFailure.where(snapshot_id: es.id, snapshot_type: "EntitySnapshot").first
+      expect(failure.snapshot_json).to eq described_class.snapshot_writer.entity_json(ent)
+    end
   end
 
   describe "expected_s3_path" do

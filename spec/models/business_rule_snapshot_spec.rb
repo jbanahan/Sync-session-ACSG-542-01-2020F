@@ -98,6 +98,18 @@ describe BusinessRuleSnapshot do
         }
       })
     end
+
+    it "writes snapshot failure when uploads to s3 fail" do
+      json = {"json" => "data"}
+      expect(described_class).to receive(:write_to_s3).and_raise Exception
+      expect(described_class).to receive(:generate_snapshot_data).and_return(json)
+
+      snapshot = BusinessRuleSnapshot.create_from_entity entry
+
+      failure = EntitySnapshotFailure.where(snapshot_id: snapshot.id, snapshot_type: "BusinessRuleSnapshot").first
+      expect(failure).not_to be_nil
+      expect(failure.snapshot_json).to eq json.to_json
+    end
   end
 
   describe "rule_comparisons" do
