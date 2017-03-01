@@ -10,14 +10,22 @@ RSpec.describe 'ISF Monitor' do
     allow(Net::FTP).to receive(:new).and_return(ftp)
   end
 
+  describe '#fake_utc_to_utc' do
+    it 'creates an ACTUAL UTC date' do
+      expect(OpenChain::IsfMonitor.new.fake_utc_to_utc(Time.new(2017, 3, 1, 14, 59, 59), "America/New_York")).
+        to eq ActiveSupport::TimeZone["UTC"].parse("2017-03-01 19:59:59")
+    end
+  end
+
   describe '#process_ftp_conents' do
     it 'returns the dates of the files' do
       dates = ftp_dates.dup
+      corrected_dates = dates.map { |date| ActiveSupport::TimeZone["America/New_York"].parse(date.strftime("%Y-%m-%d %H:%M:%S.%N")).utc }
       ftp_files.each do |file|
         expect(ftp).to receive(:mtime).with(file).and_return(dates.shift)
       end
 
-      expect(OpenChain::IsfMonitor.new.process_ftp_contents(ftp, ftp_files)).to eql(ftp_dates)
+      expect(OpenChain::IsfMonitor.new.process_ftp_contents(ftp, ftp_files, "America/New_York")).to eql(corrected_dates)
     end
   end
 

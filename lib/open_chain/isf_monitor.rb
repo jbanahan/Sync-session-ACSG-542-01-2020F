@@ -8,13 +8,14 @@ module OpenChain
       password = opts['password']
       directory = opts['directory']
       minutes_to_check = opts['duration'].to_i
+      timezone = opts['server_timezone']
 
       raise "hostname, username, password and directory must be passed in" if hostname.blank? || username.blank? || password.blank? || directory.blank?
 
-      self.new.run(hostname, username, password, directory, minutes_to_check)
+      self.new.run(hostname, username, password, directory, minutes_to_check, timezone)
     end
 
-    def run(hostname, username, password, directory, minutes_to_check)
+    def run(hostname, username, password, directory, minutes_to_check, timezone)
       ftp = ftp_connection(hostname)
       ftp_login(ftp, username, password)
       ftp_chdir(ftp, directory)
@@ -23,7 +24,7 @@ module OpenChain
 
       return unless contents.present?
 
-      file_dates = process_ftp_contents(ftp, contents)
+      file_dates = process_ftp_contents(ftp, contents, timezone)
       oldest_est_date = utc_to_est_date(file_dates[0])
 
       if is_backed_up?(file_dates[0], minutes_to_check)
@@ -38,14 +39,20 @@ module OpenChain
       date.in_time_zone("America/New_York")
     end
 
-    def process_ftp_contents(ftp, contents)
+    def process_ftp_contents(ftp, contents, timezone)
       dates = []
 
       contents.each do |content|
-        dates << ftp.mtime(content)
+        dates << fake_utc_to_utc(ftp.mtime(content), timezone)
       end
 
       sort_utc_dates(dates)
+    end
+
+    def fake_utc_to_utc(date, timezone)
+      # Yes, seconds and nanoseconds will never be needed, but it is how the default Time object returns the time.
+      # Defaults are good (And makes sure tests pass because...Time).
+      ActiveSupport::TimeZone[timezone].parse(date.strftime("%Y-%m-%d %H:%M:%S.%N")).utc
     end
 
     def is_backed_up?(date, minutes_to_check)
