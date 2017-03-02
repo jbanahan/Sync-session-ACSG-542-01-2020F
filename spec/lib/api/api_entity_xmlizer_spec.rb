@@ -19,68 +19,60 @@ describe OpenChain::Api::ApiEntityXmlizer do
   end
 
   context 'with data' do
+
+    let (:fields) { [:ord_ord_num, :ord_ord_date, :ordln_line_number, :ordln_puid, :ordln_ordered_qty] }
+    let (:product) { Product.new unique_identifier: 'PUID' }
+    let (:order_line) {  order.order_lines.first }
+    let (:order) {
+      order = Order.new order_number: "ORDNUM", order_date: Date.new(2016,5,1)
+      order.id = 1
+      line = order.order_lines.build line_number:1, quantity:10, product: product
+      line.id = 2
+      order
+    }
+
+    let (:expected_timestamp) { Time.now.utc.strftime("%Y-%m-%dT%l:%M:%S:%L%z") }
+
     before :each do
-      Timecop.freeze
-      @order = Factory(:order,order_number:'ORDNUM',order_date:Date.new(2016,5,1))
-      @product = Factory(:product,unique_identifier:'PUID')
-      @order_line = Factory(:order_line,line_number:1,quantity:10,product:@product,order:@order)
-      @fields = [
-        :ord_ord_num,
-        :ord_ord_date,
-        :ordln_line_number,
-        :ordln_puid,
-        :ordln_ordered_qty
-      ]
-      @expected_timestamp = Time.now.utc.strftime("%Y-%m-%dT%l:%M:%S:%L%z")
+      Timecop.freeze(ActiveSupport::TimeZone["UTC"].parse("2017-02-28 12:15:000+0000"))
     end
     after :each do
       Timecop.return
     end
     it 'should create xml with base tag names' do
-      expected_xml = <<-xml
-<?xml version="1.0" encoding="UTF-8"?>
-<order>
-  <id type="integer">#{@order.id}</id>
-  <order-lines type="array">
-    <order-line>
-      <id type="integer">#{@order_line.id}</id>
-      <ordln-line-number type="integer">1</ordln-line-number>
-      <ordln-ordered-qty type="decimal">10.0</ordln-ordered-qty>
-      <ordln-puid>PUID</ordln-puid>
-    </order-line>
-  </order-lines>
-  <xml-generated-time>#{@expected_timestamp}</xml-generated-time>
-  <ord-ord-num>ORDNUM</ord-ord-num>
-  <ord-ord-date type="date">2016-05-01</ord-ord-date>
-</order>
-xml
-      expect(described_class.new.entity_to_xml(Factory(:admin_user),@order,@fields)).to eq expected_xml
+      xml = subject.entity_to_xml(Factory(:admin_user),order,fields)
+      expect(xml).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample.xml') 
     end
     it 'should user xml_tag_overrides from ModelField' do
-      expected_xml = <<-xml
-<?xml version="1.0" encoding="UTF-8"?>
-<order>
-  <id type="integer">#{@order.id}</id>
-  <order-lines type="array">
-    <order-line>
-      <id type="integer">#{@order_line.id}</id>
-      <ordln-line-number type="integer">1</ordln-line-number>
-      <ordln-ordered-qty type="decimal">10.0</ordln-ordered-qty>
-      <ordln-puid>PUID</ordln-puid>
-      <custom-tag>myval</custom-tag>
-    </order-line>
-  </order-lines>
-  <xml-generated-time>#{@expected_timestamp}</xml-generated-time>
-  <ord-ord-num>ORDNUM</ord-ord-num>
-  <ord-ord-date type="date">2016-05-01</ord-ord-date>
-</order>
-xml
       cd = Factory(:custom_definition,module_type:'OrderLine',data_type:'string')
       FieldValidatorRule.create!(model_field_uid:cd.model_field_uid,xml_tag_name:'custom-tag')
       ModelField.reload
-      @order_line.update_custom_value!(cd,'myval')
-      @fields << cd.model_field_uid.to_sym
-      expect(described_class.new.entity_to_xml(Factory(:admin_user),@order,@fields)).to eq expected_xml
+      order_line.find_and_set_custom_value(cd,'myval')
+      fields << cd.model_field_uid.to_sym
+      expect(subject.entity_to_xml(Factory(:admin_user), order, fields)).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample_custom_tag.xml')
+    end
+  end
+
+  describe "xml_fingerprint" do
+    it "returns SHA256 of XML" do
+      # This also ends up verifying that the output style we're hashing is the compact output format.
+      xml = "<?xml version='1.0' encoding='UTF-8'?><root/>"
+      expect(subject.xml_fingerprint xml).to eq Digest::SHA256.hexdigest(xml)
+    end
+
+    it "strips xml-generated-time element by default" do
+      xml = "<?xml version='1.0' encoding='UTF-8'?><root><xml-generated-time>123</xml-generated-time></root>"
+      expect(subject.xml_fingerprint xml).to eq Digest::SHA256.hexdigest("<?xml version='1.0' encoding='UTF-8'?><root/>")
+    end
+
+    it "allows passing custom xpath elements to strip" do
+      xml = "<?xml version='1.0' encoding='UTF-8'?><root><child><grandchild>data</grandchild></child></root>"
+      expect(subject.xml_fingerprint xml, ignore_paths: ["/root/child"]).to eq Digest::SHA256.hexdigest("<?xml version='1.0' encoding='UTF-8'?><root/>")
+    end
+
+    it "does not strip xml-generated-time if another xpath set is given" do
+      xml = "<?xml version='1.0' encoding='UTF-8'?><root><xml-generated-time>123</xml-generated-time></root>"
+      expect(subject.xml_fingerprint xml, ignore_paths: ["/root/child"]).to eq Digest::SHA256.hexdigest(xml)
     end
   end
 end

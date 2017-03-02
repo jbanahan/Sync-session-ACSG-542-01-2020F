@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<order>
+  <id type="integer">1</id>
+  <order-lines type="array">
+    <order-line>
+      <id type="integer">2</id>
+      <ordln-line-number type="integer">1</ordln-line-number>
+      <ordln-ordered-qty type="decimal">10.0</ordln-ordered-qty>
+      <ordln-puid>PUID</ordln-puid>
+    </order-line>
+  </order-lines>
+  <xml-generated-time>2017-02-28T12:15:00:000+0000</xml-generated-time>
+  <ord-ord-num>ORDNUM</ord-ord-num>
+  <ord-ord-date type="date">2016-05-01</ord-ord-date>
+</order>

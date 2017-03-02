@@ -3,16 +3,17 @@ require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
   extend OpenChain::FtpFileSupport
   def self.send_order order
-    xml = generate(User.integration,order)
-    Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
-      tf.write xml
-      tf.flush
-      ftp_file tf
+    Lock.with_lock_retry(order) do 
+      xml, fingerprint = generate(User.integration,order)
+      sr = order.sync_records.first_or_initialize trading_partner: "SAP PO"
+      if sr.fingerprint != fingerprint
+        Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
+          tf.write xml
+          tf.flush
+          ftp_file tf
 
-      # Add a sync record so we can track when files are sent to SAP
-      Lock.with_lock_retry(order) do 
-        sr = order.sync_records.first_or_initialize trading_partner: "SAP PO"
-        sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+          sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute), fingerprint: fingerprint
+        end
       end
     end
   end
@@ -24,7 +25,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def self.generate user, order
     f = build_field_list(user)
-    OpenChain::Api::ApiEntityXmlizer.new.entity_to_xml(user,order,f)
+    xmlizer = OpenChain::Api::ApiEntityXmlizer.new
+    xml = xmlizer.entity_to_xml(user,order,f)
+    fingerprint = xmlizer.xml_fingerprint xml
+    [xml, fingerprint]
   end
 
   def self.build_field_list current_user
