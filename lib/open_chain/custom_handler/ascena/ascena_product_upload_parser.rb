@@ -19,9 +19,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def process user
-    
     begin
       process_file @custom_file, user
+      user.messages.create subject: "File Processing Complete", body: "Ascena Product Upload processing for file #{@custom_file.attached_file_name} is complete."
     rescue => e
       user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
     end

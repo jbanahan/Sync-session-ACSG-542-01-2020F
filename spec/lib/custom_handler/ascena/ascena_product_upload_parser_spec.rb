@@ -202,4 +202,28 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect(changed.value).to eq true
     end
   end
+
+  describe "process" do
+    let (:user) { Factory(:user) }
+
+    it "processes a file" do
+      expect(subject).to receive(:process_file).with custom_file, user
+      subject.process user
+
+      m = user.messages.first
+      expect(m).not_to be_nil
+      expect(m.subject).to eq "File Processing Complete"
+      expect(m.body).to eq "Ascena Product Upload processing for file file.xls is complete."
+    end
+
+    it "handles error" do
+      expect(subject).to receive(:process_file).and_raise "Error"
+      subject.process user
+
+      m = user.messages.first
+      expect(m).not_to be_nil
+      expect(m.subject).to eq "File Processing Complete With Errors"
+      expect(m.body).to eq "Unable to process file file.xls due to the following error:<br>Error"
+    end
+  end
 end
