@@ -33,6 +33,12 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
 
       expect(subject.run_validation entry).to be_nil
     end
+
+    it "does not error if invoice number indicates Non-First sale" do
+      entry.commercial_invoices.first.update_attributes! invoice_number: "INVNFS"
+
+      expect(subject.run_validation entry).to be_nil
+    end
   end
   
 end
