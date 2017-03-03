@@ -6,6 +6,22 @@ module ValidatesFieldFormat
     tested = 0
     messages = []
     validation_expressions.each_pair do |model_field, attrs|
+      # If we have "if criterions", we don't evaluate the rule unless all the IF statements pass
+      passed = true
+      Array.wrap(attrs['if_criterions']).each do |sc|
+        passed = sc.test?(obj)
+        break unless passed
+      end
+      next unless passed
+
+      # If we have 'unless_criterions', we don't evaluate the rule if any of statements pass
+      passed = true
+      Array.wrap(attrs['unless_criterions']).each do |sc|
+        passed = !sc.test?(obj)
+        break unless passed
+      end
+      next unless passed
+
       val = model_field.process_export(obj,nil,true)
       reg = attrs['regex']
       #If this option is used, any block will have to check this attribute and adjust message accordingly
@@ -39,9 +55,31 @@ module ValidatesFieldFormat
         attrs['regex'] = rule_attribute('regex')
         attrs['fail_if_matches'] = rule_attribute('fail_if_matches')
         attrs['allow_blank'] = rule_attribute('allow_blank')
+
+        Array.wrap(rule_attribute('if')).each do |condition|
+          attrs['if_criterions'] ||= []
+          attrs['if_criterions'] << condition_criterion(condition)
+        end
+        Array.wrap(rule_attribute('unless')).each do |condition|
+          attrs['unless_criterions'] ||= []
+          attrs['unless_criterions'] << condition_criterion(condition)
+        end
       else
         self.rule_attributes.each_pair do |uid, attrs|
           @expressions[ModelField.find_by_uid(uid)] = attrs
+
+          conditions = attrs.delete 'if'
+          Array.wrap(conditions).each do |condition|
+            attrs['if_criterions'] ||= []
+            attrs['if_criterions'] << condition_criterion(condition)
+          end
+
+          conditions = attrs.delete 'unless'
+          Array.wrap(conditions).each do |condition|
+            attrs['unless_criterions'] ||= []
+            attrs['unless_criterions'] << condition_criterion(condition)
+          end
+
         end
       end
     end
@@ -52,5 +90,19 @@ module ValidatesFieldFormat
   def rule_attribute key
     @attrs ||= self.rule_attributes
     @attrs[key]
+  end
+
+  def condition_criterion condition_json
+    model_field = ModelField.find_by_uid(condition_json["model_field_uid"])
+    raise "Invalid model field '#{condition_json["model_field_uid"]}' given in condition." unless model_field
+    operator = condition_json["operator"]
+    raise "No operator given in condition." if operator.blank?
+
+    c = SearchCriterion.new
+    c.model_field_uid = model_field.uid
+    c.operator = operator
+    c.value = condition_json["value"]
+
+    c
   end
 end
