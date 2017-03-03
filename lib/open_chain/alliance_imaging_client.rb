@@ -50,6 +50,7 @@ class OpenChain::AllianceImagingClient
     hash = nil
     retry_count = 0
     begin
+      user = User.integration
       # visibility timeout indicates how long after the poll message is received the message will become
       # visible again to be re-picked up.  This comes into play if the message errors.  If that happens,
       # the message won't get deleted (as raising from the poll block causes the message to stay in the queue),
@@ -69,14 +70,12 @@ class OpenChain::AllianceImagingClient
         end
 
         file = OpenChain::S3.download_to_tempfile bucket, key, opts
-        entry = nil
         if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
-          entry = process_fenix_nd_image_file file, hsh
+          process_fenix_nd_image_file file, hsh, user
         else
-          entry = process_image_file file, hsh
+          entry = process_image_file file, hsh, user
         end
 
-        entry.create_snapshot(User.integration) if entry
         hash = nil
       end
     rescue => e
@@ -92,7 +91,7 @@ class OpenChain::AllianceImagingClient
   # The file passed in here must have the correct file extension for content type discovery or
   # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
   # it points to should have a .pdf extension on it.
-  def self.process_image_file t, hsh
+  def self.process_image_file t, hsh, user
     Attachment.add_original_filename_method t
     t.original_filename= hsh["file_name"]
     source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]
@@ -179,6 +178,8 @@ class OpenChain::AllianceImagingClient
         if delete_previous_file_versions
           att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
         end
+
+        entry.create_snapshot user, nil, "Imaging"
       end
 
       return entry
@@ -187,7 +188,7 @@ class OpenChain::AllianceImagingClient
     nil
   end
 
-  def self.process_fenix_nd_image_file t, file_data
+  def self.process_fenix_nd_image_file t, file_data, user
     # Here's the hash data we can expect from the Fenix ND export process
     # {"source_system" => "Fenix", "export_process" => "sql_proxy", "doc_date" => "", "s3_key"=>"path/to/file.txt", "s3_bucket" => "bucket", 
     #   "file_number" => "11981001795105 ", "doc_desc" => "B3", "file_name" => "_11981001795105 _B3_01092015 14.24.42 PM.pdf", "version" => nil, "public" => true}
@@ -241,6 +242,8 @@ class OpenChain::AllianceImagingClient
             other_attachments_query(att, delete_other_file_algorithm).where("NOT attachments.id = ?", att.id).destroy_all
           end
         end
+
+        entry.create_snapshot user, nil, "Imaging"
       end
 
       return entry
