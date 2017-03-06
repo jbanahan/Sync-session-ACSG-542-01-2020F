@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe OpenChain::Report::DailyFirstSaleExceptionReport do
   let(:report) { described_class.new }
-  let(:header) { ['Entry#','Release Date','Duty Due Date','Master Bills','House Bills','PO#','Brand','Item#','Invoice#','COO',
-                  'Department','HTS','Duty Rate','MID','Supplier','Item Quantity','Item UOM','Invoice Value','Entered Value','Duty',
-                  'Prorated MPF','HMF','Cotton Fee','NDC'] }
+  #                  0           1                 2                 3              4              5          6      7       8         9        10       11       12        13      14      15             16            17              18            19              20         21            22          23           24      25         26                 27                       28
+  let(:header) { ['Entry#','Release Date', 'Entry Filed Date', 'Duty Due Date','Master Bills','House Bills','PO#','Brand','Item#', 'Invoice#','COO','Department','HTS','Duty Rate','MID','Supplier', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Item Quantity','Item UOM', 'Value', 'Invoice Value','Entered Value','Duty','NDC', 'Price to Brand', 'Vendor Price to AGS', 'First Sale Price'] }
+  let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type] }                  
   
   def create_data
     Factory(:company, alliance_customer_number: "ASCE", importer:true)
@@ -12,14 +12,24 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     @today = ActiveSupport::TimeZone["UTC"].now.beginning_of_day
     @yesterday = @today - 1.day
     @day_before_yesterday = @yesterday - 1.day
+    @tomorrow = @today + 1.day
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid")
-    @ent = Factory(:entry, import_country: Factory(:country, iso_code: 'US'), customer_number: 'ASCE', entry_number: 'entry num', release_date: @yesterday, 
-                    duty_due_date: @day_before_yesterday, master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols')
-    @ci = Factory(:commercial_invoice, entry: @ent, invoice_number: 'inv num')
+    vend = Factory(:company, name: "vend name", system_code: "vend sys code")
+    @ent = Factory(:entry, import_country: Factory(:country, iso_code: 'US'), customer_number: 'ASCE', entry_filed_date: @day_before_yesterday,
+                    first_entry_sent_date: @today, entry_number: 'entry num', release_date: @yesterday, 
+                    duty_due_date: @tomorrow, master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols')
+    @ci = Factory(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 2)
     @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, contract_amount: 0, po_number: 'po num', part_number: 'part num', 
-                    country_origin_code: 'coo', department: 'dept', vendor_name: 'vend name', quantity: 6, unit_of_measure: 'uom', 
-                    value: 1, prorated_mpf: 2, hmf: 3, cotton_fee: 4, non_dutiable_amount: 5, mid: 'mid', product_line: 'brand')
+                    country_origin_code: 'coo', department: 'dept', vendor_name: 'supplier', quantity: 6, unit_of_measure: 'uom', 
+                    value: 1, non_dutiable_amount: 5, mid: 'mid', product_line: 'brand', unit_price: 3)
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', entered_value: 1, duty_rate: 7, duty_amount: 8)
+
+    @prod = Factory(:product, unique_identifier: 'ASCENA-part num')
+    @ord = Factory(:order, order_number: 'ASCENA-po num', vendor: vend)
+    @ord.find_and_set_custom_value(cdefs[:ord_type], 'AGS')
+    @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
+    @ord.save!
+    @ordln = Factory(:order_line, order: @ord, product: @prod, price_per_unit: 1)
   end
 
   describe "permission?" do
@@ -114,55 +124,56 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     before { create_data }
 
     it "produces expected results" do
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 1
       expect(db_result.fields).to eq header
-      expect(db_result.first).to eq ['entry num',@yesterday, @day_before_yesterday.to_date,'mbols','hbols','po num','brand','part num','inv num','coo','dept','hts',700,'mid','vend name',6,'uom',1,1,8,2,3,4,5]
+      #                                   0            1                 2                           3           4        5        6       7        8          9      10     11    12     13   14       15         16               17            18     19   20    21   22  23   24   25  26  27  28
+      expect(db_result.first).to eq ['entry num', @yesterday, @day_before_yesterday.to_date, @tomorrow.to_date,'mbols','hbols','po num','brand','part num','inv num','coo','dept','hts', 700, 'mid','supplier', 'vend name', 'vend sys code',  'agent',   6, 'uom',  1,   2,  1,   8,   5,  3,  1,  0]
     end
 
     it "omits non-US entries" do
       @ent.update_attributes(import_country: Factory(:country, iso_code: "CA"))
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits non-Ascena entries" do
       @ent.update_attributes(customer_number: "ACME")
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
-    it "omits entries without a release date" do
-      @ent.update_attributes(release_date: nil)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+    it "omits entries without first_entry_sent_date" do
+      @ent.update_attributes(first_entry_sent_date: nil)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
-    it "omits entries with a future duty_due_date" do
-      @ent.update_attributes(duty_due_date: @today + 1.day)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+    it "omits entries with a past duty_due_date" do
+      @ent.update_attributes(duty_due_date: @today - 1.day)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits invoices with a contract_amount" do
       @cil.update_attributes(contract_amount: 100)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits tariffs whose entered_value doesn't equal the invoice line's value" do
       @cit.update_attributes(entered_value: 100)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits invoice lines whose mfid isn't specified" do
-      db_result = ActiveRecord::Base.connection.execute report.query(['foo'])
+      db_result = ActiveRecord::Base.connection.execute report.query(['foo'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "handles a blank mfid list" do
-      db_result = ActiveRecord::Base.connection.execute report.query([])
+      db_result = ActiveRecord::Base.connection.execute report.query([], cdefs)
       expect(db_result.count).to eq 0
     end
   end
