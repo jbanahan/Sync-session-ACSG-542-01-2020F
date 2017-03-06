@@ -100,6 +100,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
         p.update_custom_value! @cdefs[key], value
       end
 
+      p.update_custom_value! @cdefs[:clean_fiber_content], nil
+
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
       root = doc.root
@@ -208,6 +210,18 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
       expect(REXML::XPath.each(doc.root, "product/style").map(&:text)).to eq [p2.unique_identifier]
+    end
+
+    it "sends clean_fiber_content if clean_fiber_content is set" do
+      p = Factory(:product)
+      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
+
+      p.update_custom_value! @cdefs[:clean_fiber_content], "cleanfibercontent"
+      p.update_custom_value! @sap_brand_cd, true
+
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
+      doc = REXML::Document.new(IO.read(@tmp.path))
+      expect(REXML::XPath.each(doc.root, "product/fiber_content").map(&:text)).to eq ["cleanfibercontent"]
     end
 
     it "should not send products that aren't SAP Brand" do

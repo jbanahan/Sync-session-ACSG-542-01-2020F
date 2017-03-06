@@ -9,6 +9,34 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
     h.generate
   end
 
+  def preprocess_header_row row, opts = {}
+    # Since index 8 is clean_fiber_content, and that ends up under fiber_content, we do not want clean_fiber_content
+    # as a header. I am removing it from the header, then moving all the other elements back into their normal positions.
+    row.delete(8)
+    trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6, 7)
+    trailing_hash.each do |k, v|
+      row[k - 1] = v
+    end
+    [row]
+  end
+
+  def preprocess_row row, opts = {}
+    # Index 8 is clean_fiber_content. We want to make sure that, if that is present, that gets placed under fiber_content.
+    # I am replacing fiber_content with clean_fiber_content (If present) then removing the clean_fiber_content row and moving
+    # all elements back to where they were.
+    if row[8].present?
+      row[7] = row[8]
+      row.delete(8)
+    else
+      row.delete(8)
+    end
+    trailing_hash = row.slice!(0, 1, 2, 3, 4, 5, 6, 7)
+    trailing_hash.each do |k, v|
+      row[k - 1] = v
+    end
+    [row]
+  end
+
   def generate
     f = nil
     begin
@@ -62,7 +90,7 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def query
-    q = "SELECT products.id, 
+    q = "SELECT products.id,
 #{cd_s @cdefs[:lin_number]},
 #{cd_s @cdefs[:csm_numbers]},
 #{cd_s @cdefs[:season]},
@@ -71,6 +99,7 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
 #{cd_s @cdefs[:msl_board_number]},
 products.unique_identifier as 'Style',
 #{cd_s @cdefs[:fiber_content]},
+#{cd_s @cdefs[:clean_fiber_content]},
 products.name as 'Name',
 #{cd_s @cdefs[:knit_woven], query_alias: "Knit / Woven?"},
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
@@ -106,19 +135,19 @@ INNER JOIN tariff_records ON tariff_records.classification_id = classifications.
   end
 
   def self.cdefs
-    [:lin_number, :csm_numbers, :season, :product_area, :msl_board_number, :fiber_content, :knit_woven] + cdef_range
+    [:lin_number, :csm_numbers, :season, :product_area, :msl_board_number, :fiber_content, :clean_fiber_content, :knit_woven] + cdef_range
   end
 
   def self.cdef_range
-    [:stitch_count_vertical, :stitch_count_horizontal, :grams_square_meter, :knit_type, :type_of_bottom, :functional_neck_closure, :significantly_napped, :back_type, :defined_armholes, 
-      :strap_width, :pass_water_resistant_test, :type_of_coating, :padding_or_filling, :meets_down_requirments, :tightening_at_waist, :denim, :denim_color, :corduroy, :shearling, :total_back_panels, 
-      :short_fall_above_knee, :mesh_lining, :full_elastic_waistband, :full_functional_drawstring, :cover_crown_of_head, :wholly_or_partially_braid, :yarn_dyed, :colors_in_warp_weft, :piece_dyed, 
-      :printed, :solid, :ounces_sq_yd, :size_scale, :type_of_fabric, :weight_of_fabric, :form_fitting_or_loose_fitting, :functional_open_fly, :fly_covered, :tightening_at_cuffs, 
-      :embellishments_or_ornamentation, :sizing, :sold_in_sleepwear_dept, :pcs_in_set, :sold_as_set, :footwear_upper, :footwear_outsole, :welted, :cover_the_ankle, :length_cm, :width_cm, 
-      :height_cm, :secure_closure, :closure_type, :multiple_compartment, :fourchettes_for_gloves, :lined_for_gloves, :seamed, :components, :cost_of_component, :weight_of_components, 
-      :material_content_of_posts_earrings, :filled, :type_of_fill, :coated, :semi_precious, :semi_precious_type, :telescopic_shaft, :unit_price, :vendor_code, :country_of_origin, :fish_wildlife, 
-      :common_name_1, :scientific_name_1, :fish_wildlife_origin_1, :fish_wildlife_source_1, :royalty_percentage, :chart_comments, :binding_ruling_number, :binding_ruling_type, :mid, :fda_product_code, 
-      :effective_date, :price_uom, :special_program_indicator, :cvd_case, :add_case, :ptp_code, :terms_of_sale]
+    [:stitch_count_vertical, :stitch_count_horizontal, :grams_square_meter, :knit_type, :type_of_bottom, :functional_neck_closure, :significantly_napped, :back_type, :defined_armholes,
+     :strap_width, :pass_water_resistant_test, :type_of_coating, :padding_or_filling, :meets_down_requirments, :tightening_at_waist, :denim, :denim_color, :corduroy, :shearling, :total_back_panels,
+     :short_fall_above_knee, :mesh_lining, :full_elastic_waistband, :full_functional_drawstring, :cover_crown_of_head, :wholly_or_partially_braid, :yarn_dyed, :colors_in_warp_weft, :piece_dyed,
+     :printed, :solid, :ounces_sq_yd, :size_scale, :type_of_fabric, :weight_of_fabric, :form_fitting_or_loose_fitting, :functional_open_fly, :fly_covered, :tightening_at_cuffs,
+     :embellishments_or_ornamentation, :sizing, :sold_in_sleepwear_dept, :pcs_in_set, :sold_as_set, :footwear_upper, :footwear_outsole, :welted, :cover_the_ankle, :length_cm, :width_cm,
+     :height_cm, :secure_closure, :closure_type, :multiple_compartment, :fourchettes_for_gloves, :lined_for_gloves, :seamed, :components, :cost_of_component, :weight_of_components,
+     :material_content_of_posts_earrings, :filled, :type_of_fill, :coated, :semi_precious, :semi_precious_type, :telescopic_shaft, :unit_price, :vendor_code, :country_of_origin, :fish_wildlife,
+     :common_name_1, :scientific_name_1, :fish_wildlife_origin_1, :fish_wildlife_source_1, :royalty_percentage, :chart_comments, :binding_ruling_number, :binding_ruling_type, :mid, :fda_product_code,
+     :effective_date, :price_uom, :special_program_indicator, :cvd_case, :add_case, :ptp_code, :terms_of_sale]
   end
 
 end; end; end

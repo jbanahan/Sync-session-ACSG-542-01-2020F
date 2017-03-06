@@ -130,7 +130,6 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     else
       results = non_footwear_parse fiber
     end
-    results.delete :algorithm if results
 
     # invalid_results? raises errors if anything is bad, so by virtue
     # of it not blowing up, we have a valid fiber content
@@ -182,6 +181,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           cdefs << "fabric_percent_#{x}".to_sym
         end
         cdefs << :fiber_content
+        cdefs << :clean_fiber_content
+        cdefs << :set_type
         cdefs << :msl_fiber_failure
         cdefs << :msl_fiber_status
         @cdefs = self.class.prep_custom_definitions cdefs
@@ -517,16 +518,59 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # case (don't leave stale fields behind, it's confusing).  The old fields will be listed in the history
       # if anyone needs to see them
       results = {} unless results
+      clean_fiber_content = {}
 
       (1..15).each do |x|
         fiber, type, percent = all_fiber_fields results, x
+
+        unless fiber.blank? || percent.blank?
+          percent = percent.to_f % 1 == 0 ? percent.to_i : percent.to_f
+          clean_fiber_content[type] ||= []
+          clean_fiber_content[type] << [fiber, percent]
+        end
+
         update_or_create_cv(product, "fabric_type_#{x}".to_sym, type)
         update_or_create_cv(product, "fabric_#{x}".to_sym, fiber)
         update_or_create_cv(product, "fabric_percent_#{x}".to_sym, percent)
       end
 
+      if parse_failed
+        update_or_create_cfv(product, {}, results)
+      else
+        update_or_create_cfv(product, clean_fiber_content, results)
+      end
       update_or_create_cv(product, :msl_fiber_failure, parse_failed)
       update_or_create_cv(product, :msl_fiber_status, status_message)
+    end
+
+    def update_or_create_cfv(product, fiber_hash, results)
+      hts = nil
+      classification = product.classifications.first
+      tariff_record = classification.tariff_records.first if classification.present?
+      hts = [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3] if tariff_record.present?
+
+      return if hts.blank? || (hts.grep(/^61/).blank? && hts.grep(/^62/).blank?) || product.custom_value(@cdefs[:set_type]).present?
+
+      footwear = results[:algorithm] == 'footwear'
+      cd = @cdefs[:clean_fiber_content]
+      if fiber_hash.present?
+        clean_fiber_string = ''
+        count = 1
+        fiber_hash.each do |key, value|
+          value.each_with_index do |fiber, index|
+            clean_fiber_string << "#{fiber[1]}% " unless footwear
+            clean_fiber_string << "#{fiber[0].upcase}"
+            clean_fiber_string << ", " unless index + 1 == value.length
+          end
+          clean_fiber_string << " #{key.upcase}" unless fiber_hash.count == 1 || count > fiber_hash.length
+          clean_fiber_string << " / " unless count == fiber_hash.length
+          count += 1
+        end
+      else
+        clean_fiber_string = ''
+      end
+
+      product.find_and_set_custom_value cd, clean_fiber_string
     end
 
     def update_or_create_cv product, cv_sym, value
