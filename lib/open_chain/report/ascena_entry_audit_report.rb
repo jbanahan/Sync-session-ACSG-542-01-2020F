@@ -28,7 +28,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions [:ord_selling_agent, :ord_type]
+    @cdefs ||= self.class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price]
   end
 
   def create_workbook start_date, end_date, time_zone
@@ -88,7 +88,12 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              cit.classification_uom_1 AS 'UOM 1',
              cit.classification_uom_2 AS 'UOM 2',
              cil.add_case_number AS 'ADD Case Number',
-             cil.value AS 'Value',
+             cil.quantity * (SELECT ordln_price.decimal_value
+                             FROM order_lines ol
+                              INNER JOIN products prod ON prod.id = ol.product_id
+                              INNER JOIN custom_values ordln_price ON ordln_price.customizable_id = ol.id AND ordln_price.customizable_type = "OrderLine" AND ordln_price.custom_definition_id = #{cdefs[:ord_line_wholesale_unit_price].id}
+                             WHERE o.id = ol.order_id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
+                             LIMIT 1) AS 'Value',
              ci.invoice_value AS 'Invoice Value',
              cit.entered_value AS 'Entered Value',
              (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0) 
@@ -113,8 +118,17 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              ci.non_dutiable_amount AS 'Inv Non-Dutiable Amount',
              cil.non_dutiable_amount AS 'Inv Ln Non-Dutiable Amount',
              e.total_non_dutiable_amount AS 'Total Non-Dutiable Amount',
-             cil.unit_price AS 'Price to Brand',
-             IF(ord_type.string_value = "NONAGS", 0, ol.price_per_unit) AS 'Vendor Price to AGS',
+             (SELECT ordln_price.decimal_value
+              FROM order_lines ol
+               INNER JOIN products prod ON prod.id = ol.product_id
+               INNER JOIN custom_values ordln_price ON ordln_price.customizable_id = ol.id AND ordln_price.customizable_type = "OrderLine" AND ordln_price.custom_definition_id = #{cdefs[:ord_line_wholesale_unit_price].id}
+              WHERE o.id = ol.order_id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
+              LIMIT 1) AS 'Price to Brand',
+             IF((ord_type.string_value = "NONAGS"), 0, (SELECT ordln.price_per_unit 
+                                                        FROM order_lines ordln 
+                                                          INNER JOIN products prod ON prod.id = ordln.product_id 
+                                                        WHERE ordln.order_id = o.id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
+                                                        LIMIT 1)) AS 'Vendor Price to AGS',
              IF((ord_type.string_value = "NONAGS" OR cil.contract_amount <= 0), 0, cit.entered_value / cil.quantity) AS 'First Sale Price',
              (SELECT IF((SUM(t.entered_value) = 0) OR ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2)< 1,0,ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2))
               FROM commercial_invoice_lines l
@@ -126,8 +140,6 @@ module OpenChain; module Report; class AscenaEntryAuditReport
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
         LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.po_number)
-        LEFT OUTER JOIN order_lines ol ON o.id = ol.order_id
-        LEFT OUTER JOIN products p on ol.product_id = p.id AND p.unique_identifier = CONCAT("ASCENA-", cil.part_number)
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
         INNER JOIN companies vend ON vend.id = o.vendor_id

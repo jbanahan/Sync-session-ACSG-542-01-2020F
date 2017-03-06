@@ -9,16 +9,10 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   let(:date_3) { DateTime.new(2016,03,17) }
   let(:date_4) { DateTime.new(2016,03,18) }
   let(:date_5) { DateTime.new(2016,03,19) }
-  let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :prod_part_number] }
-  let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 
-                  'Final Statement Date', 'Release Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 
-                  'Port of Entry Name', 'Port of Lading Code', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 
-                  'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'Vendor Name', 
-                  'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 
-                  'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Value', 'Invoice Value', 'Entered Value', 
-                  'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 
-                  'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Price to Brand', 
-                  'Vendor Price to AGS', 'First Sale Price', 'First Sale Duty Savings', 'First Sale Flag'] }
+  let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price] }
+  
+  #                           0               1             2                 3                       4                      5                      6                    7                 8                  9            10                  11                       12                    13               14             15             16                 17               18               19                   20                     21                22            23          24       25          26              27              28               29               30                 31              32     33          34             35            36          37      38            39             40           41               42             43               44              45        46         47            48           49             50              51                52                      53                         54                            55                     56                   57                   58                     59                      60
+  let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Value', 'Invoice Value', 'Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Price to Brand', 'Vendor Price to AGS', 'First Sale Price', 'First Sale Duty Savings', 'First Sale Flag'] }
 
   def create_data
     vend = Factory(:company, name: "vend name", system_code: "vend sys code")
@@ -45,6 +39,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
     @ord.save!
     @ordln = Factory(:order_line, order: @ord, product: @prod, price_per_unit: 1)
+    @ordln.update_custom_value!(cdefs[:ord_line_wholesale_unit_price], 2)
   end
 
   describe "permission?" do
@@ -119,15 +114,9 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       expect(result.count).to eq 2
       rows = []
       result.each { |r| rows << r }
-      expect(rows[0]).to eq ['brok ref', 'ent num', 'ent type', date_1, date_2, date_3, date_4, date_5, 'transport mode', 'mbols', 'hbols', 'unlading', 
-                             'alliance port', 'lading', 'po num', 'prod line', 'part num', 'imp tax', 'cust name', 'inv num', 'coo', 'export code',
-                             'dept', 'hts', 1, 'mid', 'vend name', 'vend sys code', 'agent', 1, 2, 3, 1, 'uom', 'spi', 2, 3, 'class uom 1', 'class uom 2', 
-                             'add case', 18, 1, 4, 13, 3, 4, 5, 16, 6, 7, 5, 8, 29, 2, 9, 1, 10, 1, 4, 13, 'Y']
-      
-      expect(rows[1]).to eq ['brok ref', 'ent num', 'ent type', date_1, date_2, date_3, date_4, date_5, 'transport mode', 'mbols', 'hbols', 'unlading', 
-                             'alliance port', 'lading', 'po num', 'prod line', 'part num', 'imp tax', 'cust name', 'inv num', 'coo', 'export code',
-                             'dept', 'hts2', 2, 'mid', 'vend name', 'vend sys code', 'agent', 1, 2, 3, 1, 'uom', 'spi2', 3, 4, 'class uom 1(2)', 'class uom 2(2)', 
-                             'add case', 18, 1, 5, 13, 3, 4, 5, 16, 6, 7, 6, 8, 29, 2, 9, 1, 10, 1, 5, 13, 'Y']
+      #                           0          1          2         3       4       5       6       7          8               9       10         11             12           13        14          15          16          17         18           19      20          21        22     23    24   25        26            27            28     29  30  31  32   33      34   35  36       37                 38             39        40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58  59  60
+      expect(rows[0]).to eq ['brok ref', 'ent num', 'ent type', date_1, date_2, date_3, date_4, date_5, 'transport mode', 'mbols', 'hbols', 'unlading', 'alliance port', 'lading', 'po num', 'prod line', 'part num', 'imp tax', 'cust name', 'inv num', 'coo', 'export code','dept', 'hts',  1, 'mid', 'vend name', 'vend sys code', 'agent',  1,  2,  3,  1, 'uom', 'spi',  2,  3, 'class uom 1',    'class uom 2',   'add case',   2,  1,  4, 13,  3,  4,  5, 16,  6,  7,  5,  8, 29,  2,  9,  1,   2,  1,  4, 13, 'Y']   
+      expect(rows[1]).to eq ['brok ref', 'ent num', 'ent type', date_1, date_2, date_3, date_4, date_5, 'transport mode', 'mbols', 'hbols', 'unlading', 'alliance port', 'lading', 'po num', 'prod line', 'part num', 'imp tax', 'cust name', 'inv num', 'coo', 'export code','dept', 'hts2', 2, 'mid', 'vend name', 'vend sys code', 'agent',  1,  2,  3,  1, 'uom', 'spi2', 3,  4, 'class uom 1(2)', 'class uom 2(2)', 'add case',  2,  1,  5, 13,  3,  4,  5, 16,  6,  7,  6,  8, 29,  2,  9,  1,   2,  1,  5, 13, 'Y']
     end
 
     it "skips entries whose release date isn't in the range" do
