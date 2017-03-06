@@ -153,7 +153,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def assigned_agent order
     linked_system_codes = Company.where("companies.id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",order.vendor_id).pluck(:system_code)
-    agent_codes = ['GELOWELL','RO'] & linked_system_codes
+    agent_codes = ['GELOWELL','RO','GS-EU','GS-US','GS-CA'] & linked_system_codes
     agent_codes.sort.join("/")
   end
 
