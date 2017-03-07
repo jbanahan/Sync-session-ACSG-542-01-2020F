@@ -116,6 +116,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
     context "baillie" do
       it "should send data to the baillie order xml parser if the path contains baillie/_po_xml" do
+        expect(master_setup).to receive(:custom_feature?).with('Baillie').and_return(true)
         k = OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser
         expect(k).to receive(:delay).and_return(k)
         expect(k).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'

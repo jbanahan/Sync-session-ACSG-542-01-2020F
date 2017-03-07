@@ -129,7 +129,7 @@ module OpenChain
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
         OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, remote_path)
-      elsif command['path'].include?('baillie/_po_xml')
+      elsif command['path'].include?('baillie/_po_xml') && master_setup.custom_feature?("Baillie")
         OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser.delay.process_from_s3(bucket, remote_path)
       elsif command['path'].include?('_fenix_invoices/') && master_setup.custom_feature?('fenix')
         OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
