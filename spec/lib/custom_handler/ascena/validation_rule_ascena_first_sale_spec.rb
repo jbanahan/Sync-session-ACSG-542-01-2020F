@@ -39,6 +39,13 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
 
       expect(subject.run_validation entry).to be_nil
     end
+
+    it "does not error if MOT = 40 and line has non-dutable charges" do
+      entry.update_attributes! transport_mode_code: "40"
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C", non_dutiable_amount: 20
+
+      expect(subject.run_validation entry).to be_nil
+    end
   end
   
 end
