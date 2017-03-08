@@ -21,6 +21,10 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
         if mids.include?(l.mid.upcase) && invalid_first_sale_data?(l)
           errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} must have Value Appraisal Method and Contract Amount set."
         end
+
+        if l.contract_amount.to_f > 0 && l.contract_amount.to_f < l.total_entered_value
+          errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} must have a First Sale Contract Amount greater than the Entered Value."
+        end
       end
     end
 

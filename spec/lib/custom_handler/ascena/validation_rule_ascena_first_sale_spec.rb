@@ -4,8 +4,10 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     let (:entry) {
       e = Factory(:entry)
       i = e.commercial_invoices.create! invoice_number: "INV"
-      i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 1
-      i.commercial_invoice_lines.create! line_number: 2, value_appraisal_method: "F", mid: "MID2", contract_amount: 1
+      l = i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 10
+      l.commercial_invoice_tariffs.create! entered_value: 5
+      l = i.commercial_invoice_lines.create! line_number: 2, value_appraisal_method: "F", mid: "MID2", contract_amount: 10
+      l.commercial_invoice_tariffs.create! entered_value: 5
       e
     }
 
@@ -45,6 +47,11 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C", non_dutiable_amount: 20
 
       expect(subject.run_validation entry).to be_nil
+    end
+
+    it "errors if first sale amount is less than the entered value" do
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! contract_amount: 4
+      expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have a First Sale Contract Amount greater than the Entered Value."
     end
   end
   
