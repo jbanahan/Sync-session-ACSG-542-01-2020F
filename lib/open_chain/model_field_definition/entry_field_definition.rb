@@ -252,7 +252,10 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [164,:ent_cancelled_date, :cancelled_date, "Cancelled Date", {:data_type=>:datetime}],
       [165,:ent_arrival_notice_receipt_date, :arrival_notice_receipt_date, "Arrival Notice Receipt Date", {:data_type=>:datetime}],
       [166, :ent_total_non_dutiable_amount, :total_non_dutiable_amount, "Total Non-Dutiable Amount", {data_type: :decimal, currency: :usd}],
-      [167, :ent_product_lines, :product_lines, "Product Lines", {:data_type=>:text}]
+      [167, :ent_product_lines, :product_lines, "Product Lines", {:data_type=>:text}],
+      [168, :ent_fiscal_date, :fiscal_date, "Fiscal Date", {:data_type=>:date}],
+      [169, :ent_fiscal_month, :fiscal_month, "Fiscal Month", {:data_type=>:integer}],
+      [170, :ent_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

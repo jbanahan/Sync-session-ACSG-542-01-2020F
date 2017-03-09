@@ -15,11 +15,59 @@ describe CompaniesController do
       expect(c.entity_snapshots.count).to eq 1
     end
   end
+  describe "new" do
+    it "renders for authorized user" do
+      mf_release_date = double "ent_release_date"
+      mf_arrival_date = double "ent_arrival_date"
+      expect(ModelField).to receive(:find_by_uid).with(:ent_release_date).and_return mf_release_date
+      expect(ModelField).to receive(:find_by_uid).with(:ent_arrival_date).and_return mf_arrival_date
+      expect(mf_release_date).to receive(:label).and_return "Release Date"
+      expect(mf_arrival_date).to receive(:label).and_return "Arrival Date"
+
+      get :new
+      expect(response).to be_success
+      expect(assigns(:company)).to be_instance_of Company
+      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], ["Arrival Date", :ent_arrival_date], ["Release Date", :ent_release_date]])
+    end
+
+    it "denies access to unauthorized user" do
+      company.update_attributes(master: false)
+      get :new
+      expect(response).to be_redirect
+    end
+  end
+  describe "edit" do
+    it "renders for authorized user" do
+      mf_release_date = double "ent_release_date"
+      mf_arrival_date = double "ent_arrival_date"
+      expect(ModelField).to receive(:find_by_uid).with(:ent_release_date).and_return mf_release_date
+      expect(ModelField).to receive(:find_by_uid).with(:ent_arrival_date).and_return mf_arrival_date
+      expect(mf_release_date).to receive(:label).and_return "Release Date"
+      expect(mf_arrival_date).to receive(:label).and_return "Arrival Date"
+
+      get :edit, id: company
+      expect(response).to be_success
+      expect(assigns(:company)).to eq company
+      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], ["Arrival Date", :ent_arrival_date], ["Release Date", :ent_release_date]])
+      expect(assigns(:workflow_object)).to eq company
+    end
+
+    it "denies access to unauthorized user" do
+      company.update_attributes(master: false)
+      get :edit, id: company
+      expect(response).to be_redirect
+    end
+  end
   describe "update" do
     it "should trigger snapshot" do
       allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       put :update, {'id'=>company.id, 'company'=>{'cmp_name'=>'mycompany'}}
       expect(company.entity_snapshots.count).to eq 1
+    end
+    it "warns user if fiscal_reference has changed" do
+      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
+      put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>'release_date'}}
+      expect(flash[:notices]).to include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
     end
   end
   describe "attachment_archive_enabled" do

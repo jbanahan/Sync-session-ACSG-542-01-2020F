@@ -1060,6 +1060,21 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = subject.process_entry @e
       expect(entry.commercial_invoices.first.commercial_invoice_lines.first.unit_price).to eq 0
     end
+
+    it "assigns fiscal month to entry and broker invoice" do
+      imp = Factory(:company, alliance_customer_number: "TEST", fiscal_reference: "ent_release_date")
+      fm_1 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,3,1), end_date: Date.new(2015,3,31))
+      fm_2 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015,4,1), end_date: Date.new(2015,4,30))
+
+      entry = subject.process_entry @e
+      expect(entry.fiscal_date).to eq fm_1.start_date
+      expect(entry.fiscal_month).to eq 1
+      expect(entry.fiscal_year).to eq 2015
+      brok_inv = entry.broker_invoices.first
+      expect(brok_inv.fiscal_date).to eq fm_2.start_date
+      expect(brok_inv.fiscal_month).to eq 2
+      expect(brok_inv.fiscal_year).to eq 2015
+    end    
   end
 
   describe "parse" do

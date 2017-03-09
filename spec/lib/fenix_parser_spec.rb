@@ -689,6 +689,15 @@ describe OpenChain::FenixParser do
     expect(e.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_amount).to be_nil
   end
 
+  it "assigns fiscal month to entry" do
+    imp = Factory(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
+    fm = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,9,1), end_date: Date.new(2015,9,30))
+    OpenChain::FenixParser.parse @entry_lambda.call
+    e = Entry.find_by_broker_reference @file_number
+    expect(e.fiscal_date).to eq fm.start_date
+    expect(e.fiscal_month).to eq 1
+    expect(e.fiscal_year).to eq 2015
+  end    
 
   context "with fenix admin group" do
     let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}

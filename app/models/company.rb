@@ -35,6 +35,7 @@ class Company < ActiveRecord::Base
   has_many  :product_vendor_assignments, dependent: :destroy, foreign_key: :vendor_id
   has_many  :products_as_vendor, through: :product_vendor_assignments, source: :product
   has_many  :vfi_invoices, :dependent => :destroy, :foreign_key => "customer_id"
+  has_many  :fiscal_months
 
   has_one :attachment_archive_setup, :dependent => :destroy
 

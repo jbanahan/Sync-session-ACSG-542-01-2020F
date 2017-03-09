@@ -79,6 +79,7 @@ module OpenChain
               total_broker_invoice_value += inv.invoice_total
             end
             ent.broker_invoice_total = total_broker_invoice_value
+            FiscalMonthAssigner.assign ent
             ent.save!
           else
             invoice.save!

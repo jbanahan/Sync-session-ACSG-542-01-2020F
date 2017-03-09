@@ -1,0 +1,47 @@
+<%content_for :action_bar do-%>
+  <button class='btn_link' link_to='<%= new_company_fiscal_month_path(@company) %>'>New</button>
+  <button class='btn_link' link_to='<%= download_company_fiscal_months_path(@company) %>' title='Download'><i class='fa fa-download'></i></button>
+  <button class='btn_link' link_to='<%= company_path(@company)%>' key_map='b'>Back</button>
+<% end %>
+<div class="container" id="main-container">
+  <h1>Fiscal Calendar: <%=@company.name%></h1><br>
+  <div class="container">
+    
+     <%= form_tag "/companies/#{@company.id}/fiscal_months/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
+      <div class="form-group">
+        <label for="attached" class='col-md-1 control-label'>File:</label>
+        <div class="col-md-4">
+          <%= file_field_tag :attached, :style => "width: 500px !important;", :placeholder => "This is a test:"%>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-1 col-md-offset-1">
+          <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn' %>
+        </div>
+      </div>
+    <% end %>
+
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>&nbsp;</th>
+          <th>Fiscal Year</th>
+          <th>Fiscal Month</th>
+          <th>Actual Start Date</th>
+          <th>Actual End Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%- @fiscal_months.each do |fm| %>
+          <tr>
+            <td><%= link_to "Edit", edit_company_fiscal_month_path(@company, fm) %></td>
+            <td><%= fm.year %></td>
+            <td><%= fm.month_number %></td>
+            <td><%= fm.start_date %></td>
+            <td><%= fm.end_date %></td>
+          </tr>
+        <%- end %>
+      </tbody>
+    </table>
+  </div>
+</div>

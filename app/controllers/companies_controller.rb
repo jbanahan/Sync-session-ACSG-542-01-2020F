@@ -55,6 +55,8 @@ class CompaniesController < ApplicationController
   # GET /companies/new.xml
   def new
     @company = Company.new
+    # @fiscal_reference_opts = {release_date: ModelField.find_by_uid(:ent_release_date), arrival_date: ModelField.find_by_uid(:ent_arrival_date)}
+      @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_release_date]
     action_secure(current_user.company.master, @company, {:verb => "create ", :module_name=>"company"}) {
       respond_to do |format|
         format.html # new.html.erb
@@ -65,6 +67,8 @@ class CompaniesController < ApplicationController
   # GET /companies/1/edit
   def edit
      @company = Company.find(params[:id])
+     # @fiscal_reference_opts = {release_date: ModelField.find_by_uid(:ent_release_date), arrival_date: ModelField.find_by_uid(:ent_arrival_date)}
+     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_release_date]
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) { 
        enable_workflow @company
      }
@@ -92,10 +96,12 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
+      old_fiscal_ref = @company.fiscal_reference
       if @company.update_model_field_attributes(params[:company])
         OpenChain::WorkflowProcessor.async_process @company
         @company.create_snapshot(current_user)
         add_flash :notices, "Company was updated successfully."
+        add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference != old_fiscal_ref
       else
         errors_to_flash @company
       end
@@ -173,5 +179,15 @@ class CompaniesController < ApplicationController
       if params[:company][:cmp_enabled_booking_types].respond_to?(:join)
         params[:company][:cmp_enabled_booking_types] = params[:company][:cmp_enabled_booking_types].join("\n ")
       end
+    end
+
+    def fiscal_reference_options uids
+      opts = [[nil, ""]]
+      uids.each do |uid|
+        mf = ModelField.find_by_uid uid
+        next unless mf
+        opts << [mf.label, uid]
+      end
+      opts
     end
 end

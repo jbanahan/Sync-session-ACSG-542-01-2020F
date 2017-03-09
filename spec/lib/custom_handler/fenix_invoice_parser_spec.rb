@@ -329,4 +329,16 @@ INV
     expect(inv.customer_number).to eq "BOSSCI"
     expect(inv.intacct_receivable_lines.first.charge_code).to eq "001"
   end
+
+  it "assigns fiscal month to broker invoice" do
+    imp = Factory(:company, fiscal_reference: "ent_release_date")
+    @ent.update_attributes(importer: imp, release_date: "20130105")
+    fm = Factory(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013,1,1), end_date: Date.new(2015,1,31))
+    @k.parse @content
+
+    brok_inv = @ent.broker_invoices.first
+    expect(brok_inv.fiscal_date).to eq fm.start_date
+    expect(brok_inv.fiscal_month).to eq 1
+    expect(brok_inv.fiscal_year).to eq 2013
+  end
 end

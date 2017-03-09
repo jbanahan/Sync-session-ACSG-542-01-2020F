@@ -213,6 +213,8 @@ module OpenChain
 
           set_entry_dates @entry, accumulated_dates
 
+          FiscalMonthAssigner.assign @entry
+
           @entry.save!
           #match up any broker invoices that might have already been loaded
           @entry.link_broker_invoices

@@ -120,7 +120,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         end
 
         postprocess e, entry
-        
+
+        FiscalMonthAssigner.assign entry
+
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
 

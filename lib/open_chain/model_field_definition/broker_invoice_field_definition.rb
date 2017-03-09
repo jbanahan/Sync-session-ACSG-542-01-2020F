@@ -172,7 +172,13 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
 
       make_broker_invoice_entry_field(157,:bi_ent_broker_invoice_total,:broker_invoice_total,"Total Broker Invoice",:decimal,lambda {|entry| entry.broker_invoice_total},lambda {|u| u.view_broker_invoices?},{:currency=>:usd}),
       make_broker_invoice_entry_field(158,:bi_ent_total_add,:total_add,"Total ADD",:decimal,lambda {|entry| entry.total_add},nil,{:currency=>:usd}),
-      make_broker_invoice_entry_field(159,:bi_ent_total_cvd,:total_cvd,"Total CVD",:decimal,lambda {|entry| entry.total_cvd},nil,{:currency=>:usd})
+      make_broker_invoice_entry_field(159,:bi_ent_total_cvd,:total_cvd,"Total CVD",:decimal,lambda {|entry| entry.total_cvd},nil,{:currency=>:usd}),
+      [160, :bi_fiscal_date, :fiscal_date, "Fiscal Date", {:data_type=>:date}],
+      [161, :bi_fiscal_month, :fiscal_month, "Fiscal Month", {:data_type=>:integer}],
+      [162, :bi_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}],
+      make_broker_invoice_entry_field(163,:bi_ent_fiscal_date,:fiscal_date,"Entry Fiscal Date",:date,lambda {|entry| entry.fiscal_date}),
+      make_broker_invoice_entry_field(164,:bi_ent_fiscal_month,:fiscal_month,"Entry Fiscal Month",:integer,lambda {|entry| entry.fiscal_month}),
+      make_broker_invoice_entry_field(165,:bi_ent_fiscal_year,:fiscal_year,"Entry Fiscal Year",:integer,lambda {|entry| entry.fiscal_year})
     ]
   end
 end; end; end;

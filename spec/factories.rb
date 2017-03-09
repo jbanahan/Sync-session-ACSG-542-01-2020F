@@ -554,3 +554,6 @@ end
 Factory.define :aws_snapshot do |f|
   f.association :aws_backup_session
 end
+Factory.define :fiscal_month do |f|
+  f.association :company
+end

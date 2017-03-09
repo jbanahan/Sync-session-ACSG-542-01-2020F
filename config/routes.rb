@@ -849,6 +849,10 @@ OpenChain::Application.routes.draw do
     resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
     get :attachment_archive_enabled, :on => :collection
+    resources :fiscal_months, :except=>[:show] do
+      get 'download', :on=>:collection
+      post 'upload', :on=>:collection
+    end
   end
 
   resources :file_import_results, :only => [:show] do
