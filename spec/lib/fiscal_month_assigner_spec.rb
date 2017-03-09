@@ -39,7 +39,7 @@ describe OpenChain::FiscalMonthAssigner do
     end
 
     it "does nothing if company doesn't have fiscal calendar enabled" do
-      co.update_attributes(fiscal_reference: "")
+      co.update_attributes!(fiscal_reference: "")
       described_class.assign ent
       expect(ent.fiscal_date).to eq nil
       expect(ent.fiscal_month).to eq nil
@@ -50,7 +50,7 @@ describe OpenChain::FiscalMonthAssigner do
     end
 
     it "assigns blank fiscal attributes if entry field corresponding to company's fiscal reference is blank" do
-      ent.update_attributes(release_date: nil, fiscal_date: Date.today, fiscal_month: 1, fiscal_year: 2016)
+      ent.update_attributes!(release_date: nil, fiscal_date: Date.today, fiscal_month: 1, fiscal_year: 2016)
       described_class.assign ent
       expect(ent.fiscal_date).to be_nil
       expect(ent.fiscal_month).to be_nil
@@ -58,7 +58,7 @@ describe OpenChain::FiscalMonthAssigner do
     end
 
     it "assigns blank fiscal attributes if broker invoice date is blank" do
-      brok_inv.update_attributes(invoice_date: nil, fiscal_date: Date.today, fiscal_month: 1, fiscal_year: 2016)
+      brok_inv.update_attributes!(invoice_date: nil, fiscal_date: Date.today, fiscal_month: 1, fiscal_year: 2016)
       described_class.assign ent
       expect(ent.broker_invoices.first.fiscal_date).to be_nil
       expect(ent.broker_invoices.first.fiscal_month).to be_nil
@@ -66,12 +66,12 @@ describe OpenChain::FiscalMonthAssigner do
     end
 
     it "raises exception if company's fiscal calendar is enabled but entry's date doesn't have a matching fiscal month" do
-      ent.update_attributes(release_date: Date.new(2016,5,15))
+      ent.update_attributes!(release_date: DateTime.new(2016, 5, 15, 12, 00))
       expect{described_class.assign ent}.to raise_error "No fiscal month found for Entry #entry num with Release Date 2016-05-15."
     end
 
     it "raises exception if company's fiscal calendar is enabled but broker invoice's invoice_date doesn't have a matching fiscal month" do
-      brok_inv.update_attributes(invoice_date: Date.new(2016,5,15))
+      brok_inv.update_attributes!(invoice_date: Date.new(2016,5,15))
       expect{described_class.assign ent}.to raise_error "No fiscal month found for Broker Invoice #inv num with Invoice Date 2016-05-15."
     end
 
