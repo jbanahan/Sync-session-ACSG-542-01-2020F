@@ -9,7 +9,7 @@ class Entry < ActiveRecord::Base
   TRACKING_STATUS_OPEN ||= 1 #Entry has been sent to customs
   TRACKING_STATUS_CLOSED ||= 2 #Entry will never be sent to customs
 
-  has_many :broker_invoices, :dependent => :destroy, :autosave => true
+  has_many :broker_invoices, dependent: :destroy, autosave: true, inverse_of: :entry
   has_many :broker_invoice_lines, :through => :broker_invoices
   has_many :commercial_invoices, :dependent => :destroy, :autosave => true
   has_many :commercial_invoice_lines, :through => :commercial_invoices
