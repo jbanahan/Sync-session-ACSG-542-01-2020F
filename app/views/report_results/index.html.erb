@@ -40,7 +40,11 @@
   <%if OpenChain::Report::AscenaEntryAuditReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Ascena Entry Audit Report", reports_show_ascena_entry_audit_report_path%></td>
     <td>Shows combination of Ascena and PO data.</td></tr>
-  <%end-%>  
+  <%end-%>
+  <%if OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Ascena Duty Savings Report", reports_show_ascena_duty_savings_report_path%></td>
+    <td>Shows duty savings for a fiscal month.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::DrawbackExportsWithoutImports.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Drawback Exports Without Imports", reports_show_drawback_exports_without_imports_path%></td>
     <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td></tr>

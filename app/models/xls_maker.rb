@@ -210,6 +210,10 @@ class XlsMaker
 
     f
   end
+
+  def self.open_workbook path
+    Spreadsheet.open path
+  end
   
   private
   def prep_workbook cols, user

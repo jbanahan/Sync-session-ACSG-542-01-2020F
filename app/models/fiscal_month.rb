@@ -10,6 +10,10 @@ class FiscalMonth < ActiveRecord::Base
     user.sys_admin?
   end
 
+  def fiscal_descriptor
+    "#{year}-#{month_number.to_s.rjust(2, "0")}"
+  end
+
   def self.generate_csv company_id
     recs = run_csv_query company_id
     output = CSV.generate do |csv|
