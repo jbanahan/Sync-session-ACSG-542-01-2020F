@@ -187,7 +187,7 @@ module OpenChain
 
       def find_rl_brand entry
         # The brand is the first 3 characters of the product for SAP PO's.
-        brand_line = entry.commercial_invoice_lines.find {|line| (line.part_number.length >= 3 && sap_po?(line.po_number)) ? line : false}
+        brand_line = entry.commercial_invoice_lines.find {|line| (line.part_number.to_s.length >= 3 && sap_po?(line.po_number)) ? line : false}
 
         brand = nil
         if brand_line.nil?
