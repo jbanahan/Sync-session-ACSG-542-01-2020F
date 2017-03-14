@@ -55,6 +55,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       CustomDefinition.delete_all
     end
 
+    before :each do
+      # Disable the actual delaying of the jobs
+      Delayed::Worker.delay_jobs = false
+    end
+
     def cdefs
       @cdefs
     end
@@ -304,7 +309,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
     context "check that methods are called" do
       it "should fail on header validation issue" do
-        expect(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise "some error"
+        expect(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise described_class::BusinessLogicError, "some error"
         subject.process_file(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
 
         expect(Order.count).to eq 0
@@ -324,7 +329,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect(rows[1]).to eq detail_2
       end
       it "should fail on detail validation issue" do
-        expect(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise "some error"
+        expect(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise  described_class::BusinessLogicError, "some error"
 
         subject.process_file(convert_pipe_delimited [header, detail])
 

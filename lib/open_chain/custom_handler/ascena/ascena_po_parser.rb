@@ -22,13 +22,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
         next if blank_row?(row)
         if(row[0] == 'H')
           if po_rows.length > 0
-            process_po(user, po_rows, opts)
+            # The reason we're delaying here is so that we can let any transient db/locking/etc type of errors
+            # bubble up and transparently let delayed jobs reprocess the file chunk
+            self.delay.process_po(user, po_rows, opts[:bucket], opts[:key])
             po_rows = []
           end
         end
         po_rows << row
       end
-      process_po(user, po_rows, opts) if po_rows.length > 0
+      self.delay.process_po(user, po_rows, opts[:bucket], opts[:key]) if po_rows.length > 0
     rescue => e
       raise e unless Rails.env.production?
       # Log the error and don't bother attempting to reprocess the file...by adding the file path into the error,
@@ -47,14 +49,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     row.find {|c| !c.blank? }.nil?
   end
 
+  class BusinessLogicError < StandardError
+
+  end
+
   def validate_header header
-    raise "Customer order number missing" if header[:ord_customer_order_number].blank?
+    raise BusinessLogicError, "Customer order number missing" if header[:ord_customer_order_number].blank?
   end
 
   def validate_detail detail, row_num
-    raise "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
-    raise "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
-    raise "Line number missing on row #{row_num}" if detail[:ordln_line_number].nil? || detail[:ordln_line_number].zero?
+    raise BusinessLogicError, "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
+    raise BusinessLogicError, "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
+    raise BusinessLogicError, "Line number missing on row #{row_num}" if detail[:ordln_line_number].nil? || detail[:ordln_line_number].zero?
   end
 
 
@@ -108,9 +114,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     hsh
   end
 
-  private
 
-  def process_po user, rows, opts
+  def process_po user, rows, bucket, filename
     po_number = nil
     begin
       header = map_header rows.first
@@ -124,22 +129,24 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
         validate_detail row, x + 1
         detail_rows << row
       end
-      product_cache = make_product_cache(user, header, detail_rows, opts[:key])
+      product_cache = make_product_cache(user, header, detail_rows, filename)
 
       shipped_lines = []
-      ord = update_or_create_order(header, opts) do |saved_ord|
+      ord = update_or_create_order(header, bucket, filename) do |saved_ord|
         
-        shipped_lines = process_detail_rows(detail_rows, header, saved_ord, product_cache, opts)
+        shipped_lines = process_detail_rows(detail_rows, header, saved_ord, product_cache)
       end
-      ord.create_snapshot user, nil, opts[:key]
+      ord.create_snapshot user, nil, filename
 
       if shipped_lines.length > 0
         notify_about_shipped_lines rows, po_number, shipped_lines
       end
-    rescue => e
-      handle_process_po_error(rows, po_number, e, opts[:key])
+    rescue BusinessLogicError => e
+      handle_process_po_error(rows, po_number, e, filename)
     end
   end
+
+  private
 
   def handle_process_po_error rows, po_number, err, file_name
     temp_file_data(rows, po_number) do |f|
@@ -187,7 +194,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     cache
   end
 
-  def process_detail_rows detail_rows, header, ord, product_cache, opts
+  def process_detail_rows detail_rows, header, ord, product_cache
 
     shipped_line_numbers = Set.new
     unless ord.order_lines.empty?
@@ -248,7 +255,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     factory
   end
 
-  def update_or_create_order header, opts, &block
+  def update_or_create_order header, bucket, filename, &block
     ord = nil
     continue = false
     Lock.acquire("ASCENA-#{header[:ord_customer_order_number]}") do
@@ -261,14 +268,14 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     end
     if continue
       Lock.with_lock_retry(ord) do
-        update_order(ord, header, opts, &block) 
+        update_order(ord, header, bucket, filename, &block) 
       end
     end
     
     ord
   end
 
-  def update_order ord, header, opts
+  def update_order ord, header, bucket, filename
     if newer_revision? ord, header
       vendor = update_or_create_vendor(header[:ord_vend_system_code],header[:ord_vend_name])
       factory = update_or_create_factory(header[:ord_fact_system_code],header[:ord_fact_name],header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
@@ -276,7 +283,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       ord.assign_attributes(order_date: date_parse(header[:ord_order_date]), vendor: vendor, terms_of_sale: header[:ord_terms_of_sale],
                             mode: header[:ord_mode], ship_window_start: date_parse(header[:ord_ship_window_start]),
                             ship_window_end: date_parse(header[:ord_ship_window_end]), fob_point: header[:ord_fob_point],
-                            last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+                            last_file_bucket: bucket, last_file_path: filename)
       ord.factory = factory if factory
       ord.find_and_set_custom_value(cdefs[:ord_selling_channel], header[:ord_selling_channel])
       ord.find_and_set_custom_value(cdefs[:ord_division], header[:ord_division])
