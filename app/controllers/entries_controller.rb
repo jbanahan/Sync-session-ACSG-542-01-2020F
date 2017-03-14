@@ -57,9 +57,6 @@ class EntriesController < ApplicationController
   end
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]],:entry_comments=>[:entry],:import_country=>[]).first
-    e.commercial_invoices.each do |invoice|
-
-    end
     unless e
       error_redirect "Entry with id #{params[:id]} not found."
       return
