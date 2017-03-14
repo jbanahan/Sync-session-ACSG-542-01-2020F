@@ -4,19 +4,27 @@
       $('.attachment_icon').popover({html: true});
     });    
   <% end %>
-  <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
+  <% can_attach = !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user) %>
+  <% if can_attach%>
     <% content_for :action_bar do %>
       <button title='Add Attachment' class="btn btn-default" data-toggle="modal" href='#mod_attach_bs'><i class='fa fa-paperclip'></i></button>
     <%end%>
   <% end %>
 <%end-%>
 <% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments).find_all {|a| a.can_view?(current_user) }-%>
-<% unless attachments.blank?-%>
   <div class='row text-center'>
     <div class='col-md-12'>
       <h3>Attachments</h3>
     </div>
   </div>
+  <% if attachments.blank? %>
+    <div class="well">
+      There aren't any attachments.
+      <% if can_attach %>
+        Create one with the <i class='fa fa-paperclip'></i> button below.
+      <% end %>
+    </div>
+  <% else %>
       <% attachments.each_with_index do |att, attachment_counter| %>
         <% if attachment_counter%3 == 0 %>
           <div class="row">

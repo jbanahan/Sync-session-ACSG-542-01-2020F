@@ -70,4 +70,5 @@
   margin-right: 20px; }
 
 .chain-folder-list ul {
-  list-style-type: none; }
+  list-style-type: none;
+  padding-left: 0; }

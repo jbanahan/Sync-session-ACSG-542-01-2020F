@@ -81,6 +81,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
       expect(ol.custom_value(@cdefs[:ordln_qa_approved_by])).to_not be_blank
       expect(ol.custom_value(@cdefs[:ordln_qa_approved_date])).to_not be_blank
     end
+    
+    it "should auto flow if assigned agent is global sourcing" do
+      ['GS-EU','GS-US','GS-CA'].each do |agent|
+        ol = Factory(:order_line)
+        ol.order.update_custom_value!(@cdefs[:ord_assigned_agent],agent)
+        
+        described_class.process(ol.order)
+        expect(ol.custom_value(@cdefs[:ordln_qa_approved_by])).to_not be_blank
+        expect(ol.custom_value(@cdefs[:ordln_qa_approved_date])).to_not be_blank
+      end
+    end
 
     it "should not auto flow QA if assigned agent" do
       ol = Factory(:order_line)
@@ -106,13 +117,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprove
     end
 
     it "allows disabling the snapshot" do
-      u = Factory(:master_user,username:'autoflow')
+      Factory(:master_user,username:'autoflow')
       p = Factory(:product)
       v = Factory(:company,name:'vendor')
       pva = p.product_vendor_assignments.create!(vendor_id:v.id)
       pva.update_custom_value!(@cdefs[:prodven_risk],'Auto-Flow')
       ord = Factory(:order,vendor:v)
-      ol = Factory(:order_line,product:p,order:ord)
+      Factory(:order_line,product:p,order:ord)
 
       expect(ord).not_to receive(:create_snapshot)
 

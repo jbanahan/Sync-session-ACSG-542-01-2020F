@@ -48,8 +48,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
   end
 
   def self.process_line_qa ol, cdefs, autoflow_user
-    should_be_autoflow = ol.order.get_custom_value(cdefs[:ord_assigned_agent]).value.blank?
-    is_approved = !ol.get_custom_value(cdefs[:ordln_qa_approved_date]).value.blank?
+    assigned_agent = ol.order.custom_value(cdefs[:ord_assigned_agent])
+    should_be_autoflow = assigned_agent.blank? || assigned_agent.match(/GS-(EU|US|CA)/)
+    is_approved = !ol.custom_value(cdefs[:ordln_qa_approved_date]).blank?
     if !is_approved && should_be_autoflow
       ol.update_custom_value!(cdefs[:ordln_qa_approved_by],autoflow_user.id)
       ol.update_custom_value!(cdefs[:ordln_qa_approved_date],0.seconds.ago)

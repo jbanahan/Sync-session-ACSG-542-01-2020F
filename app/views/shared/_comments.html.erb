@@ -66,14 +66,21 @@ function sendComment() {
     })
 }
 <% end %>
-<% if (!commentable.respond_to?('can_comment?') || commentable.can_comment?(current_user)) %>
+<% can_comment = (!commentable.respond_to?('can_comment?') || commentable.can_comment?(current_user)) %>
+<% if can_comment %>
   <%content_for :action_bar do%>
     <button id='btn_comment_add' title='Add Comment'><i class='fa fa-sticky-note'></i></button>
   <% end %>
 <%end%>
-<% unless commentable.comments.empty? %>
 <div id='comments_container' class='section_insert'>
-  <h2 class='section_insert_heading'>Comments <span style='font-weight: normal; font-size: 50%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
+  <h3 class='section_insert_heading text-center'>Comments <span style='font-weight: normal; font-size: 40%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h3>
+  <% if commentable.comments.empty? %>
+  <div class="well">There aren't any comments. 
+    <%if can_comment %> 
+      Create one with the <i class='fa fa-sticky-note'></i> button below.
+    <%end%>
+  </div>
+  <% else %>
   <table class='comment_table'>
     <tbody>
       <%commentable.comments.each do |c| %>
@@ -114,8 +121,8 @@ function sendComment() {
       <%end%>
     </tbody>
   </table>
+  <% end %>
 </div>
-<% end %>
 <div id='mod_comments_add' style='display:none;'>
   <%=form_for(commentable.comments.build, :html=>{:id=>'frm_comment_add'}) do |f| %>
     <%=f.hidden_field :commentable_id %>

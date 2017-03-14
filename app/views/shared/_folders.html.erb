@@ -1,25 +1,29 @@
 <% content_for :action_bar do %>
-  <button title='Add Folder' class="btn btn-default" href='javascript:;' onclick="newFolder();"><i class='fa fa-folder-open-o'></i></button>
+  <button title='Add Folder' class="btn btn-default" href='javascript:;' onclick="newFolder();"><i title="create folder" class='fa fa-folder-open-o'></i></button>
 <%end%>
 <% content_for :javascript do %>
   function newFolder() {
     angular.element(".chain-folder-add").scope().showModal()
+    $('.no-folder-well').hide()
   }
 <% end %>
 
-<% unless obj.folders.blank?-%>
-<div class='row text-center'>
-  <div class='col-md-12'>
-    <h3>Folders</h3>
-  </div>
-</div>
-<% end %>
-<div class="row">
-  <div class="col-md-12">
-    <div ng-app="Folders">
-      <chain-folders owner-type="<%=obj.class.to_s.underscore.pluralize%>" owner-id="<%=obj.id%>" can-attach="<%=obj.can_attach?(current_user)%>" create-folder-button="false"/>
+<div class="section_insert">
+  <div class='row text-center'>
+    <div class='col-md-12'>
+      <h3 class="section_insert_heading">Folders</h3>
     </div>
   </div>
+  <% if obj.folders.blank?-%>
+  <div class="well no-folder-well">
+    There aren't any folders, create one with the <i class='fa fa-folder-open-o' title="create folder"></i> button below.
+  </div>
+  <% end %>
+  <div class="row">
+    <div class="col-md-12">
+      <div ng-app="Folders">
+        <chain-folders owner-type="<%=obj.class.to_s.underscore.pluralize%>" owner-id="<%=obj.id%>" can-attach="<%=obj.can_attach?(current_user)%>" create-folder-button="false"/>
+        </div>
+      </div>
+    </div>
 </div>
-
-

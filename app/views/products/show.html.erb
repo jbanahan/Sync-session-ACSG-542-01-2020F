@@ -58,6 +58,7 @@
       <%end-%>
       <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
       <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
+      <%=render :partial => 'shared/folders', :locals => {:obj => @product} %>
       <%if @product.on_bill_of_materials?-%>
         <div class='bom_cont'>
           <% unless @product.parent_products.empty? -%>
