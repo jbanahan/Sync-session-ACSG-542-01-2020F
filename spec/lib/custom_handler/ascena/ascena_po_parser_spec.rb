@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
   end
 
-  describe "parse" do
+  describe "parse", :disable_delayed_jobs do
     let!(:importer) { Factory(:company, system_code: "ASCENA", importer: true) }
 
     before(:all) do
@@ -53,11 +53,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     after(:all) do
       CustomDefinition.delete_all
-    end
-
-    before :each do
-      # Disable the actual delaying of the jobs
-      Delayed::Worker.delay_jobs = false
     end
 
     def cdefs
@@ -300,7 +295,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
   end
 
-  context "data validation" do
+  context "data validation", :disable_delayed_jobs do
     let :header_map do
       subject.map_header header
     end
