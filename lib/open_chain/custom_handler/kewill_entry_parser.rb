@@ -391,6 +391,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           totals[:total_units] += il.quantity unless il.quantity.nil?
           totals[:total_cvd] += il.cvd_duty_amount unless il.cvd_duty_amount.nil?
           totals[:total_add] += il.add_duty_amount unless il.add_duty_amount.nil?
+          totals[:other_fees] += il.other_fees unless il.other_fees.nil?
 
           il.commercial_invoice_tariffs.each do |cit|
             accumulations[:spis] << cit.spi_primary
@@ -477,6 +478,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.total_add = value if value.nonzero?
         when :total_non_dutiable_amount
           entry.total_non_dutiable_amount = value if value.nonzero?
+        when :other_fees
+          entry.other_fees = value if value.nonzero?
         end
       end
 
@@ -667,6 +670,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.value_appraisal_method = l[:value_appraisal_method]
       line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
 
+      other_fees = BigDecimal.new("0")
+
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i
         when 499
@@ -683,8 +688,16 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           line.hmf = parse_decimal fee[:amt_fee]
         when 56
           line.cotton_fee = parse_decimal fee[:amt_fee]
+        else
+          if fee[:amt_fee_prorated].to_f > 0
+            other_fees += parse_decimal fee[:amt_fee_prorated]
+          else
+            other_fees += parse_decimal fee[:amt_fee]
+          end
         end
       end
+
+      line.other_fees = other_fees if other_fees.nonzero?
 
       Array.wrap(l[:penalties]).each do |p|
         case p[:penalty_type].to_s.upcase

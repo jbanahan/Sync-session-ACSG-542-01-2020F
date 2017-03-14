@@ -189,6 +189,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
                   {'customs_fee_code'=>56, 'amt_fee'=>456},
+                  {'customs_fee_code'=>311, 'amt_fee'=>5, 'amt_fee_prorated' => 250},
+                  {'customs_fee_code'=>100, 'amt_fee'=>1250}
                 ],
                 'penalties' => [
                   {'penalty_type'=>"ADA", 'case_no'=>'123', 'bonded'=>"Y", "duty_amt"=>123, 'case_value'=>234, 'duty_percent'=>345},
@@ -392,6 +394,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.hmf).to eq BigDecimal.new("1.11")
       expect(entry.mpf).to eq BigDecimal.new("2.22")
       expect(entry.cotton_fee).to eq BigDecimal.new("3.33")
+      expect(entry.other_fees).to eq BigDecimal.new("15")
       expect(entry.daily_statement_number).to eq "bstatement"
       expect(entry.monthly_statement_number).to eq "astatement"
       expect(entry.monthly_statement_due_date).to eq Date.new(2015,3,15)
@@ -590,6 +593,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.first_sale).to be_truthy
       expect(line.non_dutiable_amount).to eq BigDecimal("123.45")
       expect(line.unit_price).to eq BigDecimal("95.23")
+      expect(line.other_fees).to eq BigDecimal("15.00")
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"

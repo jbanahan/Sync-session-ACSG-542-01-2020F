@@ -17,7 +17,7 @@ class CommercialInvoiceLine < ActiveRecord::Base
   end
 
   def total_fees
-    [prorated_mpf, hmf, cotton_fee].compact.sum
+    [prorated_mpf, hmf, cotton_fee, other_fees].compact.sum
   end
 
   def total_entered_value

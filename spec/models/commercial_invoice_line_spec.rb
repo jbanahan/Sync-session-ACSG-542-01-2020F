@@ -30,7 +30,7 @@ describe CommercialInvoiceLine do
 
   describe "total_fees" do
     it "sums fees for line" do
-      expect(CommercialInvoiceLine.new(prorated_mpf: BigDecimal.new("1"), hmf: BigDecimal.new("2"), cotton_fee: BigDecimal.new("3")).total_fees).to eq BigDecimal.new("6")
+      expect(CommercialInvoiceLine.new(prorated_mpf: BigDecimal.new("1"), hmf: BigDecimal.new("2"), cotton_fee: BigDecimal.new("3"), other_fees: BigDecimal("7")).total_fees).to eq BigDecimal.new("13")
     end
   end
 

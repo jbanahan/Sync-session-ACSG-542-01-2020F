@@ -255,7 +255,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [167, :ent_product_lines, :product_lines, "Product Lines", {:data_type=>:text}],
       [168, :ent_fiscal_date, :fiscal_date, "Fiscal Date", {:data_type=>:date}],
       [169, :ent_fiscal_month, :fiscal_month, "Fiscal Month", {:data_type=>:integer}],
-      [170, :ent_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}]
+      [170, :ent_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}],
+      [171, :ent_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
