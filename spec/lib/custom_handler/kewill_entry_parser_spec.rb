@@ -825,6 +825,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       expect(entry.broker_invoices.second.invoice_number).to eq "12345"
       expect(entry.broker_invoices.second.sync_records.length).to eq 1
+
+      # There was a bug where we were totally destroyed invoices into the main total..make sure it doesn't happen again
+      expect(entry.broker_invoice_total).to eq 201.98
     end
 
     it "uses cross process locking / per entry locking" do

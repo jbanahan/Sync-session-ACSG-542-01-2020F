@@ -401,6 +401,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       end
 
       entry.broker_invoices.each do |bi|
+        next if bi.destroyed? || bi.marked_for_destruction?
+
         totals[:broker_invoice_total] += bi.invoice_total unless bi.invoice_total.nil?
         bi.broker_invoice_lines.each do |bil|
           accumulations[:charge_codes] << bil.charge_code
