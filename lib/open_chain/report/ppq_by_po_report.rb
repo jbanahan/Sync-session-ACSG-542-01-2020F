@@ -25,7 +25,7 @@ module OpenChain; module Report; class PpqByPoReport
   end
 
   def conversions time_zone
-    {"Entry Number" => datetime_translation_lambda(time_zone)}
+    {"Release Date" => datetime_translation_lambda(time_zone)}
   end
   
   def rows_to_csv str
