@@ -69,7 +69,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.currency = et(order_header,'CURCY')
         o.terms_of_payment = payment_terms_description(base)
         terms_of_sale = ship_terms(base)
-        o.terms_of_sale = terms_of_sale unless terms_of_sale.blank? 
+        o.terms_of_sale = terms_of_sale unless terms_of_sale.blank?
         o.order_from_address = order_from_address(base,vend)
 
         header_ship_to = ship_to_address(base,@imp)
@@ -531,7 +531,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def order_from_address base, vendor
-      vendor.addresses.first
+      vendor.addresses.where("system_code like '%-CORP'").first
     end
 
     def ship_to_address base, importer
