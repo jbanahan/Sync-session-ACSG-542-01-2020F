@@ -158,14 +158,21 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def find_and_process_entry(e)
       entry = nil 
-      file_no, updated_at, extract_time = self.class.entry_info e
+      file_no, updated_at, extract_time, cancelled_date = self.class.entry_info e
 
       Lock.acquire(Lock::ALLIANCE_PARSER) do
         # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
         # means that the data is for a totally new entry and not for the one that was purged
         break if Entry.purged? Entry::KEWILL_SOURCE_SYSTEM, file_no, extract_time
 
-        entry = Entry.where(broker_reference: file_no, source_system: Entry::KEWILL_SOURCE_SYSTEM).first_or_create! expected_update_time: updated_at, last_exported_from_source: extract_time
+        # If the entry has been cancelled, we don't want to go creating it...it's pointless
+        entry_relation = Entry.where(broker_reference: file_no, source_system: Entry::KEWILL_SOURCE_SYSTEM)
+        if !cancelled_date.nil?
+          entry = entry_relation.first
+        else
+          entry = entry_relation.first_or_create! expected_update_time: updated_at, last_exported_from_source: extract_time
+        end
+
         if skip_file? entry, extract_time
           entry = nil
         end
@@ -176,12 +183,25 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         Lock.with_lock_retry(entry) do
           # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
           if !skip_file?(entry, extract_time)
-            entry.expected_update_time = updated_at
-            entry.last_exported_from_source = extract_time
-            return yield e, entry
+
+            # If the file has been cancelled, it should be purged immediately...don't update any data, just purge it (with extreme vengeance)
+            if cancelled_date
+              process_cancelled_entry entry, extract_time
+              return nil
+            else
+              entry.expected_update_time = updated_at
+              entry.last_exported_from_source = extract_time
+              return yield e, entry
+            end
           end
         end
       end
+    end
+
+    def process_cancelled_entry entry, extract_time
+      # Use the extract time of the purge, so that we're consistent in how we're tracking automated purges by 
+      # always using a value that's tracking against the source system's clock (.ie Kewill's database)
+      entry.purge! date_purged: extract_time
     end
 
     def skip_file? entry, last_exported_from_source
@@ -190,12 +210,22 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def self.entry_info e
-      [e['file_no'].to_s, parse_numeric_datetime(e['updated_at']), tz.parse(e['extract_time'])]
+      [e['file_no'].to_s, parse_numeric_datetime(e['updated_at']), tz.parse(e['extract_time']), cancelled_date(e)]
+    end
+
+    def self.cancelled_date entry_json
+      Array.wrap(entry_json[:dates]).each do |date|
+        next unless date[:date_no].to_i == 5023
+
+        return parse_numeric_datetime(date[:date])
+      end
+
+      nil
     end
 
     def self.s3_file_path e
       # File No and Extract Time should never, ever be missing
-      file_no, updated_at, extract_time = entry_info e
+      file_no, updated_at, extract_time, cancelled_date = entry_info e
 
       # Every other file has the file dates in the path based on UTC, so we're just going to 
       # continue doing that here too.

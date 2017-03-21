@@ -308,7 +308,40 @@ describe Entry do
     it "reports not purged if no purge record exists" do
       expect(Entry.purged? 'Source', '12345', Time.zone.parse("2015-03-31 00:00")).to be_falsey
     end
-   
+  end
+
+  describe "purge!" do
+    let (:entry) { Factory(:entry, broker_reference: "12345", source_system: "SOURCE", import_country: country)}
+    let (:country) { Factory(:country, iso_code: "ZZ") }
+
+    it "purges entries" do
+      now = Time.zone.now
+      Timecop.freeze(now) { entry.purge! }
+
+      purge = EntryPurge.where(broker_reference: "12345").first
+      expect(purge).not_to be_nil
+      expect(purge.country_iso).to eq "ZZ"
+      expect(purge.source_system).to eq "SOURCE"
+      expect(purge.date_purged.to_i).to eq now.to_i
+    end
+
+    it "accepts an alternate date_purged value" do
+      time = ActiveSupport::TimeZone["America/New_York"].parse "2017-01-01 12:00"
+      entry.purge! date_purged: time
+
+      purge = EntryPurge.where(broker_reference: "12345").first
+      expect(purge).not_to be_nil
+      expect(purge.date_purged).to eq time
+    end
+
+    it "handles missing import country" do
+      entry.update_attributes! import_country: nil
+
+      entry.purge!
+      purge = EntryPurge.where(broker_reference: "12345").first
+      expect(purge).not_to be_nil
+      expect(purge.country_iso).to be_nil
+    end
   end
 
   describe "first_sale_savings" do

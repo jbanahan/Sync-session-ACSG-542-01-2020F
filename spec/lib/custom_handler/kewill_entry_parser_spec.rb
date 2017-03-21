@@ -110,7 +110,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99310, 'date'=>201503020800},
           {'date_no'=>99311, 'date'=>201503020900},
           {'date_no'=>99202, 'date'=>201503021000},
-          {'date_no'=>5023, 'date'=>201701051200},
           {'date_no'=>10, 'date'=>201701031200}
         ],
         'notes' => [
@@ -430,7 +429,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.monthly_statement_paid_date).to eq tz.parse("201503020900").to_date
       expect(entry.first_release_date).to eq tz.parse "201503021000"
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
-      expect(entry.cancelled_date).to eq tz.parse "201701051200"
       expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
@@ -1081,7 +1079,26 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(brok_inv.fiscal_date).to eq fm_2.start_date
       expect(brok_inv.fiscal_month).to eq 2
       expect(brok_inv.fiscal_year).to eq 2015
-    end    
+    end
+
+    it "does not create entries that have cancelled dates" do
+      @e['dates'] << {'date_no'=>5023, 'date'=>201503021000}
+      expect(subject.process_entry @e).to be_nil
+    end
+
+    it "purges existing entries that have been cancelled" do
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance")
+
+      @e['dates'] << {'date_no'=>5023, 'date'=>201503021000}
+      expect(subject.process_entry @e).to be_nil
+
+      expect {entry.reload}.to raise_error ActiveRecord::RecordNotFound
+
+      purge = EntryPurge.where(broker_reference: "12345", source_system: "Alliance").first
+      expect(purge).not_to be_nil
+      # Verify the purge date is the extract time value
+      expect(purge.date_purged).to eq "2015-03-12 17:26:20"
+    end
   end
 
   describe "parse" do
