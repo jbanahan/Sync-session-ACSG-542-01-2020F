@@ -101,6 +101,20 @@ describe OpenChain::EntityCompare::EntityComparator do
       described_class.process(to_process)
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv2','ob2','od2','ov2']]
     end
+
+    it "skips snapshots that don't have bucket written" do
+      processed_es = EntitySnapshot.create!(compared_at: 2.days.ago, created_at: 2.days.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
+      old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
+      es = EntitySnapshot.create!(recordable: order, user:user)
+
+      described_class.process(es)
+
+      #Normally, we'd be expecting the es snapshot to process, but since it doesn't have a bucket or doc path, it shouldn't get picked up yet.
+      expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','ob','od','ov']]
+
+      #all objects should be flagged as compared
+      expect(EntitySnapshot.where('compared_at is null')).to include es
+    end
   end
 
   describe "handle_snapshot" do

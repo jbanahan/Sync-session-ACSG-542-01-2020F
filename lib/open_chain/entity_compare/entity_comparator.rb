@@ -1,4 +1,5 @@
 require 'open_chain/entity_compare/comparator_registry'
+
 module OpenChain; module EntityCompare; class EntityComparator
 
   def self.process_by_id entity_snapshot_id
@@ -21,7 +22,7 @@ module OpenChain; module EntityCompare; class EntityComparator
     rec_type = entity_snapshot.recordable_type
     Lock.acquire("EntityComparator-#{rec_type}-#{rec_id}") do
       #get all unprocessed items, oldest to newest
-      all_unprocessed = rec.entity_snapshots.where(compared_at:nil).order(:created_at,:id)
+      all_unprocessed = rec.entity_snapshots.where(compared_at:nil).where("bucket IS NOT NULL AND doc_path IS NOT NULL").order(:created_at,:id)
 
       newest_unprocessed = all_unprocessed.last
 
@@ -31,8 +32,7 @@ module OpenChain; module EntityCompare; class EntityComparator
 
       old_bucket = old_path = old_version = nil
 
-      last_processed = rec.entity_snapshots.where('not compared_at is null').order('compared_at desc, id desc').limit(1).first
-
+      last_processed = rec.entity_snapshots.where('compared_at IS NOT NULL').where("bucket IS NOT NULL AND doc_path IS NOT NULL").order('compared_at desc, id desc').limit(1).first
 
       if last_processed
         # do nothing if newest unprocessed is older than last processed
