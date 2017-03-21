@@ -84,16 +84,17 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [55, :cil_first_sale_savings, :first_sale_savings, "First Sale Savings", {data_type: :decimal, :read_only=>true,
         :import_lambda=>lambda{|o,d| "First Sale Savings ignored (read only)"},
         :export_lambda=>lambda { |obj| obj.first_sale_savings },
-        :qualified_field_name=>"(SELECT ROUND((cil.contract_amount - cil.value) * (cit.duty_amount / cit.entered_value), 2)
-                                     FROM commercial_invoice_lines cil 
-                                       INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id 
-                                     WHERE cil.id = commercial_invoice_lines.id 
-                                     LIMIT 1)"
+        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0,
+                                    (SELECT ROUND((cil.contract_amount - cil.value) * (cit.duty_amount / cit.entered_value), 2)
+                                     FROM commercial_invoice_lines cil
+                                       INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
+                                     WHERE cil.id = commercial_invoice_lines.id
+                                     LIMIT 1 ))"
       }],
       [56, :cil_first_sale_difference, :first_sale_difference, "First Sale Difference", {data_type: :decimal, :read_only=>true,
         :import_lambda=>lambda{|o,d| "First Sale Difference ignored (read only)"},
         :export_lambda=>lambda { |obj| obj.first_sale_difference },
-        :qualified_field_name=>"ROUND((commercial_invoice_lines.contract_amount - commercial_invoice_lines.value), 2)"
+        :qualified_field_name=>"IF(contract_amount IS NULL OR contract_amount = 0, 0, ROUND((commercial_invoice_lines.contract_amount - commercial_invoice_lines.value), 2))"
       }],
       [57, :cil_con_container_number, :container_number, "Container Number", {:data_type=>:string, :read_only=>true,
         :import_lambda=>lambda{ |o,d| "Container Number ignored (read only)"},
