@@ -1,0 +1,33 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("textarea[name='customer_numbers']").val().length === 0) {
+      r = false;
+    }
+    if($("textarea[name='po_numbers']").val().length === 0) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter at least one PO number and Customer Number");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>PPQ By PO Report</h2><br>
+<%=form_tag reports_run_ppq_by_po_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="customer_numbers">Customer Number(s):</label></div>
+    <div class="col-md-3"><%=text_area_tag :customer_numbers,"", :class=>'form-control'%></div>
+    <div class="col-md-2"><label class="control-label" for="po_numbers">PO Number(s): </label></div>
+    <div class="col-md-3"><%=text_area_tag :po_numbers, "", :class=>'form-control' %></div>
+  </div>
+</div>
+<%end%>
+</div>

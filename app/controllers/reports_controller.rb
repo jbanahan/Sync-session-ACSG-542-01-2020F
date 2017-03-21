@@ -484,6 +484,22 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
+  
+  def show_ppq_by_po_report
+    if OpenChain::Report::PpqByPoReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+  def run_ppq_by_po_report
+    klass = OpenChain::Report::PpqByPoReport
+    if klass.permission? current_user
+      run_report "PPQ By PO Report", klass, {customer_numbers: params[:customer_numbers], po_numbers: params[:po_numbers]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
 
   def run_monthly_entry_summation
     if OpenChain::Report::MonthlyEntrySummation.permission? current_user

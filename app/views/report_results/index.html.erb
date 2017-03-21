@@ -41,6 +41,10 @@
     <tr class='hover'><td><%=link_to "Ascena Entry Audit Report", reports_show_ascena_entry_audit_report_path%></td>
     <td>Shows combination of Ascena and PO data.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::PpqByPoReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "PPQ By PO Report", reports_show_ppq_by_po_report_path%></td>
+    <td>Shows PPQ data submitted for the entries covering a list of POs.</td></tr>
+  <%end-%>
   <%if OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Ascena Duty Savings Report", reports_show_ascena_duty_savings_report_path%></td>
     <td>Shows duty savings for a fiscal month.</td></tr>
