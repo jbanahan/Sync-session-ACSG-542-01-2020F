@@ -445,7 +445,8 @@ EOS
     @errors = errors
     @filename = filename
     @file_type = file_type.blank? ? "Unknown" : file_type
-
+    @blacklisted_extension = File.extname(file) if extension_blacklisted? file 
+    
     local_attachments = process_attachments(file, email_to)
     
     m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|
@@ -458,6 +459,15 @@ EOS
   
 
   private
+
+    #http://developer.postmarkapp.com/developer-send-api.html#attachments
+    def extension_blacklisted? file 
+      [".vbs", ".exe", ".bin", ".bat", ".chm", ".com", ".cpl", 
+       ".crt", ".hlp", ".hta", ".inf", ".ins", ".isp", ".jse", 
+       ".lnk", ".mdb", ".pcd", ".pif", ".reg", ".scr", ".sct", 
+       ".shs", ".vbe", ".vba", ".wsf", ".wsh", ".wsl", ".msc", 
+       ".msi", ".msp", ".mst"].include? File.extname(file)
+    end
 
     def extract_email_addresses list
       emails = list
@@ -497,8 +507,10 @@ EOS
       local_attachments = {}
       @attachment_messages = []
 
-      Array.wrap(file_attachments).each do |file|
-        
+      approved_attachments = Array.wrap(file_attachments).reject{ |f| extension_blacklisted? f }
+      
+      approved_attachments.each do |file|
+
         save_large_attachment(file, email_to) do |email_attachment, attachment_text|
           if email_attachment
             @attachment_messages << attachment_text

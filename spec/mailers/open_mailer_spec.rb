@@ -270,6 +270,32 @@ describe OpenMailer do
       end
     end
 
+    it "should not save an email attachment if its extension is not allowed by Postmark" do
+      Tempfile.open(["bad_file",".vbs"]) do |f|
+        Tempfile.open(["good_file", ".txt"]) do |f2|
+          f.binmode
+          f << "Content"
+          f.flush
+          f2.binmode
+          f2 << "Content2"
+          f2.flush
+
+          OpenMailer.send_simple_html("me@there.com","Subject","<p>Body</p>".html_safe,[f,f2]).deliver!
+
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.attachments.size).to eq(1)
+
+          pa = mail.attachments[File.basename(f2)]
+          expect(pa).not_to be_nil
+          expect(pa.read).to eq(File.read(f2))
+          expect(pa.content_type).to match /application\/octet-stream/
+
+          ea = EmailAttachment.all.first
+          expect(ea).to be_nil
+        end
+      end
+    end
+
     it "should save an email attachment if the attachment is too large" do
       MasterSetup.get.update_attributes(:request_host=>"host.xxx")
 
