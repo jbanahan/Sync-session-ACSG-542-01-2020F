@@ -440,6 +440,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.it_numbers).to eq "ITNO\n ITNO2"
       expect(entry.total_non_dutiable_amount).to eq BigDecimal("246.9")
       expect(entry.product_lines).to eq "PRODUCT\n PRODUCT2"
+      expect(entry.summary_rejected?).to eq false
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -1098,6 +1099,39 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(purge).not_to be_nil
       # Verify the purge date is the extract time value
       expect(purge.date_purged).to eq "2015-03-12 17:26:20"
+    end
+
+    it "sets summary rejected when TRANSACTION DATA REJECTED is in notes" do
+      @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
+      entry = subject.process_entry @e
+      expect(entry.summary_rejected).to eq true
+    end
+
+    it "does not set summary rejected if data rjected note was not set by CUSTOMS" do
+      @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"SOMEDUDE", 'date_updated' => 201603191930, 'confidential' => "Y"}
+      entry = subject.process_entry @e
+      expect(entry.summary_rejected).to eq false
+    end
+
+    it "does not set summary rejected if data rjected note was followed by summary replacement message" do 
+      @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
+      @e['notes'] << {'note' => "SUMMARY HAS BEEN REPLACED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191931, 'confidential' => "Y"}
+      entry = subject.process_entry @e
+      expect(entry.summary_rejected).to eq false
+    end
+
+    it "does not set summary rejected if data rjected note was followed by summary add message" do 
+      @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
+      @e['notes'] << {'note' => "SUMMARY HAS BEEN ADDED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191931, 'confidential' => "Y"}
+      entry = subject.process_entry @e
+      expect(entry.summary_rejected).to eq false
+    end
+
+    it "does sets summary rejected if data rjected note was followed by summary add message by a person" do 
+      @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
+      @e['notes'] << {'note' => "SUMMARY HAS BEEN ADDED", 'modified_by'=>"APERSON", 'date_updated' => 201603191931, 'confidential' => "Y"}
+      entry = subject.process_entry @e
+      expect(entry.summary_rejected).to eq true
     end
   end
 

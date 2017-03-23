@@ -260,6 +260,30 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.monthly_statement_due_date = find_statement_due_date(e, entry)
 
       process_totals e, entry
+
+      postprocess_notes entry
+    end
+
+    def postprocess_notes entry
+      entry.summary_rejected = summary_rejected?(entry)
+    end
+
+    def summary_rejected? entry
+      # What we're looking for here is to determine if there is an entry comment (note) indicating that the summary
+      # has been been rejected and not yet replaced or added.
+      rejected = false
+      entry.entry_comments.each do |note|
+        next unless note.username.to_s.upcase == "CUSTOMS"
+
+        body = note.body.to_s.upcase
+        if body.include? "TRANSACTION DATA REJECTED"
+          rejected = true
+        elsif body.include?("SUMMARY HAS BEEN ADDED") || body.include?("SUMMARY HAS BEEN REPLACED")
+          rejected = false
+        end
+      end
+
+      rejected
     end
 
     def find_statement_due_date e, entry
