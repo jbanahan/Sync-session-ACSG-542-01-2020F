@@ -2,6 +2,7 @@ require 'open_chain/sql_proxy_client'
 require 'open_chain/s3'
 require 'open_chain/integration_client_parser'
 require 'open_chain/alliance_imaging_client'
+require 'open_chain/fiscal_month_assigner'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
   extend OpenChain::IntegrationClientParser
@@ -121,7 +122,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         postprocess e, entry
 
-        FiscalMonthAssigner.assign entry
+        OpenChain::FiscalMonthAssigner.assign entry
 
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)

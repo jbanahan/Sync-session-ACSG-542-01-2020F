@@ -1,5 +1,6 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/intacct/intacct_client'
+require 'open_chain/fiscal_month_assigner'
 
 module OpenChain
   module CustomHandler
@@ -79,7 +80,7 @@ module OpenChain
               total_broker_invoice_value += inv.invoice_total
             end
             ent.broker_invoice_total = total_broker_invoice_value
-            FiscalMonthAssigner.assign ent
+            OpenChain::FiscalMonthAssigner.assign ent
             ent.save!
           else
             invoice.save!

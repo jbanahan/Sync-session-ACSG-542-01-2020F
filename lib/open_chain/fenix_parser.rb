@@ -1,6 +1,7 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/fenix_sql_proxy_client'
 require 'open_chain/ftp_file_support'
+require 'open_chain/fiscal_month_assigner'
 
 module OpenChain
   class FenixParser
@@ -213,7 +214,7 @@ module OpenChain
 
           set_entry_dates @entry, accumulated_dates
 
-          FiscalMonthAssigner.assign @entry
+          OpenChain::FiscalMonthAssigner.assign @entry
 
           @entry.save!
           #match up any broker invoices that might have already been loaded
