@@ -188,9 +188,17 @@ root.Chain =
     writeCompany c.company for c in data
 
   #load user list from ajax callback (default url is /users.json)
-  loadUserList : (selectBox,defaultSelection,callback) ->
-    url = '/users.json' unless url
-    jQuery.get url, (data) ->
+  loadUserList : (selectBox,defaultSelection,callback, url='/users.json') ->
+    $.ajax({
+      url: url
+      contentType: 'application/json'
+      type: 'GET'
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+    .done (data) ->
       Chain.populateUserList selectBox, defaultSelection, data
       callback(selectBox) if callback
 

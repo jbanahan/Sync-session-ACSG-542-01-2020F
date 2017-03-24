@@ -26,7 +26,7 @@ $(function() {
         <select id='assign_lst' name='to_assign' multiple='multiple' size='10' style='width:100%;'>
           <% @visible_companies.each do |c|%>
             <optgroup label='<%=c.name%>'>
-              <%c.users.sort_by {|n| n.full_name.upcase}.each do |u|%>
+              <%c.enabled_users.sort_by {|n| n.full_name.upcase}.each do |u|%>
                 <option value='<%=u.id%>'><%=u.full_name%></option>
               <%end%>
             </optgroup>

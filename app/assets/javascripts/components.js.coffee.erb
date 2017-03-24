@@ -581,7 +581,7 @@
     getListForCurrentUser: (callback) ->
       if @.users.length == 0
         svc = this
-        $http.get('/users.json').success((data) ->
+        $http.get('/api/v1/users/enabled_users').success((data) ->
           svc.users = []
           for c in data
             cName = c.company.name

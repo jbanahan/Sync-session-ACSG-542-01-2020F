@@ -63,6 +63,7 @@ class User < ActiveRecord::Base
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
   validate :valid_email
+  scope :enabled, lambda { where(disabled: [false, nil]) }
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag

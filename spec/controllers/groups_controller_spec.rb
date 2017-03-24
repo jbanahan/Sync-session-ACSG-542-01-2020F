@@ -204,10 +204,12 @@ describe GroupsController do
       mary = Factory(:user, username: "Mary", groups: [@g])
       rob = Factory(:user, username: "Rob", groups: [@g])
       alice = Factory(:user, username: "Alice", groups: [@g])
+      disabled_user = Factory(:user, disabled: true, groups: [@g])
 
       burt = Factory(:user, username: "Burt")
       kate = Factory(:user, username: "Kate")
       tom = Factory(:user, username: "Tom")
+      disabled_user2 = Factory(:user, disabled: true)
 
       get :edit, id: @g
       expect(assigns(:group)).to eq @g
@@ -231,6 +233,7 @@ describe GroupsController do
       burt = Factory(:user, username: "Burt")
       kate = Factory(:user, username: "Kate")
       tom = Factory(:user, username: "Tom")
+      disabled_user = Factory(:user, disabled: true)
 
       get :new
 

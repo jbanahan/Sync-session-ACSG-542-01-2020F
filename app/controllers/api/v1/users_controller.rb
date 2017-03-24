@@ -17,6 +17,12 @@ module Api; module V1; class UsersController < Api::V1::ApiController
     render json: {user: current_user.api_hash}
   end
 
+  def enabled_users
+    companies = current_user.company.visible_companies_with_users.includes(:users)
+    companies_json = companies.to_json(:only=>[:name],:include=>{:enabled_users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
+    render :json => companies_json.gsub("\"enabled_users\":", "\"users\":")
+  end
+
   def toggle_email_new_messages
     u = current_user
     u.email_new_messages = !u.email_new_messages?
@@ -79,6 +85,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   end
 
   private
+
     def test? 
       Rails.env.test?
     end

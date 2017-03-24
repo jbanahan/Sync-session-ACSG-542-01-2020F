@@ -15,7 +15,7 @@ function validate() {
 }
 
 $(function() {
-  Chain.loadUserList($("#assign_to_user_id"));
+  Chain.loadUserList($("#assign_to_user_id"),null,null,"/api/v1/users/enabled_users");
 });
 <% end %>
 

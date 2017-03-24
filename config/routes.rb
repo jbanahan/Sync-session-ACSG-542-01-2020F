@@ -100,6 +100,7 @@ OpenChain::Application.routes.draw do
           post :login
           post :google_oauth2
           get :me
+          get :enabled_users
           post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages'
           post :change_my_password
         end

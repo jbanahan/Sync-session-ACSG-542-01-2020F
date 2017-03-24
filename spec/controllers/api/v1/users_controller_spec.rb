@@ -152,6 +152,42 @@ describe Api::V1::UsersController do
     end
   end
 
+  describe "enabled_users" do
+    it "returns enabled users belonging to current_user's visible companies" do
+      linked_co = Factory(:company, name: 'Konvenientz')
+      co = Factory(:company, name: 'Acme', linked_companies: [linked_co])
+      u = Factory(:user, company: co, first_name: 'Nigel', last_name: 'Tufnel', username: 'ntufnel', disabled: false)
+      u2 = Factory(:user, company: linked_co, first_name: 'David', last_name: 'St. Hubbins', username: 'dsthubbins', disabled: nil)
+      Factory(:user, company: linked_co, first_name: 'Derek', last_name: 'Smalls', username: 'dsmalls', disabled: true)
+      allow_api_access u
+      
+      get :enabled_users
+      expect(response).to be_success
+      expected = [{'company' => 
+                    {
+                     'name' => 'Acme',
+                     'users' => [ {
+                        'first_name' => 'Nigel',
+                        'id' => u.id,
+                        'last_name' => 'Tufnel',
+                        'full_name' => 'Nigel Tufnel'
+                       } ]
+                    }},
+                  {'company' =>
+                    {
+                     'name' => 'Konvenientz',
+                     'users' => [ {
+                        'first_name' => 'David',
+                        'id' => u2.id,
+                        'last_name' => 'St. Hubbins',
+                        'full_name' => 'David St. Hubbins'
+                       } ]
+                    }
+                   }]
+      expect(JSON.parse(response.body).sort_by{|c| c['company']['name']}).to eq expected
+    end
+  end
+
   describe "#toggle_email_new_messages" do
     it "should set email_new_messages" do
       u = Factory(:user)

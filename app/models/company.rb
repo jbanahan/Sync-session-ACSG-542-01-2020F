@@ -1,25 +1,25 @@
 class Company < ActiveRecord::Base
   include CoreObjectSupport
-	validates	:name,	:presence => true
-	validate  :master_lock
+  validates  :name,  :presence => true
+  validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
   validates_uniqueness_of :alliance_customer_number, :if => lambda {!self.alliance_customer_number.blank?}, :message=>"is already taken."
 
-	has_many	:addresses, :dependent => :destroy
-	has_many	:divisions, :dependent => :destroy
+  has_many  :addresses, :dependent => :destroy
+  has_many  :divisions, :dependent => :destroy
   has_many  :importer_products, :class_name => 'Product', :foreign_key=>'importer_id'
   has_many  :importer_orders, :class_name => 'Order', :foreign_key => 'importer_id', :dependent => :destroy
   has_many  :factory_orders, :class_name => 'Order', :foreign_key => 'factory_id'
-	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy
-	has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy
-	has_many  :carrier_shipments, :class_name => "Shipment", :foreign_key => "carrier_id", :dependent => :destroy
-	has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
-	has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
-	has_many  :customer_deliveries, :class_name => "Delivery", :foreign_key => "customer_id", :dependent => :destroy
-	has_many  :users, :dependent => :destroy, :order=>"first_name ASC, last_name ASC, username ASC"
-	has_many	:orders, :through => :divisions, :dependent => :destroy
-	has_many	:products, :through => :divisions, :dependent => :destroy
-	has_many  :histories, :dependent => :destroy
+  has_many  :vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy
+  has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy
+  has_many  :carrier_shipments, :class_name => "Shipment", :foreign_key => "carrier_id", :dependent => :destroy
+  has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
+  has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
+  has_many  :customer_deliveries, :class_name => "Delivery", :foreign_key => "customer_id", :dependent => :destroy
+  has_many  :users, :dependent => :destroy, :order=>"first_name ASC, last_name ASC, username ASC"
+  has_many  :orders, :through => :divisions, :dependent => :destroy
+  has_many  :products, :through => :divisions, :dependent => :destroy
+  has_many  :histories, :dependent => :destroy
   has_many  :power_of_attorneys, :dependent => :destroy
   has_many  :drawback_claims, :foreign_key => "importer_id"
   has_many  :charge_categories, :dependent => :destroy
@@ -56,13 +56,13 @@ class Company < ActiveRecord::Base
   def linked_company? c
     self.linked_companies.include? c
   end
-	def self.find_can_view(user)
-	  if user.company.master
-	    return Company.where("1=1")
-	  else
-	    return Company.where(:id => user.company_id)
-	  end
-	end
+  def self.find_can_view(user)
+    if user.company.master
+      return Company.where("1=1")
+    else
+      return Company.where(:id => user.company_id)
+    end
+  end
 
   def has_vfi_invoice?
     ([self] + linked_companies).map{ |co| co.vfi_invoices.count != 0 }.any?
@@ -94,19 +94,19 @@ class Company < ActiveRecord::Base
     Company.select("distinct companies.*").joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
   end
 
-	def can_edit?(user)
-	  return true if user.admin?
+  def can_edit?(user)
+    return true if user.admin?
     return true if self.vendor? && user.edit_vendors?
     return false
-	end
+  end
 
-	def can_view?(user)
-	  if user.company.master
-	    return true
-	  else
-	    return user.company == self || user.company.linked_company?(self)
-	  end
-	end
+  def can_view?(user)
+    if user.company.master
+      return true
+    else
+      return user.company == self || user.company.linked_company?(self)
+    end
+  end
 
   def can_view_as_vendor?(user)
     self.vendor &&
@@ -133,13 +133,13 @@ class Company < ActiveRecord::Base
     self.surveys.update_all(company_id:target_company.id,updated_at:Time.now)
   end
 
-	def self.not_locked
-	  Company.where("locked = ? OR locked is null",false)
-	end
+  def self.not_locked
+    Company.where("locked = ? OR locked is null",false)
+  end
 
-	def self.find_master
-	  Company.first_or_create(:master => true,name:'Master Company')
-	end
+  def self.find_master
+    Company.first_or_create(:master => true,name:'Master Company')
+  end
 
   def visible_companies
     if self.master?
@@ -381,14 +381,18 @@ class Company < ActiveRecord::Base
     {"Product" => 'product', "Order" => 'order', 'Order Line' => 'order_line', "Container" => 'container'}
   end
 
-	private
+  def enabled_users
+    users.enabled.all
+  end
+
+  private
 
   def master_setup
     MasterSetup.get
   end
-	def master_lock
-	  errors.add(:base, "Master company cannot be locked.") if self.master && self.locked
-	end
+  def master_lock
+    errors.add(:base, "Master company cannot be locked.") if self.master && self.locked
+  end
   def company_view_deliveries?
     company_edit_deliveries? || (self.customer? && master_setup.delivery_enabled)
   end

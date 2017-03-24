@@ -65,14 +65,14 @@ class GroupsController < ApplicationController
   def edit
     admin_secure("Only a system administrator can view this page.") {
       @group = Group.find(params[:id])
-      @new_members = User.joins("INNER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").all
-      @new_non_members = User.joins("LEFT OUTER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").where("m.id IS NULL").all
+      @new_members = User.enabled.joins("INNER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").all
+      @new_non_members = User.enabled.joins("LEFT OUTER JOIN user_group_memberships m on users.id = m.user_id and m.group_id = #{@group.id}").where("m.id IS NULL").all
     }
   end
 
   def new
     admin_secure("Only a system administrator can view this page.") {
-      @new_non_members = User.all
+      @new_non_members = User.enabled
       @new_members = []
       @group = Group.new
     }
