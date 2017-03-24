@@ -816,6 +816,7 @@ OpenChain::Application.routes.draw do
       post 'update_children'
       post 'push_alliance_products'
       get 'validation_results'
+      get 'history'
     end
 		resources :addresses
 		resources :divisions

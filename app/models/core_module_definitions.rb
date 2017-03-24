@@ -389,7 +389,7 @@ module CoreModuleDefinitions
   COMPANY = CoreModule.new("Company","Vendor",
     default_search_columns: [:cmp_name,:cmp_sys_code],
     unique_id_field_name: :cmp_sys_code,
-    key_model_field_uids: :cmp_sys_code,
+    key_model_field_uids: [:cmp_sys_code],
     children: [Plant],
     child_lambdas: {
       Plant => lambda {|c| c.plants},

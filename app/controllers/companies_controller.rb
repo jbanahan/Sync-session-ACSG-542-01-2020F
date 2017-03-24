@@ -17,6 +17,11 @@ class CompaniesController < ApplicationController
     'imp_bool' => {:field => 'importer', :label => 'Is An Importer', :datatype => :boolean},
     'l_bool' => {:field => 'locked', :label => 'Is Locked', :datatype => :boolean}
   }
+  
+  def root_class
+    Company
+  end
+  
   def index
     sp = SEARCH_PARAMS
     if MasterSetup.get.custom_feature? 'alliance'

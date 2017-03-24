@@ -26,7 +26,7 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
     co = Company.find params[:id]
     run_validations co
   end
-  
+    
   private
   def query_base linked_with = nil
     r = (current_user.company.master? ? Company : current_user.company.linked_companies).where("length(trim(system_code)) > 0")
