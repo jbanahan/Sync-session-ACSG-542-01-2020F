@@ -20,7 +20,8 @@ module OpenChain; module Report; class PpqByPoReport
 
   def create_workbook customer_numbers, po_numbers, run_by
     wb, sheet = XlsMaker.create_workbook_and_sheet "PPQ By PO Numbers"
-    table_from_query sheet, query(customer_numbers,po_numbers,run_by), conversions(run_by.time_zone)
+    qry = query(customer_numbers,po_numbers,run_by)
+    table_from_query sheet, qry, conversions(run_by.time_zone)
     wb
   end
 
@@ -50,8 +51,8 @@ cic.percent_recycled_material as 'Percent Recycled'
 from entries
 inner join commercial_invoices ci on ci.entry_id = entries.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
-inner join commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
-inner join commercial_invoice_lacey_components cic on cic.commercial_invoice_tariff_id = cit.id
+left outer join commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
+left outer join commercial_invoice_lacey_components cic on cic.commercial_invoice_tariff_id = cit.id
 where entries.customer_number IN  (#{customer_numbers}) and cil.po_number IN (#{po_numbers})
 AND #{Entry.search_where(run_by)}
     SQL
