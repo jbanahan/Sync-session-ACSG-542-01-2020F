@@ -23,6 +23,10 @@ class LL11282Report
     end
   end
 
+  def self.run_entered_orders
+    run CommercialInvoiceLine.pluck(:po_number).uniq
+  end
+
   def self.make_rows order, cdefs
     header = make_header_hash(order,cdefs)
     es = find_effective_snapshot(order,header[:departed_date])
