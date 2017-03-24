@@ -24,7 +24,7 @@ class LL11282Report
   end
 
   def self.run_entered_orders
-    run CommercialInvoiceLine.pluck(:po_number).uniq
+    run CommercialInvoiceLine.where("po_number <> '' AND po_number IS NOT NULL").uniq.pluck(:po_number)
   end
 
   def self.make_rows order, cdefs
