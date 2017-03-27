@@ -293,6 +293,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
       expect(order.vendor).to be_nil
     end
+
+    it "does not create a factory if the name is missing" do
+      header[19] = nil
+
+      described_class.parse(convert_pipe_delimited [header, detail])
+      order = Order.first
+      expect(order.factory).to be_nil
+    end
+
+    it "does not update factory names to blank if name is missing" do
+      factory = Factory(:company, system_code: "001423", name: "Factory")
+      header[19] = nil
+
+      described_class.parse(convert_pipe_delimited [header, detail])
+      order = Order.first
+      expect(order.factory).to eq factory
+      factory.reload
+      expect(factory.name).to eq "Factory"
+    end
   end
 
   context "data validation", :disable_delayed_jobs do
