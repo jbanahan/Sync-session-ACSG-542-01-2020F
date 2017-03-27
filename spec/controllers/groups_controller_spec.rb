@@ -17,7 +17,7 @@ describe GroupsController do
 
     context "with valid attributes" do
       it "should save the new group to the db" do
-        post :create, group: {name: "admin"}, members_list: "#{@jim.id},#{@mary.id},#{@rob.id}"
+        post :create, group: {name: "admin", system_code: "admin"}, members_list: "#{@jim.id},#{@mary.id},#{@rob.id}"
         group = Group.first
         
         expect(group).not_to be_nil
@@ -41,11 +41,11 @@ describe GroupsController do
 
     context "with invalid attributes" do
       it "should prevent group without a name from being saved" do
-        post :create, group: {name: ""}
+        post :create, group: {system_code: "Code", name: ""}
         group = Group.last
         expect(group).to be nil
         expect(response).to redirect_to new_group_path(group)
-        expect(flash[:errors][0]).to match(/can't be blank/)
+        expect(flash[:errors]).to include("Name can't be blank")
       end
 
       it "should prevent group with a duplicate system code from being saved" do
@@ -54,7 +54,15 @@ describe GroupsController do
 
         expect(Group.count).to eq 1
         expect(response).to redirect_to new_group_path
-        expect(flash[:errors][0]).to match(/has already been taken/)
+        expect(flash[:errors]).to include("System code has already been taken")
+      end
+
+      it "prevents groups without system codes" do 
+        post :create, group: {name: "Name"}
+        group = Group.last
+        expect(group).to be nil
+        expect(response).to redirect_to new_group_path(group)
+        expect(flash[:errors]).to include("System code can't be blank")
       end
 
     end

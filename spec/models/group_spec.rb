@@ -31,8 +31,12 @@ describe Group do
     it "should validate presence of name" do
       g = Group.new(name: "")
       g.save
-      expect(g.errors.messages.count).to eq 1
       expect(g.errors.messages[:name]).to include "can't be blank"
+    end
+    it "should validate presence of system_code" do
+      g = Group.new
+      g.save
+      expect(g.errors.messages[:system_code]).to include "can't be blank"
     end
     it "should validate uniqueness of system_code, if it exists" do
       Factory(:group, system_code: "ABCDE")

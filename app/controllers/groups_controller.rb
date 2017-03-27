@@ -14,7 +14,7 @@ class GroupsController < ApplicationController
         redirect_to groups_path
         return
       else
-        errors_to_flash group, :now => true
+        errors_to_flash group
         redirect_to new_group_path(group)
       end
     }
@@ -26,7 +26,7 @@ class GroupsController < ApplicationController
       group.name = params[:group][:name]
       group.description = params[:group][:description]
       unless group.save
-        errors_to_flash group, :now => true
+        errors_to_flash group
         redirect_to edit_group_path(group)
         return
       end
