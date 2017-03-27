@@ -346,7 +346,7 @@ describe EntitySnapshot, :snapshot do
       expect_any_instance_of(described_class).to receive(:write_s3) do |inst, json|
         raise Exception, "Error"
       end
-      expect(OpenChain::EntityCompare::EntityComparator).to receive(:handle_snapshot)
+      expect(OpenChain::EntityCompare::EntityComparator).not_to receive(:handle_snapshot)
 
       ent = Factory(:entry)
       u = Factory(:user)
@@ -413,6 +413,36 @@ describe EntitySnapshot, :snapshot do
       s = EntitySnapshot.new doc_path: "path/to/file.txt"
       expect(EntitySnapshot).to receive(:retrieve_snapshot_data_from_s3).with(s).and_return '     '
       expect(s.snapshot_json(true)).to be_nil
+    end
+  end
+
+  describe "store_snapshot_json" do
+    let (:snapshot) { EntitySnapshot.new recordable: Factory(:entry), user: Factory(:user)}
+
+    it "writes snapshot json data to s3" do
+      expect(snapshot).to receive(:write_s3).with "json"
+
+      expect(described_class.store_snapshot_json snapshot, "json").to eq true
+    end
+
+    it "creates a snapshot failure record if write fails" do
+      snapshot.save!
+      expect(snapshot).to receive(:write_s3).and_raise Exception, "Failed"
+
+      expect(described_class.store_snapshot_json snapshot, "json").to eq false
+
+      failure = EntitySnapshotFailure.where(snapshot_id: snapshot.id).first
+      expect(failure).not_to be_nil
+      expect(failure.snapshot_json).to eq "json"
+    end
+
+    it "does not save failure record if instructed not to" do
+      snapshot.save!
+      expect(snapshot).to receive(:write_s3).and_raise Exception, "Failed"
+
+      expect(described_class.store_snapshot_json snapshot, "json", record_failure: false).to eq false
+
+      expect(EntitySnapshotFailure.where(snapshot_id: snapshot.id).first).to be_nil
     end
   end
 end

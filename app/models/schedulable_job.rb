@@ -20,6 +20,7 @@ class SchedulableJob < ActiveRecord::Base
     SchedulableJob.where(run_class: "OpenChain::LoadCountriesSchedulableJob").first_or_create! base_opts.merge(run_hour: '2', run_minute: '0', time_zone_name: "Eastern Time (US & Canada)")
     SchedulableJob.where(run_class: "OpenChain::Report::MonthlyUserAuditReport").first_or_create!({run_hour:'6',run_minute:'0',time_zone_name: "Eastern Time (US & Canada)",day_of_month:'1'})
     SchedulableJob.where(run_class: "OpenChain::BusinessRulesNotifier").first_or_create!({run_hour: '8', run_minute: '30', time_zone_name: "Eastern Time (US & Canada)"})
+    SchedulableJob.where(run_class: "EntitySnapshotFailure").first_or_create! base_opts.merge(run_interval: "10m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
   end
 
   def run log=nil

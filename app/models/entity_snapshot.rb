@@ -52,25 +52,40 @@ class EntitySnapshot < ActiveRecord::Base
   def self.create_from_entity entity, user=User.current, imported_file=nil, context=nil
     json = snapshot_writer.entity_json(entity)
     es = EntitySnapshot.create!(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
+
+    # If storing the snapshot failed, then we shouldn't be trying to process it...this will be handled
+    # later when the snapshot is restored.
+    if store_snapshot_json(es, json)
+      OpenChain::EntityCompare::EntityComparator.handle_snapshot es
+    end
+
+    write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')
+    
+    es
+  end
+
+  def self.store_snapshot_json es, json, record_failure: true
+    success = false
     begin
       es.write_s3 json
       es.save!
+      success = true
     rescue Exception => e
       # If we fail to write the snapshot to S3, buffer the data in the database and then 
       # another service will come along and process it, push it to s3 and then relink the s3 data to the
       # snapshot.
-      EntitySnapshotFailure.create! snapshot: es, snapshot_json: json
+      EntitySnapshotFailure.create!(snapshot: es, snapshot_json: json) if record_failure
     end
 
-    write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')
-    OpenChain::EntityCompare::EntityComparator.handle_snapshot es
-    es
+    success
   end
 
   def self.write_snapshot_caller es
     bucket_name = "#{Rails.env}.#{MasterSetup.get.system_code}.snapshot_callers.vfitrack.net"
     OpenChain::S3.create_bucket!(bucket_name, versioning: false) unless OpenChain::S3.bucket_exists?(bucket_name)
     OpenChain::S3.upload_data(bucket_name,"#{es.recordable_type}/#{es.id}.txt",caller.join("\n"))
+  rescue Exception => e
+    e.log_me
   end
 
   def snapshot_json as_string = false
