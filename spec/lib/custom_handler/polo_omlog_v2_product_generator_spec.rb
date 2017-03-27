@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
 
   before :all do
-     @cdefs = described_class.prep_custom_definitions described_class.cdefs
+    @cdefs = described_class.prep_custom_definitions described_class.cdefs
   end
 
   after :all do
@@ -29,6 +29,36 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     after :each do
       @tmp.close! if @tmp && !@tmp.closed?
     end
+
+    it "should always remove the clean fiber content header field" do
+      product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
+      @tmp = subject.sync_csv
+
+      a = CSV.parse IO.read @tmp.path
+      expect(a[0]).to_not include('Clean Fiber Content')
+    end
+
+    it "should remove the clean_fiber_content field if it is empty" do
+      product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
+      product.update_custom_value! @cdefs[:clean_fiber_content], ""
+      @tmp = subject.sync_csv
+
+      a = CSV.parse IO.read @tmp.path
+
+      expect(a[1][7]).to eql('fibercontent')
+    end
+
+    it "should replace fiber_content with clean_fiber_content" do
+      product.update_custom_value! @cdefs[:fiber_content], 'fibercontent'
+      product.update_custom_value! @cdefs[:clean_fiber_content], 'cleanfibercontent'
+      @tmp = subject.sync_csv
+
+      a = CSV.parse IO.read @tmp.path
+
+      expect(a[1][7]).to eql('cleanfibercontent')
+      expect(a[1][7]).to_not eql('fibercontent')
+    end
+
     it "should split CSM numbers" do
       product.update_attributes :name => "Value1\nValue2\r\nValue3"
       product.update_custom_value! csm_def, "CSM1\nCSM2"
@@ -73,7 +103,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     end
   end
   describe "query" do
-    before :each do 
+    before :each do
       product
     end
 
@@ -110,7 +140,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     it "should utilize max results" do
       # Create a second product and confirm only a single result was returned.
       tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
-      
+
       r = Product.connection.execute(described_class.new(max_results: 1).query)
       expect(r.count).to eq(1)
     end
@@ -133,7 +163,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       # Create a second product to validate the job is running only 2 times when working down the 
       # max result list
       tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
-      
+
       expect_any_instance_of(described_class).to receive(:ftp_file).exactly(2).times do |instance, file|
         file.close! unless file.nil? || file.closed?
       end

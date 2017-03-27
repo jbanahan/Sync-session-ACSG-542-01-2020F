@@ -13,7 +13,7 @@ module OpenChain
         g = self.new(opts)
         f = nil
         begin
-          # Sync only does 500 products at a time now, so keep running the send 
+          # Sync only does 500 products at a time now, so keep running the send
           # until we get a file output w/ zero lines (sync_xml returns a nil file in this case)
           f = g.sync_xml
           g.ftp_file f unless f.nil?
@@ -21,7 +21,7 @@ module OpenChain
       end
 
       #Accepts 3 parameters
-      # * :env=>:qa to send to qa ftp folder 
+      # * :env=>:qa to send to qa ftp folder
       # * :custom_where to replace the query where clause
       # * :no_brand_restriction to allow styles to be sent that don't have SAP Brand set
       def initialize params = {}
@@ -33,7 +33,7 @@ module OpenChain
         raise "SAP Brand custom definition does not exist." unless @sap_brand
       end
 
-      def sync_code 
+      def sync_code
         'polo_sap'
       end
 
@@ -86,7 +86,7 @@ module OpenChain
         prod = add_element parent_element, "product"
         add_element prod, "style", row[0]
         add_element prod, "long_description", row[6]
-        add_element prod, "fiber_content", row[1]
+        add_element prod, "fiber_content", row[34].present? ? row[34] : row[1]
         add_element prod, "down_indicator", row[5]
         add_element prod, "country_of_origin", row[8]
         add_element prod, "hts", row[3]
@@ -169,17 +169,17 @@ module OpenChain
       def convert_to_ascii value
         if value && value.is_a?(String)
           allowed_conversions = {
-            "\u{00A0}" => " ", #non breaking space
-            "\u{2013}" => "-",
-            "\u{2014}" => "-",
-            "\u{00BE}" => "3/4",
-            "\u{201D}" => "\"", # Right quote-mark ”
-            "\u{201C}" => "\"", # Left quote-mark “
-            "\u{00BC}" => "1/4",
-            "\u{00BD}" => "1/2",
-            "\u{00FA}" => "u", #u w/ acute http://www.fileformat.info/info/unicode/char/fa/index.htm
-            "\u{00AE}" => "", # blank out registered character
-            "\u{2019}" => "'" # Right single quote-mark '
+              "\u{00A0}" => " ", #non breaking space
+              "\u{2013}" => "-",
+              "\u{2014}" => "-",
+              "\u{00BE}" => "3/4",
+              "\u{201D}" => "\"", # Right quote-mark ”
+              "\u{201C}" => "\"", # Left quote-mark “
+              "\u{00BC}" => "1/4",
+              "\u{00BD}" => "1/2",
+              "\u{00FA}" => "u", #u w/ acute http://www.fileformat.info/info/unicode/char/fa/index.htm
+              "\u{00AE}" => "", # blank out registered character
+              "\u{2019}" => "'" # Right single quote-mark '
           }
           # First convert the UTF-8 text to ascii w/ our conversion table
           value = value.encode("US-ASCII", :fallback => allowed_conversions)
@@ -218,12 +218,12 @@ module OpenChain
         @cdefs ||= self.class.prep_custom_definitions self.class.cdefs
 
         q = "SELECT products.id,
-products.unique_identifier, 
+products.unique_identifier,
 #{cd_s @cdefs[:fiber_content]},
 countries.iso_code as 'Classification - Country ISO Code',
 tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{custom_def_query_fields}
-FROM products 
+FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
@@ -245,7 +245,7 @@ INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-QRY
+        QRY
         if @custom_where.blank?
           q << "\n#{Product.need_sync_join_clause(sync_code)}\nWHERE #{Product.need_sync_where_clause()}"
         else
@@ -256,13 +256,13 @@ QRY
         q
       end
 
-      def self.cdefs 
-        [:fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type, 
-          :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_origin_4, :fish_wildlife_origin_5, 
-          :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
-          :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
-          :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
-          :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven]
+      def self.cdefs
+        [:fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type,
+         :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_origin_4, :fish_wildlife_origin_5,
+         :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
+         :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
+         :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
+         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven, :clean_fiber_content]
       end
 
       def custom_def_query_fields
