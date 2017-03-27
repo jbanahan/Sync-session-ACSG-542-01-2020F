@@ -35,6 +35,7 @@ class DataCrossReference < ActiveRecord::Base
   UN_LOCODE_TO_US_CODE ||= "locode_to_us"
   ASCE_MID ||= 'asce_mid'
   CA_HTS_TO_DESCR ||= 'ca_hts_to_descr'
+  PVH_INVOICES ||= 'pvh_invoices'
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
@@ -233,6 +234,14 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_ca_hts_to_descr ca_hts, importer_id
     find_unique(where(cross_reference_type: CA_HTS_TO_DESCR, key: ca_hts, company_id: importer_id))
+  end
+
+  def self.create_pvh_invoice! vend_name, inv_number
+    add_xref! PVH_INVOICES, make_compound_key(vend_name, inv_number), nil
+  end
+
+  def self.find_pvh_invoice vend_name, inv_number
+    !where(cross_reference_type: PVH_INVOICES, key: make_compound_key(vend_name,inv_number)).empty?
   end
 
   def self.find_and_mark_next_unused_hm_pars_number

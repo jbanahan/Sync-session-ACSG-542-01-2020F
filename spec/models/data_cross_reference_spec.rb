@@ -189,6 +189,23 @@ describe DataCrossReference do
     end
   end
 
+  describe "find_pvh_invoice" do
+    it "finds" do
+      DataCrossReference.destroy_all
+      described_class.create!(key: "pvh*~*inv_num", cross_reference_type: described_class::PVH_INVOICES)
+      expect(described_class.find_pvh_invoice("pvh", "inv_num")).to eq true
+    end
+  end
+
+  describe "create_pvh_invoice" do
+    it "creates" do
+      expect{ described_class.create_pvh_invoice!("pvh", "inv_num") }.to change(DataCrossReference, :count).from(0).to(1)
+      xref = DataCrossReference.first
+      expect(xref.cross_reference_type).to eq(described_class::PVH_INVOICES)
+      expect(xref.key).to eq "pvh*~*inv_num"
+    end
+  end
+
   describe "has_key?" do
     it "determines if an xref key is present in the db table" do
       DataCrossReference.add_xref! DataCrossReference::UA_PLANT_TO_ISO, 'x', 'y', 1

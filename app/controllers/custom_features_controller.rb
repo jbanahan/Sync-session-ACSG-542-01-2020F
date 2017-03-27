@@ -30,6 +30,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_hand
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
 require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
+require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -60,6 +61,7 @@ class CustomFeaturesController < ApplicationController
   EDDIE_7501_AUDIT ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler'
   HM_PO_LINE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmPoLineParser'
   ASCENA_PARTS_PARSER ||= 'OpenChain::CustomHandler::Ascena::AscenaProductUploadParser'
+  PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
 
   def index
     render :layout=>'one_col'
@@ -431,6 +433,18 @@ class CustomFeaturesController < ApplicationController
 
   def pvh_workflow_download
     generic_download "PVH Workflow"
+  end
+
+  def pvh_ca_workflow_index
+    generic_index OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser, PVH_CA_WORKFLOW, "PVH CA Workflow Parser"
+  end
+
+  def pvh_ca_workflow_upload
+    generic_upload PVH_CA_WORKFLOW, "PVH CA Workflow Parser", "pvh_ca_workflow"
+  end
+
+  def pvh_ca_workflow_download
+    generic_download "PVH CA Workflow Parser"
   end
 
   def advan_parts_index
