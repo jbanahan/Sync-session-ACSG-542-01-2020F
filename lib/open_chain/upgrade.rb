@@ -173,8 +173,8 @@ module OpenChain
     end
 
     def update_master_setup_cache
-      CACHE.set MasterSetup::CACHE_KEY, nil
-      log_me "Updated Master Setup Cache"
+      MasterSetup.clear_cache
+      log_me "Cleared Master Setup Cache"
     end
 
     def update_configurations

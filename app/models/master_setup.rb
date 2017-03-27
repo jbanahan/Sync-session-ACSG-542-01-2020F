@@ -121,4 +121,8 @@ class MasterSetup < ActiveRecord::Base
   def update_cache
     CACHE.set CACHE_KEY, self
   end
+
+  def self.clear_cache
+    CACHE.set CACHE_KEY, nil
+  end
 end
