@@ -92,7 +92,7 @@ class LL11282Report
     # if we have departed date then we want the snapshot just before it, otherwise, use the newest
     rel = order.entity_snapshots.order('created_at DESC')
     rel = rel.where('created_at < ?',departed_date) if departed_date
-    rel = order.entity_snapshots.order(:created_at).first if rel.empty?
+    rel = order.entity_snapshots.order(:created_at) if rel.empty?
     rel.first
   end
 
