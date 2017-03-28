@@ -23,15 +23,22 @@ module EntitySnapshotSupport
   end
 
   def create_async_snapshot user=User.current, imported_file=nil, context=nil
-    if self.disable_async
-      # If we've turned off async, don't run via the standard suckerpunch .async call, even if
-      # we use the inline testing functionality, we still seem to get the code run outside of
-      # an rspec transaction (leaving garbage testing snapshots around).  At this point, this
-      # is the only reason the disable_async is in use
-      AsyncSnapshotJob.perform_job self, user, imported_file, context
-    else
-      AsyncSnapshotJob.new.async.perform(self,user,imported_file, context)
-    end
+    # As of March 27, 2017 disabling async functionality because it was creating bad snapshots
+    # 
+    # When a user saved a snapshot in an transaction, the async job would run on a different
+    # connection before the transaction was committed, so the snapshot would not include the data
+    # that reflected the user's changes when submitted through a controller
+    AsyncSnapshotJob.perform_job self, user, imported_file, context
+    
+    # if self.disable_async
+    #   # If we've turned off async, don't run via the standard suckerpunch .async call, even if
+    #   # we use the inline testing functionality, we still seem to get the code run outside of
+    #   # an rspec transaction (leaving garbage testing snapshots around).  At this point, this
+    #   # is the only reason the disable_async is in use
+    #   AsyncSnapshotJob.perform_job self, user, imported_file, context
+    # else
+    #   AsyncSnapshotJob.new.async.perform(self,user,imported_file, context)
+    # end
     
   end
 
