@@ -30,4 +30,29 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
       expect(mf.read_only?).to be_truthy
     end
   end
+  describe 'ent_container_count' do
+    let :mf do
+      ModelField.find_by_uid :ent_container_count
+    end
+    it "should return 0 if no containers" do
+      ent = Factory(:entry)
+      ss = SearchSetup.new(module_type:'Entry',user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_container_count',operator:'eq',value:'0')
+      expect(ss.result_keys).to eq [ent.id]
+
+      # test in memory export value
+      expect(mf.process_export(ent,nil,true)).to eq 0
+    end
+    it "should return container count" do
+      ent = Factory(:entry)
+      2.times {|i| Factory(:container,entry:ent)}
+      ent.reload
+      ss = SearchSetup.new(module_type:'Entry',user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_container_count',operator:'eq',value:'2')
+      expect(ss.result_keys).to eq [ent.id]
+
+      # test in memory export value
+      expect(mf.process_export(ent,nil,true)).to eq 2
+    end
+  end
 end

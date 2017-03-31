@@ -257,7 +257,13 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [169, :ent_fiscal_month, :fiscal_month, "Fiscal Month", {:data_type=>:integer}],
       [170, :ent_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}],
       [171, :ent_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}],
-      [172, :ent_summary_rejected, :summary_rejected, "Summary Rejected", {data_type: :boolean}]
+      [172, :ent_summary_rejected, :summary_rejected, "Summary Rejected", {data_type: :boolean}],
+      [173, :ent_container_count, :containre_count, "Container Count", {
+        data_type: :integer, 
+        read_only: true,
+        export_lambda: lambda {|ent| ent.containers.length},
+        qualified_field_name: "(SELECT COUNT(*) FROM containers WHERE containers.entry_id = entries.id)"
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
