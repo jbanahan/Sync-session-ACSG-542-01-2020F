@@ -32,12 +32,12 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
 
   describe "process" do
     context "it delegates to FenixNdInvoiceGenerator" do
-        #                                                      10          11              12                     15         16             19         21           24     26               29       30          31
-      let(:row_1)  { ["", "", "", "", "", "", "", "", "", "", "COO 1", "vend name 1", "invoice num 1", "", "", "po num 1", "style 1", "", "", 1, "", "HTS 111111", "", "", 2, "", 3, "", "", "note a1", "note b1", "note c1", "", "", "", "", "", "", "", ""] }
+        #                                                            10          11              12                     15         16             19         21                 24     26               29       30          31
+      let(:row_1)  { ["", "", "", "", "", "", "", "", "", "", "COO 1':|+?", "vend name 1", "invoice num 1", "", "", "po num 1", "style 1", "", "", 1, "", "HTS 111111", "", "", 2, "", 3, "", "", "note a1", "note b1", "note c1", "", "", "", "", "", "", "", ""] }
       let(:row_1a) { ["", "", "", "", "", "", "", "", "", "", "", "fact name 1", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
-      let(:row_2)  { ["", "", "", "", "", "", "", "", "", "", "COO 2", "vend name 1", "invoice num 1", "", "", "po num 2", "style 2", "", "", 2, "", "HTS 222222", "", "", 3, "", 4, "", "", "note a2", "note b2", "note c2", "", "", "", "", "", "", "", ""] }
+      let(:row_2)  { ["", "", "", "", "", "", "", "", "", "", "COO 2",      "vend name 1", "invoice num 1", "", "", "po num 2", "style 2", "", "", 2, "", "HTS 222222", "", "", 3, "", 4, "", "", "note a2", "note b2", "note c2", "", "", "", "", "", "", "", ""] }
       let(:row_2a) { ["", "", "", "", "", "", "", "", "", "", "", "fact name 2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
-      let(:row_3)  { ["", "", "", "", "", "", "", "", "", "", "COO 3", "vend name 2", "invoice num 2", "", "", "po num 3", "style 3", "", "", 3, "", "HTS 333333", "", "", 4, "", 5, "", "", "note a3", "note b3", "note c3", "", "", "", "", "", "", "", ""] }
+      let(:row_3)  { ["", "", "", "", "", "", "", "", "", "", "COO 3",      "vend name 2", "invoice num 2", "", "", "po num 3", "style 3", "", "", 3, "", "HTS 333333", "", "", 4, "", 5, "", "", "note a3", "note b3", "note c3", "", "", "", "", "", "", "", ""] }
       let(:row_3a) { ["", "", "", "", "", "", "", "", "", "", "", "fact name 3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
       
       let!(:cf) { double "custom file" }
@@ -48,6 +48,8 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
         described_class.new cf
       end
 
+      let(:now) { Time.zone.now.in_time_zone("America/New_York") }
+
       it "sends new invoices, updates xref" do
         expect(parser).to receive(:foreach).with(cf).twice.and_yield([], 0).and_yield([], 1).and_yield([], 2)
                                                           .and_yield(row_1, 3).and_yield(row_1a, 4)
@@ -56,6 +58,8 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
         
         expect(fenix).to receive(:generate) do |inv|
           expect(inv.persisted?).to eq false
+          expect(inv.currency).to eq "USD"
+          expect(inv.invoice_date).to eq(now.to_date)
           expect(inv.invoice_number).to eq "invoice num 1"
           expect(inv.total_quantity).to eq 7
           expect(inv.total_quantity_uom).to eq "CTN"
@@ -74,6 +78,8 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
 
         expect(fenix).to receive(:generate) do |inv|
           expect(inv.persisted?).to eq false
+          expect(inv.currency).to eq "USD"
+          expect(inv.invoice_date).to eq(now.to_date)
           expect(inv.invoice_number).to eq "invoice num 2"
           expect(inv.total_quantity).to eq 5
           expect(inv.total_quantity_uom).to eq "CTN"
@@ -90,7 +96,8 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
           expect(cit.tariff_description).to eq "note a3 note b3 note c3"
         end
 
-        parser.process user
+        Timecop.freeze(now) { parser.process user }
+         
         expect(DataCrossReference.find_pvh_invoice("vend name 1", "invoice num 1")).to eq true
         expect(DataCrossReference.find_pvh_invoice("vend name 2", "invoice num 2")).to eq true
       end

@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCaWorkflowParser
       next if inv_already_exists?(curr_inv_num, curr_vendor_name)
       if curr_inv_num != prev_inv_num
         complete_invoice invoice, invoice_rows, prev_vendor_name if invoice        
-        invoice = CommercialInvoice.new(invoice_number: curr_inv_num, total_quantity_uom: 'CTN')
+        invoice = CommercialInvoice.new(invoice_number: curr_inv_num, total_quantity_uom: 'CTN', currency: 'USD', invoice_date: Time.zone.now.in_time_zone("America/New_York").to_date)
         invoice_rows = [row]
       else
         invoice_rows << row
@@ -53,7 +53,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCaWorkflowParser
 
   def stringify_elements row
     r = []
-    row.each_with_index { |elem, i| r << ([19,24,26].include?(i) ? decimal_value(elem) : text_value(elem)) }
+    row.each_with_index { |elem, i| r << ([19,24,26].include?(i) ? decimal_value(elem) : text_value(elem).gsub("':|+?", "")) }
     r
   end
   
