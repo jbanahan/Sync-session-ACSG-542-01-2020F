@@ -560,7 +560,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           value.each_with_index do |fiber, index|
             clean_fiber_string << "#{fiber[1]}% " unless footwear
             clean_fiber_string << "#{fiber[0].upcase}"
-            clean_fiber_string << ", " unless index + 1 == value.length
+            clean_fiber_string << " " unless index + 1 == value.length
           end
           clean_fiber_string << " #{key.upcase}" unless fiber_hash.count == 1 || count > fiber_hash.length
           clean_fiber_string << " / " unless count == fiber_hash.length

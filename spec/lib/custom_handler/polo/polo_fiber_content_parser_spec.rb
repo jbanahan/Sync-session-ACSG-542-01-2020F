@@ -324,7 +324,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
         @prod.reload
 
-        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS 50.5% COTTON"
       end
     end
 
@@ -389,7 +389,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       @prod.reload
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS 50.5% COTTON"
     end
 
     it "drops insignificant zeroes" do
@@ -403,7 +403,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       @prod.reload
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS, 50% COTTON"
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS 50% COTTON"
     end
 
     it "includes all fabric types, with commas between if multiple fabric types" do
@@ -417,8 +417,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       @prod.reload
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS, 50% COTTON"
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to_not eq "50% CANVAS, 50% COTTON,"
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS 50% COTTON"
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to_not eq "50% CANVAS 50% COTTON "
     end
 
     it "deals with footwear properly" do
@@ -432,7 +432,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       @prod.reload
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "LEATHER, CANVAS OUTER / LEATHER SOLE"
+      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "LEATHER CANVAS OUTER / LEATHER SOLE"
     end
 
     it "parses a fiber content field and sets the values into the given product" do
