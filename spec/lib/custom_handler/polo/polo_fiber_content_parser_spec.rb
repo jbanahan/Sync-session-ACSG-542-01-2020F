@@ -333,7 +333,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       @tariff.update_attribute(:hts_1, "6134567890")
       @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
-      @prod.update_custom_value! @test_cds[:set_type], "X"
+      @prod.classifications.first.update_custom_value! @test_cds[:set_type], "X"
       changed_at = 1.day.ago
       @prod.update_column :changed_at, changed_at
       @prod.update_column :updated_at, changed_at
