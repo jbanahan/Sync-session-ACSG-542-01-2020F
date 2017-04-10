@@ -4,6 +4,7 @@ require 'open_chain/stat_client'
 
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
+  include ActionView::Helpers::NumberHelper
 
   def self.can_view? user
     MasterSetup.get.system_code == 'polo' || Rails.env.development?
@@ -524,7 +525,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         fiber, type, percent = all_fiber_fields results, x
 
         unless fiber.blank? || percent.blank?
-          percent = percent.to_f % 1 == 0 ? percent.to_i : percent.to_f
+          percent = number_with_precision(percent, precision: 5, strip_insignificant_zeros: true)
           clean_fiber_content[type] ||= []
           clean_fiber_content[type] << [fiber, percent]
         end
@@ -545,12 +546,24 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
     def update_or_create_cfv(product, fiber_hash, results)
       hts = nil
-      classification = product.classifications.first
-      tariff_record = classification.tariff_records.first if classification.present?
-      hts = [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3] if tariff_record.present?
-      sets = product.classifications.map { |clas| clas.custom_value(@cdefs[:set_type]) }.compact
+      # We only want to deal w/ products that are chapters 61/62...so just find the first
+      # classification record with a tariff number.
+      set_record = nil
+      product.classifications.each do |c|
+        c.tariff_records.each do |t|
+          if !t.hts_1.blank?
+            hts = t.hts_1
+            break
+          end
+        end if hts.nil?
 
-      return if hts.blank? || (hts.grep(/^61/).blank? && hts.grep(/^62/).blank?) || sets.present?
+        # Check if the product is a set or not, we're skipping sets
+        if set_record.nil? && c.custom_value(@cdefs[:set_type]).to_s.present?
+          set_record = true
+        end
+      end
+
+      return if hts.blank? || (hts =~ /^(61|62)/).nil? || set_record
 
       footwear = results[:algorithm] == 'footwear'
       cd = @cdefs[:clean_fiber_content]
