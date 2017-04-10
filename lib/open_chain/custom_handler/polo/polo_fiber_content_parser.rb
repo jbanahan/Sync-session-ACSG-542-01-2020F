@@ -117,6 +117,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       convert_results_to_custom_values product, result, failed, status_message
       product.save!
       DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
+      product.create_snapshot snapshot_user, nil, "Fiber Content Parser"
     end
     !failed
   end
@@ -642,6 +643,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
       # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).
       Digest::MD5.hexdigest values.join("\n")
+    end
+
+    def snapshot_user
+      @user ||= User.integration
     end
 
 end; end; end; end;

@@ -473,6 +473,12 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # will trigger a send to MSL+ - which is where this fiber data ultimately needs to end up)
       expect(@prod.changed_at.to_i).to be > changed_at.to_i
       expect(@prod.updated_at.to_i).to be > changed_at.to_i
+
+      expect(@prod.entity_snapshots.length).to eq 1
+
+      snapshot = @prod.entity_snapshots.first
+      expect(snapshot.user).to eq User.integration
+      expect(snapshot.context).to eq "Fiber Content Parser"
     end
 
     it "detects an error and updates fields based on that" do
