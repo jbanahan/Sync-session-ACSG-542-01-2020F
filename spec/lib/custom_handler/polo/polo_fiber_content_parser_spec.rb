@@ -311,11 +311,47 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @prod.update_custom_value! @test_cds[:msl_fiber_failure], true
     end
 
-    ["61", "62"].each do |chapter|
-      it "sets clean_fiber_content for chapter #{chapter}" do
+    context "clean fiber handling" do 
+      ["61", "62"].each do |chapter|
+        it "sets clean_fiber_content for chapter #{chapter}" do
+          DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+          DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+          @tariff.update_attribute(:hts_1, "#{chapter}34567890")
+          @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+          changed_at = 1.day.ago
+          @prod.update_column :changed_at, changed_at
+          @prod.update_column :updated_at, changed_at
+          expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+
+          @prod.reload
+
+          expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS 50.5% COTTON"
+        end
+      end
+
+      it 'does not set clean_fiber_content if set_type is set' do
         DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
         DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-        @tariff.update_attribute(:hts_1, "#{chapter}34567890")
+        @tariff.update_attribute(:hts_1, "6134567890")
+        @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+        @prod.classifications.first.update_custom_value! @test_cds[:set_type], "X"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+
+        @prod.reload
+
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
+      end
+
+      it 'does not set clean_fiber_content if product has no classification' do
+        @prod.classifications.destroy
+        @tariff.destroy
+
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+
         @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
         changed_at = 1.day.ago
         @prod.update_column :changed_at, changed_at
@@ -324,115 +360,96 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
         @prod.reload
 
-        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
       end
-    end
 
-    it 'does not set clean_fiber_content if set_type is set' do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @tariff.update_attribute(:hts_1, "6134567890")
-      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
-      @prod.update_custom_value! @test_cds[:set_type], "X"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+      it "does not set clean_fiber_content for any chapter other than 61 or 62" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @tariff.update_attribute(:hts_1, '1234567890')
 
-      @prod.reload
+        @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
-    end
+        @prod.reload
 
-    it 'does not set clean_fiber_content if product has no classification' do
-      @prod.classifications.destroy
-      @tariff.destroy
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
+      end
 
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      it "does not drop significant digits" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+        @prod.reload
 
-      @prod.reload
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS 50.5% COTTON"
+      end
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
-    end
+      it "drops insignificant zeroes" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @prod.update_custom_value! @test_cds[:fiber_content], "50.00% Canvas 50.00% Cotton"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-    it "does not set clean_fiber_content for any chapter other than 61 or 62" do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @tariff.update_attribute(:hts_1, '1234567890')
+        @prod.reload
 
-      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS 50% COTTON"
+      end
 
-      @prod.reload
+      it "includes all fabric types, with commas between if multiple fabric types" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @prod.update_custom_value! @test_cds[:fiber_content], "50% Canvas 50% Cotton"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to be_blank
-    end
+        @prod.reload
 
-    it "does not drop significant digits" do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS 50% COTTON"
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to_not eq "50% CANVAS 50% COTTON "
+      end
 
-      @prod.reload
+      it "deals with footwear properly" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Leather", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @prod.update_custom_value! @test_cds[:fiber_content], "UPPER - 50% Leather 50% Canvas \nOUTSOLE - 100% LEATHER"
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "49.5% CANVAS, 50.5% COTTON"
-    end
+        @prod.reload
 
-    it "drops insignificant zeroes" do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @prod.update_custom_value! @test_cds[:fiber_content], "50.00% Canvas 50.00% Cotton"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "LEATHER CANVAS OUTER / LEATHER SOLE"
+      end
 
-      @prod.reload
+      it "handles blank set custom fields" do
+        DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+        @prod.update_custom_value! @test_cds[:fiber_content], "50.00% Canvas 50.00% Cotton"
+        @prod.classifications.first.update_custom_value! @test_cds[:set_type], " "
+        changed_at = 1.day.ago
+        @prod.update_column :changed_at, changed_at
+        @prod.update_column :updated_at, changed_at
+        expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS, 50% COTTON"
-    end
+        @prod.reload
 
-    it "includes all fabric types, with commas between if multiple fabric types" do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @prod.update_custom_value! @test_cds[:fiber_content], "50% Canvas 50% Cotton"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
-
-      @prod.reload
-
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS, 50% COTTON"
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to_not eq "50% CANVAS, 50% COTTON,"
-    end
-
-    it "deals with footwear properly" do
-      DataCrossReference.create! key: "Canvas", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      DataCrossReference.create! key: "Leather", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-      @prod.update_custom_value! @test_cds[:fiber_content], "UPPER - 50% Leather 50% Canvas \nOUTSOLE - 100% LEATHER"
-      changed_at = 1.day.ago
-      @prod.update_column :changed_at, changed_at
-      @prod.update_column :updated_at, changed_at
-      expect(described_class.parse_and_set_fiber_content @prod.id).to be true
-
-      @prod.reload
-
-      expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "LEATHER, CANVAS OUTER / LEATHER SOLE"
+        expect(@prod.get_custom_value(@test_cds[:clean_fiber_content]).value).to eq "50% CANVAS 50% COTTON"
+      end
     end
 
     it "parses a fiber content field and sets the values into the given product" do
@@ -456,6 +473,12 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       # will trigger a send to MSL+ - which is where this fiber data ultimately needs to end up)
       expect(@prod.changed_at.to_i).to be > changed_at.to_i
       expect(@prod.updated_at.to_i).to be > changed_at.to_i
+
+      expect(@prod.entity_snapshots.length).to eq 1
+
+      snapshot = @prod.entity_snapshots.first
+      expect(snapshot.user).to eq User.integration
+      expect(snapshot.context).to eq "Fiber Content Parser"
     end
 
     it "detects an error and updates fields based on that" do

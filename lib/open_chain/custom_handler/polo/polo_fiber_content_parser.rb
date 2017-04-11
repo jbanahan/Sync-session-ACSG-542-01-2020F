@@ -4,6 +4,7 @@ require 'open_chain/stat_client'
 
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
+  include ActionView::Helpers::NumberHelper
 
   def self.can_view? user
     MasterSetup.get.system_code == 'polo' || Rails.env.development?
@@ -116,6 +117,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       convert_results_to_custom_values product, result, failed, status_message
       product.save!
       DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
+      product.create_snapshot snapshot_user, nil, "Fiber Content Parser"
     end
     !failed
   end
@@ -524,7 +526,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         fiber, type, percent = all_fiber_fields results, x
 
         unless fiber.blank? || percent.blank?
-          percent = percent.to_f % 1 == 0 ? percent.to_i : percent.to_f
+          percent = number_with_precision(percent, precision: 5, strip_insignificant_zeros: true)
           clean_fiber_content[type] ||= []
           clean_fiber_content[type] << [fiber, percent]
         end
@@ -545,11 +547,24 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
     def update_or_create_cfv(product, fiber_hash, results)
       hts = nil
-      classification = product.classifications.first
-      tariff_record = classification.tariff_records.first if classification.present?
-      hts = [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3] if tariff_record.present?
+      # We only want to deal w/ products that are chapters 61/62...so just find the first
+      # classification record with a tariff number.
+      set_record = nil
+      product.classifications.each do |c|
+        c.tariff_records.each do |t|
+          if !t.hts_1.blank?
+            hts = t.hts_1
+            break
+          end
+        end if hts.nil?
 
-      return if hts.blank? || (hts.grep(/^61/).blank? && hts.grep(/^62/).blank?) || product.custom_value(@cdefs[:set_type]).present?
+        # Check if the product is a set or not, we're skipping sets
+        if set_record.nil? && c.custom_value(@cdefs[:set_type]).to_s.present?
+          set_record = true
+        end
+      end
+
+      return if hts.blank? || (hts =~ /^(61|62)/).nil? || set_record
 
       footwear = results[:algorithm] == 'footwear'
       cd = @cdefs[:clean_fiber_content]
@@ -560,7 +575,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           value.each_with_index do |fiber, index|
             clean_fiber_string << "#{fiber[1]}% " unless footwear
             clean_fiber_string << "#{fiber[0].upcase}"
-            clean_fiber_string << ", " unless index + 1 == value.length
+            #clean_fiber_string << ", " unless index + 1 == value.length
+            clean_fiber_string << " " unless index + 1 == value.length
           end
           clean_fiber_string << " #{key.upcase}" unless fiber_hash.count == 1 || count > fiber_hash.length
           clean_fiber_string << " / " unless count == fiber_hash.length
@@ -628,6 +644,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
       # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).
       Digest::MD5.hexdigest values.join("\n")
+    end
+
+    def snapshot_user
+      @user ||= User.integration
     end
 
 end; end; end; end;
