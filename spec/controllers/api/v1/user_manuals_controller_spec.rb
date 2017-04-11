@@ -6,8 +6,10 @@ describe Api::V1::UserManualsController do
       u = Factory(:user)
       allow_api_access u
 
-      um1 = double(:user_manual,name:'MyManual',id:1)
-      um2 = double(:user_manual,name:'AbcManual',id:2)
+      um1 = UserManual.new(name:'Man1',wistia_code:'wc',category:'cat')
+      um1.id = 1
+      um2 = UserManual.new(name:'AbcManual')
+      um2.id = 2
 
       source_page = 'https://www.vfitrack.net/vendor_portal'
 
@@ -16,8 +18,8 @@ describe Api::V1::UserManualsController do
       # expecting return to be sorted by name
       expected = {
         'user_manuals' => [
-          {'id' => 2, 'name' => um2.name},
-          {'id' => 1, 'name' => um1.name}
+          {'id' => 2, 'name' => um2.name, 'wistia_code' => nil, 'category' => nil},
+          {'id' => 1, 'name' => um1.name, 'wistia_code' => um1.wistia_code, 'category' => um1.category}
         ]
       }
 

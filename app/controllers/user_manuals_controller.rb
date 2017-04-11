@@ -4,7 +4,7 @@ class UserManualsController < ApplicationController
   skip_before_filter :portal_redirect, only: [:download]
   around_filter :admin_secure, except: [:download,:for_referer]
   def index
-    @user_manuals = UserManual.order(:name)
+    @user_manuals = UserManual.all
   end
 
   def update
@@ -17,9 +17,8 @@ class UserManualsController < ApplicationController
   def create
     begin
       UserManual.transaction do
-        return error_redirect "You must attach a file." unless params[:user_manual_file]
         um = UserManual.create(params[:user_manual])
-        if um.errors.blank?
+        if um.errors.blank? && params[:user_manual_file]
           um.create_attachment!(attached:params[:user_manual_file])
         end
         redirect_to user_manuals_path

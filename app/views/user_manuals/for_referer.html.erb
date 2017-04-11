@@ -3,10 +3,25 @@
     <div class="col-xs-10 col-xs-offset-1">
       <%if @manuals.blank?%>
         <div class="alert alert-info">There aren't any user manuals configured for this page.</div>
-      <%end%>
-      <%@manuals.each do |m|%>
-        <%=link_to m.name, download_user_manual_path(m), {:class=>'btn btn-primary btn-block'}%>
+      <%else%>
+        <%UserManual.to_category_hash(@manuals).each do |cat,ma|%>
+        <div>
+          <h3><%=cat%></h3>
+          <ul>
+            <%ma.each do |m|%>
+            <ul>
+              <% if !m.wistia_code.blank? %>
+                <script src="https://fast.wistia.com/embed/medias/<%=m.wistia_code%>.jsonp" async></script><span class="wistia_embed wistia_async_<%=m.wistia_code%> popover=true popoverAnimateThumbnail=true popoverContent=link" style="display:inline"><a href="#"><%=m.name%></a></span>
+              <% else %>
+                <%=link_to m.name, download_user_manual_path(m)%>
+              <% end %>
+            </ul>
+            <%end%>
+          </ul>
+        </div>
+        <%end%>
       <%end%>
     </div>
   </div>
 </div>
+<script src="https://fast.wistia.com/assets/external/E-v1.js" async></script>

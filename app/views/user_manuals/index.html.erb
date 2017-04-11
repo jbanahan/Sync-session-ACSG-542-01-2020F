@@ -15,19 +15,27 @@ $(function() {
       <table class="table table-striped">
         <thead>
           <tr>
+            <th>Category</th>
             <th>Name</th>
+            <th>Wistia Code</th>
             <th>URL Regex</th>
             <th>Groups</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <%@user_manuals.each do |um| %>
+          <%@user_manuals.sort_by {|e| "#{e.category},#{e.name},#{e.id}"}.each do |um| %>
             <tr>
+              <td>
+                <%= um.category%>
+              </td>
               <td>
                 <a href='<%=download_user_manual_path(um)%>' target='_blank'>
                   <%=um.name%>
                 </a>
+              </td>
+              <td>
+                <%= um.wistia_code%>
               </td>
               <td><%=um.page_url_regex%></td>
               <td>
@@ -59,8 +67,16 @@ $(function() {
             <%=f.text_field :name, required: true, class: 'form-control'%>
           </div>
           <div class="form-group">
+            <%=f.label :category%>
+            <%=f.text_field :category, class: 'form-control'%>
+          </div>
+          <div class="form-group">
+            <%=f.label :wistia_code%>
+            <%=f.text_field :wistia_code, class: 'form-control'%>
+          </div>
+          <div class="form-group">
             <label for='user_manual_file'>Attachment</label>
-            <input type='file' id='user_manual_file' name='user_manual_file' required='required' class='form-control' />
+            <input type='file' id='user_manual_file' name='user_manual_file' class='form-control' />
           </div>
           <div class="form-group">
             <%=f.label :page_url_regex, 'Matching Page URL (regex)'%>

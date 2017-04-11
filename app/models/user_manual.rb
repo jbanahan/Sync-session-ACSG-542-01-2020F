@@ -1,5 +1,5 @@
 class UserManual < ActiveRecord::Base
-  attr_accessible :groups, :name, :page_url_regex
+  attr_accessible :groups, :name, :page_url_regex, :wistia_code, :category
   validates :name, presence: true
 
   has_one :attachment, :as => :attachable, :dependent=>:destroy
@@ -15,6 +15,18 @@ class UserManual < ActiveRecord::Base
     end
   end
 
+  # sort the given collection into an hash keyed by category 
+  # with each value being an array of user manuals sorted by name
+  def self.to_category_hash coll
+    cat_hash = Hash.new {|h,k| h[k] = []}
+    coll.each do |um|
+      n = um.category.blank? ? '' : um.category
+      cat_hash[n] << um
+    end
+    cat_hash.each {|k,v| v.sort_by! {|e| [e.name,e.id]}}
+    cat_hash
+  end
+  
   # user_group_system_codes is an optimization for when you're calling this
   # in a loop over multiple UserManuals. It can be ignored, and the groups
   # will be loaded from the user object if it is not passed

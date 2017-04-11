@@ -19,7 +19,7 @@ describe UserManualsController do
       sign_in_as Factory(:admin_user)
       get :index
       expect(response).to be_success
-      expect(assigns(:user_manuals).to_a).to eq [um2,um1]
+      expect(assigns(:user_manuals).to_a).to eq [um1,um2]
     end
   end
   describe '#update' do
@@ -58,11 +58,6 @@ describe UserManualsController do
       um = UserManual.first
       expect(um.name).to eq 'X'
       expect(um.attachment.attached_file_name).to eq 'test.txt'
-    end
-    it "should fail without attachment" do
-      sign_in_as Factory(:admin_user)
-      expect { post :create, user_manual: {name:'X'}}.to_not change(UserManual,:count)
-      expect(flash[:errors].first).to eq "You must attach a file."
     end
   end
   describe '#destroy' do

@@ -30,6 +30,14 @@ $(function() {
           <%=f.text_field :name, required: true, class: 'form-control'%>
         </div>
         <div class="form-group">
+          <%=f.label :category%>
+          <%=f.text_field :category, class: 'form-control'%>
+        </div>
+        <div class="form-group">
+          <%=f.label :wistia_code%>
+          <%=f.text_field :wistia_code, class: 'form-control'%>
+        </div>
+        <div class="form-group">
           <%=f.label :page_url_regex, 'Matching Page URL (regex)'%>
           <%=f.text_field :page_url_regex, class: 'form-control'%>
         </div>
