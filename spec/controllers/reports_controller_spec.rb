@@ -505,17 +505,21 @@ describe ReportsController do
     end
 
     context "run" do
+      let(:args) { {range_field: "release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m", 
+                    end_fiscal_year_month: "end fy/m"}}
+      
       it "doesn't run for unauthorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return false
         expect(ReportResult).not_to receive(:run_report!)
-        post :run_ascena_entry_audit_report, start_date: "start", end_date: "end"
+        post :run_ascena_entry_audit_report, args
         expect(flash[:errors].first).to eq("You do not have permission to view this report")
       end
 
       it "runs for authorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return true
-        expect(ReportResult).to receive(:run_report!).with("Ascena Entry Audit Report", user, OpenChain::Report::AscenaEntryAuditReport, :settings=>{start_date: "start", end_date: "end"}, :friendly_settings=>[])
-        post :run_ascena_entry_audit_report, start_date: "start", end_date: "end"
+        expect(ReportResult).to receive(:run_report!).with("Ascena Entry Audit Report", user, OpenChain::Report::AscenaEntryAuditReport, 
+                                                           :settings=>args, :friendly_settings=>[])
+        post :run_ascena_entry_audit_report, args
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end

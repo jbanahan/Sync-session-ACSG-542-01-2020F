@@ -16,11 +16,10 @@ class FiscalMonth < ActiveRecord::Base
 
   def self.generate_csv company_id
     recs = run_csv_query company_id
-    output = CSV.generate do |csv|
+    CSV.generate do |csv|
       csv << ["Fiscal Year", "Fiscal Month", "Actual Start Date", "Actual End Date"]
       recs.each { |r| csv << r }
     end
-    output
   end
 
   private

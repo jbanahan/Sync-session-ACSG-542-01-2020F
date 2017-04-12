@@ -1,17 +1,21 @@
 require 'open_chain/report/report_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+require 'open_chain/custom_handler/ascena/ascena_report_helper'
 
 module OpenChain; module Report; class AscenaEntryAuditReport
   include OpenChain::Report::ReportHelper
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::CustomHandler::Ascena::AscenaReportHelper
+
+  SYSTEM_CODE = "ASCENA"
 
   def self.permission? user
     (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
-      (user.view_entries? && (user.company.master? || user.company.system_code == "ASCENA" || linked_to_ascena?(user.company)))
+      (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
   end
 
   def self.linked_to_ascena? co
-    ascena = Company.where(system_code: "ASCENA").first
+    ascena = Company.where(system_code: SYSTEM_CODE).first
     return false unless ascena
     co.linked_companies.to_a.include? ascena
   end
@@ -21,19 +25,42 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   end
 
   def run run_by, settings
-    start_date = sanitize_date_string settings['start_date'], run_by.time_zone
-    end_date = sanitize_date_string settings['end_date'], run_by.time_zone
-    wb = create_workbook start_date, end_date, run_by.time_zone
+    start_date, end_date = get_dates run_by, settings
+    wb = create_workbook start_date, end_date, settings['range_field'], run_by.time_zone
     workbook_to_tempfile wb, 'AscenaEntryAuditReport-', file_name: "Ascena Entry Audit Report.xls"
+  end
+
+  def get_dates run_by, settings
+    if settings['range_field'] == 'release_date'
+      start_date, end_date = release_date_dates(settings['start_release_date'], settings['end_release_date'], run_by.time_zone)
+    elsif settings['range_field'] == 'fiscal_date'
+      start_date, end_date = fiscal_month_dates(*settings['start_fiscal_year_month'].split('-'), *settings['end_fiscal_year_month'].split('-'))
+    end
+    [start_date, end_date]
+  end
+
+  def release_date_dates start_date, end_date, time_zone
+    start_date = sanitize_date_string start_date, time_zone
+    end_date = sanitize_date_string end_date, time_zone
+    [start_date, end_date]
+  end
+
+  def fiscal_month_dates start_fiscal_year, start_fiscal_month, end_fiscal_year, end_fiscal_month
+    ascena = Company.where(system_code: SYSTEM_CODE).first
+    start_date = FiscalMonth.where(company_id: ascena.id, year: start_fiscal_year, month_number: start_fiscal_month)
+                            .first.start_date.strftime("%Y-%m-%d")
+    end_date   = FiscalMonth.where(company_id: ascena.id, year: end_fiscal_year, month_number: end_fiscal_month)
+                            .first.start_date.strftime("%Y-%m-%d")
+    [start_date, end_date]
   end
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price]
   end
 
-  def create_workbook start_date, end_date, time_zone
+  def create_workbook start_date, end_date, range_field, time_zone
     wb, sheet = XlsMaker.create_workbook_and_sheet "Ascena Entry Audit Report"
-    table_from_query sheet, query(start_date, end_date, cdefs), conversions(time_zone)
+    table_from_query sheet, query(start_date, end_date, range_field, cdefs), conversions(time_zone).merge("Web Link"=>weblink_translation_lambda(CoreModule::ENTRY))
     wb
   end
 
@@ -44,7 +71,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
      "Release Date" => datetime_translation_lambda(time_zone) }
   end
 
-  def query start_date, end_date, cdefs
+  def query start_date, end_date, range_field, cdefs
     <<-SQL
       SELECT e.broker_reference AS 'Broker Reference',
              e.entry_number AS 'Entry Number',
@@ -54,6 +81,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              e.entry_filed_date AS 'Entry Filed Date',
              e.final_statement_date AS 'Final Statement Date',
              e.release_date AS 'Release Date',
+             e.duty_due_date AS 'Duty Due Date',
              e.transport_mode_code AS 'Mode of Transport',
              e.master_bills_of_lading AS 'Master Bills',
              e.house_bills_of_lading AS 'House Bills',
@@ -62,6 +90,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
                 THEN (SELECT name FROM ports WHERE ports.cbsa_port = e.entry_port_code) 
                 ELSE (SELECT name FROM ports WHERE ports.schedule_d_code = e.entry_port_code) END) AS 'Port of Entry Name',
              e.lading_port_code AS 'Port of Lading Code',
+             (SELECT COUNT(*) FROM containers WHERE containers.entry_id = e.id) AS 'Container Count',
              cil.po_number AS 'PO Number',
              cil.product_line AS 'Product Line',
              cil.part_number AS 'Part Number',
@@ -74,6 +103,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              cit.hts_code AS 'HTS Code',
              cit.duty_rate AS 'Duty Rate',
              cil.mid AS 'MID',
+             fact.name AS 'MID Supplier Name',
              vend.name AS 'Vendor Name',
              vend.system_code AS 'Vendor Number',
              IF(ord_type.string_value = "NONAGS", "", ord_agent.string_value) AS 'AGS Office',
@@ -88,14 +118,11 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              cit.classification_uom_1 AS 'UOM 1',
              cit.classification_uom_2 AS 'UOM 2',
              cil.add_case_number AS 'ADD Case Number',
-             cil.quantity * (SELECT ordln_price.decimal_value
-                             FROM order_lines ol
-                              INNER JOIN products prod ON prod.id = ol.product_id
-                              INNER JOIN custom_values ordln_price ON ordln_price.customizable_id = ol.id AND ordln_price.customizable_type = "OrderLine" AND ordln_price.custom_definition_id = #{cdefs[:ord_line_wholesale_unit_price].id}
-                             WHERE o.id = ol.order_id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
-                             LIMIT 1) AS 'Value',
-             ci.invoice_value AS 'Invoice Value',
+             #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id)} AS 'Invoice Value - Brand',
+             #{invoice_value_7501('ci')} AS 'Invoice Value - 7501',
+             #{invoice_value_contract('ci', 'cil')} AS 'Invoice Value - Contract',
              cit.entered_value AS 'Entered Value',
+             #{rounded_entered_value('cit')} AS 'Rounded Entered Value',
              (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0) 
               FROM commercial_invoice_tariffs total_duty_t
               WHERE total_duty_t.commercial_invoice_line_id = cil.id) AS 'Total Duty',
@@ -118,23 +145,20 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              ci.non_dutiable_amount AS 'Inv Non-Dutiable Amount',
              cil.non_dutiable_amount AS 'Inv Ln Non-Dutiable Amount',
              e.total_non_dutiable_amount AS 'Total Non-Dutiable Amount',
-             (SELECT ordln_price.decimal_value
-              FROM order_lines ol
-               INNER JOIN products prod ON prod.id = ol.product_id
-               INNER JOIN custom_values ordln_price ON ordln_price.customizable_id = ol.id AND ordln_price.customizable_type = "OrderLine" AND ordln_price.custom_definition_id = #{cdefs[:ord_line_wholesale_unit_price].id}
-              WHERE o.id = ol.order_id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
-              LIMIT 1) AS 'Price to Brand',
-             IF((ord_type.string_value = "NONAGS"), 0, (SELECT ordln.price_per_unit 
-                                                        FROM order_lines ordln 
-                                                          INNER JOIN products prod ON prod.id = ordln.product_id 
-                                                        WHERE ordln.order_id = o.id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
-                                                        LIMIT 1)) AS 'Vendor Price to AGS',
-             IF((ord_type.string_value = "NONAGS" OR cil.contract_amount <= 0), 0, cit.entered_value / cil.quantity) AS 'First Sale Price',
+             #{unit_price_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id)} AS 'Unit Price - Brand',
+             #{unit_price_po('o', 'cil')} AS 'Unit Price - PO',
+             #{unit_price_7501('ci', 'cil')} AS 'Unit Price - 7501',
              (SELECT IF((SUM(t.entered_value) = 0) OR ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2)< 1,0,ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2))
               FROM commercial_invoice_lines l
               INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id 
-              WHERE l.id = cil.id) AS 'First Sale Duty Savings',
-             IF(cil.contract_amount > 0, 'Y', 'N') AS 'First Sale Flag'
+              WHERE l.id = cil.id) AS 'Duty Savings - NDC',
+             IF(cil.contract_amount IS NULL OR cil.contract_amount = 0, 0, (SELECT ROUND((l.contract_amount - l.value) * (t.duty_amount / t.entered_value), 2)
+                                                                            FROM commercial_invoice_lines l
+                                                                               INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
+                                                                            WHERE l.id = cil.id
+                                                                            LIMIT 1 )) AS 'Duty Savings - First Sale',
+             IF(cil.contract_amount > 0, 'Y', 'N') AS 'First Sale Flag',
+             e.id AS 'Web Link'
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
@@ -142,8 +166,9 @@ module OpenChain; module Report; class AscenaEntryAuditReport
         LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.po_number)
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
-        INNER JOIN companies vend ON vend.id = o.vendor_id
-      WHERE e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}'
+        LEFT OUTER JOIN companies fact ON fact.id = o.factory_id
+        LEFT OUTER JOIN companies vend ON vend.id = o.vendor_id
+      WHERE e.#{range_field} >= '#{start_date}' AND e.#{range_field} < '#{end_date}'
         AND e.customer_number = "ASCE"
     SQL
   end
