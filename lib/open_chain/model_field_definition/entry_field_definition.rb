@@ -258,7 +258,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [170, :ent_fiscal_year, :fiscal_year, "Fiscal Year", {:data_type=>:integer}],
       [171, :ent_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}],
       [172, :ent_summary_rejected, :summary_rejected, "Summary Rejected", {data_type: :boolean}],
-      [173, :ent_container_count, :containre_count, "Container Count", {
+      [173, :ent_container_count, :container_count, "Container Count", {
         data_type: :integer, 
         read_only: true,
         export_lambda: lambda {|ent| ent.containers.length},
