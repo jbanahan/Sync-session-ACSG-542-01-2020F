@@ -131,8 +131,27 @@ module ApplicationHelper
     if one_of_array && one_of_array.size > 0
       inner_opts.delete :size
       inner_opts.delete "size"
-      a = [""]+one_of_array
-      select_tag(field_name,options_for_select(a,value),inner_opts)
+      # What we have now is in one_of_arry is an array like ["Option 1", "Option 2"]
+      # ...this introduces alphabetical casing issues when value goes to match the option that's selected.  
+      # We explicitly allow for case-mismatch for the values in the field validator rule check for the 'One Of' field validation
+
+      # So, rather than rely on the rails options_for_select to do the selected option detection, we can do it ourselves here
+      # in a case insensitive manner and then, in order to avoid changing the fields value, we set the option's value
+      # to be the same as the field's value via the hash options_for_select allows as the last element of the option's array
+
+      # So if field value = "OPTION 1" you get and html output of: <option value="OPTION 1" selected="selected">Option 1</option>
+      downed_value = value.try(:downcase)
+      selected = false
+      options_array = ([""]+one_of_array).map do |v|
+        if !selected && v.downcase == downed_value
+          selected = true
+          [v, value, {selected: selected}]
+        else
+          [v]
+        end
+      end
+
+      select_tag(field_name,options_for_select(options_array),inner_opts)
     else
       text_field_tag(field_name,value,inner_opts)
     end
