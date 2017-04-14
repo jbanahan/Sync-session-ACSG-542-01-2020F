@@ -119,8 +119,8 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              cit.classification_uom_2 AS 'UOM 2',
              cil.add_case_number AS 'ADD Case Number',
              #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id)} AS 'Invoice Value - Brand',
-             #{invoice_value_7501('ci')} AS 'Invoice Value - 7501',
-             #{invoice_value_contract('ci', 'cil')} AS 'Invoice Value - Contract',
+             #{invoice_value_7501('cil')} AS 'Invoice Value - 7501',
+             #{invoice_value_contract('cil')} AS 'Invoice Value - Contract',
              cit.entered_value AS 'Entered Value',
              #{rounded_entered_value('cit')} AS 'Rounded Entered Value',
              (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0) 
@@ -147,7 +147,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              e.total_non_dutiable_amount AS 'Total Non-Dutiable Amount',
              #{unit_price_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id)} AS 'Unit Price - Brand',
              #{unit_price_po('o', 'cil')} AS 'Unit Price - PO',
-             #{unit_price_7501('ci', 'cil')} AS 'Unit Price - 7501',
+             #{unit_price_7501('cil')} AS 'Unit Price - 7501',
              (SELECT IF((SUM(t.entered_value) = 0) OR ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2)< 1,0,ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2))
               FROM commercial_invoice_lines l
               INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id 

@@ -154,10 +154,10 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts', 'Duty Rate'=>1, 'MID'=>'mid', 
          'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
          'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi', 'Quantity 1'=>2, 'Quantity 2'=>3, 'UOM 1'=>'class uom 1', 
-         'UOM 2'=>'class uom 2', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>1, 'Invoice Value - Contract'=>20, 
+         'UOM 2'=>'class uom 2', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 'Invoice Value - Contract'=>20, 
          'Entered Value'=>4, 'Rounded Entered Value'=>4, 'Total Duty'=>13, 'MPF - Prorated'=>3, 'MPF - Full'=>4, 'HMF'=>5, 'Total Fees'=>16, 'ADD Value'=>6, 
          'CVD Value'=>7, 'Excise Amount'=>5, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 'Inv Ln Non-Dutiable Amount'=>9, 
-         'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>1, 'Duty Savings - NDC'=>13, 
+         'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
          'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Web Link'=>@ent.id})
 
       expect(rows[1]).to eq(
@@ -168,10 +168,10 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts2', 'Duty Rate'=>2, 'MID'=>'mid', 
          'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
          'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi2', 'Quantity 1'=>3, 'Quantity 2'=>4, 
-         'UOM 1'=>'class uom 1(2)', 'UOM 2'=>'class uom 2(2)', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>1, 
+         'UOM 1'=>'class uom 1(2)', 'UOM 2'=>'class uom 2(2)', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 
          'Invoice Value - Contract'=>20, 'Entered Value'=>5, 'Rounded Entered Value'=>5, 'Total Duty'=>13, 'MPF - Prorated'=>3.0, 'MPF - Full'=>4, 'HMF'=>5, 
          'Total Fees'=>16, 'ADD Value'=>6, 'CVD Value'=>7, 'Excise Amount'=>6, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 
-         'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>1, 'Duty Savings - NDC'=>13, 
+         'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
          'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Web Link'=>@ent.id}
         )      
     end
@@ -193,13 +193,11 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       expect(result.first['Port of Entry Name']).to eq "fenix port"
     end
 
-    it "For non-AGS orders, returns a blank/0 for AGS Office, First Sale Price" do
+    it "For non-AGS orders, returns a blank/0 for AGS Office" do
       @ord.update_custom_value!(cdefs[:ord_type], 'NONAGS')
       result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', cdefs)
       row = result.first
       expect(row['AGS Office']).to be_blank
-      expect(row['Unit Price - PO']).to eq 1
-      expect(row['Unit Price - 7501']).to eq 1
     end
 
     it "assigns 0 to 'Duty Savings - First Sale', 'N' to First Sale Flag if contract amount is 0" do

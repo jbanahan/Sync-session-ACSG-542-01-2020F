@@ -13,12 +13,12 @@ class Report
     cdef_id = cdefs[:ord_line_wholesale_unit_price].id
     <<-SQL
       SELECT #{invoice_value_brand('o', 'cil', cdef_id)} AS 'Invoice Value - Brand', 
-             #{invoice_value_7501('ci')} AS 'Invoice Value - 7501', 
-             #{invoice_value_contract('ci', 'cil')} AS 'Invoice Value - Contract', 
+             #{invoice_value_7501('cil')} AS 'Invoice Value - 7501', 
+             #{invoice_value_contract('cil')} AS 'Invoice Value - Contract', 
              #{rounded_entered_value('cit')} AS 'Rounded Entered Value', 
              #{unit_price_brand('o', 'cil', cdef_id)} AS 'Unit Price - Brand', 
              #{unit_price_po('o', 'cil')} AS 'Unit Price - PO', 
-             #{unit_price_7501('ci', 'cil')} AS 'Unit Price - 7501'
+             #{unit_price_7501('cil')} AS 'Unit Price - 7501'
       FROM commercial_invoices ci
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
@@ -31,8 +31,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
   let(:report) { Report.new }
   
   before do
-    @ci = Factory(:commercial_invoice, invoice_value: 2)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, quantity: 3, part_number: "part num", po_number:'po num', contract_amount: 4)
+    @ci = Factory(:commercial_invoice)
+    @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, quantity: 3, part_number: "part num", po_number:'po num', contract_amount: 4, value: 2)
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 5.5)
     @p = Factory(:product, unique_identifier: "ASCENA-part num")
     @o = Factory(:order, order_number: "ASCENA-po num")

@@ -3,12 +3,12 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
     "#{inv_line_alias}.quantity * #{unit_price(ord_alias, inv_line_alias, wholesale_unit_price_cdef_id)}"
   end
 
-  def invoice_value_7501 inv_alias
-    "#{inv_alias}.invoice_value"
+  def invoice_value_7501 inv_line_alias
+    "#{inv_line_alias}.value"
   end
 
-  def invoice_value_contract inv_alias, inv_line_alias
-    "IF(#{inv_line_alias}.contract_amount > 0, #{inv_line_alias}.contract_amount, #{inv_alias}.invoice_value)"
+  def invoice_value_contract inv_line_alias
+    "IF(#{inv_line_alias}.contract_amount > 0, #{inv_line_alias}.contract_amount, #{inv_line_alias}.value)"
   end
 
   def rounded_entered_value tariff_alias
@@ -29,8 +29,8 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
        SQL
   end
 
-  def unit_price_7501 inv_alias, inv_line_alias
-    "#{inv_alias}.invoice_value / #{inv_line_alias}.quantity"
+  def unit_price_7501 inv_line_alias
+    "#{inv_line_alias}.value / #{inv_line_alias}.quantity"
   end
 
   private
