@@ -20,7 +20,17 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
       [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}],
       [18,:ci_destination_code,:destination_code,'Destination Code',{data_type: :string}],
       [19,:ci_updated_at,:updated_at,"Last Updated",{data_type: :datetime,read_only: true}],
-      [20, :ci_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}]
+      [20, :ci_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}],
+      [21,:ci_total_adjusted_value, :total_adjusted_value, "Adjusted Value", {data_type: :decimal, currency: :usd,
+        :import_lambda=>lambda {|o,d| "Adjusted Value ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.inject(0) do |acc, nxt| 
+            acc + (nxt.adjustments_amount ? nxt.adjustments_amount : BigDecimal.new(0)) + (nxt.value ? nxt.value : BigDecimal.new(0))
+          end },
+        :qualified_field_name=>"(SELECT SUM((ifnull(commercial_invoice_lines.adjustments_amount,0) + ifnull(commercial_invoice_lines.value,0)))
+                                 FROM commercial_invoice_lines
+                                 WHERE commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id)"
+        }]
+       
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
   end
