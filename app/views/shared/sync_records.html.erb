@@ -1,0 +1,25 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=defined?(@back_url) ? @back_url : url_for(:back)%>' key_map='b'>Back</button>
+<%end%>
+
+<% core_module = CoreModule.find_by_object(@base_object) %>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>System Sync: <%=Array.wrap(core_module.unique_id_field).first.process_export(@base_object, current_user)%></h2>
+    </div>
+    <% if @base_object.sync_records.length == 0 %>
+      <div class="col-md-12">
+        <h2 align="center">
+          There are no sync records available for this <%=core_module.label%>.
+        </h2>
+      </div>
+    <% else %>
+      <div class="row">
+        <div class="col-md-12">
+          <%= render(partial: "shared/sync_records", locals: {base_object: @base_object}) %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

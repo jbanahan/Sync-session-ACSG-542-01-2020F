@@ -5,11 +5,13 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     it "should ftp_file" do
       ents = 'x'
       files = ['y','z']
+      sync_record = SyncRecord.new trading_partner: "Test"
       expect_any_instance_of(described_class).to receive(:find_shipments).and_return(ents)
-      expect_any_instance_of(described_class).to receive(:generate_tempfiles).with(ents).and_yield(files[0], files[1])
-      expect_any_instance_of(described_class).to receive(:ftp_file).with(files[0],{remote_file_name:'Vand_Header'})
-      expect_any_instance_of(described_class).to receive(:ftp_file).with(files[1],{remote_file_name:'Vand_Detail'})
+      expect_any_instance_of(described_class).to receive(:generate_tempfiles).with(ents).and_yield(files[0], files[1], [sync_record])
+      expect_any_instance_of(described_class).to receive(:ftp_sync_file).with(files[0], [sync_record], {remote_file_name:'Vand_Header'})
+      expect_any_instance_of(described_class).to receive(:ftp_file).with(files[1], {remote_file_name:'Vand_Detail'})
       described_class.run_schedulable
+      expect(sync_record.persisted?).to eq true
     end
   end
 
@@ -218,12 +220,17 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         g = described_class.new
         allow(g).to receive(:generate_header_rows)
         allow(g).to receive(:generate_detail_rows)
+        sync_records = []
+
         expect {
-          g.generate_tempfiles [@shipment] {|f1, f2| }
+          g.generate_tempfiles [@shipment] {|f1, f2, srs| sync_records = srs}
         }.to change(
           SyncRecord.where(syncable_id:@shipment.id,
             trading_partner:'LENOXASN').
           where('confirmed_at is not null'),:count).from(0).to(1)
+
+        expect(sync_records.length).to eq 1
+        expect(sync_records.first).to eq @shipment.sync_records.first
       end
     end
   end

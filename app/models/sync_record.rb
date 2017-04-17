@@ -1,6 +1,7 @@
 class SyncRecord < ActiveRecord::Base
   belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true
+  belongs_to :ftp_session
 
   scope :problems, lambda { where(self.problems_clause()) }
 

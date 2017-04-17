@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
           tf.write xml
           tf.flush
-          ftp_file tf
+          ftp_sync_file tf, sr
 
           sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute), fingerprint: fingerprint
         end

@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
         temp.rewind
 
         SyncRecord.transaction do
-          ftp_file temp
+          ftp_sync_file temp, sync_record
           now = Time.zone.now
           conf = now + 1.minute
           sync_record.sent_at = now
@@ -83,9 +83,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           entry.broker_invoices.each do |inv|
             sr = inv.sync_records.find {|sr| sr.trading_partner == self.class.sync_code}
             if sr
-              sr.update_attributes! sent_at: now, confirmed_at: conf
+              sr.update_attributes! sent_at: now, confirmed_at: conf, ftp_session: sync_record.ftp_session
             else
-              inv.sync_records.create! trading_partner: self.class.sync_code, sent_at: now, confirmed_at: now
+              inv.sync_records.create! trading_partner: self.class.sync_code, sent_at: now, confirmed_at: now, ftp_session: sync_record.ftp_session
             end
           end
         end

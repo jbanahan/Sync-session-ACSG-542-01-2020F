@@ -795,7 +795,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       line_2 = Factory(:broker_invoice_line, broker_invoice: line.broker_invoice, charge_code: "0100", charge_description: "OUTLAY", charge_amount: BigDecimal("0.99"), vendor_name: "", vendor_reference: "", charge_type: "O")
       broker_invoice = line.broker_invoice
       # Ultimately, the reason we're doing this is to make sure we're copying sync records, so bake this into the test case
-      sync_record = broker_invoice.sync_records.create! trading_partner: "TESTING", sent_at: Time.zone.now
+      sync_record = broker_invoice.sync_records.create! trading_partner: "TESTING", sent_at: Time.zone.now, ftp_session_id: 10
 
       # Create a second invoice and make sure it gets removed, since it won't be in the json
       Factory(:broker_invoice, entry: e)
@@ -821,11 +821,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # make sure the attributes of the sync record were copied over
       expect(entry.broker_invoices.first.sync_records.first.trading_partner).to eq "TESTING"
       expect(entry.broker_invoices.first.sync_records.first.sent_at.to_i).to eq sync_record.sent_at.to_i
+      expect(entry.broker_invoices.first.sync_records.first.ftp_session_id).to eq 10
 
       expect(entry.broker_invoices.second.invoice_number).to eq "12345"
       expect(entry.broker_invoices.second.sync_records.length).to eq 1
 
-      # There was a bug where we were totally destroyed invoices into the main total..make sure it doesn't happen again
+      # There was a bug where we were adding destroyed invoice's total amounts into the entry's broker invoice total..make sure it doesn't happen again
       expect(entry.broker_invoice_total).to eq 201.98
     end
 

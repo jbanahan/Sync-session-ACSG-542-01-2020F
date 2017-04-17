@@ -26,9 +26,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     generate_file(entries) do |file, sync_records, errors|
       begin
         ActiveRecord::Base.transaction do
+          ftp_sync_file file, sync_records
           sync_records.each {|sr| sr.save!}
-
-          ftp_file file
         end
       rescue => e
         errors << e

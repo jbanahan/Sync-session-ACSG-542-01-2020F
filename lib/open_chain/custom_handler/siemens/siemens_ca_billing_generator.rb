@@ -55,9 +55,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
           # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
           # shouldn't span too much clock time.
+          sync_records = []
           Entry.transaction do 
             entries.each do |e|
-              e.sync_records.create! trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed
+              sync_records << e.sync_records.build(trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed)
             end
 
             counter_item.update_attributes! json_data: {counter: counter}.to_json
@@ -65,7 +66,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
             # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
             # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
             # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
-            ftp_file encrypted_file
+            ftp_sync_file encrypted_file, sync_records
+
+            sync_records.each {|sr| sr.save! }
             
             completed = true
           end

@@ -11,14 +11,13 @@ describe EntriesController do
   end
 
   describe "sync_records" do
-    before :each do
-      @ent = Factory(:entry)
-    end
+    let (:entry) { Factory(:entry) }
 
     it "should render page" do
-      get :sync_records, id: @ent.id
+      get :sync_records, id: entry.id
       expect(response).to be_success
-      expect(controller.instance_variable_get(:@e)).to eq(@ent)
+      expect(assigns :base_object).to eq(entry)
+      expect(assigns :back_url).to include "entries/#{entry.id}"
     end
   end
 

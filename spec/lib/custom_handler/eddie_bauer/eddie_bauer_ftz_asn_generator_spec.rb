@@ -5,10 +5,12 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
   describe "run_schedulable" do
     it "should ftp file" do
+      sync = SyncRecord.new trading_partner: "test"
       expect_any_instance_of(described_class).to receive(:find_entries).and_return(['ents'])
-      expect_any_instance_of(described_class).to receive(:generate_file).with(['ents']).and_yield('x', [], [])
-      expect_any_instance_of(described_class).to receive(:ftp_file).with('x')
+      expect_any_instance_of(described_class).to receive(:generate_file).with(['ents']).and_yield('x', [sync], [])
+      expect_any_instance_of(described_class).to receive(:ftp_sync_file).with('x', [sync])
       described_class.run_schedulable
+      expect(sync.persisted?).to eq true
     end
   end
 
@@ -41,7 +43,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "generates file and saves yielded sync records and ftps yield file" do
 
       expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
-      expect(subject).to receive(:ftp_file).with @file
+      expect(subject).to receive(:ftp_sync_file).with @file, [@sync_record]
 
       subject.run_for_entries @entries
 
@@ -50,7 +52,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
     it "rolls back all sync records saved if ftp fails" do
       expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
-      expect(subject).to receive(:ftp_file).with(@file).and_raise StandardError, "Error"
+      expect(subject).to receive(:ftp_sync_file).with(@file, [@sync_record]).and_raise StandardError, "Error"
 
       expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error</li></ul>"
       expect(@sync_record).not_to be_persisted
@@ -58,7 +60,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
     it "combines errors together into one mega error" do
       expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [StandardError.new("Error 1"), StandardError.new("Error 2")])
-      expect(subject).to receive(:ftp_file).with(@file)
+      expect(subject).to receive(:ftp_sync_file).with(@file, [@sync_record])
 
 
       expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error 1</li><li>Error 2</li></ul>"

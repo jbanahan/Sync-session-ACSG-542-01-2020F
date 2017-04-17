@@ -9,6 +9,7 @@ describe OpenChain::CustomHandler::Generator315Support do
 
   before :each do 
     @data = OpenChain::CustomHandler::Generator315Support::Data315.new "ref", "ent", 10, "LCL", "SCAC", "ves", "voy", "e_p", "l_p", "CCN", "A\nB", "C\nD", "E\nF", "G\nH", "release_date", ActiveSupport::TimeZone["America/New_York"].parse("201501011230")
+    @data.sync_record = SyncRecord.new
   end
 
   describe "write_315_xml" do
@@ -70,7 +71,9 @@ describe OpenChain::CustomHandler::Generator315Support do
       @data.master_bills = "A"
       files = []
       folder = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      sync_records = []
+      expect(subject).to receive(:ftp_sync_file) do |file, srs, opts|
+        sync_records = srs
         files << file.read
         folder = opts[:folder]
       end
@@ -87,12 +90,15 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(root.children[1].text "MasterBills/MasterBill").to eq "B"
       expect(milestones).to eq [@data, d2]
       expect(folder).to eq "to_ecs/315/CN"
+
+      expect(sync_records.length).to eq 2
+      expect(sync_records.first).to be @data.sync_record
     end
 
     it "creates xml document, ftps it, but doesn't yield when testing" do
       files = []
       folder = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect(subject).to receive(:ftp_sync_file) do |file, srs, opts|
         files << file.read
         folder = opts[:folder]
       end

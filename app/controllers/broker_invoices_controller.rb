@@ -12,6 +12,20 @@ class BrokerInvoicesController < ApplicationController
       @invoice = i
     }
   end
+
+  def sync_records
+    @base_object = BrokerInvoice.find(params[:id])
+    # We use the same method for the entry/:entry_id/broker_invoice/:id/sync_records route as the /broker_invoice/:id/sync_records one
+    # when coming from the entry screen...we want to go back to the entry screen, not the broker invoices
+    if params[:entry_id]
+      @back_url = url_for(Entry.find(params[:entry_id]))
+    else
+      @back_url = url_for(@base_object)
+    end
+    
+    render template: "shared/sync_records"
+  end
+
   def create
     ent = Entry.find params[:entry_id]
     if !ent.can_view? current_user

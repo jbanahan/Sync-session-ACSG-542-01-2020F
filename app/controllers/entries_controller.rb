@@ -166,7 +166,9 @@ class EntriesController < ApplicationController
   end
 
   def sync_records
-    @e = Entry.find(params[:id])
+    @base_object = Entry.find(params[:id])
+    @back_url = url_for(@base_object)
+    render template: "shared/sync_records"
   end
 
   def request_entry_data
