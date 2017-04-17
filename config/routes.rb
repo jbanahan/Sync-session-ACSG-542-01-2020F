@@ -300,7 +300,11 @@ OpenChain::Application.routes.draw do
       post 'bulk_request_entry_data'
     end
 
-    resources :broker_invoices, :only=>[:create]
+    resources :broker_invoices, :only=>[:create] do 
+      member do 
+        get 'sync_records'
+      end
+    end
   end
 
   resources :business_validation_templates do
@@ -319,7 +323,11 @@ OpenChain::Application.routes.draw do
   end
 
   resources :commercial_invoices, :only => [:show]
-  resources :broker_invoices, :only => [:index,:show]
+  resources :broker_invoices, :only => [:index,:show] do
+    member do 
+      get 'sync_records'
+    end
+  end
   resources :part_number_correlations, only: [:index, :show, :create]
   resources :commercial_invoice_maps, :only=>[:index] do
     post 'update_all', :on=>:collection

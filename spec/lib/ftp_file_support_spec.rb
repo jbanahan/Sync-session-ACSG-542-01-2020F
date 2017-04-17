@@ -74,6 +74,37 @@ describe "FtpFileSupport" do
       expect(@t).to receive(:unlink)
       s.ftp_file @t, opts
     end
+
+    it "yields the ftp session if a block is gvien" do
+      allow(File).to receive(:exists?).and_return true
+      expect(@t).to receive(:unlink)
+      session = FtpSession.new
+
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials).and_return session
+      expect{ |b| subject.ftp_file(@t, &b) }.to yield_with_args(session)
+    end
+  end
+
+  describe "ftp_sync_file" do
+    let (:session) { FtpSession.new }
+    let (:file) { instance_double(File) }
+    let (:overrides) { {:server=>'svr',:username=>'u',:password=>'p'} }
+
+    it "uses ftp file and sets the yielded session into the sync record" do
+      expect(subject).to receive(:ftp_file).with(file, overrides).and_yield session
+      sync_record = SyncRecord.new
+      subject.ftp_sync_file file, sync_record, overrides
+      expect(sync_record.ftp_session).to eq session
+    end
+
+    it "handles multiple sync records" do
+      expect(subject).to receive(:ftp_file).with(file, overrides).and_yield session
+      sync_record_1 = SyncRecord.new
+      sync_record_2 = SyncRecord.new
+      subject.ftp_sync_file file, [sync_record_1, sync_record_2], overrides
+      expect(sync_record_1.ftp_session).to eq session
+      expect(sync_record_2.ftp_session).to eq session
+    end
   end
 
   describe "ftp2_vandegrift_inc" do

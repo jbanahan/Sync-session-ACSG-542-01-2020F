@@ -73,8 +73,8 @@ describe FtpSender do
 
   context "send" do
     before :each do
-      @ftp = double('ftp').as_null_object
-      expect(FtpSender).to receive(:get_ftp_client).and_return @ftp
+      @ftp = instance_double(described_class::NoOpFtpClient).as_null_object
+      allow(FtpSender).to receive(:get_ftp_client).and_return @ftp
     end
 
     context "error" do
@@ -90,12 +90,12 @@ describe FtpSender do
         expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_raise "RANDOM ERROR"
         expect(@ftp).to receive(:last_response).and_return "500"
 
-        # We're stubbing out the create_attachment call on the ftp session to avoid S3 involvement when
+        # We're stubbing out the build_attachment call on the ftp session to avoid S3 involvement when
         # saving the ftp session's file attachment
         attachment = double("Attachment")
         allow(attachment).to receive(:id).and_return 1
 
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         expect_any_instance_of(FtpSession).to receive(:attachment).twice.and_return attachment
         file_contents = nil
         expect(attachment).to receive(:attached=) { |file|
@@ -176,7 +176,7 @@ describe FtpSender do
         allow(@ftp).to receive(:last_response).and_return "200"
 
         attachment = double("Attachment")
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         file_contents = nil
         file_name = nil
         expect(attachment).to receive(:attached=) { |file|
@@ -199,7 +199,7 @@ describe FtpSender do
         expect(@ftp).to receive(:send_file).with @file.path, 'remote_file.txt', kind_of(Hash)
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         file_contents = nil
         file_name = nil
         expect(attachment).to receive(:attached=) { |file|
@@ -222,7 +222,7 @@ describe FtpSender do
         expect(@ftp).to receive(:send_file).with @file.path, File.basename(@file), kind_of(Hash)
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         file_contents = nil
         file_name = nil
         expect(attachment).to receive(:attached=) { |file|
@@ -241,7 +241,7 @@ describe FtpSender do
       it "should change directory to remote directory" do
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         expect(attachment).to receive(:attached=)
         expect(@ftp).to receive(:chdir).with("some/remote/folder")
         FtpSender.send_file @server, @username, @password, @file, {:folder => "some/remote/folder"}
@@ -253,10 +253,31 @@ describe FtpSender do
 
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
-        expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
         expect(attachment).to receive(:attached=)
         session = FtpSender.send_file @server, @username, @password, @file
         expect(session.file_name).to eq("original.txt")
+      end
+    end
+
+    context "with blank file" do
+
+      before :each do 
+        @file.truncate(0)
+        @file.rewind
+      end
+
+      it "does not save ftp_sessions for blank files" do
+        sess = FtpSender.send_file @server, @username, @password, @file
+        expect(sess.persisted?).to eq false
+        expect(sess.username).to eq(@username)
+        expect(sess.server).to eq(@server)
+        expect(sess.file_name).to eq(File.basename(@file))
+        expect(sess.empty_file?).to eq true
+        expect(sess.last_server_response).to be_nil
+        expect(sess.successful?).to eq true
+
+        expect(@file.closed?).to be_truthy
       end
     end
 
@@ -496,7 +517,7 @@ describe FtpSender do
       allow(@ftp).to receive(:last_response).and_return "200"
 
       attachment = double("Attachment")
-      expect_any_instance_of(FtpSession).to receive(:create_attachment).and_return attachment
+      expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
       file_contents = nil
       expect(attachment).to receive(:attached=) { |file|
         file.rewind

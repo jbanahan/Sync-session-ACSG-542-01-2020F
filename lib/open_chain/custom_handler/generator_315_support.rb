@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Generator315Support
           doc.write fout
           fout.flush
           fout.rewind
-          ftp_file fout, folder: ftp_folder(customer_number, testing)
+          ftp_sync_file fout, data_315s.map {|d| d.sync_record }, folder: ftp_folder(customer_number, testing)
 
           unless testing
             data_315s.each do |milestone|

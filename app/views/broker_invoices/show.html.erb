@@ -3,6 +3,9 @@
   <% if current_user.view_entries? %>
     <button class='btn_link' link_to='<%=entry_path(@invoice.entry)%>' key_map='e'>View Entry</button>
   <% end %>
+  <% if current_user.sys_admin? %>
+    <button class="btn_link" title='Sync Records' link_to='<%=sync_records_broker_invoice_path(@invoice)%>'><i class='fa fa-exchange'></i></button>
+  <% end %>
 <% end%>
 <%= show_model_fields @invoice, CoreModule::BROKER_INVOICE.model_fields.values %>
 <h2>Lines</h2>

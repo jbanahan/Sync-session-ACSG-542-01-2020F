@@ -3,7 +3,8 @@ class FtpSessionsController < ApplicationController
     'c_username' => {:field => 'username', :label=> 'Username'},
     'c_server' => {:field => 'server', :label => 'Server'},
     'c_filename' => {:field => 'file_name', :label => 'File Name'},
-    'd_createdat' => {:field => 'created_at', :label => "Created At"}
+    'd_createdat' => {:field => 'created_at', :label => "Created At"},
+    'd_sentdat' => {:field => 'updated_at', :label => "Sent At"}
   }
 
   def index

@@ -12,9 +12,12 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def self.run_schedulable opts={}
     g = self.new(opts)
-    g.generate_tempfiles(g.find_shipments) do |header_file, detail_file|
-      g.ftp_file header_file, {remote_file_name:'Vand_Header'}
+    g.generate_tempfiles(g.find_shipments) do |header_file, detail_file, sync_records|
+      g.ftp_sync_file header_file, sync_records, {remote_file_name:'Vand_Header'}
       g.ftp_file detail_file, {remote_file_name:'Vand_Detail'}
+
+      # Save off the sync_record now that they're populated with the ftp session for the header file
+      sync_records.each {|sr| sr.save! }
     end
     nil
   end
@@ -43,11 +46,12 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     Shipment.transaction do
       Tempfile.open(['LENOXHEADER','.txt']) do |header_file|
         Tempfile.open(['LENOXDETAIL','.txt']) do |detail_file|
+          sync_records = []
           shipments.each do |shp|
             hdata, ddata = '', ''
             generate_header_rows(shp) {|r| hdata << "#{r}\n"}
             generate_detail_rows(shp) {|r| ddata << "#{r}\n"}
-            shp.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+            sync_records << shp.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
             header_file << hdata
             detail_file << ddata
           end
@@ -56,7 +60,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
           detail_file.flush
           detail_file.rewind
 
-          yield header_file, detail_file
+          yield header_file, detail_file, sync_records
         end
       end
     end

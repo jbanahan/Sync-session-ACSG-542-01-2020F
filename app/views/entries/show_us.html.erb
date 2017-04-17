@@ -378,7 +378,11 @@ $(function() {
           <tbody>
             <tr>
               <td colspan='2'>
-                <h3><%= model_field_labels :bi_invoice_date %><%= show_model_fields bi, :bi_invoice_date, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
+                <h3><%= model_field_labels :bi_invoice_date %><%= show_model_fields bi, :bi_invoice_date, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %>
+                  <% if current_user.sys_admin? %>
+                    <span style="font-size: 75%"><a href='<%=sync_records_entry_broker_invoice_path(@entry, bi)%>'><i class='fa fa-exchange'></i></a></span>
+                  <% end %>
+                </h3>
               </td>
             </tr>
             <tr>

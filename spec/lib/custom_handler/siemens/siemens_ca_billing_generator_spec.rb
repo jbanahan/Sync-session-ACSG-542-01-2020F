@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         blk.call f
       end
 
-      expect_any_instance_of(described_class).to receive(:ftp_file).and_return true
+      expect_any_instance_of(described_class).to receive(:ftp_sync_file).and_return true
 
       described_class.run_schedulable({'public_key' => 'spec/fixtures/files/vfitrack.gpg.key'})
       # All that we care about here is ultimately 1 line of something was encrypted
@@ -370,9 +370,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         it "writes entry data to a file and sends it" do
           encrypted_file = nil
           filename = nil
-          expect(subject).to receive(:ftp_file) do |ftp_file|
+          sync_records = []
+          expect(subject).to receive(:ftp_sync_file) do |ftp_file, srs|
             encrypted_file = ftp_file.read
             filename = ftp_file.original_filename
+            sync_records = srs
             true
           end
 
@@ -400,6 +402,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           expect(sr.sent_at).not_to be_nil
           expect(sr.confirmed_at).not_to be_nil
 
+          expect(sync_records.length).to eq 1
+          expect(sync_records.first).to eq sr
+
           expect(@counter.reload.data).to eq({"counter" => 1})
           expect(ActionMailer::Base.deliveries.length).to eq 1
           # Ensure the email was the report and not an error
@@ -419,7 +424,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
             end
           end
 
-          expect(subject).to receive(:ftp_file).and_raise "Error!"
+          expect(subject).to receive(:ftp_sync_file).and_raise "Error!"
           expect{ subject.generate_and_send [@entry]}.to raise_error "Error!"
 
           expect(@entry.reload.sync_records.length).to eq 0

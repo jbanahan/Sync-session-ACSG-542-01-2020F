@@ -107,8 +107,14 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
     it "yields tempfile to block given if file's fingerprint changed" do
       files = []
-      @g.sync_xml {|t| files << t.path}
+      sync = []
+      @g.sync_xml do |t, s| 
+        files << t.path
+        sync << s
+      end
       expect(files.size).to eq(1)
+      expect(sync.length).to eq 1
+      expect(sync.first).to eq @e1.sync_records.first
     end
     it "yields nothing if file fingerprint did not change" do
       data = "Testing"
@@ -223,28 +229,6 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
   end
 
-  describe "ftp_xml_files" do
-    before :each do 
-      @tempfiles = []
-      @h = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
-    end
-    after :each do 
-      @tempfiles.each {|t| t.unlink}
-    end
-    it "should ftp the files to dev folder" do
-      allow(@h).to receive(:remote_file_name).and_return('xyz.xml')
-      3.times do |i| 
-        t = Tempfile.new(["tf#{i}",".xml"])
-        @tempfiles << t
-        expect(@h).to receive(:ftp_file).with t
-      end
-      @h.ftp_xml_files @tempfiles
-    end
-    it "should set remote file name" do
-      expect(@h.remote_file_name).to match /VFITRACK.*\.xml/
-    end
-  end
-
   describe "ftp_credentials" do 
     it "should use the ftp2 credentials" do
       g = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
@@ -265,6 +249,17 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       described_class.run_schedulable
 
       expect(SyncRecord.first.syncable).to eq @e1
+    end
+  end
+
+  describe "generate" do
+    it "generates xml and ftps it" do
+      sync = SyncRecord.new trading_partner: "test"
+      expect(subject).to receive(:sync_xml).and_yield "file", sync
+      expect(subject).to receive(:ftp_sync_file).with "file", sync
+
+      subject.generate
+      expect(sync.persisted?).to eq true
     end
   end
 end

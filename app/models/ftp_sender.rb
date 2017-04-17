@@ -27,6 +27,7 @@ class FtpSender
       # Attempt to send 10 times total
       max_retry_count = 9
       error = nil
+      empty_file = false
       begin
         # Use pathname here instead of just stat'ing the file because there are instances where the file handle
         # may not have been used directly to write the data, but there is in fact data to be read from the filesystem.  
@@ -56,7 +57,8 @@ class FtpSender
             log << "Session completed successfully."
           end
         else
-          log << "File was empty, not sending."
+          empty_file = true
+          log << FtpSession::EMPTY_MESSAGE
         end
       rescue => e
         # Just throw an error into the log, the retry/excepton logging occurs in the ensure block
@@ -71,6 +73,12 @@ class FtpSender
                           :last_server_response => (ftp_client.nil? ? nil : ftp_client.last_response),
                           :protocol => my_opts[:protocol],
                           :retry_count => session.retry_count ? session.retry_count + 1 : 0)
+        
+        # We don't really want to save off empty ftp file send sessions, there's no real point.
+        # We do, however, want to return a session always from the send..so, just return one that hasn't
+        # been created yet
+        return session if empty_file
+
         session.save!
 
         # No attachment means that there was a blank file attempted to be sent
@@ -131,10 +139,8 @@ class FtpSender
 
       if file
         # Make sure we're storing the attachment off under the name we sent it as
-        Attachment.add_original_filename_method file
-        file.original_filename = remote_name
-
-        att = session.create_attachment
+        Attachment.add_original_filename_method file, remote_name
+        att = session.build_attachment
         att.attached = file
       end
     end

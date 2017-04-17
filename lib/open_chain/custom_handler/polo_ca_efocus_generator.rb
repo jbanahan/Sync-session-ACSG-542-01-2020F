@@ -23,7 +23,11 @@ module OpenChain
       
       #This is the master method that does all of the work
       def generate
-        sync_xml {|t| ftp_file t}
+        sync_xml do |t, sync| 
+          ftp_sync_file t, sync
+          # Save the sync record now that it has an ftp session
+          sync.save!
+        end
       end
 
       def sync_xml
@@ -50,7 +54,7 @@ module OpenChain
                 Tempfile.open(["PoloCaEfocus",".xml"]) do |t|
                   t << output.read
                   t.rewind
-                  yield t if block_given? 
+                  yield t, sr if block_given? 
                 end
               else
                 t = Tempfile.new ["PoloCaEfocus",".xml"]
@@ -114,13 +118,6 @@ endbody
         output_file << doc.to_s
         output_file.flush
         output_file
-      end
-
-      def ftp_xml_files file_array
-        environ = Rails.env=='production' ? 'prod' : 'dev'
-        file_array.each do |f|
-          ftp_file f
-        end
       end
 
       def ftp_credentials 

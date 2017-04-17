@@ -1,13 +1,18 @@
+<% download_link = (!@ftp_session.attachment.nil?) ? download_attachment_path(@ftp_session.attachment, disposition: "attachment") : download_ftp_session_path(@ftp_session) %>
+
 <% content_for :action_bar do %>
 
-  <button class='btn_link' link_to='<%= (!@ftp_session.attachment.nil?) ? download_attachment_path(@ftp_session.attachment, disposition: "attachment") : download_ftp_session_path(@ftp_session) %>'>Download</button>
+  <button class='btn_link' link_to='<%= download_link %>'>Download</button>
   <button class='btn_link' link_to='<%= ftp_sessions_path %>' key_map='b'>Back</button>
 <% end %>
 
 <table>
   <%= field_row "Username", @ftp_session.username %>
   <%= field_row "Server", @ftp_session.server %>
-  <%= field_row "File Name", @ftp_session.file_name %>
+  <%= field_row "File Name", link_to(@ftp_session.file_name, download_link) %>
   <%= field_row "Log", simple_format(@ftp_session.log) %>
   <%= field_row "Created At", @ftp_session.created_at %>
+  <%= field_row "Sent At", @ftp_session.updated_at %>
+  <%= field_row "Successful", @ftp_session.successful? ? "Y" : "N" %>
+  <%= field_row "Send Retries", @ftp_session.retry_count.to_i %>
 </table>
