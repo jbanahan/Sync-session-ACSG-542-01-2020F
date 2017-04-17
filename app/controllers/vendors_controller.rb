@@ -1,4 +1,3 @@
-require 'open_chain/workflow_processor'
 require 'open_chain/business_rule_validation_results_support'
 class VendorsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
@@ -30,7 +29,6 @@ class VendorsController < ApplicationController
       end
       c = Company.create(name:name.strip,vendor:true)
       if c.errors.full_messages.blank?
-        OpenChain::WorkflowProcessor.async_process c
         c.create_snapshot current_user
         redirect_to vendor_path(c)
       else
@@ -131,7 +129,6 @@ class VendorsController < ApplicationController
   def secure_company_view
     @company = Company.find params[:id]
     action_secure(@company.can_view_as_vendor?(current_user), @company, {:verb => "view", :lock_check => true, :module_name=>"vendor"}) {
-      enable_workflow @company
       yield @company if block_given?
     }
   end

@@ -67,11 +67,6 @@ class ApplicationController < ActionController::Base
     MasterSetup.get
   end
 
-  # turn on the workflow popup icon
-  def enable_workflow base_object
-    @workflow_object = base_object
-  end
-
   #controller action to display generic history page
   def history
     p = root_class.find params[:id]
@@ -96,30 +91,30 @@ class ApplicationController < ActionController::Base
       raise ActionController::RoutingError.new('Not Found')
     end
   end
-  
+
   def error_redirect(message=nil)
     add_flash :errors, message unless message.nil?
     target = request.referrer ? request.referrer : "/"
     target = params[:redirect_to].blank? ? target : params[:redirect_to]
     redirect_to target
   end
-    
+
   def action_secure(permission_check, obj, options={})
     err_msg = nil
     opts = {
-      :lock_check => true, 
-      :verb => "edit", 
+      :lock_check => true,
+      :verb => "edit",
       :lock_lambda => lambda {|o| o.respond_to?(:locked?) && o.locked?},
       :module_name => "object"}.merge(options)
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
-    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
+    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
     unless err_msg.nil?
       opts[:json] ? (render_json_error err_msg) : (error_redirect err_msg)
     else
       yield
     end
   end
-  
+
   # secure the given block to Company Admin's only (as opposed to System Admins)
   def admin_secure(err_msg = "Only administrators can do this.")
     if current_user.admin?
@@ -128,7 +123,7 @@ class ApplicationController < ActionController::Base
       error_redirect err_msg
     end
   end
-  
+
   def sys_admin_secure(err_msg = "Only system admins can do this.")
     if current_user.sys_admin?
       yield
@@ -136,12 +131,12 @@ class ApplicationController < ActionController::Base
       error_redirect err_msg
     end
   end
-  
+
   # Strips top level parameter keys from the URI query string.  Note, this method
   # does not support nested parameter names (ala "model[attribute]").
   def strip_uri_params uri_string, *keys
     uri = URI.parse uri_string
-    begin 
+    begin
       query_params = Rack::Utils.parse_nested_query(uri.query).except(*keys)
       uri.query = Rack::Utils.build_nested_query(query_params)
     end unless uri.query.blank? || keys.empty?
@@ -149,7 +144,7 @@ class ApplicationController < ActionController::Base
     uri.query = nil if uri.query.blank?
     return uri.to_s
   end
-  
+
   # If true (default), legacy javascript files will be included in the html rendered.
   # Override and return false if legacy files are not needed (all angular based pages should return false )
   def legacy_javascripts?
@@ -158,12 +153,12 @@ class ApplicationController < ActionController::Base
 
   # Returns true if the user's browser is IE < 9.
   # Relies on the browser gem to make this calculation
-  def old_ie_version? 
+  def old_ie_version?
     return browser.ie? && Integer(browser.version) < 9 rescue true
   end
-  
+
   def send_excel_workbook workbook, filename
-    spreadsheet = StringIO.new 
+    spreadsheet = StringIO.new
     workbook.write spreadsheet
     send_data spreadsheet.string, :filename => filename, :type => :xls
   end
@@ -186,7 +181,7 @@ class ApplicationController < ActionController::Base
     user
   end
 
-  protected 
+  protected
   def verified_request?
     # Angular uses the header X-XSRF-Token (rather than rails' X-CSRF-Token default), just account for that
     # rather than making config modifications to our angular apps (since we'd have to update several different files
@@ -195,9 +190,9 @@ class ApplicationController < ActionController::Base
   end
 
   private
-  
+
   def set_master_setup
-    MasterSetup.current = MasterSetup.get false 
+    MasterSetup.current = MasterSetup.get false
   end
 
   def force_reset
@@ -218,7 +213,7 @@ class ApplicationController < ActionController::Base
     visible = (params[:sf] == f_short) ? "visible" : "hidden"
 
     arrow = "<span class=\"glyphicon #{glyphicon}\" style=\"visibility: #{visible}; margin-right: .5em;\"></span>"
-    link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
+    link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a')))
     (arrow + link).html_safe
   end
 
@@ -293,7 +288,7 @@ class ApplicationController < ActionController::Base
   end
 
   def store_location
-    session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/) 
+    session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/)
   end
 
   def redirect_back_or_default(default)
@@ -323,7 +318,7 @@ class ApplicationController < ActionController::Base
     p.each {|k,v| r[k]=v if v.is_a?(String)}
     r
   end
-  def model_field_label(model_field_uid) 
+  def model_field_label(model_field_uid)
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
     return mf.label

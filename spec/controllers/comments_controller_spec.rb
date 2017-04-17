@@ -6,19 +6,18 @@ describe CommentsController do
     sign_in_as @u
   end
   describe "#create", :disable_delayed_jobs do
-    before do 
+    before do
       @prod = Factory(:product)
     end
-    
+
     context "with authorized user" do
       before do
         expect_any_instance_of(Product).to receive(:can_comment?).with(@u).and_return true
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(@prod)
       end
-      
-      it "creates a comment, sends email, executes workflow, redirects" do
+
+      it "creates a comment, sends email, redirects" do
         post :create, to: "nigeltufnel@stonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
-        
+
         expect(Comment.count).to eq 1
         expect(flash[:errors]).to be_nil
         expect(ActionMailer::Base.deliveries.count).to eq 1
@@ -41,10 +40,9 @@ describe CommentsController do
     context "with unauthorized user" do
       it "redirects with flash error" do
         expect_any_instance_of(Product).to receive(:can_comment?).with(@u).and_return false
-        expect(OpenChain::WorkflowProcessor).to_not receive(:async_process)
-        
+
         post :create, to: "nigeltufnelstonehenge.biz", comment: {user_id: @u.id, commentable_id: @prod.id, commentable_type: "Product"}
-        
+
         expect(ActionMailer::Base.deliveries.count).to eq 0
         expect(Comment.count).to eq 0
         expect(flash[:errors]).to eq ["You do not have permission to add comments to this item."]
@@ -84,7 +82,7 @@ describe CommentsController do
       @comment = Comment.create!(:commentable => prod, :user => @u, :subject => "what it's about", :body => "what is there to say?")
       expect_any_instance_of(Product).to receive(:can_view?).with(@u).and_return true
     end
-    
+
     it "sends message if email list contains at least one valid email" do
       post :send_email, {id: @comment.id, to: "tufnel@stonehenge.biz"}
       expect(response.body).to eq "OK"

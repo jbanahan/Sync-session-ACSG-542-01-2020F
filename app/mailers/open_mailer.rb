@@ -29,32 +29,13 @@ EOS
     pm_attachments = []
     opts = {to: explode_group_email_list(to, "TO"), subject: subject}.merge mail_options
     local_attachments = process_attachments(file_attachments, opts[:to])
-    
+
     m = mail(opts) do |format|
       format.html
     end
 
     local_attachments.each {|name, content| m.attachments[name] = content}
     m
-  end
-
-  def send_tasks user
-    @user = user
-    @tasks = WorkflowTask.for_user(user).not_passed.order('workflow_tasks.due_at DESC')
-    @grouped_tasks = {}
-    (WorkflowTask::DUE_AT_LABELS - ['Complete']).each {|l| @grouped_tasks[l] = []}
-    @tasks.each do |t|
-      lbl = t.due_at_label
-      @grouped_tasks[lbl] << t
-    end
-    @link = emailer_host(user)
-    mail(to: user.email, subject:"[VFI Track] Your Tasks") do |format|
-      if user.email_format == 'text'
-        format.text
-      else
-        format.html
-      end
-    end
   end
 
   def send_change(history,subscription,text_only)
@@ -72,9 +53,9 @@ EOS
       end
     end
   end
-  
+
   def send_registration_request(params)
-    @email, @fname, @lname, @company, @cust_no, @contact, @system_code = 
+    @email, @fname, @lname, @company, @cust_no, @contact, @system_code =
       params.values_at(:email, :fname, :lname, :company, :cust_no, :contact, :system_code)
 
     mail(:to => "support@vandegriftinc.com", :subject => "Registration Request (#{@system_code})")
@@ -93,7 +74,7 @@ EOS
   def send_password_reset(user)
     @user = user
     @reset_url = edit_password_reset_url(@user.confirmation_token, host: emailer_host(user))
-    mail(:to => user.email, :subject => "[VFI Track] Password Reset") do |format| 
+    mail(:to => user.email, :subject => "[VFI Track] Password Reset") do |format|
       format.html
     end
   end
@@ -108,8 +89,8 @@ EOS
   def send_comment(current_user,to_address,comment,link=nil)
     @user = current_user
     @comment = comment
-    @link = link 
-    mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}") 
+    @link = link
+    mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}")
   end
 
   def send_search_result(to, search_name, attachment_name, file_path, user)
@@ -125,7 +106,7 @@ EOS
   end
 
   def send_search_result_manually(to, subject, body, file_path, current_user)
-    @user = current_user 
+    @user = current_user
     @body_text = body
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
@@ -193,12 +174,12 @@ EOS
   def send_message(message)
     @message = message
     @messages_url = messages_url(:host => emailer_host(@message.user))
-    
+
     mail(:to => message.user.email, :subject => "[VFI Track] New Message - #{message.subject}") do |format|
       format.html
     end
   end
-  
+
 #ERROR EMAILS
   def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
     @search_name = search_name
@@ -232,7 +213,7 @@ EOS
 
   def send_custom_search_error(user, error, params)
     @user = user
-    @error = error  
+    @error = error
     @params = params
     mail(:to => "bug@vandegriftinc.com", :subject => "[VFI Track Exception] Search Failure") do |format|
       format.text
@@ -251,12 +232,12 @@ EOS
     @process_id = Process.pid
     local_attachments = {}
     attachment_paths.each do |ap|
-      if save_large_attachment ap, 'bug@vandegriftinc.com' 
+      if save_large_attachment ap, 'bug@vandegriftinc.com'
         @additional_messages << @body_text
       else
         local_attachments[attachment_filename(ap)] = create_attachment ap
       end
-    end  
+    end
     m = mail(:to=>"bug@vandegriftinc.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
       format.text
     end
@@ -391,7 +372,7 @@ EOS
     file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
     local_attachments = {}
     file_attachments.each do |file|
-      
+
       save_large_attachment(file, to) do |email_attachment, attachment_text|
         if email_attachment
           @attachment_messages << attachment_text
@@ -432,8 +413,8 @@ EOS
     message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
     # Message.to/etc are all actually Mail::AddressContainer, so we have to convert them to just a string before saving them
     # Message.body is much more complex and also cannot be directly saved to the database, the body text must be extracted first.
-    SentEmail.create!(email_subject: message.subject, email_to: extract_email_addresses(message.to), email_cc: extract_email_addresses(message.cc), 
-                      email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from), 
+    SentEmail.create!(email_subject: message.subject, email_to: extract_email_addresses(message.to), email_cc: extract_email_addresses(message.cc),
+                      email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from),
                       email_reply_to: extract_email_addresses(message.reply_to), email_date: Time.zone.now, email_body: extract_email_body(message.body),
                       attachments: attachment_list)
 
@@ -448,7 +429,7 @@ EOS
     @blacklisted_extension = File.extname(file) if extension_blacklisted? file 
     
     local_attachments = process_attachments(file, email_to)
-    
+
     m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|
       format.html
     end
@@ -456,7 +437,7 @@ EOS
     local_attachments.each {|name, content| m.attachments[name] = content}
     m
   end
-  
+
 
   private
 
@@ -507,15 +488,14 @@ EOS
       local_attachments = {}
       @attachment_messages = []
 
-      approved_attachments = Array.wrap(file_attachments).reject{ |f| extension_blacklisted? f }
-      
+      approved_attachments = Array.wrap(file_attachments).reject{ |f| extension_blacklisted? f }      
       approved_attachments.each do |file|
 
         save_large_attachment(file, email_to) do |email_attachment, attachment_text|
           if email_attachment
             @attachment_messages << attachment_text
           else
-            
+
             filename = attachment_filename(file)
             local_attachments[filename] = create_attachment(file)
           end
@@ -623,7 +603,7 @@ EOS
       if data_is_file
         data = IO.read((data.respond_to?(:path) ? data.path : (data.respond_to?(:to_path) ? data.to_path.to_s : data)), mode: "rb")
       end
-      # When using the native Rails mail attachments you no longer have to base64 encode the data, the 
+      # When using the native Rails mail attachments you no longer have to base64 encode the data, the
       # postmark library handles that behind the scenes for us now.
       {content: data,
         mime_type: "application/octet-stream"}

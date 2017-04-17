@@ -1,4 +1,3 @@
-require 'open_chain/workflow_processor'
 require 'open_chain/bulk_action/bulk_action_runner'
 require 'open_chain/bulk_action/bulk_comment'
 require 'open_chain/bulk_action/bulk_action_support'
@@ -21,7 +20,6 @@ class CommentsController < ApplicationController
       if cmt.save
         add_flash :errors, "Email address is invalid." unless params[:to].empty? || email(cmt)
       end
-      OpenChain::WorkflowProcessor.async_process(commentable)
       errors_to_flash cmt
     end
     redirect_to redirect_location(commentable)
@@ -32,7 +30,6 @@ class CommentsController < ApplicationController
     action_secure((current_user.admin? || current_user.id == cmt.user_id), cmt, {:lock_check => false, :verb => "delete", :module_name => "comment"}) {
       if cmt.destroy
         add_flash :notices, "Comment deleted successfully."
-        OpenChain::WorkflowProcessor.async_process(commentable)
       end
       errors_to_flash cmt
     }
@@ -51,7 +48,6 @@ class CommentsController < ApplicationController
     action_secure(current_user.id==cmt.user_id, cmt, {:lock_check => false, :verb => "edit", :module_name => "comment"}) {
       if cmt.update_attributes(params[:comment])
         add_flash :notices, "Comment updated successfully."
-        OpenChain::WorkflowProcessor.async_process(commentable)
         email cmt
       end
       errors_to_flash cmt
@@ -66,7 +62,7 @@ class CommentsController < ApplicationController
     }
     if email_sent || params[:to].blank?
       render :text=>"OK"
-    else 
+    else
       render :text=>"Email is invalid."
     end
   end

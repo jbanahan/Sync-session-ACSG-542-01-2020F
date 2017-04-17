@@ -46,7 +46,6 @@ describe StateToggleButton do
 
   describe "toggle!" do
     before :each do
-      allow_any_instance_of(OpenChain::WorkflowProcessor).to receive(:process!)
     end
     it "should set the date and user_id fields" do
       btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
@@ -123,24 +122,13 @@ describe StateToggleButton do
       expect(s.get_custom_value(cd_date).value).to be_nil
       expect(s.get_custom_value(cd_user_id).value).to be_nil
     end
-    it "should respsect async snapshot" do
+    it "should respect async snapshot parameter" do
       btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
       s = Factory(:shipment)
       u = Factory(:user)
 
       expect(s).to receive(:create_snapshot_with_async_option).with(true,u)
       btn.toggle! s, u, true
-    end
-    it "should reprocess workfow" do
-      wp = double('workflow processor')
-      expect(OpenChain::WorkflowProcessor).to receive(:new).and_return wp
-      btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'canceled_date',user_attribute:'canceled_by')
-      s = Factory(:shipment)
-      u = Factory(:user)
-
-      allow(s).to receive(:create_snapshot_with_async_option)
-      expect(wp).to receive(:process!).with(s,u)
-      btn.toggle! s, u
     end
   end
 
@@ -192,9 +180,9 @@ describe StateToggleButton do
     let!(:user_cdef) { Factory(:custom_definition, module_type: "Order", data_type: "integer", label: "Custom User")}
     let!(:date_cdef) { Factory(:custom_definition, module_type: "Order", data_type: "datetime", label: "Custom Date")}
     let(:stb) { Factory(:state_toggle_button, module_type: "Order") }
-    
+
     describe "user_field" do
-      
+
       it "retrieves model field if the button has a user_attribute" do
         stb.update_attributes(user_custom_definition_id: nil, user_attribute: "ord_closed_by")
         expect(stb.user_field.label).to eq "Closed By"

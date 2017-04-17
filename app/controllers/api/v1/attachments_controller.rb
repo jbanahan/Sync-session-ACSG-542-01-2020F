@@ -1,5 +1,3 @@
-require 'open_chain/workflow_processor'
-
 module Api; module V1; class AttachmentsController < Api::V1::ApiController
   include PolymorphicFinders
   include ApiJsonSupport
@@ -40,7 +38,6 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
           deleted = true
         end
 
-        OpenChain::WorkflowProcessor.async_process(obj) if deleted
         render_ok
       else
         render_forbidden
@@ -60,7 +57,6 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
         attachment.uploaded_by = current_user
         attachment.save!
 
-        OpenChain::WorkflowProcessor.async_process(obj)
         obj.log_update(current_user) if obj.respond_to?(:log_update)
         obj.attachment_added(attachment) if obj.respond_to?(:attachment_added)
 

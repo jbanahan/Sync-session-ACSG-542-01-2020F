@@ -1,4 +1,3 @@
-require 'open_chain/workflow_processor'
 class StateToggleButton < ActiveRecord::Base
   # Permission group system codes should be separated by newlines
 
@@ -47,7 +46,6 @@ class StateToggleButton < ActiveRecord::Base
 
     obj.save!
     obj.create_snapshot_with_async_option async_snapshot, user
-    OpenChain::WorkflowProcessor.new.process! obj, user
     nil
   end
   def async_toggle! obj, user

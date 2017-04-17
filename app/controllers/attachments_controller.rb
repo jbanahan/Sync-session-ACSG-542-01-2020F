@@ -1,4 +1,3 @@
-require 'open_chain/workflow_processor'
 require 'email_validator'
 
 class AttachmentsController < ApplicationController
@@ -22,7 +21,6 @@ class AttachmentsController < ApplicationController
         att.uploaded_by = current_user
         if att.save!
           saved = true
-          OpenChain::WorkflowProcessor.async_process(attachable)
           attachable.log_update(current_user) if attachable.respond_to?(:log_update)
           attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)
         else
@@ -56,7 +54,6 @@ class AttachmentsController < ApplicationController
         att.rebuild_archive_packet if deleted
       end
       errors_to_flash att
-      OpenChain::WorkflowProcessor.async_process(attachable) if deleted
     else
       add_flash :errors, "You do not have permission to delete this attachment."
     end
@@ -73,7 +70,7 @@ class AttachmentsController < ApplicationController
       else
         download_attachment att
       end
-      
+
     else
       error_redirect "You do not have permission to download this attachment."
     end

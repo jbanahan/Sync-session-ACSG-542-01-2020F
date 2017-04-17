@@ -21,8 +21,6 @@ describe Api::V1::AttachmentsController do
       it "deletes an attachment" do
         expect_any_instance_of(Product).to receive(:can_attach?).with(user).and_return true
         expect_any_instance_of(Attachment).to receive(:rebuild_archive_packet)
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process)
-
         delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
         expect(response).to be_success
         expect(JSON.parse(response.body)).to eq({"ok" => "ok"})
@@ -129,8 +127,6 @@ describe Api::V1::AttachmentsController do
     end
 
     it "creates an attachment" do
-      expect(OpenChain::WorkflowProcessor).to receive(:async_process)
-
       post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
 
@@ -151,8 +147,6 @@ describe Api::V1::AttachmentsController do
       expect_any_instance_of(Product).to receive(:attachment_added) do |instance, attach|
         attachment_id = attach.id
       end
-
-      expect(OpenChain::WorkflowProcessor).to receive(:async_process)
 
       post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success

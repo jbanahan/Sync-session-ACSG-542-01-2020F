@@ -1,8 +1,6 @@
 class Group < ActiveRecord::Base
   has_and_belongs_to_many :users, join_table: "user_group_memberships"
 
-  has_many :workflow_tasks, inverse_of: :group
-
   validates :name, presence: true
   validates :system_code, presence: true
   validates :system_code, uniqueness: true, unless: Proc.new {|g| g.system_code.blank? }

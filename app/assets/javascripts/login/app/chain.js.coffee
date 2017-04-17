@@ -59,13 +59,13 @@ root.Chain =
       Chain.hideMessage('wh4')
 
     bootstro.start '', {items:itms, onExit: ox}
-    
+
   toggleNotificationCenter: () ->
     if $("#notification-center").is(':visible')
       Chain.hideNotificationCenter()
     else
       Chain.showNotificationCenter()
-      
+
   showNotificationCenter : () ->
     $("#notification-center").modal('show')
     Chain.showNotificationCenterPane('messages')
@@ -94,7 +94,7 @@ root.Chain =
 
   hideNotificationCenter : () ->
     $("#notification-center").modal('hide')
-      
+
 
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
@@ -134,8 +134,8 @@ root.Chain =
   # generates html string for a bootstrap error panel
   makeErrorPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "error", needs_container
-      
-  makeSuccessPanel: (messages, needs_container = true) -> 
+
+  makeSuccessPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "success", needs_container
 
   makePanel: (messages, type, needs_container) ->
@@ -256,7 +256,7 @@ root.Chain =
       country_cb = []
       cb_set[country_id] = country_cb
     country_cb.push callback
-    
+
   #fire these callbacks when a tariff field is flagged as valid
   fireTariffCallbacks : (state,country_id,bad_tariff_number) ->
     return unless @tariffCallbacks
@@ -323,7 +323,7 @@ root.Chain =
     modal.html(h)
     writeClassification(c) for c in product.classifications
     Classify.enableHtsChecks() #check for HTS values inline
-    
+
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, (if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"]) then 'post' else 'put')
     buttons = {
     'Cancel': () ->
@@ -378,7 +378,7 @@ root.Chain =
             scope.selectNone()
           )
       should_submit
-      
+
     Chain.htsAutoComplete()
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')
@@ -393,7 +393,7 @@ root.Chain =
 
   # Controls for enabling and disabling the user message poller.
   messagePoller :
-    
+
     getMessageCount : (url) ->
       $.getJSON url, (data) ->
         if data > 0
@@ -402,8 +402,8 @@ root.Chain =
         else
           $('.message_envelope').each () ->
             $(this).html('').removeClass('messages')
-    
-    
+
+
     # If pollingSeconds is <=0, no ongoing polling is done.
     initialize : (user_id, pollingSeconds) ->
       @url = '/messages/message_count?user_id='+user_id
@@ -488,7 +488,7 @@ root.Chain =
         if $("#notification-center").is(":visible")
           $("#notification-center button.close").click()
         if $('.sidebar-offcanvas').hasClass 'active'
-          $('[data-toggle="offcanvas"]').click()   
+          $('[data-toggle="offcanvas"]').click()
 
     $(document).on 'keyup', null, '/', () ->
       $(".search-query:visible:first").focus()
@@ -511,9 +511,9 @@ root.Chain =
         buttons:
           "Close": () ->
             $("#mod_tariff_popup").dialog('close')
-        
+
       )
-    
+
     c = $("#tariff_popup_content")
     c.html("Loading tariff information...")
     mod.dialog('open')
@@ -568,13 +568,13 @@ root.Chain =
             h += htsDataRow("Quota Category",o.official_quota.category)
             h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor)
             h += htsDataRow("SME UOM",o.official_quota.unit_of_measure)
-          
+
           h += htsDataRow("Notes:",o.notes)
           if o.auto_classify_ignore
             h += htsDataRow("Ignore For Auto Classify","Yes")
-        
+
           h += "</tbody></table>"
-        
+
         c.html(h)
     )
 
@@ -620,13 +620,6 @@ $(document).ready () ->
         window.history.back()
       else
         window.location=link
-
-  $(document).on 'chain:workflow-load', (evt) ->
-    ChainWorkflow.initWorkflowButtons (data) ->
-      Chain.showNotificationCenterPane('tasks')
-    $('.task-widget [rel-date]').each () ->
-      t = $(this)
-      t.html(t.attr('rel-date-prefix')+moment(t.attr('rel-date')).fromNow())
 
   $(document).on 'show.bs.tab', '[tab-src]', (evt) ->
     t = $(this)
@@ -681,9 +674,6 @@ $(document).ready () ->
         h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
-    
-  $("div[notification-center-pane='tasks']").on 'chain:workflow-change', () ->
-    Chain.showNotificationCenterPane('tasks')
 
   $("#set-homepage-btn").click (evt) ->
     $.post("/users/set_homepage", {homepage: $(location).attr("href")})

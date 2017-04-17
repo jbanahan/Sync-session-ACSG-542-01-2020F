@@ -20,7 +20,6 @@ describe AttachmentsController do
         attachment_id = attach.id
       end
 
-      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
       post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
       expect(response).to redirect_to prod
       expect(prod.attachments.length).to eq 1
@@ -32,7 +31,6 @@ describe AttachmentsController do
 
     context "with http request" do
       it "creates an attachment" do
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
         post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
         expect(response).to redirect_to prod
         prod.reload
@@ -71,7 +69,6 @@ describe AttachmentsController do
 
     context "with JSON request" do
       it "creates an attachment" do
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(prod)
         post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format => :json
         prod.reload
         expect(prod.attachments.length).to eq 1

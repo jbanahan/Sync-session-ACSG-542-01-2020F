@@ -532,6 +532,3 @@ $(document).ready () ->
         h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
-
-  $(document).on 'chain:workflow-change', () ->
-    Chain.showNotificationCenterPane('tasks')

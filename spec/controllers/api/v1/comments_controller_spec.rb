@@ -8,12 +8,8 @@ describe Api::V1::CommentsController do
     allow_api_access @u
   end
   describe "destroy" do
-    before :each do
-      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
-    end
-    it "should destroy if user is current_user" do
-      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(instance_of(Shipment))
-      c = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
+    before :each do    end
+    it "should destroy if user is current_user" do      c = @s.comments.create!(user_id:@u.id,subject:'s1',body:'b1')
       expect{delete :destroy, id: c.id.to_s}.to change(Comment,:count).from(1).to(0)
       expect(response).to be_success
     end
@@ -39,10 +35,7 @@ describe Api::V1::CommentsController do
         body:'bod'
       }}
     end
-    it "should create comment" do
-      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
-      expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(instance_of(Shipment))
-      expect{post :create, @comment_hash}.to change(Comment,:count).from(0).to(1)
+    it "should create comment" do      expect{post :create, @comment_hash}.to change(Comment,:count).from(0).to(1)
       expect(response).to be_success
       expect(@s.comments.first.subject).to eq 'sub'
     end
@@ -112,7 +105,7 @@ describe Api::V1::CommentsController do
     let (:shipment) { @s }
 
     describe "polymorphic_index" do
-      
+
       it "returns all comments from an object" do
         get :polymorphic_index, base_object_type: "shipments", base_object_id: shipment.id
         expect(response).to be_success
@@ -183,8 +176,6 @@ describe Api::V1::CommentsController do
 
       it "destroys comment" do
         expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
-
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
         expect(response).to be_success
         expect(JSON.parse(response.body)).to eq({"ok" => "ok"})
@@ -198,8 +189,6 @@ describe Api::V1::CommentsController do
         c = shipment.comments.create! user_id: u.id, subject: "Sub", body: "Bod"
 
         expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
-        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
-
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: c.id
         expect(response).not_to be_success
         expect(response.status).to eq 403
@@ -212,8 +201,6 @@ describe Api::V1::CommentsController do
         allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return false
 
         expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
-        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
-
         delete :polymorphic_destroy, base_object_type: "shipments", base_object_id: shipment.id, id: comment.id
         expect(response).not_to be_success
         expect(response.status).to eq 403
@@ -231,8 +218,6 @@ describe Api::V1::CommentsController do
 
       it "creates a comment" do
         expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
-
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {:cmt_subject=>"Subject", :cmt_body=>"Body"}
         expect(response).to be_success
 
@@ -249,8 +234,6 @@ describe Api::V1::CommentsController do
 
       it "creates a comment, returning permissions" do
         expect_any_instance_of(Shipment).to receive(:create_async_snapshot).with user
-        expect(OpenChain::WorkflowProcessor).to receive(:async_process).with(shipment)
-
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, comment: {cmt_subject: "Subject", cmt_body: "Body"}, include: "permissions"
         expect(response).to be_success
 
@@ -262,8 +245,6 @@ describe Api::V1::CommentsController do
         allow_any_instance_of(Shipment).to receive(:can_comment?).with(user).and_return false
 
         expect_any_instance_of(Shipment).not_to receive(:create_async_snapshot)
-        expect(OpenChain::WorkflowProcessor).not_to receive(:async_process)
-
         post :polymorphic_create, base_object_type: "shipments", base_object_id: shipment.id, :cmt_subject=>"Subject", :cmt_body=>"Body"
         expect(response).not_to be_success
         expect(response.status).to eq 403
@@ -271,5 +252,5 @@ describe Api::V1::CommentsController do
     end
 
   end
-  
+
 end

@@ -1,7 +1,6 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
-require 'open_chain/workflow_processor'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapVendorXmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
@@ -20,9 +19,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def initialize opts={}
-    inner_opts = {workflow_processor:WorkflowProcessor.new}.merge opts
     @cdefs = self.class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked,:cmp_sap_blocked_status]
-    @wfp = inner_opts[:workflow_processor]
     @user = User.integration
   end
 
@@ -56,8 +53,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       lock_or_unlock_vendor c, base
 
       c.create_snapshot User.integration, nil, "System Job: SAP Vendor XML Parser"
-
-      @wfp.process! c, @user
     end
   end
 

@@ -4,7 +4,7 @@ describe SchedulableJob do
 
   describe '.create_default_jobs!' do
     jobs = ["OpenChain::StatClient", "OpenChain::IntegrationClient", "BusinessValidationTemplate", "SurveyResponseUpdate",
-            "OfficialTariff", "Message", "ReportResult", "OpenChain::WorkflowProcessor", "OpenChain::DailyTaskEmailJob",
+            "OfficialTariff", "Message", "ReportResult",
             "OpenChain::LoadCountriesSchedulableJob", "OpenChain::Report::MonthlyUserAuditReport",
             "OpenChain::BusinessRulesNotifier"]
     jobs.each do |klass|

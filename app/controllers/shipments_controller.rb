@@ -1,11 +1,11 @@
 require 'open_chain/custom_handler/shipment_download_generator'
 
 class ShipmentsController < ApplicationController
-  
+
 	def root_class
 	  Shipment
 	end
-	
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::SHIPMENT, params[:force_search]
@@ -16,7 +16,6 @@ class ShipmentsController < ApplicationController
   def show
     @shipment_id = params[:id]
     @no_action_bar = true
-    @workflow_object = Shipment.find params[:id]
   end
 
   # GET /shipments/new

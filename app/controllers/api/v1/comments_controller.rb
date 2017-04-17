@@ -1,5 +1,3 @@
-require 'open_chain/workflow_processor'
-
 module Api; module V1; class CommentsController < Api::V1::ApiController
   include PolymorphicFinders
   include Api::V1::ApiJsonSupport
@@ -18,7 +16,6 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     my_params = params[:comment]
     my_params[:user_id] = current_user.id
     c = Comment.create!(my_params)
-    OpenChain::WorkflowProcessor.async_process(c.commentable)
     render json: {comment:comment_json(c)}
   end
 
@@ -26,7 +23,6 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     c = Comment.find params[:id]
     raise StatusableError.new("You cannot delete a comment that another user created.",401) unless c.user == current_user || current_user.sys_admin?
     raise StatusableError.new(c.errors.full_messages.join("\n")) unless c.destroy
-    OpenChain::WorkflowProcessor.async_process(c.commentable)
     render json: {message:'Comment deleted'}
   end
 
@@ -70,7 +66,6 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
       if comment && comment.user == current_user
         comment.destroy
         obj.create_async_snapshot(current_user) if obj.respond_to?(:create_async_snapshot)
-        OpenChain::WorkflowProcessor.async_process(obj)
         render_ok
       else
         render_forbidden
@@ -130,7 +125,6 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
         render_error comment.errors
       else
         comment.commentable.create_async_snapshot(current_user) if comment.commentable.respond_to?(:create_async_snapshot)
-        OpenChain::WorkflowProcessor.async_process(comment.commentable)
         render json: {"comment" => comment_view(user, comment)}
       end
     end

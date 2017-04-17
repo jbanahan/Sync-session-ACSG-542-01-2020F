@@ -9,7 +9,6 @@ describe CompaniesController do
 
   describe "create" do
     it "should trigger snapshot" do
-      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       expect{post :create, {'company'=>{'cmp_name'=>'mycompany'}}}.to change(Company,:count).by(1)
       c = Company.last
       expect(c.entity_snapshots.count).to eq 1
@@ -49,7 +48,6 @@ describe CompaniesController do
       expect(response).to be_success
       expect(assigns(:company)).to eq company
       expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], ["Arrival Date", :ent_arrival_date], ["Release Date", :ent_release_date]])
-      expect(assigns(:workflow_object)).to eq company
     end
 
     it "denies access to unauthorized user" do
@@ -60,12 +58,10 @@ describe CompaniesController do
   end
   describe "update" do
     it "should trigger snapshot" do
-      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       put :update, {'id'=>company.id, 'company'=>{'cmp_name'=>'mycompany'}}
       expect(company.entity_snapshots.count).to eq 1
     end
     it "warns user if fiscal_reference has changed" do
-      allow(OpenChain::WorkflowProcessor).to receive(:async_process)
       put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>'release_date'}}
       expect(flash[:notices]).to include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
     end

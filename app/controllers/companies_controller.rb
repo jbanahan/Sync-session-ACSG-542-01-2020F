@@ -1,6 +1,5 @@
 require 'open_chain/business_rule_validation_results_support'
 require 'open_chain/custom_handler/vandegrift/kewill_product_generator'
-require 'open_chain/workflow_processor'
 
 class CompaniesController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
@@ -48,8 +47,7 @@ class CompaniesController < ApplicationController
   def show
     @company = Company.find(params[:id])
     action_secure(@company.can_view?(current_user), @company, {:verb => "view", :lock_check => false, :module_name=>"company"}) {
-      enable_workflow @company
-      @countries = Country.all  
+      @countries = Country.all
       respond_to do |format|
         format.html # show.html.erb
       end
@@ -74,8 +72,7 @@ class CompaniesController < ApplicationController
      @company = Company.find(params[:id])
      # @fiscal_reference_opts = {release_date: ModelField.find_by_uid(:ent_release_date), arrival_date: ModelField.find_by_uid(:ent_arrival_date)}
      @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_release_date]
-     action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) { 
-       enable_workflow @company
+     action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) {
      }
   end
 
@@ -85,7 +82,6 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
       @company = Company.create(name:params[:company][:cmp_name])
       if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
-        OpenChain::WorkflowProcessor.async_process @company
         @company.create_snapshot(current_user)
         add_flash :notices, "Company created successfully."
       else
@@ -103,7 +99,6 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
       old_fiscal_ref = @company.fiscal_reference
       if @company.update_model_field_attributes(params[:company])
-        OpenChain::WorkflowProcessor.async_process @company
         @company.create_snapshot(current_user)
         add_flash :notices, "Company was updated successfully."
         add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference != old_fiscal_ref
@@ -118,7 +113,7 @@ class CompaniesController < ApplicationController
   def validation_results
     generic_validation_results(Company.find params[:id])
   end
-  
+
   def shipping_address_list
     c = Company.find(params[:id])
     action_secure(c.can_view?(current_user),c,{:lock_check => false, :module_name => "company", :verb => "view addresses for"}) {
@@ -135,7 +130,7 @@ class CompaniesController < ApplicationController
     end
     @company = Company.find params[:id]
   end
-  
+
   def update_children
     if !current_user.admin? || !current_user.company.master?
       error_redirect "You do not have permission to work with linked companies."
@@ -172,7 +167,7 @@ class CompaniesController < ApplicationController
     end
   end
 
-  private 
+  private
     def secure
       Company.find_can_view(current_user)
     end

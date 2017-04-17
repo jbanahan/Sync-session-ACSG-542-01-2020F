@@ -19,12 +19,9 @@ module CoreObjectSupport
     has_many :change_records, as: :recordable
     has_many :sync_records, as: :syncable, dependent: :destroy, autosave: true, inverse_of: :syncable
     has_many :business_validation_results, as: :validatable, dependent: :destroy
-    has_many :workflow_instances, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object, conditions: "folders.archived is null OR folders.archived = 0"
     has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy
-
-    has_one :workflow_processor_run, as: :base_object, dependent: :destroy, inverse_of: :base_object
 
     after_save :process_linked_attachments
 
