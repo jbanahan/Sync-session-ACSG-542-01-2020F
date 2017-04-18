@@ -101,22 +101,17 @@ class BusinessValidationTemplate < ActiveRecord::Base
       bvr = self.business_validation_results.where(validatable_type:obj.class.name,validatable_id:obj.id).first_or_create!
     end
 
+
     # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
     # This should mean that only a single process is running validations for this module obj at a time
-    Lock.with_lock_retry(bvr) do
-      bvr.validatable = obj
-      bvr.save!
+    if run_validation
+      # Inverting the obj/bvr locks is an attempt to reduce the deadlocks in this section of code...the vast majority of 
+      # time the calling code will already have obtained a lock on the obj (since this code is called when snapshoting an object)
+      # therefore, there's going to be few situations where it shouldn't be able to also obtain the bvr lock for the obj.
+      Lock.with_lock_retry(obj) do 
+        Lock.with_lock_retry(bvr) do
+          initialize_business_validation_result bvr, obj
 
-      self.business_validation_rules.each do |rule|
-        unless rule.delete_pending?
-          bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
-        end
-      end
-
-      if run_validation
-        # We want to also make sure we're locking the actual object so that we
-        # prevent updates to the data while we're evaluating the rules.
-        Lock.with_lock_retry(obj) do
           state_changed = bvr.run_validation
           bvr.updated_at = Time.zone.now #force save
           bvr.save!
@@ -134,9 +129,34 @@ class BusinessValidationTemplate < ActiveRecord::Base
           end
         end
       end
+
+    else
+      Lock.with_lock_retry(bvr) do
+        initialize_business_validation_result bvr, obj
+      end
+    end
+    
+    bvr
+  end
+
+  def initialize_business_validation_result business_validation_result, obj
+    rule_built = false
+    self.business_validation_rules.each do |rule|
+      unless rule.delete_pending?
+        # Rather than doing a first_or_create for every rule (which used to be here and resulted in a separate query executed for each rule)
+        #...we can load the association once and then search through it for the rule id...then build the result if it's not present yet.
+        # The result will be created a few lines below when the validation result is saved.
+        rule_result = business_validation_result.business_validation_rule_results.find {|bvrr| bvrr.business_validation_rule_id == rule.id }
+        if rule_result.nil?
+          # the business_validation_rule_id is not an accessible attribute, so we can't use create! business_validation_rule_rule_id: rule.id
+          rr = business_validation_result.business_validation_rule_results.build
+          rr.business_validation_rule = rule
+          rule_built = true
+        end
+      end
     end
 
-    bvr
+    business_validation_result.save! if rule_built
   end
 
   def self.async_destroy id

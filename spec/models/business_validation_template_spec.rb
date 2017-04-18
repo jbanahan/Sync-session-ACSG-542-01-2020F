@@ -91,6 +91,7 @@ describe BusinessValidationTemplate do
 
     it "should create result based on rules" do
       bvr = @bvt.create_result! @o
+      bvr.reload
       expect(bvr.validatable).to eq @o
       expect(bvr.business_validation_rule_results.count).to eq 1
       expect(bvr.business_validation_rule_results.first.business_validation_rule).to eq @bvt.business_validation_rules.first
@@ -116,8 +117,9 @@ describe BusinessValidationTemplate do
     end
     it "should run validation if attribute passed" do
       expect(Lock).to receive(:with_lock_retry).ordered.with(@bvt).and_yield
-      expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
+      expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield
+      
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"Business Rule Update")
       @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
       bvr = @bvt.create_result! @o, run_validation: true
@@ -170,12 +172,13 @@ describe BusinessValidationTemplate do
       bvt_ignore = described_class.create!(module_type:'Entry')
 
       ord = Factory(:order, order_number: "ABCD")
-      expect_any_instance_of(Order).to receive(:create_snapshot).exactly(2).times
       expect{described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult,:count).from(0).to(2)
       [bvt1,bvt2].each do |b|
         b.reload
         expect(b.business_validation_results.first.validatable).to eq ord
       end
+
+      expect(ord.entity_snapshots.length).to eq 2
     end
 
     it "does not snapshot the entity if flag is utilized" do
