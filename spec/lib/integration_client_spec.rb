@@ -115,7 +115,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
     end
     context "baillie" do
-      it "should send data to the baillie order xml parser if the path contains baillie/_po_xml" do
+      it "should send data to the baillie order xml parser if the path contains /_po_xml and master setup includes Baillie" do
         expect(master_setup).to receive(:custom_feature?).with('Baillie').and_return(true)
         k = OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser
         expect(k).to receive(:delay).and_return(k)
