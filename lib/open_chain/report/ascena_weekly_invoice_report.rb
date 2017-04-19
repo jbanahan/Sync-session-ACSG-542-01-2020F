@@ -1,4 +1,5 @@
 require 'open_chain/report/report_helper'
+require 'open_chain/custom_handler/ascena/ascena_billing_invoice_file_generator'
 
 module OpenChain; module Report; class AscenaWeeklyInvoiceReport
   include OpenChain::Report::ReportHelper
@@ -38,7 +39,7 @@ module OpenChain; module Report; class AscenaWeeklyInvoiceReport
     <<-SQL
       SELECT i.broker_reference AS "Broker Reference", i.invoice_number AS "Invoice Number", i.invoice_date AS "Invoice Date", l.charge_description AS "Charge Description", l.charge_amount AS "Charge Amount"
       FROM broker_invoices i
-        INNER JOIN sync_records s ON s.syncable_id = i.id AND s.syncable_type = 'BrokerInvoice' AND s.trading_partner = 'ASCE_BILLING'
+        INNER JOIN sync_records s ON s.syncable_id = i.id AND s.syncable_type = 'BrokerInvoice' AND s.trading_partner IN ('#{OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator::LEGACY_SYNC}', '#{OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator::BROKERAGE_SYNC}')
         INNER JOIN broker_invoice_lines l ON l.broker_invoice_id = i.id
           AND s.sent_at >= '#{start_dtime}' AND s.sent_at < '#{end_dtime}' AND l.charge_code <> '0001'
       ORDER BY i.invoice_date, i.invoice_number, l.charge_code

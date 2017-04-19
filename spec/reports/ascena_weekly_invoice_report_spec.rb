@@ -5,7 +5,7 @@ describe OpenChain::Report::AscenaWeeklyInvoiceReport do
   let(:date) { Date.new(2017,04,10) }
   let(:bi) { Factory(:broker_invoice, broker_reference: 'brok ref', invoice_number: 'inv num', invoice_date: date) }
   let(:bil) { Factory(:broker_invoice_line, broker_invoice: bi, charge_code: '0002', charge_description: 'charge descr', charge_amount: 1) }
-  let(:sr) { SyncRecord.create!(syncable: bi, sent_at: date, trading_partner: 'ASCE_BILLING') }
+  let(:sr) { SyncRecord.create!(syncable: bi, sent_at: date, trading_partner: 'ASCE_BROKERAGE_BILLING') }
   let(:header) { ["Broker Reference", "Invoice Number", "Invoice Date", "Charge Description", "Charge Amount"] }
 
   def create_data
@@ -43,6 +43,15 @@ describe OpenChain::Report::AscenaWeeklyInvoiceReport do
     before { create_data }
     
     it "returns expected results" do
+      results = ActiveRecord::Base.connection.execute report.query(Date.new(2017,04,01), Date.new(2017,04,15))
+      expect(results.fields).to eq header
+      expect(results.count).to eq 1
+      expect(results.first).to eq ['brok ref', 'inv num', date, 'charge descr', 1]
+    end
+
+    it "returns expected results with legacy sync code" do
+      sr.update_attributes! trading_partner: "ASCE_BILLING"
+      
       results = ActiveRecord::Base.connection.execute report.query(Date.new(2017,04,01), Date.new(2017,04,15))
       expect(results.fields).to eq header
       expect(results.count).to eq 1
