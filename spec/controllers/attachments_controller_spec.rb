@@ -227,7 +227,7 @@ describe AttachmentsController do
 
   describe "download" do
     let (:secure_url) { "http://my.secure.url"}
-    let (:attachment) { double(:attachment, secure_url: secure_url) }
+    let (:attachment) { double(:attachment, secure_url: secure_url, attached_file_name: "file.txt") }
     let! (:user) { u = Factory(:user); sign_in_as(u); u }
 
     it "downloads an attachment via s3 redirect" do
@@ -268,7 +268,7 @@ describe AttachmentsController do
     it "handles inline disposition parameter" do
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
-      expect(subject).to receive(:download_attachment).with(attachment, disposition: "inline").and_call_original
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'inline; filename="file.txt"').and_call_original
 
       get :download, id: 1, disposition: "inline"
     end
@@ -276,9 +276,17 @@ describe AttachmentsController do
     it "handles attachment disposition parameter" do
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
-      expect(subject).to receive(:download_attachment).with(attachment, disposition: "attachment").and_call_original
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'attachment; filename="file.txt"').and_call_original
 
       get :download, id: 1, disposition: "attachment"
+    end
+
+    it "doesn't add filename parameter to disposition if it's already present" do
+      expect(Attachment).to receive(:find).with("1").and_return attachment
+      expect(attachment).to receive(:can_view?).with(user).and_return true
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'attachment; filename="somefile.txt"').and_call_original
+
+      get :download, id: 1, disposition: 'attachment; filename="somefile.txt"'
     end
 
     it "ignores other disposition parameters" do

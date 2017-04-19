@@ -93,7 +93,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "00151", "140.0", "Duty", "PO 3", "151"]
     end
 
-
     it "sends brokerage file" do
       data = nil
       expect(subject).to receive(:ftp_file) do |file, opts|
@@ -148,7 +147,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
     it "uses the correct ftp information" do
       ftp_opts = {}
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect(subject).to receive(:ftp_sync_file) do |file, sr, opts|
         ftp_opts = opts
       end
 
@@ -165,13 +164,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       expect(broker_invoice.sync_records.length).to eq 1
       sr = broker_invoice.sync_records.first
-      expect(sr.trading_partner).to eq "ASCE_BILLING"
+      expect(sr.trading_partner).to eq "ASCE_DUTY_BILLING"
       expect(sr.sent_at).to eq now
     end
 
-    it "does not send if already synced" do
+    it "does not send if already synced with legacy code" do
       broker_invoice.sync_records.create! trading_partner: "ASCE_BILLING", sent_at: Time.zone.now
-      expect(subject).not_to receive(:ftp_file)
+      expect(subject).not_to receive(:ftp_sync_file)
+      subject.generate_and_send broker_invoice_with_duty_snapshot
+    end
+
+    it "does not send if already synced with new codes" do
+      broker_invoice.sync_records.create! trading_partner: "ASCE_DUTY_BILLING", sent_at: Time.zone.now
+      broker_invoice.sync_records.create! trading_partner: "ASCE_BROKERAGE_BILLING", sent_at: Time.zone.now
+      expect(subject).not_to receive(:ftp_sync_file)
       subject.generate_and_send broker_invoice_with_duty_snapshot
     end
 
@@ -180,6 +186,64 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       expect(subject).not_to receive(:ftp_file)
       subject.generate_and_send broker_invoice_with_duty_snapshot
+    end
+
+    context "with duty credits" do
+      let (:broker_invoice_duty_credit) {
+        duty_line = broker_invoice_line_duty
+        duty_invoice = duty_line.broker_invoice
+        invoice = Factory(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: Time.zone.parse("2017-01-14").to_date)
+        invoice_line = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
+
+        invoice
+      }
+
+      let (:broker_invoice_duty_credit_snapshot) {
+        entry.broker_invoices << broker_invoice_line_duty.broker_invoice
+        entry.broker_invoices << broker_invoice_duty_credit
+
+        entry.reload
+        JSON.parse CoreModule::ENTRY.entity_json(entry)
+      }
+
+      let (:original_duty_sync_record) {
+        broker_invoice_line_duty.broker_invoice.sync_records.create! trading_partner: "ASCE_DUTY_BILLING", sent_at: Time.zone.parse("2017-01-13 00:00")
+      }
+
+      let (:ftp_session_attachment) {
+        ftp_session = original_duty_sync_record.create_ftp_session
+        ftp_session.create_attachment attached_file_name: "ASCE_DUTY_BILLING.csv"
+      }
+
+      let (:duty_file_data) {
+        "H|INVOICENUMBER|STANDARD|01/13/2017|00151|100.0|USD|For Customs Entry # ENTRYNO\n"+
+        "L|INVOICENUMBER|1|00151|30.0|Duty|PO 1|7218"
+      }
+
+      it "issues a duty credit by downloading and manually reversing a previously sent billing file" do
+        ftp_session_attachment
+        snapshot = broker_invoice_duty_credit_snapshot
+        expect(OpenChain::S3).to receive(:download_to_tempfile).and_yield StringIO.new(duty_file_data)
+
+        ftp_data = nil
+        expect(subject).to receive(:ftp_sync_file) do |file, sr, opts|
+          ftp_data = file.read
+        end
+
+        subject.generate_and_send snapshot
+
+        expect(ftp_data).not_to be_nil
+        rows = CSV.parse(ftp_data, col_sep: "|")
+
+        expect(rows.length).to eq 2
+        expect(rows.first).to eq ["H", "INVOICENUMBERV", "CREDIT", "01/14/2017", "00151", "-100.0", "USD", "For Customs Entry # ENTRYNO"]
+        expect(rows.second).to eq ["L", "INVOICENUMBERV", "1", "00151", "-30.0", "Duty", "PO 1", "7218"]
+
+        expect(broker_invoice_duty_credit.sync_records.length).to eq 1
+        sr = broker_invoice_duty_credit.sync_records.first
+        expect(sr.trading_partner).to eq "ASCE_DUTY_BILLING"
+        expect(sr.sent_at).not_to be_nil
+      end
     end
   end
 

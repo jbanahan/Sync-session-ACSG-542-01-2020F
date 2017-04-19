@@ -5,6 +5,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
   include OpenChain::EntityCompare::ComparatorHelper
   include OpenChain::FtpFileSupport
 
+  DUTY_SYNC ||= "ASCE_DUTY_BILLING"
+  BROKERAGE_SYNC ||= "ASCE_BROKERAGE_BILLING"
+  LEGACY_SYNC ||= "ASCE_BILLING"
+
   def generate_and_send entry_snapshot_json
     # Don't even bother trying to send anything if there are failing business rules...
     # There needs to be a rule in place to ensure that the Product Line (aka Brand) field
@@ -21,8 +25,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     # I could go finer grained, but that involves a little more checkwork below and the courser lock
     # should be fine given that in general we're not going to be sending any invoices.
     Lock.acquire("AscenaBilling-#{mf(entry_snapshot_json, "ent_brok_ref")}") do 
-      unsent_invoices(broker_invoice_snapshots).each do |inv|
-        generate_and_send_invoice(entry_snapshot_json, inv)
+      unsent_invoices(broker_invoice_snapshots).each_pair do |invoice_number, invoice_data|
+        generate_and_send_invoice(entry_snapshot_json, invoice_data)
       end
     end
 
@@ -41,24 +45,36 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
   private 
   
-    def generate_and_send_invoice entry_snapshot, broker_invoice_snapshot
+    def generate_and_send_invoice entry_snapshot, invoice_data
+      broker_invoice_snapshot = invoice_data[:snapshot]
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
-      duty_file, brokerage_file = generate_data(entry_snapshot, broker_invoice_snapshot)
+      duty_file, brokerage_file = generate_data(entry_snapshot, broker_invoice_snapshot, invoice_data[:sync_types])
 
       ActiveRecord::Base.transaction do 
         broker_invoice = find_entity_object(broker_invoice_snapshot)
         return unless broker_invoice
 
-        sr = broker_invoice.sync_records.where(trading_partner: "ASCE_BILLING").first_or_initialize
-        sr.sent_at = Time.zone.now
-        sr.save!
+        invoice_data[:sync_types].each do |sync_type|
+          # Skip any types where the corresponding files are blank
+          next if (sync_type == DUTY_SYNC && duty_file.blank?) || (sync_type == BROKERAGE_SYNC && brokerage_file.blank?)
 
-        send_file(duty_file, true) unless duty_file.blank?
-        send_file(brokerage_file) unless brokerage_file.blank?
+          sr = broker_invoice.sync_records.where(trading_partner: sync_type).first_or_initialize
+          
+          if sync_type == DUTY_SYNC
+            send_file(duty_file, sr, true)
+          elsif sync_type == BROKERAGE_SYNC
+            send_file(brokerage_file, sr)
+          end
+
+          sr.sent_at = Time.zone.now
+          sr.confirmed_at = sr.sent_at + 1.minute
+          sr.save!
+        end
+  
       end
     end
 
-    def send_file lines, duty_file = false
+    def send_file lines, sync_record, duty_file = false
       filename = "ASC_#{duty_file ? "DUTY" : "BROKER"}_INVOICE_AP_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y%m%d%H%M%S%L")}.dat"
       Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |f|
         Attachment.add_original_filename_method f, filename
@@ -66,39 +82,39 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         lines.each {|line| f << line.to_csv(col_sep: "|") }
         f.flush
         f.rewind
-        ftp_file f, connect_vfitrack_net("to_ecs/_ascena_billing", filename)
+        ftp_sync_file f, sync_record, connect_vfitrack_net("to_ecs/_ascena_billing", filename)
       end
     end
 
-    def generate_data entry_snapshot, broker_invoice_snapshot
-      invoice_lines = json_child_entities(broker_invoice_snapshot, "BrokerInvoiceLine")
-
-      # split into duty vs. non-duty lines...we need to send duty lines in a separate file with a different 
-      # vendor id for them
-      duty_lines, non_duty_lines = invoice_lines.partition {|l| ["0001", "0099"].include?(mf(l, "bi_line_charge_code")) }
-
-      # reject any lines marked as duty paid direct (code 0099) - they don't need to be billed (since they're not an actual charge
-      # rather a reflection on the invoice that the customer is repsonsible for duty payments).  Every time a 99 charge comes
-      # across there should also be a Duty (0001) charge on the invoice as well.
-      duty_lines = duty_lines.reject {|l| mf(l, "bi_line_charge_code").to_s.upcase == "0099"}
+    def generate_data entry_snapshot, broker_invoice_snapshot, sync_types
+      duty_lines, non_duty_lines = split_duty_non_duty_lines(broker_invoice_snapshot)
 
       po_brand_org_codes = po_organization_ids entry_snapshot
 
       duty_file = []
-      if duty_lines.length > 0
-        # Really there should only ever be a single duty line per file...but doesn't hurt to handle this like there could be more
-        duty_file << invoice_header_fields(broker_invoice_snapshot, duty_lines, duty_invoice: true)
-        line_number = 1
-        duty_lines.each do |line|
-          charge_lines = invoice_line_duty_fields(entry_snapshot, broker_invoice_snapshot, line_number, po_brand_org_codes)
-          duty_file.push *charge_lines
-          line_number += charge_lines.length
+      if sync_types.include?(DUTY_SYNC) && duty_lines.length > 0
+        # We have to handle credit invoices with duty on them in a special way, so check if this is a credit invoices first
+        invoice_total = duty_lines.map {|l| mf(l, "bi_line_charge_amount")}.compact.sum
+        if invoice_total < 0
+          duty_file = generate_duty_credit_invoice(broker_invoice_snapshot)
         end
 
+        # At the very beginning of the change to process credit invoices in the above manner, we won't have any of the invoices
+        # so we'll just continue to do them old (wrong) way if the file is blank
+        if duty_file.blank?
+          # Really there should only ever be a single duty line per file...but doesn't hurt to handle this like there could be more
+          duty_file << invoice_header_fields(broker_invoice_snapshot, duty_lines, duty_invoice: true)
+          line_number = 1
+          duty_lines.each do |line|
+            charge_lines = invoice_line_duty_fields(entry_snapshot, broker_invoice_snapshot, line_number, po_brand_org_codes)
+            duty_file.push *charge_lines
+            line_number += charge_lines.length
+          end
+        end
       end
 
       non_duty_file = []
-      if non_duty_lines.length > 0
+      if sync_types.include?(BROKERAGE_SYNC) && non_duty_lines.length > 0
         non_duty_file << invoice_header_fields(broker_invoice_snapshot, non_duty_lines, duty_invoice: false)
         line_number = 1
         non_duty_lines.each do |line|
@@ -212,14 +228,81 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       lines
     end
 
+    def split_duty_non_duty_lines broker_invoice_snapshot
+      invoice_lines = json_child_entities(broker_invoice_snapshot, "BrokerInvoiceLine")
+
+      # split into duty vs. non-duty lines...we need to send duty lines in a separate file with a different 
+      # vendor id for them
+      duty_lines, non_duty_lines = invoice_lines.partition {|l| ["0001", "0099"].include?(mf(l, "bi_line_charge_code")) }
+
+      # reject any lines marked as duty paid direct (code 0099) - they don't need to be billed (since they're not an actual charge
+      # rather a reflection on the invoice that the customer is repsonsible for duty payments).  Every time a 99 charge comes
+      # across there should also be a Duty (0001) charge on the invoice as well.
+      duty_lines = duty_lines.reject {|l| mf(l, "bi_line_charge_code").to_s.upcase == "0099"}
+
+      [duty_lines, non_duty_lines]
+    end
+
+    # This is a funky situation...we need to credit the exact duty amounts back to ascena HOWEVER since
+    # the duty data is generated directly from the entry commercial invoice lines it's very possible that
+    # the duty amounts on those lines have been changed.  This is a common scenario when the duty is billed
+    # and then tariff numbers are ammended after the fact, which changes the dutiable amounts.
+    #
+    # In this situation, what we're going to do is retrieve the original file from the ftp session linked to the
+    # sync record on the initial duty billing invoice.  Then we'll just flip the sign on all the duty lines.
+    def generate_duty_credit_invoice broker_invoice_snapshot
+      duty_lines, * = split_duty_non_duty_lines(broker_invoice_snapshot)
+      duty_amount = mf(duty_lines.first, "bi_line_charge_amount") * -1
+
+      # Find the original broker invoice that had the billed duty amount we're looking for.
+      broker_reference = mf(broker_invoice_snapshot, "bi_brok_ref")
+
+      original_invoices = BrokerInvoice.joins(:entry, :broker_invoice_lines).where(broker_invoice_lines: {charge_code: '0001', charge_amount: duty_amount}).where(entries: {broker_reference: broker_reference, customer_number: mf(broker_invoice_snapshot, "bi_ent_cust_num")}).order("invoice_date DESC, id DESC").all
+      sync_record = nil
+      original_invoices.each do |invoice|
+        sync_record = invoice.sync_records.where(trading_partner: DUTY_SYNC).where("ftp_session_id IS NOT NULL").first
+        break if sync_record
+      end
+      
+      return nil unless sync_record
+
+      lines = nil
+      sync_record.ftp_session.attachment.download_to_tempfile do |tf|
+        lines = CSV.parse tf.read, col_sep: "|"
+      end
+
+      # Now all we have to do is invert the amounts from the original file and then return those
+      invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
+      lines.each do |row|
+        case row[0]
+        when "H"
+          row[1] = invoice_number
+          row[2] = "CREDIT"
+          row[3] = mf(broker_invoice_snapshot, "bi_invoice_date").try(:strftime, "%m/%d/%Y")
+          row[5] = (BigDecimal(row[5]) * -1)
+        when "L"
+          row[1] = invoice_number
+          row[4] = (BigDecimal(row[4]) * -1)
+        end
+      end
+
+      lines
+    end
+
     def unsent_invoices broker_invoice_snapshots
-      invoices = []
+      invoices = {}
       broker_invoice_snapshots.each do |bi|
         broker_invoice = find_entity_object(bi)
-        next if broker_invoice.nil?
+        next if broker_invoice.nil? || broker_invoice.sync_records.find {|s| s.trading_partner == LEGACY_SYNC }.present?
         
-        sr = broker_invoice.sync_records.find {|s| s.trading_partner == "ASCE_BILLING" }
-        invoices << bi if sr.nil? || sr.sent_at.nil?
+        invoice_data = {snapshot: bi, sync_types: []}
+
+        [DUTY_SYNC, BROKERAGE_SYNC].each do |sync|
+          sr = broker_invoice.sync_records.find {|s| s.trading_partner == sync }
+          invoice_data[:sync_types] << sync if sr.nil? || sr.sent_at.nil?
+        end
+
+        invoices[broker_invoice.invoice_number] = invoice_data if invoice_data[:sync_types].length > 0
       end
 
       invoices
