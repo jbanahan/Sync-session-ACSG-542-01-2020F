@@ -5,7 +5,7 @@ $(function() {
 
   function setFieldAccess() {
     var checked = $('input:checked').val()
-    if (checked == "release_date") {
+    if (checked == "first_release_date") {
       enableReleaseDate();
     } else if (checked == "fiscal_date") {
       enableFiscalDate();
@@ -41,7 +41,7 @@ $(function() {
 
   $("#frm_run").submit(function() {
     var checked = $('input:checked').val()
-    if (checked == "release_date") {
+    if (checked == "first_release_date") {
       if (invalidReleaseDate("start_release_date", 10) || invalidReleaseDate("end_release_date", 10)) {
         window.alert("You must enter both release dates.");
         return false;
@@ -65,8 +65,8 @@ $(function() {
 <div class="container">
   <div class="release-date">
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-1"><%= radio_button_tag(:range_field, "release_date", checked: true) %></div>
-      <div class="col-md-2"><label class="control-label" for="start_release_date">Release date on or after:</label></div>
+      <div class="col-md-1"><%= radio_button_tag(:range_field, "first_release_date", checked: true) %></div>
+      <div class="col-md-2"><label class="control-label" for="start_release_date">First Release Date on or after:</label></div>
       <div class="col-md-3"><%=text_field_tag :start_release_date,"", :class=>'form-control isdate'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
@@ -78,7 +78,7 @@ $(function() {
   <div class="fiscal-date">
     <div class="row" style="line-height: 2.5">
       <div class="col-md-1"><%= radio_button_tag(:range_field, "fiscal_date") %></div>
-      <div class="col-md-2"><label class="control-label">Fiscal period on or after:</label></div>
+      <div class="col-md-2"><label class="control-label">Fiscal Period on or after:</label></div>
       <div class="col-md-2"><%=text_field_tag :start_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
     </div>
     <div class="row" style="line-height: 2.5">

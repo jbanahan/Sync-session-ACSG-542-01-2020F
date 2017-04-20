@@ -90,7 +90,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     it "generates spreadsheet based on release_date, adjusts for user time zone" do
       create_data
       stub_master_setup
-      @temp = described_class.run_report(u, {'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20', 'range_field' => 'release_date'})
+      @temp = described_class.run_report(u, {'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20', 'range_field' => 'first_release_date'})
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
       
@@ -129,7 +129,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     end
 
     it "returns time-zone-adjusted start_date and end_date args when range_field is 'release_date'" do
-      start_date, end_date = report.get_dates(u, {'range_field' => 'release_date', 'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20'})
+      start_date, end_date = report.get_dates(u, {'range_field' => 'first_release_date', 'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20'})
       expect(start_date).to eq "2016-03-14 04:00:00"
       expect(end_date).to eq "2016-03-20 04:00:00"
     end

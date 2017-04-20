@@ -31,7 +31,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   end
 
   def get_dates run_by, settings
-    if settings['range_field'] == 'release_date'
+    if settings['range_field'] == 'first_release_date'
       start_date, end_date = release_date_dates(settings['start_release_date'], settings['end_release_date'], run_by.time_zone)
     elsif settings['range_field'] == 'fiscal_date'
       start_date, end_date = fiscal_month_dates(*settings['start_fiscal_year_month'].split('-'), *settings['end_fiscal_year_month'].split('-'))

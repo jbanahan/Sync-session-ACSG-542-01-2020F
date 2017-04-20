@@ -16,17 +16,10 @@ describe CompaniesController do
   end
   describe "new" do
     it "renders for authorized user" do
-      mf_release_date = double "ent_release_date"
-      mf_arrival_date = double "ent_arrival_date"
-      expect(ModelField).to receive(:find_by_uid).with(:ent_release_date).and_return mf_release_date
-      expect(ModelField).to receive(:find_by_uid).with(:ent_arrival_date).and_return mf_arrival_date
-      expect(mf_release_date).to receive(:label).and_return "Release Date"
-      expect(mf_arrival_date).to receive(:label).and_return "Arrival Date"
-
       get :new
       expect(response).to be_success
       expect(assigns(:company)).to be_instance_of Company
-      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], ["Arrival Date", :ent_arrival_date], ["Release Date", :ent_release_date]])
+      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], [ModelField.find_by_uid(:ent_arrival_date).label, :ent_arrival_date], [ModelField.find_by_uid(:ent_first_release).label, :ent_first_release]])
     end
 
     it "denies access to unauthorized user" do
@@ -37,17 +30,10 @@ describe CompaniesController do
   end
   describe "edit" do
     it "renders for authorized user" do
-      mf_release_date = double "ent_release_date"
-      mf_arrival_date = double "ent_arrival_date"
-      expect(ModelField).to receive(:find_by_uid).with(:ent_release_date).and_return mf_release_date
-      expect(ModelField).to receive(:find_by_uid).with(:ent_arrival_date).and_return mf_arrival_date
-      expect(mf_release_date).to receive(:label).and_return "Release Date"
-      expect(mf_arrival_date).to receive(:label).and_return "Arrival Date"
-
       get :edit, id: company
       expect(response).to be_success
       expect(assigns(:company)).to eq company
-      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], ["Arrival Date", :ent_arrival_date], ["Release Date", :ent_release_date]])
+      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], [ModelField.find_by_uid(:ent_arrival_date).label, :ent_arrival_date], [ModelField.find_by_uid(:ent_first_release).label, :ent_first_release]])
     end
 
     it "denies access to unauthorized user" do

@@ -58,8 +58,7 @@ class CompaniesController < ApplicationController
   # GET /companies/new.xml
   def new
     @company = Company.new
-    # @fiscal_reference_opts = {release_date: ModelField.find_by_uid(:ent_release_date), arrival_date: ModelField.find_by_uid(:ent_arrival_date)}
-      @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_release_date]
+    @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
     action_secure(current_user.company.master, @company, {:verb => "create ", :module_name=>"company"}) {
       respond_to do |format|
         format.html # new.html.erb
@@ -70,8 +69,7 @@ class CompaniesController < ApplicationController
   # GET /companies/1/edit
   def edit
      @company = Company.find(params[:id])
-     # @fiscal_reference_opts = {release_date: ModelField.find_by_uid(:ent_release_date), arrival_date: ModelField.find_by_uid(:ent_arrival_date)}
-     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_release_date]
+     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) {
      }
   end
