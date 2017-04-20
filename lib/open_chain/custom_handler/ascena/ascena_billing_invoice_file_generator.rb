@@ -264,7 +264,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         break if sync_record
       end
       
-      return nil unless sync_record
+      return [] unless sync_record
 
       lines = nil
       sync_record.ftp_session.attachment.download_to_tempfile do |tf|
