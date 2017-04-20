@@ -18,8 +18,8 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
 
     grouped_shipments.values.each do |shipments|
       begin
-        generate_and_send(shipments)
-        add_sync_records(shipments)
+        all_shipments = generate_and_send(shipments)
+        add_sync_records(all_shipments)
       rescue => e
         e.log_me ["Master Bill: #{shipments.first.master_bill_of_lading}"]
       end
@@ -39,16 +39,35 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     ActiveRecord::Base.transaction do 
       shipments.each do |s|
         sr = s.sync_records.first_or_initialize trading_partner: "CI Load"
-        sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+        # We may have some shipments that were already sent in here, don't update these...it'll help potential debugging scenarios
+        # to be able to track the progress of the master bill.
+        sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute) if sr.sent_at.nil?
       end
     end
   end
 
   def generate_and_send shipments
-    entry_data = generate_entry_data shipments
+    # What we've received here is all the shipments that haven't already been synced...BUT...it's possible that Burlington sends us
+    # updates to master bills that have already been synced.  Because of this, we're going to always include every shipment
+    # that matches the master bill on the CI Load file we produce.
+    synced_shipments = find_synced_shipments(shipments)
+
+    all_shipments = shipments + synced_shipments
+
+    # sort the shipments by the importer reference (which becomes the invoice number in the CI Load)
+    all_shipments = all_shipments.sort {|a, b| a.importer_reference.to_s <=> b.importer_reference.to_s }
+    
+    entry_data = generate_entry_data all_shipments
     workbook = kewill_generator.generate_xls entry_data
     send_xls_to_google_drive workbook, "#{Array.wrap(shipments).first.master_bill_of_lading}.xls"
-    nil
+
+    all_shipments
+  end
+
+  def find_synced_shipments shipments
+    # NOTE: This also includes files that haven't been synced yet, but are less than 12 hours old...it's ok to sync these files too, since they will
+    # be complete shipments and there's no sense waiting around for them to mature if we're sending other shipments for this master bill.
+    Shipment.where(importer_id: shipments.first.importer_id, master_bill_of_lading: shipments.first.master_bill_of_lading).where("id NOT IN (?)", shipments.map {|s| s.id }).all
   end
 
   def cdefs

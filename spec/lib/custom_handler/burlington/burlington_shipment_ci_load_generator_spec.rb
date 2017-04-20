@@ -118,7 +118,28 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
 
       expect(subject).to receive(:kewill_generator).and_return generator
       expect(subject).to receive(:send_xls_to_google_drive).with(workbook, "MASTERBILL.xls")
-      subject.generate_and_send shipment
+      subject.generate_and_send [shipment]
+    end
+
+    it "finds shipments already sent with same master bill and resends them" do
+      shipment2 = Factory(:shipment, importer: shipment.importer, importer_reference: "ARef2", master_bill_of_lading: shipment.master_bill_of_lading)
+      shipment_line_2 = Factory(:shipment_line, shipment: shipment2, product: product, carton_qty: 1, gross_kgs: BigDecimal("10"), quantity: 10, linked_order_line_id: order.order_lines.first.id)
+      shipment.sync_records.create! trading_partner: "CI Load", sent_at: Time.zone.now
+
+      expect(subject).to receive(:kewill_generator).and_return generator
+      expect(subject).to receive(:send_xls_to_google_drive).with(workbook, "MASTERBILL.xls")
+      ci_load = nil
+      expect(generator).to receive(:generate_xls) do |cil|
+        ci_load = cil
+        workbook
+      end
+
+      subject.generate_and_send [shipment]
+
+      expect(ci_load).not_to be_nil
+      expect(ci_load.invoices.length).to eq 2
+      expect(ci_load.invoices.first.invoice_number).to eq shipment2.importer_reference
+      expect(ci_load.invoices.second.invoice_number).to eq shipment.importer_reference
     end
   end
 
@@ -154,6 +175,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       sent = []
       expect(subject).to receive(:generate_and_send) do |shipments|
         sent << shipments
+
+        shipments
       end
 
       now = ActiveSupport::TimeZone["America/New_York"].parse("2017-02-01 7:01")
@@ -177,6 +200,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       sent = []
       expect(subject).to receive(:generate_and_send) do |shipments|
         sent << shipments
+
+        shipments
       end
 
       Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-02-01 7:01")) do
