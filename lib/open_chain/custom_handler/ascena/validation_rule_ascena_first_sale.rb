@@ -9,8 +9,8 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
     air = entry.transport_mode_code.to_s == "40"
 
     entry.commercial_invoices.each do |i|
-      # Skip any envoice that ends with NFS (Non-First Sale)
-      next if i.invoice_number.to_s.upcase.end_with? "NFS"
+      # Skip any envoice that ends with NFS (No Margin for Vendors (?)) or MIN (minimum)
+      next if i.invoice_number.to_s.upcase.end_with?("NFS") || i.invoice_number.to_s.upcase.end_with?("MIN")
 
       i.commercial_invoice_lines.each do |l|
         next if l.mid.blank?
