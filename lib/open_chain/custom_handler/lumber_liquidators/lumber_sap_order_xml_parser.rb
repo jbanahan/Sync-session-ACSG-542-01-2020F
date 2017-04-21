@@ -547,7 +547,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       name1 = et(el,'NAME1')
       name2 = et(el,'NAME2')
-      my_addr.name = name2.blank? ? name1 : name2
+      my_addr.name = name1.blank? ? name2 : name1
 
       my_addr.line_1 = et(el,'STRAS')
       my_addr.line_2 = et(el,'STRS2')

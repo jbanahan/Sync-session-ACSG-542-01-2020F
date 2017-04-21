@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol.unit_of_measure).to eq 'UOM'
 
       ship_to = ol.ship_to
-      expect(ship_to.name).to eq "Angel Aguilar"
+      expect(ship_to.name).to eq "LOS ANGELES CA 9444"
       expect(ship_to.line_1).to eq '6548 Telegraph Road'
       expect(ship_to.line_2).to be_blank
       expect(ship_to.city).to eq 'City of Commerce'
@@ -435,12 +435,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ModelField.find_by_uid(:ord_ship_to_count).process_export(o,nil,true)).to eq 1
       st = o.order_lines.first.ship_to
 
-      expect(st.name).to eq 'Angel Aguilar'
+      expect(st.name).to eq 'LOS ANGELES CA 9444'
     end
 
     it "should re-use existing address" do
       oa = @importer.addresses.new
-      oa.name = "Angel Aguilar"
+      oa.name = "LOS ANGELES CA 9444"
       oa.line_1 = '6548 Telegraph Road'
       oa.city = 'City of Commerce'
       oa.state = 'CA'
