@@ -84,7 +84,8 @@ class MessagesController < ApplicationController
 
   def send_to_users
     admin_secure do
-      Message.delay.send_to_users(params[:receivers], help.strip_tags(params[:message_subject]), help.strip_tags(params[:message_body]))
+      body = RedCloth.new(params[:message_body]).to_html
+      Message.delay.send_to_users(params[:receivers], help.strip_tags(params[:message_subject]), body)
       flash[:notices] = ["Message sent."]
       redirect_to request.referrer
     end

@@ -114,15 +114,15 @@ describe MessagesController do
         expect(response).to be_redirect
       end
 
-      it 'sanitizes html' do
+      it 'sanitizes subject and formats body as markdown' do
         u = Factory(:admin_user)
         sign_in_as u
         
         d = double("delayed_job")
         expect(Message).to receive(:delay).and_return d
-        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "<p>This <b>is</b> a test.</p>")
 
-        post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test <em>Message</em>", message_body: "<a href=\'http://www.google.com\'>This is a test.</a>"}
+        post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test <em>Message</em>", message_body: "This **is** a test."}
       end
 
       it "creates notifications for specified users" do
@@ -131,7 +131,7 @@ describe MessagesController do
         
         d = double("delayed_job")
         expect(Message).to receive(:delay).and_return d
-        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], "Test Message", "This is a test.")
+        expect(d).to receive(:send_to_users).with([@receiver1.id.to_s, @receiver2.id.to_s], instance_of(String), instance_of(String))
         
         post :send_to_users, {receivers: [@receiver1.id, @receiver2.id], message_subject: "Test Message", message_body: "This is a test."}
         expect(flash[:notices]).to include "Message sent."
