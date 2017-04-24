@@ -9,10 +9,10 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
   end
 
   def find_generate_and_send 
-    # Look up any shipments that have last_exported_from_source times over 12 hours ago that have not
-    # been synce'd to Kewill.  Then group them together by master bill and send all the shipments with the
-    # same master bill together into the same CI Load file.
-    shipments = find_shipments(Time.zone.now - 12.hours)
+    # Look up any shipments that have last_exported_from_source times over 30 minutes ago that have not been sent.
+    # This used to be 12 hours, but since we pull everything for the master bill each time we send, there's no real
+    # point in waiting that long any longer.
+    shipments = find_shipments(Time.zone.now - 30.minutes)
     grouped_shipments = Hash.new {|h, k| h[k] = [] }
     shipments.each {|s| grouped_shipments[s.master_bill_of_lading] << s }
 

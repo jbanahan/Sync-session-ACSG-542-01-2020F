@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, importer: burlington, importer_reference: "ImpRef", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01")
+    shipment = Factory(:shipment, importer: burlington, importer_reference: "ImpRef", master_bill_of_lading: "MASTERBILL", last_exported_from_source: "2017-02-01 00:00")
     shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
     shipment_line_2 = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 20, gross_kgs: BigDecimal("100.50"), quantity: 198, linked_order_line_id: order.order_lines.first.id)
 
@@ -217,10 +217,10 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       expect(shipment2.sync_records.first).not_to be_nil
     end
 
-    it "does not send shipments received less than 12 hours ago" do
+    it "does not send shipments received less than 30 minutes ago" do
       expect(subject).not_to receive(:generate_and_send)
 
-      now = ActiveSupport::TimeZone["America/New_York"].parse("2017-02-01 6:59")
+      now = ActiveSupport::TimeZone["America/New_York"].parse("2017-01-31 19:30")
       Timecop.freeze(now) do
         subject.find_generate_and_send
       end
