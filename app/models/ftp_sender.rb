@@ -82,7 +82,9 @@ class FtpSender
         session.save!
 
         # No attachment means that there was a blank file attempted to be sent
-        unless session.attachment.nil? || session.successful? || !Rails.configuration.enable_ftp
+        # If the error object is not nill, we ALWAYS want to retry...this can happen in a case where the last command was
+        # technically successful (like changing dirs), but then the file send timed out.
+        unless session.attachment.nil? || (error.nil? && session.successful?) || !Rails.configuration.enable_ftp
           if session.retry_count < max_retry_count
             # Add the session id and attachment id to the options hash so the resend knows which file to send and which session to update
             my_opts[:session_id] = session.id

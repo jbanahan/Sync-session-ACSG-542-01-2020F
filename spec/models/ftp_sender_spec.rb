@@ -136,6 +136,57 @@ describe FtpSender do
         expect(@file.closed?).to be_truthy
       end
 
+      it "should log message and requeue if error is raised, but last response was a success" do
+        # These two lines mock out the actual internal client proxy access
+        expect(@ftp).to receive(:connect).with(@server, @username, @password, kind_of(Array), kind_of(Hash)).and_raise "RANDOM ERROR"
+        expect(@ftp).to receive(:last_response).and_return "200"
+
+        # We're stubbing out the build_attachment call on the ftp session to avoid S3 involvement when
+        # saving the ftp session's file attachment
+        attachment = double("Attachment")
+        allow(attachment).to receive(:id).and_return 1
+
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
+        expect_any_instance_of(FtpSession).to receive(:attachment).twice.and_return attachment
+        file_contents = nil
+        expect(attachment).to receive(:attached=) { |file|
+          file.rewind
+          file_contents = file.read
+        }
+
+        # Mock out the requeue-ing on error via delayed jobs
+        expect(FtpSender).to receive(:delay) do |args|
+          # Just make sure the first requeue will re-run in under 10 seconds..we're testing the actual
+          # calculate retry elsewhere
+          expect((Time.zone.now - args[:run_at]).abs).to be < 10
+          FtpSender
+        end
+        session_id = nil
+        expect(FtpSender).to receive(:resend_file) do |server, username, password, serialized_opts|
+          expect(server).to eq @server
+          expect(username).to eq @username
+          expect(password).to eq @password
+          opts = ActiveSupport::JSON.decode serialized_opts
+          expect(opts['attachment_id']).to eq attachment.id
+          expect(opts['remote_file_name']).to eq File.basename(@file)
+          session_id = opts['session_id']
+
+          nil
+        end
+        sess = FtpSender.send_file @server, @username, @password, @file
+        expect(sess.username).to eq(@username)
+        expect(sess.server).to eq(@server)
+        expect(sess.file_name).to eq(File.basename(@file))
+        expect(sess.log.split("\n").last).to eq("ERROR: RANDOM ERROR")
+        expect(file_contents).to eq("xyz")
+        expect(sess.last_server_response).to eq("200")
+        # Make sure the correct session id was passed to the resend call
+        expect(session_id).to eq sess.id
+
+        expect(FtpSession.first.id).to eq(sess.id)
+        expect(@file.closed?).to be_truthy
+      end
+
       it "sends a failure email on the 10th failure" do
         s = FtpSession.create! username: 'test', retry_count: 10
         opts = {'session_id' => s.id, 'attachment_id' => 100, 'remote_file_name'=>'test.txt'}
