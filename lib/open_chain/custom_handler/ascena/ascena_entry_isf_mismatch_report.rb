@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     XlsMaker.set_column_widths sheet, column_widths
     XlsMaker.add_header_row sheet, 0, report_headers, column_widths
 
-    entries = Entry.where(importer_id: importer.id, transport_mode_code: ["10", "11"]).where("first_entry_sent_date >= ? AND first_entry_sent_date < ?", start_date.in_time_zone("UTC"), end_date.in_time_zone("UTC")).pluck :id
+    entries = Entry.where(importer_id: importer.id, transport_mode_code: ["10", "11"]).where("first_entry_sent_date >= ? AND first_entry_sent_date < ?", start_date.in_time_zone("UTC"), end_date.in_time_zone("UTC")).where("first_entry_sent_date > '2017-04-21'").pluck :id
     entries.each do |id|
       entry = Entry.where(id: id).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]]).first
 

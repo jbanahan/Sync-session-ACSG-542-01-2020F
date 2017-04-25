@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
   describe "run_report" do
     let (:importer) { Factory(:importer) }
     let! (:entry) {
-      e = Factory(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-03-01 12:00"))
+      e = Factory(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-05-01 12:00"))
       i = e.commercial_invoices.create! invoice_number: "INV"
       l = i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", country_origin_code: "CO"
       t = l.commercial_invoice_tariffs.create! hts_code: "1234567890"
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports nothing if entry matches isf by master bill" do
       isf.update_attributes! entry_reference_numbers: "NO MATCH"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1
@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports if entry does not match to an isf" do
       isf.update_attributes! entry_reference_numbers: "NO MATCH", master_bill_of_lading: "NO MATCH"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports if entry does not match to country origin" do
       isf.security_filing_lines.first.update_attributes! country_of_origin_code: "ISF"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
@@ -66,7 +66,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports if entry does not match to PO" do
       isf.security_filing_lines.first.update_attributes! po_number: "ISF"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports if entry does not match to Part" do
       isf.security_filing_lines.first.update_attributes! part_number: "ISF"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "reports if entry does not match to HTS" do
       isf.security_filing_lines.first.update_attributes! hts_code: "1234578906"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
     it "does not report if hts matches first 6 digits, but doesn't match the rest of the digits" do
       isf.security_filing_lines.first.update_attributes! hts_code: "1234561234"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1
@@ -109,16 +109,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       entry.update_attributes! transport_mode_code: "40"
       isf.security_filing_lines.first.update_attributes! po_number: "ISF"
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1
     end
 
     it "does not report entries that are outside the time range" do
-      entry.update_attributes! first_entry_sent_date: tz.parse("2017-03-01 12:31")
+      entry.update_attributes! first_entry_sent_date: tz.parse("2017-05-01 12:31")
 
-      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
+      wb = XlsMaker.open_workbook file
+      sheet = wb.worksheet "Entry / ISF Match"
+      expect(sheet.rows.length).to eq 1
+    end
+
+    it "does not report entries prior to 4/21/2017" do
+      entry.update_attributes! first_entry_sent_date: tz.parse("2017-04-20 00:00")
+
+      file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1
