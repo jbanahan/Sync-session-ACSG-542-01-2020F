@@ -110,6 +110,14 @@ class FieldValidatorRule < ActiveRecord::Base
     end
   end
 
+  def mass_edit_groups
+    if respond_to?(:can_mass_edit_groups)
+      can_mass_edit_groups.to_s.lines.collect { |ln| ln.strip }.sort
+    else
+      []
+    end
+  end
+
   def string_hsh
     out = {}
     #general
@@ -136,6 +144,7 @@ class FieldValidatorRule < ActiveRecord::Base
     out[:ends_with] = "Ends With '#{ends_with}'" unless ends_with.blank?
     out[:contains] = "Contains '#{contains}'" unless contains.blank?
     out[:one_of] = "Is One Of: #{one_of.gsub(/\n/, ", ")}" unless one_of.blank?
+    out[:mass_edit] = "Mass Editable" unless mass_edit.blank?
 
     out
   end

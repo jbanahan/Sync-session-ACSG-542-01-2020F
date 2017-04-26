@@ -84,6 +84,17 @@ describe UserSessionsController do
       expect(flash[:errors]).to include "Your login was not successful."
     end
 
+    it 'should respond with password locked error if password is locked.' do
+      # The next failed login will bump failed login count to 5
+      # This is to make sure they get the locked error on their fifth failed attempt.
+      @user.update_attribute(:failed_logins, 4)
+      @user.reload
+      expect_any_instance_of(User).not_to receive(:on_successful_login).with request
+      post :create, :user_session => {'username'=>@user.username, 'password'=>"password"}
+      expect(response).to render_template("new")
+      expect(flash[:errors]).to include "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
+    end
+
     it "should allow a user to log in with via json" do
       expect_any_instance_of(User).to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :format => "json"

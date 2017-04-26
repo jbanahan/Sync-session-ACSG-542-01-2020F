@@ -27,7 +27,15 @@ describe FieldValidatorRule do
       r = FieldValidatorRule.new can_edit_groups: "Z\r\nY\nA"
       expect(r.edit_groups).to eq ["A", "Y", "Z"]
     end
+
+    describe 'mass_edit_groups' do
+      it "returns a sorted list of view groups" do
+        r = FieldValidatorRule.new can_mass_edit_groups: "Z\r\nY\nA"
+        expect(r.mass_edit_groups).to eq ["A", "Y", "Z"]
+      end
+    end
   end
+
 
   describe "string_hsh" do
     it "returns hash of values" do

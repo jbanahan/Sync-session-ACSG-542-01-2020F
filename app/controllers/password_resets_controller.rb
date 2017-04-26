@@ -24,11 +24,26 @@ class PasswordResetsController < ApplicationController
 
   def update
     success = false
-    if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
-      @user.update_attributes(:password_reset => false)
-      # Have to actually sign in the user here via clearance to set their remember token
-      sign_in(@user) do |status|
-        success = status.success?
+    current_password_valid = false
+
+    if params[:user][:current_password].present?
+      current_password_valid = @user.authenticated?(@user.password_salt, params[:user][:current_password])
+    end
+
+    if current_password_valid || !@user.password_expired
+      if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
+        @user.update_attributes(:password_reset => false, :password_expired => false, :password_locked => false)
+        # Have to actually sign in the user here via clearance to set their remember token
+        sign_in(@user) do |status|
+          success = status.success?
+        end
+      end
+    elsif @user.password_expired && !current_password_valid
+      success = false
+      if params[:user][:current_password].present?
+        @user.errors.add(:current_password, 'is invalid')
+      else
+        @user.errors.add(:current_password, 'is required to change password')
       end
     end
 

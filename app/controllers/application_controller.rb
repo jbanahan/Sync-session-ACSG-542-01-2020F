@@ -203,6 +203,7 @@ class ApplicationController < ActionController::Base
       # The forgot password call just generates a confirmation token which is used by the controller to determine
       # which user is resetting their password
       current_user.forgot_password!
+      add_flash(:warning, "Your password has expired. Please select a new password.") if current_user.password_expired
       redirect_to edit_password_reset_path current_user.confirmation_token
       return false
     end

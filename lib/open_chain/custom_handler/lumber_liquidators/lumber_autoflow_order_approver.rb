@@ -5,7 +5,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
   
   def self.process order, entity_snapshot: true
     u = find_or_create_autoflow_user
-    cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,:ord_assigned_agent,:ordln_qa_approved_by,:ordln_qa_approved_date])
+
+    cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,:ord_assigned_agent,:ordln_qa_approved_by,:ordln_qa_approved_date, :ord_inspector_assigned])
     has_changes = false
 
     order.order_lines.each do |ol|
@@ -42,8 +43,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
   def self.process_line ol, cdefs, autoflow_user
     changed = false
-    changed = true if process_line_product_compliance(ol,cdefs,autoflow_user)
-    changed = true if process_line_qa(ol,cdefs,autoflow_user)
+    changed = true if process_line_product_compliance(ol,cdefs, autoflow_user)
+    changed = true if process_line_qa(ol,cdefs, autoflow_user)
     return changed
   end
 

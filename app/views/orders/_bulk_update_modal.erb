@@ -2,7 +2,7 @@
     <div>
       <div class='col-md-6'>
         <label class='control-label'><%= model.label %></label>
-        <%= model_field_editor(User.current, Order.new, model, "mf_hsh[#{field_name}]", {})%>
+        <%= model_field_editor(User.current, Order.new, model, "mf_hsh[#{field_name}]", {class: []})%>
       </div>
     </div>
 <% end %>

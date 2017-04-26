@@ -23,9 +23,10 @@ class UserSessionsController < ApplicationController
     remember_me
 
     user = authenticate(params)
+
     # This call runs the clearance sign_in "guards" which runs business logic validations
     # to check if user is allowed to login (.ie user isn't locked, disabled etc)
-    handle_sign_in(user)
+    handle_sign_in(user, locked_password: locked_password?(user))
   end
 
   def create_from_omniauth
@@ -46,7 +47,7 @@ class UserSessionsController < ApplicationController
     end
   end
 
-  def handle_sign_in(user)
+  def handle_sign_in(user, opts={})
     sign_in(user) do |status|
       # I don't know why user would be nil here but it is sometimes (concurrency issue perhaps or something in clearance maybe?), so just
       # handle that like it was a bad login.
@@ -59,7 +60,11 @@ class UserSessionsController < ApplicationController
         end
       else
         session.delete :user_id
-        error = "Your login was not successful."
+        if opts[:locked_password]
+          error = "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
+        else
+          error = "Your login was not successful."
+        end
         respond_to do |format|
           format.html {
             add_flash :errors, error, now: true
@@ -80,6 +85,14 @@ class UserSessionsController < ApplicationController
   end
 
   private
+
+    def locked_password?(user)
+      return unless user.blank?
+
+      user = User.where(username: params[:user_session][:username]).first
+
+      user && user.password_locked
+    end
 
     def remember_me
       # Clearance (due to wanting a "clean codebase"), removed the option to

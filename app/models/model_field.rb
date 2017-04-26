@@ -63,6 +63,7 @@ class ModelField
     @field_validator_rule = self.class.field_validator_rule uid
     @field_validator_rule = o[:field_validator_rule] ? o[:field_validator_rule] : @field_validator_rule
     @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
+    @mass_edit = o[:mass_edit] || @field_validator_rule.try(:mass_edit?)
 
     # The respond_to here is pretty much solely there for the migration case when disabled? didn't
     # exist and the migration is creating it - unfortunately this is necesitated because
@@ -70,6 +71,7 @@ class ModelField
     @disabled = o[:disabled] || (@field_validator_rule.respond_to?(:disabled?) && @field_validator_rule.disabled?)
     @can_view_groups = SortedSet.new(@field_validator_rule.respond_to?(:view_groups) ? @field_validator_rule.view_groups : [])
     @can_edit_groups = SortedSet.new(@field_validator_rule.respond_to?(:edit_groups) ? @field_validator_rule.edit_groups : [])
+    @can_mass_edit_groups = SortedSet.new(@field_validator_rule.respond_to?(:mass_edit_groups) ? @field_validator_rule.mass_edit_groups : [])
     if !o[:default_label].blank?
       FieldLabel.set_default_value @uid, o[:default_label]
     end
@@ -118,6 +120,10 @@ class ModelField
     @read_only
   end
 
+  def mass_edit?
+    @mass_edit
+  end
+
   def disabled?
     @disabled
   end
@@ -158,6 +164,17 @@ class ModelField
   def select_options
     return nil unless @select_options_lambda
     @select_options_lambda.call()
+  end
+
+  # returns true if the given user should be allowed to mass edit this field
+  def can_mass_edit? user
+    return false unless mass_edit?
+    return false unless user_accessible
+    return false unless can_edit?(user)
+
+    in_groups = false
+
+    @can_mass_edit_groups.size > 0 ? (user.in_any_group?(@can_mass_edit_groups)) : true
   end
 
   # returns true if the given user should be allowed to view this field

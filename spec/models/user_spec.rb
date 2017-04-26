@@ -1,6 +1,52 @@
 require 'spec_helper'
 
 describe User do
+  describe "valid_password?" do
+    it 'returns false if any PasswordValidationRegistry tests return false' do
+      u = User.new
+      p = 'password'
+      d1 = double('pv1')
+      d2 = double('pv2')
+      expect(d1).to receive(:valid_password?).with(u, p).and_return true
+      expect(d2).to receive(:valid_password?).with(u, p).and_return false
+      expect(OpenChain::PasswordValidationRegistry).to receive(:registered_for_valid_password).and_return [d1, d2]
+
+      expect(u.valid_password?(u,p)).to be false
+    end
+    it 'returns true if all PasswordValidationRegistry tests return true' do
+      u = User.new
+      p = 'password'
+      d1 = double('pv1')
+      d2 = double('pv2')
+      [d1,d2].each {|d| expect(d).to receive(:valid_password?).with(u, p).and_return true}
+      expect(OpenChain::PasswordValidationRegistry).to receive(:registered_for_valid_password).and_return [d1, d2]
+
+      expect(u.valid_password?(u, p)).to be true
+    end
+  end
+
+  describe "recent_passwords" do
+
+    let!(:user) { Factory.create(:user) }
+    it 'returns the 5 most recently used passwords' do
+      # We would expect that password6 not be included in the return value as it is the oldest
+      passwords = ["password1", "password2", "password3", "password4", "password5", "password6"]
+      expected_passwords = passwords[0..4].map { |password| user.encrypt_password(user.password_salt, password)}
+
+      [5, 10, 15, 20, 25, 30].each_with_index do |time_ago, index|
+        UserPasswordHistory.create do |uph|
+          uph.user_id = user.id
+          uph.hashed_password = user.encrypt_password(user.password_salt, passwords[index])
+          uph.password_salt = user.password_salt
+          uph.created_at = uph.updated_at = time_ago.minutes.ago
+        end
+      end
+
+      expect(user.recent_password_hashes.map { |password| password.hashed_password}).to eql expected_passwords
+      expect(user.recent_password_hashes.map { |password| password.hashed_password}).to_not include(user.encrypt_password(user.password_salt, passwords[5]))
+    end
+  end
+
   describe "api_hash" do
     let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', email_new_messages:true) }
     it "should get hash" do
@@ -707,6 +753,12 @@ describe User do
       expect(User.authenticate @user.username, "notmypassword").to be_nil
     end
 
+    it "calls FailedPasswordHandler if authentication fails" do
+      klass = OpenChain::UserSupport::FailedPasswordHandler
+      expect(klass).to receive(:call)
+      User.authenticate @user.username, "notmypassword"
+    end
+
     it "returns nil if user can't use password login" do
       @user.update_attributes(disallow_password:true)
       expect(User.authenticate @user.username, "abc").to be_nil
@@ -738,6 +790,22 @@ describe User do
   describe "update_user_password" do
     before :each do
       @user = Factory(:user)
+    end
+
+    it 'creates user_password_histories record if password is valid' do
+      @user.update_user_password 'newpassword', 'newpassword'
+      expect(User.authenticate @user.username, 'newpassword').to eq @user
+      @user.reload
+      expect(@user.user_password_histories.first.hashed_password).to eq(@user.encrypted_password)
+      expect(@user.user_password_histories.first.password_salt).to eq(@user.password_salt)
+    end
+
+    it "sets password_changed_at" do
+      Timecop.freeze(Time.zone.now) do
+        @user.update_user_password 'newpassword', 'newpassword'
+        expect(User.authenticate @user.username, 'newpassword').to eq @user
+        expect(@user.password_changed_at).to eql(Time.zone.now)
+      end
     end
 
     it "updates a user password with valid info" do

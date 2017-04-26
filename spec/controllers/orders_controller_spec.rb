@@ -155,6 +155,7 @@ describe OrdersController do
     end
   describe 'bulk_update_fields' do
     it "returns list of model fields for user to edit" do
+      FieldValidatorRule.create!(model_field_uid: 'ord_ord_date', module_type: 'Order', mass_edit: true)
       post :bulk_update_fields
       expect(JSON.parse(response.body)["mf_hsh"]).to include({"ord_ord_date" => "Order Date"})
     end

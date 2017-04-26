@@ -3,6 +3,8 @@ require 'digest/sha1'
 require 'email_validator'
 require 'open_chain/user_support/user_permissions'
 require 'open_chain/user_support/groups'
+require 'open_chain/user_support/failed_password_handler'
+require 'open_chain/password_validation_registry'
 
 class User < ActiveRecord::Base
   include Clearance::User
@@ -32,6 +34,8 @@ class User < ActiveRecord::Base
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
     :support_agent,
     :password_reset,
+    :password_expired,
+    :password_locked,
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
     :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids,
@@ -41,6 +45,7 @@ class User < ActiveRecord::Base
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
 
+  has_many   :user_password_histories, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :search_setups, :dependent => :destroy
@@ -122,10 +127,13 @@ class User < ActiveRecord::Base
     if user
       # Authenticated? is the clearance method for validating the user's supplied password matches
       # the stored password hash.
-      r = !user.disallow_password? && user.authenticated?(password) ? user : nil
+      if !user.disallow_password?
+        r = user.authenticated?(user.password_salt, password)
+        OpenChain::UserSupport::FailedPasswordHandler.call(user) if r.blank?
+      end
     end
 
-    r
+    r.present? ? user : nil
   end
 
   def self.from_omniauth(omniauth_provider, auth_info)
@@ -252,6 +260,10 @@ class User < ActiveRecord::Base
     hash
   end
 
+  def recent_password_hashes(password_count=5)
+    user_password_histories.order('created_at DESC').limit(password_count).map { |password| password }
+  end
+
   # override default clearance email authentication
   def email_optional?
     true
@@ -264,6 +276,12 @@ class User < ActiveRecord::Base
     r
   end
 
+  def valid_password? user, password
+    registered = OpenChain::PasswordValidationRegistry.registered_for_valid_password
+    return true if registered.empty?
+    registered.map { |oa| oa.valid_password?(user,password) }.all?
+  end
+
   def update_user_password password, password_confirmation
     # Fail if the password is blank, under no circumstance do we want to accidently set someone's password
     # to a blank string.
@@ -273,10 +291,17 @@ class User < ActiveRecord::Base
     else
       if password != password_confirmation
         errors.add(:password, "must match password confirmation.")
+      elsif !valid_password?(self, password)
+        valid = false
       else
         # This is the clearance method for updating the password.
         valid = update_password(password)
       end
+    end
+
+    if valid
+      update_attribute(:password_changed_at, Time.zone.now)
+      self.user_password_histories.create!(hashed_password: self.encrypted_password, password_salt: self.password_salt)
     end
 
     valid

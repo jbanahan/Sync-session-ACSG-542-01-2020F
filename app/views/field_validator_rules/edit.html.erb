@@ -20,6 +20,7 @@ $(function() {
   <%=field_row "Custom XML Tag", f.text_field(:xml_tag_name)%>
   <%=field_row "Read Only", f.check_box(:read_only) %>
   <%=field_row "Required", f.check_box(:required) %>
+  <%=field_row "Mass Edit", f.check_box(:mass_edit) %>
   <% if [:decimal,:integer].include? mf.data_type%>
     <%=field_row "Greater Than", f.text_field(:greater_than,:class=>mf.data_type)%>
     <%=field_row "Less Than", f.text_field(:less_than,:class=>mf.data_type)%>
@@ -40,8 +41,9 @@ $(function() {
   <% end%>
   <%=field_row "Regular Expression", content_tag(:span,f.text_field(:regex)+tag("br")+"See "+link_to("this article","http://en.wikipedia.org/wiki/Regular_expression",:target=>"_blank")+".")%>
   <%=field_row "Disabled For All Users", f.check_box(:disabled) %>
-  <%=field_row "Groups That Can View Field", content_tag(:span,f.text_area(:can_view_groups,:rows=>5)+tag("br")+"Put each group on it's own line.")%>
-  <%=field_row "Groups That Can Edit Field", content_tag(:span,f.text_area(:can_edit_groups,:rows=>5)+tag("br")+"Put each group on it's own line.")%>
+  <%=field_row "Groups That Can View Field", content_tag(:span,f.text_area(:can_view_groups,:rows=>5)+tag("br")+"Put each group on its own line.")%>
+  <%=field_row "Groups That Can Edit Field", content_tag(:span,f.text_area(:can_edit_groups,:rows=>5)+tag("br")+"Put each group on its own line.")%>
+  <%=field_row "Groups That Can Mass Edit Field", content_tag(:span,f.text_area(:can_mass_edit_groups, :rows=>5)+tag("br")+"Put each group on its own line.")%>
   </table>
 <%end%>
 <div style='display:none;'>

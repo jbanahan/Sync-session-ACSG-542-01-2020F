@@ -167,7 +167,7 @@ class OrdersController < ApplicationController
 
   def bulk_update_fields
     mf_hsh = {}
-    mfs = CoreModule::ORDER.model_fields(current_user) {|mf| mf.can_edit?(current_user) && mf.date?}
+    mfs = CoreModule::ORDER.model_fields(current_user) {|mf| mf.can_mass_edit?(current_user)}
     html = render_to_string(partial: 'bulk_update_modal', locals: { mfs: mfs })
     mfs.each_pair { |field_name, mf| mf_hsh[field_name] = mf.label }
     c = get_bulk_count(params[:pk], params[:sr_id])

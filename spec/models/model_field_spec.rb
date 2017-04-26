@@ -147,6 +147,37 @@ describe ModelField do
     end
   end
 
+  describe "can_mass_edit?" do
+    it 'disallows mass_edit by default' do
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z).can_mass_edit?(Factory(:user))).to be_falsey
+    end
+
+    it 'allows mass_edit if field is mass_edit, and no groups are provided' do
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, mass_edit: true).can_mass_edit?(Factory(:user))).to be_truthy
+    end
+
+    it 'disallows mass_edit if field is not user accessible' do
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: false, mass_edit: true).can_mass_edit?(Factory(:user))).to be_falsey
+    end
+
+    it 'disallows mass_edit if fields cannot be edited by user' do
+      expect(ModelField.new(1, :x, CoreModule::SHIPMENT, :z, user_accessible: true, mass_edit: true, read_only: true).can_mass_edit?(Factory(:user))).to be_falsey
+    end
+
+    it 'disallows mass_edit if user is not in mass_edit group, if group is provided' do
+      FieldValidatorRule.create! module_type: "Order", model_field_uid: 'uid', can_mass_edit_groups: "Group"
+      user = Factory(:user)
+      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true).can_mass_edit?(user)).to be_falsey
+    end
+
+    it 'allows mass_edit if user is in the mass_edit group, if group is provided' do
+      FieldValidatorRule.create! module_type: "Order", model_field_uid: "uid", can_mass_edit_groups: "GROUP1\nGROUP"
+      user = Factory(:user)
+      user.groups << Factory(:group, system_code: "GROUP")
+      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true).can_mass_edit?(user)).to be_truthy
+    end
+  end
+
   describe "can_edit?" do
     it "allows edit by default" do
       expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_edit?(Factory(:user))).to be_truthy

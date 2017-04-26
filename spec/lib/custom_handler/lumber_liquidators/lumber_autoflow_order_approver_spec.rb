@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberAutoflowOrderApprover do
   describe "process" do
     before :each do
-      @cdefs = described_class.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_qa_approved_by,:ordln_qa_approved_date,:ord_assigned_agent])
+      @cdefs = described_class.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_qa_approved_by,:ordln_qa_approved_date,:ord_assigned_agent,:ord_inspector_assigned])
     end
     it "should approve lines where risk level is Auto-Flow" do
       u = Factory(:master_user,username:'autoflow')

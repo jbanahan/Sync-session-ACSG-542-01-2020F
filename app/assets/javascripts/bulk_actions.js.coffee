@@ -79,7 +79,7 @@ makeBulkActions = ->
 
     completeBulkOrderUpdate: ->
       mod = $('#bulk-ord-update-modal')
-      fields = mod.find('input').map ->
+      fields = mod.find('.form-control').map ->
         field = {}
         if this.value 
           field[this.name] = this.value
@@ -89,7 +89,13 @@ makeBulkActions = ->
       sba.children(':not(input[type="hidden"])').remove()
       for obj in fields
         for n,v of obj
-          inputTag = mod.find("input[name='#{n}']").clone(true)
+          inputTag = mod.find("input[name='#{n}']")
+          if inputTag.is('input')
+            inputTag = inputTag.clone(true)
+          else
+            inputTag = $("<input>").attr
+              type: 'hidden'
+              name: n
           inputTag.attr('value', v)
           sba.append inputTag
 

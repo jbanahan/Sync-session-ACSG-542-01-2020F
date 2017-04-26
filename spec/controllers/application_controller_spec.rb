@@ -145,6 +145,14 @@ describe ApplicationController do
       # what's set in the current user, then we're good to go.
       expect(response).to redirect_to edit_password_reset_path controller.current_user.confirmation_token
     end
+
+    it "should display a password expired message if password_expired is set" do
+      @u.update_attributes password_reset: true, password_expired: true
+
+      get :show, :id => 1
+      expect(response).to redirect_to edit_password_reset_path controller.current_user.confirmation_token
+      expect(flash[:warning]).to include("Your password has expired. Please select a new password.")
+    end
   end
 
   describe "set_x_frame_options_header" do

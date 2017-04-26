@@ -71,6 +71,9 @@ RSpec.configure do |config|
 
     # clear OrderBookingRegistry
     OpenChain::OrderBookingRegistry.clear
+
+    # clear PasswordValidationRegistry
+    OpenChain::PasswordValidationRegistry.clear
   end
 
   # Clears out the deliveries array before every test..which is only done automatically

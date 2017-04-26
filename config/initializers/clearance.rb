@@ -7,8 +7,8 @@ require 'digest/sha2'
 
 module Sha512PasswordStrategy
 
-  def authenticated?(password)
-    encrypted_password == encrypt(password)
+  def authenticated?(salt, password)
+    encrypted_password == encrypt_password(salt, password)
   end
 
   def password=(cleartext_password)
@@ -16,26 +16,26 @@ module Sha512PasswordStrategy
     initialize_salt_if_necessary
 
     if cleartext_password.present?
-      self.encrypted_password = encrypt(cleartext_password)
+      self.encrypted_password = encrypt_password(password_salt, cleartext_password)
     end
+  end
+
+  def encrypt_password salt, password
+    generate_hash "#{password}#{salt}"
   end
 
   private
 
-    def encrypt(string)
-      generate_hash "#{string}#{password_salt}"
-    end
+  def generate_hash(digest)
+    20.times { digest = Digest::SHA512.hexdigest(digest) }
+    digest
+  end
 
-    def generate_hash(digest)
-      20.times { digest = Digest::SHA512.hexdigest(digest) }
-      digest
+  def initialize_salt_if_necessary
+    if password_salt.blank?
+      self.password_salt = SecureRandom.hex(64)
     end
-
-    def initialize_salt_if_necessary
-      if password_salt.blank?
-        self.password_salt = SecureRandom.hex(64)
-      end
-    end
+  end
 end
 
 class LoginAllowedGuard < Clearance::SignInGuard
