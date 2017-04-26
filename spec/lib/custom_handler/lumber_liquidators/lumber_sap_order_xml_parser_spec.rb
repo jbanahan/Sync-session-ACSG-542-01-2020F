@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
     it "should create order" do
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
+      expect{described_class.new(key: "filename.xml").parse_dom(dom)}.to change(Order,:count).from(0).to(1)
 
       o = Order.first
 
@@ -112,7 +112,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq ol.product.name
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq '123456' #ol.product.get_custom_value(@cdefs[:prod_old_article]).value
 
-      expect(o.entity_snapshots.count).to eq 1
+      expect(o.entity_snapshots.length).to eq 1
+      snap = o.entity_snapshots.first
+      expect(snap.context).to eq "filename.xml"
 
       folders = o.folders.order(:name).map{ |f| {f_name: f.name, g_name: f.groups.first.name, g_system_code: f.groups.first.system_code } }
       expect(folders).to eq [{f_name:'Lacey Docs', g_name: 'RO/Product Compliance', g_system_code: 'ROPRODCOMP'},

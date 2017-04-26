@@ -4,17 +4,16 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
+  include OpenChain::CustomHandler::XmlHelper
+  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
+  extend OpenChain::IntegrationClientParser
 
   class OnShipmentError < StandardError; end
 
   VALID_ROOT_ELEMENTS ||= [
     '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
     'ORDERS05' #before June 2016
-  ]
-
-  include OpenChain::CustomHandler::XmlHelper
-  include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  ]  
 
   def self.parse data, opts={}
     parse_dom REXML::Document.new(data), opts
@@ -108,7 +107,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         setup_folders o
         o
       end
-      order.create_snapshot @user if order
+      order.create_snapshot(@user, nil, @opts[:key]) if order
     rescue OnShipmentError
       # mailer here
       send_on_shipment_error dom, order_number, $!.message
