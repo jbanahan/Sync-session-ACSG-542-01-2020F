@@ -24,7 +24,7 @@ describe SnapshotWriter do
 
   describe "entity_json" do
     let (:entry) {
-      Factory(:entry, broker_reference: "ABC", arrival_date: Time.zone.now, total_fees: BigDecimal.new("1.50"), export_date: Time.zone.now.to_date, paperless_release: true, import_country: Factory(:country))
+      Factory(:entry, broker_reference: "ABC", arrival_date: ActiveSupport::TimeZone["UTC"].now, total_fees: BigDecimal.new("1.50"), export_date: Time.zone.now.to_date, paperless_release: true, import_country: Factory(:country))
     }
 
     it "uses given descriptor and generates snapshot" do
@@ -213,8 +213,8 @@ describe SnapshotWriter do
     end
   end
 
-  describe "field_value" do
-    let (:entry) { Entry.new broker_reference: "12345", release_date: Time.zone.parse("2017-02-24 12:00"), duty_due_date: Date.new(2017, 2, 23), master_bills_of_lading: "A\n B", total_fees: BigDecimal("10.50"), paperless_release: true, pay_type: 1}
+  shared_examples 'SnapshotWriter#field_value' do
+    let (:entry) { Entry.new broker_reference: "12345", release_date: ActiveSupport::TimeZone["UTC"].parse("2017-02-24 12:00"), duty_due_date: Date.new(2017, 2, 23), master_bills_of_lading: "A\n B", total_fees: BigDecimal("10.50"), paperless_release: true, pay_type: 1}
     
     {ent_brok_ref: "12345", ent_release_date: Time.zone.parse("2017-02-24 12:00"), ent_duty_due_date: Date.new(2017, 2, 23), ent_mbols: "A\n B", ent_total_fees: BigDecimal("10.50"), ent_paperless_release: true,  ent_pay_type: 1, ent_cust_num: nil}.each_pair do |k, v|
       it "returns process_export value for object and field #{k}" do
@@ -229,6 +229,20 @@ describe SnapshotWriter do
         end
       end
     end
+
+    it "converts all datetime values to UTC timezone" do
+      expect(subject.field_value Entry.new(release_date: ActiveSupport::TimeZone["America/New_York"].parse("2017-02-24 12:00")), ModelField.find_by_uid(:ent_release_date)).to eq "2017-02-24T17:00:00Z"
+    end
+  end
+
+  describe "field_value" do
+    it_behaves_like "SnapshotWriter#field_value"
+  end
+
+  describe "self.field_value" do
+    subject {described_class}
+
+    it_behaves_like "SnapshotWriter#field_value"
   end
 
 end

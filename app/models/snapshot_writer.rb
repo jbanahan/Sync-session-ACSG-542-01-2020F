@@ -9,8 +9,13 @@ class SnapshotWriter
   # utilizes when generating a snapshot.  This can be handy if you need to compare an object to
   # a snapshot.  In which case, you should use the json_string option, which will return the 
   # exact field value you'd expect to get when reading data out of a hashified snapshot json string.
-  def field_value entity, model_field, json_string: false
+  def self.field_value entity, model_field, json_string: false
     value = model_field.process_export entity, nil, true
+
+    # For Timestamps we always want to store off the value adjusted to UTC (just like the database)
+    if value.respond_to?(:in_time_zone)
+      value = value.in_time_zone("UTC")
+    end
 
     # Null values are not added to the snapshot, so return these as null here too
     if !value.nil? && json_string
@@ -32,6 +37,14 @@ class SnapshotWriter
     end
 
     value
+  end
+
+  # This method is for those that want to be able to get at the actual value the snapshot writer
+  # utilizes when generating a snapshot.  This can be handy if you need to compare an object to
+  # a snapshot.  In which case, you should use the json_string option, which will return the 
+  # exact field value you'd expect to get when reading data out of a hashified snapshot json string.
+  def field_value entity, model_field, json_string: false
+    self.class.field_value entity, model_field, json_string: json_string
   end
 
   protected 

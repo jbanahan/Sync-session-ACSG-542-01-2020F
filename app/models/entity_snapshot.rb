@@ -297,11 +297,38 @@ class EntitySnapshot < ActiveRecord::Base
     r = {}
     new_mf = new_json.nil? ? {} : new_json['entity']['model_fields']
     old_mf = old_json.nil? ? {} : old_json['entity']['model_fields']
+    
+    parse_diff_datetimes(new_mf)
+    parse_diff_datetimes(old_mf)
+
+    # Diff here is an activerecord hash method which uses == to determine equality
     fields_changed = new_mf.diff(old_mf).keys
     fields_changed.each do |mf_uid|
       r[mf_uid] = [old_mf[mf_uid],new_mf[mf_uid]]
     end
     r
+  end
+
+  def parse_diff_datetimes model_field_hash
+    # Times are stored as iso 8601 strings in the database, so before we diff the values we want to parse all 
+    # times as actual time objects, this will allow the diff to display to the user in their timezone.
+    #
+    # This also resolves a previous bug in snapshots where the snapshot data was written using the value in Time.zone
+    # rather than always forcing it to UTC (which it does as of end of April 2017). ActiveRecord::DateWithTime
+    # recognizes that '2017-04-01 12:00:00 UTC' is the same moment as '2017-04-01 08:00:00 -0400' and thus will
+    # not flag a field as being changed (as happened when we still evaluated the datetime as a string for the diff)
+    date_time_regex = /\A\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{1,2}:\d{1,2}/
+    model_field_hash.each_pair do |k, v|
+      # Do a quicker upfront approach to determine if we MAY or may not have a date time value (regex is infinitely faster 
+      # than looking up the uid).
+      if v.is_a?(String) && v =~ date_time_regex
+        mf = ModelField.find_by_uid k
+        if mf.data_type == :datetime
+          date = Time.zone.parse v
+          model_field_hash[k] = date unless date.nil?
+        end
+      end
+    end
   end
 
   class ESDiff

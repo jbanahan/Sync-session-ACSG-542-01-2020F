@@ -2,16 +2,15 @@ require 'spec_helper'
 
 describe EntitySnapshot, :snapshot do
 
+  let (:user) { Factory(:user) }
+
   describe "diff" do
-    before :each do
-      @u = Factory(:user)
-    end
 
     it "should return empty diff for identical snapshots" do
       ol = Factory(:order_line)
       o = ol.order
-      s = EntitySnapshot.create_from_entity o, @u
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
       expect(diff.record_id).to eq o.id
       expect(diff.core_module).to eq 'Order'
@@ -29,19 +28,19 @@ describe EntitySnapshot, :snapshot do
       old_order_number = o.order_number
       new_order_number = "#{o.order_number}X"
 
-      s = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
       o.update_attributes(order_number:new_order_number)
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
       
       expect(diff.model_fields_changed['ord_ord_num']).to eq [old_order_number,new_order_number]
     end
     it "should reflect added child" do
       o = Factory(:order)
-      s = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
       ol = Factory(:order_line,order:o)
       o.reload
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
       
       expect(diff.children_added.size).to eq 1
@@ -52,10 +51,10 @@ describe EntitySnapshot, :snapshot do
     it "should reflect deleted child" do
       ol = Factory(:order_line)
       o = ol.order
-      s = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
       ol.destroy
       o.reload
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
 
       expect(diff.children_deleted.size).to eq 1
@@ -68,10 +67,10 @@ describe EntitySnapshot, :snapshot do
       old_line_number = ol.line_number
       new_line_number = old_line_number + 1
       o = ol.order
-      s = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
       ol.update_attributes(line_number:new_line_number)
       o.reload
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
       
       expect(diff.children_in_both.size).to eq 1
@@ -82,16 +81,27 @@ describe EntitySnapshot, :snapshot do
       ol = Factory(:order_line,hts:'123456')
       line_number = ol.line_number
       o = ol.order
-      s = EntitySnapshot.create_from_entity o, @u
+      s = EntitySnapshot.create_from_entity o, user
       ol.destroy
       ol = Factory(:order_line,order:o,line_number:line_number,hts:'654321')
       o.reload
-      s2 = EntitySnapshot.create_from_entity o, @u
+      s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
       
       expect(diff.children_in_both.size).to eq 1
       cib = diff.children_in_both.first
       expect(cib.model_fields_changed['ordln_hts']).to eq ['123456'.hts_format,'654321'.hts_format]
+    end
+
+    it "returns datetimes as date time objects (not strings)" do 
+      e = Entry.new release_date: Time.zone.parse("2017-04-01 12:00")
+      s1 = EntitySnapshot.create_from_entity e, user
+
+      e.release_date = Time.zone.parse("2017-04-01 16:00")
+      s2 = EntitySnapshot.create_from_entity e, user      
+
+      diff = s2.diff s1
+      expect(diff.model_fields_changed["ent_release_date"]).to eq [Time.zone.parse("2017-04-01 12:00"), Time.zone.parse("2017-04-01 16:00") ]
     end
   end
   describe "restore" do
@@ -102,32 +112,31 @@ describe EntitySnapshot, :snapshot do
       allow_any_instance_of(Classification).to receive(:can_edit?).and_return(true)
       allow_any_instance_of(TariffRecord).to receive(:can_edit?).and_return(true)
 
-      @u = Factory(:user)
       @p = Factory(:product,:name=>'nm',:unique_identifier=>'uid')
       @tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p))
-      @first_snapshot = @p.create_snapshot @u
+      @first_snapshot = @p.create_snapshot user
     end
     it "should replace base object properties" do
       @p.update_attributes(:name=>'n2')
-      restored = @first_snapshot.restore(@u)
+      restored = @first_snapshot.restore(user)
       expect(restored.id).to eq(@p.id)
       expect(restored.name).to eq('nm')
     end
     it "should erase base object properties that have been added" do
       @p.update_attributes(:unit_of_measure=>'EA')
-      restored = @first_snapshot.restore(@u)
+      restored = @first_snapshot.restore(user)
       expect(restored.id).to eq(@p.id)
       expect(restored.unit_of_measure).to be_blank
     end
     it "should insert base object properties that have been removed" do
       @p.update_attributes(:name=>nil)
-      restored = @first_snapshot.restore(@u)
+      restored = @first_snapshot.restore(user)
       expect(restored.id).to eq(@p.id)
       expect(restored.name).to eq('nm')
     end
     it "should leave base object properties that haven't changed alone" do
       @p.update_attributes(:unit_of_measure=>'EA')
-      restored = @first_snapshot.restore(@u)
+      restored = @first_snapshot.restore(user)
       expect(restored.id).to eq(@p.id)
       expect(restored.name).to eq('nm')
     end
@@ -137,12 +146,12 @@ describe EntitySnapshot, :snapshot do
       expect(restored.last_updated_by_id).to eq(other_user.id)
     end
     it "should not restore if user does not have permission" do
-      @p.update_attributes! last_updated_by: @u
+      @p.update_attributes! last_updated_by: user
       allow_any_instance_of(Product).to receive(:can_edit?).and_return(false)
       @p.update_attributes(:name=>'n2')
       other_user = Factory(:user)
-      restored = @first_snapshot.restore(@u)
-      expect(restored.last_updated_by_id).to eq(@u.id)
+      restored = @first_snapshot.restore(user)
+      expect(restored.last_updated_by_id).to eq(user.id)
       expect(restored.name).to eq('n2')
     end
 
@@ -153,27 +162,27 @@ describe EntitySnapshot, :snapshot do
           @cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
           ModelField.reload
           @p.update_custom_value! @cd, 'x'
-          @first_snapshot = @p.create_snapshot @u
+          @first_snapshot = @p.create_snapshot user
         end
 
         it "should replace custom fields" do
           @p.update_custom_value! @cd, 'y'
-          restored = @first_snapshot.restore(@u)
+          restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should erase custom fields that have been added" do
           cd2 = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
           @p.update_custom_value! cd2, 'y'
-          restored = @first_snapshot.restore(@u)
+          restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(cd2).value).to be_blank
         end
         it "should insert custom fields that have been removed" do
            @p.get_custom_value(@cd).destroy 
-          restored = @first_snapshot.restore(@u)
+          restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should leave custom fields that haven't changed alone" do
-          restored = @first_snapshot.restore(@u)
+          restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
       end
@@ -182,13 +191,13 @@ describe EntitySnapshot, :snapshot do
         it "handles user custom value fields" do
           user_def = Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
           ModelField.reload
-          @p.update_custom_value! user_def, @u
-          snapshot = @p.create_snapshot @u
+          @p.update_custom_value! user_def, user
+          snapshot = @p.create_snapshot user
           user2 = Factory(:user)
           @p.update_custom_value! user_def, user2
-          snapshot.restore @u
+          snapshot.restore user
           @p.reload
-          expect(@p.custom_value(user_def)).to eq @u.id
+          expect(@p.custom_value(user_def)).to eq user.id
         end
 
         it "handles address fields" do
@@ -199,10 +208,10 @@ describe EntitySnapshot, :snapshot do
           address_2 = Factory(:full_address)
 
           @p.update_custom_value! addr_def, address
-          snapshot = @p.create_snapshot @u
+          snapshot = @p.create_snapshot user
           @p.update_custom_value! addr_def, address_2
 
-          snapshot.restore @u
+          snapshot.restore user
           @p.reload
           expect(@p.custom_value(addr_def)).to eq address.id
         end
@@ -213,30 +222,30 @@ describe EntitySnapshot, :snapshot do
     context "children" do
       it "should add children that were removed" do
         @p.classifications.first.destroy
-        restored = @first_snapshot.restore @u
+        restored = @first_snapshot.restore user
         expect(restored.classifications.first.tariff_records.first.hts_1).to eq('1234567890')
       end
       it "should remove children that didn't exist" do
         p = Factory(:product)
-        es = p.create_snapshot @u
+        es = p.create_snapshot user
         Factory(:tariff_record,:classification=>(Factory(:classification,:product=>p)))
         p.reload
         expect(p.classifications.first.tariff_records.first).not_to be_nil
-        es.restore @u
+        es.restore user
         p.reload
         expect(p.classifications.first).to be_nil
       end
       it "should replace values in children that changed" do
         @tr.update_attributes(:hts_1=>'1234')
-        @first_snapshot.restore @u
+        @first_snapshot.restore user
         expect(TariffRecord.find(@tr.id).hts_1).to eq('1234567890')
       end
       it "should replace custom values for children that changed" do
         cd = Factory(:custom_definition,:module_type=>"Classification",:data_type=>"string")
         @tr.classification.update_custom_value! cd, 'x'
-        @first_snapshot = @p.create_snapshot @u
+        @first_snapshot = @p.create_snapshot user
         @tr.classification.update_custom_value! cd, 'y'
-        restored = @first_snapshot.restore @u
+        restored = @first_snapshot.restore user
         expect(restored.classifications.first.get_custom_value(cd).value).to eq('x')
       end
 
@@ -244,7 +253,7 @@ describe EntitySnapshot, :snapshot do
         j = @first_snapshot.snapshot_json
         j['entity']['children'][0]['entity']['record_id'] = nil
         @first_snapshot.snapshot = j.to_json
-        restored = @first_snapshot.restore @u
+        restored = @first_snapshot.restore user
         expect(restored.classifications.size).to eq 0
       end
     end
@@ -254,7 +263,7 @@ describe EntitySnapshot, :snapshot do
       @first_snapshot.update_attributes! snapshot: ActiveSupport::JSON.encode(first_snapshot)
       expect(EntitySnapshot).not_to receive(:retrieve_snapshot_data_from_s3)
 
-      restored = @first_snapshot.restore (@u)
+      restored = @first_snapshot.restore (user)
       expect(restored).to eq @p
       expect(restored.name).to eq "nm"
     end

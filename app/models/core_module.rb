@@ -339,7 +339,7 @@ class CoreModule
       mf_hash = master_hash['entity']['model_fields']
       core_module.model_fields.values.each do |mf|
         unless mf.history_ignore?
-          v = mf.process_export entity, nil, true
+          v = SnapshotWriter.field_value entity, mf
           mf_hash[mf.uid] = v unless v.nil?
         end
       end
