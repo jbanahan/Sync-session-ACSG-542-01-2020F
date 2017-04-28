@@ -70,7 +70,7 @@ orders.closed_at is null
 AND orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND (orders.approval_status is null OR orders.approval_status != 'Accepted')
 AND (orders.fob_point IN ('VN','PH','ID'))
-AND DATEDIFF(now(),orders.last_revised_date) > 7
+AND DATEDIFF(now(),orders.last_revised_date) >= 7
 GROUP BY orders.id
 QRY
     q
@@ -93,9 +93,9 @@ orders.closed_at is null
   (
     orders.ship_window_start != orders.ship_window_end
     OR
-    (orders.mode = 'Air' AND (DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) < 7 OR DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) > 10))
+    (orders.mode = 'Air' AND (DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) <= 7 OR DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) >= 10))
     OR
-    (orders.mode = 'Ocean' AND (DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) < 32 OR DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) > 45))
+    (orders.mode = 'Ocean' AND (DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) <= 32 OR DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) >= 45))
   )
   AND
   (orders.ship_window_start >= now() AND orders.ship_window_end >= now())
@@ -126,10 +126,10 @@ QRY
         orders.closed_at is null
         AND orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
         AND (orders.approval_status = 'Accepted')
-        AND DATEDIFF(orders.ship_window_end,now()) < 14
+        AND DATEDIFF(orders.ship_window_end,now()) <= 14
         AND (orders.fob_point IN ('VN','PH','ID'))
         AND (booking_lines.id IS NULL)
-        AND (orders.ship_window_end < DATE_ADD(NOW(), INTERVAL 14 DAY))
+        AND (orders.ship_window_end <= DATE_ADD(NOW(), INTERVAL 14 DAY))
       GROUP BY orders.id
       ) x
       SQL
