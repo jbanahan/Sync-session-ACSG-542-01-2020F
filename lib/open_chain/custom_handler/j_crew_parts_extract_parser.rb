@@ -6,7 +6,6 @@ module OpenChain
   module CustomHandler
     class JCrewPartsExtractParser
       include OpenChain::FtpFileSupport
-      include AllianceProductSupport
       
       J_CREW_CUSTOMER_NUMBER ||= "J0000"
       
@@ -53,7 +52,7 @@ module OpenChain
           temp.binmode
           Attachment.add_original_filename_method temp, "JPART.TXT"
           generate_product_file(input_io, temp)
-          send_ftp temp
+          ftp_file(temp, connect_vfitrack_net('to_ecs/jcrew_parts'))
         end
       end
 

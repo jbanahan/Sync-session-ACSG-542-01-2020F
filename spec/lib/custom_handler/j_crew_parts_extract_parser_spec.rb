@@ -87,12 +87,8 @@ describe 'JCrewPartsExtractParser' do
       }
 
       expect(@p).to receive(:ftp_file) {|file, opts|
-        file.path == tempfile.path
-        expect(opts[:keep_local]).to be_truthy
-
-        # simulate closing the file reference like ftp'ing does so we make sure
-        # we're handling this case
-        file.close
+        expect(opts[:server]).to eq "connect.vfitrack.net"
+        expect(opts[:folder]).to eq "to_ecs/jcrew_parts"
       }
 
       @p.generate_and_send io
