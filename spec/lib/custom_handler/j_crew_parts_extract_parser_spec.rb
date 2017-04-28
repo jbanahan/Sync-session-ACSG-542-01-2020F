@@ -81,7 +81,7 @@ describe 'JCrewPartsExtractParser' do
       expect(@p).to receive(:generate_product_file) { |input, output|  
         expect(input).to eq(io)
         expect(output.binmode?).to be_truthy
-        expect(File.basename(output.path)).to match(/^JCrewPartsExtract.+\.DAT$/)
+        expect(output.original_filename).to eq "JPART.TXT"
         expect(output.class).to eq(Tempfile)
         tempfile = output
       }
@@ -102,7 +102,7 @@ describe 'JCrewPartsExtractParser' do
   context "remote_file_name" do 
     it "should use JCrew customer numbers" do
     	p = OpenChain::CustomHandler::JCrewPartsExtractParser.new
-      expect(p.remote_file_name).to match(/^JPART.DAT$/)
+      expect(p.remote_file_name).to eq "JPART.TXT"
     end
   end
 

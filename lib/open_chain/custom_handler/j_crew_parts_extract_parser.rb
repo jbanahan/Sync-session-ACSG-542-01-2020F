@@ -49,13 +49,11 @@ module OpenChain
       def generate_and_send input_io
         # ftp_file is from FtpSupport
         # All ftp options for FTP sending are defined in AllianceProductSupport (except remote_file_name)
-        temp = Tempfile.new ['JCrewPartsExtract', '.DAT']
-        begin
+        Tempfile.open(['JCrewPartsExtract', '.TXT']) do |temp|
           temp.binmode
+          Attachment.add_original_filename_method temp, "JPART.TXT"
           generate_product_file(input_io, temp)
           send_ftp temp
-        ensure
-          temp.close! unless temp.closed?
         end
       end
 
@@ -64,7 +62,7 @@ module OpenChain
         # Since we need to send multiple copies of the same file via FTP (one into each JCrew account)
         # We'll just name the first file as the first account name, and then the second as JPART.DAT
         # and track the # of times the file has been FTP'ed
-        "JPART.DAT"
+        "JPART.TXT"
       end
 
       # Reads the IO object containing JCrew part information and writes the translated output
