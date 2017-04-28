@@ -2,7 +2,7 @@ class SecurityFiling < ActiveRecord::Base
   include CoreObjectSupport 
   include IntegrationParserSupport
   belongs_to :importer, :class_name=>'Company'
-  has_many :security_filing_lines, :dependent=>:destroy, :order=>'line_number'
+  has_many :security_filing_lines, dependent: :destroy, order: 'line_number', autosave: true
   has_many :piece_sets, :through=>:security_filing_lines
 
   validates_uniqueness_of :host_system_file_number, {:scope=>:host_system, :if=>lambda {!self.host_system_file_number.blank?}}
