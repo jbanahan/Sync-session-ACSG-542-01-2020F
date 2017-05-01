@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
   describe "run_report" do
     let (:importer) { Factory(:importer) }
     let! (:entry) {
-      e = Factory(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-05-01 12:00"))
+      e = Factory(:entry, importer: importer, broker_reference: "REF", entry_number: "ENT", master_bills_of_lading: "MBOL", house_bills_of_lading: "HBOL\n HBOL2", container_numbers: "CONT", transport_mode_code: "10", first_entry_sent_date: ActiveSupport::TimeZone["UTC"].parse("2017-05-01 12:00"))
       i = e.commercial_invoices.create! invoice_number: "INV"
-      l = i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", country_origin_code: "CO"
+      l = i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", country_origin_code: "CO", product_line: "BRAND"
       t = l.commercial_invoice_tariffs.create! hts_code: "1234567890"
 
       e
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet).not_to be_nil
       expect(sheet.rows.length).to eq 1
-      expect(sheet.row(0)).to eq ["Transaction Number", "Master Bill", "Container Number", "Entry Number", "Country of Origin Code (ISF)", "Country of Origin Code (Entry)", "PO Number (ISF)", "PO Number (Entry)", "Part Number (ISF)", "Part Number (Entry)", "HTS Code (ISF)", "HTS Code (Entry)", "ISF Match", "HTS Match", "COO Match", "PO Match", "Style Match"]
+      expect(sheet.row(0)).to eq ["Transaction Number", "Master Bill", "Container Number", "Entry Number", "Brand", "Country of Origin Code (ISF)", "Country of Origin Code (Entry)", "PO Number (ISF)", "PO Number (Entry)", "Part Number (ISF)", "Part Number (Entry)", "HTS Code (ISF)", "HTS Code (Entry)", "ISF Match", "HTS Match", "COO Match", "PO Match", "Style Match"]
     end
 
     it "reports nothing if entry matches isf by master bill" do
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq [nil, "MBOL", "CONT", "ENT", nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N" ]
+      expect(sheet.row(1)).to eq [nil, "MBOL", "CONT", "ENT", nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N" ]
     end
 
     it "reports if entry does not match to country origin" do
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "ISF", "CO", "PO", "PO", "PART", "PART", "1234.56.7890", "1234.56.7890", "Y", "Y", "N", "Y", "Y"]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "BRAND", "ISF", "CO", "PO", "PO", "PART", "PART", "1234.56.7890", "1234.56.7890", "Y", "Y", "N", "Y", "Y"]
     end
 
     it "reports if entry does not match to PO" do
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "CO", "CO", "ISF", "PO", "PART", "PART", "1234.56.7890", "1234.56.7890", "Y", "Y", "Y", "N", "Y"]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "BRAND", nil, "CO", "ISF", "PO", nil, "PART", nil, "1234.56.7890", "Y", "N", "N", "N", "N"]
     end
 
     it "reports if entry does not match to Part" do
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "CO", "CO", "PO", "PO", "ISF", "PART", "1234.56.7890", "1234.56.7890", "Y", "Y", "Y", "Y", "N"]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "BRAND", nil, "CO", "PO", "PO", nil, "PART", nil, "1234.56.7890", "Y", "N", "N", "Y", "N"]
     end
 
     it "reports if entry does not match to HTS" do
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "CO", "CO", "PO", "PO", "PART", "PART", "1234.57.8906", "1234.56.7890", "Y", "N", "Y", "Y", "Y"]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "CONT", "ENT", "BRAND", "CO", "CO", "PO", "PO", "PART", "PART", "1234.57.8906", "1234.56.7890", "Y", "N", "Y", "Y", "Y"]
     end
 
     it "does not report if hts matches first 6 digits, but doesn't match the rest of the digits" do
@@ -128,6 +128,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       entry.update_attributes! first_entry_sent_date: tz.parse("2017-04-20 00:00")
 
       file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
+      wb = XlsMaker.open_workbook file
+      sheet = wb.worksheet "Entry / ISF Match"
+      expect(sheet.rows.length).to eq 1
+    end
+
+    it "falls back to matching by house bill" do
+      isf.update_attributes! master_bill_of_lading: nil, house_bills_of_lading: "HBOL2"
+
+      file = subject.run_report importer, tz.parse("2017-03-01 07:00"), tz.parse("2017-03-01 12:30")
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1

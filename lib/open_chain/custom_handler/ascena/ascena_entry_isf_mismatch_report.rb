@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     wb, sheet = XlsMaker.create_workbook_and_sheet "Entry / ISF Match"
 
     row_number = 0
-    column_widths = [20, 25, 20, 20, 30, 30, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10, 10]
+    column_widths = [20, 25, 20, 20, 10, 30, 30, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10, 10]
     XlsMaker.set_column_widths sheet, column_widths
     XlsMaker.add_header_row sheet, 0, report_headers, column_widths
 
@@ -32,22 +32,29 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     entries.each do |id|
       entry = Entry.where(id: id).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]]).first
 
-      isf = SecurityFiling.where(importer_id: entry.importer_id).where("entry_reference_numbers LIKE ?", "%#{entry.broker_reference}%").includes(:security_filing_lines).first
+      isfs = []
+
+      isfs.push *SecurityFiling.where(importer_id: entry.importer_id).where("entry_reference_numbers LIKE ?", "%#{entry.broker_reference}%").includes(:security_filing_lines).all
 
       # Kewill's ISF system is terribly bad at not VFI Track updates containing the entry numbers.  So, we're going to also see if we can find 
       # an ISF by the master bill.
-      isf = SecurityFiling.where(importer_id: entry.importer_id).where("master_bill_of_lading = ?", entry.master_bills_of_lading).includes(:security_filing_lines).first
+      master_bills = entry.split_master_bills_of_lading
+      isfs.push *SecurityFiling.where(importer_id: entry.importer_id).where("master_bill_of_lading in (?)", master_bills).includes(:security_filing_lines).all if master_bills.length > 0
 
-      if isf.nil?
-        add_exception_row(sheet, (row_number+=1), column_widths, entry, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+      # We also don't always get master bills for ISF's (apparently for some LCL files), so lets also find by the house bills on the entry
+      house_bills = entry.split_house_bills_of_lading
+      isfs.push(*SecurityFiling.where(importer_id: entry.importer_id).where("house_bills_of_lading IN (?)", house_bills).includes(:security_filing_lines).all) if house_bills.length > 0
+
+      if isfs.length == 0
+        add_exception_row(sheet, (row_number+=1), column_widths, entry, nil, nil, nil, nil)
       else
         entry.commercial_invoices.each do |invoice|
           invoice.commercial_invoice_lines.each do |line|
             line.commercial_invoice_tariffs.each do |tariff|
-              match = matches(line, tariff, isf)
+              match = matches(line, tariff, isfs)
 
               if !match.matches?
-                add_exception_row sheet, (row_number += 1), column_widths, entry, line, tariff, isf, match.isf_line, true, match.hts_match, match.coo_match, match.po_match, match.style_match
+                add_exception_row sheet, (row_number += 1), column_widths, entry, line, tariff, match.isf, match
               end
             end
           end
@@ -59,29 +66,29 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   end
 
   def report_headers 
-    ["Transaction Number", "Master Bill", "Container Number", "Entry Number", "Country of Origin Code (ISF)", "Country of Origin Code (Entry)", "PO Number (ISF)", "PO Number (Entry)", "Part Number (ISF)", "Part Number (Entry)", "HTS Code (ISF)", "HTS Code (Entry)", "ISF Match", "HTS Match", "COO Match", "PO Match", "Style Match"]
+    ["Transaction Number", "Master Bill", "Container Number", "Entry Number", "Brand", "Country of Origin Code (ISF)", "Country of Origin Code (Entry)", "PO Number (ISF)", "PO Number (Entry)", "Part Number (ISF)", "Part Number (Entry)", "HTS Code (ISF)", "HTS Code (Entry)", "ISF Match", "HTS Match", "COO Match", "PO Match", "Style Match"]
   end
 
-
-  def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_line, isf, isf_line, isf_match, hts_match, coo_match, po_match, style_match
+  def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_line, isf, isf_match
     row = []
     row << field(isf.try(:transaction_number), "")
     row << field(isf.try(:master_bill_of_lading), entry.master_bills_of_lading)
     row << field(isf.try(:container_numbers), entry.container_numbers)
     row << entry.entry_number
-    row << isf_line.try(:country_of_origin_code)
+    row << invoice_line.try(:product_line)
+    row << isf_match.try(:coo)
     row << invoice_line.try(:country_origin_code)
-    row << isf_line.try(:po_number)
+    row << isf_match.try(:po)
     row << invoice_line.try(:po_number)
-    row << isf_line.try(:part_number)
+    row << isf_match.try(:style)
     row << invoice_line.try(:part_number)
-    row << isf_line.try(:hts_code).to_s.hts_format
+    row << isf_match.try(:hts).to_s.hts_format
     row << tariff_line.try(:hts_code).to_s.hts_format
-    row << (isf_match ? "Y" : "N")
-    row << (hts_match ? "Y" : "N")
-    row << (coo_match ? "Y" : "N")
-    row << (po_match ? "Y" : "N")
-    row << (style_match ? "Y" : "N")
+    row << (isf.present? ? "Y" : "N")
+    row << (isf_match.try(:hts_match) ? "Y" : "N")
+    row << (isf_match.try(:coo_match) ? "Y" : "N")
+    row << (isf_match.try(:po_match) ? "Y" : "N")
+    row << (isf_match.try(:style_match) ? "Y" : "N")
 
     XlsMaker.add_body_row sheet, row_number, row, column_widths
   end
@@ -90,43 +97,64 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     isf_value.presence || entry_value
   end
 
-  def matches line, tariff, isf
+  def matches line, tariff, isfs
     # basically, we're looking for a single line that as close as possible matches the invoice line / tariff...so what
     # we'll do is evaluate all the lines to see how well each of the criteria matches...and if we find a line that 
     # matches them all, we'll say it matches...if we don't fine one, then we'll return the best match
     matches = []
 
-    isf.security_filing_lines.each do |isf_line|
-      match = IsfMatch.new isf_line
+    catch(:found) do 
+      isfs.each do |isf|
+        isf.security_filing_lines.each do |isf_line|
+          match = IsfMatch.new isf, isf_line
 
-      match.hts_match = isf_line.hts_code.strip.to_s[0..5] == tariff.hts_code.strip.to_s[0..5]
-      match.coo_match = isf_line.country_of_origin_code.to_s.strip.upcase == line.country_origin_code.to_s.strip.upcase
-      match.po_match = isf_line.po_number.to_s.strip.upcase == line.po_number.to_s.strip.upcase
-      match.style_match = isf_line.part_number.to_s.strip.upcase == line.part_number.to_s.strip.upcase
+          match.hts_match = match.hts[0..5] == tariff.hts_code.to_s.strip[0..5]
+          match.coo_match = match.coo.upcase == line.country_origin_code.to_s.strip.upcase
+          match.po_match = match.po.upcase == line.po_number.to_s.strip.upcase
+          match.style_match = match.style.upcase == line.part_number.to_s.strip.upcase
 
-      matches << match
+          matches << match
 
-      # no use continuing to look for rows if all the criteria match
-      break if match.matches?
+          # no use continuing to look for rows if all the criteria match
+          throw(:found) if match.matches?
+        end
+      end
     end
 
     # Return the "most matched" result
     matches.sort!
 
-    matches.first
+    most_matched = matches.first
+
+    # If the "most matched" result doesn't match on PO, then clear the isf values for style
+    if !most_matched.po_match || !most_matched.style_match
+      most_matched.coo, most_matched.hts, most_matched.style = ""
+      most_matched.hts_match, most_matched.coo_match = false
+    end
+
+    if !most_matched.po_match
+      most_matched.style_match = false
+    end
+    
+
+    most_matched
   end
 
   def full_match? matches_hash
     matches_hash.values.uniq.first == true
   end
 
-  class IsfMatch 
+  class IsfMatch
+    attr_reader :isf
+    attr_accessor :hts_match, :coo_match, :po_match, :style_match, :po, :style, :hts, :coo, :isf_line_number
 
-    attr_reader :isf_line
-    attr_accessor :hts_match, :coo_match, :po_match, :style_match
-
-    def initialize isf_line
-      @isf_line = isf_line
+    def initialize isf, isf_line
+      @isf = isf
+      @po = isf_line.po_number.to_s.strip
+      @style = isf_line.part_number.to_s.strip
+      @hts = isf_line.hts_code.to_s.strip
+      @coo = isf_line.country_of_origin_code.to_s.strip
+      @isf_line_number = isf_line.line_number
     end
 
     def <=> m
@@ -134,7 +162,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
       v = m.match_count <=> match_count
 
       if v == 0
-        v = m.isf_line.line_number <=> isf_line.line_number
+        v = m.isf_line_number <=> isf_line_number
       end
 
       v
