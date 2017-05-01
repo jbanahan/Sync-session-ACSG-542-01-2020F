@@ -105,6 +105,11 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     h['vendor_id'] = o.vendor_id
     h['permissions'] = render_permissions(o)
     h['available_tpp_survey_responses'] = render_tpp_surveys(o)
+    
+    if MasterSetup.get.custom_feature? 'CARB Statement'
+      h['statement'] = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.carb_statement(o)
+    end
+    
     h
   end
   def render_permissions order

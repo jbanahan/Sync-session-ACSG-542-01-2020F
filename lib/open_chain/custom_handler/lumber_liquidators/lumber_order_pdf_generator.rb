@@ -9,6 +9,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include ActionView::Helpers::NumberHelper
   include OpenChain::CustomHandler::PdfGeneratorSupport
 
+  def self.carb_statement order
+    if order.order_date <= Date.new(2017,12,11)
+      "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
+    else
+      "All Composite Wood Products contained in finished goods must be TSCA TITLE VI Compliant, or must be compliant to California 93120 Phase 2 for formaldehyde if panels were manufactured before December 12, 2017."
+    end
+  end
+
   def self.create! order, user
     Tempfile.open(['foo', '.pdf']) do |file|
       existing_printout_count = order.attachments.where(attachment_type: "Order Printout").count
@@ -104,6 +112,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
     end
 
+    d.formatted_text [{text: "\n", size: 8}, {text: self.class.carb_statement(order), styles: [:bold, :italic], color: "ff0000", size: 8}]
+    
     # change log
     d.start_new_page
     d.formatted_text [
