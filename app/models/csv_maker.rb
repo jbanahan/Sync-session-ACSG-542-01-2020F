@@ -18,7 +18,7 @@ class CsvMaker
     ss = search_query.search_setup
     errors = []
     raise errors.first unless ss.downloadable?(errors, single_page)
-    max_results = ss.max_results
+    max_results = ss.max_results(search_query.user)
 
     columns = search_query.search_setup.search_columns.order('rank ASC')
     row_number = 1

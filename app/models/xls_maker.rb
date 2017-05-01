@@ -20,7 +20,7 @@ class XlsMaker
     errors = []
     raise errors.first unless ss.downloadable?(errors, search_query_opts[:single_page])
 
-    max_results = ss.max_results
+    max_results = ss.max_results(search_query.user)
     cols = search_query.search_setup.search_columns.order('rank ASC')
     wb = prep_workbook cols, search_query.user
     sheet = wb.worksheet 0

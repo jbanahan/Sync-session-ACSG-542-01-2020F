@@ -158,8 +158,14 @@ describe SearchQuery do
       expect(@sq.to_sql(per_page: 100)).to include "AS inner_opt ON "
     end
 
-    it "defaults to using the max_results from search_setup as the query LIMIT" do
-      expect(@sq.to_sql).to include "LIMIT #{@sq.search_setup.max_results}"
+    it "defaults to using the max_results from search_setup as the query LIMIT for a normal user" do
+      @sq.user.sys_admin = false
+      expect(@sq.to_sql).to include "LIMIT 25000"
+    end
+
+    it "defaults to using the max_results from search_setup as the query LIMIT for a sysadmin" do
+      @sq.user.sys_admin = true
+      expect(@sq.to_sql).to include "LIMIT 100000"
     end
 
     it "handles search_columns that have been removed/disabled" do
