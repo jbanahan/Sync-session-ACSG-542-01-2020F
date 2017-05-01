@@ -204,8 +204,8 @@ class SearchSetup < ActiveRecord::Base
     return messages.size == start_messages_count
   end
 
-  def max_results
-    25000
+  def max_results user
+    user.try(:sys_admin) ? 100000 : 25000
   end
 
   private 

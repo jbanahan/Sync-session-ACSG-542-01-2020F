@@ -225,7 +225,7 @@ class ImportedFile < ActiveRecord::Base
     end
   end
 
-  def max_results
+  def max_results user
     # this is for duck typing to search_setup, we're using a really high value so as to not actually limit results
     1000000
   end

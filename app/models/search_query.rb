@@ -88,7 +88,7 @@ class SearchQuery
   def to_sql opts={}
     # By default, only allow the maximum number of results the search setup affords
     # This can be overridden by passing a true value for disable_pagination op
-    opts = {per_page: @search_setup.max_results}.merge opts
+    opts = {per_page: @search_setup.max_results(@user)}.merge opts
     build_select(opts) + build_from(opts) + build_where + build_order + build_pagination_from_opts(opts)
   end
 

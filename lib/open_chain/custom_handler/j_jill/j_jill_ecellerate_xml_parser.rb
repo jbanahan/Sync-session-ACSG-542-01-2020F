@@ -1,3 +1,4 @@
+require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/j_jill/j_jill_support.rb'
 module OpenChain; module CustomHandler; module JJill; class JJillEcellerateXmlParser
   include OpenChain::CustomHandler::XmlHelper
