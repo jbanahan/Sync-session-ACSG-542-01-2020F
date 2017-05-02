@@ -554,25 +554,55 @@ ERR
   end
 
   describe "run_schedulable" do
-    it "implements SchedulableJob interface" do
-      allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
-      expect(OpenChain::AllianceImagingClient).to receive(:consume_images)
-      expect(OpenChain::AllianceImagingClient).to receive(:consume_stitch_responses)
-      expect(OpenChain::AllianceImagingClient).to receive(:send_outstanding_stitch_requests)
+    let! (:ms) { stub_master_setup }
 
-      OpenChain::AllianceImagingClient.run_schedulable
+    context "without stitching custom feature" do
+      before :each do
+        allow(ms).to receive(:custom_feature?).with("Document Stitching").and_return false
+      end
+
+      it "implements SchedulableJob interface" do
+        allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
+        expect(OpenChain::AllianceImagingClient).to receive(:consume_images)
+
+        OpenChain::AllianceImagingClient.run_schedulable
+      end
+
+      it "does not call consume_images if 2 jobs are already running" do
+        expect(OpenChain::AllianceImagingClient).to receive(:queued_jobs_for_method).with(OpenChain::AllianceImagingClient, :consume_images).and_return 2
+
+        allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
+        expect(OpenChain::AllianceImagingClient).not_to receive(:consume_images)
+        OpenChain::AllianceImagingClient.run_schedulable
+      end
     end
 
-    it "does not call consume_images if 2 jobs are already running" do
-      expect(OpenChain::AllianceImagingClient).to receive(:queued_jobs_for_method).with(OpenChain::AllianceImagingClient, :consume_images).and_return 2
+    context "with stitching custom feature" do
+      before :each do
+        allow(ms).to receive(:custom_feature?).with("Document Stitching").and_return true
+      end
 
-      allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
-      expect(OpenChain::AllianceImagingClient).not_to receive(:consume_images)
-      expect(OpenChain::AllianceImagingClient).to receive(:consume_stitch_responses)
-      expect(OpenChain::AllianceImagingClient).to receive(:send_outstanding_stitch_requests)
+      it "implements SchedulableJob interface" do
+        allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
+        expect(OpenChain::AllianceImagingClient).to receive(:consume_images)
+        expect(OpenChain::AllianceImagingClient).to receive(:consume_stitch_responses)
+        expect(OpenChain::AllianceImagingClient).to receive(:send_outstanding_stitch_requests)
 
-      OpenChain::AllianceImagingClient.run_schedulable
+        OpenChain::AllianceImagingClient.run_schedulable
+      end
+
+      it "does not call consume_images if 2 jobs are already running" do
+        expect(OpenChain::AllianceImagingClient).to receive(:queued_jobs_for_method).with(OpenChain::AllianceImagingClient, :consume_images).and_return 2
+
+        allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
+        expect(OpenChain::AllianceImagingClient).not_to receive(:consume_images)
+        expect(OpenChain::AllianceImagingClient).to receive(:consume_stitch_responses)
+        expect(OpenChain::AllianceImagingClient).to receive(:send_outstanding_stitch_requests)
+
+        OpenChain::AllianceImagingClient.run_schedulable
+      end
     end
+    
   end
 
   describe "process_fenix_nd_image_file" do

@@ -15,8 +15,10 @@ class OpenChain::AllianceImagingClient
       self.delay.consume_images
     end
     
-    self.delay.consume_stitch_responses
-    self.delay.send_outstanding_stitch_requests
+    if MasterSetup.get.custom_feature?("Document Stitching")
+      self.delay.consume_stitch_responses
+      self.delay.send_outstanding_stitch_requests
+    end
   end
 
   def self.delayed_bulk_request_images search_run_id, primary_keys
