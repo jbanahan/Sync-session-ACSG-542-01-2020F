@@ -110,29 +110,37 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
         order_line = line.order_lines.first
         po = order_line.order.customer_order_number
         unit_price = (order_line.price_per_unit || BigDecimal("0"))
-        tariff = hts(line)
-        key = "#{po}*~*#{style}*~*#{tariff}*~*#{unit_price}"
-        cil = lines[key]
-        if cil.nil?
-          cil = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
-          cil.po_number = po
-          cil.part_number = style
-          cil.buyer_customer_number = "BURLI"
-          cil.cartons = BigDecimal("0")
-          cil.gross_weight = BigDecimal("0")
-          cil.pieces = BigDecimal("0")
-          cil.foreign_value = BigDecimal("0")
-          cil.unit_price = unit_price
-          cil.hts = tariff
-          invoice.invoice_lines << cil
-          lines[key] = cil
-        end
+        hts_numbers = get_us_hts_numbers(line)
+        first_hts = true
+        hts_numbers.each do |tariff|
+          key = "#{po}*~*#{style}*~*#{tariff}*~*#{unit_price}"
+          cil = lines[key]
+          if cil.nil?
+            cil = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
+            cil.po_number = po
+            cil.part_number = style
+            cil.buyer_customer_number = "BURLI"
+            cil.cartons = BigDecimal("0")
+            cil.gross_weight = BigDecimal("0")
+            cil.pieces = BigDecimal("0")
+            cil.foreign_value = BigDecimal("0")
+            cil.unit_price = unit_price
+            cil.hts = tariff
+            invoice.invoice_lines << cil
+            lines[key] = cil
+          end
 
-        cil.cartons += (line.carton_qty.presence || BigDecimal("0"))
-        cil.gross_weight += (line.gross_kgs.presence || BigDecimal("0"))
-        cil.pieces += (line.quantity || BigDecimal("0"))
-        # Once the pieces have been updated, just recalculate the whole foreign value
-        cil.foreign_value = (unit_price * cil.pieces)
+          # In the event a product has multiple US tariff numbers associated with it, several numeric values
+          # are assigned to the first tariff only.  There is no per-tariff breakdown of these numbers.
+          if first_hts
+            cil.cartons += (line.carton_qty.presence || BigDecimal("0"))
+            cil.gross_weight += (line.gross_kgs.presence || BigDecimal("0"))
+            cil.pieces += (line.quantity || BigDecimal("0"))
+            # Once the pieces have been updated, just recalculate the whole foreign value
+            cil.foreign_value = (unit_price * cil.pieces)
+          end
+          first_hts = false
+        end
       end
     end
     
@@ -143,15 +151,16 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
   end
 
-  def hts shipment_line
-    hts = ""
+  def get_us_hts_numbers shipment_line
+    hts_numbers = []
+
     classification = shipment_line.product.classifications.find {|c| c.country == us }
 
     if classification
-      hts = classification.tariff_records.first.try(:hts_1)
+      hts_numbers = classification.tariff_records.select {|tariff| !tariff.hts_1.blank?}.map {|t| t.hts_1}
     end
 
-    hts
+    hts_numbers
   end
 
   def us

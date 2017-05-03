@@ -101,6 +101,42 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       expect(line.buyer_customer_number).to eq "BURLI"
     end
 
+    it "handles multi-tariff products, creating a separate line for each tariff" do
+      c = product.classifications.first
+      # Second tariff
+      c.tariff_records.create! hts_1: "1234567891"
+      # Third tariff: has a blank HTS number and should be ignored.
+      c.tariff_records.create! hts_1: ""
+
+      ci_load = subject.generate_entry_data shipment
+      expect(ci_load.invoices.length).to eq 1
+      inv = ci_load.invoices.first
+      expect(inv.invoice_lines.length).to eq 2
+
+      line = inv.invoice_lines.first
+      expect(line.part_number).to eq "PARTNO"
+      expect(line.cartons).to eq 30
+      expect(line.gross_weight).to eq BigDecimal("201")
+      expect(line.pieces).to eq 297
+      expect(line.buyer_customer_number).to eq "BURLI"
+      expect(line.po_number).to eq "PO"
+      expect(line.unit_price).to eq BigDecimal("12.99")
+      expect(line.foreign_value).to eq BigDecimal("3858.03")
+      expect(line.hts).to eq "1234567890"
+
+      line2 = inv.invoice_lines.second
+      expect(line2.part_number).to eq "PARTNO"
+      # Several numeric fields have 0 values for the line based on the secondary HTS number.
+      expect(line2.cartons).to eq 0
+      expect(line2.gross_weight).to eq BigDecimal("0")
+      expect(line2.pieces).to eq 0
+      expect(line2.buyer_customer_number).to eq "BURLI"
+      expect(line2.po_number).to eq "PO"
+      expect(line2.unit_price).to eq BigDecimal("12.99")
+      expect(line2.foreign_value).to eq BigDecimal("0")
+      expect(line2.hts).to eq "1234567891"
+    end
+
   end
 
   describe "generate_and_send" do
