@@ -213,7 +213,7 @@ angular.module("chain_vendor_maint/partials/orders.html", []).run(["$templateCac
 
 angular.module("chain_vendor_maint/partials/products.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("chain_vendor_maint/partials/products.html",
-    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Products\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Products\" api-object-name=\"ProductVendorAssignment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
+    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Products\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Products\" api-object-name=\"ProductVendorAssignment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit page-uid=\"{{pageUid}}\" button-classes=\"btn-default btn-sm\" api-object-name=\"ProductVendorAssignment\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
 }]);
 
 angular.module("chain_vendor_maint/partials/show.html", []).run(["$templateCache", function ($templateCache) {
