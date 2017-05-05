@@ -68,4 +68,42 @@ describe OpenChain::Upgrade do
       subject.send_slack_failure master_setup, error
     end
   end
+
+  context "freshservice callbacks" do
+    let(:callbacks) { subject.freshservice_callbacks }
+
+    describe "fs_running lambda" do
+      it "passes #create_change! call to error logger" do
+        hostname = `hostname`.strip
+        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:create_change!).with("www", "2.0", hostname)
+        expect(subject).to receive(:err_logger).and_yield
+        callbacks[:fs_running].call "www", "2.0"
+      end
+    end
+
+    describe "fs_finished lambda" do
+      it "passes #add_note_with_log! call to error logger" do
+        upgrade_log = double "upgrade log"
+        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:add_note_with_log!).with(upgrade_log)
+        expect(subject).to receive(:err_logger).and_yield
+        callbacks[:fs_finished].call upgrade_log
+      end
+    end
+
+    describe "fs_error" do
+      it "passes #add_note! call to error logger" do
+        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:add_note!).with("ERROR!")
+        expect(subject).to receive(:err_logger).and_yield
+        callbacks[:fs_error].call "ERROR!"
+      end
+    end
+
+    describe "error_logger" do
+      it "rescues, logs errors" do
+        e = StandardError.new "ERROR!!"
+        expect(e).to receive(:log_me)
+        expect{subject.err_logger { raise e }}.not_to raise_exception
+      end
+    end
+  end
 end

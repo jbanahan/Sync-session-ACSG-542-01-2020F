@@ -1,6 +1,7 @@
 require 'open3'
 require 'fileutils'
 require 'open_chain/slack_client'
+require 'open_chain/freshservice_client'
 
 module OpenChain
   class Upgrade
@@ -81,10 +82,12 @@ module OpenChain
 
       return false unless @log
 
+      callbacks.merge!(freshservice_callbacks)
       execute_callback(callbacks, :running)
       upgrade_completed = false
       begin
         @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target, :log=>IO.read(@log_path))
+        execute_callback(callbacks, :fs_running, MasterSetup.get.system_code, @upgrade_log.to_version)
         get_source
         apply_upgrade
         #upgrade_running.txt will stick around if one of the previous methods blew an exception
@@ -102,13 +105,44 @@ module OpenChain
         # There's not a lot of point to logging an error on an upgrade, since the notification queue will, in all likelihood 
         # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).  
         # Send via slack.
-        send_slack_failure(MasterSetup.get, e)
+        ms = MasterSetup.get
+        send_slack_failure(ms, e)
+        execute_callback(callbacks, :fs_error, error_message(ms, e))
         raise e
       ensure
         finish_upgrade_log
+        execute_callback(callbacks, :fs_finished, @upgrade_log)
       end
 
       upgrade_completed
+    end
+
+    def freshservice_callbacks
+      fs_client = OpenChain::FreshserviceClient.new
+      
+      fs_running = lambda do |instance, new_version|
+        err_logger { 
+          host_name = `hostname`.strip
+          fs_client.create_change! instance, new_version, host_name
+        }
+      end
+
+      fs_finished = lambda do |upgrade_log|
+        err_logger { fs_client.add_note_with_log! upgrade_log }
+      end
+
+      fs_error = lambda do |err_msg|
+        err_logger { fs_client.add_note! err_msg  }
+      end
+      {fs_running: fs_running, fs_finished: fs_finished, fs_error: fs_error}
+    end
+
+    def err_logger
+      begin
+        yield
+      rescue => e
+        e.log_me
+      end
     end
 
     # private
@@ -204,14 +238,18 @@ module OpenChain
 
     def send_slack_failure master_setup, error=nil
       begin
-        host = `hostname`.strip
-        msg = "<!group>: Upgrade failed for server: #{host}, instance: #{master_setup.system_code}"
-        msg << ", error: #{error.message}" if error
+        msg = error_message master_setup, error
         slack_client.send_message('it-dev',msg,{icon_emoji:':loudspeaker:'})
       rescue => e
         #don't interrupt, just log
         e.log_me
       end
+    end
+
+    def error_message master_setup, error=nil
+      host = `hostname`.strip
+      msg = "<!group>: Upgrade failed for server: #{host}, instance: #{master_setup.system_code}"
+      msg << ", error: #{error.message}" if error
     end
 
     def slack_client
@@ -223,23 +261,20 @@ module OpenChain
       @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
 
-    def execute_callback callback_list, event
-      if callback_list && callback_list[event]
-        cb_list = callback_list[event]
-        to_run = []
-        if cb_list.respond_to? :entries
-          to_run = cb_list.entries
+    def execute_callback callback_hash, event, *event_params
+      callbacks = Array.wrap(callback_hash.try(:[], event))
+      callbacks.each do |cb| 
+        if cb.arity.zero?
+          cb.call
         else
-          to_run << cb_list
-        end
-
-        to_run.each do |callback|
-          callback.call
+          params = event_params.take(cb.arity)
+          cb.call(*params)
         end
       end
     end
-  end
 
+  end
+  
   class UpgradeFailure < StandardError
 
   end
