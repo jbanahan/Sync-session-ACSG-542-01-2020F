@@ -59,7 +59,9 @@ class OpenChain::AllianceImagingClient
       # thus, after 5 minutes the message will get retried.  This allows for transient errors to be 
       # retried after a lengthy wait.
       OpenChain::SQS.poll(imaging_config[:sqs_receive_queue], visibility_timeout: 300) do |hsh|
-        hash = hsh
+        # Create a deep_dup of the hash so anything we may do with it doesn't muck upthe 
+        # hash if we need to proxy it
+        hash = hsh.deep_dup
         bucket = hsh["s3_bucket"]
         key = hsh["s3_key"]
         version = hsh["s3_version"]
@@ -72,10 +74,13 @@ class OpenChain::AllianceImagingClient
         end
 
         file = OpenChain::S3.download_to_tempfile bucket, key, opts
-        if hsh["source_system"] == OpenChain::FenixParser::SOURCE_CODE && hsh["export_process"] == "sql_proxy"
+        if hsh["source_system"] == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "sql_proxy"
           process_fenix_nd_image_file file, hsh, user
         else
-          entry = process_image_file file, hsh, user
+          response = process_image_file file, hsh, user
+          if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
+            proxy_fenix_drive_docs response[:entry], hash
+          end
         end
 
         hash = nil
@@ -87,7 +92,28 @@ class OpenChain::AllianceImagingClient
       # is now invisible for a period of time so it's not blocking the head of the queue
       retry if (retry_count += 1) < 10
     end
-    
+  end
+
+  def self.proxy_fenix_drive_docs entry, message_hash
+    # The config will have a key for the customer's name if we're proxying docs for them, with a hash as the value..the value has will have a `queue`
+    # key and the value will be the SQS queue(s) to push the message on
+    conf = proxy_fenix_drive_docs_config[entry.customer_number.to_s.upcase]
+    return unless conf && conf['queue']
+
+    Array.wrap(conf['queue']).each do |queue|
+      OpenChain::SQS.send_json queue, message_hash
+    end
+
+  end
+
+  def self.proxy_fenix_drive_docs_config
+    @proxy_config ||= begin
+      YAML.load_file 'config/proxy_fenix_drive_docs.yml'
+    rescue Errno::ENOENT
+      # do nothing...if the load raises we'll report a nicer error
+    end
+    raise "No Fenix Drive Docs proxy configuration file found at 'config/proxy_fenix_drive_docs.yml'." unless @proxy_config
+    @proxy_config
   end
 
   # The file passed in here must have the correct file extension for content type discovery or
@@ -96,7 +122,7 @@ class OpenChain::AllianceImagingClient
   def self.process_image_file t, hsh, user
     Attachment.add_original_filename_method t
     t.original_filename= hsh["file_name"]
-    source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]
+    source_system = hsh["source_system"].nil? ? Entry::KEWILL_SOURCE_SYSTEM : hsh["source_system"]
 
     attachment_type = hsh["doc_desc"]
 
@@ -105,7 +131,7 @@ class OpenChain::AllianceImagingClient
     # In the VAST majority of cases, the entry is going to be there already, so I don't want to utilize a global lock
     # literally every time we look up the entry...so for the very few cases where the entry isn't present, we'll do a double lookup
     # Create a shell entry record if there wasn't one, so we can actually attach the image.
-    if source_system == OpenChain::FenixParser::SOURCE_CODE
+    if source_system == Entry::FENIX_SOURCE_SYSTEM
       # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
       entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first
       if entry.nil?
@@ -143,6 +169,7 @@ class OpenChain::AllianceImagingClient
     end
 
     if entry
+      attachment = nil
       Lock.with_lock_retry(entry) do 
         att = entry.attachments.build
         att.attached = t
@@ -182,9 +209,10 @@ class OpenChain::AllianceImagingClient
         end
 
         entry.create_snapshot user, nil, "Imaging"
+        attachment = att
       end
 
-      return entry
+      return {entry: entry, attachment: attachment}
     end
 
     nil
@@ -208,6 +236,7 @@ class OpenChain::AllianceImagingClient
     end
 
     if entry
+      attachment = nil
       Lock.with_lock_retry(entry) do 
         att = entry.attachments.build
         att.attached = t
@@ -243,12 +272,14 @@ class OpenChain::AllianceImagingClient
             # Since we now know this attachment is the "latest" and greatest we can delete any others that are of this type
             other_attachments_query(att, delete_other_file_algorithm).where("NOT attachments.id = ?", att.id).destroy_all
           end
+          attachment = att
         end
 
         entry.create_snapshot user, nil, "Imaging"
+
       end
 
-      return entry
+      return attachment.nil? ? nil : {entry: entry, attachment: attachment}
     end
 
     nil

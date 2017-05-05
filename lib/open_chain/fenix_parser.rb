@@ -8,7 +8,7 @@ module OpenChain
     extend OpenChain::IntegrationClientParser
     include OpenChain::FtpFileSupport
 
-    SOURCE_CODE ||= 'Fenix'
+    SOURCE_CODE ||= Entry::FENIX_SOURCE_SYSTEM
 
     # You can easily add new simple date mappings from the SD records by adding a 
     # Activity # -> method name symbol in the entry.

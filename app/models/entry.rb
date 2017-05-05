@@ -29,6 +29,7 @@ class Entry < ActiveRecord::Base
   before_save :update_tracking_status
 
   KEWILL_SOURCE_SYSTEM ||= "Alliance"
+  FENIX_SOURCE_SYSTEM ||= "Fenix"
 
   def locked?
     false
