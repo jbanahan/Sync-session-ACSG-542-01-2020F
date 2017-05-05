@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include OpenChain::CustomHandler::PdfGeneratorSupport
 
   def self.carb_statement order
-    if order.order_date <= Date.new(2017,12,11)
+    if (order.order_date || order.created_at) <= Date.new(2017,12,11)
       "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
     else
       "All Composite Wood Products contained in finished goods must be TSCA TITLE VI Compliant, or must be compliant to California 93120 Phase 2 for formaldehyde if panels were manufactured before December 12, 2017."
