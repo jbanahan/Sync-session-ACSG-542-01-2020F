@@ -263,7 +263,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         read_only: true,
         export_lambda: lambda {|ent| ent.containers.length},
         qualified_field_name: "(SELECT COUNT(*) FROM containers WHERE containers.entry_id = entries.id)"
-      }]
+      }],
+      [174, :ent_release_type, :release_type, "CBSA Release Type", {data_type: :string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
