@@ -505,6 +505,10 @@ Factory.define :invoiced_event do |f|
   f.association :billable_event
 end
 
+Factory.define :non_invoiced_event do |f|
+  f.association :billable_event
+end
+
 Factory.define :vfi_invoice do |f|
   f.association :customer, :factory=>:company
   f.sequence :invoice_number

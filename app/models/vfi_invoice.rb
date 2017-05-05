@@ -1,4 +1,6 @@
 class VfiInvoice < ActiveRecord::Base
+  include CoreObjectSupport
+  
   belongs_to :customer, :class_name => "Company"
   has_many :vfi_invoice_lines, :dependent => :destroy, :inverse_of => :vfi_invoice
 
@@ -7,6 +9,10 @@ class VfiInvoice < ActiveRecord::Base
 
   def can_view? user
     user.view_vfi_invoices? && (user.company.master? || user.company_id == self.customer_id || user.company.linked_companies.include?(self.customer))
+  end
+
+  def can_edit? user
+    false
   end
   
   def self.search_where(user)
