@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     wb, sheet = XlsMaker.create_workbook_and_sheet "Entry / ISF Match"
 
     row_number = 0
-    column_widths = [20, 25, 20, 20, 10, 30, 30, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10, 10]
+    column_widths = [20, 20, 20, 20, 10, 20, 20, 20, 20, 30, 30, 10, 10, 10, 10, 10, 10, 10, 100]
     XlsMaker.set_column_widths sheet, column_widths
     XlsMaker.add_header_row sheet, 0, report_headers, column_widths
 
@@ -66,35 +66,70 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   end
 
   def report_headers 
-    ["Transaction Number", "Master Bill", "Container Number", "Entry Number", "Brand", "Country of Origin Code (ISF)", "Country of Origin Code (Entry)", "PO Number (ISF)", "PO Number (Entry)", "Part Number (ISF)", "Part Number (Entry)", "HTS Code (ISF)", "HTS Code (Entry)", "ISF Match", "HTS Match", "COO Match", "PO Match", "Style Match"]
+    ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
   end
 
   def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_line, isf, isf_match
     row = []
     row << field(isf.try(:transaction_number), "")
-    row << field(isf.try(:master_bill_of_lading), entry.master_bills_of_lading)
-    row << field(isf.try(:container_numbers), entry.container_numbers)
-    row << entry.entry_number
+    row << field(isf.try(:master_bill_of_lading), entry.split_master_bills_of_lading.join(", "))
+    row << field(isf.try(:house_bills_of_lading), entry.split_house_bills_of_lading.join(", "))
+    row << entry.broker_reference
     row << invoice_line.try(:product_line)
-    row << isf_match.try(:coo)
-    row << invoice_line.try(:country_origin_code)
-    row << isf_match.try(:po)
     row << invoice_line.try(:po_number)
-    row << isf_match.try(:style)
+    row << isf_match.try(:po)
     row << invoice_line.try(:part_number)
-    row << isf_match.try(:hts).to_s.hts_format
+    row << isf_match.try(:style)
+    row << invoice_line.try(:country_origin_code)
+    row << isf_match.try(:coo)
     row << tariff_line.try(:hts_code).to_s.hts_format
+    row << isf_match.try(:hts).to_s.hts_format
     row << (isf.present? ? "Y" : "N")
-    row << (isf_match.try(:hts_match) ? "Y" : "N")
-    row << (isf_match.try(:coo_match) ? "Y" : "N")
     row << (isf_match.try(:po_match) ? "Y" : "N")
     row << (isf_match.try(:style_match) ? "Y" : "N")
+    row << (isf_match.try(:coo_match) ? "Y" : "N")
+    row << (isf_match.try(:hts_match) ? "Y" : "N")
+    
+    row << exception_notes(entry, invoice_line, tariff_line, isf, isf_match)
 
     XlsMaker.add_body_row sheet, row_number, row, column_widths
   end
 
   def field isf_value, entry_value
     isf_value.presence || entry_value
+  end
+
+  def exception_notes entry, invoice_line, tariff_line, isf, isf_match
+    if isf.nil?
+      message = "Unabled to find an ISF with a Broker Reference of '#{entry.broker_reference}' OR a Master Bill of '#{entry.master_bills_of_lading}'"
+      house_bills = entry.split_house_bills_of_lading.join(", ")
+      if house_bills.length > 0
+        message << " OR a House Bill in '#{house_bills}'"
+      end
+       message << "."
+       return message
+    else
+      if !isf_match.po_match
+        return "Unable to find PO # '#{invoice_line.po_number}' on ISF '#{isf.transaction_number}'."
+      elsif !isf_match.style_match
+        return "Unable to find an ISF line with PO # '#{invoice_line.po_number}' and Part # '#{invoice_line.part_number}' on ISF '#{isf.transaction_number}'."
+      elsif !isf_match.hts_match || !isf_match.coo_match
+        message = "The ISF line with PO # '#{invoice_line.po_number}' and Part '#{invoice_line.part_number}'"
+        suffix = ""
+        if !isf_match.hts_match
+          suffix << " did not match to HTS # '#{tariff_line.hts_code.to_s.hts_format}'"
+        end
+
+        if !isf_match.coo_match
+          suffix << " and" if suffix.length > 0
+          suffix << " did not match to Country '#{invoice_line.country_origin_code}'"
+        end
+
+        return message + suffix + "."
+      else
+        return nil
+      end
+    end
   end
 
   def matches line, tariff, isfs
@@ -133,6 +168,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     end
 
     if !most_matched.po_match
+      most_matched.po = ""
       most_matched.style_match = false
     end
     
