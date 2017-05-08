@@ -37,11 +37,20 @@
           <div class="panel panel-default">
             <div class="panel-heading" role="tab" id='heading<%+s.id%>'>
               <h4 class="panel-title">
-                <a  data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
-                  <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
-                </a>
+                <p>
+                  <a data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
+                    <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
+                  </a>
+                  <% if current_user.sys_admin? %>
+                    <small><a href="<%=download_entity_snapshot_path(s)%>" target="_blank"><i class="fa fa-cloud-download" aria-hidden="true"></i></a></small>
+                  <% end %>
+                </p>
                 <%if !s.context.blank?%>
-                  <p><small><%=s.context%></small></p>
+                  <% if current_user.sys_admin? && s.s3_integration_file_context? %>
+                    <p><small><a href="<%=download_integration_file_entity_snapshot_path(s)%>" target="_blank"><%=s.context%></a></small></p>
+                  <% else %>
+                    <p><small><%=s.context%></small></p>
+                  <% end %>
                 <%end%>
               </h4>
             </div>

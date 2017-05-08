@@ -132,6 +132,17 @@ class EntitySnapshot < ActiveRecord::Base
     diff_json old_json, my_json
   end
 
+  def s3_integration_file_context?
+    (self.context.to_s =~ /\A\d{4}-\d{2}\/\d{2}\/home\/ubuntu\//).present?
+  end
+
+  def s3_integration_file_context_download_link
+    s3_integration_file_context? ? OpenChain::S3.url_for(OpenChain::S3.integration_bucket_name, self.context) : ""
+  end
+
+  def snapshot_download_link
+    OpenChain::S3.url_for(self.bucket, self.doc_path, 1.minute, version: self.version)
+  end
 
   ###################################
   # S3 Handling Stuff

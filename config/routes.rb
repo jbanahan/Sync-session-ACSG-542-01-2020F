@@ -345,7 +345,11 @@ OpenChain::Application.routes.draw do
     end
   end
   resources :entity_snapshots, :only => [:show] do
-    post 'restore', :on=>:member
+    member do 
+      post 'restore'
+      get 'download'
+      get 'download_integration_file'
+    end
   end
   resources :instant_classifications do
     collection do

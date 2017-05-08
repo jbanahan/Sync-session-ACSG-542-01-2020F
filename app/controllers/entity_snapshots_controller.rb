@@ -9,6 +9,22 @@ class EntitySnapshotsController < ApplicationController
     }
   end
 
+  def download
+    sys_admin_secure do 
+      es = EntitySnapshot.find params[:id]
+      redirect_to es.snapshot_download_link
+    end
+  end
+
+  def download_integration_file 
+    sys_admin_secure do
+      es = EntitySnapshot.find params[:id]
+      raise ActiveRecord::RecordNotFound unless es.s3_integration_file_context?
+
+      redirect_to es.s3_integration_file_context_download_link
+    end
+  end
+
   def restore
     es = EntitySnapshot.find params[:id]
     recordable = es.recordable

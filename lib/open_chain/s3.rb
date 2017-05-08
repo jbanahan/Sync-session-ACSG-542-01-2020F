@@ -80,7 +80,13 @@ module OpenChain; class S3
   def self.url_for bucket, key, expires_in=1.minute, options = {}
     version = options.delete :version
     options = {:expires_in=>expires_in.to_i, :secure=>true}.merge options
-    Client.s3_versioned_object(bucket, key, version).presigned_url(:get, options).to_s
+    if version.blank?
+      obj = Client.s3_versioned_object(bucket, key)
+    else
+      obj = Client.s3_versioned_object(bucket, key, version).try(:object)
+    end
+
+    obj.try(:presigned_url, :get, options).to_s
   end
 
   def self.metadata metadata_key, bucket, key, version = nil
@@ -370,7 +376,7 @@ module OpenChain; class S3
     end
 
     def self.s3_file bucket, key
-      s3_bucket(bucket).object(key)
+      s3_bucket(bucket).try(:object, key)
     end
 
     def self.aws_s3

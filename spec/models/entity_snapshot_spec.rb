@@ -454,4 +454,41 @@ describe EntitySnapshot, :snapshot do
       expect(EntitySnapshotFailure.where(snapshot_id: snapshot.id).first).to be_nil
     end
   end
+
+  describe "s3_integration_file_context?" do
+    it "identifies context by having date followed by /home/ubuntu" do
+      subject.context = "2017-04/12/home/ubuntu/file.txt"
+      expect(subject.s3_integration_file_context?).to eq true
+    end
+
+    it "identifies anything else as not being an integration file" do
+      subject.context = "Some Parser"
+      expect(subject.s3_integration_file_context?).to eq false
+    end
+  end
+
+  describe "s3_integration_file_context_download_link" do
+    subject {  EntitySnapshot.new context: "2017-04/12/home/ubuntu/file.txt" }
+
+    it "generates an s3 link" do
+      expect(OpenChain::S3).to receive(:url_for).with(OpenChain::S3.integration_bucket_name, "2017-04/12/home/ubuntu/file.txt").and_return "url"
+      expect(subject.s3_integration_file_context_download_link).to eq "url"
+    end
+
+    it "returns blank if context isn't an s3 object" do
+      subject.context = "context"
+      expect(subject.s3_integration_file_context_download_link).to eq ""
+    end
+  end
+
+  describe "snapshot_download_link" do
+
+    subject {  EntitySnapshot.new bucket: 'bucket', doc_path: "path/to/file.txt", version: "version" }
+
+    it "generates a link to download the snapshot json" do
+      expect(OpenChain::S3).to receive(:url_for).with("bucket", "path/to/file.txt", 1.minute, version: "version").and_return "url"
+      expect(subject.snapshot_download_link).to eq "url"
+    end
+  end
+
 end

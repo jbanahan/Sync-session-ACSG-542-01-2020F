@@ -402,6 +402,22 @@ describe OpenChain::S3, s3: true do
       expect(expires_at).to eq 600
       expect(url).to match "response-content-type=application%2Fpdf"
     end
+
+    it "returns url for a bucket, key, version combination" do
+      obj_version = instance_double(Aws::S3::ObjectVersion)
+      obj = instance_double(Aws::S3::Object)
+      expect(OpenChain::S3::Client).to receive(:s3_versioned_object).with("bucket", "path/to/file.txt", "version").and_return obj_version
+      expect(obj_version).to receive(:object).and_return obj
+      expect(obj).to receive(:presigned_url).with(:get, instance_of(Hash)).and_return "URL"
+
+      expect(described_class.url_for "bucket", "path/to/file.txt", 1.minute, version: "version").to eq "URL"
+    end
+
+    it "handles missing object version" do
+      expect(OpenChain::S3::Client).to receive(:s3_versioned_object).with("bucket", "path/to/file.txt", "version").and_return nil
+      
+      expect(described_class.url_for "bucket", "path/to/file.txt", 1.minute, version: "version").to eq ""
+    end
   end
 
   describe "parse_full_s3_path" do
