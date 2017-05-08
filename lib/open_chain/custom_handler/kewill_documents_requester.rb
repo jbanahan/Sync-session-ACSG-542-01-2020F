@@ -1,4 +1,4 @@
-require 'open_chain/kewill_sql_proxy_client'
+require 'open_chain/kewill_imaging_sql_proxy_client'
 require 'open_chain/polling_job'
 
 module OpenChain; module CustomHandler; class KewillDocumentsRequester
@@ -14,12 +14,12 @@ module OpenChain; module CustomHandler; class KewillDocumentsRequester
     offset = opts['polling_offset'].presence || 300
     conf = imaging_config
     poll(polling_offset: offset) do |last_run, current_run|
-      sql_proxy_client.request_images_added_between last_run, current_run, conf[:s3_bucket], conf[:sqs_receive_queue]
+      sql_proxy_client.request_images_added_between last_run, current_run, opts["customer_numbers"], conf[:s3_bucket], conf[:sqs_receive_queue]
     end
   end
 
   def self.sql_proxy_client
-    OpenChain::KewillSqlProxyClient.new
+    OpenChain::KewillImagingSqlProxyClient.new
   end
   private_class_method :sql_proxy_client
 
