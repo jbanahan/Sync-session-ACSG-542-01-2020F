@@ -121,6 +121,14 @@ describe OpenChain::CustomHandler::CsvExcelParser do
     it 'does nothing to values that are not numbers' do
       expect(subject.text_value "ABC").to eq "ABC"
     end
+
+    it "strips whitespace by default" do
+      expect(subject.text_value " ABC ").to eq "ABC"
+    end
+
+    it "does not strip whitespace if instructed" do
+      expect(subject.text_value " ABC ", strip_whitespace: false).to eq " ABC "
+    end
   end
 
   describe "decimal_value" do

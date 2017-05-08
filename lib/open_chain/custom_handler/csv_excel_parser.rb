@@ -83,8 +83,13 @@ module OpenChain; module CustomHandler; module CsvExcelParser
     parsed_date
   end
 
-  def text_value value
-    OpenChain::XLClient.string_value value
+  def text_value value, strip_whitespace: true
+    v = OpenChain::XLClient.string_value value
+    if strip_whitespace
+      v = v.nil? ? v : v.strip
+    end
+
+    v
   end
 
   def decimal_value value, decimal_places: nil

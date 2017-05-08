@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
       errors = subject.parse "file.xlsx"
       expect(errors.length).to eq 1
-      expect(errors[0]).to include("No Fenix Importer associated with the Tax ID '  '.")
+      expect(errors[0]).to include("No Fenix Importer associated with the Tax ID ''.")
     end
 
     it "should not send invoices if suppressed" do
