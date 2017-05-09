@@ -4,6 +4,9 @@
   <% if @sj.persisted? %>
     <%=button_to "Run", run_schedulable_job_path(@sj), method: :post, class:'btn btn-default navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to run this?'-%>
   <% end %>
+  <% if @sj.running? && @sj.no_concurrent_jobs %>
+    <%=button_to "Reset Run Flag", reset_run_flag_schedulable_job_path(@sj), method: :post, class:'btn btn-default navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to reset the run flag?'-%>
+  <% end %>
   <button class="btn_link" link_to="<%=schedulable_jobs_path%>">Cancel</button>
 <%-end-%>
 <div class="container">

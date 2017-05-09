@@ -57,4 +57,16 @@ class SchedulableJobsController < ApplicationController
       redirect_to schedulable_jobs_path
     end
   end
+
+  def reset_run_flag
+    sys_admin_secure do
+      sj = SchedulableJob.find(params[:id])
+      sj.running = false
+      sj.save!
+
+      add_flash :notices, "#{sj.run_class.to_s.split("::").last} has been marked as not running."
+      
+      redirect_to schedulable_jobs_path
+    end
+  end
 end
