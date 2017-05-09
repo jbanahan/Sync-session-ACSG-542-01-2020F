@@ -80,12 +80,9 @@ module OpenChain; class S3
   def self.url_for bucket, key, expires_in=1.minute, options = {}
     version = options.delete :version
     options = {:expires_in=>expires_in.to_i, :secure=>true}.merge options
-    if version.blank?
-      obj = Client.s3_versioned_object(bucket, key)
-    else
-      obj = Client.s3_versioned_object(bucket, key, version).try(:object)
-    end
-
+    options[:version_id] = version unless version.blank?
+    # Purposefully not using the version here...the version to use gets passed to the presigner as an option
+    obj = Client.s3_versioned_object(bucket, key)
     obj.try(:presigned_url, :get, options).to_s
   end
 
