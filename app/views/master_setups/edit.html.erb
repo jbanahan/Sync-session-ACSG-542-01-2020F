@@ -42,6 +42,9 @@ $(function() {
 <button id='btn_save'>Save</button>
 <button id='btn_upgrade'>Upgrade</button>
 <button id='btn_cancel'>Cancel</button>
+<% if @ms.migration_host.present? %>
+  <%=button_to "Release Migration Lock", release_migration_lock_master_setups_path, method: :post, class:'btn btn-default navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to release the migration lock?'-%>
+<% end %>
 <%end%>
 <div class='container'>
   <div class='row'>

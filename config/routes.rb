@@ -389,6 +389,7 @@ OpenChain::Application.routes.draw do
       get 'show_system_message'
       post 'set_system_message'
       post 'upgrade'
+      post 'release_migration_lock'
     end
   end
   resources :upgrade_logs, :only=>[:show]

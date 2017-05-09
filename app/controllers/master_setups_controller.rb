@@ -74,4 +74,11 @@ class MasterSetupsController < ApplicationController
     }
   end
 
+  def release_migration_lock
+    sys_admin_secure("Only system administrators can run upgrades.") {
+      MasterSetup.release_migration_lock(force_release: true)
+      redirect_to edit_master_setup_path MasterSetup.get 
+    }
+  end
+
 end
