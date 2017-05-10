@@ -1,9 +1,11 @@
 require 'open_chain/report/report_helper'
 require 'open_chain/fiscal_calendar_scheduling_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsReport
   extend OpenChain::FiscalCalendarSchedulingSupport
   include OpenChain::Report::ReportHelper
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.permission? user
     importer = ascena
@@ -72,7 +74,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     row_number = 0
 
     summary = {}
-    first_sale_brand_summary = {}
+    first_sale_brand_summary = {"AGS" => {}, "NONAGS" => {}}
     entries = Set.new
 
     result_set.each do |row|
@@ -105,8 +107,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
       brand = row[field_map[:brand]]
       if !brand.blank?
-        first_sale_brand_summary[brand] ||= {vendor_invoice: BigDecimal("0"), entered_value: BigDecimal("0"), total_entered_value: BigDecimal("0"), duty_savings: BigDecimal("0")}
-        bs = first_sale_brand_summary[brand]
+        order_type = row[field_map[:order_type]].to_s.strip.upcase == "NONAGS" ? "NONAGS" : "AGS"
+
+        first_sale_brand_summary[order_type][brand] ||= {vendor_invoice: BigDecimal("0"), entered_value: BigDecimal("0"), total_entered_value: BigDecimal("0"), duty_savings: BigDecimal("0")}
+        bs = first_sale_brand_summary[order_type][brand]
 
         if savings[:savings_type] == :first_sale
           bs[:vendor_invoice] += row[field_map[:first_sale_amount]]
@@ -146,13 +150,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
   end
 
-  def generate_first_sale_brand_summary sheet, summary
+  def generate_first_sale_brand_summary sheet, brand_summary
     column_widths = []
 
-    XlsMaker.add_body_row sheet, 1, ["Vendor Invoice", summary["JST"].try(:[], :vendor_invoice), "", summary["LB"].try(:[], :vendor_invoice), "", summary["CA"].try(:[], :vendor_invoice), "", summary["MAU"].try(:[], :vendor_invoice), "", summary["DB"].try(:[], :vendor_invoice)]
-    XlsMaker.add_body_row sheet, 2, ["Entered Value", summary["JST"].try(:[], :entered_value), "", summary["LB"].try(:[], :entered_value), "", summary["CA"].try(:[], :entered_value), "", summary["MAU"].try(:[], :entered_value), "", summary["DB"].try(:[], :entered_value)]
-    XlsMaker.add_body_row sheet, 3, ["Duty Savings", summary["JST"].try(:[], :duty_savings), "", summary["LB"].try(:[], :duty_savings), "", summary["CA"].try(:[], :duty_savings), "", summary["MAU"].try(:[], :duty_savings), "", summary["DB"].try(:[], :duty_savings)]
-    XlsMaker.add_body_row sheet, 4, ["Total Brand FOB Receipts", summary["JST"].try(:[], :total_entered_value), "", summary["LB"].try(:[], :total_entered_value), "", summary["CA"].try(:[], :total_entered_value), "", summary["MAU"].try(:[], :total_entered_value), "", summary["DB"].try(:[], :total_entered_value)]
+    row = 0
+    [["AGS", brand_summary["AGS"]], ["NONAGS", brand_summary["NONAGS"]]].each do |summary_type, summary|
+      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Vendor Invoice", summary["JST"].try(:[], :vendor_invoice), "", summary["LB"].try(:[], :vendor_invoice), "", summary["CA"].try(:[], :vendor_invoice), "", summary["MAU"].try(:[], :vendor_invoice), "", summary["DB"].try(:[], :vendor_invoice)]
+      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Entered Value", summary["JST"].try(:[], :entered_value), "", summary["LB"].try(:[], :entered_value), "", summary["CA"].try(:[], :entered_value), "", summary["MAU"].try(:[], :entered_value), "", summary["DB"].try(:[], :entered_value)]
+      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Duty Savings", summary["JST"].try(:[], :duty_savings), "", summary["LB"].try(:[], :duty_savings), "", summary["CA"].try(:[], :duty_savings), "", summary["MAU"].try(:[], :duty_savings), "", summary["DB"].try(:[], :duty_savings)]
+      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Total Brand FOB Receipts", summary["JST"].try(:[], :total_entered_value), "", summary["LB"].try(:[], :total_entered_value), "", summary["CA"].try(:[], :total_entered_value), "", summary["MAU"].try(:[], :total_entered_value), "", summary["DB"].try(:[], :total_entered_value)]
+      row+=1
+    end
+    
   end
 
   def summary_headers
@@ -160,7 +169,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def data_headers
-    ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
+    ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Order Type", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
   end
 
   def brand_headers
@@ -257,17 +266,23 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
   def query start_date, end_date
     qry = <<-QRY
-SELECT e.broker_reference, e.transport_mode_code, concat(fiscal_year, '-', lpad(fiscal_month, 2, '0')), convert_tz(e.release_date, 'UTC', 'America/New_York'), i.invoice_number, l.po_number, l.part_number, l.product_line, l.non_dutiable_amount, l.contract_amount, t.hts_code, t.tariff_description, t.entered_value, t.spi_primary, t.duty_rate, t.duty_amount
+SELECT e.broker_reference, e.transport_mode_code, concat(fiscal_year, '-', lpad(fiscal_month, 2, '0')), convert_tz(e.release_date, 'UTC', 'America/New_York'), i.invoice_number, l.po_number, l.part_number, l.product_line, l.non_dutiable_amount, l.contract_amount, t.hts_code, t.tariff_description, t.entered_value, t.spi_primary, t.duty_rate, t.duty_amount, ord_type.string_value
 FROM entries e
 INNER JOIN commercial_invoices i on e.id = i.entry_id
 INNER JOIN commercial_invoice_lines l on i.id = l.commercial_invoice_id
 INNER JOIN commercial_invoice_tariffs t on t.commercial_invoice_line_id = l.id
+LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", l.po_number)
+LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
 WHERE e.customer_number = 'ASCE' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
 QRY
   end
 
   def field_map
-    @map ||= {broker_reference: 0, transport_mode_code: 1, fiscal_date: 2, release_date: 3, invoice_number: 4, po_number: 5, part_number: 6, brand: 7, non_dutiable_amount: 8, first_sale_amount: 9, hts_code: 10, tariff_description: 11, entered_value: 12, spi: 13, duty_rate: 14, duty_amount: 15}
+    @map ||= {broker_reference: 0, transport_mode_code: 1, fiscal_date: 2, release_date: 3, invoice_number: 4, po_number: 5, part_number: 6, brand: 7, non_dutiable_amount: 8, first_sale_amount: 9, hts_code: 10, tariff_description: 11, entered_value: 12, spi: 13, duty_rate: 14, duty_amount: 15, order_type: 16}
+  end
+
+  def cdefs 
+    @cdefs ||= self.class.prep_custom_definitions [:ord_type]
   end
 
 end; end; end; end;

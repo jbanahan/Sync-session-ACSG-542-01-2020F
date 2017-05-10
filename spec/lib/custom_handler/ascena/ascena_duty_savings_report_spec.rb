@@ -74,6 +74,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       e
     }
 
+    let! (:order) {
+      order = Factory(:order, order_number: "ASCENA-PO")
+      order.update_custom_value! cdefs[:ord_type], "AGS"
+      order
+    }
+
+    let (:cdefs) { described_class.new.cdefs }
+
     let! (:fiscal_month) { Factory(:fiscal_month, company: ascena, year: 2017, month_number: 3, start_date: Date.new(2017, 3, 1), end_date: Date.new(2017, 4, 1)) }
 
     it "skips anything that does not have duty savings" do
@@ -87,18 +95,50 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       expect(sheet.rows.count).to eq 1
 
       expect(sheet = wb.worksheet("First Sale")).not_to be_nil
-      expect(sheet.rows.count).to eq 5
+      expect(sheet.rows.count).to eq 10
       expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-      expect(sheet.row(1)).to eq ["Vendor Invoice", 0, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(2)).to eq ["Entered Value", 0, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(3)).to eq ["Duty Savings", 0, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", 20, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(2)).to eq ["AGS Entered Value", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(3)).to eq ["AGS Duty Savings", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 20, nil, nil, nil, nil, nil, nil, nil, nil]
+
+      expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(7)).to eq ["NONAGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(8)).to eq ["NONAGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil
       expect(sheet.rows.count).to eq 3
-      expect(sheet.row(0)).to eq ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
-      expect(sheet.row(1)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, 10, 1, 0]
-      expect(sheet.row(2)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART2", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, 10, 1, 0]
+      expect(sheet.row(0)).to eq ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Order Type", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
+      expect(sheet.row(1)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, "AGS", 10, 1, 0]
+      expect(sheet.row(2)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART2", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, "AGS", 10, 1, 0]
+    end
+
+    it "records non-ags first sale data" do
+      order.update_custom_value! cdefs[:ord_type], "NONAGS"
+      tf = subject.run_report nil, {"fiscal_month" => "2017-03"}
+      expect(tf).not_to be_nil
+
+      wb = XlsMaker.open_workbook(tf)
+
+      expect(sheet = wb.worksheet("First Sale")).not_to be_nil
+      expect(sheet.rows.count).to eq 10
+      expect(sheet.row(1)).to eq ["AGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(2)).to eq ["AGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(3)).to eq ["AGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil]
+
+      expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(7)).to eq ["NONAGS Entered Value", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(8)).to eq ["NONAGS Duty Savings", 0, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", 20, nil, nil, nil, nil, nil, nil, nil, nil]
+
+
+      expect(sheet = (wb.worksheet "Data")).not_to be_nil
+      expect(sheet.rows.count).to eq 3
+      expect(sheet.row(1)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, "NONAGS", 10, 1, 0]
+      expect(sheet.row(2)).to eq ["REF", "10", "2017-03", excel_date(Date.new(2017, 3, 1)), "INV", "PO", "PART2", "JST", 0, 0, "1234567890", "DESC", 10, nil, 0.1, 1, "NONAGS", 10, 1, 0]
     end
 
     it "records air/sea differential amounts" do
@@ -177,12 +217,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.rows.count).to eq 5
         expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-        expect(sheet.row(1)).to eq ["Vendor Invoice", 40, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(2)).to eq ["Entered Value", 20, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(3)).to eq ["Duty Savings", 2, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", 40, nil, nil, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 40, nil, nil, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", 20, nil, nil, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", 2, nil, nil, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 40, nil, nil, nil, nil, nil, nil, nil, nil]
       end
 
       it "records Lane Bryant first sale data" do
@@ -191,12 +230,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.rows.count).to eq 5
-        expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-        expect(sheet.row(1)).to eq ["Vendor Invoice", nil, nil, 40, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(2)).to eq ["Entered Value", nil, nil, 20, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(3)).to eq ["Duty Savings", nil, nil, 2, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", nil, nil, 40, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", nil, nil, 40, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", nil, nil, 20, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", nil, nil, 2, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, 40, nil, nil, nil, nil, nil, nil]
       end
 
       it "records Catherines first sale data" do
@@ -205,12 +242,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.rows.count).to eq 5
-        expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-        expect(sheet.row(1)).to eq ["Vendor Invoice", nil, nil, nil, nil, 40, nil, nil, nil, nil]
-        expect(sheet.row(2)).to eq ["Entered Value", nil, nil, nil, nil, 20, nil, nil, nil, nil]
-        expect(sheet.row(3)).to eq ["Duty Savings", nil, nil, nil, nil, 2, nil, nil, nil, nil]
-        expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", nil, nil, nil, nil, 40, nil, nil, nil, nil]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", nil, nil, nil, nil, 40, nil, nil, nil, nil]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", nil, nil, nil, nil, 20, nil, nil, nil, nil]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", nil, nil, nil, nil, 2, nil, nil, nil, nil]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, nil, nil, 40, nil, nil, nil, nil]
       end
 
       it "records Maurices first sale data" do
@@ -219,12 +254,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.rows.count).to eq 5
-        expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-        expect(sheet.row(1)).to eq ["Vendor Invoice", nil, nil, nil, nil, nil, nil, 40, nil, nil]
-        expect(sheet.row(2)).to eq ["Entered Value", nil, nil, nil, nil, nil, nil, 20, nil, nil]
-        expect(sheet.row(3)).to eq ["Duty Savings", nil, nil, nil, nil, nil, nil, 2, nil, nil]
-        expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, 40, nil, nil]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", nil, nil, nil, nil, nil, nil, 40, nil, nil]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", nil, nil, nil, nil, nil, nil, 20, nil, nil]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", nil, nil, nil, nil, nil, nil, 2, nil, nil]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, 40, nil, nil]
       end
 
       it "records Dress Barn first sale" do
@@ -233,12 +266,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.rows.count).to eq 5
-        expect(sheet.row(0)).to eq [nil, "Tweenbrands", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn"]
-        expect(sheet.row(1)).to eq ["Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, 40]
-        expect(sheet.row(2)).to eq ["Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, 20]
-        expect(sheet.row(3)).to eq ["Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, 2]
-        expect(sheet.row(4)).to eq ["Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, 40]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, 40]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, 20]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, 2]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, 40]
       end
     end
 
