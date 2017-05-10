@@ -90,11 +90,18 @@ module OpenChain
         execute_callback(callbacks, :fs_running, MasterSetup.get.system_code, @upgrade_log.to_version)
         get_source
         apply_upgrade
-        #upgrade_running.txt will stick around if one of the previous methods blew an exception
-        #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
-        capture_and_log "rm #{Upgrade.upgrade_file_path}"
-        # Remove the upgrade error file if it is present
-        capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
+        # Don't remove the upgrade_running file if we're running on the web servers, the initializer will take care of removing
+        # it (touching tmp/restart.txt will initiate a passenger restart)...on the delayed job queue, we do have to do this,
+        # otherwise the cron job that ensures job queues are always running won't restart the queues after they shut down after the upgrade
+        if delayed_job_upgrade
+          #upgrade_running.txt will stick around if one of the previous methods blew an exception
+          #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
+          capture_and_log "rm #{Upgrade.upgrade_file_path}"
+
+          # Remove the upgrade error file if it is present
+          capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if File.exists?(Upgrade.upgrade_error_file_path)
+        end
+        
         @@upgraded = true
         upgrade_completed = true
       rescue => e
