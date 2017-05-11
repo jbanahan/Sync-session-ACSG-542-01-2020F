@@ -120,5 +120,7 @@ module OpenChain
       # atributes
       config.middleware.insert 0, OpenChain::NewRelicSetupMiddleware
     end
+
+    config.hostname = `hostname`.strip
   end
 end

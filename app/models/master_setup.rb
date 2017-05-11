@@ -58,7 +58,7 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.hostname hostname = nil
-    hostname.blank? ? `hostname`.strip : hostname
+    hostname.blank? ? Rails.application.config.hostname : hostname
   end
 
   def self.release_migration_lock host: nil, force_release: false

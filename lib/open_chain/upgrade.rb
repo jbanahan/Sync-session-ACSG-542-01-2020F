@@ -58,6 +58,22 @@ module OpenChain
       "tmp/upgrade_error.txt"
     end
 
+    # This tells use what the current version the system has already been upgraded to.  This CAN differ
+    # from what the codebase (and even config/version.txt) indicates due to the multi-process/threaded nature
+    # of our app server (Passenger).  In essence, what we'll do is once the upgrade is complete, it will echo
+    # the version number to this file, thus any other threads will know this system has definitely already been upgraded.
+    def self.current_upgraded_version
+      Pathname.new(upgraded_version_path).read.strip rescue nil
+    end
+
+    def self.upgraded_version_path
+      "tmp/upgraded_version.txt"
+    end
+
+    def already_upgraded?
+      self.class.current_upgraded_version == @target
+    end
+
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
       @target = target
@@ -72,7 +88,7 @@ module OpenChain
       @upgrade_log = nil
       unless Upgrade.upgraded?
         Lock.acquire(Lock::UPGRADE_LOCK) do
-          unless Upgrade.in_progress?
+          unless Upgrade.in_progress? || self.already_upgraded?
             @log = Logger.new(@log_path)
             # The log statement for this commeand will get sucked into the upgrade log when it's created
             capture_and_log "touch #{Upgrade.upgrade_file_path}"
@@ -82,7 +98,18 @@ module OpenChain
 
       return false unless @log
 
-      callbacks.merge!(freshservice_callbacks)
+      Lock.acquire("Upgrade-#{Rails.application.config.hostname}-#{@target}", yield_in_transaction: false) do 
+        # There's some (albeit really small) possibility that the upgrade could already have been done in another process 
+        # while waiting on this lock, just check the already_upgraded? and return if it has already been
+        return false if self.already_upgraded?
+
+        return do_upgrade(delayed_job_upgrade, callbacks)
+      end
+    end
+
+    def do_upgrade delayed_job_upgrade, callbacks
+      callbacks.merge!(freshservice_callbacks) if Rails.env.production?
+
       execute_callback(callbacks, :running)
       upgrade_completed = false
       begin
@@ -90,17 +117,11 @@ module OpenChain
         execute_callback(callbacks, :fs_running, MasterSetup.get.system_code, @upgrade_log.to_version)
         get_source
         apply_upgrade
-        # Don't remove the upgrade_running file if we're running on the web servers, the initializer will take care of removing
-        # it (touching tmp/restart.txt will initiate a passenger restart)...on the delayed job queue, we do have to do this,
-        # otherwise the cron job that ensures job queues are always running won't restart the queues after they shut down after the upgrade
-        if delayed_job_upgrade
-          #upgrade_running.txt will stick around if one of the previous methods blew an exception
-          #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
-          capture_and_log "rm #{Upgrade.upgrade_file_path}"
-
-          # Remove the upgrade error file if it is present
-          capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if File.exists?(Upgrade.upgrade_error_file_path)
-        end
+        #upgrade_running.txt will stick around if one of the previous methods blew an exception
+        #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
+        capture_and_log "rm #{Upgrade.upgrade_file_path}"
+        # Remove the upgrade error file if it is present
+        capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
         
         @@upgraded = true
         upgrade_completed = true
@@ -113,7 +134,7 @@ module OpenChain
         # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).  
         # Send via slack.
         ms = MasterSetup.get
-        send_slack_failure(ms, e)
+        send_slack_failure(ms, e) if Rails.env.production?
         execute_callback(callbacks, :fs_error, error_message(ms, e))
         raise e
       ensure
@@ -129,7 +150,7 @@ module OpenChain
       
       fs_running = lambda do |instance, new_version|
         err_logger { 
-          host_name = `hostname`.strip
+          host_name = Rails.application.config.hostname
           fs_client.create_change! instance, new_version, host_name
         }
       end
@@ -177,6 +198,8 @@ module OpenChain
       precompile
       init_schedulable_jobs
       update_master_setup_cache
+      log_me "Writing '#{@target}' to #{OpenChain::Upgrade.upgraded_version_path}"
+      File.open(OpenChain::Upgrade.upgraded_version_path, "w") {|f| f << "#{@target}\n" }
       log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
       log_me "Upgrade complete"
@@ -189,15 +212,18 @@ module OpenChain
 
     def migrate
       c = 0
-      #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table
-      while !MasterSetup.get_migration_lock && c<60
-        log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
-        sleep 10
-        c += 1
+      begin 
+        #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table
+        while !MasterSetup.get_migration_lock && c<60
+          log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
+          sleep 10
+          c += 1
+        end
+        raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
+        capture_and_log "rake db:migrate"
+      ensure
+        MasterSetup.release_migration_lock
       end
-      raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
-      capture_and_log "rake db:migrate"
-      MasterSetup.release_migration_lock
       log_me "Migration complete"
     end
 
@@ -254,8 +280,7 @@ module OpenChain
     end
 
     def error_message master_setup, error=nil
-      host = `hostname`.strip
-      msg = "<!group>: Upgrade failed for server: #{host}, instance: #{master_setup.system_code}"
+      msg = "<!group>: Upgrade failed for server: #{Rails.application.config.hostname}, instance: #{master_setup.system_code}"
       msg << ", error: #{error.message}" if error
     end
 
