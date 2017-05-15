@@ -173,6 +173,7 @@ module Helpers
     ms = double("MasterSetup")
     allow(ms).to receive(:request_host).and_return "localhost:3000"
     allow(ms).to receive(:system_code).and_return "test"
+    allow(ms).to receive(:uuid).and_return "test-uuid"
     allow(MasterSetup).to receive(:get).and_return ms
     ms
   end

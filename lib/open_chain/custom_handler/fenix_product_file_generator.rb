@@ -23,6 +23,7 @@ module OpenChain
           custom_defintions = []
         end
         
+        custom_defintions << :class_stale_classification
         custom_defintions << :prod_part_number if @use_part_number
         custom_defintions << :prod_country_of_origin unless @suppress_country
         custom_defintions << :class_customs_description unless @suppress_description
@@ -38,6 +39,9 @@ module OpenChain
       def find_products
         r = Product.
           includes(:classifications=>:tariff_records).
+          # Prevent stale classifications from going to Fenix
+          joins("LEFT OUTER JOIN custom_values v on classifications.id = v.customizable_id AND v.customizable_type = 'Classification' AND custom_definition_id = #{@cdefs[:class_stale_classification].id}").
+          where("v.boolean_value IS NULL OR v.boolean_value = 0").
           where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
         
         if @importer_id
@@ -54,34 +58,56 @@ module OpenChain
       def make_file products, update_sync_records = true
         t = Tempfile.new(["fenix-#{@fenix_customer_code}",'.txt'])
         t.binmode
+        user = User.integration
         products.each do |p|
+          stale_classification = false
           c = p.classifications.find {|cl| cl.country_id == @canada_id }
           next unless c
           c.tariff_records.each do |tr|
             unless tr.hts_1.blank?
-              begin
-                # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
-                # This lets us send characters like ”, Æ, etc correctly to Fenix
-                t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252") unless tr.hts_1.blank?
-              rescue Encoding::UndefinedConversionError => e
-                e.log_me "Product #{p.unique_identifier} could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
-                next
+
+              if stale_classification? tr
+                stale_classification = true
+              else
+                begin
+                  # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
+                  # This lets us send characters like ”, Æ, etc correctly to Fenix
+                  t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252")
+                rescue Encoding::UndefinedConversionError => e
+                  e.log_me "Product #{p.unique_identifier} could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
+                  next
+                end
+                break
               end
-              break
             end
           end
 
-          # If we need to manually generate a file, then we won't want to run the sync data
-          if update_sync_records
-            sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
-            sr.sent_at = Time.now
-            sr.confirmed_at = 1.second.from_now
-            sr.confirmation_file_name = "Fenix Confirmation"
-            sr.save!
+          if stale_classification
+            update_stale_classification(user, p, c)
+          else
+            # If we need to manually generate a file, then we won't want to run the sync data
+            if update_sync_records
+              sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
+              sr.sent_at = Time.now
+              sr.confirmed_at = 1.second.from_now
+              sr.confirmation_file_name = "Fenix Confirmation"
+              sr.save!
+            end
           end
+
         end
         t.flush
         t
+      end
+
+      def stale_classification? t
+        ids = OfficialTariff.where(country_id: @canada_id, hts_code: t.hts_1).limit(1).pluck :id
+        return ids.blank?
+      end
+
+      def update_stale_classification user, product, classification
+        classification.update_custom_value! @cdefs[:class_stale_classification], true
+        product.create_snapshot user, nil, "Stale Tariff"
       end
 
       def ftp_file f

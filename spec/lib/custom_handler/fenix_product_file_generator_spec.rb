@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     attr_reader :cdefs
 
     def initialize
-      @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
+      @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code, :class_stale_classification]
     end
   end
 
@@ -37,32 +37,38 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   end
 
   describe "find_products" do
+    subject { OpenChain::CustomHandler::FenixProductFileGenerator.new(@code) }
+
     before :each do
       @to_find_1 = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@canada.id)).product
       @to_find_2 = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification,:country_id=>@canada.id)).product
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      
     end
     it "should find products that need sync and have canadian classifications" do
-      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2])
+      expect(subject.find_products.to_a).to eq([@to_find_1,@to_find_2])
     end
     it "should filter on importer_id if given" do
       @to_find_1.update_attributes(:importer_id => 100)
-      h = @h.class.new(@code, 'importer_id' => 100)
+      h = subject.class.new(@code, 'importer_id' => 100)
       expect(h.find_products.to_a).to eq([@to_find_1])
     end
     it "should apply additional_where filters" do
       @to_find_1.update_attributes(:name=>'XYZ')
-      h = @h.class.new(@code, 'additional_where' => "products.name = 'XYZ'")
+      h = subject.class.new(@code, 'additional_where' => "products.name = 'XYZ'")
       expect(h.find_products.to_a).to eq([@to_find_1])
     end
     it "should not find products that don't have canada classifications but need sync" do
       different_country_product = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification)).product
-      expect(@h.find_products.to_a).to eq([@to_find_1,@to_find_2])
+      expect(subject.find_products.to_a).to eq([@to_find_1,@to_find_2])
     end
     it "should not find products that have classification but don't need sync" do
       @to_find_2.update_attributes(:updated_at=>1.hour.ago)
       @to_find_2.sync_records.create!(:trading_partner=>"fenix-#{@code}",:sent_at=>1.minute.ago,:confirmed_at=>1.minute.ago)
-      expect(@h.find_products.to_a).to eq([@to_find_1])
+      expect(subject.find_products.to_a).to eq([@to_find_1])
+    end
+    it "does not find products that are marked as having stale tariffs" do
+      @to_find_1.classifications.first.update_custom_value! cdefs[:class_stale_classification], true
+      expect(subject.find_products.to_a).not_to include @to_find_1
     end
   end
 
@@ -70,14 +76,21 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     before :each do
       @p = Factory(:product,:unique_identifier=>'myuid')
       @c = @p.classifications.create!(:country_id=>@canada.id)
-      t = @c.tariff_records.create!(:hts_1=>'1234567890')
+      @tariff = @c.tariff_records.create!(:hts_1=>'1234567890')
     end
+
     after :each do
       @t.unlink if @t
     end
 
+    def generator code, opts = {}
+      g = described_class.new(code, opts)
+      allow(g).to receive(:stale_classification?).and_return false
+      g
+    end
+
     it "should generate output file with given products" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
 
       @p.update_custom_value! cdefs[:prod_country_of_origin], "CN"
       @c.update_custom_value! cdefs[:class_customs_description], "Random Product Description"
@@ -109,7 +122,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read).to end_with "\r\n"
     end
     it "should generate output file using part number" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'use_part_number'=>true)
+      @h = generator(@code, 'use_part_number'=>true)
       pn_def = CustomDefinition.where(label: "Part Number", module_type: "Product", data_type: "string").first
       @p.update_custom_value! pn_def, "ABC123"
 
@@ -118,7 +131,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[31, 40]).to eq "ABC123".ljust(40)
     end
     it "should write sync records with dummy confirmation date" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
       @t = @h.make_file [@p]
       @p.reload
       expect(@p.sync_records.size).to eq(1)
@@ -128,7 +141,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "skips adding country of origin if instructed" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_country'=>true)
+      @h = generator(@code, 'suppress_country'=>true)
       # Verify custom definition for country of origin wasn't created
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
       expect(coo_def).to be_nil
@@ -145,7 +158,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "skips adding description if instructed" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_description'=>true)
+      @h = generator(@code, 'suppress_description'=>true)
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
       expect(desc_def).to be_nil
       desc_def = CustomDefinition.create!(label: "Customs Description", module_type: "Classification", data_type: "string")
@@ -158,7 +171,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "only uses the first hts line" do
-      h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      h = generator(@code)
       t2 = Factory(:tariff_record, hts_1: "12345", classification: @c)
       @t = h.make_file [@p]
       read = IO.read(@t.path)
@@ -167,7 +180,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "cleanses forbidden characters" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
 
@@ -185,14 +198,14 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "skips sync record creation if instructed" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
       @t = @h.make_file [@p], false
       @p.reload
       expect(@p.sync_records.size).to eq(0)
     end
 
     it "strips leading zeros if instructed" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'strip_leading_zeros' => true)
+      @h = generator(@code, 'strip_leading_zeros' => true)
       @p.update_attributes! unique_identifier: "00000#{@p.unique_identifier}"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
@@ -200,7 +213,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
 
     it "transliterates to windows encoding" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
       # Description taken from actual data that's failing to correctly transfer
       @c.update_custom_value! desc_def, "Brad Nail, 23G, PIN, Brass, 1”, 6000 pcs"
@@ -214,7 +227,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       # Use hebrew chars, since the windows encoding in use in Fenix is a latin one, it can't encode them
       @p.update_attributes! unique_identifier: "בדיקה אם נרשם"
 
-      @t = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code).make_file [@p]
+      @t = generator(@code).make_file [@p]
       expect(IO.read(@t.path)).to be_blank
       expect(ErrorLogEntry.first.additional_messages_json).to match(/could not be sent to Fenix/)
     end
@@ -234,7 +247,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @c.update_custom_value! cdefs[:class_ogd_origin], "O"
       @c.update_custom_value! cdefs[:class_sima_code], "S"
       
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code)
+      @h = generator(@code)
       
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
@@ -253,6 +266,32 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[386, 3]).to eq "   "
       expect(read[389, 2]).to eq "  "
       expect(read).to end_with "\r\n"
+    end
+
+    context "stale_classification" do
+      # By virtue of not setting up any Official tariffs, anything in here is going to end up being marked stale
+      it "skips any products that have outdated tariff numbers and marks them as stale" do
+        @t = described_class.new(@code).make_file [@p]
+        expect(IO.read(@t.path)).to be_blank
+
+        @p.reload
+
+        expect(@p.classifications.first.custom_value(cdefs[:class_stale_classification])).to eq true
+        expect(@p.entity_snapshots.length).to eq 1
+        snap = @p.entity_snapshots.first
+        expect(snap.context).to eq "Stale Tariff"
+      end
+    end
+
+    context "with valid official tariff" do
+
+      let!(:official_tariff) { OfficialTariff.create! country: @canada, hts_code: @tariff.hts_1}
+
+      it "uses official tariff lookup to determine stale tariff" do
+        @t = described_class.new(@code).make_file [@p]
+        expect(IO.read(@t.path)).not_to be_blank
+      end
+      
     end
   end
 
