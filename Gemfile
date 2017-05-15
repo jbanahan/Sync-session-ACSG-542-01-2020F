@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem "rails", "3.2.22"
-gem 'mysql2', '0.3.18'
+gem 'mysql2', '0.3.21'
 gem 'sqlite3'
 gem 'aws-sdk', '~> 2.6'
 # Handles AWS SNS posts
