@@ -22,13 +22,45 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   end
 
   def get_new_billables
-    events = BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "HmInvoiceGenerator"')
-                          .joins('LEFT OUTER JOIN non_invoiced_events nie ON billable_events.id = nie.billable_event_id AND nie.invoice_generator_name = "HmInvoiceGenerator"')
-                          .joins('INNER JOIN classifications cla ON cla.id = billable_eventable_id INNER JOIN countries cou ON cou.id = cla.country_id AND cou.iso_code = "CA" INNER JOIN products p ON cla.product_id = p.id INNER JOIN companies com ON com.id = p.importer_id AND com.alliance_customer_number = "HENNE"')
-                          .where('ie.id IS NULL AND nie.id IS NULL')
-                          .where('billable_eventable_type = "Classification"')
-    to_be_invoiced, to_be_skipped = partition_by_order_type events
-    {to_be_invoiced: to_be_invoiced, to_be_skipped: to_be_skipped}
+    events = all_new_billables
+    
+    #Filter in three passes:
+    #only invoice online orders (products with at least one PO beginning with 1)
+    online_orders, offline_orders = partition_by_order_type events
+    
+    #only invoice one classification per product
+    with_unique_product, with_non_unique_product = partition_with_unique_product(online_orders)
+    
+    #only invoice classifications for products that haven't already been invoiced
+    with_uninvoiced_product, with_invoiced_product = partition_with_uninvoiced_product(with_unique_product)
+    {to_be_invoiced: with_uninvoiced_product, to_be_skipped: (offline_orders + with_non_unique_product + with_invoiced_product)}
+  end
+
+  def all_new_billables
+    BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "HmInvoiceGenerator"')
+                 .joins('LEFT OUTER JOIN non_invoiced_events nie ON billable_events.id = nie.billable_event_id AND nie.invoice_generator_name = "HmInvoiceGenerator"')
+                 .joins('INNER JOIN classifications cla ON cla.id = billable_eventable_id INNER JOIN countries cou ON cou.id = cla.country_id AND cou.iso_code = "CA" INNER JOIN products p ON cla.product_id = p.id INNER JOIN companies com ON com.id = p.importer_id AND com.alliance_customer_number = "HENNE"')
+                 .where('ie.id IS NULL AND nie.id IS NULL')
+                 .where('billable_eventable_type = "Classification"')
+  end
+
+  def partition_with_unique_product billables
+    product_billable = Hash.new{|k,v| k[v] = []}
+    billables.each { |b| product_billable[b.billable_eventable.product] << b }
+    unique = []; to_be_skipped = []
+    product_billable.values.each do |v|
+      unique.concat v.take(1)
+      to_be_skipped.concat v.drop(1)
+    end
+    [unique, to_be_skipped]
+  end
+
+  def partition_with_uninvoiced_product billables
+    product_ids = billables.map{ |b| b.billable_eventable.product.id }
+    r = ActiveRecord::Base.connection.execute uninvoiced_billable_qry(product_ids)
+    already_billed_ids = r.map{|r| r[0] }
+    uninvoiced, to_be_skipped = billables.partition { |b| !already_billed_ids.include? b.billable_eventable.product.id }
+    [uninvoiced, to_be_skipped]
   end
 
   def create_invoice
@@ -57,6 +89,15 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
       billables.each do |e|
         NonInvoicedEvent.create!(billable_event_id: e[:id], invoice_generator_name: "HmInvoiceGenerator")
       end
+    end
+  end
+
+  def partition_by_order_type billables
+    billables.partition do |be|
+      prod = be.billable_eventable.product
+      po_nums = prod.custom_value(cdefs[:prod_po_numbers]).try(:split, /\r?\n */) || []
+      found = po_nums.find { |po| po[0] == '1' }
+      !found.nil?
     end
   end
 
@@ -99,13 +140,15 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
 
   private
 
-  def partition_by_order_type billables
-    billables.partition do |be|
-      prod = be.billable_eventable.product
-      po_nums = prod.custom_value(cdefs[:prod_po_numbers]).try(:split, /\r?\n */) || []
-      found = po_nums.find { |po| po[0] == '1' }
-      !found.nil?
-    end
+  def uninvoiced_billable_qry prod_ids
+    <<-SQL
+      SELECT p.id
+      FROM products p
+      INNER JOIN classifications c ON p.id = c.product_id
+      INNER JOIN billable_events be ON be.billable_eventable_id = c.id AND be.billable_eventable_type = "Classification"
+      INNER JOIN invoiced_events ie ON be.id = ie.billable_event_id AND ie.invoice_generator_name = "HMInvoiceGenerator"
+      WHERE p.id IN (#{prod_ids.join(",")})
+    SQL
   end
 
 end; end; end; end

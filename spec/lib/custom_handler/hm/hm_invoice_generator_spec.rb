@@ -3,6 +3,13 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   let(:hm) { Factory(:company, alliance_customer_number: "HENNE", name: "H&M") }
+  let(:country) { Factory(:country, iso_code: "CA") }
+  let(:cdef) { described_class.prep_custom_definitions([:prod_po_numbers])[:prod_po_numbers] }
+  let(:prod) do 
+    p = Factory(:product, importer: hm)
+    p.update_custom_value! cdef, "0123456\n 1234567"
+    p
+  end
   
   describe "run_schedulable" do
     it "finds the new billable events, new invoiceable events, creates a VFI invoice, bills new entries" do
@@ -27,110 +34,89 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
   end
 
-  describe "get_new_billables" do
-    let(:country_ca) { Factory(:country, iso_code: "CA", name: "CANADA") }
-    let(:country_us) { Factory(:country, iso_code: "US", name: "UNITED STATES") }
-    let(:cdef) { described_class.prep_custom_definitions([:prod_po_numbers])[:prod_po_numbers] }
-    let(:prod) do 
-      p = Factory(:product, importer: hm, unique_identifier: "foo")
-      p.update_custom_value! cdef, "0123456\n 1234567"
+  describe "get_new_billables" do   
+    it "returns hash separating billables to be invoiced from those to be skipped" do
+      cl1 = Factory(:classification, product: prod, country: country)
+      prod_2 = Factory(:product, importer: hm)
+      prod_2.update_custom_value! cdef, "0123456\n 1234567"
+      cl2 = Factory(:classification, product: prod_2, country: country)
+      
+      be_invoiced = Factory(:billable_event, billable_eventable: cl1)
+      Factory(:invoiced_event, billable_event: be_invoiced, invoice_generator_name: "HmInvoiceGenerator")
+      
+      be_non_invoiced = Factory(:billable_event, billable_eventable: cl2)
+      Factory(:non_invoiced_event, billable_event: be_non_invoiced, invoice_generator_name: "HmInvoiceGenerator")
+      
+      be_new_1 = Factory(:billable_event, billable_eventable: cl1) #skipped because assoc prod already invoiced
+      be_new_2 = Factory(:billable_event, billable_eventable: cl2) 
+      be_new_3 = Factory(:billable_event, billable_eventable: cl2) #skipped because invoices same prod as be_new_2
+
+      r = subject.get_new_billables
+      expect(r[:to_be_invoiced]).to eq [be_new_2]
+      expect(r[:to_be_skipped]).to contain_exactly(be_new_1, be_new_3)
+    end
+  end
+
+  describe "all_new_billables" do
+    let(:prod) { Factory(:product, importer: hm) }
+    let(:classi) { Factory(:classification, product: prod, country: country) }
+    let!(:billable) { Factory(:billable_event, billable_eventable: classi, event_type: "classification_new") }
+
+    it "returns expected result" do
+      expect(subject.all_new_billables).to eq [billable]
+    end
+
+    it "returns no results if classification isn't Canadian" do
+      country.iso_code = "US"; country.save!
+      expect(subject.all_new_billables).to be_empty
+    end
+
+    it "returns no results if event not associated with a classification" do
+      billable.update_attributes(billable_eventable: Factory(:entry))
+      expect(subject.all_new_billables).to be_empty
+    end
+
+    it "returns no results if associated importer isn't H&M" do
+      prod.update_attributes(importer: Factory(:company))
+      expect(subject.all_new_billables).to be_empty
+    end
+
+    it "returns result if billable has an associated invoiced_event from another generator" do
+      Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
+      expect(subject.all_new_billables).to eq [billable]
+    end
+  
+    it "returns no results if billable has an associated invoiced_event from this generator" do
+      Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
+      expect(subject.all_new_billables).to be_empty
+    end
+
+    it "returns result if billable has an associated non_invoiced_event from another generator" do
+      Factory(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
+      expect(subject.all_new_billables).to eq [billable]
+    end
+
+    it "returns no results if billable has an associated non_invoiced_event from this generator" do
+      Factory(:non_invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
+      expect(subject.all_new_billables).to be_empty
+    end
+  end
+
+  describe "partition_by_order_type" do
+    let(:prod2) do 
+      p = Factory(:product, importer: hm)
+      p.update_custom_value! cdef, "0123456\n 2345678"
       p
     end
-    
-    context "H&M classifications" do
 
-      context "CA classifications that haven't been invoiced" do
-
-        it "returns as 'to_be_invoiced' results for classifications with a product of associated with at least one PO number beginning with 1" do
-          cl = Factory(:classification, product: prod, country: country_ca)
-          Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-          results = subject.get_new_billables
-          expect(results[:to_be_invoiced].count).to eq 1
-          expect(results[:to_be_skipped].count).to eq 0
-        end
-
-        it "returns as 'to_be_skipped' any results for classifications without a product associated with at least one PO number beginning with 1" do
-          prod.update_custom_value! cdef, "0123456\n 2345678"
-
-          cl = Factory(:classification, product: prod, country: country_ca)
-          Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-          results = subject.get_new_billables
-          expect(results[:to_be_invoiced].count).to eq 0
-          expect(results[:to_be_skipped].count).to eq 1
-        end
-
-        it "returns no results for CA classifications with a non_invoiced_event" do
-          cl = Factory(:classification, product: prod, country: country_ca)
-          be = Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-          Factory(:non_invoiced_event, billable_event: be, invoice_generator_name: "HMInvoiceGenerator")
-          results = subject.get_new_billables
-          expect(results[:to_be_invoiced].count).to eq 0
-          expect(results[:to_be_skipped].count).to eq 0
-        end
-      end
-
-      it "returns no results for CA classifications that are already invoiced" do
-        cl = Factory(:classification, product: prod, country: country_ca)
-        be = Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-        Factory(:invoiced_event, billable_event: be, invoice_generator_name: "HmInvoiceGenerator")
-        results = subject.get_new_billables
-        expect(results[:to_be_invoiced].count).to eq 0
-        expect(results[:to_be_skipped].count).to eq 0
-      end
-
-      it "returns no results for non-CA classifications that haven't been invoiced" do
-        cl = Factory(:classification, product: prod, country: country_us)
-        Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-        results = subject.get_new_billables
-        expect(results[:to_be_invoiced].count).to eq 0
-        expect(results[:to_be_skipped].count).to eq 0
-      end
-    end
-
-    context "Non-H&M classifications" do
-      let(:prod) { Factory(:product, importer: Factory(:company), unique_identifier: "foo") }
-
-      it "returns no results for CA classifications that haven't been invoiced" do
-        cl = Factory(:classification, product: prod, country: country_ca)
-        Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-        results = subject.get_new_billables
-        expect(results[:to_be_invoiced].count).to eq 0
-        expect(results[:to_be_skipped].count).to eq 0
-      end
-
-      it "returns no results for non-CA classifications that haven't been invoiced" do
-        cl = Factory(:classification, product: prod, country: country_us)
-        Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-        results = subject.get_new_billables
-        expect(results[:to_be_invoiced].count).to eq 0
-        expect(results[:to_be_skipped].count).to eq 0
-      end
-    end
-
-    it "returns no results for non-classifications" do
-      ent = Factory(:entry, importer: hm)
-      Factory(:billable_event, billable_eventable: ent, entity_snapshot: Factory(:entity_snapshot), event_type: "entry_new")
-      results = subject.get_new_billables
-      expect(results[:to_be_invoiced].count).to eq 0
-      expect(results[:to_be_skipped].count).to eq 0
-    end
-
-    it "returns as 'to_be_invoiced' results for invoiced CA classifications that have been processed by a different generator" do
-      cl = Factory(:classification, product: prod, country: country_ca)
-      be = Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-      Factory(:invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
-      results = subject.get_new_billables
-      expect(results[:to_be_invoiced].count).to eq 1
-      expect(results[:to_be_skipped].count).to eq 0
-    end
-
-    it "returns as 'to_be_invoiced' results that have a non_invoiced_event associated with a different generator" do
-      cl = Factory(:classification, product: prod, country: country_ca)
-      be = Factory(:billable_event, billable_eventable: cl, entity_snapshot: Factory(:entity_snapshot), event_type: "classification_new")
-      Factory(:non_invoiced_event, billable_event: be, invoice_generator_name: "FooGenerator")
-      results = subject.get_new_billables
-      expect(results[:to_be_invoiced].count).to eq 1
-      expect(results[:to_be_skipped].count).to eq 0
+    it "splits billables according to whether associated product has at least one PO number beginning with 1" do
+      cl = Factory(:classification, product: prod)
+      cl2 = Factory(:classification, product: prod2)
+      billable = Factory(:billable_event, billable_eventable: cl)
+      billable2 = Factory(:billable_event, billable_eventable: cl2)
+      starts_with_one, doesnt_start_with_one = subject.partition_by_order_type [billable, billable2]
+      expect(starts_with_one).to eq [billable]
+      expect(doesnt_start_with_one).to eq [billable2]
     end
   end
 
@@ -198,6 +184,35 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       ev = NonInvoicedEvent.all.sort.first
       expect(ev.billable_event).to eq be_1
       expect(ev.invoice_generator_name).to eq "HmInvoiceGenerator"
+    end
+  end
+
+  describe "partition_with_unique_product" do
+    it "takes one event per product, marks the rest 'to be skipped'" do
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      be1 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
+      be2 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
+      be3 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p2))
+
+      unique, to_be_skipped = subject.partition_with_unique_product [be1, be2, be3]
+      expect(unique).to eq [be1, be3]
+      expect(to_be_skipped).to eq [be2]
+    end
+  end
+
+  describe "partition_with_uninvoiced_product" do
+    it "takes events belonging to products that have not been previously invoiced, marks the rest 'to be skipped'" do
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      be1 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
+      be2 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p1))
+      Factory(:invoiced_event, billable_event: be2, invoice_generator_name: "HMInvoiceGenerator")
+      be3 = Factory(:billable_event, billable_eventable: Factory(:classification, product: p2))
+
+      uninvoiced, to_be_skipped = subject.partition_with_uninvoiced_product [be1, be2, be3]
+      expect(uninvoiced).to eq [be3]
+      expect(to_be_skipped).to eq [be1, be2]
     end
   end
 
