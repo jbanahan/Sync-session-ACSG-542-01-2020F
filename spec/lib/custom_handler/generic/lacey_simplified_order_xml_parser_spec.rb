@@ -100,8 +100,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       ord.reload
       expect(ord.customer_order_number).to eq 'ABC-12345'
     end
-    it "should find existing vendor by system code (even if name is different)
-        and update name on Company record" do
+    it "should find existing vendor by system code (even if name is different) and update name on Company record" do
       ven = Factory(:company,vendor:true,system_code:'ILSI',name:'x')
       expect{described_class.new.parse_dom(base_dom)}.to_not change(Company.where(vendor:true),:count)
       ven.reload

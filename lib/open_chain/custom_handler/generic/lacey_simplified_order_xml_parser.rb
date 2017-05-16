@@ -79,9 +79,9 @@ module OpenChain; module CustomHandler; module Generic; class LaceySimplifiedOrd
   end
 
   def validate_totals ord, element
-    tl_num = et(element,'TotalLines')
-    olc = ord.order_lines.size
-    if olc.to_s != tl_num
+    tl_num = et(element,'TotalLines').to_i
+    olc = ord.order_lines.length
+    if olc != tl_num
       raise "TotalLines was #{tl_num} but order had #{olc} lines."
     end
 
