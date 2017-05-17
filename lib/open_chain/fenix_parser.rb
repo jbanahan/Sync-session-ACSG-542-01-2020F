@@ -680,8 +680,9 @@ module OpenChain
 
         if fenix_nd_entry
           if !validate_no_transaction_reuse(entry, file_number)
-            # Set the entry to nil if the transaction is being reused...we don't want to update any data in it.
+            # Set the entry and shell_entry to nil if the transaction is being reused...we don't want to update any data in it.
             entry = nil
+            shell_entry = nil
           end
         end
       end
