@@ -19,3 +19,7 @@
 <% end %>
 </table>
 <%= will_paginate @ftp_sessions %>  
+
+<% if @default_display %>
+  <p style="text-align: center;"><b><%=@default_display%></b></p>
+<% end %>

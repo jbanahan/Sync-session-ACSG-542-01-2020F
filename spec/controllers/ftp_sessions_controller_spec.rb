@@ -12,6 +12,13 @@ describe FtpSessionsController do
     it "should be successful" do
       get :index
       expect(response).to be_success
+      expect(assigns(:default_display)).to start_with("By default")
+    end
+
+    it "executes a search" do
+      get :index, {s: "2017-01-01", f: "created_at", c: "sw"}
+      expect(response).to be_success
+      expect(assigns(:default_display)).to be_nil
     end
 
     it "should reject if user isn't sys admin" do

@@ -16,4 +16,8 @@
   </tr>
 <% end %>
 </table>
-<%= will_paginate @sent_email %>  
+<%= will_paginate @sent_email %>
+
+<% if @default_display %>
+  <p style="text-align: center;"><b><%=@default_display%></b></p>
+<% end %>
