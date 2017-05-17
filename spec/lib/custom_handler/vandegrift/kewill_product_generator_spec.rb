@@ -212,6 +212,20 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(importer.last_alliance_product_push_at.to_i).to eq now.to_i
     end
 
+    it "finds product using importer_system_code if given" do
+      product
+      importer.update_attributes! alliance_customer_number: nil, system_code: "SYSCODE"
+      expect_any_instance_of(subject).to receive(:ftp_file)
+
+      now = Time.zone.now
+      Timecop.freeze(now) do 
+        subject.run_schedulable "alliance_customer_number" => "CUST", "importer_system_code": "SYSCODE"
+      end
+      product.reload
+
+      expect(product.sync_records.length).to eq 1
+    end
+
     it "ftps repeatedly until all producs are sent" do
       # Create a second product and then set the max products per file to 1...we should get two files ftp'ed
       product
@@ -231,6 +245,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     it "errors if invalid customer number given" do
       expect { subject.run_schedulable "alliance_customer_number" => "Invalid" }.to raise_error "No importer found with Kewill customer number 'Invalid'."
+    end
+
+    it "errors if invalid system code given" do
+      expect { subject.run_schedulable "alliance_customer_number" => "Invalid", "importer_system_code" => "SYSCODE" }.to raise_error "No importer found with Importer System Code 'SYSCODE'."
     end
 
     it "strips leading zeros on part number" do

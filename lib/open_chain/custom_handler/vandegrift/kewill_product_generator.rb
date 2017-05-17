@@ -35,6 +35,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def initialize alliance_customer_number, opts = {}
     opts = opts.with_indifferent_access
     @alliance_customer_number = alliance_customer_number
+    @importer_system_code = opts[:importer_system_code]
     @custom_where = opts[:custom_where]
     @strip_leading_zeros = opts[:strip_leading_zeros].to_s.to_boolean
     @use_unique_identifier = opts[:use_unique_identifier].to_s.to_boolean
@@ -182,8 +183,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def importer
-    @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
-    raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+    if !@importer_system_code.blank?
+      @importer ||= Company.where(system_code: @importer_system_code).first
+      raise ArgumentError, "No importer found with Importer System Code '#{@importer_system_code}'." unless @importer
+    else
+      @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
+      raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
+    end
 
     @importer
   end
