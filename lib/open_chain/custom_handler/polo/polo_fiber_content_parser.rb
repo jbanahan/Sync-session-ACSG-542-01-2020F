@@ -1,6 +1,7 @@
 require 'digest/md5'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 require 'open_chain/stat_client'
+require 'open_chain/mutable_boolean'
 
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
@@ -88,7 +89,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     begin
       fiber = product.get_custom_value(@cdefs[:fiber_content]).value
       unless fiber.blank?
-        result = parse_fiber_content fiber
+        result = parse_fiber_content(fiber, force_clean_fiber: use_clean_fiber_algorithm?(product))
       end
       failed = false
       status_message = "Passed"
@@ -103,31 +104,25 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       raise e if Rails.env.test?
     end
 
-    # First things, first...make sure the results hash has actually changed values before we bother
-    # writing the results into the custom values.
-    fingerprint = results_fingerprint result, status_message
-
-    xref_fingerprint = DataCrossReference.find_rl_fabric_fingerprint product.unique_identifier
-
-    # If the fingerprints match, don't update anything, just return true as if everything
-    # worked without issue.
-    return true if fingerprint == xref_fingerprint
-
     Lock.with_lock_retry(product) do
-      convert_results_to_custom_values product, result, failed, status_message
-      product.save!
-      DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
-      product.create_snapshot snapshot_user, nil, "Fiber Content Parser"
+      changed = convert_results_to_custom_values(product, result, failed, status_message)
+      if changed
+        product.save!
+        product.create_snapshot snapshot_user, nil, "Fiber Content Parser"
+      end
     end
+
     !failed
   end
 
-  def parse_fiber_content fiber
+  def parse_fiber_content fiber, force_clean_fiber: false
     fiber = preprocess_fiber fiber
     
     footwear = footwear? fiber
 
-    if footwear
+    if force_clean_fiber
+      results = clean_fiber_parse fiber
+    elsif footwear
       results = parse_footwear fiber
     else
       results = non_footwear_parse fiber
@@ -219,8 +214,48 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         end
       end
       
+      results ? {algorithm: "single_non_footwear", results: [results]} : nil
+    end
 
-      results
+    def clean_fiber_parse fiber
+      # Anything that's clean fiber eligable should look like one of the following:
+      # 100% Cotton
+      # 80% Cotton 20% Polyester
+
+      # Components can have any number of /'s...each slash is a distinct component in a set
+
+      # Component 1 100% Cotton / Component 2 100% Polyester
+      # Component 1 80% Cotton 20% Polyester / Component 2 80% Cotton 20% Polyester
+      # Component 1: 100% Cotton / Component 2: 100% Polyester
+
+      components = fiber.split("/").map(&:strip)
+      full_results = []
+      components.each do |component|
+        component_name, fiber = split_component_name(component)
+
+        results = single_line_nonfootwear(fiber)
+        results.delete :algorithm
+        results[:component] = component_name unless component_name.blank?
+        full_results << results
+      end
+
+      {algorithm: "clean_fiber", results: full_results}
+    end
+
+    def split_component_name component
+      # Anything prior to the first numeric percentage we're going to consider the component name..strip it.
+      component_name = ""
+      fiber = component
+      position = 0
+      if (position = (component =~ /\d+(?:\.\d*)?%/)) && position > 0
+        component_name = component[0..position-1].strip
+        if component_name.ends_with?(":")
+          component_name = component_name[0..-2]
+        end
+        fiber = component[position..-1]
+      end
+
+      [component_name, fiber]
     end
 
     def parse_footwear fiber
@@ -237,9 +272,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         results = footwear_trailing_components fiber
       end
 
-      results[:algorithm] = "footwear" if results
-
-      results
+      results ? {algorithm: "footwear", results: [results]} : nil
     end
 
     def single_line_nonfootwear fiber
@@ -251,7 +284,6 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # Fabric
       results = {}
       parse_standard_fiber_string fiber, results
-      results[:algorithm] = "single_non_footwear"
       results
     end
 
@@ -445,45 +477,49 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       fiber_content =~ /\bup{1,}ers?(?:\b|\d)/i && fiber_content =~ /\b(?:(?:soles?)|(?:outsoles?))\b/i
     end
 
-    def invalid_results? results, strip_overages = false
-      raise error("Invalid Fiber Content % format.", results) if results.nil? || results.size == 0
+    def invalid_results? results_container, strip_overages = false
+      every_result = Array.wrap(results_container[:results])
+      raise error("Invalid Fiber Content % format.", results) if every_result.length == 0
 
-      # What we're looking for are the following
-      # 1) Each set of results (fiber_X, type_X, percent_x) has values in each field
-      # 2) The percentage of each type of fiber adds up to 100 (or a mulitiple of 100, since
-      # in certain cases we'll parse out multiples of 100% but then only return the first 100%)
-      percentages = {}
       valid_fibers = all_validated_fabrics
 
-      (1..15).each do |x|
-        fiber, type, percent = all_fiber_fields results, x
+      every_result.each do |results|
+        # What we're looking for are the following
+        # 1) Each set of results (fiber_X, type_X, percent_x) has values in each field
+        # 2) The percentage of each type of fiber adds up to 100 (or a mulitiple of 100, since
+        # in certain cases we'll parse out multiples of 100% but then only return the first 100%)
+        percentages = {}
+        
+        (1..15).each do |x|
+          fiber, type, percent = all_fiber_fields results, x
 
-        # Returns a missing descriptor error if one of the 3 values is blank and one of the other 2 isn't.
-        all_blank = "#{fiber}#{type}#{percent}".blank?
-        next if all_blank
+          # Returns a missing descriptor error if one of the 3 values is blank and one of the other 2 isn't.
+          all_blank = "#{fiber}#{type}#{percent}".blank?
+          next if all_blank
 
-        raise error("Invalid Fiber Content % format.", results) if (fiber.blank? || type.blank? || percent.blank?)
+          raise error("Invalid Fiber Content % format.", results_container) if (fiber.blank? || type.blank? || percent.blank?)
 
-        percentages[type] ||= []
-        p = percent.to_f
-        raise error("Invalid percentage value '#{p}' found.  Percentages must be greater than 0 and less than or equal to 100.", results) if p <= 0
+          percentages[type] ||= []
+          p = percent.to_f
+          raise error("Invalid percentage value '#{p}' found.  Percentages must be greater than 0 and less than or equal to 100.", results_container) if p <= 0
 
-        percentages[type] << p
-      end
+          percentages[type] << p
+        end
 
-      percentages.keys.each do |key|
-        total = percentages[key].inject(:+)
-        raise error("Fabric percentages for all components must add up to 100%.  Found #{total}%", results) if (total % 100) > 0
-      end
+        percentages.keys.each do |key|
+          total = percentages[key].inject(:+)
+          raise error("Fabric percentages for all components must add up to 100%.  Found #{total}%", results_container) if (total % 100) > 0
+        end
 
-      if strip_overages
-        strip_component_overages results
-      end
+        if strip_overages
+          strip_component_overages results
+        end
 
-      # Only validate the fibers after we've stripped the overages.
-      (1..15).each do |x|
-        fiber, *ignore = all_fiber_fields results, x
-        raise error("Invalid fabric '#{fiber}' found.", results) unless fiber.blank? || valid_fabric?(fiber)
+        # Only validate the fibers after we've stripped the overages.
+        (1..15).each do |x|
+          fiber, *ignore = all_fiber_fields results, x
+          raise error("Invalid fabric '#{fiber}' found.", results_container) unless fiber.blank? || valid_fabric?(fiber)
+        end
       end
 
       nil
@@ -520,36 +556,87 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # case (don't leave stale fields behind, it's confusing).  The old fields will be listed in the history
       # if anyone needs to see them
       results = {} unless results
-      clean_fiber_content = {}
+
+      changed = MutableBoolean.new false
+
+      # At this point in time, the Fabric 1-15 fields are ONLY for the primary component, as these all go to MSL+
+      # and they only utilize the first component.
+      first_result = Array.wrap(results[:results]).first
+      first_result = {} unless first_result
 
       (1..15).each do |x|
-        fiber, type, percent = all_fiber_fields results, x
+        fiber, type, percent = all_fiber_fields first_result, x
 
         unless fiber.blank? || percent.blank?
           percent = number_with_precision(percent, precision: 5, strip_insignificant_zeros: true)
-          clean_fiber_content[type] ||= []
-          clean_fiber_content[type] << [fiber, percent]
         end
 
-        update_or_create_cv(product, "fabric_type_#{x}".to_sym, type)
-        update_or_create_cv(product, "fabric_#{x}".to_sym, fiber)
-        update_or_create_cv(product, "fabric_percent_#{x}".to_sym, percent)
+        update_or_create_cv(product, "fabric_type_#{x}".to_sym, type, changed)
+        update_or_create_cv(product, "fabric_#{x}".to_sym, fiber, changed)
+        update_or_create_cv(product, "fabric_percent_#{x}".to_sym, (percent.nil? ? nil : BigDecimal(percent)), changed)
       end
 
-      if parse_failed
-        update_or_create_cfv(product, {}, results)
-      else
-        update_or_create_cfv(product, clean_fiber_content, results)
-      end
-      update_or_create_cv(product, :msl_fiber_failure, parse_failed)
-      update_or_create_cv(product, :msl_fiber_status, status_message)
+      clean_fiber_content = results[:algorithm] == "clean_fiber" ? generate_clean_fiber_content(results, parse_failed) : nil
+      update_or_create_cv(product, :clean_fiber_content,  clean_fiber_content, changed)
+      update_or_create_cv(product, :msl_fiber_failure, parse_failed, changed)
+      update_or_create_cv(product, :msl_fiber_status, status_message, changed)
+
+      changed.value
     end
 
-    def update_or_create_cfv(product, fiber_hash, results)
+    def generate_clean_fiber_content results, parse_failed
+      return nil if parse_failed
+
+      clean_fiber_components = []
+      Array.wrap(results[:results]).each do |result|
+        clean_fiber = ""
+
+        (1..15).each do |x|
+          fiber, type, percent = all_fiber_fields result, x
+          next if fiber.blank? || percent.blank?
+
+          percent = number_with_precision(percent, precision: 5, strip_insignificant_zeros: true)
+
+          clean_fiber << " " if clean_fiber.length > 0
+          clean_fiber << "#{percent}% #{fiber.upcase}"
+        end
+
+        # Prefix the clean_fiber with the component, if there is any
+        if clean_fiber.strip.length > 0
+          clean_fiber = "#{result[:component]}: #{clean_fiber}" if result[:component]
+          clean_fiber_components << clean_fiber
+        end
+        
+      end
+
+      clean_fiber_components.join(" / ")
+    end
+
+    def update_or_create_cv product, cv_sym, value, changed
+      cd = @cdefs[cv_sym]
+      # Only save off values that actually differ
+      if value.nil?
+        # Mark the CV for destruction if the value is nil
+        cv = product.custom_values.find {|v| v.custom_definition_id == cd.id}
+        if cv
+          cv.mark_for_destruction
+          changed.value = true
+        end
+      else
+        existing_value = product.custom_value(cd)
+        if existing_value != value
+          product.find_and_set_custom_value cd, value
+          changed.value = true
+        end
+        
+      end
+      nil
+    end
+
+    def use_clean_fiber_algorithm? product
       hts = nil
       # We only want to deal w/ products that are chapters 61/62...so just find the first
       # classification record with a tariff number.
-      set_record = nil
       product.classifications.each do |c|
         c.tariff_records.each do |t|
           if !t.hts_1.blank?
@@ -557,49 +644,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
             break
           end
         end if hts.nil?
-
-        # Check if the product is a set or not, we're skipping sets
-        if set_record.nil? && c.custom_value(@cdefs[:set_type]).to_s.present?
-          set_record = true
-        end
       end
 
-      return if hts.blank? || (hts =~ /^(61|62)/).nil? || set_record
-
-      footwear = results[:algorithm] == 'footwear'
-      cd = @cdefs[:clean_fiber_content]
-      if fiber_hash.present?
-        clean_fiber_string = ''
-        count = 1
-        fiber_hash.each do |key, value|
-          value.each_with_index do |fiber, index|
-            clean_fiber_string << "#{fiber[1]}% " unless footwear
-            clean_fiber_string << "#{fiber[0].upcase}"
-            #clean_fiber_string << ", " unless index + 1 == value.length
-            clean_fiber_string << " " unless index + 1 == value.length
-          end
-          clean_fiber_string << " #{key.upcase}" unless fiber_hash.count == 1 || count > fiber_hash.length
-          clean_fiber_string << " / " unless count == fiber_hash.length
-          count += 1
-        end
-      else
-        clean_fiber_string = ''
-      end
-
-      product.find_and_set_custom_value cd, clean_fiber_string
-    end
-
-    def update_or_create_cv product, cv_sym, value
-      cd = @cdefs[cv_sym]
-      # Only save off values that actually differ
-      if value.nil?
-        # Mark the CV for destruction if the value is nil
-        cv = product.custom_values.find {|v| v.custom_definition_id == cd.id}
-        cv.mark_for_destruction if cv
-      else
-        product.find_and_set_custom_value cd, value
-      end
-      nil
+      hts.nil? ? false : ( (hts =~ /^(61|62)/).present? )
     end
 
     def xref_value fabric
@@ -625,25 +672,6 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       @all_fabrics
-    end
-
-    def results_fingerprint results, status_message
-      # Some error cases result in missing results, just use a blank hash for these to fingerprint since the
-      # actual fiber 1-15 fields will be blank anyway too.
-      results = {} if results.nil?
-
-      values = []
-      (1..15).each do |x|
-        fiber, type, percent = all_fiber_fields results, x
-        values << results["type_#{x}".to_sym].to_s
-        values << results["fiber_#{x}".to_sym].to_s
-        values << results["percent_#{x}".to_sym].to_s
-      end
-      values << status_message.to_s
-
-      # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
-      # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).
-      Digest::MD5.hexdigest values.join("\n")
     end
 
     def snapshot_user

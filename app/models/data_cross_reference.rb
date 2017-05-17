@@ -23,7 +23,6 @@ class DataCrossReference < ActiveRecord::Base
   LANDS_END_MID ||= 'le_mid'
   RL_FABRIC_XREF ||= 'rl_fabric'
   RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
-  RL_FABRIC_FINGERPRINT ||= 'rl_fabric_fingerprint'
   UA_DUTY_RATE ||= 'ua_duty_rate'
   ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
   ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
@@ -192,14 +191,6 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_rl_fabric fabric
     find_unique where(cross_reference_type: RL_FABRIC_XREF, key: fabric)
-  end
-
-  def self.find_rl_fabric_fingerprint product_unique_identifier
-    find_unique where(cross_reference_type: RL_FABRIC_FINGERPRINT, key: product_unique_identifier)
-  end
-
-  def self.create_rl_fabric_fingerprint! product_unique_identifier, fingerprint
-    add_xref! RL_FABRIC_FINGERPRINT, product_unique_identifier, fingerprint
   end
 
   def self.find_315_milestone entry, event_code
