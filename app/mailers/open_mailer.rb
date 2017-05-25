@@ -426,9 +426,9 @@ EOS
     @errors = errors
     @filename = filename
     @file_type = file_type.blank? ? "Unknown" : file_type
-    @blacklisted_extension = File.extname(file) if extension_blacklisted? file 
-    
-    local_attachments = process_attachments(file, email_to)
+    # file may be nil if it's too large to be processed
+    @blacklisted_extension = File.extname(file) if file && extension_blacklisted?(file)
+    local_attachments = file ? process_attachments(file, email_to) : []
 
     m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|
       format.html

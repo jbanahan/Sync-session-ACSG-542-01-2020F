@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   def self.send_s3_document_to_kewill bucket, key, version
     Lock.acquire("#{bucket}-#{key}-#{version}") do
       OpenChain::S3.download_to_tempfile(bucket, key, version: version, original_filename: File.basename(key)) do |file|
-        file_info = validate_file(key)
+        file_info = validate_file(key, file)
 
         if file_info[:errors].blank?
           # All's good...ftp this file to kewill imaging...use the current timestamp as the comment field so that any files that would be named
@@ -40,7 +40,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
           #  or possibly google drive - where the client fetches the owner email from)
           email_to = OpenMailer::BUG_EMAIL if email_to.blank?
 
-          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file_info[:attachment_type], file.original_filename, file).deliver!
+          # Don't attach the email if it's too large...no point in trying to send a 70MB file.
+          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file_info[:attachment_type], file.original_filename, file_info[:too_large] ? nil : file).deliver!
         end
       end
 
@@ -52,7 +53,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     nil
   end
 
-  def self.validate_file file_path
+  def self.validate_file file_path, file
     path = Pathname.new file_path
     filename = File.basename file_path
     file_info = validate_filename filename 
@@ -63,11 +64,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     doc_code = file_info[:attachment_type_obj].try(:kewill_document_code)
 
     if doc_code.blank?
-      file_info[:errors] << "No Kewill Imaging document code is configured for #{attachment_type}."
+      file_info[:errors] << "No Kewill Imaging document code is configured for '#{attachment_type}'."
     else
       # If the document type does not have a kewill_attachment_type value...then it's been set up wrong...raise an error
       file_info[:errors] << "Attachment Type '#{attachment_type}' is missing a Kewill Attachment Type cross-reference value.  Please forward this error to IT Support." if file_info[:attachment_type_obj].kewill_attachment_type.blank?
       file_info[:document_code] = doc_code
+    end
+
+    if file.size > 70.megabytes
+      file_info[:errors] << "File is larger than 70 Megabytes.  Please forward this error to IT Support for help loading this file."
+      file_info[:too_large] = true
     end
 
     file_info
@@ -82,13 +88,22 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     value = {errors: []}
     if matches.try(:length) == 3
       value[:entry_number] = matches[0].to_s.strip
+
       # For the customer number...strip everything after the first space
-      if matches[1].to_s.strip =~ /^(\S*)\s/
-        value[:customer_number] = $1
-      else
-        value[:customer_number] = matches[1].to_s.strip
+      customer_number = matches[1].to_s.strip
+      if customer_number =~ /^(\S*)\s/
+        customer_number = $1
+      end
+
+      # Windows by default hides filename extensions, so people often don't realize when they're renaming files and they include
+      # .pdf at the end of the file, the file's actual name is file.pdf.pdf.  In this case, we can just handle this.
+      # It would be an issue if there were legitimately periods in any customer names...but there's not, so we can just keep
+      # stripping off extensions on the customer number segment until we don't hae any to strip.
+      if customer_number =~ /([^.]+)\./
+        customer_number = $1
       end
       
+      value[:customer_number] = customer_number
       value[:extension] = matches[2].to_s.strip
 
       if !["pdf", "tif"].include? value[:extension].to_s.downcase 
@@ -98,7 +113,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
       entry = Entry.where(customer_number: value[:customer_number], broker_reference: value[:entry_number], source_system: Entry::KEWILL_SOURCE_SYSTEM).first
       value[:entry] = entry
       if entry.nil?
-        value[:errors] << "No entry found for File # #{value[:entry_number]} under Customer account #{value[:customer_number]}."
+        value[:errors] << "No entry found for File # '#{value[:entry_number]}' under Customer account '#{value[:customer_number]}'."
       end
 
     else

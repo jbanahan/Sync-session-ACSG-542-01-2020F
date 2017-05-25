@@ -138,6 +138,33 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
         expect(KeyJsonItem.entry_document_counts("12345").first).to be_nil
       end
+
+      it "allows user to duplicate the filename extension" do
+        expect(subject).to receive(:ftp_file)
+        
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf.pdf", version: "version", original_filename: "12345 - CUST.pdf.pdf").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf.pdf", "version")
+
+        subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf.pdf", "version")
+      end
+
+
+      it "errors if file is over 70 MB" do
+        expect(downloaded_file).to receive(:size).and_return 71.megabytes
+
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", version: "version", original_filename: "12345 - CUST.txt").and_yield downloaded_file
+        expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
+        expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version").and_return "you@there.com"
+
+        subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.txt", "version")
+
+        email = ActionMailer::Base.deliveries.first
+        expect(email).not_to be_nil
+
+        expect(email.body.raw_source).to include ERB::Util.html_escape("File is larger than 70 Megabytes.  Please forward this error to IT Support for help loading this file.")
+        # Make sure we're not attaching 70+ megabyte files to emails.
+        expect(email.attachments.size).to eq 0
+      end
     end
 
     it "validates data and emails errors back to file owner" do
@@ -155,9 +182,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       expect(email.subject).to eq "[VFI Track] Failed to load file 12345 - CUST.txt"
       expect(email.attachments["12345 - CUST.txt"]).not_to be_nil
       expect(email.attachments["12345 - CUST.txt"].read).to eq "Content"
-      expect(email.body.raw_source).to include "No Kewill Imaging document code is configured for Document Type."
+      expect(email.body.raw_source).to include ERB::Util.html_escape("No Kewill Imaging document code is configured for 'Document Type'.")
       expect(email.body.raw_source).to include ERB::Util.html_escape("Kewill Imaging does not accept 'txt' file types.")
-      expect(email.body.raw_source).to include "No entry found for File # 12345 under Customer account CUST."
+      expect(email.body.raw_source).to include ERB::Util.html_escape("No entry found for File # '12345' under Customer account 'CUST'.")
     end
 
     it "errors if file name is invalid and emails owner" do
