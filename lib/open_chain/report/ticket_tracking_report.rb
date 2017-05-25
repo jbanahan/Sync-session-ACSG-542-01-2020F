@@ -1,12 +1,12 @@
 module OpenChain; module Report; class TicketTrackingReport
   include OpenChain::Report::ReportHelper
 
-  COLUMN_NAMES ||= ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 
+  COLUMN_NAMES ||= ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)', 'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 
                     'Issue Created', 'Issue Resolved', 'Broker Reference', 'Entry Number', 'PO Numbers', 'Part Numbers', 'Product Lines', 
                     'Vendors', 'MIDs', 'Countries of Origin', 'Master Bills', 'House Bills', 'Container Numbers', 'Release Date', 
                     'Link to Jira issue', 'Link to VFI Track entry']
 
-  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"]                  
+  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"]         
 
 
   def self.permission? user
@@ -64,17 +64,17 @@ module OpenChain; module Report; class TicketTrackingReport
     vfi_hash = hash_results_by_broker_ref(vfi_result)
     jira_result.each do |jr| 
       #move the ticketing_system_code from the jira result to the vfi result
-      jira_broker_ref = jr[11]
+      jira_broker_ref = jr[13]
       if vfi_hash[jira_broker_ref]
-        vfi_hash[jira_broker_ref][11] = jr.delete_at(12)
+        vfi_hash[jira_broker_ref][11] = jr.delete_at(14)
         r << (jr + vfi_hash[jira_broker_ref])
       else
         # There's no VFI Data to add, but we need add the jira link still
-        jira_link = jr.delete_at(12)
+        jira_link = jr.delete_at(14)
         r << jr + [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, jira_link]
       end
     end
-    r.sort_by{|r| r[9]}
+    r.sort_by{|res| res[11]}
   end
 
   def hash_results_by_broker_ref vfi_result
@@ -84,7 +84,7 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def extract_broker_refs jira_result
-    jira_result.map { |jr| jr[11] }.compact.uniq
+    jira_result.map { |jr| jr[13] }.compact.uniq
   end
   
   def comments_lambda 
@@ -95,12 +95,16 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def jira_url_lambda
-    lambda { |result_set_row, raw_column_value|
+    lambda do |result_set_row, raw_column_value|
       issue_num = result_set_row[0]
       ticketing_system_code = raw_column_value
       url = "http://ct.vfitrack.net/browse/#{ticketing_system_code}-#{issue_num}"
       XlsMaker.create_link_cell url
-    }
+    end
+  end
+
+  def list_format_lambda
+    lambda { |result_set_row, raw_column_value| raw_column_value.to_s.squish.split(/\s/).join(", ") }
   end
 
   def conversions(time_zone)
@@ -108,6 +112,8 @@ module OpenChain; module Report; class TicketTrackingReport
      "Issue Resolved" => datetime_translation_lambda(time_zone), 
      "Release Date" => datetime_translation_lambda(time_zone),
      "Comments" => comments_lambda,
+     "Order Number(s)" =>list_format_lambda,
+     "Part Number(s)" =>list_format_lambda,
      "Link to VFI Track entry" => weblink_translation_lambda(CoreModule::ENTRY),
      "Link to Jira issue" => jira_url_lambda}
   end
@@ -118,6 +124,8 @@ module OpenChain; module Report; class TicketTrackingReport
              t.pname AS 'Issue Type', 
              s.pname AS 'Status', 
              i.SUMMARY AS 'Summary', 
+             ordnum.STRINGVALUE AS 'Order Number(s)',
+             part.STRINGVALUE AS 'Part Number(s)',
              i.DESCRIPTION AS 'Description', 
              i.id AS 'Comments', 
              i.ASSIGNEE 'Assignee', 
@@ -134,6 +142,8 @@ module OpenChain; module Report; class TicketTrackingReport
         LEFT OUTER JOIN jiradb.jiraaction a on a.issueid = i.id AND a.actiontype = 'comment'
         LEFT OUTER JOIN jiradb.customfieldvalue ship ON ship.customfield = 10003 AND ship.issue = i.id
         LEFT OUTER JOIN jiradb.customfieldvalue eta ON eta.customfield = 10004 AND eta.issue = i.id
+        LEFT OUTER JOIN jiradb.customfieldvalue ordnum ON ordnum.customfield = 10200 AND ordnum.issue = i.id
+        LEFT OUTER JOIN jiradb.customfieldvalue part ON part.customfield = 10002 AND part.issue = i.id
       WHERE p.pkey IN (#{project_keys.map{|c| ActiveRecord::Base.sanitize c}.join(', ')})
         AND i.CREATED >= '#{start_date}' AND i.created < '#{end_date}'
       GROUP BY i.id
