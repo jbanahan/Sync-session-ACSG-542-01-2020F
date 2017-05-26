@@ -10,46 +10,63 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
 E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E0002450            SHAHI EXPORTS PVT LTD               0799            0009            201403282014032820140509OCHENNAI             N                   00098500                            SHAHI EXPORTS PVT LTD              91 E0002450-F001       IN0002580    WT SS LACE                                                                      SEATTLE DIRECT SOURCING  X
 E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E0002450            SHAHI EXPORTS PVT LTD               0799            0009            201403282014032820140509OCHENNAI             N                   00098501                            SHAHI EXPORTS PVT LTD              91 E0002450-F001       IN0002031    PLS SS LACE                                                                     SEATTLE DIRECT SOURCING  X"
   end
-  it "should create orders" do
-    expect { described_class.new.process(@data) }.to change(Order,:count).from(0).to(2)
-    ord = Order.find_by_order_number('EDDIE-E0442642-0011')
-    expect(ord.customer_order_number).to eq 'E0442642-0011'
-    expect(ord.vendor.name).to eq 'SHAHI EXPORTS PVT LTD'
-    expect(ord.vendor.system_code).to eq 'EDDIE-E0002450'
-    expect(ord.importer).to eq @eddie
-    expect(ord.order_lines.count).to eq 4
-    ol = ord.order_lines.order(:line_number).first
-    expect(ol.product.unique_identifier).to eq 'EDDIE-009-8498'
-    expect(ol.quantity).to eq 11134
-  end
-  it "should create EBCC orders under EBCC" do
-    # Use the two canada business codes as the two for the orders meaning that
-    # both orders should be created under EBCC
-    lines = @data.lines
-    lines.each_with_index do |ln,i|
-      ln.sub!('0003','0002')
-      ln.sub!('0011','0004')
+  describe "parse" do
+    subject { described_class }
+
+    context "with disabled delayed jobs", :disable_delayed_jobs do 
+      it "should create orders" do
+        expect { subject.parse(@data) }.to change(Order,:count).from(0).to(2)
+        ord = Order.find_by_order_number('EDDIE-E0442642-0011')
+        expect(ord.customer_order_number).to eq 'E0442642-0011'
+        expect(ord.vendor.name).to eq 'SHAHI EXPORTS PVT LTD'
+        expect(ord.vendor.system_code).to eq 'EDDIE-E0002450'
+        expect(ord.importer).to eq @eddie
+        expect(ord.order_lines.count).to eq 4
+        ol = ord.order_lines.order(:line_number).first
+        expect(ol.product.unique_identifier).to eq 'EDDIE-009-8498'
+        expect(ol.quantity).to eq 11134
+      end
+      it "should create EBCC orders under EBCC" do
+        # Use the two canada business codes as the two for the orders meaning that
+        # both orders should be created under EBCC
+        lines = @data.lines
+        lines.each_with_index do |ln,i|
+          ln.sub!('0003','0002')
+          ln.sub!('0011','0004')
+        end
+        expect{subject.parse lines.join("")}.to change(Order.where(importer_id:@ebcc.id),:count).from(0).to(2)
+      end
+      it "should find existing product" do
+        p = Factory(:product,unique_identifier:'EDDIE-009-8498',importer:@eddie)
+        subject.parse(@data)
+        expect(Order.find_by_order_number('EDDIE-E0442642-0011').order_lines.find_by_product_id(p.id)).not_to be_nil
+      end
+      it "should delete and rebuild lines on existing order" do
+        p = Factory(:product,unique_identifier:'EDDIE-009-9999',importer:@eddie)
+        line_to_delete = Factory(:order_line,product:p,order:Factory(:order,importer:@eddie,order_number:'EDDIE-E0442642-0011'))
+        expect{subject.parse(@data)}.to change(OrderLine,:count).from(1).to(5)
+        ord = line_to_delete.order
+        ord.reload
+        expect(ord.order_lines.count).to eq 4
+        expect(ord.order_lines.find_by_product_id(p.id)).to be_nil
+      end
+      it "should use existing vendor" do
+        sys_code = "EDDIE-E0002450"
+        vendor = Factory(:company,vendor:true,system_code:sys_code)
+        subject.parse @data
+        expect(Order.find_by_order_number('EDDIE-E0442642-0011').vendor).to eq vendor
+      end
     end
-    expect{described_class.new.process lines.join("")}.to change(Order.where(importer_id:@ebcc.id),:count).from(0).to(2)
+
+    context "without delayed jobs disabled" do
+      it "delays processing of every set of order lines" do
+        expect(subject).to receive(:process_lines).with([@data.lines[0]])
+        expect(subject).to receive(:process_lines).with(@data.lines[1..-1])
+
+        expect(subject).to receive(:delay).exactly(2).times.and_return subject
+        subject.parse @data
+      end
+    end
   end
-  it "should find existing product" do
-    p = Factory(:product,unique_identifier:'EDDIE-009-8498',importer:@eddie)
-    described_class.new.process(@data)
-    expect(Order.find_by_order_number('EDDIE-E0442642-0011').order_lines.find_by_product_id(p.id)).not_to be_nil
-  end
-  it "should delete and rebuild lines on existing order" do
-    p = Factory(:product,unique_identifier:'EDDIE-009-9999',importer:@eddie)
-    line_to_delete = Factory(:order_line,product:p,order:Factory(:order,importer:@eddie,order_number:'EDDIE-E0442642-0011'))
-    expect{described_class.new.process(@data)}.to change(OrderLine,:count).from(1).to(5)
-    ord = line_to_delete.order
-    ord.reload
-    expect(ord.order_lines.count).to eq 4
-    expect(ord.order_lines.find_by_product_id(p.id)).to be_nil
-  end
-  it "should use existing vendor" do
-    sys_code = "EDDIE-E0002450"
-    vendor = Factory(:company,vendor:true,system_code:sys_code)
-    described_class.new.process @data
-    expect(Order.find_by_order_number('EDDIE-E0442642-0011').vendor).to eq vendor
-  end
+  
 end

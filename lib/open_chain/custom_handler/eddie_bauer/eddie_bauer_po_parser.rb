@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
   end
 
   def self.parse data, opts = {}
-    self.new.process data
+    self.process data
   end
 
   def initialize
@@ -16,24 +16,27 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
     raise "Can't find company with system code EBCC" unless @ebcc
   end
 
-  def process data
+  def self.process data
     lines = []
     last_po = nil
     data.lines.each do |ln|
       raw_po = ln[0,14]
       if last_po && last_po != raw_po
-        process_lines lines
+        self.delay.process_lines lines
         lines = []
       end
       last_po = raw_po
       lines << ln
     end
     if !lines.empty?
-      process_lines lines
+      self.delay.process_lines lines
     end
   end
 
-  private
+  def self.process_lines lines
+    self.new.process_lines lines
+  end
+
   def process_lines lines
     products = find_or_create_products lines
 
@@ -50,6 +53,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
     end
   end
 
+  private
   def find_or_create_products lines
     products = {}
     lines.each do |line|
