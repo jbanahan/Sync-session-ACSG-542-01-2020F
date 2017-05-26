@@ -66,7 +66,11 @@ module ValidatesFieldFormat
         end
       else
         self.rule_attributes.each_pair do |uid, attrs|
-          @expressions[ModelField.find_by_uid(uid)] = attrs
+          mf = ModelField.find_by_uid(uid)
+          # If model field is blank, we likely have a flag attribute set for the expression...so just skip it
+          next if mf.blank?
+
+          @expressions[mf] = attrs
 
           conditions = attrs.delete 'if'
           Array.wrap(conditions).each do |condition|
