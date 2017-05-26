@@ -243,8 +243,7 @@ class OpenChain::AllianceImagingClient
         att.attachment_type = file_data["doc_desc"]
         att.source_system_timestamp = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(file_data["doc_date"]) unless file_data["doc_date"].blank?
 
-        if file_data["public"].to_s != "true"
-          # A value of true is the only thing that will allow the image to not be private
+        if !file_data["public"].to_s.to_boolean
           att.is_private = true
         end
 

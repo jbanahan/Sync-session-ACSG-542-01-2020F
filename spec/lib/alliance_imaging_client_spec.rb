@@ -875,5 +875,17 @@ ERR
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
 
+    it "accepts 1 as a value for public attachments" do
+      @message["public"] = "1"
+      r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+      expect(r[:attachment].is_private).to be_nil
+    end
+
+    it "uses any other value of 'public' other than true/1 to make the attachment private" do
+      @message["public"] = ""
+      r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+      expect(r[:attachment].is_private).to eq true
+    end
+
   end
 end
