@@ -66,23 +66,23 @@ $(function() {
   <div class="release-date">
     <div class="row" style="line-height: 2.5">
       <div class="col-md-1"><%= radio_button_tag(:range_field, "first_release_date", checked: true) %></div>
-      <div class="col-md-2"><label class="control-label" for="start_release_date">First Release Date on or after:</label></div>
-      <div class="col-md-3"><%=text_field_tag :start_release_date,"", :class=>'form-control isdate'%></div>
+      <div class="col-md-3"><label class="control-label" for="start_release_date">First Release Date on or after:</label></div>
+      <div class="col-md-2"><%=text_field_tag :start_release_date,"", :class=>'form-control isdate'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-2 col-md-offset-1"><label class="control-label" for="end_release_date">and before: </label></div>
-      <div class="col-md-3"><%=text_field_tag :end_release_date, "", :class=>'form-control isdate' %></div>
+      <div class="col-md-3 col-md-offset-1"><label class="control-label" for="end_release_date">and before: </label></div>
+      <div class="col-md-2"><%=text_field_tag :end_release_date, "", :class=>'form-control isdate' %></div>
     </div>
   </div>
   <br>
   <div class="fiscal-date">
     <div class="row" style="line-height: 2.5">
       <div class="col-md-1"><%= radio_button_tag(:range_field, "fiscal_date") %></div>
-      <div class="col-md-2"><label class="control-label">Fiscal Period on or after:</label></div>
+      <div class="col-md-3"><label class="control-label">Fiscal Period on or after:</label></div>
       <div class="col-md-2"><%=text_field_tag :start_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-2 col-md-offset-1"><label class="control-label">and before: </label></div>
+      <div class="col-md-3 col-md-offset-1"><label class="control-label">and before: </label></div>
       <div class="col-md-2"><%=text_field_tag :end_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
     </div>
   </div>

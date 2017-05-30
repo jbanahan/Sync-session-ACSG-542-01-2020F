@@ -10,14 +10,15 @@ class Report
   end
   
   def query cdefs
-    cdef_id = cdefs[:ord_line_wholesale_unit_price].id
+    unit_price_cdef_id = cdefs[:ord_line_wholesale_unit_price].id
+    ref_cdef_id = cdefs[:prod_reference_number].id
     <<-SQL
-      SELECT #{invoice_value_brand('o', 'cil', cdef_id)} AS 'Invoice Value - Brand', 
+      SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id)} AS 'Invoice Value - Brand', 
              #{invoice_value_7501('cil')} AS 'Invoice Value - 7501', 
              #{invoice_value_contract('cil')} AS 'Invoice Value - Contract', 
              #{rounded_entered_value('cit')} AS 'Rounded Entered Value', 
-             #{unit_price_brand('o', 'cil', cdef_id)} AS 'Unit Price - Brand', 
-             #{unit_price_po('o', 'cil')} AS 'Unit Price - PO', 
+             #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id)} AS 'Unit Price - Brand', 
+             #{unit_price_po('o', 'cil', ref_cdef_id)} AS 'Unit Price - PO', 
              #{unit_price_7501('cil')} AS 'Unit Price - 7501'
       FROM commercial_invoices ci
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
@@ -31,20 +32,31 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
   let(:report) { Report.new }
   
   before do
+    @cdefs = self.class.prep_custom_definitions [:ord_line_wholesale_unit_price, :prod_reference_number]
     @ci = Factory(:commercial_invoice)
     @cil = Factory(:commercial_invoice_line, commercial_invoice: @ci, quantity: 3, part_number: "part num", po_number:'po num', contract_amount: 4, value: 2)
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, entered_value: 5.5)
     @p = Factory(:product, unique_identifier: "ASCENA-part num")
+    @p.update_custom_value!(@cdefs[:prod_reference_number], "part num")
     @o = Factory(:order, order_number: "ASCENA-po num")
     @ol = Factory(:order_line, order: @o, product: @p, price_per_unit: 6)
-    @cdefs = self.class.prep_custom_definitions [:ord_line_wholesale_unit_price]
     @ol.update_custom_value!(@cdefs[:ord_line_wholesale_unit_price], 7)
   end
 
-  it "returns expected query" do
+  it "returns expected results when products are linked by unique_id" do
     result = report.run_query @cdefs
     expect(result.columns).to eq ["Invoice Value - Brand", "Invoice Value - 7501", "Invoice Value - Contract", "Rounded Entered Value", 
                                   "Unit Price - Brand", "Unit Price - PO", "Unit Price - 7501"]
+    expect(result.count).to eq 1
+    expect(result.first).to eq(
+      {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4, "Rounded Entered Value" => 6, 
+       "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3,6)})                                  
+  end
+
+  it "returns expected results when products are linked by reference number" do
+    @p.update_attributes(unique_identifier: "foo")
+
+    result = report.run_query @cdefs
     expect(result.count).to eq 1
     expect(result.first).to eq(
       {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4, "Rounded Entered Value" => 6, 

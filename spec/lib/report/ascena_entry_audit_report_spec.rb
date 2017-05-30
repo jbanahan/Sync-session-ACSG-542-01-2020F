@@ -9,7 +9,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   let(:date_3) { DateTime.new(2016,03,17) }
   let(:date_4) { DateTime.new(2016,03,18) }
   let(:date_5) { DateTime.new(2016,03,19) }
-  let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price] }
+  let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price, :prod_reference_number] }
   
   let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Duty Due Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'Container Count', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'MID Supplier Name', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Invoice Value - Brand', 'Invoice Value - 7501', 'Invoice Value - Contract', 'Entered Value', 'Rounded Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Unit Price - Brand', 'Unit Price - PO', 'Unit Price - 7501', 'Duty Savings - NDC', 'Duty Savings - First Sale', 'First Sale Flag', 'Web Link'] }
 
