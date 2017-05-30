@@ -162,6 +162,12 @@ describe SurveysController do
       expect(q.require_comment).to be_falsey
       expect(q.require_attachment).to be_falsey
     end
+    it "should not change the rank of questions that already have a rank" do
+      q = @s.questions.create!(content: "Sample content", choices:"a\nb")
+      q.save!
+      post :update, {id: @s.id, survey: {name: 'survey name', questions_attributes: {q.id => {id: q.id, content: "Sample content"}}}}
+      expect(Question.first.rank).to eql(0)
+    end
     it 'should allow questions to have attachments' do
       q = @s.questions.create!(content: "Sample content", choices:"a\nb")
       q.save!
@@ -183,6 +189,17 @@ describe SurveysController do
       expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(Survey.first)}.to_json)
       expect(Survey.first.name).to eq 'abc'
       expect(Survey.first.company_id).to eq @u.company_id
+    end
+    it "should set the rank of new questions" do
+      post :create, {:survey=>{:name=>'abc', :questions_attributes=>
+          {"1496153505004"=>
+               {"content"=>"It's a question",
+                "choices"=>"blah",
+                "rank"=>"",
+                "comment_required_for_choices"=>"",
+                "attachment_required_for_choices"=>""
+         }}}}
+      expect(Question.first.rank).to eql(0)
     end
     it "should set company_id based on current_user not parameter" do
       post :create, {:survey=>{:name=>'abc',:company_id => (@u.company_id+1)}} 

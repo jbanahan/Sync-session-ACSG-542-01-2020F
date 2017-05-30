@@ -78,13 +78,6 @@ class SurveysController < ApplicationController
   def update
     begin
       #inject false warnings where not submitted
-      if params[:survey] && params[:survey][:questions_attributes]
-        params[:survey][:questions_attributes].each do |k,v|
-          v[:warning]="" unless v[:warning]
-          v[:require_comment]="" unless v[:require_comment]
-          v[:require_attachment]="" unless v[:require_attachment]
-        end
-      end
       s = Survey.find params[:id]
       if !s.can_edit? current_user
         add_flash :errors, "You cannot edit this survey."
@@ -93,6 +86,7 @@ class SurveysController < ApplicationController
         add_flash :errors, "You cannot edit a survey that has already been sent."
         return
       end
+      question_validation
       s.update_attributes(params[:survey])
       errors_to_flash s unless s.errors.empty?
     rescue => e
@@ -103,12 +97,27 @@ class SurveysController < ApplicationController
       render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
     end
   end
+
+  def question_validation
+    if params[:survey] && params[:survey][:questions_attributes]
+      counter = 0
+      params[:survey][:questions_attributes].each do |k, v|
+        v[:rank] = counter unless v[:rank].present?
+        v[:warning]="" unless v[:warning]
+        v[:require_comment]="" unless v[:require_comment]
+        v[:require_attachment]="" unless v[:require_attachment]
+        counter += 1
+      end
+    end
+  end
+
   def create
     begin
       if !current_user.edit_surveys?
         add_flash :errors, "You do not have permission to edit surveys."
         return
       end
+      question_validation
       s = Survey.new(params[:survey])
       s.company_id = current_user.company_id
       s.created_by = current_user
