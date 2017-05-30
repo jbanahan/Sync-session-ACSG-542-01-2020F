@@ -43,6 +43,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
       expect(o.order_number).to eq 'ABC12345'
       expect(o.customer_order_number).to eq 'ABC-12345'
       expect(o.order_date.strftime('%Y-%m-%d')).to eq '2015-07-31'
+      expect(o.customer_order_status).to eq 'Open'
       expect(o.last_exported_from_source.iso8601).to eq '2015-08-31T17:26:00Z'
       expect(o.mode).to eq 'Ocean'
       expect(o.ship_window_start).to eq Date.new(2015,8,15)

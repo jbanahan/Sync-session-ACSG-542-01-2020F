@@ -32,6 +32,7 @@ module OpenChain; module CustomHandler; module Generic; class LaceySimplifiedOrd
       ord.vendor = vendor
       set_attribute_if_sent(ord,:customer_order_number,root,'CustomerOrderNumber')
       set_attribute_if_sent(ord,:order_date,root,'OrderDate')
+      set_attribute_if_sent(ord,:customer_order_status,root,'CustomerOrderStatus')
       set_attribute_if_sent(ord,:last_exported_from_source,root,'SystemExtractDate')
       set_attribute_if_sent(ord,:mode,root,'Mode')
       set_attribute_if_sent(ord,:ship_window_start,root,'ShipWindowStartDate')

@@ -6,6 +6,7 @@
   <CustomerOrderNumber>ABC-12345</CustomerOrderNumber>
   <OrderDate>2015-07-31</OrderDate>
   <SystemExtractDate>2015-08-31T13:26:00-04:00</SystemExtractDate>
+  <CustomerOrderStatus>Open</CustomerOrderStatus>
   <Mode>Ocean</Mode>
   <ShipWindowStartDate>2015-08-15</ShipWindowStartDate>
   <ShipWindowEndDate>2015-08-22</ShipWindowEndDate>
