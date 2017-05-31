@@ -26,7 +26,7 @@ module OpenChain; module Report; class FenixCurrencyRatesReport
   def get_data_conversions run_by, settings
     {
       'der' => fenix_date_conversion,
-      'er' => decimal_conversion(decimal_offset: 6, decimal_places: 6),
+      'er' => decimal_conversion(decimal_places: 6),
     }
   end
 
