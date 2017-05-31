@@ -58,11 +58,11 @@ module OpenChain; module Report; module SqlProxyDataReport
     end
   end
 
-  # This method receives the posted results of a sql_proxy alliance query and turns them into a spreadsheet
+  # This method receives the posted results of a sql_proxy query and turns them into a spreadsheet
   # returning the data as a tempfile.  
   def process_results run_by, results, settings
     # This is going to be the main method to extend if you need to make any major adjustments to how you process the query results
-    # returned by the sql_proxy alliance query.
+    # returned by the sql_proxy query.
 
     # If you don't override this method, then you must implement the folowing methods: column_headers, worksheet_name, report_filename_prefix
     sheet_name = worksheet_name run_by, settings
@@ -81,7 +81,7 @@ module OpenChain; module Report; module SqlProxyDataReport
   end
 
   module ClassMethods
-    def alliance_report?
+    def sql_proxy_report?
       true
     end
 
@@ -90,7 +90,7 @@ module OpenChain; module Report; module SqlProxyDataReport
       self.new
     end
 
-    def process_alliance_query_details run_by, results, settings
+    def process_sql_proxy_query_details run_by, results, settings
       new_instance(run_by, results, settings).process_results run_by, results, settings
     end
 
@@ -98,13 +98,13 @@ module OpenChain; module Report; module SqlProxyDataReport
       raise "#{self.name} must implement the method 'sql_proxy_query_name'." unless self.respond_to?(:sql_proxy_query_name)
 
       # This is solely for testing purposes...
-      client = settings['sql_proxy_client'].nil? ? OpenChain::KewillSqlProxyClient.new : settings['sql_proxy_client']
+      client = settings['sql_proxy_client'].nil? ?  sql_proxy_client : settings['sql_proxy_client']
 
       # Fill in the report class value so the postback controller knows which report to pass the results back to
       query_context = {'report_result_id' => settings['report_result_id']}
 
       # By default, just pass the settings value straight to the sql proxy call (this implies that your query params in sql proxy
-      # match exactly with the settings keys and the values are the expected datatypes in the alliance query)
+      # match exactly with the settings keys and the values are the expected datatypes in the sql_proxy query)
       parameters = nil
       if self.respond_to?(:sql_proxy_parameters)
         parameters = self.sql_proxy_parameters(run_by, settings)
@@ -119,9 +119,13 @@ module OpenChain; module Report; module SqlProxyDataReport
       end
 
       # This ends the first part of the report by posting the query data to the sql_proxy.  sql_proxy will then post the 
-      # sql results back as json to the AllianceGenericReportsController class...which then passes control through to 
-      # the ReportResult#continue_alliance_report method (and from there to process_alliance_query_details)
+      # sql results back as json to the SqlProxyPostbacksController class...which then passes control through to 
+      # the ReportResult#continue_sql_proxy_report method (and from there to process_sql_proxy_query_details)
       client.report_query self.sql_proxy_query_name(run_by, settings), parameters, query_context
+    end
+
+    def sql_proxy_client
+      OpenChain::KewillSqlProxyClient.new
     end
 
   end

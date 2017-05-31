@@ -39,8 +39,8 @@ class ReportResult < ActiveRecord::Base
       :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id], email_to: inner_opts[:email_to]
     )
     # The lower the priority the quicker dj picks these up from the queue - we want these done right away since they're user init'ed.
-    if report_class.respond_to?(:alliance_report?) && report_class.alliance_report?
-      rr.delay(:priority=>-1).execute_alliance_report
+    if report_class.respond_to?(:sql_proxy_report?) && report_class.sql_proxy_report?
+      rr.delay(:priority=>-1).execute_sql_proxy_report
     else
       rr.delay(:priority=>-1).execute_report
     end
@@ -85,7 +85,7 @@ class ReportResult < ActiveRecord::Base
     end
   end
 
-  def execute_alliance_report
+  def execute_sql_proxy_report
     User.run_with_user_settings(run_by) do
       self.update_attributes(:status=>"Running")
       settings = ActiveSupport::JSON.decode(self.settings_json)
@@ -95,14 +95,14 @@ class ReportResult < ActiveRecord::Base
     fail_report e
   end
 
-  def continue_alliance_report results
+  def continue_sql_proxy_report results
     User.run_with_user_settings(run_by) do
       local_file = nil
       begin
         self.update_attributes(:status=>"Running")
         settings = ActiveSupport::JSON.decode(self.settings_json)
         results = results.is_a?(String) ? ActiveSupport::JSON.decode(results) : results
-        local_file = self.report_class.constantize.process_alliance_query_details run_by, results, settings
+        local_file = self.report_class.constantize.process_sql_proxy_query_details run_by, results, settings
         complete_report local_file
       rescue => err
         fail_report err

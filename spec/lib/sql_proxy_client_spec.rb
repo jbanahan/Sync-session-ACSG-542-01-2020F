@@ -1,13 +1,13 @@
 require 'spec_helper'
 
 describe OpenChain::SqlProxyClient do
-  let (:json_client) { double("OpenChain::JsonHttpClient") }
+  let (:json_client) { instance_double(OpenChain::JsonHttpClient) }
   let (:config) { {'test' => {'auth_token' => "config_auth_token", "url" => "config_url"}} }
   subject { OpenChain::SqlProxyClient.new(json_client) }
 
   after :each do
     # Needed otherwise the config is memoized and never loaded again during the tests
-    described_class.remove_instance_variable(:@proxy_config)
+    described_class.remove_instance_variable(:@proxy_config) if described_class.instance_variable_get(:@proxy_config)
   end
 
   describe "request" do
@@ -54,6 +54,18 @@ describe OpenChain::SqlProxyClient do
       # If the proxy wasn't memoized, then the expectations above will fail since they only
       # expect a single call to the load_file, etc
       expect(described_class.proxy_config).to eq config
+    end
+  end
+
+  describe "report_query" do
+    it "requests running a query" do
+      params = {"1"=>"2"}
+      context = {"id"=>"1"}
+
+      body = {'job_params' => params, "context" => context}
+      expect(subject).to receive(:request).with("query_name", params, context, swallow_error: false)
+
+      subject.report_query "query_name", params, context
     end
   end
 

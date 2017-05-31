@@ -103,11 +103,6 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request 'updated_entries', params, {}, {swallow_error: false}
   end
 
-  def report_query query_name, query_params = {}, context = {}
-    # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
-    request query_name, query_params, context, swallow_error: false
-  end
-
   def request_mid_updates updated_after_date
     params = {updated_date: updated_after_date.strftime("%Y%m%d").to_i}
     context = {results_as_array: true}

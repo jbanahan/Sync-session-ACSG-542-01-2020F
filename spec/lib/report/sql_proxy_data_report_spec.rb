@@ -143,7 +143,7 @@ describe OpenChain::Report::SqlProxyDataReport do
       expect(subject.class).to receive(:new_instance).with(u, results, settings).and_return subject
       expect(subject).to receive(:process_results).with(u, results, settings)
 
-      subject.class.process_alliance_query_details u, results, settings
+      subject.class.process_sql_proxy_query_details u, results, settings
     end
   end
 

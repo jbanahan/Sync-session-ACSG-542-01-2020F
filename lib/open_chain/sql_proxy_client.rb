@@ -22,6 +22,11 @@ module OpenChain; class SqlProxyClient
     end
   end
 
+  def report_query query_name, query_params = {}, context = {}
+    # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
+    request query_name, query_params, context, swallow_error: false
+  end
+
   def self.proxy_config
     @proxy_config ||= begin
       YAML.load_file self.proxy_config_file

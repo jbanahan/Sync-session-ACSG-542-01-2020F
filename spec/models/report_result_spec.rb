@@ -126,8 +126,8 @@ describe ReportResult do
     end
 
     it "detects alliance reports" do
-      class AllianceReport
-        def self.alliance_report?
+      class SqlProxyReport
+        def self.sql_proxy_report?
           true
         end
 
@@ -138,14 +138,14 @@ describe ReportResult do
         end
       end
       rr = double("ReportResult") 
-      expect(rr).to receive(:execute_alliance_report)
+      expect(rr).to receive(:execute_sql_proxy_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
-      ReportResult.run_report! 'delay', @u, AllianceReport
+      ReportResult.run_report! 'delay', @u, SqlProxyReport
     end
 
-    it "detects non-alliance reports reponding to alliance_report?" do
-      class NonAllianceReport
-        def self.alliance_report?
+    it "detects non-alliance reports reponding to sql_proxy_report?" do
+      class NonSqlProxyReport
+        def self.sql_proxy_report?
           false
         end
 
@@ -158,7 +158,7 @@ describe ReportResult do
       rr = double("ReportResult") 
       expect(rr).to receive(:execute_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
-      ReportResult.run_report! 'delay', @u, NonAllianceReport
+      ReportResult.run_report! 'delay', @u, NonSqlProxyReport
     end
 
     it "emails file to user if email_to is set" do
@@ -244,7 +244,7 @@ describe ReportResult do
     end
   end
 
-  describe "execute_alliance_report" do
+  describe "execute_sql_proxy_report" do
     before :each do
       class TestReport; end
       @report_class = TestReport
@@ -257,7 +257,7 @@ describe ReportResult do
       settings["report_result_id"] = @r.id
       expect(@report_class).to receive(:run_report).with(@u, settings)
 
-      @r.execute_alliance_report
+      @r.execute_sql_proxy_report
       
       @r.reload
       expect(@r.status).to eq "Running"
@@ -266,7 +266,7 @@ describe ReportResult do
     it "handles any errors raised while starting report" do
       expect(@report_class).to receive(:run_report).and_raise "Error"
 
-      @r.execute_alliance_report
+      @r.execute_sql_proxy_report
 
       expect(@u.messages.size).to eq(1)
       @r.reload
@@ -274,7 +274,7 @@ describe ReportResult do
     end
   end
 
-  describe "continue_alliance_report" do
+  describe "continue_sql_proxy_report" do
     before :each do
       class TestReport; end
       @report_class = TestReport
@@ -287,13 +287,13 @@ describe ReportResult do
       @tf.close! unless @tf.closed?
     end
 
-    it "continues an alliance report" do
+    it "continues a sql proxy report" do
       expect(User).to receive(:run_with_user_settings).and_yield
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
 
-      @r.continue_alliance_report results
+      @r.continue_sql_proxy_report results
 
       @r.reload
       expect(@u.messages.size).to eq(1)
@@ -301,13 +301,13 @@ describe ReportResult do
       expect(@r.report_data).to_not be_nil
     end
 
-    it "continues an alliance report with json results" do
+    it "continues a sql proxy report with json results" do
       expect(User).to receive(:run_with_user_settings).and_yield
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
 
-      @r.continue_alliance_report results.to_json
+      @r.continue_sql_proxy_report results.to_json
 
       @r.reload
       expect(@u.messages.size).to eq(1)
@@ -318,9 +318,9 @@ describe ReportResult do
     it "handles errors / cleanup if alliance report continuation fails" do
       settings = ActiveSupport::JSON.decode(@r.settings_json)
       results = []
-      expect(@report_class).to receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
       expect(@r).to receive(:complete_report).with(@tf).and_raise "Error"
-      @r.continue_alliance_report results
+      @r.continue_sql_proxy_report results
 
       expect(@u.messages.size).to eq(1)
       @r.reload

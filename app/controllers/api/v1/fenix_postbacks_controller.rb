@@ -1,6 +1,6 @@
 require 'open_chain/fenix_parser'
 
-module Api; module V1; class FenixPostbacksController < Api::V1::SqlProxyPostbackController
+module Api; module V1; class FenixPostbacksController < Api::V1::SqlProxyPostbacksController
   
   def receive_lvs_results
     extract_results(params) do |results|

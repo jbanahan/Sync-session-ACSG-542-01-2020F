@@ -2,7 +2,7 @@ require 'open_chain/sql_proxy_client'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 require 'open_chain/custom_handler/intacct/intacct_client'
 
-module Api; module V1; class IntacctDataController < SqlProxyPostbackController
+module Api; module V1; class IntacctDataController < SqlProxyPostbacksController
 
   before_filter :require_admin
 

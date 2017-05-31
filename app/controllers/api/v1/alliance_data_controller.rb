@@ -3,7 +3,7 @@ require 'open_chain/report/alliance_webtracking_monitor_report'
 require 'open_chain/custom_handler/kewill_entry_parser'
 require 'open_chain/custom_handler/kewill_data_requester'
 
-module Api; module V1; class AllianceDataController < SqlProxyPostbackController
+module Api; module V1; class AllianceDataController < SqlProxyPostbacksController
 
   def receive_alliance_entry_details 
     # Really all we're doing here is just delaying off the processing of the params being posted

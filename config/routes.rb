@@ -175,7 +175,8 @@ OpenChain::Application.routes.draw do
       post "/alliance_data/receive_entry_data" => "alliance_data#receive_entry_data"
       post "/alliance_data/receive_mid_updates" => "alliance_data#receive_mid_updates"
       post "/alliance_data/receive_address_updates" => "alliance_data#receive_address_updates"
-      match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
+      post "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data"
+      post "/sql_proxy_postbacks/receive_sql_proxy_report_data" => "sql_proxy_postbacks#receive_sql_proxy_report_data"
 
       match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
 

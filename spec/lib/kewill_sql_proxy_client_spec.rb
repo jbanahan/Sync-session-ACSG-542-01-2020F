@@ -57,28 +57,6 @@ describe OpenChain::KewillSqlProxyClient do
     end
   end
 
-  describe "report_query" do
-    it "requests running a query" do
-      params = {"1"=>"2"}
-      context = {"id"=>"1"}
-
-      body = {'job_params' => params, "context" => context}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/query_name", body, {}, @proxy_config['test']['auth_token'])
-
-      @c.report_query "query_name", params, context
-    end
-
-    it "raises errors encountered by the json client" do
-      params = {"1"=>"2"}
-      context = {"id"=>"1"}
-
-      body = {'job_params' => params, "context" => context}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/query_name", body, {}, @proxy_config['test']['auth_token']).and_raise "JSON CLIENT ERROR"
-
-      expect { @c.report_query "query_name", params, context }.to raise_error "JSON CLIENT ERROR"
-    end
-  end
-
   describe "request_check_details" do
     it "requests check details" do
       request_body = {'job_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
