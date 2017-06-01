@@ -61,7 +61,7 @@ describe OpenChain::Report::FenixCurrencyRatesReport do
     
     it "handles all post-query processing on data returned from sql_proxy server" do
       u = User.new
-      results = [{'c'=>"CN", 'cn' => "China", "cur" => "CNY", "der" => "20160401", 'er' => 123456}]
+      results = [{'c'=>"CN", 'cn' => "China", "cur" => "CNY", "der" => "20160401", 'er' => "12.3456789"}]
       settings = {'start_date' => "2014-01-01"}
 
       @tf = subject.process_results u, results, settings
@@ -70,7 +70,7 @@ describe OpenChain::Report::FenixCurrencyRatesReport do
       sheet = wb.worksheets.find {|s| s.name == "CA Currency Rates"}
       expect(sheet).not_to be_nil
       expect(sheet.row(0)).to eq ["Country", "Name", "Currency", "Exchange Date", "Exchange Rate"]
-      expect(sheet.row(1)).to eq ["CN", "China", "CNY", excel_date(Date.new(2016, 4, 1)), BigDecimal("0.123456")]
+      expect(sheet.row(1)).to eq ["CN", "China", "CNY", excel_date(Date.new(2016, 4, 1)), BigDecimal("12.345679")]
     end
   end
 end
