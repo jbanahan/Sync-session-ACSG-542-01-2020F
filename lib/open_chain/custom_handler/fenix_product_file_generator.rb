@@ -1,9 +1,11 @@
 require 'open_chain/fixed_position_generator'
+require 'open_chain/ftp_file_support'
 
 module OpenChain
   module CustomHandler
     class FenixProductFileGenerator < OpenChain::FixedPositionGenerator
       include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+      include OpenChain::FtpFileSupport
 
       def initialize fenix_customer_code, options = {}
         super()
@@ -16,6 +18,7 @@ module OpenChain
         @suppress_description = (options['suppress_description'].to_s == "true")
         @output_subdirectory = (options['output_subdirectory'].presence || '')
         @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
+        @max_products = options['max_products'].to_i > 0 ? options['max_products'].to_i : 10_000
 
         if MasterSetup.get.custom_feature? "Full Fenix Product File"
           custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
@@ -32,8 +35,17 @@ module OpenChain
       end
 
       #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
-      def generate
-        ftp_file make_file find_products 
+      def generate update_sync_records: true
+        products = nil
+        begin
+          products = find_products
+          if products.length > 0
+            make_file(products, update_sync_records: update_sync_records) do |file, sync_records|
+              ftp_sync_file(file, sync_records, ftp2_vandegrift_inc(ftp_directory))
+              sync_records.each {|sr| sr.save! }
+            end
+          end
+        end while products.nil? || products.length > 0
       end
 
       def find_products
@@ -44,6 +56,11 @@ module OpenChain
           where("v.boolean_value IS NULL OR v.boolean_value = 0").
           where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
         
+        bad_prods = bad_product_ids
+        if bad_prods.length > 0
+          r = r.where("products.id NOT IN (?)", bad_prods)
+        end
+
         if @importer_id
           r = r.where(:importer_id => @importer_id)
         end
@@ -52,52 +69,79 @@ module OpenChain
           r = r.where(@additional_where)
         end
 
-        r
+        r.limit(max_products).order("products.id")
+      end
+
+      def max_products
+        @max_products
+      end
+
+      def record_bad_product product
+        @bad_products ||= Set.new
+        @bad_products << product.id
+        nil
+      end
+      
+      def bad_product_ids 
+        defined?(@bad_products) ? @bad_products.to_a : []
       end
       
       def make_file products, update_sync_records = true
-        t = Tempfile.new(["fenix-#{@fenix_customer_code}",'.txt'])
-        t.binmode
-        user = User.integration
-        products.each do |p|
-          stale_classification = false
-          c = p.classifications.find {|cl| cl.country_id == @canada_id }
-          next unless c
-          c.tariff_records.each do |tr|
-            unless tr.hts_1.blank?
+        Tempfile.open(["fenix-#{@fenix_customer_code}",'.txt']) do |t|
+          sync_records = []
+          t.binmode
+          file_has_data = false
+          user = User.integration
+          products.each do |p|
+            stale_classification = false
+            c = p.classifications.find {|cl| cl.country_id == @canada_id }
+            next unless c
+            c.tariff_records.each do |tr|
+              unless tr.hts_1.blank?
 
-              if stale_classification? tr
-                stale_classification = true
-              else
-                begin
-                  # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
-                  # This lets us send characters like ”, Æ, etc correctly to Fenix
-                  t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252")
-                rescue Encoding::UndefinedConversionError => e
-                  e.log_me "Product #{p.unique_identifier} could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
-                  next
+                if stale_classification? tr
+                  stale_classification = true
+                else
+                  begin
+                    # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
+                    # This lets us send characters like ”, Æ, etc correctly to Fenix
+                    t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252")
+                    file_has_data = true
+                  rescue Encoding::UndefinedConversionError => e
+                    # Make sure we're storign off all the product ids that were bad, otherwise it's possible we'll
+                    # get into a vicious loop cycle, since a follow up pass to check if more parts need to be sent (find_products) will
+                    # return the bad part unless we indicate it shouldn't.
+                    record_bad_product(p)
+                    e.log_me "Product #{p.unique_identifier} could not be sent to Fenix because it cannot be converted to Windows-1252 encoding."
+                    next
+                  end
+                  break
                 end
-                break
+              end
+            end
+
+            if stale_classification
+              update_stale_classification(user, p, c)
+            else
+              # If we need to manually generate a file, then we won't want to run the sync data
+              if update_sync_records
+                sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
+                sr.sent_at = Time.zone.now
+                sr.confirmed_at = (sr.sent_at + 1.minute)
+                sr.confirmation_file_name = "Fenix Confirmation"
+                sr.save!
+                sync_records << sr
               end
             end
           end
 
-          if stale_classification
-            update_stale_classification(user, p, c)
-          else
-            # If we need to manually generate a file, then we won't want to run the sync data
-            if update_sync_records
-              sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
-              sr.sent_at = Time.now
-              sr.confirmed_at = 1.second.from_now
-              sr.confirmation_file_name = "Fenix Confirmation"
-              sr.save!
-            end
+          
+          if file_has_data
+            t.flush
+            t.rewind
+            yield t, sync_records
           end
-
         end
-        t.flush
-        t
       end
 
       def stale_classification? t
@@ -110,10 +154,11 @@ module OpenChain
         product.create_snapshot user, nil, "Stale Tariff"
       end
 
-      def ftp_file f
-        folder = "to_ecs/fenix_products/#{@output_subdirectory}"
-        FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>folder, :remote_file_name=>File.basename(f.path)})
-        f.unlink
+      def ftp_directory
+        folder = "to_ecs/fenix_products"
+        folder += "/#{@output_subdirectory}" unless @output_subdirectory.blank?
+
+        folder
       end
 
       def self.run_schedulable opts_hash={}
