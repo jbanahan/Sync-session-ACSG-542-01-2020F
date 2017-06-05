@@ -1,10 +1,12 @@
 require 'open_chain/s3'
 require 'open_chain/entity_compare/comparator_helper'
 require 'open_chain/entity_compare/product_comparator'
+require 'open_chain/entity_compare/product_comparator/product_comparator_helper'
 
 module OpenChain; module BillingComparators; class ProductComparator
   extend OpenChain::EntityCompare::ComparatorHelper
   extend OpenChain::EntityCompare::ProductComparator
+  extend OpenChain::EntityCompare::ProductComparator::ProductComparatorHelper
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type == 'Product'

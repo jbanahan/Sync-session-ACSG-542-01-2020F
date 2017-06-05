@@ -6,6 +6,13 @@ OpenChain::Application.routes.draw do
   get '/assets/:subpath/fonts/:font.svg', to: redirect('/%{subpath}/fonts/%{font}.svg', status: 302)
   get '/assets/:subpath/fonts/:font.eot', to: redirect('/%{subpath}/fonts/%{font}.eot', status: 302)
 
+  # Resolves font-awesome requests with a URL this is not based underneath assets...I believe this just happens on dev. machines.
+  get '/:subpath/fonts/:font.woff2', to: redirect('/fonts/%{font}.woff2', status: 302)
+  get '/:subpath/fonts/:font.woff', to: redirect('/fonts/%{font}.woff', status: 302)
+  get '/:subpath/fonts/:font.ttf', to: redirect('/fonts/%{font}.ttf', status: 302)
+  get '/:subpath/fonts/:font.svg', to: redirect('/fonts/%{font}.svg', status: 302)
+  get '/:subpath/fonts/:font.eot', to: redirect('/fonts/%{font}.eot', status: 302)
+
   match '/hts/subscribed_countries' => 'hts#subscribed_countries', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get

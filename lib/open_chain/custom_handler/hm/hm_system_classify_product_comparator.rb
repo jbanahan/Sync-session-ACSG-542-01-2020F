@@ -1,10 +1,11 @@
 require 'open_chain/entity_compare/product_comparator'
+require 'open_chain/entity_compare/product_comparator/product_comparator_helper'
 require 'open_chain/entity_compare/comparator_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProductComparator
   extend OpenChain::EntityCompare::ProductComparator
-  extend OpenChain::EntityCompare::ComparatorHelper
+  extend OpenChain::EntityCompare::ProductComparator::ProductComparatorHelper
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.accept? snapshot
