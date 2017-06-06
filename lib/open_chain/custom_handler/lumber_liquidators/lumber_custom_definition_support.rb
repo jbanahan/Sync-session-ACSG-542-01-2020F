@@ -156,6 +156,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_testing_date_planned: {label: "Testing Date - Planned", data_type: :date, module_type: "Order", cdef_uid: "ord_testing_date_planned"},
     ord_testing_date_completed: {label: "Testing Date - Completed", data_type: :date, module_type: "Order", cdef_uid: "ord_testing_date_completed"},
     ord_cancel_date: {label: "Cancelled Date", data_type: :date, module_type: "Order", read_only: true, cdef_uid: "ord_cancel_date"},
+    ord_manual_send_to_sap_date: {label: "Manual Send To SAP Date", data_type: :datetime, module_type: "Order", read_only: true, cdef_uid: "ord_manual_send_to_sap_date"},
     ordln_old_art_number: { label: 'Old Article Number', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_old_art_number"},
     ordln_part_name: {label: 'Part Name', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_part_name"},
     ord_delay_reason: { label: "Delay Reason", data_type: :string, module_type: "Order", cdef_uid: "ord_delay_reason"},

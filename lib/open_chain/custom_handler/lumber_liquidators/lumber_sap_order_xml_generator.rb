@@ -2,11 +2,11 @@ require 'open_chain/api/api_entity_xmlizer'
 require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
   extend OpenChain::FtpFileSupport
-  def self.send_order order
+  def self.send_order order, force_send: false
     Lock.with_lock_retry(order) do 
       xml, fingerprint = generate(User.integration,order)
       sr = order.sync_records.first_or_initialize trading_partner: "SAP PO"
-      if sr.fingerprint != fingerprint
+      if sr.fingerprint != fingerprint || force_send
         Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
           tf.write xml
           tf.flush

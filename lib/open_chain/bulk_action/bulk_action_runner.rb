@@ -12,7 +12,9 @@ module OpenChain; module BulkAction; class BulkActionRunner
     end
   end
   def self.process_search_run user, search_run, action_class, opts
-    process_object_ids user, search_run.find_all_object_keys.to_a, action_class, opts
+    ids = search_run.find_all_object_keys.to_a
+    raise TooManyBulkObjectsError if opts[:max_results].present? && opts[:max_results].to_i < ids.length
+    process_object_ids user, ids, action_class, opts
   end
   def self.process_object_ids user, ids, action_class, opts
     data = {user_id:user.id,keys:ids,opts:opts}.to_json
@@ -33,3 +35,7 @@ module OpenChain; module BulkAction; class BulkActionRunner
     end
   end
 end; end; end
+
+module OpenChain; module BulkAction; class TooManyBulkObjectsError < StandardError
+
+end; end; end;

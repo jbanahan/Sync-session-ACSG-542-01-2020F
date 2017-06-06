@@ -106,6 +106,7 @@ describe OrdersController do
       expect(@o.closed_at).to_not be_nil
     end
   end
+
   describe 'validation_results' do
     before :each do
       @ord = Factory(:order,order_number:'123456')
@@ -153,6 +154,8 @@ describe OrdersController do
       expect(rr['overridden_by']['full_name']).to eq @u.full_name
       expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at
     end
+  end
+
   describe 'bulk_update_fields' do
     it "returns list of model fields for user to edit" do
       FieldValidatorRule.create!(model_field_uid: 'ord_ord_date', module_type: 'Order', mass_edit: true)
@@ -177,6 +180,7 @@ describe OrdersController do
       expect(JSON.parse(response.body)['count']).to eq 10
     end
   end
+
   describe 'bulk_update' do
     it 'should call bulk action runner with BulkOrderUpdate' do
       today = Date.today.to_s
@@ -187,5 +191,76 @@ describe OrdersController do
     end
   end
 
+  describe 'bulk_send_to_sap' do
+    it 'should call bulk action runner with BulkSendToSap' do
+      request.env["HTTP_REFERER"] = "blah"
+      bar = OpenChain::BulkAction::BulkActionRunner
+      expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100})
+
+      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+
+      expect(response).to redirect_to("blah")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Documents have been requested for transmission to SAP.  Please allow a few minutes for them to be sent.")
+    end
+
+    it 'should handle bulk SAP send requests without a referer' do
+      request.env["HTTP_REFERER"] = nil
+      bar = OpenChain::BulkAction::BulkActionRunner
+      expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100})
+
+      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Documents have been requested for transmission to SAP.  Please allow a few minutes for them to be sent.")
+    end
+
+    it 'should handle excessive objects gracefully' do
+      request.env["HTTP_REFERER"] = "blah"
+      bar = OpenChain::BulkAction::BulkActionRunner
+      expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100}).and_raise(OpenChain::BulkAction::TooManyBulkObjectsError)
+
+      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+
+      expect(response).to redirect_to("blah")
+      expect(flash[:errors].first).to eq("You may not send more than 100 orders to SAP at one time.")
+      expect(flash[:notices]).to be_blank
+    end
   end
+
+  describe 'send_to_sap' do
+    it 'should call BulkSendToSap to send the file' do
+      request.env["HTTP_REFERER"] = "blah"
+
+      order_id = Random.new.rand(500)
+
+      bulk = OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap
+      expect(bulk).to receive(:delay).and_return bulk
+      expect(bulk).to receive(:act).with(@u, order_id.to_s, {}, nil, nil)
+
+      get :send_to_sap, id: order_id
+
+      expect(response).to redirect_to("blah")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Document has been requested for transmission to SAP.  Please allow a few minutes for it to be sent.")
+    end
+
+    it 'should handle SAP send requests without a referer' do
+      request.env["HTTP_REFERER"] = nil
+
+      order_id = Random.new.rand(500)
+
+      bulk = OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap
+      expect(bulk).to receive(:delay).and_return bulk
+      expect(bulk).to receive(:act).with(@u, order_id.to_s, {}, nil, nil)
+
+      get :send_to_sap, id: order_id
+
+      expect(response).to redirect_to("/")
+      expect(flash[:errors]).to be_blank
+      expect(flash[:notices].first).to eq("Document has been requested for transmission to SAP.  Please allow a few minutes for it to be sent.")
+    end
+  end
+
 end

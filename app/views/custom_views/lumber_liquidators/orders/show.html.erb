@@ -16,7 +16,7 @@
   :ord_sap_extract, :ord_avail_to_prom_date,:ord_qa_hold_by,
   :ord_qa_hold_date,:ord_inspector_assigned,:ord_inspection_date_planned,:ord_inspection_date_completed,
   :ord_testing_date_planned,:ord_testing_date_completed,
-  :ordln_old_art_number, :ordln_part_name]+asn_cdefs)%>
+  :ordln_old_art_number, :ordln_part_name, :ord_manual_send_to_sap_date]+asn_cdefs)%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -80,6 +80,9 @@
   <%end%>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
   <button class='btn_link' link_to='/vendor_portal#/orders/<%=@order.id%>' title='Vendor Portal'><i class='fa fa-industry'></i></a>
+  <%if MasterSetup.get.custom_feature?("Bulk Send Order To SAP")%>
+    <button class='btn_link' link_to='<%=send_to_sap_order_path(@order)%>' title='Send To SAP'>Send To SAP</button>
+  <%end%>
 <% end %>
 <div class="container">
   <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field,validation_path:validation_results_order_path(@order)}%>
@@ -106,7 +109,7 @@
       <% end %>
       <%= show_model_fields @order, [:ord_ven_syscode, :ord_cust_ord_no, :ord_approval_status, :ord_accepted_at, :ord_accepted_by, :ord_imp_name, :ord_agent_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_payment_terms, :ord_terms, :ord_fob_point] %>
       <hr />
-      <%=show_custom_fields @order, {skip_fields:([:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_change_log,:ord_testing_date_completed]+asn_cdefs).collect{|key| cdefs[key].model_field_uid}}%>
+      <%=show_custom_fields @order, {skip_fields:([:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract, :ord_manual_send_to_sap_date, :ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_change_log,:ord_testing_date_completed]+asn_cdefs).collect{|key| cdefs[key].model_field_uid}}%>
       <hr />
       <%= show_model_fields @order, asn_cdefs.collect {|key| cdefs[key].model_field_uid}%>
     </div>
@@ -116,6 +119,7 @@
       <%= show_model_fields @order, [:ord_planned_handover_date,:ord_forecasted_ship_window_start,:ord_forecasted_handover_date,:ord_ship_confirmation_date].collect {|key| cdefs[key].model_field_uid} << :ord_first_exp_del%>
       <hr />
       <%= show_model_fields @order, [:ord_sap_extract].collect {|key| cdefs[key].model_field_uid}%>
+      <%= show_model_fields @order, [:ord_manual_send_to_sap_date].collect {|key| cdefs[key].model_field_uid}%>
       <hr />
       <%= show_model_fields @order, [:ord_avail_to_prom_date,:ord_sap_vendor_handover_date].collect {|key| cdefs[key].model_field_uid}%>
       <hr />

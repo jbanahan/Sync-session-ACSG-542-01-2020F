@@ -42,6 +42,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
 
       subject.send_order(order)
     end
+
+    it "sends duplicate xml files if 'force send' is true" do
+      u = instance_double(User)
+      expect(User).to receive(:integration).and_return(u)
+      expect(subject).to receive(:generate).and_return ["<xml></xml>", "fingerprint"]
+
+      order.sync_records.create! trading_partner: "SAP PO", fingerprint: "fingerprint"
+
+      expect(subject).to receive(:ftp_file)
+
+      subject.send_order(order, force_send: true)
+    end
   end
 
   describe "generate" do

@@ -39,6 +39,24 @@ describe OpenChain::BulkAction::BulkActionRunner do
 
       described_class.process_search_run(@u,sr,@ac,@opts)
     end
+
+    it 'should throw exception if more values found than allowed' do
+      @opts[:max_results] = 2
+
+      sr = double(:search_run)
+      expect(sr).to receive(:find_all_object_keys).and_return([1,2,3].to_enum)
+      expect {described_class.process_search_run(@u,sr,@ac,@opts)}.to raise_error OpenChain::BulkAction::TooManyBulkObjectsError
+    end
+
+    it 'should not throw exception if results do not exceed maximum' do
+      @opts[:max_results] = 3
+
+      sr = double(:search_run)
+      expect(sr).to receive(:find_all_object_keys).and_return([1,2,3].to_enum)
+      expect(described_class).to receive(:process_object_ids).with(@u,[1,2,3],@ac,@opts)
+
+      described_class.process_search_run(@u,sr,@ac,@opts)
+    end
   end
   describe '#process_object_ids' do
     it 'should write to s3 and delay run_s3' do

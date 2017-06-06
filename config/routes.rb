@@ -765,6 +765,7 @@ OpenChain::Application.routes.draw do
     member do
       get 'history'
       get 'validation_results'
+      get 'send_to_sap'
       post 'close'
       post 'reopen'
       post 'accept'
@@ -773,6 +774,7 @@ OpenChain::Application.routes.draw do
     collection do
       post :bulk_update
       post :bulk_update_fields
+      post :bulk_send_to_sap
     end
 		resources :order_lines
 	end

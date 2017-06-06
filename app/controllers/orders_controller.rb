@@ -2,6 +2,7 @@ require 'open_chain/business_rule_validation_results_support'
 require 'open_chain/bulk_action/bulk_action_runner'
 require 'open_chain/bulk_action/bulk_action_support'
 require 'open_chain/bulk_action/bulk_order_update'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_bulk_send_to_sap'
 
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
@@ -172,6 +173,22 @@ class OrdersController < ApplicationController
     mfs.each_pair { |field_name, mf| mf_hsh[field_name] = mf.label }
     c = get_bulk_count(params[:pk], params[:sr_id])
     render json: {count: c, mf_hsh: mf_hsh, html: html}
+  end
+
+  def bulk_send_to_sap
+    begin
+      OpenChain::BulkAction::BulkActionRunner.process_from_parameters current_user, params, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results: 100}
+      add_flash :notices, "Documents have been requested for transmission to SAP.  Please allow a few minutes for them to be sent."
+    rescue OpenChain::BulkAction::TooManyBulkObjectsError => e
+      add_flash :errors, "You may not send more than 100 orders to SAP at one time."
+    end
+    redirect_to request.referrer || "/"
+  end
+
+  def send_to_sap
+    OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap.delay.act(current_user, params[:id], {}, nil, nil)
+    add_flash :notices, "Document has been requested for transmission to SAP.  Please allow a few minutes for it to be sent."
+    redirect_to request.referrer || "/"
   end
 
   private
