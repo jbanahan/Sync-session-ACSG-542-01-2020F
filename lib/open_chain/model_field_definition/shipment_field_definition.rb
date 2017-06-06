@@ -88,8 +88,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
             export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:customer_order_number).compact.uniq.sort.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR '\n ')
           FROM booking_lines
-          INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
-          INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
+          INNER JOIN orders ON orders.id = booking_lines.order_id
           WHERE booking_lines.shipment_id = shipments.id)"
         }],
       [48,:shp_shipped_orders,:shipped_orders,"Shipped Orders",{
@@ -188,8 +187,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
             export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:id).compact.uniq.sort.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
           FROM booking_lines
-          INNER JOIN order_lines ON booking_lines.order_line_id = order_lines.id
-          INNER JOIN orders ON orders.id = order_lines.order_id OR orders.id = booking_lines.order_id
+          INNER JOIN orders ON orders.id = booking_lines.order_id
           WHERE booking_lines.shipment_id = shipments.id)"
         }],
       [74, :shp_shipped_order_ids,:shipped_orders,"Shipped Order DB IDs",{
