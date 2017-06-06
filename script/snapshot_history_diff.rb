@@ -15,8 +15,9 @@ class SnapshotHistoryDiff
         r['Changed Date'] = es.created_at
         r['Context'] = es.context
       end
-      r
-    end
+      r["Fields Changed"].blank? ? nil : r
+    end.compact
+    
     mapped.to_json
   end
 end
