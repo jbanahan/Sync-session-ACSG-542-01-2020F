@@ -73,7 +73,13 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
       }],
       [12, :bkln_container_size, :container_size, "Container Size", {data_type: :string}],
       [13, :bkln_order_line_id, :order_line_id, "Order Line DB ID", {data_type: :integer}],
-      [14, :bkln_product_db_id, :product_id, "Product DB ID",{data_type: :integer}]
+      [14, :bkln_product_db_id, :product_id, "Product DB ID",{data_type: :integer}],
+      [15, :bkln_order_number, :booked_order_number, "Order Number", {data_type: :string, read_only: true, 
+          export_lambda: lambda {|detail| 
+            cust_order_number = detail.order.try(:customer_order_number)
+            cust_order_number.blank? ? detail.order.try(:order_number) : cust_order_number
+          }, 
+          qualified_field_name: "(SELECT IFNULL(orders.customer_order_number, orders.order_number) FROM orders WHERE booking_lines.order_id = orders.id LIMIT 1)"}]
     ]
     add_fields CoreModule::BOOKING_LINE, make_variant_arrays(100,'bkln','booking_lines')
   end
