@@ -209,19 +209,28 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
     end
     context "eddie_bauer" do
+      before :each do
+        expect(master_setup).to receive(:custom_feature?).with('Eddie Bauer Feeds').and_return(true)
+      end
       it "should send ack files to ack parser for _eb_ftz_ack" do
-        p = double("parser")
-        expect(OpenChain::CustomHandler::AckFileHandler).to receive(:new).and_return p
-        expect(p).to receive(:delay).and_return p
-        expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+        expect_any_instance_of(OpenChain::CustomHandler::AckFileHandler).to receive(:delay) do |instance|
+          expect(instance).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+          instance
+        end
         cmd = {'request_type'=>'remote_file','path'=>'/_eb_ftz_ack/','remote_path'=>'12345'}
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
       it "should send data to eddie bauer po parser for _eddie_po" do
-        p = double("parser")
-        expect(OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser).to receive(:delay).and_return p
-        expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        expect(OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser).to receive(:delay).and_return OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser
+        expect(OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
         cmd = {'request_type'=>'remote_file','path'=>'/_eddie_po/','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+
+      it "handles Eddie invoices" do
+        expect(OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser).to receive(:delay).and_return OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
+        expect(OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_eddie_invoice/','remote_path'=>'12345'}
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
     end

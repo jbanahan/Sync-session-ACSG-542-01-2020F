@@ -204,6 +204,18 @@ class Product < ActiveRecord::Base
     attributes[:class_cntry_id].blank? && attributes[:class_cntry_name].blank? && attributes[:class_cntry_iso].blank?
   end
 
+  # This method only returns all the tariffs for a specfic country
+  def hts_for_country country
+    if !country.respond_to?(:iso_code)
+      c = Country.where(iso_code: country).first
+      raise "No country record found for ISO Code '#{country}'." if c.nil?
+      country = c
+    end
+
+    classification = self.classifications.find {|c| c.country_id == country.id }
+    Array.wrap(classification.try(:tariff_records)).map &:hts_1
+  end
+
   private
 
   def default_division

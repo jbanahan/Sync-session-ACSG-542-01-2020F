@@ -9,6 +9,7 @@ require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
 require 'open_chain/custom_handler/ecellerate_xml_router'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
+require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_commercial_invoice_parser'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/hm/hm_i1_interface'
 require 'open_chain/custom_handler/hm/hm_i2_shipment_parser'
@@ -175,10 +176,12 @@ module OpenChain
         OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_eddie_po/'
+      elsif command['path'].include?('/_eddie_po/') && master_setup.custom_feature?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_eb_ftz_ack/'
+      elsif command['path'].include?('/_eb_ftz_ack/') && master_setup.custom_feature?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+      elsif command['path'].include?('/_eddie_invoice') && master_setup.custom_feature?("Eddie Bauer Feeds")
+        OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_product/') && master_setup.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_po/') && master_setup.custom_feature?('Lenox')

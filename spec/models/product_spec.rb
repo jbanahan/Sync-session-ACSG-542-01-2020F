@@ -393,4 +393,44 @@ describe Product do
       expect(p.classifications.first.country).to eq country
     end
   end
+
+  describe "hts_for_country" do
+
+    let (:product) {
+      p = Factory(:product)
+      c = Factory(:classification, product: p, country: Factory(:country, iso_code: "CA"))
+      c.tariff_records.create! hts_1: "1234567890", hts_2: "987654321", hts_3: "12731289"
+      c.tariff_records.create! hts_1: "1890231908"
+
+      c = Factory(:classification, product: p, country: Factory(:country, iso_code: "US"))
+      c.tariff_records.create! hts_1: "1289731280"
+
+      p.reload
+    }
+
+    it "pulls the hts number for a specific country" do
+      expect(product.hts_for_country("US")).to eq ["1289731280"]
+    end
+
+    it "allows passing country object" do
+      expect(product.hts_for_country(Country.where(iso_code: "US").first)).to eq ["1289731280"]
+    end
+
+    it "returns all the hts values" do
+      expect(product.hts_for_country("CA")).to eq ["1234567890", "1890231908"]
+    end
+
+    it "returns blank if no hts" do
+      product
+      us = Country.where(iso_code: "US").first
+      c = product.classifications.find {|c| c.country_id == us.id}
+      c.tariff_records.destroy_all
+
+      expect(product.hts_for_country("US")).to eq []
+    end
+
+    it "raises an error if the country doesn't exist" do
+      expect {product.hts_for_country("XX")}.to raise_error "No country record found for ISO Code 'XX'."
+    end
+  end
 end
