@@ -87,6 +87,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
     wb
   end
 
+  def generate_xls_to_google_drive drive_path, ci_load_entries
+    wb = generate_xls ci_load_entries
+
+    Tempfile.open([File.basename(drive_path, ".*"), File.extname(drive_path)]) do |t|
+      t.binmode
+      wb.write t
+      t.flush
+      t.rewind
+
+      OpenChain::GoogleDrive.upload_file OpenChain::GoogleDrive.default_user_account, drive_path, t 
+    end
+    nil
+  end
+
   private 
     def add_xls_lines sheet, last_row_number, entry, widths
       entry_data = []

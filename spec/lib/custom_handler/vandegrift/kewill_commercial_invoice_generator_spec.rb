@@ -388,4 +388,31 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       expect(sheet.row(3)).to eq []
     end
   end
+
+  describe "generate_xls_to_google_drive" do
+    let (:workbook) {
+      wb = instance_double(Spreadsheet::Workbook)
+      allow(wb).to receive(:write) do |t|
+        t << "Test"
+      end
+      wb
+    }
+
+    it "generates an excel workbook and loads it to drive" do
+      tf = nil
+      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
+        expect(account).to eq OpenChain::GoogleDrive.default_user_account
+        expect(path).to eq "path/to/file.xls"
+        expect(file).to be_a Tempfile
+        expect(file.read).to eq "Test"
+        tf = file
+        nil
+      end
+
+      expect(subject).to receive(:generate_xls).with([]).and_return workbook
+
+      subject.generate_xls_to_google_drive("path/to/file.xls", [])
+      expect(tf.closed?).to eq true
+    end
+  end
 end

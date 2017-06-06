@@ -480,6 +480,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_burlington_856/file.dat','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+
+    it "handles amersports 856 files" do
+      expect(master_setup).to receive(:custom_feature?).with('AmerSports').and_return(true)
+      p = class_double("OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser")
+      expect(OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_amersports_856/file.dat','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
   end
 
   it 'should return error if bad request type' do
