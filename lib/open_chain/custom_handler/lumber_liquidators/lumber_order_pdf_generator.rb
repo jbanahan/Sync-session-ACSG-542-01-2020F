@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       t.row(0).font_style = :bold
 
       # Need to manually set widths when there's a ship to address, prawn has issues autosizing if we don't
-      if multi_shipto?(order, user)
+      if self.class.multi_shipto?(order, user)
         t.column(1).width = 160
         t.column(2).width = 140
       end
@@ -181,7 +181,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def ship_to_header_address order, user
-    if multi_shipto?(order, user)
+    if self.class.multi_shipto?(order, user)
       "Multi-Stop"
     else
       if order.order_lines.length > 0
@@ -230,12 +230,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     v
   end
 
-  def multi_shipto? order, user
+  def self.multi_shipto? order, user
     ModelField.find_by_uid(:ord_ship_to_count).process_export(order, user).to_i > 1
   end
 
   def order_lines order, user
-    multi_shipto = multi_shipto?(order, user)
+    multi_shipto = self.class.multi_shipto?(order, user)
 
     lines = [["Line Item", "Article", "Quantity", "UM", "Unit Price", "Net Amount"]]
     if multi_shipto
