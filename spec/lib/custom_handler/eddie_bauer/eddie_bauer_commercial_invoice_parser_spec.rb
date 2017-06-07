@@ -129,6 +129,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       expect(line.foreign_value).to eq BigDecimal("19.16")
       expect(line.po_number).to eq "ABCD"
       expect(line.hts).to eq "9876543210"
+      expect(line.mid).to eq "MID"
+      expect(line.seller_mid).to eq "MID"
+      expect(line.buyer_customer_number).to eq "EBCC"
     end
   end
 

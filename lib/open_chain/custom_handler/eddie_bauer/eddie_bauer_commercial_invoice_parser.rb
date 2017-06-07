@@ -132,6 +132,9 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     line.unit_price = BigDecimal(v(row[22]))
     line.foreign_value = line.pieces * line.unit_price
     line.po_number = v(row[53])
+    line.mid = v(row[7])
+    line.seller_mid = line.mid
+    line.buyer_customer_number = "EBCC"
 
     invoice.invoice_lines << line
   end
