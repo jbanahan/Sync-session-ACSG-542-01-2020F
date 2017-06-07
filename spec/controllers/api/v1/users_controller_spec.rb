@@ -158,6 +158,7 @@ describe Api::V1::UsersController do
       co = Factory(:company, name: 'Acme', linked_companies: [linked_co])
       u = Factory(:user, company: co, first_name: 'Nigel', last_name: 'Tufnel', username: 'ntufnel', disabled: false)
       u2 = Factory(:user, company: linked_co, first_name: 'David', last_name: 'St. Hubbins', username: 'dsthubbins', disabled: nil)
+      u3 = Factory(:user, company: linked_co, first_name: 'AAA', last_name: 'ZZZZ', username: 'AAA ZZZZ', disabled: nil)
       Factory(:user, company: linked_co, first_name: 'Derek', last_name: 'Smalls', username: 'dsmalls', disabled: true)
       allow_api_access u
       
@@ -177,14 +178,22 @@ describe Api::V1::UsersController do
                     {
                      'name' => 'Konvenientz',
                      'users' => [ {
-                        'first_name' => 'David',
-                        'id' => u2.id,
-                        'last_name' => 'St. Hubbins',
-                        'full_name' => 'David St. Hubbins'
-                       } ]
+                        'first_name' => 'AAA',
+                        'id' => u3.id,
+                        'last_name' => 'ZZZZ',
+                        'full_name' => 'AAA ZZZZ'
+                       },
+                       {
+                         'first_name' => 'David',
+                         'id' => u2.id,
+                         'last_name' => 'St. Hubbins',
+                         'full_name' => 'David St. Hubbins'
+                        }
+                        ]
                     }
                    }]
-      expect(JSON.parse(response.body).sort_by{|c| c['company']['name']}).to eq expected
+      # Make sure the companies are sorted by name and the users are sorted by name
+      expect(JSON.parse(response.body)).to eq expected
     end
   end
 

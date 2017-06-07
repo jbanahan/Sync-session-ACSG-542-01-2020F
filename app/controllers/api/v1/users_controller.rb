@@ -18,9 +18,21 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   end
 
   def enabled_users
-    companies = current_user.company.visible_companies_with_users.includes(:users)
-    companies_json = companies.to_json(:only=>[:name],:include=>{:enabled_users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
-    render :json => companies_json.gsub("\"enabled_users\":", "\"users\":")
+    # The "messiness" of this method is primarily due to optimizing it due to it's use on every search screen load...the queries are hand tuned for speed and the json
+    # is hand rendered for the same reason
+    companies = current_user.company.visible_companies.joins(:users).order("lower(companies.name)").uniq.select(["companies.id", "companies.name"]).to_a
+    user_hash = Hash.new do |h, k|
+      h[k] = []
+    end
+    User.enabled.where(company_id: companies.map(&:id)).order("company_id, lower(first_name), lower(last_name)").select([:id, :company_id, :username, :first_name, :last_name]).each do |u|
+      user_hash[u.company_id] << {"id" => u.id, "first_name" => u.first_name, "last_name" => u.last_name, "full_name" => u.full_name}
+    end
+    json = []
+    companies.each do |c|
+      json << {"company" => {"name" => c.name, "users" => user_hash[c.id]}}
+    end
+
+    render :json => json
   end
 
   def toggle_email_new_messages

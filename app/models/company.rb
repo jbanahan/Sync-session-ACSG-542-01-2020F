@@ -150,9 +150,8 @@ class Company < ActiveRecord::Base
   end
 
   def visible_companies_with_users
-    visible_companies.where('companies.id IN (SELECT company_id FROM users)')
+    visible_companies.where('companies.id IN (SELECT DISTINCT company_id FROM users)')
   end
-
 
   #permissions
   def view_security_filings?
