@@ -2,6 +2,12 @@ require 'open_chain/api/api_entity_xmlizer'
 require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlGenerator
   extend OpenChain::FtpFileSupport
+
+  def self.delayed_send_order order_id, force_send: false
+    order = Order.where(id: order_id).first
+    send_order(order, force_send: force_send) unless order.nil?
+  end
+
   def self.send_order order, force_send: false
     Lock.with_lock_retry(order) do 
       xml, fingerprint = generate(User.integration,order)

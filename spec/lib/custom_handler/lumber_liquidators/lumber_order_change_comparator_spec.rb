@@ -253,32 +253,39 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe '#generate ll xml' do
     ["NB", "ZMSP"].each do |type|
       it "should send xml if OrderData.send_sap_update? returns true and type is #{type}" do
-        o = double('order')
+        o = instance_double(Order)
+        expect(o).to receive(:id).and_return 10
+
         od = double('OrderData-Old')
         nd = double('OrderData-New')
         allow(nd).to receive(:order_type).and_return type
         expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with o, snapshot_entity: false
         expect(order_data_klass).to receive(:send_sap_update?).with(o, od,nd).and_return true
-        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:send_order).with(o)
-        subject.generate_ll_xml(o,od,nd)
+        now = Time.zone.now
+        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:delay).with(run_at: (now + 5.minutes), priority: 20).and_return OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
+        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).to receive(:delayed_send_order).with(10)
+
+        Timecop.freeze(now) { subject.generate_ll_xml(o,od,nd) }
       end
     end
     
-    it 'should not send xml if OrderData.send_sap_update? returns false' do
-      o = double('order')
-      od = double('OrderData-Old')
-      nd = double('OrderData-New')
-      allow(nd).to receive(:order_type).and_return "NB"
-      expect(order_data_klass).to receive(:send_sap_update?).with(o, od,nd).and_return false
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
-      subject.generate_ll_xml(o,od,nd)
-    end
+    context "with disabled delayed jobs", :disable_delayed_jobs do 
+      it 'should not send xml if OrderData.send_sap_update? returns false' do
+        o = double('order')
+        od = double('OrderData-Old')
+        nd = double('OrderData-New')
+        allow(nd).to receive(:order_type).and_return "NB"
+        expect(order_data_klass).to receive(:send_sap_update?).with(o, od,nd).and_return false
+        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:delayed_send_order)
+        subject.generate_ll_xml(o,od,nd)
+      end
 
-    it "should not send xml if order type is not 'NB' or 'ZMSP'" do
-      nd = double('OrderData-New')
-      allow(nd).to receive(:order_type).and_return "SOME OTHER TYPE"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:send_order)
-      subject.generate_ll_xml(nil,nil,nd)
+      it "should not send xml if order type is not 'NB' or 'ZMSP'" do
+        nd = double('OrderData-New')
+        allow(nd).to receive(:order_type).and_return "SOME OTHER TYPE"
+        expect(OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator).not_to receive(:delayed_send_order)
+        subject.generate_ll_xml(nil,nil,nd)
+      end
     end
   end
 

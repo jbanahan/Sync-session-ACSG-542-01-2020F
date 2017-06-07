@@ -68,4 +68,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
       expect(subject.generate(u,order)).to eq ['xml', 'fingerprint']
     end
   end
+
+  describe "delayed_send_order" do
+    let (:order) { Factory(:order) }
+
+    it "finds order and sends it" do
+      expect(subject).to receive(:send_order).with(order, force_send: false)
+      subject.delayed_send_order order.id
+    end
+
+    it "passes force_send param" do
+      expect(subject).to receive(:send_order).with(order, force_send: true)
+      subject.delayed_send_order order.id, force_send: true
+    end
+
+    it "doesn't send if order isn't found" do
+      expect(subject).not_to receive(:send_order)
+
+      subject.delayed_send_order 10
+    end
+  end
 end

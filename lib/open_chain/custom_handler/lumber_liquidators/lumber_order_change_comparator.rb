@@ -159,7 +159,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     # business rule state.
     BusinessValidationTemplate.create_results_for_object! order, snapshot_entity: false
     if OrderData.send_sap_update?(order, old_data,new_data)
-      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order order
+      # The reason we're delaying the send by a couple minutes is because we have a fairly complex web of logic run for the LL 
+      # comparators that ends up resulting in a series of passes over the order data.  It seems to end up resulting in rules 
+      # getting flipped from approved to unapproved back to approved quite quickly.  Which then, due to the way we compress
+      # snapshot processing together, can result in changes not getting picked up by this logic (Snapshot A starts as approved, 
+      # Snapshot B changes to unapproved, Snapshot C goes back to approved - if they're all processed together the system doesn't 
+      # see the changes to the approval flag, since it started at appoved and went back to approved).
+
+      # This is more of a bandaid. I think the real fix might be to actually run comparators over every single snapshot (at least for 
+      # Lumber due to their web of comparator logic), rather than diffing the range of snapshots that are present at the current time the
+      # entity_comparator code runs.  However, doing something like that will have other consequences that I can't deal with at the moment.
+      # This should get us past the specific issue we're dealing with.
+
+      # Note the priority is set lower than the comparator's priority...so all comparators should clear before this will get sent out.
+      OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.delay(run_at: (Time.zone.now + 5.minutes), priority: 20).delayed_send_order(order.id)
     end
   end
 
