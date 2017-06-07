@@ -56,9 +56,9 @@ describe OpenChain::FreshserviceClient do
 
     it "logs error if FS call fails" do
       e = StandardError.new "ERROR!!"
-      expect(RestClient::Request).to receive(:execute).and_raise e
+      expect(RestClient::Request).to receive(:execute).exactly(4).times.and_raise e
       allow(JSON).to receive(:parse).and_return({"item" => {"itil_change" => {}}})
-      expect(e).to receive(:log_me)
+      expect(fs_client).to receive(:log)
       fs_client.create_change! "www", "2.0", host_name
     end
   end
@@ -133,11 +133,22 @@ describe OpenChain::FreshserviceClient do
     it "logs error if FS call fails" do
       fs_client.change_id = 1
       e = StandardError.new "ERROR!!"
-      expect(RestClient::Request).to receive(:execute).and_raise e
-      expect(e).to receive(:log_me)
+      expect(RestClient::Request).to receive(:execute).exactly(4).times.and_raise e
+      expect(fs_client).to receive(:log)
       fs_client.add_note! "message"
       expect(fs_client.request_complete).to eq false
     end
   end
 
+  describe "log" do
+    it "execute #log_me on input error" do
+      e = StandardError.new "ERROR!!"
+      e.set_backtrace ["backtrace 1", "backtrace 2"]
+      expect_any_instance_of(StandardError).to receive(:log_me) do |instance|
+        expect(instance.message).to eq "ERROR!!"
+        expect(instance.backtrace).to eq ["backtrace 1", "backtrace 2"]
+      end
+      fs_client.log e
+    end
+  end
 end

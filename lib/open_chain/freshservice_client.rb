@@ -24,6 +24,7 @@ module OpenChain; class FreshserviceClient
      raise "FreshserviceClient failed: This change request has already been sent!"
     end
     
+    retry_count = 0
     begin
       response = RestClient::Request.execute({user: token, 
                                               password: "password", 
@@ -32,7 +33,8 @@ module OpenChain; class FreshserviceClient
                                               url: change_url, 
                                               payload: change_request(instance, new_version, server_name)})
     rescue => e
-      e.log_me
+      retry if (retry_count += 1) < 4
+      log e
     end
     @change_id = JSON.parse(response)["item"]["itil_change"]["display_id"]
   end
@@ -46,6 +48,7 @@ module OpenChain; class FreshserviceClient
     
     return if request_complete
     
+    retry_count = 0
     begin
       RestClient::Request.execute({user: token, 
                                    password: "password", 
@@ -55,12 +58,22 @@ module OpenChain; class FreshserviceClient
                                    payload: note_request(message)})
       @request_complete = true
     rescue => e
-      e.log_me
+      retry if (retry_count += 1) < 4
+      log e
     end
   end
 
   def add_note_with_log! upgrade_log
     add_note! stringify_log(upgrade_log)
+  end
+
+  # Serialized RestClient errors caused DelayedJob to choke. Log only the essentials.
+  def log e
+    begin
+      raise e.class, e.message, e.backtrace
+    rescue => err
+      err.log_me
+    end
   end
 
   private 
