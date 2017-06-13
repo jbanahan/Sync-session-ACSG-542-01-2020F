@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script runs in a sleep loop every 10 minutes and ensures that the correct number of 
+# This script runs in a sleep loop every 1 minute and ensures that the correct number of 
 # delayed job queues are running for each chainio instance that has a config/dj_count.txt
 # file in it.
 #
@@ -24,6 +24,6 @@ while [[ ! -f ./dj_stop ]]; do
     fi
     cd .. 
   done
-  sleep 600 #wait 10 minutes between runs
+  sleep 60 #wait 1 minute between runs
 done
 echo "$(date) - dj_stop file found, exiting."
