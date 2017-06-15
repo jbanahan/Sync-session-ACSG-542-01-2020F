@@ -321,10 +321,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     h = {id: s.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
     if render_shipment_lines?
-      h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
+      h['lines'] = render_lines(preload_shipment_lines(s, render_order_fields?, true), shipment_line_fields_to_render, render_order_fields?)
     end
     if render_booking_lines?
-      h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render)
+      h['booking_lines'] = render_lines(preload_booking_lines(s), booking_line_fields_to_render)
     end
 
     h['containers'] = render_lines(s.containers, container_fields_to_render) if s.containers.any?
@@ -349,10 +349,28 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     h
   end
 
+  def preload_shipment_lines shipment, render_order_fields, custom_values
+    if render_order_fields?
+      if custom_values
+        return shipment.shipment_lines.includes([{piece_sets: {order_line: [:order]}}, :custom_values, {product: [:custom_values]}])
+      else
+        return shipment.shipment_lines.includes([{piece_sets: {order_line: [:order]}}, {product: [:custom_values]}])
+      end
+      
+    else
+      return shipment.shipment_lines
+    end
+  end
+
+  def preload_booking_lines shipment
+    shipment.booking_lines.includes([{order_line: [:order]}, :order])
+  end
+
   def shipment_lines
     s = get_shipment
     h = {id: s.id}
-    h['lines'] = render_lines(s.shipment_lines, shipment_line_fields_to_render, render_order_fields?)
+  
+    h['lines'] = render_lines(preload_shipment_lines(s, render_order_fields?, true), shipment_line_fields_to_render, render_order_fields?)
 
     render json: {'shipment' => h}
   end
@@ -360,7 +378,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def booking_lines
     s = get_shipment
     h = {id: s.id}
-    h['booking_lines'] = render_lines(s.booking_lines, booking_line_fields_to_render)
+    h['booking_lines'] = render_lines(preload_booking_lines(s), booking_line_fields_to_render)
 
     render json: {'shipment' => h}
   end
@@ -458,7 +476,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :bkln_varuid,
       :bkln_order_line_id,
       :bkln_product_db_id
-     ] + custom_field_keys(CoreModule::BOOKING_LINE))
+     ])
   end
 
   def shipment_line_fields_to_render
@@ -541,31 +559,40 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     order_ids = Set.new
     booked_product_ids = Set.new
     product_ids = Set.new
-    shipment.shipment_lines.each do |sl|
-      piece_count += sl.quantity unless sl.quantity.nil?
-      sl.order_lines.each {|ol| order_ids << ol.order_id}
-      product_ids << sl.product_id
+    line_count = 0
+    booking_line_count = 0
+
+    # This query runs WAY faster than iterating over the shipment lines, piece sets, order lines to get counts.
+    ActiveRecord::Base.connection.execute("select ol.id, ol.order_id, ol.product_id, l.quantity FROM shipment_lines l
+      inner join piece_sets p on l.id = p.shipment_line_id
+      inner join order_lines ol on p.order_line_id = ol.id
+      where l.shipment_id = #{shipment.id}").each do |row|
+
+      order_ids << row[1] unless row[1].nil?
+      product_ids << row[2] unless row[2].nil?
+      line_count += 1
+      piece_count += row[3] unless row[3].nil?
     end
-    shipment.booking_lines.each do |bl|
+
+    preload_booking_lines(shipment).each do |bl|
+      booking_line_count += 1
       booked_piece_count += bl.quantity unless bl.quantity.nil?
       if bl.order_line_id.present?
         booked_order_ids << bl.order_line.order_id
-        booked_product_ids << bl.order_line.product_id
       else
-        booked_order_ids << bl.order_id
-        booked_product_ids << bl.product_id
+        booked_order_ids << bl.order_id if bl.order_id.present?
       end
-
+      booked_product_ids << bl.product_id if bl.product_id.present?
     end
     {
-      line_count: number_with_delimiter(shipment.shipment_lines.size),
-      booked_line_count: number_with_delimiter(shipment.booking_lines.size),
+      line_count: number_with_delimiter(line_count),
+      booked_line_count: number_with_delimiter(booking_line_count),
       piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
       booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
-      order_count: number_with_delimiter(order_ids.to_a.compact.size),
-      booked_order_count: number_with_delimiter(booked_order_ids.to_a.compact.size),
-      product_count: number_with_delimiter(product_ids.to_a.compact.size),
-      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.size)
+      order_count: number_with_delimiter(order_ids.size),
+      booked_order_count: number_with_delimiter(booked_order_ids.size),
+      product_count: number_with_delimiter(product_ids.size),
+      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.length)
     }
   end
   def render_order_fields?
@@ -592,7 +619,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
           :ordln_ordered_qty,
           :ordln_country_of_origin,
           :ordln_hts
-        ] + custom_field_keys(CoreModule::ORDER_LINE))
+        ])
         line_fields.each {|uid| olh[uid] = export_field(uid, ol)}
         olh
       else
