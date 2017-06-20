@@ -142,8 +142,10 @@ $(function() {
             <td><%=dj.priority%></td>
             <td><%=dj.attempts%></td>
             <td>
-              <%-unless dj.last_error.blank?-%>
-                <pre style='height:150px;overflow:auto;resize:both;'><%=dj.last_error%></pre>
+              <%-unless dj.last_error.blank?
+                # Limit the error and handler sizes to only 1K characters...otherwise this can actually cause the master setups page to load REALLY slow if we have long errors/handlers in a bunch of fields
+              -%>
+                <pre style='height:150px;overflow:auto;resize:both;'><%=dj.last_error.to_s.length <= 1000 ? dj.last_error : (dj.last_error.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY- SEE DATABASE FOR FULL LAST ERROR VALUE]")%></pre>
               <%-end-%>
             </td>
             <td><%=dj.run_at%></td>
@@ -151,7 +153,7 @@ $(function() {
             <td><%=dj.failed_at%></td>
             <td><%=dj.locked_by%></td>
             <td>
-              <pre style='height:150px;overflow:auto;resize:both;'><%=dj.handler%></pre>
+              <pre style='height:150px;overflow:auto;resize:both;'><%=dj.handler.to_s.length <= 1000 ? dj.handler : (dj.handler.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY - SEE DATABASE FOR FULL HANDLER VALUE]")%></pre>
             </td>
           </tr>
         <% end %>

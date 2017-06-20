@@ -109,4 +109,5 @@ class ChainDelayedJobPlugin < Delayed::Plugin
   end
 end
 
+Delayed::Worker.default_queue_name = 'default'
 Delayed::Worker.plugins << ChainDelayedJobPlugin
