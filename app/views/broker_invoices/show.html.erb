@@ -1,6 +1,6 @@
 <% content_for :action_bar do%>
   <button class='btn_link' link_to='<%=broker_invoices_path%>' key_map='b'>Back To Search</button>
-  <% if current_user.view_entries? %>
+  <% if current_user.view_entries? && @invoice.entry.present? %>
     <button class='btn_link' link_to='<%=entry_path(@invoice.entry)%>' key_map='e'>View Entry</button>
   <% end %>
   <% if current_user.sys_admin? %>
