@@ -130,7 +130,7 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
     :key_model_field_uids => [:shp_ref],
-    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference],
+    :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference, :shp_shipped_orders, :shp_booked_orders],
     :module_chain => [Shipment, ModuleChain::SiblingModules.new(ShipmentLine, BookingLine)]
     })
   SALE_LINE = CoreModule.new("SalesOrderLine","Sale Line",{
