@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:UA_Delivery xmlns:ns0="http://ua.com/3pl/FMS/XSDLibrary">
+  <Header>
+    <ExtDocNumber>ASN0001045</ExtDocNumber>
+    <DocNumber>6000000556</DocNumber>
+    <DocType Variant="RESERVED">ASN</DocType>
+    <MasterBOL>MBOL1938</MasterBOL>
+    <SubBOL>HBOL1938</SubBOL>
+    <Carrier>SCAC</Carrier>
+    <Trailer>MBOL1938</Trailer>
+    <TotalNumOfCartons>00002</TotalNumOfCartons>
+    <ShippedFrom>
+      <ID>0000602029</ID>
+      <Name>YMUV2 LONG VA VIETNAM CO LTD</Name>
+    </ShippedFrom>
+    <CurrentFacility>
+      <ID>9004</ID>
+    </CurrentFacility>
+    <DateTime>
+      <Date DateQualifier="DeliveryDate">20161218</Date>
+    </DateTime>
+    <DateTime/>
+    <DateTime/>
+    <MessageID>0000000000209814</MessageID>
+    <Order>
+      <Order>6000000556</Order>
+      <Type>RESERVED</Type>
+      <CustomerPO>I0P2P031 Robin</CustomerPO>
+      <SoldTo>
+        <ID>0010000495</ID>
+        <Name>FGL Sports Ltd.</Name>
+        <Name2>Sport Chek</Name2>
+        <Street>824 41ST AVE NE</Street>
+        <Street2/>
+        <Street3/>
+        <City>CALGARY</City>
+        <State>AB</State>
+        <PostalCode>T2E 3R3</PostalCode>
+        <Country ISOCountry="CAN" ISOCountryNum="124">CA</Country>
+        <Phone1/>
+        <Phone2/>
+        <Email/>
+        <ExtPartnerID>SPORTCHEK</ExtPartnerID>
+      </SoldTo>
+      <ShipTo>
+        <ID>0010000495</ID>
+        <Name>FGL Sports Ltd.</Name>
+        <ExtPartnerID/>
+      </ShipTo>
+      <ShippingCondition>CUSTPICKUP</ShippingCondition>
+      <OrderDetails>
+        <LineNum>900001</LineNum>
+        <SKU>1242757-001-XL</SKU>
+        <VariantArticle>1242757-001004</VariantArticle>
+        <UPC>886091000606</UPC>
+        <WMSizeCode>XL4</WMSizeCode>
+        <Qty>
+          <Quantity UOM="EA">10</Quantity>
+        </Qty>
+        <StockCategory>1ZZ02VNZZZ</StockCategory>
+        <CountryOfOrigin>VN</CountryOfOrigin>
+        <Quality>1</Quality>
+        <Kit>02</Kit>
+        <AccountGroup>ZZZ</AccountGroup>
+        <Channel>ZZ</Channel>
+        <CustomerDept/>
+        <EDICustStyleDesc>886091000606</EDICustStyleDesc>
+        <SAPPurchOrderNum>4200001938</SAPPurchOrderNum>
+        <SAPPurchOrderType>ZTP</SAPPurchOrderType>
+      </OrderDetails>
+      <Carton>
+        <CartonID>00000000008000000277</CartonID>
+        <Weights>
+          <Value type="GrossWeight">1.000</Value>
+          <UOM>KGM</UOM>
+        </Weights>
+        <Dimensions>
+          <Value type="Width">100.000</Value>
+          <UOM>CMT</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Height">100.000</Value>
+          <UOM>CMT</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Length">100.000</Value>
+          <UOM>CMT</UOM>
+        </Dimensions>
+        <CartonDetails>
+          <SKU>1242757-001-XL</SKU>
+          <VariantArticle>1242757-001004</VariantArticle>
+          <UPC>886091000606</UPC>
+          <WMSizeCode>XL4</WMSizeCode>
+          <PackQty>
+            <Quantity UOM="EA">10.000</Quantity>
+          </PackQty>
+          <Order>6000000556</Order>
+          <OrderLine>900001</OrderLine>
+        </CartonDetails>
+      </Carton>
+      <Carton>
+        <CartonID>00000000008000000278</CartonID>
+        <Weights>
+          <Value type="GrossWeight">2.20462</Value>
+          <UOM>LB</UOM>
+        </Weights>
+        <Dimensions>
+          <Value type="Width">2.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Height">1.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Length">1.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <CartonDetails>
+          <SKU>1242757-001-XL</SKU>
+          <VariantArticle>1242757-001001</VariantArticle>
+          <UPC>886091000576</UPC>
+          <WMSizeCode>XS1</WMSizeCode>
+          <PackQty>
+            <Quantity UOM="EA">20.000</Quantity>
+          </PackQty>
+          <Order>6000000556</Order>
+          <OrderLine>900001</OrderLine>
+        </CartonDetails>
+      </Carton>
+      <!-- This carton exists to make sure we're using the Order/OrderLine values to only pull those cartons that match to the order detail being processed. -->
+      <Carton>
+        <CartonID>00000000008000000279</CartonID>
+        <Weights>
+          <Value type="GrossWeight">2.20462</Value>
+          <UOM>LB</UOM>
+        </Weights>
+        <Dimensions>
+          <Value type="Width">2.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Height">1.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <Dimensions>
+          <Value type="Length">1.000</Value>
+          <UOM>CBM</UOM>
+        </Dimensions>
+        <CartonDetails>
+          <SKU>1242757-001-XL</SKU>
+          <VariantArticle>1242757-001001</VariantArticle>
+          <UPC>886091000576</UPC>
+          <WMSizeCode>XS1</WMSizeCode>
+          <PackQty>
+            <Quantity UOM="EA">20.000</Quantity>
+          </PackQty>
+          <Order>6000000556</Order>
+          <OrderLine>900002</OrderLine>
+        </CartonDetails>
+      </Carton>
+    </Order>
+  </Header>
+</ns0:UA_Delivery>

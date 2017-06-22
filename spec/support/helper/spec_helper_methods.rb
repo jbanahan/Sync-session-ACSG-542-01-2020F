@@ -170,7 +170,7 @@ module Helpers
   end
 
   def stub_master_setup_request_host
-    ms = double("MasterSetup")
+    ms = instance_double("MasterSetup")
     allow(ms).to receive(:request_host).and_return "localhost:3000"
     allow(ms).to receive(:system_code).and_return "test"
     allow(ms).to receive(:uuid).and_return "test-uuid"

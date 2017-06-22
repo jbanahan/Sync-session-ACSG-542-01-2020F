@@ -10,6 +10,7 @@ class DataCrossReference < ActiveRecord::Base
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
+  UA_SITE_TO_COUNTRY ||= 'ua_site'
   UA_WINSHUTTLE_FINGERPRINT ||= 'uawin-fingerprint'
   UA_315_MILESTONE_EVENT ||= 'ua-315'
   UA_MATERIAL_COLOR_PLANT ||= 'ua-mcp'
@@ -42,7 +43,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
       xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true),
       xref_attributes(ASCE_MID, "Ascena MID List", "MIDs on this list are used to generate the Daily First Sale Exception report", key_label: "MID", show_value_column: false),
-      xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true)
+      xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true),
+      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
     ]
 
     user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
@@ -80,6 +82,8 @@ class DataCrossReference < ActiveRecord::Base
       (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
     when CA_HTS_TO_DESCR
       (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.in_group?('xref-maintenance'))
+    when UA_SITE_TO_COUNTRY
+      (Rails.env.development? || MasterSetup.get.system_code == "underarmour")
     else
       false
     end
@@ -104,6 +108,10 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_ua_plant_to_iso plant
     find_unique where(cross_reference_type:UA_PLANT_TO_ISO, key:plant)
+  end
+
+  def self.find_ua_country_by_site site_number
+    find_unique where(cross_reference_type:UA_SITE_TO_COUNTRY, key:site_number)
   end
 
   def self.find_ua_315_milestone ua_shipment_identifier, event_code

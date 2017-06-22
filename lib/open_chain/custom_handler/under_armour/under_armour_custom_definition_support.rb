@@ -11,8 +11,14 @@ module OpenChain; module CustomHandler; module UnderArmour; module UnderArmourCu
     import_countries: {label:'Import Countries',data_type: :text, module_type: 'Product'},
     size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
     expected_duty_rate: {label: "Expected Duty Rate", data_type: :decimal, module_type: "Classification"},
+    prod_color: {label:'Color',data_type: :string, module_type: 'Product', cdef_uid: 'prod_color'},
     prod_seasons: {label:'Seasons',data_type: :text, module_type:'Product'},
     prod_export_countries: {label:'Export Countries',data_type: :text, module_type: 'Product'},
+    prod_import_countries: {label:'Import Countries',data_type: :text, module_type: 'Product', cdef_uid: 'prod_import_countries'},
+    prod_style: {label: 'Style', data_type: :string, module_type:'Product', cdef_uid: :prod_style},
+    prod_size_code: {label: 'Size', data_type: :string, module_type:'Product', cdef_uid: :prod_size_code},
+    prod_size_description: {label: 'Descriptive Size', data_type: :string, module_type: 'Product', cdef_uid: 'prod_size_description'},
+    prod_site_codes: {label: 'Site Codes', data_type: :text, module_type: 'Product', cdef_uid: 'prod_site_codes'},
     var_export_countries: {label:'Export Countries',data_type: :text, module_type: 'Variant'},
     var_import_countries: {label:'Import Countries',data_type: :text, module_type: 'Variant'}
   }

@@ -20,6 +20,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/under_armour/ua_style_color_region_parser'
 require 'open_chain/custom_handler/under_armour/ua_style_color_factory_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_missing_classifications_upload_parser'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
@@ -45,6 +46,7 @@ class CustomFeaturesController < ApplicationController
   UA_TBD_REPORT_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
   UA_STYLE_COLOR_REGION_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser'
   UA_STYLE_COLOR_FACTORY_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser'
+  UA_MISSING_CLASSIFICATIONS_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser'
   LE_RETURNS_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
   LE_CI_UPLOAD ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
   ALLIANCE_DAY_END ||= 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
@@ -147,6 +149,22 @@ class CustomFeaturesController < ApplicationController
 
   def ua_style_color_factory_download
     generic_download "UA Style/Color/Region"
+  end
+
+  def ua_missing_classifications_index
+    generic_index OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser.new(nil), UA_MISSING_CLASSIFICATIONS_PARSER, 'UA Missing Classifications'
+  end
+
+  def ua_missing_classifications_upload
+    generic_upload(UA_MISSING_CLASSIFICATIONS_PARSER, 'UA Missing Classifications', 'ua_missing_classifications', additional_process_params: params[:attached].original_filename) do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+
+  def ua_missing_classifications_download
+    generic_download 'UA Missing Classifications'
   end
 
   def kewill_isf_index

@@ -95,6 +95,14 @@ describe DataCrossReference do
       expect(described_class.find_ua_plant_to_iso('x')).to eq('y')
     end
   end
+  
+  context "find_ua_country_by_site" do
+    it "finds" do
+      described_class.create!(key: 'x', value:'y', cross_reference_type:described_class::UA_SITE_TO_COUNTRY)
+      expect(described_class.find_ua_country_by_site('x')).to eq('y')
+    end
+  end
+
   context "find_ua_winshuttle_fingerprint" do
     it "should find" do
       described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'),value:'y',cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
@@ -278,6 +286,16 @@ describe DataCrossReference do
 
       it "allows access to RL Value Fabirc xref for anyone" do
         expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_truthy
+      end
+    end
+
+    context "under armour system" do
+      before :each do
+        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "underarmour"
+      end
+
+      it "allows access to UA sites xref for anyone" do
+        expect(DataCrossReference.can_view? 'ua_site', User.new).to be_truthy
       end
     end
 

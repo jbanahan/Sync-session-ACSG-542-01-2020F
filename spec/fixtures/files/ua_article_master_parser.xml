@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<n0:UA_Article xmlns:n0="http://ua.com/SAP/ArticleMaster" xmlns:prx="urn:sap.com:proxy:ERQ:/1SAI/TASED64B800E7C9E19A33D4:750">
+  <Style>
+    <Article>
+      <ArticleNumber>art num</ArticleNumber>
+      <ArticleDescription ISOLanguage="EN">art descr</ArticleDescription>
+      <ArticleAttr>
+        <Code Type="CommImpCode">1111.11.1111</Code>
+        <Description ISOLanguage="EN">customs descr</Description>
+      </ArticleAttr>
+      <ArticleAttr>
+        <Code id='prepack' Type="ArticleType"></Code>
+        <Description ISOLanguage="EN">UA Pre-Pack</Description>
+      </ArticleAttr>
+      <UPC id="1">
+        <UPCNumber>upc num 1</UPCNumber>
+        <VariantArticle>var art 1</VariantArticle>
+        <VariantDescription ISOLanguage="EN">var descr 1</VariantDescription>
+        <SKU>sku 1</SKU>
+        <UPCAttr>
+          <Code Type="HTSCode">1111.11.1111</Code>
+        </UPCAttr>
+      </UPC>
+      <UPC id="2">
+        <UPCNumber>upc num 2</UPCNumber>
+        <VariantArticle>var art 2</VariantArticle>
+        <VariantDescription ISOLanguage="EN">var descr 2</VariantDescription>
+        <SKU>sku 2</SKU>
+        <UPCAttr>
+          <Code Type="HTSCode">1111.11.1111</Code>
+        </UPCAttr>
+        <BOMComponent>
+          <ComponentSKU>1271424-43700-SM</ComponentSKU>
+          <ComponentQty>55.44</ComponentQty>
+        </BOMComponent>
+        <BOMComponent>
+          <ComponentSKU>1271424-43700-LG</ComponentSKU>
+          <ComponentQty>789</ComponentQty>
+        </BOMComponent>
+      </UPC>
+      <UPC id="3">
+        <UPCNumber>upc num 3</UPCNumber>
+        <VariantArticle>var art 3</VariantArticle>
+        <VariantDescription ISOLanguage="EN">var descr 3</VariantDescription>
+        <SKU>sku 3</SKU>
+        <UPCAttr>
+          <Code Type="HTSCode">2222.22.2222</Code>
+        </UPCAttr>
+      </UPC>
+    </Article>
+  </Style>
+</n0:UA_Article>

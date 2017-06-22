@@ -34,6 +34,9 @@ require 'open_chain/custom_handler/kewill_export_shipment_parser'
 require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handler'
 require 'open_chain/custom_handler/polo/polo_850_parser'
 require 'open_chain/custom_handler/ascena/ascena_po_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_po_xml_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_856_xml_parser'
+require 'open_chain/custom_handler/under_armour/ua_article_master_parser'
 require 'open_chain/custom_handler/burlington/burlington_850_parser'
 require 'open_chain/custom_handler/burlington/burlington_856_parser'
 require 'open_chain/custom_handler/amersports/amersports_856_ci_load_parser'
@@ -153,6 +156,8 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_sap_pir_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('_ua_article_master/') && MasterSetup.get.custom_feature?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_from_msl/') && master_setup.custom_feature?('MSL+')
         if fname.to_s.match /-ack/
           OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
@@ -208,6 +213,10 @@ module OpenChain
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
       elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_ua_po_xml/') && master_setup.custom_feature?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_ua_856_xml/') && master_setup.custom_feature?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_burlington_850/') && master_setup.custom_feature?("Burlington")
         OpenChain::CustomHandler::Burlington::Burlington850Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_burlington_856/') && master_setup.custom_feature?("Burlington")

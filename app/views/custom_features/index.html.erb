@@ -60,6 +60,13 @@
   </div>
   <%-end-%>
   <%-if enabled_features.include?('UA SAP')-%>
+    <%-if OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser.new(nil).can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-4 col-md-offset-4'>
+          <%=link_to "Missing Classifications Upload", '/custom_features/ua_missing_classifications', :class=>'btn btn-lg btn-default btn-block'%>
+        </div>
+      </div>
+    <%-end-%>    
     <%-if OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil).can_view?(current_user)-%>
       <div class='row'>
         <div class='col-md-4 col-md-offset-4'>

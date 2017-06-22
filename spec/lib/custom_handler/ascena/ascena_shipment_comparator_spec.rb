@@ -41,5 +41,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaShipmentComparator do
       expect(sr.sent_at.to_i).to eq now.to_i
       expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
     end
+
+    it "does not send if a sync record is already present" do
+      shipment.sync_records.create! sent_at: Time.zone.now, trading_partner: "ASCE"
+
+      expect(subject).not_to receive(:ascena_generator)
+      subject.compare nil, shipment.id, nil, nil, nil, nil, nil, nil
+    end
+
+    it "does send if sync record has blank sent_at" do
+      expect(subject).to receive(:ascena_generator).and_return generator
+      expect(generator).to receive(:generate_and_send).with(shipment)
+      shipment.sync_records.create! trading_partner: "ASCE"
+
+      subject.compare nil, shipment.id, nil, nil, nil, nil, nil, nil
+    end
   end
 end

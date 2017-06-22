@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/custom_definition_support'
 
 module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
+    shp_revision: {label: "Revision", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_revision"},
     shpln_priority: {label: "Priority", data_type: :string, module_type: "ShipmentLine", cdef_uid: "shpln_priority"},
     shpln_po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_po"},
     shpln_sku: {label:'SKU',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_sku"},
@@ -50,6 +51,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_classified_from_entry: {label: "Classified From Entry", data_type: :string, module_type: "Product", cdef_uid: "prod_classified_from_entry"},
     prod_brand: {label: "Brand", data_type: :string, module_type: "Product", cdef_uid: "prod_brand"},
     prod_department_code: {label: "Department Code", data_type: :string, module_type: "Product", cdef_uid: "prod_department_code"},
+    prod_prepack: {label: "Prepack", data_type: :boolean, module_type: "Product", cdef_uid: "prod_prepack" },
     prod_reference_number: {label: "Reference Number", data_type: :string, module_type: "Product", cdef_uid: "prod_reference_number"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification", cdef_uid: "class_customs_description"},
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification", cdef_uid: "class_set_type"},
@@ -89,8 +91,13 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_line_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_units_per_inner_pack"},
     ord_line_retail_unit_price: {label: "Retail Unit Price", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_retail_unit_price"},
     ord_line_buyer_item_number: {label: "Buyer Item Number", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_buyer_item_number"},
-    ord_line_outer_pack_identifier: {label: "Outer Pack Identifier", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_outer_pack_identifier"}
-  } 
+    ord_line_outer_pack_identifier: {label: "Outer Pack Identifier", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_outer_pack_identifier"},
+    var_upc: {label: "UPC", data_type: "string", module_type: "Variant", cdef_uid: "var_upc"},
+    var_article_number: {label: "Article Number", data_type: :string, module_type: "Variant", cdef_uid: "var_article_number"},
+    var_description: {label: "Description", data_type: :string, module_type: "Variant", cdef_uid: "var_description"},
+    var_hts_code: {label: "HTS Code", data_type: :string, module_type: "Variant", cdef_uid: "var_hts_code"},
+    var_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "Variant", cdef_uid: "var_units_per_inner_pack"}
+  }
   
   def self.included(base)
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)

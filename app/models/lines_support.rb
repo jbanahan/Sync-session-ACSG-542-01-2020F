@@ -4,7 +4,7 @@ module LinesSupport
 
   #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   included do
-    has_many :piece_sets
+    has_many :piece_sets, autosave: true
     has_many :order_lines, :through => :piece_sets
     has_many :sales_order_lines, :through => :piece_sets
     has_many :shipment_lines, :through => :piece_sets

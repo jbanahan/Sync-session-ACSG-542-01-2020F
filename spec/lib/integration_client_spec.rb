@@ -96,6 +96,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
   let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
 
   context 'request type: remote_file', :disable_delayed_jobs do
+    context "ecellerate" do
+      it "should send data to eCellerate router" do
+        expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_ecellerate_shipment/a.xml','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+    end
     context "ascena" do
       it "sends data to Ascena PO parser" do
         klass = OpenChain::CustomHandler::Ascena::AscenaPoParser
@@ -298,6 +305,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
     end
+    context "under_armour" do
+      it "sends data to UA Article Master Parser" do
+        klass = OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser
+        expect(master_setup).to receive(:custom_feature?).with('Under Armour Feeds').and_return(true)
+        expect(klass).to receive(:delay).and_return klass
+        expect(klass).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name, '12345')
+        cmd = {'request_type'=>'remote_file','path'=>'/_ua_article_master/a.xml', 'remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+    end
     it 'should process CSM Acknowledgements' do
       expect(master_setup).to receive(:custom_feature?).with('CSM Sync').and_return(true)
       p = double("parser")
@@ -460,6 +477,24 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(OpenChain::CustomHandler::Polo::Polo850Parser).to receive(:delay).and_return OpenChain::CustomHandler::Polo::Polo850Parser
       expect(OpenChain::CustomHandler::Polo::Polo850Parser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
       cmd = {'request_type'=>'remote_file','path'=>'/polo/_850/file.dat','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
+
+    it "handles ua po files" do
+      expect(master_setup).to receive(:custom_feature?).with('Under Armour Feeds').and_return(true)
+      p = class_double(OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser)
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_ua_po_xml/file.xml','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
+
+    it "handles ua 856 files" do
+      expect(master_setup).to receive(:custom_feature?).with('Under Armour Feeds').and_return(true)
+      p = class_double(OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser)
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_ua_856_xml/file.xml','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
 

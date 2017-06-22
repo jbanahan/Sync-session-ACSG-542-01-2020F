@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe LinkableAttachmentImportRule do
+  after :each do
+    LinkableAttachmentImportRule.load_cache
+  end
+
   context 'validations' do
     it 'should validate unique paths' do
       should_work = Factory("linkable_attachment_import_rule",:path=>'f')
@@ -24,10 +28,10 @@ describe LinkableAttachmentImportRule do
         LinkableAttachmentImportRule.create!(:path=>'/that',:model_field_uid=>'prod_uid')
       end
       it "should find for module in use" do
-        expect(LinkableAttachmentImportRule.exists_for_class?(Order)).to be_truthy
+        expect(LinkableAttachmentImportRule.exists_for_class?(Order)).to eq true
       end
       it "should not find for module not in use" do
-        expect(LinkableAttachmentImportRule.exists_for_class?(Shipment)).to be_falsey
+        expect(LinkableAttachmentImportRule.exists_for_class?(Shipment)).to eq false
       end
     end
   end
@@ -158,6 +162,17 @@ describe LinkableAttachmentImportRule do
       LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt', original_path: "/path/to"
 
       expect(ErrorLogEntry.last.additional_messages).to eq ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
+    end
+  end
+
+  describe "after_destroy" do 
+    it "reloads cache after destroy" do
+      field =  Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      expect(field).to receive(:load_cache).and_call_original
+      # The after cleanup above also calls load cache, hence the at_least(:once) here
+      expect(LinkableAttachmentImportRule).to receive(:load_cache).at_least(:once).and_call_original
+
+      field.destroy
     end
   end
 end

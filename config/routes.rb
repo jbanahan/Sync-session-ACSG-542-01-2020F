@@ -590,6 +590,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ascena_product/upload" => "custom_features#ascena_product_upload", :via => :post
   match "/custom_features/ascena_product/:id/download" => "custom_features#ascena_product_download", :via => :get
 
+  get "/custom_features/ua_missing_classifications" => "custom_features#ua_missing_classifications_index"
+  post "/custom_features/ua_missing_classifications/upload" => "custom_features#ua_missing_classifications_upload"
+  get "/custom_features/ua_missing_classifications/:id/download" => "custom_features#ua_missing_classifications_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get
