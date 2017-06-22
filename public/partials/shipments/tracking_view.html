@@ -47,8 +47,28 @@
   <p class="form-control-static" id="shp_inland_port_date">{{outerScope.shp.shp_inland_port_date}}</p>
 </div>
 <div class="form-group">
+  <label for="shp_do_issued_at" class="control-label">DO Issued Date</label>
+  <p class="form-control-static" id="shp_do_issued_at">{{outerScope.shp.shp_do_issued_at}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_trucker_name" class="control-label">Trucker Name</label>
+  <p class="form-control-static" id="shp_trucker_name">{{outerScope.shp.shp_trucker_name}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_port_last_free_day" class="control-label">Port Last Free Day</label>
+  <p class="form-control-static" id="shp_port_last_free_day">{{outerScope.shp.shp_port_last_free_day}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_pickup_at" class="control-label">Pickup Date</label>
+  <p class="form-control-static" id="shp_pickup_at">{{outerScope.shp.shp_pickup_at}}</p>
+</div>
+<div class="form-group">
   <label for="shp_delivered_date" class="control-label">Delivered Date</label>
   <p class="form-control-static" id="shp_delivered_date">{{outerScope.shp.shp_delivered_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_in_warehouse_time" class="control-label">In Warehouse Time</label>
+  <p class="form-control-static" id="shp_in_warehouse_time" placeholder="YYYY-MM-DD HH:MM">{{outerScope.shp.shp_in_warehouse_time | amDateFormat: 'MM/DD/YYYY hh:mm a'}}</p>
 </div>
 <div ng-show="outerScope.shp.shp_canceled_date" class="form-group">
   <label for="shp_canceled_date" class="control-label">Canceled Date</label>

@@ -219,6 +219,19 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.shipment_instructions_sent_by_id)",
         :data_type=>:string,
         :read_only=>true
+      }],
+      [85, :shp_do_issued_at, :do_issued_at, "DO Issued Date", {data_type: :date}],
+      [86, :shp_trucker_name, :trucker_name, "Trucker Name", {data_type: :string}],
+      [87, :shp_port_last_free_day, :port_last_free_day, "Port Last Free Day", {data_type: :date}],
+      [88, :shp_pickup_at, :pickup_at, "Pickup At", {data_type: :date}],
+      [89, :shp_in_warehouse_time, :in_warehouse_time, "In Warehouse Time", {data_type: :datetime,
+        :import_lambda => lambda {|obj, val|
+            if val.is_a? String
+              obj.in_warehouse_time = Time.zone.parse val
+            else
+              obj.in_warehouse_time = val
+            end
+        }
       }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")

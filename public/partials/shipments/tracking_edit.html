@@ -23,5 +23,22 @@
 <input type="date" id="shp_arrival_port_date" ng-model="outerScope.tracking.shp_arrival_port_date" class="form-control" />
 <label for="shp_inland_port_date">Inland Port Date</label>
 <input type="date" id="shp_inland_port_date" ng-model="outerScope.tracking.shp_inland_port_date" class="form-control" />
+<label for="shp_do_issued_at">DO Issued At</label>
+<input type="date" id="shp_do_issued_at" ng-model="outerScope.tracking.shp_do_issued_at" class="form-control" />
+<label for="shp_trucker_name">Trucker Name</label>
+<input type="text" id="shp_trucker_name" ng-model="outerScope.tracking.shp_trucker_name" class="form-control" />
+<label for="shp_port_last_free_day">Port Last Free Day</label>
+<input type="date" id="shp_port_last_free_day" ng-model="outerScope.tracking.shp_port_last_free_day" class="form-control" />
+<label for="shp_pickup_at">Pickup Date</label>
+<input type="date" id="shp_pickup_at" ng-model="outerScope.tracking.shp_pickup_at" class="form-control" />
 <label for="shp_delivered_date">Delivered Date</label>
 <input type="date" id="shp_delivered_date" ng-model="outerScope.tracking.shp_delivered_date" class="form-control" />
+<label>In Warehouse Time</label>
+<div class="row">
+    <div class="col-sm-6">
+        <input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="col-sm-6 form-control" placeholder="YYYY-MM-DD"/>
+    </div>
+    <div class="col-sm-6">
+        <input type="time" placeholder="HH:MM" id="shp_warehouse_time_hour" pattern="\d{2}:\d{2}" ng-pattern="/^\d{2}:\d{2}$/" ng_model="outerScope.tracking._shp_warehouse_time_hour" class="col-sm-6 form-control" />
+    </div>
+</div>
