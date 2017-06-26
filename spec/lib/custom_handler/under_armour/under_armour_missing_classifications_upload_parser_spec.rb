@@ -52,9 +52,21 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
       subject.process "user", "file.csv"
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ["uacustomscompliance@underarmour.com"]
+      expect(mail.to).to eq [described_class::ERROR_EMAIL]
       expect(mail.subject).to eq "Missing Classifications Upload Error"
       expect(mail.body.raw_source).to include "The following site codes in file.csv were unrecognized: site2 (row 2)"
+      expect(Product.count).to eq 1
+    end
+
+    it "doesn't send email if site code is blank" do
+      stub_master_setup
+      row_1[7] = row_2[7] = ""
+      expect(subject).to receive(:foreach).with("custom file").and_return [header, row_1, row_2]
+      subject.process "user", "file.csv"
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail).to be_nil
+      expect(Product.count).to eq 2
     end
   end
 

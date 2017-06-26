@@ -5,6 +5,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
   include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
 
+  ERROR_EMAIL = 'jkohn@vandegriftinc.com'
 
   def initialize custom_file
     @custom_file = custom_file
@@ -32,7 +33,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
 
   def parse rows, codes, missing_codes, filename
     rows.each_with_index do |row, i|
-      if !codes.include? row[7]
+      if row[7].presence && !codes.include?(row[7])
         missing_codes[i + 1] = row[7]
         next
       end
@@ -50,7 +51,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
 
   def send_email codes_hsh, filename
     body = error_string(codes_hsh, filename)
-    OpenMailer.send_simple_html("uacustomscompliance@underarmour.com", "Missing Classifications Upload Error", body).deliver!
+    OpenMailer.send_simple_html(ERROR_EMAIL, "Missing Classifications Upload Error", body).deliver!
   end
 
   def error_string codes_hsh, filename
