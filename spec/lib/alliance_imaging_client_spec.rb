@@ -351,7 +351,7 @@ describe OpenChain::AllianceImagingClient do
     it "handles errors and retries polling" do
       error = StandardError.new
       expect(OpenChain::SQS).to receive(:poll).exactly(10).times.and_raise error
-      expect(error).to receive(:log_me).with(["Alliance imaging client hash: "]).exactly(10).times
+      expect(error).to receive(:log_me).with(["Alliance imaging client hash: null"]).exactly(10).times
 
       OpenChain::AllianceImagingClient.consume_images
     end

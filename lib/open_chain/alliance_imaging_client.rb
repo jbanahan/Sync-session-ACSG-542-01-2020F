@@ -86,7 +86,7 @@ class OpenChain::AllianceImagingClient
         hash = nil
       end
     rescue => e
-      e.log_me ["Alliance imaging client hash: #{hash}"]
+      e.log_me ["Alliance imaging client hash: #{hash.to_json}"]
       
       # retry the poll to continue processing messages even after an error was raised.  The errored message
       # is now invisible for a period of time so it's not blocking the head of the queue
