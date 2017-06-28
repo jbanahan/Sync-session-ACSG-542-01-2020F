@@ -202,6 +202,8 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
       "WILSON"
     when "PRECOR"
       "PRECOR"
+    when "MAVIC"
+      "MAVIC"
     else
       raise "Invalid AMERSPORTS Importer code received: '#{code}'."
     end
