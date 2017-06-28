@@ -11,6 +11,10 @@ module OpenChain; module EntityCompare; class EntityComparator
 
     # Make these a lower queue priority..when uploading large numbers of orders/products these can choke out
     # reports and such if they're running at a lower priority
+
+    # This is simply here to prevent the massive number of snapshots we're doing for UAPARTS from flooding the
+    # job queue...this can be removed after they're all loaded.
+    return if entity_snapshot.recordable.respond_to?(:unique_identifier) && entity_snapshot.recordable.unique_identifier.starts_with?("UAPARTS-") && MasterSetup.get.system_code == "www-vfitrack-net"
     self.delay(priority: 10).process_by_id(entity_snapshot.id) if OpenChain::EntityCompare::ComparatorRegistry.registered_for(entity_snapshot).length > 0
 
     nil

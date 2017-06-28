@@ -134,5 +134,20 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       described_class.handle_snapshot snapshot
     end
+
+    it "skips process by id if product is for UAPARTS" do
+      # Make sure there's a comparator there to process, so we know that it's not not calling the process_by_id method due to the logic
+      # and not that there's no comparators.
+      OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
+      ms = stub_master_setup
+      expect(ms).to receive(:system_code).and_return "www-vfitrack-net"
+
+      product = Factory(:product, unique_identifier: "UAPARTS-123")
+      es = EntitySnapshot.new id: 6, recordable: product
+
+      expect(described_class).not_to receive(:delay)
+
+      described_class.handle_snapshot es
+    end
   end
 end
