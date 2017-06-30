@@ -88,30 +88,26 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # Check to see if there are any rule results around for this template, if so, we need to remove them as the template no longer applies.
     # This could be the case is situations where a template was changed to remove a company from the rules.
     if !template_applies
-      result = obj.business_validation_results.where(business_validation_template_id: self.id).first
-      result.destroy if result
+      Lock.with_lock_retry(obj) do 
+        result = obj.business_validation_results.where(business_validation_template_id: self.id).first
+        result.destroy if result
+      end
       return nil
     end
 
-    # This should prevent multiple business validation result objects from being generated at a time (.ie if there are concurrent create_all! runs occurring)
-    # I'm not putting this in a super-coarse lock around create_all! because that will run the whole create_all! method inside a single DB transaction,
-    # which has the potential to be a very lengthy process.
+    # Inverting the obj/bvr locks is an attempt to reduce the deadlocks in this section of code...the vast majority of 
+    # time the calling code will already have obtained a lock on the obj (since this code is called when snapshoting an object)
+    # therefore, there's going to be few situations where it shouldn't be able to also obtain the bvr lock for the obj.''
     bvr = nil
-    Lock.with_lock_retry(self) do
-      bvr = self.business_validation_results.where(validatable_type:obj.class.name,validatable_id:obj.id).first_or_create!
-    end
+    Lock.with_lock_retry(obj) do 
+      bvr = obj.business_validation_results.where(business_validation_template_id: self.id).first_or_create!
+      
+      Lock.with_lock_retry(bvr) do
+        initialize_business_validation_result bvr, obj
 
-
-    # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
-    # This should mean that only a single process is running validations for this module obj at a time
-    if run_validation
-      # Inverting the obj/bvr locks is an attempt to reduce the deadlocks in this section of code...the vast majority of 
-      # time the calling code will already have obtained a lock on the obj (since this code is called when snapshoting an object)
-      # therefore, there's going to be few situations where it shouldn't be able to also obtain the bvr lock for the obj.
-      Lock.with_lock_retry(obj) do 
-        Lock.with_lock_retry(bvr) do
-          initialize_business_validation_result bvr, obj
-
+        # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
+        # This should mean that only a single process is running validations for this module obj at a time
+        if run_validation
           state_changed = bvr.run_validation
           bvr.updated_at = Time.zone.now #force save
           bvr.save!
@@ -128,11 +124,6 @@ class BusinessValidationTemplate < ActiveRecord::Base
             bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
           end
         end
-      end
-
-    else
-      Lock.with_lock_retry(bvr) do
-        initialize_business_validation_result bvr, obj
       end
     end
     

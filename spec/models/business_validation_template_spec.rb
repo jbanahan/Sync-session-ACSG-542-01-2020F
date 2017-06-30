@@ -116,7 +116,6 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationRuleResult.count).to eq 0
     end
     it "should run validation if attribute passed" do
-      expect(Lock).to receive(:with_lock_retry).ordered.with(@bvt).and_yield
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield
       
@@ -127,7 +126,7 @@ describe BusinessValidationTemplate do
       expect(bvr.state).not_to be_nil
     end
     it "utilizes database locking while creating and validating objects" do
-      expect(Lock).to receive(:with_lock_retry).with(@bvt).and_yield
+      expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(BusinessValidationResult)).and_yield
 
       @bvt.create_result! @o
