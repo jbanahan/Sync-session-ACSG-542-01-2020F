@@ -211,4 +211,29 @@ describe BusinessValidationTemplate do
       expect(described_class.count).to eq 0
     end
   end
+
+  describe "create_results_for_object_ids!" do
+    let (:object) { Factory(:product) }
+    subject {described_class }
+
+    it "looks up the object and passes it to create_results_for_object" do
+      expect(subject).to receive(:create_results_for_object!).with(object, snapshot_entity: true)
+      subject.create_results_for_object_ids! "Product", [object.id]
+    end
+
+    it "handles actual class being passed as the object_type" do
+      expect(subject).to receive(:create_results_for_object!).with(object, snapshot_entity: true)
+      subject.create_results_for_object_ids! Product, [object.id]
+    end
+
+    it "handles missing objects" do
+      expect(subject).not_to receive(:create_results_for_object!)
+      subject.create_results_for_object_ids! Product, [-1]
+    end
+
+    it "allows for passing single id, not as an array" do
+      expect(subject).to receive(:create_results_for_object!).with(object, snapshot_entity: true)
+      subject.create_results_for_object_ids! "Product", object.id
+    end
+  end
 end

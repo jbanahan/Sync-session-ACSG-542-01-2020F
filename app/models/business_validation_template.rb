@@ -30,6 +30,20 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
   end
 
+  # This is pretty much just a simple way to offload rule validation of a bunch of object ids 
+  # to a backend processing queue.  The standard use case for this would be:
+  #
+  # BusinessValidationTemplate.delay.create_results_for_object_ids! "Product", [1, 2, 3]
+  #
+  def self.create_results_for_object_ids! object_type, object_ids, snapshot_entity: true
+    object_type = object_type.constantize unless object_type.is_a?(Class)
+
+    Array.wrap(object_ids).each do |id|
+      object = object_type.where(id: id).first
+      create_results_for_object!(object, snapshot_entity: snapshot_entity) if object
+    end
+  end
+
   # call create_result for all templates with matching module types
   # for the given object
   def self.create_results_for_object! obj, snapshot_entity: true
