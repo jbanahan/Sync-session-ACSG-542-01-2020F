@@ -47,6 +47,13 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
       snapshot.recordable = e
       expect(subject.accept? snapshot).to eq false
     end
+
+    it "does not accept snapshots when 'UA EEM Conversion' custom feature is enabled" do 
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("UA EEM Conversion").and_return true
+
+      expect(subject.accept? snapshot).to eq false
+    end
   end
 
   describe "compare" do

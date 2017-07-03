@@ -5,6 +5,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourShi
   extend OpenChain::EntityCompare::ShipmentComparator
 
   def self.accept? snapshot
+    # This can be removed once we know UA has sent every converted EEM shipment
+    return false if MasterSetup.get.custom_feature?("UA EEM Conversion")
+
     accept = super
 
     accept && snapshot.try(:recordable).try(:importer).try(:system_code) == "UNDAR"

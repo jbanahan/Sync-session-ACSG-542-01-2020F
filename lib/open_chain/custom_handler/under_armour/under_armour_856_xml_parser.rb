@@ -50,7 +50,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       # Clear out all the shipment lines...technically, UA said we wouldn't be getting updates except in cases
       # of big mess ups, but 1) I'm sure there will be a mess up 2) it's very simple to just delete the lines
       # and rebuild.  So lets just handle this scenario.
-      shipment.shipment_lines.destroy_all
+
+      # This custom feature check can be removed once all "converted" EEM ASN / Shipment data has been pushed
+      # through VFI Track.  Which should be within days of this commit
+      shipment.shipment_lines.destroy_all unless MasterSetup.get.custom_feature?("UA EEM Conversion")
 
       ship_xml.each_element("Order") do |order_xml|
         order_xml.each_element("OrderDetails") do |order_line_xml|

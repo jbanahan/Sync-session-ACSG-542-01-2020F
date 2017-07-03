@@ -114,6 +114,22 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       ua.destroy
       expect { subject.process_shipment xml, user, "bucket", "file.xml"}.to raise_error RuntimeError, "Unable to find Under Armour 'UNDAR' importer account."
     end
+
+    it "doesn't destroy existing lines if 'UA EEM Conversion' custom feature is enabled" do
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("UA EEM Conversion").and_return true
+
+      shipment = Factory(:shipment, importer: ua, reference: "UNDAR-ASN0001045")
+      line = shipment.shipment_lines.create! line_number: 1, product: product
+      container = shipment.containers.create! container_number: "MBOL1938"
+
+      subject.process_shipment xml, user, "bucket", "file.xml"
+
+      shipment.reload
+
+      expect { line.reload }.not_to raise_error
+      expect(shipment.shipment_lines.length).to eq 2
+    end
   end
 
   describe "send_error_email" do
