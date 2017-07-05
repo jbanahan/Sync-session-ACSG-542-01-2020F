@@ -6,9 +6,9 @@ module OpenChain; module CustomHandler; module UnderArmour; module UaSitesSubsHe
   included { include UnderArmourCustomDefinitionSupport; extend ClassMethods }
     
     module ClassMethods
-      def run opts={}
+      def process opts={}
         g = self.new(opts)
-        g.ftp_file g.sync_csv(true, row_sep: "\r\n")
+        g.sync_csv(true, row_sep: "\r\n")
       end
     end
 

@@ -3,11 +3,7 @@ require 'open_chain/custom_handler/under_armour/ua_sites_subs_helper'
 
 module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProductGenerator < OpenChain::CustomHandler::ProductGenerator
   include OpenChain::CustomHandler::UnderArmour::UaSitesSubsHelper 
-
-  def self.run_schedulable opts={}
-    run opts
-  end
-    
+  
   def sync_code
     "ua_sites"
   end
@@ -43,11 +39,11 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
   def preprocess_row row, opts={}
     out = []
     prod = products.find_by_unique_identifier row[0]
-    row[1].split(" ").each do |site|
+    row[1].split("\n ").each do |site|
       co = DataCrossReference.find_ua_country_by_site site
       if co
-        hts = prod.classifications.find{ |cl| cl.country.iso_code == co }.tariff_records.first.hts_1
-        out << {0=>prod.unique_identifier, 1=>site, 2=>hts}
+        hts = prod.classifications.find{ |cl| cl.country.iso_code == co }.tariff_records.first.try(:hts_1)
+        out << {0=>prod.unique_identifier, 1=>site, 2=>hts.hts_format} if hts.present?
       end
     end
     out

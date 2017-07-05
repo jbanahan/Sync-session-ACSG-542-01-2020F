@@ -17,21 +17,27 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
       @f.close! if @f && !@f.closed?
     end
 
-    it "generates a csv file" do
+    it "generates a csv file with a row for each matching site code" do
+      non_site_cl = Factory(:classification, product: @p, country: Factory(:country, iso_code: "CA"))
+      Factory(:tariff_record, classification: non_site_cl, hts_1: "1357935791")
+      DataCrossReference.create!(key: "234", value: "CN", cross_reference_type: "ua_site")
+      @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
+      
       g = described_class.new
       @f = g.sync_csv
       out = CSV.read @f.path
 
-      expect(out.length).to eq 2
+      expect(out.length).to eq 3
       expect(out.first).to eq ["Article", "Site Code", "Classification"]
-      expect(out.second).to eq ["123-456-7890", "123", "1234567890"]
+      expect(out.second).to eq ["123-456-7890", "123", "1234.56.7890"]
+      expect(out.third).to eq ["123-456-7890", "234", "0987.65.4321"]
 
       expect(SyncRecord.where(syncable_id: @p.id, trading_partner: g.sync_code).first).not_to be_nil
     end
 
-    it "produces a row for each matching site code" do
+    it "shows same data if assigned more than one site code" do
       DataCrossReference.create!(key: "234", value: "US", cross_reference_type: "ua_site")
-      @p.update_custom_value! @cdefs[:prod_site_codes], "123 234"
+      @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
 
       g = described_class.new
       @f = g.sync_csv
@@ -39,8 +45,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
 
       expect(out.length).to eq 3
       expect(out.first).to eq ["Article", "Site Code", "Classification"]
-      expect(out.second).to eq ["123-456-7890", "123", "1234567890"]
-      expect(out.third).to eq ["123-456-7890", "234", "1234567890"]
+      expect(out.second).to eq ["123-456-7890", "123", "1234.56.7890"]
+      expect(out.third).to eq ["123-456-7890", "234", "1234.56.7890"]
 
       expect(SyncRecord.where(syncable_id: @p.id, trading_partner: g.sync_code).first).not_to be_nil
     end
@@ -58,25 +64,18 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
       expect(g.sync_csv).to be_nil
       expect(SyncRecord.where(syncable_id: @p.id, trading_partner: g.sync_code).first).to be_nil
     end
-  end
 
-  describe "run" do
-    it "ftps sync'ed file" do
-      out = nil
-      expect_any_instance_of(described_class).to receive(:ftp_file) do |instance, f|
-        begin
-          out = IO.binread f.path
-        ensure
-          f.close!
-        end
-      end
+    it "excludes sites lacking a tariff" do
+      DataCrossReference.create!(key: "234", value: "CN", cross_reference_type: "ua_site")
+      @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
+      @t2.update_attributes(hts_1: nil)
 
-      described_class.run
-      #Make sure we're sending Windows newlines
-      expect(StringIO.new(out).gets[-2, 2]).to eq "\r\n"
-      csv = []
-      CSV.parse(out) {|row| csv << row}
-      expect(csv.second).to eq ["123-456-7890", "123", "1234567890"]
+      g = described_class.new
+      @f = g.sync_csv
+      out = CSV.read @f.path
+
+      expect(out.length).to eq 2
+      expect(out.second).to eq ["123-456-7890", "123", "1234.56.7890"]
     end
-  end 
+  end
 end

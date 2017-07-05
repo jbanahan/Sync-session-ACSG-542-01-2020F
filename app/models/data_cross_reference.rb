@@ -44,7 +44,7 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true),
       xref_attributes(ASCE_MID, "Ascena MID List", "MIDs on this list are used to generate the Daily First Sale Exception report", key_label: "MID", show_value_column: false),
       xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true),
-      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
+      xref_attributes(UA_SITE_TO_COUNTRY, "FMS Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
     ]
 
     user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}

@@ -89,6 +89,13 @@
       </div>
     <%-end-%>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator.can_view?(current_user)-%>
+    <div class='row'>
+      <div class='col-md-4 col-md-offset-4'>
+        <%=link_to "Sites + Subs Email", '/custom_features/ua_sites_subs', :class=>'btn btn-lg btn-default btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
   <%-if enabled_features.include?('UA-TPP') && OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser.new(nil).can_view?(current_user)-%>
     <div class='row'>
       <div class='col-md-4 col-md-offset-4'>

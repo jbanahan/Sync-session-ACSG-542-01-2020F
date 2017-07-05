@@ -15,9 +15,20 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
     ['.XLS','.XLSX', '.CSV'].include? File.extname(filename.upcase)
   end
 
-  def process user, filename
+  def process user
+    begin
+      process_file @custom_file, user
+      user.messages.create subject: "File Processing Complete", body: "Missing Classifications Upload processing for file #{@custom_file.attached_file_name} is complete."
+    rescue => e
+      user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
+    end
+    nil
+  end
+
+  def process_file custom_file, user
     codes = DataCrossReference.where(cross_reference_type: 'ua_site').pluck(:key)
     missing_codes = {}
+    filename = custom_file.attached_file_name
     data = foreach @custom_file
     parse data.drop(1), codes, missing_codes, filename
     send_email missing_codes, filename unless missing_codes.empty?
@@ -46,8 +57,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
       end
     end
   end
-
-  private
 
   def send_email codes_hsh, filename
     body = error_string(codes_hsh, filename)

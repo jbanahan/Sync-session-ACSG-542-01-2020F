@@ -32,6 +32,7 @@ require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
 require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
 require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
+require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -47,6 +48,7 @@ class CustomFeaturesController < ApplicationController
   UA_STYLE_COLOR_REGION_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser'
   UA_STYLE_COLOR_FACTORY_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser'
   UA_MISSING_CLASSIFICATIONS_PARSER ||= 'OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser'
+  UA_SITES_SUBS ||= 'OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator'
   LE_RETURNS_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
   LE_CI_UPLOAD ||= 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
   ALLIANCE_DAY_END ||= 'OpenChain::CustomHandler::Intacct::AllianceDayEndHandler'
@@ -115,6 +117,23 @@ class CustomFeaturesController < ApplicationController
     }
   end
 
+  def ua_sites_subs_index
+    generic_index OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator, nil, "UA Sites & Subs Reports", false
+  end
+
+  def ua_sites_subs_send
+    action_secure(OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator.can_view?(current_user),Product,{:verb=>"view",:module_name=>"UA Sites & Subs Reports",:lock_check=>false}) {
+      eml = params[:email]
+      if eml.blank?
+        add_flash :errors, "You must specify an email address."
+      else
+        OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator.delay.run_and_email current_user, params[:email]
+        add_flash :notices, "Your Sites & Subs report is being generated and will be emailed to #{params[:email]}"
+      end
+      redirect_to '/custom_features/ua_sites_subs'
+    }
+  end
+
   def ua_tbd_report_index
     generic_index OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil), UA_TBD_REPORT_PARSER, "UA TBD Reports"
   end
@@ -156,7 +175,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def ua_missing_classifications_upload
-    generic_upload(UA_MISSING_CLASSIFICATIONS_PARSER, 'UA Missing Classifications', 'ua_missing_classifications', additional_process_params: params[:attached].original_filename) do |f|
+    generic_upload(UA_MISSING_CLASSIFICATIONS_PARSER, 'UA Missing Classifications', 'ua_missing_classifications') do |f|
       if !f.attached_file_name.blank? && !OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser.valid_file?(f.attached_file_name)
         add_flash :errors, "You must upload a valid Excel file or csv file."
       end

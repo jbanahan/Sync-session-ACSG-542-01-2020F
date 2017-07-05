@@ -1,10 +1,13 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser do
+  let!(:user) { Factory(:master_user) }
+  let!(:custom_file) { double "custom file "}
+  before { allow(custom_file).to receive(:attached_file_name).and_return "file.csv" }
+
   describe 'can_view?' do
     let!(:subject) { described_class.new(nil) }
     let!(:ms) { stub_master_setup }
-    let!(:user) { Factory(:master_user) }
 
     it "allow product-editing master users on systems with feature" do
       expect(ms).to receive(:custom_feature?).with('UA SAP').and_return true
@@ -33,23 +36,27 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
   end
 
   describe 'process' do
-    subject { described_class.new("custom file") }
 
     let(:header) { ["Article", "Name", "Destination Country Code", "Style", "Color", "Size", "Descriptive Size", "Site Code"] }
     let(:row_1) { ["art1", "shirt", "US", "stylish", "blue", "big", "descriptive size", "site1"] }
     let(:row_2) { ["art2", "shorts", "CA", "tacky", "red", "small", "descriptive size2", "site2"] }
+    
+    subject { described_class.new(custom_file) }
   
     it "reads file, discards header, passes rows to #parse" do
-      expect(subject).to receive(:foreach).with("custom file").and_return [header, row_1, row_2]
-      expect(subject).to receive(:parse).with([row_1, row_2], [], {}, "file.csv")
-      subject.process "user", "file.csv"
+      expect(subject).to receive(:foreach).with(custom_file).and_return [header, row_1, row_2]
+      expect(subject).to receive(:parse).with([row_1, row_2], [], {}, 'file.csv')
+      subject.process user
+      m = user.messages.first
+      expect(m.subject).to eq "File Processing Complete"
+      expect(m.body).to eq "Missing Classifications Upload processing for file file.csv is complete."
     end
 
     it "sends email if missing site codes are found" do
       stub_master_setup
       DataCrossReference.create!(key: "site1", value: "US", cross_reference_type: "ua_site")
-      expect(subject).to receive(:foreach).with("custom file").and_return [header, row_1, row_2]
-      subject.process "user", "file.csv"
+      expect(subject).to receive(:foreach).with(custom_file).and_return [header, row_1, row_2]
+      subject.process user
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [described_class::ERROR_EMAIL]
@@ -59,26 +66,33 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     end
 
     it "doesn't send email if site code is blank" do
-      stub_master_setup
       row_1[7] = row_2[7] = ""
-      expect(subject).to receive(:foreach).with("custom file").and_return [header, row_1, row_2]
-      subject.process "user", "file.csv"
+      expect(subject).to receive(:foreach).with(custom_file).and_return [header, row_1, row_2]
+      subject.process user
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail).to be_nil
       expect(Product.count).to eq 2
     end
+  
+    it "Notifies user if upload fails" do
+      expect(subject).to receive(:process_file).with(custom_file, user).and_raise "KABOOM!"
+      subject.process user
+      m = user.messages.first
+      expect(m.subject).to eq "File Processing Complete With Errors"
+      expect(m.body).to eq "Unable to process file file.csv due to the following error:<br>KABOOM!"
+    end
   end
 
   describe 'parse' do
-    subject { described_class.new("custom file") }
+    subject { described_class.new(custom_file) }
 
     let(:cdefs) { subject.cdefs }
     let(:row_1) { ["art num", "shirt", "US", "stylish", "blue", "big", "descriptive size", "site1"] }
     let(:row_2) { ["art num", "nice shirt", "CA", "stylish", "blue", "big", "descriptive size", "site2"] }
     
     it 'creates products' do      
-      subject.parse [row_1], ["site1", "site2"], {}, "file.csv"
+      subject.parse [row_1], ["site1", "site2"], {}, custom_file
       expect(Product.count).to eq 1
       p = Product.first
       expect(p.unique_identifier).to eq "art num"
@@ -92,7 +106,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     end
 
     it 'adds on to import countries, site codes of existing products; leave other fields unchanged' do
-      subject.parse [row_1, row_2, row_2], ["site1", "site2"], {}, "file.csv" #check that duplicate data is ignored
+      subject.parse [row_1, row_2, row_2], ["site1", "site2"], {}, custom_file #check that duplicate data is ignored
       expect(Product.count).to eq 1
       p = Product.first
       expect(p.unique_identifier).to eq "art num"
@@ -108,7 +122,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     it 'skips row and records missing site codes' do
       row_1[7] = "site3"
       missing_codes = {}
-      subject.parse [row_1, row_2], ["site1","site2"], missing_codes, "file.csv"
+      subject.parse [row_1, row_2], ["site1","site2"], missing_codes, custom_file
       
       expect(Product.count).to eq 1
       p = Product.first

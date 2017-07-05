@@ -4,10 +4,6 @@ require 'open_chain/custom_handler/under_armour/ua_sites_subs_helper'
 module OpenChain; module CustomHandler; module UnderArmour; class UaSubsProductGenerator < OpenChain::CustomHandler::ProductGenerator
   include OpenChain::CustomHandler::UnderArmour::UaSitesSubsHelper 
 
-  def self.run_schedulable opts={}
-    run opts
-  end
-
   def sync_code
     "ua_subs"
   end 
@@ -45,8 +41,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSubsProductG
     prod = products.find_by_unique_identifier row[0]
     prod.classifications.reject{ |cl| site_countries.include? cl.country.iso_code }.each do |cl|
       co = cl.country
-      hts = cl.tariff_records.first.hts_1
-      out << {0=>co.iso_code, 1=>prod.unique_identifier, 2=>hts}
+      hts = cl.tariff_records.first.try(:hts_1)
+      out << {0=>co.iso_code, 1=>prod.unique_identifier, 2=>hts.hts_format} if hts.present?
     end
     out
   end
