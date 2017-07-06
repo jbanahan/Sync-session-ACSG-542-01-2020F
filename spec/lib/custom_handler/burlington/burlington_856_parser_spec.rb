@@ -92,6 +92,32 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         expect(snap.context).to eq "file.edi"
       end
 
+      it "matches to order on SKU # if item numbers don't match" do
+        ol = order_1.order_lines.first
+        ol.update_attributes! sku: "13347530"
+        ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "BIN12312"
+
+        shipment = subject.process_shipment user, segments, "bucket", "file.edi"
+        expect(shipment).not_to be_nil
+
+        expect(shipment.shipment_lines.length).to eq 2
+        expect(shipment.shipment_lines.first.order_lines.first).to eq order_1.order_lines.first
+      end
+
+      it "uses UPC (UP) from EDI if Item Number (IN) is not sent" do
+        edi_data.gsub! "LIN||IN|13347530", "LIN||UP|13347530"
+
+        ol = order_1.order_lines.first
+        ol.update_attributes! sku: "13347530"
+        ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "BIN12312"
+
+        shipment = subject.process_shipment user, segments, "bucket", "file.edi"
+        expect(shipment).not_to be_nil
+
+        expect(shipment.shipment_lines.length).to eq 2
+        expect(shipment.shipment_lines.first.order_lines.first).to eq order_1.order_lines.first
+      end
+
       it "leaves missing port codes blank" do
         port_unlading.destroy
 
@@ -108,7 +134,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       it "errors on missing order line" do
         order_1.order_lines.destroy_all
 
-        expect { subject.process_shipment user, segments, "bucket", "file.edi" }.to raise_error "Burlington 856 references missing Order Line from Order '365947702' with Buyer Item Number '13347530'."
+        expect { subject.process_shipment user, segments, "bucket", "file.edi" }.to raise_error "Burlington 856 references missing Order Line from Order '365947702' with Buyer Item Number / UPC '13347530'."
       end
 
       it "errors on missing importer" do

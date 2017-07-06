@@ -178,7 +178,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
             subline_count = 0
             find_segments(item_loop[:segments], "SLN") do |prepack|
               subline_count +=1
-              style = find_segment_qualified_value(prepack, "IN")
+              style = find_style(prepack)
               quantity = BigDecimal(value(prepack, 4))
               po_data[style][:quantity] += quantity
               unless added_carton
@@ -214,7 +214,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
             end
           else
             # Standard packs
-            style = find_segment_qualified_value(find_segment(item_loop[:segments], "LIN"), "IN")
+            style = find_lin_style(item_loop[:segments])
             quantity = BigDecimal(find_element_value(item_loop[:segments], "SN102"))
 
             po_data[style][:quantity] += quantity
@@ -270,7 +270,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
           subline_count = 0
           find_segments(item_loop[:segments], "SLN") do |prepack|
             subline_count += 1
-            style = find_segment_qualified_value(prepack, "IN")
+            style = find_style(prepack)
             quantity = BigDecimal(value(prepack, 4))
             po_data[style][:quantity] += quantity
             unless added_carton
@@ -308,7 +308,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
           
         else
           # Standard packs
-          style = find_segment_qualified_value(find_segment(item_loop[:segments], "LIN"), "IN")
+          style = find_lin_style(item_loop[:segments])
           quantity = BigDecimal(find_element_value(item_loop[:segments], "SN102"))
 
           po_data[style][:quantity] += quantity
@@ -318,6 +318,20 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     end
 
     process_po_data shipment, po, po_weights
+  end
+
+  def find_lin_style segments
+    find_style(find_segment(segments, "LIN"))
+  end
+
+  def find_style segment
+    style = find_segment_qualified_value(segment, "IN")
+
+    if style.blank?
+      style = find_segment_qualified_value(segment, "UP")
+    end
+
+    style
   end
 
   def explode_prepack order_number, outer_pack_identifier
@@ -407,13 +421,18 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     weights
   end
 
-  def process_shipment_line_data shipment, order_number, cartons, buyer_style, item_quantity, weight, order_line
+  def process_shipment_line_data shipment, order_number, cartons, buyer_style_or_upc, item_quantity, weight, order_line
     if order_line.nil?
       order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
       raise "Burlington 856 references missing Order # '#{order_number}'." unless order
 
-      order_line = order.order_lines.find {|l| l.custom_value(cdefs[:ord_line_buyer_item_number]) == buyer_style}
-      raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number '#{buyer_style}'." unless order_line
+      order_line = order.order_lines.find {|l| l.custom_value(cdefs[:ord_line_buyer_item_number]) == buyer_style_or_upc}
+
+      if order_line.nil?
+        order_line = order.order_lines.find {|l| l.sku == buyer_style_or_upc}
+      end
+
+      raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number / UPC '#{buyer_style_or_upc}'." unless order_line
     end
 
     container = shipment.containers.first

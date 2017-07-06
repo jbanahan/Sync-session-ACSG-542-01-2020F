@@ -55,6 +55,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.unit_of_measure).to eq "EA"
       expect(line.price_per_unit).to eq BigDecimal("124")
       expect(line.hts).to eq "9403.50.9041"
+      expect(line.sku).to eq "123456"
       expect(line.custom_value(cdefs[:ord_line_department_code])).to eq "Kids"
       expect(line.custom_value(cdefs[:ord_line_size])).to eq "QTY"
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "ESPRESSO"

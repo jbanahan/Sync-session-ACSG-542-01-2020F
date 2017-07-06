@@ -197,6 +197,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     if hts_values.length > 0
       line.hts = hts_values.length == 1 ? hts_values.first : "MULTI"
     end
+    line.sku = find_segment_qualified_value(po1, "UP")
     line.find_and_set_custom_value(cdefs[:ord_line_department_code], department)
     line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(po1, "BO"))
     line.find_and_set_custom_value(cdefs[:ord_line_color_description], find_segment_qualified_value(po1, "PU"))
