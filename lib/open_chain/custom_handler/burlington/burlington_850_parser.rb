@@ -268,6 +268,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
       style = find_segment_qualified_value(sln, "IT")
       line.product = product_cache[style]
+      line.sku = find_segment_qualified_value(sln, "UP")
 
       hts_values = find_element_values(subline_segments, "TC202")
       if hts_values.length > 0
