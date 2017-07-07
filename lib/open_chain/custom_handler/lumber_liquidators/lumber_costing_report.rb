@@ -39,14 +39,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
 
   def generate_and_send_entry_data id
     begin
-      entry = find_entry(id)
-
-      if has_manual_po?(entry)
-        send_manual_po(entry)
-      else
-        send_cost_file(entry)
+      find_entry(id) do |entry|
+        if has_manual_po?(entry)
+          send_manual_po(entry)
+        else
+          send_cost_file(entry)
+        end
       end
-
     rescue => e
       raise e if Rails.env.test?
       e.log_me
@@ -70,23 +69,21 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
         temp.flush
         temp.rewind
 
-        SyncRecord.transaction do
-          ftp_sync_file temp, sync_record
-          now = Time.zone.now
-          conf = now + 1.minute
-          sync_record.sent_at = now
-          sync_record.confirmed_at = conf
-          sync_record.save!
+        ftp_sync_file temp, sync_record
+        now = Time.zone.now
+        conf = now + 1.minute
+        sync_record.sent_at = now
+        sync_record.confirmed_at = conf
+        sync_record.save!
 
-          # We also need to add sync records for all the broker invoices that were sent too, so that the invoice report can know EXACTLY which
-          # invoices where included on the cost files.  We can assume every invoice that's currently on the entry is included in the cost file.
-          entry.broker_invoices.each do |inv|
-            sr = inv.sync_records.find {|sr| sr.trading_partner == self.class.sync_code}
-            if sr
-              sr.update_attributes! sent_at: now, confirmed_at: conf, ftp_session: sync_record.ftp_session
-            else
-              inv.sync_records.create! trading_partner: self.class.sync_code, sent_at: now, confirmed_at: now, ftp_session: sync_record.ftp_session
-            end
+        # We also need to add sync records for all the broker invoices that were sent too, so that the invoice report can know EXACTLY which
+        # invoices where included on the cost files.  We can assume every invoice that's currently on the entry is included in the cost file.
+        entry.broker_invoices.each do |inv|
+          sr = inv.sync_records.find {|sr| sr.trading_partner == self.class.sync_code}
+          if sr
+            sr.update_attributes! sent_at: now, confirmed_at: conf, ftp_session: sync_record.ftp_session
+          else
+            inv.sync_records.create! trading_partner: self.class.sync_code, sent_at: now, confirmed_at: now, ftp_session: sync_record.ftp_session
           end
         end
       end
@@ -117,7 +114,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   end
 
   def find_entry entry_id
-    Entry.where(id: entry_id).includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]], broker_invoices: [:broker_invoice_lines]).first
+    Entry.transaction do 
+      entry = Entry.lock.where(id: entry_id).includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]], broker_invoices: [:broker_invoice_lines]).first
+      yield entry
+    end
   end
 
   def has_manual_po? entry
