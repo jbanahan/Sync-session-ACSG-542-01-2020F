@@ -205,6 +205,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.quantity).to eq BigDecimal("716")
       expect(line.hts).to eq "9503.00.0073"
       expect(line.price_per_unit).to eq BigDecimal("7")
+      expect(line.sku).to eq "123456"
       expect(line.custom_value(cdefs[:ord_line_department_code])).to eq "Kids"
       expect(line.custom_value(cdefs[:ord_line_size])).to eq "QTY"
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "BEADOS"
@@ -219,6 +220,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       # same values...so just check that the line numbers are as expected
       line = order.order_lines.second
       expect(line.line_number).to eq 1002
+      expect(line.sku).to eq "987654"
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "RED"
 
       # Now, make sure the product was created 
