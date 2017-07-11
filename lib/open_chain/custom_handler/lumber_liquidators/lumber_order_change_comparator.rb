@@ -309,8 +309,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   class OrderData
-    ORDER_MODEL_FIELDS ||= [:ord_ord_num,:ord_window_start,:ord_window_end,:ord_currency,:ord_payment_terms,:ord_terms,:ord_fob_point]
-    ORDER_LINE_MODEL_FIELDS ||= [:ordln_line_number,:ordln_puid,:ordln_ordered_qty,:ordln_unit_of_measure,:ordln_ppu]
     # using array so we can dynamically build but not have to
     PLANNED_HANDOVER_DATE_UID ||= []
     SAP_EXTRACT_DATE_UID ||= []
@@ -330,9 +328,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     def self.build_from_hash entity_hash
+      @cdefs = prep_custom_definitions([:ordln_custom_article_description, :ordln_vendor_inland_freight_amount])
       fingerprint_hash = {'lines'=>{}}
       order_hash = entity_hash['entity']['model_fields']
-      ORDER_MODEL_FIELDS.each do |uid|
+      [:ord_ord_num, :ord_window_start, :ord_window_end, :ord_currency, :ord_payment_terms, :ord_terms, :ord_fob_point].each do |uid|
         fingerprint_hash[uid] = order_hash[uid.to_s]
       end
       variant_map = {}
@@ -342,7 +341,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           next unless child['entity']['core_module'] == 'OrderLine'
           child_hash = child['entity']['model_fields']
           line_fp_hash = {}
-          ORDER_LINE_MODEL_FIELDS.each do |uid|
+          [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, @cdefs[:ordln_custom_article_description].model_field_uid, @cdefs[:ordln_vendor_inland_freight_amount].model_field_uid].each do |uid|
             line_fp_hash[uid] = child_hash[uid.to_s]
           end
           line_number = child_hash['ordln_line_number']

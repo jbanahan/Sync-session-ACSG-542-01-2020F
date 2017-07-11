@@ -644,7 +644,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe 'OrderData' do
     let :cdefs do
-      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type])
+      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type, :ordln_custom_article_description, :ordln_vendor_inland_freight_amount])
     end
     let :sap_extract_date do
       Time.now.utc
@@ -653,7 +653,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       p = Factory(:product,unique_identifier:'px')
       variant = Factory(:variant,product:p,variant_identifier:'VIDX')
       ol = Factory(:order_line,line_number:1,product:p,variant:variant,quantity:10,unit_of_measure:'EA',price_per_unit:5)
-      Factory(:order_line,order:ol.order,line_number:2,product:p,quantity:50,unit_of_measure:'FT',price_per_unit:7)
+      ol2 = Factory(:order_line,order:ol.order,line_number:2,product:p,quantity:50,unit_of_measure:'FT',price_per_unit:7)
       o = ol.order
       o.update_attributes(order_number:'ON1',
       ship_window_start:Date.new(2015,1,1),
@@ -668,6 +668,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       o.update_custom_value!(cdefs[:ord_sap_extract],sap_extract_date)
       o.update_custom_value!(cdefs[:ord_planned_handover_date], Date.new(2015, 2, 2))
       o.update_custom_value!(cdefs[:ord_type],'Type')
+      ol.update_custom_value!(cdefs[:ordln_custom_article_description], 'Custom desc')
+      ol.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 123.45)
+      ol2.update_custom_value!(cdefs[:ordln_custom_article_description], 'Another custom desc')
+      ol2.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 678.9)
       expect(o).to receive(:business_rules_state).and_return('Fail')
       o.reload
       o
@@ -690,14 +694,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
             'ordln_puid' => 'px',
             'ordln_ordered_qty' => '10.0',
             'ordln_unit_of_measure' => 'EA',
-            'ordln_ppu' => '5.0'
+            'ordln_ppu' => '5.0',
+            cdefs[:ordln_custom_article_description].model_field_uid => 'Custom desc',
+            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '123.45'
           },
           '2' => {
             'ordln_line_number' => 2,
             'ordln_puid' => 'px',
             'ordln_ordered_qty' => '50.0',
             'ordln_unit_of_measure' => 'FT',
-            'ordln_ppu' => '7.0'
+            'ordln_ppu' => '7.0',
+            cdefs[:ordln_custom_article_description].model_field_uid => 'Another custom desc',
+            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '678.9'
           }
         }
       }

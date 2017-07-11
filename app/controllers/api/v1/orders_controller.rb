@@ -109,7 +109,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     if MasterSetup.get.custom_feature? 'CARB Statement'
       h['statement'] = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.carb_statement(o)
     end
-    
+
     h
   end
   def render_permissions order

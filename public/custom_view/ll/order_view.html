@@ -195,25 +195,39 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat='ol in order.order_lines track by ol.id'>
-              <td>{{ol.ordln_line_number}}</td>
-              <td>
-                <small>{{ol.ordln_puid}}</small><br />
-                <small>{{ol[dictionary.fieldsByAttribute('label','Old Article Number',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
-                {{ol[dictionary.fieldsByAttribute('label', 'Part Name',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}
-              </td>
-              <td>
-              </td>
-              <td ng-if='order.ord_ship_to_count > 1'>
-                <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
-              </td>
-              <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
-              <td>{{ol.ordln_unit_of_measure}}</td>
-              <td class='text-right numeric'>{{ol.ordln_ppu | currency}}</td>
-              <td class='text-right numeric'>{{ol.ordln_total_cost | currency}}</td>
+            <tbody ng-repeat='ol in order.order_lines track by ol.id'>
+              <tr>
+                <td>{{ol.ordln_line_number}}</td>
+                <td>
+                  <small>{{ol.ordln_puid}}</small><br />
+                  <small>{{ol[dictionary.fieldsByAttribute('label','Old Article Number',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
+                  {{ol[dictionary.fieldsByAttribute('label', 'Part Name',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}
+                </td>
+                <td>
+                </td>
+                <td ng-if='order.ord_ship_to_count > 1'>
+                  <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
+                </td>
+                <td class='text-right numeric'>{{ol.ordln_ordered_qty}}</td>
+                <td>{{ol.ordln_unit_of_measure}}</td>
+                <td class='text-right numeric'>{{ol.ordln_ppu | currency}}</td>
+                <td class='text-right numeric'>{{ol.ordln_total_cost | currency}}</td>
+              </tr>
+              <tr style="white-space: pre-wrap;" ng-if="ol[dictionary.fieldsByAttribute('label','Custom Article Description', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]">
+                <td>&nbsp;</td>
+                <td colspan='{{order.ord_ship_to_count > 1 ? 7 : 6}}'>{{ol[dictionary.fieldsByAttribute('label','Custom Article Description', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</td>
+              </tr>
+            </tbody>
+            <tr ng-if="order[dictionary.fieldsByAttribute('label','Total Freight', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 7 : 6}}'>Freight</td>
+              <td class='text-right numeric'>{{order[dictionary.fieldsByAttribute('label','Total Freight', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid] | currency}}</td>
             </tr>
-            <tr>
-              <td class='text-right' colspan='6'>Total</td>
+            <tr ng-if="order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 7 : 6}}'>Total</td>
+              <td class='text-right numeric'>{{order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid] | currency}}</td>
+            </tr>
+            <tr ng-if="!order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 7 : 6}}'>Total</td>
               <td class='text-right numeric'>{{order.ord_total_cost | currency}}</td>
             </tr>
           </tbody>

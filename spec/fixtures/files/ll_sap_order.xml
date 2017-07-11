@@ -30,6 +30,9 @@
       <BSART>ZMSP</BSART>
       <BELNR>4700000325</BELNR>
       <RECIPNT_NO>0000100131</RECIPNT_NO>
+      <_-LUMBERL_-ZTERM_DESCRIPTION SEGMENT="1">
+        <ZTERM_TXT>1% 10 days, Net 30</ZTERM_TXT>
+      </_-LUMBERL_-ZTERM_DESCRIPTION>
     </E1EDK01>
     <E1EDK14 SEGMENT="1">
       <QUALF>014</QUALF>
@@ -104,6 +107,28 @@
       <BRGEW>10141.068</BRGEW>
       <WERKS>9444</WERKS>
       <LGORT>1000</LGORT>
+      <E1EDP05 SEGMENT="1">
+        <ALCKZ>+</ALCKZ>
+        <KSCHL>PB00</KSCHL>
+        <KOTXT>Gross Price</KOTXT>
+        <BETRG>3316.56</BETRG>
+        <KRATE>0.52</KRATE>
+        <UPRBS>1</UPRBS>
+        <MEAUN>FTK</MEAUN>
+        <MWSKZ>I0</MWSKZ>
+        <KOEIN>USD</KOEIN>
+      </E1EDP05>
+      <E1EDP05 SEGMENT="1">
+        <ALCKZ>+</ALCKZ>
+        <KSCHL>ZLF2</KSCHL>
+        <KOTXT>L-Inland Freight Fix</KOTXT>
+        <BETRG>49.3</BETRG>
+        <KRATE>0</KRATE>
+        <MWSKZ>I0</MWSKZ>
+        <_-LUMBERL_-FREIGHT_COND_VEND SEGMENT="1">
+          <VN_FREIGHT_VNDR>0000201814</VN_FREIGHT_VNDR>
+        </_-LUMBERL_-FREIGHT_COND_VEND>
+      </E1EDP05>
       <E1EDP20 SEGMENT="1">
         <WMENG>5602.800</WMENG>
         <AMENG>0.000</AMENG>
@@ -137,6 +162,46 @@
         <IDTNR>000000000010001547</IDTNR>
         <KTEXT>SCH ENG Bamboo QC 9/16x5&quot; Strand Nat</KTEXT>
       </E1EDP19>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F01</TDID>
+        <TSSPRAS>E</TSSPRAS>
+        <TSSPRAS_ISO>EN</TSSPRAS_ISO>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>Custom Text:</TDLINE>
+          <TDFORMAT>=</TDFORMAT>
+        </E1EDPT2>
+      </E1EDPT1>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F01</TDID>
+        <TSSPRAS>E</TSSPRAS>
+        <TSSPRAS_ISO>EN</TSSPRAS_ISO>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>Sale # 124511692 Quote # ST 12311134-2</TDLINE>
+          <TDFORMAT>/</TDFORMAT>
+        </E1EDPT2>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>
+            11 Box Retread Hickory 36" X 11.5" X 5/8" Pre-Finished Stained
+          </TDLINE>
+          <TDFORMAT>*</TDFORMAT>
+        </E1EDPT2>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>***CUSTOM***</TDLINE>
+        </E1EDPT2>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>Casa De Colour Cherry Hickory</TDLINE>
+          <TDFORMAT>*</TDFORMAT>
+        </E1EDPT2>
+      </E1EDPT1>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F04</TDID>
+        <TSSPRAS>E</TSSPRAS>
+        <TSSPRAS_ISO>EN</TSSPRAS_ISO>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>Ignore this: only grabbing custom text from F01</TDLINE>
+          <TDFORMAT>=</TDFORMAT>
+        </E1EDPT2>
+      </E1EDPT1>
     </E1EDP01>
     <E1EDP01 SEGMENT="1">
       <POSEX>00002</POSEX>
@@ -157,6 +222,17 @@
       <BRGEW>25567.092</BRGEW>
       <WERKS>9444</WERKS>
       <LGORT>1000</LGORT>
+      <E1EDP05 SEGMENT="1">
+        <ALCKZ>+</ALCKZ>
+        <KSCHL>ZLF2</KSCHL>
+        <KOTXT>L-Inland Freight Fix</KOTXT>
+        <BETRG>55.22</BETRG>
+        <KRATE>0</KRATE>
+        <MWSKZ>I0</MWSKZ>
+        <_-LUMBERL_-FREIGHT_COND_VEND SEGMENT="1">
+          <VN_FREIGHT_VNDR>0000100131</VN_FREIGHT_VNDR>
+        </_-LUMBERL_-FREIGHT_COND_VEND>
+      </E1EDP05>
       <E1EDP20 SEGMENT="1">
         <WMENG>8168.400</WMENG>
         <AMENG>0.000</AMENG>
@@ -190,6 +266,19 @@
         <IDTNR>000000000010003151</IDTNR>
         <KTEXT>MS STN Qing Drag Bam 9/16x3-3/4&quot; Str</KTEXT>
       </E1EDP19>
+      <E1EDPT1 SEGMENT="1">
+        <TDID>F01</TDID>
+        <TSSPRAS>E</TSSPRAS>
+        <TSSPRAS_ISO>EN</TSSPRAS_ISO>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>Custom Text Goes Here</TDLINE>
+          <TDFORMAT>*</TDFORMAT>
+        </E1EDPT2>
+        <E1EDPT2 SEGMENT="1">
+          <TDLINE>   </TDLINE>
+          <TDFORMAT>*</TDFORMAT>
+        </E1EDPT2>
+      </E1EDPT1>
     </E1EDP01>
     <E1EDP01 SEGMENT="1">
       <POSEX>00003</POSEX>

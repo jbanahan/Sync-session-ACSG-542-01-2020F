@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email, :ordln_old_art_number, :ordln_part_name, :ord_change_log])
+    @cdefs = self.class.prep_custom_definitions([:prod_old_article, :cmp_purchasing_contact_email, :ordln_old_art_number, :ordln_part_name, :ord_change_log, :ordln_vendor_inland_freight_amount, :ordln_custom_article_description, :ord_total_freight, :ord_grand_total])
   end
 
   def render order, user, open_file_object
@@ -218,8 +218,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def v_dec order, user, uid, opts = {}
-    opts = {precision: 5}.merge opts
     v = ModelField.find_by_uid(uid).process_export(order, user)
+    format_number v
+  end
+
+  def format_number v, opts = {}
+    opts = {precision: 5}.merge opts
     if v && v.is_a?(Numeric)
       v = number_with_delimiter(number_with_precision(v, opts))
     end
@@ -255,9 +259,24 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       line << {content: v_dec(ol, user, :ordln_total_cost), align: :right}
 
       lines << line
+
+      custom_article_desc = ol.custom_value(@cdefs[:ordln_custom_article_description])
+      if custom_article_desc
+        lines << [{content: ""}, {content: custom_article_desc, colspan: (lines.first.size - 1)}]
+      end
     end
 
-    lines << [{content: "<b>Total</b>", colspan: (lines.first.size - 1), align: :right}, {content: v_dec(order, user, :ord_total_cost), align: :right}]
+    total_freight = order.custom_value(@cdefs[:ord_total_freight])
+    if total_freight && total_freight > 0
+      lines << [{content: "<b>Freight</b>", colspan: (lines.first.size - 1), align: :right}, {content: format_number(total_freight), align: :right}]
+    end
+
+    grand_total = order.custom_value(@cdefs[:ord_grand_total])
+    if !grand_total
+      # Orders received prior to June 2017 (or thereabouts) won't have a grand total custom definition.  Use the old total cost value.
+      grand_total = ModelField.find_by_uid(:ord_total_cost).process_export(order, user)
+    end
+    lines << [{content: "<b>Total</b>", colspan: (lines.first.size - 1), align: :right}, {content: format_number(grand_total), align: :right}]
 
     lines
   end

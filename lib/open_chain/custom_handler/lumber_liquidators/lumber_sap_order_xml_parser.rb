@@ -33,7 +33,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
       :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
       :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent,
-      :ordln_part_name, :ordln_old_art_number, :prod_old_article
+      :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description,
+      :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number,
+      :ord_total_freight, :ord_grand_total
     ]
     @opts = opts
   end
@@ -66,7 +68,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.vendor = vend
         o.order_date = order_date(base)
         o.currency = et(order_header,'CURCY')
-        o.terms_of_payment = payment_terms_description(base)
+        # The method for calculating payment terms was much more complicated prior to proj. 1230.  Per 1230
+        # requirements, it was supposed to be retained "for possible future use in calculating the payment date".
+        # Should that ever be the case, it's in the repository in revisions of this file older than 06/2017.
+        o.terms_of_payment = REXML::XPath.first(base, './E1EDK01/_-LUMBERL_-ZTERM_DESCRIPTION/ZTERM_TXT').try(:text)
         terms_of_sale = ship_terms(base)
         o.terms_of_sale = terms_of_sale unless terms_of_sale.blank?
         o.order_from_address = order_from_address(base,vend)
@@ -87,7 +92,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
           end
         }
 
-
         o.save!
         o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
         o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
@@ -97,6 +101,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
         o.associate_vendor_and_products! @user
 
+        set_header_totals_from_lines o
         set_header_dates_from_lines(base,o)
 
         o.save!
@@ -154,6 +159,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     linked_system_codes = Company.where("companies.id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",order.vendor_id).pluck(:system_code)
     agent_codes = ['GELOWELL','RO','GS-EU','GS-US','GS-CA'] & linked_system_codes
     agent_codes.sort.join("/")
+  end
+
+  def set_header_totals_from_lines order
+    total_freight = 0
+    order.order_lines.each do |ol|
+      freight = ol.custom_value(@cdefs[:ordln_vendor_inland_freight_amount])
+      if freight
+        total_freight += freight
+      end
+    end
+    order.update_custom_value!(@cdefs[:ord_total_freight], total_freight)
+
+    grand_total = ModelField.find_by_uid(:ord_total_cost).process_export(order, @user) + total_freight
+    order.update_custom_value!(@cdefs[:ord_grand_total], grand_total)
   end
 
   def set_header_dates_from_lines base, order
@@ -464,8 +483,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ol.quantity = qty
       ol.unit_of_measure = uom
 
-
-
       # There is a possibility these may change between runs. We do not want the part_name or old_article_number
       # to change once they are set.
       unless ol.get_custom_value(@cdefs[:ordln_part_name]).value.present?
@@ -475,7 +492,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       unless ol.get_custom_value(@cdefs[:ordln_old_art_number]).value.present?
         ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article]).value
       end
-
 
       exp_del = expected_delivery_date(line_el)
       if !@first_expected_delivery_date || (exp_del && exp_del < @first_expected_delivery_date)
@@ -487,7 +503,49 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       ol.ship_to = header_ship_to if ol.ship_to.nil?
 
+      ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], get_custom_article_description(line_el)
+
+      inland_freight_el = get_inland_freight_element line_el
+      if inland_freight_el
+        inland_freight_amt = BigDecimal(et(inland_freight_el, 'BETRG'))
+        ol.find_and_set_custom_value @cdefs[:ordln_inland_freight_amount], inland_freight_amt
+        vendor_number = REXML::XPath.first(inland_freight_el, '_-LUMBERL_-FREIGHT_COND_VEND/VN_FREIGHT_VNDR').try(:text)
+        ol.find_and_set_custom_value @cdefs[:ordln_inland_freight_vendor_number], vendor_number
+
+        # Vendor inland freight amount is set only if the order's vendor matches the one in the file.
+        # It'll either be the same value as inland freight amount or nil, depending on the vendor.  This field
+        # is public, the other amount field is not.
+        vendor_inland_freight_amt = vendor_number == order.vendor.system_code ? inland_freight_amt : nil
+        ol.find_and_set_custom_value @cdefs[:ordln_vendor_inland_freight_amount], vendor_inland_freight_amt
+      end
+
       return ol
+    end
+
+    # Combines content from (potentially) several elements together as one description value.  The SAP system will
+    # split descriptions longer than 70 characters in the file we receive to multiple elements.
+    def get_custom_article_description line_el
+      custom_article_desc = ''
+      prev_line_separator = '='
+      REXML::XPath.each(line_el, "E1EDPT1[TDID='F01']/E1EDPT2") do |custom_article_desc_el|
+        custom_article_desc_line = et(custom_article_desc_el, 'TDLINE')
+        if custom_article_desc_line && !custom_article_desc_line.strip.empty?
+          # An asterisk or slash in the 'TDFORMAT' field indicate that a new line should be added between
+          # the previous line and this one.  Any other character means that the two lines can be appended
+          # with no separator char.
+          if prev_line_separator && ('*' == prev_line_separator || '/' == prev_line_separator)
+            custom_article_desc += "\n"
+          end
+          custom_article_desc += custom_article_desc_line.strip
+          prev_line_separator = et(custom_article_desc_el, 'TDFORMAT')
+        end
+      end
+      custom_article_desc
+    end
+
+    def get_inland_freight_element line_el
+      # Codes ZHF2 and ZLF2 should be specific to inland info.
+      REXML::XPath.first(line_el, "E1EDP05[KSCHL='ZHF2' or KSCHL='ZLF2']")
     end
 
     def validate_line_not_changed ol, product, qty, uom, price_per_unit
@@ -581,48 +639,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       str = et(outer_el,'EDATU') if str.blank? || str.match(/^0*$/)
       return nil if str.blank?
       parse_date(str)
-    end
-
-    def payment_terms_description base
-      # Use the ZTERM element to determine if there a special term codes that we need to handle
-      # outside of the standard path of parsing the terms elements into a terms description.
-      # Special Terms don't have these elements.
-      zterm = REXML::XPath.first(base, "./E1EDK01/ZTERM").try(:text)
-      if special_payment_terms[zterm]
-        special_payment_terms[zterm]
-      elsif zterm.to_s =~ /^tt(\d+)$/i
-        "T/T Net #{$1}"
-      else
-        elements = REXML::XPath.match(base,"./E1EDK18")
-
-        # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
-        return "Due Immediately" unless elements.try(:size) > 0
-
-        values = []
-        elements.each do |el|
-          days = et(el, 'TAGE')
-          percent = et(el, 'PRZNT')
-
-          next if days.blank?
-
-          if percent.blank?
-            values << "Net #{days}"
-          else
-            # Strip trailing insignificant digits
-            if percent =~ /\.\d*[0]+$/
-              percent.sub!(/0+$/, "")
-              percent = percent[0..-2] if percent.ends_with?(".")
-            end
-            values << "#{percent}% #{days} Days"
-          end
-        end
-
-        values.join(", ")
-      end
-    end
-
-    def special_payment_terms
-      {"TT00" => "T/T At Sight"}
     end
 
     def parse_date str

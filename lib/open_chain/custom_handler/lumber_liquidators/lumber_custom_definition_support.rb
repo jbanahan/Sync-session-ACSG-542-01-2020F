@@ -157,6 +157,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_testing_date_completed: {label: "Testing Date - Completed", data_type: :date, module_type: "Order", cdef_uid: "ord_testing_date_completed"},
     ord_cancel_date: {label: "Cancelled Date", data_type: :date, module_type: "Order", read_only: true, cdef_uid: "ord_cancel_date"},
     ord_manual_send_to_sap_date: {label: "Manual Send To SAP Date", data_type: :datetime, module_type: "Order", read_only: true, cdef_uid: "ord_manual_send_to_sap_date"},
+    ord_total_freight: {label: 'Total Freight', data_type: :decimal, module_type: 'Order', read_only: true, cdef_uid: "ord_total_freight"},
+    ord_grand_total: {label: 'Grand Total', data_type: :decimal, module_type: 'Order', read_only: true, cdef_uid: "ord_grand_total"},
     ordln_old_art_number: { label: 'Old Article Number', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_old_art_number"},
     ordln_part_name: {label: 'Part Name', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_part_name"},
     ord_delay_reason: { label: "Delay Reason", data_type: :string, module_type: "Order", cdef_uid: "ord_delay_reason"},
@@ -168,6 +170,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_price_revised_date: {label: "Price Revised Date", data_type: :datetime, module_type:'OrderLine',read_only: true, cdef_uid: "ordln_price_revised_date"},
     ordln_qa_approved_by: {label: 'QA Approved By', data_type: :integer, module_type: 'OrderLine', read_only: true, is_user: true, cdef_uid: "ordln_qa_approved_by"},
     ordln_qa_approved_date: {label: 'QA Approved DAte', data_type: :datetime, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_qa_approved_date"},
+    ordln_custom_article_description: {label: 'Custom Article Description', data_type: :text, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_custom_article_description"},
+    ordln_inland_freight_vendor_number: {label: 'Inland Freight Vendor Number', data_type: :string, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_vendor_number"},
+    ordln_inland_freight_amount: {label: 'Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_amount"},
+    ordln_vendor_inland_freight_amount: {label: 'Vendor Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_vendor_inland_freight_amount"},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"}
   }
 
