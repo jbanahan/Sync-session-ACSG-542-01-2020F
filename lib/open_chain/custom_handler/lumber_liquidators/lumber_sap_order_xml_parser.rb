@@ -71,7 +71,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         # The method for calculating payment terms was much more complicated prior to proj. 1230.  Per 1230
         # requirements, it was supposed to be retained "for possible future use in calculating the payment date".
         # Should that ever be the case, it's in the repository in revisions of this file older than 06/2017.
-        o.terms_of_payment = REXML::XPath.first(base, './E1EDK01/_-LUMBERL_-ZTERM_DESCRIPTION/ZTERM_TXT').try(:text)
+        #o.terms_of_payment = REXML::XPath.first(base, './E1EDK01/_-LUMBERL_-ZTERM_DESCRIPTION/ZTERM_TXT').try(:text)
+        o.terms_of_payment = payment_terms_description(base)
         terms_of_sale = ship_terms(base)
         o.terms_of_sale = terms_of_sale unless terms_of_sale.blank?
         o.order_from_address = order_from_address(base,vend)
@@ -639,6 +640,48 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       str = et(outer_el,'EDATU') if str.blank? || str.match(/^0*$/)
       return nil if str.blank?
       parse_date(str)
+    end
+
+    def payment_terms_description base
+      # Use the ZTERM element to determine if there a special term codes that we need to handle
+      # outside of the standard path of parsing the terms elements into a terms description.
+      # Special Terms don't have these elements.
+      zterm = REXML::XPath.first(base, "./E1EDK01/ZTERM").try(:text)
+      if special_payment_terms[zterm]
+        special_payment_terms[zterm]
+      elsif zterm.to_s =~ /^tt(\d+)$/i
+        "T/T Net #{$1}"
+      else
+        elements = REXML::XPath.match(base,"./E1EDK18")
+
+        # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
+        return "Due Immediately" unless elements.try(:size) > 0
+
+        values = []
+        elements.each do |el|
+          days = et(el, 'TAGE')
+          percent = et(el, 'PRZNT')
+
+          next if days.blank?
+
+          if percent.blank?
+            values << "Net #{days}"
+          else
+            # Strip trailing insignificant digits
+            if percent =~ /\.\d*[0]+$/
+              percent.sub!(/0+$/, "")
+              percent = percent[0..-2] if percent.ends_with?(".")
+            end
+            values << "#{percent}% #{days} Days"
+          end
+        end
+
+        values.join(", ")
+      end
+    end
+
+    def special_payment_terms
+      {"TT00" => "T/T At Sight"}
     end
 
     def parse_date str
