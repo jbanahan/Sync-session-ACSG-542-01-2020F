@@ -504,7 +504,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       ol.ship_to = header_ship_to if ol.ship_to.nil?
 
-      ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], get_custom_article_description(line_el)
+      description = get_custom_article_description(line_el)
+      if description.blank?
+        # This is here exclusively to fix a initial deployment issue where blank article descriptions were
+        # getting identified as changed as compared to nil ones (see the lumber_order_change_comparator's fingerprinting of OrderData)
+        # Rather than changing the fingerprinting method and then have a bunch of things record as changed again, we'll only
+        # set a blank string here if the value is already blank, otherwise we'll nil the field.
+        if ol.custom_value(@cdefs[:ordln_custom_article_description]) == ""
+          description = ""
+        else
+          description = nil
+        end
+      end
+
+      ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], description
 
       inland_freight_el = get_inland_freight_element line_el
       if inland_freight_el
