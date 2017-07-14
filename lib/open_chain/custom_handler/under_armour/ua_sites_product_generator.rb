@@ -42,7 +42,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
     row[1].split("\n ").each do |site|
       co = DataCrossReference.find_ua_country_by_site site
       if co
-        hts = prod.classifications.find{ |cl| cl.country.iso_code == co }.tariff_records.first.try(:hts_1)
+        classi = prod.classifications.find{ |cl| cl.country.iso_code == co }
+        hts = classi.tariff_records.first.try(:hts_1) if classi
         out << {0=>prod.unique_identifier, 1=>site, 2=>hts.hts_format} if hts.present?
       end
     end

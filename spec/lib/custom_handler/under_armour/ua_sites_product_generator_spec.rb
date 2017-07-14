@@ -77,5 +77,18 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
       expect(out.length).to eq 2
       expect(out.second).to eq ["123-456-7890", "123", "1234.56.7890"]
     end
+
+    it "excludes sites lacking a classification" do
+      DataCrossReference.create!(key: "234", value: "CN", cross_reference_type: "ua_site")
+      @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
+      @t2.classification.destroy
+
+      g = described_class.new
+      @f = g.sync_csv
+      out = CSV.read @f.path
+
+      expect(out.length).to eq 2
+      expect(out.second).to eq ["123-456-7890", "123", "1234.56.7890"]
+    end
   end
 end
