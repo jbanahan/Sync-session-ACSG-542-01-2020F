@@ -420,7 +420,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return new_hash.keys if ship_from_changed?(old_data,new_data)
 
       lines_to_check = new_hash.keys & old_hash.keys
-      need_reset = lines_to_check.reject {|line_number| old_hash[line_number] == new_hash[line_number]}
+      need_reset = lines_to_check.reject do |line_number| 
+        # only the following fields should be considered as pc approval resets - [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu]
+        [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu].all? do |uid| 
+          old_hash[line_number][uid.to_s] == new_hash[line_number][uid.to_s]
+        end
+      end
+
       new_data.variant_map.each do |k,v|
         need_reset << k if old_data.variant_map[k] != v
       end

@@ -927,6 +927,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         new_data.variant_map = {'1'=>'OTHER','2'=>'11','3'=>'NEW'}
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','3']
       end
+      it "does not reset pc approval if Custom Article Description or Freight Amount changes" do
+        old_fingerprint = base_fingerprint_hash.deep_dup
+        old_data = order_data_klass.new(old_fingerprint)
+        old_data.ship_from_address = 'abc'
+        old_data.variant_map = {1=>'10',2=>'11'}
+        
+        new_fingerprint = base_fingerprint_hash.deep_dup
+        new_fingerprint['lines']['1'][cdefs[:ordln_custom_article_description].model_field_uid] = "Changed"
+        new_fingerprint['lines']['2'][cdefs[:ordln_vendor_inland_freight_amount].model_field_uid] = "987.65"
+        new_data = order_data_klass.new(new_fingerprint)
+        new_data.ship_from_address = " abc"
+        new_data.variant_map = {1=>'10',2=>'11'}
+
+        expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
+      end
     end
 
     describe '#vendor_visible_fields_changed?' do
