@@ -1,18 +1,21 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'
-class LLSOW1132
+
+class LlPcReapprovalScript
+
   def initialize
     @cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive]
     @cdef_uids = {}
     @cdefs.each {|k,v| @cdef_uids[k] = v.model_field_uid}
     @integration = User.integration
   end
-  def run source_file
-    File.open("tmp/sow_1130_#{Time.now.to_i}.txt",'wb') do |f|
+
+  def run source_file, snapshot_comment
+    File.open("tmp/log-#{Time.now.to_i}.txt",'wb') do |f|
       orders_processed = []
       order_numbers = CSV.read(source_file).collect {|line| line.first}
       order_numbers.in_groups_of(200,false) do |ord_nums|
         Order.where("order_number in (?)",ord_nums).includes({:order_lines=>:custom_values}).each do |ord|
-          process_order ord, f
+          process_order ord, f, snapshot_comment
           orders_processed << ord.order_number
         end
       end
@@ -21,7 +24,7 @@ class LLSOW1132
     end
   end
 
-  def process_order order, log_file
+  def process_order order, log_file, snapshot_comment
     unapproved_lines = get_unapproved_lines(order)
     lines_approved = []
     if unapproved_lines.blank?
@@ -34,7 +37,7 @@ class LLSOW1132
     end
     if !lines_approved.empty?
       log_file << "Order #{order.order_number} approved lines #{lines_approved.collect {|ol| ol.line_number}.join(", ")}\n"
-      order.create_snapshot @integration, nil, "SOW 1132: Bulk Trade Compliance Reapprove"
+      order.create_snapshot @integration, nil, snapshot_comment
     end
   end
 
