@@ -120,34 +120,56 @@ describe OpenChain::EntityCompare::EntityComparator do
   describe "handle_snapshot" do
     let (:snapshot) { EntitySnapshot.new id: 6, recordable: order }
 
-    it "delays process_by_id call if there is a comparator set to handle the snapshot" do
-      OpenChain::EntityCompare::ComparatorRegistry.register comparator
+    context "non-test environment" do
+      before :each do
+        expect(described_class).to receive(:test?).and_return false
+      end
 
-      expect(described_class).to receive(:delay).with(priority: 10).and_return described_class
-      expect(described_class).to receive(:process_by_id).with(snapshot.id)
+      it "delays process_by_id call if there is a comparator set to handle the snapshot" do
+        OpenChain::EntityCompare::ComparatorRegistry.register comparator
 
-      described_class.handle_snapshot snapshot
+        expect(described_class).to receive(:delay).with(priority: 10).and_return described_class
+        expect(described_class).to receive(:process_by_id).with(snapshot.id)
+
+        described_class.handle_snapshot snapshot
+      end
+
+      it "does not call process_by_id if no comparator is set to handle the snapshot" do
+        expect(described_class).not_to receive(:delay)
+
+        described_class.handle_snapshot snapshot
+      end
+
+      it "skips process by id if snapshot's recordable type is disabled" do
+        # Make sure there's a comparator there to process, so we know that it's not not calling the process_by_id method due to the logic
+        # and not that there's no comparators.
+        OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
+        ms = stub_master_setup
+        expect(ms).to receive(:custom_feature?).with("Disable Product Snapshot Comparators").and_return true
+
+        product = Factory(:product, unique_identifier: "UAPARTS-123")
+        es = EntitySnapshot.new id: 6, recordable: product
+
+        expect(described_class).not_to receive(:delay)
+
+        described_class.handle_snapshot es
+      end
     end
 
-    it "does not call process_by_id if no comparator is set to handle the snapshot" do
-      expect(described_class).not_to receive(:delay)
+    context "test environment" do
+      it "does not skip process by id if test environment" do
+        # Make sure there's a comparator there to process
+        OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
+        product = Factory(:product, unique_identifier: "UAPARTS-123")
+        es = EntitySnapshot.new id: 6, recordable: product
 
-      described_class.handle_snapshot snapshot
+        expect(described_class).to receive(:delay).and_return described_class
+        expect(described_class).to receive(:process_by_id).with(snapshot.id)
+
+        described_class.handle_snapshot es
+      end
     end
 
-    it "skips process by id if product is for UAPARTS" do
-      # Make sure there's a comparator there to process, so we know that it's not not calling the process_by_id method due to the logic
-      # and not that there's no comparators.
-      OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
-      ms = stub_master_setup
-      expect(ms).to receive(:system_code).and_return "www-vfitrack-net"
-
-      product = Factory(:product, unique_identifier: "UAPARTS-123")
-      es = EntitySnapshot.new id: 6, recordable: product
-
-      expect(described_class).not_to receive(:delay)
-
-      described_class.handle_snapshot es
-    end
+    
   end
 end

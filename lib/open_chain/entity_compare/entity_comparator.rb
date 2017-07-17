@@ -11,13 +11,21 @@ module OpenChain; module EntityCompare; class EntityComparator
 
     # Make these a lower queue priority..when uploading large numbers of orders/products these can choke out
     # reports and such if they're running at a lower priority
-
-    # This is simply here to prevent the massive number of snapshots we're doing for UAPARTS from flooding the
-    # job queue...this can be removed after they're all loaded.
-    return if entity_snapshot.recordable.respond_to?(:unique_identifier) && entity_snapshot.recordable.unique_identifier.starts_with?("UAPARTS-") && MasterSetup.get.system_code == "www-vfitrack-net"
+    return unless process_snapshot?(entity_snapshot)
     self.delay(priority: 10).process_by_id(entity_snapshot.id) if OpenChain::EntityCompare::ComparatorRegistry.registered_for(entity_snapshot).length > 0
 
     nil
+  end
+
+  def self.process_snapshot? entity_snapshot
+    # This method is a simple way to disable all snapshot processing for a distinct snapshot class / type
+    return test? || !MasterSetup.get.custom_feature?("Disable #{entity_snapshot.recordable_type} Snapshot Comparators")
+  end
+
+  def self.test?
+    # PURELY for test casing - it also allows us to not have to have every single test case set up an expectation on Mastersetup if they
+    # end up generating a snapshot
+    return Rails.env.test?
   end
 
   def self.process entity_snapshot
