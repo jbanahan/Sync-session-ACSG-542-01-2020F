@@ -2,8 +2,9 @@ class CartonSet < ActiveRecord::Base
   belongs_to :shipment, inverse_of: :carton_sets
   has_many :shipment_lines, inverse_of: :carton_set
 
-  def total_gross_kgs
-    BigDecimal.new(self.carton_qty.presence || 0) * (self.gross_kgs.presence || 0)
+  def total_gross_kgs decimal_places = 2
+    val = BigDecimal.new(self.carton_qty.presence || 0) * (self.gross_kgs.presence || 0)
+    val.round(decimal_places)
   end
 
   def total_volume_cbms decimal_places = 2
@@ -18,5 +19,14 @@ class CartonSet < ActiveRecord::Base
     end
 
     total
-  end 
+  end
+
+  def total_volume_cubic_centimeters 
+    total = BigDecimal(0)
+    if self.length_cm && self.width_cm && self.height_cm
+      volume = (self.length_cm * self.width_cm * self.height_cm)
+    end
+
+    BigDecimal.new(self.carton_qty.presence || 0) * (volume.presence || 0)
+  end
 end

@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       add_row_data rows, 28, 8, "Mode"
       add_row_data rows, 35, 0, "Marks And Numbers"
 
-      add_details_row rows, 35, 2, ["PONumber", "Style", "Sku", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["PONumber", "Style", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
       rows
     }
     let (:cdefs) {
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "parses shipment data, linking to order lines by sku" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "", "Sku", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["PONumber", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
 
       subject.process_rows shipment, rows, user
       expect(shipment).to be_persisted
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "parses shipment data, linking to order lines by product part number" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "Style", "", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["PONumber", "Style", "", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
       subject.process_rows shipment, rows, user
       expect(shipment).to be_persisted
 
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "handles manufacturer_address_id if provided in constructor options" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "", "Sku", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["PONumber", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
 
       address = Factory(:full_address)
       described_class.new(manufacturer_address_id: address.id).process_rows shipment, rows, user

@@ -88,6 +88,9 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
     sl = shipment.shipment_lines.build(product:ol.product,quantity:qty, manufacturer_address_id:manufacturer_address_id)
+    sl.gross_kgs = BigDecimal("0")
+    sl.carton_qty = 0
+    sl.cbms = BigDecimal("0")
     sl.container = container
     sl.linked_order_line_id = ol.id
     sl.line_number = line_number
@@ -121,26 +124,37 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def find_or_build_carton_set shipment, row
-    starting_carton = row[6]
-    return @last_carton_set if starting_carton.blank?
+    initial_starting_carton = row[6]
+    cs = nil
+    if initial_starting_carton.blank?
+      # If the initial starting carton column is left blank, it just means the same carton range from the previous
+      # row is still in use
+      cs = shipment.carton_sets.to_a.last
+    end
+
+    return cs unless cs.nil?
 
     # Regardless of what was sent in the Excel, make this an int to ensure we re-use values we've seen before
-    starting_carton = starting_carton.to_i
-
-    cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
+    starting_carton = initial_starting_carton.to_i
     if cs.nil?
-      weight_factor = (row[48].to_s.strip == 'LB') ? BigDecimal("0.453592") : 1
-      dim_factor = dimension_coversion_factor(row[55].to_s.strip)
-      cs = shipment.carton_sets.build(starting_carton:starting_carton)
-      cs.carton_qty = clean_number row[37]
-      cs.net_net_kgs = convert_number row[42], weight_factor
-      cs.net_kgs = convert_number row[45], weight_factor
-      cs.gross_kgs = convert_number row[47], weight_factor
-      cs.length_cm = convert_number row[49], dim_factor
-      cs.width_cm = convert_number row[51], dim_factor
-      cs.height_cm = convert_number row[53], dim_factor
-      @last_carton_set = cs
+      # See if the Carton Set has already been added
+      cs = shipment.carton_sets.find { |cs| cs.starting_carton == starting_carton }
+      return cs unless cs.nil?
+
+      cs = shipment.carton_sets.build(starting_carton: starting_carton)
     end
+
+    weight_factor = (row[48].to_s.strip == 'LB') ? BigDecimal("0.453592") : 1
+    dim_factor = dimension_coversion_factor(row[55].to_s.strip)
+    
+    cs.carton_qty = clean_number row[37]
+    cs.net_net_kgs = convert_number row[42], weight_factor
+    cs.net_kgs = convert_number row[45], weight_factor
+    cs.gross_kgs = convert_number row[47], weight_factor
+    cs.length_cm = convert_number row[49], dim_factor
+    cs.width_cm = convert_number row[51], dim_factor
+    cs.height_cm = convert_number row[53], dim_factor
+
     cs
   end
 
@@ -182,8 +196,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
       next if cs.nil? || carton_sets.include?(cs)
 
       total_package_count += cs.carton_qty.presence || 0
-      gross_weight += cs.total_gross_kgs
-      volume += cs.total_volume_cbms
+      gross_weight += cs.total_gross_kgs(3)
+      volume += cs.total_volume_cbms(3)
 
       carton_sets << cs
     end
@@ -195,6 +209,100 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
       shipment.number_of_packages = (shipment.number_of_packages.presence || 0) + total_package_count
       shipment.number_of_packages_uom = "CARTONS" if shipment.number_of_packages_uom.blank?
     end
+
+    sum_carton_set_shipment_line_data(shipment, lines_added) unless lines_added.blank?
+    nil
+  end
+
+  def sum_carton_set_shipment_line_data shipment, lines_added
+    # We need to calculate the number of cartons per shipment line and the gross weight / volume
+    # and then prorate those values to the line for lines where there's multiple shipment lines per carton set
+    carton_sets = {}
+    lines_added.each do |line|
+      carton_sets[line.carton_set] ||= []
+      carton_sets[line.carton_set] << line
+    end
+
+    carton_sets.each_pair do |cs, lines|
+      total_cartons = (cs.carton_qty.presence || 0)
+      total_weight = cs.total_gross_kgs(4)
+      
+
+      if lines.length == 1
+        line = lines[0]
+        line.carton_qty = total_cartons
+        line.gross_kgs = total_weight
+        line.cbms = cs.total_volume_cbms(4)
+      elsif lines.length > 0
+        total_items = lines.sum {|l| l.quantity.to_f > 0 ? l.quantity : 0 }
+
+        # Do the proration as cubic centimeters (since it's so small), then convert to cbms
+        total_volume = cs.total_volume_cubic_centimeters
+
+        prorate_based_on_item_count(total_weight, total_items, lines, "gross_kgs")
+        prorate_based_on_item_count(total_volume, total_items, lines, "cbms")
+        # Because we're potentially losing some data on the round below, add it back in
+        cbms = cs.total_volume_cbms(4)
+        total = BigDecimal("0")
+        lines.each do |line|
+          line.cbms = (line.cbms / BigDecimal(1000000)).round(4, BigDecimal::ROUND_DOWN) unless line.cbms.nil?
+          total += line.cbms
+        end
+        if total < cbms
+          lines.first.cbms += (cbms - total)
+        end
+        
+        prorate_carton(total_cartons, lines)
+      end
+    end
+
+  end
+
+  def prorate_based_on_item_count total_amount, total_items, shipment_lines, attribute
+    proration = (BigDecimal(total_amount.to_s) / BigDecimal(total_items.to_s)).round(2, BigDecimal::ROUND_DOWN)
+
+    total_prorated = BigDecimal("0")
+    shipment_lines.each do |line|
+      amount = (proration * line.quantity).round(4, BigDecimal::ROUND_DOWN)
+      line.assign_attributes(attribute => amount)
+      total_prorated += amount
+    end
+
+    # This basically means that there's no values (units / items) to prorate..so bail.
+    return if total_prorated == 0
+
+    remainder = total_amount - total_prorated
+
+    return unless remainder > 0
+
+    begin
+      shipment_lines.each do |line|
+        # TODO Figure out prorations of very small values without 
+        if remainder < BigDecimal("0.0099")
+          val = line.attributes[attribute.to_s]
+          line.assign_attributes({attribute => (val + remainder)})
+          remainder = 0
+          break
+        else
+          val = line.attributes[attribute.to_s]
+          proration_unit = BigDecimal("0.01")
+          line.assign_attributes({attribute => (val + proration_unit)})
+          remainder -= proration_unit
+          break if remainder <= 0
+        end
+      end
+    end while remainder > 0
+  end
+
+  def prorate_carton total_cartons, shipment_lines
+    carton_used = 0
+    begin
+      shipment_lines.each do |line|
+        carton_used += 1
+        line.carton_qty += 1
+        break if carton_used >= total_cartons
+      end
+    end while carton_used < total_cartons
   end
 
   def dimension_coversion_factor uom

@@ -447,6 +447,16 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         expect(cs.shipment_lines.first).to eq @s.shipment_lines.first
         expect(@s.shipment_lines.count).to eq 2
 
+        line = @s.shipment_lines.first
+        expect(line.carton_qty).to eq 2
+        expect(line.gross_kgs).to eq 14
+        expect(line.cbms).to eq 2
+
+        line = @s.shipment_lines.second
+        expect(line.carton_qty).to eq 4
+        expect(line.gross_kgs).to eq 28
+        expect(line.cbms).to eq 4
+
         expect(@s.gross_weight).to eq BigDecimal(42)
         expect(@s.number_of_packages).to eq 6
         expect(@s.number_of_packages_uom).to eq "CARTONS"
@@ -547,7 +557,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         cs = @s.carton_sets.first
         expect(cs.net_kgs).to eq 1
       end
-      it "should assign line w/ blank carton range to the last carton range" do
+      it "should assign line w/ blank carton range to the last carton range and prorate values on shipment lines" do
         row_seed = {
           82=>subtitle_row('CARTON DETAIL'),
           84=>['','','','Equipment#: WHATEVER'],
@@ -565,6 +575,45 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         last_cs = @s.carton_sets.last
         expect(cs_from_shipment_lines).to eq [first_cs, first_cs, last_cs]
 
+        line = @s.shipment_lines.first
+        expect(line.carton_qty).to eq 1
+        expect(line.gross_kgs).to eq 7
+        expect(line.cbms).to eq 1
+
+        line = @s.shipment_lines.second
+        expect(line.carton_qty).to eq 1
+        expect(line.gross_kgs).to eq 7
+        expect(line.cbms).to eq 1
+      end
+
+      it "handles carton prorations with complex remainders" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'10',item_qty:'10'}),
+          87=>detail_line({range:'',carton_start:'',carton_qty:'',item_qty:'10'}),
+          88=>detail_line({range:'',carton_start:'',carton_qty:'',item_qty:'10'}),
+        }
+        rows = init_mock_array 90, row_seed
+        subject.process_rows(@s,rows,@u)
+        @s.reload
+        expect(@s.shipment_lines.length).to eq 3
+
+        line = @s.shipment_lines.first
+        expect(line.carton_qty).to eq 4
+        expect(line.gross_kgs).to eq BigDecimal("23.34")
+        expect(line.cbms).to eq BigDecimal("3.3334")
+
+        line = @s.shipment_lines.second
+        expect(line.carton_qty).to eq 3
+        expect(line.gross_kgs).to eq BigDecimal("23.33")
+        expect(line.cbms).to eq BigDecimal("3.3333")
+
+        line = @s.shipment_lines[2]
+        expect(line.carton_qty).to eq 3
+        expect(line.gross_kgs).to eq BigDecimal("23.33")
+        expect(line.cbms).to eq BigDecimal("3.3333")
       end
 
     end
