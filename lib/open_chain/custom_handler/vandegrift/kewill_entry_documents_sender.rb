@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   end
 
   def self.send_s3_document_to_kewill bucket, key, version
-    Lock.acquire("#{bucket}-#{key}-#{version}") do
+    Lock.acquire("#{bucket}-#{key}-#{version}", yield_in_transaction: false) do
       OpenChain::S3.download_to_tempfile(bucket, key, version: version, original_filename: File.basename(key)) do |file|
         file_info = validate_file(key, file)
 
@@ -133,12 +133,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
     if attachment_type.disable_multiple_kewill_docs?
       yield ""
     else
-      Lock.acquire("DocCounter-#{entry.broker_reference}") do 
+      item = nil
+      Lock.acquire("DocCounter-#{entry.broker_reference}") do
+        item = KeyJsonItem.entry_document_counts(entry.broker_reference).first_or_create! json_data: "{}"
+      end
+
+      Lock.with_lock_retry(item) do
         document_code = attachment_type.kewill_document_code
         # We need a cross reference from drive name to "actual" name of type used by kewill
         existing_entry_suffix = entry.attachments.where(attachment_type: attachment_type.kewill_attachment_type).order("alliance_suffix DESC").first.try(:alliance_suffix).to_i
 
-        item = KeyJsonItem.entry_document_counts(entry.broker_reference).first_or_initialize
         counts = item.data
         counts = {} if counts.blank?
         # The first document suffix always needs to start at 1, as that's what Kewill does too when generating docs internally.
@@ -149,8 +153,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
 
         counts[document_code] = json_suffix
         item.data = counts
-        # This is inside of a transaction (and a cross process lock), so we should be good to save the value right away and rely on a transaction
-        # rollback to undo the setting should any issue occur
+        # This is inside of a transaction (and a database row lock), so we should be good to save the value right away and rely on a transaction
+        # rollback to undo the setting should any issue occur during the ftp process
         item.save!
 
         yield json_suffix
