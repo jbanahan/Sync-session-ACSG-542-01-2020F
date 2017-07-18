@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSubsProductG
 
   def query
     qry = <<-SQL
-      SELECT p.id, p.unique_identifier
+      SELECT DISTINCT p.id, '' as 'Country', p.unique_identifier as 'Article', '' as 'Classification'
       FROM products p
         INNER JOIN classifications cl ON p.id = cl.product_id
         INNER JOIN tariff_records t ON cl.id = t.classification_id
@@ -32,13 +32,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSubsProductG
     qry
   end
 
-  def preprocess_header_row row, opts={}
-    [{0=>"Country", 1=>"Article", 2=>"Classification"}]
-  end
-
   def preprocess_row row, opts={}
     out = []
-    prod = products.find_by_unique_identifier row[0]
+    prod = products.find_by_unique_identifier row[1]
     prod.classifications.reject{ |cl| site_countries.include? cl.country.iso_code }.each do |cl|
       co = cl.country
       hts = cl.tariff_records.first.try(:hts_1)

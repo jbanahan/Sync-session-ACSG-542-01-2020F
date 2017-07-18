@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
   
   def query
     qry = <<-SQL
-      SELECT p.id, p.unique_identifier, sites.text_value
+      SELECT DISTINCT p.id as 'ID', p.unique_identifier as 'Article', sites.text_value as 'Site Code', '' as 'Classification'
       FROM products p
         INNER JOIN classifications cl ON p.id = cl.product_id
         INNER JOIN tariff_records t ON cl.id = t.classification_id
@@ -31,23 +31,35 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
     qry += " ORDER BY p.unique_identifier ASC"
     qry
   end
-  
-  def preprocess_header_row row, opts={}
-    [{0=>"Article", 1=>"Site Code", 2=>"Classification"}]
-  end
 
   def preprocess_row row, opts={}
     out = []
     prod = products.find_by_unique_identifier row[0]
     row[1].split("\n ").each do |site|
-      co = DataCrossReference.find_ua_country_by_site site
-      if co
-        classi = prod.classifications.find{ |cl| cl.country.iso_code == co }
-        hts = classi.tariff_records.first.try(:hts_1) if classi
-        out << {0=>prod.unique_identifier, 1=>site, 2=>hts.hts_format} if hts.present?
-      end
+      co = get_site_country site
+      next if co.blank?
+
+      classification = prod.classifications.find{ |cl| cl.country.iso_code == co }
+      next unless classification
+
+      hts = classification.tariff_records.first.try(:hts_1)
+      next if hts.nil? || hts.blank?
+
+      out << {0=>prod.unique_identifier, 1=>site, 2=>hts.hts_format}
     end
     out
+  end
+
+  def get_site_country site
+    @sites ||= Hash.new do |h, k|
+      co = DataCrossReference.find_ua_country_by_site k
+      if co.nil?
+        co = ""
+      end
+      h[k] = co
+    end
+
+    @sites[site]
   end
 end
   
