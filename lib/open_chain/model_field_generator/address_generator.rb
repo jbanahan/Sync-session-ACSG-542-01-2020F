@@ -18,10 +18,16 @@ module OpenChain; module ModelFieldGenerator; module AddressGenerator
       :data_type=>:string
     }]
     r << [rank_start+2, :"#{uid_prefix}_ship_#{ft}_full_address", :"#ship_{ft}_address", "Ship #{ftc} Address", {
-       data_type: :text,
+        data_type: :text,
+        read_only:true,
+        export_lambda: lambda {|obj| obj.send("ship_#{ft}").try(:full_address)},
+        qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, '')^',', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')^',', IFNULL(iso_code,'')) FROM addresses INNER JOIN countries ON addresses.country_id = countries.id where addresses.id = #{table_name}.ship_#{ft}_id)"
+    }]
+    r << [rank_start+3, :"#{uid_prefix}_ship_#{ft}_system_code", :"#ship_{ft}_system_code", "Ship #{ftc} System Code", {
        read_only:true,
-       export_lambda: lambda {|obj| obj.send("ship_#{ft}").try(:full_address)},
-       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, '')^',', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, '')^',', IFNULL(iso_code,'')) FROM addresses INNER JOIN countries ON addresses.country_id = countries.id where addresses.id = #{table_name}.ship_#{ft}_id)"
+       export_lambda: lambda {|obj| obj.send("ship_#{ft}").try(:system_code)},
+       :qualified_field_name => "(SELECT system_code FROM addresses WHERE addresses.id = #{table_name}.ship_#{ft}_id)",
+       :data_type=>:string
      }]
     r
   end
