@@ -33,7 +33,14 @@ module OpenChain
       'CADXACCP' => :cadex_accept_date=,
       'ACSREFF' => :exam_ordered_date=,
       'CADK84REC' => {datatype: :date, setter: :k84_receive_date=},
-      'B3P' => :b3_print_date=
+      'B3P' => :b3_print_date=,
+      'KPIDOC' => :documentation_request_date=,
+      'KPIPO' => :po_request_date=,
+      'KPIHTS' => :tariff_request_date=,
+      'KPIOGD' => :ogd_request_date=,
+      'KPIVAL' => :value_currency_request_date=,
+      'KPIPART' => :part_number_request_date=,
+      'KPIIOR' => :importer_request_date=
     }
 
     SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL']

@@ -91,7 +91,14 @@ describe OpenChain::FenixParser do
       'CADXACCP' => [Time.new(2015,9,12,12,2), Time.new(2015,9,13,12,2)],
       'ACSREFF' => [Time.new(2015,4,4,10,0), Time.new(2015,4,4,18,0)],
       'CADK84REC' => [Time.new(2015,4,4,23,59)],
-      'B3P' => [Time.new(2015,9,3,12,2), Time.new(2015,9,3,7,57)]
+      'B3P' => [Time.new(2015,9,3,12,2), Time.new(2015,9,3,7,57)],
+      'KPIDOC' => [Time.new(2017,7,7,12,2), Time.new(2017,7,7,7,57)],
+      'KPIPO' => [Time.new(2017,7,8,12,2), Time.new(2017,7,8,7,57)],
+      'KPIHTS' => [Time.new(2017,7,9,12,2), Time.new(2017,7,9,7,57)],
+      'KPIOGD' => [Time.new(2017,7,10,12,2), Time.new(2017,7,10,7,57)],
+      'KPIVAL' => [Time.new(2017,7,11,12,2), Time.new(2017,7,11,7,57)],
+      'KPIPART' => [Time.new(2017,7,12,12,2), Time.new(2017,7,12,7,57)],
+      'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)]
     }
     @use_new_activities = false
     @additional_bols = ["123456", "9876542321"]
@@ -654,6 +661,13 @@ describe OpenChain::FenixParser do
     expect(e.exam_ordered_date).to eq tz.parse(@new_activities['ACSREFF'][1].to_s).in_time_zone(Time.zone)
     expect(e.k84_receive_date).to eq tz.parse(@new_activities['CADK84REC'][0].to_s).to_date
     expect(e.b3_print_date).to eq tz.parse(@new_activities['B3P'][1].to_s).in_time_zone(Time.zone)
+    expect(e.documentation_request_date).to eq tz.parse(@new_activities['KPIDOC'][1].to_s).in_time_zone(Time.zone)
+    expect(e.po_request_date).to eq tz.parse(@new_activities['KPIPO'][1].to_s).in_time_zone(Time.zone)
+    expect(e.tariff_request_date).to eq tz.parse(@new_activities['KPIHTS'][1].to_s).in_time_zone(Time.zone)
+    expect(e.ogd_request_date).to eq tz.parse(@new_activities['KPIOGD'][1].to_s).in_time_zone(Time.zone)
+    expect(e.value_currency_request_date).to eq tz.parse(@new_activities['KPIVAL'][1].to_s).in_time_zone(Time.zone)
+    expect(e.part_number_request_date).to eq tz.parse(@new_activities['KPIPART'][1].to_s).in_time_zone(Time.zone)
+    expect(e.importer_request_date).to eq tz.parse(@new_activities['KPIIOR'][1].to_s).in_time_zone(Time.zone)
   end
 
   it 'requests LVS child data if entry type is F' do

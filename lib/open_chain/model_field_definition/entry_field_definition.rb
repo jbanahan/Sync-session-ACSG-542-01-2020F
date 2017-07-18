@@ -264,7 +264,14 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         export_lambda: lambda {|ent| ent.containers.length},
         qualified_field_name: "(SELECT COUNT(*) FROM containers WHERE containers.entry_id = entries.id)"
       }],
-      [174, :ent_release_type, :release_type, "CBSA Release Type", {data_type: :string}]
+      [174, :ent_release_type, :release_type, "CBSA Release Type", {data_type: :string}],
+      [175, :ent_documentation_request_date, :documentation_request_date, "Documentation Request Date", {:data_type=>:datetime}],
+      [176, :ent_po_request_date, :po_request_date, "PO Request Date", {:data_type=>:datetime}],
+      [177, :ent_tariff_request_date, :tariff_request_date, "Tariff Request Date", {:data_type=>:datetime}],
+      [178, :ent_ogd_request_date, :ogd_request_date, "OGD Request Date", {:data_type=>:datetime}],
+      [179, :ent_value_currency_request_date, :value_currency_request_date, "Value/Currency Request Date", {:data_type=>:datetime}],
+      [180, :ent_part_number_request_date, :part_number_request_date, "Part Number Request Date", {:data_type=>:datetime}],
+      [181, :ent_importer_request_date, :importer_request_date, "Importer Request Date", {:data_type=>:datetime}],
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
