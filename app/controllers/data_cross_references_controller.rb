@@ -1,3 +1,5 @@
+require 'open_chain/data_cross_reference_uploader'
+
 class DataCrossReferencesController < ApplicationController
   
   def index
@@ -78,61 +80,88 @@ class DataCrossReferencesController < ApplicationController
     end
   end
 
+  def upload
+    xref_type = params[:cross_reference_type]
+    file = params[:attached]
+    if DataCrossReference.can_view?(xref_type, current_user)
+      run_uploader current_user, file, xref_type
+      redirect_to request.referer
+    else
+      error_redirect "You do not have permission to update this cross reference."
+    end
+  end
+
   def get_importers
     Company.uniq.where(importer: true).joins(:importer_products).order("companies.name")
   end
 
   private
 
-    def xref_hash xref_type, user
-      info = DataCrossReference.xref_edit_hash user
-      info[xref_type]
-    end
-
-    def new_edit xref
-      action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
-        @xref_info = xref_hash xref.cross_reference_type, current_user
-        @xref = xref
-        @importers = get_importers
+  def run_uploader user, file, xref_type
+    uploader = OpenChain::DataCrossReferenceUploader
+    if file.nil?
+      add_flash :errors, "You must select a file to upload."
+    else
+      error = uploader.check_extension(file.original_filename)
+      if error
+        add_flash(:errors, error)
+        return
       end
+      cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: user, attached: file)
+      CustomFile.delay.process(cf.id, current_user.id, cross_reference_type: xref_type)
+      add_flash(:notices, "Your file is being processed.  You'll receive a VFI Track message when it completes.")
+    end
+  end
+
+  def xref_hash xref_type, user
+    info = DataCrossReference.xref_edit_hash user
+    info[xref_type]
+  end
+
+  def new_edit xref
+    action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
+      @xref_info = xref_hash xref.cross_reference_type, current_user
+      @xref = xref
+      @importers = get_importers
+    end
+  end
+
+  def search_params xref_type
+    edit_hash = xref_hash xref_type, current_user
+
+    sp = {
+      'd_key' => {field: "`key`", label: edit_hash[:key_label]}
+    }
+
+    if edit_hash[:show_value_column]
+      sp['d_value']  = {field: "`value`", label: edit_hash[:value_label]}
     end
 
-    def search_params xref_type
-      edit_hash = xref_hash xref_type, current_user
+    sp
+  end
 
-      sp = {
-        'd_key' => {field: "`key`", label: edit_hash[:key_label]}
-      }
+  def secure
+    # The xref param has already been validation in the index action prior to this method being
+    # called so we're ok to always assume its presence
+    DataCrossReference.where(cross_reference_type: params[:cross_reference_type])
+  end
 
-      if edit_hash[:show_value_column]
-        sp['d_value']  = {field: "`value`", label: edit_hash[:value_label]}
+  def validate_non_duplicate xref
+    edit_hash = DataCrossReference.xref_edit_hash current_user
+
+    allow_save = true
+    # See if we may allow duplicate xref keys..(some instances may require duplicates - though likely not via the screen edits)
+    if !edit_hash[xref.cross_reference_type].try(:[], :allow_duplicate_keys)
+      
+      query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, key: xref.key)
+      if xref.id.try(:nonzero?)
+        query = query.where("id <> ?", xref.id)
       end
 
-      sp
+      allow_save = query.first.nil?
+      xref.errors.add(:base, "The #{edit_hash[xref.cross_reference_type][:key_label]} value '#{xref.key}' already exists on another cross reference record.") unless allow_save
     end
 
-    def secure
-      # The xref param has already been validation in the index action prior to this method being
-      # called so we're ok to always assume its presence
-      DataCrossReference.where(cross_reference_type: params[:cross_reference_type])
-    end
-
-    def validate_non_duplicate xref
-      edit_hash = DataCrossReference.xref_edit_hash current_user
-
-      allow_save = true
-      # See if we may allow duplicate xref keys..(some instances may require duplicates - though likely not via the screen edits)
-      if !edit_hash[xref.cross_reference_type].try(:[], :allow_duplicate_keys)
-        
-        query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, key: xref.key)
-        if xref.id.try(:nonzero?)
-          query = query.where("id <> ?", xref.id)
-        end
-
-        allow_save = query.first.nil?
-        xref.errors.add(:base, "The #{edit_hash[xref.cross_reference_type][:key_label]} value '#{xref.key}' already exists on another cross reference record.") unless allow_save
-      end
-
-      allow_save
-    end
+    allow_save
+  end
 end

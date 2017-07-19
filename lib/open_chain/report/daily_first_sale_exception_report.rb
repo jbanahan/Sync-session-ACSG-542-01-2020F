@@ -23,7 +23,8 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   end
 
   def self.get_mids
-    DataCrossReference.get_all_pairs("asce_mid").keys.presence || []
+    keys = DataCrossReference.get_all_pairs("asce_mid").keys.presence 
+    keys ? keys.map{ |k| k.split("-").first } : []
   end
   
   def run run_by, settings

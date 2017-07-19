@@ -14,11 +14,19 @@
               }
             );
     })
+    $('#upload_btn').click(function() {
+      $('#uploadModal').modal('show');
+    });
+    $('#btn_upload').click(function() {
+      $('#frm_run').submit();
+    })
   });
+
 <% end %>
 <%content_for :action_bar do-%>
   <button class='btn_link' link_to='<%=new_data_cross_reference_path(cross_reference_type: @xref_info[:identifier])%>'>New</button>
   <button class='btn_link' id='download_btn' title='Download'><i class='fa fa-download'></i></button>
+  <button class='btn_link' id='upload_btn' title='Upload'><i class='fa fa-upload'></i></button>
 <% end %>
 <div class="container" id="main-container">
   <h1><%=@xref_info[:title]%></h1>
@@ -66,5 +74,36 @@
     </table>
     <%=will_paginate @xrefs%>
   </div>
+
+  <div id="uploadModal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title">Upload Cross References</h3>
+        </div>
+        <div class="modal-body">
+          <%= form_tag "/data_cross_references/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
+            <p>Spreadsheet should contain a header row, with <%=@xref_info[:key_label]%> in column A <%= @xref_info[:show_value_column] ? "and #{@xref_info[:value_label]} in column B" : ""%></p>
+            <div class="form-group">
+              <label for="attached" class='col-md-1 control-label'>File:</label>
+              <div class="col-md-4">
+                <%= file_field_tag :attached, :style => "width: 500px !important;"%>
+                <%= hidden_field_tag :cross_reference_type, @xref_info[:identifier] %>
+              </div>
+            </div>
+            <div class="form-group">
+            </div>
+          <% end %>                    
+        </div>
+        <div class="modal-footer">
+            <div class="col-md-1 col-md-offset-1">
+              <button type="button" class="btn btn-default pull-right" id='btn_upload'>Upload</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 

@@ -13,7 +13,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     @yesterday = @today - 1.day
     @day_before_yesterday = @yesterday - 1.day
     @tomorrow = @today + 1.day
-    DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid")
+    DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid-vendorId")
     vend = Factory(:company, name: "vend name", system_code: "vend sys code")
     @ent = Factory(:entry, import_country: Factory(:country, iso_code: 'US'), customer_number: 'ASCE', entry_filed_date: @day_before_yesterday,
                     first_entry_sent_date: @today, entry_number: 'entry num', release_date: @yesterday, 
@@ -68,8 +68,8 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
 
   describe "get_mids" do
     it "retrieves mids" do
-      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid1")
-      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid2")
+      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid1-vendorId1")
+      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid2-vendorId2")
 
       expect(described_class.get_mids).to eq ["mid1", "mid2"]
     end

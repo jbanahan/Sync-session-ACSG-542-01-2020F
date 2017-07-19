@@ -1021,6 +1021,7 @@ OpenChain::Application.routes.draw do
   resources :data_cross_references do
     get 'show' => "data_cross_references#edit"
     get 'download', on: :collection
+    post 'upload', on: :collection
   end
 
   resources :search_templates, only: [:index,:destroy]

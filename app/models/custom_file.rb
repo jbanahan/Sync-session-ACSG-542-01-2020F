@@ -22,6 +22,7 @@ require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
+require 'open_chain/data_cross_reference_uploader'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records

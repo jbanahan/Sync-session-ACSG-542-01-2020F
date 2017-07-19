@@ -1,3 +1,4 @@
+require 'open_chain/data_cross_reference_upload_preprocessor'
 require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
@@ -37,17 +38,19 @@ class DataCrossReference < ActiveRecord::Base
   CA_HTS_TO_DESCR ||= 'ca_hts_to_descr'
   PVH_INVOICES ||= 'pvh_invoices'
 
+  PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
+
   def self.xref_edit_hash user
     all_editable_xrefs = [
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
-      xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true),
-      xref_attributes(ASCE_MID, "Ascena MID List", "MIDs on this list are used to generate the Daily First Sale Exception report", key_label: "MID", show_value_column: false),
-      xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true),
-      xref_attributes(UA_SITE_TO_COUNTRY, "FMS Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
+      xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true, company: {system_code: "HENNE"}),
+      xref_attributes(ASCE_MID, "Ascena MID-Vendor List", "MID-Vendors on this list are used to generate the Daily First Sale Exception report", key_label: "MID-Vendor ID", value_label: "FS Start Date", preprocessor: PREPROCESSORS[ASCE_MID]),
+      xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true, company: {system_code: "HENNE"}),
+      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
     ]
 
-    user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
+    user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
 
     h = {}
     user_xrefs.each {|x| h[x[:identifier]] = x}
@@ -62,13 +65,30 @@ class DataCrossReference < ActiveRecord::Base
     options[:title] = title
     options[:description] = description
     options[:identifier] = identifier
+    options[:preprocessor] ||= PREPROCESSORS['none']
 
     options
   end
   private_class_method :xref_attributes
 
+  def self.company_for_xref xref_hsh
+    return unless xref_hsh[:company].try(:keys).present?
+    Company.where(xref_hsh[:company]).first
+  end
+
   def can_view? user
     self.class.can_view? cross_reference_type, user
+  end
+
+  def self.preprocess_and_add_xref! xref_type, new_key, new_value, company_id=nil
+    xref_hsh = xref_edit_hash(nil)[xref_type]
+    k, v = xref_hsh[:preprocessor].call(new_key, new_value).values_at(:key, :value)
+    if k.nil? || (v.nil? && xref_hsh[:show_value_column]) 
+      false
+    else
+      add_xref! xref_type, k, v, company_id
+      true
+    end
   end
 
   def self.can_view? cross_reference_type, user

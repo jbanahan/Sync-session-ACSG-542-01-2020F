@@ -223,6 +223,94 @@ describe DataCrossReference do
     end
   end
 
+  describe "company_for_xref" do
+    let!(:u) { double "user" }
+    let!(:xref_edit_hash) { {key_label: "key", value_label: "value", company: {system_code: "ACME"}} }
+    
+    it "returns company associated with xref_edit_hash, looking-up by system_code" do
+      co = Factory(:company, system_code: "ACME")
+      expect(described_class.company_for_xref(xref_edit_hash)).to eq co
+    end
+
+    it "returns company associated with xref_edit_hash, looking-up by alliance_customer_number" do
+      co = Factory(:company, alliance_customer_number: "ACME")
+      xref_edit_hash[:company] = {alliance_customer_number: "ACME"}
+
+      expect(described_class.company_for_xref(xref_edit_hash)).to eq co
+    end
+
+    it "returns company associated with xref_edit_hash, looking-up by fenix_customer_number" do
+      co = Factory(:company, fenix_customer_number: "ACME")
+      xref_edit_hash[:company] = {fenix_customer_number: "ACME"}
+
+      expect(described_class.company_for_xref(xref_edit_hash)).to eq co
+    end
+
+    it "returns nil if no company is associated" do
+      xref_edit_hash.delete :company
+      expect(described_class.company_for_xref(xref_edit_hash)).to be_nil
+    end
+  end
+
+  describe "preprocess_and_add_xref!" do
+    let(:xref_hsh) do
+      {
+        "xref_type" => {
+          show_value_column: true, 
+          identifier: "xref_type", 
+          require_company: false, 
+        }
+      }
+    end
+
+    it "returns false if preprocessed key is nil and makes no changes" do
+      preprocessor = lambda { |key, value| {key: nil, value: "value"} }
+      xref_hsh["xref_type"][:preprocessor] = preprocessor
+
+      expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
+      described_class.destroy_all
+      expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq false
+      expect(described_class.count).to eq 0
+    end
+
+    it "returns false if preprocessed value is nil and makes no changes when value is required" do
+      preprocessor = lambda { |key, value| {key: "key", value: nil} }
+      xref_hsh["xref_type"][:preprocessor] = preprocessor
+
+      expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
+      described_class.destroy_all
+      expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq false
+      expect(described_class.count).to eq 0
+    end
+
+    it "returns true and updates xref when preprocessed key and value exist" do
+      preprocessor = lambda { |key, value| {key: "key", value: "value"} }
+      xref_hsh["xref_type"][:preprocessor] = preprocessor
+
+      expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
+      described_class.destroy_all
+      expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq true
+      expect(described_class.count).to eq 1
+      xref = described_class.first
+      expect(xref.key).to eq "key"
+      expect(xref.value).to eq "value"
+    end
+
+    it "returns true and updates xref when preprocessed value is nil and value is not required" do
+      preprocessor = lambda { |key, value| {key: "key", value: nil} }
+      xref_hsh["xref_type"][:preprocessor] = preprocessor
+      xref_hsh["xref_type"][:show_value_column] = false
+      
+      expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
+      described_class.destroy_all
+      expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq true
+      expect(described_class.count).to eq 1
+      xref = described_class.first
+      expect(xref.key).to eq "key"
+      expect(xref.value).to be_nil
+    end
+  end
+
   describe "create_lands_end_mid!" do
     it "creates a lands end mid xref" do
       DataCrossReference.create_lands_end_mid! 'factory', 'hts', 'MID'
@@ -238,6 +326,13 @@ describe DataCrossReference do
   end
 
   describe "xref_edit_hash" do
+    #no two lambdas share the same identity so this simplifies the tests
+    def strip_preproc hsh
+      hsh.delete(:preprocessor)
+      hsh
+    end
+
+    let(:preproc) {  OpenChain::DataCrossReferenceUploadPreprocessor }
     context "polo system" do      
       it "returns information about xref screens user has access to" do
         allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
@@ -245,8 +340,8 @@ describe DataCrossReference do
         xrefs = DataCrossReference.xref_edit_hash User.new
 
         expect(xrefs.size).to eq 2
-        expect(xrefs['rl_fabric']).to eq title: "MSL+ Fabric Cross References", description: "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", identifier: 'rl_fabric', key_label: "Failure Fiber", value_label: "Approved Fiber", show_value_column: true, allow_duplicate_keys: false, require_company: false
-        expect(xrefs['rl_valid_fabric']).to eq title: "MSL+ Valid Fabric List", description: "Only values included in this list are allowed to be sent to to MSL+.", identifier: 'rl_valid_fabric', key_label: "Approved Fiber", value_label: "Value", show_value_column: false, allow_duplicate_keys: false, require_company: false
+        expect(strip_preproc(xrefs['rl_fabric'])).to eq title: "MSL+ Fabric Cross References", description: "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", identifier: 'rl_fabric', key_label: "Failure Fiber", value_label: "Approved Fiber", show_value_column: true, allow_duplicate_keys: false, require_company: false
+        expect(strip_preproc(xrefs['rl_valid_fabric'])).to eq title: "MSL+ Valid Fabric List", description: "Only values included in this list are allowed to be sent to to MSL+.", identifier: 'rl_valid_fabric', key_label: "Approved Fiber", value_label: "Value", show_value_column: false, allow_duplicate_keys: false, require_company: false
       end
     end
 
@@ -257,8 +352,8 @@ describe DataCrossReference do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
         expect(xrefs.size).to eq 2
-        expect(xrefs['us_hts_to_ca']).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true
-        expect(xrefs['asce_mid']).to eq title: "Ascena MID List", description: "MIDs on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
+        expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
@@ -269,7 +364,8 @@ describe DataCrossReference do
 
         xrefs = DataCrossReference.xref_edit_hash(u)
         expect(xrefs.size).to eq 1
-        expect(xrefs['ca_hts_to_descr']).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true
+        xrefs['ca_hts_to_descr'].delete(:preprocessor)
+        expect(xrefs['ca_hts_to_descr']).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
       end
     end
   end
