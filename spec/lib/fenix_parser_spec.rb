@@ -98,7 +98,8 @@ describe OpenChain::FenixParser do
       'KPIOGD' => [Time.new(2017,7,10,12,2), Time.new(2017,7,10,7,57)],
       'KPIVAL' => [Time.new(2017,7,11,12,2), Time.new(2017,7,11,7,57)],
       'KPIPART' => [Time.new(2017,7,12,12,2), Time.new(2017,7,12,7,57)],
-      'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)]
+      'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)],
+      "MANINFREC" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)],
     }
     @use_new_activities = false
     @additional_bols = ["123456", "9876542321"]
@@ -668,6 +669,7 @@ describe OpenChain::FenixParser do
     expect(e.value_currency_request_date).to eq tz.parse(@new_activities['KPIVAL'][1].to_s).in_time_zone(Time.zone)
     expect(e.part_number_request_date).to eq tz.parse(@new_activities['KPIPART'][1].to_s).in_time_zone(Time.zone)
     expect(e.importer_request_date).to eq tz.parse(@new_activities['KPIIOR'][1].to_s).in_time_zone(Time.zone)
+    expect(e.manifest_info_received_date).to eq tz.parse(@new_activities['MANINFREC'][1].to_s).in_time_zone(Time.zone)
   end
 
   it 'requests LVS child data if entry type is F' do

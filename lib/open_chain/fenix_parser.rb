@@ -40,7 +40,8 @@ module OpenChain
       'KPIOGD' => :ogd_request_date=,
       'KPIVAL' => :value_currency_request_date=,
       'KPIPART' => :part_number_request_date=,
-      'KPIIOR' => :importer_request_date=
+      'KPIIOR' => :importer_request_date=,
+      "MANINFREC" => :manifest_info_received_date=
     }
 
     SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL']

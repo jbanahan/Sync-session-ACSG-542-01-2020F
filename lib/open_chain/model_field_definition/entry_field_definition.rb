@@ -272,6 +272,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [179, :ent_value_currency_request_date, :value_currency_request_date, "Value/Currency Request Date", {:data_type=>:datetime}],
       [180, :ent_part_number_request_date, :part_number_request_date, "Part Number Request Date", {:data_type=>:datetime}],
       [181, :ent_importer_request_date, :importer_request_date, "Importer Request Date", {:data_type=>:datetime}],
+      [182, :ent_manifest_info_received_date, :manifest_info_received_date, "Manifest Info Received Date", {:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
