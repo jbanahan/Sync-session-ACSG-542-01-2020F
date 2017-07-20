@@ -1,6 +1,8 @@
 module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscenaFirstSale < BusinessValidationRule
 
   def run_validation entry
+    return nil unless entry.entry_filed_date
+
     # What we need to do here is ensure that every single invoice line on the entry that has an MID-VendorID that 
     # matches one of the MID-VendorIDs in their list (xref'ed type) and has a filed date after the FS start date in 
     # the corresponding xref has first sale data.

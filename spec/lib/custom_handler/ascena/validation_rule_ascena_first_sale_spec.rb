@@ -71,6 +71,11 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
       expect(subject.run_validation entry).to be_nil
     end
 
+    it "does not error if the entry filed date is nil" do
+      entry.update_attributes! entry_filed_date: nil
+      expect(subject.run_validation entry).to be_nil
+    end
+
     it "errors if first sale amount is less than the entered value" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! contract_amount: 4
       expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have a First Sale Contract Amount greater than the Entered Value."
