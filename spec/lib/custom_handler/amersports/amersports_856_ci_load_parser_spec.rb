@@ -64,8 +64,9 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.gross_weight).to eq 273
       end
 
-      it "parses part number differently for non-Wilson accounts" do
-        Factory(:importer, system_code: "ATOMIC", alliance_customer_number: "ATOMI") 
+      it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
+        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON") 
+        # This also tests that ATOMIC is translated to Salomon
         described_class.parse data.gsub("WILSON    ", "ATOMIC    ")
         expect(entries.length).to eq 1
 

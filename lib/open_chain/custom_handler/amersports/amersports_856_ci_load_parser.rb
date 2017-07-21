@@ -9,6 +9,8 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
   end
 
   def self.parse data, opts = {}
+    data.force_encoding("Windows-1252")
+    
     file_header = nil
     header = nil
     lines = []
@@ -197,7 +199,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
     when "SALOMON"
       "SALOMON"
     when "ATOMIC"
-      "ATOMI"
+      "SALOMON"
     when "WILSON"
       "WILSON"
     when "PRECOR"
