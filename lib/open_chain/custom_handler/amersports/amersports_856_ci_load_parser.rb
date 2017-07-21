@@ -93,6 +93,13 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
       end
 
       cil.foreign_value = parse_decimal(line[439..451], implied_decimals: 2)
+
+      # Since MOL only sends us carton count and gross weight at the invoice header level, 
+      # only include it on the first line of the spreadsheet we're creating.
+      if line_count == 1
+        cil.cartons = cartons
+        cil.gross_weight = gross_weight
+      end
     end
 
     generate_xls_to_google_drive("AMERSPORTS CI Load/#{entry.invoices.first.try(:invoice_number)}.xls", entry)

@@ -58,6 +58,8 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.pieces).to eq 180
         expect(line.hts).to eq "1234567890"
         expect(line.foreign_value).to eq 2511
+        expect(line.cartons).to eq 37
+        expect(line.gross_weight).to eq 273
 
         line = inv.invoice_lines.second
 
@@ -67,6 +69,8 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.pieces).to eq 780
         expect(line.hts).to eq "1234567890"
         expect(line.foreign_value).to eq 7137
+        expect(line.cartons).to be_nil
+        expect(line.gross_weight).to be_nil
       end
 
       it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
