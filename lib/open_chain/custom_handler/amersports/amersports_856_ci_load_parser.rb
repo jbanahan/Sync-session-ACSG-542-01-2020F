@@ -71,12 +71,11 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
 
     line_count = 0
     
-    invoice_lines = []
     lines.each do |line|
       line_count += 1
 
       cil = CiLoadInvoiceLine.new
-      invoice_lines << cil
+      invoice.invoice_lines << cil
 
       cil.country_of_origin = country_origin
       cil.part_number = part_number(imp, line)
@@ -94,54 +93,9 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
       end
 
       cil.foreign_value = parse_decimal(line[439..451], implied_decimals: 2)
-
-      # Since MOL only sends us carton count and gross weight at the invoice header level, 
-      # only include it on the first line of the spreadsheet we're creating.
-      if line_count == 1
-        cil.cartons = cartons
-        cil.gross_weight = gross_weight
-      end
     end
-
-    invoice.invoice_lines = rollup_lines(invoice_lines)
 
     generate_xls_to_google_drive("AMERSPORTS CI Load/#{entry.invoices.first.try(:invoice_number)}.xls", entry)
-  end
-
-  def rollup_lines invoice_lines
-    bad_tariffs = []
-    rollup = Hash.new {|h, k| h[k] = [] }
-
-    invoice_lines.each do |line|
-      # If we weren't able to find tariffs for the parts involved, we can't roll them up
-      # Operations will have to handle it.
-      if line.hts.to_s.length < 10
-        bad_tariffs << line
-      else
-        rollup[rollup_key(line)] << line
-      end
-    end
-
-    rolled_lines = []
-    rollup.values.each do |lines|
-      # Use the first line as the basis for the others
-      line_prime = lines.first
-      # For rolled up lines, we don't keep the styles any longer.
-      line_prime.part_number = nil
-
-      lines[1..-1].each do |line|
-        line_prime.pieces += line.pieces if line.pieces
-        line_prime.foreign_value += line.foreign_value if line.foreign_value
-        line_prime.cartons += line.cartons if line.cartons
-        line_prime.gross_weight += line.gross_weight if line.gross_weight
-      end
-
-      rolled_lines << line_prime
-    end
-
-    rolled_lines.push *bad_tariffs
-
-    rolled_lines
   end
 
   def part_number importer, line
@@ -160,10 +114,6 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
     end
 
     style
-  end
-
-  def rollup_key line 
-    "#{line.country_of_origin}*~*#{line.hts}"
   end
 
   def val(v)

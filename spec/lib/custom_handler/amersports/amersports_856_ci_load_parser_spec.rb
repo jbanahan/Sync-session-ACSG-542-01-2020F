@@ -48,20 +48,25 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(inv.invoice_number).to eq "LD161214"
         expect(inv.invoice_date).to eq Date.new(2016,12,14)
 
-        # Since they have the same tariff / country of origin...the two lines should be 
-        # rolled up into a single one
-        expect(inv.invoice_lines.length).to eq 1
+        expect(inv.invoice_lines.length).to eq 2
 
         line = inv.invoice_lines.first
 
         expect(line.country_of_origin).to eq "CN"
-        expect(line.part_number).to be_nil
+        expect(line.part_number).to eq "WTDPCH00251"
         expect(line.po_number).to eq "5301428515"
-        expect(line.pieces).to eq 960
+        expect(line.pieces).to eq 180
         expect(line.hts).to eq "1234567890"
-        expect(line.foreign_value).to eq 9648
-        expect(line.cartons).to eq 37
-        expect(line.gross_weight).to eq 273
+        expect(line.foreign_value).to eq 2511
+
+        line = inv.invoice_lines.second
+
+        expect(line.country_of_origin).to eq "CN"
+        expect(line.part_number).to eq "WTDPCH00218"
+        expect(line.po_number).to eq "5301428518"
+        expect(line.pieces).to eq 780
+        expect(line.hts).to eq "1234567890"
+        expect(line.foreign_value).to eq 7137
       end
 
       it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
@@ -101,8 +106,6 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.pieces).to eq 180
         expect(line.hts).to eq "950699"
         expect(line.foreign_value).to eq 2511
-        expect(line.cartons).to eq 37
-        expect(line.gross_weight).to eq 273
 
         line = inv.invoice_lines.second
 
@@ -112,22 +115,6 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.pieces).to eq 780
         expect(line.hts).to eq "950699"
         expect(line.foreign_value).to eq 7137
-        # Cartons and Gross weight are only carried to the first line because they 
-        # come from the invoice header level in the file
-        expect(line.cartons).to be_nil
-        expect(line.gross_weight).to be_nil
-      end
-
-      it "doesn't roll products together if the hts numbers are different" do
-        product_1
-        product_2
-
-        product_2.classifications.first.tariff_records.first.update_attributes! hts_1: "9876543210"
-
-        described_class.parse data
-      inv = entries.first.invoices.first
-
-        expect(inv.invoice_lines.length).to eq 2
       end
     end
     
