@@ -49,8 +49,13 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
 
   def process_invoice shipment_header, invoice_header, lines
     entry = CiLoadEntry.new
+    importer_code = amer_codes(val(shipment_header[74..83]))
+    
+    # According to Joe H, we're not going to use this process for Precor files, so just ignore them
+    # rather than generate them and junk up the output folder.
+    return if importer_code == "PRECOR"
 
-    imp = importer(amer_codes(val(shipment_header[74..83])))
+    imp = importer(importer_code)
     entry.customer = imp.alliance_customer_number
     entry.invoices = []
     invoice = CiLoadInvoice.new

@@ -74,6 +74,11 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
 
         expect(line.part_number).to eq "TDPCH0"
       end
+
+      it "doesn't process PRECOR files" do
+        described_class.parse data.gsub("WILSON    ", "PRECOR    ")
+        expect(entries.length).to eq 0
+      end
     end
 
     context "without products" do
