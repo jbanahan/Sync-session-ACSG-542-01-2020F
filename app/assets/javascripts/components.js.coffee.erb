@@ -983,7 +983,7 @@
       }
     }
 ]
-@components.directive 'chainSearchResult', ['$http', '$location',($http, $location) ->
+@components.directive 'chainSearchResult', ['$http', '$location', 'localStorageService',($http, $location, localStorageService) ->
   {
     scope: {
       searchResult: "=chainSearchResult"
@@ -1000,33 +1000,35 @@
 
       $scope.loadedSearchId = null
 
-      cookieIdentifier = (scope) ->
-        scope.urlPrefix+scope.searchResult.id
+      storageIdentifier = (scope) ->
+        scope.urlPrefix+"~"+scope.searchResult.id
 
-      clearSelectionCookie = (scope) ->
-        $.removeCookie(cookieIdentifier(scope))
+      clearSearchSelections = (scope) ->
+        localStorageService.remove(storageIdentifier(scope), "sessionStorage")
 
-      #write cookie for current selection state
-      writeSelectionCookie = (scope) ->
+      writeSearchSelections = (scope) ->
         o = {rows: scope.bulkSelected, all: scope.allSelected}
-        $.cookie(cookieIdentifier(scope),JSON.stringify(o))
+        localStorageService.set(storageIdentifier(scope), angular.toJson(o), "sessionStorage")
 
+      getSearchSelections = (scope) ->
+        obj = localStorageService.get(storageIdentifier(scope), "sessionStorage")
+        obj = angular.fromJson(obj) if obj
+        obj
 
-      $scope.selectionCookieRead = false
+      $scope.searchSelectionsRead = false
 
-      #load selection state values from cookie
-      readSelectionCookie = (scope, searchId) ->
+      #load selection state values from stored search selections
+      readSearchSelections = (scope, searchId) ->
         usedIds = []
-        v = $.cookie(cookieIdentifier(scope))
-        if v
-          o = $.parseJSON v
+        o = getSearchSelections(scope)
+        if o
           scope.bulkSelected = o.rows
           scope.selectAll() if o.all
           for r in scope.searchResult.rows
             if $.inArray(r.id,scope.bulkSelected)>=0 && $.inArray(r.id,usedIds)==-1
               r.bulk_selected = true
               usedIds.push r.id
-        $scope.selectionCookieRead = true
+        $scope.searchSelectionsRead = true
 
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
@@ -1049,7 +1051,7 @@
             scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.errors && scope.searchResult.too_big
 
             scope.loadedSearchId = scope.searchResult.id
-            readSelectionCookie scope, data.id
+            readSearchSelections scope, data.id
             $http.get(scope.urlPrefix+searchId+'/total_objects.json').success((data) ->
               sr.total_objects = data.total_objects
             )
@@ -1067,7 +1069,7 @@
         # We want to clear bulkSelections in this case since the user saved the setup (which will
         # re-run the search and likely invalidate existing bulk selections)
         if saved
-          clearSelectionCookie scope
+          clearSearchSelections scope
           scope.selectNone()
 
         if scope.searchResult.id != scope.loadedSearchId
@@ -1110,8 +1112,8 @@
         r.bulk_selected = false for r in $scope.searchResult.rows if $scope.searchResult.rows
 
       if $location.search()['clearSelection'] is 'true'
-        # Unset the selection cookie then remove the parameter
-        clearSelectionCookie($scope)
+        # Unset the selections then remove the parameter
+        clearSearchSelections($scope)
         $location.search('clearSelection', null)
 
       $scope.selectAll = ->
@@ -1149,7 +1151,7 @@
       registrations = []
 
       registrations.push($scope.$watch 'allSelected', (newValue,oldValue, cbScope) ->
-        writeSelectionCookie(cbScope) unless newValue==oldValue
+        writeSearchSelections(cbScope) unless newValue==oldValue
       )
 
       registrations.push($scope.$watch 'searchResult', ((newValue,oldValue, cbScope) ->
@@ -1169,7 +1171,7 @@
 
           # remove the non-selected ids from the scope
           # we can't just clear it because we don't want to lose items from other pages that were loaded
-          # by the cookie
+          # by the searchSelections
           for nsId in nonSelectedIds
             idx = $.inArray(nsId,cbScope.bulkSelected)
             cbScope.bulkSelected.splice(idx,1) if idx >= 0
@@ -1181,7 +1183,7 @@
 
 
         cbScope.selectPageCheck = false
-        writeSelectionCookie cbScope if $scope.selectionCookieRead
+        writeSearchSelections cbScope if $scope.searchSelectionsRead
         ), true #true means "deep search"
       )
 
