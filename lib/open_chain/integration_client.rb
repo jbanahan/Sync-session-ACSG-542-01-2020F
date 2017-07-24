@@ -26,6 +26,7 @@ require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
+require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_zip_handler'
 require 'open_chain/custom_handler/lands_end/le_parts_parser'
 require 'open_chain/custom_handler/lands_end/le_canada_plus_processor'
 require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
@@ -180,6 +181,8 @@ module OpenChain
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_850/') && master_setup.custom_feature?("RL 850")
         OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include? '/_shoes_for_crews_po_zip/'
+        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_eddie_po/') && master_setup.custom_feature?("Eddie Bauer Feeds")

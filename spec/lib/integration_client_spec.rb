@@ -430,6 +430,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_shoes_po/file.csv','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+    it "sends Shoes For Crews zip files to handler" do
+      p = double("parser")
+      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_shoes_for_crews_po_zip/file.zip','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
 
     it "should send Tradecard 810 files to handler" do
       p = double("parser")
