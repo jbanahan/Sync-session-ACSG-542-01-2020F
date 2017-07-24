@@ -232,6 +232,13 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
               obj.in_warehouse_time = val
             end
         }
+      }],
+      [85, :shp_container_numbers, :container_numbers, "Container(s)", {
+        :data_type=>:text,
+        :read_only=>true,
+        :import_lambda => lambda {|obj,val| "Container(s) is read only."},
+        :export_lambda => lambda {|obj| obj.containers.map(&:container_number).sort.join("\n ") },
+        :qualified_field_name => "(SELECT GROUP_CONCAT(c.container_number ORDER BY c.container_number SEPARATOR '\n ') FROM containers AS c INNER JOIN shipments s ON s.id = c.shipment_id WHERE shipments.id = c.shipment_id )"
       }]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
