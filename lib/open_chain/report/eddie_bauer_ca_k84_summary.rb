@@ -4,10 +4,6 @@ module OpenChain
     class EddieBauerCaK84Summary
       include OpenChain::Report::ReportHelper
 
-      CUST_NO_1 = "EDDIEBR"
-      CUST_NO_2 = "EBSUPPLY"
-      CUST_NO_3 = "EDDIE"
-
       def self.permission? user
         MasterSetup.get.system_code=='www-vfitrack-net' && user.company.master? && user.view_commercial_invoices? 
       end
@@ -19,10 +15,13 @@ module OpenChain
         XlsMaker.create_sheet wb, "CA K84 Detail - EB Supply"
         XlsMaker.create_sheet wb, "CA K84 Summary - Eddie LLC"
         XlsMaker.create_sheet wb, "CA K84 Detail - Eddie LLC"
+        XlsMaker.create_sheet wb, "CA K84 Summary - Eddie eCommerce"
+        XlsMaker.create_sheet wb, "CA K84 Detail - Eddie eCommerce"
         
-        fill_sheets(user, wb, settings['date'], 0, 1, CUST_NO_1)
-        fill_sheets(user, wb, settings['date'], 2, 3, CUST_NO_2)
-        fill_sheets(user, wb, settings['date'], 4, 5, CUST_NO_3)
+        fill_sheets(user, wb, settings['date'], 0, 1, "EDDIEBR")
+        fill_sheets(user, wb, settings['date'], 2, 3, "EBSUPPLY")
+        fill_sheets(user, wb, settings['date'], 4, 5, "EDDIE")
+        fill_sheets(user, wb, settings['date'], 6, 7, "EBECOMM")
         
         workbook_to_tempfile wb, 'EddieBauerCaK84-'
       end
