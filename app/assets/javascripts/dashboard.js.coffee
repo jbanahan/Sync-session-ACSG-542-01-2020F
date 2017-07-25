@@ -1,4 +1,4 @@
-dashboardApp = angular.module('DashboardApp',['ChainComponents'])
+dashboardApp = angular.module('DashboardApp',['ChainComponents', 'LocalStorageModule'])
 dashboardApp.directive 'dashboardWidget', ->
   {
     restrict:'E'
