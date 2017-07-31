@@ -349,6 +349,11 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       # Verify a fingerprint was set
       fingerprint = DataCrossReference.find_po_fingerprint po
       expect(fingerprint).not_to be_nil
+
+      expect(po.entity_snapshots.length).to eq 1
+      s = po.entity_snapshots.first
+      expect(s.context).to eq "key"
+      expect(s.user).to eq User.integration
     end
 
     it "updates a PO" do
@@ -361,6 +366,11 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       # Just check if there are now lines, if so, it means the order was updated
       expect(order.order_lines.length).to eq 3
+
+      expect(order.entity_snapshots.length).to eq 1
+      s = order.entity_snapshots.first
+      expect(s.context).to eq "key"
+      expect(s.user).to eq User.integration
     end
 
     it "does not update an order if the order is shipping" do

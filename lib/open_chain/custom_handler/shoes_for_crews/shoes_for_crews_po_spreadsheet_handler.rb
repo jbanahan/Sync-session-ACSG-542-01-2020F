@@ -116,12 +116,14 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
         po.post_create_logic! user
         fingerprint_handling po, user
+        po.create_snapshot User.integration, nil, key
       when "updated"
         po.freeze_all_custom_values_including_children
 
         fingerprint_handling(po, user) do
           po.post_update_logic! user
         end
+        po.create_snapshot User.integration, nil, key
       when "shipping"
         # We'll probably want to, at some point, send out an email like the jill 850 parser to notify order couldn't be updated.
       end
