@@ -12,6 +12,14 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     self.new.run run_by, HashWithIndifferentAccess.new(params)
   end
 
+  def self.run_schedulable params = {}
+    start_date, end_date = calculate_dates params['after_x_days_ago'], params['before_x_days_ago']
+    report = self.new.run User.integration, start_date: start_date, end_date: end_date
+    subject = "Eddie Bauer CA Statement Summary for #{start_date} to #{end_date}"
+    OpenMailer.send_simple_html(params['email'], subject, "Attached is the #{subject}", [report]).deliver!
+    report.close
+  end
+
   def run run_by, params = {}
     start_date = params[:start_date].to_date
     end_date = params[:end_date].to_date
@@ -78,6 +86,13 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
         where("broker_invoices.invoice_date < ?", end_date).
         includes(:broker_invoice_lines).each.
           map {|inv| inv.broker_invoice_lines.to_a}.flatten.collect {|bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount}.sum
+    end
+
+    def self.calculate_dates after_x_days_ago, before_x_days_ago
+      today = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.beginning_of_day
+      start_date = (today - after_x_days_ago.days).to_date.strftime("%Y-%m-%d")
+      end_date = (today - before_x_days_ago.days).to_date.strftime("%Y-%m-%d")
+      [start_date, end_date]
     end
 
 end; end; end

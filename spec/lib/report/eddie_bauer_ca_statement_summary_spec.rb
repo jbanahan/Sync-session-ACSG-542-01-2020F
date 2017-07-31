@@ -22,6 +22,25 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
     end
   end
 
+  describe "run_schedulable" do
+    it "runs/emails the report" do
+      now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,3,15)
+      Timecop.freeze(now) do
+        Tempfile.open(["file", ".csv"]) do |t|
+          t.binmode
+          t << "content"
+          expect_any_instance_of(described_class).to receive(:run).with(User.integration, {start_date: "2017-03-08", end_date: "2017-03-15"}).and_return t
+          allow(File).to receive(:size).with(t.path).and_return 10
+          described_class.run_schedulable({'email' => 'tufnel@stonehenge.biz', 'after_x_days_ago' => 7, 'before_x_days_ago' => 0})
+          m = ActionMailer::Base.deliveries.first
+          expect(m.to).to eq ["tufnel@stonehenge.biz"]
+          expect(m.subject).to eq "Eddie Bauer CA Statement Summary for 2017-03-08 to 2017-03-15"
+          expect(m.attachments.size).to eq 1
+        end
+      end
+    end
+  end
+
   describe "run" do
     before :each do
       @entry = Factory(:entry, entry_number: '123456789', customer_number: "EBCC", entry_filed_date: '2014-03-01')
