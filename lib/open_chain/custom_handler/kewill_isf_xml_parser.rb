@@ -87,7 +87,6 @@ module OpenChain
           end
         end
 
-        @sf.late_filing = (et(r,'IS_SUBMIT_LATE')=='Y')
         @sf.status_description = STATUS_XREF[@sf.status_code]
         process_bills_of_lading r
         process_container_numbers r

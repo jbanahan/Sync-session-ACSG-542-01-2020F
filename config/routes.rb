@@ -596,6 +596,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/ua_missing_classifications/upload" => "custom_features#ua_missing_classifications_upload"
   get "/custom_features/ua_missing_classifications/:id/download" => "custom_features#ua_missing_classifications_download"
 
+  get "/custom_features/isf_late_filing" => "custom_features#isf_late_filing_index"
+  post "/custom_features/isf_late_filing/upload" => "custom_features#isf_late_filing_upload"
+  get "/custom_features/isf_late_filing/:id/download" => "custom_features#isf_late_filing_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

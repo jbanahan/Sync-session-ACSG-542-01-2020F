@@ -33,6 +33,7 @@ require 'open_chain/custom_handler/hm/hm_po_line_parser'
 require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
 require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
 require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
+require 'open_chain/custom_handler/generic/isf_late_flag_file_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -66,6 +67,7 @@ class CustomFeaturesController < ApplicationController
   HM_PO_LINE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmPoLineParser'
   ASCENA_PARTS_PARSER ||= 'OpenChain::CustomHandler::Ascena::AscenaProductUploadParser'
   PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
+  ISF_LATE_FLAG_FILE_PARSER ||= 'OpenChain::CustomHandler::Generic::IsfLateFlagFileParser'
 
   def index
     render :layout=>'one_col'
@@ -586,6 +588,22 @@ class CustomFeaturesController < ApplicationController
 
   def ascena_product_download
     generic_download "Ascena Product Upload"
+  end
+
+  def isf_late_filing_index
+    generic_index OpenChain::CustomHandler::Generic::IsfLateFlagFileParser.new(nil), ISF_LATE_FLAG_FILE_PARSER, 'ISF Late Filing Reports'
+  end
+
+  def isf_late_filing_upload
+    generic_upload(ISF_LATE_FLAG_FILE_PARSER, 'ISF Late Filing Reports', 'isf_late_filing') do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Generic::IsfLateFlagFileParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+
+  def isf_late_filing_download
+    generic_download 'ISF Late Filing Reports'
   end
 
   private

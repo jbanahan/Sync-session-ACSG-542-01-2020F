@@ -1,0 +1,5 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY .csv, .xls or .xlsx ISF Late Filing Reports</h2>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "ISF Late Filing Report Upload", custom_feature: "isf_late_filing"} %>

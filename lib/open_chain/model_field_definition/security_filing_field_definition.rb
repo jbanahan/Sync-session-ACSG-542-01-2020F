@@ -36,7 +36,9 @@ module OpenChain; module ModelFieldDefinition; module SecurityFilingFieldDefinit
       [33,:sf_last_event, :last_event, "Last Event Date", {:data_type => :datetime}],
       [34,:sf_manufacturer_names, :manufacturer_names, "Manufacturer Names", {:data_type => :text}],
       [35,:sf_ams_match_date,:ams_match_date, "AMS Match Date",{:data_type=> :datetime}],
-      [36,:sf_delete_accepted_date,:delete_accepted_date, "Delete Accepted Date",{:data_type=> :datetime}]
+      [36,:sf_delete_accepted_date,:delete_accepted_date, "Delete Accepted Date",{:data_type=> :datetime}],
+      [37,:sf_us_customs_first_file_date, :us_customs_first_file_date, "US Customs First File Date", {:data_type=> :datetime, :can_view_lambda=>lambda {|u| u.company.broker? }}],
+      [38,:sf_vessel_departure_date, :vessel_departure_date, "Vessel Departure Date", {:data_type=> :datetime, :can_view_lambda=>lambda {|u| u.company.broker? }}]
     ]
   end
 end; end; end

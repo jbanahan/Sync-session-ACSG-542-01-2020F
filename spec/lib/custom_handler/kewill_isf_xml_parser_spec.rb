@@ -128,7 +128,6 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.unlading_port_code).to eq('UL')
       expect(sf.entry_port_code).to eq('PE')
       expect(sf.status_code).to eq('ACCNOMATCH')
-      expect(sf.late_filing).to be_falsey
       expect(sf.master_bill_of_lading).to eq('KKLUXM02368200')
       expect(sf.house_bills_of_lading).to eq('HBSCHBL123')
       expect(sf.container_numbers).to eq('KKFU1694054')
@@ -209,11 +208,6 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     it "should set countries of origin" do
       sf = @k.new.parse_dom @dom, @sf
       expect(sf.countries_of_origin).to eq("CN\nMX")
-    end
-    it "should set late filing to true" do
-      @dom.root.elements['IS_SUBMIT_LATE'].text="Y"
-      sf = @k.new.parse_dom @dom, @sf
-      expect(sf).to be_late_filing
     end
     it "should remove lines not in updated xml" do
       @sf.security_filing_lines.create! line_number: 1

@@ -250,4 +250,11 @@
     </div>
   </div>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::Generic::IsfLateFlagFileParser.new(nil).can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-4 col-md-offset-4'>
+          <%=link_to "ISF Late Filing Report Upload", '/custom_features/isf_late_filing', :class=>'btn btn-lg btn-default btn-block'%>
+        </div>
+      </div>
+  <%-end-%>
 </div>
