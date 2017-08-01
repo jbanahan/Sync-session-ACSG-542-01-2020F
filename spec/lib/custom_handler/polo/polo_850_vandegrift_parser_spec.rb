@@ -203,6 +203,16 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         expect(order).not_to be_nil
       end
 
+      it "handles Polo Factory Stores buyer" do
+        @buyer_id = "0200016789"
+        @importer = Factory(:company, fenix_customer_number: "806167003RM0002")
+
+        described_class.new.parse @xml_lambda.call
+
+        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        expect(order).not_to be_nil
+      end
+
       it "handles TradeCard First Sale invoicing system values" do
         @ref_value = 'TCF'
         described_class.new.parse @xml_lambda.call

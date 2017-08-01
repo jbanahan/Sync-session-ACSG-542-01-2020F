@@ -13,7 +13,8 @@ module OpenChain; module CustomHandler; module Polo
 
     RL_BUYER_MAP ||= {
       '0200011989' => '806167003RM0001',
-      '0200011987' => '866806458RM0001'
+      '0200011987' => '866806458RM0001',
+      '0200016789' => '806167003RM0002'
     }
 
     def initialize
