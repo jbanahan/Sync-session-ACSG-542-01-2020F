@@ -246,6 +246,7 @@ OpenChain::Application.routes.draw do
       delete "/:base_object_type/:base_object_id/folder/:id" => "folders#destroy"
 
       resources :groups, only: [:index, :show]
+      get "/groups/show_excluded_users/:id" => "groups#show_excluded_users"
       post "/:base_object_type/:base_object_id/groups/:id/add" => "groups#add_to_object"
       post "/:base_object_type/:base_object_id/groups" => "groups#set_groups_for_object"
 
@@ -1035,9 +1036,6 @@ OpenChain::Application.routes.draw do
   resources :user_templates
 
   match "/vendor_portal" => "vendor_portal#index", via: :get
-
-
-  resources :groups, except: [:show]
 
   resources :summary_statements, except: [:destroy] do
     get 'get_invoices', :on=>:member

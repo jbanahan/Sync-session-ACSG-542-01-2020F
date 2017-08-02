@@ -10,14 +10,17 @@ describe Api::V1::Admin::GroupsController do
 
   describe "create" do
     it "creates a new group" do
-      post :create, grp_system_code: "GROUP", grp_name: "Name", grp_description: "Description"
+      post :create, grp_system_code: "GROUP", grp_name: "Name", grp_description: "Description", :include=>'users', users: [user.id]
       group = Group.first
       expect(group).not_to be_nil
       expect(response).to be_success
       json = JSON.parse response.body
-      expect(json).to eq({
-        "group" => {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Name", 'grp_description' => "Description", "grp_unique_identifier" => "#{group.id}-Name"}
-      })
+      g = json['group']
+      expect(g['id']).to eq(group.id)
+      expect(g['grp_system_code']).to eq "GROUP"
+      expect(g['grp_description']).to eq "Description"
+      expect(g['grp_unique_identifier']).to eq "#{group.id}-Name"
+      expect(g['users'].first['id']).to eq user.id
     end
 
     it "errors if user is not admin" do
@@ -32,16 +35,30 @@ describe Api::V1::Admin::GroupsController do
     let! (:users) { group.users << user; [user] }
 
     it "updates a group" do
-      put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc"
+      user2 = Factory(:user)
+      put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc", :include=>"users", "users"=>[user2.id]
 
       expect(response).to be_success
       json = JSON.parse response.body
-      expect(json).to eq({
-        "group" => {'id' => group.id, 'grp_system_code' => "GROUP", 'grp_name' => "Update", 'grp_description' => "Upd. Desc", "grp_unique_identifier" => "#{group.id}-Update"}
-      })
+      g = json['group']
+      expect(g['id']).to eq(group.id)
+      expect(g['grp_name']).to eq("Update")
+      expect(g['grp_system_code']).to eq "GROUP"
+      expect(g['grp_description']).to eq "Upd. Desc"
+      expect(g['grp_unique_identifier']).to eq "#{group.id}-Update"
+      expect(g['users'].first['id']).to eq user2.id
 
       group.reload
       expect(group.name).to eq "Update"
+    end
+
+    it "clears users" do
+      put :update, id: group.id, grp_name: "Update", grp_description: "Upd. Desc", :include=>"users", "users"=>nil
+
+      expect(response).to be_success
+      json = JSON.parse response.body
+      g = json['group']
+      expect(g['users']).to be_empty
     end
 
     it "errors if user is not admin" do

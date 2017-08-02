@@ -7,7 +7,6 @@ module Api; module V1; module Admin; class SettingsController < Api::V1::Admin::
                commercial_invoice_maps: commercial_invoice_maps_path,
                companies: companies_path,
                countries: countries_path,
-               groups: groups_path,
                instant_classifications: instant_classifications_path,
                linkable_attachment_import_rules: linkable_attachment_import_rules_path,
                new_bulk_messages: new_bulk_messages_path,
