@@ -79,6 +79,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
         data = file.read
       end
 
+      expect(Lock).to receive(:with_lock_retry).with(entry).and_yield
+
       subject.generate_and_send broker_invoice_with_duty_snapshot
 
       lines = CSV.parse data, col_sep: "|"

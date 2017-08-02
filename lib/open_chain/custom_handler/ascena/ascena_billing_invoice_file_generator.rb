@@ -20,12 +20,14 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
     return if broker_invoice_snapshots.length == 0
 
-    # Use a lock unique to this billing process, to prevent any other ruby processes from 
-    # also attempting to bill this file concurrently (.ie prevent sending the same invoice twice).
-    # I could go finer grained, but that involves a little more checkwork below and the courser lock
-    # should be fine given that in general we're not going to be sending any invoices.
-    Lock.acquire("AscenaBilling-#{mf(entry_snapshot_json, "ent_brok_ref")}") do 
-      unsent_invoices(broker_invoice_snapshots).each_pair do |invoice_number, invoice_data|
+    entry = find_entity_object(entry_snapshot_json)
+    return if entry.nil?
+
+    # Lock the entry entirely because of how we have to update the broker references associated with the entry
+    # and the way the kewill entry parser has to copy the broker invoice data across from an old broker invoice record
+    # to a new one.
+    Lock.with_lock_retry(entry) do
+      unsent_invoices(entry, broker_invoice_snapshots).each_pair do |invoice_number, invoice_data|
         generate_and_send_invoice(entry_snapshot_json, invoice_data)
       end
     end
@@ -50,27 +52,24 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
       duty_file, brokerage_file = generate_data(entry_snapshot, broker_invoice_snapshot, invoice_data[:sync_types])
 
-      ActiveRecord::Base.transaction do 
-        broker_invoice = find_entity_object(broker_invoice_snapshot)
-        return unless broker_invoice
+      broker_invoice = find_entity_object(broker_invoice_snapshot)
+      return unless broker_invoice
 
-        invoice_data[:sync_types].each do |sync_type|
-          # Skip any types where the corresponding files are blank
-          next if (sync_type == DUTY_SYNC && duty_file.blank?) || (sync_type == BROKERAGE_SYNC && brokerage_file.blank?)
+      invoice_data[:sync_types].each do |sync_type|
+        # Skip any types where the corresponding files are blank
+        next if (sync_type == DUTY_SYNC && duty_file.blank?) || (sync_type == BROKERAGE_SYNC && brokerage_file.blank?)
 
-          sr = broker_invoice.sync_records.where(trading_partner: sync_type).first_or_initialize
-          
-          if sync_type == DUTY_SYNC
-            send_file(duty_file, sr, true)
-          elsif sync_type == BROKERAGE_SYNC
-            send_file(brokerage_file, sr)
-          end
-
-          sr.sent_at = Time.zone.now
-          sr.confirmed_at = sr.sent_at + 1.minute
-          sr.save!
+        sr = broker_invoice.sync_records.where(trading_partner: sync_type).first_or_initialize
+        
+        if sync_type == DUTY_SYNC
+          send_file(duty_file, sr, true)
+        elsif sync_type == BROKERAGE_SYNC
+          send_file(brokerage_file, sr)
         end
-  
+
+        sr.sent_at = Time.zone.now
+        sr.confirmed_at = sr.sent_at + 1.minute
+        sr.save!
       end
     end
 
@@ -289,12 +288,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       lines
     end
 
-    def unsent_invoices broker_invoice_snapshots
+    def unsent_invoices entry, broker_invoice_snapshots
       invoices = {}
       broker_invoice_snapshots.each do |bi|
-        broker_invoice = find_entity_object(bi)
+        invoice_number = mf(bi, "bi_invoice_number")
+        broker_invoice = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number}
+
+        # It's possible the invoice won't be found because it may have been updated in the intervening time from Kewill
         next if broker_invoice.nil? || broker_invoice.sync_records.find {|s| s.trading_partner == LEGACY_SYNC }.present?
-        
+
         invoice_data = {snapshot: bi, sync_types: []}
 
         [DUTY_SYNC, BROKERAGE_SYNC].each do |sync|
