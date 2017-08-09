@@ -423,7 +423,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       need_reset = lines_to_check.reject do |line_number| 
         # only the following fields should be considered as pc approval resets - [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu]
         [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu].all? do |uid| 
-          old_hash[line_number][uid.to_s] == new_hash[line_number][uid.to_s]
+          old_hash[line_number][uid] == new_hash[line_number][uid]
         end
       end
 

@@ -878,13 +878,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     describe '#lines_needing_pc_approval_reset' do
       it 'should return lines in both hashes with different key values' do
         old_fingerprint = base_fingerprint_hash.deep_dup
-        old_fingerprint['lines']['3'] = {'ordln_ppu'=>"100"}
+        old_fingerprint['lines']['3'] = {ordln_ppu: "100"}
         old_data = order_data_klass.new(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
-        new_fingerprint['lines']['2'] = {'ordln_ppu'=>"1000"}
-        new_fingerprint['lines']['4'] = {'ordln_ppu'=>"90"}
+        new_fingerprint['lines']['2'] = {ordln_ppu: "1000"}
+        new_fingerprint['lines']['4'] = {ordln_ppu: "90"}
         new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
         new_data.variant_map = old_data.variant_map
@@ -899,7 +899,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
-        new_fingerprint['lines']['4'] = {'ordln_ppu'=>"90"}
+        new_fingerprint['lines']['4'] = {ordln_ppu: "90"}
         new_data = order_data_klass.new(new_fingerprint)
         new_data.ship_from_address = 'other'
         new_data.variant_map = old_data.variant_map
