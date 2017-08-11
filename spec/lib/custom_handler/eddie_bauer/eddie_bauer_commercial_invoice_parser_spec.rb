@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
   let (:file_contents) { IO.read 'spec/fixtures/files/eddie_fenix_invoice.csv' }
   let! (:eddie_parts) { Factory(:importer, system_code: "EDDIE")}
   let (:row_arrays) {
-    CSV.parse file_contents, col_sep: "|"
+    CSV.parse file_contents, col_sep: "|", quote_char: "\007"
   }
 
   describe "parse" do

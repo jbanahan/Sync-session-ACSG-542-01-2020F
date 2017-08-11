@@ -14,7 +14,9 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     rows = []
     # These SHOULD be 1 invoice per file, but lets just allow more than that since it's easy enough to do
     parser = self.new
-    CSV.parse(data, col_sep: "|") do |row|
+    # Disable quoting (or set the char to the bell char which we'll never see in the file), 
+    #they've disabled it themselves in the output now too
+    CSV.parse(data, col_sep: "|", quote_char: "\007") do |row|
       if "HDR" == row[0].to_s.upcase && rows.length > 0
         parser.process_and_send_invoice(rows)
         rows = []
