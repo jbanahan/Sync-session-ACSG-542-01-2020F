@@ -162,6 +162,8 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
       "SALOMON"
     when "ATOMIC"
       "SALOMON"
+    when "ARMADA"
+      "SALOMON"
     when "WILSON"
       "WILSON"
     when "PRECOR"

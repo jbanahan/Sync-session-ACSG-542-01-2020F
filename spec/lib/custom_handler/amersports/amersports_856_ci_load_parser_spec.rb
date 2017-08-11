@@ -84,6 +84,16 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.part_number).to eq "TDPCH0"
       end
 
+      it "translates ARMADA to Salomon account" do
+        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON")
+        described_class.parse data.gsub("WILSON    ", "ARMADA    ")
+        expect(entries.length).to eq 1
+
+        line = entries.first.invoices.first.invoice_lines.first
+
+        expect(line.part_number).to eq "TDPCH0"
+      end
+
       it "doesn't process PRECOR files" do
         described_class.parse data.gsub("WILSON    ", "PRECOR    ")
         expect(entries.length).to eq 0
