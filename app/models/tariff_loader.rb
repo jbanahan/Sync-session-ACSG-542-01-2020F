@@ -15,6 +15,16 @@ class TariffLoader
     o.export_regulations = s.strip
   }
 
+  ASSIGN_FDA_LAMBDA = lambda {|o,d|
+    return unless d && d =~ /^(FD|fd)/
+    if o.fda_indicator
+      indicators = o.fda_indicator.split("\n ") << d.upcase
+      o.fda_indicator = indicators.uniq.sort.join("\n ")
+    else
+      o.fda_indicator = d.upcase
+    end
+  }
+
   SUB_HEADING_LAMBDA = lambda {|o,d| o.sub_heading = d}
   UOM_HEADING_LAMBDA = lambda {|o,d| o.unit_of_measure = d}
 
@@ -41,6 +51,10 @@ class TariffLoader
     "ERGA_OMNES" => lambda {|o,d| o.erga_omnes_rate = d},
     "COL2_RATE" => lambda {|o,d| o.column_2_rate = d},
     "RATE2" => lambda {|o,d| o.column_2_rate = d},
+    "PGA_CD1" => ASSIGN_FDA_LAMBDA,
+    "PGA_CD2" => ASSIGN_FDA_LAMBDA,
+    "PGA_CD3" => ASSIGN_FDA_LAMBDA,
+    "PGA_CD4" => ASSIGN_FDA_LAMBDA,
     "Import Reg 1" => IMPORT_REG_LAMBDA,
     "IMP_REG1" => IMPORT_REG_LAMBDA,
     "Import Reg 2" => IMPORT_REG_LAMBDA,

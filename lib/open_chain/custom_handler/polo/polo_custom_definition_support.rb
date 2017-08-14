@@ -107,6 +107,7 @@ module OpenChain
           :fish_wildlife => {label: "Fish & Wildlife", data_type: :boolean, module_type: "Product"},
           :msl_fiber_status => {label: "MSL Fiber Status", data_type: :string, module_type: "Product"},
           :product_area => {label: "Product Area", data_type: :string, module_type: "Product"},
+          :prod_fda_indicator => {label: "US FDA Indicator", data_type: :string, module_type: "Product", cdef_uid: "prod_fda_indicator"},
           :long_description => {label: "Long Description", data_type: :text, module_type: "Product"},
           :stitch_count_vertical => {label: "Stitch Count / 2cm Vertical", data_type: :string, module_type: "Product"},
           :stitch_count_horizontal => {label: "Stitch Count / 2cm Horizontal", data_type: :string, module_type: "Product"},

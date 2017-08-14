@@ -54,7 +54,8 @@ module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinit
           obj.taric_url
         },
         qualified_field_name: 'if((select european_union from countries where official_tariffs.country_id = countries.id)=1,concat("http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?LangDescr=en&Taric=",official_tariffs.hts_code),"")'
-      }]
+      }],
+      [24,:ot_fda_indicator, :fda_indicator, "FDA Indicator", {:data_type => :string}]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
   end
