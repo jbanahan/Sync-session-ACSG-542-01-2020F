@@ -1,5 +1,5 @@
 root = exports ? this
-importedFileApp = angular.module('ImportedFileApp',['ngRoute','ChainComponents']).config(['$routeProvider', ($routeProvider) ->
+importedFileApp = angular.module('ImportedFileApp',['ngRoute','ChainComponents', 'LocalStorageModule']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
     when('/:fileId',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'}).
     when('/:fileId/:page',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'})
