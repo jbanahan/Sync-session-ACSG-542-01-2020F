@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe FtpSession do
 
-  context "successful?" do
+  describe "successful?" do
     subject { FtpSession.new log: "" }
 
     context "ftp" do 
@@ -56,13 +56,36 @@ describe FtpSession do
     end
   end
 
-  context "can_view?" do
+  describe "can_view?" do
     it "should allow sys_admin users to view" do
       user = User.new
       user.sys_admin = true
       expect(subject.can_view?(user)).to be_truthy
       user.sys_admin = false
       expect(subject.can_view?(user)).to be_falsey
+    end
+  end
+
+  describe "purge" do
+    subject { described_class }
+
+    it "removes anything older than given date" do
+      session = nil
+      Timecop.freeze(Time.zone.now - 1.second) { session = FtpSession.create! }
+      
+      subject.purge Time.zone.now
+
+      expect {session.reload}.to raise_error ActiveRecord::RecordNotFound
+    end
+
+    it "does not remove items newer than given date" do
+      session = nil
+      now = Time.zone.now
+      Timecop.freeze(now + 1.second) { session = FtpSession.create! }
+      
+      subject.purge now
+
+      expect {session.reload}.not_to raise_error
     end
   end
 end

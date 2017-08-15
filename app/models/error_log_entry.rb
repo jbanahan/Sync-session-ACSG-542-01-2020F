@@ -17,4 +17,8 @@ class ErrorLogEntry < ActiveRecord::Base
   def email_me?
     ErrorLogEntry.where(:exception_class=>self.exception_class,:error_message=>self.error_message).where("created_at > ?",1.minute.ago).where(self.id ? "NOT id = #{self.id}" : "1=1").first.blank?
   end
+
+  def self.purge reference_date
+    ErrorLogEntry.where("created_at < ?", reference_date).delete_all
+  end
 end

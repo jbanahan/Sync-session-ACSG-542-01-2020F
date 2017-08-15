@@ -29,4 +29,10 @@ class FtpSession < ActiveRecord::Base
   def empty_file?
     log.present? && log.ends_with?(EMPTY_MESSAGE)
   end
+
+  def self.purge reference_date
+    FtpSession.where("created_at < ?", reference_date).find_each do |session|
+      session.destroy
+    end
+  end
 end

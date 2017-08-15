@@ -11,4 +11,9 @@ class SentEmail < ActiveRecord::Base
     end
   end
 
+  def self.purge reference_date
+    SentEmail.where("created_at < ?", reference_date).find_each do |email|
+      email.destroy
+    end
+  end
 end

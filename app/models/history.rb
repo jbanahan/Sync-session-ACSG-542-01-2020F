@@ -33,6 +33,12 @@ class History < ActiveRecord::Base
   def self.create_delivery_changed(delivery, current_user, link_back)
     create_object_changed(:delivery,delivery,"Delivery",delivery.reference,current_user,link_back)
   end
+
+  def self.purge reference_date
+    History.where("created_at < ?", reference_date).find_each do |history|
+      history.destroy
+    end
+  end
   
   private
   def self.create_object_changed(type_symbol,obj,type_name,identifier,current_user,link_back)
