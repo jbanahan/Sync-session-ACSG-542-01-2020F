@@ -179,8 +179,8 @@ module OpenChain
           entry_nums << "#{et el, 'BROKER_FILER_CD'}#{et el, 'ENTRY_NBR'}"
           file_nums << "#{et el, 'BROKER_REF_NO'}"
         end
-        @sf.entry_numbers = entry_nums.join("\n")
-        @sf.entry_reference_numbers = file_nums.join("\n")
+        @sf.entry_numbers = Set.new(@sf.entry_numbers.to_s.split("\n") + entry_nums).to_a.join("\n")
+        @sf.entry_reference_numbers = Set.new(@sf.entry_reference_numbers.to_s.split("\n") + file_nums).to_a.join("\n")
       end
       def last_event_time root
         r = nil

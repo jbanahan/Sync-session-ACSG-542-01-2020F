@@ -37,6 +37,18 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.time_to_process).to be > 10
       expect(sf.time_to_process).to be < 1000 # NOTE: this fails if you're ever debugging the parser
     end
+    it "should not replace entry numbers" do
+      sf = Factory(:security_filing,:entry_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      @k.parse IO.read(@path)
+      sf = SecurityFiling.first
+      expect(sf.entry_numbers).to eql("123456")
+    end
+    it "should not replace entry reference numbers" do
+      sf = Factory(:security_filing,:entry_reference_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      @k.parse IO.read(@path)
+      sf = SecurityFiling.first
+      expect(sf.entry_reference_numbers).to eql("123456")
+    end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       @k.parse IO.read(@path)

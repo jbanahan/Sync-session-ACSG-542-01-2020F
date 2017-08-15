@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/ascena/ascena_shipment_comparator'
 require 'open_chain/custom_handler/under_armour/under_armour_shipment_comparator'
 require 'open_chain/custom_handler/ascena/ascena_entry_billing_comparator'
 require 'open_chain/entity_compare/product_comparator/stale_tariff_comparator'
+require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSystemInit
 
@@ -26,6 +27,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Ascena::AscenaEntryBillingComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator
   end
   private_class_method :register_change_comparators
 
