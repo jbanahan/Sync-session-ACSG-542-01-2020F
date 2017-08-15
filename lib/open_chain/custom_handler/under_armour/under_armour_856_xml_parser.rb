@@ -19,18 +19,22 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
   end
 
   def parse xml_string, opts
-    begin
-      process_shipment(REXML::Document.new(xml_string), User.integration, opts[:bucket], opts[:key])
-    rescue BusinessLogicError => e
-      send_error_email(xml_string, File.basename(opts[:key]), e)
+    errors = []
+    if importer
+      process_shipment(REXML::Document.new(xml_string), User.integration, opts[:bucket], opts[:key], errors)
+    else
+      errors << "Unable to find Under Armour 'UNDAR' importer account."
     end
+    send_error_email(xml_string, File.basename(opts[:key]), errors) unless errors.empty?
   end
 
-
-  def process_shipment xml, user, bucket, file
+  def process_shipment xml, user, bucket, file, errors
     ship_xml = xml.root.get_elements("Header").first
 
-    raise "Invalid XML structure.  Expecting 'Header' element but received '#{ship_xml.name}'" unless ship_xml.name == "Header"
+    if ship_xml.name != "Header"
+      errors << "Invalid XML structure.  Expecting 'Header' element but received '#{ship_xml.name}'"
+      return
+    end
 
     # The ExtDocNumber (the ASN # in UA's world) is basically a shipment identifier.
     shipment_number = ship_xml.text "ExtDocNumber"
@@ -40,7 +44,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     find_or_create_shipment(shipment_number, revision, bucket, file) do |shipment|
       parse_shipment_header shipment, ship_xml
       container_number = ship_xml.text "Trailer"
-      raise BusinessLogicError, "#{error_prefix(shipment)} No container number value found in 'Trailer' element." if container_number.blank?
+      errors << "#{error_prefix(shipment)} No container number value found in 'Trailer' element." if container_number.blank?
 
       container = shipment.containers.find {|c| c.container_number == container_number }
       if container.nil?
@@ -57,7 +61,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
 
       ship_xml.each_element("Order") do |order_xml|
         order_xml.each_element("OrderDetails") do |order_line_xml|
-          parse_order_details(shipment, container, order_xml, order_line_xml)
+          parse_order_details(shipment, container, order_xml, order_line_xml, errors)
         end
       end
 
@@ -79,7 +83,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       Attachment.add_original_filename_method(file, filename) unless filename.blank?
 
       body = "<p>There was a problem processing the attached Under Armour Shipment XML File. The file that errored is attached.</p><p>Error:"
-      body += ERB::Util.html_escape(error.message)
+      body += error.map{|e| ERB::Util.html_escape e}.join("<br>")
       body += "</p>"
 
       OpenMailer.send_simple_html("edisupport@vandegriftinc.com", "Under Armour Shipment XML Processing Error", body.html_safe, [file]).deliver!
@@ -122,17 +126,23 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     "IBD # #{shipment.booking_number} / ASN # #{shipment.importer_reference}:"
   end
 
-  def parse_order_details shipment, container, order_xml, order_line_xml
+  def parse_order_details shipment, container, order_xml, order_line_xml, errors
     order_number = order_line_xml.text "SAPPurchOrderNum"
     order = find_order(order_number)
-    raise BusinessLogicError, "#{error_prefix(shipment)} Failed to find Order # #{order_number}." unless order
+    if order.nil?
+      errors << "#{error_prefix(shipment)} Failed to find Order # #{order_number}."
+      return
+    end
 
     sku = order_line_xml.text "SKU"
 
     # Find the order line based on the sku...this works for both prepack and standard lines
     order_line = order.order_lines.find {|l| l.sku == sku}
 
-    raise BusinessLogicError, "#{error_prefix(shipment)} Failed to find SKU #{sku} on Order #{order_number}." unless order_line
+    if order_line.nil?
+      errors << "#{error_prefix(shipment)} Failed to find SKU #{sku} on Order #{order_number}."
+      return
+    end
 
     shipment_line = shipment.shipment_lines.build
     shipment_line.container = container
@@ -237,7 +247,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
 
   def importer 
     @importer ||= Company.importers.where(system_code: "UNDAR").first
-    raise "Unable to find Under Armour 'UNDAR' importer account." unless @importer
     @importer
   end
 

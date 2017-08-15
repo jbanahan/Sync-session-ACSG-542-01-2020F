@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
     it "processes 856 xml into a shipment" do
       now = Time.zone.parse "2017-02-03 12:00"
-      Timecop.freeze(now) { subject.process_shipment xml, user, "bucket", "file.xml" }
+      Timecop.freeze(now) { subject.process_shipment xml, user, "bucket", "file.xml", [] }
 
       shipment = Shipment.where(reference: "UNDAR-ASN0001045").first
       expect(shipment).not_to be_nil
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 
-      subject.process_shipment xml, user, "bucket", "file.xml"
+      subject.process_shipment xml, user, "bucket", "file.xml", []
 
       shipment.reload
 
@@ -95,24 +95,26 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(shipment.shipment_lines.length).to eq 1
     end
 
-    it "raises an error if trailer is blank" do
-      data.gsub!("<Trailer>MBOL1938</Trailer>", "<Trailer></Trailer>")
-      expect { subject.process_shipment xml, user, "bucket", "file.xml"}.to raise_error described_class::BusinessLogicError, "IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."
-    end
+    context "error handling" do
+      let(:errors) { [] }
 
-    it "sends an error if po couldn't be found" do
-      order.destroy
-      expect { subject.process_shipment xml, user, "bucket", "file.xml"}.to raise_error described_class::BusinessLogicError, "IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."
-    end
+      it "appends error if trailer is blank" do
+        data.gsub!("<Trailer>MBOL1938</Trailer>", "<Trailer></Trailer>")
+        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."]
+      end
 
-    it "sends an error if order line couldn't be found" do
-      order.order_lines.destroy_all
-      expect { subject.process_shipment xml, user, "bucket", "file.xml"}.to raise_error described_class::BusinessLogicError, "IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."
-    end
+      it "appends error if po couldn't be found" do
+        order.destroy
+        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."]
+      end
 
-    it "sends an error if importer isn't set up" do
-      ua.destroy
-      expect { subject.process_shipment xml, user, "bucket", "file.xml"}.to raise_error RuntimeError, "Unable to find Under Armour 'UNDAR' importer account."
+      it "appends error if order line couldn't be found" do
+        order.order_lines.destroy_all
+        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."]
+      end
     end
 
     it "doesn't destroy existing lines if 'UA EEM Conversion' custom feature is enabled" do
@@ -123,7 +125,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 
-      subject.process_shipment xml, user, "bucket", "file.xml"
+      subject.process_shipment xml, user, "bucket", "file.xml", []
 
       shipment.reload
 
@@ -134,9 +136,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
   describe "send_error_email" do
     let(:error) {
-      e = StandardError.new "Error"
-      e.set_backtrace ["Line 1", "Line 2"]
-      e
+      ["ERROR"]
     }
     
     it "writes XML to file and emails to edi support" do
@@ -147,7 +147,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
       expect(m.to).to eq ["edisupport@vandegriftinc.com"]
       expect(m.subject).to eq "Under Armour Shipment XML Processing Error"
-      expect(m.body.raw_source).to include "Error"
+      expect(m.body.raw_source).to include "ERROR"
       expect(m.attachments["file.xml"]).not_to be_nil
       expect(m.attachments["file.xml"].read).to eq "<xml></xml>"
     end
@@ -171,9 +171,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(Shipment.where(reference: "UNDAR-ASN0001045").first).not_to be_nil
     end
 
-    it "handles raised errors" do
-      expect_any_instance_of(subject).to receive(:send_error_email).with(data, "file.xml", instance_of(described_class::BusinessLogicError))
-      # Force an error by not making the order
+    it "emails error without parsing if importer isn't set up" do
+      ua.destroy
+      expect_any_instance_of(subject).to receive(:send_error_email).with(data, "file.xml", ["Unable to find Under Armour 'UNDAR' importer account."])
+      expect_any_instance_of(subject).to_not receive(:process_shipment)
       subject.parse data, bucket: "bucket", key: "file.xml"
     end
   end
