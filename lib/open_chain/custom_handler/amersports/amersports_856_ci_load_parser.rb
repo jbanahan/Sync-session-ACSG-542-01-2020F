@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
 
         file_header = line
       elsif line.starts_with? "C0"
-        if lines.length < 0
+        if lines.length > 0
           self.delay.process_invoice(file_header, header, lines)
           header = nil
           lines = []
