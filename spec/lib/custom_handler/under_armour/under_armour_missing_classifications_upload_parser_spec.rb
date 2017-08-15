@@ -89,29 +89,44 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
 
     let(:cdefs) { subject.cdefs }
     let(:row_1) { ["art num", "shirt", "US", "stylish", "blue", "big", "descriptive size", "site1"] }
-    let(:row_2) { ["art num", "nice shirt", "CA", "stylish", "blue", "big", "descriptive size", "site2"] }
+    let(:row_2) { ["art num", "nice shirt", "CA", "meh", "green", "medium", "descriptive size2", "site2"] }
+    let(:row_3) { ["art num2", "ugly shirt", "CN", "frumpy", "mauve", "too small", "descriptive size3", "site3"] }
     
-    it 'creates products' do      
-      subject.parse [row_1], ["site1", "site2"], {}, custom_file
-      expect(Product.count).to eq 1
+    it 'creates products; aggregates import countries, site codes for a single article, uses the last row for other fields' do      
+      subject.parse [row_1, row_2, row_3], ["site1", "site2", "site3"], {}, custom_file
+      expect(Product.count).to eq 2
       p = Product.first
+      expect(p.entity_snapshots.count).to eq 1
       expect(p.unique_identifier).to eq "art num"
-      expect(p.name).to eq "shirt"
-      expect(p.custom_value(cdefs[:prod_import_countries])).to eq "US"
-      expect(p.custom_value(cdefs[:prod_style])).to eq "stylish"
-      expect(p.custom_value(cdefs[:prod_color])).to eq "blue"
-      expect(p.custom_value(cdefs[:prod_size_code])).to eq "big"
-      expect(p.custom_value(cdefs[:prod_size_description])).to eq "descriptive size"
-      expect(p.custom_value(cdefs[:prod_site_codes])).to eq "site1"
+      expect(p.name).to eq "nice shirt"
+      expect(p.custom_value(cdefs[:prod_import_countries])).to eq "CA\n US"
+      expect(p.custom_value(cdefs[:prod_style])).to eq "meh"
+      expect(p.custom_value(cdefs[:prod_color])).to eq "green"
+      expect(p.custom_value(cdefs[:prod_size_code])).to eq "medium"
+      expect(p.custom_value(cdefs[:prod_size_description])).to eq "descriptive size2"
+      expect(p.custom_value(cdefs[:prod_site_codes])).to eq "site1\n site2"
+
+      p2 = Product.last
+      expect(p2.entity_snapshots.count).to eq 1
+      expect(p2.unique_identifier).to eq "art num2"
+      expect(p2.name).to eq "ugly shirt"
+      expect(p2.custom_value(cdefs[:prod_import_countries])).to eq "CN"
+      expect(p2.custom_value(cdefs[:prod_style])).to eq "frumpy"
+      expect(p2.custom_value(cdefs[:prod_color])).to eq "mauve"
+      expect(p2.custom_value(cdefs[:prod_size_code])).to eq "too small"
+      expect(p2.custom_value(cdefs[:prod_size_description])).to eq "descriptive size3"
+      expect(p2.custom_value(cdefs[:prod_site_codes])).to eq "site3"
     end
 
-    it 'adds on to import countries, site codes of existing products; leave other fields unchanged' do
-      subject.parse [row_1, row_2, row_2], ["site1", "site2"], {}, custom_file #check that duplicate data is ignored
+    it 'updates products; aggregates import countries, site codes of existing products; leaves other fields unchanged' do
+      subject.parse [row_1], ["site1", "site2"], {}, custom_file
+      subject.parse [row_2, row_2], ["site1", "site2"], {}, custom_file #check that duplicate data is ignored
       expect(Product.count).to eq 1
       p = Product.first
+      expect(p.entity_snapshots.count).to eq 2
       expect(p.unique_identifier).to eq "art num"
       expect(p.name).to eq "shirt"
-      expect(p.custom_value(cdefs[:prod_import_countries])).to eq "US\n CA"
+      expect(p.custom_value(cdefs[:prod_import_countries])).to eq "CA\n US"
       expect(p.custom_value(cdefs[:prod_style])).to eq "stylish"
       expect(p.custom_value(cdefs[:prod_color])).to eq "blue"
       expect(p.custom_value(cdefs[:prod_size_code])).to eq "big"
@@ -122,12 +137,19 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     it 'skips row and records missing site codes' do
       row_1[7] = "site3"
       missing_codes = {}
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration, nil, "UA Missing Classification Upload Parser")
       subject.parse [row_1, row_2], ["site1","site2"], missing_codes, custom_file
       
       expect(Product.count).to eq 1
       p = Product.first
       expect(p.custom_value(cdefs[:prod_site_codes])).to eq "site2"
       expect(missing_codes).to eq({1 => "site3"})
+    end
+
+    it "doesn't snapshot unchanged products" do
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration, nil, "UA Missing Classification Upload Parser").once
+      subject.parse [row_1], ["site1", "site2"], {}, custom_file
+      subject.parse [row_1], ["site1", "site2"], {}, custom_file
     end
   end
 end
