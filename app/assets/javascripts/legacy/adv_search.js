@@ -539,6 +539,7 @@ function readScheduleContainer(c) {
   rv.hour = c.children(".sch_hr").val();
   rv.dom = c.children(".sch_dom").val(); 
   rv.empty = c.children(".sch_empty").val()=="true";
+  rv.tmstmp = c.children(".sch_excl_tmstmp").val()=="true";
   rv.mon = getDay(c,"mon");
   rv.tue = getDay(c,"tue");
   rv.wed = getDay(c,"wed");
@@ -575,6 +576,7 @@ function writeScheduleContainer(container,rv,parentHash) {
     var ftp_lbl = (rv.ftpsvr && rv.ftpsvr.length > 0) ? "FTP: "+rv.ftpsvr : "";
     r += " at "+rv.hour+":00 to "+rv.email+" "+ftp_lbl+" - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>";
     r += "<input class='sch_empty' name='"+ssa+"[send_if_empty]' type='hidden' value='"+rv.empty+"'/>";
+    r += "<input class='sch_excl_tmstmp' name='"+ssa+"[exclude_file_timestamp]' type='hidden' value='"+rv.tmstmp+"'/>";
     r += "<input class='sch_dom' name='"+ssa+"[day_of_month]' type='hidden' value='"+rv.dom+"'/>";
     r += "<input class='sch_mon' name='"+ssa+"[run_monday]' type='hidden' value='"+rv.mon+"'/>";
     r += "<input class='sch_tue' name='"+ssa+"[run_tuesday]' type='hidden' value='"+rv.tue+"'/>";
@@ -609,6 +611,7 @@ function readScheduleInterface() {
   var rv = new Object();
   rv.email = $("#sd_email").val();
   rv.empty = $("#sd_empty:checked").length>0;
+  rv.tmstmp = $("#sd_excl_tmstmp:checked").length>0;
   rv.hour = $("#sd_hr").val();
   rv.dom = $("#sd_dom").val();
   rv.mon = $("#sd_mon:checked").length>0;
@@ -632,6 +635,7 @@ function writeScheduleInterface(s) {
   $("#sd_id").val(s.id);
   $("#sd_email").val(s.email);
   $("#sd_empty").attr('checked', s.empty)
+  $("#sd_excl_tmstmp").attr('checked', s.tmstmp)
   $("#sd_hr").val(s.hour);
   $("#sd_dom").val(s.dom);
   $("#sd_mon").attr('checked',s.mon);

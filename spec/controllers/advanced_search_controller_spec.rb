@@ -123,7 +123,8 @@ describe AdvancedSearchController do
       @ss.search_schedules.create!(:email_addresses=>"a@example.com")
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
         {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
-          :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false},
+          :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false,
+          :exclude_file_timestamp=>true, },
         {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test"}
       ], :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       expect(response).to be_success
@@ -140,6 +141,7 @@ describe AdvancedSearchController do
       expect(email.run_friday?).to be_falsey
       expect(email.run_saturday?).to be_falsey
       expect(email.run_sunday?).to be_falsey
+      expect(email.exclude_file_timestamp).to be_truthy
 
       ftp = @ss.search_schedules.find_by_ftp_server("ftp.example.com")
       expect(ftp.ftp_username).to eq('user')
@@ -203,7 +205,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8, :exclude_file_timestamp=>true,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -233,7 +235,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
-          "download_format"=>"xls","day_of_month"=>11}
+          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
@@ -254,7 +256,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,
-                                  :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+                                  :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
       get :setup, :id=>@ss.id, :format=>'json'
@@ -264,7 +266,8 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
-          "download_format"=>"xls","day_of_month"=>11, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", "ftp_subfolder"=>"subf", "protocol"=>"protocol"}
+          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", 
+          "ftp_subfolder"=>"subf", "protocol"=>"protocol"}
       ])
     end
     it "should set include empty for criterions" do

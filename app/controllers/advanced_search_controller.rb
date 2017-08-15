@@ -56,7 +56,7 @@ class AdvancedSearchController < ApplicationController
       unless base_params[:search_schedules].blank?
         base_params[:search_schedules].each do |sc|
           sched = ss.search_schedules.build :email_addresses=>sc[:email_addresses], :send_if_empty=>sc[:send_if_empty],
-            :run_hour=>sc[:run_hour], :day_of_month=>sc[:day_of_month], :download_format=>sc[:download_format],
+            :run_hour=>sc[:run_hour], :day_of_month=>sc[:day_of_month], :download_format=>sc[:download_format], :exclude_file_timestamp=>sc[:exclude_file_timestamp],
             :run_monday=>sc[:run_monday],
             :run_tuesday=>sc[:run_tuesday],
             :run_wednesday=>sc[:run_wednesday],
@@ -213,7 +213,7 @@ class AdvancedSearchController < ApplicationController
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
           :search_schedules=>ss.search_schedules.collect {|s|
             f = {:email_addresses=>s.email_addresses, :send_if_empty=>s.send_if_empty, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
-            :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format}
+            :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format, :exclude_file_timestamp=>s.exclude_file_timestamp}
 
             if ss.can_ftp?
               f[:ftp_server] = s.ftp_server

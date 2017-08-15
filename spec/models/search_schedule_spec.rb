@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe SearchSchedule do
   describe "run_search" do
+    let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001,2,3,4,5,6) }
     before :each do
       @temp = Tempfile.new ["search_schedule_spec", ".xls"]
       @u = Factory(:user, :time_zone => "Hawaii")
@@ -32,11 +33,11 @@ describe SearchSchedule do
         expect(User.current).to eq(@setup.user)
         expect(Time.zone).to eq(ActiveSupport::TimeZone[@setup.user.time_zone])
       }
-      allow(@ss).to receive(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
+      allow(@ss).to receive(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', @u, log)
+      expect(@ss).to receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', log)
       
-      @ss.run log 
-
+      Timecop.freeze(now) { @ss.run log }
+       
       expect(@ss.last_finish_time).not_to be_nil
       
     end
@@ -61,10 +62,10 @@ describe SearchSchedule do
       log = double
       expect(log).to receive(:info).twice
 
-      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt.xls', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt.xls', log)
+      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt_20010203040506000.xls', @u, log)
+      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt_20010203040506000.xls', log)
 
-      @ss.run log
+      Timecop.freeze(now) { @ss.run log }
 
       expect(@ss.last_finish_time).not_to be_nil
 
@@ -90,16 +91,17 @@ describe SearchSchedule do
       log = double
       expect(log).to receive(:info).twice
 
-      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
+      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt_20010203040506000.csv', @u, log)
+      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt_20010203040506000.csv', log)
 
-      @ss.run log
+      Timecop.freeze(now) { @ss.run log }
 
       expect(@ss.last_finish_time).not_to be_nil
 
     end
 
-    it "should run with a custom report and search setup" do
+    it "should run with a custom report and search setup, excluding timestamp if specified" do
+      @ss.exclude_file_timestamp = true
       log = double
       expect(log).to receive(:info).exactly(3).times
 
@@ -125,7 +127,7 @@ describe SearchSchedule do
       expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', @u, log)
       expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
 
-      @ss.run log
+      Timecop.freeze(now) { @ss.run log }
 
       expect(@ss.last_finish_time).not_to be_nil
     end

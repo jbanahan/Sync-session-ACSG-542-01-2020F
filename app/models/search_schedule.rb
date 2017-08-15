@@ -78,6 +78,10 @@ class SearchSchedule < ActiveRecord::Base
 
   private
 
+  def timestamp
+    exclude_file_timestamp ? "" : Time.zone.now.strftime("_%Y%m%d%H%M%S%L")
+  end
+
   def run_search srch_setup, log
     if !srch_setup.user.active?
       log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
@@ -85,7 +89,7 @@ class SearchSchedule < ActiveRecord::Base
     end
     User.run_with_user_settings(srch_setup.user) do
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
-      attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
+      attachment_name = "#{sanitize_filename(srch_setup.name)}#{timestamp}.#{extension}"
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
         t.binmode
         if extension == "csv"
@@ -115,7 +119,7 @@ class SearchSchedule < ActiveRecord::Base
     
     User.run_with_user_settings(rpt.user) do
       t = nil
-      attachment_name = "#{sanitize_filename(rpt.name)}"
+      attachment_name = "#{sanitize_filename(rpt.name)}#{timestamp}"
 
       if self.download_format.nil? || self.download_format.downcase=='csv'
         t = rpt.csv_file rpt.user

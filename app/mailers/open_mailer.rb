@@ -100,7 +100,7 @@ EOS
       :subject => "[VFI Track] #{search_name} Result",
       :from => 'do-not-reply@vfitrack.net')
     unless attachment_saved
-      m.attachments[attachment_filename(file_path)] = create_attachment file_path
+      m.attachments[attachment_name] = create_attachment file_path
     end
     m
   end

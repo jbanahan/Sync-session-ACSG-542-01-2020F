@@ -306,6 +306,12 @@
                       </div>
                     </div>
                     <div class='control-group'>
+                      <label class='control-label' for='sched-f-timestamp'>Exclude File Timestamp?</label>
+                      <div class='controls'>
+                        <input id='sched-f-timestamp' type='checkbox' ng-model='scheduleToEdit.exclude_file_timestamp'/>
+                      </div>
+                    </div>
+                    <div class='control-group'>
                       <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
                       <div class='controls'>
                         <input id='sched-f-server' class='form-control' type='text' ng-model='scheduleToEdit.ftp_server'/>
