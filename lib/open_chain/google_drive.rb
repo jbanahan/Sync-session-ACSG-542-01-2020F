@@ -21,7 +21,7 @@ module OpenChain
     def self.upload_file user_email, path, file, options = {}
       client = get_client(user_email)
       # Returns the new file's id
-      client.upload_file path, file, options
+      Lock.acquire("#{user_email}-#{path}") { client.upload_file path, file, options }
     end
 
     # Downloads the Google Drive data specified by the user/path.  The tempfile
