@@ -38,6 +38,7 @@ describe OpenChain::GoogleAccountChecker do
     it 'suspends users who are not found' do
       json_file = File.read('spec/fixtures/files/google_account_checker/user_search_404.json')
       allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
+      expect(OpenMailer).to receive(:send_simple_html)
       OpenChain::GoogleAccountChecker.run_schedulable({})
       user.reload
       expect(user.disabled).to eql(true)

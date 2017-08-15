@@ -21,6 +21,8 @@ module OpenChain
         if suspended.present?
           user.update_attribute(:disabled, suspended)
           suspended_users << user
+          body = "The following account was disabled: #{email}<br />Debug Information #{body.to_json}".html_safe
+          OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "VFI Account Disabled -- #{email}", body)
         end
         
       end
