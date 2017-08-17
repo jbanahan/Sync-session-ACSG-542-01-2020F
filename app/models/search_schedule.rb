@@ -1,7 +1,9 @@
 require 'open_chain/schedule_support'
-class SearchSchedule < ActiveRecord::Base
+require 'open_chain/email_validation_support'
 
+class SearchSchedule < ActiveRecord::Base
   include OpenChain::ScheduleSupport
+  include OpenChain::EmailValidationSupport
 
   RUFUS_TAG = "search_schedule"  
 
@@ -66,7 +68,7 @@ class SearchSchedule < ActiveRecord::Base
   def send_email name, temp_file,attachment_name, user, log=nil
     unless self.email_addresses.blank?  
       log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
-      if self.email_addresses.split(/,|;/).map{ |e| EmailValidator.valid? e}.all?
+      if email_list_valid? self.email_addresses
         OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!
       else
         msg = "The above scheduled search contains an invalid email address. Please correct it and try again."

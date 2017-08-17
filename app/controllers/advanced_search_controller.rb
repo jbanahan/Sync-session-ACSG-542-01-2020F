@@ -1,9 +1,10 @@
 require 'open_chain/search_query_controller_helper'
 require 'open_chain/report/xls_search'
-require 'email_validator'
+require 'open_chain/email_validation_support'
 
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
+  include OpenChain::EmailValidationSupport
 
   def legacy_javascripts?
     false
@@ -168,11 +169,11 @@ class AdvancedSearchController < ApplicationController
       if email_to.blank?
         render_json_error "Please enter an email address."
       else
-        email_list = email_to.delete(' ').split(',')
+        email_list = email_to.split(',')
         if email_list.count > 10
           render_json_error "Cannot accept more than 10 email addresses."
         else
-          unless email_list.map{ |e| EmailValidator.valid? e }.all?
+          if !email_list_valid? email_list
             render_json_error "Please ensure all email addresses are valid and separated by commas."
           else
             OpenChain::Report::XLSSearch.delay.run_and_email_report current_user, ss.id, mail_fields

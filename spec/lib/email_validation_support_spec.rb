@@ -18,6 +18,10 @@ describe OpenChain::EmailValidationSupport do
       it "returns false for blank input" do
         expect(klass.email_list_valid?('')).to eq false
       end
+
+      it "returns false for spaces not adjacent to a comma" do
+        expect(klass.email_list_valid?('tufnel@stonehenge.biz, st-hubbins@hellhole.co. uk')).to eq false
+      end
     end
 
     context "with array" do

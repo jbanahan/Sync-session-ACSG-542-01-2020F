@@ -1,8 +1,9 @@
-require 'email_validator'
+require 'open_chain/email_validation_support'
 
 class AttachmentsController < ApplicationController
   include DownloadS3ObjectSupport
   include PolymorphicFinders
+  include OpenChain::EmailValidationSupport
 
   skip_before_filter :portal_redirect, only: [:download]
 
@@ -124,12 +125,12 @@ class AttachmentsController < ApplicationController
   end
 
   def send_email_attachable
-    email_list = params[:to_address].delete(' ').split(',')
+    email_list = params[:to_address].split(',')
     if email_list.empty?
       render_json_error "Please enter an email address."
     elsif email_list.count > 10
       render_json_error "Cannot accept more than 10 email addresses."
-    elsif !email_list.map{ |e| EmailValidator.valid? e }.all?
+    elsif !email_list_valid? email_list
       render_json_error "Please ensure all email addresses are valid."
     else
       total_size = Attachment.where("id IN (#{params[:ids_to_include].join(', ')})").sum(:attached_file_size)
