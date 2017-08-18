@@ -14,12 +14,27 @@ class FiscalMonth < ActiveRecord::Base
     "#{year}-#{month_number.to_s.rjust(2, "0")}"
   end
 
+  def self.get company_or_id, date
+    co_id = company_or_id.kind_of?(Integer) ? company_or_id : company_or_id.id
+    where("company_id = #{co_id} AND start_date <= '#{date}' AND end_date >= '#{date}'").first
+  end
+
   def self.generate_csv company_id
     recs = run_csv_query company_id
     CSV.generate do |csv|
       csv << ["Fiscal Year", "Fiscal Month", "Actual Start Date", "Actual End Date"]
       recs.each { |r| csv << r }
     end
+  end
+
+  def forward n_months
+    year_adj, mod = ((month_number - 1) + n_months).divmod 12
+    new_month_num = mod + 1
+    FiscalMonth.where(company_id: company.id, month_number: new_month_num, year: year + year_adj).first
+  end
+
+  def back n_months
+    forward(n_months * -1)
   end
 
   private

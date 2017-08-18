@@ -1,0 +1,9 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Ascena Actual vs Potential First Sale Report</h2>
+<p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
+<%=form_tag reports_run_ascena_actual_vs_potential_first_sale_report_path, :id=>'frm_run' do -%>
+
+<%end%>

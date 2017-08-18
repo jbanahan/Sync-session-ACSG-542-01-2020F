@@ -468,6 +468,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_ascena_actual_vs_potential_first_sale_report
+    if OpenChain::Report::AscenaActualVsPotentialFirstSaleReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ascena_actual_vs_potential_first_sale_report
+    klass = OpenChain::Report::AscenaActualVsPotentialFirstSaleReport
+    if klass.permission? current_user
+      run_report "Ascena Actual vs Potential First Sale Report", klass, {}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def show_ascena_entry_audit_report
     if OpenChain::Report::AscenaEntryAuditReport.permission? current_user
       render

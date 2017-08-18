@@ -485,6 +485,44 @@ describe ReportsController do
     end
   end
 
+  describe "Ascena Actual Vs Potential First Sale Report" do
+    let(:report_class) { OpenChain::Report::AscenaActualVsPotentialFirstSaleReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_ascena_actual_vs_potential_first_sale_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_ascena_actual_vs_potential_first_sale_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :show_ascena_actual_vs_potential_first_sale_report
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Ascena Actual vs Potential First Sale Report", user, report_class, 
+                                                           :settings=>{}, :friendly_settings=>[])
+        post :run_ascena_actual_vs_potential_first_sale_report
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
   describe "Ascena Entry Audit Report" do
     let(:report_class) { OpenChain::Report::AscenaEntryAuditReport }
     let(:user) { Factory(:user) }
