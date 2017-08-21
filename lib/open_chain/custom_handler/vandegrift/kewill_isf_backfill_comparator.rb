@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     security_filings.each do |sf|
       entry_numbers = sf.entry_numbers ? sf.entry_numbers.split("\n") : []
       entry_reference_numbers = sf.entry_reference_numbers ? sf.entry_reference_numbers.split("\n") : []
-      next if entry_numbers.include?(entry.entry_number) && entry_reference_numbers.include(entry.broker_reference)
+      next if entry_numbers.include?(entry.entry_number) && entry_reference_numbers.include?(entry.broker_reference)
       unless entry_numbers.include?(entry.entry_number)
         entry_numbers << entry.entry_number
         sf.entry_numbers = entry_numbers.join("\n")
