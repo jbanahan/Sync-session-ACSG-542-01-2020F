@@ -17,6 +17,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
     @invoice_number = 'INV1234'
     @line = Factory(:commercial_invoice_line,
       :commercial_invoice=>Factory(:commercial_invoice,:entry=>@ent,:invoice_number=>@invoice_number),
+      :country_origin_code=>'CN',
       :po_number=>@po_number,
       :prorated_mpf => BigDecimal("10.50"),
       :hmf=>BigDecimal("20.00"),
@@ -64,12 +65,13 @@ describe OpenChain::Report::EddieBauerStatementSummary do
     expect(r[10].strftime("%Y%m%d")).to eq(@ent.monthly_statement_received_date.strftime("%Y%m%d"))
     expect(r[11].strftime("%Y%m%d")).to eq(@ent.release_date.strftime("%Y%m%d"))
     expect(r[12]).to eq("31612345678/8.1/INV1234")
+    expect(r[13]).to eq "CN"
   end
   it "should write details headings" do
     r = get_details_tab.row(0)
     headings = ["Statement #", 
       "ACH #", "Entry #", "PO", "Business", "Invoice", 
-      "Duty Rate", "Duty", "Taxes / Fees", "ACH Date","Statement Date","Release Date","Unique ID"]
+      "Duty Rate", "Duty", "Taxes / Fees", "ACH Date","Statement Date","Release Date","Unique ID", "Country of Origin"]
     headings.each_with_index do |h,i|
       expect(r[i]).to eq(h)
     end

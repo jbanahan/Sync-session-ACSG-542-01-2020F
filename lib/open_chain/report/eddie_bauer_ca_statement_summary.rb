@@ -25,7 +25,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     end_date = params[:end_date].to_date
 
     wb = XlsMaker.create_workbook "Billing Summary #{start_date} - #{end_date}", 
-      ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "LINK"]
+      ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "Country of Origin", "LINK"]
     sheet = wb.worksheet 0
     cursor = 0
     column_widths = []
@@ -65,6 +65,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
           row << ""
           row << ent.release_date
           row <<  "#{ent.entry_number}/#{duty_rate}/#{ci.invoice_number}"
+          row << cil.country_origin_code
           row << Spreadsheet::Link.new(ent.view_url,'Web Link')
 
           XlsMaker.add_body_row sheet, (cursor+=1), row, column_widths

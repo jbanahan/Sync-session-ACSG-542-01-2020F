@@ -45,10 +45,10 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
     before :each do
       @entry = Factory(:entry, entry_number: '123456789', customer_number: "EBCC", entry_filed_date: '2014-03-01')
       @commercial_invoice = Factory(:commercial_invoice, entry: @entry, invoice_number: "A")
-      @cil =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "ABC-123", hmf: 1, prorated_mpf: 2, cotton_fee: 3)
+      @cil =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "ABC-123", hmf: 1, prorated_mpf: 2, cotton_fee: 3, country_origin_code: "CN")
       @tariff_line = @cil.commercial_invoice_tariffs.create! duty_amount: 5, duty_rate: 0.5
       @tariff_line2 = @cil.commercial_invoice_tariffs.create! duty_amount: 10, duty_rate: 0.05
-      @cil2 =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "DEF-456", hmf: 4, prorated_mpf: 5, cotton_fee: 6)
+      @cil2 =  Factory(:commercial_invoice_line, commercial_invoice: @commercial_invoice, po_number: "DEF-456", hmf: 4, prorated_mpf: 5, cotton_fee: 6, country_origin_code: "CA")
       @tariff_line3 = @cil2.commercial_invoice_tariffs.create! duty_amount: 20, duty_rate: 0.25
       @tariff_line4 = @cil2.commercial_invoice_tariffs.create! duty_amount: 25, duty_rate: 0.05
 
@@ -67,11 +67,11 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
 
-      expect(sheet.row(0)).to eq ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "LINK"]
+      expect(sheet.row(0)).to eq ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "Country of Origin", "LINK"]
       expect(sheet.row(1)).to eq [nil, nil, @entry.entry_number, "ABC", "123", @commercial_invoice.invoice_number, 
-        50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+        50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", "CN", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
       expect(sheet.row(2)).to eq [nil, nil, @entry.entry_number, "DEF", "456", @commercial_invoice.invoice_number, 
-        25.0, 45.0, 15.0, nil, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+        25.0, 45.0, 15.0, nil, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", "CA", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
     end
 
     it "prevents users who do not have access to the entry from seeing them" do
