@@ -10,21 +10,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
   let!(:security_filing) { Factory(:security_filing, broker_customer_number: '1234567890', master_bill_of_lading: '1234567890')}
 
   describe "#compare" do
-    before do
-      @klass = subject.new
-      allow(subject).to receive(:new).and_return(@klass)
-    end
 
     it "appends the security filing's entry_reference_numbers if new broker_reference is not present" do
       security_filing.entry_reference_numbers = "0987654321"
       security_filing.save!
-      @klass.compare(entry)
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
       expect(security_filing.entry_reference_numbers).to eql("0987654321\n1234567890")
     end
 
     it "sets the entry's security filing's entry_reference_numbers if not present" do
-      @klass.compare(entry)
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
       expect(security_filing.entry_reference_numbers).to eql('1234567890')
     end
@@ -32,46 +28,21 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
     it "appends the security filing's entry_number if new entry_number is not present" do
       security_filing.entry_numbers = "0987654321"
       security_filing.save!
-      @klass.compare(entry)
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
       expect(security_filing.entry_numbers).to eql("0987654321\n1234567890")
     end
 
     it "sets the entry's security filing's entry_number if not present" do
-      @klass.compare(entry)
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
       expect(security_filing.entry_numbers).to eql('1234567890')
     end
 
-    it "is not called if customer_number is blank" do
-      entry.customer_number = nil
-      entry.save
-      entry.reload
-      expect(@klass).to_not receive(:compare)
-      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
-    end
+    it "is not compared unless entry is valid" do
+      expect(subject).to receive(:valid_entry?).and_return false
+      expect(subject).not_to receive(:populate_isf_data)
 
-    it "is not called if master_bills_of_lading is blank" do
-      entry.master_bills_of_lading = nil
-      entry.save
-      entry.reload
-      expect(@klass).to_not receive(:compare)
-      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
-    end
-
-    it "is not called if us_country? is false" do
-      entry.source_system = "Kewill"
-      entry.save
-      entry.reload
-      expect(@klass).to_not receive(:compare)
-      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
-    end
-
-    it "is not called if ocean_transport? is false" do
-      entry.transport_mode_code = 12
-      entry.save
-      entry.reload
-      expect(@klass).to_not receive(:compare)
       subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
     end
 
@@ -86,8 +57,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       entry.broker_reference = "1234567890"
       entry.save
       entry.reload
-      expect(subject.new.find_security_filings(entry)).to include(sf1)
-      expect(subject.new.find_security_filings(entry)).to_not include(sf2)
+      expect(subject.find_security_filings(entry)).to include(sf1)
+      expect(subject.find_security_filings(entry)).to_not include(sf2)
     end
   end
 
@@ -121,5 +92,39 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       entry.reload
       expect(subject.us_country?(entry)).to be_falsey
     end
+  end
+
+  describe "valid_entry" do
+    let (:entry) {
+      e = Entry.new transport_mode_code: "10", source_system: "Alliance", customer_number: "CUST", master_bills_of_lading: "MBOL"
+    }
+    it "returns true if entry is ocean mode Alliance entry with customer number and master bills" do
+      expect(subject.valid_entry? entry).to eq true
+    end
+
+    it "returns true if alternate ocean mode is used" do
+      entry.transport_mode_code = "11"
+      expect(subject.valid_entry? entry).to eq true
+    end
+
+    it "returns false if not ocean mode" do
+      entry.transport_mode_code = "40"
+      expect(subject.valid_entry? entry).to eq false
+    end
+
+    it "returns false if not Alliance entry" do
+      entry.source_system = "Not Alliance"
+      expect(subject.valid_entry? entry).to eq false
+    end
+
+    it "returns false if customer number is blank" do
+      entry.customer_number = nil
+      expect(subject.valid_entry? entry).to eq false
+    end
+
+    it "returns false if master bill is blank" do
+      entry.master_bills_of_lading = nil
+      expect(subject.valid_entry? entry).to eq false
+    end    
   end
 end

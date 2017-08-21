@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
   extend OpenChain::EntityCompare::EntryComparator
   extend OpenChain::EntityCompare::ComparatorHelper
 
-  def compare(entry)
+  def self.populate_isf_data(entry)
     security_filings = find_security_filings(entry)
     return unless security_filings
 
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     end
   end
 
-  def find_security_filings(entry)
+  def self.find_security_filings(entry)
     return unless entry.master_bills_of_lading
     master_bills_of_lading = entry.master_bills_of_lading.split('\n')
     SecurityFiling.
@@ -35,14 +35,24 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
   end
 
   def self.accept?(snapshot)
-    super
+    accept = super
+    if accept
+      entry = snapshot.recordable
+      accept = entry && valid_entry?(entry)
+    end
+
+    accept
   end
 
   def self.compare(type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version)
     entry = Entry.find(id)
-    if ocean_transport?(entry) && us_country?(entry) && entry.customer_number.present? && entry.master_bills_of_lading.present?
-      self.new.compare(entry)
+    if valid_entry?(entry)
+      populate_isf_data(entry)
     end
+  end
+
+  def self.valid_entry? entry
+    ocean_transport?(entry) && us_country?(entry) && entry.customer_number.present? && entry.master_bills_of_lading.present?
   end
 
   def self.ocean_transport?(entry)
