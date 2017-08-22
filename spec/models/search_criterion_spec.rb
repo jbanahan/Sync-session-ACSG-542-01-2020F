@@ -834,9 +834,10 @@ describe SearchCriterion do
         expect(sql).to match(/#{expected_value}/)
       end
     end
+
     it "should return false for nil values for comparison operators" do
       ent = Entry.new
-      ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm","gteq"].each do |op|
+      ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf"].each do |op|
         sc = SearchCriterion.new(model_field_uid: :ent_file_logged_date, value:'2016-01-01')
         sc.operator = op
         expect(sc.test?(ent)).to be_falsey
