@@ -12,55 +12,53 @@ describe "FtpFileSupport" do
   subject { FtpSupportImpl.new }
 
   describe "ftp_file" do
-    before :each do
-      @t = double('tmpfile')
-      allow(@t).to receive(:to_path).and_return('/x.badfile')
-    end
+    let! (:tempfile) {
+      Tempfile.new(["file", ".txt"])
+    }
+
+    after(:each) {
+      tempfile.close! unless tempfile.closed?
+    }
 
     it "should ftp_file" do
-      allow(File).to receive(:exists?).and_return true
-      expect(@t).to receive(:unlink)
-      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials)
-      subject.ftp_file @t
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',tempfile, subject.ftp_credentials)
+      subject.ftp_file tempfile
+      expect(tempfile.closed?).to be_truthy
+      # Tempfile path is nil once it has been unlinked
+      expect(tempfile.path).to be_nil
     end
 
     it "should take option_overrides" do
-      allow(File).to receive(:exists?).and_return true
-      
       def subject.ftp_credentials
         return {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987}
       end
 
-      expect(FtpSender).to receive(:send_file).with('otherserver','u','p',@t,{:server=>'otherserver',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987})
-      expect(@t).to receive(:unlink)
-
-      subject.ftp_file @t, {server:'otherserver'}
+      expect(FtpSender).to receive(:send_file).with('otherserver','u','p',tempfile,{:server=>'otherserver',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r', :protocol=>"test", port:987})
+      subject.ftp_file tempfile, {server:'otherserver'}
     end
     
     it 'should not unlink if false is passed' do
-      allow(File).to receive(:exists?).and_return true
-      expect(@t).not_to receive(:unlink)
+      expect(File).to receive(:exists?).with(tempfile.to_path).and_return true
       expect(FtpSender).to receive(:send_file)
-      subject.ftp_file @t, {keep_local:true}
+      subject.ftp_file tempfile, {keep_local:true}
+      expect(tempfile.closed?).to be_falsey
     end
     
     it "should return false if file is nil" do
-      allow(File).to receive(:exists?).and_return true
       expect(FtpSender).not_to receive(:send_file)
       expect(subject.ftp_file(nil)).to be_falsey
     end
     
     it "should return false if file does not exist" do
+      expect(File).to receive(:exists?).with(tempfile.to_path).and_return false
       expect(FtpSender).not_to receive(:send_file)
-      expect(subject.ftp_file(@t)).to be_falsey
+      expect(subject.ftp_file tempfile).to be_falsey
     end
 
     it "should allow for missing folder and remote file name values from ftp_credentials" do
       expect(subject).to receive(:ftp_credentials).and_return(:server=>'svr',:username=>'u',:password=>'p')
-      allow(File).to receive(:exists?).and_return true
-      expect(@t).to receive(:unlink)
-      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t,{:server=>'svr',:username=>'u',:password=>'p'})
-      subject.ftp_file @t
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',tempfile,{:server=>'svr',:username=>'u',:password=>'p'})
+      subject.ftp_file tempfile
     end
 
     it "allows including class to not implement ftp_credentials method" do
@@ -68,20 +66,34 @@ describe "FtpFileSupport" do
         include OpenChain::FtpFileSupport
       end.new
 
-      allow(File).to receive(:exists?).and_return true
       opts = {server: "server", username: "user", password: "pwd"}
-      expect(FtpSender).to receive(:send_file).with('server','user','pwd',@t, opts)
-      expect(@t).to receive(:unlink)
-      s.ftp_file @t, opts
+      expect(FtpSender).to receive(:send_file).with('server','user','pwd',tempfile, opts)
+      s.ftp_file tempfile, opts
     end
 
     it "yields the ftp session if a block is gvien" do
-      allow(File).to receive(:exists?).and_return true
-      expect(@t).to receive(:unlink)
       session = FtpSession.new
 
-      expect(FtpSender).to receive(:send_file).with('svr','u','p',@t, subject.ftp_credentials).and_return session
-      expect{ |b| subject.ftp_file(@t, &b) }.to yield_with_args(session)
+      expect(FtpSender).to receive(:send_file).with('svr','u','p',tempfile, subject.ftp_credentials).and_return session
+      expect{ |b| subject.ftp_file(tempfile, &b) }.to yield_with_args(session)
+    end
+
+    context "with a File object" do
+      let (:file) {
+        File.open("tmp/file.txt", "w+")
+      }
+
+      after(:each) {
+        file.close unless file.closed?
+        File.unlink("tmp/file.txt") rescue nil
+      }
+
+      it "deletes File objects after sent" do
+        expect(FtpSender).to receive(:send_file).with('svr','u','p',file, subject.ftp_credentials)
+        subject.ftp_file file
+        expect(file.closed?).to be_truthy
+        expect(File.exists? "tmp/file.txt").to be_falsey
+      end
     end
   end
 

@@ -24,7 +24,13 @@ module OpenChain
           # if the file truly can't be sent.
           send_status = true
         ensure
-          file.unlink if delete_local
+          if delete_local
+            if !file.closed?
+              file.is_a?(Tempfile) ? file.close! : file.close
+            end
+
+            File.unlink(file.path) unless file.is_a?(Tempfile)
+          end
         end
       end
       send_status
