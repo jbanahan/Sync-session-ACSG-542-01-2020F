@@ -14,6 +14,11 @@ describe OpenChain::Validations::Password::PasswordAgePoller do
     it 'does not pull password reset dates that are less than the given number of days' do
       expect(subject.expired_passwords("90")).to_not include(@not_old_password)
     end
+
+    it 'does not pull system users' do
+      @old_password.update_attribute(:system_user, true)
+      expect(subject.expired_passwords("90")).to_not include(@old_password)
+    end
   end
 
   describe '#run' do

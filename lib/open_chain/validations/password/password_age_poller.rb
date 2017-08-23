@@ -11,6 +11,6 @@ module OpenChain; module Validations; module Password; class PasswordAgePoller
   end
 
   def expired_passwords(expiration_days)
-    User.where("password_changed_at <= ?", expiration_days.to_i.days.ago)
+    User.where("password_changed_at <= ?", expiration_days.to_i.days.ago).where(system_user: false)
   end
 end; end; end; end
