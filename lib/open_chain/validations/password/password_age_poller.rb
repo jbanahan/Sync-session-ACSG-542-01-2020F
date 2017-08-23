@@ -7,7 +7,7 @@ module OpenChain; module Validations; module Password; class PasswordAgePoller
 
   def run(expired_days)
     expired = expired_passwords(expired_days)
-    expired.update_all(password_expired: true)
+    expired.update_all(password_expired: true, password_reset: true)
   end
 
   def expired_passwords(expiration_days)

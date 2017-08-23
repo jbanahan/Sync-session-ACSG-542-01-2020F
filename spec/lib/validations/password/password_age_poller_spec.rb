@@ -17,6 +17,14 @@ describe OpenChain::Validations::Password::PasswordAgePoller do
   end
 
   describe '#run' do
+    it 'sets password_reset to true' do
+      subject.run("90")
+      @old_password.reload
+      @not_old_password.reload
+      expect(@old_password.password_reset).to be_truthy
+      expect(@not_old_password.password_reset).to be_falsey
+    end
+
     it 'sets password_expired on all expired passwords' do
       subject.run("90")
       @old_password.reload

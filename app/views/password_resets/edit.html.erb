@@ -2,7 +2,7 @@
 
 <%=form_for @user, :url => password_reset_path, :method => :put do |f| %>
   <table>
-    <% if @user.password_expired %>
+    <% if @user.password_expired && !@user.password_locked %>
       <%=field_row "Current Password", f.password_field(:current_password) %>
     <% end %>
     <%=field_row "Password", f.password_field(:password) %>
