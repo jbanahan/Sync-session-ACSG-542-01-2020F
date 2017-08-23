@@ -176,7 +176,7 @@ class AdvancedSearchController < ApplicationController
           if !email_list_valid? email_list
             render_json_error "Please ensure all email addresses are valid and separated by commas."
           else
-            OpenChain::Report::XLSSearch.delay.run_and_email_report current_user, ss.id, mail_fields
+            OpenChain::Report::XLSSearch.delay.run_and_email_report current_user.id, ss.id, mail_fields
             render :json=>{:ok=>:ok}
           end
         end

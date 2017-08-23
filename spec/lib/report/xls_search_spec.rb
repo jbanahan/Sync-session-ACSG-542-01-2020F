@@ -24,11 +24,9 @@ describe OpenChain::Report::XLSSearch do
 
     it "sends an email and closes tempfile afterwards" do
       report_double = double("report")
-      allow(report_double).to receive(:path).and_return "some/path"
-      allow(described_class).to receive(:run).and_return report_double
-      expect(report_double).to receive(:close!)
+      allow(described_class).to receive(:run).and_yield report_double
       expect(OpenMailer).to receive(:send_search_result_manually).with(@mail_fields[:to], @mail_fields[:subject],
-                                                                    "Goes up to 11.", "some/path", @u)
+                                                                    "Goes up to 11.", report_double, @u)
       described_class.run_and_email_report(@u, @search.id, @mail_fields)
     end
 
@@ -74,7 +72,7 @@ describe OpenChain::Report::XLSSearch do
         @xl_out = double("Spreadsheet")
         allow(@xl_out).to receive(:write)
         @xl_maker = double("XlsMaker")
-        expect(@xl_maker).to receive(:make_from_search_query_by_search_id_and_user_id).and_return([@xl_out, 3])
+        expect(@xl_maker).to receive(:make_from_search_query).and_return([@xl_out, 3])
       end
 
       it "should include links" do
@@ -86,6 +84,23 @@ describe OpenChain::Report::XLSSearch do
         ss = Factory(:search_setup,:no_time=>true,:user=>@u)
         expect(XlsMaker).to receive(:new).with({:include_links=>false,:no_time=>true}).and_return(@xl_maker)
         described_class.run @u, ss.id
+      end
+    end
+
+    context "with block" do
+
+      before :each do
+        @xl_out = double("Spreadsheet")
+        allow(@xl_out).to receive(:write)
+      end
+
+      it "yields workbook" do
+        ss = Factory(:search_setup,:user=>@u, name: "search")
+        expect_any_instance_of(XlsMaker).to receive(:make_from_search_query).and_return([@xl_out])
+        expect(Attachment).to receive(:add_original_filename_method).with(instance_of(Tempfile), /search/)
+        tf = nil
+        described_class.run(@u, ss.id) {|tempfile| tf = tempfile }
+        expect(tf).to be_a(Tempfile)
       end
     end
   end

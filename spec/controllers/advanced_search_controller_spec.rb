@@ -492,7 +492,7 @@ describe AdvancedSearchController do
 
       d = double("delay")
       expect(OpenChain::Report::XLSSearch).to receive(:delay).and_return d
-      expect(d).to receive(:run_and_email_report).with(@user, @ss.id, {'to' => recipient, 'reply_to' => sender, 'subject' => mail_subject, 'body' => body})
+      expect(d).to receive(:run_and_email_report).with(@user.id, @ss.id, {'to' => recipient, 'reply_to' => sender, 'subject' => mail_subject, 'body' => body})
       post :send_email, :id=>@ss.id, :mail_fields => {:to => recipient, :reply_to => sender, :subject => mail_subject, :body => body}
       expect(JSON.parse(response.body)).to eq({'ok' => 'ok'})
     end

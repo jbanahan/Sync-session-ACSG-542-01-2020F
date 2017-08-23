@@ -78,11 +78,16 @@ class SearchSchedule < ActiveRecord::Base
     end
   end
 
-  private
+  def self.report_name search_setup, file_extension, include_timestamp: false
+    name = sanitize_filename(search_setup.name)
+    if include_timestamp
+      name += Time.zone.now.strftime("_%Y%m%d%H%M%S%L")
+    end
 
-  def timestamp
-    exclude_file_timestamp ? "" : Time.zone.now.strftime("_%Y%m%d%H%M%S%L")
+    name += ".#{file_extension}"
   end
+
+  private
 
   def run_search srch_setup, log
     if !srch_setup.user.active?
@@ -91,7 +96,7 @@ class SearchSchedule < ActiveRecord::Base
     end
     User.run_with_user_settings(srch_setup.user) do
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
-      attachment_name = "#{sanitize_filename(srch_setup.name)}#{timestamp}.#{extension}"
+      attachment_name = self.class.report_name srch_setup, extension, include_timestamp: !exclude_file_timestamp
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
         t.binmode
         if extension == "csv"
@@ -121,16 +126,15 @@ class SearchSchedule < ActiveRecord::Base
     
     User.run_with_user_settings(rpt.user) do
       t = nil
-      attachment_name = "#{sanitize_filename(rpt.name)}#{timestamp}"
-
-      if self.download_format.nil? || self.download_format.downcase=='csv'
+      extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+      attachment_name = self.class.report_name rpt, extension, include_timestamp: !exclude_file_timestamp
+      
+      if extension=='csv'
         t = rpt.csv_file rpt.user
-        attachment_name = "#{attachment_name}.csv"
       else
         t = rpt.xls_file rpt.user
-        attachment_name = "#{attachment_name}.xls"
       end
-      
+
       if send_if_empty? || !report_blank?(t)
         send_email rpt.name, t, attachment_name, rpt.user, log
         send_ftp rpt.name, t, attachment_name, log
@@ -231,7 +235,8 @@ class SearchSchedule < ActiveRecord::Base
 
     return CSV.generate_line(d,{:row_sep=>""})
   end
-  def sanitize_filename(filename)
+
+  def self.sanitize_filename(filename)
     filename.strip.tap do |name|
       # NOTE: File.basename doesn't work right with Windows paths on Unix
       # get only the filename, not the whole path

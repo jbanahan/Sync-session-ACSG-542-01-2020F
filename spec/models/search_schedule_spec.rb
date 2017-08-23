@@ -364,4 +364,22 @@ describe SearchSchedule do
     end
   end
 
+  describe "report_name" do
+    subject { described_class }
+
+    let (:search_setup) { SearchSetup.new name: "search"}
+
+    it "generates a report name" do
+      expect(subject.report_name(search_setup, "xls")).to eq "search.xls"
+    end
+
+    it "generates a timestamp into filename" do
+      now = Time.zone.now
+      Timecop.freeze(now) do 
+        expect(subject.report_name(search_setup, "xls", include_timestamp: true)).to eq "search_#{now.strftime "%Y%m%d%H%M%S%L"}.xls"
+      end
+      
+    end
+  end
+
 end
