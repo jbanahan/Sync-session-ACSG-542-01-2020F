@@ -456,4 +456,20 @@ describe OpenChain::EdiParserSupport do
       expect(subject.value(segment, (12..20))).to eq ["00401", "000004837", "0", "P", ">"]
     end
   end
+
+  describe "all_segments_up_to" do
+    it "returns all segments up to the given stop segment" do
+      segments = subject.all_segments_up_to first_transaction.segments, "REF"
+      expect(segments.map {|s| s.segment_type}).to eq ["ST", "BSN", "HL", "TD1"]
+    end
+
+    it "allows for passing multiple stop segments" do
+      segments = subject.all_segments_up_to first_transaction.segments, ["TD1", "REF"]
+      expect(segments.map {|s| s.segment_type}).to eq ["ST", "BSN", "HL"]
+    end
+
+    it "returns all segments if no stop-segment is encountered" do 
+      expect(subject.all_segments_up_to(first_transaction.segments, "BLAH").length).to eq 48
+    end
+  end
 end

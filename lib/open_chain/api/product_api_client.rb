@@ -1,29 +1,15 @@
 require 'open_chain/api/api_client'
+require 'open_chain/api/core_api_actions'
 
 module OpenChain; module Api; class ProductApiClient < ApiClient
+  include OpenChain::Api::CoreApiActions
+
+  def core_module
+    CoreModule::PRODUCT
+  end
 
   def find_by_uid uid, mf_uids
-    get("/products/by_uid", {uid: uid}.merge(mf_uid_list_to_param(mf_uids)))
-  rescue => e
-    if not_found_error?(e)
-      return {'product' => nil}
-    else
-      raise e
-    end
-  end
-
-  def show id, mf_uids
-    get("/products/#{id}", mf_uid_list_to_param(mf_uids))
-  end
-
-  def create product_hash
-    post("/products", product_hash)
-  end
-
-  def update product_hash
-    id = extract_id_from_params product_hash, 'product'
-
-    put("/products/#{id}", product_hash)
+    get_request_wrapper { get("/#{module_path}/by_uid", {uid: uid}.merge(mf_uid_list_to_param(mf_uids))) }
   end
 
 end; end; end

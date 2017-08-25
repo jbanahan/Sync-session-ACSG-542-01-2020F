@@ -447,11 +447,21 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(l.department).to eq BigDecimal("19")
         expect(l.spi).to eq "A+"
         expect(l.add_to_make_amount).to eq BigDecimal("123.45")
+        expect(l.non_dutiable_amount).to be_nil
         expect(l.cotton_fee_flag).to eq "N"
         expect(l.mid).to eq "MID12345"
         expect(l.cartons).to eq BigDecimal("12")
         expect(l.buyer_customer_number).to eq "BuyerCustNo"
         expect(l.seller_mid).to eq "SellerMID"
+      end
+
+      it "handles negative value in col 17 as non-dutiable charge" do
+        row_data.first[17] = "-123.45"
+
+        l = subject.parse_invoice_line nil, nil, row_data.first
+
+        expect(l.add_to_make_amount).to be_nil
+        expect(l.non_dutiable_amount).to eq BigDecimal("123.45")
       end
     end
   end

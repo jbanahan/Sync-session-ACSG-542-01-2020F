@@ -32,6 +32,26 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         @client.sync
       end
 
+      it "executes query, parses results, calls do_sync for each result, stops if continue_looping is false" do
+        row_1 = [1, 'UID']
+        row_2 = [2, 'UID2']
+        query = "SELECT 1"
+
+        @active_record_connection = double
+        allow(ActiveRecord::Base).to receive(:connection).and_return @active_record_connection
+
+        query_result = [OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1}), OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(2, {'id' => 2})]
+        expect(@client).to receive(:query).once.and_return query
+        expect(@active_record_connection).to receive(:execute).with(query).and_return [row_1, row_2]
+        expect(@client).to receive(:process_query_result).with(row_1, last_result: false).and_return nil
+        expect(@client).to receive(:process_query_result).with(row_2, last_result: true).and_return query_result
+        expect(@client).to receive(:do_sync).with query_result[0]
+        expect(@client).to receive(:do_sync).with query_result[1]
+        expect(@client).to receive(:continue_looping?).with(1).and_return false
+
+        @client.sync
+      end
+
       it "does not repeatedly send the same failed object" do
         query = "SELECT 1, 'UID'"
         row_1 = [1, 'UID']
@@ -94,6 +114,25 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         expect(@client).to receive(:process_object_result).with(o2).and_return object_result[1]
         expect(@client).to receive(:do_sync).with object_result[0]
         expect(@client).to receive(:do_sync).with object_result[1]
+
+        @client.sync
+      end
+
+      it "stops executing sync if continue_looping? returns false" do
+        allow(@client).to receive(:max_object_results).and_return 1
+
+        o1 = Object.new
+        o2 = Object.new
+        object_result = [OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(1, {'id' => 1}), OpenChain::CustomHandler::ApiSyncClient::ApiSyncObject.new(2, {'id' => 2})]
+
+        result_set1 = double
+        allow(result_set1).to receive(:limit).with(1).and_return result_set1
+        expect(result_set1).to receive(:each).and_yield(o1)
+        expect(@client).to receive(:objects_to_sync).and_return result_set1
+        expect(@client).to receive(:continue_looping?).with(1).and_return false
+
+        expect(@client).to receive(:process_object_result).with(o1).and_return object_result[0]
+        expect(@client).to receive(:do_sync).with object_result[0]
 
         @client.sync
       end

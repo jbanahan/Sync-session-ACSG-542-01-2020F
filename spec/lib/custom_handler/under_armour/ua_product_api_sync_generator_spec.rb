@@ -97,14 +97,15 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
     end
 
     it "saves a sync record for products with no data to sync" do
-      # Set a plant and a color, but don't set up the xref so that it's not syncing anything
+      # Blank the colors field, so then we don't have anything to split out
       @product.update_custom_value! @cdefs[:colors], "    "
-
-      @g.sync
+      now = Time.zone.now
+      Timecop.freeze(now) { @g.sync }
+      
       sr = @product.reload.sync_records.first
       expect(sr).not_to be_nil
-      expect(sr.sent_at).not_to be_nil
-      expect((sr.confirmed_at - sr.sent_at).to_i).to be <= 63
+      expect(sr.sent_at.to_i).to eq now.to_i
+      expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
       expect(sr.confirmation_file_name).to eq "No US data to send."
     end
   end

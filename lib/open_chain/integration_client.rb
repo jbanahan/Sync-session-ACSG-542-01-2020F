@@ -4,6 +4,7 @@ require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
+require 'open_chain/custom_handler/ann_inc/ann_order_850_parser'
 require 'open_chain/custom_handler/ascena/apll_856_parser'
 require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
 require 'open_chain/custom_handler/ecellerate_xml_router'
@@ -177,6 +178,11 @@ module OpenChain
         else
           OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.delay.process_from_s3 bucket, remote_path
         end
+      elsif command['path'].include?('/_ann_850/') && master_setup.custom_feature?("Ann Brokerage Feeds")
+        OpenChain::CustomHandler::AnnInc::AnnOrder850Parser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_ann_invoice/') && master_setup.custom_feature?("Ann Brokerage Feeds")
+        OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, remote_path
+     
       elsif command['path'].include? '/_polo_850/'
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_850/') && master_setup.custom_feature?("RL 850")

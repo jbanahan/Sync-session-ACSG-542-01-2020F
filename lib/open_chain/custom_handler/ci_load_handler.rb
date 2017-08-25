@@ -212,7 +212,19 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.po_number = text_value(row[14])
         l.cartons = decimal_value(row[15])
         l.first_sale = decimal_value row[16]
-        l.add_to_make_amount = decimal_value(row[17])
+
+        mmv_ndc = decimal_value(row[17])
+        if mmv_ndc.nonzero?
+          # So, pperations was / is using this field for two different purposes (WTF)...when the value
+          # is negative they're expecting it to go to the non-dutiable field in kewill, when it's positive
+          # it should go to the add to make amount.
+          if mmv_ndc > 0
+            l.add_to_make_amount = mmv_ndc
+          else
+            l.non_dutiable_amount = (mmv_ndc * -1)
+          end
+        end
+
         l.department = decimal_value(row[18])
         l.spi = text_value(row[19])
         l.buyer_customer_number = text_value(row[20])

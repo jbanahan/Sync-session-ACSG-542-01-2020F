@@ -3,9 +3,12 @@ require 'open_chain/api/product_api_client'
 
 # This is a simple base class to extend for instance/company specific 
 # syncing of data meant for syncing to VFI Track.
-module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < OpenChain::CustomHandler::ApiSyncClient
 
-  attr_reader :api_client
+# The methods you must implement are:
+# query_row_map - returns a hash of column keys IN QUERY SELECT ORDER that will be utilized in the SQL query. The keys utilized must be one of those found in the "valid_columns" method's return value
+# query - the SQL query to execute to determine which products to sync with the remote system
+# vfitrack_importer_syscode - The importer system code the products should be stored under in VFI Track.
+module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < OpenChain::CustomHandler::ApiSyncClient
 
   def initialize opts = {}
     # This is primarily just here as a guard so we only actually automate the api endpoint in production
@@ -16,6 +19,10 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       @api_client = opts[:api_client]
     end
     validate_query_row_map
+
+    if opts[:sync_classifications]
+      @sync_classifications = opts[:sync_classifications]
+    end
   end
 
   def self.run_schedulable opts = {}
@@ -32,6 +39,14 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
 
   def validate_query_row_map
     map = query_row_map
+    # Allow for an array to easily define column order based on the array index
+    unless map.is_a?(Hash)
+      temp_map = {}
+      map.each_with_index do |v, x|
+        temp_map[v] = x
+      end
+      map = temp_map
+    end
 
     mappings = map.keys
     mappings.each {|field| raise "#{field} is not a valid mapping column." unless valid_columns.include?(field)}
@@ -50,12 +65,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
     product_id = row[@query_map[:product_id]]
 
     if @previous_product && @previous_product['id'] == product_id
-      # The tariff line / hts # is the only piece of data we're 
-      # sharing across multiple result rows to form a single product result
-      tariff = {}
-      @previous_product['tariff_records'] << tariff
-      tariff['hts_line_number'] = row[@query_map[:hts_line_number]]
-      tariff['hts_hts_1'] = row[@query_map[:hts_hts_1]] if @query_map[:hts_hts_1]
+      add_classification_tariff_fields_to_local_data row, @previous_product
     else
       to_return << ApiSyncObject.new(@previous_product['id'], @previous_product) if @previous_product
       @previous_product = {}
@@ -67,13 +77,8 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       @previous_product['prod_name'] = row[@query_map[:prod_name]] if @query_map[:prod_name]
       @previous_product['fda_product_code'] = row[@query_map[:fda_product_code]] if @query_map[:fda_product_code]
       @previous_product['prod_country_of_origin'] = row[@query_map[:prod_country_of_origin]] if @query_map[:prod_country_of_origin]
-      @previous_product['class_cntry_iso'] = row[@query_map[:class_cntry_iso]]
-      @previous_product['class_customs_description'] = row[@query_map[:class_customs_description]] if @query_map[:class_customs_description]
 
-      tariff = {}
-      @previous_product['tariff_records'] = [tariff]
-      tariff['hts_line_number'] = row[@query_map[:hts_line_number]]
-      tariff['hts_hts_1'] = row[@query_map[:hts_hts_1]]
+      add_classification_tariff_fields_to_local_data row, @previous_product
     end
 
     if opts[:last_result] && @previous_product.size > 0
@@ -82,6 +87,34 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
     end
 
     to_return.size > 0 ? to_return : nil
+  end
+
+
+  def add_classification_tariff_fields_to_local_data row, product_data
+    # The tariff line / hts # is the only piece of data we're 
+    # sharing across multiple result rows to form a single product result
+    classification = Array.wrap(product_data["classifications"]).find {|c| c["class_cntry_iso"] == row[@query_map[:class_cntry_iso]] }
+    if classification.nil?
+      classification = {}
+      classification['class_cntry_iso'] = row[@query_map[:class_cntry_iso]]
+      classification['class_customs_description'] = row[@query_map[:class_customs_description]] if @query_map[:class_customs_description]
+      product_data["classifications"] ||= []
+      product_data["classifications"] << classification
+    end
+
+    tariff = Array.wrap(classification["tariff_records"]).find {|t| t["hts_line_number"].to_i == row[@query_map[:hts_line_number]].to_i}
+    if tariff.nil?
+      # I'm not sure what situation, we'd have where the same hts_line_number is referenced multiple times by the query, but it's simple enough
+      # to handle it here
+      tariff = {}
+      classification["tariff_records"] ||= []
+      classification["tariff_records"] << tariff
+    end
+    
+    tariff['hts_line_number'] = row[@query_map[:hts_line_number]]
+    tariff['hts_hts_1'] = row[@query_map[:hts_hts_1]] if @query_map[:hts_hts_1]
+
+    nil
   end
 
   def retrieve_remote_data local_data
@@ -116,9 +149,9 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
     to_send = {'product' => remote_data}
 
     if remote_data['id'].nil?
-      @api_client.create to_send
+      api_client.create to_send
     else
-      @api_client.update to_send
+      api_client.update to_send
     end
   end
 
@@ -163,7 +196,10 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       remote_data["prod_name"] = local_data["prod_name"] if @query_map.has_key?(:prod_name)
       remote_data["*cf_41"] = local_data["prod_country_of_origin"] if @query_map.has_key?(:prod_country_of_origin)
 
-      insert_classification_data remote_data, local_data
+      Array.wrap(local_data["classifications"]).each do |local_classification|
+        remote_data["classifications"] ||= []
+        update_classification_data remote_data["classifications"], local_classification
+      end
 
       remote_data
     end
@@ -181,90 +217,70 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       set_data(remote_data, "prod_name", local_data["prod_name"]) if @query_map.has_key?(:prod_name)
       set_data(remote_data, "*cf_41", local_data["prod_country_of_origin"]) if @query_map.has_key?(:prod_country_of_origin)
 
-      if remote_data['classifications'] && remote_data['classifications'].size > 0
-        # Find the corresponding classification recore
-        country = local_data['class_cntry_iso']
-        if country
-          classification = remote_data['classifications'].find {|c| c['class_cntry_iso'] == country}
-          if classification
-            # if we found the classification, then insert the classification description, if needed, then sync the tariff data
-            set_data(classification, '*cf_99', local_data["class_customs_description"]) if @query_map.has_key?(:class_customs_description)
-
-            if classification['tariff_records'] && classification['tariff_records'].size > 0
-              if local_data["tariff_records"].blank? || local_data["tariff_records"].size == 0
-                # Since we don't have any local tariff records, mark all the remote ones to be destroyed
-                classification['tariff_records'].each {|tr| tr["_destroy"] = true}
-              else
-                line_numbers = Set.new
-                local_data["tariff_records"].each do |tr|
-                  line_number = tr["hts_line_number"].to_i
-                  remote_tariff = classification['tariff_records'].find {|t| t["hts_line_number"].to_i == line_number}
-
-                  if remote_tariff
-                    # Just use this method so we are sure we're retaining the same data output formatting
-                    new_tariff = new_tariff_data(tr)
-                    line_numbers << new_tariff['hts_line_number']
-                    remote_tariff['hts_line_number'] = new_tariff['hts_line_number']
-                    set_data(remote_tariff, 'hts_hts_1', new_tariff['hts_hts_1']) if @query_map.has_key?(:hts_hts_1)
-                  else
-                    new_tariff = new_tariff_data(tr)
-                    line_numbers << new_tariff['hts_line_number']
-                    classification['tariff_records'] << new_tariff
-                  end
-                end
-
-                # Now go through the remote records and mark to destroy those that were not locally utilized
-                classification['tariff_records'].each {|tr| tr["_destroy"] = true unless line_numbers.include?(tr["hts_line_number"].to_i)}
-              end
-            else
-              insert_tariff_data classification, local_data
-            end
-          else
-            insert_classification_data remote_data, local_data
-          end
-        end
-      else
-        # Add in classification data, since it didn't exist 
-        insert_classification_data remote_data, local_data
+      remote_classifications = remote_data['classifications']
+      if remote_classifications.nil? || remote_classifications.size == 0
+        remote_classifications = []
       end
+
+      local_tariff_isos = Set.new
+
+      Array.wrap(local_data["classifications"]).each do |local_classification|
+        update_classification_data(remote_classifications, local_classification)
+        local_tariff_isos << local_classification['class_cntry_iso'] unless local_classification['class_cntry_iso'].blank?
+      end
+
+      if @sync_classifications
+        # Mark any country not referenced locally to be destroyed..
+        remote_classifications.each do |remote_classification|
+          country = remote_classification['class_cntry_iso']
+          mark_as_destroyed(remote_classification) unless local_tariff_isos.include?(country)
+        end
+      end
+      
+
+      if remote_classifications.length > 0
+        remote_data["classifications"] = remote_classifications
+      end
+
       remote_data
     end
   
-    def insert_classification_data remote_data, local_data
-      return unless local_data['class_cntry_iso']
+    def update_classification_data remote_classifications, local_classification
+      return unless local_classification['class_cntry_iso']
 
-      # We're only expecting a single classification in our local api sync products.  If we have multiple rows of classifications
-      # to send (like if we're sending US / CA for a customer), then that should get split into multiple ApiSyncObjects coming out
-      # of the process_query_result method
-      classification = {'class_cntry_iso' => local_data['class_cntry_iso']}
-      set_data(classification, '*cf_99', local_data["class_customs_description"]) if @query_map.has_key?(:class_customs_description)
-      if remote_data['classifications']
-        remote_data['classifications'] << classification
-      else
-        remote_data['classifications'] = [ classification ]
+      remote_classification = remote_classifications.find {|c| c["class_cntry_iso"] == local_classification["class_cntry_iso"]}
+
+      if remote_classification.nil?
+        remote_classification = {'class_cntry_iso' => local_classification['class_cntry_iso']}
+        remote_classifications << remote_classification
+      end
+      
+      set_data(remote_classification, '*cf_99', local_classification["class_customs_description"]) if @query_map.has_key?(:class_customs_description)
+
+      local_tariff_rows = Set.new
+      Array.wrap(local_classification['tariff_records']).each do |local_tariff|
+        next unless local_tariff["hts_line_number"]
+        update_tariff_data remote_classification, local_tariff
+        local_tariff_rows << local_tariff["hts_line_number"].to_i
       end
 
-      insert_tariff_data classification, local_data
-    end
-
-    def insert_tariff_data remote_classification_hash, local_data
-      if local_data['tariff_records']
-        tariff_records = []
-        remote_classification_hash['tariff_records'] = tariff_records
-
-        local_data['tariff_records'].each do |tr|
-          tariff_records << new_tariff_data(tr)
-        end
+      # destroy any remote tariff rows that were not locally referenced.
+      Array.wrap(remote_classification["tariff_records"]).each do |tr|
+        mark_as_destroyed(tr) unless local_tariff_rows.include?(tr["hts_line_number"].to_i)
       end
+      nil
     end
 
-    def new_tariff_data local_data
-      # Use hts format so we're retaining the same data formatting in and out
-      # otherwise we'll break the local fingerprinting being done
-      tariff = {"hts_line_number" => local_data['hts_line_number'].to_i}
-      tariff['hts_hts_1'] = local_data["hts_hts_1"].hts_format if @query_map.has_key?(:hts_hts_1)
+    def update_tariff_data remote_classification, local_tariff
+      remote_tariff = Array.wrap(remote_classification['tariff_records']).find {|t| t["hts_line_number"].to_i == local_tariff["hts_line_number"].to_i}
+      if remote_tariff.nil?
+        remote_tariff = {"hts_line_number" => local_tariff['hts_line_number'].to_i}
+        remote_classification["tariff_records"] ||= []
+        remote_classification["tariff_records"] << remote_tariff
+      end
 
-      tariff
+      remote_tariff['hts_hts_1'] = local_tariff["hts_hts_1"].hts_format if @query_map.has_key?(:hts_hts_1)
+      nil
     end
 
     def set_data remote, key, local_data
@@ -275,6 +291,14 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
         remote[key] = local_data
       end
 
+    end
+
+    def mark_as_destroyed obj
+      obj["_destroy"] = true
+    end
+
+    def api_client
+      @api_client
     end
 
 end; end; end;

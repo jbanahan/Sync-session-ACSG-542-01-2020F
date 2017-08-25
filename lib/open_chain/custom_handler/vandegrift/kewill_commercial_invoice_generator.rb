@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
         doc, shipments = build_base_xml
         generate_entry_xml(shipments, entry, add_entry_info: false)
 
-        Tempfile.open(["CI_Load_#{entry.file_number}_", ".xml"]) do |file|
+        Tempfile.open(["CI_Load_#{entry.file_number.to_s.gsub("/", "_")}_", ".xml"]) do |file|
           file.binmode
           write_xml doc, file
           file.rewind

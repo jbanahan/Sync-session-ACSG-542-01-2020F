@@ -11,43 +11,77 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
   end
 
   def process_query_result row, opts
-    
+     @previous_products ||= {products: [], id: nil}
+
     # UA stores their data at the style level, but UA's unique product identifier (from an entry standpoint) 
     # is Style + Color.  So, split out the color value and send every style + color combo to VFI Track.
     colors = row[5].to_s.split(/\s*\r?\n\s*/)
 
     api_objects = []
-    sent_codes = Set.new
 
+    if !@previous_products[:id].nil? && row[0] != @previous_products[:id]
+      api_objects.push *drain_previous_products
+    end
+
+    color_count = 0
     colors.each do |color|
       unique_identifier = "#{row[1]}-#{color}"
-      next if color.blank? || sent_codes.include?(unique_identifier)
+      next if color.blank?
 
-      product = {}
-      product['id'] = row[0]
-      product['prod_imp_syscode'] = vfitrack_importer_syscode(nil)
-      product['prod_uid'] = unique_identifier
-      product["prod_part_number"] = unique_identifier
-      product['class_cntry_iso'] = row[2]
-      product['class_customs_description'] = row[6] if row[2] == "CA"
+      color_count += 1
+
+      @previous_products[:id] ||= row[0]
+
+      product = @previous_products[:products].find {|p| p["prod_uid"] == unique_identifier}
+      if product.nil?
+        product = {}
+        product['id'] = row[0]
+        product['prod_imp_syscode'] = vfitrack_importer_syscode(nil)
+        product['prod_uid'] = unique_identifier
+        product["prod_part_number"] = unique_identifier
+        @previous_products[:products] << product
+      end
+
+      product["classifications"] ||= []
+
+      classification = product["classifications"].find {|c| c["class_cntry_iso"] == row[2]}
+      if classification.nil?
+        classification = {"class_cntry_iso" => row[2], "tariff_records" => []}
+        product["classifications"] << classification
+      end
+
+      classification["class_customs_description"] = row[6] if row[2] == "CA"
+
       tariff = {}
-      product['tariff_records'] = [tariff]
+      classification["tariff_records"] << tariff
+
       tariff['hts_line_number'] = row[3]
       tariff['hts_hts_1'] = row[4]
-
-      api_objects << ApiSyncObject.new(row[0], product)
-      sent_codes << unique_identifier
     end
 
     # If there's no records to send, then we want to make sure that we still log a sync record against this product 
     # otherwise we'll get a pile-up of records indicating they need syncing but no sync records being built for them.
-    if api_objects.length == 0
+    if color_count == 0
       sr = SyncRecord.where(syncable_id: row[0], syncable_type: syncable_type, trading_partner: sync_code).first_or_create!
       sr.update_attributes! sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute), fingerprint: nil, confirmation_file_name: "No US data to send."
     end
 
+     # If this is the last row from the query, then we need to stop buffering and return everything
+    if opts[:last_result]
+      api_objects.push *drain_previous_products
+    end
 
-    return api_objects
+    api_objects
+  end
+
+  def drain_previous_products
+    api_objects = []
+    @previous_products[:products].each do |p|
+      api_objects << ApiSyncObject.new(@previous_products[:id], p)
+    end
+    @previous_products = {products: [], id: nil}
+
+    api_objects
   end
 
   def query_row_map

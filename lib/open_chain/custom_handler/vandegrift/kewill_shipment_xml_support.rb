@@ -156,8 +156,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "addToMakeAmt", g.number(invoice.add_to_make_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(invoice.add_to_make_amount)
     currency = (invoice.currency.to_s.blank? ? "USD" : invoice.currency)
     add_element(parent, "currency", g.string(currency, 3, pad_string: false))
-    exchange_rate = invoice.exchange_rate.nil? && currency == "USD" ? BigDecimal("100") : invoice.exchange_rate
-    add_element(parent, "exchangeRate", g.number(exchange_rate, 7, decimal_places: 4, strip_decimals: true)) if exchange_rate
+    exchange_rate = invoice.exchange_rate.nil? && currency == "USD" ? BigDecimal("1") : invoice.exchange_rate
+    add_element(parent, "exchangeRate", g.number(exchange_rate, 7, decimal_places: 6, strip_decimals: true).strip) if exchange_rate
 
     # Sum the carton totals from the lines (for some reason qty on invoice has no decimal places)
     add_element(parent, "qty", g.number(lines.inject(BigDecimal("0")) {|sum, line| sum += (nonzero?(line.cartons) ? line.cartons : 0)}, 12, decimal_places: 0, strip_decimals: true, pad_string: false))

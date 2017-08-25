@@ -19,14 +19,33 @@ module OpenChain; module Api; class ApiClient
   }
 
   def initialize endpoint_alias, username = nil, authtoken = nil
+    endpoint_alias = self.class.substitute_endpoint(endpoint_alias)
+
     @endpoint = VALID_ENDPOINTS[endpoint_alias]
     raise ArgumentError, "#{endpoint_alias} is not a valid API endpoint." if @endpoint.blank?
     if username.blank? || authtoken.blank?
-      @username, @authtoken = *ApiClient.default_username_authoken(endpoint_alias)
+      @username, @authtoken = *self.class.default_username_authoken(endpoint_alias)
     else
       @username = username
       @authtoken = authtoken  
     end
+  end
+
+  # This method exists solely to point all aliases at dev when run from dev system and not another system (unless overridden)
+  def self.substitute_endpoint endpoint_alias
+    if !development?
+      return endpoint_alias
+    elsif MasterSetup.get.custom_feature?("Allow Production API Client in Dev")
+      return endpoint_alias
+    else
+      return "dev"
+    end
+  end
+
+  # This is pretty much here solely for testing...I don't like mocking
+  # out the rails env
+  def self.development?
+    Rails.env.development?
   end
 
   def self.valid_endpoint? endpoint_alias
@@ -36,7 +55,7 @@ module OpenChain; module Api; class ApiClient
 
   def self.default_username_authoken end_point
     config = get_config
-    endpoint_alias = ApiClient.valid_endpoint? end_point
+    endpoint_alias = valid_endpoint? end_point
     user_authtoken = config[endpoint_alias]
 
     username = nil
@@ -58,8 +77,8 @@ module OpenChain; module Api; class ApiClient
   end
   private_class_method :get_config
 
-  def mf_uid_list_to_param uids
-    uids.blank? ? {} : {"mf_uids" => uids.inject(""){|i, uid| i += "#{uid.to_s},"}[0..-2]}
+  def self.not_found_error? e
+    e.is_a?(OpenChain::Api::ApiClient::ApiError) && e.http_status.to_s == "404"
   end
 
   def get path, parameters = {}
@@ -168,17 +187,6 @@ module OpenChain; module Api; class ApiClient
       end
 
       r
-    end
-
-    def not_found_error? e
-      e.is_a?(OpenChain::Api::ApiClient::ApiError) && e.http_status.to_s == "404"
-    end
-
-    def extract_id_from_params params, entity_name
-      entity = params[entity_name] ? params[entity_name] : params[entity_name.to_sym]
-      id = entity.try(:[], 'id') ? entity['id'] : entity.try(:[], :id)
-      raise "All API update calls require an 'id' in the attribute hash." unless id
-      id
     end
 
   private 

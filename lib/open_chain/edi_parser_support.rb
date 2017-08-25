@@ -219,6 +219,24 @@ module OpenChain; module EdiParserSupport
     found
   end
 
+  # Returns all segments up to (but not including) the given terminator segment type...generally this 
+  # something you'll probably use to extract all "header" level type segments.
+  # So, for an 850, you'd call the following to get only header level data: 
+  # all_segments_up_to all_segments, "PO1"
+  #
+  def all_segments_up_to segments, stop_segment
+    stop_segments = Set.new(Array.wrap(stop_segment))
+
+    collected = []
+    Array.wrap(segments).each do |seg|
+      break if stop_segments.include? seg.segment_type
+
+      collected << seg
+    end
+
+    collected
+  end
+
   def extract_loop segments, sub_element_list, stop_segments: nil
     sub_element_list = Array.wrap(sub_element_list)
     raise ArgumentError, "At least one loop sub-element must be passed." if sub_element_list.length == 0

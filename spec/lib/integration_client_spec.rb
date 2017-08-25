@@ -214,6 +214,24 @@ describe OpenChain::IntegrationClientCommandProcessor do
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/zym_ack.a.csv','remote_path'=>'12345'}
         expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
       end
+
+      it "handles ann 850 files" do
+        expect(master_setup).to receive(:custom_feature?).with('Ann Brokerage Feeds').and_return(true)
+
+        expect(OpenChain::CustomHandler::AnnInc::AnnOrder850Parser).to receive(:delay).and_return OpenChain::CustomHandler::AnnInc::AnnOrder850Parser
+        expect(OpenChain::CustomHandler::AnnInc::AnnOrder850Parser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_ann_850/file.edi','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+
+      it "handles ann invoice xml files" do
+        expect(master_setup).to receive(:custom_feature?).with('Ann Brokerage Feeds').and_return(true)
+
+        expect(OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser).to receive(:delay).and_return OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser
+        expect(OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_ann_invoice/file.xml','remote_path'=>'12345'}
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
     end
     context "eddie_bauer" do
       before :each do

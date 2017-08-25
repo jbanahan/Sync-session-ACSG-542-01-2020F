@@ -54,12 +54,12 @@ module OpenChain; module CustomHandler; class ApiSyncClient
   protected 
     def sync_via_query
       results = nil
+      loop_count = 0
       # Just keep trying to sync while there are results remaining (and we acutally sent 
       # at least one valid result), this way the query can define a limit or not and we 
       # don't care about it either way.
       begin
         results = ActiveRecord::Base.connection.execute query
-
         num_results = results.size
         result_ids = nil
         results.each_with_index do |cols, x|
@@ -71,13 +71,15 @@ module OpenChain; module CustomHandler; class ApiSyncClient
             result_ids.merge(Array.wrap(sync_objects).map(&:syncable_id))
             yield sync_objects
           end
-
         end
-      end while results.size > 0 && had_valid_result_data?(result_ids)
+        loop_count += 1
+
+      end while results.size > 0 && had_valid_result_data?(result_ids) && continue_looping?(loop_count)
       
     end
 
     def sync_via_objects
+      loop_count = 0
       max_results = max_object_results
       begin
         count = 0
@@ -92,7 +94,8 @@ module OpenChain; module CustomHandler; class ApiSyncClient
             yield sync_objects
           end
         end
-      end while count == max_results && had_valid_result_data?(result_ids)
+        loop_count += 1
+      end while count == max_results && had_valid_result_data?(result_ids) && continue_looping?(loop_count)
     end
 
     def do_sync sync_object
@@ -161,6 +164,13 @@ module OpenChain; module CustomHandler; class ApiSyncClient
 
     def max_object_results
       500
+    end
+
+    # This method can be used to prevent the loop forever until no results are returned aspect of the
+    # base sync client. Useful for cases where you may only be syncing specific values (like if a custom where
+    # clause can be utilized from the console)
+    def continue_looping? loop_count
+      return true
     end
 
   private

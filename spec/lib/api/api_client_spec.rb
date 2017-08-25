@@ -34,16 +34,19 @@ describe OpenChain::Api::ApiClient do
       expect(c.username).to eq "user"
       expect(c.authtoken).to eq "token"
     end
-  end
 
-  describe "mf_uid_list_to_param" do 
-    it "converts an array of model field uid symbols to a request parameter hash" do
-      param = @c.mf_uid_list_to_param [:a, :b, :c, :d]
-      expect(param['mf_uids']).to eq "a,b,c,d"
+    it "subsitutes dev endpoint on development systems" do
+      expect(described_class).to receive(:development?).and_return true
+      c = OpenChain::Api::ApiClient.new 'test', 'test', 'test'
+      expect(c.endpoint).to eq "http://localhost:3000"
     end
 
-    it "handles nil uid lists" do
-      expect(@c.mf_uid_list_to_param(nil)).to eq({})
+    it "does not substitute endpoint if custom feature is enabled" do
+      expect(described_class).to receive(:development?).and_return true
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("Allow Production API Client in Dev").and_return true
+      c = OpenChain::Api::ApiClient.new 'test', 'test', 'test'
+      expect(c.endpoint).to eq "http://www.notadomain.com"
     end
   end
 
@@ -179,6 +182,22 @@ describe OpenChain::Api::ApiClient do
 
         json = @c.get "/path/file.json", {"mf uids" => "1 3"}
         expect(json['ok']).to eq("ok")
+    end
+  end
+
+  describe "not_found_error?" do
+    subject { described_class }
+
+    let (:error_404) {
+      OpenChain::Api::ApiClient::ApiError.new 404, {}
+    }
+
+    it "identifies a 404 error from the API" do
+      expect(subject.not_found_error? error_404).to eq true
+    end
+
+    it "identifies other errors as not not found errors" do
+      expect(subject.not_found_error? StandardError.new('message')).to eq false
     end
   end
 end

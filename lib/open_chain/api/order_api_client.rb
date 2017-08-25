@@ -1,29 +1,15 @@
 require 'open_chain/api/api_client'
+require 'open_chain/api/core_api_actions'
 
 module OpenChain; module Api; class OrderApiClient < ApiClient
+  include OpenChain::Api::CoreApiActions
+
+  def core_module
+    CoreModule::ORDER
+  end
 
   def find_by_order_number order_number, mf_uids
-    get("/orders/by_order_number", {order_number: order_number}.merge(mf_uid_list_to_param(mf_uids)))
-  rescue => e
-    if not_found_error?(e)
-      return {'order' => nil}
-    else
-      raise e
-    end
-  end
-
-  def show id, mf_uids
-    get("/orders/#{id}", mf_uid_list_to_param(mf_uids))
-  end
-
-  def create order_hash
-    post("/orders", order_hash)
-  end
-
-  def update order_hash
-    id = extract_id_from_params order_hash, 'order'
-
-    put("/orders/#{id}", order_hash)
+    get_request_wrapper { get("/#{module_path}/by_order_number", {order_number: order_number}.merge(mf_uid_list_to_param(mf_uids))) }
   end
 
 end; end; end
