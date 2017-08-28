@@ -129,9 +129,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
       p.freeze_custom_values
 
       # RL wants the MSL system to receive product level data, BUT the MSL system can't receive data if it doesn't have a country code, SO
-      # we're defaulting to CN when there is no classification for the product.
+      # we're defaulting to IT when there is no classification for the product.
 
-      file = [p.unique_identifier, (iso.presence || "CN"), mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
+      file = [p.unique_identifier, (iso.presence || "IT"), mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
       file.push *get_custom_values(p, :length_cm, :width_cm, :height_cm)
 
       if skip_fiber_fields? p
