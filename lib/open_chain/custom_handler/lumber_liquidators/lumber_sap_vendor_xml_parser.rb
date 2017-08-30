@@ -1,6 +1,8 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
+require 'open_chain/mutable_boolean'
+
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapVendorXmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
@@ -30,39 +32,50 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     sap_code = et(base,'LIFNR')
     raise "Missing SAP Number. All vendors must have SAP Number at XPATH //E1LFA1M/LIFNR" if sap_code.blank?
     name = et(base,'NAME1')
-    ActiveRecord::Base.transaction do
-      c = Company.where(system_code:sap_code).first_or_create!(name:name,vendor:true,show_business_rules:true)
+
+    c = nil
+    changed = MutableBoolean.new false
+
+    Lock.acquire("Company-#{sap_code}") do
+      c = Company.where(system_code:sap_code).first_or_initialize(name: name, show_business_rules:true)
+      if !c.persisted?
+        c.save!
+        changed.value = true
+      end
 
       master = Company.find_by_master(true)
       master.linked_companies << c unless master.linked_companies.include?(c)
+    end
 
-      sap_num_cv = c.get_custom_value(@cdefs[:cmp_sap_company])
+    Lock.with_lock_retry(c) do
+      c.vendor = true
+      c.name = name
 
-      attributes_to_update = {}
-      attributes_to_update[:vendor] = true unless c.vendor?
-      attributes_to_update[:name] = name unless c.name == name
-      c.update_attributes(attributes_to_update) unless attributes_to_update.empty?
+      set_custom_value(c, :cmp_sap_company, sap_code, changed)
 
-      if sap_num_cv.value!=sap_code
-        sap_num_cv.value = sap_code
-        sap_num_cv.save!
-        c.touch
+      update_address c, sap_code, base, changed
+      lock_or_unlock_vendor c, base, changed
+
+      if c.changed?
+        changed.value = true
+        c.save!
       end
 
-      update_address c, sap_code, base
-      lock_or_unlock_vendor c, base
-
-      c.create_snapshot User.integration, nil, "System Job: SAP Vendor XML Parser"
+      if changed.value
+        c.touch
+        c.create_snapshot User.integration, nil, "System Job: SAP Vendor XML Parser"
+      end
     end
   end
 
   private
-  def lock_or_unlock_vendor company, el
+
+  def lock_or_unlock_vendor company, el, changed
     lock_code = et(el,'SPERM')
     is_locked = lock_code=='X'
 
     # we always write the SAP value to the SAP Blocked Status field for tracking purposes
-    company.update_custom_value!(@cdefs[:cmp_sap_blocked_status],is_locked)
+    set_custom_value(company, :cmp_sap_blocked_status, is_locked, changed)
 
     # we only set the actual PO Blocked field if the vendor is Blocked
     # per LL SOW #2.36, we don't want to clear the blocked status if it's cleared in SAP since
@@ -70,25 +83,38 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     #
     # https://docs.google.com/document/d/1PX80pIkNiCnNRFtCaGrVhKVi5ubdI30GgqlnzDDU5LA/edit#heading=h.sqrtf262xrei
     if is_locked
-      company.update_custom_value!(@cdefs[:cmp_po_blocked],true)
+      set_custom_value(company, :cmp_po_blocked, true, changed)
     end
   end
-  def update_address company, sap_code, el
+
+  def update_address company, sap_code, el, changed
     add_sys_code = "#{sap_code}-CORP"
-    add = company.addresses.where(system_code:add_sys_code).first_or_create!(name:'Corporate')
+    add = company.addresses.where(system_code:add_sys_code).first_or_initialize(name:'Corporate')
+    changed.value = true unless add.persisted?
+
     country_iso = et(el,'LAND1')
     country = Country.find_by_iso_code country_iso
     raise "Invalid country code #{country_iso}." unless country
-    attributes_to_update = {}
-    add_if_change attributes_to_update, add.line_1, et(el,'STRAS'), :line_1
-    add_if_change attributes_to_update, add.city, et(el,'ORT01'), :city
-    add_if_change attributes_to_update, add.state, et(el,'REGIO'), :state
-    add_if_change attributes_to_update, add.postal_code, et(el,'PSTLZ'), :postal_code
-    add_if_change attributes_to_update, add.country_id, country.id, :country_id
-    add.update_attributes(attributes_to_update) unless attributes_to_update.empty?
+
+    add.line_1 = et(el,'STRAS')
+    add.city = et(el,'ORT01')
+    add.state = et(el,'REGIO')
+    add.postal_code = et(el,'PSTLZ')
+    add.country_id = country.id
+
+    if add.changed?
+      add.save!
+      changed.value = true
+    end
   end
 
-  def add_if_change hash, old_val, new_val, sym
-    hash[sym] = new_val unless old_val == new_val
+  def set_custom_value obj, cdef_uid, value, changed
+    cd = @cdefs[cdef_uid]
+    existing = obj.custom_value(cd)
+    if existing != value
+      obj.update_custom_value! cd, value
+      changed.value = true
+    end
   end
+
 end; end; end; end
