@@ -762,6 +762,8 @@
             if chainSearchOperators.isRelative rScope.crit.datatype, rScope.crit.operator
               v_str = "<input type='text' ng-model='crit.value' class='form-control' />"
               dateStepper = true
+            else if chainSearchOperators.isNoValue rScope.crit.datatype, rScope.crit.operator
+              v_str = ""
             else if rScope.modelFields && chainSearchOperators.isFieldRelative rScope.crit.datatype, rScope.crit.operator
               # Angular doesn't appear to have a way to select the first option from the select box as a default, so using a new scope
               # property and setting the crit.value ahead of time is the only way to not have a blank option value show in the select box
@@ -847,6 +849,10 @@
 
       return compatible
 
+    isNoValue: (datatype, operator) ->
+      op = @.findOperator datatype, operator
+      if op then op.noValue else false
+
 
     ops: {
       date: [
@@ -863,8 +869,13 @@
         {operator: 'bmf', label: 'Before _ Months From Now', relative: true}
         {operator: 'amf', label: 'After _ Months From Now', relative: true}
         {operator: 'pm', label: 'Previous _ Months', relative: true}
-        {operator: 'null', label: 'Is Empty'}
-        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'cmo', label: 'Current Month', noValue: true}
+        {operator: 'pqu', label: 'Previous _ Quarters', relative: true}
+        {operator: 'cqu', label: 'Current Quarter', noValue: true}
+        {operator: 'pfcy', label: 'Previous _ Full Calendar Years', relative: true}
+        {operator: 'cytd', label: 'Current Year To Date', noValue: true}
+        {operator: 'null', label: 'Is Empty', noValue: true}
+        {operator: 'notnull', label: 'Is Not Empty', noValue: true}
         {operator: 'afld', label: 'After (Field)', fieldRelative: true}
         {operator: 'bfld', label: 'Before (Field)', fieldRelative: true}
         {operator: 'dt_regexp', label: 'Regex'}
@@ -884,8 +895,13 @@
         {operator: 'bmf', label: 'Before _ Months From Now', relative: true}
         {operator: 'amf', label: 'After _ Months From Now', relative: true}
         {operator: 'pm', label: 'Previous _ Months', relative: true}
-        {operator: 'null', label: 'Is Empty'}
-        {operator: 'notnull', label: 'Is Not Empty'}
+        {operator: 'cmo', label: 'Current Month', noValue: true}
+        {operator: 'pqu', label: 'Previous _ Quarters', relative: true}
+        {operator: 'cqu', label: 'Current Quarter', noValue: true}
+        {operator: 'pfcy', label: 'Previous _ Full Calendar Years', relative: true}
+        {operator: 'cytd', label: 'Current Year To Date', noValue: true}
+        {operator: 'null', label: 'Is Empty', noValue: true}
+        {operator: 'notnull', label: 'Is Not Empty', noValue: true}
         {operator: 'afld', label: 'After (Field)', fieldRelative: true}
         {operator: 'bfld', label: 'Before (Field)', fieldRelative: true}
         {operator: 'dt_regexp', label: 'Regex'}

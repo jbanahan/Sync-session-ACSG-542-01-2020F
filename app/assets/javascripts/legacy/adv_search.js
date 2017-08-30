@@ -111,6 +111,11 @@ var OCSearch = (function() {
       amf:relDateVal,
       bma:relDateVal,
       bmf:relDateVal,
+      cmo:function(f) {f.hide();},
+      pqu:relDateVal,
+      cqu:function(f) {f.hide();},
+      pfcy:relDateVal,
+      cytd:function(f) {f.hide();},
       'null':function(f) {f.hide();},
       'notnull':function(f) {f.hide()}
     }
@@ -157,6 +162,11 @@ var OCSearch = (function() {
         h += "<option value='bmf'>Before _ Months From Now</option>";
         h += "<option value='amf'>After _ Months From Now</option>";
         h += "<option value='pm'>Previous _ Months</option>";
+        h += "<option value='cmo'>Current Month</option>";
+        h += "<option value='pqu'>Previous _ Quarters</option>";
+        h += "<option value='cqu'>Current Quarter</option>";
+        h += "<option value='pfcy'>Previous _ Full Calendar Years</option>";
+        h += "<option value='cytd'>Current Year To Date</option>";
         h += "<option value='dt_regexp'>Regex</option>";
         h += "<option value='dt_notregexp'>Not Regex</option>";
       }

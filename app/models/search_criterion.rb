@@ -205,6 +205,45 @@ class SearchCriterion < ActiveRecord::Base
     end
   end
 
+  # Quarters are defined simply: 1-4, representing Jan-Mar, Apr-Jun, Jul-Sep and Oct-Dec.
+  # This method gets the number representing the current quarter.
+  def self.get_quarter_number d
+    ((d.month - 1) / 3) + 1
+  end
+
+  # Determines the starting date of a quarter.  Providing quarter 3 for 2017 would, for example, return July 1, 2017.
+  def self.get_quarter_start_date quarter, year
+    Date.new(year, ((quarter - 1) * 3) + 1, 1)
+  end
+
+  # Goes back in time by the specified number of quarters, returning the start date to that quarter.
+  # For example, if this method was called against August 4, 2017 (quarter 3) with a quarter count of 4, it would
+  # return July 1, 2016: the beginning of the summer quarter 4 quarters (a year) prior.  If a negative quarter_count
+  # is provided, the method works in the opposite direction, looking into a later quarter.
+  def self.get_previous_quarter_start_date d, quarter_count
+    current_quarter = SearchCriterion.get_quarter_number(d)
+    start_quarter = (current_quarter - quarter_count.remainder(4)).abs
+    # start_quarter = (current_quarter - (quarter_count % 4)).abs
+    if start_quarter == 0
+      start_quarter = 4
+    elsif start_quarter == 5
+      start_quarter = 1
+    end
+    years_spanned = (quarter_count.abs / 4)
+    if ((quarter_count >= 0 && start_quarter > current_quarter) || (quarter_count < 0 && start_quarter < current_quarter))
+      years_spanned += 1
+    end
+    past_adjuster = quarter_count >= 0 ? 1 : -1
+    SearchCriterion.get_quarter_start_date(start_quarter, d.year - (years_spanned * past_adjuster))
+  end
+
+  # Looks forward from a date by the specified number of quarters, returning the start date to that quarter.
+  # For example, if this method was called against August 4, 2017 (quarter 3) with a quarter count of 4, it would
+  # return July 1, 2018: the beginning of the summer quarter 4 quarters (a year) later.
+  def self.get_next_quarter_start_date d, quarter_count
+    get_previous_quarter_start_date d, -quarter_count
+  end
+
   private
 
   def field_relative?
@@ -260,7 +299,10 @@ class SearchCriterion < ActiveRecord::Base
     # If we include empty values, Returns true for nil, blank strings (ie. only whitespace), or anything that equals zero
     return true if (self.include_empty && ((value_to_test.blank? && value_to_test != false) || value_to_test == 0))
     #all of these operators should return false if value_to_test is nil
-    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf"].include?(self.operator)
+    
+    # Generally speaking, any operator that is meant to compare a database DATE value to something else, where the
+    # database date value could be nil, should be included in this array and return false.
+    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf","cmo","pqu","cqu","pfcy","cytd"].include?(self.operator)
 
     # Does the given value pass the criterion test (this is primarily for boolean fields)
     # Since we're considering blank strings as empty, we should also consider 0 (ie. blank number) as empty as well
@@ -356,6 +398,21 @@ class SearchCriterion < ActiveRecord::Base
         return vt >= ((Time.zone.now + self_val.months).end_of_month + 1.day).at_midnight
       elsif self.operator == "bmf"
         return vt < (Time.zone.now + self_val.months).beginning_of_month.at_midnight
+      elsif self.operator == "cmo"
+        # Includes items that may be in the future, provided that they occur within the current month.
+        return vt >= Time.zone.now.beginning_of_month && vt <= Time.zone.now.end_of_month
+      elsif self.operator == "pqu"
+        # Excludes items from the current quarter.
+        return vt >= SearchCriterion.get_previous_quarter_start_date(Time.now, self_val) && vt < SearchCriterion.get_quarter_start_date(SearchCriterion.get_quarter_number(Time.now), Time.now.year)
+      elsif self.operator == "cqu"
+        # Includes items that may be in the future, provided that they occur within the current quarter.
+        return vt >= SearchCriterion.get_quarter_start_date(SearchCriterion.get_quarter_number(Time.now), Time.now.year) && vt < SearchCriterion.get_next_quarter_start_date(Time.now, 1)
+      elsif self.operator == "pfcy"
+        # Excludes items from the current calendar year.
+        return vt >= Date.new(self_val.years.ago.year, 1, 1) && vt < Date.new(Time.now.year, 1, 1)
+      elsif self.operator == "cytd"
+        # Excludes items from the current year occurring after the current date.  This is labeled specifically as "year to date".
+        return vt >= Date.new(Time.now.year, 1, 1) && vt <= Time.now
       end
     elsif d == :boolean
       # The screen does't use 'eq', 'nq' for boolean types, it uses 'null', 'notnull' (evaluated above)

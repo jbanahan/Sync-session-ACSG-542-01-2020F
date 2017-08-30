@@ -747,9 +747,281 @@ describe SearchCriterion do
       end
 
       it "does not find product created before 1 month from now" do
-        @product.update_column :created_at,  (Time.zone.now.beginning_of_month + 1.month).at_midnight
+        @product.update_column :created_at, (Time.zone.now.beginning_of_month + 1.month).at_midnight
         expect(@sc.apply(Product.where("1=1")).all).to_not include @product
       end
+    end
+  end
+
+  context "Current Month" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"cmo")
+    end
+
+    context "test?" do
+      it "accepts product created during this month" do
+        @product.created_at = 1.second.ago
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "does not accept product created last month" do
+        @product.created_at = 1.month.ago
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product that will be created next month" do
+        @product.created_at = 1.month.from_now
+        expect(@sc.test?(@product)).to be_falsey
+      end
+    end
+
+    context "apply" do
+      it "finds product created during this month" do
+        @product.update_column :created_at, 1.second.ago
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created last month" do
+        @product.update_column :created_at, 1.month.ago
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product that will be created next month" do
+        @product.update_column :created_at, 1.month.from_now
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "Previous _ Quarters" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pqu",:value=>2)
+    end
+
+    context "test?" do
+      it "accepts product created during the previous quarter" do
+        @product.created_at = SearchCriterion.get_previous_quarter_start_date(Time.now, 1)
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "accepts product created during the quarter preceding the previous quarter" do
+        @product.created_at = SearchCriterion.get_previous_quarter_start_date(Time.now, 2)
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "does not accept product created during the current quarter" do
+        @product.created_at = 1.second.ago
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product created during the quarter preceding the previous two quarters" do
+        @product.created_at = SearchCriterion.get_previous_quarter_start_date(Time.now, 3)
+        expect(@sc.test?(@product)).to be_falsey
+      end
+    end
+
+    context "apply" do
+      it "finds product created during the previous quarter" do
+        @product.update_column :created_at, SearchCriterion.get_previous_quarter_start_date(Time.now, 1)
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "finds product created during the quarter preceding the previous quarter" do
+        @product.update_column :created_at, SearchCriterion.get_previous_quarter_start_date(Time.now, 2)
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created during the current quarter" do
+        @product.update_column :created_at, 1.second.ago
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product created during the quarter preceding the previous two quarters" do
+        @product.update_column :created_at, SearchCriterion.get_previous_quarter_start_date(Time.now, 3)
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "Current Quarter" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"cqu")
+    end
+
+    context "test?" do
+      it "accepts product created during this quarter" do
+        @product.created_at = 1.second.ago
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "does not accept product created last quarter" do
+        @product.created_at = (SearchCriterion.get_quarter_start_date(SearchCriterion.get_quarter_number(Time.now), Time.now.year).to_date - 1.day).to_date
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product that will be created during a future quarter" do
+        @product.created_at = SearchCriterion.get_next_quarter_start_date(Time.now, 1)
+        expect(@sc.test?(@product)).to be_falsey
+      end
+    end
+
+    context "apply" do
+      it "finds product created during this quarter" do
+        @product.update_column :created_at, 1.second.ago
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created last quarter" do
+        @product.update_column :created_at, (SearchCriterion.get_quarter_start_date(SearchCriterion.get_quarter_number(Time.now), Time.now.year).to_date - 1.day).to_date
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product that will be created during a future quarter" do
+        @product.update_column :created_at, SearchCriterion.get_next_quarter_start_date(Time.now, 1)
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "Previous _ Full Calendar Years" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pfcy",:value=>2)
+    end
+
+    context "test?" do
+      it "accepts product created during the previous year" do
+        @product.created_at = 1.year.ago
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "accepts product created two years ago" do
+        @product.created_at = 2.years.ago
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "does not accept product created during the current year" do
+        @product.created_at = 1.second.ago
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product created three years ago" do
+        @product.created_at = 3.years.ago
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product that will be created in the future" do
+        @product.created_at = 1.year.from_now
+        expect(@sc.test?(@product)).to be_falsey
+      end
+    end
+
+    context "apply" do
+      it "finds product created during the previous year" do
+        @product.update_column :created_at, 1.year.ago
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "finds product created two years ago" do
+        @product.update_column :created_at, 2.years.ago
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created during the current year" do
+        @product.update_column :created_at, 1.second.ago
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product created three years ago" do
+        @product.update_column :created_at, 3.years.ago
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product that will be created in the future" do
+        @product.update_column :created_at, 1.year.from_now
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "Current Year To Date" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"cytd")
+    end
+
+    context "test?" do
+      it "accepts product created during this year" do
+        @product.created_at = 1.second.ago
+        expect(@sc.test?(@product)).to be_truthy
+      end
+
+      it "does not accept product created last year" do
+        @product.created_at = 1.year.ago
+        expect(@sc.test?(@product)).to be_falsey
+      end
+
+      it "does not accept product that will be created at a later date this year" do
+        @product.created_at = 1.minute.from_now
+        expect(@sc.test?(@product)).to be_falsey
+      end
+    end
+
+    context "apply" do
+      it "finds product created during this year" do
+        @product.update_column :created_at, 1.day.ago
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created last year" do
+        @product.update_column :created_at, 1.year.ago
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+
+      it "does not find product that will be created at a later date this year" do
+        @product.update_column :created_at, 1.minute.from_now
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "get_quarter_number" do
+    it "determines the quarter for a date" do
+      expect(SearchCriterion.get_quarter_number(Date.new(2015, 10, 1))).to eq(4)
+      expect(SearchCriterion.get_quarter_number(Date.new(2017, 2, 5))).to eq(1)
+      expect(SearchCriterion.get_quarter_number(Date.new(2016, 1, 15))).to eq(1)
+      expect(SearchCriterion.get_quarter_number(Date.new(2017, 8, 4))).to eq(3)
+      expect(SearchCriterion.get_quarter_number(Date.new(2017, 5, 13))).to eq(2)
+    end
+  end
+
+  context "get_quarter_start_date" do
+    it "determines the start date of a quarter" do
+      expect(SearchCriterion.get_quarter_start_date(4, 2015)).to eq(Date.new(2015, 10, 1))
+      expect(SearchCriterion.get_quarter_start_date(1, 2017)).to eq(Date.new(2017, 1, 1))
+      expect(SearchCriterion.get_quarter_start_date(1, 2016)).to eq(Date.new(2016, 1, 1))
+      expect(SearchCriterion.get_quarter_start_date(3, 2017)).to eq(Date.new(2017, 7, 1))
+      expect(SearchCriterion.get_quarter_start_date(2, 2017)).to eq(Date.new(2017, 4, 1))
+    end
+  end
+
+  context "get_previous_quarter_start_date" do
+    it "determines the start of a previous quarter" do
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2015, 10, 1), 1)).to eq(Date.new(2015, 7, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 2, 5), 1)).to eq(Date.new(2016, 10, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2016, 1, 15), 3)).to eq(Date.new(2015, 4, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 8, 4), 4)).to eq(Date.new(2016, 7, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 8, 4), 8)).to eq(Date.new(2015, 7, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 5, 13), 1)).to eq(Date.new(2017, 1, 1))
+    end
+  end
+
+  context "get_next_quarter_start_date" do
+    it "determines the start of a following quarter" do
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2015, 10, 1), 1)).to eq(Date.new(2016, 1, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 2, 5), 1)).to eq(Date.new(2017, 4, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2016, 1, 15), 3)).to eq(Date.new(2016, 10, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 8, 4), 4)).to eq(Date.new(2018, 7, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 8, 4), 8)).to eq(Date.new(2019, 7, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 5, 13), 1)).to eq(Date.new(2017, 7, 1))
     end
   end
 
@@ -837,7 +1109,7 @@ describe SearchCriterion do
 
     it "should return false for nil values for comparison operators" do
       ent = Entry.new
-      ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf"].each do |op|
+      ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf","cmo","pqu","cqu","pfcy","cytd"].each do |op|
         sc = SearchCriterion.new(model_field_uid: :ent_file_logged_date, value:'2016-01-01')
         sc.operator = op
         expect(sc.test?(ent)).to be_falsey
