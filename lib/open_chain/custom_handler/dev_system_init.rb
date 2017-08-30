@@ -13,8 +13,11 @@ module OpenChain; module CustomHandler; class DevSystemInit
   def self.init
     return unless Rails.env.development?
 
-    if MasterSetup.get.custom_feature?("Lumber Custom Views")
+    if MasterSetup.get.custom_feature?("Act Like Lumber")
+      # I'm purposefully not adding the change comparators, etc...those are easy to test in isolation...these are not
       OpenChain::CustomHandler::CustomViewSelector.register_handler OpenChain::CustomHandler::LumberLiquidators::LumberViewSelector
+      OpenChain::OrderAcceptanceRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance
+      OpenChain::OrderBookingRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking
     end
 
     register_change_comparators

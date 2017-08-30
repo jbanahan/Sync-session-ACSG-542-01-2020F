@@ -35,6 +35,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     end
     o
   end
+  let! (:group) { Group.use_system_group("ORDER_REJECTED_EMAIL", name: "Order Rejected Email") }
 
   describe "parse_dom" do
     before :each do
@@ -154,11 +155,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
 
     context "updates to booked" do
+      let!(:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("Production").and_return true
+        ms
+      }
       let :prep_mailer do
         m = double('mail')
         expect(m).to receive(:deliver!)
         expect(OpenMailer).to receive(:send_simple_html).with(
-          'll-support@vandegriftinc.com',
+          array_including(['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com', group]),
           "Order 4700000325 XML rejected.",
           /Order 4700000325 was rejected/,
           [instance_of(Tempfile)]
@@ -215,11 +221,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     end
 
     context "updates to shipped" do
+      let!(:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("Production").and_return true
+        ms
+      }
       let :prep_mailer do
         m = double('mail')
         expect(m).to receive(:deliver!)
         expect(OpenMailer).to receive(:send_simple_html).with(
-          'll-support@vandegriftinc.com',
+          array_including(['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com', group]),
           "Order 4700000325 XML rejected.",
           /Order 4700000325 was rejected/,
           [instance_of(Tempfile)]

@@ -66,6 +66,7 @@ OpenChain::Application.routes.draw do
         end
         collection do
           post 'booking_from_order/:order_id' => 'shipments#create_booking_from_order'
+          get 'open_bookings' => "shipments#open_bookings"
         end
       end
       resources :fields, only: [:index]

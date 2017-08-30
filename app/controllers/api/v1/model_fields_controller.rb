@@ -24,7 +24,6 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
   def index
     cu = current_user
     text_to_render = Rails.cache.fetch("Api::V1::ModelFields#index-#{ModelField.last_loaded}-#{cu.id}-#{cu.updated_at.to_i}") do
-      validator_rules = Hash[FieldValidatorRule.all.map{|fvr| [fvr.model_field_uid.to_sym, fvr]}]
       h = {}
       h['recordTypes'] = []
       h['fields'] = []
@@ -40,13 +39,14 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
           mf_h['select_options'] = select_opts
           mf_h['autocomplete'] = mf.autocomplete unless mf.autocomplete.blank?
           mf_h['can_edit'] = mf.can_edit?(cu)
-          fvr = validator_rules[mf.uid.to_sym]
+          fvr = mf.field_validator_rule
           if fvr
-            mf_h['remote_validate'] = true
-            if fvr.one_of_array.length > 0
+            mf_h['remote_validate'] = fvr.requires_remote_validation?
+            select_options = fvr.one_of_array
+            if Array.wrap(select_options).length > 0
               #clobber the hard coded options with the customer configured ones if they both exist.
               #This is on purpose - BSG 2015-09-16
-              mf_h['select_options'] = fvr.one_of_array.collect {|a| [a,a]} #api expects 2 dimensional array
+              mf_h['select_options'] = select_options.map {|a| [a,a]} #api expects 2 dimensional array
             end
           end
           if mf.custom?

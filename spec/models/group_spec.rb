@@ -66,4 +66,34 @@ describe Group do
       expect(found.name).to eq "Name"
     end
   end
+
+  describe "user_emails" do
+    let (:group) { Group.use_system_group "TEST", name: "Test" }
+    let! (:user_1) { 
+      u = Factory(:user, email: "me@there.com")
+      group.users << u
+      u
+    }
+
+    let! (:user_2) { 
+      u = Factory(:user, email: "you@there.com")
+      group.users << u
+      u
+    }
+
+    it "returns all users emails addresses that are part of the group" do
+      emails = group.user_emails
+      expect(emails.length).to eq 2
+      expect(emails).to include "me@there.com"
+      expect(emails).to include "you@there.com"
+    end
+
+    it "does not return any blank emails" do
+      user_1.update_attributes! email: ""
+      emails = group.user_emails
+      
+      expect(emails.length).to eq 1
+      expect(emails).to include "you@there.com"
+    end
+  end
 end

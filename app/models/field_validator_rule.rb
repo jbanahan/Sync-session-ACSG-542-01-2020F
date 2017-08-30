@@ -24,6 +24,11 @@ class FieldValidatorRule < ActiveRecord::Base
     r.nil? ? [] : r
   end
 
+  def requires_remote_validation?
+    [required?, greater_than, less_than, more_than_ago, less_than_from_now, greater_than_date, 
+      less_than_date, regex, starts_with, ends_with, contains, one_of, minimum_length, maximum_length].any? {|v| !v.blank? }
+  end
+
   #validates the given base object based on the rules defined in the FieldValidatorRule instance.
   #The base_object should be an instance of the class backing the CoreModule set in the field validator
   #For example, if the FieldValidator's module_type is Product, then you should pass in a Product object
@@ -127,8 +132,10 @@ class FieldValidatorRule < ActiveRecord::Base
     out[:read_only] = "Read Only: #{read_only}" unless read_only.blank?
     out[:required] = "Required: #{required}" unless required.blank?
     out[:disabled] = "Disabled For All Users: #{disabled}" unless disabled.blank?
+    out[:allow_everyone_to_view] = "Allow Everyone To View: #{allow_everyone_to_view}" unless allow_everyone_to_view.blank?
     out[:can_view_groups] = "Groups That Can View Field: #{can_view_groups.gsub(/\n/, ", ")}" unless can_view_groups.blank?
     out[:can_edit_groups] = "Groups That Can Edit Field: #{can_edit_groups.gsub(/\n/, ", ")}" unless can_edit_groups.blank?
+    out[:can_mass_edit_groups] = "Groups That Can Mass Edit Field: #{can_mass_edit_groups.gsub(/\n/, ", ")}" unless can_mass_edit_groups.blank?
     #decimal/integer
     out[:greater_than] = "Greater Than #{greater_than}" unless greater_than.blank?
     out[:less_than] = "Less Than #{less_than}" unless less_than.blank?

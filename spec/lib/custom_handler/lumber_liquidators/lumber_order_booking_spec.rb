@@ -1,6 +1,14 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
+  subject {described_class}
+
+  let (:booking_unlocked_date) { 
+      Class.new {
+        include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
+        }.prep_custom_definitions([:shp_booking_unlocked_date])[:shp_booking_unlocked_date]
+    }
+
   describe 'registry' do
     it "should be able to be registered" do
       expect{OpenChain::OrderBookingRegistry.register(described_class)}.to_not raise_error
@@ -26,53 +34,54 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       o
     end
     it "should return true if all conditions are met" do
-      expect(described_class.can_book?(order,user)).to be_truthy
+      expect(subject.can_book?(order,user)).to be_truthy
     end
     it "should return false if order is already on a booking" do
       o = order
       expect(o).to receive(:booking_lines_by_order_line).and_return ['x']
-      expect(described_class.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o,user)).to be_falsey
     end
     it "should return false if user cannot edit shipments" do
       u = user
       expect(u).to receive(:edit_shipments?).and_return false
-      expect(described_class.can_book?(order,u)).to be_falsey
+      expect(subject.can_book?(order,u)).to be_falsey
     end
     it "should return false if user's company is not order's vendor" do
       c2 = Company.new
       c2.id = 100
       o = order
       o.vendor = c2
-      expect(described_class.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o,user)).to be_falsey
     end
     it "should return false if order has failed business rules" do
       o = order
       expect(o).to receive(:business_rules_state).and_return 'Fail'
-      expect(described_class.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o,user)).to be_falsey
     end
     it "should return false if business rules have not been run" do
       o = order
       expect(o).to receive(:business_rules_state).and_return nil
-      expect(described_class.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o,user)).to be_falsey
     end
   end
 
   describe '#book_from_order_hook' do
     it "should set defaults" do
       expected = {
-        shp_fwd_syscode:'dhl',
+        shp_fwd_syscode:'allport',
         shp_booking_mode:'Ocean',
         shp_booking_shipment_type:'CY'
       }
       o = double(:order)
       sh = {}
       booking_lines = double(:booking_lines)
-      described_class.book_from_order_hook(sh,o,booking_lines)
+      subject.book_from_order_hook(sh,o,booking_lines)
       expected.each {|k,v| expect(sh[k]).to eq v}
     end
   end
 
   describe '#request_booking_hook' do
+
     it "should copy shipment fields to booking" do
       s = Shipment.new(
         shipment_type:'CY',
@@ -81,13 +90,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
         requested_equipment:'4 40HC',
         cargo_ready_date:Date.new(2015,1,1)
       )
+      s.find_and_set_custom_value booking_unlocked_date, Time.zone.now
       u = double('user')
-      described_class.request_booking_hook s, u
+      subject.request_booking_hook s, u
       expect(s.booking_shipment_type).to eq s.shipment_type
       expect(s.booking_mode).to eq s.mode
       expect(s.booking_first_port_receipt_id).to eq s.first_port_receipt_id
       expect(s.booking_requested_equipment).to eq s.requested_equipment
       expect(s.booking_cargo_ready_date).to eq s.cargo_ready_date
+      expect(s.custom_value(booking_unlocked_date)).to be_nil
     end
   end
 
@@ -100,52 +111,131 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
         requested_equipment:'4 40HC',
         cargo_ready_date:Date.new(2015,1,1)
       )
+      s.find_and_set_custom_value booking_unlocked_date, Time.zone.now
+
       u = double('user')
-      described_class.revise_booking_hook s, u
+      subject.revise_booking_hook s, u
       expect(s.booking_shipment_type).to eq s.shipment_type
       expect(s.booking_mode).to eq s.mode
       expect(s.booking_first_port_receipt_id).to eq s.first_port_receipt_id
       expect(s.booking_requested_equipment).to eq s.requested_equipment
       expect(s.booking_cargo_ready_date).to eq s.cargo_ready_date
+      expect(s.custom_value(booking_unlocked_date)).to be_nil
     end
   end
 
-  describe '#can_revise_booking_hook' do
-    it "should allow if user can edit and is vendor" do
-      s = Shipment.new
-      v = Company.new
-      u = User.new
-      u.company = v
-      s.vendor = v
-      expect(s).to receive(:can_edit?).with(u).and_return true
-      expect(described_class.can_revise_booking_hook(s,u)).to be_truthy
+  describe '#can_revise_booking?' do
+
+    let (:port) { Factory(:port) }
+    let (:shipment) { Shipment.new mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: port, vendor: company }
+    let (:user) { 
+      u = User.new 
+      u.company = company
+      u
+    }
+    let (:company) { Company.new }
+    before :each do 
+      shipment.booking_received_date = Time.zone.now
+      shipment.find_and_set_custom_value booking_unlocked_date, Time.zone.now
+      allow(shipment).to receive(:can_edit?).with(user).and_return true
     end
+
+    it "should allow if user can edit and is vendor and Booking Received is not null and Booking Unlocked Date is set" do
+      expect(subject.can_revise_booking?(shipment,user)).to eq true
+    end
+
+    it "should not allow if user can edit and is vendor and Booking Received is not null and Booking Unlocked Date is not set" do
+      shipment.find_and_set_custom_value booking_unlocked_date, nil
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
+    end
+
+    it "should not allow if user can edit and is vendor and Booking Received is null and Booking Unlocked Date is set" do
+      shipment.booking_received_date = nil
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
+    end
+
     it "should not allow if user is not vendor" do
-      s = Shipment.new
-      v = Company.new
-      s.vendor = v
-      u = User.new
-      u.company = Company.new
-      allow(s).to receive(:can_edit?).with(u).and_return true
-      expect(described_class.can_revise_booking_hook(s,u)).to be_falsey
+      shipment.vendor = Company.new
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
     end
     it "should not allow if user cannot edit" do
-      s = Shipment.new
-      v = Company.new
-      u = User.new
-      u.company = v
-      s.vendor = v
-      expect(s).to receive(:can_edit?).with(u).and_return false
-      expect(described_class.can_revise_booking_hook(s,u)).to be_falsey
+      expect(shipment).to receive(:can_edit?).with(user).and_return false
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
     end
     it "should not allow if shipment is canceled" do
-      s = Shipment.new(canceled_date:Time.now)
-      v = Company.new
-      u = User.new
-      u.company = v
-      s.vendor = v
-      allow(s).to receive(:can_edit?).with(u).and_return true
-      expect(described_class.can_revise_booking_hook(s,u)).to be_falsey
+      shipment.canceled_date = Time.zone.now
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
+    end
+    it "does not allow if shipment is missing fields" do
+      # The full range of fields is checked elswhere, just make sure we're chekcing them for this
+      shipment.mode = ""
+      expect(subject.can_revise_booking?(shipment,user)).to eq false
+    end
+  end
+
+  describe "can_request_booking?" do
+    
+    let (:port) { Factory(:port) }
+    let (:shipment) { Shipment.new mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: port, vendor: company }
+    let (:user) { 
+      u = User.new 
+      u.company = company
+      u
+    }
+    let (:company) { Company.new }
+
+    before :each do
+      booking_unlocked_date
+      allow(shipment).to receive(:can_edit?).with(user).and_return true
+    end
+
+    it "does not allow booking to be requested unless several fields have values and user is vendor and can edit shipment" do
+      expect(subject.can_request_booking?(shipment, user)).to eq true
+    end
+
+    it "does not allow booking to be requested if mode is blank" do
+      shipment.mode = ""
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking to be requested if shipment type is blank" do
+      shipment.shipment_type = ""
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking to be requested if requested equipment is blank" do
+      shipment.requested_equipment = ""
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking to be requested if cargo ready date is blank" do
+      shipment.cargo_ready_date = nil
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking to be requested if first port receipt is blank" do
+      shipment.first_port_receipt = nil
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking if shipment vendor is not user's company" do
+      shipment.vendor = Company.new
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking if user cannot edit shipments" do
+      expect(shipment).to receive(:can_edit?).with(user).and_return false
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking if shipment is cancelled" do
+      shipment.canceled_date = Time.zone.now
+      expect(subject.can_request_booking?(shipment, user)).to eq false
+    end
+
+    it "does not allow booking if booking has already been received" do
+      shipment.booking_received_date = Time.zone.now
+      expect(subject.can_request_booking?(shipment, user)).to eq false
     end
   end
 
@@ -154,7 +244,61 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       s = Shipment.new
       user = User.new
       expect(s).to receive(:cancel_shipment!).with(user)
-      described_class.post_request_cancel_hook(s,user)
+      subject.post_request_cancel_hook(s,user)
+    end
+  end
+
+  describe "open_bookings_hook" do
+    let! (:shipment) { Factory(:shipment) }
+
+    before :each do 
+      booking_unlocked_date
+    end
+
+    it "returns bookings that do not have booking received dates" do
+      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      expect(shipments.all).to include shipment
+    end
+
+    it "does not return shipments that have a booking received date" do
+      shipment.update_attributes! booking_received_date: Time.zone.now
+      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      expect(shipments.all).not_to include shipment
+    end
+
+    it "returns bookings that have a booking received date and a booking unlocked date" do
+      shipment.update_custom_value! booking_unlocked_date, Time.zone.now
+
+      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      expect(shipments.all).to include shipment
+    end
+  end
+
+  describe "can_edit_booking?" do
+    let (:shipment) { Shipment.new }
+    let (:user) { User.new }
+
+    it "allows editing booking if booking received date is nil" do
+      expect(subject).to receive(:base_booking_permissions).with(shipment, user).and_return true
+      expect(subject.can_edit_booking? shipment, user).to eq true
+    end
+
+    it "denies if booking received date is not null" do
+      shipment.find_and_set_custom_value booking_unlocked_date, nil
+      shipment.booking_received_date = Time.zone.now
+
+
+      expect(subject).to receive(:base_booking_permissions).with(shipment, user).and_return true
+      expect(subject.can_edit_booking? shipment, user).to eq false
+    end
+
+    it "allows if booking has been received, but is unlocked" do
+      shipment.find_and_set_custom_value booking_unlocked_date, Time.zone.now
+      shipment.booking_received_date = Time.zone.now
+
+
+      expect(subject).to receive(:base_booking_permissions).with(shipment, user).and_return true
+      expect(subject.can_edit_booking? shipment, user).to eq true
     end
   end
 end

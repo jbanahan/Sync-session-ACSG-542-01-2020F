@@ -15,8 +15,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [16,:shp_vessel,:vessel,"Vessel",{:data_type=>:string}],
       [17,:shp_voyage,:voyage,"Voyage",{:data_type=>:string}],
       [18,:shp_vessel_carrier_scac,:vessel_carrier_scac,"Vessel SCAC",{:data_type=>:string}],
-      [19,:shp_booking_received_date,:booking_received_date,"Booking Received Date",{:data_type=>:date,:read_only=>true}],
-      [20,:shp_booking_confirmed_date,:booking_confirmed_date,"Booking Confirmed Date",{:data_type=>:date}],
+      [19,:shp_booking_received_date,:booking_received_date,"Booking Received Date",{data_type: :datetime, read_only: true}],
+      [20,:shp_booking_confirmed_date,:booking_confirmed_date,"Booking Confirmed Date",{data_type: :datetime, read_only: true}],
       [21,:shp_booking_cutoff_date,:booking_cutoff_date,"Cutoff Date",{:data_type=>:date}],
       [22,:shp_booking_est_arrival_date,:booking_est_arrival_date,"Est Arrival Date - Booked",{:data_type=>:date}],
       [23,:shp_booking_est_departure_date,:booking_est_departure_date,"Est Departure Date - Booked",{:data_type=>:date}],
@@ -57,7 +57,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.booking_approved_by_id)",
         :data_type=>:string
       }],
-      [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: 'date', read_only: true}],
+      [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: :datetime, read_only: true}],
       [38,:shp_booked_quantity,:booked_quantity,"Booked Quantity",{data_type: :decimal, read_only:true}],
       [39,:shp_canceled_by_full_name,:username,"Canceled By", {
         :import_lambda => lambda {|a,b| return "Canceled By cannot be set by import, ignored."},
@@ -68,7 +68,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.canceled_by_id)",
         :data_type=>:string
       }],
-      [40,:shp_canceled_date,:canceled_date,"Canceled Date",{data_type: 'date', read_only: true}],
+      [40,:shp_canceled_date,:canceled_date,"Canceled Date",{data_type: :datetime, read_only: true}],
       [41,:shp_total_cartons,:total_cartons,"Total Cartons",{
         data_type: :integer,
         read_only: true,
@@ -166,7 +166,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
       [65, :shp_eta_last_foreign_port_date, :eta_last_foreign_port_date, 'ETA Last Origin Port Date', {data_type: :date}],
       [66, :shp_departure_last_foreign_port_date, :departure_last_foreign_port_date, 'Departure Last Origin Port Date', {data_type: :date}],
-      [67, :shp_booking_revised_date, :booking_revised_date, 'Booking Revised Date', {data_type: :date, read_only: true}],
+      [67, :shp_booking_revised_date, :booking_revised_date, 'Booking Revised Date', {data_type: :datetime, read_only: true}],
       [68, :shp_booking_revised_by_full_name,:username,"Booking Revised By", {
         :export_lambda => lambda {|obj|
           u = obj.booking_revised_by
@@ -262,6 +262,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_address_arrays(1350,'shp','shipments','container_stuffing')
     add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
     add_fields CoreModule::SHIPMENT, make_forwarder_arrays(1500,'shp','shipments')
+    add_fields CoreModule::SHIPMENT, make_attachment_arrays(1600,'shp',CoreModule::SHIPMENT)
 
   end
 end; end; end

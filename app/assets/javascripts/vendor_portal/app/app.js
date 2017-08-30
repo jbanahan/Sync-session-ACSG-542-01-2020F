@@ -14,7 +14,8 @@
       $urlRouterProvider.otherwise('/');
       return $stateProvider.state('main', {
         url: '/',
-        templateUrl: "vendor_portal/partials/main.html"
+        templateUrl: "vendor_portal/partials/main.html",
+        controller: "MainCtrl"
       }).state('showOrder', {
         url: '/orders/:id',
         template: "<chain-loading-wrapper loading-flag='{{loading}}'><dynamic-show-order></dynamic-show-order></chain-loading-wrapper>",
@@ -52,23 +53,7 @@
             scope.loading = 'loading';
             return chainDomainerSvc.withDictionary().then(function(dict) {
               scope.dict = dict;
-              return chainApiSvc.Shipment.search({
-                columns: ['shp_booked_orders', 'shp_ref'],
-                criteria: [
-                  {
-                    field: 'shp_shipment_instructions_sent_date',
-                    operator: 'null'
-                  }, {
-                    field: 'shp_ven_id',
-                    operator: 'eq',
-                    val: scope.order.ord_ven_id
-                  }, {
-                    field: 'shp_imp_id',
-                    operator: 'eq',
-                    val: scope.order.ord_imp_id
-                  }
-                ]
-              }).then(function(shipments) {
+              return chainApiSvc.Shipment.openBookings(["shp_booked_orders", "shp_ref"], scope.order.id).then(function(shipments) {
                 scope.shipments = shipments;
                 return delete scope.loading;
               });
@@ -166,8 +151,7 @@
       templateUrl: 'vendor_portal/partials/chain_vp_equipment_requestor.html',
       link: function(scope, el, attrs) {
         var parseExistingValue, writeReqVal;
-        scope.numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20];
-        scope.requestedEquipment = {};
+        scope.numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20];
         writeReqVal = function(rEquip, row) {
           var elements;
           elements = row.split(' ');
@@ -177,17 +161,22 @@
           return rEquip[elements[1]] = elements[0];
         };
         parseExistingValue = function(shp) {
-          var i, len, rEquip, reqRows, reqStr, row;
-          rEquip = {};
+          var e, i, j, len, len1, ref, reqRows, reqStr, requestedEquipment, row;
+          requestedEquipment = {};
+          ref = scope.equipmentTypes;
+          for (i = 0, len = ref.length; i < len; i++) {
+            e = ref[i];
+            requestedEquipment[e] = 0;
+          }
           reqStr = shp.shp_requested_equipment;
           if (reqStr && reqStr.length > 0) {
             reqRows = reqStr.split("\n");
-            for (i = 0, len = reqRows.length; i < len; i++) {
-              row = reqRows[i];
-              writeReqVal(rEquip, row);
+            for (j = 0, len1 = reqRows.length; j < len1; j++) {
+              row = reqRows[j];
+              writeReqVal(requestedEquipment, row);
             }
           }
-          return rEquip;
+          return requestedEquipment;
         };
         scope.showModal = function() {
           scope.requestedEquipment = parseExistingValue(scope.shipment);
@@ -199,7 +188,7 @@
           val = [];
           for (t in scope.requestedEquipment) {
             num = scope.requestedEquipment[t];
-            if (num && num > 0) {
+            if (!isNaN(num) && num > 0) {
               val.push(num + " " + t);
             }
           }
@@ -503,22 +492,10 @@
 
   app.controller('ChainVpShipmentPanelCtrl', [
     '$scope', '$state', '$window', 'chainApiSvc', 'chainDomainerSvc', 'bulkSelectionSvc', function($scope, $state, $window, chainApiSvc, chainDomainerSvc, bulkSelectionSvc) {
-      var activateSearchWithCriteria, initFunc;
       $scope.pageUid = 'chain-vp-shipment-panel';
-      $scope.showShipment = function(shp) {
-        return $state.transitionTo('showShipment', {
-          id: shp.id
-        });
-      };
-      $scope.coreSearch = {};
-      $scope.selectAll = {
-        checked: false
-      };
-      activateSearchWithCriteria = function(hiddenCriteria) {
-        return $scope.coreSearch.searchSetup = {
-          reload: new Date().getTime(),
-          hiddenCriteria: hiddenCriteria,
-          columns: ['shp_ref', 'shp_booking_received_date', 'shp_booking_confirmed_date', 'shp_departure_date'],
+      $scope.baseSearch = function() {
+        var ss;
+        return ss = {
           buttons: [
             {
               label: 'View',
@@ -527,155 +504,26 @@
               onClick: $scope.showShipment
             }
           ],
-          sorts: [
-            {
-              field: 'shp_booking_received_date'
-            }, {
-              field: 'shp_ref'
-            }
-          ],
-          bulkSelections: {}
+          bulkSelections: true
         };
       };
-      $scope.activateShipmentsNotBooked = function() {
-        return activateSearchWithCriteria([
-          {
-            field: 'shp_booking_received_date',
-            operator: 'null'
-          }
-        ]);
-      };
-      $scope.activateShipmentsNotConfirmed = function() {
-        return activateSearchWithCriteria([
-          {
-            field: 'shp_booking_received_date',
-            operator: 'notnull'
-          }, {
-            field: 'shp_booking_confirmed_date',
-            operator: 'null'
-          }
-        ]);
-      };
-      $scope.activateShipmentsNotShipped = function() {
-        return activateSearchWithCriteria([
-          {
-            field: 'shp_booking_received_date',
-            operator: 'notnull'
-          }, {
-            field: 'shp_booking_confirmed_date',
-            operator: 'notnull'
-          }, {
-            field: 'shp_departure_date',
-            operator: 'null'
-          }
-        ]);
-      };
-      $scope.activateShipmentsShipped = function() {
-        return activateSearchWithCriteria([
-          {
-            field: 'shp_departure_date',
-            operator: 'notnull'
-          }
-        ]);
-      };
-      $scope.activateFindOne = function() {
-        return null;
-      };
-      $scope.activateSearch = function() {
-        var so;
-        so = $.grep($scope.searchOptions, function(el) {
-          return el.id === $scope.activeSearch.id;
-        });
-        if (so.length > 0) {
-          return $scope[so[0].func]();
-        }
-      };
-      $scope.find = function(shipmentNumber) {
-        var defaultFields, defaultSorts, trimVal;
-        defaultFields = 'shp_ref,shp_booking_received_date,shp_booking_confirmed_date,shp_departure_date';
-        defaultSorts = [
-          {
-            field: 'shp_booking_received_date'
-          }, {
-            field: 'shp_ref'
-          }
-        ];
-        trimVal = shipmentNumber ? $.trim(shipmentNumber) : '';
-        if (trimVal.length < 3) {
-          $window.alert('Please enter at least 3 letters or numbers into search.');
-          return;
-        }
-        return activateSearchWithCriteria([
-          {
-            field: 'shp_ref',
-            operator: 'co',
-            val: trimVal
-          }
-        ]);
-      };
-      $scope.searchOptions = [
-        {
-          id: 'notbooked',
-          name: 'Not Booked',
-          func: 'activateShipmentsNotBooked'
-        }, {
-          id: 'notconfirmed',
-          name: 'Booked - Not Confirmed',
-          func: 'activateShipmentsNotConfirmed'
-        }, {
-          id: 'notshipped',
-          name: 'Booked - Not Shipped',
-          func: 'activateShipmentsNotShipped'
-        }, {
-          id: 'shipped',
-          name: 'Shipped',
-          func: 'activateShipmentsShipped'
-        }, {
-          id: 'findone',
-          name: 'Search',
-          func: 'activateFindOne'
-        }
-      ];
-      $scope.bulkComment = function(orders) {
-        var comments, i, len, o;
-        if (!(orders && orders.length > 0)) {
-          return;
-        }
-        comments = [];
-        for (i = 0, len = orders.length; i < len; i++) {
-          o = orders[i];
-          comments.push({
-            commentable_id: o.id,
-            commentable_type: 'Shipment',
-            subject: $scope.bulkShipmentCommentSubject,
-            body: $scope.bulkShipmentCommentBody
+      $scope.showShipment = function(shp, evt) {
+        var url;
+        if (evt && evt.ctrlKey) {
+          url = $state.href('showShipment', {
+            id: shp.id
+          });
+          $window.open(url, '_blank');
+        } else {
+          $state.transitionTo('showShipment', {
+            id: shp.id
           });
         }
-        return chainApiSvc.Bulk.execute(chainApiSvc.Comment.post, comments).then(function(r) {
-          return $scope.activateSearch();
-        });
+        return null;
       };
-      $scope.selectedShipments = function() {
-        return bulkSelectionSvc.selected($scope.pageUid);
+      return $scope.hasSelections = function() {
+        return bulkSelectionSvc.selectedCount($scope.pageUid) > 0;
       };
-      $scope.selectionCount = function() {
-        return bulkSelectionSvc.selectedCount($scope.pageUid);
-      };
-      $scope.selectNone = function() {
-        return bulkSelectionSvc.selectNone($scope.pageUid);
-      };
-      $scope.hasSelectedShipments = function() {
-        return $scope.selectionCount() > 0;
-      };
-      initFunc = function() {
-        $scope.activeSearch = {
-          id: 'notbooked'
-        };
-        return $scope.activateSearch();
-      };
-      if (!$scope.$root.isTest) {
-        return initFunc();
-      }
     }
   ]);
 
@@ -833,77 +681,97 @@
 
 angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_book_order.html', 'vendor_portal/partials/chain_vp_bookings.html', 'vendor_portal/partials/chain_vp_equipment_requestor.html', 'vendor_portal/partials/chain_vp_full_shipment_pack.html', 'vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/chain_vp_shipment_panel.html', 'vendor_portal/partials/chain_vp_variant_selector.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/order_accept_button.html', 'vendor_portal/partials/select_ship_from.html', 'vendor_portal/partials/select_tpp_survey_response.html', 'vendor_portal/partials/standard_order_template.html', 'vendor_portal/partials/standard_shipment_template.html']);
 
-angular.module("vendor_portal/partials/chain_vp_book_order.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_book_order.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_book_order.html",
-    "<button class=\"btn btn-sm btn-primary\" ng-if=\"order.permissions.can_book\" ng-click=\"showModal()\">Book Order</button><div class=\"modal fade text-left\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Select Shipment</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><table class=\"table\" ng-hide=\"loading\"><thead><tr><th>{{dict.field('shp_ref').label}}</th><th>{{dict.field('shp_booked_orders').label}}</th><th>&nbsp;</th></tr></thead><tbody><tr ng-repeat=\"s in shipments track by s.id\"><td><chain-field-value model=\"s\" field=\"dict.field(&quot;shp_ref&quot;)\"></chain-field-value></td><td><chain-field-value model=\"s\" field=\"dict.field(&quot;shp_booked_orders&quot;)\"></chain-field-value></td><td><button class=\"btn btn-sm btn-success\" title=\"Add to shipment\" ng-click=\"addToShipment(s)\"><i class=\"fa fa-plus\"></i></button></td></tr><tr><td colspan=\"3\"><button class=\"btn btn-success\" title=\"Add to NEW shipment\" ng-click=\"addToNewShipment()\">Create New Shipment</button></td></tr></tbody></table></div></div></div></div>");
+    "<button class=\"btn btn-sm btn-primary\" ng-if=\"order.permissions.can_book\" ng-click=\"showModal()\">Book Order</button><div class=\"modal fade text-left\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Select Shipment</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><table class=\"table\" ng-hide=\"loading\"><thead><tr><th>{{dict.field('shp_ref').label}}</th><th>{{dict.field('shp_booked_orders').label}}</th><th>&nbsp;</th></tr></thead><tbody><tr ng-repeat=\"s in shipments track by s.id\"><td><chain-field-value model=\"s\" field='dict.field(\"shp_ref\")'></chain-field-value></td><td><chain-field-value model=\"s\" field='dict.field(\"shp_booked_orders\")'></chain-field-value></td><td><button class=\"btn btn-sm btn-success\" title=\"Add to shipment\" ng-click=\"addToShipment(s)\"><i class=\"fa fa-plus\"></i></button></td></tr><tr><td colspan=\"3\"><button class=\"btn btn-success\" title=\"Add to NEW shipment\" ng-click=\"addToNewShipment()\">Create New Shipment</button></td></tr></tbody></table></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_bookings.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_bookings.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_bookings.html",
     "<small ng-if=\"loading\">Loading bookings</small><chain-vp-book-order order=\"order\" ng-if=\"shipments.length==0\"></chain-vp-book-order><span ng-repeat=\"s in shipments track by s.id\"><a ui-sref=\"showShipment(s)\">{{s.shp_ref}}</a><span ng-if=\"!$last\">,</span></span>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_equipment_requestor.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_equipment_requestor.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_equipment_requestor.html",
     "<pre>\n" +
     "{{shipment.shp_requested_equipment}}\n" +
     "</pre><button class=\"btn btn-sm btn-primary\" ng-show=\"shipment.permissions.can_edit\" ng-click=\"showModal()\">Change</button><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Equipment Request</h4></div><div class=\"modal-body\"><div class=\"form-group\" ng-repeat=\"et in equipmentTypes track by $index\"><label>{{et}}</label><select class=\"form-control\" ng-options=\"n for n in numbers track by n\" ng-model=\"requestedEquipment[et]\"></select></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button> <button type=\"button\" class=\"btn btn-primary\" ng-click=\"commitChange()\">OK</button></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_full_shipment_pack.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_full_shipment_pack.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_full_shipment_pack.html",
     "<button ng-click=\"showModal(shipment)\" ng-disabled=\"!shipment.permissions.can_add_remove_shipment_lines || shipment.shp_shipment_instructions_sent_date || unShippedBookingLines.length == 0\" class=\"btn btn-default\">Pack Manifest</button><div class=\"modal fade\" data-backdrop=\"static\" data-keyboard=\"false\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog\"><div class=\"modal-content text-left\"><div class=\"modal-header\"><h4 class=\"modal-title\">Pack Shipment</h4></div><div class=\"modal-body\"><h4>Available Booking Lines</h4><div class=\"alert alert-success\" ng-show=\"unShippedBookingLines.length>0\">All lines must be packed to save shipment.</div><table class=\"table available-lines\"><thead><tr><th></th><th ng-repeat=\"uid in bookingTableFields track by $index\">{{dictionary.field(uid).label}}</th></tr></thead><tbody><tr ng-repeat=\"bl in unShippedBookingLines track by bl.id\"><td><input type=\"checkbox\" ng-model=\"bl.readyForPack\"></td><td ng-repeat=\"uid in bookingTableFields track by $index\">{{bl[uid]}}</td></tr></tbody></table><div class=\"text-right\"><label>Container</label><select class=\"form-control\" ng-model=\"containerToPack\" ng-options=\"con.con_container_number for con in shipment.containers\"></select><button class=\"btn btn-default\" ng-click=\"packLines(shipment,containerToPack)\">Pack Lines</button></div><h4>Containers</h4><table class=\"table containers\"><thead><tr><th ng-repeat=\"uid in containerTableFields track by $index\">{{dictionary.field(uid).label}}</th><th><button class=\"btn btn-sm btn-success\" ng-show=\"!showAddContainer\" ng-click=\"showAddContainer = true\" title=\"Show Add Container\"><i class=\"fa fa-plus\"></i></button> <button class=\"btn btn-sm btn-success\" ng-show=\"showAddContainer\" ng-click=\"showAddContainer = false\" title=\"Hide Add Container\"><i class=\"fa fa-minus\"></i></button></th></tr></thead><tbody><tr class=\"add-container-row\" ng-show=\"showAddContainer\"><td ng-repeat=\"uid in containerTableFields track by $index\"><chain-field-input model=\"containerToAdd\" field=\"dictionary.field(uid)\"></chain-field-input></td><td><button class=\"btn btn-xm btn-success\" ng-disabled=\"shouldDisableAddContainer()\" title=\"Add Container\" ng-click=\"addContainer(shipment,containerToAdd)\"><i class=\"fa fa-plus\"></i></button></td></tr></tbody><tbody ng-repeat=\"con in shipment.containers track by con.id\"><tr class=\"info\"><td ng-repeat=\"uid in containerTableFields track by $index\"><chain-field-value model=\"con\" field=\"dictionary.field(uid)\"></chain-field-value></td><td></td></tr><tr><td colspan=\"{{containerTableFields.length + 1}}\"><table class=\"table\" ng-show=\"linesForContainer(shipment,con).length > 0\"><thead><tr><td ng-repeat=\"uid in shipmentLineTableFields track by $index\">{{dictionary.field(uid).label}}</td></tr></thead><tbody><tr ng-repeat=\"ln in linesForContainer(shipment,con)\"><td ng-repeat=\"uid in shipmentLineTableFields track by $index\"><chain-field-value model=\"ln\" field=\"dictionary.field(uid)\"></chain-field-value></td></tr></tbody></table><div class=\"text-warning\" ng-show=\"linesForContainer(shipment,con).length == 0\">Empty containers will be removed when you save.</div></td></tr></tbody></table></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" ng-click=\"cancel(shipment)\">Cancel</button> <button type=\"button\" class=\"btn btn-primary\" ng-disabled=\"!canSave(shipment)\" ng-click=\"save(shipment)\">Save</button></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_order_panel.html",
     "<chain-search-panel name=\"Orders\" api-object-name=\"Order\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment><button class=\"btn btn-sm btn-default\" ng-click=\"bulkApprove()\" ng-disabled=\"!hasSelections()\">Approve</button></chain-search-panel>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_shipment_panel.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_shipment_panel.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_shipment_panel.html",
-    "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Shipments</h3></div><div class=\"panel-body bg-info\"><select class=\"form-control\" ng-model=\"activeSearch\" ng-change=\"activateSearch()\" ng-options=\"opt.name for opt in searchOptions track by opt.id\"></select></div><div class=\"panel-body form-inline\" ng-if=\"activeSearch.id==&quot;findone&quot;\"><div class=\"form-group\"><input class=\"form-control\" ng-model=\"findOneVal\" placeholder=\"order number\" ng-keyup=\"$event.keyCode == 13 && find(findOneVal)\"> <button class=\"btn btn-success btn-sm\" ng-click=\"find(findOneVal)\"><i class=\"fa fa-search\"></i></button></div></div><div class=\"panel-body\"><chain-search-table api-object-name=\"Shipment\" search-setup=\"coreSearch.searchSetup\" page-uid=\"{{pageUid}}\"></chain-search-table></div><div class=\"panel-footer text-right\"><button class=\"btn btn-sm btn-primary\" ng-click=\"selectNone()\">Clear Selection ({{selectionCount()}})</button> <button class=\"btn btn-sm btn-primary\" ng-disabled=\"!hasSelectedShipments()\" data-toggle=\"modal\" data-target=\"#bulk-comment-selected-shipments\" title=\"Add Comments\"><i class=\"fa fa-sticky-note\"></i></button></div></div><div class=\"modal fade\" id=\"bulk-comment-selected-shipments\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Add Comments</h4></div><div class=\"modal-body\"><label for=\"bulkShipmentCommentSubject\">Subject</label><input class=\"form-control\" id=\"bulkShipmentCommentSubject\" ng-model=\"bulkShipmentCommentSubject\"><label for=\"bulkShipmentCommentBody\">Body</label><textarea class=\"form-control\" id=\"bulkShipmentCommentBody\" ng-model=\"bulkShipmentCommentBody\"></textarea><div class=\"alert alert-warning\">This will add comments to {{selectedOrders().length}} orders.</div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-success\" data-dismiss=\"modal\" ng-disabled=\"bulkShipmentCommentSubject.length==0 || bulkShipmentCommentBody.length==0\" ng-click=\"bulkComment(selectedShipments())\">Send</button></div></div></div></div>");
+    "<chain-search-panel name=\"Shipments\" api-object-name=\"Shipment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment></chain-search-panel>");
 }]);
 
-angular.module("vendor_portal/partials/chain_vp_variant_selector.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/chain_vp_variant_selector.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_variant_selector.html",
     "<span>{{orderLine.ordln_varuid}}</span> <button class=\"btn btn-xs btn-default\" ng-if=\"canEdit\" title=\"Change Variant\" ng-click=\"activateModal()\"><i class=\"fa fa-edit\"></i></button><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Change Variant</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"panel\" ng-repeat=\"v in variants track by v.id\" ng-class=\"{'panel-primary':v==selectedVariant,'panel-default':v!=selectedVariant}\"><div class=\"panel-heading\"><h3 class=\"panel-title\">{{v.var_identifier}}</h3></div><div class=\"panel-body\"><pre>\n" +
     "{{v[dictionary.fieldsByAttribute('label','Recipe',dictionary.fieldsByRecordType(dictionary.recordTypes.Variant))[0].uid]}}\n" +
     "</pre></div><div class=\"panel-footer text-right\"><button class=\"btn btn-primary btn-sm\" title=\"Select Variant\" ng-click=\"selectVariant(v)\">Select</button></div></div><div ng-show=\"variants && variants.length==0 && !loading\" class=\"text-danger\">No variants are assigned to this product.</div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button type=\"button\" class=\"btn btn-success\" ng-disabled=\"!selectedVariant || loading\" ng-click=\"save()\">Save</button></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/main.html",
-    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1>Vendor Portal</h1></div></div><div class=\"row\"><div class=\"col-md-8\"><chain-vp-order-panel></chain-vp-order-panel></div><div class=\"col-md-4\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Settings</h3></div><div class=\"panel-body\"><a href=\"#\" id=\"change-password-link\">Change Password</a></div></div></div></div><chain-change-password-modal></chain-change-password-modal><script>$('#change-password-link').click(function() {\n" +
+    "<div class=\"container\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1>Vendor Portal</h1></div></div><div class=\"row\"><div class=\"col-md-8\"><chain-vp-order-panel ng-if=\"me.permissions.view_orders\"></chain-vp-order-panel><chain-vp-shipment-panel ng-if=\"me.permissions.view_shipments\"></chain-vp-shipment-panel></div><div class=\"col-md-4\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Settings</h3></div><div class=\"panel-body\"><a href=\"#\" id=\"change-password-link\">Change Password</a></div></div></div></div><chain-change-password-modal></chain-change-password-modal><script>$('#change-password-link').click(function() {\n" +
     "      $('chain-change-password-modal .modal').modal('show');\n" +
     "      return false;\n" +
     "    });</script></div>");
 }]);
 
-angular.module("vendor_portal/partials/order_accept_button.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/order_accept_button.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/order_accept_button.html",
-    "<button class=\"btn btn-xs {{order.ord_approval_status!=&quot;Accepted&quot; ? &quot;btn-success&quot; : &quot;btn-link&quot;}}\" ng-if=\"order.permissions.can_accept && (order.permissions.can_be_accepted || order.ord_approval_status=='Accepted')\" ng-click=\"toggleAccept(order)\"><span ng-show=\"order.ord_approval_status!='Accepted'\">Approve</span> <span ng-show=\"order.ord_approval_status=='Accepted'\" class=\"fa fa-trash text-danger\" title=\"Remove\"></span></button>");
+    "<button class='btn btn-xs {{order.ord_approval_status!=\"Accepted\" ? \"btn-success\" : \"btn-link\"}}' ng-if=\"order.permissions.can_accept && (order.permissions.can_be_accepted || order.ord_approval_status=='Accepted')\" ng-click=\"toggleAccept(order)\"><span ng-show=\"order.ord_approval_status!='Accepted'\">Approve</span> <span ng-show=\"order.ord_approval_status=='Accepted'\" class=\"fa fa-trash text-danger\" title=\"Remove\"></span></button>");
 }]);
 
-angular.module("vendor_portal/partials/select_ship_from.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/select_ship_from.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/select_ship_from.html",
     "<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\"><a ui-sref=\"showOrder({id:order.id})\"><i class=\"fa fa-arrow-left\"></i></a>&nbsp;Select Ship From Address</h3></div><div class=\"panel-body\"><div class=\"row\" ng-repeat=\"ag in addressGroups\"><div class=\"col-md-4\" ng-repeat=\"a in ag track by a.id\"><div class=\"thumbnail\"><iframe ng-src=\"{{a.map_url}}\" style=\"width:100%\"></iframe><div class=\"caption\"><div class=\"text-right text-warning\"><small>Map locations are approximate based on the address text provided.</small></div><div><chain-address address=\"{{a.add_full_address}}\"></chain-address></div><div class=\"text-right\"><button ng-click=\"select(order,a)\" class=\"btn btn-success\" role=\"button\">Select</button></div></div></div></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/select_tpp_survey_response.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/select_tpp_survey_response.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/select_tpp_survey_response.html",
-    "<chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"panel panel-primary\" ng-show=\"loading!=&quot;loading&quot;\"><div class=\"panel-heading\"><h3 class=\"panel-title\"><a ui-sref=\"showOrder(order.id)\"><i class=\"fa fa-arrow-left\"></i></a>&nbsp;Select Trade Preference Program Certification</h3></div><div class=\"panel-body\"><select class=\"form-control\" title=\"Select TPP Certification\" ng-model=\"tppSurveyResponse\" ng-options=\"a.long_name for a in availableResponses\"></select></div><div class=\"panel-footer text-right\"><button class=\"btn btn-default\" ng-click=\"showOrder(order.id)\">Cancel</button> <button class=\"btn btn-primary\" ng-click=\"select(order)\">Select</button></div></div>");
+    "<chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"panel panel-primary\" ng-show='loading!=\"loading\"'><div class=\"panel-heading\"><h3 class=\"panel-title\"><a ui-sref=\"showOrder(order.id)\"><i class=\"fa fa-arrow-left\"></i></a>&nbsp;Select Trade Preference Program Certification</h3></div><div class=\"panel-body\"><select class=\"form-control\" title=\"Select TPP Certification\" ng-model=\"tppSurveyResponse\" ng-options=\"a.long_name for a in availableResponses\"></select></div><div class=\"panel-footer text-right\"><button class=\"btn btn-default\" ng-click=\"showOrder(order.id)\">Cancel</button> <button class=\"btn btn-primary\" ng-click=\"select(order)\">Select</button></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/standard_order_template.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/standard_order_template.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/standard_order_template.html",
-    "<div class=\"container\" id=\"standard-order-template\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1><small>Purchase Order</small><br>{{order.ord_ord_num}}</h1></div></div><div class=\"row\"><div class=\"col-md-5\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"></div><ul class=\"list-group\"><li class=\"list-group-item\">Issue Date <span class=\"pull-right\">{{order.ord_ord_date}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_start && order.ord_window_start==order.ord_window_end\">Delivery Date <span class=\"pull-right\">{{order.ord_window_start}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_start && order.ord_window_start!=order.ord_window_end\">Ship Window Start <span class=\"pull-right\">{{order.ord_window_start}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_end && order.ord_window_start!=order.ord_window_end\">Ship Window End <span class=\"pull-right\">{{order.ord_window_end}}</span></li><li class=\"list-group-item\">Vendor No. <span class=\"pull-right\">{{order.ord_ven_syscode}}</span></li><li class=\"list-group-item\">Vendor Name <span class=\"pull-right\">{{order.ord_ven_name}}</span></li><li class=\"list-group-item\">Currency <span class=\"pull-right\">{{order.ord_currency}}</span></li><li class=\"list-group-item\">Terms of Payment <span class=\"pull-right\">{{order.ord_payment_terms}}</span></li><li class=\"list-group-item\">Terms of Delivery <span class=\"pull-right\">{{order.ord_terms}}</span></li><li class=\"list-group-item\">Delivery Location <span class=\"pull-right\">{{order.ord_fob_point}}</span></li></ul></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Order Status</h3></div><ul class=\"list-group\"><li class=\"list-group-item\">Vendor Approval <span class=\"pull-right\">{{order.ord_approval_status}} <a class=\"label label-default\" ng-if=\"!order.permissions.can_be_accepted && order.ord_approval_status!=&quot;Accepted&quot;\" data-toggle=\"modal\" data-target=\"#mod_cant_be_accepted\">Not Ready</a><order-accept-button></order-accept-button></span></li></ul></div></div><div class=\"col-md-7\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Vendor Order Address</h3></div><div class=\"panel-body\"><chain-address address=\"{{order.ord_order_from_address_full_address}}\"></chain-address></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Ship From Address</h3></div><div class=\"panel-body\"><div class=\"text-warning\" ng-show=\"order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_full_address.length>0\">Please select a ship from address using the Change button below.</div><chain-address address=\"{{order.ord_ship_from_full_address}}\"></chain-address></div><div class=\"panel-footer text-right\" ng-if=\"order.permissions.can_edit && order.vendor_id == me.company_id\"><a ui-sref=\"selectShipFrom({id:order.id})\" class=\"btn btn-primary\">Change</a></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Ship To Address</h3></div><div ng-if=\"order.order_lines.length > 0 && order.ord_ship_to_count==1\" class=\"panel-body\"><chain-address address=\"{{order.order_lines[0].ordln_ship_to_full_address}}\"></chain-address></div><div ng-if=\"order.ord_ship_to_count > 1\" class=\"panel-body\"><strong>Multi-Stop</strong></div></div><div class=\"panel panel-primary\" ng-if=\"order.available_tpp_survey_responses.length > 0\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Trade Preference Program Certification</h3></div><div class=\"panel-body\">{{order.ord_tppsr_name}}<div ng-if=\"!order.ord_tppsr_db_id\" class=\"alert alert-info\">No trade preference program selected.</div></div><div class=\"panel-footer text-right\"><button class=\"btn btn-primary\" ui-sref=\"selectTppSurveyResponse({id:order.id})\">Change</button></div></div></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><table class=\"table table-bordered table-striped\"><thead><tr><th>Line Num</th><th>Article</th><th ng-if=\"order.ord_ship_to_count > 1\">Ship To</th><th>Quantity</th><th>UM</th><th>Unit Price</th><th>Net Amount</th></tr></thead><tbody><tr ng-repeat=\"ol in order.order_lines track by ol.id\"><td>{{ol.ordln_line_number}}</td><td><small>{{ol.ordln_puid}}</small><br>{{ol.ordln_pname}}</td><td ng-if=\"order.ord_ship_to_count > 1\"><chain-address address=\"{{ol.ordln_ship_to_full_address}}\"></chain-address></td><td class=\"text-right numeric\">{{ol.ordln_ordered_qty}}</td><td>{{ol.ordln_unit_of_measure}}</td><td class=\"text-right numeric\">{{ol.ordln_ppu}}</td><td class=\"text-right numeric\">{{ol.ordln_total_cost}}</td></tr><tr><td class=\"text-right\" colspan=\"5\">Total</td><td class=\"text-right numeric\">{{order.ord_total_cost}}</td></tr></tbody></table></div></div></div><div class=\"row\"><div class=\"col-md-6\"><chain-comments-panel parent=\"order\" module-type=\"Order\"></chain-comments-panel></div><div class=\"col-md-6\"><chain-attachments-panel parent=\"order\" module-type=\"Order\"></chain-attachments-panel></div></div></div><div class=\"modal fade\" id=\"mod_cant_be_accepted\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Pending Updates</h4></div><div class=\"modal-body\">This order is does not have all data elements completed and cannot be accepted.</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
+    "<div class=\"container\" id=\"standard-order-template\"><div class=\"row\"><div class=\"col-md-12 text-center\"><a ui-sref=\"main\"><img src=\"/logo.png\" alt=\"Logo\"></a><br><h1><small>Purchase Order</small><br>{{order.ord_ord_num}}</h1></div></div><div class=\"row\"><div class=\"col-md-5\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"></div><ul class=\"list-group\"><li class=\"list-group-item\">Issue Date <span class=\"pull-right\">{{order.ord_ord_date}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_start && order.ord_window_start==order.ord_window_end\">Delivery Date <span class=\"pull-right\">{{order.ord_window_start}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_start && order.ord_window_start!=order.ord_window_end\">Ship Window Start <span class=\"pull-right\">{{order.ord_window_start}}</span></li><li class=\"list-group-item\" ng-if=\"order.ord_window_end && order.ord_window_start!=order.ord_window_end\">Ship Window End <span class=\"pull-right\">{{order.ord_window_end}}</span></li><li class=\"list-group-item\">Vendor No. <span class=\"pull-right\">{{order.ord_ven_syscode}}</span></li><li class=\"list-group-item\">Vendor Name <span class=\"pull-right\">{{order.ord_ven_name}}</span></li><li class=\"list-group-item\">Currency <span class=\"pull-right\">{{order.ord_currency}}</span></li><li class=\"list-group-item\">Terms of Payment <span class=\"pull-right\">{{order.ord_payment_terms}}</span></li><li class=\"list-group-item\">Terms of Delivery <span class=\"pull-right\">{{order.ord_terms}}</span></li><li class=\"list-group-item\">Delivery Location <span class=\"pull-right\">{{order.ord_fob_point}}</span></li></ul></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Order Status</h3></div><ul class=\"list-group\"><li class=\"list-group-item\">Vendor Approval <span class=\"pull-right\">{{order.ord_approval_status}} <a class=\"label label-default\" ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!=\"Accepted\"' data-toggle=\"modal\" data-target=\"#mod_cant_be_accepted\">Not Ready</a><order-accept-button></order-accept-button></span></li></ul></div></div><div class=\"col-md-7\"><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Vendor Order Address</h3></div><div class=\"panel-body\"><chain-address address=\"{{order.ord_order_from_address_full_address}}\"></chain-address></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Ship From Address</h3></div><div class=\"panel-body\"><div class=\"text-warning\" ng-show=\"order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_full_address.length>0\">Please select a ship from address using the Change button below.</div><chain-address address=\"{{order.ord_ship_from_full_address}}\"></chain-address></div><div class=\"panel-footer text-right\" ng-if=\"order.permissions.can_edit && order.vendor_id == me.company_id\"><a ui-sref=\"selectShipFrom({id:order.id})\" class=\"btn btn-primary\">Change</a></div></div><div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Ship To Address</h3></div><div ng-if=\"order.order_lines.length > 0 && order.ord_ship_to_count==1\" class=\"panel-body\"><chain-address address=\"{{order.order_lines[0].ordln_ship_to_full_address}}\"></chain-address></div><div ng-if=\"order.ord_ship_to_count > 1\" class=\"panel-body\"><strong>Multi-Stop</strong></div></div><div class=\"panel panel-primary\" ng-if=\"order.available_tpp_survey_responses.length > 0\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Trade Preference Program Certification</h3></div><div class=\"panel-body\">{{order.ord_tppsr_name}}<div ng-if=\"!order.ord_tppsr_db_id\" class=\"alert alert-info\">No trade preference program selected.</div></div><div class=\"panel-footer text-right\"><button class=\"btn btn-primary\" ui-sref=\"selectTppSurveyResponse({id:order.id})\">Change</button></div></div></div></div><div class=\"row\"><div class=\"col-md-12\"><div class=\"panel panel-primary\"><table class=\"table table-bordered table-striped\"><thead><tr><th>Line Num</th><th>Article</th><th ng-if=\"order.ord_ship_to_count > 1\">Ship To</th><th>Quantity</th><th>UM</th><th>Unit Price</th><th>Net Amount</th></tr></thead><tbody><tr ng-repeat=\"ol in order.order_lines track by ol.id\"><td>{{ol.ordln_line_number}}</td><td><small>{{ol.ordln_puid}}</small><br>{{ol.ordln_pname}}</td><td ng-if=\"order.ord_ship_to_count > 1\"><chain-address address=\"{{ol.ordln_ship_to_full_address}}\"></chain-address></td><td class=\"text-right numeric\">{{ol.ordln_ordered_qty}}</td><td>{{ol.ordln_unit_of_measure}}</td><td class=\"text-right numeric\">{{ol.ordln_ppu}}</td><td class=\"text-right numeric\">{{ol.ordln_total_cost}}</td></tr><tr><td class=\"text-right\" colspan=\"5\">Total</td><td class=\"text-right numeric\">{{order.ord_total_cost}}</td></tr></tbody></table></div></div></div><div class=\"row\"><div class=\"col-md-6\"><chain-comments-panel parent=\"order\" module-type=\"Order\"></chain-comments-panel></div><div class=\"col-md-6\"><chain-attachments-panel parent=\"order\" module-type=\"Order\"></chain-attachments-panel></div></div></div><div class=\"modal fade\" id=\"mod_cant_be_accepted\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Pending Updates</h4></div><div class=\"modal-body\">This order is does not have all data elements completed and cannot be accepted.</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>");
 }]);
 
-angular.module("vendor_portal/partials/standard_shipment_template.html", []).run(["$templateCache", function($templateCache) {
+angular.module("vendor_portal/partials/standard_shipment_template.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/standard_shipment_template.html",
     "<div id=\"standard-shipment-template\"><h1>Shipment {{shipment.shp_ref}}</h1></div>");
 }]);
+
+(function() {
+  var app;
+
+  app = angular.module('VendorPortal');
+
+  app.controller('MainCtrl', [
+    '$scope', 'chainApiSvc', function($scope, chainApiSvc) {
+      $scope.init = function() {
+        return chainApiSvc.User.me().then(function(me) {
+          return $scope.me = me;
+        });
+      };
+      if (!$scope.$root.isTest) {
+        return $scope.init();
+      }
+    }
+  ]);
+
+}).call(this);
 
 (function() {
   angular.module('VendorPortal').directive('orderAcceptButton', function() {

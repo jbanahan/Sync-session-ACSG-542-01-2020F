@@ -559,8 +559,8 @@ EOS
       Array.wrap(list).each do |email_address|
         if email_address.is_a? Group
           group_codes << email_address.system_code
-          emails = email_address.users.map(&:email).find_all {|em| !em.blank?}
-          new_list.push(*emails) if emails.size > 0
+          emails = email_address.user_emails
+          new_list.push(*emails) if emails.length > 0
         else
           new_list << email_address
         end

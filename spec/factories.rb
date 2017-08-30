@@ -150,7 +150,7 @@ Factory.define :order_line do |o|
   o.association :order
 end
 Factory.define :shipment do |s|
-  s.sequence(:reference)
+  s.sequence(:reference, 'a')
   s.association :vendor, :factory => :company
 end
 Factory.define :shipment_line do |s|

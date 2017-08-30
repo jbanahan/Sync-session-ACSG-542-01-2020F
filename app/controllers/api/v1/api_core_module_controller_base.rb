@@ -101,12 +101,11 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   def import_fields base_hash, obj, core_module
     # We want to allow access even to fields that aren't user)accessible via the search here for scenarios
     # where we're setting id values via autocomplete boxes (ports, address ids, etc)
-    fields = core_module.every_model_field {|mf| base_hash.has_key?(mf.uid.to_s) }
+    fields = core_module.every_model_field {|mf| !mf.read_only? && base_hash.has_key?(mf.uid.to_s) }
     user = current_user
     fields.each_pair do |uid, mf|
       uid = mf.uid.to_s
-      # process_import handles checking if user can edit or if field is read_only?
-      # so don't bother w/ that here
+      # process_import handles checking if user can edit, so don't bother w/ that here
       mf.process_import(obj,base_hash[uid], user)
     end
     nil

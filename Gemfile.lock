@@ -16,6 +16,7 @@ GEM
       rack-cache (~> 1.2)
       rack-test (~> 0.6.1)
       sprockets (~> 2.2.1)
+    active_record_query_trace (1.5.4)
     activemodel (3.2.22)
       activesupport (= 3.2.22)
       builder (~> 3.0.0)
@@ -366,6 +367,7 @@ PLATFORMS
 DEPENDENCIES
   REX12 (~> 0.1.4)
   RedCloth (= 4.2.9)
+  active_record_query_trace
   aws-sdk (~> 2.6)
   aws-sdk-v1 (~> 1.66)
   barby (~> 0.6)

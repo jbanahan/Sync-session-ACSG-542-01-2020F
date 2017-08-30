@@ -174,7 +174,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_inland_freight_vendor_number: {label: 'Inland Freight Vendor Number', data_type: :string, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_vendor_number"},
     ordln_inland_freight_amount: {label: 'Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_amount"},
     ordln_vendor_inland_freight_amount: {label: 'Vendor Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_vendor_inland_freight_amount"},
-    var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"}
+    var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"},
+    shp_booking_unlocked_date: {label: "Booking Unlocked Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_booking_unlocked_date"}
   }
 
   def self.included(base)

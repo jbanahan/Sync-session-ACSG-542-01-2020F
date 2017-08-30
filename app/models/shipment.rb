@@ -59,6 +59,18 @@ class Shipment < ActiveRecord::Base
   # Booking Request / Approve / Confirm / Revise
   #########
   def can_request_booking? user, ignore_shipment_state=false
+    registered = OpenChain::OrderBookingRegistry.registered
+    if registered.empty?
+      return default_can_request_booking?(user, ignore_shipment_state)
+    else
+      registered.each do |r|
+        return false unless r.can_request_booking?(self,user)
+      end
+      return true
+    end
+  end
+
+  def default_can_request_booking? user, ignore_shipment_state=false
     unless ignore_shipment_state
       return false if self.booking_received_date || self.booking_approved_date || self.booking_confirmed_date
     end
@@ -66,6 +78,7 @@ class Shipment < ActiveRecord::Base
     return false unless self.vendor == user.company || user.company.master?
     return true
   end
+
   def request_booking! user, async_snapshot = false
     self.booking_received_date = 0.seconds.ago
     self.booking_requested_by = user
@@ -132,7 +145,7 @@ class Shipment < ActiveRecord::Base
 
       if !self.booking_confirmed_date
         # Users that can request or approve bookings can revise if it's not confirmed
-        return true if self.can_approve_booking?(user,true) || self.can_request_booking?(user,true)
+        return true if self.can_approve_booking?(user,true) || self.default_can_request_booking?(user,true)
       else
         # If there's a booking confirm date, only user's that can confirm can revise a booking
         return true if self.can_confirm_booking?(user,true)
@@ -140,7 +153,7 @@ class Shipment < ActiveRecord::Base
       return false
     else
       registered.each do |r|
-        return false unless r.can_revise_booking_hook(self,user)
+        return false unless r.can_revise_booking?(self,user)
       end
       return true
     end
@@ -152,7 +165,7 @@ class Shipment < ActiveRecord::Base
     self.booking_approved_date = nil
     self.booking_confirmed_by = nil
     self.booking_confirmed_date = nil
-    self.booking_revised_date = Time.zone.now.to_date
+    self.booking_revised_date = Time.zone.now
     self.booking_revised_by = user
     self.booking_request_count ||= 0
     self.booking_request_count = (self.booking_request_count + 1)
@@ -342,6 +355,19 @@ class Shipment < ActiveRecord::Base
 	  #same rules as view
 	  return user.edit_shipments? && can_view?(user)
 	end
+
+  def can_edit_booking? user
+    registered = OpenChain::OrderBookingRegistry.registered
+    if registered.empty?
+      # By default, just use the can_edit shipment register
+      return can_edit?(user)
+    else
+      registered.each do |r|
+        return false unless r.can_edit_booking?(self,user)
+      end
+      return true
+    end
+  end
 
   # can the user currently add lines to this shipment
   def can_add_remove_shipment_lines?(user)

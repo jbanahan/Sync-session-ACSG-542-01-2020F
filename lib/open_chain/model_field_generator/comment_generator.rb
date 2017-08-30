@@ -46,6 +46,21 @@ module OpenChain; module ModelFieldGenerator; module CommentGenerator
           export_lambda: lambda {|o| c = o.comments.order('comments.created_at DESC, comments.id DESC').first; c.nil? ? '' : c.subject},
           qualified_field_name: "IFNULL((SELECT subject FROM comments WHERE commentable_id = #{klass.tableize}.id AND commentable_type = '#{klass}' ORDER BY comments.created_at DESC, comments.id DESC LIMIT 1),'')"
         }
+      ],
+      [rank_start+5, "#{uid_prefix}_comment_last_7_days".to_sym, :comment_last_7_days, "Comments - Last 7 Days", :data_type=>:string, :read_only=>true, :history_ignore=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 7 Days cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, DateTime.now - 7.days)},
+        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c7.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c7.subject,\": \",c7.body) ORDER BY c7.updated_at DESC SEPARATOR \"\n \n\") FROM comments c7 WHERE c7.commentable_id = #{klass.tableize}.id AND c7.commentable_type = '#{klass}' AND DATE_SUB(NOW(), INTERVAL 7 DAY) <= c7.updated_at)"
+      ],
+      [rank_start+6, "#{uid_prefix}_comment_last_24_hrs".to_sym, :comment_last_2_hrs, "Comments - Last 24 Hours", :data_type=>:string, :read_only=>true, :history_ignore=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 24 Hours cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, DateTime.now - 24.hours)},
+        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c24.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c24.subject,\": \",c24.body) ORDER BY c24.updated_at DESC SEPARATOR \"\n \n\") FROM comments c24 WHERE c24.commentable_id = #{klass.tableize}.id AND c24.commentable_type = '#{klass}' AND DATE_SUB(NOW(), INTERVAL 24 DAY_HOUR) <= c24.updated_at)"
+      ],
+      [rank_start+7, "#{uid_prefix}_comment_last_25".to_sym, :comment_last_25, "Comments - Last 25", :data_type=>:string, :read_only=>true, :history_ignore=>true,
+        :import_lambda => lambda {|a,b| return "Comments - Last 25 cannot be set by import, ignored."},
+        :export_lambda => lambda {|obj| Comment.gather(obj, nil, 25)},
+        :qualified_field_name => "(SELECT GROUP_CONCAT(CONCAT(DATE_FORMAT(CONVERT_TZ(c25.updated_at, 'UTC', '#{Time.zone.tzinfo.name}'),'%m-%d %H:%i'),\" \",c25.subject,\": \",c25.body) ORDER BY c25.updated_at DESC SEPARATOR \"\n \n\") FROM comments c25 WHERE c25.commentable_id = #{klass.tableize}.id AND c25.commentable_type = '#{klass}' LIMIT 25)"
       ]
 
     ]

@@ -98,6 +98,7 @@ group :development,:test do
   gem 'rspec_junit_formatter', '~> 0.2.3' #circle-ci formatting
   # gem 'rack-mini-profiler'
   gem 'minitest'
+  gem 'active_record_query_trace'
 end
 
 group :test do

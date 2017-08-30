@@ -60,12 +60,14 @@ describe Order do
       u
     end
     let :book_registry_array do
-      r1 = double(:b1)
-      r2 = double(:b2)
-      r = [r1,r2]
-      r.each do |x|
-        allow(x).to receive(:can_book?).with(instance_of(Order),user).and_return true
-        OpenChain::OrderBookingRegistry.register(x)
+      2.times do |x|
+        c = Class.new {
+          def self.can_book?(order, user); true; end
+          def self.can_request_booking?(shipment, user); true; end
+          def self.can_revise_booking?(shipment, user); true; end
+          def self.can_edit_booking?(shipment, user); true; end
+        }
+        OpenChain::OrderBookingRegistry.register(c)
       end
     end
     it "should return true if can edit shipments and all OrderBookingRegistry entries return true" do
@@ -80,9 +82,13 @@ describe Order do
     end
     it "should return false if any OrderBookingRegistry returns false" do
       book_registry_array
-      x = double(:false_booking)
-      expect(x).to receive(:can_book?).with(instance_of(Order),user).and_return false
-      OpenChain::OrderBookingRegistry.register x
+     c = Class.new {
+        def self.can_book?(order, user); false; end
+        def self.can_request_booking?(shipment, user); true; end
+        def self.can_revise_booking?(shipment, user); true; end
+        def self.can_edit_booking?(shipment, user); true; end
+      }
+      OpenChain::OrderBookingRegistry.register(c)
       expect(Order.new.can_book?(user)).to be_falsey
     end
 

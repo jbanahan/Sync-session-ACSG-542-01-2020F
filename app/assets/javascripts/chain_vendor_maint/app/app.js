@@ -48,12 +48,14 @@
       $scope.coreSearch = {};
       $scope.baseSearch = function() {
         return {
-          hiddenCriteria: {
-            field: 'add_comp_db_id',
-            operator: 'eq',
-            val: $scope.vendor.id,
-            doNotSave: true
-          },
+          hiddenCriteria: [
+            {
+              field: 'add_comp_db_id',
+              operator: 'eq',
+              val: $scope.vendor.id,
+              doNotSave: true
+            }
+          ],
           buttons: [
             {
               label: 'Edit',
@@ -197,7 +199,7 @@ angular.module('ChainVendorMaint-Templates', ['chain_vendor_maint/partials/addre
 
 angular.module("chain_vendor_maint/partials/addresses.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("chain_vendor_maint/partials/addresses.html",
-    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Addresses\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Addresses\" api-object-name=\"Address\" base-search-setup-function=\"baseSearch\" page-uid=\"vendor-address\" bulk-edit=\"true\"></chain-search-panel></div></div><div class=\"row\"><div class=\"col-md-12 text-right\"><button ng-if=\"vendor.permissions.can_edit\" class=\"btn btn-success\" title=\"Add Address\" ng-click=\"openNewModal()\"><i class=\"fa fa-plus\"></i></button></div></div></div></chain-loading-wrapper><div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\" id=\"edit-address-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Edit Address</h4></div><div class=\"modal-body\" ng-if=\"addressToEdit\"><div ng-if=\"vendor.permissions.can_edit\"><chain-field-label field='dict.field(\"add_shipping\")'></chain-field-label><chain-field-input model=\"addressToEdit\" field='dict.field(\"add_shipping\")' input-class=\"form-control\"></chain-field-input></div><div ng-if=\"!vendor.permissions.can_edit\"><div class=\"alert alert-info\">You do not have permission to edit addresses for this vendor.</div></div></div><div class=\"modal-footer text-right\"><button class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button> <button ng-if=\"vendor.permissions.can_edit\" ng-click=\"save(addressToEdit)\" class=\"btn btn-success\" title=\"Save\"><i class=\"fa fa-save\"></i></button></div></div></div></div><div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\" id=\"new-address-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">New Address</h4></div><div class=\"modal-body\" ng-if=\"addressToAdd.add_comp_db_id\"><div ng-repeat=\"f in editFields track by f.uid\"><chain-field-label field=\"f\"></chain-field-label><chain-field-input model=\"addressToAdd\" field=\"f\" input-class=\"form-control\"></chain-field-input></div></div><div class=\"modal-footer text-right\"><button class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button> <button ng-click=\"save(addressToAdd)\" class=\"btn btn-success\" title=\"Save\"><i class=\"fa fa-save\"></i></button></div></div></div></div>");
+    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Addresses\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Addresses\" api-object-name=\"Address\" base-search-setup-function=\"baseSearch\" page-uid=\"vendor-address\" bulk-edit=\"true\" page-uid-cache-prefix=\"vendor.id\"></chain-search-panel></div></div><div class=\"row\"><div class=\"col-md-12 text-right\"><button ng-if=\"vendor.permissions.can_edit\" class=\"btn btn-success\" title=\"Add Address\" ng-click=\"openNewModal()\"><i class=\"fa fa-plus\"></i></button></div></div></div></chain-loading-wrapper><div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\" id=\"edit-address-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Edit Address</h4></div><div class=\"modal-body\" ng-if=\"addressToEdit\"><div ng-if=\"vendor.permissions.can_edit\"><chain-field-label field='dict.field(\"add_shipping\")'></chain-field-label><chain-field-input model=\"addressToEdit\" field='dict.field(\"add_shipping\")' input-class=\"form-control\"></chain-field-input></div><div ng-if=\"!vendor.permissions.can_edit\"><div class=\"alert alert-info\">You do not have permission to edit addresses for this vendor.</div></div></div><div class=\"modal-footer text-right\"><button class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button> <button ng-if=\"vendor.permissions.can_edit\" ng-click=\"save(addressToEdit)\" class=\"btn btn-success\" title=\"Save\"><i class=\"fa fa-save\"></i></button></div></div></div></div><div class=\"modal fade\" data-keyboard=\"false\" data-backdrop=\"static\" id=\"new-address-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">New Address</h4></div><div class=\"modal-body\" ng-if=\"addressToAdd.add_comp_db_id\"><div ng-repeat=\"f in editFields track by f.uid\"><chain-field-label field=\"f\"></chain-field-label><chain-field-input model=\"addressToAdd\" field=\"f\" input-class=\"form-control\"></chain-field-input></div></div><div class=\"modal-footer text-right\"><button class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button> <button ng-click=\"save(addressToAdd)\" class=\"btn btn-success\" title=\"Save\"><i class=\"fa fa-save\"></i></button></div></div></div></div>");
 }]);
 
 angular.module("chain_vendor_maint/partials/chain-cvm-nav.html", []).run(["$templateCache", function ($templateCache) {
@@ -212,12 +214,12 @@ angular.module("chain_vendor_maint/partials/folders.html", []).run(["$templateCa
 
 angular.module("chain_vendor_maint/partials/orders.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("chain_vendor_maint/partials/orders.html",
-    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Orders\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Orders\" api-object-name=\"Order\" base-search-setup-function=\"baseSearch\" page-uid=\"vendor-order\" bulk-edit=\"true\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
+    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Orders\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Orders\" api-object-name=\"Order\" base-search-setup-function=\"baseSearch\" page-uid=\"vendor-order\" bulk-edit=\"true\" page-uid-cache-prefix=\"vendor.id\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
 }]);
 
 angular.module("chain_vendor_maint/partials/products.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("chain_vendor_maint/partials/products.html",
-    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Products\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Products\" api-object-name=\"ProductVendorAssignment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit page-uid=\"{{pageUid}}\" button-classes=\"btn-default btn-sm\" api-object-name=\"ProductVendorAssignment\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
+    "<chain-loading-wrapper loading-flag=\"{{loading}}\"><div class=\"container\"><div class=\"row\"><h1 class=\"text-center\">{{vendor.cmp_name}}</h1></div><chain-cvm-nav active-module=\"Products\" vendor=\"vendor\"></chain-cvm-nav><div class=\"row\"><div class=\"col-md-12\"><chain-search-panel name=\"Products\" api-object-name=\"ProductVendorAssignment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\" page-uid-cache-prefix=\"vendor.id\"><chain-bulk-edit page-uid=\"{{pageUid}}\" button-classes=\"btn-default btn-sm\" api-object-name=\"ProductVendorAssignment\"></chain-search-panel></div></div></div></chain-loading-wrapper>");
 }]);
 
 angular.module("chain_vendor_maint/partials/show.html", []).run(["$templateCache", function ($templateCache) {
@@ -258,12 +260,14 @@ angular.module("chain_vendor_maint/partials/show.html", []).run(["$templateCache
       $scope.coreSearch = {};
       $scope.baseSearch = function() {
         return {
-          hiddenCriteria: {
-            field: 'ord_vendor_id',
-            operator: 'eq',
-            val: $scope.vendor.id,
-            doNotSave: true
-          },
+          hiddenCriteria: [
+            {
+              field: 'ord_vendor_id',
+              operator: 'eq',
+              val: $scope.vendor.id,
+              doNotSave: true
+            }
+          ],
           buttons: [
             {
               label: 'View',
@@ -304,12 +308,14 @@ angular.module("chain_vendor_maint/partials/show.html", []).run(["$templateCache
       $scope.baseSearch = function() {
         var ss;
         return ss = {
-          hiddenCriteria: {
-            field: 'prodven_vend_dbid',
-            operator: 'eq',
-            val: $scope.vendor.id,
-            doNotSave: true
-          },
+          hiddenCriteria: [
+            {
+              field: 'prodven_vend_dbid',
+              operator: 'eq',
+              val: $scope.vendor.id,
+              doNotSave: true
+            }
+          ],
           buttons: [
             {
               label: 'View',

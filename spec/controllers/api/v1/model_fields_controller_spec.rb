@@ -69,27 +69,33 @@ describe Api::V1::ModelFieldsController do
     end
 
     it "should flag remote validate" do
-      FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
-      expect(get :index).to be_success
+      fvr = instance_double(FieldValidatorRule)
+      expect(ModelField.find_by_uid(:prod_name)).to receive(:field_validator_rule).and_return fvr
+      expect(fvr).to receive(:requires_remote_validation?).and_return true
+      expect(fvr).to receive(:one_of_array).and_return ["A", "X", "C"]
 
+      expect(get :index).to be_success
       h = JSON.parse(response.body)
       mf = h['fields'].find {|fld| fld['uid']=='prod_name'}
-      expect(mf['remote_validate']).to be_truthy
+      expect(mf['remote_validate']).to eq true
+      expect(mf['select_options']).to eq [["A", "A"], ["X", "X"], ["C", "C"]]
 
       mf = h['fields'].find {|fld| fld['uid']=='prod_uid'}
-      expect(mf['remote_validate']).to be_falsey
-
+      expect(mf['remote_validate']).to be_nil
     end
 
-    it "should get choices array" do
-      FieldValidatorRule.create!(model_field_uid:'prod_name',module_type:'Product',one_of:"a\nx\nc")
+    it "uses select options from field validator rule" do
+      fvr = instance_double(FieldValidatorRule)
+      expect(ModelField.find_by_uid(:prod_name)).to receive(:field_validator_rule).and_return fvr
+      expect(fvr).to receive(:requires_remote_validation?).and_return false
+      expect(fvr).to receive(:one_of_array).and_return ["A", "X", "C"]
 
       expect(get :index).to be_success
-
       h = JSON.parse(response.body)
       mf = h['fields'].find {|fld| fld['uid']=='prod_name'}
-      expect(mf['select_options']).to eq [['a','a'],['x','x'],['c','c']]
+      expect(mf['select_options']).to eq [["A", "A"], ["X", "X"], ["C", "C"]]
     end
+
     it "should return cache key" do
       mfload = 10.minutes.ago
       company_updated_at = 1.hour.ago
@@ -121,7 +127,6 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
-      # byebug
       fld = h['fields'].find {|f| f['uid']=="*cf_#{cd.id}"}
       expect(fld['cdef_uid']).to eq 'xyz'
     end

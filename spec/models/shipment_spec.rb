@@ -3,8 +3,10 @@ require 'spec_helper'
 describe Shipment do
   let :order_booking do
     obr = Class.new do
-      def self.can_book? s, u
-      end
+      def self.can_book?(ord, user); true; end
+      def self.can_request_booking?(ord, user); true; end
+      def self.can_revise_booking?(ord, user); true; end
+      def self.can_edit_booking?(shipment, user); true; end
     end
     OpenChain::OrderBookingRegistry.register obr
     obr
@@ -309,6 +311,14 @@ describe Shipment do
       s.vendor = u.company
       expect(s.can_request_booking?(u)).to be_falsey
     end
+    it "defers to order booking registry" do
+      ob = order_booking
+      def ob.can_request_booking?(s,u); s.do_something(u); true; end
+      s = Shipment.new
+      u = double('user')
+      expect(s).to receive(:do_something).with(u)
+      expect(s.can_request_booking?(u)).to be true
+    end
   end
 
   describe "can_approve_booking?" do
@@ -425,7 +435,7 @@ describe Shipment do
     it "should allow user to revise if approved but not confirmed and user can request_booking" do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
-      expect(s).to receive(:can_request_booking?).with(u,true).and_return true
+      expect(s).to receive(:default_can_request_booking?).with(u,true).and_return true
       allow(s).to receive(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
       allow(s).to receive(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_truthy
@@ -434,7 +444,7 @@ describe Shipment do
       u = double('u')
       s = Shipment.new(booking_approved_date:Time.now)
       expect(s).to receive(:can_approve_booking?).with(u,true).and_return true
-      allow(s).to receive(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      allow(s).to receive(:default_can_request_booking?).and_return false #make sure we're not testing the wrong thing
       allow(s).to receive(:can_confirm_booking?).and_return false #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_truthy
     end
@@ -444,7 +454,7 @@ describe Shipment do
       s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
       expect(s).to receive(:can_confirm_booking?).with(u,true).and_return true
       allow(s).to receive(:can_approve_booking?).and_return false #make sure we're not testing the wrong thing
-      allow(s).to receive(:can_request_booking?).and_return false #make sure we're not testing the wrong thing
+      allow(s).to receive(:default_can_request_booking?).and_return false #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_truthy
     end
     it "should not allow user to revise if confirmed and user cannot confirm_booking" do
@@ -452,14 +462,14 @@ describe Shipment do
       s = Shipment.new(booking_approved_date:Time.now,booking_confirmed_date:Time.now)
       expect(s).to receive(:can_confirm_booking?).with(u,true).and_return false
       allow(s).to receive(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
-      allow(s).to receive(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      allow(s).to receive(:default_can_request_booking?).and_return true #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_falsey
     end
     it "should not allow if not approved or confirmed" do #since it wouldn't be logical
       u = double('u')
       s = Shipment.new
       allow(s).to receive(:can_approve_booking?).and_return true #make sure we're not testing the wrong thing
-      allow(s).to receive(:can_request_booking?).and_return true #make sure we're not testing the wrong thing
+      allow(s).to receive(:default_can_request_booking?).and_return true #make sure we're not testing the wrong thing
       allow(s).to receive(:can_confirm_booking?).and_return true #make sure we're not testing the wrong thing
       expect(s.can_revise_booking?(u)).to be_falsey
     end
@@ -471,7 +481,7 @@ describe Shipment do
     end
     it "should defer to OrderBookingRegistry" do
       ob = order_booking
-      def ob.can_revise_booking_hook(s,u); s.do_something(u); true; end
+      def ob.can_revise_booking?(s,u); s.do_something(u); true; end
       s = Shipment.new
       u = double('user')
       expect(s).to receive(:do_something).with(u)
@@ -484,15 +494,16 @@ describe Shipment do
       original_receive= Time.zone.now
       s = Factory(:shipment,booking_approved_by:u,booking_requested_by:u,booking_confirmed_by:u,booking_received_date:original_receive,booking_approved_date:Time.now,booking_confirmed_date:Time.now,booking_request_count:1)
       expect(s).to receive(:create_snapshot_with_async_option).with(false,u)
-      s.revise_booking! u
+      now = Time.zone.now
+      Timecop.freeze(now) { s.revise_booking! u }
       s.reload
       expect(s.booking_approved_by).to be_nil
       expect(s.booking_approved_date).to be_nil
       expect(s.booking_confirmed_by).to be_nil
       expect(s.booking_confirmed_date).to be_nil
-      expect(s.booking_received_date).to eq original_receive.to_date
+      expect(s.booking_received_date.to_i).to eq original_receive.to_i
       expect(s.booking_requested_by).to eq u
-      expect(s.booking_revised_date).to eq Time.zone.now.to_date
+      expect(s.booking_revised_date.to_i).to eq now.to_i
       expect(s.booking_request_count).to eq 2
     end
     it "should call order booking registry" do
@@ -724,6 +735,26 @@ describe Shipment do
       user.company.linked_companies << @imp
       products = @shipment.available_products(user).all
       expect(products.size).to eq 1
+    end
+  end
+
+  describe "can_edit_booking?" do
+    it "uses shipment.can_edit? permissions by default" do
+      user = User.new
+      shipment = Shipment.new
+
+      expect(shipment).to receive(:can_edit?).with(user).and_return true
+      expect(shipment.can_edit_booking? user).to eq true
+    end
+
+    it "calls through to order registry if present" do
+      user = User.new
+      shipment = Shipment.new
+      
+      expect(order_booking).to receive(:can_edit_booking?).with(shipment, user).and_return true
+      expect(shipment).not_to receive(:can_edit?)
+
+      expect(shipment.can_edit_booking? user).to eq true
     end
   end
 end

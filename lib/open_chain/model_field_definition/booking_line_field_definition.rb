@@ -12,7 +12,7 @@ module OpenChain; module ModelFieldDefinition; module BookingLineFieldDefinition
      [4, :bkln_cbms, :cbms, "CBMS", {:data_type=>:decimal}],
      [5, :bkln_carton_qty, :carton_qty, "Carton Quantity", {:data_type=>:integer}],
      [6, :bkln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",
-      {data_type: :integer,
+      {data_type: :integer, user_accessible: false,
        import_lambda: lambda {|sl,id|
          return "#{ModelField.find_by_uid(:bkln_carton_set_uid).label} was blank." if id.blank?
          cs = CartonSet.find_by_id id
@@ -32,7 +32,7 @@ INNER JOIN orders ON orders.id = order_lines.order_id
 WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line_id = order_lines.id)"
        }],
      [8, :bkln_order_id, :order_id, "Order ID", {
-           data_type: :integer,
+           data_type: :integer, user_accessible: false,
            export_lambda: lambda{|bl| bl.order_id ? bl.order_id : bl.order_line.try(:order).try(:id) }
        }],
      [9,:bkln_puid, :unique_identifier,"Product Unique ID", {
@@ -72,14 +72,17 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
         }
       }],
       [12, :bkln_container_size, :container_size, "Container Size", {data_type: :string}],
-      [13, :bkln_order_line_id, :order_line_id, "Order Line DB ID", {data_type: :integer}],
-      [14, :bkln_product_db_id, :product_id, "Product DB ID",{data_type: :integer}],
+      [13, :bkln_order_line_id, :order_line_id, "Order Line DB ID", {data_type: :integer, user_accessible: false}],
+      [14, :bkln_product_db_id, :product_id, "Product DB ID",{data_type: :integer, user_accessible: false}],
       [15, :bkln_order_number, :booked_order_number, "Order Number", {data_type: :string, read_only: true, 
           export_lambda: lambda {|detail| 
             cust_order_number = detail.order.try(:customer_order_number)
             cust_order_number.blank? ? detail.order.try(:order_number) : cust_order_number
           }, 
-          qualified_field_name: "(SELECT IFNULL(orders.customer_order_number, orders.order_number) FROM orders WHERE booking_lines.order_id = orders.id LIMIT 1)"}]
+          qualified_field_name: "(SELECT IFNULL(orders.customer_order_number, orders.order_number) FROM orders WHERE booking_lines.order_id = orders.id LIMIT 1)"}],
+      [16, :bkln_order_line_number, :order_line_number, "Order Line Number", {data_type: :integer, read_only: true, 
+          export_lambda: lambda {|detail| detail.order_line.try(:line_number)},
+          qualified_field_name: "(SELECT line_number FROM order_lines AS booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}]
     ]
     add_fields CoreModule::BOOKING_LINE, make_variant_arrays(100,'bkln','booking_lines')
   end

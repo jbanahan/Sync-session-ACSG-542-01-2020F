@@ -38,6 +38,9 @@ QRY
     else
       g.where(system_code: system_code).first
     end
+  end
 
+  def user_emails
+    users.where("length(trim(email)) > 0").pluck :email
   end
 end

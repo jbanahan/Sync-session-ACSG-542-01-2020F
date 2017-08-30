@@ -72,6 +72,10 @@ class ModelField
     @can_view_groups = SortedSet.new(@field_validator_rule.respond_to?(:view_groups) ? @field_validator_rule.view_groups : [])
     @can_edit_groups = SortedSet.new(@field_validator_rule.respond_to?(:edit_groups) ? @field_validator_rule.edit_groups : [])
     @can_mass_edit_groups = SortedSet.new(@field_validator_rule.respond_to?(:mass_edit_groups) ? @field_validator_rule.mass_edit_groups : [])
+    # Allow everyone to view exists for the case where you have a field that you want to limit edit access but not view access (the default
+    # case prevents any view level access if a edit group exists on the field validator rule)
+    @everyone_can_view = @field_validator_rule.respond_to?(:allow_everyone_to_view?) && @field_validator_rule.allow_everyone_to_view?
+
     if !o[:default_label].blank?
       FieldLabel.set_default_value @uid, o[:default_label]
     end
@@ -180,16 +184,24 @@ class ModelField
   # returns true if the given user should be allowed to view this field
   def can_view? user
     in_groups = false
-    if @can_edit_groups.size > 0
-      in_groups = user.in_any_group? @can_edit_groups
-    end
+    everyone_can_view = false
 
-    if !in_groups && @can_view_groups.size > 0
-      in_groups = user.in_any_group? @can_view_groups
+    # If the field validator rule indicates everyone can view, then that will override any other checks, other than 
+    # the can_view_lambda (essentially, it just overrides the groups checks)
+    if @everyone_can_view
+      everyone_can_view = @everyone_can_view
+    else
+      if @can_edit_groups.size > 0
+        in_groups = user.in_any_group? @can_edit_groups
+      end
+
+      if !in_groups && @can_view_groups.size > 0
+        in_groups = user.in_any_group? @can_view_groups
+      end
     end
 
     can_view = false
-    if in_groups || (@can_edit_groups.size == 0 && @can_view_groups.size == 0)
+    if everyone_can_view || in_groups || (@can_edit_groups.size == 0 && @can_view_groups.size == 0)
       # By default, there's no can_view_lambda so we assume the default state of the field
       # is viewable by all.
       if @can_view_lambda.nil?

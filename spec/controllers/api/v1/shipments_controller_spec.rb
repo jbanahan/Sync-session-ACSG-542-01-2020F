@@ -58,6 +58,7 @@ describe Api::V1::ShipmentsController do
       expect(pj['can_view']).to eq true
       expect(pj['can_attach']).to eq true
       expect(pj['can_comment']).to eq false
+      expect(pj['can_edit_booking']).to eq false
     end
 
     it "should render without lines" do
@@ -941,6 +942,9 @@ describe Api::V1::ShipmentsController do
         def self.book_from_order_hook ship_hash, order, booking_lines
           ship_hash[:shp_master_bill_of_lading] = 'mbol'
         end
+        def self.can_request_booking?(shipment, user); true; end
+        def self.can_revise_booking?(shipment, user); true; end
+        def self.can_edit_booking?(shipment, user); true; end
       end
       OpenChain::OrderBookingRegistry.register order_booking
       order_booking
@@ -1076,6 +1080,134 @@ describe Api::V1::ShipmentsController do
 
         expect(response).to_not be_success
         expect(response.body).to match(/vendor must/)
+      end
+    end
+  end
+
+  describe "open_bookings" do
+    let (:vendor) { Factory(:vendor) }
+    let (:importer) { Factory(:importer) }
+    let! (:shipment) { Factory(:shipment, vendor: vendor, importer: importer) }
+
+    context "with order_id parameter" do
+      let! (:order) { Factory(:order, importer: importer, vendor:vendor) }
+
+      it "returns bookings user can see where the importer and vendor match the given order's ids" do
+        get "open_bookings", order_id: order.id
+
+        expect(response).to be_success
+        json = JSON.parse(response.body)
+        expect(json["results"].length).to eq 1
+        expect(json["results"].first["id"]).to eq shipment.id
+      end
+
+      it "does not return results if importer is different than order" do
+        shipment.update_attributes! importer_id: Factory(:importer).id
+
+        get "open_bookings", order_id: order.id
+        expect(JSON.parse(response.body)["results"].length).to eq 0
+      end
+
+      it "does not return results if vendor is different than order" do
+        shipment.update_attributes! vendor_id: Factory(:vendor).id
+
+        get "open_bookings", order_id: order.id
+        expect(JSON.parse(response.body)["results"].length).to eq 0
+      end
+    end
+
+    it "limits bookings to linked importer accounts if user is not a vendor or an importer" do
+      @u.company = Factory(:master_company)
+      @u.company.linked_companies << importer
+      @u.save!
+
+      get "open_bookings"
+
+      expect(response).to be_success
+      json = JSON.parse(response.body)
+      expect(json["results"].length).to eq 1
+      expect(json["results"].first["id"]).to eq shipment.id
+    end
+    
+    it "limits bookings by vendor id if user is a vendor" do
+      @u.company.vendor = true
+      @u.company.save!
+
+      shipment.update_attributes! vendor_id: Factory(:vendor).id
+
+      get "open_bookings"
+      expect(JSON.parse(response.body)["results"].length).to eq 0
+    end
+
+    it "limits bookings by importer id if user is an importer" do
+      @u.company.importer = true
+      @u.company.save!
+
+      shipment.update_attributes! importer_id: Factory(:vendor).id
+
+      get "open_bookings"
+      expect(JSON.parse(response.body)["results"].length).to eq 0
+    end
+
+    it "limits fields returned" do
+      @u.company = Factory(:master_company)
+      @u.company.linked_companies << importer
+      @u.save!
+      get "open_bookings", fields: "shp_ref"
+
+      hash = JSON.parse(response.body)["results"].first
+      # Rip out permissions, we want to make sure the other shipment fields were limited by the fields parameter
+      hash.delete 'permissions'
+      expect(hash).to eq({"id" => shipment.id, "shp_ref" => shipment.reference})
+    end
+
+    it "does not return shipments that have shipment instructions" do
+      shipment.update_attributes! shipment_instructions_sent_date: Time.zone.now
+      @u.company = Factory(:master_company)
+      @u.company.linked_companies << importer
+      @u.save!
+      get "open_bookings", fields: "shp_ref"
+
+      expect(JSON.parse(response.body)["results"].length).to eq 0
+    end
+
+    context "with booking registry method" do
+      let!(:order_booking_registry) {
+        order_booking = Class.new {
+          def self.can_book?(user); true; end
+          def self.open_bookings_hook user, shipments_query, order
+            shipments_query.where(mode: "Ocean")
+          end
+          def self.can_request_booking?(shipment, user); true; end
+          def self.can_revise_booking?(shipment, user); true; end
+          def self.can_edit_booking?(shipment, user); true; end
+        }
+
+        OpenChain::OrderBookingRegistry.register order_booking
+        order_booking
+      }
+
+      it "uses an order booking registry" do
+        @u.company = Factory(:master_company)
+        @u.company.linked_companies << importer
+        @u.save!
+
+        get "open_bookings"
+
+        # This result should be blank because we're limiting bookings to only ocean ones.
+        expect(JSON.parse(response.body)["results"].length).to eq 0
+      end
+
+      it "uses an order booking registry" do
+        shipment.update_attributes! mode: "Ocean", shipment_instructions_sent_date: Time.zone.now
+        @u.company = Factory(:master_company)
+        @u.company.linked_companies << importer
+        @u.save!
+
+        get "open_bookings"
+
+        # This result should be blank because we're limiting bookings to only ocean ones.
+        expect(JSON.parse(response.body)["results"].length).to eq 1
       end
     end
   end

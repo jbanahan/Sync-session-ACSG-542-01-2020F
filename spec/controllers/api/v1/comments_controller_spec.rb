@@ -67,15 +67,18 @@ describe Api::V1::CommentsController do
       expected_h = {'id'=>c1.id,'commentable_id'=>@s.id,'commentable_type'=>'Shipment',
         'subject'=>'s1','body'=>'b1'
       }
-      expect(jc[0]['id']).to eq c1.id
-      expect(jc[0]['commentable_id']).to eq @s.id
-      expect(jc[0]['commentable_type']).to eq 'Shipment'
-      expect(jc[0]['subject']).to eq 's1'
-      expect(jc[0]['body']).to eq 'b1'
-      expect(jc[0]['created_at']).to_not be_nil
-      expect(jc[0]['user']['full_name']).to eq @u.full_name
+
+      c = jc.find {|c| c["id"].to_i == c1.id}
+
+      expect(c).not_to be_nil
+      expect(c['commentable_id']).to eq @s.id
+      expect(c['commentable_type']).to eq 'Shipment'
+      expect(c['subject']).to eq 's1'
+      expect(c['body']).to eq 'b1'
+      expect(c['created_at']).to_not be_nil
+      expect(c['user']['full_name']).to eq @u.full_name
       expected_permissions = {'can_view'=>true,'can_edit'=>true,'can_delete'=>true}
-      expect(jc[0]['permissions']).to eq expected_permissions
+      expect(c['permissions']).to eq expected_permissions
     end
     it "should return empty array for no comments" do
       get :for_module, module_type:'Shipment', id: @s.id.to_s

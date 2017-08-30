@@ -1,4 +1,4 @@
-<div class="container">
+<div id="outer" class="container">
   <div class="row">
     <div class="col-md-12 text-center">
       <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
@@ -19,14 +19,34 @@
           <li class="list-group-item list-group-item-info">
             Booking
           </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_mode','shp_shipment_type','shp_cargo_ready_date','shp_first_port_receipt_id']">
+          <li class="list-group-item" ng-repeat="fld in ['shp_mode','shp_shipment_type','shp_cargo_ready_date']">
             <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+            <div ng-if="shipment.permissions.can_edit_booking">
+              <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+            </div>
+            <div ng-if="!shipment.permissions.can_edit_booking">
+              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+            </div>
+          </li>
+          <li class="list-group-item"">
+            <chain-field-label field="dictionary.field('shp_first_port_receipt_id')"></chain-field-label>
+            <div ng-if="shipment.permissions.can_edit_booking">
+              <chain-field-input model="shipment" field="dictionary.field('shp_first_port_receipt_id')"></chain-field-input>
+            </div>
+            <div ng-if="!shipment.permissions.can_edit_booking">
+              <chain-field-value model="shipment" field="dictionary.field('shp_first_port_receipt_name')"></chain-field-value>
+            </div>
           </li>
           <li class="list-group-item">
             <chain-field-label field="dictionary.field('shp_requested_equipment')"></chain-field-label>
-            <chain-vp-equipment-requestor shipment="shipment" equipment-types="['20STD','40STD','40HQ','45STD','53','LCL']"></chain-vp-equipment-requestor>
+            <div ng-if="shipment.permissions.can_edit_booking">
+              <chain-vp-equipment-requestor shipment="shipment" equipment-types="['20STD','40STD','40HQ','45STD','53','LCL']"></chain-vp-equipment-requestor>
+            </div>
+            <div ng-if="!shipment.permissions.can_edit_booking">
+              <chain-field-value model="shipment" field="dictionary.field('shp_requested_equipment')"></chain-field-value>
+            </div>
           </li>
+          <!-- Commented out for now
           <li class="list-group-item list-group-item-info">
             Shipment Instructions
           </li>
@@ -34,6 +54,7 @@
             <chain-field-label field="dictionary.field(fld)"></chain-field-label>
             <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
           </li>
+          -->
           <li class="list-group-item list-group-item-info">
             Details
           </li>
@@ -50,7 +71,7 @@
             </div>
           </li>
         </ul>
-        <div class="panel-footer text-right" ng-if='shipment.permissions.can_edit'>
+        <div class="panel-footer text-right" ng-if='shipment.permissions.can_edit_booking'>
           <button class='btn btn-xs btn-primary' title='Save' ng-click='save(shipment)'><i class='fa fa-save'></i></button>
         </div>
       </div>
@@ -61,12 +82,16 @@
           <h3 class="panel-title">Actions</h3>
         </div>
         <ul class="list-group">
+          <li class="list-group-item" ng-if="shipment['shp_mode'] == '' || shipment['shp_shipment_type'] == '' || shipment['shp_cargo_ready_date'] == '' || shipment['shp_first_port_receipt_id'] == '' || shipment['shp_requested_equipment'] == ''">
+            <p>Please complete all fields in the Booking section and click save before requesting your booking.</p>
+          </li>
           <li class="list-group-item">
             <button ng-disabled="!shipment.permissions.can_request_booking" class="btn btn-sm btn-default btn-block" ng-click='requestBooking(shipment)'>Request Booking</button>
           </li>
           <li class="list-group-item">
             <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-default btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
           </li>
+          <!-- These will be needed later on
           <li class="list-group-item">
             <button ng-disabled="!shipment.permissions.can_send_shipment_instructions" class="btn btn-sm btn-default btn-block" ng-click='sendShipmentInstructions(shipment)'>Send Shipment Instructions</button>
           </li>
@@ -76,6 +101,7 @@
           <li class="list-group-item" ng-show='me.permissions.admin'>
             <button ng-disabled="!shipment.permissions.can_uncancel" class="btn btn-sm btn-default btn-block" ng-click='uncancel(shipment)'>Undo Cancel Shipment</button>
           </li>
+          -->
         </ul>
         <div class="panel-footer">
 
@@ -87,7 +113,7 @@
         </div>
         <ul class="list-group" ng-if="shipment.shp_canceled_date">
           <li class="list-group-item list-group-item-danger">
-            Cancelation
+            Cancellation
           </li>
           <li class="list-group-item" ng-repeat="fld in ['shp_canceled_by_full_name','shp_canceled_date']">
             <chain-field-label field="dictionary.field(fld)"></chain-field-label>
@@ -100,7 +126,7 @@
           <li class="list-group-item list-group-item-info">
             Booking Activity
           </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_booking_requested_by_full_name','shp_booking_received_date','shp_booking_revised_by_full_name','shp_booking_revised_date','shp_shipment_instructions_sent_date','shp_shipment_instructions_sent_by_full_name','shp_booking_request_count']">
+          <li class="list-group-item" ng-repeat="fld in ['shp_booking_requested_by_full_name','shp_booking_received_date','shp_booking_revised_by_full_name','shp_booking_revised_date', '*shp_booking_unlocked_date', 'shp_shipment_instructions_sent_date','shp_shipment_instructions_sent_by_full_name','shp_booking_request_count']">
             <chain-field-label field="dictionary.field(fld)"></chain-field-label>
             <span class="pull-right">
               <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
@@ -131,7 +157,10 @@
         <div class="panel-body">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a data-target="#booking-tab" aria-controls="booking-tab" role="tab" data-toggle="tab">Booking</a></li>
+            <!-- 
+            We're going to need this back in at some point, so we're just commenting it out now
             <li role="presentation"><a data-target="#manifest-tab" aria-controls="manifest-tab" role="tab" data-toggle="tab">Manifest</i></a></li>
+            -->
           </ul>
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="booking-tab">
@@ -178,7 +207,7 @@
                       <chain-field-value model='bLine' field='dictionary.field("bkln_quantity")'></chain-field-value>
                     </td>
                     <td>
-                      <button ng-click='unBookOrder(bLine)' ng-if='shipment.permissions.can_add_remove_booking_lines' class='btn btn-sm btn-danger' title="Remove order from booking">
+                      <button ng-click='unBookOrder(bLine)' ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking" class='btn btn-sm btn-danger' title="Remove order from booking">
                         <i class='fa fa-trash-o'></i>
                       </button>
                     </td>
@@ -206,10 +235,12 @@
             </div>
           </div>
         </div>
+        <!-- Commented out, not needed at the moment
         <div class="panel-footer text-right">
           <button class='btn btn-default' ng-if='shipment.lines.length > 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='clearManifest(shipment)'>Clear Manifest</button>
           <chain-vp-full-shipment-pack shipment="shipment" dictionary="dictionary"></chain-vp-full-shipment-pack>
         </div>
+        -->
       </div>
     </div>
   </div>

@@ -81,6 +81,37 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render json: {lines: lines}
   end
 
+  def open_bookings
+    # If we're looking for bookings for a specific order then the order_id should be sent, otherwise, if it's not we'll limit the bookings
+    # based on the user's linked companies.
+    order = params["order_id"].present? ? Order.where(id: params["order_id"].to_i).first : nil
+
+    shipments = Shipment.search_secure current_user, Shipment.scoped
+    if order
+      if order.can_view?(current_user)
+        shipments = shipments.where(vendor_id: order.vendor_id, importer_id: order.importer_id)
+      else
+        shipments = shipments.where("1 = 0")
+      end
+    elsif current_user.company.vendor?
+      shipments = shipments.where(vendor_id: current_user.company_id)
+    elsif current_user.company.importer?
+      shipments = shipments.where(importer_id: current_user.company_id)
+    else
+      shipments = shipments.where(importer_id: current_user.company.linked_companies.where(importer: true).pluck(:id))
+    end
+
+    registry = OpenChain::OrderBookingRegistry.registered
+    if registry.length > 0
+      OpenChain::OrderBookingRegistry.registered.each {|r| shipments = r.open_bookings_hook(current_user, shipments, order)}
+    else
+      # By default, drop off any bookings where shipment instructions have been sent to the carrier
+      shipments = shipments.where(shipment_instructions_sent_date: nil)
+    end
+
+    render json: {results: shipments.order("updated_at DESC").limit(200).map {|s| obj_to_json_hash(s) }}
+  end
+
   def process_tradecard_pack_manifest
     attachment_job('Tradecard Pack Manifest')
   end
@@ -300,7 +331,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :shp_unlading_port_id,
       :shp_unlading_port_name,
       :shp_ven_id,
-      :shp_ven_name,
       :shp_ven_syscode,
       :shp_vessel,
       :shp_vessel_carrier_scac,
@@ -514,6 +544,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       can_approve_booking:shipment.can_approve_booking?(current_user),
       can_confirm_booking:shipment.can_confirm_booking?(current_user),
       can_revise_booking:shipment.can_revise_booking?(current_user),
+      can_edit_booking:shipment.can_edit_booking?(current_user),
       can_add_remove_shipment_lines:shipment.can_add_remove_shipment_lines?(current_user),
       can_add_remove_booking_lines:shipment.can_add_remove_booking_lines?(current_user),
       can_request_cancel:shipment.can_request_cancel?(current_user),

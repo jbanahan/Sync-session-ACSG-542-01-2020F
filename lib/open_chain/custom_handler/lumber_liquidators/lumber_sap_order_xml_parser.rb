@@ -137,7 +137,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       f.flush
       subject = "Order #{order_number} XML rejected."
       body = "Order #{order_number} was rejected: #{message}"
-      to = 'll-support@vandegriftinc.com'
+
+      if MasterSetup.get.custom_feature?("Production")
+        to = ['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com']
+      else
+        to = ['ll-support@vandegriftinc.com']
+      end
+
+      to << Group.use_system_group("ORDER_REJECTED_EMAIL", name: "Order Rejected Email")
+      
       OpenMailer.send_simple_html(to,subject,body,[f]).deliver!
     end
   end

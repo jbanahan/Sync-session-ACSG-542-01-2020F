@@ -145,6 +145,22 @@ describe ModelField do
       user = Factory(:user)
       expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_falsey
     end
+
+    it "allows viewing when allow_everyone_to_view exists on the FieldValidatorRule" do
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP", allow_everyone_to_view: true
+      user = Factory(:user)
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to eq true
+    end
+
+    it "disallows viewing when an edit group is set for the FieldValidatorRule and user is not in that group" do
+      # I'm not sure if this is a bug or a feature...I would think that since there's a view / edit groups that 
+      # if the view group was blank, anyone can view it....however, due to the sheer number of fields that lumber 
+      # has that have this exact setup and are likely relying on this behavior, I'm not going to change this.
+      # This is the reason that FieldValidatorRule#allow_everyone_to_view exists.
+      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
+      user = Factory(:user)
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to eq false
+    end
   end
 
   describe "can_mass_edit?" do
@@ -402,28 +418,56 @@ describe ModelField do
     r = Factory(:region)
     expect(ModelField.uid_for_region(r,"x")).to eq "*r_#{r.id}_x"
   end
+
   context "special cases" do
     describe 'ports' do
-      before :each do
-        @port = Factory(:port,name:'MyName')
-        @u = Factory(:master_user,shipment_view:true)
-        @ss = SearchSetup.new(module_type:'Shipment',user_id:@u.id)
-        @ss.search_columns.build(model_field_uid:'shp_dest_port_name',rank:1)
-        @sc = @ss.search_criterions.build(model_field_uid:'shp_dest_port_name',operator:'eq',value:@port.name)
-        @mf = ModelField.find_by_uid(:shp_dest_port_name)
+      let (:port) { Factory(:port,name:'MyName') }
+      let (:user) { Factory(:master_user,shipment_view:true) }
+      let (:search_setup) { 
+        ss = SearchSetup.new(module_type:'Shipment',user_id:user.id) 
+        ss.search_columns.build(model_field_uid: uid, rank: 1)
+        ss
+      }
+
+      let (:model_field) { ModelField.find_by_uid(uid) }
+      let (:shipment) { Shipment.new reference: "REF", destination_port: port }
+
+      context "using port name field" do
+        let (:uid) { 'shp_dest_port_name' }
+        let! (:search_criterions) { search_setup.search_criterions.build(model_field_uid:uid, operator:'eq', value:port.name)}
+
+        it "should process_export" do
+          expect(model_field.process_export(shipment,user,true)).to eq port.name
+        end
+
+        it "should not process_import (readonly)" do
+          v = model_field.process_import shipment, port.name, user
+          expect(v).to eq "Value ignored. Discharge Port Name is read only."
+        end
+
+        it "should find" do
+          shipment.save!
+          expect(search_setup.result_keys).to eq [shipment.id]
+        end
       end
-      it "should process_export" do
-        s = Shipment.new(destination_port:@port)
-        expect(@mf.process_export(s,@u,true)).to eq @port.name
-      end
-      it "should process_import" do
-        s = Shipment.new
-        @mf.process_import s, @port.name, @u
-        expect(s.destination_port).to eq @port
-      end
-      it "should find" do
-        s = Factory(:shipment,destination_port:@port)
-        expect(@ss.result_keys).to eq [s.id]
+
+      context "using port id field" do
+        let (:uid) { 'shp_dest_port_id' }
+        let! (:search_criterions) { search_setup.search_criterions.build(model_field_uid:uid, operator:'eq', value:port.id)}
+        
+        it "should process_export" do
+          expect(model_field.process_export(shipment,user,true)).to eq port.id
+        end
+
+        it "should process_import" do
+          model_field.process_import shipment, port.id, user
+          expect(shipment.destination_port).to eq port
+        end
+
+        it "should find" do
+          shipment.save!
+          expect(search_setup.result_keys).to eq [shipment.id]
+        end
       end
     end
 
