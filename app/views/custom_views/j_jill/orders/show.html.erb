@@ -171,7 +171,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
           </td>
           <td>
             <label>Ship Via</label>
-            <div><%=field_value @order, cdefs[:ship_type].model_field_uid.to_sym%></div>
+            <div><%=field_value @order, cdefs[:ord_ship_type].model_field_uid.to_sym%></div>
           </td>
           <td>
             <label>Season</label>
@@ -214,10 +214,10 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
                   <%=display_uid%>
                 <%-end-%>
               </td>
-              <td><%=line.product.get_custom_value(cdefs[:importer_style]).value%></td>
-              <td><%=line.get_custom_value(cdefs[:color]).value%></td>
-              <td><%=line.get_custom_value(cdefs[:size]).value%></td>
-              <td><%=line.product.get_custom_value(cdefs[:fish_wildlife]).value.blank? ? 'NO' : 'YES'%></td>
+              <td><%=line.product.get_custom_value(cdefs[:prod_importer_style]).value%></td>
+              <td><%=line.get_custom_value(cdefs[:ord_line_color]).value%></td>
+              <td><%=line.get_custom_value(cdefs[:ord_line_size]).value%></td>
+              <td><%=line.product.get_custom_value(cdefs[:prod_fish_wildlife]).value.blank? ? 'NO' : 'YES'%></td>
               <td><%=line.quantity %></td>
               <td><%=line.product.unit_of_measure %></td>
               <td><%=line.price_per_unit %></td>

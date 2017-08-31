@@ -132,7 +132,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     end
   end
 
-  def production?
+  def self.production?
     Rails.env.production?
   end
 
