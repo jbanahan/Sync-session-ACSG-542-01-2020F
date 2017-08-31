@@ -51,6 +51,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     line.po_number = line_xml.text "OrderNumber"
     line.part_number = line_xml.text "PartNo"
     line.country_of_origin = REXML::XPath.first(invoice_xml, "OrganizationAddressCollection/OrganizationAddress[AddressType = 'Manufacturer']/Country/Code").try(:text)
+    line.quantity_2 = net_weight(line_xml)
     line.pieces = dec(line_xml.text "InvoiceQuantity")
     line.hts = us_hts(line.part_number)
     
@@ -106,6 +107,19 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
 
   def customized_field_value invoice_line_xml, key
     REXML::XPath.first(invoice_line_xml, "CustomizedFieldCollection/CustomizedField[Key = '#{key}']/Value").try(:text)
+  end
+
+  def net_weight line_xml
+    weight = BigDecimal(line_xml.text("NetWeight") || "0")
+    return nil unless weight.nonzero?
+
+    uom = line_xml.text("NetWeightUnit/Code")
+    if uom.to_s.upcase.starts_with? "LB"
+      # Convert to KG
+      weight = (weight * BigDecimal("0.453592")).round(2, :half_up)
+    end
+
+    weight
   end
 
   def us_hts part_number
