@@ -1,21 +1,21 @@
-require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
   extend OpenChain::IntegrationClientParser
-  include LenoxCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   CUSTOM_DEFINITION_MAP ||= {
-    part_number:[4,18],
-    product_department:[131,20],
-    product_pattern:[259,30],
-    product_buyer_name:[459,25],
-    product_units_per_set:[582,3],
-    product_coo:[348,3]
+    prod_part_number:[4,18],
+    prod_department_name:[131,20],
+    prod_pattern:[259,30],
+    prod_buyer_name:[459,25],
+    prod_units_per_set:[582,3],
+    prod_country_of_origin:[348,3]
   }
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_MAP.keys + [:prod_product_group]
     @imp = Company.where(system_code:'LENOX').first_or_create!(name:'Lenox',importer:true)
   end
 
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
       batch_write_vals << cv
     end
     pgroup_cv = CustomValue.new(customizable_id:p.id,customizable_type:'Product',
-        custom_definition_id:@cdefs[:product_group].id)
+        custom_definition_id:@cdefs[:prod_product_group].id)
     pgroup_cv.value = "#{ln[92,15].strip}-#{ln[109,20].strip}"
     batch_write_vals << pgroup_cv 
     CustomValue.batch_write! batch_write_vals

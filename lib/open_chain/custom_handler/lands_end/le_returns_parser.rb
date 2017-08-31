@@ -1,12 +1,12 @@
-require 'open_chain/custom_handler/lands_end/le_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/s3'
 
 module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
-  include OpenChain::CustomHandler::LandsEnd::LeCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize custom_file
     @custom_file = custom_file
-    @cdefs = self.class.prep_custom_definitions [:part_number, :suffix_indicator, :exception_code, :suffix, :comments]
+    @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_suffix_indicator, :prod_exception_code, :prod_suffix, :prod_comments]
   end
 
   def can_view?(user)
@@ -131,7 +131,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
       raise "Missing Lands End Importer account." unless @importer
 
       products = Product.where(importer_id: @importer.id).
-                  joins("INNER JOIN custom_values cv ON cv.customizable_id = products.id AND cv.customizable_type = 'Product' AND cv.custom_definition_id = #{@cdefs[:part_number].id} AND cv.string_value = #{Product.sanitize(part_number)}").
+                  joins("INNER JOIN custom_values cv ON cv.customizable_id = products.id AND cv.customizable_type = 'Product' AND cv.custom_definition_id = #{@cdefs[:prod_part_number].id} AND cv.string_value = #{Product.sanitize(part_number)}").
                   all
       
       if products.size == 0
@@ -205,7 +205,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
     end
 
     def get_added_product_line_info p, factory, hts
-      [cv(p, :suffix_indicator), cv(p, :exception_code), cv(p, :suffix), factory.country.iso_code, factory.system_code, factory.name, factory.line_1, factory.line_2, factory.line_3, factory.city, "", hts, cv(p, :comments)]
+      [cv(p, :prod_suffix_indicator), cv(p, :prod_exception_code), cv(p, :prod_suffix), factory.country.iso_code, factory.system_code, factory.name, factory.line_1, factory.line_2, factory.line_3, factory.city, "", hts, cv(p, :prod_comments)]
     end
 
     def cv p, v

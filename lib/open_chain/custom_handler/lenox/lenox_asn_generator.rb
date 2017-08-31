@@ -1,9 +1,9 @@
 require 'open_chain/fixed_position_generator'
-require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
-  include OpenChain::CustomHandler::Lenox::LenoxCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::FtpFileSupport
 
   class LenoxBusinessLogicError < StandardError; end
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   def initialize opts = {}
     inner_opts = {'env'=>Rails.env}.merge opts
     @lenox = Company.find_by_system_code 'LENOX'
-    @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = self.class.prep_custom_definitions [:ord_factory_code, :ord_destination_code, :prod_country_of_origin, :ord_line_destination_code]
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
       date_format:'%Y%m%d', numeric_pad_char: '0', numeric_strip_decimals: true
     )
@@ -98,7 +98,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(shipment.lading_port.try(:schedule_k_code),10)
       r << @f.str(shipment.unlading_port.try(:schedule_d_code),10)
       r << @f.str('11',6) #only sending ocean
-      r << @f.str(sl_array.first.order_lines.first.get_custom_value(@cdefs[:order_line_destination_code]).value,10)
+      r << @f.str(sl_array.first.order_lines.first.get_custom_value(@cdefs[:ord_line_destination_code]).value,10)
       r << 'APP '
       r << ''.ljust(80)
       r << time_and_user
@@ -114,11 +114,11 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(shipment.house_bill_of_lading,35)
       r << @f.str(ln.container.container_number,17)
       r << @f.num(i+1,10)
-      r << @f.str(order.get_custom_value(@cdefs[:order_factory_code]).value,10)
+      r << @f.str(order.get_custom_value(@cdefs[:ord_factory_code]).value,10)
       r << @f.str(order.customer_order_number,35)
       r << @f.str(ln.product.unique_identifier.gsub(/^LENOX-/i,""),35)
       r << @f.num(ln.quantity,7)
-      r << @f.str(ln.product.get_custom_value(@cdefs[:product_coo]).value,4)
+      r << @f.str(ln.product.get_custom_value(@cdefs[:prod_country_of_origin]).value,4)
       r << @f.str('',35) #no commercial invoice number
       r << @f.num(ln.line_number,10)
       r << @f.date(nil) #no invoice date

@@ -1,9 +1,9 @@
 require 'open_chain/report/report_helper'
-require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::Report::ReportHelper
-  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.permission? user
     MasterSetup.get.system_code == 'www-vfitrack-net' &&
@@ -16,7 +16,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   end
 
   def initialize
-    @cdefs ||= self.class.prep_custom_definitions [:original_gac_date]
+    @cdefs ||= self.class.prep_custom_definitions [:ord_original_gac_date]
   end
 
   def run run_by, settings

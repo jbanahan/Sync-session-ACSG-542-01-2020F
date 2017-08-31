@@ -3,7 +3,7 @@ module OpenChain; module CustomHandler; module Rhee; module RheeCustomDefinition
   extend ActiveSupport::Concern
 
   CUSTOM_DEFINITION_INSTRUCTIONS = {
-    fda_product_code: {label: "FDA Product Code", data_type: :string, module_type: 'Product'}
+    fda_product_code: {label: "FDA Product Code", data_type: :string, module_type: 'Product', cdef_uid: "prod_fda_product_code"}
   }
 
   included do |base|

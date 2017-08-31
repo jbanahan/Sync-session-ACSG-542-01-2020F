@@ -51,33 +51,6 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       ]
     ModelField.reload true
   end
-  it "should create custom fields" do 
-    read_onlys = []
-    read_onlys << CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product").first
-    read_onlys << CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Unit Costs",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Earliest AC Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Merch Dept Number",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Merch Dept Name",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Proposed HTS",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Related Styles",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Minimum Cost",:data_type=>:decimal,:module_type=>'Classification').first
-    read_onlys << CustomDefinition.where(:label=>"Maximum Cost",:data_type=>:decimal,:module_type=>'Classification').first
-    expect(CustomDefinition.where(:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification').first).not_to be_nil
-    expect(CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product').first).not_to be_nil
-    read_onlys.each do |cd| 
-      expect(cd.model_field).to be_read_only
-    end
-  end
 
   it "should create new product" do
     data = make_row

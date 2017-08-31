@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   end
 
   def update_product h, user
-    @cdefs ||= self.class.prep_custom_definitions [:colors,:import_countries,:prod_seasons,:var_import_countries]
+    @cdefs ||= self.class.prep_custom_definitions [:colors,:prod_import_countries,:prod_seasons,:var_import_countries]
     ActiveRecord::Base.transaction do
       p = Product.where(unique_identifier:h[:style]).first_or_create!
       p.name = h[:name]
@@ -98,7 +98,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
       cv_seasons.value = merge_custom_value(cv_seasons,h[:seasons])
       cv_colors = p.get_custom_value(@cdefs[:colors])
       cv_colors.value = merge_custom_value(cv_colors,h[:colors].keys)
-      cv_countries = p.get_custom_value(@cdefs[:import_countries])
+      cv_countries = p.get_custom_value(@cdefs[:prod_import_countries])
       cv_countries.value = merge_custom_value(cv_countries,h[:colors].values.flatten)
       raise "You cannot edit product #{p.unique_identifier}." unless p.can_edit?(user)
       p.save!

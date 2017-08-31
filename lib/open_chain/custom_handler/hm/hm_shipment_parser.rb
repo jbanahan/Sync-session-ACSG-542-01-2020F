@@ -1,10 +1,12 @@
-require 'open_chain/custom_handler/hm/hm_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+
 module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
-  include OpenChain::CustomHandler::Hm::HmCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+
   def self.parse data, user
     Lock.acquire_for_class(self) do
       Shipment.transaction do
-        cdefs = prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
+        cdefs = prep_custom_definitions cdef_keys
         lines = data.lines
         mode, file_date = process_first_line lines[0]
         file_name, import_number = process_second_line lines[1]
@@ -22,6 +24,10 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
         attach_file shp, data, "#{file_name}.txt"
       end
     end
+  end
+
+  def self.cdef_keys
+    [:prod_part_number, :ord_line_destination_code, :ord_line_department_code]
   end
 
   def self.build_shipment hd
@@ -118,8 +124,8 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
     end
     dest_code = ln[17,8].strip
     dest_code = hd[:act_dest_code] if dest_code.blank?
-    ol.update_custom_value! cdefs[:ol_dest_code], dest_code
-    ol.update_custom_value! cdefs[:ol_dept_code], ln[47,9].strip
+    ol.update_custom_value! cdefs[:ord_line_destination_code], dest_code
+    ol.update_custom_value! cdefs[:ord_line_department_code], ln[47,9].strip
   end
 
   def self.find_importer

@@ -14,7 +14,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
       trade_lanes: {},
       countries: {}
     }
-    cdefs = prep_custom_definitions [:prod_export_countries,:import_countries,:prod_seasons,:expected_duty_rate]
+    cdefs = prep_custom_definitions [:prod_export_countries,:prod_import_countries,:prod_seasons,:expected_duty_rate]
     query_opts = params.with_indifferent_access
     raise "Must have style list or season code." if query_opts[:season].blank? && query_opts[:style_s3_path].blank?
     f = Tempfile.open(['ua_duty_planning','.csv'])
@@ -33,7 +33,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
 
   def self.write_product f, p, cdefs, caches
     product_rows = []
-    import_countries = p.get_custom_value(cdefs[:import_countries]).value
+    import_countries = p.get_custom_value(cdefs[:prod_import_countries]).value
     export_countries = p.get_custom_value(cdefs[:prod_export_countries]).value
     p.classifications.each do |cls|
       next if import_countries.blank? || export_countries.blank?

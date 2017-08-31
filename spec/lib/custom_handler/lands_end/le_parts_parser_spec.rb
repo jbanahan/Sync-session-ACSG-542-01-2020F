@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
   before :each do
     @importer = Factory(:company, system_code: "LERETURNS", importer: true)
     @us = Factory(:country, iso_code: "US")
-    @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_suffix_indicator, :prod_exception_code, :prod_suffix, :prod_comments]
   end
 
   context "process lines" do
@@ -29,11 +29,11 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
         expect(tariff).to_not be_nil
         expect(tariff.hts_1).to eq @row[14].gsub(".", "")
 
-        expect(prod.get_custom_value(@cdefs[:part_number]).value).to eq @row[0]
-        expect(prod.get_custom_value(@cdefs[:suffix_indicator]).value).to eq @row[1]
-        expect(prod.get_custom_value(@cdefs[:exception_code]).value).to eq @row[2]
-        expect(prod.get_custom_value(@cdefs[:suffix]).value).to eq @row[3]
-        expect(prod.get_custom_value(@cdefs[:comments]).value).to eq (@row[15] + " | " + @row[16])
+        expect(prod.custom_value(@cdefs[:prod_part_number])).to eq @row[0]
+        expect(prod.custom_value(@cdefs[:prod_suffix_indicator])).to eq @row[1]
+        expect(prod.custom_value(@cdefs[:prod_exception_code])).to eq @row[2]
+        expect(prod.custom_value(@cdefs[:prod_suffix])).to eq @row[3]
+        expect(prod.custom_value(@cdefs[:prod_comments])).to eq (@row[15] + " | " + @row[16])
 
         factory = prod.factories.first
         expect(factory).to_not be_nil

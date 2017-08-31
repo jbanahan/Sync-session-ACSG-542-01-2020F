@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       @row[31] = 1
 
       @temp = make_csv_file [@header, @row]
-      @cdefs = described_class.prep_custom_definitions [:part_number, :suffix_indicator, :exception_code, :suffix, :comments]
+      @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_suffix_indicator, :prod_exception_code, :prod_suffix, :prod_comments]
     end
     
     it "parses a csv file and merges product data, writing to given io object, missing product data" do
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
     it "writes missing country of origin error" do
       p = Factory(:product, importer_id: @le.id)
-      p.update_custom_value! @cdefs[:part_number], @part_number
+      p.update_custom_value! @cdefs[:prod_part_number], @part_number
 
       out = StringIO.new
       out.binmode
@@ -66,11 +66,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       f1 = Factory(:address, country: country, system_code: "1", name: "F1", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       f2 = Factory(:address, country: country, system_code: "2", name: "F2", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       p = Factory(:product, importer_id: @le.id, factories: [f1, f2])
-      p.update_custom_value! @cdefs[:part_number], @part_number
-      p.update_custom_value! @cdefs[:suffix_indicator], "suf-ind"
-      p.update_custom_value! @cdefs[:exception_code], "excp"
-      p.update_custom_value! @cdefs[:suffix], "suf"
-      p.update_custom_value! @cdefs[:comments], "comments"
+      p.update_custom_value! @cdefs[:prod_part_number], @part_number 
+      p.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind"
+      p.update_custom_value! @cdefs[:prod_exception_code], "excp"
+      p.update_custom_value! @cdefs[:prod_suffix], "suf"
+      p.update_custom_value! @cdefs[:prod_comments], "comments"
       t = Factory(:tariff_record, hts_1: "9876543210", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: p))
 
       mid1 = DataCrossReference.create_lands_end_mid! f1.system_code, t.hts_1, "MID1"
@@ -99,19 +99,19 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       country = Factory(:country, iso_code: @coo)
       f1 = Factory(:address, country: country, system_code: "1", name: "F1", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       p = Factory(:product, importer_id: @le.id, factories: [f1])
-      p.update_custom_value! @cdefs[:part_number], @part_number
-      p.update_custom_value! @cdefs[:suffix_indicator], "suf-ind"
-      p.update_custom_value! @cdefs[:exception_code], "excp"
-      p.update_custom_value! @cdefs[:suffix], "suf"
-      p.update_custom_value! @cdefs[:comments], "comments"
+      p.update_custom_value! @cdefs[:prod_part_number], @part_number
+      p.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind"
+      p.update_custom_value! @cdefs[:prod_exception_code], "excp"
+      p.update_custom_value! @cdefs[:prod_suffix], "suf"
+      p.update_custom_value! @cdefs[:prod_comments], "comments"
       t = Factory(:tariff_record, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: p))
 
       p2 = Factory(:product, importer_id: @le.id, factories: [f1])
-      p2.update_custom_value! @cdefs[:part_number], @part_number
-      p2.update_custom_value! @cdefs[:suffix_indicator], "suf-ind2"
-      p2.update_custom_value! @cdefs[:exception_code], "excp2"
-      p2.update_custom_value! @cdefs[:suffix], "suf2"
-      p2.update_custom_value! @cdefs[:comments], "comments2"
+      p2.update_custom_value! @cdefs[:prod_part_number], @part_number
+      p2.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind2"
+      p2.update_custom_value! @cdefs[:prod_exception_code], "excp2"
+      p2.update_custom_value! @cdefs[:prod_suffix], "suf2"
+      p2.update_custom_value! @cdefs[:prod_comments], "comments2"
       t2 = Factory(:tariff_record, hts_1: "9876543210", classification: Factory(:classification, country:t.classification.country, product: p2))
 
       mid1 = DataCrossReference.create_lands_end_mid! f1.system_code, t.hts_1, "MID1"
@@ -141,19 +141,19 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       f1 = Factory(:address, country: country, system_code: "1", name: "F1", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       f2 = Factory(:address, country: country, system_code: "2", name: "F2", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       p = Factory(:product, importer_id: @le.id, factories: [f1, f2])
-      p.update_custom_value! @cdefs[:part_number], @part_number
-      p.update_custom_value! @cdefs[:suffix_indicator], "suf-ind"
-      p.update_custom_value! @cdefs[:exception_code], "excp"
-      p.update_custom_value! @cdefs[:suffix], "suf"
-      p.update_custom_value! @cdefs[:comments], "comments"
+      p.update_custom_value! @cdefs[:prod_part_number], @part_number
+      p.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind"
+      p.update_custom_value! @cdefs[:prod_exception_code], "excp"
+      p.update_custom_value! @cdefs[:prod_suffix], "suf"
+      p.update_custom_value! @cdefs[:prod_comments], "comments"
       t = Factory(:tariff_record, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: p))
 
       p2 = Factory(:product, importer_id: @le.id, factories: [f1, f2])
-      p2.update_custom_value! @cdefs[:part_number], @part_number
-      p2.update_custom_value! @cdefs[:suffix_indicator], "suf-ind2"
-      p2.update_custom_value! @cdefs[:exception_code], "excp2"
-      p2.update_custom_value! @cdefs[:suffix], "suf2"
-      p2.update_custom_value! @cdefs[:comments], "comments2"
+      p2.update_custom_value! @cdefs[:prod_part_number], @part_number
+      p2.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind2"
+      p2.update_custom_value! @cdefs[:prod_exception_code], "excp2"
+      p2.update_custom_value! @cdefs[:prod_suffix], "suf2"
+      p2.update_custom_value! @cdefs[:prod_comments], "comments2"
       t2 = Factory(:tariff_record, hts_1: "9876543210", classification: Factory(:classification, country:t.classification.country, product: p2))
 
       # In a real file, each distinct factory would have the exact same MID, this is just to ensure we're doing lookups on each exploded line.
@@ -194,11 +194,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       country = Factory(:country, iso_code: @coo)
       f1 = Factory(:address, country: country, system_code: "1", name: "F1", line_1: "Line1", line_2: "Line2", line_3: "Line3", city: "City")
       p = Factory(:product, importer_id: @le.id, factories: [f1])
-      p.update_custom_value! @cdefs[:part_number], @part_number
-      p.update_custom_value! @cdefs[:suffix_indicator], "suf-ind"
-      p.update_custom_value! @cdefs[:exception_code], "excp"
-      p.update_custom_value! @cdefs[:suffix], "suf"
-      p.update_custom_value! @cdefs[:comments], "comments"
+      p.update_custom_value! @cdefs[:prod_part_number], @part_number
+      p.update_custom_value! @cdefs[:prod_suffix_indicator], "suf-ind"
+      p.update_custom_value! @cdefs[:prod_exception_code], "excp"
+      p.update_custom_value! @cdefs[:prod_suffix], "suf"
+      p.update_custom_value! @cdefs[:prod_comments], "comments"
       t = Factory(:tariff_record, hts_1: "9876543210", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: p))
       mid1 = DataCrossReference.create_lands_end_mid! f1.system_code, t.hts_1, "MID1"
 

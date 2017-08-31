@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     
     def initialize custom_file
       @custom_file = custom_file 
-      @cdefs = self.class.prep_custom_definitions [:colors,:plant_codes,:import_countries]
+      @cdefs = self.class.prep_custom_definitions [:colors,:plant_codes,:prod_import_countries]
     end
 
     def can_view?(user)
@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       p.load_custom_values
       write_aggregate_values! p.get_custom_value(@cdefs[:colors]), array_of_rows, lambda {|r| self.class.get_color r}
       write_aggregate_values! p.get_custom_value(@cdefs[:plant_codes]), array_of_rows, lambda {|r| r[2].blank? ? '' : self.class.prep_plant_code(r[2])}
-      write_aggregate_values! p.get_custom_value(@cdefs[:import_countries]), array_of_rows, lambda {|r| 
+      write_aggregate_values! p.get_custom_value(@cdefs[:prod_import_countries]), array_of_rows, lambda {|r| 
         k = r[2]
         return nil if r[2].blank?
         DataCrossReference.find_ua_plant_to_iso self.class.prep_plant_code(k)

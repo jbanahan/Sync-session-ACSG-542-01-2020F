@@ -1,18 +1,18 @@
 require 'spreadsheet'
 require 'open_chain/xml_builder'
-require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_custom_definitions_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module ShoesForCrews
   class ShoesForCrewsPoSpreadsheetHandler
     include OpenChain::IntegrationClientParser
     include OpenChain::XmlBuilder
     include OpenChain::FtpFileSupport
-    include ShoesForCrewsCustomDefinitionsSupport
+    include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
     SHOES_SYSTEM_CODE ||= "SHOES"
 
     def initialize
-      @cdefs = self.class.prep_custom_definitions([:prod_part_number, :order_line_color, :order_line_size, :order_line_destination_code])
+      @cdefs = self.class.prep_custom_definitions([:prod_part_number, :ord_line_color, :ord_line_size, :ord_line_destination_code])
     end
 
     def ftp_credentials
@@ -178,10 +178,10 @@ module OpenChain; module CustomHandler; module ShoesForCrews
           line.sku = item[:upc]
           line.quantity = BigDecimal(item[:ordered].to_s.strip)
           line.price_per_unit = BigDecimal(item[:unit_cost].to_s.strip)
-          line.find_and_set_custom_value(@cdefs[:order_line_destination_code], item[:warehouse_code]) unless item[:warehouse_code].blank?
+          line.find_and_set_custom_value(@cdefs[:ord_line_destination_code], item[:warehouse_code]) unless item[:warehouse_code].blank?
           size, color = extract_size_color_from_model_description item[:model]
-          line.find_and_set_custom_value(@cdefs[:order_line_size], size) unless size.blank?
-          line.find_and_set_custom_value(@cdefs[:order_line_color], color) unless color.blank?
+          line.find_and_set_custom_value(@cdefs[:ord_line_size], size) unless size.blank?
+          line.find_and_set_custom_value(@cdefs[:ord_line_color], color) unless color.blank?
         end
 
         # If we don't mark the order as accepted, they will not be able to be selected on the shipment screen.
@@ -430,7 +430,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       def order_fingerprint po, user
         fingerprint_fields = {model_fields: [:ord_ord_num, :ord_cust_ord_no, :ord_ord_date, :ord_mode, :ord_first_exp_del, :ord_terms, :ord_ven_syscode],
           order_lines: {
-            model_fields: [:ordln_line_number, :ordln_puid, :ordln_sku, :ordln_ordered_qty, :ordln_ordln_ppu, @cdefs[:order_line_destination_code].model_field_uid, @cdefs[:order_line_size].model_field_uid, @cdefs[:order_line_color].model_field_uid]
+            model_fields: [:ordln_line_number, :ordln_puid, :ordln_sku, :ordln_ordered_qty, :ordln_ordln_ppu, @cdefs[:ord_line_destination_code].model_field_uid, @cdefs[:ord_line_size].model_field_uid, @cdefs[:ord_line_color].model_field_uid]
           }
         }
 

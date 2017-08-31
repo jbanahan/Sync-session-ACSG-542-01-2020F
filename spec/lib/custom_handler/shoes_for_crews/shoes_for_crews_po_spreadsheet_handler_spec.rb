@@ -331,20 +331,20 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(line.sku).to eq "upc"
       expect(line.quantity).to eq BigDecimal("2")
       expect(line.price_per_unit).to eq BigDecimal("3")
-      expect(line.custom_value(custom_values[:order_line_destination_code])).to eq "ware"
-      expect(line.custom_value(custom_values[:order_line_size])).to eq "07"
-      expect(line.custom_value(custom_values[:order_line_color])).to eq "Blk"
+      expect(line.custom_value(custom_values[:ord_line_destination_code])).to eq "ware"
+      expect(line.custom_value(custom_values[:ord_line_size])).to eq "07"
+      expect(line.custom_value(custom_values[:ord_line_color])).to eq "Blk"
 
       # The next couple lines are just testing size/color parsing from the "model" source value
       line = po.order_lines[1]
       expect(line.line_number).to eq 2
-      expect(line.custom_value(custom_values[:order_line_size])).to eq "07"
-      expect(line.custom_value(custom_values[:order_line_color])).to be_nil
+      expect(line.custom_value(custom_values[:ord_line_size])).to eq "07"
+      expect(line.custom_value(custom_values[:ord_line_color])).to be_nil
 
       line = po.order_lines[2]
       expect(line.line_number).to eq 3
-      expect(line.custom_value(custom_values[:order_line_size])).to be_nil
-      expect(line.custom_value(custom_values[:order_line_color])).to eq "Blk"
+      expect(line.custom_value(custom_values[:ord_line_size])).to be_nil
+      expect(line.custom_value(custom_values[:ord_line_color])).to eq "Blk"
 
       # Verify a fingerprint was set
       fingerprint = DataCrossReference.find_po_fingerprint po

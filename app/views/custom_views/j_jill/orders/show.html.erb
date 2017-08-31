@@ -29,11 +29,11 @@
 most_recently_updated_product = Product.joins(:order_lines).where(order_lines: {order_id: @order.id}).order("products.updated_at DESC").first
 cache [@order, @order.piece_sets.where("piece_sets.order_line_id is not null").order('piece_sets.updated_at DESC').first, most_recently_updated_product, 'jjillorder'] do%>
 <%
-require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 my_k = Class.new do
-  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 end
-cdefs = my_k.prep_custom_definitions [:color,:size,:entry_port_name,:importer_style,:ship_type,:fish_wildlife]
+cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_port_name,:prod_importer_style,:ord_ship_type,:prod_fish_wildlife]
 %>
 <style type="text/css">
   @media print {

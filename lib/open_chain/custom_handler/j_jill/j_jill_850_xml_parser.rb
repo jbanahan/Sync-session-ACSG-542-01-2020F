@@ -1,12 +1,12 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/j_jill/j_jill_support'
-require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::JJill::JJillSupport
-  include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
   SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by_system_code UID_PREFIX
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions self.class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
     raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
 
@@ -74,10 +74,10 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       if update_header || update_lines
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
         ord.save!
-        ord.update_custom_value!(@cdefs[:ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
-        ord.update_custom_value!(@cdefs[:entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
-        if ord.ship_window_end && ord.get_custom_value(@cdefs[:original_gac_date]).value.blank?
-          ord.update_custom_value!(@cdefs[:original_gac_date],ord.ship_window_end)
+        ord.update_custom_value!(@cdefs[:ord_ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
+        ord.update_custom_value!(@cdefs[:ord_entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
+        if ord.ship_window_end && ord.get_custom_value(@cdefs[:ord_original_gac_date]).value.blank?
+          ord.update_custom_value!(@cdefs[:ord_original_gac_date],ord.ship_window_end)
         end
         update_line_custom_values ord
       end
@@ -184,8 +184,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     #the respond_to? checks are there because we may encounter existing order lines that haven't
     #been touched by this parsing run
     ord.order_lines.each do |ol|
-      ol.update_custom_value! @cdefs[:color], ol.ph_color if ol.respond_to? :ph_color
-      ol.update_custom_value! @cdefs[:size], ol.ph_size if ol.respond_to? :ph_size
+      ol.update_custom_value! @cdefs[:ord_line_color], ol.ph_color if ol.respond_to? :ph_color
+      ol.update_custom_value! @cdefs[:ord_line_size], ol.ph_size if ol.respond_to? :ph_size
     end
   end
   def parse_product group_11
@@ -198,14 +198,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     uom = et po1_el, 'PO103'
     update_product_if_needed(p,product_name,uom)
 
-    cv = p.get_custom_value(@cdefs[:vendor_style])
+    cv = p.get_custom_value(@cdefs[:prod_vendor_style])
     vendor_style = et(po1_el,'PO111')
     @vendor_styles << vendor_style unless vendor_style.blank?
     if cv.value != vendor_style
       cv.value = vendor_style
       cv.save!
     end
-    imp_cv = p.get_custom_value(@cdefs[:importer_style])
+    imp_cv = p.get_custom_value(@cdefs[:prod_importer_style])
     importer_style = et(po1_el,'PO107')
     if imp_cv.value != importer_style
       imp_cv.value = importer_style

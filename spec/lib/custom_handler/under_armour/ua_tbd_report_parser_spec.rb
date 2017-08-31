@@ -207,7 +207,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-123','23','','','','','','','desc1',''],
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
-      imp_country_cd = described_class.prep_custom_definitions([:import_countries])[:import_countries]
+      imp_country_cd = described_class.prep_custom_definitions([:prod_import_countries])[:prod_import_countries]
       p = Product.find_by_unique_identifier('1234567')
       expect(p.get_custom_value(imp_country_cd).value).to eq("CA\nUS")
     end

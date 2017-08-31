@@ -1,12 +1,15 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmShipmentParser do
+  before(:all) { described_class.prep_custom_definitions described_class.cdef_keys }
+  after(:all) { CustomDefinition.destroy_all }
+
   before(:each) do
     @air_path = 'spec/support/bin/hm_air.txt'
     @ocean_path = 'spec/support/bin/hm_ocean.txt'
     @u = Factory(:user)
     @hm = Factory(:company,importer:true,system_code:'HENNE')
-    @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = described_class.prep_custom_definitions described_class.cdef_keys
   end
   it "should attach file to shipment" do
     [Product,Order,CommercialInvoice,Shipment].each do |k|
@@ -94,8 +97,8 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           ol = sl.order_lines.first
           expect(ol.product).to eq p
           expect(ol.quantity).to eq 234
-          expect(ol.get_custom_value(@cdefs[:ol_dest_code]).value).to eq 'US0004'
-          expect(ol.get_custom_value(@cdefs[:ol_dept_code]).value).to eq 'OU'
+          expect(ol.get_custom_value(@cdefs[:ord_line_destination_code]).value).to eq 'US0004'
+          expect(ol.get_custom_value(@cdefs[:ord_line_department_code]).value).to eq 'OU'
           o = ol.order
           expect(o.importer).to eq @hm
           expect(o.order_number).to eq 'HENNE-100309'
@@ -139,7 +142,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         it "should use ActRcv if FinRcv is blank" do
           described_class.parse(IO.read(@air_path),@u)
           sl = ShipmentLine.first
-          expect(sl.order_lines.first.get_custom_value(@cdefs[:ol_dest_code]).value).to eq 'US0004'
+          expect(sl.order_lines.first.get_custom_value(@cdefs[:ord_line_destination_code]).value).to eq 'US0004'
         end
         it "should not duplicate lines on an air shipment" do
           expect{described_class.parse(IO.read(@air_path),@u)}.to change(ShipmentLine,:count).from(0).to(3)

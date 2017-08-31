@@ -34,17 +34,17 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
 
   context "needs_data" do    
     before :each do 
-      @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+      @cdefs = described_class.prep_custom_definitions [:ord_factory_code, :ord_destination_code, :prod_country_of_origin, :ord_line_destination_code]
       @lenox = Factory(:company,alliance_customer_number:'LENOX',system_code:'LENOX')
       @vendor = Factory(:company,system_code:'LENOX-VENCODE')
       @product = Factory(:product,importer:@lenox,unique_identifier:'LENOX-partnum')
-      @product.update_custom_value!(@cdefs[:product_coo],'CN')
+      @product.update_custom_value!(@cdefs[:prod_country_of_origin],'CN')
       @order = Factory(:order,importer:@lenox,order_number:'LENOX-ponum',vendor:@vendor,customer_order_number:'ponum')
-      @order.update_custom_value!(@cdefs[:order_destination_code],'HG')
-      @order.update_custom_value!(@cdefs[:order_factory_code],'0000007')
-      @product.update_custom_value!(@cdefs[:product_units_per_set],2)
+      @order.update_custom_value!(@cdefs[:ord_destination_code],'HG')
+      @order.update_custom_value!(@cdefs[:ord_factory_code],'0000007')
+      #@product.update_custom_value!(@cdefs[:product_units_per_set],2)
       @order_line = Factory(:order_line,order:@order,product:@product,quantity:100,price_per_unit:100.10)
-      @order_line.update_custom_value!(@cdefs[:order_line_destination_code],'HDC')
+      @order_line.update_custom_value!(@cdefs[:ord_line_destination_code],'HDC')
       @shipment = Factory(:shipment,importer:@lenox,house_bill_of_lading:'HBOL',
         vessel:'VES',est_departure_date:Date.new(2014,7,1),
         unlading_port:Factory(:port,schedule_d_code:'4321'),

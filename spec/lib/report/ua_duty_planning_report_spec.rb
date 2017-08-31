@@ -4,7 +4,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
   describe '#run_report' do
     before :each do
       allow(described_class).to receive(:permission?).and_return true
-      @cdefs = described_class.prep_custom_definitions([:prod_export_countries,:import_countries,:prod_seasons,:expected_duty_rate])
+      @cdefs = described_class.prep_custom_definitions([:prod_export_countries,:prod_import_countries,:prod_seasons,:expected_duty_rate])
 
 
       @country_rates = {'CN'=>BigDecimal('0.32'),'US'=>BigDecimal('.1112'),'MX'=>BigDecimal('0.42')}
@@ -31,7 +31,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       # intentionally using CN for both import & export country
       # to be sure we don't generate record w/ same country in both positions
       p.update_custom_value!(@cdefs[:prod_export_countries],"CN\nMX")
-      p.update_custom_value!(@cdefs[:import_countries],"US\nCN")
+      p.update_custom_value!(@cdefs[:prod_import_countries],"US\nCN")
       p.update_custom_value!(@cdefs[:prod_seasons],['SS16','FW17','SS18'].join("\n"))
 
       @country_rates.keys.each do |iso|

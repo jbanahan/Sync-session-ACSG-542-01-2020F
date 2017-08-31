@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       run_file
     end
     it "should save order" do
-      cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
@@ -57,9 +57,9 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.fob_point).to eq 'CN'
       expect(o.terms_of_sale).to eq 'OA 60 DAYS FROM FCR'
       expect(o.season).to eq '1501'
-      expect(o.get_custom_value(cdefs[:entry_port_name]).value).to eq 'Boston'
-      expect(o.get_custom_value(cdefs[:ship_type]).value).to eq 'Boat'
-      expect(o.get_custom_value(cdefs[:original_gac_date]).date_value).to eq o.ship_window_end
+      expect(o.get_custom_value(cdefs[:ord_entry_port_name]).value).to eq 'Boston'
+      expect(o.get_custom_value(cdefs[:ord_ship_type]).value).to eq 'Boat'
+      expect(o.get_custom_value(cdefs[:ord_original_gac_date]).date_value).to eq o.ship_window_end
       expect(o.product_category).to eq 'Other'
 
       st  = o.ship_to
@@ -78,16 +78,15 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(ol1.price_per_unit).to eq 16.4
       expect(ol1.sku).to eq '28332664'
       expect(ol1.hts).to eq '6109100060'
-      expect(ol1.get_custom_value(cdefs[:size]).value).to eq 'XSP'
-      expect(ol1.get_custom_value(cdefs[:color]).value).to eq 'DPBLUEMLT'
+      expect(ol1.custom_value(cdefs[:ord_line_size])).to eq 'XSP'
+      expect(ol1.custom_value(cdefs[:ord_line_color])).to eq 'DPBLUEMLT'
 
       p1 = ol1.product
       expect(p1.unique_identifier).to eq 'JJILL-04-1024'
       expect(p1.name).to eq 'SPACE-DYED COTTON PULLOVER'
       expect(p1.unit_of_measure).to eq 'EA'
-      expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
-      expect(p1.get_custom_value(cdefs[:importer_style]).value).to eq '014932'
-      # expect(p1.get_custom_value(cdefs[:fish_wildlife]).value).to be_true
+      expect(p1.custom_value(cdefs[:prod_vendor_style])).to eq '04-1024'
+      expect(p1.custom_value(cdefs[:prod_importer_style])).to eq '014932'
 
       expected_fingerprint = described_class.new.generate_order_fingerprint o
       expect(DataCrossReference.find_jjill_order_fingerprint(o)).to eq expected_fingerprint
@@ -166,11 +165,11 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
     it "should not change the original GAC custom field if it is already set" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',ship_window_end:Date.new(2014,12,25))
-      cdefs = described_class.prep_custom_definitions [:original_gac_date]
-      o.update_custom_value!(cdefs[:original_gac_date], o.ship_window_end)
+      cdefs = described_class.prep_custom_definitions [:ord_original_gac_date]
+      o.update_custom_value!(cdefs[:ord_original_gac_date], o.ship_window_end)
       run_file
       o.reload
-      expect(o.get_custom_value(cdefs[:original_gac_date]).date_value).to eq Date.new(2014,12,25)
+      expect(o.custom_value(cdefs[:ord_original_gac_date])).to eq Date.new(2014,12,25)
     end
     it "should not update order already on a shipment" do
       u = 3.days.ago

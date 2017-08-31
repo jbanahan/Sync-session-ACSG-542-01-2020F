@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
   def expect_custom_value product, code, val
-    expect(product.get_custom_value(@cdefs[code]).value).to eq val
+    expect(product.custom_value(@cdefs[code])).to eq val
   end
   before :each do
     @imp = Factory(:importer,system_code:'LENOX')
@@ -37,20 +37,20 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
   end
   context "product" do
     before :each do
-      @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+      @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_department_name, :prod_pattern, :prod_buyer_name, :prod_units_per_set, :prod_country_of_origin, :prod_product_group]
     end
     it "should create product" do
       described_class.new.process @row, @u
       p = Product.first
       expect(p.unique_identifier).to eq 'LENOX-00200GB'
       expect(p.name).to eq 'ODIN 5 PC PLACE SET BOXED'
-      expect_custom_value p, :part_number, '00200GB'
-      expect_custom_value p, :product_group, 'METALS-STAINLESS'
-      expect_custom_value p, :product_department, 'DANSK'
-      expect_custom_value p, :product_pattern, 'ODIN'
-      expect_custom_value p, :product_buyer_name, 'JOE GILSON'
-      expect_custom_value p, :product_units_per_set, 5
-      expect_custom_value p, :product_coo, 'VN'
+      expect_custom_value p, :prod_part_number, '00200GB'
+      expect_custom_value p, :prod_product_group, 'METALS-STAINLESS'
+      expect_custom_value p, :prod_department_name, 'DANSK'
+      expect_custom_value p, :prod_pattern, 'ODIN'
+      expect_custom_value p, :prod_buyer_name, 'JOE GILSON'
+      expect_custom_value p, :prod_units_per_set, 5
+      expect_custom_value p, :prod_country_of_origin, 'VN'
     end
     it "should create history and last updated by" do
       described_class.new.process @row, @u

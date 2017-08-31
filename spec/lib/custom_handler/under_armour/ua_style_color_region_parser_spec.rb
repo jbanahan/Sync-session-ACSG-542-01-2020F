@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       described_class.prep_custom_definitions [
         :prod_seasons,
         :colors,
-        :import_countries,
+        :prod_import_countries,
         :var_import_countries
       ]
     end
@@ -166,7 +166,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       expect(p.entity_snapshots.count).to eq 1
       expect(p.get_custom_value(cdefs[:prod_seasons]).value).to eq "FW17\nSS15"
       expect(p.get_custom_value(cdefs[:colors]).value).to eq "001\n002"
-      expect(p.get_custom_value(cdefs[:import_countries]).value).to eq "AU\nMX"
+      expect(p.get_custom_value(cdefs[:prod_import_countries]).value).to eq "AU\nMX"
       expect(p.variants.count).to eq 2
       v = p.variants.find_by_variant_identifier '001'
       expect(v.get_custom_value(cdefs[:var_import_countries]).value).to eq "AU\nMX"

@@ -1,12 +1,12 @@
-require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
   extend OpenChain::IntegrationClientParser
-  include OpenChain::CustomHandler::Lenox::LenoxCustomDefinitionSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    @cdefs = self.class.prep_custom_definitions [:ord_buyer, :ord_buyer_email, :ord_destination_code, :ord_factory_code, :ord_line_note, :ord_line_destination_code, :prod_part_number, :prod_earliest_ship_date]
     @imp = Company.where(system_code:'LENOX').first_or_create!(name:'Lenox',importer:true)
   end
 
@@ -45,10 +45,10 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     o.save!
 
     #handle custom values after save
-    o.update_custom_value! @cdefs[:order_buyer_name], ls.buyer_name
-    o.update_custom_value! @cdefs[:order_buyer_email], ls.buyer_email
-    o.update_custom_value! @cdefs[:order_destination_code], ls.destination_code
-    o.update_custom_value! @cdefs[:order_factory_code], ls.factory_code
+    o.update_custom_value! @cdefs[:ord_buyer], ls.buyer_name
+    o.update_custom_value! @cdefs[:ord_buyer_email], ls.buyer_email
+    o.update_custom_value! @cdefs[:ord_destination_code], ls.destination_code
+    o.update_custom_value! @cdefs[:ord_factory_code], ls.factory_code
 
     #process lines
     lines.each do |ln|
@@ -63,8 +63,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
         product:p, price_per_unit:ln.unit_price,quantity:ln.quantity,
         currency:ln.currency,country_of_origin:ln.coo,hts:ln.hts
       )
-      ol.update_custom_value! @cdefs[:order_line_note], ln.line_note
-      ol.update_custom_value! @cdefs[:order_line_destination_code], ln.line_destination_code
+      ol.update_custom_value! @cdefs[:ord_line_note], ln.line_note
+      ol.update_custom_value! @cdefs[:ord_line_destination_code], ln.line_destination_code
     end
     o.destroy if o.order_lines.empty?
   end
@@ -76,9 +76,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     #manually created products may not have the importer set properly  
     p.update_attributes(importer_id:@imp.id) unless p.importer_id == @imp.id  
     
-    p.update_custom_value! @cdefs[:part_number], line_struct.part_number
+    p.update_custom_value! @cdefs[:prod_part_number], line_struct.part_number
     if line_struct.earliest_ship_date
-      cv = p.get_custom_value(@cdefs[:product_earliest_ship])
+      cv = p.get_custom_value(@cdefs[:prod_earliest_ship_date])
       if cv.value.blank? || cv.value > line_struct.earliest_ship_date
         cv.value = line_struct.earliest_ship_date
         cv.save!

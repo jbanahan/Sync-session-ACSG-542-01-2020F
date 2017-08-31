@@ -11,17 +11,17 @@ R                 RB05722520131105                                              
   
   it "should create PO" do
     described_class.new.process @testdata
-    c_defs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
+    c_defs = described_class.prep_custom_definitions [:ord_buyer, :ord_buyer_email, :ord_destination_code, :ord_factory_code, :ord_line_note, :ord_line_destination_code, :prod_part_number, :prod_earliest_ship_date]
     expect(Order.count).to eq 1
     o = Order.first
     expect(o.order_number).to eq 'LENOX-RB057225'
     expect(o.customer_order_number).to eq 'RB057225'
     expect(o.order_date).to eq Date.new(2013,11,5)
     expect(o.mode).to eq 'OCN'
-    expect(o.get_custom_value(c_defs[:order_buyer_name]).value).to eq '97 - MADELINE LUM'
-    expect(o.get_custom_value(c_defs[:order_buyer_email]).value).to eq 'MADELINE_LUMA@LENOX.COM'
-    expect(o.get_custom_value(c_defs[:order_destination_code]).value).to eq 'H01'
-    expect(o.get_custom_value(c_defs[:order_factory_code]).value).to eq '000007'
+    expect(o.get_custom_value(c_defs[:ord_buyer]).value).to eq '97 - MADELINE LUM'
+    expect(o.get_custom_value(c_defs[:ord_buyer_email]).value).to eq 'MADELINE_LUMA@LENOX.COM'
+    expect(o.get_custom_value(c_defs[:ord_destination_code]).value).to eq 'H01'
+    expect(o.get_custom_value(c_defs[:ord_factory_code]).value).to eq '000007'
     expect(o.importer).to eq @lenox
     expect(o.order_lines.count).to eq 3
     expect(o.order_lines.collect {|ol| ol.product.unique_identifier}.sort.uniq).to eq [
@@ -34,14 +34,14 @@ R                 RB05722520131105                                              
     expect(ln.price_per_unit).to eq BigDecimal("12.73")
     expect(ln.quantity).to eq 204 
     expect(ln.currency).to eq 'USD'
-    expect(ln.get_custom_value(c_defs[:order_line_note]).value).to eq 'ABC'
+    expect(ln.get_custom_value(c_defs[:ord_line_note]).value).to eq 'ABC'
     expect(ln.country_of_origin).to eq 'ID'
     expect(ln.hts).to eq '6911103750'
-    expect(ln.get_custom_value(c_defs[:order_line_destination_code]).value).to eq 'HDC'
+    expect(ln.get_custom_value(c_defs[:ord_line_destination_code]).value).to eq 'HDC'
 
     #test product construction
     p = ln.product
-    expect(p.get_custom_value(c_defs[:part_number]).value).to eq '6083927' 
+    expect(p.get_custom_value(c_defs[:prod_part_number]).value).to eq '6083927' 
     expect(p.name).to eq 'BUTTERFLY MEADOW TEAPOT W/LID'
     expect(p.importer).to eq @lenox
 
@@ -93,14 +93,14 @@ R                 RB05722520131105                                              
   end
   it "should update earliest ship date on product if earlier than existing date" do
     p = Factory(:product,unique_identifier:'LENOX-6083927',importer:@lenox)
-    cd = described_class.prep_custom_definitions([:product_earliest_ship]).values.first
+    cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd,Date.new(2015,1,1))
     described_class.new.process @testdata
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2014,2,1)
   end
   it "should not update earliest ship date on product if later than existing date" do
     p = Factory(:product,unique_identifier:'LENOX-6083927',importer:@lenox)
-    cd = described_class.prep_custom_definitions([:product_earliest_ship]).values.first
+    cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd,Date.new(2013,1,1))
     described_class.new.process @testdata
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2013,1,1)
