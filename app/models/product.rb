@@ -206,17 +206,45 @@ class Product < ActiveRecord::Base
 
   # This method only returns all the tariffs for a specfic country
   def hts_for_country country
+    country = get_country(country)
+
+    classification = self.classifications.find {|c| c.country_id == country.id }
+    Array.wrap(classification.try(:tariff_records)).map &:hts_1
+  end
+
+  def update_hts_for_country country, hts
+    country = get_country(country)
+
+    classification = self.classifications.find {|c| c.country_id == country.id }
+    classification = self.classifications.create!(country_id: country.id) if classification.nil?
+
+    records = []
+    Array.wrap(hts).each_with_index do |hts, index|
+      tariff_record = classification.tariff_records[index]
+      if tariff_record.nil?
+        tariff_record = classification.tariff_records.create!(line_number: (index + 1), hts_1: hts) if tariff_record.nil?
+      else
+        tariff_record.update_attributes! hts_1: hts
+      end
+
+      records << tariff_record
+    end
+    
+    
+    records
+  end
+
+  private
+
+  def get_country country
     if !country.respond_to?(:iso_code)
       c = Country.where(iso_code: country).first
       raise "No country record found for ISO Code '#{country}'." if c.nil?
       country = c
     end
 
-    classification = self.classifications.find {|c| c.country_id == country.id }
-    Array.wrap(classification.try(:tariff_records)).map &:hts_1
+    country
   end
-
-  private
 
   def default_division
     self.division = Division.first if self.division.nil? && self.division_id.nil?

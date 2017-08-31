@@ -56,4 +56,49 @@ describe OpenChain::DelayedJobExtensions do
     end
     
   end
+
+  describe "currently_running_as_delayed_job" do
+    it "recognizes when not running in a delayed job" do
+      expect(subject.class.currently_running_as_delayed_job?).to eq false
+    end
+
+    context "when running as delayed job" do
+      before(:each) { Thread.current.thread_variable_set("delayed_job", true)}
+      after(:each) { Thread.current.thread_variable_set("delayed_job", nil)}
+
+      it "recognizes when running in a delayed job" do
+        expect(subject.class.currently_running_as_delayed_job?).to eq true
+      end
+    end
+  end
+
+  describe "currently_running_delayed_job_attempts" do
+    it "returns 0 when not in delayed job" do
+      expect(subject.class.currently_running_delayed_job_attempts).to eq 0
+    end
+
+    context "when running as delayed job" do
+      before(:each) { Thread.current.thread_variable_set("delayed_job_attempts", 5)}
+      after(:each) { Thread.current.thread_variable_set("delayed_job_attempts", nil)}
+
+      it "recognizes when running in a delayed job" do
+        expect(subject.class.currently_running_delayed_job_attempts).to eq 5
+      end
+    end
+  end
+
+  describe "currently_running_delayed_job_queue" do
+    it "returns nil when not in delayed job" do
+      expect(subject.class.currently_running_delayed_job_queue).to be_nil
+    end
+
+    context "when running as delayed job" do
+      before(:each) { Thread.current.thread_variable_set("delayed_job_queue", "queue")}
+      after(:each) { Thread.current.thread_variable_set("delayed_job_queue", nil)}
+
+      it "recognizes when running in a delayed job" do
+        expect(subject.class.currently_running_delayed_job_queue).to eq "queue"
+      end
+    end
+  end
 end

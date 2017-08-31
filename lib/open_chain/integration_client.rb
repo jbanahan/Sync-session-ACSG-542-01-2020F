@@ -42,6 +42,7 @@ require 'open_chain/custom_handler/under_armour/ua_article_master_parser'
 require 'open_chain/custom_handler/burlington/burlington_850_parser'
 require 'open_chain/custom_handler/burlington/burlington_856_parser'
 require 'open_chain/custom_handler/amersports/amersports_856_ci_load_parser'
+require 'open_chain/custom_handler/talbots/talbots_850_parser'
 
 module OpenChain
   class IntegrationClient
@@ -232,6 +233,8 @@ module OpenChain
         OpenChain::CustomHandler::Burlington::Burlington856Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_amersports_856/') && master_setup.custom_feature?("AmerSports")
         OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_talbots_850/') && master_setup.custom_feature?("Talbots")
+        OpenChain::CustomHandler::Talbots::Talbots850Parser.delay.process_from_s3 bucket, remote_path
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"

@@ -28,4 +28,21 @@ module OpenChain; module DelayedJobExtensions
     query.count
   end
 
+  module ClassMethods
+    def currently_running_delayed_job_queue
+      # See delayed_jobs_initializer for where this value is set / cleared
+      Thread.current.thread_variable_get("delayed_job_queue")
+    end
+
+    def currently_running_delayed_job_attempts
+      # See delayed_jobs_initializer for where this value is set / cleared
+      Thread.current.thread_variable_get("delayed_job_attempts").to_i
+    end
+
+    def currently_running_as_delayed_job?
+      # See delayed_jobs_initializer for where this value is set / cleared
+      Thread.current.thread_variable_get("delayed_job") == true
+    end
+  end
+
 end; end

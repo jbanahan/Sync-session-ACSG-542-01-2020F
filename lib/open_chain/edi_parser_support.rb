@@ -368,7 +368,7 @@ module OpenChain; module EdiParserSupport
         f.rewind
         Attachment.add_original_filename_method(f, filename) unless filename.blank?
 
-        body = "<p>There was a problem processing the attached #{parser_name} EDI. A recreation of only the specific EDI transaction file the file that errored is attached.</p><p>Error: "
+        body = "<p>There was a problem processing the attached #{parser_name} EDI. A re-creation of only the specific EDI transaction file the file that errored is attached.</p><p>Error: "
         body += ERB::Util.html_escape(error.message)
         body += "<br>"
         body += error.backtrace.map {|t| ERB::Util.html_escape(t)}.join "<br>"

@@ -433,4 +433,35 @@ describe Product do
       expect {product.hts_for_country("XX")}.to raise_error "No country record found for ISO Code 'XX'."
     end
   end
+
+  describe "update_hts_for_country" do
+    let (:product) {
+      p = Factory(:product)
+      c = Factory(:classification, product: p, country: Factory(:country, iso_code: "CA"))
+      c.tariff_records.create! hts_1: "1234567890", hts_2: "987654321", hts_3: "12731289"
+      c.tariff_records.create! hts_1: "1890231908"
+
+      c = Factory(:classification, product: p, country: Factory(:country, iso_code: "US"))
+      c.tariff_records.create! hts_1: "1289731280"
+
+      p.reload
+    }
+
+    it "sets hts value into hts_1 of specified country" do
+      product.update_hts_for_country "US", "987654321"
+
+      expect(product.hts_for_country("US")).to eq ["987654321"]
+    end
+
+    it "sets multiple hts values into hts_1 of specified country" do
+      product.update_hts_for_country "US", ["987654321", "1280123012"]
+
+      expect(product.hts_for_country("US")).to eq ["987654321", "1280123012"]
+    end
+
+    it "updates multiple hts values" do
+      product.update_hts_for_country "CA", ["987654321", "1280123012"]
+      expect(product.hts_for_country("CA")).to eq ["987654321", "1280123012"]
+    end
+  end
 end

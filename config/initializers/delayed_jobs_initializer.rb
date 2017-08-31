@@ -78,10 +78,19 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         # We really shouldn't have a case where we're getting an upgrade job in this process after we've already
         # run one, but since it's so easy to guard against we'll handle it just in case.
         unless OpenChain::Upgrade.upgraded?
-          result = block.call(worker, job, *args)
+          Thread.current.thread_variable_set("delayed_job", true)
+          Thread.current.thread_variable_set("delayed_job_attempts", job.attempts)
+          Thread.current.thread_variable_set("delayed_job_queue", job.queue)
+          begin
+            result = block.call(worker, job, *args)
 
-          if upgrade_job
-            worker.stop if OpenChain::Upgrade.upgraded?
+            if upgrade_job
+              worker.stop if OpenChain::Upgrade.upgraded?
+            end
+          ensure
+            Thread.current.thread_variable_set("delayed_job", nil)
+            Thread.current.thread_variable_set("delayed_job_attempts", nil)
+            Thread.current.thread_variable_set("delayed_job_queue", nil)
           end
         end
         result

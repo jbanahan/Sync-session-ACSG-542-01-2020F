@@ -76,6 +76,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     class_stale_classification: {label: "Stale Tariff", data_type: :boolean, module_type: "Classification", cdef_uid: "class_stale_classification"},
     ord_assigned_agent: {label: "Assigned Agent", data_type: :string, module_type: "Order", cdef_uid: "ord_assigned_agent"},
     ord_buyer: {label: "Buyer", data_type: :string, module_type: "Order", cdef_uid: "ord_buyer"},
+    ord_buyer_order_number: {label: "Buyer Order Number", data_type: :string, module_type: "Order", cdef_uid: "ord_buyer_order_number"},
     ord_buyer_email: {label:'Buyer Email',data_type: :string, module_type:'Order', cdef_uid: "ord_buyer_email"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order", cdef_uid: "ord_invoicing_system"},
     ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order", cdef_uid: "ord_invoiced"},
@@ -87,6 +88,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_selling_channel: {label: "Selling Channel", data_type: :string, module_type: "Order", cdef_uid: "ord_selling_channel"},
     ord_planned_forwarder: {label: "Planned Forwarder", data_type: :string, module_type: "Order", cdef_uid: "ord_planned_forwarder"},
     ord_type: {label: "Type", data_type: :string, module_type: "Order", cdef_uid: "ord_type"},
+    ord_country_of_origin: {label: "Country Of Origin", data_type: :string, module_type: "Order", cdef_uid: "ord_country_of_origin"},
     ord_entry_port_name: {label:'Entry Port Name', data_type: :string, module_type: 'Order', cdef_uid: "ord_entry_port_name"},
     ord_ship_type: {label:'Ship Mode Type', data_type: :string, module_type:'Order', cdef_uid: "ord_ship_type"},
     ord_original_gac_date: {label:'Original GAC Date', data_type: :date, module_type:'Order', cdef_uid: "ord_original_gac_date"},
@@ -116,7 +118,9 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     var_article_number: {label: "Article Number", data_type: :string, module_type: "Variant", cdef_uid: "var_article_number"},
     var_description: {label: "Description", data_type: :string, module_type: "Variant", cdef_uid: "var_description"},
     var_hts_code: {label: "HTS Code", data_type: :string, module_type: "Variant", cdef_uid: "var_hts_code"},
-    var_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "Variant", cdef_uid: "var_units_per_inner_pack"}
+    var_units_per_inner_pack: {label: "Units Per Inner Pack", data_type: :decimal, module_type: "Variant", cdef_uid: "var_units_per_inner_pack"},
+    var_color: {label: "Color", data_type: :string, module_type: "Variant", cdef_uid: "var_color"},
+    var_size: {label: "Size", data_type: :string, module_type: "Variant", cdef_uid: "var_size"}
   }
   
   def self.included(base)
