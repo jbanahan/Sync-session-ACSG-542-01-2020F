@@ -12,10 +12,8 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     }
 
     before do
-      v1 = Factory(:company, system_code: "ACME")
-      v2 = Factory(:company, system_code: "KONVENIENTZ")
-      Factory(:order, vendor: v1, order_number: "ASCENA-12345")
-      Factory(:order, vendor: v2, order_number: "ASCENA-54321")
+      Factory(:order, vendor: Factory(:company, system_code: "ACME"), factory: Factory(:company, mid: "MID"), order_number: "ASCENA-12345")
+      Factory(:order, vendor: Factory(:company, system_code: "KONVENIENTZ"), factory: Factory(:company, mid: "MID2"), order_number: "ASCENA-54321")
     end
 
     let! (:mids) {
@@ -30,22 +28,13 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     it "errors if value appraisal method is wrong or contract amount is missing" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
       entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
-
       expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have Value Appraisal Method and Contract Amount set.\nInvoice # INV / Line # 2 must have Value Appraisal Method and Contract Amount set."
     end
 
-    it "does not error if MID is not in xref" do      
+    it "does not error if entry-filed date is before the FS Start Date as long as Vendor-MID isn't in xref" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
-      entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
-
-      DataCrossReference.destroy_all
-
-      expect(subject.run_validation entry).to be_nil
-    end
-
-    it "does not error if entry-filed date is before the FS Start Date" do
-      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
-      entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
+      entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil, mid: "FOO"
+      Order.where(order_number: "ASCENA-54321").first.factory.update_attributes! mid: "FOO"
 
       entry.update_attributes(entry_filed_date: Date.new(2017,3,10))
 
@@ -79,6 +68,28 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     it "errors if first sale amount is less than the entered value" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! contract_amount: 4
       expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have a First Sale Contract Amount greater than the Entered Value."
+    end
+  
+    it "errors for first-sale invoice line if associated vendor-MID ISN'T in xref" do
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! mid: "FOO"
+      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: "FOO"
+      expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have a Vendor-MID combination on the approved first-sale list."
+    end
+
+    it "errors for non-first-sale invoice line if associated vendor-MID IS in xref" do
+      entry.update_attributes! entry_filed_date: Date.new(2017,3,14)
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! contract_amount: 0
+      expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must not have a Vendor-MID combination on the approved first-sale list."
+    end
+
+    it "errors if line's po number is invalid" do
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! po_number: "FOO"
+      expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 has an invalid PO number."
+    end
+
+    it "errors if line's MID doesn't match order's" do
+      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: "FOO"
+      expect(subject.run_validation entry).to eq  "Invoice # INV / Line # 1 must have an MID that matches to the PO. Invoice MID is 'MID' / PO MID is 'FOO'"
     end
   end
   
