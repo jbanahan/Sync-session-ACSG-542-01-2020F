@@ -1,4 +1,5 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/api/product_api_client'
 require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generator'
 require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
 
