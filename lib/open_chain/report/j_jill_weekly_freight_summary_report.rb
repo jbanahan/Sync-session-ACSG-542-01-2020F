@@ -295,7 +295,7 @@ inner join orders o on ol.order_id= o.id
 inner join companies imp on s.importer_id = imp.id and imp.system_code = 'JJILL' and imp.importer = true
 left outer join companies vend on o.vendor_id = vend.id
 left outer join companies fact on o.factory_id = fact.id
-LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:original_gac_date].id} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
+LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:ord_original_gac_date].id} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
 where s.arrival_port_date > '#{start_date}'
 and s.canceled_date IS NULL
 group by s.id, o.id
