@@ -45,7 +45,6 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       expect(line.po_number).to eq "6238635"
       expect(line.part_number).to eq "419488"
       expect(line.country_of_origin).to eq "ID"
-      expect(line.gross_weight).to eq BigDecimal("669.8")
       expect(line.pieces).to eq 1457
       expect(line.hts).to eq "1234567890"
       expect(line.foreign_value).to eq BigDecimal("16187.27")
@@ -94,26 +93,6 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       expect(line.first_sale).to be_nil
       # Unit price calculation should come after discounts are added back in
       expect(line.unit_price).to eq BigDecimal("11.18")
-    end
-
-    it "converts weight in LB to KG" do
-      expect(subject).to receive(:us_hts).with("419488").and_return "1234567890"
-
-      element = REXML::XPath.first(document, "/UniversalInterchange/Body/UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/CommercialInvoiceLineCollection/CommercialInvoiceLine/NetWeightUnit/Code")
-      element.text = "LB"
-
-      entry = nil
-      expect(subject).to receive(:send_invoice) do |invoice|
-        entry = invoice
-      end
-
-      subject.parse(document)
-
-      expect(entry).not_to be_nil
-
-      line = entry.invoices.first.invoice_lines.first
-
-      expect(line.gross_weight).to eq BigDecimal("303.82")
     end
   end
 
