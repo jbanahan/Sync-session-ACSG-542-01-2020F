@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
           next
         end
 
-        if inv_line_data[l.id][:inv_mid] != inv_line_data[l.id][:ord_mid]
+        if inv_line_data[l.id][:ord_mid].present? && (inv_line_data[l.id][:inv_mid] != inv_line_data[l.id][:ord_mid])
           errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} must have an MID that matches to the PO. Invoice MID is '#{inv_line_data[l.id][:inv_mid]}' / PO MID is '#{inv_line_data[l.id][:ord_mid]}'"
         end
         

@@ -91,6 +91,12 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
       Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: "FOO"
       expect(subject.run_validation entry).to eq  "Invoice # INV / Line # 1 must have an MID that matches to the PO. Invoice MID is 'MID' / PO MID is 'FOO'"
     end
+  
+    it "doesn't error if order's MID is missing" do
+      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: nil
+      expect(subject.run_validation entry).to be_nil
+    end 
+
   end
   
 end
