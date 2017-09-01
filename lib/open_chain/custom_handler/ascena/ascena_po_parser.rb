@@ -250,9 +250,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   def update_or_create_factory system_code, name, mid
     factory = Company.where(system_code: system_code).first
     if factory
-      # intentionally not updating MID in case we manually update based on better data from
-      # compliance department
-      factory.update_attributes!(name: name) if !name.blank? && name != factory.name
+      attributes = {}
+      attributes[:name] = name if !name.blank? && name != factory.name
+      attributes[:mid] = mid if !mid.blank? && mid != factory.mid
+
+      factory.update_attributes!(attributes) if attributes.size > 0
     elsif !name.blank?
       factory = Company.create! system_code: system_code, name: name, mid: mid
     end

@@ -312,6 +312,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       factory.reload
       expect(factory.name).to eq "Factory"
     end
+
+    it "updates factory MID if existing mid is blank" do
+      factory = Factory(:company, system_code: "001423", name: "Factory")
+
+      described_class.parse(convert_pipe_delimited [header, detail])
+      factory.reload
+
+      expect(factory.mid).to eq "IDSELKAU0105BEK"
+    end
+
+    it "does not blank an existing factory MID" do
+      factory = Factory(:company, system_code: "001423", name: "Factory", mid: "EXISTING")
+      header[18] = ""
+
+      described_class.parse(convert_pipe_delimited [header, detail])
+      factory.reload
+
+      expect(factory.mid).to eq "EXISTING"
+    end
   end
 
   context "data validation", :disable_delayed_jobs do
