@@ -4,7 +4,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
   let (:document) { REXML::Document.new xml }
   let (:middleman_document) { REXML::Document.new IO.read("spec/fixtures/files/ann_commercial_invoice_middleman.xml")}
   let (:discounts_document) { REXML::Document.new IO.read("spec/fixtures/files/ann_commercial_invoice_discounts.xml")}
-  let! (:ann) { Factory(:importer, system_code: "ATAYLOR", alliance_customer_number: "ATAYLOR")}
+  let (:factory) { Company.create! factory: true, name: "ANN Factory", mid: "MID12345" }
+  let! (:po) { Factory(:order, importer: ann, factory: factory, customer_order_number: "6238635") }
+  let! (:ann) { Factory(:importer, system_code: "ATAYLOR", alliance_customer_number: "ATAYLOR") }
 
   describe "parse" do
 
@@ -54,6 +56,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       expect(line.department).to eq "226"
       expect(line.buyer_customer_number).to eq "ATAYLOR"
       expect(line.cartons).to eq 34
+      expect(line.mid).to eq "MID12345"
       # There's no charges so the ndc should be blank
       expect(line.non_dutiable_amount).to be_nil
     end
@@ -114,6 +117,33 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       line = entry.invoices.first.invoice_lines.first
 
       expect(line.quantity_2).to eq BigDecimal("303.82")
+    end
+
+    it "handles missing orders" do
+      expect(subject).to receive(:us_hts).with("419488").and_return "1234567890"
+      po.destroy
+      entry = nil
+      expect(subject).to receive(:send_invoice) do |invoice|
+        entry = invoice
+      end
+
+      subject.parse(document)
+      line = entry.invoices.first.invoice_lines.first
+      expect(line.mid).to be_nil
+    end
+
+    it "handles missing factory" do
+      expect(subject).to receive(:us_hts).with("419488").and_return "1234567890"
+      po.factory = nil
+      po.save!
+      entry = nil
+      expect(subject).to receive(:send_invoice) do |invoice|
+        entry = invoice
+      end
+
+      subject.parse(document)
+      line = entry.invoices.first.invoice_lines.first
+      expect(line.mid).to be_nil
     end
   end
 

@@ -87,6 +87,8 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
       line.unit_price = (line.foreign_value / line.pieces).round(2, :half_up)
     end
 
+    line.mid = mid(line.po_number) unless line.po_number.blank?
+
     line
   end
 
@@ -182,6 +184,12 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
 
   def api_client
     OpenChain::Api::ProductApiClient.new 'ann'
+  end
+
+  def mid po_number
+    # Look up the MID for the line using the Factory linked to the PO
+    order = Order.where(importer_id: ann_importer.id, customer_order_number: po_number).first
+    order.try(:factory).try(:mid)
   end
 
 end; end; end; end

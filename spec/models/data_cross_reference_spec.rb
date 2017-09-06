@@ -579,4 +579,21 @@ describe DataCrossReference do
       end
     end
   end
+
+  describe "find_mid" do
+    let (:company) { Factory(:importer) }
+    let! (:mid) {  DataCrossReference.create! key: "key", value: "MID1", company: company, cross_reference_type: DataCrossReference::MID_XREF}
+
+    it "finds an mid record" do
+      expect(DataCrossReference.find_mid("key", company)).to eq "MID1"
+    end
+
+    it "allows using company id" do
+      expect(DataCrossReference.find_mid("key", company.id)).to eq "MID1"
+    end
+
+    it "returns nil if not found" do
+      expect(DataCrossReference.find_mid("key2", company)).to eq nil
+    end
+  end
 end

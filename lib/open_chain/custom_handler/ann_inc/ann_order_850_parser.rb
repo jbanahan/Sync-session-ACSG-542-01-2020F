@@ -294,15 +294,23 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     n1 = find_segment factory_segments, "N1"
     id = value(n1, 4)
     system_code = "#{ann_importer.system_code}-MF-#{id}"
+    mid = DataCrossReference.find_mid(id, ann_importer)
 
     factory = Company.where(factory: true, system_code: system_code).first
 
-    return factory unless factory.nil?
-
-    Lock.acquire(system_code) do
-      factory = Company.where(system_code: system_code).first_or_create! name: value(n1, 2), factory: true
-      ann_importer.linked_companies << factory
-      vendor.linked_companies << factory if vendor
+    if !factory.nil?
+      # The only thing we're ever going to update for a factory is its MID.
+      if !mid.blank? && mid != factory.mid
+        Lock.with_lock_retry(factory) do 
+          factory.update_attributes! mid: mid
+        end
+      end
+    else
+      Lock.acquire(system_code) do
+        factory = Company.where(system_code: system_code).first_or_create! name: value(n1, 2), factory: true, mid: mid
+        ann_importer.linked_companies << factory
+        vendor.linked_companies << factory if vendor
+      end
     end
 
     factory

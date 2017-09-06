@@ -3,6 +3,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
   let (:standard_edi_data) { IO.read 'spec/fixtures/files/ann_standard_850.edi' }
   let (:prepack_edi_data) { IO.read 'spec/fixtures/files/ann_multi_prepack_850.edi' }
   let! (:ann_taylor) { Factory(:importer, system_code: "ATAYLOR", name: "Ann Taylor")}
+  let! (:mid_xref) { DataCrossReference.create! key: "76007", value: "MID1", company: ann_taylor, cross_reference_type: DataCrossReference::MID_XREF}
 
   describe "parse" do
 
@@ -38,6 +39,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
         expect(order.factory).not_to be_nil
         expect(order.factory.system_code).to eq "ATAYLOR-MF-76007"
         expect(order.factory.name).to eq "ICON EYEWEAR INC."
+        expect(order.factory.mid).to eq "MID1"
         expect(order.vendor.linked_companies).to include order.factory
         expect(ann_taylor.linked_companies).to include order.factory
 
@@ -170,7 +172,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
 
       it "re-uses vendors / factories" do
         vendor = Factory(:vendor, system_code: "ATAYLOR-VN-76007")
-        factory = Factory(:company, factory: true, system_code: "ATAYLOR-MF-76007")
+        factory = Factory(:company, factory: true, system_code: "ATAYLOR-MF-76007", mid: "TEST")
 
         subject.parse standard_edi_data
 
@@ -179,6 +181,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
 
         expect(order.vendor).to eq vendor
         expect(order.factory).to eq factory
+        # It should also update MID values if they differ
+        expect(order.factory.mid).to eq "MID1"
       end
 
       it "errors if ann taylor importer is missing" do

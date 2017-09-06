@@ -37,6 +37,9 @@ class DataCrossReference < ActiveRecord::Base
   ASCE_MID ||= 'asce_mid'
   CA_HTS_TO_DESCR ||= 'ca_hts_to_descr'
   PVH_INVOICES ||= 'pvh_invoices'
+  # This is a generic MID cross reference, the key value can be anything, the value should be the MID and the importer id field should
+  # be filled in
+  MID_XREF ||= 'mid_xref'
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
@@ -298,6 +301,11 @@ class DataCrossReference < ActiveRecord::Base
     val = find_unique(DataCrossReference.where("company_id IS NULL"), key: locode, xref_type: UN_LOCODE_TO_US_CODE) if val.nil?
 
     val
+  end
+
+  def self.find_mid key, company
+    relation = DataCrossReference.where("company_id = ? ", (company.is_a?(Numeric) ? company : company.id))
+    find_unique(relation, key: key, xref_type: MID_XREF)
   end
 
   def self.has_key? key, cross_reference_type
