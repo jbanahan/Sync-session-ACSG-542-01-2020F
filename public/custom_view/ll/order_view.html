@@ -113,7 +113,7 @@
                   <i class="fa fa-square-o"></i>
                 </a>
               </span>
-            <li class='list-group-item'>
+            <li class='list-group-item' ng-if="me.permissions.view_shipments">
               Bookings
               <div class='text-right'>
                 <chain-vp-bookings order='order'></chain-vp-bookings>
