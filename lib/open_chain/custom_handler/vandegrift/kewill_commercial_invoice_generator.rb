@@ -90,7 +90,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
   def generate_xls_to_google_drive drive_path, ci_load_entries
     wb = generate_xls ci_load_entries
 
-    Tempfile.open([File.basename(drive_path, ".*"), File.extname(drive_path)]) do |t|
+    tmp_file = Attachment.get_sanitized_filename(File.basename(drive_path, ".*"))
+    Tempfile.open([tmp_file, File.extname(drive_path)]) do |t|
       t.binmode
       wb.write t
       t.flush

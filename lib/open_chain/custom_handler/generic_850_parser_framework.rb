@@ -88,56 +88,25 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
   include OpenChain::EdiParserSupport
   include OpenChain::DelayedJobExtensions
 
-  def self.parse data, opts={}
-    user = User.integration
-    REX12::Document.each_transaction(data) do |transaction|
-      self.delay.process_transaction(transaction, opts)
-    end
-  end
-
   def initialize configuration = {}
-    @parser_name = configuration[:parser_name]
-
     # In general, you'll want to set this to false on customer specific systems (ll, polo, etc)
-    @prefix_identifiers_with_system_codes = configuration[:prefix_identifiers_with_system_codes].present? || true
+    @prefix_identifiers_with_system_codes = configuration[:prefix_identifiers_with_system_codes].nil? ? true : configuration[:prefix_identifiers_with_system_codes]
 
-    # If 
-    @allow_updates_to_shipping_orders = configuration[:allow_updates_to_shipping_orders].present? || false
+    # If set to true, the system will not reject updates to orders that are shipping
+    @allow_updates_to_shipping_orders = configuration[:allow_updates_to_shipping_orders].nil? ? false : configuration[:allow_updates_to_shipping_orders]
     # In the general case, we're not exploding prepacks onto the PO, we're going to be just handling the lines
     # as they are sent.  If this is set to true, then prepack methods listed above must be implemented and 
     # each SLN is expected to be its own OrderLine
-    @explode_prepacks = configuration[:explode_prepacks].present? || false
+    @explode_prepacks = configuration[:explode_prepacks].nil? ? false : configuration[:explode_prepacks]
 
     # Valid values handled by the framework are [:isa_date, :revision] 
     #- revision requires custom definition usage and the BEG04 segment to be used properly 
     # (incrementing version numbers are sent by the EDI sender)
-    @track_order_by = configuration[:track_order_by].present? || :isa_date
-  end
+    @track_order_by = configuration[:track_order_by].presence || :isa_date
 
-  def self.process_transaction transaction, opts
-    parser = self.new
-    user = User.integration
-    begin
-      parser.process_transaction(user, transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
-    rescue => e
-      raise e unless production?
-
-      # We should retry these at least a couple times if we're running in a delayed job, since there's all sorts
-      # of database issues that could arise that we will probably want to reprocess for before giving up and emailing
-      # (locks, etc)
-      raise e if currently_running_as_delayed_job? && currently_running_delayed_job_attempts < 4
-
-      send_error_email(transaction, e, parser.parser_name, opts[:key])
-      e.log_me ["File: #{opts[:key]}"]
-    end
-  end
-
-  def self.production?
-    Rails.env.production?
-  end
-
-  def parser_name
-    @parser_name.blank? ? self.class.name.demodulize : @parser_name
+    # If any value other than a 1 signifies a cancelled order, then you will need to set this coniguration value to the value
+    # that signifies cancellation
+    @canceled_order_transmission_code = configuration[:canceled_order_transmission_code].present? ? configuration[:canceled_order_transmission_code].to_i : 1
   end
 
   def process_transaction user, transaction, last_file_bucket:, last_file_path:
@@ -154,7 +123,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
 
     find_or_create_order(beg_segment, transaction, last_file_bucket, last_file_path) do |order|
       if purpose == :cancel
-        process_cancelled_order_header(user, order, edi_segments)
+        process_cancelled_order(user, order, edi_segments)
       else
         process_order(user, order, edi_segments, product_cache)
       end
@@ -175,9 +144,8 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
   end
 
   def process_order user, order, edi_segments, product_cache
-
     if !allow_updates_to_shipping_orders?
-      raise "PO # #{order.customer_order_number} is already shipping and cannot be updated." if order.shipping?
+      raise EdiBusinessLogicError, "PO # '#{order.customer_order_number}' is already shipping and cannot be updated." if order.shipping?
     end
 
     handle_order_header(user, order, edi_segments)
@@ -238,87 +206,16 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     process_standard_line(order, po1, all_line_segments, product)
   end
 
-  def handle_prepack_line order, po1, all_line_segments, sln, all_subline_segments
+  def handle_prepack_line order, po1, all_line_segments, sln, all_subline_segments, product_cache
     style = prepack_style(po1, all_line_segments, sln, all_subline_segments)
     product = product_cache[style]
 
     process_prepack_line(order, po1, sln, all_subline_segments, product)
   end
 
-  def extract_n1_entity_data n1_loop
-    data = {}
-    n1 = find_segment(n1_loop, "N1")
-    data[:entity_type] = value(n1, 1)
-    data[:name] = value(n1, 2)
-    data[:id_code_qualifier] = value(n1, 3)
-    data[:id_code] = value(n1, 4)
-
-    data[:names] = []
-    find_segments(n1_loop, "N2").each do |n2|
-      v = value(n2, 1)
-      data[:names] << v unless v.blank?
-      v = value(n2, 2) 
-      data[:names] << v unless v.blank?
-    end
-
-    address = Address.new
-    data[:address] = address
-    n3 = find_segment(n1_loop, "N3")
-    address.line_1 = value(n3, 1)
-    address.line_2 = value(n3, 2)
-
-    n4 = find_segment(n1_loop, "N4")
-    address.city = value(n4, 1)
-    address.state = value(n4, 2)
-    address.postal_code = value(n4, 3)
-
-    data[:country] = value(n4, 4)
-
-    data
-  end
-
   def find_or_create_company_from_n1_data data, company_type_hash: , other_attributes: {}
-    c = nil
-    Lock.acquire("Company-#{data[:id_code]}", yield_in_transaction: false) do
-      c = Company.where(company_type_hash).where(system_code: prefix_value(importer, data[:id_code])).first_or_initialize
-
-      if !c.persisted?
-        c.name = data[:name]
-        c.name_2 = data[:names].first unless data[:names].blank?
-
-        country = Country.where(iso_code: data[:country]).first unless data[:country].blank?
-        data[:address].country = country
-
-        c.addresses << data[:address]
-        c.assign_attributes(other_attributes) unless other_attributes.blank?
-
-        c.save!
-        importer.linked_companies << c unless importer.linked_companies.include? c
-      end
-    end
-
-    c
-  end
-
-  def find_or_create_address_from_n1_data data, company
-    a = nil
-    Lock.acquire("Address-#{data[:id_code]}", yield_in_transaction: false) do
-      address = company.addresses.find {|a| a.system_code == data[:id_code] }
-
-      if address.nil?
-        a = data[:address]
-        a.system_code = data[:id_code]
-        a.name = data[:name]
-        a.country = Country.where(iso_code: data[:country]).first
-        a.company = company
-
-        a.save!
-
-        company.addresses.reload
-      end
-    end
-
-    a
+    prefix = prefix_identifiers_with_system_codes? ? importer.system_code : nil
+    super(data, company_type_hash: company_type_hash, link_to_company: importer, system_code_prefix: prefix, other_attributes: other_attributes)
   end
 
   def parse_ship_mode code
@@ -480,7 +377,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     end
 
     d = ActiveSupport::TimeZone["America/New_York"].parse datetime
-    raise "ISA Timestamp is not a valid date.  ISA09 = #{date} / ISA10 = #{time}." unless d
+    raise EdiStructuralError, "ISA Timestamp is not a valid date.  ISA09 = #{date} / ISA10 = #{time}." unless d
     d
   end
 
@@ -498,11 +395,10 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
   def order_purpose beg_segment
     purpose = value(beg_segment, 1).to_i
 
-    case purpose
-    when 0
+    if purpose == canceled_order_transmission_code
+      return :cancel
+    elsif purpose == 0
       :create
-    when 1
-      :cancel
     else
       :update
     end
@@ -551,7 +447,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     style = standard_style(po1_segment, line_segments)
     variant_identifier = standard_variant_identifier(po1_segment, line_segments) if self.respond_to?(:standard_variant_identifier)
 
-    product = cache[style].nil?
+    product = cache[style]
     variant = cache[:variants][variant_cache_key(style, variant_identifier)]
 
     # If we've already seen both the product and the variant (or just the product if we're not dealing w/ variants)
@@ -582,7 +478,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     style = prepack_style(po1_segment, line_segments, sln_segment, sln_segments)
     variant_identifier = prepack_variant_identifier(po1_segment, line_segments, sln_segment, sln_segments) if self.respond_to?(:prepack_variant_identifier)
 
-    product = cache[style].nil?
+    product = cache[style]
     variant = cache[:variants][variant_cache_key(style, variant_identifier)]
 
     # If we've already seen both the product and the variant (or just the product if we're not dealing w/ variants)
@@ -646,8 +542,12 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     @track_order_by
   end
 
-  def prefix_value importer, value
-    prefix_identifiers_with_system_codes? ? "#{importer.system_code}-#{value}" : value
+  def canceled_order_transmission_code
+    @canceled_order_transmission_code
+  end
+
+  def prefix_value company, value
+    prefix_identifiers_with_system_codes? ? "#{company.system_code}-#{value}" : value
   end
 
   def importer
@@ -657,7 +557,13 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
 
   def cdefs
     # It's possible that the implementing class won't use any custom definitions.
-    @cdefs ||= self.class.prep_custom_definitions(self.respond_to?(:cdef_uids) ? self.cdef_uids : [])
+    @cdefs ||= begin
+      if self.respond_to?(:cdef_uids)
+        self.class.prep_custom_definitions(self.cdef_uids)
+      else
+        {}
+      end
+    end
 
     @cdefs
   end

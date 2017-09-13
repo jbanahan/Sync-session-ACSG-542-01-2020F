@@ -558,6 +558,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_talbots_850/file.edi','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+
+    it "handles Talbots 856s" do
+      expect(master_setup).to receive(:custom_feature?).with('Talbots').and_return(true)
+      p = class_double("OpenChain::CustomHandler::Talbots::Talbots856Parser")
+      expect(OpenChain::CustomHandler::Talbots::Talbots856Parser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_talbots_856/file.edi','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
   end
 
   it 'should return error if bad request type' do

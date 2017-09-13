@@ -472,4 +472,248 @@ describe OpenChain::EdiParserSupport do
       expect(subject.all_segments_up_to(first_transaction.segments, "BLAH").length).to eq 48
     end
   end
+
+  describe "parse" do 
+
+    let (:edi_data) {
+      "ISA^00^          ^00^          ^ZZ^INSD           ^01^014492501      ^170725^1040^U^00401^000001357^0^P^>\n" +
+      "GS^SH^INSD^014492501^20170725^1040^1356^X^004010\n" +
+      transaction_1 +
+      transaction_2 +
+      "GE^1^1356\n" +
+      "IEA^1^000001357\n"
+    }
+
+    let (:transaction_1) {
+      "ST^856^13560001\n" +
+      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" + 
+      "SE^38^13560001\n"
+    }
+
+    let (:transaction_2) {
+      "ST^856^13560002\n" +
+      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" + 
+      "SE^38^13560002\n"
+    }
+
+    it "parses edi data into multiple transactions and delays processing each transaction" do 
+      expect(subject.class).to receive(:delay).exactly(2).times.and_return subject.class
+
+      transactions = []
+      expect(subject.class).to receive(:process_transaction).exactly(2).times do |transaction, opts|
+        expect(opts).to eq({key: "value"})
+        transactions << transaction
+      end
+
+      subject.class.parse(edi_data, key: "value")
+      expect(transactions.length).to eq 2
+
+      # Just make sure the transactions were received in the correct order
+      expect(subject.find_element_value(transactions.first.segments, "ST02")).to eq "13560001"
+      expect(subject.find_element_value(transactions.second.segments, "ST02")).to eq "13560002"
+    end
+  end
+
+  describe "process_transaction" do
+    let (:transaction) { instance_double(REX12::Transaction) }
+    let (:parser) { double(subject.class) }
+    let (:user) { User.new }
+    let (:opts) { {bucket: "bucket", key: "path"} }
+
+    before :each do 
+      allow(subject.class).to receive(:new).and_return parser
+    end
+
+    context "with successful process_transaction" do
+      it "calls process transaction" do
+        expect(subject.class).to receive(:user).and_return user
+        expect(parser).to receive(:process_transaction).with(user, transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+        subject.class.process_transaction(transaction, opts)
+      end
+
+      it "uses User.integration user method is not implemented" do
+        expect(parser).to receive(:process_transaction).with(User.integration, transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+        subject.class.process_transaction(transaction, opts)
+      end
+    end
+
+    context "with errors" do
+      before :each do 
+        allow(subject.class).to receive(:user).and_return user
+      end
+
+      it "re-raises errors in test" do
+        expect(parser).to receive(:process_transaction).and_raise "Error"
+        expect { subject.class.process_transaction(transaction, opts) }.to raise_error "Error"
+      end
+
+      context "not in test environment" do
+        before :each do 
+          allow(subject.class).to receive(:test?).and_return false
+        end
+
+        context "running as delayed_job" do
+          before :each do 
+            allow(subject.class).to receive(:currently_running_as_delayed_job?).and_return true
+          end
+
+          it "re-raises errors non EDI errors if delayed job and attempts < max " do
+            expect(parser).to receive(:process_transaction).and_raise "Error"
+            expect(subject.class).to receive(:currently_running_delayed_job_attempts).and_return 4
+            expect { subject.class.process_transaction(transaction, opts) }.to raise_error "Error"
+          end
+
+          it "emails if attempts > max with standard error is raised" do
+            e = StandardError.new "Error"
+            expect(parser).to receive(:process_transaction).and_raise e
+            expect(parser).to receive(:parser_name).and_return "Parser"
+            expect(subject.class).to receive(:currently_running_delayed_job_attempts).and_return 5
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(e).to receive(:log_me).with ["File: path"]
+
+            subject.class.process_transaction(transaction, opts)
+          end
+
+          it "emails immediately if EdiBusinessLogicError is raised" do
+            e = OpenChain::EdiParserSupport::EdiBusinessLogicError.new "Error"
+
+            expect(parser).to receive(:process_transaction).and_raise e
+            expect(parser).to receive(:parser_name).and_return "Parser"
+            expect(subject.class).not_to receive(:currently_running_as_delayed_job?)
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(e).not_to receive(:log_me)
+
+            subject.class.process_transaction(transaction, opts)
+          end
+
+          it "emails immediately if EdiStructuralError is raised" do
+            e = OpenChain::EdiParserSupport::EdiStructuralError.new "Error"
+
+            expect(parser).to receive(:process_transaction).and_raise e
+            expect(parser).to receive(:parser_name).and_return "Parser"
+            expect(subject.class).not_to receive(:currently_running_as_delayed_job?)
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(e).not_to receive(:log_me)
+
+            subject.class.process_transaction(transaction, opts)
+          end
+        end
+      end
+    end
+  end
+
+  describe "parser_name" do
+    it "uses the class' demodularized name" do
+      klazz = class_double(OpenChain::CustomHandler::Talbots::Talbots856Parser)
+
+      expect(subject).to receive(:class).and_return klazz
+      expect(klazz).to receive(:name).and_return OpenChain::CustomHandler::Talbots::Talbots856Parser.name
+      expect(subject.parser_name).to eq "Talbots856Parser"
+    end
+  end
+
+  describe "extract_n1_entity_data" do
+    let (:n1_loop) { subject.extract_n1_loops(first_transaction_segments, qualifier: "VN").first }
+
+    it "extracts data from an n1 segment into a hash" do
+      h = subject.extract_n1_entity_data n1_loop
+      expect(h[:entity_type]).to eq "VN"
+      expect(h[:name]).to eq "SOUTH ASIA (new)"
+      expect(h[:id_code_qualifier]).to eq "ZZ"
+      expect(h[:id_code]).to eq "70289"
+
+      expect(h[:names]).to eq ["Name", "Name2"]
+      address = h[:address]
+
+      expect(address).not_to be_nil
+     expect(address.line_1).to eq "17/F SOUTH ASIS BLDG"
+      expect(address.line_2).to eq "108 HOW MING STREET"
+      expect(address.city).to eq "City"
+      expect(address.state).to eq "State"
+      expect(address.postal_code).to eq "Postal"
+      expect(h[:country]).to eq "CN"
+    end
+  end
+
+  describe "find_or_create_company_from_n1_data" do
+    let (:n1_loop) { subject.extract_n1_loops(first_transaction_segments, qualifier: "VN").first }
+    let (:n1_data) { subject.extract_n1_entity_data n1_loop }
+    let! (:cn) { Factory(:country, iso_code: "CN") }
+    let (:importer) { Company.where(importer: true, system_code: "Test").first }
+
+    it "extracts data from an n1 segment into a hash" do
+      expect(Lock).to receive(:acquire).with("Company-70289", yield_in_transaction: false).and_yield
+
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}
+      expect(company.persisted?).to eq true
+      expect(company.system_code).to eq "70289"
+      expect(company.factory).to eq true
+      expect(company.name).to eq "SOUTH ASIA (new)"
+      expect(company.name_2).to eq "Name"
+      expect(company.addresses.length).to eq 1
+      address = company.addresses.first
+      expect(address.line_1).to eq "17/F SOUTH ASIS BLDG"
+      expect(address.line_2).to eq "108 HOW MING STREET"
+      expect(address.city).to eq "City"
+      expect(address.state).to eq "State"
+      expect(address.postal_code).to eq "Postal"
+      expect(address.country).to eq cn
+    end
+
+    it "allows passing other attributes to add to the company" do
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, other_attributes: {mid: "MID", irs_number: "12345"}
+      expect(company.mid).to eq "MID"
+      expect(company.irs_number).to eq "12345"
+    end
+
+    it "does not update information if company already exists" do
+      existing = Factory(:company, factory: true, system_code: "70289", name: "Test")
+
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}
+
+      expect(company).to eq existing
+
+      existing.reload
+      expect(existing.name).to eq "Test"
+      expect(existing.addresses.length).to eq 0
+    end
+
+    it "uses system code prefix" do
+      expect(Lock).to receive(:acquire).with("Company-Prefix-70289", yield_in_transaction: false).and_yield
+
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, system_code_prefix: "Prefix"
+      expect(company.system_code).to eq "Prefix-70289"
+    end
+
+    it "links to given company" do
+      importer = Factory(:importer)
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, link_to_company: importer
+      expect(importer.linked_companies).to include company      
+    end
+  end
+
+  describe "find_or_create_address_from_n1_data" do
+    let (:n1_loop) { subject.extract_n1_loops(first_transaction_segments, qualifier: "VN").first }
+    let (:n1_data) { subject.extract_n1_entity_data n1_loop }
+    let! (:cn) { Factory(:country, iso_code: "CN") }
+    let (:company) { Factory(:importer, system_code: "Test") }
+
+    it "creates a new address" do
+      expect(Lock).to receive(:acquire).with("Address-70289", yield_in_transaction: false).and_yield
+
+      address = subject.find_or_create_address_from_n1_data n1_data, company
+      expect(address.persisted?).to eq true
+      expect(address.system_code).to eq "70289"
+      expect(address.name).to eq "SOUTH ASIA (new)"
+      expect(address.line_1).to eq "17/F SOUTH ASIS BLDG"
+      expect(address.line_2).to eq "108 HOW MING STREET"
+      expect(address.city).to eq "City"
+      expect(address.state).to eq "State"
+      expect(address.postal_code).to eq "Postal"
+      expect(address.country).to eq cn
+
+      expect(company.addresses).to include address
+    end
+  end
+
 end

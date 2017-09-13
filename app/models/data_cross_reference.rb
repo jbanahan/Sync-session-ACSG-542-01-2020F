@@ -40,6 +40,7 @@ class DataCrossReference < ActiveRecord::Base
   # This is a generic MID cross reference, the key value can be anything, the value should be the MID and the importer id field should
   # be filled in
   MID_XREF ||= 'mid_xref'
+  SHIPMENT_CI_LOAD_CUSTOMERS ||= "shp_ci_load_cust"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
