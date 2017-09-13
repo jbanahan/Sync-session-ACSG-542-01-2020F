@@ -1,61 +1,111 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::CustomViewSelector do
+
+  subject { described_class }
+
+  let (:user) { User.new }
+
   describe '#order_view' do
-    before :each do
-      @o = double('order')
-      @u = double('user')
-    end
+    let (:order) { Order.new }
+  
     after :each do
       described_class.register_handler nil
     end
-    it 'should pass through to registered handler' do
-      handler = Class.new do
-        def self.order_view o, u
-          return 'x'
-        end
+
+    context "with cache configured" do 
+
+      before :each do 
+        expect(MasterSetup).to receive(:current_code_version).and_return "some value"
       end
 
-      described_class.register_handler handler
+      it 'should pass through to registered handler' do
+        handler = Class.new do
+          attr_accessor :user, :order
+          def order_view o, u
+            @user = u
+            @order = o
 
-      expect(described_class.order_view(@o,@u)).to eq 'x'
+            return 'path/to/file.html'
+          end
+        end.new
+
+        subject.register_handler handler
+
+        expect(subject.order_view(order, user)).to eq 'path/to/file.html?c=some%20value'
+        expect(handler.user).to be user
+        expect(handler.order).to be order
+      end
     end
+    
     it 'should return nil if no registered handler' do
-      expect(described_class.order_view(@o,@u)).to be_nil
+      expect(subject.order_view(order, user)).to be_nil
     end
     it "should return nil if regiestered handler doesn't implement method" do
       handler = Class.new
-      described_class.register_handler handler
-      expect(described_class.order_view(@o,@u)).to be_nil
+      subject.register_handler handler
+      expect(subject.order_view(order, user)).to be_nil
     end
   end
 
   describe '#shipment_view' do
-    before :each do
-      @s = double('shipment')
-      @u = double('user')
-    end
+
+    let (:shipment) { Shipment.new }
     after(:each) do
-      described_class.register_handler nil
+      subject.register_handler nil
     end
-    it 'should pass through to registered handler' do
-      handler = Class.new do
-        def self.shipment_view s, u
-          return 'x'
-        end
+
+    context "with cache configured" do 
+
+      before :each do 
+        expect(MasterSetup).to receive(:current_code_version).and_return "cache"
       end
 
-      described_class.register_handler handler
+      it 'should pass through to registered handler' do
+        handler = Class.new do
+          attr_accessor :user, :shipment
+          def shipment_view s, u
+            @user = u
+            @shipment = s
+          
+            return 'x'
+          end
+        end.new 
 
-      expect(described_class.shipment_view(@s,@u)).to eq 'x'
+        subject.register_handler handler
+
+        expect(subject.shipment_view(shipment, user)).to eq 'x?c=cache'
+        expect(handler.shipment).to be shipment
+        expect(handler.user).to be user
+      end
     end
+
     it 'should return nil if no registered handler' do
-      expect(described_class.shipment_view(@s,@u)).to be_nil
+      expect(subject.shipment_view(shipment, user)).to be_nil
     end
+
     it "should return nil if regiestered handler doesn't implement method" do
       handler = Class.new
-      described_class.register_handler handler
-      expect(described_class.shipment_view(@s,@u)).to be_nil
+      subject.register_handler handler
+      expect(subject.shipment_view(shipment, user)).to be_nil
+    end
+  end
+
+  describe "add_cache_parameter" do
+    it "appends a cache parameter to given url" do
+      expect(subject.add_cache_parameter "/path/to/file.html", cache_value: "val").to eq "/path/to/file.html?c=val"
+    end
+
+    it "handles cache values with special chars" do
+      expect(subject.add_cache_parameter "/path/to/file.html", cache_value: "val val").to eq "/path/to/file.html?c=val%20val"
+    end
+
+    it "appends cache values to existing url params" do
+      expect(subject.add_cache_parameter "/path/to/file.html?existing=p", cache_value: "val").to eq "/path/to/file.html?existing=p&c=val"
+    end
+
+    it "hands page parameters" do
+      expect(subject.add_cache_parameter "/path/to/file.html?existing=p#hash", cache_value: "val").to eq "/path/to/file.html?existing=p&c=val#hash"
     end
   end
 end
