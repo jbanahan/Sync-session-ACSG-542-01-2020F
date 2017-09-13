@@ -39,6 +39,8 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
       unit_type_column: 8,
       cbms_column: 9,
       gross_kgs_column: 10,
+      container_column: 12,
+      seal_column: 13,
       total_column: 5,
       header_row: 34,
       port_of_receipt: {
@@ -47,23 +49,22 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
       },
       mode: {
         row: 28,
-        column: 7
+        column: 8
       },
       terms: {
         row: 30,
-        column: 7
+        column: 8
       },
       ready_date: {
         row: 28,
-        column: 10
+        column: 11
       },
       shipment_type: {
         row: 30,
-        column:10
+        column:11
       }
     }
   end
-
 
   ##
   # Makes sure the user can edit the shipment, then reads the row data and adds lines

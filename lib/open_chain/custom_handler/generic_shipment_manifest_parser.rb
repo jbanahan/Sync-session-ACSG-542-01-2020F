@@ -10,45 +10,6 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
     @manufacturer_address_id = opts[:manufacturer_address_id]
   end
 
-  def file_layout
-    {
-      marks_column: 0,
-      description_column: 1,
-      po_column: 2,
-      style_no_column: 3,
-      sku_column:4,
-      carton_qty_column: 6,
-      quantity_column: 7,
-      unit_type_column: 8,
-      cbms_column: 9,
-      gross_kgs_column: 10,
-      container_column: 12,
-      seal_column: 13,
-      total_column: 5,
-      header_row: 34,
-      port_of_receipt: {
-        row: 28,
-        column: 5
-      },
-      mode: {
-        row: 28,
-        column: 8
-      },
-      terms: {
-        row: 30,
-        column: 8
-      },
-      ready_date: {
-        row: 28,
-        column: 11
-      },
-      shipment_type: {
-        row: 30,
-        column:11
-      }
-    }
-  end
-
   def max_line_number shipment
     shipment.shipment_lines.maximum(:line_number) || 0
   end

@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
 
     it "handles CY/CY ship mode as Ocean - FCL" do
       values = form_data.dup
-      values[30][10] = "CY/CY"
+      values[30][11] = "CY/CY"
 
       result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CY/CY"
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
 
     it "handles CY/CFS ship mode as Ocean - FCL" do
       values = form_data.dup
-      values[30][10] = "CY/CFS"
+      values[30][11] = "CY/CFS"
 
       result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CY/CFS"
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
 
     it "handles CFS/CFS ship mode as Ocean - LCL" do
       values = form_data.dup
-      values[30][10] = "CFS/CFS"
+      values[30][11] = "CFS/CFS"
 
       result = subject.process_rows shipment, form_data, user
       expect(shipment.booking_shipment_type).to eq "CFS/CFS"
