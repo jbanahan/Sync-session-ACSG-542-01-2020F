@@ -702,7 +702,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def special_payment_terms
-      {"TT00" => "T/T At Sight"}
+      {"TT00" => "T/T At Sight",
+       "LC60" => "Letter of Credit 60 Days"}
     end
 
     def parse_date str
