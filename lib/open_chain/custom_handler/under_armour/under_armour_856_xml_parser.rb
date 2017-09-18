@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
 
     find_or_create_shipment(shipment_number, revision, bucket, file) do |shipment|
       parse_shipment_header shipment, ship_xml
-      container_number = ship_xml.text "Trailer"
+      container_number = ship_xml.text("Trailer").to_s
       errors << "#{error_prefix(shipment)} No container number value found in 'Trailer' element." if container_number.blank?
 
       container = shipment.containers.find {|c| c.container_number == container_number }
