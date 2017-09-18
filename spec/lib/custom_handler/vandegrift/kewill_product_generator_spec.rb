@@ -151,6 +151,31 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(t.text "CatFdaEsList/CatFdaEs/fdaSeqNo").to eq "1"
       expect(t.text "CatFdaEsList/CatFdaEs/productCode").to eq "FDACODE"
     end
+
+    it "allows for default values to be sent at all levels" do
+      opts = {defaults: 
+                {
+                  "CatCiLine" => {
+                    "printPartNo7501" => "Y",
+                    "process9802" => "N"},  
+                  "CatTariffClass" => {
+                    "ultimateConsignee" => "CONS"},
+                  "CatFdaEs" => {
+                    "abiPriorNotice" => "Y"}, 
+                  "CatFdaEsCompliance" => {
+                    "assembler" => "ASS"}
+                }
+              }
+
+      gen = described_class.new "CUST", opts
+
+      gen.write_row_to_xml parent, 1, fda_row
+      expect(parent.text "part/printPartNo7501").to eq "Y"
+      expect(parent.text "part/process9802").to eq "N"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/ultimateConsignee").to eq "CONS"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/abiPriorNotice").to eq "Y"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/CatFdaEsComplianceList/CatFdaEsCompliance/assembler").to eq "ASS"
+    end
   end
 
   describe "run_schedulable" do

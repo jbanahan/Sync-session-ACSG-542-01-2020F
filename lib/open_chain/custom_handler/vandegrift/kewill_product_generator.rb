@@ -44,6 +44,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @disable_importer_check = opts[:disable_importer_check].to_s.to_boolean
     @allow_blank_tariffs = opts[:allow_blank_tariffs].to_s.to_boolean
     @allow_multiple_tariffs = opts[:allow_multiple_tariffs].to_s.to_boolean
+    @default_values = opts[:defaults].presence || {}
   end
 
   def custom_defs
@@ -90,6 +91,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # This is blanked unless FDA Flag is true, so we're ok to always send it (see preprocess_row)
     write_data(p, "manufacturerId", row[9], 15)
     write_data(p, "productLine", row[4], 30)
+    append_defaults(p, "CatCiLine")
 
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
     # here into individual classification fields.
@@ -119,6 +121,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         write_data(fda, "contactName", row[16], 10)
         write_data(fda, "contactPhone", row[17], 10)
         write_data(fda, "cargoStorageStatus", row[20], 1)
+        append_defaults(fda, "CatFdaEs")
+
         if !row[18].blank?
           aff_comp = add_element(add_element(fda, "CatFdaEsComplianceList"), "CatFdaEsCompliance")
           add_kewill_keys(aff_comp, row)
@@ -128,6 +132,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
           write_data(aff_comp, "complianceCode", row[18], 3)
           # It appears Kewill named qualifier incorrectly...as the qualifier is actually the affirmation of compliance number/value
           write_data(aff_comp, "complianceQualifier", row[19], 25)
+          append_defaults(aff_comp, "CatFdaEsCompliance")
         end
       end
     end
@@ -141,7 +146,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # Since we're allowing blank tariffs, just take part of the join condition for 8 char tariffs and recreate it here, dropping
     # anything that's less than 8 chars (.ie not a good tariff)
     write_data(tariff_class, "tariffNo", (hts.to_s.length >= 8 ? hts : ""), 10, error_on_trim: true)
-    
+    append_defaults(tariff_class, "CatTariffClass")
+
     tariff_class
   end
 
@@ -156,6 +162,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(parent, "partNo", row[0], 40, error_on_trim: true)
     write_data(parent, "styleNo", row[0], 40, error_on_trim: true) if include_style
     write_data(parent, "dateEffective", date_format(effective_date), 8, error_on_trim: true)
+  end
+
+  def append_defaults parent, level
+    defaults = @default_values[level]
+    return if defaults.blank?
+    defaults.each_pair do |name, value|
+      add_element(parent, name, value)
+    end
   end
 
   def effective_date
