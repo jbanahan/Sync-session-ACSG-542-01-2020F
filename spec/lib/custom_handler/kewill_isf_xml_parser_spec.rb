@@ -115,6 +115,18 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 09:15 EST: All Bills Matched"
       ]
     end
+    it "uses event date 20 as last event date if 21 or 8 are not present" do
+      dom = REXML::Document.new File.new(@path)
+
+      dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '20']")
+
+      expect{@k.parse dom.to_s}.not_to raise_error
+
+      saved = SecurityFiling.first
+      expect(saved).not_to be_nil
+
+      expect(saved.last_event).to eq ActiveSupport::TimeZone["UTC"].parse "2012-11-27T09:14:02.000-05:00"
+    end
   end
   describe "parse_dom" do
     before :each do

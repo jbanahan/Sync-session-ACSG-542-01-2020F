@@ -184,7 +184,9 @@ module OpenChain
       end
       def last_event_time root
         r = nil
-        REXML::XPath.each(root, "events[EVENT_NBR = '21' or EVENT_NBR = '8']") do |el|
+        # Events 8, 20, 21 represent system events that generate timestamps containing the current time...they're reliable means
+        # for determining the moment in time when the ISF XML file was generated.
+        REXML::XPath.each(root, "events[EVENT_NBR = '21' or EVENT_NBR = '8' or EVENT_NBR = '20']") do |el|
           time_stamp = ed el, 'EVENT_DATE'
           r = pick_date(r,time_stamp,true)
         end
