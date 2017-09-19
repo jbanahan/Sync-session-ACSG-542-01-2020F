@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         r = sheet.row(0)
 
         expect(r).to_not include('Clean Fiber Content')
-        expect(r.length).to eql(106)
+        expect(r.length).to eql(107)
       end
 
       it "should remove the clean_fiber_content field if it is empty" do
@@ -66,7 +66,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         r = sheet.row(1)
 
         expect(r[6]).to eql('fibercontent')
-        expect(r.length).to eql(106)
+        expect(r.length).to eql(107)
       end
 
       it "should replace fiber_content with clean_fiber_content" do

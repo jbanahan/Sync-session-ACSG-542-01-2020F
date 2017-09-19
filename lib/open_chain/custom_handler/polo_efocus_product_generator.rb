@@ -166,7 +166,7 @@ AND (inner_test_style.string_value IS NULL OR length(rtrim(inner_test_style.stri
 
   def self.cdefs_range_2
     [:country_of_origin, :fish_wildlife, :common_name_1, :scientific_name_1, :fish_wildlife_origin_1, :fish_wildlife_source_1, :royalty_percentage, :chart_comments, :binding_ruling_number, :binding_ruling_type,
-     :mid, :fda_product_code, :effective_date, :price_uom, :special_program_indicator, :cvd_case, :add_case, :ptp_code, :terms_of_sale, :set_type]
+     :mid, :fda_product_code, :effective_date, :price_uom, :special_program_indicator, :cvd_case, :add_case, :ptp_code, :terms_of_sale, :set_type, :prod_fda_indicator]
   end
 
 end; end; end

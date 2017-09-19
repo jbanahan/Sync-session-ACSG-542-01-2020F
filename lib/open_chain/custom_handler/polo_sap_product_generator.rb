@@ -127,6 +127,8 @@ module OpenChain
           end
         end
         add_element prod, "knit_woven", knit_woven
+        add_element prod, "fda", row[35]
+        add_element prod, "set", row[9]
       end
 
       def preprocess_header_row row, opts = {}
@@ -262,7 +264,7 @@ INNER JOIN tariff_records on tariff_records.classification_id = classifications.
          :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
          :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
          :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
-         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven, :clean_fiber_content]
+         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven, :clean_fiber_content, :prod_fda_indicator]
       end
 
       def custom_def_query_fields
