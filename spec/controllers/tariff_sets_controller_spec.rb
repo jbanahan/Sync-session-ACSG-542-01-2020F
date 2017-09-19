@@ -86,6 +86,13 @@ describe TariffSetsController do
         post :load, :country_id=>@country.id, :path=>"path/to/file/#{@country.iso_code}_abc", :label=>"lbl", :activate=>'yes'
         expect(flash[:errors]).to include "Tariff Set filename and Label must begin with the Country you are loading's ISO Code."
       end
+      it "loads if country is member of EU and file path and label begin with EU" do
+        @country.european_union = true
+        @country.save!
+        expect(TariffLoader).to receive(:delay).and_return(TariffLoader)
+        expect(TariffLoader).to receive(:process_s3).with("path/to/file/EU_abc",@country,"EU-lbl",false,instance_of(User))
+        post :load, :country_id=>@country.id, :path=>"path/to/file/EU_abc", :label=>"EU-lbl"
+      end
     end
   end
   describe "activate" do
