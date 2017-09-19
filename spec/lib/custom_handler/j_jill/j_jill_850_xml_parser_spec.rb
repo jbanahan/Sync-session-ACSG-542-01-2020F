@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       run_file
     end
     it "should save order" do
-      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
@@ -87,6 +87,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(p1.unit_of_measure).to eq 'EA'
       expect(p1.custom_value(cdefs[:prod_vendor_style])).to eq '04-1024'
       expect(p1.custom_value(cdefs[:prod_importer_style])).to eq '014932'
+      expect(p1.custom_value(cdefs[:prod_part_number])).to eq '04-1024'
 
       expected_fingerprint = described_class.new.generate_order_fingerprint o
       expect(DataCrossReference.find_jjill_order_fingerprint(o)).to eq expected_fingerprint

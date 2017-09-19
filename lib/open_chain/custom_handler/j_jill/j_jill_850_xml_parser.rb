@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by_system_code UID_PREFIX
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
+    @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
     raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
 
@@ -198,19 +198,23 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     uom = et po1_el, 'PO103'
     update_product_if_needed(p,product_name,uom)
 
-    cv = p.get_custom_value(@cdefs[:prod_vendor_style])
     vendor_style = et(po1_el,'PO111')
-    @vendor_styles << vendor_style unless vendor_style.blank?
-    if cv.value != vendor_style
-      cv.value = vendor_style
-      cv.save!
+    existing_vendor_style = p.custom_value(@cdefs[:prod_vendor_style])
+    if existing_vendor_style != vendor_style
+      p.update_custom_value!(@cdefs[:prod_vendor_style], vendor_style)
     end
-    imp_cv = p.get_custom_value(@cdefs[:prod_importer_style])
+    # Set to same value as vendor style.
+    existing_part_number = p.custom_value(@cdefs[:prod_part_number])
+    if existing_part_number != vendor_style
+      p.update_custom_value!(@cdefs[:prod_part_number], vendor_style)
+    end
+
     importer_style = et(po1_el,'PO107')
-    if imp_cv.value != importer_style
-      imp_cv.value = importer_style
-      imp_cv.save!
+    existing_importer_style = p.custom_value(@cdefs[:prod_importer_style])
+    if existing_importer_style != importer_style
+      p.update_custom_value!(@cdefs[:prod_importer_style], importer_style)
     end
+
     p
   end
 
