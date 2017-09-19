@@ -7,8 +7,6 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::Ascena::AscenaReportHelper
 
-  SYSTEM_CODE = "ASCENA"
-
   def self.permission? user
     (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
       (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
@@ -42,15 +40,6 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   def release_date_dates start_date, end_date, time_zone
     start_date = sanitize_date_string start_date, time_zone
     end_date = sanitize_date_string end_date, time_zone
-    [start_date, end_date]
-  end
-
-  def fiscal_month_dates start_fiscal_year, start_fiscal_month, end_fiscal_year, end_fiscal_month
-    ascena = Company.where(system_code: SYSTEM_CODE).first
-    start_date = FiscalMonth.where(company_id: ascena.id, year: start_fiscal_year, month_number: start_fiscal_month)
-                            .first.start_date.strftime("%Y-%m-%d")
-    end_date   = FiscalMonth.where(company_id: ascena.id, year: end_fiscal_year, month_number: end_fiscal_month)
-                            .first.start_date.strftime("%Y-%m-%d")
     [start_date, end_date]
   end
 
@@ -152,11 +141,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
               FROM commercial_invoice_lines l
               INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id 
               WHERE l.id = cil.id) AS 'Duty Savings - NDC',
-             IF(cil.contract_amount IS NULL OR cil.contract_amount = 0, 0, (SELECT ROUND((l.contract_amount - l.value) * (t.duty_amount / t.entered_value), 2)
-                                                                            FROM commercial_invoice_lines l
-                                                                               INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
-                                                                            WHERE l.id = cil.id
-                                                                            LIMIT 1 )) AS 'Duty Savings - First Sale',
+             #{duty_savings_first_sale('cil')} AS 'Duty Savings - First Sale',
              IF(cil.contract_amount > 0, 'Y', 'N') AS 'First Sale Flag',
              e.id AS 'Web Link'
       FROM entries e

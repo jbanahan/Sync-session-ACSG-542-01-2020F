@@ -57,6 +57,10 @@
     <tr class='hover'><td><%=link_to "Ascena Entry Audit Report", reports_show_ascena_entry_audit_report_path%></td>
     <td>Shows combination of Ascena and PO data.</td></tr>
   <%end-%>
+  <%if OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Ascena Vendor Scorecard Report", reports_show_ascena_vendor_scorecard_report_path%></td>
+    <td>Breaks down entry first sale data by vendor and factory.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::DrawbackExportsWithoutImports.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Drawback Exports Without Imports", reports_show_drawback_exports_without_imports_path%></td>
     <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td></tr>

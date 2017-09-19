@@ -1,0 +1,92 @@
+<% content_for :javascript do -%>
+$(function() {
+    
+  setFieldAccess();
+
+  function setFieldAccess() {
+    var checked = $('input:checked').val()
+    if (checked == "first_release_date") {
+      enableReleaseDate();
+    } else if (checked == "fiscal_date") {
+      enableFiscalDate();
+    }
+  }
+
+  function enableReleaseDate() {
+    $('.release-date input[type=text]').removeAttr("disabled");
+    fiscalDateField = $('.fiscal-date input[type=text]')
+    fiscalDateField.val("");
+    fiscalDateField.attr("disabled", true);
+  }
+
+  function enableFiscalDate() {
+    $('.fiscal-date input[type=text]').removeAttr("disabled");
+    releaseDateField = $('.release-date input[type=text]')
+    releaseDateField.val("");
+    releaseDateField.attr("disabled", true);
+  }
+  
+  $('input[type=radio]').click(function () {
+    setFieldAccess();
+  })
+
+  function invalidReleaseDate(elemName, length) {
+    return $("input[name=" + elemName + "]").val().length < length
+  }
+
+  function invalidFiscalYearMonth(elemName) {
+    var regEx = /^\d{4}-\d{2}$/;
+    return $("input[name=" + elemName + "]").val().match(regEx) == null;
+  }
+
+  $("#frm_run").submit(function() {
+    var checked = $('input:checked').val()
+    if (checked == "first_release_date") {
+      if (invalidReleaseDate("start_release_date", 10) || invalidReleaseDate("end_release_date", 10)) {
+        window.alert("You must enter both release dates.");
+        return false;
+      }
+    }
+    else if (checked == "fiscal_date") {
+      if (invalidFiscalYearMonth("start_fiscal_year_month") || invalidFiscalYearMonth("end_fiscal_year_month")) {
+        window.alert("You must enter both fiscal date fields in YYYY-MM format.");
+        return false;
+      }
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Ascena Vendor Scorecard Report</h2><br>
+<%=form_tag reports_run_ascena_vendor_scorecard_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="release-date">
+    <div class="row" style="line-height: 2.5">
+      <div class="col-md-1"><%= radio_button_tag(:range_field, "first_release_date", checked: true) %></div>
+      <div class="col-md-3"><label class="control-label" for="start_release_date">First Release Date on or after:</label></div>
+      <div class="col-md-2"><%=text_field_tag :start_release_date,"", :class=>'form-control isdate'%></div>
+    </div>
+    <div class="row" style="line-height: 2.5">
+      <div class="col-md-3 col-md-offset-1"><label class="control-label" for="end_release_date">and before: </label></div>
+      <div class="col-md-2"><%=text_field_tag :end_release_date, "", :class=>'form-control isdate' %></div>
+    </div>
+  </div>
+  <br>
+  <div class="fiscal-date">
+    <div class="row" style="line-height: 2.5">
+      <div class="col-md-1"><%= radio_button_tag(:range_field, "fiscal_date") %></div>
+      <div class="col-md-3"><label class="control-label">Fiscal Period on or after:</label></div>
+      <div class="col-md-2"><%=text_field_tag :start_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
+    </div>
+    <div class="row" style="line-height: 2.5">
+      <div class="col-md-3 col-md-offset-1"><label class="control-label">and before: </label></div>
+      <div class="col-md-2"><%=text_field_tag :end_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
+    </div>
+  </div>
+
+</div>
+<%end%>
+</div>

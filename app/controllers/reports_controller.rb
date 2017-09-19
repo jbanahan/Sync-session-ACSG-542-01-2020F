@@ -496,14 +496,33 @@ class ReportsController < ApplicationController
   def run_ascena_entry_audit_report
     klass = OpenChain::Report::AscenaEntryAuditReport
     if klass.permission? current_user
-      run_report "Ascena Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date], 
-                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month], 
+      run_report "Ascena Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
+                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
                                                       end_fiscal_year_month: params[:end_fiscal_year_month]}, []
     else
       error_redirect "You do not have permission to view this report"
     end
   end
-  
+
+  def show_ascena_vendor_scorecard_report
+    if OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ascena_vendor_scorecard_report
+    klass = OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport
+    if klass.permission? current_user
+      run_report "Ascena Vendor Scorecard Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
+                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
+                                                      end_fiscal_year_month: params[:end_fiscal_year_month]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def show_ppq_by_po_report
     if OpenChain::Report::PpqByPoReport.permission? current_user
       render

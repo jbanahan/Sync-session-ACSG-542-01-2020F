@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     email_to = Array.wrap(config['email'])
     raise "At least one email must be present." unless email_to.length > 0
 
-    run_if_configured(config) do |fiscal_month, fiscal_date, config|
+    run_if_configured(config) do |fiscal_month, fiscal_date|
       self.new.run(fiscal_month) do |report|
         body = "Attached is the Duty Savings Report for #{fiscal_month.fiscal_descriptor}."
         OpenMailer.send_simple_html(email_to, "Duty Savings Report #{fiscal_month.fiscal_descriptor}", body, report)

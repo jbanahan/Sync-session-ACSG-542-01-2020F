@@ -1,4 +1,6 @@
 module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
+  SYSTEM_CODE = "ASCENA"
+
   def invoice_value_brand ord_alias, inv_line_alias, wholesale_unit_price_cdef_id, prod_reference_cdef_id
     "#{inv_line_alias}.quantity * #{unit_price(ord_alias, inv_line_alias, wholesale_unit_price_cdef_id, prod_reference_cdef_id)}"
   end
@@ -13,6 +15,14 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
 
   def rounded_entered_value tariff_alias
     "ROUND(#{tariff_alias}.entered_value)"
+  end
+
+  def duty_savings_first_sale inv_line_alias
+    "IF(#{inv_line_alias}.contract_amount IS NULL OR #{inv_line_alias}.contract_amount = 0, 0, (SELECT ROUND((l.contract_amount - l.value) * (t.duty_amount / t.entered_value), 2)
+    FROM commercial_invoice_lines l
+    INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
+    WHERE l.id = cil.id
+    LIMIT 1 ))"
   end
 
   def unit_price_brand ord_alias, inv_line_alias, wholesale_unit_price_cdef_id, prod_reference_cdef_id
@@ -57,6 +67,15 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
                         WHERE ordln.order_id = #{ord_alias}.id AND prod_ref.string_value = #{inv_line_alias}.part_number
                         LIMIT 1)))
       SQL
+  end
+
+  def fiscal_month_dates start_fiscal_year, start_fiscal_month, end_fiscal_year, end_fiscal_month
+    ascena = Company.where(system_code: SYSTEM_CODE).first
+    start_date = FiscalMonth.where(company_id: ascena.id, year: start_fiscal_year, month_number: start_fiscal_month)
+                     .first.start_date.strftime("%Y-%m-%d")
+    end_date   = FiscalMonth.where(company_id: ascena.id, year: end_fiscal_year, month_number: end_fiscal_month)
+                     .first.start_date.strftime("%Y-%m-%d")
+    [start_date, end_date]
   end
 
 end; end; end; end
