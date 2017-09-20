@@ -705,12 +705,12 @@ angular.module("vendor_portal/partials/chain_vp_full_shipment_pack.html", []).ru
 
 angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_order_panel.html",
-    "<chain-search-panel name=\"Orders\" api-object-name=\"Order\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment><button class=\"btn btn-sm btn-default\" ng-click=\"bulkApprove()\" ng-disabled=\"!hasSelections()\">Approve</button></chain-search-panel>");
+    "<chain-search-panel name=\"Orders\" api-object-name=\"Order\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\" cache-hidden-criteria=\"true\"><chain-bulk-edit api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Order\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment><button class=\"btn btn-sm btn-default\" ng-click=\"bulkApprove()\" ng-disabled=\"!hasSelections()\">Approve</button></chain-search-panel>");
 }]);
 
 angular.module("vendor_portal/partials/chain_vp_shipment_panel.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_shipment_panel.html",
-    "<chain-search-panel name=\"Shipments\" api-object-name=\"Shipment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\"><chain-bulk-edit api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment></chain-search-panel>");
+    "<chain-search-panel name=\"Shipments\" api-object-name=\"Shipment\" base-search-setup-function=\"baseSearch\" page-uid=\"{{pageUid}}\" bulk-edit=\"true\" cache-hidden-criteria=\"true\"><chain-bulk-edit api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-edit><chain-bulk-comment api-object-name=\"Shipment\" page-uid=\"{{pageUid}}\" button-classes=\"btn-sm btn-default\"></chain-bulk-comment></chain-search-panel>");
 }]);
 
 angular.module("vendor_portal/partials/chain_vp_variant_selector.html", []).run(["$templateCache", function ($templateCache) {
