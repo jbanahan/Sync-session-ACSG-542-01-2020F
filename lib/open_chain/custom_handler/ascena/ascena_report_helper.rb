@@ -1,4 +1,6 @@
 module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
+  extend ActiveSupport::Concern
+
   SYSTEM_CODE = "ASCENA"
 
   def invoice_value_brand ord_alias, inv_line_alias, wholesale_unit_price_cdef_id, prod_reference_cdef_id
@@ -76,6 +78,14 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
     end_date   = FiscalMonth.where(company_id: ascena.id, year: end_fiscal_year, month_number: end_fiscal_month)
                      .first.start_date.strftime("%Y-%m-%d")
     [start_date, end_date]
+  end
+
+  module ClassMethods
+    def linked_to_ascena? co
+      ascena = Company.where(system_code: SYSTEM_CODE).first
+      return false unless ascena
+      co.linked_companies.to_a.include? ascena
+    end
   end
 
 end; end; end; end

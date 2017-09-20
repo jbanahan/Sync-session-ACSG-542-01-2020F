@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
 
   def self.permission? user
     (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) &&
-        (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE ))
+        (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
   end
 
   def self.run_report run_by, settings

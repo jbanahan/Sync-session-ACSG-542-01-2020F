@@ -27,6 +27,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(subject.permission? u).to eq true
     end
 
+    it "allows access for users of Ascena's linked companies" do
+      partner = Factory(:company, linked_companies: [ascena])
+      u = Factory(:user, company: partner)
+      expect(u).to receive(:view_entries?).and_return true
+      expect(described_class.permission? u).to eq true
+    end
+
     it "prevents access by other companies" do
       u = Factory(:user)
       u.company.system_code = 'NOT ASCENA'

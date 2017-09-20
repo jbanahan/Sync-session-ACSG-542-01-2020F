@@ -12,12 +12,6 @@ module OpenChain; module Report; class AscenaEntryAuditReport
       (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
   end
 
-  def self.linked_to_ascena? co
-    ascena = Company.where(system_code: SYSTEM_CODE).first
-    return false unless ascena
-    co.linked_companies.to_a.include? ascena
-  end
-
   def self.run_report run_by, settings={}
     self.new.run run_by, settings
   end
