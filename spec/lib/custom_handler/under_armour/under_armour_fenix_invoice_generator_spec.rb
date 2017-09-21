@@ -75,7 +75,6 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
       expect(inv.total_quantity_uom).to eq "CTN"
       expect(inv.total_quantity).to eq 3
       expect(inv.gross_weight).to eq 10
-      expect(inv.currency).to eq "CAD"
 
       expect(inv.commercial_invoice_lines.length).to eq 2
 

@@ -24,7 +24,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
     inv.invoice_number = shipment.importer_reference
     inv.invoice_date = Time.zone.now.in_time_zone("America/New_York").to_date
     inv.total_quantity_uom = "CTN"
-    inv.currency = "CAD"
 
     inv.total_quantity = 0
     inv.gross_weight = BigDecimal.new("0")
