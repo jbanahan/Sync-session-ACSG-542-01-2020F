@@ -356,4 +356,96 @@ describe Entry do
       expect(ent.first_sale_savings).to eq 1350
     end
   end
+
+  context "hold date / hold release date" do
+    let(:date_1) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,1,12)}
+    let(:date_2) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,1,15)}
+    let(:date_3) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,1,17)}
+    let(:now) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now }
+    
+    describe "set_hold_date" do
+      it "assigns the earliest hold date" do
+        e = Factory(:entry, aphis_hold_date: date_1, cbp_hold_date: date_2, nmfs_hold_date: date_3, hold_date: nil)
+        expect{e.set_hold_date}.to change(e, :hold_date).from(nil).to date_1
+      end
+    end
+
+    describe "set_hold_release_date" do
+      let(:e) { Factory(:entry, hold_release_date: nil, aphis_hold_date: date_1, cbp_hold_date: date_2, nmfs_hold_date: date_3, aphis_hold_release_date: date_1, cbp_hold_release_date: date_2, nmfs_hold_release_date: date_3) }
+      
+      it "assigns 'one usg date' if it isn't nil" do
+        e.update_attributes!(one_usg_date: date_1)
+        expect{e.set_hold_release_date}.to change(e, :hold_release_date).from(nil).to date_1
+      end
+
+      it "assigns the latest hold release date if 'one usg' is nil and there are no open holds" do
+        e.update_attributes! on_hold: true
+        expect{e.set_hold_release_date}.to change(e, :hold_release_date).from(nil).to date_3
+      end
+
+      it "assigns nil if 'one usg date' is nil and there is an open hold" do
+        e.update_attributes!(one_usg_date: nil, hold_release_date: now, aphis_hold_release_date: nil)
+        expect{e.set_hold_release_date}.to change(e, :hold_release_date).from(now).to nil
+      end
+
+      it "assigns nil if all hold release dates and 'one usg' are nil" do
+        e.update_attributes!(hold_release_date: date_1, one_usg_date: nil, aphis_hold_release_date: nil, cbp_hold_release_date: nil, nmfs_hold_release_date: nil)
+        expect{e.set_hold_release_date}.to change(e, :hold_release_date).from(date_1).to nil
+      end
+    end
+
+     describe "set_on_hold" do
+      let(:e) { Factory(:entry, on_hold: nil, aphis_hold_date: date_1, cbp_hold_date: date_2, nmfs_hold_date: date_3) }
+      
+      it "returns 'true' if any of the customs hold dates are assigned without a corresponding release date" do
+        e.update_attributes!(aphis_hold_release_date: now, cbp_hold_release_date: now, nmfs_hold_release_date: nil)
+        expect{e.set_on_hold}.to change(e, :on_hold).from(nil).to true
+      end
+
+      it "returns 'false' if no custom hold dates are assigned" do
+        e.update_attributes!(on_hold: true, aphis_hold_date: nil, cbp_hold_date: nil, nmfs_hold_date: nil)
+        expect{e.set_on_hold}.to change(e, :on_hold).from(true).to false
+      end
+
+      it "returns 'false' if a customs hold date is assigned with a corresponding release date" do
+        e.update_attributes!(on_hold: true, aphis_hold_release_date: now, cbp_hold_release_date: now, nmfs_hold_release_date: now)
+        expect{e.set_on_hold}.to change(e, :on_hold).from(true).to false
+      end
+
+      it "returns 'false' if 'one usg date' is assigned" do
+        e.update_attributes!(on_hold: true, one_usg_date: now)
+        expect{e.set_on_hold}.to change(e, :on_hold).from(true).to false
+      end
+    end
+
+    describe "all_holds" do
+      it "returns list of hashes containing hold/release-date pairs where the hold date is populated" do
+        now = DateTime.now
+        yesterday = DateTime.now - 1.day
+        e = Factory(:entry, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
+        expect(e.all_holds).to eq [{hold: { mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: yesterday}, release: { mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: yesterday}}, 
+                                   {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: now}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: nil}}]
+      end
+    end
+
+    describe "hold_attributes" do
+      it "returns list of matching PGA hold and release dates" do
+        e = Factory(:entry)
+        expect(e.hold_attributes).to eq([{hold: :ams_hold_date, release: :ams_hold_release_date}, 
+                                         {hold: :aphis_hold_date, release: :aphis_hold_release_date}, 
+                                         {hold: :atf_hold_date, release: :atf_hold_release_date}, 
+                                         {hold: :cargo_manifest_hold_date, release: :cargo_manifest_hold_release_date},
+                                         {hold: :cbp_hold_date, release: :cbp_hold_release_date},
+                                         {hold: :cbp_intensive_hold_date, release: :cbp_intensive_hold_release_date},
+                                         {hold: :ddtc_hold_date, release: :ddtc_hold_release_date},
+                                         {hold: :fda_hold_date, release: :fda_hold_release_date},
+                                         {hold: :fsis_hold_date, release: :fsis_hold_release_date},
+                                         {hold: :nhtsa_hold_date, release: :nhtsa_hold_release_date},
+                                         {hold: :nmfs_hold_date, release: :nmfs_hold_release_date},
+                                         {hold: :usda_hold_date, release: :usda_hold_release_date},
+                                         {hold: :other_agency_hold_date, release: :other_agency_hold_release_date}])
+      end
+    end
+  end
+
 end

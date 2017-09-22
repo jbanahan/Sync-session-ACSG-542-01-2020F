@@ -272,7 +272,46 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [179, :ent_value_currency_request_date, :value_currency_request_date, "Value/Currency Request Date", {:data_type=>:datetime}],
       [180, :ent_part_number_request_date, :part_number_request_date, "Part Number Request Date", {:data_type=>:datetime}],
       [181, :ent_importer_request_date, :importer_request_date, "Importer Request Date", {:data_type=>:datetime}],
-      [182, :ent_manifest_info_received_date, :manifest_info_received_date, "Manifest Info Received Date", {:data_type=>:datetime}]
+      [182, :ent_manifest_info_received_date, :manifest_info_received_date, "Manifest Info Received Date", {:data_type=>:datetime}],
+      [183, :ent_ams_hold_date, :ams_hold_date, "AMS Hold Date", {:data_type=>:datetime}],
+      [184, :ent_ams_hold_release_date, :ams_hold_release_date, "AMS Hold Release Date", {:data_type=>:datetime}],
+      [185, :ent_aphis_hold_date, :aphis_hold_date, "APHIS Hold Date", {:data_type=>:datetime}],
+      [186, :ent_aphis_hold_release_date, :aphis_hold_release_date, "APHIS Hold Release Date", {:data_type=>:datetime}],
+      [187, :ent_atf_hold_date, :atf_hold_date, "ATF Hold Date", {:data_type=>:datetime}],
+      [188, :ent_atf_hold_release_date, :atf_hold_release_date, "ATF Hold Release Date", {:data_type=>:datetime}],
+      [189, :ent_cargo_manifest_hold_date, :cargo_manifest_hold_date, "Cargo Manifest Hold Date", {:data_type=>:datetime}],
+      [190, :ent_cargo_manifest_hold_release_date, :cargo_manifest_hold_release_date, "Cargo Manifest Hold Release Date", {:data_type=>:datetime}],
+      [191, :ent_cbp_hold_date, :cbp_hold_date, "CBP Hold Date", {:ata_type=>:datetime}],
+      [192, :ent_cbp_hold_release_date, :cbp_hold_release_date, "CBP Hold Release Date", {:data_type=>:datetime}],
+      [193, :ent_cbp_intensive_hold_date, :cbp_intensive_hold_date, "CBP Intensive Hold Date", {:data_type=>:datetime}],
+      [194, :ent_cbp_intensive_hold_release_date, :cbp_intensive_hold_release_date, "CBP Intensive Hold Release Date", {:data_type=>:datetime}],
+      [195, :ent_ddtc_hold_date, :ddtc_hold_date, "DDTC Hold Date", {:data_type=>:datetime}],
+      [196, :ent_ddtc_hold_release_date, :ddtc_hold_release_date, "DDTC Hold Release Date", {:data_type=>:datetime}],
+      [197, :ent_fda_hold_date, :fda_hold_date, "FDA Hold Date", {:data_type=>:datetime}],
+      [198, :ent_fda_hold_release_date, :fda_hold_release_date, "FDA Hold Release Date", {:data_type=>:datetime}],
+      [199, :ent_fsis_hold_date, :fsis_hold_date, "FSIS Hold Date", {:data_type=>:datetime}],
+      [200, :ent_fsis_hold_release_date, :fsis_hold_release_date, "FSIS Hold Release Date", {:data_type=>:datetime}],
+      [201, :ent_nhtsa_hold_date, :nhtsa_hold_date, "NHTSA Hold Date", {:data_type=>:datetime}],
+      [202, :ent_nhtsa_hold_release_date, :nhtsa_hold_release_date, "NHTSA Hold Release Date", {:data_type=>:datetime}],
+      [203, :ent_nmfs_hold_date, :nmfs_hold_date, "NMFS Hold Date", {:data_type=>:datetime}],
+      [204, :ent_nmfs_hold_release_date, :nmfs_hold_release_date, "NMFS Hold Release Date", {:data_type=>:datetime}],
+      [205, :ent_usda_hold_date, :usda_hold_date, "USDA Hold Date", {:data_type=>:datetime}],
+      [206, :ent_usda_hold_release_date, :usda_hold_release_date, "USDA Hold Release Date", {:data_type=>:datetime}],
+      [207, :ent_other_agency_hold_date, :other_agency_hold_date, "Other Agency Hold Date", {:data_type=>:datetime}],
+      [208, :ent_other_agency_hold_release_date, :other_agency_hold_release_date, "Other Agency Hold Release Date", {:data_type=>:datetime}],
+      [209, :ent_one_usg_date, :one_usg_date, "One USG Date", {:data_type=>:datetime}],
+      [210, :ent_hold_date, :hold_date, "Hold Date", {
+        :data_type=>:datetime, 
+        :read_only=>true,
+        :import_lambda=> lambda{ |obj, data| "Hold Date ignored. (read only)" }}],
+      [211, :ent_hold_release_date, :hold_release_date, "Hold Release Date", {
+        :data_type=>:datetime, 
+        :read_only=>true,
+        :import_lambda=> lambda{ |obj, data| "Hold Release Date ignored. (read only)"}}],
+      [212, :ent_on_hold, :on_hold, "On Hold", {
+        :data_type=>:boolean,
+        :read_only=>true,
+        :import_lambda=> lambda{ |obj, data| "On Hold ignored. (read only)"}}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

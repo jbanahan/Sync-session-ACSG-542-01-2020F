@@ -140,7 +140,51 @@ class Entry < ActiveRecord::Base
     commercial_invoice_lines.map {|cil| cil.first_sale_savings }.compact.sum
   end
 
+  def set_on_hold
+    self.on_hold = self.one_usg_date ? false : holds.reject{ |pair| pair[:release][:value].present? }.map{ |p| p[:hold][:value]}.compact.present?
+  end
+  
+  def set_hold_date
+    self.hold_date = holds.map{ |pair| pair[:hold][:value] }.compact.min
+  end
+
+  def set_hold_release_date
+    set_on_hold
+    if self.one_usg_date 
+      self.hold_release_date = self.one_usg_date
+    elsif self.on_hold?
+      self.hold_release_date = nil 
+    else
+      self.hold_release_date = holds.map{ |pair| pair[:release][:value] }.compact.max
+    end
+  end                       
+  
+  def all_holds
+    holds.select{ |pair| pair[:hold][:value].present? }
+  end
+
+  def hold_attributes
+    holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
+  end
+
   private
+
+  def holds
+    [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}}, 
+     {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}}, 
+     {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}}, 
+     {hold: {mfid: :ent_cargo_manifest_hold_date, attribute: :cargo_manifest_hold_date, value: cargo_manifest_hold_date}, release: {mfid: :ent_cargo_manifest_hold_release_date, attribute: :cargo_manifest_hold_release_date, value: cargo_manifest_hold_release_date}},
+     {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: cbp_hold_date}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: cbp_hold_release_date}},
+     {hold: {mfid: :ent_cbp_intensive_hold_date, attribute: :cbp_intensive_hold_date, value: cbp_intensive_hold_date}, release: {mfid: :ent_cbp_intensive_hold_release_date, attribute: :cbp_intensive_hold_release_date, value: cbp_intensive_hold_release_date}},
+     {hold: {mfid: :ent_ddtc_hold_date, attribute: :ddtc_hold_date, value: ddtc_hold_date}, release: {mfid: :ent_ddtc_hold_release_date, attribute: :ddtc_hold_release_date, value: ddtc_hold_release_date}},
+     {hold: {mfid: :ent_fda_hold_date, attribute: :fda_hold_date, value: fda_hold_date}, release: {mfid: :ent_fda_hold_release_date, attribute: :fda_hold_release_date, value: fda_hold_release_date}},
+     {hold: {mfid: :ent_fsis_hold_date, attribute: :fsis_hold_date, value: fsis_hold_date}, release: {mfid: :ent_fsis_hold_release_date, attribute: :fsis_hold_release_date, value: fsis_hold_release_date}},
+     {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date}, release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
+     {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
+     {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
+     {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}}]
+  end
+
   def split_newline_values values
     values.blank? ? [] : values.split(/\r?\n */)
   end

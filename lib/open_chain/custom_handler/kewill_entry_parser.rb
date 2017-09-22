@@ -47,7 +47,72 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     99202 => :first_release_date,
     99212 => :first_entry_sent_date,
     99310 => {attribute: :monthly_statement_received_date, datatype: :date},
-    99311 => {attribute: :monthly_statement_paid_date, datatype: :date}
+    99311 => {attribute: :monthly_statement_paid_date, datatype: :date},
+    99628 => {attribute: :ams_hold_date, directive: :hold},
+    99663 => {attribute: :ams_hold_date, directive: :hold},
+    99629 => {attribute: :ams_hold_date, directive: :hold},
+    99670 => {attribute: :ams_hold_date, directive: :hold},
+    99630 => {attribute: :ams_hold_release_date, directive: :hold_release},
+    99616 => {attribute: :aphis_hold_date, directive: :hold},
+    99662 => {attribute: :aphis_hold_date, directive: :hold},
+    99617 => {attribute: :aphis_hold_date, directive: :hold},
+    99669 => {attribute: :aphis_hold_date, directive: :hold},
+    99618 => {attribute: :aphis_hold_release_date, directive: :hold_release},
+    99694 => {attribute: :atf_hold_date, directive: :hold},
+    99701 => {attribute: :atf_hold_date, directive: :hold},
+    99695 => {attribute: :atf_hold_date, directive: :hold},
+    99700 => {attribute: :atf_hold_date, directive: :hold},
+    99696 => {attribute: :atf_hold_release_date, directive: :hold_release},
+    90036 => {attribute: :cargo_manifest_hold_date, directive: :hold},
+    90024 => {attribute: :cargo_manifest_hold_date, directive: :hold},
+    90026 => {attribute: :cargo_manifest_hold_date, directive: :hold},
+    90037 => {attribute: :cargo_manifest_hold_release_date, directive: :hold_release},
+    90054 => [{attribute: :cbp_hold_date, directive: :hold}, {attribute: :cbp_intensive_hold_date, directive: :hold}],
+    90051 => {attribute: :cbp_hold_date, directive: :hold},
+    90050 => {attribute: :cbp_hold_date, directive: :hold},
+    90049 => {attribute: :cbp_hold_date, directive: :hold},
+    90053 => {attribute: :cbp_hold_date, directive: :hold},
+    90057 => {attribute: :cbp_hold_date, directive: :hold},
+    5051  => {attribute: :cbp_hold_date, directive: :hold},
+    5003  => [{attribute: :cbp_hold_date, directive: :hold}, {attribute: :cbp_intensive_hold_date, directive: :hold}],
+    5099  => {attribute: :cbp_hold_date, directive: :hold},
+    5090  => {attribute: :cbp_hold_date, directive: :hold},
+    90055 => [{attribute: :cbp_hold_release_date, directive: :hold_release}, {attribute: :cbp_intensive_hold_release_date, directive: :hold_release}],
+    90056 => {attribute: :cbp_hold_release_date, directive: :hold_release},
+    5054  => {attribute: :cbp_hold_release_date, directive: :hold_release},
+    5098  => {attribute: :cbp_hold_release_date, directive: :hold_release},
+    99638 => {attribute: :ddtc_hold_date, directive: :hold},
+    99664 => {attribute: :ddtc_hold_date, directive: :hold},
+    99639 => {attribute: :ddtc_hold_date, directive: :hold},
+    99671 => {attribute: :ddtc_hold_date, directive: :hold},
+    99640 => {attribute: :ddtc_hold_release_date, directive: :hold_release},
+    99689 => {attribute: :fda_hold_date, directive: :hold}, 
+    99681 => {attribute: :fda_hold_date, directive: :hold},
+    99683 => {attribute: :fda_hold_date, directive: :hold},
+    99682 => {attribute: :fda_hold_date, directive: :hold},
+    99688 => {attribute: :fda_hold_date, directive: :hold},
+    99684 => {attribute: :fda_hold_release_date, directive: :hold_release},
+    99604 => {attribute: :fsis_hold_date, directive: :hold},
+    99605 => {attribute: :fsis_hold_date, directive: :hold},
+    99660 => {attribute: :fsis_hold_date, directive: :hold},
+    99667 => {attribute: :fsis_hold_date, directive: :hold},
+    99607 => {attribute: :fsis_hold_release_date, directive: :hold_release},
+    99611 => {attribute: :nhtsa_hold_date, directive: :hold},
+    99661 => {attribute: :nhtsa_hold_date, directive: :hold},
+    99668 => {attribute: :nhtsa_hold_date, directive: :hold},
+    99613 => {attribute: :nhtsa_hold_release_date, directive: :hold_release},
+    99645 => {attribute: :nmfs_hold_date, directive: :hold},
+    99646 => {attribute: :nmfs_hold_date, directive: :hold},
+    99665 => {attribute: :nmfs_hold_date, directive: :hold},
+    99679 => {attribute: :nmfs_hold_date, directive: :hold},
+    99647 => {attribute: :nmfs_hold_date, directive: :hold},
+    99672 => {attribute: :nmfs_hold_date, directive: :hold},
+    99648 => {attribute: :nmfs_hold_release_date, directive: :hold_release},
+    5052  => {attribute: :usda_hold_date, directive: :hold},
+    5055  => {attribute: :usda_hold_release_date, directive: :hold_release},
+    5053  => {attribute: :other_agency_hold_date, directive: :hold},
+    5056  => {attribute: :other_agency_hold_release_date, directive: :hold_release},
+    91065 => {attribute: :one_usg_date, directive: :hold_release}
   }
 
   def self.integration_folder
@@ -146,7 +211,32 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     entry
   end
 
+  # Sets hold date while blanking corresponding release date if it's a secondary hold
+  def set_any_hold_date date, attribute, entry
+    hold_date_attr, release_date_attr = entry.hold_attributes.find{ |att| att[:hold] == attribute }.values_at(:hold, :release)
+    entry[release_date_attr] = nil if entry[hold_date_attr].present?
+    entry[hold_date_attr] = date
+  end
+
+  # Sets release date only if corresponding hold date already set; if it's One USG, assigns that date to release dates for all current holds
+  def set_any_hold_release_date date, attribute, entry
+    if attribute == :one_usg_date
+      set_one_usg_date date, entry
+    else
+      hold_date_attr = entry.hold_attributes.find{ |att| att[:release] == attribute }[:hold]
+      entry[attribute] = entry[hold_date_attr].present? ? date : nil
+    end
+  end
+
   private 
+
+    def set_one_usg_date date, entry
+      entry.one_usg_date = date
+      entry.all_holds.each do |h| 
+        release_date_attr = h[:release][:attribute]
+        entry[release_date_attr] = date unless entry[release_date_attr].present?
+      end
+    end
 
     def self.json_to_tempfile json
        Tempfile.open([Time.zone.now.iso8601, ".json"]) do |f|
@@ -246,13 +336,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Clear dates
       attributes = {}
       DATE_MAP.keys.each do |v|
-        c = get_date_config v
-        next unless c 
+        configs = get_date_config v
+        next if configs.empty?
         # Don't clear anything w/ a first/last/ifnull directive, since we want to retain those original dates
-        next unless c[:directive] == :none
-        attributes[c[:attribute]] = nil
+        configs.each do |c|
+          next unless c[:directive] == :none
+          attributes[c[:attribute]] = nil
+        end
       end
-      entry.assign_attributes attributes
+      entry.assign_attributes attributes.merge({hold_date: nil, hold_release_date: nil})
       nil
     end
 
@@ -578,14 +670,16 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def get_date_config date_no
-      config = DATE_MAP[date_no]
-      out_config = nil
-      if config
-        default_config = {datatype: :datetime, directive: :none}
-        if config.is_a?(Symbol)
-          out_config = default_config.merge({attribute: config})
-        else
-          out_config = default_config.merge config
+      config = Array.wrap DATE_MAP[date_no]
+      out_config = []
+      if config.present?
+        config.each do |c|
+          default_config = {datatype: :datetime, directive: :none}
+          if c.is_a?(Symbol)
+            out_config << default_config.merge({attribute: c})
+          else
+            out_config << default_config.merge(c)
+          end
         end
       end
 
@@ -594,28 +688,36 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def process_dates e, entry
       Array.wrap(e[:dates]).each do |date|
-        config = get_date_config date[:date_no].to_i
-        next unless config
+        configs = get_date_config date[:date_no].to_i
+        next if configs.empty?
 
-        in_val = (config[:datatype] == :date ? parse_numeric_date(date[:date]) : parse_numeric_datetime(date[:date]))
+        configs.each do |c|
+          in_val = (c[:datatype] == :date ? parse_numeric_date(date[:date]) : parse_numeric_datetime(date[:date]))
+          
+          val = nil
+          case c[:directive]
+          when :first
+            val = earliest_date(in_val, entry.read_attribute(c[:attribute]))
+          when :last
+            val = latest_date(in_val, entry.read_attribute(c[:attribute]))
+          when :ifnull
+            # Only set the date field if the entry hasn't had the value already set
+            next unless entry.read_attribute(c[:attribute]).blank?
+            val = in_val
+          when :hold
+            set_any_hold_date in_val, c[:attribute], entry
+          when :hold_release
+            set_any_hold_release_date in_val, c[:attribute], entry
+          else
+            val = in_val
+          end
 
-        val = nil
-        case config[:directive]
-        when :first
-          val = earliest_date(in_val, entry.read_attribute(config[:attribute]))
-        when :last
-          val = latest_date(in_val, entry.read_attribute(config[:attribute]))
-        when :ifnull
-          # Only set the date field if the entry hasn't had the value already set
-          next unless entry.read_attribute(config[:attribute]).blank?
-          val = in_val
-        else
-          val = in_val
+          entry.assign_attributes(c[:attribute] => val) unless [:hold, :hold_release].member? c[:directive]
         end
-
-        entry.assign_attributes config[:attribute] => val
       end
 
+      entry.set_hold_date
+      entry.set_hold_release_date
       nil
     end
 

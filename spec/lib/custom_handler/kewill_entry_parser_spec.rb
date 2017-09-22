@@ -110,7 +110,33 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99310, 'date'=>201503020800},
           {'date_no'=>99311, 'date'=>201503020900},
           {'date_no'=>99202, 'date'=>201503021000},
-          {'date_no'=>10, 'date'=>201701031200}
+          {'date_no'=>10, 'date'=>201701031200},
+          # release/hold dates
+          {'date_no'=>99628, 'date'=>201701031300},
+          {'date_no'=>99630, 'date'=>201701031400},
+          {'date_no'=>99616, 'date'=>201701031500},
+          {'date_no'=>99618, 'date'=>201701031600},
+          {'date_no'=>99694, 'date'=>201701031700},
+          {'date_no'=>99696, 'date'=>201701031800},
+          {'date_no'=>90036, 'date'=>201701031900},
+          {'date_no'=>90037, 'date'=>201701032000},
+          {'date_no'=>90054, 'date'=>201701032100}, #multi
+          {'date_no'=>90055, 'date'=>201701032200}, #multi
+          {'date_no'=>99638, 'date'=>201701032300},
+          {'date_no'=>99640, 'date'=>201701040000},
+          {'date_no'=>99689, 'date'=>201701040100},
+          {'date_no'=>99684, 'date'=>201701040200},
+          {'date_no'=>99604, 'date'=>201701040300},
+          {'date_no'=>99607, 'date'=>201701040400},
+          {'date_no'=>99611, 'date'=>201701040500},
+          {'date_no'=>99613, 'date'=>201701040600},
+          {'date_no'=>99645, 'date'=>201701040700},
+          {'date_no'=>99648, 'date'=>201701040800},
+          {'date_no'=>5052, 'date'=>201701040900},
+          {'date_no'=>5055, 'date'=>201701041000},
+          {'date_no'=>5053, 'date'=>201701041100},
+          {'date_no'=>5056, 'date'=>201701041200},
+          {'date_no'=>91065, 'date'=>201701041300}
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -430,6 +456,36 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.first_release_date).to eq tz.parse "201503021000"
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
       expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
+
+      expect(entry.ams_hold_date).to eq tz.parse "201701031300" 
+      expect(entry.ams_hold_release_date).to eq tz.parse "201701031400" 
+      expect(entry.aphis_hold_date).to eq tz.parse "201701031500" 
+      expect(entry.aphis_hold_release_date).to eq tz.parse "201701031600" 
+      expect(entry.atf_hold_date).to eq tz.parse "201701031700" 
+      expect(entry.atf_hold_release_date).to eq tz.parse "201701031800" 
+      expect(entry.cargo_manifest_hold_date).to eq tz.parse "201701031900" 
+      expect(entry.cargo_manifest_hold_release_date).to eq tz.parse "201701032000" 
+      expect(entry.cbp_hold_date).to eq tz.parse "201701032100" 
+      expect(entry.cbp_hold_release_date).to eq tz.parse "201701032200" 
+      expect(entry.cbp_intensive_hold_date).to eq tz.parse "201701032100" 
+      expect(entry.cbp_intensive_hold_release_date).to eq tz.parse "201701032200" 
+      expect(entry.ddtc_hold_date).to eq tz.parse "201701032300" 
+      expect(entry.ddtc_hold_release_date).to eq tz.parse "201701040000" 
+      expect(entry.fda_hold_date).to eq tz.parse "201701040100" 
+      expect(entry.fda_hold_release_date).to eq tz.parse "201701040200" 
+      expect(entry.fsis_hold_date).to eq tz.parse "201701040300" 
+      expect(entry.fsis_hold_release_date).to eq tz.parse "201701040400" 
+      expect(entry.nhtsa_hold_date).to eq tz.parse "201701040500" 
+      expect(entry.nhtsa_hold_release_date).to eq tz.parse "201701040600" 
+      expect(entry.nmfs_hold_date).to eq tz.parse "201701040700" 
+      expect(entry.nmfs_hold_release_date).to eq tz.parse "201701040800" 
+      expect(entry.usda_hold_date).to eq tz.parse "201701040900" 
+      expect(entry.usda_hold_release_date).to eq tz.parse "201701041000" 
+      expect(entry.other_agency_hold_date).to eq tz.parse "201701041100" 
+      expect(entry.other_agency_hold_release_date).to eq tz.parse "201701041200"
+      expect(entry.one_usg_date).to eq tz.parse "201701041300"
+      expect(entry.hold_date).to eq tz.parse "201701031300"
+      expect(entry.hold_release_date).to eq tz.parse "201701041300"
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
@@ -1201,6 +1257,67 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "handles empty datasets" do
       expect(described_class.save_to_s3({})).to be_nil
+    end
+  end
+
+  context "hold/hold-release date assigners" do
+    let(:ent) { Factory(:entry, aphis_hold_date: nil, aphis_hold_release_date: nil) }
+    let(:date) { DateTime.new(2017,3,15) }
+    let(:date2) { DateTime.new(2017,3,16)}
+    
+    describe "set_any_hold_date" do
+      let(:attribute) { :aphis_hold_date }
+
+      it "sets hold date" do
+        described_class.new.set_any_hold_date date, attribute, ent
+        expect(ent.aphis_hold_date).to eq date
+      end
+
+      it "also sets corresponding release date to nil if hold is already populated" do
+        ent.update_attributes!(aphis_hold_date: date2, aphis_hold_release_date: date2)
+        described_class.new.set_any_hold_date date, attribute, ent
+        expect(ent.aphis_hold_date).to eq date
+        expect(ent.aphis_hold_release_date).to be_nil
+      end
+    end
+
+    describe "set_any_hold_release_date" do
+      let(:attribute) { :aphis_hold_release_date }
+    
+      it "sets release date" do
+        ent.update_attributes!(aphis_hold_date: date)
+        described_class.new.set_any_hold_release_date date, attribute, ent
+        expect(ent.aphis_hold_release_date).to eq date
+      end
+
+      it "sets release date to nil if hold date isn't set" do
+        described_class.new.set_any_hold_release_date date, attribute, ent
+        expect(ent.aphis_hold_release_date).to be_nil
+      end
+
+      it "delegates to #set_one_usg_date if needed" do
+        attribute = :one_usg_date
+        expect_any_instance_of(described_class).to receive(:set_one_usg_date).with(date, ent)
+        described_class.new.set_any_hold_release_date date, attribute, ent
+      end
+    
+      context "one_usg_date" do
+        let(:attribute) { :one_usg_date }    
+
+        it "sets One USG date" do
+          described_class.new.set_any_hold_release_date date, attribute, ent
+          expect(ent.one_usg_date).to eq date
+        end
+
+        it "also sets the empty release dates of all populated hold dates" do
+          ent.update_attributes!(aphis_hold_date: date, ams_hold_date: date, ams_hold_release_date: nil, nmfs_hold_date: date, nmfs_hold_release_date: date)
+          described_class.new.set_any_hold_release_date date2, attribute, ent
+          expect(ent.one_usg_date).to eq date2
+          expect(ent.aphis_hold_release_date).to eq date2
+          expect(ent.ams_hold_release_date).to eq date2
+          expect(ent.nmfs_hold_release_date).to eq date # unchanged
+        end
+      end
     end
   end
 end
