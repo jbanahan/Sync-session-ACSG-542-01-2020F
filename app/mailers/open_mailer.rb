@@ -293,6 +293,7 @@ EOS
     @cap_mode = corrective_action_plan
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
     @updated_by = response_updates.collect {|u| u.user.full_name}
+    @survey_title = get_survey_title survey_response
 
     to = survey_subscriptions.map {|ss| ss.user.email}.join(',')
     mail(:to=>to, :subject=>"Survey Updated") do |format|
@@ -304,6 +305,7 @@ EOS
   def send_survey_user_update survey_response, corrective_action_plan = false
     @cap_mode = corrective_action_plan
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
+
     to = [survey_response.user.try(:email)]
     to << survey_response.group
     to = explode_group_email_list to.compact, "TO"
@@ -612,4 +614,13 @@ EOS
     def emailer_host user
       user.host_with_port.blank? ? MasterSetup.get.request_host : user.host_with_port
     end
+
+    def get_survey_title survey_response
+      survey_title = "\"#{survey_response.survey_name}\""
+      if !survey_response.subtitle.to_s.empty?
+        survey_title = survey_title + " subtitled \"#{survey_response.subtitle}\""
+      end
+      survey_title
+    end
+
 end
