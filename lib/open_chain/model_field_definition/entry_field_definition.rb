@@ -200,7 +200,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}],
       # used to be ent_rule_sate
       [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
-      [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],
+      [139,:ent_exam_ordered_date,:exam_ordered_date,"CBSA Exam Ordered Date",{:data_type=>:datetime}],
       [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [141,:ent_location_of_goods,:location_of_goods,"Location Of Goods", {:data_type=>:string}],
       [142,:ent_final_statement_date,:final_statement_date,"Final Statement Date", {:data_type=>:date}],
@@ -311,7 +311,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [212, :ent_on_hold, :on_hold, "On Hold", {
         :data_type=>:boolean,
         :read_only=>true,
-        :import_lambda=> lambda{ |obj, data| "On Hold ignored. (read only)"}}]
+        :import_lambda=> lambda{ |obj, data| "On Hold ignored. (read only)"}}],
+      [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {:date_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

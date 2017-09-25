@@ -141,35 +141,59 @@ class Entry < ActiveRecord::Base
   end
 
   def set_on_hold
-    self.on_hold = self.one_usg_date ? false : holds.reject{ |pair| pair[:release][:value].present? }.map{ |p| p[:hold][:value]}.compact.present?
+    canadian? ? set_ca_on_hold : set_us_on_hold
   end
   
   def set_hold_date
-    self.hold_date = holds.map{ |pair| pair[:hold][:value] }.compact.min
+    canadian? ? set_ca_hold_date : set_us_hold_date
   end
 
   def set_hold_release_date
+    canadian? ? set_ca_hold_release_dates : set_us_hold_release_date
+  end                       
+  
+  def all_holds
+    if canadian?
+      raise RuntimeError, "Only valid for US entries!"
+    else
+      all_us_holds
+    end
+  end
+
+  def hold_attributes
+    if canadian?
+      raise RuntimeError, "Only valid for US entries!"
+    else
+      us_holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
+    end
+  end
+  
+  private
+
+  def set_us_on_hold
+    self.on_hold = self.one_usg_date ? false : us_holds.reject{ |pair| pair[:release][:value].present? }.map{ |p| p[:hold][:value]}.compact.present?
+  end
+
+  def set_us_hold_date
+    self.hold_date = us_holds.map{ |pair| pair[:hold][:value] }.compact.min
+  end
+
+  def set_us_hold_release_date
     set_on_hold
     if self.one_usg_date 
       self.hold_release_date = self.one_usg_date
     elsif self.on_hold?
       self.hold_release_date = nil 
     else
-      self.hold_release_date = holds.map{ |pair| pair[:release][:value] }.compact.max
+      self.hold_release_date = us_holds.map{ |pair| pair[:release][:value] }.compact.max
     end
-  end                       
-  
-  def all_holds
-    holds.select{ |pair| pair[:hold][:value].present? }
   end
 
-  def hold_attributes
-    holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
+  def all_us_holds
+    us_holds.select{ |pair| pair[:hold][:value].present? }
   end
 
-  private
-
-  def holds
+  def us_holds
     [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}}, 
      {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}}, 
      {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}}, 
@@ -183,6 +207,18 @@ class Entry < ActiveRecord::Base
      {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
      {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
      {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}}]
+  end     
+
+  def set_ca_on_hold
+    self.on_hold = self.hold_date && !self.hold_release_date ? true : false
+  end
+
+  def set_ca_hold_date
+    self.hold_date = self.exam_ordered_date
+  end
+
+  def set_ca_hold_release_dates
+    self.hold_release_date = self.exam_release_date = self.release_date
   end
 
   def split_newline_values values
@@ -216,6 +252,7 @@ class Entry < ActiveRecord::Base
     end
     true
   end
+  
   def update_k84
     k84_basis = nil
 

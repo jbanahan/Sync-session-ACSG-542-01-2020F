@@ -260,6 +260,32 @@ describe OpenChain::FenixParser do
     ent
   end
 
+  it "sets hold-date fields correctly" do
+    @release_date = nil
+    expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
+
+    OpenChain::FenixParser.parse @entry_lambda.call(true), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    ent = Entry.find_by_broker_reference @file_number
+
+    expect(ent.on_hold).to eq true
+    expect(ent.hold_date).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['1276'][1].to_s).in_time_zone(Time.zone)
+    expect(ent.hold_release_date).to be_nil
+    expect(ent.exam_release_date).to be_nil
+  end
+
+  it "sets hold-release date fields correctly" do
+    # ent = do_shared_test @entry_lambda.call(false)
+    expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
+
+    OpenChain::FenixParser.parse @entry_lambda.call(false), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    ent = Entry.find_by_broker_reference @file_number
+
+
+    expect(ent.on_hold).to eq false
+    expect(ent.hold_date).to be_nil
+    expect(ent.hold_release_date.strftime("%m/%d/%Y")).to eq @release_date[0, 10]
+    expect(ent.exam_release_date.strftime("%m/%d/%Y")).to eq @release_date[0, 10]
+  end
 
   it 'should save an entry with one line' do
     ent = do_shared_test @entry_lambda.call(false)

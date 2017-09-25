@@ -530,6 +530,12 @@ module OpenChain
       values
     end
 
+    def update_holds entry
+      entry.set_hold_date
+      entry.set_hold_release_date
+      entry.set_on_hold
+    end
+
     def process_cargo_control_line line
       accumulate_string(:cargo_control_number, line[2]) unless line[2].blank?
     end
@@ -631,6 +637,8 @@ module OpenChain
       # last SD date value from the file.
       entry.first_do_issued_date = first_accumulated_date(accumulated_dates, :do_issued_date_first)
       entry.docs_received_date = first_accumulated_date(accumulated_dates, :docs_received_date_first)
+
+      update_holds entry
     end
 
     def accumulated_string string_code
