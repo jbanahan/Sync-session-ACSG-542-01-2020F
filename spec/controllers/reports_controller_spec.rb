@@ -544,7 +544,7 @@ describe ReportsController do
 
     context "run" do
       let(:args) { {range_field: "release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m", 
-                    end_fiscal_year_month: "end fy/m"}}
+                    end_fiscal_year_month: "end fy/m", run_as_company: "company" }}
       
       it "doesn't run for unauthorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return false

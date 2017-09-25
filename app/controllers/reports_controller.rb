@@ -498,7 +498,7 @@ class ReportsController < ApplicationController
     if klass.permission? current_user
       run_report "Ascena Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
                                                       end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
-                                                      end_fiscal_year_month: params[:end_fiscal_year_month]}, []
+                                                      end_fiscal_year_month: params[:end_fiscal_year_month], run_as_company: params[:run_as_company]}, []
     else
       error_redirect "You do not have permission to view this report"
     end

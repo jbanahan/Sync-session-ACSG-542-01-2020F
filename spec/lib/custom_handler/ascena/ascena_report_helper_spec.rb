@@ -13,12 +13,12 @@ class Report
     unit_price_cdef_id = cdefs[:ord_line_wholesale_unit_price].id
     ref_cdef_id = cdefs[:prod_reference_number].id
     <<-SQL
-      SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id)} AS 'Invoice Value - Brand', 
+      SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, SYSTEM_CODE)} AS 'Invoice Value - Brand', 
              #{invoice_value_7501('cil')} AS 'Invoice Value - 7501', 
              #{invoice_value_contract('cil')} AS 'Invoice Value - Contract', 
              #{rounded_entered_value('cit')} AS 'Rounded Entered Value', 
-             #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id)} AS 'Unit Price - Brand', 
-             #{unit_price_po('o', 'cil', ref_cdef_id)} AS 'Unit Price - PO', 
+             #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, SYSTEM_CODE)} AS 'Unit Price - Brand', 
+             #{unit_price_po('o', 'cil', ref_cdef_id, SYSTEM_CODE)} AS 'Unit Price - PO', 
              #{unit_price_7501('cil')} AS 'Unit Price - 7501'
       FROM commercial_invoices ci
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id

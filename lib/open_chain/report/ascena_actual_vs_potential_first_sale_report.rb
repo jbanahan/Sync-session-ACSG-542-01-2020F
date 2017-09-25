@@ -311,7 +311,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
                vend.name AS 'Vendor Name',
                fact.name AS 'MID Supplier Name',
                cil.mid AS 'MID',
-               #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id)} AS 'Invoice Value - Brand',
+               #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id, SYSTEM_CODE)} AS 'Invoice Value - Brand',
                cil.country_origin_code AS 'COO',
                (SELECT prod_style.string_value
                 FROM order_lines ordln

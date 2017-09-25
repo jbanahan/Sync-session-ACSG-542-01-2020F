@@ -18,7 +18,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
 
   def run run_by, settings
     start_date, end_date = get_dates run_by, settings
-    wb = create_workbook start_date, end_date, settings['range_field'], run_by.time_zone
+    wb = create_workbook start_date, end_date, settings['range_field'], run_by.time_zone, settings['run_as_company']
     workbook_to_tempfile wb, 'AscenaEntryAuditReport-', file_name: "Ascena Entry Audit Report.xls"
   end
 
@@ -41,9 +41,9 @@ module OpenChain; module Report; class AscenaEntryAuditReport
     @cdefs ||= self.class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price, :prod_reference_number]
   end
 
-  def create_workbook start_date, end_date, range_field, time_zone
+  def create_workbook start_date, end_date, range_field, time_zone, importer_system_code
     wb, sheet = XlsMaker.create_workbook_and_sheet "Ascena Entry Audit Report"
-    table_from_query sheet, query(start_date, end_date, range_field, cdefs), conversions(time_zone).merge("Web Link"=>weblink_translation_lambda(CoreModule::ENTRY))
+    table_from_query sheet, query(start_date, end_date, range_field, importer_system_code, cdefs), conversions(time_zone).merge("Web Link"=>weblink_translation_lambda(CoreModule::ENTRY))
     wb
   end
 
@@ -54,7 +54,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
      "Release Date" => datetime_translation_lambda(time_zone) }
   end
 
-  def query start_date, end_date, range_field, cdefs
+  def query start_date, end_date, range_field, importer_system_code, cdefs
     <<-SQL
       SELECT e.broker_reference AS 'Broker Reference',
              e.entry_number AS 'Entry Number',
@@ -101,7 +101,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              cit.classification_uom_1 AS 'UOM 1',
              cit.classification_uom_2 AS 'UOM 2',
              cil.add_case_number AS 'ADD Case Number',
-             #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id)} AS 'Invoice Value - Brand',
+             #{invoice_value_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id, importer_system_code)} AS 'Invoice Value - Brand',
              #{invoice_value_7501('cil')} AS 'Invoice Value - 7501',
              #{invoice_value_contract('cil')} AS 'Invoice Value - Contract',
              cit.entered_value AS 'Entered Value',
@@ -128,8 +128,8 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              ci.non_dutiable_amount AS 'Inv Non-Dutiable Amount',
              cil.non_dutiable_amount AS 'Inv Ln Non-Dutiable Amount',
              e.total_non_dutiable_amount AS 'Total Non-Dutiable Amount',
-             #{unit_price_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id)} AS 'Unit Price - Brand',
-             #{unit_price_po('o', 'cil', cdefs[:prod_reference_number].id)} AS 'Unit Price - PO',
+             #{unit_price_brand('o', 'cil', cdefs[:ord_line_wholesale_unit_price].id, cdefs[:prod_reference_number].id, importer_system_code)} AS 'Unit Price - Brand',
+             #{unit_price_po('o', 'cil', cdefs[:prod_reference_number].id, importer_system_code)} AS 'Unit Price - PO',
              #{unit_price_7501('cil')} AS 'Unit Price - 7501',
              (SELECT IF((SUM(t.entered_value) = 0) OR ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2)< 1,0,ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2))
               FROM commercial_invoice_lines l
@@ -137,18 +137,21 @@ module OpenChain; module Report; class AscenaEntryAuditReport
               WHERE l.id = cil.id) AS 'Duty Savings - NDC',
              #{duty_savings_first_sale('cil')} AS 'Duty Savings - First Sale',
              IF(cil.contract_amount > 0, 'Y', 'N') AS 'First Sale Flag',
+             IF(cil.related_parties, 'Y', 'N') AS 'Related Parties', 
+             e.fiscal_month AS 'Fiscal Month', 
+             e.fiscal_year AS 'Fiscal Year',  
              e.id AS 'Web Link'
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
-        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.po_number)
+        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("#{importer_system_code}-", cil.po_number)
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
         LEFT OUTER JOIN companies fact ON fact.id = o.factory_id
         LEFT OUTER JOIN companies vend ON vend.id = o.vendor_id
       WHERE e.#{range_field} >= '#{start_date}' AND e.#{range_field} < '#{end_date}'
-        AND e.customer_number = "ASCE"
+        AND e.customer_number = "#{importer_system_code == SYSTEM_CODE ? 'ASCE' : 'ATAYLOR'}"
     SQL
   end
 end; end; end
