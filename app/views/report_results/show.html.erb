@@ -2,7 +2,7 @@
   <% if @report_result.report_data_file_name%>
     <button class='btn_link' link_to='<%=download_report_result_path(@report_result)%>'>Download</button>
   <% end%>
-  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button%>
+  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
 <%end%>
 <h2>Report Result: <%=@report_result.name%></h2>
 <table>

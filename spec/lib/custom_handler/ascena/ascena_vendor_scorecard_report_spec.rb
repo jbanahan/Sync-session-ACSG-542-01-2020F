@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       tariff4 = line4.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid12345-suffix_to_be_ignored", value: "2017-01-01")
-      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid23456-X", value: "2016-12-25")
+      DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid23456-X", value: "2017-02-22")
 
       vendor = Factory(:company, name: "Ascena Vendor")
       vendor2 = Factory(:company, name: "Ascena Vendor 2")
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet = wb.worksheet("Vendor")).not_to be_nil
       expect(sheet.rows.count).to eq 6
       expect(sheet.row(0)).to eq ["<Summary by vendor>", nil, nil, nil, nil, nil]
-      expect(sheet.row(2)).to eq ["No.", "VENDOR", "INV AMOUNT", "INV AMOUNT IN FS ELIGIBLE", "FS SAVINGS", "PENETRATION"]
+      expect(sheet.row(2)).to eq ["No.", "VENDOR", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "PENETRATION"]
       expect(sheet.row(3)).to eq [1, "Ascena Vendor", 8.2, 6.99, 0.11, 0.85]
       expect(sheet.row(4)).to eq [2, "Ascena Vendor 2", 1.67, 1.67, 0.14, 1]
       expect(sheet.row(5)).to eq [nil, "TOTAL", 9.87, 8.66, 0.25, 0.88]
@@ -100,20 +100,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet = wb.worksheet("Vendor Factory Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Summary by vendor / factory pair>", nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "INV AMOUNT", "INV AMOUNT IN FS ELIGIBLE", "FS SAVINGS", "REMARKS"]
-      expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", 1.56, 1.56, -0.19, "Eligible - 12/25/2016"]
-      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", 6.64, 5.43, 0.3, "Eligible - 01/01/2017"]
-      expect(sheet.row(5)).to eq [3, "Ascena Vendor 2", "Crapco Industries", 1.67, 1.67, 0.14, "Eligible - 01/01/2017"]
+      expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "REMARKS"]
+      expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", 1.56, 1.56, -0.19, "Eligible - 02/22/2017"]
+      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", 6.64, 5.43, 0.3, "Eligible < 2017"]
+      expect(sheet.row(5)).to eq [3, "Ascena Vendor 2", "Crapco Industries", 1.67, 1.67, 0.14, "Eligible < 2017"]
       expect(sheet.row(6)).to eq [nil, "TOTAL", nil, 9.87, 8.66, 0.25, nil]
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Detailed Data Lines>", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "ENTRY NUMBER", "INV AMOUNT", "FS SAVINGS", "FIRST RELEASE DATE", "INVOICE NUMBER", "VALUE", "PRODUCT LINE", "PO NUMBER", "PART NUMBER", "CONTRACT AMOUNT", "REMARKS"]
-      expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", "entry_no", 1.56, -0.19, "03/01/2017", "INV", 3.45, "prodlineB", "PO2", "part_Y", 1.56, "Eligible - 12/25/2016"]
-      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", "entry_no", 5.43, 0.3, "03/01/2017", "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, "Eligible - 01/01/2017"]
-      expect(sheet.row(5)).to eq [3, "Ascena Vendor", "Crapco Industries", "entry_no", 1.21, 0.0, "03/01/2017", "INV", 1.21, "prodlineA2", "PO", "part_X", 0, "Eligible - 01/01/2017"]
-      expect(sheet.row(6)).to eq [4, "Ascena Vendor 2", "Crapco Industries", "entry_no", 1.67, 0.14, "03/01/2017", "INV", 0.25, "prodlineC", "PO3", "part_Z", 1.67, "Eligible - 01/01/2017"]
+      expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", "entry_no", 1.56, -0.19, "03/01/2017", "INV", 3.45, "prodlineB", "PO2", "part_Y", 1.56, "Eligible - 02/22/2017"]
+      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", "entry_no", 5.43, 0.3, "03/01/2017", "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, "Eligible < 2017"]
+      expect(sheet.row(5)).to eq [3, "Ascena Vendor", "Crapco Industries", "entry_no", 1.21, 0.0, "03/01/2017", "INV", 1.21, "prodlineA2", "PO", "part_X", 0, "Eligible < 2017"]
+      expect(sheet.row(6)).to eq [4, "Ascena Vendor 2", "Crapco Industries", "entry_no", 1.67, 0.14, "03/01/2017", "INV", 0.25, "prodlineC", "PO3", "part_Z", 1.67, "Eligible < 2017"]
     end
 
     it "runs fiscal-date-based report" do
@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       prev_fiscal_quarter_end_month = FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 12, start_date: current_fiscal_quarter_start_month.start_date - 30.days, end_date: current_fiscal_quarter_start_month.start_date - 1.day)
       prev_fiscal_quarter_start_month = FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 10, start_date: prev_fiscal_quarter_end_month.start_date - 60.days, end_date: prev_fiscal_quarter_end_month.start_date - 31.day)
 
-      expect_any_instance_of(subject).to receive(:run_report)
+      expect_any_instance_of(subject).to receive(:run_scorecard_report)
       m = double('mail')
       expect(OpenMailer).to receive(:send_simple_html).with(
           ["goofus@fakeemail.com"],

@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
   end
 
   def self.run_report run_by, settings
-    self.new.run_report settings
+    self.new.run_scorecard_report settings
   end
 
   def self.run_schedulable settings
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
           quarter_descriptor = "Q#{(((prev_fiscal_quarter_start_month.month_number - 1) / 3) + 1)} #{prev_fiscal_quarter_start_month.year}"
           report_descriptor = "Ascena Vendor Scorecard [#{quarter_descriptor}]"
           settings['file_name'] = report_descriptor
-          temp = self.new.run_report settings
+          temp = self.new.run_scorecard_report settings
           OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] #{report_descriptor}", "Attached is the Ascena Vendor Scorecard Report for #{quarter_descriptor}, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.", [temp]).deliver!
         ensure
           temp.close! if temp && !temp.closed?
@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
     end
   end
 
-  def run_report settings
+  def run_scorecard_report settings
     start_date, end_date = get_dates settings
     workbook = generate_report start_date, end_date, settings['range_field']
     file_name = settings['file_name'].presence || get_on_demand_file_name(start_date, end_date)
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
     XlsMaker.add_body_row sheet, 0, ["<Summary by vendor>", "", "", "", "", ""]
     sheet.row(0).height = 20
     XlsMaker.set_cell_formats sheet, 0, [HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT]
-    XlsMaker.add_header_row sheet, 2, ["No.", "VENDOR", "INV AMOUNT", "INV AMOUNT IN FS ELIGIBLE", "FS SAVINGS", "PENETRATION"]
+    XlsMaker.add_header_row sheet, 2, ["No.", "VENDOR", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "PENETRATION"]
     penetration_format = XlsMaker.create_format "Penetration", :number_format => '0%'
 
     # Condense data by vendor.
@@ -177,7 +177,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
     XlsMaker.add_body_row sheet, 0, ["<Summary by vendor / factory pair>", "", "", "", "", "", ""]
     sheet.row(0).height = 20
     XlsMaker.set_cell_formats sheet, 0, [HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT, HEADER_FORMAT]
-    XlsMaker.add_header_row sheet, 2, ["No.", "VENDOR", "FACTORY", "INV AMOUNT", "INV AMOUNT IN FS ELIGIBLE", "FS SAVINGS", "REMARKS"]
+    XlsMaker.add_header_row sheet, 2, ["No.", "VENDOR", "FACTORY", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "REMARKS"]
 
     # Condense data by vendor and factory.
     data_hash = Hash.new
@@ -244,7 +244,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
   end
 
   def get_first_sale_eligibility_remarks first_sale_eligible_date
-    first_sale_eligible_date.nil? ? "Ineligible" : "Eligible - #{first_sale_eligible_date.strftime('%m/%d/%Y')}"
+    if first_sale_eligible_date.nil?
+      remarks = "Ineligible"
+    else
+      # January 1, 2017 was the date eligibility started to be recorded in VFI Track.  It's not really when some of
+      # these vendors became eligible.  Ascena wants a default label to be shown if the default date is encountered.
+      if first_sale_eligible_date == Date.parse('01/01/2017', '%m/%d/%Y')
+        remarks = "Eligible < 2017"
+      else
+        remarks = "Eligible - #{first_sale_eligible_date.strftime('%m/%d/%Y')}"
+      end
+    end
+    remarks
   end
 
   def generate_data_sheet wb, data_arr
