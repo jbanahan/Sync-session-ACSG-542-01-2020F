@@ -438,4 +438,99 @@ describe UsersController do
     end
 
   end
+
+  describe "enable_run_as" do
+    before :each do
+      # So the :back redirect in the controller returns something
+      request.env["HTTP_REFERER"] = "/referer"
+    end
+
+    it "should enable run as functionality for a non-disabled user when current user is an admin" do
+      @user.admin = true
+      @user.save
+
+      run_as_user = Factory(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false, password_reset: false)
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/"
+      expect(flash[:errors]).to be_nil
+      expect(@user.run_as).to eq(run_as_user)
+    end
+
+    it "should error when the current user is not an admin" do
+      @user.admin = false
+      @user.save
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("You must be an administrator to run as a different user.")
+      expect(@user.run_as).to be_nil
+    end
+
+    it "should error when the run as user is not found" do
+      @user.admin = true
+      @user.save
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("User with username AugustusGloop not found.")
+      expect(@user.run_as).to be_nil
+    end
+
+    it "should error when run as user has been disabled" do
+      @user.admin = true
+      @user.save
+
+      run_as_user = Factory(:user, username: "AugustusGloop", disabled: true, password_locked: false, password_expired: false, password_reset: false)
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("This username is locked and not available for use with this feature.  Select another username or have this user account unlocked.")
+      expect(@user.run_as).to be_nil
+    end
+
+    it "should error when run as user's password has been locked" do
+      @user.admin = true
+      @user.save
+
+      run_as_user = Factory(:user, username: "AugustusGloop", disabled: false, password_locked: true, password_expired: false, password_reset: false)
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("This username is locked and not available for use with this feature.  Select another username or have this user account unlocked.")
+      expect(@user.run_as).to be_nil
+    end
+
+    it "should error when run as user's password has expired" do
+      @user.admin = true
+      @user.save
+
+      run_as_user = Factory(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: true, password_reset: false)
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("This username is locked and not available for use with this feature.  Select another username or have this user account unlocked.")
+      expect(@user.run_as).to be_nil
+    end
+
+    it "should error when run as user's password is in reset status" do
+      @user.admin = true
+      @user.save
+
+      run_as_user = Factory(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false, password_reset: true)
+
+      post :enable_run_as, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("This username is locked and not available for use with this feature.  Select another username or have this user account unlocked.")
+      expect(@user.run_as).to be_nil
+    end
+  end
+
 end

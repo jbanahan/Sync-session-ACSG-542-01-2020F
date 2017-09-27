@@ -214,10 +214,14 @@ class UsersController < ApplicationController
       if current_user.admin?
         u = User.find_by_username params[:username]
         if u
-          user = current_user
-          user.run_as = u
-          user.save
-          redirect_to "/"
+          if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
+            user = current_user
+            user.run_as = u
+            user.save
+            redirect_to "/"
+          else
+            error_redirect "This username is locked and not available for use with this feature.  Select another username or have this user account unlocked."
+          end
         else
           error_redirect "User with username #{params[:username]} not found."
         end
@@ -225,6 +229,7 @@ class UsersController < ApplicationController
         error_redirect "You must be an administrator to run as a different user."
       end
     end
+
     def disable_run_as
       cu = current_user #load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
       if cu && @run_as_user
