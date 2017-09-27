@@ -33,7 +33,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     if self.message.nil?
       self.state = 'Pass'
     else
-      self.state = self.business_validation_rule.fail_state || 'Fail'
+      self.state = self.business_validation_rule.fail_state.presence || 'Fail'
     end
     return self.state != original_value
   end

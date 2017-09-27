@@ -57,6 +57,14 @@ describe BusinessValidationRuleResult do
       rule.run_validation(Order.new)
       expect(rule.state).to eq 'Fail'
     end
+    it "defaults state to Fail if fail_state is blank" do
+      json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
+      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json, fail_state: "")
+      rule = BusinessValidationRuleResult.new
+      expect(rule.business_validation_rule = vr).to be_truthy
+      rule.run_validation(Order.new)
+      expect(rule.state).to eq 'Fail'
+    end
     it "should set state to Pass if no fail message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
