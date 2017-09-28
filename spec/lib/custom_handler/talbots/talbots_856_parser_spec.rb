@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
 
   describe "parse", :disable_delayed_jobs do
     let (:product) {
-      prod = Factory(:product, importer: talbots, unique_identifier: "PART")
-      prod.variants.create! variant_identifier: "15D2020DT"
+      prod = Factory(:product, importer: talbots, unique_identifier: "TALBO-PART")
+      prod.update_custom_value! cdefs[:prod_part_number], "15D2020DT"
 
       prod
     }
@@ -61,7 +61,6 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
       line = shipment.shipment_lines.first
 
       expect(line.product).to eq product
-      expect(line.variant).to eq product.variants.first
       expect(line.piece_sets.first.order_line).to eq order.order_lines.first
       expect(line.container).to eq container
 
@@ -82,10 +81,10 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
       s.sync_records.create! trading_partner: "CI LOAD", sent_at: Time.zone.now
 
       container = s.containers.create! container_number: "TCNU5516700"
-      line = s.shipment_lines.create! product_id: product.id, variant_id: product.variants.first.id, linked_order_line_id: order.order_lines.first, container_id: container.id
+      line = s.shipment_lines.create! product_id: product.id, linked_order_line_id: order.order_lines.first, container_id: container.id
 
       container2 = s.containers.create! container_number: "CONTAINER2"
-      line2 = s.shipment_lines.create! product_id: product.id, variant_id: product.variants.first.id, linked_order_line_id: order.order_lines.first, container_id: container2.id
+      line2 = s.shipment_lines.create! product_id: product.id, linked_order_line_id: order.order_lines.first, container_id: container2.id
 
 
       subject.parse data, bucket: "bucket", key: "file.edi"

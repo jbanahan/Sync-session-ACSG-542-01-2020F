@@ -154,19 +154,19 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
     lin = find_segment(item_segments, "LIN")
     raise EdiStructuralError, "All Item HL Loops must contain an LIN segment." if lin.nil?
 
-    sku = find_segment_qualified_value(lin, "SK")
-    raise EdiStructuralError, "All LIN segments must contain a 'SK' qualified value referencing the Item's Sku." if sku.blank?
+    # Yusen / Talbots send the style in the SKU..WTF...which matches back to the VA qualified value on the 850 (after stripping the season from it)
+    style = find_segment_qualified_value(lin, "SK")
+    raise EdiStructuralError, "All LIN segments must contain a 'SK' qualified value referencing the Item's Sku." if style.blank?
 
-    order_line = order.order_lines.find { |line| line.sku == sku }
+    order_line = order.order_lines.find { |line| line.product.try(:custom_value, cdefs[:prod_part_number]) == style }
 
-    raise EdiBusinessLogicError, "No order line found on Order # '#{order.customer_order_number}' with a Sku of '#{sku}'." if order_line.nil?
+    raise EdiBusinessLogicError, "No order line found on Order # '#{order.customer_order_number}' with a Sku of '#{style}'." if order_line.nil?
 
     line = shipment.shipment_lines.build
     line.container = container
     line.linked_order_line_id = order_line.id
     line.product = order_line.product
-    line.variant = order_line.variant unless order_line.variant.nil?
-
+    
     coo = find_segment_qualified_value(lin, "ZZ")
     line.find_and_set_custom_value(cdefs[:shpln_coo], coo) unless coo.blank?
 
@@ -227,7 +227,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shp_invoice_prepared])
+    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shp_invoice_prepared, :prod_part_number])
 
     @cdefs
   end
