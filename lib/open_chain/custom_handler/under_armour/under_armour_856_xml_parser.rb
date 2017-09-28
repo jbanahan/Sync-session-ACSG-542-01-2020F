@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       body += error.map{|e| ERB::Util.html_escape e}.join("<br>")
       body += "</p>"
 
-      OpenMailer.send_simple_html("edisupport@vandegriftinc.com", "Under Armour Shipment XML Processing Error", body.html_safe, [file]).deliver!
+      OpenMailer.send_simple_html(["edisupport@vandegriftinc.com", "logisticsops@underarmour.com", "uacustomscompliance@underarmour.com"], "Under Armour Shipment XML Processing Error", body.html_safe, [file]).deliver!
     end
   end
 

@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(ActionMailer::Base.deliveries.length).to eq 1
       m = ActionMailer::Base.deliveries.first
 
-      expect(m.to).to eq ["edisupport@vandegriftinc.com"]
+      expect(m.to).to eq ["edisupport@vandegriftinc.com", "logisticsops@underarmour.com", "uacustomscompliance@underarmour.com"]
       expect(m.subject).to eq "Under Armour Shipment XML Processing Error"
       expect(m.body.raw_source).to include "ERROR"
       expect(m.attachments["file.xml"]).not_to be_nil
