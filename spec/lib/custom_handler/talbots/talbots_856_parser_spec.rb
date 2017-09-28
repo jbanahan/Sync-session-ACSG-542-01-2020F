@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
 
-  let! (:talbots) { Factory(:importer, system_code: "Talbots") }
+  let! (:talbots) { Factory(:importer, system_code: "TALBO") }
   let (:data) { IO.read 'spec/fixtures/files/talbots_856.edi'}
   let (:cdefs) { described_class.new.cdefs }
 
@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     }
 
     let! (:order) {
-      order = Factory(:order, importer: talbots, order_number: "Talbots-833754", customer_order_number: "833754")
+      order = Factory(:order, importer: talbots, order_number: "TALBO-833754", customer_order_number: "833754")
       order.order_lines.create! product: product, variant: product.variants.first, sku: '15D2020DT'
       order
     }
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     it "creates a shipment" do
       subject.parse data, bucket: "bucket", key: "file.edi"
 
-      shipment = Shipment.where(importer_id: talbots.id, reference: "Talbots-YASVTSN0039704").first
+      shipment = Shipment.where(importer_id: talbots.id, reference: "TALBO-YASVTSN0039704").first
       expect(shipment).not_to be_nil
       expect(shipment.master_bill_of_lading).to eq "YASVTSN0039704"
       expect(shipment.last_file_bucket).to eq "bucket"
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     end
 
     it "updates an existing shipment" do
-      s = Shipment.create!(importer_id: talbots.id, reference: "Talbots-YASVTSN0039704")
+      s = Shipment.create!(importer_id: talbots.id, reference: "TALBO-YASVTSN0039704")
       s.sync_records.create! trading_partner: "CI LOAD", sent_at: Time.zone.now
 
       container = s.containers.create! container_number: "TCNU5516700"
@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     end
 
     it "does not process outdated EDI" do
-      s = Shipment.create!(importer_id: talbots.id, reference: "Talbots-YASVTSN0039704", last_exported_from_source: Date.new(2017, 9, 1))
+      s = Shipment.create!(importer_id: talbots.id, reference: "TALBO-YASVTSN0039704", last_exported_from_source: Date.new(2017, 9, 1))
 
       subject.parse data, bucket: "bucket", key: "file.edi"
 
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     end
 
     it "cancels shipments" do
-      s = Shipment.create!(importer_id: talbots.id, reference: "Talbots-YASVTSN0039704")
+      s = Shipment.create!(importer_id: talbots.id, reference: "TALBO-YASVTSN0039704")
       subject.parse data.gsub("BSN^00^", "BSN^03^"), bucket: "bucket", key: "file.edi"
 
       s.reload
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     it "errors if Talbots is missing" do
       talbots.destroy
 
-      expect { subject.parse data }.to raise_error "No importer found with system code Talbots."
+      expect { subject.parse data }.to raise_error "No importer found with system code TALBO."
     end
   end
 end

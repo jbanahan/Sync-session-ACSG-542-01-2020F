@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   end
 
   def prep_importer
-    Company.where(importer: true, system_code: "Talbots").first
+    Company.where(importer: true, system_code: "TALBO").first
   end
 
   def cdef_uids

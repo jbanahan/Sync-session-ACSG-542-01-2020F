@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
   let (:standard_data) { IO.read 'spec/fixtures/files/talbots.edi' }
   let (:prepack_data) { IO.read 'spec/fixtures/files/talbots_prepack.edi'}
   let (:cdefs) { described_class.new.cdefs }
-  let! (:talbots) { Factory(:importer, system_code: "Talbots") }
+  let! (:talbots) { Factory(:importer, system_code: "TALBO") }
   let! (:us) { Factory(:country, iso_code: "US") }
 
   before(:all) {
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
     it "creates an order from standard order type" do 
       subject.parse standard_data, bucket: "bucket", key: "talbots.edi"
-      order = Order.where(order_number: "Talbots-5086819").first
+      order = Order.where(order_number: "TALBO-5086819").first
 
       expect(order).not_to be_nil
       expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["America/New_York"].parse "201508042223"
@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
       vendor = order.vendor
       expect(vendor).not_to be_nil
-      expect(vendor.system_code).to eq "Talbots-00131755"
+      expect(vendor.system_code).to eq "TALBO-00131755"
       expect(vendor.name).to eq "RED & BLUE INTERNATIONAL"
       address = vendor.addresses.first
       expect(address.line_1).to eq "THE HALLMARK BLDG SUITE 227"
@@ -64,7 +64,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
       factory = order.factory
       expect(factory).not_to be_nil
-      expect(factory.system_code).to eq "Talbots-CNZHOHEQ6ZHO"
+      expect(factory.system_code).to eq "TALBO-CNZHOHEQ6ZHO"
       expect(factory.name).to eq "ZHONGSHAN HEQING GARMENT & LAUNDRY CO LTD"
       expect(factory.mid).to eq "CNZHOHEQ6ZHO"
       address = factory.addresses.first
@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(ship_to.postal_code).to eq "02348"
       expect(ship_to.country).to eq us
 
-      product = Product.where(unique_identifier: "Talbots-53903309P").first
+      product = Product.where(unique_identifier: "TALBO-53903309P").first
       expect(product).not_to be_nil
       expect(product.importer).to eq talbots
       expect(product.name).to eq "C SLIMMING 5PKT BOOT DNM - DUSK WASH"
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
     it "creates an order from prepack order type" do 
       subject.parse prepack_data, bucket: "bucket", key: "talbots.edi"
-      order = Order.where(order_number: "Talbots-5086819").first
+      order = Order.where(order_number: "TALBO-5086819").first
 
       expect(order).not_to be_nil
 
@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(order.custom_value(cdefs[:ord_type])).to eq "OS"
       expect(order.order_lines.length).to eq 2
 
-      product = Product.where(unique_identifier: "Talbots-53903309P").first
+      product = Product.where(unique_identifier: "TALBO-53903309P").first
       expect(product).not_to be_nil
 
       variant1 = product.variants.find {|v| v.variant_identifier == "41013798"}
@@ -176,11 +176,11 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
     context "with existing data" do
       let (:product) {
-        Factory(:product, importer:talbots, unique_identifier: "Talbots-53903309P")
+        Factory(:product, importer:talbots, unique_identifier: "TALBO-53903309P")
       }
 
       let (:order) {
-        order = Factory(:order, importer: talbots, order_number: "Talbots-5086819")
+        order = Factory(:order, importer: talbots, order_number: "TALBO-5086819")
       }
 
       let! (:order_line) {
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
     }
 
     let (:product) {
-      product = Factory(:product, importer: talbots, unique_identifier: "Talbots-53903309P", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
+      product = Factory(:product, importer: talbots, unique_identifier: "TALBO-53903309P", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
       product.update_custom_value! cdefs[:prod_fish_wildlife], true
       product.update_custom_value! cdefs[:prod_fabric_content], "99% COTTON 1% SPANDEX"
       product.update_hts_for_country(us, "6204624011")

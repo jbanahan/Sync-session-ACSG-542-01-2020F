@@ -211,8 +211,8 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   end
 
   def importer
-    @imp ||= Company.where(importer: true, system_code: "Talbots").first
-    raise "No importer found with system code Talbots." unless @imp
+    @imp ||= Company.where(importer: true, system_code: "TALBO").first
+    raise "No importer found with system code TALBO." unless @imp
     @imp
   end
 
