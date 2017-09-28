@@ -18,7 +18,15 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   end
 
   def standard_style po1, all_segments
-    find_segment_qualified_value(po1, "VA")
+    # The style as Talbots sends them to us includes the season code (for some reason)
+    # Strip that off as that doesn't appear on the 856 or the commerical invoices.
+    style = find_segment_qualified_value(po1, "VA")
+    # This matches everythign prior to the last /
+    if style =~ /(.*)\/.*/
+      style = $1
+    end
+
+    style
   end
 
   def process_order_header user, order, edi_segments

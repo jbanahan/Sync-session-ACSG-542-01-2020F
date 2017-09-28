@@ -87,11 +87,11 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(ship_to.postal_code).to eq "02348"
       expect(ship_to.country).to eq us
 
-      product = Product.where(unique_identifier: "Talbots-53903309P/FL15").first
+      product = Product.where(unique_identifier: "Talbots-53903309P").first
       expect(product).not_to be_nil
       expect(product.importer).to eq talbots
       expect(product.name).to eq "C SLIMMING 5PKT BOOT DNM - DUSK WASH"
-      expect(product.custom_value(cdefs[:prod_part_number])).to eq "53903309P/FL15"
+      expect(product.custom_value(cdefs[:prod_part_number])).to eq "53903309P"
       expect(product.custom_value(cdefs[:prod_fabric_content])).to eq "99% COTTON 1% SPANDEX"
       expect(product.custom_value(cdefs[:prod_fish_wildlife])).to eq true
 
@@ -157,7 +157,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(order.custom_value(cdefs[:ord_type])).to eq "OS"
       expect(order.order_lines.length).to eq 2
 
-      product = Product.where(unique_identifier: "Talbots-53903309P/FL15").first
+      product = Product.where(unique_identifier: "Talbots-53903309P").first
       expect(product).not_to be_nil
 
       variant1 = product.variants.find {|v| v.variant_identifier == "41013798"}
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
     context "with existing data" do
       let (:product) {
-        Factory(:product, importer:talbots, unique_identifier: "Talbots-53903309P/FL15")
+        Factory(:product, importer:talbots, unique_identifier: "Talbots-53903309P")
       }
 
       let (:order) {
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
     }
 
     let (:product) {
-      product = Factory(:product, importer: talbots, unique_identifier: "Talbots-53903309P/FL15", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
+      product = Factory(:product, importer: talbots, unique_identifier: "Talbots-53903309P", name: "C SLIMMING 5PKT BOOT DNM - DUSK WASH")
       product.update_custom_value! cdefs[:prod_fish_wildlife], true
       product.update_custom_value! cdefs[:prod_fabric_content], "99% COTTON 1% SPANDEX"
       product.update_hts_for_country(us, "6204624011")
