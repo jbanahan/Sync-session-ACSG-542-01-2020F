@@ -210,6 +210,19 @@ describe OpenChain::AllianceImagingClient do
       expect(entry.entity_snapshots.first.context).to eq "Imaging"
     end
 
+    it "ensures the file_number value in the hash is a string" do
+      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the 
+      # DB index on broker_reference / entry_number isn't utilized.
+      # This test ensures there's a check to make sure the file number is stringified.
+      mock_relation = double("ActiveRecord::Relation")
+      expect(mock_relation).to receive(:first).and_return @e1
+      expect(Entry).to receive(:where).with({source_system: "Alliance", broker_reference: "123456"}).and_return mock_relation
+
+      @hash["file_number"] = 123456.0
+
+      r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
+    end
+
     context "Fenix B3 Files" do
       before :each do
         @hash["source_system"] = 'Fenix'
@@ -885,6 +898,20 @@ ERR
       @message["public"] = ""
       r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
       expect(r[:attachment].is_private).to eq true
+    end
+
+    it "ensures the file_number value in the hash is a string" do
+      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the 
+      # DB index on broker_reference / entry_number isn't utilized.
+      # This test ensures there's a check to make sure the file number is stringified.
+      entry = Factory(:entry)
+      mock_relation = double("ActiveRecord::Relation")
+      expect(mock_relation).to receive(:first_or_create!).and_return entry
+      expect(Entry).to receive(:where).with({source_system: "Fenix", entry_number: "11981001795105"}).and_return mock_relation
+
+      @message["file_number"] = 11981001795105.0
+
+      r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
     end
 
   end

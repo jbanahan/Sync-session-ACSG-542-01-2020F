@@ -120,6 +120,10 @@ class OpenChain::AllianceImagingClient
   # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
   # it points to should have a .pdf extension on it.
   def self.process_image_file t, hsh, user
+    # If the file_number is not a string, then the lookup below fails to utilize the 
+    # database index and ends up doing a table scan (VERY BAD)
+    hsh["file_number"] = hsh["file_number"].to_i.to_s
+
     Attachment.add_original_filename_method t
     t.original_filename= hsh["file_name"]
     source_system = hsh["source_system"].nil? ? Entry::KEWILL_SOURCE_SYSTEM : hsh["source_system"]
@@ -225,6 +229,10 @@ class OpenChain::AllianceImagingClient
 
     # Version appears to not be used at this point in Fenix
 
+    # If the file_number is not a string, then the lookup below fails to utilize the 
+    # database index and ends up doing a table scan (VERY BAD)
+    file_data["file_number"] = file_data["file_number"].to_i.to_s
+
     Attachment.add_original_filename_method t
 
     # For some reason, the file_name for B3's starts w/ _, which is dumb...strip leading _'s (just do it on all files..leading underscores are pointless on anything)
@@ -232,7 +240,7 @@ class OpenChain::AllianceImagingClient
 
     entry = nil
     Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
-      entry = Entry.where(:entry_number=>file_data['file_number'].to_s.strip, :source_system=>OpenChain::FenixParser::SOURCE_CODE).first_or_create!(:file_logged_date => Time.zone.now)
+      entry = Entry.where(:entry_number=>file_data['file_number'], :source_system=>OpenChain::FenixParser::SOURCE_CODE).first_or_create!(:file_logged_date => Time.zone.now)
     end
 
     if entry
