@@ -68,7 +68,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       calculate_shipment_totals shipment
 
       shipment.save!
-      shipment.create_snapshot user, nil, file
+      shipment.create_snapshot user, nil, file unless errors.length > 0
       s = shipment
     end
 

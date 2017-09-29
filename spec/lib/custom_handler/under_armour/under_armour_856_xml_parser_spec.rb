@@ -98,6 +98,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     context "error handling" do
       let(:errors) { [] }
 
+      after :each do 
+        shipment = Shipment.where(reference: "UNDAR-ASN0001045").first
+        expect(shipment.entity_snapshots.length).to eq 0
+      end
+
       it "appends error if trailer is blank" do
         data.gsub!("<Trailer>MBOL1938</Trailer>", "<Trailer></Trailer>")
         subject.process_shipment xml, user, "bucket", "file.xml", errors
