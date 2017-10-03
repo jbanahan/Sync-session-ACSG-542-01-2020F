@@ -6,7 +6,6 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize opts = {}
-    @cdefs = self.class.prep_custom_definitions [:prod_part_number]
     @manufacturer_address_id = opts[:manufacturer_address_id]
   end
 
@@ -71,10 +70,7 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
 
     # Fall back to the style..matching on the product's part number since the unique_identifier field will have the importer system code
     # in it on the main vfitrack instance.
-    order_line = order.order_lines.find do |ol|
-      product = ol.product
-      style == product.custom_value(@cdefs[:prod_part_number])
-    end if order_line.nil? && !style.blank?
+    order_line = find_order_line_by_style(order, style) if order_line.nil? && !style.blank?
 
     return if order_line.blank?
 

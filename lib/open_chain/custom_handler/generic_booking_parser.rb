@@ -1,7 +1,9 @@
 require 'open_chain/custom_handler/generic_shipment_worksheet_parser_support'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; class GenericBookingParser
   include OpenChain::CustomHandler::GenericShipmentWorksheetParserSupport
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   ##
   # The highest line number of all a shipment's booking lines
@@ -55,49 +57,39 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   # @param [Numeric] line_number
   def add_line_data(shipment, row, line_number)
     po = text_value row[file_layout[:po_column]]
-    style = text_value row[file_layout[:style_no_column]]
-    sku = text_value row[file_layout[:sku_column]]
-    quantity = decimal_value row[file_layout[:quantity_column]]
-    cbms = decimal_value row[file_layout[:cbms_column]]
-    gross_kgs = decimal_value row[file_layout[:gross_kgs_column]]
-    carton_quantity = decimal_value row[file_layout[:carton_qty_column]]
 
-    if !sku.blank?
-      if !po.blank?
-        ol = find_order_line shipment, po, sku, error_if_not_found: true
-        shipment.booking_lines.build(
-            quantity: quantity,
-            line_number: line_number,
-            order_line_id: ol.id,
-            cbms: cbms,
-            gross_kgs: gross_kgs,
-            carton_qty: carton_quantity
-        )
-      else
-        # Pull the most recent order line that matches to an order line associated with this shipment's importer
-        order_line = OrderLine.joins(:order).where(orders: {importer_id: shipment.importer_id}).where(sku: sku).order("orders.order_date DESC, order_lines.id DESC").limit(1).first
-        shipment.booking_lines.build(
-            product_id: order_line.try(:product_id),
-            quantity: quantity,
-            line_number: line_number,
-            cbms: cbms,
-            gross_kgs: gross_kgs,
-            carton_qty: carton_quantity
-        )
-      end
-    else
-      product = find_product shipment, style
+    # If there's no PO, we cannot match up lines.  Previously, this parser included some logic to pull the most recent
+    # order line for an importer and SKU combination if there was no PO, but this was removed in Sep 2017.  Per JH,
+    # that logic was "flat out wrong and bad."
+    if !po.blank?
       order = find_order shipment, po, error_if_not_found: false
+      if order
+        sku = text_value row[file_layout[:sku_column]]
+        style = text_value row[file_layout[:style_no_column]]
 
-      shipment.booking_lines.build(
-          product_id: product.try(:id),
-          quantity: quantity,
-          line_number: line_number,
-          order_id: order.try(:id),
-          cbms: cbms,
-          gross_kgs: gross_kgs,
-          carton_qty: carton_quantity
-      )
+        if !sku.blank?
+          order_line = order.order_lines.find_by_sku(sku)
+        elsif !style.blank?
+          # Fall back to the style, matching on the product's part number since the unique_identifier field will have
+          # the importer system code in it on the main vfitrack instance.
+          order_line = find_order_line_by_style order, style
+        end
+
+        if !order_line.blank?
+          quantity = decimal_value row[file_layout[:quantity_column]]
+          cbms = decimal_value row[file_layout[:cbms_column]]
+          gross_kgs = decimal_value row[file_layout[:gross_kgs_column]]
+          carton_quantity = decimal_value row[file_layout[:carton_qty_column]]
+          shipment.booking_lines.build(
+            quantity: quantity,
+            line_number: line_number,
+            order_line_id: order_line.id,
+            cbms: cbms,
+            gross_kgs: gross_kgs,
+            carton_qty: carton_quantity
+          )
+        end
+      end
     end
   end
 

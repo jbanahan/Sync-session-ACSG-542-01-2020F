@@ -1,25 +1,26 @@
 require 'spec_helper'
 require Rails.root.join('spec/fixtures/files/standard_booking_form')
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 describe OpenChain::CustomHandler::GenericBookingParser do
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   describe 'with valid data' do
+    let!(:importer) { FactoryGirl.create :company, importer:true, system_code:'SYSTEM'}
+    let!(:product) { FactoryGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
+    let!(:shipment) { FactoryGirl.create(:shipment, importer_id:importer.id) }
+    let!(:first_order) { FactoryGirl.create :order, customer_order_number: 1502377, importer_id:importer.id }
+    let!(:second_order) { FactoryGirl.create :order, customer_order_number: 1502396, importer_id:importer.id }
+    let!(:third_order) { FactoryGirl.create :order, customer_order_number: 1502397, importer_id:importer.id }
+    let!(:fourth_order) { FactoryGirl.create :order, customer_order_number: 1502398, importer_id:importer.id }
+    let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
+    let!(:user) { FactoryGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
+    let(:form_data) { StandardBookingFormSpecData.form_lines }
 
-  let!(:importer) { FactoryGirl.create :company, importer:true, system_code:'SYSTEM'}
-  let!(:product) { FactoryGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
-  let!(:shipment) { FactoryGirl.create(:shipment, importer_id:importer.id) }
-  let!(:first_order) { FactoryGirl.create :order, customer_order_number: 1502377, importer_id:importer.id }
-  let!(:second_order) { FactoryGirl.create :order, customer_order_number: 1502396, importer_id:importer.id }
-  let!(:third_order) { FactoryGirl.create :order, customer_order_number: 1502397, importer_id:importer.id }
-  let!(:fourth_order) { FactoryGirl.create :order, customer_order_number: 1502398, importer_id:importer.id }
-  let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
-  let!(:user) { FactoryGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
-  let(:form_data) { StandardBookingFormSpecData.form_lines }
-
-  before do
-    # These results are based on the standard_booking_form fixture.
-    # If that changes these tests will need to change!
-  end
+    before do
+      # These results are based on the standard_booking_form fixture.
+      # If that changes these tests will need to change!
+    end
 
     it 'parses it correctly' do
       result = subject.process_rows shipment, form_data, user
@@ -38,8 +39,10 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       expect(shipment.lcl).to be false
       expect(shipment.mode).to eq "Ocean - LCL"
       expect(shipment.booking_mode).to eq "Ocean - LCL"
-      
-      expect(shipment.booking_lines.length).to eq 7
+
+      # A bunch of lines in the standard booking form data are ignored because they don't have PO, etc.
+      # These conditions are explored further in the 'incomplete data' tests.
+      expect(shipment.booking_lines.length).to eq 3
       shipment.booking_lines.each do |line|
         expect(line).to be_persisted
       end
@@ -63,39 +66,6 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       line = shipment.booking_lines[2].reload
       expect(line.customer_order_number).to eq '1502396'
       expect(line.order_line.sku).to eq '32248838'
-      expect(line.carton_qty).to eq 198
-      expect(line.quantity).to eq 4676
-      expect(line.cbms).to be_within(0.01).of 15.450
-      expect(line.gross_kgs).to be_within(0.01).of 1920.000
-
-      line = shipment.booking_lines[3].reload
-      expect(line.customer_order_number).to eq '1502397'
-      expect(line.product_id).to eq product.id
-      expect(line.order_id).to eq third_order.id
-      expect(line.carton_qty).to eq 198
-      expect(line.quantity).to eq 4676
-      expect(line.cbms).to be_within(0.01).of 15.450
-      expect(line.gross_kgs).to be_within(0.01).of 1920.000
-
-      line = shipment.booking_lines[4].reload
-      expect(line.customer_order_number).to be_nil
-      expect(line.product_id).to eq product.id
-      expect(line.carton_qty).to eq 198
-      expect(line.quantity).to eq 4676
-      expect(line.cbms).to be_within(0.01).of 15.450
-      expect(line.gross_kgs).to be_within(0.01).of 1920.000
-
-      line = shipment.booking_lines[5].reload
-      expect(line.customer_order_number).to eq '1502398'
-      expect(line.product_id).to be_nil
-      expect(line.carton_qty).to eq 198
-      expect(line.quantity).to eq 4676
-      expect(line.cbms).to be_within(0.01).of 15.450
-      expect(line.gross_kgs).to be_within(0.01).of 1920.000
-
-      line = shipment.booking_lines[6].reload
-      expect(line.customer_order_number).to be_nil
-      expect(line.product_id).to be_nil
       expect(line.carton_qty).to eq 198
       expect(line.quantity).to eq 4676
       expect(line.cbms).to be_within(0.01).of 15.450
@@ -136,33 +106,46 @@ describe OpenChain::CustomHandler::GenericBookingParser do
     end
   end
 
-  describe 'with invalid data' do
-    describe 'when SKU is provided but not PO number' do
-      let(:shipment) { FactoryGirl.build :shipment, importer_id:1 }
+  describe 'with incomplete data' do
+    let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
+    let(:importer) { Factory(:importer) }
+    let(:shipment) { FactoryGirl.build :shipment, importer_id:importer.id }
+    let (:product) {
+      p = Factory(:product, importer: importer)
+      p.update_custom_value! cdefs[:prod_part_number], "WPT028531"
+      p
+    }
+    let!(:purchase_order) { FactoryGirl.create(:order, customer_order_number: 1502377, importer_id:importer.id)}
+    let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: purchase_order.id, sku: 32248678, product_id: product.id)]}
+    let(:row) { [nil, "LIGHT & EASY LINEN-STRETCH PANTS (53% LINEN / 45% VISCOSE / 2% SPANDEX)", 1502377.0, "WPT028531", 32248678.0, "6204.69.9044", 200.0, 5000.0, nil, 5.322, 2142.2, "PH"] }
 
-      describe 'if the SKU exists on another order line' do
-        let!(:order) { FactoryGirl.create :order, importer_id: shipment.importer_id }
-        let!(:product) { Factory(:product) }
-        let!(:order_line) { FactoryGirl.create :order_line, product_id:product.id, order_id:order.id, sku: 'THISISANSKU' }
+    it 'does not add a line when PO Number is not provided' do
+      row[subject.file_layout[:po_column]] = ''
+      subject.add_line_data shipment, row, 1
+      expect(shipment.booking_lines.length).to eq 0
+    end
 
-        it 'associates that product with the line' do
-          file_layout = subject.file_layout
-          row_with_sku = Array.new(12)
-          row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
-          subject.add_line_data shipment, row_with_sku, 1
-          expect(shipment.booking_lines.first.product_id).to eq product.id
-        end
-      end
+    it 'does not add a line when SKU and Style are not provided' do
+      row[subject.file_layout[:sku_column]] = ''
+      row[subject.file_layout[:style_no_column]] = ''
+      subject.add_line_data shipment, row, 1
+      expect(shipment.booking_lines.length).to eq 0
+    end
 
-      describe 'if the SKU is not on any other orders' do
-        it 'leaves the product blank' do
-          file_layout = subject.file_layout
-          row_with_sku = Array.new(12)
-          row_with_sku[file_layout[:sku_column]] = 'THISISANSKU'
-          subject.add_line_data shipment, row_with_sku, 1
-          expect(shipment.booking_lines.first.product_id).to be_nil
-        end
-      end
+    it 'adds lines based on style if SKU is not provided' do
+      row[subject.file_layout[:sku_column]] = ''
+      subject.add_line_data shipment, row, 1
+      expect(shipment.booking_lines.length).to eq 1
+
+      line = shipment.booking_lines[0]
+      expect(line.line_number).to eq 1
+      expect(line.customer_order_number).to eq '1502377'
+      # SKU is set by way of product linkage, which is made using style.
+      expect(line.order_line.sku).to eq '32248678'
+      expect(line.carton_qty).to eq 200
+      expect(line.quantity).to eq 5000
+      expect(line.cbms).to be_within(0.01).of 5.322
+      expect(line.gross_kgs).to be_within(0.01).of 2142.200
     end
   end
 end

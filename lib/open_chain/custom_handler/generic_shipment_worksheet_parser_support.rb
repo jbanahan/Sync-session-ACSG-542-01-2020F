@@ -146,4 +146,14 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
     ord
   end
 
+  def find_order_line_by_style order, style
+    order_line = order.order_lines.find do |ol|
+      style == ol.product.custom_value(cdefs[:prod_part_number])
+    end
+  end
+
+  def cdefs
+    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number])
+  end
+
 end; end; end

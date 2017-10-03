@@ -1,6 +1,8 @@
 require 'spec_helper'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 describe OpenChain::CustomHandler::GenericShipmentManifestParser do
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def add_row_data rows, row, col, data
     rows[row] = [] if rows[row].nil?
@@ -30,9 +32,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       add_details_row rows, 35, 2, ["PONumber", "Style", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
       rows
     }
-    let (:cdefs) {
-      subject.instance_variable_get("@cdefs")
-    }
+    let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
 
     let (:product) {
       p = Factory(:product, importer: importer)
