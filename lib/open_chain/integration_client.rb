@@ -44,6 +44,7 @@ require 'open_chain/custom_handler/burlington/burlington_856_parser'
 require 'open_chain/custom_handler/amersports/amersports_856_ci_load_parser'
 require 'open_chain/custom_handler/talbots/talbots_850_parser'
 require 'open_chain/custom_handler/talbots/talbots_856_parser'
+require 'open_chain/custom_handler/kewill_entry_parser'
 
 module OpenChain
   class IntegrationClient
@@ -134,6 +135,8 @@ module OpenChain
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_alliance_day_end_checks/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
+      elsif command['path'].include?('_kewill_entry/') && master_setup.custom_feature?('alliance')
+        OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_po/') && MasterSetup.get.custom_feature?('Ascena PO')
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
