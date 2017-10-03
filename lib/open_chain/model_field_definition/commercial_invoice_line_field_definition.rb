@@ -108,7 +108,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
         # Purposefully allowing for null values here because if quantity or contract amount is null I want this value to also be null
         qualified_field_name: "ROUND((commercial_invoice_lines.contract_amount / commercial_invoice_lines.quantity), 2)"
         }],
-      [60, :cil_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}]
+      [60, :cil_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}],
+      [61, :cil_miscellaneous_discount, :miscellaneous_discount, "Miscellaneous Discount", {data_type: :decimal, currency: :usd}]
     ]
   end
 end; end; end

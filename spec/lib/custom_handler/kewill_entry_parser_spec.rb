@@ -210,6 +210,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "container_no" => "CONT1",
                 'value_appraisal_method' => "F",
                 'non_dutiable_amt' => 12345,
+                'misc_discount' => 33.44,
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
@@ -649,6 +650,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.non_dutiable_amount).to eq BigDecimal("123.45")
       expect(line.unit_price).to eq BigDecimal("95.23")
       expect(line.other_fees).to eq BigDecimal("15.00")
+      expect(line.miscellaneous_discount).to eq BigDecimal("33.44")
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"

@@ -828,6 +828,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
       line.value_appraisal_method = l[:value_appraisal_method]
       line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
+      line.miscellaneous_discount = parse_decimal(l[:misc_discount])
 
       other_fees = BigDecimal.new("0")
 

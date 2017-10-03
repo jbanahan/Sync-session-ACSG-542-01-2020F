@@ -103,4 +103,24 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
       expect(mf.process_export(ent, nil, true)).to eq('132')
     end
   end
+
+  describe 'ent_total_miscellaneous_discount' do
+    let :mf do
+      ModelField.find_by_uid :ent_total_miscellaneous_discount
+    end
+
+    it "should return discount sum" do
+      ent = Factory(:entry)
+      inv = Factory(:commercial_invoice, entry:ent)
+      cil1 = Factory(:commercial_invoice_line, commercial_invoice:inv, miscellaneous_discount:10.25)
+      cil2 = Factory(:commercial_invoice_line, commercial_invoice:inv, miscellaneous_discount:5.50)
+      ent.reload
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_total_miscellaneous_discount', operator:'eq', value:'15.75')
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq 15.75
+    end
+  end
 end
