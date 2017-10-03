@@ -55,4 +55,52 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
       expect(mf.process_export(ent,nil,true)).to eq 2
     end
   end
+
+  describe 'ent_entry_filer' do
+    let :mf do
+      ModelField.find_by_uid :ent_entry_filer
+    end
+
+    it "should return nil if no entry number" do
+      ent = Factory(:entry, entry_number:nil)
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_entry_filer', operator:'null')
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to be_nil
+    end
+
+    it "should return first five characters of entry number if Canadian" do
+      country = Factory(:country, iso_code:'CA')
+      ent = Factory(:entry, entry_number:'1324657980', import_country:country)
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_entry_filer', operator:'eq', value:'13246')
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq('13246')
+    end
+
+    it "should return first three characters of entry number if USA" do
+      country = Factory(:country, iso_code:'US')
+      ent = Factory(:entry, entry_number:'1324657980', import_country:country)
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_entry_filer', operator:'eq', value:'132')
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq('132')
+    end
+
+    it "should return first three characters of entry number if no import country specified" do
+      ent = Factory(:entry, entry_number:'1324657980', import_country:nil)
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_entry_filer', operator:'eq', value:'132')
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq('132')
+    end
+  end
 end

@@ -312,7 +312,13 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :data_type=>:boolean,
         :read_only=>true,
         :import_lambda=> lambda{ |obj, data| "On Hold ignored. (read only)"}}],
-      [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {:date_type=>:datetime}]
+      [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {:date_type=>:datetime}],
+      [214, :ent_entry_filer, :entry_filer, "Entry Filer", {
+          :import_lambda=>lambda {|obj,data| "Entry Filer ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.entry_number ? (obj.canadian? ? obj.entry_number[0, 5] : obj.entry_number[0, 3]) : nil},
+          :qualified_field_name=>"(IF(entry_number IS NOT NULL, IF((SELECT iso_code FROM countries WHERE countries.id = entries.import_country_id) = 'CA', LEFT(entry_number, 5), LEFT(entry_number, 3)), null))",
+          :data_type=>:string
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
