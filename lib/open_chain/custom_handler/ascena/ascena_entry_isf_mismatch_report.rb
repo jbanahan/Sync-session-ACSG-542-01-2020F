@@ -45,6 +45,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
       house_bills = entry.split_house_bills_of_lading
       isfs.push(*SecurityFiling.where(importer_id: entry.importer_id).where("house_bills_of_lading IN (?)", house_bills).includes(:security_filing_lines).all) if house_bills.length > 0
 
+      # Reject any isfs that don't have isf lines
+      isfs = isfs.find_all {|i| i.security_filing_lines.length > 0 }
+
       if isfs.length == 0
         add_exception_row(sheet, (row_number+=1), column_widths, entry, nil, nil, nil, nil)
       else

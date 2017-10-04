@@ -52,6 +52,17 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
     end
 
+    it "reports if entry matches to an isf, but the isf doesn't have any lines" do
+      isf.security_filing_lines.destroy_all
+
+      file = subject.run_report importer, tz.parse("2017-05-01 07:00"), tz.parse("2017-05-01 12:30")
+      wb = XlsMaker.open_workbook file
+      sheet = wb.worksheet "Entry / ISF Match"
+      expect(sheet.rows.length).to eq 2
+
+      expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
+    end
+
     it "reports if entry does not match to country origin" do
       isf.security_filing_lines.first.update_attributes! country_of_origin_code: "ISF"
 
