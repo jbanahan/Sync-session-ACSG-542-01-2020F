@@ -52,20 +52,20 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
   end
 
   describe "carb_statement" do
-    let(:ord) { Factory(:order, order_date: Date.new(2017,12,11)) }
+    let(:ord) { Factory(:order, order_date: Date.new(2017,8,31)) }
     
-    it "returns pre-12/11/17 (inclusive) message" do
+    it "returns pre-8/31/17 (inclusive) message" do
       expect(described_class.carb_statement ord).to eq "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
     end
 
-    it "returns post-12/11/17 message" do
-      ord.update_attributes(order_date: Date.new(2017,12,12))
-      expect(described_class.carb_statement ord).to eq "All Composite Wood Products contained in finished goods must be TSCA TITLE VI Compliant, or must be compliant to California 93120 Phase 2 for formaldehyde if panels were manufactured before December 12, 2017."
+    it "returns post-8/31/17 message" do
+      ord.update_attributes(order_date: Date.new(2017,9,1))
+      expect(described_class.carb_statement ord).to eq "All Composite Wood Products contained in finished goods must be TSCA Title VI Compliant and must be compliant with California Phase 2 formaldehyde emission standards (17 CCR 93120.2)"
     end
   
     it "uses 'created_at' if order date is blank" do
       ord.update_attributes(order_date: nil)
-      expect(ord).to receive(:created_at).and_return Date.new(2017,12,11)
+      expect(ord).to receive(:created_at).and_return Date.new(2017,8,31)
       expect(described_class.carb_statement ord).to eq "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
     end
   end
