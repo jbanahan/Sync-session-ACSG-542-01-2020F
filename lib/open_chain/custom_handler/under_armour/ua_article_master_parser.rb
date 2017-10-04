@@ -17,31 +17,32 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def send_error_email error_log, file_key
-    error_body = "The following errors were encountered when processing #{file_key}: <br> <br>"
+    error_body = "<p>The following errors were encountered when processing file '#{File.basename(file_key.to_s)}': <br></p>"
     if error_log.missing_products.length > 0
-      error_body << "These products could not be found:<br>"
-      error_log.missing_products.each do |missing_product|
-        error_body << (missing_product + "<br>")
+      error_body << "<p>The following Prepack Component Products could not be found:<br><ul>"
+      error_log.missing_products.each do |error|
+        error_body << ("<li>Prepack Article # '#{error.article}' references missing Product '#{error.product}'.</li>")
       end
-      error_body << "<br>"
+      error_body << "</ul></p>"
     end
 
     if error_log.missing_variants.length > 0
-      error_body << "These variants could not be found (product / variant):<br><br>"
-      error_log.missing_variants.each do |missing_variant|
-        error_body << (missing_variant.product + " / " + missing_variant.variant + "<br>")
+      error_body << "<p>The following Prepack Component Skus could not be found (Product / Variant):<br><ul>"
+      error_log.missing_variants.each do |error|
+        error_body << ("<li>Prepack Article # '#{error.article}' references a missing SKU # '#{error.variant}' from Product '#{error.product}'.</li>")
       end
-      error_body << "<br>"
+      error_body << "</ul></p>"
     end
 
     if error_log.malformed_products.length > 0
-      error_body << "These product codes did not fit the expected format:<br>"
+      error_body << "<p>These product codes did not fit the expected format:<br><ul>"
       error_log.malformed_products.each do |malformed_product|
-        error_body << (malformed_product + "<br>")
+        error_body << ("<li>#{malformed_product}</li>")
       end
+      error_body << "</ul></p>"
     end
 
-    OpenMailer.send_simple_html('support@vandegriftinc.com', 'UA Article Master Parser: Products and/or Variants not found', error_body.html_safe).deliver!
+    OpenMailer.send_simple_html(Group.use_system_group("UA Article Master Errors", name: "UA Article Master Errors"), 'UA Article Master Processing Errors', error_body.html_safe).deliver!
   end
 
   def self.process_articles! doc, file_key
@@ -178,6 +179,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def create_or_update_prepacks! prod, art_elem, changed, error_log
+    article_number = prod.custom_value(cdefs[:prod_part_number])
     bom_sku_hash = create_bom_component_sku_hash art_elem, error_log
 
     bom_sku_hash.each do |prepack_product_number, bomcomponent_arr|
@@ -191,12 +193,13 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
           if matching_variant
             create_or_update_one_variant! matching_variant.variant_identifier, prod, get_variant_custom_values(matching_variant), changed, component_qty
           else
-            missing_var = PrepackErrorLogMissingVariant.new prepack_product_number, component_sku
+            missing_var = PrepackErrorLogMissingVariant.new article_number, prepack_product_number, component_sku
             error_log.missing_variants << missing_var
           end
         end
       else
-        error_log.missing_products << prepack_product_number
+        # This means that a particular component of a prepack has not been sent to us.
+        error_log.missing_products << PrepackErrorLogMissingProduct.new(article_number, prepack_product_number)
       end
     end
 
@@ -223,7 +226,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
     end
   end
 
-  PrepackErrorLogMissingVariant = Struct.new(:product, :variant)
+  PrepackErrorLogMissingProduct = Struct.new(:article, :product)
+  PrepackErrorLogMissingVariant = Struct.new(:article, :product, :variant)
 
   def get_variant_custom_values variant
     upc = variant.custom_value(cdefs[:var_upc])
