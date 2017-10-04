@@ -242,7 +242,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     # System code can be blank some times, so we won't create a vendor in those cases.
     return nil if system_code.blank?
 
-    vendor = Company.where(system_code:system_code).first_or_create!(name:name)
+    vendor = Company.where(system_code:system_code).first_or_create!(name:name, vendor:true)
     vendor.update_attributes!(name: name) unless vendor.name == name
     vendor
   end
@@ -256,7 +256,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
       factory.update_attributes!(attributes) if attributes.size > 0
     elsif !name.blank?
-      factory = Company.create! system_code: system_code, name: name, mid: mid
+      factory = Company.create! system_code: system_code, name: name, mid: mid, factory: true
     end
     
     factory
