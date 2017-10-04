@@ -88,10 +88,12 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016,12,8)
       expect(o.vendor.system_code).to eq "000256"
       expect(o.vendor.name).to eq "LF PRODUCTS PTE. LTD"
+      expect(o.vendor.vendor?).to eq true
       expect(o.custom_value(cdefs[:ord_assigned_agent])).to eq "Smith"
       expect(o.factory.system_code).to eq "001423"
       expect(o.factory.mid).to eq "IDSELKAU0105BEK"
       expect(o.factory.name).to eq "JIASHAN JSL CASE & BAG CO., LTD"
+      expect(o.factory.factory?).to eq true
       expect(o.custom_value(cdefs[:ord_selling_agent])).to eq "000022"
       expect(o.custom_value(cdefs[:ord_buyer])).to eq "YCHOI"
       expect(o.terms_of_sale).to eq "FCA"
@@ -149,10 +151,12 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016,12,9)
       expect(o.vendor.system_code).to eq "000257"
       expect(o.vendor.name).to eq "MG PRODUCTS PTE. LTD"
+      expect(o.vendor.vendor?).to eq true
       expect(o.custom_value(cdefs[:ord_assigned_agent])).to eq "Jones"
       expect(o.factory.system_code).to eq "001424"
       expect(o.factory.mid).to eq "JDSELKAU0105BEK"
       expect(o.factory.name).to eq "XIASHAN JSL CASE & BAG CO., LTD"
+      expect(o.factory.factory?).to eq true
       expect(o.custom_value(cdefs[:ord_selling_agent])).to eq "000023"
       expect(o.custom_value(cdefs[:ord_buyer])).to eq "ZCHOI"
       expect(o.terms_of_sale).to eq "GCA"

@@ -321,6 +321,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
         ord.factory_id = factory.id
       LEFT OUTER JOIN data_cross_references AS first_sale_xref ON 
         cil.mid = SUBSTRING_INDEX(first_sale_xref.key, '-', 1) AND 
+        vendor.system_code = SUBSTRING_INDEX(first_sale_xref.key, '-', -1) AND 
         first_sale_xref.cross_reference_type = 'asce_mid'
     WHERE
       ent.customer_number = 'ASCE' AND

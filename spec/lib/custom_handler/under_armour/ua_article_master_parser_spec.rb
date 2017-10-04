@@ -148,7 +148,11 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       ca
     end
 
-    let(:prod) { Factory(:product, importer: imp)}
+    let(:prod) { 
+      p = Factory(:product, importer: imp)
+      p.update_custom_value! cdefs[:prod_part_number], "ARTICLE"
+      p
+    }
     let(:change_flag) { MutableBoolean.new(false) }
     let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
 
@@ -348,7 +352,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
           expect(change_flag).to eq true
           expect(error_log.has_errors?).to eq true
           expect(error_log.missing_products.length).to eq 1
-          expect(error_log.missing_products[0]).to eq '1271424-437'
+          prod_error = error_log.missing_products.first
+          expect(prod_error.article).to eq "ARTICLE"
+          expect(prod_error.product).to eq "1271424-437"
           expect(error_log.missing_variants.length).to eq 0
           expect(error_log.malformed_products.length).to eq 0
         end
@@ -367,6 +373,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
           expect(error_log.has_errors?).to eq true
           expect(error_log.missing_products.length).to eq 0
           expect(error_log.missing_variants.length).to eq 1
+          expect(error_log.missing_variants[0].article).to eq 'ARTICLE'
           expect(error_log.missing_variants[0].product).to eq '1271424-437'
           expect(error_log.missing_variants[0].variant).to eq '1271424-43700-SM'
           expect(error_log.malformed_products.length).to eq 0
@@ -504,18 +511,28 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   end
 
   describe "error emailing" do
+    let! (:user) { 
+      u = Factory(:user, email: "me@there.com") 
+      u.groups << group
+      u
+    }
+
+    let (:group) { Group.use_system_group("UA Article Master Errors") }
+
     it "sends error email" do
       error_log = described_class::PrepackErrorLog.new
-      error_log.missing_products = ['ABC', 'DEF']
-      error_log.malformed_products = ['GHI', 'JKL']
-      error_log.missing_variants = [described_class::PrepackErrorLogMissingVariant.new('MNO', 'PQR'), described_class::PrepackErrorLogMissingVariant.new('STU', 'VWX')]
+      error_log.missing_products = [described_class::PrepackErrorLogMissingProduct.new("Article", "Prod"), described_class::PrepackErrorLogMissingProduct.new("Article2", "Prod2")]
+      error_log.malformed_products = ['Malformed 1', 'Malformed 2']
+      error_log.missing_variants = [described_class::PrepackErrorLogMissingVariant.new('Article', 'MNO', 'PQR'), described_class::PrepackErrorLogMissingVariant.new('Article2', 'STU', 'VWX')]
 
       subject.send_error_email error_log, 'file.xml'
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq [ "support@vandegriftinc.com" ]
-      expect(mail.subject).to eq "UA Article Master Parser: Products and/or Variants not found"
-      expect(mail.body).to match(/The following errors were encountered when processing file.xml: \<br\> \<br\>These products could not be found:\<br\>ABC\<br\>DEF\<br\>\<br\>These variants could not be found \(product \/ variant\):\<br\>\<br\>MNO \/ PQR\<br\>STU \/ VWX\<br\>\<br\>These product codes did not fit the expected format:\<br\>GHI\<br\>JKL\<br\>/)
+      expect(mail.to).to eq ["me@there.com"]
+      expect(mail.subject).to eq "UA Article Master Processing Errors"
+      expect(mail.body.raw_source).to include "Prepack Article # 'Article' references missing Product 'Prod'."
+      expect(mail.body.raw_source).to include "Prepack Article # 'Article' references a missing SKU # 'PQR' from Product 'MNO'."
+      expect(mail.body.raw_source).to include "<li>Malformed 1</li>"
     end
 
     # Represents fake condition that wouldn't occur in real world usage.
@@ -523,13 +540,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       error_log = described_class::PrepackErrorLog.new
       # Has no missing products, etc.
 
-      subject.send_error_email error_log, 'file.xml'
+      subject.send_error_email error_log, 'path/file.xml'
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.body).to match(/The following errors were encountered when processing file.xml: \<br\> \<br\>/)
-      expect(mail.body).not_to match(/These products could not be found/)
-      expect(mail.body).not_to match(/These variants could not be found/)
-      expect(mail.body).not_to match(/These product codes did not fit the expected format/)
+      expect(mail.body.raw_source).to include "The following errors were encountered when processing file 'file.xml'"
+      expect(mail.body.raw_source).not_to include "The following Prepack Component Products could not be found"
+      expect(mail.body.raw_source).not_to include "The following Prepack Component Skus could not be found"
+      expect(mail.body.raw_source).not_to include "These product codes did not fit the expected format"
     end
   end
 
