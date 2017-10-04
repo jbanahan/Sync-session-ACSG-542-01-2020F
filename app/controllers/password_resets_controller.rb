@@ -32,7 +32,9 @@ class PasswordResetsController < ApplicationController
 
     if current_password_valid || @user.password_locked || !@user.password_expired
       if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
-        @user.update_attributes(:failed_logins => 0, :password_reset => false, :password_expired => false, :password_locked => false)
+        @user.update_attributes(:password_reset => false, :password_expired => false, :password_locked => false)
+        @user.failed_logins = 0
+        @user.save!
         # Have to actually sign in the user here via clearance to set their remember token
         sign_in(@user) do |status|
           success = status.success?
