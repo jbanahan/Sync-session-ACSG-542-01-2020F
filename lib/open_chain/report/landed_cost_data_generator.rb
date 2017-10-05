@@ -42,10 +42,10 @@ module OpenChain; module Report
           ed[:transport_mode_code] = entry.transport_mode_code
           ed[:entry_number] = entry.entry_number
           ed[:broker_reference] = entry.broker_reference
-          ed[:customer_reference] = entry.customer_references.split("\n")
+          ed[:customer_reference] = entry.customer_references.to_s.split("\n")
 
           # We're going to include all PO #'s as customer references as well (making sure not to include them twice since po# could also be a customer reference value)
-          ed[:customer_references] = (entry.po_numbers.split("\n") | entry.customer_references.split("\n")).select {|v| !v.blank?}
+          ed[:customer_references] = (entry.po_numbers.to_s.split("\n") | entry.customer_references.to_s.split("\n")).select {|v| !v.blank?}
 
           ed[:commercial_invoices] = []
           # Find the total # of units so we can calculate the proration percentages for

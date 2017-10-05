@@ -10,7 +10,12 @@ module OpenChain; module CustomHandler; module Talbots; class TalbotsLandedCostC
   extend OpenChain::EntityCompare::ComparatorHelper
 
   def self.accept? snapshot
-    super && snapshot.recordable.try(:importer).try(:alliance_customer_number) == "TALBO"
+    if super
+      r = snapshot.recordable
+      !!r.last_billed_date && r.try(:importer).try(:alliance_customer_number) == "TALBO"
+    else
+      false
+    end
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

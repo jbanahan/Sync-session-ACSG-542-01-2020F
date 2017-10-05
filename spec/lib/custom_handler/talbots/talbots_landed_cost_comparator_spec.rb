@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
   subject { described_class }
-  let(:ent) { Factory(:entry, entry_number: "ENTNUM", importer: co)}
+  let(:ent) { Factory(:entry, entry_number: "ENTNUM", importer: co, last_billed_date: DateTime.now)}
   let(:co) { Factory(:company, alliance_customer_number: "TALBO") }
   let(:es) { Factory(:entity_snapshot, recordable: ent) }
 
@@ -18,6 +18,11 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
 
     it "rejects non-Talbots entries" do
       co.update_attributes alliance_customer_number: "ACME"
+      expect(subject.accept? es).to eq false
+    end
+
+    it "rejects uninvoiced entries" do
+      ent.update_attributes! last_billed_date: nil
       expect(subject.accept? es).to eq false
     end
   end
