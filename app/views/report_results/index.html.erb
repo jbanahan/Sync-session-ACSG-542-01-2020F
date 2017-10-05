@@ -185,6 +185,10 @@
     <tr class='hover'><td><%=link_to "Polo Jira Report", reports_show_rl_jira_report_path%></td>
     <td>Reports on Ralph Lauren Jira support issues.</td></tr>
   <%end%>
+  <%if OpenChain::Report::SpecialProgramsSavingsReport.permission?(current_user)%>
+    <tr class="hover"><td><%=link_to "Special Programs Savings Report", reports_show_special_programs_savings_report_path%></td>
+    <td>Special Programs Savings report.</td></tr>
+  <%end%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

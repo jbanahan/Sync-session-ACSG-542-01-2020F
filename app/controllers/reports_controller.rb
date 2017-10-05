@@ -717,6 +717,30 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_special_programs_savings_report
+    if OpenChain::Report::SpecialProgramsSavingsReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_special_programs_savings_report
+    if OpenChain::Report::SpecialProgramsSavingsReport.permission? current_user
+      start_date = params[:start_date].to_s.to_date
+      end_date = params[:end_date].to_s.to_date
+      if start_date.nil? || end_date.nil?
+        add_flash :errors, "You must enter a start and end date"
+        redirect_to reports_show_special_programs_savings_report_path
+      elsif params[:companies].nil?
+        add_flash :errors, "You must enter at least one customer number"
+        redirect_to reports_show_special_programs_savings_report_path
+      else
+        run_report "Special Programs Savings Report", OpenChain::Report::SpecialProgramsSavingsReport, {companies: params[:companies], start_date: start_date.to_s, end_date: end_date.to_s}, ["Created on or after #{start_date} and before #{end_date} for customers #{params[:customers]}"]
+      end
+    end
+  end
+
   def run_rl_jira_report
     if OpenChain::CustomHandler::Polo::PoloJiraEntryReport.permission? current_user
       # Validate the start / end dates are not more than a year apart.
