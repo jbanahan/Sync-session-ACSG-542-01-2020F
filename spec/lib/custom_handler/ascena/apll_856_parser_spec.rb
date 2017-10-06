@@ -85,13 +85,13 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expected_reference = 'ASCENA-XM1007980-HK956641'
       order #prep order data
       ports #prep port data
-      expect_any_instance_of(Shipment).to receive(:create_snapshot)
+      expect_any_instance_of(Shipment).to receive(:create_snapshot).with(User.integration, nil, "path")
       expect(Lock).to receive(:acquire).with(expected_reference).and_yield
       expect {described_class.process_shipment(first_shipment_array,cdefs, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment,:count).from(0).to(1)
       s = Shipment.first
       expect(s.reference).to eq expected_reference
       expect(s.importer).to eq ascena
-      expect(s.house_bill_of_lading).to eq 'XM1007980'
+      expect(s.master_bill_of_lading).to eq 'KKLUXM1007980'
       expect(s.booking_number).to eq 'HK956641'
       expect(s.est_departure_date).to eq Date.new(2016,11,22)
       expect(s.est_arrival_port_date).to eq Date.new(2016,12,5)

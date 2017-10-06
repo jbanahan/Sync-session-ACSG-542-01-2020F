@@ -26,6 +26,7 @@ class KeyJsonItem < ActiveRecord::Base
   SIEMENS_BILLING_FILE_COUNTER ||= 'siemens_billing'
   POLLING_JOB ||= "polling_job"
   ENTRY_DOCUMENT_COUNTS ||= "ent_doc_count"
+  ISF_CI_LOAD_CONFIG ||= "isf_config"
 
 
   # turn the object into a json string and store it in the json_data field
@@ -39,11 +40,12 @@ class KeyJsonItem < ActiveRecord::Base
     JSON.parse self.json_data
   end
 
-  scope :lands_end_cd, lambda {|logical_key| where(:key_scope=>KS_LANDS_END_CD).where(:logical_key=>logical_key)}
-  scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT).where(:logical_key=>logical_key)}
-  scope :updated_entry_data, lambda {|logical_key| where(:key_scope=>KEWILL_ENTRY_DATA).where(:logical_key=>logical_key)}
-  scope :usc_periodic_dates, lambda {|logical_key| where(:key_scope=>PERIODIC_MONTHLY_DATES).where(:logical_key=>logical_key)}
-  scope :siemens_billing, lambda {|logical_key| where(:key_scope=>SIEMENS_BILLING_FILE_COUNTER).where(:logical_key=>logical_key)}
-  scope :polling_job, lambda {|logical_key| where(:key_scope=>POLLING_JOB).where(:logical_key=>logical_key)}
-  scope :entry_document_counts, lambda {|logical_key| where(key_scope: ENTRY_DOCUMENT_COUNTS).where(logical_key: logical_key) }
+  scope :lands_end_cd, lambda {|logical_key| where(:key_scope=>KS_LANDS_END_CD, :logical_key=>logical_key)}
+  scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT, :logical_key=>logical_key)}
+  scope :updated_entry_data, lambda {|logical_key| where(:key_scope=>KEWILL_ENTRY_DATA, :logical_key=>logical_key)}
+  scope :usc_periodic_dates, lambda {|logical_key| where(:key_scope=>PERIODIC_MONTHLY_DATES, :logical_key=>logical_key)}
+  scope :siemens_billing, lambda {|logical_key| where(:key_scope=>SIEMENS_BILLING_FILE_COUNTER, :logical_key=>logical_key)}
+  scope :polling_job, lambda {|logical_key| where(:key_scope=>POLLING_JOB, :logical_key=>logical_key)}
+  scope :entry_document_counts, lambda {|logical_key| where(key_scope: ENTRY_DOCUMENT_COUNTS, logical_key: logical_key) }
+  scope :isf_config, lambda {|logical_key| where(key_scope: ISF_CI_LOAD_CONFIG, logical_key: logical_key) }
 end

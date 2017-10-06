@@ -45,6 +45,7 @@ module OpenChain
 
               sf.save!
               sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
+              sf.create_snapshot User.integration, nil, s3_key
             end
           end
           sf.broadcast_event(:save)

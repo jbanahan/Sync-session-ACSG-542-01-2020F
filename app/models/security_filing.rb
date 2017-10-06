@@ -24,6 +24,10 @@ class SecurityFiling < ActiveRecord::Base
     user.comment_security_filings? && user.company.master?
   end
 
+  def matched?
+    self.status_code == "ACCMATCH"
+  end
+
   def self.search_secure user, base_object
     base_object.where(search_where(user))
   end

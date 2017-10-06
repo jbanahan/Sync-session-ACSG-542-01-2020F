@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   describe "parse" do
     it 'should process from text' do
       expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
-      @k.parse IO.read(@path)
+      @k.parse IO.read(@path), bucket: "bucket", key: "key"
       sf = SecurityFiling.first
       expect(sf.host_system_file_number).to eq('1870446')
       expect(sf.host_system).to eq("Kewill")
@@ -36,6 +36,10 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       # to try to make sure we're recording milliseconds and not seconds)
       expect(sf.time_to_process).to be > 10
       expect(sf.time_to_process).to be < 1000 # NOTE: this fails if you're ever debugging the parser
+      expect(sf.entity_snapshots.length).to eq 1
+      s = sf.entity_snapshots.first
+      expect(s.user).to eq User.integration
+      expect(s.context).to eq "key"
     end
     it "should not replace entry numbers" do
       sf = Factory(:security_filing,:entry_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)

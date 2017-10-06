@@ -93,4 +93,18 @@ describe SecurityFiling do
       end
     end
   end
+
+  describe "matched?" do
+    it "recognizes matched status code" do
+      expect(SecurityFiling.new(status_code: "ACCMATCH").matched?).to eq true
+    end
+
+    context "with unmatched statuses" do
+      ["ACCNOMATCH", "DEL_ACCEPT", "REPLACE", "ACCEPTED", "ACCWARNING", "DELETED", ""].each do |status|
+        it "recongizes #{status} as unmatched" do
+          expect(SecurityFiling.new(status_code: status).matched?).to eq false
+        end
+      end
+    end
+  end
 end

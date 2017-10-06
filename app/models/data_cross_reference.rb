@@ -41,6 +41,7 @@ class DataCrossReference < ActiveRecord::Base
   # be filled in
   MID_XREF ||= 'mid_xref'
   SHIPMENT_CI_LOAD_CUSTOMERS ||= "shp_ci_load_cust"
+  ISF_CI_LOAD_CUSTOMERS ||= "isf_ci_load_cust"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 

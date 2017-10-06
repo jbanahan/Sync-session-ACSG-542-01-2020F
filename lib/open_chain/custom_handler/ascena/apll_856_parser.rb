@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       REX12::Document.each_transaction(data) do |transaction|
         isa_code = transaction.isa_segment.elements[13].value
         begin
-          process_shipment(transaction.segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:path])
+          process_shipment(transaction.segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
         rescue
           errors << $!
         end
@@ -57,7 +57,6 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         shipment_type = equipments.empty? ? nil : find_ref_value(equipments.first,'XY')
         shp = Shipment.new(
           reference:reference,
-          house_bill_of_lading:hbol,
           booking_number:booking_number,
           est_departure_date:get_date(shipment_segments,'369'),
           departure_date:get_date(shipment_segments,'370'),
@@ -73,6 +72,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           last_file_bucket: last_file_bucket,
           last_file_path: last_file_path
         )
+        shp.master_bill_of_lading = "#{shp.vessel_carrier_scac}#{hbol}"
         shp.save!
 
         errors = []
@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
         shp.marks_and_numbers = errors.length > 0 ? "* #{errors.join("\n* ")}" : nil
 
-        shp.create_snapshot User.integration, nil, "APLL 856 Parser"
+        shp.create_snapshot User.integration, nil, last_file_path
 
         shipment = shp
       end
