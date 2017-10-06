@@ -7,6 +7,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   include OpenChain::Report::ReportHelper
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
+  #sets both the brands that are included and the order in which they appear in the first-sale tab
+  BRAND_MAP = {"JST" => "Tweenbrands", "LB" => "Lane Bryant", "CA" => "Catherines", "MAU" => "Maurices", "DB" => "Dressbarn", "JUS" => "Justice"}
+
   def self.permission? user
     importer = ascena
     return false unless importer
@@ -106,7 +109,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       end
 
       brand = row[field_map[:brand]]
-      if !brand.blank?
+      if BRAND_MAP.keys.member?(brand)
         order_type = row[field_map[:order_type]].to_s.strip.upcase == "NONAGS" ? "NONAGS" : "AGS"
 
         first_sale_brand_summary[order_type][brand] ||= {vendor_invoice: BigDecimal("0"), entered_value: BigDecimal("0"), total_entered_value: BigDecimal("0"), duty_savings: BigDecimal("0")}
@@ -151,17 +154,22 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def generate_first_sale_brand_summary sheet, brand_summary
-    column_widths = []
-
     row = 0
     [["AGS", brand_summary["AGS"]], ["NONAGS", brand_summary["NONAGS"]]].each do |summary_type, summary|
-      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Vendor Invoice", summary["JST"].try(:[], :vendor_invoice), "", summary["LB"].try(:[], :vendor_invoice), "", summary["CA"].try(:[], :vendor_invoice), "", summary["MAU"].try(:[], :vendor_invoice), "", summary["DB"].try(:[], :vendor_invoice)]
-      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Entered Value", summary["JST"].try(:[], :entered_value), "", summary["LB"].try(:[], :entered_value), "", summary["CA"].try(:[], :entered_value), "", summary["MAU"].try(:[], :entered_value), "", summary["DB"].try(:[], :entered_value)]
-      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Duty Savings", summary["JST"].try(:[], :duty_savings), "", summary["LB"].try(:[], :duty_savings), "", summary["CA"].try(:[], :duty_savings), "", summary["MAU"].try(:[], :duty_savings), "", summary["DB"].try(:[], :duty_savings)]
-      XlsMaker.add_body_row sheet, (row+=1), ["#{summary_type} Total Brand FOB Receipts", summary["JST"].try(:[], :total_entered_value), "", summary["LB"].try(:[], :total_entered_value), "", summary["CA"].try(:[], :total_entered_value), "", summary["MAU"].try(:[], :total_entered_value), "", summary["DB"].try(:[], :total_entered_value)]
+     
+      XlsMaker.add_body_row sheet, (row+=1), first_sale_brand_summary_row(summary, summary_type, "Vendor Invoice", :vendor_invoice)
+      XlsMaker.add_body_row sheet, (row+=1), first_sale_brand_summary_row(summary, summary_type, "Entered Value", :entered_value)
+      XlsMaker.add_body_row sheet, (row+=1), first_sale_brand_summary_row(summary, summary_type, "Duty Savings", :duty_savings)
+      XlsMaker.add_body_row sheet, (row+=1), first_sale_brand_summary_row(summary, summary_type, "Total Brand FOB Receipts", :total_entered_value)
       row+=1
     end
     
+  end
+
+  def first_sale_brand_summary_row summary, summary_type, summary_field_name, summary_field
+    out = [summary_type + " " + summary_field_name]
+    BRAND_MAP.keys.each { |b| out << summary[b].try(:[], summary_field) << "" }
+    out[0..-2] #trim extra blank
   end
 
   def summary_headers
@@ -173,7 +181,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def brand_headers
-    ["", "Tweenbrands", "", "Lane Bryant", "", "Catherines", "", "Maurices", "", "Dressbarn"]
+    BRAND_MAP.map{ |k,v| ["", v] }.flatten
   end
 
   def calculate_duty_savings report_row
