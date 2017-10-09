@@ -99,6 +99,22 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
         expect(line.foreign_value).to eq BigDecimal("22.50")
       end
 
+      it "reference shipment by house bill" do
+        isf.update_attributes! house_bills_of_lading: "HBOL"
+        shipment.update_attributes! master_bill_of_lading: "", house_bill_of_lading: "HBOL"
+
+        e = subject.generate_entry_data isf
+        expect(e).not_to be_nil
+
+        #Easiest way to determine that there was a shipment match is to check that there are cartons listed
+        expect(e.invoices.length).to eq 1
+
+        i = e.invoices.first
+        expect(i.invoice_lines.length).to eq 1
+        line = i.invoice_lines.first
+        expect(line.cartons).to eq 15
+      end
+
       it "uses isf tariff if product tariff doesn't match" do
         product.update_hts_for_country us, "0123456789"
 

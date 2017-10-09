@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericIs
         if shipments.length > 0
           rel = rel.where("shipments.id NOT IN (?)", shipments.map(&:id))
         end
-        shipments.push rel.all
+        shipments.push *rel.all
       end
 
       shipments
