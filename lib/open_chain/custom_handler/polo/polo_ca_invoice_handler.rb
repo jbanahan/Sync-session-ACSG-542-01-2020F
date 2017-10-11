@@ -250,7 +250,7 @@ module OpenChain; module CustomHandler; module Polo
           end
         end
 
-        raise PoloParserError.new "Invoice contains more than 999 rows." unless rollup.length < 1000
+        raise PoloParserError.new "The attached invoice contains #{rollup.length} rows after being rolled up.  A maximum of 999 rows is allowed." unless rollup.length < 1000
         # The detail_header_row now indicates the totals row, which is what we want to return
         # so that we can parse some information out of the summary section of the invoice
         detail_header_row
