@@ -49,7 +49,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
           cit.spi_primary AS 'SPI (Primary)',
           ot.common_rate_decimal AS 'Common Rate',
           IFNULL(ROUND((ot.common_rate_decimal * cit.entered_value), 2), 0) AS 'Duty without SPI',
-          IFNULL(ROUND(((ot.common_rate_decimal * cit.entered_value) - cit.duty_amount), 2), 0) AS 'Savings'
+          IFNULL(ROUND(ot.common_rate_decimal * cit.entered_value, 2) - cit.duty_amount, 0) AS 'Savings'
       FROM
           entries e
               INNER JOIN
@@ -80,7 +80,12 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
     table_from_query sheet, sql, conversions
     sheet.row(sheet.rows.count + 1).replace(['Grand Totals', nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
                                          grand_total_hash[:invoice_tariff_duty], nil, nil, grand_total_hash[:duty_without_spi], grand_total_hash[:savings]])
-    sheet.row(sheet.rows.count + 1).replace(['Common Rate and Duty without SPI is estimated based on the country’s current tariff schedule and may not reflect the historical Common Rate from the date the entry was cleared. For Common Rates with a compound calculation (such as 4% plus $0.05 per KG), only the percentage is used for the estimated Duty without SPI and Savings calculations.'])
+    format = Spreadsheet::Format.new :vertical_align => :justify
+    msg = "Common Rate and Duty without SPI is estimated based on the country’s current tariff schedule and may not reflect the historical Common Rate from the date the entry was cleared. For Common Rates with a compound calculation (such as 4% plus $0.05 per KG), only the percentage is used for the estimated Duty without SPI and Savings calculations."
+    current_row = sheet.rows.count + 1
+    sheet.merge_cells(current_row, 0, current_row + 4, 6)
+    sheet.row(current_row).insert(0, msg)
+    sheet.row(current_row).default_format = format
     workbook_to_tempfile wb, "Special Programs Savings Report"
   end
 
