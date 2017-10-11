@@ -58,6 +58,16 @@ class OrderLine < ActiveRecord::Base
     self.piece_sets.where("shipment_line_id is not null").count > 0
   end
 
+  def booked?
+    self.booking_lines.length > 0
+  end
+
+  def booked_qty
+    qty = BigDecimal("0")
+    self.booking_lines.each {|l| qty += l.quantity unless l.quantity.nil? }
+    qty
+  end
+
 	def find_same
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})
     raise "Found multiple order lines with the same order id #{self.order_id} & line number #{self.line_number}" if found.size > 1

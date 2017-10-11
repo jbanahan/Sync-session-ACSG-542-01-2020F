@@ -209,5 +209,22 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       m = OpenMailer.deliveries.pop
       expect(m).not_to be_nil
     end
+
+    it "updates only an order header when order is booked but not shipped" do
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+      ol = Factory(:order_line,order:o)
+      s = Factory(:shipment)
+      bl = s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
+    
+      run_file
+
+      o.reload
+      expect(o.order_lines.to_a).to eq [ol]
+      expect(o.fob_point).to eq 'CN'
+
+      # No email should be sent in this case
+      m = OpenMailer.deliveries.pop
+      expect(m).to be_nil
+    end
   end
 end

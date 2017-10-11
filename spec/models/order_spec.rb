@@ -466,8 +466,6 @@ describe Order do
     end
   end
 
-  require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
-
   describe "associate_vendor_and_products!" do
     it "should create assignments for records where they don't already exist" do
       expect_any_instance_of(ProductVendorAssignment).to receive(:create_snapshot).once
@@ -532,6 +530,43 @@ describe Order do
       sr.email_sent_date = 2.years.ago
       sr.save!
       expect(o.available_tpp_survey_responses.to_a).to eq []
+    end
+  end
+
+  describe "booked?" do
+    let (:order) { Factory(:order) }
+    let (:product) { Factory(:product) }
+    let! (:booking_line) { Factory(:booking_line, order: order, product: product) }
+
+    it "indicates booked as true if an order id is listed on a booking line" do
+      expect(order.booked?).to eq true
+    end
+
+    it "indicates booked as false if an order is not on a booking line" do
+      booking_line.destroy
+      expect(order.booked?).to eq false
+    end
+  end
+
+  describe "booked_qty" do
+    let (:order) { Factory(:order) }
+    let (:product) { Factory(:product) }
+    let! (:booking_line_1) { Factory(:booking_line, order: order, product: product, quantity: 10) }
+    let! (:booking_line_2) { Factory(:booking_line, order: order, product: product, quantity: 15) }
+
+    it "finds sum of quantity of all booking lines" do
+      expect(order.booked_qty).to eq 25
+    end
+
+    it "handles booking lines w/ null quantities" do
+      booking_line_1.update_attributes! quantity: nil
+      expect(order.booked_qty).to eq 15
+    end
+
+    it "returns 0 if no lines are booked" do
+      booking_line_1.destroy
+      booking_line_2.destroy
+      expect(order.booked_qty).to eq 0
     end
   end
 end

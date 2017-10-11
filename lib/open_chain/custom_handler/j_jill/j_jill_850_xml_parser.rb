@@ -50,11 +50,19 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       update_lines = true
       update_header = true
       po_assigned_to_shipment = false
-      #skip orders already on shipments
-      if ord && ord.shipping?
-        update_header = @inner_opts[:force_header_updates]
+      
+      # If an order is booked or shipping we can't update the lines, this is because we don't
+      # get indempotent line numbers from Jill on the 850 (we actually just autogenerate them here).
+      # Therefore, we have no way to know if lines were removed / added on a transfer and end up just deleting
+      # and recreating the lines that were sent, and we could
+      # end up essentially trashing a booking or shipment by deleting an order line it references.
+      booked = ord && ord.booked?
+      shipped = ord && ord.shipping?
+      if booked || shipped
+        # Allow updates to orders if they're booked but not shipped
+        update_header = (@inner_opts[:force_header_updates] == true || booked)
         update_lines = false
-        po_assigned_to_shipment = true
+        po_assigned_to_shipment = true if shipped
       end
 
       ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord

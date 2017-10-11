@@ -53,4 +53,40 @@ describe OrderLine do
       expect(ol.received_qty).to eq 3
     end
   end
+
+  describe "booked?" do
+
+    it "returns true if there are booking lines associated with the order line" do
+      l = OrderLine.new
+      l.booking_lines << BookingLine.new
+
+      expect(l.booked?).to eq true
+    end
+
+    it "returns false if there are no booking lines associated" do
+      expect(OrderLine.new.booked?).to eq false
+    end
+  end
+
+  describe "booked_qty" do
+    it "returns booked quantity sum if there are booking lines associated with the order line" do
+      l = OrderLine.new
+      l.booking_lines << BookingLine.new(quantity: 10)
+      l.booking_lines << BookingLine.new(quantity: 15)
+
+      expect(l.booked_qty).to eq 25
+    end
+
+    it "returns zero if no booking lines" do
+      expect(OrderLine.new.booked_qty).to eq 0
+    end
+
+    it "handles missing quantities" do
+      l = OrderLine.new
+      l.booking_lines << BookingLine.new(quantity: 10)
+      l.booking_lines << BookingLine.new
+
+      expect(l.booked_qty).to eq 10
+    end
+  end
 end

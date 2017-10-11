@@ -20,9 +20,10 @@ class Order < ActiveRecord::Base
 	validates :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 
-	has_many	 :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
-	has_many   :piece_sets, :through => :order_lines
-  has_many   :booking_lines_by_order_line, :through => :order_lines, source: :booking_lines
+	has_many :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
+	has_many :piece_sets, :through => :order_lines
+  has_many :booking_lines_by_order_line, :through => :order_lines, source: :booking_lines
+  has_many :booking_lines
 
   accepts_nested_attributes_for :order_lines, :allow_destroy => true
 
@@ -227,6 +228,15 @@ class Order < ActiveRecord::Base
   # Returns true if order appears on any shipments.
   def shipping?
     self.piece_sets.where("shipment_line_id is not null").count > 0
+  end
+
+  def booked?
+    self.booking_lines.count > 0
+  end
+
+  def booked_qty
+    v = self.booking_lines.sum(:quantity)
+    v.nil? ? BigDecimal("0") : v
   end
 
 	def can_view?(user)
