@@ -11,6 +11,7 @@ class PasswordResetsController < ApplicationController
       else
         @user.delay.deliver_password_reset_instructions!
         add_flash :notices, "Instructions for resetting your password have been emailed to you."
+        @user.update_attribute(:forgot_password, true)
       end
     else
       add_flash :errors, "No user was found with email \"#{params[:email]}\"."
@@ -30,7 +31,7 @@ class PasswordResetsController < ApplicationController
       current_password_valid = @user.authenticated?(@user.password_salt, params[:user][:current_password])
     end
 
-    if current_password_valid || @user.password_locked || !@user.password_expired
+    if @user.forgot_password.present? || current_password_valid || @user.password_locked || !@user.password_expired
       if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
         @user.update_attributes(:password_reset => false, :password_expired => false, :password_locked => false)
         @user.failed_logins = 0
@@ -52,6 +53,7 @@ class PasswordResetsController < ApplicationController
     if success
       @user.on_successful_login request
       flash[:notice] = "Password successfully updated"
+      @user.update_attribute(:forgot_password, false)
       redirect_to root_url
     else 
       errors_to_flash @user, now: true

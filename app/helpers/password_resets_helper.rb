@@ -1,6 +1,6 @@
 module PasswordResetsHelper
   def requires_old_password?(user=nil)
     false if user.blank?
-    user.confirmation_token.blank? && (user.password_expired && !user.password_locked)
+    user.forgot_password.blank? && (user.password_expired && !user.password_locked)
   end
 end
