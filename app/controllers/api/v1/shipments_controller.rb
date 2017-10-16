@@ -510,7 +510,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :bkln_var_db_id,
       :bkln_varuid,
       :bkln_order_line_id,
-      :bkln_product_db_id
+      :bkln_product_db_id,
+      :bkln_order_line_quantity,
+      :bkln_quantity_diff
      ])
   end
 

@@ -7,7 +7,7 @@ module OpenChain; module ModelFieldDefinition; module BookingLineFieldDefinition
   def add_booking_line_fields
     add_fields core_module, [
      [1, :bkln_line_number, :line_number, "Line Number", {:data_type=>:integer}],
-     [2, :bkln_quantity, :quantity, "Quantity Booked", {:data_type=>:decimal}],
+     [2, :bkln_quantity, :quantity, "Booked Quantity", {:data_type=>:decimal}],
      [3, :bkln_gross_kgs, :gross_kgs, "Gross Weights (KGS)", {:data_type=>:decimal}],
      [4, :bkln_cbms, :cbms, "CBMS", {:data_type=>:decimal}],
      [5, :bkln_carton_qty, :carton_qty, "Carton Quantity", {:data_type=>:integer}],
@@ -82,7 +82,24 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
           qualified_field_name: "(SELECT IFNULL(orders.customer_order_number, orders.order_number) FROM orders WHERE booking_lines.order_id = orders.id LIMIT 1)"}],
       [16, :bkln_order_line_number, :order_line_number, "Order Line Number", {data_type: :integer, read_only: true, 
           export_lambda: lambda {|detail| detail.order_line.try(:line_number)},
-          qualified_field_name: "(SELECT line_number FROM order_lines AS booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}]
+          qualified_field_name: "(SELECT line_number FROM order_lines AS booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}],
+     [17, :bkln_order_line_quantity, :order_line_quantity, "Order Quantity", {data_type: :integer, read_only: true,
+         export_lambda: lambda {|detail| detail.order_line.try(:quantity)},
+         qualified_field_name: "(SELECT quantity FROM order_lines as booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}],
+     [18, :bkln_quantity_diff, :order_line_quantity_diff, "Booked Quantity Differential", {data_type: :decimal, read_only: true,
+         export_lambda: lambda {|detail|
+             if detail.order_line.try(:quantity) && detail.try(:quantity)
+               detail.order_line.quantity / detail.quantity
+             else
+               nil
+             end
+         },
+         qualified_field_name: "(SELECT ROUND(IFNULL((order_lines.quantity / booking_lines.quantity) * 100, 0), 0)
+FROM booking_lines
+INNER JOIN
+order_lines ON order_lines.id = booking_lines.order_line_id
+WHERE
+order_lines.id = booking_lines.order_line_id)"}]
     ]
     add_fields CoreModule::BOOKING_LINE, make_variant_arrays(100,'bkln','booking_lines')
   end

@@ -268,7 +268,9 @@
                         <th>Product</th>
                         <th>Order Number - Line</th>
                         <th>Container<br>Size</th>
-                        <th>Quantity</th>
+                        <th>Order Quantity</th>
+                        <th>Booked Quantity</th>
+                        <th>Diff</th>
                         <th>Cartons</th>
                         <th>Volume<br>(CBMS)</th>
                         <th>Gross Weight<br>(KGS)</th>
@@ -286,8 +288,14 @@
                           {{ln.bkln_container_size}}
                         </td>
                         <td>
+                          {{ln.bkln_order_line_quantity}}
+                        </td>
+                        <td>
                           {{ln.bkln_quantity}}
                         </td>
+                          <td>
+                            {{ln.bkln_quantity_diff}}%
+                          </td>
                         <td>
                           {{ln.bkln_carton_qty}}
                         </td>
