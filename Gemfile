@@ -65,6 +65,8 @@ gem 'griddler-postmark', '~> 1.0'
 # needs this.
 gem "mono_logger", '1.1.0'
 gem "net-sftp", '2.1.2'
+# For some reason, our WingFTP server doesn't correctly terminate ssh connections for any version of net-ssh > 2.7.0..so this locks the version in place.
+gem "net-ssh", '2.7.0' 
 gem "clearance", '1.3.0'
 
 gem 'connection_pool', '~> 2.2'

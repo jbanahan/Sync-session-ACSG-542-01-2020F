@@ -425,6 +425,7 @@ DEPENDENCIES
   mono_logger (= 1.1.0)
   mysql2 (= 0.3.21)
   net-sftp (= 2.1.2)
+  net-ssh (= 2.7.0)
   newrelic_rpm (~> 3.16.0)
   omniauth-google-oauth2 (= 0.2.2)
   omniauth-saml (~> 1.2.0)
