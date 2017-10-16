@@ -44,20 +44,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
   end
 
   def generate_xls_to_google_drive drive_path, entry
-    # Once the generate_xls_to_google_drive method implemention in KewillCommercialInvoiceGenerator lands
-    # in master from another (long standing) branch, then this whole method can be reduced to:
-    # OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new.generate_xls_to_google_drive("EDDIE CI Load/#{entry.invoices.first.try(:invoice_number)}.xls", entry)
-    wb = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new.generate_xls entry
-
-    Tempfile.open([File.basename(drive_path, ".*"), File.extname(drive_path)]) do |t|
-      t.binmode
-      wb.write t
-      t.flush
-      t.rewind
-
-      OpenChain::GoogleDrive.upload_file OpenChain::GoogleDrive.default_user_account, drive_path, t
-    end
-    nil
+    OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new.generate_xls_to_google_drive(drive_path, entry)
   end
 
   def import_country row

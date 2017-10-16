@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'google/api_client'
 
 describe OpenChain::GoogleAccountChecker do
   let!(:user) { Factory(:user, email: 'dummy@vandegriftinc.com', disabled: false) }
@@ -12,85 +11,88 @@ describe OpenChain::GoogleAccountChecker do
     resp
   end
 
+  let (:service) {
+    service = instance_double(Google::Apis::AdminDirectoryV1::DirectoryService)
+  }
+
+  let (:suspended_user_response) {
+    response = double("GoogleApiResponseDouble")
+    user = double("GoogleApiResponseUser")
+    allow(user).to receive(:suspended?).and_return true
+    allow(response).to receive(:users).and_return [user]
+    allow(response).to receive(:to_json).and_return '{suspended:true}'
+
+    response
+  }
+
+  let (:missing_user_response) {
+    response = double("GoogleApiResponseDouble")
+    allow(response).to receive(:users).and_return []
+    allow(response).to receive(:to_json).and_return '{missing:true}'
+
+    response
+  }
+
+  let (:active_user_response) {
+    response = double("GoogleApiResponseDouble")
+    user = double("GoogleApiResponseUser")
+    allow(user).to receive(:suspended?).and_return false
+    allow(response).to receive(:users).and_return [user]
+    allow(response).to receive(:to_json).and_return '{active:true}'
+
+    response
+  }
 
   describe "run_schedulable" do
-    it 'strips off a plus sign and anything after' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_active.json')
+
+    before :each do 
+      allow(subject).to receive(:admin_directory_service).and_return service
+    end
+
+    it "does nothing for active users" do
+      expect(service).to receive(:list_users).with(customer: "my_customer", domain: "vandegriftinc.com", max_results: 1, query: "email='dummy@vandegriftinc.com'").and_return active_user_response
+      subject.run
+      user.reload
+      expect(user.disabled?).to eq false
+    end
+
+    it "strips alias information from email account" do
       user.update_attributes!(email: 'dummy+blahblah@vandegriftinc.com')
+      expect(service).to receive(:list_users).with(customer: "my_customer", domain: "vandegriftinc.com", max_results: 1, query: "email='dummy@vandegriftinc.com'").and_return active_user_response
+      subject.run
       user.reload
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      expect_any_instance_of(Google::APIClient).to receive(:execute).with(anything, {userKey: 'dummy@vandegriftinc.com'})
-      OpenChain::GoogleAccountChecker.run_schedulable({})
+      expect(user.disabled?).to eq false
     end
 
-    it 'does not raise an error on a 400 error code' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_user_key.json')
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      expect { OpenChain::GoogleAccountChecker.run_schedulable({}) }.not_to raise_error
-    end
-
-    it 'raises an error if anything other than a 404 or 400' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_error.json')
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      expect { OpenChain::GoogleAccountChecker.run_schedulable({}) }.to raise_error(RuntimeError, "Resource Not Found: userKey")
-    end
-
-    it 'suspends users who are not found' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_404.json')
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      expect(OpenMailer).to receive(:send_simple_html)
-      OpenChain::GoogleAccountChecker.run_schedulable({})
+    it "disables accounts that don't exist" do
+      expect(service).to receive(:list_users).with(customer: "my_customer", domain: "vandegriftinc.com", max_results: 1, query: "email='dummy@vandegriftinc.com'").and_return missing_user_response
+      subject.run
       user.reload
-      expect(user.disabled).to eql(true)
+      expect(user.disabled?).to eq true
+
+      # Also verify that an email was sent
+      mail = ActionMailer::Base.deliveries.first
+      expect(mail).not_to be_nil
+      expect(mail.to).to eq ["bug@vandegriftinc.com"]
+      expect(mail.subject).to eq "VFI Track Account Disabled: dummy@vandegriftinc.com"
+      # Just make sure the response data is included in the email body
+      expect(mail.body.raw_source).to include "{missing:true}"
     end
 
-    it 'suspends users who are suspended in Google Directory' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_inactive.json')
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      OpenChain::GoogleAccountChecker.run_schedulable({})
+    it "disables suspended accounts" do
+      expect(service).to receive(:list_users).with(customer: "my_customer", domain: "vandegriftinc.com", max_results: 1, query: "email='dummy@vandegriftinc.com'").and_return suspended_user_response
+      subject.run
       user.reload
-      expect(user.disabled).to eql(true)
+      expect(user.disabled?).to eq true
+
+      # Also verify that an email was sent
+      mail = ActionMailer::Base.deliveries.first
+      expect(mail).not_to be_nil
+      expect(mail.to).to eq ["bug@vandegriftinc.com"]
+      expect(mail.subject).to eq "VFI Track Account Disabled: dummy@vandegriftinc.com"
+      # Just make sure the response data is included in the email body
+      expect(mail.body.raw_source).to include "{suspended:true}"
     end
 
-    it 'does not suspend users who are not suspended in Google Directory' do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_active.json')
-      allow_any_instance_of(Google::APIClient).to receive(:execute).and_return(response_double(json_file))
-      OpenChain::GoogleAccountChecker.run_schedulable({})
-      user.reload
-      expect(user.disabled).to eql(false)
-    end
-
-    it "ignores users that are already disabled" do
-      # Just make sure the client is not used and that'll be enough to prove we didn't check disabled users
-      user.disabled = true
-      user.save!
-      client = instance_double("Google::APIClient")
-      expect_any_instance_of(described_class).to receive(:get_client).and_return client
-      expect(client).not_to receive(:execute)
-      allow(client).to receive(:discovered_api)
-      described_class.run_schedulable
-    end
-
-    it "retries execute failure 3 times" do
-      expect_any_instance_of(described_class).to receive(:sleep).with(1).exactly(3).times
-      client = instance_double("Google::APIClient")
-      api = double("Api")
-      expect_any_instance_of(described_class).to receive(:get_api).and_return api
-      allow(api).to receive(:users).and_return api
-      allow(api).to receive(:get)
-      expect_any_instance_of(described_class).to receive(:get_client).and_return client
-      expect(client).to receive(:execute).exactly(4).times.and_raise "Error!"
-
-      expect { described_class.run_schedulable }.to raise_error "Error!"
-    end
-
-    it "retries non-404, 400 errors 3 times" do
-      json_file = File.read('spec/fixtures/files/google_account_checker/user_search_500.json')
-
-      expect_any_instance_of(described_class).to receive(:sleep).with(1).exactly(3).times
-      expect_any_instance_of(Google::APIClient).to receive(:execute).exactly(4).times.and_return(response_double(json_file))
-
-      expect { described_class.run_schedulable }.to raise_error "Backend Error"
-    end
   end
 end

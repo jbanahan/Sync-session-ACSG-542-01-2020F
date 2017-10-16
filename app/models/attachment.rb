@@ -180,13 +180,12 @@ end
   # Downloads attachment data from S3 and pushes it to the google drive account, path given.
   # drive_folder - if nil, file is placed in root of drive account
   # attachmend_id - the attachment id to push
-  # drive_account - if nil, default account is used
-  # upload_options - any applicable drive upload options
-  def self.push_to_google_drive drive_folder, attachment_id, drive_account = nil, upload_options = {}
+  # overwrite_existing - if false is passed, it will not replace any existing files that may already be in the folder, it will create identically named ones
+  def self.push_to_google_drive drive_folder, attachment_id, overwrite_existing: true
     a = Attachment.find attachment_id
     drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
     OpenChain::S3.download_to_tempfile(a.bucket, a.path) do |temp|
-      OpenChain::GoogleDrive.upload_file drive_account, drive_path, temp, upload_options
+      OpenChain::GoogleDrive.upload_file drive_path, temp, overwrite_existing: overwrite_existing
     end
   end
 

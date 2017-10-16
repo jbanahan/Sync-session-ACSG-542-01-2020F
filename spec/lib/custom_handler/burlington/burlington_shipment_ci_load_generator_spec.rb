@@ -150,10 +150,8 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
     }
 
     it "generates data and sends it to the kewill generator" do
-      expect(generator).to receive(:generate_xls).with(instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry)).and_return workbook
-
       expect(subject).to receive(:kewill_generator).and_return generator
-      expect(subject).to receive(:send_xls_to_google_drive).with(workbook, "MASTERBILL.xls")
+      expect(generator).to receive(:generate_xls_to_google_drive).with("Burlington CI Load/MASTERBILL.xls", [instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry)])
       subject.generate_and_send [shipment]
     end
 
@@ -163,11 +161,10 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       shipment.sync_records.create! trading_partner: "CI Load", sent_at: Time.zone.now
 
       expect(subject).to receive(:kewill_generator).and_return generator
-      expect(subject).to receive(:send_xls_to_google_drive).with(workbook, "MASTERBILL.xls")
       ci_load = nil
-      expect(generator).to receive(:generate_xls) do |cil|
-        ci_load = cil
-        workbook
+      expect(generator).to receive(:generate_xls_to_google_drive) do |path, cil|
+        ci_load = cil.first
+        expect(path).to eq "Burlington CI Load/MASTERBILL.xls"
       end
 
       subject.generate_and_send [shipment]
@@ -178,28 +175,6 @@ describe OpenChain::CustomHandler::Burlington::BurlingtonShipmentCiLoadGenerator
       expect(ci_load.invoices.second.invoice_number).to eq shipment.importer_reference
     end
   end
-
-  describe "send_xls_to_google_drive" do
-    let (:wb) {
-      wb, sheet = XlsMaker.create_workbook_and_sheet "sheet", ["header"]
-      wb
-    }
-
-    it "passes tempfile of given spreadsheet object to drive class" do
-      received_spreadsheet = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq "integration@vandegriftinc.com"
-        expect(path).to eq "Burlington CI Load/file.xls"
-        received_spreadsheet = Spreadsheet.open file.path
-      end
-
-      subject.send_xls_to_google_drive wb, "file.xls"
-
-      expect(received_spreadsheet).not_to be_nil
-      expect(received_spreadsheet.worksheet("sheet")).not_to be_nil
-    end
-  end
-
 
   describe "find_generate_and_send" do
 

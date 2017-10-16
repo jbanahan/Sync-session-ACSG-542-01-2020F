@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Lock do
 
+  before :each do
+    stub_master_setup
+    allow(MasterSetup).to receive(:instance_identifier).and_return "test"
+  end
+
   after :each do
     Lock.send(:flushall) unless @noflush
     Lock.class_variable_set :@@connection_pool, nil
@@ -267,7 +272,7 @@ describe Lock do
 
       # Just short circuit the actual code by insisting the lock has already been seen to avoid
       # hassle of a bunch of other setup crap
-      expect(Lock).to receive(:definitely_acquired?).with("€foo").and_return true
+      expect(Lock).to receive(:definitely_acquired?).with("test:€foo").and_return true
 
       locked = false
       Lock.acquire(lock_name) { locked = true}
@@ -287,7 +292,7 @@ describe Lock do
       locked = false
       Lock.acquire(lock_name) { locked = true}
       expect(locked).to be_truthy
-      expect(locked_name).to eq "foo"
+      expect(locked_name).to eq "test:foo"
       expect(locked_name.encoding.name).to eq "UTF-8"
     end
 
@@ -303,7 +308,16 @@ describe Lock do
       locked = false
       Lock.acquire(lock_name) { locked = true}
       expect(locked).to be_truthy
-      expect(locked_name).to eq "€foo"
+      expect(locked_name).to eq "test:€foo"
+    end
+
+    it "appends a an instance identifier namespace to key" do
+      expect(MasterSetup).to receive(:instance_identifier).and_return "TestId"
+      expect_any_instance_of(Redlock::Client).to receive(:lock).with("TestId:LockName", anything()).and_call_original
+
+      locked = false
+      Lock.acquire("LockName") { locked = true}
+      expect(locked).to be_truthy
     end
   end
 

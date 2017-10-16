@@ -58,8 +58,8 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     all_shipments = all_shipments.sort {|a, b| a.importer_reference.to_s <=> b.importer_reference.to_s }
     
     entry_data = generate_entry_data all_shipments
-    workbook = kewill_generator.generate_xls entry_data
-    send_xls_to_google_drive workbook, "#{Array.wrap(shipments).first.master_bill_of_lading}.xls"
+
+    kewill_generator.generate_xls_to_google_drive "Burlington CI Load/#{Array.wrap(shipments).first.master_bill_of_lading}.xls", [entry_data]
 
     all_shipments
   end
@@ -167,17 +167,6 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     @us ||= Country.where(iso_code: "US").first
     raise "US Country was not found" unless @us
     @us
-  end
-
-  def send_xls_to_google_drive wb, filename
-    Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |t|
-      t.binmode
-      wb.write t
-      t.flush
-      t.rewind
-
-      OpenChain::GoogleDrive.upload_file "integration@vandegriftinc.com", "Burlington CI Load/#{filename}", t 
-    end
   end
 
 end; end; end; end

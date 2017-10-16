@@ -346,14 +346,12 @@ describe Attachment do
       expect(attached).to receive(:path).and_return "s3_path"
 
       temp = double("Tempfile")
-      account = "me@there.com"
       path = "folder/subfolder"
-      options = {}
 
       expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "s3_path").and_yield temp
-      expect(OpenChain::GoogleDrive).to receive(:upload_file).with(account, "#{path}/file.txt", temp, options)
+      expect(OpenChain::GoogleDrive).to receive(:upload_file).with("#{path}/file.txt", temp, overwrite_existing: true)
 
-      Attachment.push_to_google_drive path, a.id, account, options
+      Attachment.push_to_google_drive path, a.id
     end
   end
 

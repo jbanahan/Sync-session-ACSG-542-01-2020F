@@ -97,7 +97,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
       t.flush
       t.rewind
 
-      OpenChain::GoogleDrive.upload_file OpenChain::GoogleDrive.default_user_account, drive_path, t 
+      OpenChain::GoogleDrive.upload_file drive_path, t 
     end
     nil
   end

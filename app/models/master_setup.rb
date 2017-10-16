@@ -125,4 +125,15 @@ class MasterSetup < ActiveRecord::Base
   def self.clear_cache
     CACHE.set CACHE_KEY, nil
   end
+
+
+  def self.instance_identifier
+    @@root ||= begin
+      # System code may be blank on an initial instance deployment, so fall back to the rails root for that,
+      # on a follow up start the system code should be set and it will get used
+      code = MasterSetup.get.system_code
+      code.blank? ? Rails.root.basename : code
+    end
+    @@root
+  end
 end

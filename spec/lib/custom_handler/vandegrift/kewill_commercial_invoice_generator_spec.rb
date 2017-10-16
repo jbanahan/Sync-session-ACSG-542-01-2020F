@@ -400,8 +400,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
 
     it "generates an excel workbook and loads it to drive" do
       tf = nil
-      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |account, path, file|
-        expect(account).to eq OpenChain::GoogleDrive.default_user_account
+      expect(OpenChain::GoogleDrive).to receive(:upload_file) do |path, file|
         expect(path).to eq "path/to/file.xls"
         expect(file).to be_a Tempfile
         expect(file.read).to eq "Test"

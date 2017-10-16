@@ -1,5 +1,4 @@
 require 'redis'
-require 'redis-namespace'
 require 'connection_pool'
 require 'yaml'
 require 'concurrent'
@@ -33,10 +32,6 @@ class Lock
 
   def self.get_redis_client config
     redis = Redis.new(host: config[:server], port: config[:port])
-
-    # Now we need to make sure we're namespacing so we don't cross lock with other instances
-    @@root ||= Rails.root.basename
-    Redis::Namespace.new(@@root, redis: redis)
   end
   private_class_method :get_redis_client
 
@@ -82,8 +77,8 @@ class Lock
   # to ensure that failed clients don't lock out others indefinitely. Defaults to 300.  Note, if the process is still
   # running, the lock will continue to lock..it will not simply time out after 300 seconds.
   def self.acquire(lock_name, opts = {})
-    lock_name = clean_lock_name(lock_name)
-    already_acquired = definitely_acquired?(lock_name)
+    internal_lock_name = clean_lock_name(lock_name)
+    already_acquired = definitely_acquired?(internal_lock_name)
 
     # The whole concept of temp locks is largely moot w/ redis...given the temporal nature of its "database"
     # We're going to reverse the understanding (mostly to guard against dying processes leaving locks permanently locked)
@@ -104,7 +99,7 @@ class Lock
         get_connection_pool.with(timeout: timeout) do |redis|
           raise Timeout::Error if Time.zone.now > connection_timeout_at
 
-          result = do_locking redis, lock_name, connection_timeout_at, opts[:lock_expiration], yield_in_transaction, &Proc.new
+          result = do_locking redis, internal_lock_name, connection_timeout_at, opts[:lock_expiration], yield_in_transaction, &Proc.new
         end
       rescue Timeout::Error, Redis::TimeoutError => e
         # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool/redis potentially raises one)
@@ -119,7 +114,7 @@ class Lock
           raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to connect to lock server for lock '#{lock_name}'.", e.backtrace
         end
       ensure
-        release_lock(lock_name)
+        release_lock(internal_lock_name)
       end
     end
 
@@ -185,7 +180,9 @@ class Lock
       lock_name = lock_name.chars.select(&:valid_encoding?).join
     end
 
-    lock_name
+    # We're also going to tack on information about the instance to effectively namespace the keys since we're
+    # using one single Redis instance across all systems.
+    "#{MasterSetup.instance_identifier}:#{lock_name}"
   end
   private_class_method :clean_lock_name
 
@@ -248,7 +245,7 @@ class Lock
     # This method blows up the whole redis database...don't use it for anything other than tests
     raise "Only available in testing environment" unless Rails.env.test? || force
     get_connection_pool.with do |redis|
-      redis.redis.flushall
+      redis.flushall
     end
   end
   private_class_method :flushall
