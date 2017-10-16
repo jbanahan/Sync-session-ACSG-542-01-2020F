@@ -5,11 +5,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
   describe "process_query_result" do
 
     let (:us_query_row) {
-      [1, "UID", "US", 1, "1234567890", ""]
+      [1, "UID", "US", 1, "1234567890", "", 0]
     }
 
     let (:ca_query_row) {
-      [1, "UID", "CA", 1, "9876543210", ""]
+      [1, "UID", "CA", 1, "9876543210", "", 0]
     }
 
     it "handles query result, buffering results and returning nothing since this is first product seen" do
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
       expect(result[2].local_data["classifications"].length).to eq 2
     end
 
-    it "handles multiple tariff rows" do
+    it "handles multiple tariff rows by blanking the tariffs" do
       expect(subject.process_query_result us_query_row, {}).to eq []
       row = us_query_row.clone
       row[3] = 2
@@ -140,16 +140,29 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
         "classifications" => [
           {
             "class_cntry_iso" => "US",
-            "tariff_records" => [
-              {
-                "hts_line_number" => 1,
-                "hts_hts_1" => "1234567890"
-              }, 
-              {
-                "hts_line_number" => 2,
-                "hts_hts_1" => "6789012345"
-              }
-            ]
+            "tariff_records" => []
+          }
+        ]
+      })
+    end
+
+    it "blanks tariffs of files listed as manual entry processing" do
+      us_query_row[6] = true
+      result = subject.process_query_result us_query_row, {last_result: true}
+
+      expect(result.length).to eq 1
+
+      d = result.first.local_data
+
+      expect(d).to eq({
+        "id" => 1,
+        "prod_imp_syscode" => "ATAYLOR",
+        "prod_uid" => "UID",
+        "prod_part_number" => "UID",
+        "classifications" => [
+          {
+            "class_cntry_iso" => "US",
+            "tariff_records" => []
           }
         ]
       })
@@ -164,9 +177,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
     let! (:product) {
       p = Factory(:product, unique_identifier: "UID")
       c = p.classifications.create! country: Factory(:country, iso_code: "US")
+      c.update_custom_value! cdefs[:manual_flag], false
       t = c.tariff_records.create! line_number: 1, hts_1: "1234567890"
 
       c2 = p.classifications.create! country: Factory(:country, iso_code: "CA")
+      c2.update_custom_value! cdefs[:manual_flag], true
       t2 = c2.tariff_records.create! line_number: 1, hts_1: "9876543210"
 
       p.update_custom_value! cdefs[:related_styles], "ABC\nDEF"
@@ -180,8 +195,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
 
       expect(result.size).to eq 2
 
-      expect(result.first).to eq [product.id, "UID", "CA", 1, "9876543210", "ABC\nDEF"]
-      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890", "ABC\nDEF"]
+      expect(result.first).to eq [product.id, "UID", "CA", 1, "9876543210", "ABC\nDEF", 1]
+      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890", "ABC\nDEF", 0]
     end
 
     it "returns nothing if everything is already synced" do
@@ -198,6 +213,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
 
       expect(result.size).to eq 1
       expect(query).not_to include "LIMIT"
+    end
+
+    it "returns products that don't have related styles" do
+      product.update_custom_value! cdefs[:related_styles], nil
+      result = ActiveRecord::Base.connection.execute(subject.query).to_a
+
+      expect(result.size).to eq 2
     end
   end
 end

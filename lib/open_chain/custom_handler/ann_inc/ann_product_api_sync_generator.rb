@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
 
       # We can't have more than 1 of the same line number, so we can always assume that each tariff record from the 
       # the query is a new one.
-      classification["tariff_records"] << {"hts_line_number" => row[3], "hts_hts_1" => row[4]}
+      classification["tariff_records"] << {"hts_line_number" => row[3], "hts_hts_1" => row[4]} unless row[6].to_s.to_boolean
     end
 
     # If this is the last row from the query, then we need to stop buffering and return everything
@@ -70,11 +70,24 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
   def drain_previous_products
     api_objects = []
     @previous_products[:products].each do |p|
-      api_objects << ApiSyncObject.new(@previous_products[:id], p)
+      api_objects << ApiSyncObject.new(@previous_products[:id], prepare_product_json(p))
     end
     @previous_products = {products: [], id: nil}
 
     api_objects
+  end
+
+  def prepare_product_json p
+    # What we need to do here is to delete tariff records from our local product representation
+    # if ANY classification has multiple tariffs.  When pulling in products for multi-tariff items
+    # operations decided they'd rather have no tariff records in the system for these than have 
+    # them both (for some reason)
+    p["classifications"].each do |c|
+      tariffs = Array.wrap(c["tariff_records"])
+      c["tariff_records"] = [] if tariffs.length > 1
+    end
+
+    p
   end
 
   def query_row_map
@@ -93,12 +106,13 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
   def query
     # We only want 1 row per product, we're handling exploading out the records in the query processing method
     qry = <<-QRY
-SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, related_style.text_value
+SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, related_style.text_value, manual.boolean_value
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN tariff_records r on r.classification_id = c.id
 INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code in ('US', 'CA')
-INNER JOIN custom_values related_style on related_style.customizable_id = products.id and related_style.customizable_type = 'Product' and related_style.custom_definition_id = #{cdefs[:related_styles].id} and length(related_style.text_value) > 0
+LEFT OUTER JOIN custom_values related_style on related_style.customizable_id = products.id and related_style.customizable_type = 'Product' and related_style.custom_definition_id = #{cdefs[:related_styles].id} and length(related_style.text_value) > 0
+LEFT OUTER JOIN custom_values manual on manual.customizable_id = c.id and manual.customizable_type = 'Classification' and manual.custom_definition_id = #{cdefs[:manual_flag].id}
 QRY
     if @custom_where.blank?
       qry += "\n" + Product.need_sync_join_clause(sync_code)
@@ -129,7 +143,7 @@ QRY
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:related_styles])
+    @cdefs ||= self.class.prep_custom_definitions([:related_styles, :manual_flag])
   end
 
   def continue_looping? loop_count
