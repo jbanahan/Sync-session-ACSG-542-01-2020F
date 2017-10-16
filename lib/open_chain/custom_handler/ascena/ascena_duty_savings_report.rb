@@ -78,34 +78,37 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     summary = {}
     first_sale_brand_summary = {"AGS" => {}, "NONAGS" => {}}
-    entries = Set.new
+    entries = Hash.new{ |h,k| h[k] = Set.new }
 
     result_set.each do |row|
-      savings = calculate_duty_savings row
-      calculations = savings[:calculations]
+      savings_set = calculate_duty_savings row
 
       # append the savings calculations to the row...
-      row << calculations[:calculated_entered_value]
-      row << calculations[:calculated_duty]
-      row << calculations[:savings]
+      row << savings_set.map{|s| s[:calculations][:calculated_entered_value]}.sum
+      row << savings_set.map{|s| s[:calculations][:calculated_duty]}.sum
+      row << savings_set.map{|s| s[:calculations][:savings]}.sum
 
       XlsMaker.add_body_row sheet, (row_number += 1), row, column_widths, true
 
-      # Now record any savings
-      title = savings[:savings_title]
-      if !title.blank?
-        summary[title] ||= {entry_count: 0, entered_value: BigDecimal("0"), duty_paid: BigDecimal("0"), calculated_entered_value: BigDecimal("0"), calculated_duty: BigDecimal("0"), duty_savings: BigDecimal("0")}
-        
-        s = summary[title]
-        broker_reference = row[field_map[:broker_reference]]
-        s[:entry_count] += 1 unless entries.include?(broker_reference)
-        s[:entered_value] += row[field_map[:entered_value]]
-        s[:duty_paid] += row[field_map[:duty_amount]]
-        s[:calculated_entered_value] += calculations[:calculated_entered_value]
-        s[:calculated_duty] += calculations[:calculated_duty]
-        s[:duty_savings] += calculations[:savings]
+      savings_set.each do |savings|
+        # Now record any savings
+        title = savings[:savings_title]
+        if !title.blank?
+          summary[title] ||= {entry_count: 0, entered_value: BigDecimal("0"), duty_paid: BigDecimal("0"), calculated_entered_value: BigDecimal("0"), calculated_duty: BigDecimal("0"), duty_savings: BigDecimal("0")}
+          
+          s = summary[title]
+          broker_reference = row[field_map[:broker_reference]]
+          
+          calculations = savings[:calculations]
+          s[:entry_count] += 1 unless entries[title].include?(broker_reference)
+          s[:entered_value] += row[field_map[:entered_value]]
+          s[:duty_paid] += row[field_map[:duty_amount]]
+          s[:calculated_entered_value] += calculations[:calculated_entered_value]
+          s[:calculated_duty] += calculations[:calculated_duty]
+          s[:duty_savings] += calculations[:savings]
 
-        entries << broker_reference
+          entries[title] << broker_reference
+        end
       end
 
       brand = row[field_map[:brand]]
@@ -114,16 +117,19 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
         first_sale_brand_summary[order_type][brand] ||= {vendor_invoice: BigDecimal("0"), entered_value: BigDecimal("0"), total_entered_value: BigDecimal("0"), duty_savings: BigDecimal("0")}
         bs = first_sale_brand_summary[order_type][brand]
-
-        if savings[:savings_type] == :first_sale
-          bs[:vendor_invoice] += row[field_map[:first_sale_amount]]
-          bs[:entered_value] += row[field_map[:entered_value]]
-          bs[:duty_savings] += calculations[:savings]
-          # For the total entered value, consider the first sale as the entered value on first sale lines
-          bs[:total_entered_value] += calculations[:calculated_entered_value]
-        else
-          bs[:total_entered_value] += row[field_map[:entered_value]]
+        savings_set.each do |savings|
+          calculations = savings[:calculations]
+          if savings[:savings_type] == :first_sale
+            bs[:vendor_invoice] += row[field_map[:first_sale_amount]]
+            bs[:entered_value] += row[field_map[:entered_value]]
+            bs[:duty_savings] += calculations[:savings]
+            # For the total entered value, consider the first sale as the entered value on first sale lines
+            bs[:total_entered_value] += calculations[:calculated_entered_value]
+          else
+            bs[:total_entered_value] += row[field_map[:entered_value]]
+          end
         end
+        bs[:total_entered_value] += row[field_map[:entered_value]] if savings_set.empty?
       end
     end
 
@@ -177,7 +183,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def data_headers
-    ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Order Type", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
+    ["Broker Reference", "Transport Mode Code", "Fiscal Month", "Release Date", "Invoice Number", "PO Number", "Part Number", "Brand", "Non-Dutiable Amount", "First Sale Cost", "Invoice Line Value", "HTS Code", "Tariff Description", "Entered Value", "SPI", "Duty Rate", "Duty Amount", "Order Type", "Calculated Entered Value", "Calculated Duty", "Duty Savings"]
   end
 
   def brand_headers
@@ -185,22 +191,29 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def calculate_duty_savings report_row
-    savings_type, title = duty_savings_type(report_row)
-
-    calculations = case savings_type
-    when :air_sea, :other
-      calculate_air_sea_differential(report_row)
-    when :first_sale
-      calculate_first_sale(report_row)
-    when :spi
-      calculate_spi(report_row)
-    else
+    types = duty_savings_type(report_row)
+    savings = []
+    if types.empty?
       # No duty savings, so just put values from the actual entry back into the calculations so the data has something in the display
       # columns for those.
-      {calculated_entered_value: report_row[field_map[:entered_value]], calculated_duty: report_row[field_map[:duty_amount]], savings: 0}
+      calculations = {calculated_entered_value: report_row[field_map[:entered_value]], calculated_duty: report_row[field_map[:duty_amount]], savings: 0}
+      savings << {savings_type: nil, savings_title: nil, calculations: calculations}
+    else
+      types.each do |t|
+        savings_type, title = t
+        calculations = case savings_type
+          when :air_sea, :other
+            calculate_air_sea_differential(report_row)
+          when :first_sale
+            calculate_first_sale(report_row)
+          when :spi
+            calculate_spi(report_row)
+          end
+        savings << {savings_type: savings_type, savings_title: title, calculations: calculations}
+      end
     end
 
-    {savings_type: savings_type, savings_title: title, calculations: calculations}
+    savings
   end
 
   def calculate_air_sea_differential report_row
@@ -214,9 +227,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   def calculate_first_sale report_row
     calculated_entered_value = report_row[field_map[:first_sale_amount]]
     calculated_duty = (calculated_entered_value * report_row[field_map[:duty_rate]]).round(2)
-    savings = calculated_duty - report_row[field_map[:duty_amount]]
-
+    savings = (calculate_fs_duty_savings report_row).round(2)
     {calculated_entered_value: calculated_entered_value, calculated_duty: calculated_duty, savings: savings}
+  end
+
+  def calculate_fs_duty_savings row
+    return 0 if [0,nil].member?(row[field_map[:first_sale_amount]]) || [0,nil].member?(row[field_map[:entered_value]])
+    (row[field_map[:first_sale_amount]] - row[field_map[:value]]) * (row[field_map[:duty_amount]] / row[field_map[:entered_value]])
   end
 
   def calculate_spi report_row
@@ -234,17 +251,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def duty_savings_type report_row
-    if !report_row[field_map[:spi]].blank?
-      [:spi, spi_name(report_row[field_map[:spi]])]
-    elsif report_row[field_map[:transport_mode_code]].to_s == "40" && report_row[field_map[:non_dutiable_amount]].to_f > 0
-      [:air_sea, "Air Sea Differential"]
-    elsif report_row[field_map[:transport_mode_code]].to_s != "40" && report_row[field_map[:non_dutiable_amount]].to_f > 0
-      [:other, "Other"]
-    elsif report_row[field_map[:first_sale_amount]].to_f > 0
-      [:first_sale, "First Sale"]
-    else
-      nil
-    end
+    types = []
+    types << [:spi, spi_name(report_row[field_map[:spi]])] if report_row[field_map[:spi]].present?
+    types << [:air_sea, "Air Sea Differential"] if report_row[field_map[:transport_mode_code]].to_s == "40" && report_row[field_map[:non_dutiable_amount]].to_f > 0
+    types << [:other, "Other"] if report_row[field_map[:transport_mode_code]].to_s != "40" && report_row[field_map[:non_dutiable_amount]].to_f > 0
+    types << [:first_sale, "First Sale"] if report_row[field_map[:first_sale_amount]].to_f > 0
+    types
   end
 
   def spi_name spi
@@ -273,20 +285,37 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def query start_date, end_date
-    qry = <<-QRY
-SELECT e.broker_reference, e.transport_mode_code, concat(fiscal_year, '-', lpad(fiscal_month, 2, '0')), convert_tz(e.release_date, 'UTC', 'America/New_York'), i.invoice_number, l.po_number, l.part_number, l.product_line, l.non_dutiable_amount, l.contract_amount, t.hts_code, t.tariff_description, t.entered_value, t.spi_primary, t.duty_rate, t.duty_amount, ord_type.string_value
-FROM entries e
-INNER JOIN commercial_invoices i on e.id = i.entry_id
-INNER JOIN commercial_invoice_lines l on i.id = l.commercial_invoice_id
-INNER JOIN commercial_invoice_tariffs t on t.commercial_invoice_line_id = l.id
-LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", l.po_number)
-LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
-WHERE e.customer_number = 'ASCE' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
-QRY
+    <<-SQL
+      SELECT e.broker_reference, 
+             e.transport_mode_code, 
+             concat(fiscal_year, '-', lpad(fiscal_month, 2, '0')), 
+             convert_tz(e.release_date, 'UTC', 'America/New_York'), 
+             i.invoice_number, 
+             l.po_number, 
+             l.part_number, 
+             l.product_line, 
+             l.non_dutiable_amount, 
+             l.contract_amount, 
+             l.value,
+             t.hts_code, 
+             t.tariff_description, 
+             t.entered_value, 
+             t.spi_primary, 
+             t.duty_rate, 
+             t.duty_amount, 
+             ord_type.string_value
+      FROM entries e
+      INNER JOIN commercial_invoices i on e.id = i.entry_id
+      INNER JOIN commercial_invoice_lines l on i.id = l.commercial_invoice_id
+      INNER JOIN commercial_invoice_tariffs t on t.commercial_invoice_line_id = l.id
+      LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", l.po_number)
+      LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
+      WHERE e.customer_number = 'ASCE' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
+    SQL
   end
 
   def field_map
-    @map ||= {broker_reference: 0, transport_mode_code: 1, fiscal_date: 2, release_date: 3, invoice_number: 4, po_number: 5, part_number: 6, brand: 7, non_dutiable_amount: 8, first_sale_amount: 9, hts_code: 10, tariff_description: 11, entered_value: 12, spi: 13, duty_rate: 14, duty_amount: 15, order_type: 16}
+    @map ||= {broker_reference: 0, transport_mode_code: 1, fiscal_date: 2, release_date: 3, invoice_number: 4, po_number: 5, part_number: 6, brand: 7, non_dutiable_amount: 8, first_sale_amount: 9, value: 10, hts_code: 11, tariff_description: 12, entered_value: 13, spi: 14, duty_rate: 15, duty_amount: 16, order_type: 17}
   end
 
   def cdefs 
