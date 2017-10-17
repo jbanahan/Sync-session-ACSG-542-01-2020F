@@ -45,7 +45,7 @@ gem 'therubyracer', '0.12.0', :require => 'v8'
 gem 'browser'
 
 gem "google-api-client", :git => "https://github.com/Vandegrift/google-api-ruby-client"
-gem "omniauth-google-oauth2", "0.2.2"
+gem "omniauth-google-oauth2", "0.5.2"
 gem "omniauth-saml", "~> 1.2.0"
 
 gem "cache_digests"
