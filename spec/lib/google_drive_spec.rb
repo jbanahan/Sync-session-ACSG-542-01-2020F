@@ -315,7 +315,7 @@ describe OpenChain::GoogleDrive do
 
       it "deletes a folder" do
         # The upload takes a few seconds to propigate on drive, so try this a couple times
-        retry_expect(retry_count: 5, additional_rescue_from: [StandardError]) {
+        retry_expect(retry_count: 10, additional_rescue_from: [StandardError]) {
           expect(subject.delete_by_id uploaded_file[:parents].first).to be_nil
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
           # Should also clear out files under the folder
@@ -337,7 +337,7 @@ describe OpenChain::GoogleDrive do
 
       it "deletes a folder" do
         # The upload takes a few seconds to propigate on drive, so try this a couple times
-        retry_expect(retry_count: 5, additional_rescue_from: [StandardError]) {
+        retry_expect(retry_count: 10, additional_rescue_from: [StandardError]) {
           expect(subject.delete_by_id uploaded_file[:parents].first).to be_nil
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
           # Should also clear out files under the folder
