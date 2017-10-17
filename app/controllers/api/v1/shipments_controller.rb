@@ -698,6 +698,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def load_booking_lines(shipment, h)
     if h['booking_lines']
+      raise StatusableError.new("Order has different importer from shipment", 400) unless match_importer? shipment, h['booking_lines'].map{|bl| bl['bkln_order_line_id']}
       h['booking_lines'].each_with_index do |base_ln,i|
         ln = base_ln.clone
         s_line = shipment.booking_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['bkln_line_number'], obj.line_number)}
@@ -725,6 +726,17 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     end
   end
 
+  def match_importer? shipment, order_line_ids
+    qry = <<-SQL
+      SELECT DISTINCT imp.id 
+      FROM companies imp
+        INNER JOIN orders o ON o.importer_id = imp.id 
+        INNER JOIN order_lines ol ON ol.order_id = o.id
+      WHERE ol.id IN (#{order_line_ids.join(", ")})
+    SQL
+    order_importer_ids = ActiveRecord::Base.connection.execute(qry).to_a.flatten
+    order_importer_ids == Array.wrap(shipment.importer_id)                                
+  end
 
   def load_containers shipment, h
     update_collection('containers', shipment, h, CoreModule::CONTAINER)

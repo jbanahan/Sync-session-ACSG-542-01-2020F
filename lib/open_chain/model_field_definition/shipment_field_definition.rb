@@ -184,7 +184,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
             data_type: :text,
             read_only: true,
             import_lambda: lambda {|obj,val| "Booked Orders is read only."},
-            export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:id).compact.uniq.sort.join("\n ")},
+            export_lambda: lambda {|obj| obj.booking_lines.flat_map{ |b| b.order.try(:id) }.compact.sort.uniq.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
           FROM booking_lines
           INNER JOIN orders ON orders.id = booking_lines.order_id

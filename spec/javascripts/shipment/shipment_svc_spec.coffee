@@ -211,3 +211,14 @@ describe 'ShipmentService', ->
           shp = data.data
         http.flush()
         expect(shp).toEqual resp
+
+    describe 'getOrderShipmentRefs', ->
+      it 'returns a list of shipment references associated with an order ID', ->
+        resp = {results: [{shp_ref: 'REF1'},{shp_ref: 'REF2'},{shp_ref: 'REF3'}]}
+        searchArgs = {sid1:'shp_booked_order_ids', sop1:'co', sv1:1}
+        http.expectGET('/api/v1/shipments.json?sid1=shp_booked_order_ids&sop1=co&sv1=1').respond resp
+        d = null
+        svc.getOrderShipmentRefs(1).then (data) ->
+          d = data
+        http.flush()
+        expect(d).toEqual ['REF1', 'REF2', 'REF3']

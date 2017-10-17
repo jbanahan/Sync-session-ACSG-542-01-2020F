@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/shipment_download_generator'
+require 'open_chain/custom_handler/j_jill/j_jill_shipment_download_generator'
 
 class ShipmentsController < ApplicationController
 
@@ -36,7 +37,13 @@ class ShipmentsController < ApplicationController
     s = Shipment.find(params[:id])
 
     action_secure(s.can_edit?(current_user),s,{:verb => "download",:module_name=>"shipment"}) {
-      send_excel_workbook OpenChain::CustomHandler::ShipmentDownloadGenerator.new.generate(s, current_user), "#{s.reference}.xls"
+      generator = case current_user.company.system_code
+        when "JJILL"
+          OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator
+        else
+          OpenChain::CustomHandler::ShipmentDownloadGenerator
+        end
+      send_excel_workbook generator.new.generate(s, current_user), "#{s.reference}.xls"
     }
   end
 end

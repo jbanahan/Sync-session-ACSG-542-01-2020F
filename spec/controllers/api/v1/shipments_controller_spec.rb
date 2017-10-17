@@ -517,15 +517,6 @@ describe Api::V1::ShipmentsController do
       expect(sl.quantity).to eq 24
     end
 
-    it "should update booking line" do
-      sl = Factory(:booking_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
-      @s_hash['booking_lines'] = [{bkln_line_number:1,bkln_quantity:24}]
-      put :update, id: @shipment.id, shipment: @s_hash
-      expect(response).to be_success
-      sl.reload
-      expect(sl.quantity).to eq 24
-    end
-
     it "should not allow new lines if !can_add_remove_lines?" do
       allow_any_instance_of(Shipment).to receive(:can_add_remove_shipment_lines?).and_return false
       @s_hash['lines'] = [
@@ -599,6 +590,15 @@ describe Api::V1::ShipmentsController do
         }
       }
 
+      it "should update booking line" do
+        sl = Factory(:booking_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
+        shipment_data['booking_lines'].first.merge!({'bkln_line_number' => 1, 'bkln_quantity' => 24})
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response).to be_success
+        sl.reload
+        expect(sl.quantity).to eq 24
+      end
+
       it "creates booking lines" do
         put :update, id: @shipment.id, shipment: shipment_data
         expect(response).to be_success
@@ -609,6 +609,15 @@ describe Api::V1::ShipmentsController do
         expect(line.line_number).to eq 1
         expect(line.cbms).to eq 10
         expect(line.carton_qty).to eq 1
+      end
+
+      it "rejects orders belonging to a different importer" do
+        order_line.order.update_attributes!(importer: Factory(:company,importer:true,system_code:'ACME'))
+        put :update, id: @shipment.id, shipment: shipment_data
+        expect(response.status).to eq 400
+        expect(JSON.parse(response.body)['errors']).to eq ["Order has different importer from shipment"]
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 0
       end
     end
 

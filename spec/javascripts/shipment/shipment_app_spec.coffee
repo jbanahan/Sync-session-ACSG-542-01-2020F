@@ -97,26 +97,42 @@ describe 'ShipmentApp', ->
         expect(svc.getAvailableOrders).toHaveBeenCalledWith id:10
         expect(svc.getBookedOrders).toHaveBeenCalledWith id:10
 
-    describe 'getOrder', ->
+    describe 'getOrderLines', ->
       it "should delegate to service", ->
         ord = {id: 1}
         activeOrder = {id: 99, order_lines: []}
         r = q.defer()
+        s = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
+        spyOn(svc,'getOrderShipmentRefs').andReturn(s.promise)
         scope.getOrderLines(ord)
         r.resolve({data: {order: activeOrder}})
+        s.resolve([])
         scope.$apply()
         expect(scope.activeOrder).toEqual activeOrder
         expect(svc.getOrder).toHaveBeenCalledWith 1
 
-      it "should set quantity_to_ship to ordln_ordered_qty", ->
+      it "should set quantity_to_ship to ordln_ordered_qty when no additional shipments are found", ->
         ord = {id: 1}
         r = q.defer()
+        s = q.defer()
         spyOn(svc,'getOrder').andReturn(r.promise)
+        spyOn(svc,'getOrderShipmentRefs').andReturn(s.promise)
         scope.getOrderLines(ord)
         r.resolve({data: {order: {id: 99, order_lines: [{ordln_ordered_qty: 10}]}}})
+        s.resolve([])
         scope.$apply()
         expect(scope.activeOrder).toEqual {id: 99,order_lines: [{ordln_ordered_qty: 10, quantity_to_ship: 10}]}
+
+      it "prepares data for warning modal when additional shipments are found", ->
+        ord = {id: 1}
+        r = q.defer()
+        spyOn(svc,'getOrderShipmentRefs').andReturn(r.promise)
+        scope.getOrderLines(ord)
+        r.resolve(["REF1", "REF2"])
+        scope.$apply()
+        expect(scope.activeOrder).toEqual null
+        expect(scope.shipmentWarningModalData).toEqual({shipmentsForOrder: ["REF1", "REF2"], orderId: 1})
 
     describe 'resetQuantityToShip', ->
       it 'should set quantity_to_ship to ordln_ordered_qty', ->

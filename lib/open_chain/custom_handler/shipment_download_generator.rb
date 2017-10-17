@@ -8,7 +8,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   def generate shipment, user
     workbook = XlsMaker.new_workbook
 
-    if shipment.containers.any?
+    mode = shipment.mode.presence || shipment.booking_mode.presence
+    if mode && mode != "Air"
       shipment.containers.each do |container|
         sheet = new_sheet(workbook, container)
         add_headers(sheet, shipment, user, container)

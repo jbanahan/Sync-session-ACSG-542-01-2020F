@@ -33,11 +33,27 @@ angular.module('ShipmentApp').controller 'ShipmentAddOrderCtrl', ['$scope','ship
 
   $scope.getOrderLines = (order) ->
     $scope.orderLoadingFlag = 'loading'
+    # mysterious hack that prevents order from falling out of scope within the async call (probably due to Angular).
+    this_order = angular.copy order
+    shipmentSvc.getOrderShipmentRefs(this_order.id).then (resp) ->
+      if resp.length > 0
+        $scope.orderLoadingFlag = null
+        $scope.shipmentWarningModalData = {shipmentsForOrder: resp, orderId: this_order.id}
+        $('#shipmentWarningModal').modal 'show'
+      else
+        $scope.getOrder this_order.id
+
+  $scope.getOrder = (order_id) ->
+    $scope.orderLoadingFlag = 'loading'
     $scope.activeOrder = null
-    shipmentSvc.getOrder(order.id).then (resp) ->
+    shipmentSvc.getOrder(order_id).then (resp) ->
       $scope.activeOrder = resp.data.order
       $scope.resetQuantityToShip $scope.activeOrder
       $scope.orderLoadingFlag = null
+
+  $scope.clearField = ->
+    $('#order_autocomplete_value').val('')
+    return true
 
   $scope.importBooking = ->
     $scope.orderLoadingFlag = 'loading'

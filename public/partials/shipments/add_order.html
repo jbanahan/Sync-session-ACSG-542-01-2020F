@@ -99,6 +99,19 @@
     </div>
   </div>
 </div>
+<div class="modal" id="shipmentWarningModal" tabindex="-1" role="dialog" aria-labelledby="shipmentWarningModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p>PO Number {{activeOrder.ord_cust_ord_no}} already exists on Shipment(s) {{shipmentWarningModalData.shipmentsForOrder.join(", ")}} – Continue?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="clearField()">Close</button>
+        <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='getOrder(shipmentWarningModalData.orderId)'>Add to Shipment</button>
+      </div>
+    </div>
+  </div>
+</div>
 <add-address-modal shipment-id="shp.id"></add-address-modal>
 <div chain-action-bar>
   <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
