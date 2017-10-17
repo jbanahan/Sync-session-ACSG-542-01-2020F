@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     end
     it "should close cancelled order" do
       dom = REXML::Document.new(IO.read(@path))
-      REXML::XPath.each(dom.root,'//BEG01') {|el| el.text = '03'}
+      REXML::XPath.each(dom.root,'//BEG01') {|el| el.text = '01'}
       expect_any_instance_of(Order).to receive(:close!).with(instance_of(User))
       described_class.parse_dom dom
     end

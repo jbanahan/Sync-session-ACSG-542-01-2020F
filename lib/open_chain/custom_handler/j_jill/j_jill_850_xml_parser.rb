@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   private
   def parse_order order_root, extract_date
     @vendor_styles = Set.new
-    cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
+    cancel = REXML::XPath.first(order_root,'BEG/BEG01').text.to_i == 1
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     Lock.acquire(ord_num) do
