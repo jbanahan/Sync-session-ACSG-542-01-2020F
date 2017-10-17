@@ -103,6 +103,19 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
+
+    it "retries sending dimension if a retry error is raised" do
+      get_xml = "<xml>test</xml>"
+      control = "controlid"
+      allow(@xml_gen).to receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      expect(@c).to receive(:post_xml).exactly(5).times.and_raise described_class::IntacctRetryError
+      expect(@c).to receive(:sleep).with(1)
+      expect(@c).to receive(:sleep).with(2)
+      expect(@c).to receive(:sleep).with(3)
+      expect(@c).to receive(:sleep).with(4)
+
+      @c.send_dimension "type", "id", "value"
+    end
   end
 
   describe "send_receivable" do

@@ -33,6 +33,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def send_dimension type, id, value, company = nil
+    retry_count = 0
+
     # if location_id is set, then the dimension will post to a specific sub-entity.
     control, xml = @generator.generate_dimension_get type, id
     begin
@@ -51,6 +53,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
       key
     rescue => e
+      if e.is_a?(IntacctRetryError) && (retry_count += 1) < 5
+        sleep retry_count
+        retry
+      end
+
       # There must be some slight delay when dimensions are created vs. when they're available to the API,
       # since we're only creating the same dimension one at a time (via locking) and we're still getting duplicate
       # create errors.  Just look for an error message stating the transaction was already created and then don't 
@@ -180,7 +187,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     post["Content-Type"] = "x-intacct-xml-request"
     post.body = assemble_request_xml(location_id, transaction, unique_request, connection_options, intacct_content_xml)
 
-    xml = http_request(uri, post)
+    xml = nil
+    begin
+      xml = http_request(uri, post)
+    rescue REXML::ParseException => e
+      # basically, what we're doing is allowing the outer call to determine if it wants to retry this
+      # failure...which comes about due to cloudflare sending back an HTML file w/ an error in it..which entails
+      # a bad endpoint on Intacct's end.
+      error = IntacctRetryError.new e.message
+      error.set_backtrace e.backtrace
+      raise error
+    end
 
     # Verify all the control ids passed in resulted in a valid response.
     # There's no need for this now, but we may need to not fail if transaction == false and multiple control ids
