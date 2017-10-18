@@ -28,7 +28,13 @@ module ConfigMigrations; module LL; class LlSow1289
     end
     
     # Set all configured users belonging to the specified companies to have all the necessary booking permissions
-    User.where(company_id: intl_vendors).update_all(
+    user_ids = User.where(company_id: intl_vendors).pluck :id
+    update_user_permissions(user_ids) if user_ids.length > 0
+    nil
+  end
+
+  def update_user_permissions user_ids
+    User.where(id: user_ids).update_all(
       shipment_view:true,
       shipment_edit:true,
       shipment_comment:true,
@@ -40,7 +46,7 @@ module ConfigMigrations; module LL; class LlSow1289
       product_view:true
     )
 
-    User.where(company_id: intl_vendors).each do |user|
+    User.where(id: user_ids).each do |user|
       subscriptions = user.event_subscriptions
 
       ['SHIPMENT_COMMENT_CREATE', 'SHIPMENT_BOOK_REQ'].each do |event_type|
