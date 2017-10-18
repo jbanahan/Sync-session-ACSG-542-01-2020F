@@ -318,8 +318,6 @@ describe OpenChain::GoogleDrive do
         retry_expect(retry_count: 10, additional_rescue_from: [StandardError]) {
           expect(subject.delete_by_id uploaded_file[:parents].first).to be_nil
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
-          # Should also clear out files under the folder
-          expect(subject.find_file_by_id uploaded_file[:id]).to be_nil
         }
       end
     end
@@ -332,6 +330,8 @@ describe OpenChain::GoogleDrive do
         retry_expect(retry_count: 5, additional_rescue_from: [StandardError]) {
           expect(subject.delete_by_id uploaded_file[:id]).to be_nil
           expect(subject.find_file_by_id uploaded_file[:id]).to be_nil
+          # According to the V3 api docs, if a folder is deleted, any children are also deleted...so there's no point in also checking that the file
+          # has been removed.  Also, it can take several minutes for the children to be removed on google's end.
         }
       end
 
@@ -340,8 +340,8 @@ describe OpenChain::GoogleDrive do
         retry_expect(retry_count: 10, additional_rescue_from: [StandardError]) {
           expect(subject.delete_by_id uploaded_file[:parents].first).to be_nil
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
-          # Should also clear out files under the folder
-          expect(subject.find_file_by_id uploaded_file[:id]).to be_nil
+          # According to the V3 api docs, if a folder is deleted, any children are also deleted...so there's no point in also checking that the file
+          # has been removed.  Also, it can take several minutes for the children to be removed on google's end.
         }
       end
     end
