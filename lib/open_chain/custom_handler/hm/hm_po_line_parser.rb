@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
     end
 
     inv_hsh, line_hsh, tariff_hsh = unpack_row(row)
-    write_record(imp_id, inv_hsh, line_hsh, tariff_hsh) unless has_matching_fingerprint?(po_number, fprint_row(row))
+    write_record(imp_id, inv_hsh, line_hsh, tariff_hsh) unless has_matching_fingerprint?(imp_id, po_number, fprint_row(row))
   end
 
   def unpack_row row
@@ -100,11 +100,13 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
 
   def fprint_obj invoice
     cil = invoice.commercial_invoice_lines.first
+    return false if cil.nil?
+    
     invoice.invoice_number.to_s + cil.part_number.to_s + sprintf('%.2f', invoice.invoice_value_foreign || 0) + invoice.docs_received_date.try(:strftime, '%m-%d-%Y').to_s
   end
 
-  def has_matching_fingerprint? inv_num, fprint
-    invs = CommercialInvoice.where(invoice_number: inv_num)
+  def has_matching_fingerprint? importer_id, inv_num, fprint
+    invs = CommercialInvoice.where(invoice_number: inv_num, importer_id: importer_id)
     invs.map{ |i| fprint_obj(i) == fprint }.any?
   end
 
