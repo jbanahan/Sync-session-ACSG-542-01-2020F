@@ -270,7 +270,7 @@
                         <th>Container<br>Size</th>
                         <th>Order Quantity</th>
                         <th>Booked Quantity</th>
-                        <th>Diff</th>
+                        <th>Percentage Booked</th>
                         <th>Cartons</th>
                         <th>Volume<br>(CBMS)</th>
                         <th>Gross Weight<br>(KGS)</th>
@@ -294,7 +294,7 @@
                           {{ln.bkln_quantity}}
                         </td>
                           <td>
-                            {{ln.bkln_quantity_diff}}%
+                            {{ln.bkln_quantity_diff | number:2}}%
                           </td>
                         <td>
                           {{ln.bkln_carton_qty}}

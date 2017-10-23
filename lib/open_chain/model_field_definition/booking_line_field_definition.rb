@@ -86,15 +86,15 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
      [17, :bkln_order_line_quantity, :order_line_quantity, "Order Quantity", {data_type: :integer, read_only: true,
          export_lambda: lambda {|detail| detail.order_line.try(:quantity)},
          qualified_field_name: "(SELECT quantity FROM order_lines as booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}],
-     [18, :bkln_quantity_diff, :order_line_quantity_diff, "Booked Quantity Differential", {data_type: :decimal, read_only: true,
+     [18, :bkln_quantity_diff, :order_line_quantity_diff, "Percentage Booked", {data_type: :decimal, read_only: true,
          export_lambda: lambda {|detail|
-             if detail.order_line.try(:quantity) && detail.try(:quantity)
-               detail.order_line.quantity / detail.quantity
+             if detail.order_line.try(:quantity).try(:nonzero?) && detail.try(:quantity)
+               (detail.quantity / detail.order_line.quantity) * 100
              else
                nil
              end
          },
-         qualified_field_name: "(SELECT ROUND(IFNULL((order_lines.quantity / booking_lines.quantity) * 100, 0), 0)
+         qualified_field_name: "(SELECT ROUND(IFNULL((booking_lines.quantity / order_lines.quantity) * 100, 0), 0)
 FROM booking_lines
 INNER JOIN
 order_lines ON order_lines.id = booking_lines.order_line_id

@@ -11,21 +11,22 @@ describe OpenChain::ModelFieldDefinition::BookingLineFieldDefinition do
       ol = Factory(:order_line, quantity: 100)
       bl = Factory(:booking_line, order_line: ol)
 
-      expect(@qd.process_export(bl,nil,true)).to eq(100)
+      expect(@qd.process_export(bl,nil,true)).to eq(1.0)
     end
 
     it 'should handle the order_line quantity being nil' do
       ol = Factory(:order_line)
       bl = Factory(:booking_line, order_line: ol, quantity: 100)
+      ol.update_attribute(:quantity, nil)
 
-      expect(@qd.process_export(bl,nil,true)).to eq(0.01)
+      expect(@qd.process_export(bl,nil,true)).to eq(nil)
     end
 
     it 'should handle both quantities when present' do
       ol = Factory(:order_line, quantity: 50)
       bl = Factory(:booking_line, order_line: ol, quantity: 100)
 
-      expect(@qd.process_export(bl,nil,true)).to eq(0.5)
+      expect(@qd.process_export(bl,nil,true)).to eq(200.0)
     end
   end
 
