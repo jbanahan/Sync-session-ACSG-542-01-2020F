@@ -34,10 +34,10 @@ class ShipmentsController < ApplicationController
   end
 
   def download
-    s = Shipment.find(params[:id])
+    s = Shipment.where(id: params[:id]).includes(:importer).first
 
     action_secure(s.can_edit?(current_user),s,{:verb => "download",:module_name=>"shipment"}) {
-      generator = case current_user.company.system_code
+      generator = case s.importer.try(:system_code)
         when "JJILL"
           OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator
         else

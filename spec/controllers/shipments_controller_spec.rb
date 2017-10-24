@@ -26,9 +26,9 @@ describe ShipmentsController do
       expect(response).to redirect_to request.referrer
     end
 
-    it "uses J Jill generator for JILL user" do
+    it "uses J Jill generator for shipments with JJILL importer" do
       co = Factory(:company, system_code: "JJILL")
-      u.company = co; u.save!
+      shipment.update_attributes! importer: co
 
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true
       expect_any_instance_of(OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator).to receive(:generate).with(shipment, u).and_return workbook
