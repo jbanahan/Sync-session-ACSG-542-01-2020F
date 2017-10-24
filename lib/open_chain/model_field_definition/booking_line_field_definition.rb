@@ -94,10 +94,9 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
                nil
              end
          },
-         qualified_field_name: "(SELECT ROUND(IFNULL((booking_lines.quantity / order_lines.quantity) * 100, 0), 0)
-FROM booking_lines
-INNER JOIN
-order_lines ON order_lines.id = booking_lines.order_line_id
+         qualified_field_name: "(SELECT ROUND(IFNULL((booking_lines.quantity / order_lines.quantity) * 100, 0), 2)
+FROM
+order_lines
 WHERE
 order_lines.id = booking_lines.order_line_id)"}]
     ]
