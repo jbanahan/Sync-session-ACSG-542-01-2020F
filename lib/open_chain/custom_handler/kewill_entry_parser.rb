@@ -19,6 +19,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     3 => {attribute: :docs_received_date, datatype: :date},
     98 => {attribute: :docs_received_date, datatype: :date},
     4 => :file_logged_date,
+    7 => {attribute: :import_date, datatype: :date},
     9 => {attribute: :first_it_date, datatype: :date, directive: :first},
     10 => :arrival_notice_receipt_date,
     11 => {attribute: :eta_date, datatype: :date},
@@ -487,6 +488,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Bond Types are defaulted to broker specified one if the value in the entry data specifies 8
       entry.bond_type = e[:bond_type] == 8 ? e[:broker_bond_type] : e[:bond_type]
       entry.import_country = Country.where(iso_code: "US").first
+      entry.split_shipment = e[:split].to_s.upcase == "Y"
+      entry.split_release_option = e[:split_release_option].to_i if e[:split_release_option].to_i > 0
 
       nil
     end

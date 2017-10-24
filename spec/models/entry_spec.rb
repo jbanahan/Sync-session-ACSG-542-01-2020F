@@ -493,4 +493,18 @@ describe Entry do
     end
   end
 
+  describe "split_release_option_value" do
+    it "returns 'Hold All' when 1" do
+      expect(Entry.new(split_release_option: "1").split_release_option_value).to eq "Hold All"
+    end
+
+    it "returns 'Incremental' when 2" do
+      expect(Entry.new(split_release_option: "2").split_release_option_value).to eq "Incremental"
+    end
+
+    it "returns '' when nil" do
+      expect(Entry.new.split_release_option_value).to eq ""
+    end
+  end
+
 end

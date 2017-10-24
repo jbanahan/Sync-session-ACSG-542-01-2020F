@@ -76,6 +76,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'tax_amt_liquidated' => 345.67,
         'ada_amt_liquidated' => 456.78,
         'cvd_amt_liquidated' => 567.89,
+        'split' => "N",
+        'split_release_option' => "1",
         'dates' => [
           # Note the time ending in 60..stupid Alliance has dates w/ a minute value of 60 rather
           # than incrementing the hour.
@@ -83,6 +85,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>2, 'date'=>201604271130},
           {'date_no'=>3, 'date'=>201503010800},
           {'date_no'=>4, 'date'=>201503010900},
+          {'date_no'=>7, 'date'=>201710191200},
           {'date_no'=>9, 'date'=>201503011000},
           # Add 2 IT Dates, since we only want to log the first
           {'date_no'=>9, 'date'=>201503081000},
@@ -490,6 +493,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
+      expect(entry.import_date).to eq Date.new(2017, 10, 19)
 
       expect(entry.master_bills_of_lading).to eq "XXXXMASTER\n XXXXMASTER2"
       expect(entry.house_bills_of_lading).to eq "HOUSE\n SCAC2HOUSE2\n SCACHOUSE"
@@ -498,6 +502,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.total_non_dutiable_amount).to eq BigDecimal("246.9")
       expect(entry.product_lines).to eq "PRODUCT\n PRODUCT2"
       expect(entry.summary_rejected?).to eq false
+      expect(entry.split_shipment?).to eq false
+      expect(entry.split_release_option).to eq "1"
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -779,6 +785,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       expect(entry.daily_statement_number).to eq "astatement"
       expect(entry.monthly_statement_number).to be_nil
+    end
+
+    it "identifies split shipments" do
+      @e['split'] = "Y"
+      entry = described_class.new.process_entry @e
+      entry.reload
+      expect(entry.split_shipment?).to eq true
     end
 
     it "skips unused recon flags" do

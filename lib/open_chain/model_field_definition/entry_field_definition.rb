@@ -324,6 +324,15 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :import_lambda=>lambda {|obj,data| "Commercial Invoice Line Count ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.sum(:miscellaneous_discount)},
         :qualified_field_name=>"(SELECT SUM(cil.miscellaneous_discount) FROM commercial_invoice_lines AS cil INNER JOIN commercial_invoices AS ci ON ci.id = cil.commercial_invoice_id WHERE ci.entry_id = entries.id)"
+      }],
+      [216, :ent_import_date, :import_date, "Import Date", {data_type: :date}],
+      [217, :ent_split_shipment, :split_shipment, "Split Shipment", {data_type: :boolean, 
+        export_lambda: lambda {|obj| obj.split_shipment? },
+        qualified_field_name: "IFNULL(split_shipment, false)"
+      }],
+      [218, :ent_split_release_option, :split_release_option, "Split Release Option", {data_type: :date,
+        export_lambda: lambda {|obj| obj.split_release_option_value },
+        qualified_field_name: "(CASE split_release_option WHEN '1' THEN 'Hold All' WHEN '2' THEN 'Incremental' ELSE '' END)"
       }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")

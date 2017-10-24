@@ -167,6 +167,17 @@ class Entry < ActiveRecord::Base
       us_holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
     end
   end
+
+  def split_release_option_value
+    case self.split_release_option.to_s
+    when "1"
+      "Hold All"
+    when "2"
+      "Incremental"
+    else
+      ""
+    end
+  end
   
   private
 

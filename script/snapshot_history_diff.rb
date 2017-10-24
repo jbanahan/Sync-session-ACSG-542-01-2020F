@@ -2,8 +2,8 @@
 # then search in notepad for the fi
 class SnapshotHistoryDiff
   # TODO unit test me and move to EntitySnapshot
-  def self.diff_extract recordable, model_field_uid = nil
-    mapped = recordable.entity_snapshots.order('id desc').map do |es|
+  def self.diff_extract recordable, model_field_uid = nil, tz = ActiveSupport::TimeZone["America/New_York"]
+    mapped = recordable.entity_snapshots.order('created_at ASC').map do |es|
       r = {'Fields Changed' => {}}
       diff = es.diff_vs_previous
       diff.model_fields_changed.each do |mfuid, vals|
@@ -12,12 +12,13 @@ class SnapshotHistoryDiff
         label = mf ? mf.label : mfuid
         r['Fields Changed'][label] = vals
         r['Name '] = es.user.full_name
-        r['Changed Date'] = es.created_at
+        r['Changed Date'] = es.created_at.in_time_zone(tz)
         r['Context'] = es.context
+        r['Snapshot ID'] = es.id
       end
       r["Fields Changed"].blank? ? nil : r
     end.compact
     
-    mapped.to_json
+    mapped
   end
 end
