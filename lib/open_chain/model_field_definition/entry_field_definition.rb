@@ -330,7 +330,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         export_lambda: lambda {|obj| obj.split_shipment? },
         qualified_field_name: "IFNULL(split_shipment, false)"
       }],
-      [218, :ent_split_release_option, :split_release_option, "Split Release Option", {data_type: :date,
+      [218, :ent_split_release_option, :split_release_option, "Split Release Option", {data_type: :string,
         export_lambda: lambda {|obj| obj.split_release_option_value },
         qualified_field_name: "(CASE split_release_option WHEN '1' THEN 'Hold All' WHEN '2' THEN 'Incremental' ELSE '' END)"
       }]
