@@ -147,7 +147,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   def initialize_business_validation_result business_validation_result, obj
     rule_built = false
     self.business_validation_rules.each do |rule|
-      unless rule.delete_pending?
+      unless rule.delete_pending? || rule.disabled?
         # Rather than doing a first_or_create for every rule (which used to be here and resulted in a separate query executed for each rule)
         #...we can load the association once and then search through it for the rule id...then build the result if it's not present yet.
         # The result will be created a few lines below when the validation result is saved.

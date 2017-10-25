@@ -6,14 +6,7 @@ class BusinessValidationRulesController < ApplicationController
       @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
-      begin
-        JSON.parse(params[:business_validation_rule][:rule_attributes_json]) unless params[:business_validation_rule][:rule_attributes_json].blank?
-        valid_json = true
-      rescue
-        valid_json = false
-      end
-
-      if valid_json
+      if valid_json(params[:business_validation_rule][:rule_attributes_json])
         if @bvr.save!
           redirect_to edit_business_validation_template_path(@bvt)
         else
@@ -22,6 +15,15 @@ class BusinessValidationRulesController < ApplicationController
       else
         error_redirect "Could not save due to invalid JSON. For reference, your attempted JSON was: #{params[:business_validation_rule][:rule_attributes_json]}"
       end
+    end
+  end
+
+  def valid_json json
+   begin
+      JSON.parse(json) unless json.blank?
+      true
+    rescue
+      false
     end
   end
 
@@ -36,20 +38,16 @@ class BusinessValidationRulesController < ApplicationController
   def update
     admin_secure{
       @bvr = BusinessValidationRule.find(params[:id])
-      if params[:search_criterions_only] == true
-        @bvr.search_criterions = []
-        params[:business_validation_rule][:search_criterions].each do |search_criterion|
-          add_search_criterion_to_rule(@bvr, search_criterion)
-        end unless params[:business_validation_rule][:search_criterions].blank?
-        render json: {ok: "ok"}
-      else
-        if @bvr.update_attributes(params[:business_validation_rule])
-          @bvr.save!
-          flash[:success] = "Criterion successfully added to rule."
-          redirect_to @bvr.business_validation_template
-        else
-          error_redirect "Criterion could not be added to rule."
+      @bvr.search_criterions = []
+      if valid_json(params[:business_validation_rule][:rule_attributes_json])
+        if params[:business_validation_rule][:search_criterions].present?
+          params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
         end
+        params[:business_validation_rule].delete("search_criterions")
+        @bvr.update_attributes!(params[:business_validation_rule].except("id", "business_validation_template_id", "search_criterions"))
+        render json: {notice: "Business rule updated"}
+      else
+        render json: {error: "Could not save due to invalid JSON."}, status: 500
       end
     }
   end
@@ -96,7 +94,12 @@ class BusinessValidationRulesController < ApplicationController
         fail_state: br.fail_state,
         id: br.id,
         name: br.name,
-        rule_attributes_json: br.rule_attributes_json
+        disabled: br.disabled,
+        rule_attributes_json: br.rule_attributes_json,
+        type: br.type,
+        group_id: br.group_id,
+        notification_type: br.notification_type,
+        notification_recipients: br.notification_recipients
       }
     }
 
@@ -105,7 +108,8 @@ class BusinessValidationRulesController < ApplicationController
   end
 
   def make_model_fields_hashes
-    @model_fields = ModelField.find_by_module_type(BusinessValidationRule.find(params[:id]).business_validation_template.module_type.capitalize.to_sym)
+    cm = CoreModule.find_by_class_name(BusinessValidationRule.find(params[:id]).business_validation_template.module_type, true)
+    @model_fields = cm.default_module_chain.model_fields(current_user).values
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {

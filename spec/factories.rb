@@ -392,6 +392,8 @@ Factory.define :business_validation_rule_result do |f|
     rr.save!
   }
 end
+Factory.define :business_validation_rule_result_without_callback, class: BusinessValidationRuleResult do |c|
+end
 Factory.define :container do |f|
   f.container_number {Factory.next :alpha_numeric}
   f.association :entry

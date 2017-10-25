@@ -1,4 +1,5 @@
 require 'open_chain/s3'
+require 'open_chain/entity_compare/entity_comparator'
 
 class BusinessRuleSnapshot < ActiveRecord::Base
   include SnapshotS3Support
@@ -58,6 +59,7 @@ class BusinessRuleSnapshot < ActiveRecord::Base
     begin
       s3_data = write_to_s3 snapshot_json, entity, path_prefix: "business_rule"
       snapshot.update_attributes! bucket: s3_data[:bucket], version: s3_data[:version], doc_path: s3_data[:key] 
+      OpenChain::EntityCompare::EntityComparator.handle_snapshot snapshot
     rescue Exception => e
       # If we fail to write the snapshot to S3, buffer the data in the database and then 
       # another service will come along and process it, push it to s3 and then relink the s3 data to the
@@ -107,7 +109,7 @@ class BusinessRuleSnapshot < ActiveRecord::Base
     rule = result.business_validation_rule
     # Rule could technically be nil if were in a state where the rule was deleted and its in the process of getting cleaned up
     return nil if rule.nil?
-    ["rule_#{rule.id}", {type: rule.try(:type), name: rule.try(:name), description: rule.description, state: result.state, message: result.message, note: result.note, overridden_by_id: result.overridden_by_id, overridden_at: result.overridden_at, created_at: result.created_at, updated_at: result.updated_at }]
+    ["rule_#{rule.id}", {type: rule.try(:type), name: rule.try(:name), description: rule.description, notification_type: rule.try(:notification_type), fail_state: rule.try(:fail_state), state: result.state, message: result.message, note: result.note, overridden_by_id: result.overridden_by_id, overridden_at: result.overridden_at, created_at: result.created_at, updated_at: result.updated_at }]
   end
   private_class_method :rule_data
 end

@@ -115,6 +115,11 @@ describe BusinessValidationTemplate do
       @bvt.create_result! @o
       expect(BusinessValidationRuleResult.count).to eq 0
     end
+    it "doesn't create rule results if the rule is disabled" do
+      @bvt.business_validation_rules.first.update_attribute(:disabled, true)
+      @bvt.create_result! @o
+      expect(BusinessValidationRuleResult.count).to eq 0
+    end
     it "should run validation if attribute passed" do
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield

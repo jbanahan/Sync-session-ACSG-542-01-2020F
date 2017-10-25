@@ -9,8 +9,10 @@ businessRuleApp.factory 'businessRuleService', ['$http', ($http) ->
 
     updateBusinessRule: (businessRule) ->
       return $http.put "/business_validation_templates/" + businessRule.business_validation_template_id + "/business_validation_rules/" + businessRule.id,
-        business_validation_rule: businessRule,
-        search_criterions_only: true
+        business_validation_rule: businessRule
+
+    groupIndex: () ->
+      return $http.get "/api/v1/groups"
   }
 ]
 
@@ -25,15 +27,20 @@ businessRuleApp.controller 'BusinessRuleController', ['$scope','businessRuleServ
     businessRuleService.editBusinessRule(id).success((data) ->
         $scope.model_fields = data.model_fields
         $scope.businessRule = data.business_validation_rule
+        businessRuleService.groupIndex().success((data2) ->
+          $scope.groups = data2.groups
+        )
       )
 
   $scope.updateBusinessRule = () ->
     businessRuleService.updateBusinessRule($scope.businessRule).success((data) ->
         $("#rule-criteria-submit-failure").hide()
+        $("#notice").text(data.notice)
         $("#rule-criteria-submit-success").show()
-      ).error(() ->
-        $("#rule-criteria-submit-failure").show()
+      ).error((data) ->
         $("#rule-criteria-submit-success").hide()
+        $("#error").text(data.error)
+        $("#rule-criteria-submit-failure").show()
       )
 
   $scope.setId = (id) ->

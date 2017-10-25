@@ -26,6 +26,12 @@ describe "BusinessRuleApp", () ->
         svc.updateBusinessRule(rule)
         http.flush()
 
+    describe "groupIndex", () ->
+      it "makes a get request to the correct URL", () ->
+        http.expectGET("/api/v1/groups").respond("OK")
+        svc.groupIndex()
+        http.flush()
+
   describe "BusinessRuleController", () ->
     ctrl = scope = svc = win = null
 
@@ -50,13 +56,18 @@ describe "BusinessRuleApp", () ->
         scope.editBusinessRule("5")
         expect(svc.editBusinessRule).toHaveBeenCalledWith("5")
 
-      it "should set model_fields and businessRule on success", () ->
+      it "should set model_fields, groups, businessRule on success", () ->
         myData = {model_fields: [1, 2, 3], business_validation_rule: "business rule"}
+        groupData = {groups: [{id: 1, grp_name: "foo"}, {id: 2, grp_name:"bar"}]}
         spyOn(svc, 'editBusinessRule').andReturn {
           success: (c) -> c(myData)
         }
+        spyOn(svc, 'groupIndex').andReturn {
+          success: (c) -> c(groupData)
+        }
         scope.editBusinessRule("5")
         expect(scope.model_fields).toEqual [1,2,3]
+        expect(scope.groups).toEqual groupData.groups
         expect(scope.businessRule).toEqual "business rule"
 
     describe 'updateBusinessRule', () ->

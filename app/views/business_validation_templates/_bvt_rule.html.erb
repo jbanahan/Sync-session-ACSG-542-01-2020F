@@ -42,13 +42,19 @@
                     <%= sc.model_field.label %> <%= CriterionOperator.find_by_key(sc.operator).label %> <%= sc.value %>
                   </li>
                 <% end %>
-                <li>
-                  <%= link_to "Manage Criteria", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
-                </li>
               </ul>
-              <li>
-                <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
-              </li>
+            </li>
+            <li><b>Disabled:</b>
+                <%= !!r.disabled %>
+              <span>
+                <li style="display:inline">
+                  <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
+                </li>
+                &nbsp;
+                <li style="display:inline">
+                  <%= link_to "Edit", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
+                </li>
+              </span>
             </li>
           </ul>
         </li>

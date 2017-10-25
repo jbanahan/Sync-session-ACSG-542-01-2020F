@@ -27,7 +27,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
       expect(described_class).to receive(:process).with(instance_of(EntitySnapshot))
 
-      described_class.process_by_id es.id
+      described_class.process_by_id "EntitySnapshot", es.id
     end
   end
   describe "process" do
@@ -129,7 +129,7 @@ describe OpenChain::EntityCompare::EntityComparator do
         OpenChain::EntityCompare::ComparatorRegistry.register comparator
 
         expect(described_class).to receive(:delay).with(priority: 10).and_return described_class
-        expect(described_class).to receive(:process_by_id).with(snapshot.id)
+        expect(described_class).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
 
         described_class.handle_snapshot snapshot
       end
@@ -164,7 +164,7 @@ describe OpenChain::EntityCompare::EntityComparator do
         es = EntitySnapshot.new id: 6, recordable: product
 
         expect(described_class).to receive(:delay).and_return described_class
-        expect(described_class).to receive(:process_by_id).with(snapshot.id)
+        expect(described_class).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
 
         described_class.handle_snapshot es
       end

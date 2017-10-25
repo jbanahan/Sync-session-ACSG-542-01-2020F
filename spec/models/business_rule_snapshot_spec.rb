@@ -7,14 +7,14 @@ describe BusinessRuleSnapshot do
       t = BusinessValidationTemplate.create! name: "Test", module_type: "Entry", description: "Test Template"
       t.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "notnull"
 
-      t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "REF"}.to_json
+      t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description", notification_type: "Email", notification_recipients: "tufnel@stonehenge.biz", fail_state: "Fail", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "REF"}.to_json
     }
 
     let! (:business_rule_2) {
       t = BusinessValidationTemplate.create! name: "Test 2", module_type: "Entry", description: "Test Template 2"
       t.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "notnull"
 
-      t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description 2", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
+      t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description 2", notification_type: nil, notification_recipients: nil, fail_state: "Fail", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
     }
 
     let! (:entry) {
@@ -66,6 +66,8 @@ describe BusinessRuleSnapshot do
                 "type" => "ValidationRuleFieldFormat",
                 "name" => "Broker Reference",
                 "description" => "Rule Description",
+                "notification_type" => "Email",
+                "fail_state" => "Fail",
                 "state" => "Pass",
                 "message" => nil,
                 "note" => nil,
@@ -85,6 +87,8 @@ describe BusinessRuleSnapshot do
                 "type" => "ValidationRuleFieldFormat",
                 "name" => "Broker Reference",
                 "description" => "Rule Description 2",
+                "notification_type" => nil,
+                "fail_state" => "Fail",
                 "state" => "Fail",
                 "message" => "Broker Reference must match 'ABC' format but was 'REF'.",
                 "note" => "I overrode it.",
@@ -127,6 +131,8 @@ describe BusinessRuleSnapshot do
                 "type" => "ValidationRuleFieldFormat",
                 "name" => "Broker Reference",
                 "description" => "Rule Description",
+                "notification_type" => nil,
+                "fail_state" => "Fail",
                 "state" => "Pass",
                 "message" => nil,
                 "note" => nil,
@@ -155,6 +161,8 @@ describe BusinessRuleSnapshot do
                 "type" => "ValidationRuleFieldFormat",
                 "name" => "Broker Reference",
                 "description" => "Rule Description",
+                "notification_type" => nil,
+                "fail_state" => "Fail",
                 "state" => "Fail",
                 "message" => "Invalid data.",
                 "note" => nil,
@@ -183,6 +191,8 @@ describe BusinessRuleSnapshot do
                 "type" => "ValidationRuleFieldFormat",
                 "name" => "Broker Reference",
                 "description" => "Rule Description",
+                "notification_type" => nil,
+                "fail_state" => "Fail",
                 "state" => "Pass",
                 "message" => "Invalid data.",
                 "note" => "I don't care.",
@@ -222,6 +232,8 @@ describe BusinessRuleSnapshot do
         "type" => "ValidationRuleFieldFormat",
         "name" => "Broker Reference",
         "description" => "Rule Description",
+        "notification_type" => nil,
+        "fail_state" => "Fail",
         "state" => "Pass",
         "message" => nil,
         "note" => nil,
@@ -237,6 +249,8 @@ describe BusinessRuleSnapshot do
         "type" => "ValidationRuleFieldFormat",
         "name" => "Broker Reference",
         "description" => "Rule Description",
+        "notification_type" => nil,
+        "fail_state" => "Fail",
         "state" => "Fail",
         "message" => "Invalid data.",
         "note" => nil,
@@ -252,6 +266,8 @@ describe BusinessRuleSnapshot do
         "type" => "ValidationRuleFieldFormat",
         "name" => "Broker Reference",
         "description" => "Rule Description",
+        "notification_type" => nil,
+        "fail_state" => "Fail",
         "state" => "Pass",
         "message" => "Invalid data.",
         "note" => "I don't care.",

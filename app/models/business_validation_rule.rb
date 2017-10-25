@@ -1,7 +1,7 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
-  attr_accessible :description, :name, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending
+  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, :notification_recipients
 
   has_many :search_criterions, dependent: :destroy
   # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)

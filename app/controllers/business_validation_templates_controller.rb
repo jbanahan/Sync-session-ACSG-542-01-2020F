@@ -110,7 +110,8 @@ class BusinessValidationTemplatesController < ApplicationController
   end
 
   def make_model_fields_hashes
-    @model_fields = ModelField.find_by_module_type(BusinessValidationTemplate.find(params[:id]).module_type.capitalize.to_sym).sort_by(&:label)
+    cm = CoreModule.find_by_class_name(BusinessValidationTemplate.find(params[:id]).module_type, true)
+    @model_fields = cm.default_module_chain.model_fields(current_user).values
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {

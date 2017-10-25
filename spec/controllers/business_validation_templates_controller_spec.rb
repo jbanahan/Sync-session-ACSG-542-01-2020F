@@ -195,7 +195,7 @@ describe BusinessValidationTemplatesController do
       sign_in_as u
       get :edit_angular, id: @bvt.id
       r = JSON.parse(response.body)
-      expect(r["model_fields"].length).to eq ModelField.find_by_core_module(CoreModule::ENTRY).size
+      expect(r["model_fields"].length).to eq(CoreModule::ENTRY.default_module_chain.model_fields(u).values.size)
       temp = r["business_template"]["business_validation_template"]
       temp.delete("updated_at")
       temp.delete("created_at")

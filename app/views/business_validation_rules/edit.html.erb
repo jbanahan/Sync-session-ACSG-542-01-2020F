@@ -5,7 +5,7 @@
 <div class="row" id="rule-criteria-submit-success" style="display:none;">
   <div class="col-md-6 col-md-offset-3 ">
     <div class="alert alert-info">
-      <p><b>Notice:</b> Criteria updated successfully.</p>
+      <p><b>Notice: </b><span id="notice"></span></p>
     </div>
   </div>
 </div>
@@ -13,32 +13,109 @@
 <div class="row" id="rule-criteria-submit-failure" style="display:none;">
   <div class="col-md-6 col-md-offset-3 ">
     <div class="alert alert-danger">
-      <p><b>Notice:</b> Criteria could not be saved.</p>
+      <p><b>Notice: </b><span id="error"></span></p>
     </div>
   </div>
 </div>
 
-<div class="row">
-  <div class="col-md-6 col-md-offset-3" align="center">
-    <h2>
-      Add Criterion to Rule <%= '"' + @bvr.name + '"' if @bvr.name %>
-    </h2>
-  </div>
-</div>
 
 <div id='ng-app' ng-app='BusinessRuleApp'>
   <div ng-controller='BusinessRuleController' ng-init="setId(<%= @bvr.id %>)">
 
+    <div class="container">
+      <br>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Name</div>
+          <div class="col-md-4"><input class="form-control" ng-model="businessRule.name"></input></div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Type</div>
+          <div class="col-md-4"><input class="form-control" ng-model="businessRule.type" ng-disabled="true"></input></div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Description</div>
+          <div class="col-md-4"><input class="form-control" ng-model="businessRule.description"></input></div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Fail state</div>
+          <div class="col-md-4">
+            <select class="form-control" ng-model="businessRule.fail_state">
+              <option value="Fail">Fail</option>  
+              <option value="Review">Review</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Rule attributes json</div>
+          <div class="col-md-4"><textarea class="form-control" ng-model="businessRule.rule_attributes_json" rows="3"></textarea></div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Override group</div>
+          <div class="col-md-4">
+            <select class="form-control" ng-model="businessRule.group_id" ng-options="g.id as g.grp_name for g in groups">
+               <option value=""></option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Notification type</div>
+          <div class="col-md-4">
+            <select class="form-control" ng-model="businessRule.notification_type">
+              <option value=""></option>
+              <option value="Email">Email</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">
+          <div class="col-md-2" style="font-weight:bold;">Notification recipients</div>
+          <div class="col-md-4"><textarea class="form-control" ng-model="businessRule.notification_recipients" rows="3" ng-disabled="!businessRule.notification_type"></textarea></div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="row form-group">    
+        <div class="col-md-4">
+          <span style="font-weight:bold;">Disabled&nbsp;</span> <input type="checkbox" ng-model="businessRule.disabled"/>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+          <h3>
+            Search Criterions
+          </h3>
+          <br><br>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="row">
+          <div class="col-md-8">
+            <div chain-search-criteria bound-item="businessRule" model-fields="model_fields">
+          </div>
+        </div>
+      </div>
+    </div>
+      
     <div chain-action-bar>
       <button class="btn btn-default" ng-click="backButton()">Back</button>
       <button class="btn btn-default" ng-click="updateBusinessRule()">Save</button>
     </div>
 
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3">
-        <div chain-search-criteria bound-item="businessRule" model-fields="model_fields">
-      </div>
-    </div>
 
   </div>
 </div>
