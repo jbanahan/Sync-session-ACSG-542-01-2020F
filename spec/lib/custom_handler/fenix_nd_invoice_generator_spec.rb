@@ -262,6 +262,16 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
     end
 
+    it "strips ! and | from values" do
+      @i.invoice_number = "Invoice!1|2"
+      @i.save
+
+      contents = generate
+      expect(contents.length).to eq 3
+      h = contents[0]
+      expect(h[1..25]).to eq "Invoice 1 2".ljust(25)
+    end
+
     it "can receive an invoice object" do
       contents = nil
       @generator.generate_file(@i) do |file|

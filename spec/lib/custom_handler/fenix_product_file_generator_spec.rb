@@ -240,14 +240,14 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
 
       @p.update_custom_value! coo_def, "CN"
-      @c.update_custom_value! desc_def, "Random Product !"
+      @c.update_custom_value! desc_def, "Random |Product !"
       @h.make_file([@p]) {|f| @t = f }
       read = IO.read(@t.path)
       expect(read[0, 15]).to eq "N".ljust(15)
       expect(read[15, 9]).to eq @code.ljust(9)
       expect(read[31, 40]).to eq "myuid".ljust(40)
       expect(read[71, 20]).to eq "1234567890".ljust(20)
-      expect(read[135, 50]).to eq "Random Product".ljust(50)
+      expect(read[135, 50]).to eq "Random  Product".ljust(50)
       expect(read[359, 3]).to eq "CN "
       expect(read).to end_with "\r\n"
     end

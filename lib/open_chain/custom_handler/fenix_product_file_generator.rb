@@ -198,8 +198,8 @@ module OpenChain
           line << str(custom_value(c, :class_sima_code), 2) # SIMA Code (389 - 391)
           # line << str("", 2) # Excise Rate (391 - 393)
 
-          #Because Canada doesn't allow exclamation marks in B3 files (WTF?, strip them
-          line = line.gsub("!", " ") 
+          #Because Canada doesn't allow exclamation marks or pipes in B3 files (WTF?, strip them)
+          line = line.gsub(/[!|]/, " ") 
           line += "\r\n"
         end
 

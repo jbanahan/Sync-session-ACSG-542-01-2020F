@@ -262,6 +262,9 @@ module OpenChain; module CustomHandler
         # Strip any newlines...these are never valid
         value = value.gsub(/\r|\n/, " ")
 
+        # B3 data apparently can't contain ! or | in them.  Remove them
+        value = value.gsub(/[!|]/, " ")
+
         max_len = field[:length]
         if value.length > max_len
           value = value[0..(max_len - 1)]
