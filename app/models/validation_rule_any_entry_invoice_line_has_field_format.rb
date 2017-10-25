@@ -30,8 +30,8 @@ class ValidationRuleAnyEntryInvoiceLineHasFieldFormat < BusinessValidationRule
   end
 
   # This validation doesn't work with multiple model fields set up...
-  def validation_expressions
-    expressions = super
+  def validation_expressions args=nil
+    expressions = super(['regex', 'fail_if_matches', 'allow_blank'])
     raise "Using multiple model fields is not supported with this business rule." if expressions.size > 1
     mf = expressions.keys.first
 

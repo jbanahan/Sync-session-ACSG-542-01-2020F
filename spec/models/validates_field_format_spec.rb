@@ -59,11 +59,12 @@ describe ValidatesFieldFormat do
     end
 
     context "success" do
-      before :each do
-        order_line.hts = 'ABC'
-      end
 
       context "without fail_if_matches" do
+        before :each do
+          order_line.hts = 'ABC'
+        end
+
         it "executes block if yield_matches enabled" do
           expect{ |block| rule.validate_field_format(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 'ABC', 'ABC', nil)
         end
@@ -76,13 +77,12 @@ describe ValidatesFieldFormat do
       context "with fail_if_matches" do
         before :each do
           rule.rule_attributes['fail_if_matches'] = true
-          rule.rule_attributes['regex'] = "foo"
         end
 
         let (:block) { Proc.new {|mf, val, not_regex| "At least one #{mf.label} value matches '#{not_regex}' format."} }
         
         it "executes block if yield_matches enabled" do
-          expect{ |block| rule.validate_field_format(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 'ABC', 'foo', true)
+          expect{ |block| rule.validate_field_format(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 'foo', 'ABC', true)
         end
 
         it "returns nil if yield_matches enabled" do
