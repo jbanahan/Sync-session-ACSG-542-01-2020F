@@ -37,25 +37,25 @@ module OpenChain; module CustomHandler; module Polo; class PoloSystemClassifyPro
 
   def is_spe?(prod_hts)
     return nil if prod_hts.blank?
-    return ["711311", "711319", "711320", "711620"].include?(prod_hts[0..5]) ? 'spe' : nil
+    return ["711311", "711319", "711320", "711620"].include?(prod_hts[0..5]) ? 'SPE' : nil
   end
 
   def is_bjt?(prod_hts)
     return nil if prod_hts.blank?
-    return ["711711", "711719", "711790"].include?(prod_hts[0..5]) ? 'bjt' : nil
+    return ["711711", "711719", "711790"].include?(prod_hts[0..5]) ? 'BJT' : nil
   end
 
   def is_nct?(product)
-    product.get_custom_value(cdefs[:cites]).value == false && product.get_custom_value(cdefs[:fish_wildlife]).value == true ? 'nct' : nil
+    product.get_custom_value(cdefs[:cites]).value == false && product.get_custom_value(cdefs[:fish_wildlife]).value == true ? 'NCT' : nil
   end
 
   def is_fur?(prod_hts)
     return nil if prod_hts.blank?
-    return prod_hts[0..1] == '43' ? 'fur' : nil
+    return prod_hts[0..1] == '43' ? 'FUR' : nil
   end
 
   def is_cites?(product)
-    product.get_custom_value(cdefs[:cites]).value ? 'cts' : nil
+    product.get_custom_value(cdefs[:cites]).value ? 'CTS' : nil
   end
 
   def collect_classifications(product)
@@ -79,13 +79,13 @@ module OpenChain; module CustomHandler; module Polo; class PoloSystemClassifyPro
 
   def rules_table
     @rules_table ||= {
-        "cts" => {"cts" => "cts", "spe" => "cts", "bjt" => "cts", "nct" => "cts", "wod" => "cts", "stw" => "cts", "fur" => "cts"},
-        "spe" => {"cts" => "cts", "spe" => "spe", "bjt" => "nct", "nct" => "spe", "wod" => "spe", "stw" => "spe", "fur" => "spe"},
-        "bjt" => {"cts" => "cts", "spe" => "spe", "bjt" => "bjt", "nct" => "nct", "wod" => "bjt", "stw" => "bjt", "fur" => "bjt"},
-        "nct" => {"cts" => "cts", "spe" => "nct", "bjt" => "nct", "nct" => "nct", "wod" => "nct", "stw" => "nct", "fur" => "nct"},
-        "wod" => {"cts" => "cts", "spe" => "spe", "bjt" => "bjt", "nct" => "nct", "wod" => "wod", "stw" => "wod", "fur" => "fur"},
-        "stw" => {"cts" => "cts", "spe" => "spe", "bjt" => "bjt", "nct" => "nct", "wod" => "wod", "stw" => "stw", "fur" => "fur"},
-        "fur" => {"cts" => "cts", "spe" => "spe", "bjt" => "bjt", "nct" => "nct", "wod" => "fur", "stw" => "fur", "fur" => "fur"},
+        "CTS" => {"CTS" => "CTS", "SPE" => "CTS", "BJT" => "CTS", "NCT" => "CTS", "WOD" => "CTS", "STW" => "CTS", "FUR" => "CTS"},
+        "SPE" => {"CTS" => "CTS", "SPE" => "SPE", "BJT" => "NCT", "NCT" => "SPE", "WOD" => "SPE", "STW" => "SPE", "FUR" => "SPE"},
+        "BJT" => {"CTS" => "CTS", "SPE" => "SPE", "BJT" => "BJT", "NCT" => "NCT", "WOD" => "BJT", "STW" => "BJT", "FUR" => "BJT"},
+        "NCT" => {"CTS" => "CTS", "SPE" => "NCT", "BJT" => "NCT", "NCT" => "NCT", "WOD" => "NCT", "STW" => "NCT", "FUR" => "NCT"},
+        "WOD" => {"CTS" => "CTS", "SPE" => "SPE", "BJT" => "BJT", "NCT" => "NCT", "WOD" => "WOD", "STW" => "WOD", "FUR" => "FUR"},
+        "STW" => {"CTS" => "CTS", "SPE" => "SPE", "BJT" => "BJT", "NCT" => "NCT", "WOD" => "WOD", "STW" => "STW", "FUR" => "FUR"},
+        "FUR" => {"CTS" => "CTS", "SPE" => "SPE", "BJT" => "BJT", "NCT" => "NCT", "WOD" => "FUR", "STW" => "FUR", "FUR" => "FUR"},
     }
 
     @rules_table

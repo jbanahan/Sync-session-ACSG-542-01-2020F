@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
-RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
+describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
 
   subject { described_class }
 
@@ -25,7 +25,7 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
 
     it 'does not overwrite allocation_category with nil' do
       klass = subject.new
-      product.find_and_set_custom_value(cdefs[:allocation_category], 'nct')
+      product.find_and_set_custom_value(cdefs[:allocation_category], 'NCT')
       product.save
 
       expect(klass).to receive(:collect_classifications).and_return([])
@@ -37,9 +37,9 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
 
     it 'does not save the product if the allocation_category has not changed' do
       klass = subject.new
-      product.find_and_set_custom_value(cdefs[:allocation_category], 'nct')
+      product.find_and_set_custom_value(cdefs[:allocation_category], 'NCT')
       product.save
-      expect(klass).to receive(:collect_classifications).and_return(['nct'])
+      expect(klass).to receive(:collect_classifications).and_return(['NCT'])
       expect(Product).to receive(:find).and_return(product)
 
       expect(product).to_not receive(:save!)
@@ -49,9 +49,9 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
 
     it 'saves the product if the allocation_category has changed' do
       klass = subject.new
-      product.find_and_set_custom_value(cdefs[:allocation_category], 'nct')
+      product.find_and_set_custom_value(cdefs[:allocation_category], 'NCT')
       product.save
-      expect(klass).to receive(:collect_classifications).and_return(['bjt'])
+      expect(klass).to receive(:collect_classifications).and_return(['BJT'])
       expect(Product).to receive(:find).and_return(product)
 
       expect(product).to receive(:save!)
@@ -60,24 +60,24 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
     end
   end
 
-  describe 'is_spe?' do
+  describe 'is_SPE?' do
     it 'returns nil with any other hts number' do
       expect(subject.new.is_spe?("1234567890")).to eql(nil)
     end
 
     ["711311", "711319", "711320", "711620"].each do |hts|
-      it "returns 'spe' if HTS begins with #{hts} " do
-        expect(subject.new.is_spe?(hts)).to eql('spe')
+      it "returns 'SPE' if HTS begins with #{hts} " do
+        expect(subject.new.is_spe?(hts)).to eql('SPE')
       end
     end
   end
 
-  describe 'is_nct?' do
-    it 'returns nct if fish_wildlife is true and cites is false' do
+  describe 'is_NCT?' do
+    it 'returns NCT if fish_wildlife is true and cites is false' do
       product.find_and_set_custom_value cdefs[:cites], false
       product.find_and_set_custom_value cdefs[:fish_wildlife], true
 
-      expect(subject.new.is_nct?(product)).to eql('nct')
+      expect(subject.new.is_nct?(product)).to eql('NCT')
     end
 
     it 'returns nil if fish_wildlife is false' do
@@ -95,13 +95,13 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
     end
   end
 
-  describe 'is_fur?' do
+  describe 'is_FUR?' do
     it 'returns nil with any other hts number' do
       expect(subject.new.is_fur?("1234567890")).to eql(nil)
     end
 
-    it "returns 'fur' if HTS begins with 43" do
-      expect(subject.new.is_fur?("4334567890")).to eql('fur')
+    it "returns 'FUR' if HTS begins with 43" do
+      expect(subject.new.is_fur?("4334567890")).to eql('FUR')
     end
   end
 
@@ -112,21 +112,21 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
       expect(subject.new.is_cites?(product)).to eql(nil)
     end
 
-    it 'returns cts if cites is true' do
+    it 'returns CTS if cites is true' do
       product.find_and_set_custom_value cdefs[:cites], true
 
-      expect(subject.new.is_cites?(product)).to eql('cts')
+      expect(subject.new.is_cites?(product)).to eql('CTS')
     end
   end
 
-  describe 'is_bjt?' do
+  describe 'is_BJT?' do
     it 'returns nil with any other hts number' do
       expect(subject.new.is_bjt?("1234567890")).to eql(nil)
     end
 
     ["711711", "711719", "711790"].each do |hts|
-      it "returns 'bjt' if HTS begins with #{hts} " do
-        expect(subject.new.is_bjt?(hts)).to eql('bjt')
+      it "returns 'BJT' if HTS begins with #{hts} " do
+        expect(subject.new.is_bjt?(hts)).to eql('BJT')
       end
     end
   end
@@ -148,12 +148,12 @@ RSpec.describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparat
       expect(subject.new.calculate_classification([])).to eql(nil)
     end
 
-    ['cts', 'spe', 'bjt', 'nct', 'wod', 'stw', 'fur'].each do |outer|
+    ['CTS', 'SPE', 'BJT', 'NCT', 'WOD', 'STW', 'FUR'].each do |outer|
       it 'handles cases when only one classification is present' do
         expect(subject.new.calculate_classification([outer])).to eql(outer)
       end
 
-      ['cts', 'spe', 'bjt', 'nct', 'wod', 'stw', 'fur'].each do |inner|
+      ['CTS', 'SPE', 'BJT', 'NCT', 'WOD', 'STW', 'FUR'].each do |inner|
         it "returns #{OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator.new.rules_table[outer][inner]} when given an array of [#{outer}, #{inner}]" do
           expect(subject.new.calculate_classification([outer,inner])).to eql(subject.new.rules_table[outer][inner])
         end
