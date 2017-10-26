@@ -2,6 +2,8 @@ require 'open_chain/entity_compare/comparator_registry'
 
 module OpenChain; module EntityCompare; class EntityComparator
 
+  REGISTRIES = [OpenChain::EntityCompare::ComparatorRegistry, OpenChain::EntityCompare::BusinessRuleComparatorRegistry]
+
   def self.process_by_id snapshot_class_name, snapshot_id
     process snapshot_class_name.constantize.find(snapshot_id)
   end
@@ -12,9 +14,14 @@ module OpenChain; module EntityCompare; class EntityComparator
     # Make these a lower queue priority..when uploading large numbers of orders/products these can choke out
     # reports and such if they're running at a lower priority
     return unless process_snapshot?(snapshot)
-    self.delay(priority: 10).process_by_id(snapshot.class.to_s, snapshot.id) if OpenChain::EntityCompare::ComparatorRegistry.registered_for(snapshot).length > 0
 
+    self.delay(priority: 10).process_by_id(snapshot.class.to_s, snapshot.id) if registry(snapshot)
+    
     nil
+  end
+
+  def self.registry snapshot
+    REGISTRIES.find{ |r| r.registered_for(snapshot).length > 0 }
   end
 
   def self.process_snapshot? snapshot
@@ -69,8 +76,8 @@ module OpenChain; module EntityCompare; class EntityComparator
         old_version = last_processed.version
       end
 
-
-      OpenChain::EntityCompare::ComparatorRegistry.registered_for(snapshot).each do |comp|
+      
+      registry(snapshot).registered_for(snapshot).each do |comp|
         comp.delay(priority: 10).compare(rec_type, rec_id,
           old_bucket, old_path, old_version,
           newest_unprocessed.bucket, newest_unprocessed.doc_path, newest_unprocessed.version
