@@ -211,6 +211,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     headers << "B3 Subheader #"
     headers << "B3 Line #"
     headers << "Line Number"
+    headers << "Value for Duty"
     headers << "Duty"
     headers << "Sima"
     headers << "Excise"
@@ -229,6 +230,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     columns << line.subheader_number
     columns << line.customs_line_number
     columns << line.line_number
+    columns << line.entered_value
     columns << line.duty
     columns << line.sima_value
     columns << line.excise_amount
