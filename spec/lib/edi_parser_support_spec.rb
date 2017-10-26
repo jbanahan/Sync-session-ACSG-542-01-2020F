@@ -376,6 +376,14 @@ describe OpenChain::EdiParserSupport do
       expect(m.attachments["file.edi"].read).to eq transaction.read
     end
 
+    it "does not include a backtrace if instructed not to" do
+      subject.send_error_email(first_transaction, error, "Parser", "file.edi", include_backtrace: false)
+
+      m = ActionMailer::Base.deliveries.first
+
+      expect(m.body.raw_source).not_to include ERB::Util.html_escape(error.backtrace.first)      
+    end
+
     it "handles blank filenames" do
       # The attachment in this case just takes the tempfile name...which is fine, this just used
       # to crash the reporter and we don't want that.
@@ -568,7 +576,7 @@ describe OpenChain::EdiParserSupport do
             expect(parser).to receive(:process_transaction).and_raise e
             expect(parser).to receive(:parser_name).and_return "Parser"
             expect(subject.class).to receive(:currently_running_delayed_job_attempts).and_return 5
-            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path", to_address: "bug@vandegriftinc.com")
             expect(e).to receive(:log_me).with ["File: path"]
 
             subject.class.process_transaction(transaction, opts)
@@ -580,7 +588,7 @@ describe OpenChain::EdiParserSupport do
             expect(parser).to receive(:process_transaction).and_raise e
             expect(parser).to receive(:parser_name).and_return "Parser"
             expect(subject.class).not_to receive(:currently_running_as_delayed_job?)
-            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path", include_backtrace: false)
             expect(e).not_to receive(:log_me)
 
             subject.class.process_transaction(transaction, opts)
@@ -592,7 +600,7 @@ describe OpenChain::EdiParserSupport do
             expect(parser).to receive(:process_transaction).and_raise e
             expect(parser).to receive(:parser_name).and_return "Parser"
             expect(subject.class).not_to receive(:currently_running_as_delayed_job?)
-            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path")
+            expect(subject.class).to receive(:send_error_email).with(transaction, e, "Parser", "path", include_backtrace: false)
             expect(e).not_to receive(:log_me)
 
             subject.class.process_transaction(transaction, opts)

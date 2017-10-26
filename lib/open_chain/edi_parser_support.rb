@@ -361,8 +361,8 @@ module OpenChain; module EdiParserSupport
     self.class.isa_code(transaction)
   end
 
-  def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com"
-    self.class.send_error_email transaction, error, parser_name, filename, to_address: to_address
+  def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com", include_backtrace: true
+    self.class.send_error_email transaction, error, parser_name, filename, to_address: to_address, include_backtrace: include_backtrace
   end
 
   def write_transaction transaction, io, segment_terminator: "\n"
@@ -479,7 +479,7 @@ module OpenChain; module EdiParserSupport
       transaction.isa_segment.elements[13].value
     end
 
-    def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com"
+    def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com", include_backtrace: true
       Tempfile.create(["EDI-#{isa_code(transaction)}-",'.edi']) do |f|
         write_transaction transaction, f
         f.rewind
@@ -487,8 +487,10 @@ module OpenChain; module EdiParserSupport
 
         body = "<p>There was a problem processing the attached #{parser_name} EDI. A re-creation of only the specific EDI transaction file the file that errored is attached.</p><p>Error: "
         body += ERB::Util.html_escape(error.message)
-        body += "<br>"
-        body += error.backtrace.map {|t| ERB::Util.html_escape(t)}.join "<br>"
+        if include_backtrace
+          body += "<br>"
+          body += error.backtrace.map {|t| ERB::Util.html_escape(t)}.join "<br>"
+        end
         body += "</p>"
 
         OpenMailer.send_simple_html(to_address, "#{parser_name} EDI Processing Error (ISA: #{isa_code(transaction)})", body.html_safe, [f]).deliver!
@@ -525,7 +527,7 @@ module OpenChain; module EdiParserSupport
 
         # These errors are conditions that should be reported without having to retry the document processing, they represent
         # errors inside the actual data that will never get remedied by reprocessing
-        send_error_email(transaction, e, parser.parser_name, opts[:key])
+        send_error_email(transaction, e, parser.parser_name, opts[:key], include_backtrace: false)
       rescue => e
         # In test, I want the errors to be raised so they're easily test cased
         raise e if test?
@@ -535,7 +537,9 @@ module OpenChain; module EdiParserSupport
         # (locks, etc)
         raise e if currently_running_as_delayed_job? && currently_running_delayed_job_attempts < max_delayed_job_attempts
 
-        send_error_email(transaction, e, parser.parser_name, opts[:key])
+        # Send these errors to our bug email so that they're not creating tickets, and getting sent to the customer
+        # as they're likely not errors that the customer should be seeing (db issue, data issue inside VFI Track, etc)
+        send_error_email(transaction, e, parser.parser_name, opts[:key], to_address: OpenMailer::BUG_EMAIL)
         e.log_me ["File: #{opts[:key]}"]
       end
     end
