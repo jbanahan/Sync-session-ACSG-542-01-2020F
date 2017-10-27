@@ -4,11 +4,30 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
   include OpenChain::Report::ReportHelper
 
   def self.permission? user
-    (Rails.env.development? || MasterSetup.get.system_code == "www-vfitrack-net") && user.company.master? && user.view_entries?
+    (Rails.env.development? || MasterSetup.get.system_code == "www-vfitrack-net") && user.view_entries? &&
+        (user.company.master? || user.company.system_code == 'RLMASTER')
   end
 
   def self.run_report user, settings = {}
     self.new.run(user, settings)
+  end
+
+  def self.run_schedulable settings={}
+    raise "Scheduled instances of the Jira Ticket Discrepancy Report must include an email_to setting with an array of email addresses." unless settings['email_to'] && settings['email_to'].respond_to?(:each)
+    current_datetime = ActiveSupport::TimeZone["America/New_York"].now()
+    report_start = current_datetime.beginning_of_month - 1.month
+    settings['start_date'] = report_start.strftime("%Y-%m-%d")
+    settings['end_date'] = current_datetime.beginning_of_month.strftime("%Y-%m-%d")
+    temp = nil
+    begin
+      temp = self.new.run User.integration, settings
+      report_month_formatted = report_start.strftime("%m/%Y")
+      subject = "[VFI Track] Jira Ticket Discrepancy Report for the Month of #{report_month_formatted}"
+      body = "Attached please find the Jira Ticket Discrepancy Report for the Month of #{report_month_formatted}.  For any issues related to the report or to change the report email distribution list, please contact VFI Track Support at vfitrack_support@vandegriftinc.com."
+      OpenMailer.send_simple_html(settings['email_to'], subject, body, [temp]).deliver!
+    ensure
+      temp.close! if temp && temp.respond_to?(:close!) && !temp.closed?
+    end
   end
 
   def run user, settings = {}
