@@ -22,9 +22,8 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
     self.new.send_email(settings['email'])
   end
 
-  def self.get_mids
-    keys = DataCrossReference.get_all_pairs("asce_mid").keys.presence 
-    keys ? keys.map{ |k| k.split("-").first } : []
+  def self.get_mid_vendors
+    DataCrossReference.get_all_pairs("asce_mid").keys
   end
   
   def run run_by, settings
@@ -47,7 +46,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
 
   def create_workbook time_zone
     wb, sheet = XlsMaker.create_workbook_and_sheet "Daily First Sale Exception Report"
-    table_from_query sheet, query(self.class.get_mids, cdefs), conversions(time_zone)
+    table_from_query sheet, query(self.class.get_mid_vendors, cdefs), conversions(time_zone)
     wb
   end
 
@@ -104,7 +103,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
         AND e.duty_due_date >= NOW()
         AND (cil.contract_amount = 0 OR cil.contract_amount IS NULL)
         AND (cit.entered_value = cil.value)
-        AND cil.mid in (#{format_mids(mid_list)})
+        AND CONCAT(cil.mid,"-",vend.system_code) in (#{format_mids(mid_list)})
       ORDER BY e.entry_filed_date
     SQL
   end

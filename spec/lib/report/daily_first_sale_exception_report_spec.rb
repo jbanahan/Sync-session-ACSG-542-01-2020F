@@ -13,7 +13,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     @yesterday = @today - 1.day
     @day_before_yesterday = @yesterday - 1.day
     @tomorrow = @today + 1.day
-    DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid-vendorId")
+    DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid-vend sys code")
     vend = Factory(:company, name: "vend name", system_code: "vend sys code")
     @ent = Factory(:entry, import_country: Factory(:country, iso_code: 'US'), customer_number: 'ASCE', entry_filed_date: @day_before_yesterday,
                     first_entry_sent_date: @today, entry_number: 'entry num', release_date: @yesterday, 
@@ -66,16 +66,16 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     end
   end
 
-  describe "get_mids" do
+  describe "get_mid_vendors" do
     it "retrieves mids" do
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid1-vendorId1")
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid2-vendorId2")
 
-      expect(described_class.get_mids).to eq ["mid1", "mid2"]
+      expect(described_class.get_mid_vendors).to eq ["mid1-vendorId1", "mid2-vendorId2"]
     end
 
     it "returns empty string if list is empty" do
-      expect(described_class.get_mids).to eq []
+      expect(described_class.get_mid_vendors).to eq []
     end
   end
 
@@ -124,7 +124,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     before { create_data }
 
     it "produces expected results" do
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 1
       expect(db_result.fields).to eq header
       #                                   0            1                 2                           3           4        5        6       7        8          9      10     11    12     13   14       15         16               17            18     19   20    21   22  23   24   25  26  27  28
@@ -133,37 +133,37 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
 
     it "omits non-US entries" do
       @ent.update_attributes(import_country: Factory(:country, iso_code: "CA"))
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits non-Ascena entries" do
       @ent.update_attributes(customer_number: "ACME")
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits entries without first_entry_sent_date" do
       @ent.update_attributes(first_entry_sent_date: nil)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits entries with a past duty_due_date" do
       @ent.update_attributes(duty_due_date: @today - 1.day)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits invoices with a contract_amount" do
       @cil.update_attributes(contract_amount: 100)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
     it "omits tariffs whose entered_value doesn't equal the invoice line's value" do
       @cit.update_attributes(entered_value: 100)
-      db_result = ActiveRecord::Base.connection.execute report.query(['mid'], cdefs)
+      db_result = ActiveRecord::Base.connection.execute report.query(['mid-vend sys code'], cdefs)
       expect(db_result.count).to eq 0
     end
 
