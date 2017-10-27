@@ -12,20 +12,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
   end
 
-  def self.parse data, opts={}
-    user = User.integration
-    parser = self.new
-    REX12::Document.each_transaction(data) do |transaction|
-      begin
-        parser.process_shipment(user, transaction.segments, opts[:bucket], opts[:key])
-      rescue => e
-        send_error_email(transaction, e, "Burlington 856", opts[:key])
-        e.log_me ["File: #{opts[:key]}"]
-      end
-    end
-  end
-
-  def process_shipment user, segments, bucket, file
+  def process_transaction user, segments, bucket:, file:
     # Use the BSN03-04 value as the send date and our indicator of whether the shipment data is outdated or not in reprocessing scenarios
     bsn = find_segment(segments, "BSN")
     shipment_number = value(bsn, 2)
@@ -55,7 +42,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
       when "0002"
         process_order_item_pack_loops(shipment, hl_loops)
       else
-        raise "Unexpected BSN05 Heirarchical Structure Code value received: '#{loop_structure}'."
+        raise EdiStructuralError, "Unexpected BSN05 Heirarchical Structure Code value received: '#{loop_structure}'."
       end
 
       calculate_shipment_totals shipment
@@ -336,10 +323,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
 
   def explode_prepack order_number, outer_pack_identifier
     order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
-    raise "Burlington 856 references missing Order # '#{order_number}'." unless order
+    raise EdiBusinessLogicError, "Burlington 856 references missing Order # '#{order_number}'." unless order
 
     order_lines = order.order_lines.find_all {|l| l.custom_value(cdefs[:ord_line_outer_pack_identifier]) == outer_pack_identifier}
-    raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Outer Pack Identifier '#{outer_pack_identifier}'." if order_lines.length == 0
+    raise EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '#{order_number}' with Outer Pack Identifier '#{outer_pack_identifier}'." if order_lines.length == 0
 
     order_lines
   end
@@ -424,7 +411,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   def process_shipment_line_data shipment, order_number, cartons, buyer_style_or_upc, item_quantity, weight, order_line
     if order_line.nil?
       order = Order.where(importer_id: importer.id, order_number: "BURLI-#{order_number}").first
-      raise "Burlington 856 references missing Order # '#{order_number}'." unless order
+      raise EdiBusinessLogicError, "Burlington 856 references missing Order # '#{order_number}'." unless order
 
       order_line = order.order_lines.find {|l| l.custom_value(cdefs[:ord_line_buyer_item_number]) == buyer_style_or_upc}
 
@@ -432,7 +419,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
         order_line = order.order_lines.find {|l| l.sku == buyer_style_or_upc}
       end
 
-      raise "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number / UPC '#{buyer_style_or_upc}'." unless order_line
+      raise EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '#{order_number}' with Buyer Item Number / UPC '#{buyer_style_or_upc}'." unless order_line
     end
 
     container = shipment.containers.first
