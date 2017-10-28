@@ -7,6 +7,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   extend OpenChain::IntegrationClientParser
   include OpenChain::EdiParserSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::DelayedJobExtensions
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
