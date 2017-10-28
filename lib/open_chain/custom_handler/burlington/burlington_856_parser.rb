@@ -13,7 +13,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
   end
 
-  def process_transaction user, segments, last_file_bucket:, last_file_path:
+  def process_transaction user, transaction, last_file_bucket:, last_file_path:
+    segments = transaction.segments
+    
     # Use the BSN03-04 value as the send date and our indicator of whether the shipment data is outdated or not in reprocessing scenarios
     bsn = find_segment(segments, "BSN")
     shipment_number = value(bsn, 2)
