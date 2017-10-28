@@ -1,7 +1,6 @@
 require 'rex12'
 require 'open_chain/integration_client_parser'
 require 'open_chain/edi_parser_support'
-require 'open_chain/delayed_job_extensions'
 
 # This class is meant to be extended for all 850 parsers that fit a fairly standard 
 # parsing structure used to create an Order
@@ -86,7 +85,6 @@ require 'open_chain/delayed_job_extensions'
 module OpenChain; module CustomHandler; class Generic850ParserFramework
   extend OpenChain::IntegrationClientParser
   include OpenChain::EdiParserSupport
-  include OpenChain::DelayedJobExtensions
 
   def initialize configuration = {}
     # In general, you'll want to set this to false on customer specific systems (ll, polo, etc)
