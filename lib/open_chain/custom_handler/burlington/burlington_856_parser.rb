@@ -13,13 +13,13 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
   end
 
-  def process_transaction user, segments, bucket:, file:
+  def process_transaction user, segments, last_file_bucket:, last_file_path:
     # Use the BSN03-04 value as the send date and our indicator of whether the shipment data is outdated or not in reprocessing scenarios
     bsn = find_segment(segments, "BSN")
     shipment_number = value(bsn, 2)
     shipment_date = parse_date(Array.wrap(value(bsn, (3..4))).join)
     s = nil
-    find_or_create_shipment(shipment_number, shipment_date, bucket, file) do |shipment|
+    find_or_create_shipment(shipment_number, shipment_date, last_file_bucket, last_file_path) do |shipment|
       # destroy all shipment lines / containers...technically we could re-use containers
       # but that would save so little processing time that it's just easier to rebuild them
       # all from scratch each time we get an 856.
@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
       calculate_shipment_totals shipment
 
       shipment.save!
-      shipment.create_snapshot user, nil, file
+      shipment.create_snapshot user, nil, last_file_path
       s = shipment
     end
 

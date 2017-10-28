@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       let! (:port_unlading) { Port.create! unlocode: "USORD", name: "O'Hare" }
 
       it "parses edi segments into shipments" do
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.reference).to eq "BURLI-146021201-02"
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         ol.update_attributes! sku: "13347530"
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "BIN12312"
 
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.shipment_lines.length).to eq 2
@@ -111,7 +111,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         ol.update_attributes! sku: "13347530"
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "BIN12312"
 
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.shipment_lines.length).to eq 2
@@ -121,32 +121,32 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       it "leaves missing port codes blank" do
         port_unlading.destroy
 
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment.unlading_port).to be_nil
       end
 
       it "errors on missing order" do
         order_1.destroy
 
-        expect { subject.process_transaction user, segments, bucket: "bucket", file: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order # '365947702'."
+        expect { subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order # '365947702'."
       end
 
       it "errors on missing order line" do
         order_1.order_lines.destroy_all
 
-        expect { subject.process_transaction user, segments, bucket: "bucket", file: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '365947702' with Buyer Item Number / UPC '13347530'."
+        expect { subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '365947702' with Buyer Item Number / UPC '13347530'."
       end
 
       it "errors on missing importer" do
         importer.destroy
 
-        expect { subject.process_transaction user, segments, bucket: "bucket", file: "file.edi" }.to raise_error "Unable to find Burlington importer account with system code of: 'BURLI'."
+        expect { subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi" }.to raise_error "Unable to find Burlington importer account with system code of: 'BURLI'."
       end
 
       it "converts LB gross weight to KG" do
         edi_data.gsub!("|KG", "|LB")
 
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment.gross_weight).to eq BigDecimal("4561.77")
 
         line = shipment.shipment_lines.first
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       it "parses edi segments into shipments" do
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.number_of_packages_uom).to eq "CTN"
@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       it "parses alternate edi loop structure" do
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.number_of_packages_uom).to eq "CTN"
@@ -297,7 +297,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       it "parses alternate edi loop prepack structure" do
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.number_of_packages_uom).to eq "CTN"
@@ -365,7 +365,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
       }
 
       it "parses edi" do
-        shipment = subject.process_transaction user, segments, bucket: "bucket", file: "file.edi"
+        shipment = subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi"
         expect(shipment).not_to be_nil
 
         expect(shipment.number_of_packages_uom).to eq "CTN"
@@ -402,12 +402,12 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
       it "raises an error if order line is not found" do
         order.order_lines.destroy_all
-        expect { subject.process_transaction user, segments, bucket: "bucket", file: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '641585114' with Outer Pack Identifier 'PO6415851LN14'."
+        expect { subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order Line from Order '641585114' with Outer Pack Identifier 'PO6415851LN14'."
       end
 
       it "raises an error if order is not found" do
         order.destroy
-        expect { subject.process_transaction user, segments, bucket: "bucket", file: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order # '641585114'."
+        expect { subject.process_transaction user, segments, last_file_bucket: "bucket", last_file_path: "file.edi" }.to raise_error described_class::EdiBusinessLogicError, "Burlington 856 references missing Order # '641585114'."
       end
     end
   end
