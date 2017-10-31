@@ -12,8 +12,15 @@ module OpenChain
       hts_map[hts_code[0,4]] ||= get_description(hts_code[0,4],us)
       d.export_date = d.ship_date = Date.strptime(r[1],"%m/%d/%Y")
       d.part_number = r[12]
-      d.ref_1 = r[7]
-      d.ref_2 = r[0]
+      d.ref_1 = r[7] # Order Tracking #
+      d.ref_2 = r[0] # B3 Number
+      order_trailer = r[6].to_s
+      if order_trailer =~ /(.+)-(.+)/
+        d.ref_3 = $1
+        d.ref_4 = $2
+      else
+        d.ref_3 = order_trailer
+      end
       d.destination_country = "CA"
       d.quantity = r[13] 
       d.description = hts_map[hts_code[0,4]]
@@ -22,6 +29,9 @@ module OpenChain
       d.action_code = "E"
       d.hts_code = hts_code
       d.importer = importer
+      if (b3_line_number = r[8].to_i) > 0
+        d.customs_line_number = b3_line_number
+      end
       d
     end
     private

@@ -30,8 +30,8 @@ describe OpenChain::LandsEndExportParser do
       expect(d.carrier).to be_nil
       expect(d.ref_1).to eq("1Z7R65572007202242") #Lands End Tracking Number
       expect(d.ref_2).to eq("15818-019998734") #B3 Number
-      expect(d.ref_3).to be_nil
-      expect(d.ref_4).to be_nil
+      expect(d.ref_3).to eq "00104010"
+      expect(d.ref_4).to eq "11364"
       expect(d.destination_country).to eq("CA")
       expect(d.quantity).to eq(1)
       expect(d.description).to eq("CHP")
@@ -45,6 +45,20 @@ describe OpenChain::LandsEndExportParser do
       expect(d.duty_calc_export_file).to be_nil
       expect(d.hts_code).to eq("6116930092")
       expect(d.importer).to eq(@importer)
+      expect(d.customs_line_number).to eq 1
+    end
+    it "parses order trailer that don't conform to standard" do
+      line = @lines[1].parse_csv
+      line[6] = "NOTVALID"
+
+      d = OpenChain::LandsEndExportParser.parse_csv_line line, 0, @importer
+      expect(d.export_date).to eq(Date.new(2012,1,4))
+      expect(d.ship_date).to eq(Date.new(2012,1,4))
+      expect(d.part_number).to eq("3250356")
+      expect(d.ref_1).to eq("1Z7R65572007202242") #Lands End Tracking Number
+      expect(d.ref_2).to eq("15818-019998734") #B3 Number
+      expect(d.ref_3).to eq "NOTVALID"
+      expect(d.ref_4).to be_nil
     end
     it 'should raise exception if part is empty' do
       line = "\"15818-019998734\",\"1/4/2012\",\"1/3/2012\",\"\",\"\",\"\",\"00104010-11364\",\"1Z7R65572007202242\",1,\"6116.93.00.92\",\"PAR\",\"CN\",\"\",1,6.99,\"USD\",1.021,\"2/24/2012\",18,1.28,.42,0,0,1.7,0,\"\",2,\"LANDSEND-C\",\"\"".parse_csv
