@@ -362,7 +362,10 @@ describe FtpSender do
     describe "connect" do
       it "should use Net::FTP to connect to a server and yield the given block" do
         @ftp = double("Net::FTP")
-        expect(Net::FTP).to receive(:open).with(@server, @username, @password).and_yield @ftp
+        allow(@ftp).to receive(:close)
+        expect(Net::FTP).to receive(:new).and_return(@ftp)
+        expect(@ftp).to receive(:connect).with(@server, "21").and_return(@ftp)
+        expect(@ftp).to receive(:login).with(@username, @password).and_return(@ftp)
 
         test = nil
 
@@ -378,8 +381,11 @@ describe FtpSender do
     context "post_connect" do
       before :each do
         @ftp = double("Net::FTP")
+        allow(@ftp).to receive(:close)
+        expect(Net::FTP).to receive(:new).and_return(@ftp)
+        expect(@ftp).to receive(:connect).with(@server, "21").and_return(@ftp)
+        expect(@ftp).to receive(:login).with(@username, @password).and_return(@ftp)
         # connect sets up some variables so we need to call it every time
-        expect(Net::FTP).to receive(:open).with(@server, @username, @password).and_yield @ftp
         @client.connect(@server, @username, @password, [], {}){|client|}
       end
 

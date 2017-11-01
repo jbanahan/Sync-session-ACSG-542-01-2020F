@@ -14,6 +14,52 @@ class SearchCriterion < ActiveRecord::Base
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
 
+  CRITERIONS = {
+    'eq'=> 'Equals',
+    'eqf'=> 'Equals (Field Including Time)',
+    'eqfd'=> 'Equals (Field)',
+    'nq'=> 'Not Equal To',
+    'nqf'=> 'Not Equal To (Field Including Time)',
+    'nqfd'=> 'Not Equal To (Field)',
+    'gt'=> 'After',
+    'gteq'=> 'After',
+    'lt'=> 'Before',
+    'sw'=> 'Starts With',
+    'ew'=> 'Ends With',
+    'nsw'=> 'Does Not Start With',
+    'new'=> 'Does Not End With',
+    'co'=> 'Contains',
+    'nc'=> "Doesn't Contain",
+    'in'=> 'One Of',
+    'notin'=> 'Not One Of',
+    'bda'=> 'Before _ Days Ago',
+    'ada'=> 'After _ Days Ago',
+    'bdf'=> 'Before _ Days From Now',
+    'adf'=> 'After _ Days From Now',
+    'bma'=> 'Before _ Months Ago',
+    'ama'=> 'After _ Months Ago',
+    'bmf'=> 'Before _ Months From Now',
+    'amf'=> 'After _ Months From Now',
+    'pm'=> 'Previous _ Months',
+    'cmo'=> 'Current Month',
+    'pqu'=> 'Previous _ Quarters',
+    'cqu'=> 'Current Quarter',
+    'pfcy'=> 'Previous _ Full Calendar Years',
+    'cytd'=> 'Current Year To Date',
+    'null'=> 'Is Empty',
+    'notnull'=> 'Is Not Empty',
+    'regexp'=> 'Regex',
+    'notregexp'=> 'Not Regex',
+    'afld'=> 'After (Field)',
+    'bfld'=> 'Before (Field)',
+    'dt_regexp'=> 'Regex',
+    'dt_notregexp'=> 'Not Regex'
+  }
+
+  def operator_label
+    CRITERIONS[self.operator]
+  end
+
   def json current_user
     mf = self.model_field
     {:mfid=>self.model_field_uid,:label=>(mf.can_view?(current_user) ? mf.label : ModelField.disabled_label),:operator=>self.operator,:value=>self.value,:datatype=>self.model_field.data_type,:include_empty=>self.include_empty?}
@@ -247,7 +293,7 @@ class SearchCriterion < ActiveRecord::Base
   private
 
   def field_relative?
-    ['bfld', 'afld'].include? self.operator
+    ['bfld', 'afld', 'eqf', 'nqf', 'nqfd', 'eqfd'].include? self.operator
   end
 
   def get_relative_model_field
@@ -268,6 +314,14 @@ class SearchCriterion < ActiveRecord::Base
         passes = my_value.to_date < other_value.to_date
       when 'afld'
         passes = my_value.to_date > other_value.to_date
+      when 'eqf'
+        passes = my_value == other_value
+      when 'nqf'
+        passes = my_value != other_value
+      when 'eqfd'
+        passes = my_value.to_date == other_value.to_date
+      when 'nqfd'
+        passes = my_value.to_date != other_value.to_date
       end
     end
 
@@ -277,6 +331,21 @@ class SearchCriterion < ActiveRecord::Base
   def relative_where_clause
     my_mf = find_model_field
     other_mf = get_relative_model_field
+    mysql_user_time_zone = Time.zone.tzinfo.name
+    really_old_date = Time.new("1901", "01", "01", "00", "00", "00")
+
+    if ['eqf', 'nqf', 'eqfd', 'nqfd'].include? self.operator
+      main_field_query = if my_mf.data_type == :datetime
+                          "convert_tz(#{my_mf.qualified_field_name}, 'GMT', '#{mysql_user_time_zone}')"
+                         else
+                           "#{my_mf.qualified_field_name}"
+                         end
+      other_field_query = if other_mf.data_type == :datetime
+                            "convert_tz(#{other_mf.qualified_field_name}, 'GMT', '#{mysql_user_time_zone}')"
+                          else
+                            "#{other_mf.qualified_field_name}"
+                          end
+    end
 
     clause = ""
     case self.operator
@@ -284,6 +353,14 @@ class SearchCriterion < ActiveRecord::Base
       clause = "#{my_mf.qualified_field_name} < #{other_mf.qualified_field_name}"
     when 'afld'
       clause = "#{my_mf.qualified_field_name} > #{other_mf.qualified_field_name}"
+    when 'eqf'
+      clause = "IFNULL(#{main_field_query},'#{really_old_date}') = IFNULL(#{other_field_query}, '#{really_old_date}')"
+    when 'nqf'
+      clause = "IFNULL(#{main_field_query},'#{really_old_date}') <> IFNULL(#{other_field_query}, '#{really_old_date}')"
+    when 'eqfd'
+      clause = "DATE(IFNULL(#{main_field_query},'#{really_old_date}')) = DATE(IFNULL(#{other_field_query}, '#{really_old_date}'))"
+    when 'nqfd'
+      clause = "DATE(IFNULL(#{main_field_query},'#{really_old_date}')) <> DATE(IFNULL(#{other_field_query}, '#{really_old_date}'))"
     end
 
     clause

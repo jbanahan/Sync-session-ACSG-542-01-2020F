@@ -34,7 +34,20 @@ class XlsMaker
       
       raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
     end
+    generate_criteria_tab(wb, search_query)
     [wb, row_number - 1]
+  end
+
+  def generate_criteria_tab(wb, search_query)
+    sheet = XlsMaker.create_sheet wb, "Search Parameters", ['Parameter Name', 'Parameter Value']
+    sheet.row(1).replace(['User Name', search_query.user.try(:full_name)])
+    sheet.row(2).replace(['Report Run Time', Time.zone.now])
+    sheet.row(3).replace(['Customer', search_query.user.company.name])
+    row = 4
+    search_query.search_setup.search_criterions.each do |crit|
+      sheet.row(row).replace([ModelField.find_by_uid(crit.model_field_uid).label, "#{crit.operator_label} #{crit.value}"])
+      row += 1
+    end
   end
 
   #delay job friendly version of make_from_search_query

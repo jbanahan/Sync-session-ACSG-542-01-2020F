@@ -834,6 +834,10 @@
       op = @.findOperator datatype, operator
       if op then op.fieldRelative else false
 
+    isFieldRelativeOffset: (datatype, operator) ->
+      op = @.findOperator datatype, operator
+      if op then op.fieldRelativeOffset else false
+
     isCompatibleDateOperators: (datatype, newOperatorString, oldOperatorString) ->
       newOp = @.findOperator datatype, newOperatorString
       oldOp = @.findOperator datatype, oldOperatorString
@@ -854,10 +858,15 @@
       if op then op.noValue else false
 
 
+    # If you add an operator to this list, you MUST add it to the CRITERION hash in search_criterion.rb
     ops: {
       date: [
         {operator: 'eq', label: 'Equals'}
+        {operator: 'eqf', label: 'Equals (Field Including Time)', fieldRelative: true}
+        {operator: 'eqfd', label: 'Equals (Field)', fieldRelative: true}
         {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'nqf', label: 'Not Equal To (Field Including Time)', fieldRelative: true}
+        {operator: 'nqfd', label: 'Not Equal To (Field)', fieldRelative: true}
         {operator: 'gt', label: 'After'}
         {operator: 'lt', label: 'Before'}
         {operator: 'bda', label: 'Before _ Days Ago', relative: true}
@@ -883,7 +892,11 @@
         ]
       datetime: [
         {operator: 'eq', label: 'Equals'}
+        {operator: 'eqf', label: 'Equals (Field Including Time)', fieldRelative: true}
+        {operator: 'eqfd', label: 'Equals (Field)', fieldRelative: true}
         {operator: 'nq', label: 'Not Equal To'}
+        {operator: 'nqf', label: 'Not Equal To (Field Including Time)', fieldRelative: true}
+        {operator: 'nqfd', label: 'Not Equal To (Field)', fieldRelative: true}
         {operator: 'gteq', label: 'After'}
         {operator: 'lt', label: 'Before'}
         {operator: 'bda', label: 'Before _ Days Ago', relative: true}

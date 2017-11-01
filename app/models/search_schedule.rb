@@ -196,6 +196,7 @@ class SearchSchedule < ActiveRecord::Base
       opts = {:remote_file_name => attachment_name}
       opts[:folder] = self.ftp_subfolder unless self.ftp_subfolder.blank?
       opts[:protocol] = self.protocol unless self.protocol.blank?
+      opts[:port] = ftp_port.blank? ? nil : ftp_port
       begin
         FtpSender.send_file self.ftp_server, self.ftp_username, self.ftp_password, temp_file.path, opts
       rescue IOError => e

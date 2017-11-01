@@ -5,6 +5,8 @@ describe XlsMaker do
   describe "make_from_search_query" do
     before :each do
       @u = Factory(:master_user,:entry_view=>true)
+      @c = Factory(:company, system_code: 'TEST')
+      @c.users << @u
       @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
       @search.search_columns.create!(:model_field_uid=>'ent_brok_ref',:rank=>1)
       @search.search_columns.create!(:model_field_uid=>'ent_entry_num',:rank=>2)
@@ -16,6 +18,20 @@ describe XlsMaker do
         and_yield({:row_key=>1,:result=>['a','b',Date.new(2013,4,30),Time.now]}).
         and_yield({:row_key=>2,:result=>['c','d',Date.new(2013,4,30),Time.now]})
     end
+
+    it "should add a second worksheet with general information on the search." do
+      now = Time.zone.now
+      Timecop.freeze(now) do
+        wb, data_row_count = XlsMaker.new.make_from_search_query @sq
+        s = wb.worksheet(1)
+        expect(s).to be_present
+        expect(s.row(1)).to eql(['User Name', @u.full_name])
+        expect(s.row(2)).to eql(['Report Run Time', now])
+        expect(s.row(3)).to eql(['Customer', @c.name])
+        expect(s.row(4)).to eql(['Broker Reference', 'Equals x'])
+      end
+    end
+
     it "should create workbook" do
       wb, data_row_count = XlsMaker.new.make_from_search_query @sq
       expect(data_row_count).to eq(2)

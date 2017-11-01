@@ -6,8 +6,8 @@ importedFileApp = angular.module('ImportedFileApp',['ngRoute','ChainComponents',
 ])
 
 importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$routeParams', '$http', '$location', 'chainSearchOperators', '$window', ($scope,$timeout,$routeParams,$http,$location,chainSearchOperators,$window) ->
-  
-  #find object in array by mfid
+
+#find object in array by mfid
   findByMfid = (ary,mfid) ->
     for m in ary
       return m if m.mfid==mfid
@@ -44,7 +44,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$ro
   $scope.showEmailCurrent = false
   $scope.emailCurrentSettings = {to:'',subject:'[VFI Track] Current File Data',body:''}
 
-  $scope.reloadWhenProcessed = () ->  
+  $scope.reloadWhenProcessed = () ->
     $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').success((data) ->
       importedFile = data
       if importedFile.last_processed == ''
@@ -134,10 +134,10 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$ro
 
   #remove criterions that are deleted
   registrations.push($scope.$watch 'importedFile.search_criterions', ((n,o,wScope) ->
-      return unless wScope.importedFile && wScope.importedFile.search_criterions && wScope.importedFile.search_criterions.length > 0
-      for c in wScope.importedFile.search_criterions
-        wScope.removeCriterion(c) if c.deleteMe
-    ), true
+        return unless wScope.importedFile && wScope.importedFile.search_criterions && wScope.importedFile.search_criterions.length > 0
+        for c in wScope.importedFile.search_criterions
+          wScope.removeCriterion(c) if c.deleteMe
+      ), true
   )
 
   $scope.$on('$destroy', () ->

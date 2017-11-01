@@ -335,6 +335,12 @@
                         <input id='sched-f-folder' class='form-control' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
                       </div>
                     </div>
+                    <div class='control-group'>
+                      <label class="control-label" for="sched-f-port">{{scheduleProtocol(scheduleToEdit)}} Port</label>
+                      <div class='controls'>
+                        <input id='sched-f-port' class='form-control' type='text' ng-model='scheduleToEdit.ftp_port' />
+                      </div>
+                    </div>
                   </fieldset>
                 </div>
               </div>

@@ -213,7 +213,7 @@ describe SearchSchedule do
     it "should send ftp" do
       tf = double("Tempfile")
       expect(tf).to receive(:path).and_return "path"
-      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt")
+      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", port: nil)
       m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
       expect(m).to match /: FTP complete/
     end
@@ -223,7 +223,7 @@ describe SearchSchedule do
 
       tf = double("Tempfile")
       expect(tf).to receive(:path).and_return "path"
-      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", protocol: 'sftp')
+      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", protocol: 'sftp', port: nil)
       m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
       expect(m).to match /: SFTP complete/
     end
@@ -233,7 +233,7 @@ describe SearchSchedule do
 
       tf = double("Tempfile")
       expect(tf).to receive(:path).and_return "path"
-      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", folder: 'subdir')
+      expect(FtpSender).to receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", folder: 'subdir', port: nil)
       m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
       expect(m).to match /: FTP complete/
     end

@@ -208,13 +208,18 @@ class FtpSender
     attr_accessor :log
 
     def connect server, user, password, log, opts, &block
-      Net::FTP.open(server, user, password) do |client|
-        @client = client
-        @log = log
+      @client = Net::FTP.new
+      port = opts[:port] || '21'
+      @log = log
+      begin
+        @client.connect(server, port)
+        @client.login(user, password)
         block.call self
+      rescue => e
+        handle_exception e
+      ensure
+        @client.close rescue err
       end
-    rescue => e
-      handle_exception e
     end
 
     def after_login opts={}

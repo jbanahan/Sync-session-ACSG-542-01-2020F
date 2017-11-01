@@ -4,11 +4,148 @@ describe SearchCriterion do
   before :each do
     @product = Factory(:product)
   end
+
+  it 'knows what type of criterion it is' do
+    @sc = SearchCriterion.create(model_field_uid:'ent_release_date',operator:'nqf',value:'ent_arrival_date')
+    expect(@sc.operator_label).to eql('Not Equal To (Field Including Time)')
+  end
+
   describe "core_module" do
     it "should return core module based on module type" do
       expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
     end
   end
+
+  context "not equal to (field)" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'Entry',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'ent_release_date',operator:'nqfd',value:'ent_arrival_date')
+    end
+
+    it "should pass if field is not equal to other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
+      expect(@sc.test?(ent)).to be_truthy
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should not pass if field is equal other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.day.ago)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+
+    it "should pass if field is null" do
+      ent = Factory(:entry, :arrival_date=>2.days.ago,:release_date=>nil)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should pass if other field is null" do
+      ent = Factory(:entry, :arrival_date=>nil,:release_date=>2.days.ago)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+  end
+
+  context "not equal to (field including time)" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'Entry',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'ent_release_date',operator:'nqf',value:'ent_arrival_date')
+    end
+
+    it "cares about time" do
+      time1 = Time.new("2017", "01", "01", "12", "59")
+      time2 = Time.new("2017", "01", "01", "12", "58")
+      ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
+      expect(@sc.test?(ent)).to be_truthy
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should pass if field is not equal to other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
+      expect(@sc.test?(ent)).to be_truthy
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should not pass if field is equal other field's value" do
+      time = Time.new("2017", "01", "01", "12", "59")
+      ent = Factory(:entry,:arrival_date=>time,:release_date=>time)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+
+    it "should pass if field is null" do
+      ent = Factory(:entry, :arrival_date=>1.day.ago,:release_date=>nil)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should pass if other field is null" do
+      ent = Factory(:entry, :arrival_date=>nil,:release_date=>1.day.ago)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+  end
+
+  context "equals (field including time)" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'Entry',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'ent_release_date',operator:'eqf',value:'ent_arrival_date')
+    end
+
+    it "cares about time" do
+      time1 = Time.new("2017", "01", "01", "12", "59")
+      time2 = Time.new("2017", "01", "01", "12", "58")
+      ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+
+    it "should pass if field is equal to other field's value" do
+      time = Time.new("2017", "01", "01", "12", "59")
+      ent = Factory(:entry,:arrival_date=>time,:release_date=>time)
+      expect(@sc.test?(ent)).to be_truthy
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents.first).to eq(ent)
+    end
+
+    it "should not pass if field does not equal other field's value" do
+      time1 = Time.new("2017", "01", "01", "12", "59")
+      time2 = Time.new("2017", "01", "01", "12", "58")
+      ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+
+    it "should not pass if field is null" do
+      ent = Factory(:entry, :arrival_date=>2.days.ago,:release_date=>nil)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+
+    it "should not pass if other field is null" do
+      ent = Factory(:entry, :arrival_date=>nil,:release_date=>2.days.ago)
+      expect(@sc.test?(ent)).to be_falsey
+      ents = @sc.apply(Entry.scoped).all
+      expect(ents).to be_empty
+    end
+  end
+
   context "after (field)" do
     before :each do
       @u = Factory(:master_user)

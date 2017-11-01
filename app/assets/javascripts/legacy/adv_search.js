@@ -150,7 +150,9 @@ var OCSearch = (function() {
       var h = "";
       if(dt=="date" || dt=="datetime") {
         h += "<option value='eq'>Equals</option>";
+        h += "<option value='eqf'>Equals (Field)</option>";
         h += "<option value='nq'>Not Equal To</option>";
+        h += "<option value='nqf'>Not Equal To (Field)</option>";
         h += "<option value=" + (dt=="date" ? "'gt'" : "'gteq'") + ">After</option>";
         h += "<option value='lt'>Before</option>";
         h += "<option value='bda'>Before _ Days Ago</option>";
