@@ -95,6 +95,15 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
         row_arrays[1][34] = "GB"
       end
     end
+
+    it "uses a sku suffix to determine if style is different from previous line" do
+      row_arrays[1][5] = "009-5123-100-1004-A"
+      inv = subject.process_ca_invoice_rows row_arrays
+      expect(inv.commercial_invoice_lines.length).to eq 3
+
+      line = inv.commercial_invoice_lines.first
+      expect(line.part_number).to eq "009-5123A"
+    end
   end
 
   describe "process_us_invoice_rows" do

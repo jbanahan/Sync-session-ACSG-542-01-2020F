@@ -196,7 +196,19 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
   end
 
   def style part_number
-    part_number[0, 8]
+    part_number = part_number.to_s
+
+    # This regex matches skus of the format XXX-XXX-XXX-XXX with an optional trailing suffix.
+    # For our entry purposes we only need the first 2 sections of the sku.
+    # An optional trailing A/B suffix needs to be taken into account when it's present as well.
+    if part_number =~ /([^-]+)-([^-]+)-([^-]+)-([^-]+)(?:-([^-]+))?/
+      part_number = "#{$1}-#{$2}"
+      part_number += $5 unless $5.blank?
+    else
+      part_number = part_number[0, 8]
+    end
+
+    part_number
   end
 
   def parse_date v
