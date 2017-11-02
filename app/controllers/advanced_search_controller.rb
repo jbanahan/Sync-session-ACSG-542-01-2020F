@@ -71,6 +71,7 @@ class AdvancedSearchController < ApplicationController
             sched.ftp_password = sc[:ftp_password]
             sched.ftp_subfolder = sc[:ftp_subfolder]
             sched.protocol = sc[:protocol]
+            sched.ftp_port = sc[:ftp_port].to_s.strip.to_i unless sc[:ftp_port].to_s.strip.to_i == 0
           end
         end
       end
@@ -222,6 +223,7 @@ class AdvancedSearchController < ApplicationController
               f[:ftp_password] = s.ftp_password
               f[:ftp_subfolder] = s.ftp_subfolder
               f[:protocol] = s.protocol
+              f[:ftp_port] = s.ftp_port
             end
             f
           },

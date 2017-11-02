@@ -20,7 +20,7 @@ class FtpSender
     get_file_to_ftp(arg_file, opts) do |file|
 
       my_opts = default_options(arg_file, file).merge(opts).with_indifferent_access
-      log = ["Attempting to #{my_opts[:protocol]} file to #{server} with username #{username}."]
+      log = ["Attempting to #{my_opts[:protocol]} file to #{server} with username #{username}#{my_opts[:port].to_i > 0 ? " using port #{my_opts[:port]}" : ""}."]
       remote_name = my_opts[:remote_file_name]
       store_sent_file = false
       ftp_client = nil

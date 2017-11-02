@@ -125,7 +125,7 @@ describe AdvancedSearchController do
         {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
           :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false,
           :exclude_file_timestamp=>true, },
-        {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test"}
+        {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
       ], :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       expect(response).to be_success
       @ss.reload
@@ -148,6 +148,7 @@ describe AdvancedSearchController do
       expect(ftp.ftp_password).to eq('pass')
       expect(ftp.ftp_subfolder).to eq('/sub')
       expect(ftp.protocol).to eq('test')
+      expect(ftp.ftp_port).to eq "123"
     end
     it "should recreate criterions" do
       @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
@@ -256,7 +257,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,
-                                  :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+                                  :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :ftp_port=>"123")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
       get :setup, :id=>@ss.id, :format=>'json'
@@ -267,7 +268,7 @@ describe AdvancedSearchController do
         {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
           "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", 
-          "ftp_subfolder"=>"subf", "protocol"=>"protocol"}
+          "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
       ])
     end
     it "should set include empty for criterions" do
