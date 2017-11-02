@@ -201,6 +201,7 @@
                       <small class='muted'>
                         Separate addresses with commas.
                       </small>
+                      <div id='invalid-email-flag' class='text-danger' style="display: none;"><p>Schedule contains an invalid email</p></div>
                     </div>
                   </div>
                   <div class='control-group'>
@@ -346,7 +347,7 @@
               </div>
               <div class='control-group'>
                 <div class='controls'>
-                  <button class='btn btn-primary' ng-click='scheduleToEdit = null' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
+                  <button class='btn btn-primary' ng-click='closeSchedule(scheduleToEdit)' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
                 </div>
               </div>
             </div>
@@ -354,7 +355,7 @@
         </div>
         <hr />
         <div id='search-setup-actions' class='row text-center'>
-          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true'>
+          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true || scheduleToEdit'>
             <button class='btn btn-lg btn-success' ng-click='saveSetup()'>Save</button>
             <button class='btn btn-lg btn-default' ng-click='newSetup()'>New</button>
             <button class='btn btn-lg btn-default' ng-click='copyPrompt=true'>Copy</button>

@@ -296,6 +296,19 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     schedules = $scope.searchSetup.search_schedules
     schedules.splice($.inArray(s, schedules),1)
 
+  $scope.closeSchedule = (s) ->
+    if s.email_addresses != ""
+      $http.get('/api/v1/emails/validate_email_list.json', {params:{email: s.email_addresses}}).then (resp) ->
+        if resp.data.valid
+          $('#invalid-email-flag').hide()
+          $scope.scheduleToEdit = null
+        else
+          $('#invalid-email-flag').show()
+          true
+    else
+      $scope.scheduleToEdit = null
+
+
   #add criterion to model
   $scope.addCriterion = (toAddId) ->
     toAdd = {value:''}
