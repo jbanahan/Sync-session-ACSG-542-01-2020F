@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   #sets both the brands that are included and the order in which they appear in the first-sale tab
-  BRAND_MAP = {"JST" => "Tweenbrands", "LB" => "Lane Bryant", "CA" => "Catherines", "MAU" => "Maurices", "DB" => "Dressbarn", "JUS" => "Justice"}
+  BRAND_MAP = {"JST" => "Justice", "LB" => "Lane Bryant", "CA" => "Catherines", "MAU" => "Maurices", "DB" => "Dressbarn"}
 
   def self.permission? user
     importer = ascena
