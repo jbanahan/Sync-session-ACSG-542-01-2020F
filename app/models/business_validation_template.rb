@@ -9,7 +9,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_ent
 require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name, :delete_pending
+  attr_accessible :description, :module_type, :name, :delete_pending, :disabled
   validates :module_type, presence: true
 
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
@@ -56,6 +56,10 @@ class BusinessValidationTemplate < ActiveRecord::Base
     nil
   end
 
+  def active?
+    !self.disabled? && !self.delete_pending?
+  end
+
   #run create
   def create_results! run_validation: false, snapshot_entity: true
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
@@ -91,7 +95,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
-    return nil if self.search_criterions.length == 0
+    return nil if self.search_criterions.length == 0 || self.disabled?
 
     template_applies = false
     self.search_criterions.each do |sc|

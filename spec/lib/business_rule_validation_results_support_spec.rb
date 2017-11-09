@@ -268,5 +268,27 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
       r = subject.results_to_hsh @u, @obj
       expect(r).to be_nil
     end
+
+    it "doesn't return results belonging to template with delete_pending" do
+      @bvt.update_attributes! delete_pending: true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
+      r = subject.results_to_hsh @u, @obj
+      expect(r[:bv_results]).to be_empty
+    end
+
+    it "doesn't return results belonging to disabled template" do
+      @bvt.update_attributes! disabled: true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
+      r = subject.results_to_hsh @u, @obj
+      expect(r[:bv_results]).to be_empty
+    end
+
+    it "doesn't return rule result belonging to disabled rule" do
+      @bvru_3.update_attributes! disabled: true
+      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
+      r = subject.results_to_hsh @u, @obj
+      expect(r[:bv_results][1][:rule_results]).to be_empty
+    end
+
   end
 end

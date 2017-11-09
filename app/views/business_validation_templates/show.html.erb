@@ -6,7 +6,10 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12">
-      <h1>Template: <%=@bv_template.name%></h1>  
+      <h1>Template: <%=@bv_template.name%>
+        <% if @bv_template.disabled? %>
+          &nbsp;[disabled]
+        <% end %></h1>
     </div>
   </div>
   <div class="row">

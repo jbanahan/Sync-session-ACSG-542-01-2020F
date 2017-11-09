@@ -73,6 +73,10 @@ class BusinessValidationRule < ActiveRecord::Base
     r.sort! {|pair1,pair2| pair1[0] <=> pair2[0]}
   end
 
+  def active?
+    !self.disabled? && self.business_validation_template.active?
+  end
+
   def rule_attributes
     @parsed_rule_attributes ||= self.rule_attributes_json.blank? ? {} : JSON.parse(self.rule_attributes_json)
     @parsed_rule_attributes

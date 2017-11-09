@@ -74,8 +74,14 @@ describe BusinessValidationTemplate do
     end
     it "does not evaulate anything if there are no criterions associated with the template" do
       @bvt.search_criterions.destroy_all
-
-      @bvt.create_results!
+      Factory(:entry,customer_number:'12345')
+      @bvt.create_results! run_validation: true
+      expect(BusinessValidationResult.count).to eq 0
+    end
+    it "does not evaluate anything if template is disabled" do
+      Factory(:entry,customer_number:'12345')
+      @bvt.update_attributes! disabled: true
+      @bvt.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
   end

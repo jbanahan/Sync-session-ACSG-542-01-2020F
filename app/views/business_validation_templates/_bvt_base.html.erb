@@ -11,6 +11,10 @@
     <%= f.label :module_type %>
     <%= f.text_field :module_type, class: "form-control", id:"new-bvt-module-type-field", placeholder: "Enter module type..." %>
   </div>
+  <div class="form-group">
+    <%= f.label :disabled %>&nbsp;
+    <%= f.check_box :disabled, id:"new-bvt-disabled-field" %>
+  </div>
   <div align="center">
     <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
   </div>
