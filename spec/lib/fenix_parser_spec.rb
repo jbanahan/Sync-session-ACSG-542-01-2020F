@@ -707,6 +707,14 @@ describe OpenChain::FenixParser do
     OpenChain::FenixParser.parse @entry_lambda.call
   end
 
+  it "uses cadex accept as release date for F type entries" do
+    @entry_type = "F"
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    entry = Entry.where(broker_reference: @file_number).first
+    expect(entry.release_date).to eq entry.cadex_accept_date
+  end
+
   it "sets exchnage rate to 1 if missing and currency is CAD" do
     @currency = 'CAD'
     @exchange_rate = ""

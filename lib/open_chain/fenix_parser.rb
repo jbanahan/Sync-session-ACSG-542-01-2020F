@@ -232,7 +232,7 @@ module OpenChain
 
           # F type entries are LVS Summaries...when we get one of these we then want to request a full listing of any of the "child" LVS
           # transaction numbers so we can pull the summary level dates down into the child entries.
-          if @entry.entry_type.to_s.upcase.strip == "F"
+          if summary_entry_type? @entry
             OpenChain::FenixSqlProxyClient.new.delay.request_lvs_child_transactions @entry.entry_number
           end
 
@@ -638,6 +638,14 @@ module OpenChain
       entry.first_do_issued_date = first_accumulated_date(accumulated_dates, :do_issued_date_first)
       entry.docs_received_date = first_accumulated_date(accumulated_dates, :docs_received_date_first)
 
+      # For F type entries (which are the "parent" entries of the LV (low value) entries), CA customs doesn't issue
+      # a traditional release date for them.  At least one customer is bothered that these entries
+      # never show release, so to appease them we're going to take the Cadex Accept (which is filled in) and set that as 
+      # the release date.
+      if summary_entry_type? entry
+        entry.release_date = entry.cadex_accept_date
+      end
+
       update_holds entry
     end
 
@@ -901,6 +909,10 @@ module OpenChain
           {}
         end
       end
+    end
+
+    def summary_entry_type? entry
+      entry.entry_type.to_s.upcase == "F"
     end
 
   end
