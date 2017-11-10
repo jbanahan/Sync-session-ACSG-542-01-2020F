@@ -49,9 +49,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
     invoice.reload
   }
   before :each do
-    ms = double("MasterSetup")
-    allow(ms).to receive(:request_host).and_return "http://localhost"
-    allow(MasterSetup).to receive(:get).and_return ms
+    stub_master_setup
   end
 
   describe "generate_report" do

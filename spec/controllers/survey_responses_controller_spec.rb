@@ -359,9 +359,7 @@ describe SurveyResponsesController do
 
     it "sends custom emails to all recipients" do
       allow(@u).to receive(:edit_surveys?).and_return true
-      ms = double()
-      expect(ms).to receive(:request_host).and_return "localhost:3000"
-      allow(MasterSetup).to receive(:get).and_return ms
+      stub_master_setup
       link_addr = "http://localhost:3000/survey_responses/#{@sr.id}"
       
       post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body

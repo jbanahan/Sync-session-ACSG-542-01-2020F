@@ -14,6 +14,11 @@
         <tr><td>Check X- headers for original email addresses.</td></tr>
       </table>
     <%-end-%>
+    <%-if !MasterSetup.get.custom_feature?("Production")-%>
+      <table border='0' width='100%'>
+        <tr><td bgcolor='#FF0000' align='center'><b>This email notification was generated from a VFI Track test environment.</b></td></tr>
+      </table>
+    <%-end-%>
     <table border='0' cellpadding='0' cellspacing='0' width='100%'>
       <tr>
         <td bgcolor='#ffffff' align='center' style='padding-top:20px;padding-bottom:20px;font-family:Helvetica, Arial, sans-serif;'>
@@ -38,6 +43,9 @@
               <td bgcolor="#000000">
                 &nbsp;
               </td>
+            </tr>
+            <tr>
+              <td>This email was generated from <%=MasterSetup.get.request_host%> because of a user request. If you believe you received this email in error, please contact support@vandegriftinc.com.</td>
             </tr>
           </table>
         </td>

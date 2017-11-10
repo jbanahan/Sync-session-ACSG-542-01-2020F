@@ -23,10 +23,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceS
       first_invoice
       synced_invoice
       not_lumber_invoice
-
-      ms = double("MasterSetup")
-      allow(ms).to receive(:request_host).and_return "http://localhost"
-      allow(MasterSetup).to receive(:get).and_return ms
+      stub_master_setup
     end
 
     it "sends supplemental lumber invoices that have not been synced yet" do

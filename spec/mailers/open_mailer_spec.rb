@@ -722,9 +722,8 @@ EMAIL
 
     it "sends email with specified recipients, subject & body, with a link to the survey" do
       sr = Factory(:survey_response)
-      ms = double()
-      expect(ms).to receive(:request_host).and_return "localhost:3000"
-      allow(MasterSetup).to receive(:get).and_return ms
+
+      stub_master_setup
       link_addr = "http://localhost:3000/survey_responses/#{sr.id}"
 
       email_to = ["john.smith@abc.com", "sue.anderson@cbs.com"]

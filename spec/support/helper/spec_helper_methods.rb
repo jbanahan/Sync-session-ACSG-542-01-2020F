@@ -174,6 +174,7 @@ module Helpers
     allow(ms).to receive(:request_host).and_return "localhost:3000"
     allow(ms).to receive(:system_code).and_return "test"
     allow(ms).to receive(:uuid).and_return "test-uuid"
+    allow(ms).to receive(:custom_feature?).and_return false
     allow(MasterSetup).to receive(:get).and_return ms
     ms
   end
