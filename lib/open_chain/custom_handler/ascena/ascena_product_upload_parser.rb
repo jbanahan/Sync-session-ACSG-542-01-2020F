@@ -133,6 +133,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def process_file_row user, filename, row, style, hts, classification_notes
+    return if style.blank?
+
     # This changed tracking stuff is mostly about not creating change records when the product
     # is unchanged...it floods the history pointlessly.  Because the product heirarchy is multiple layers
     # (both horizontally (custom values) and vertically (classification, tariff records))

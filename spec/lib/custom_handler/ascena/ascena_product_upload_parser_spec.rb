@@ -178,6 +178,21 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
       expect(c.tariff_records.first).to be_nil
     end
+
+    it "handles files w/ blank parent ids" do
+      allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).exactly(2).times.and_yield file_row
+
+      file_row[3] = nil
+
+      subject.process_file custom_file, user
+
+      prod = Product.where(unique_identifier: "ASCENA-Style").first
+      expect(prod).not_to be_nil
+
+      # Should not create a blank parent part
+      prod = Product.where(unique_identifier: "ASCENA-").first
+      expect(prod).to be_nil
+    end
   end
 
   describe "assign_fda" do
