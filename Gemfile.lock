@@ -175,6 +175,7 @@ GEM
     logging (2.2.2)
       little-plugger (~> 1.1)
       multi_json (~> 1.10)
+    lru_redux (1.1.0)
     macaddr (1.7.1)
       systemu (~> 2.6.2)
     mail (2.5.5)
@@ -422,6 +423,7 @@ DEPENDENCIES
   jasmine-rails (= 0.4.6)
   jquery-rails (= 2.3.0)
   jsonpath (~> 0.5.6)
+  lru_redux (~> 1.1.0)
   minitest
   mocha (= 0.9.12)
   mono_logger (= 1.1.0)

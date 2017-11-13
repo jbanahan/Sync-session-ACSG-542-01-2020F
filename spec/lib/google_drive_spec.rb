@@ -139,6 +139,18 @@ describe OpenChain::GoogleDrive do
         file_ids << file[:id]
         folder_ids << file[:parents].first
       end
+
+      it "uses a cache for the path lookup and stores the result in a cache" do
+        cache = {}
+        test_folder = File.basename(existing_drive_folder)
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, existing_drive_folder_id)
+
+        file = subject.upload_file remote_path, local_file_path
+        expect(file[:id]).not_to be_nil
+      end
     end
 
     context "using team drive" do
@@ -163,6 +175,17 @@ describe OpenChain::GoogleDrive do
         file_ids << file[:id]
         folder_ids << file[:parents].first
       end
+
+      it "uses a cache for the path lookup and stores the result back in the cache" do
+        cache = {}
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with("#{existing_team_drive_id}:#{File.basename existing_team_drive_folder}").and_return nil
+        expect(cache).to receive(:[]=).with("#{existing_team_drive_id}:#{File.basename existing_team_drive_folder}", existing_team_drive_folder_id)
+
+        file = subject.upload_file remote_path, local_file_path
+        expect(file[:id]).not_to be_nil
+      end
     end
   end
 
@@ -183,6 +206,17 @@ describe OpenChain::GoogleDrive do
           expect(subject.find_file_by_id uploaded_file[:id]).to be_nil
         }
       end
+
+      it "uses a cache for the path lookup and stores the result in a cache" do
+        cache = {}
+        test_folder = File.basename(existing_drive_folder)
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, existing_drive_folder_id)
+
+        expect(subject.delete_file remote_path).to be_nil
+      end
     end
 
     context "using team drive" do
@@ -195,6 +229,17 @@ describe OpenChain::GoogleDrive do
           expect(subject.find_file_by_id uploaded_file[:id]).to be_nil
         }
       end
+
+      it "uses a cache for the path lookup and stores the result in a cache" do
+        cache = {}
+        test_folder = "#{existing_team_drive_id}:#{File.basename(existing_team_drive_folder)}"
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, existing_team_drive_folder_id)
+
+        expect(subject.delete_file remote_path).to be_nil
+      end
     end
   end
 
@@ -205,7 +250,9 @@ describe OpenChain::GoogleDrive do
     }
 
     context "using standard drive" do
-      let (:remote_path) { existing_drive_folder + "#{Time.zone.now}-folder/test.txt" }
+      let (:drive_folder) { "#{Time.zone.now}-folder" }
+      let (:drive_path) { "#{drive_folder}/test.txt" }
+      let (:remote_path) { existing_drive_folder + drive_path }
 
       it "deletes a folder" do
         # The upload takes a few seconds to propigate on drive, so try this a couple times
@@ -215,18 +262,48 @@ describe OpenChain::GoogleDrive do
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
         }
       end
+
+      it "evicts a deleted folder from the cache" do
+        cache = {}
+        parent_folder_id = uploaded_file[:parents].first
+
+        test_folder = "#{File.basename(existing_drive_folder)}/#{drive_folder}"
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, parent_folder_id)
+        expect(cache).to receive(:delete).with test_folder
+
+        subject.delete_folder Pathname.new(remote_path).split.first.to_s
+      end
     end
 
     context "using team drive" do
-      let (:remote_path) { existing_team_drive_folder + "#{Time.zone.now}-folder/test.txt" }
+      let (:drive_folder) { "#{Time.zone.now}-folder" }
+      let (:drive_path) { "#{drive_folder}/test.txt" }
+      let (:remote_path) { existing_team_drive_folder + drive_path }
 
-      it "deletes a file" do
+      it "deletes a folder" do
         # The upload takes a few seconds to propigate on drive, so try this a couple times
         retry_expect(retry_count: 5, additional_rescue_from: [StandardError]) {
           folder = Pathname.new(remote_path).split.first.to_s
           expect(subject.delete_folder folder).to be_nil
           expect(subject.find_folder_by_id uploaded_file[:parents].first).to be_nil
         }
+      end
+
+      it "evicts a deleted folder from the cache" do
+        cache = {}
+        parent_folder_id = uploaded_file[:parents].first
+
+        test_folder = "#{existing_team_drive_id}:#{File.basename(existing_team_drive_folder)}/#{drive_folder}"
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, parent_folder_id)
+        expect(cache).to receive(:delete).with test_folder
+
+        subject.delete_folder Pathname.new(remote_path).split.first.to_s
       end
     end
   end
@@ -242,6 +319,17 @@ describe OpenChain::GoogleDrive do
         expect(folder[:modified_time]).not_to be_nil
         expect(folder[:parents]).to eq [existing_drive_folder_parent_id]
         expect(folder[:team_drive_id]).to be_nil
+      end
+
+      it "uses a cache for the path lookup and stores the result in a cache" do
+        cache = {}
+        test_folder = File.basename(existing_drive_folder)
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, existing_drive_folder_id)
+
+        subject.find_folder existing_drive_folder
       end
     end
 
@@ -285,6 +373,17 @@ describe OpenChain::GoogleDrive do
         expect(file[:modified_time]).not_to be_nil
         expect(file[:parents]).to eq [existing_team_drive_folder_id]
         expect(file[:team_drive_id]).to eq existing_team_drive_id
+      end
+
+      it "uses a cache for the path lookup and stores the result in a cache" do
+        cache = {}
+        test_folder = "#{existing_team_drive_id}:#{File.basename(existing_team_drive_folder)}"
+        # The at leasts here are due to the after hooks
+        expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
+        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
+        expect(cache).to receive(:[]=).with(test_folder, existing_team_drive_folder_id)
+
+        subject.find_file existing_team_drive_file
       end
     end
   end

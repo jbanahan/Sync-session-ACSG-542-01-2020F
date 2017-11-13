@@ -45,6 +45,8 @@ gem 'therubyracer', '0.12.0', :require => 'v8'
 gem 'browser'
 
 gem "google-api-client", :git => "https://github.com/Vandegrift/google-api-ruby-client"
+# LRU Redux provides an LRU (optionally timebased) cache...it's used to cache google drive paths
+gem 'lru_redux', '~> 1.1.0'
 gem "omniauth-google-oauth2", "0.5.2"
 gem "omniauth-saml", "~> 1.2.0"
 
