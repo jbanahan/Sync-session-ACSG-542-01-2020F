@@ -4,7 +4,7 @@ describe OpenChain::GoogleAccountChecker do
   let!(:user) { Factory(:user, username: "user1", email: 'dummy@vandegriftinc.com', disabled: false) }
 
   let!(:user_list) {
-    {"dummy@vandegriftinc.com" => true}
+    Set.new ["dummy@vandegriftinc.com"]
   }
 
   describe "run_schedulable" do
@@ -14,6 +14,13 @@ describe OpenChain::GoogleAccountChecker do
     end
 
     it "does nothing for active users" do
+      subject.run
+      user.reload
+      expect(user.disabled?).to eq false
+    end
+
+    it "handles different casing in email addresses" do
+      user.update_attributes! email: "DuMmY@VandegriftInc.com"
       subject.run
       user.reload
       expect(user.disabled?).to eq false
