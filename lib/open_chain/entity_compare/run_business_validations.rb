@@ -8,8 +8,9 @@ module OpenChain; module EntityCompare; class RunBusinessValidations
   ]
 
   def self.accept? snapshot
-    # Accept everything since the purpose of this thing is to run business validations for every object
-    true
+    # For some instances, this class doesn't make sense...we don't need to cascade down validations on products
+    # to orders and shipments.  We don't need to cascade company validations.
+    MasterSetup.get.custom_feature?("Disable Cascading Validations") ? false : true
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

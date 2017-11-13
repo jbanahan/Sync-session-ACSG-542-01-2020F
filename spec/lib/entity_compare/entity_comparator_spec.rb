@@ -115,6 +115,14 @@ describe OpenChain::EntityCompare::EntityComparator do
       #all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to include es
     end
+
+    it "skips snapshots where the recordable entity is missing" do
+      es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
+      order.destroy
+      es.reload
+
+      described_class.process(es)
+    end
   end
 
   describe "handle_snapshot" do

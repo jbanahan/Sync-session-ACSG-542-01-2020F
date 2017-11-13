@@ -48,6 +48,10 @@ module OpenChain; module EntityCompare; class EntityComparator
 
   def self.process snapshot
     rec = snapshot.recordable
+    # It's possible that the recordable is nil at this point if the entity has been deleted and the snapshot has taken a bit of time
+    # to process.  For instance, entries can be purged / cancelled.
+    return if rec.nil?
+
     rec_id = snapshot.recordable_id
     rec_type = snapshot.recordable_type
     relation = snapshot_relation(rec, snapshot)
