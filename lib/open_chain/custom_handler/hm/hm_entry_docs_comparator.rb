@@ -10,7 +10,8 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
   def self.accept? snapshot
     accept = super
     if accept
-      accept = snapshot.recordable.try(:customer_number).to_s.upcase == "HENNE"
+      # This should not run for entries exported from CA, those are returns from online sales and we don't need to populate products with that data.
+      accept = snapshot.recordable.try(:customer_number).to_s.upcase == "HENNE" && snapshot.recordable.try(:export_country_codes).to_s.upcase != "CA"
     end
 
     accept

@@ -2,31 +2,38 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
-  let (:importer) { Factory(:importer, system_code: "HENNE")}
-  let (:entry) { Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) }
-  let (:snapshot) { entry.create_snapshot user }
-  let (:user) { Factory(:user) }
-
-
   describe "accept?" do
+
+    let (:importer) { Company.new system_code: "HENNE" }
+    let (:entry) { Entry.new customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00"), export_country_codes: "CN" }
+    let (:snapshot) { EntitySnapshot.new recordable: entry}
+
     it "accepts entry snapshots for HM" do
-      expect(described_class.accept? snapshot).to be_truthy
+      expect(described_class.accept? snapshot).to eq true
     end
 
     it "does not accept non-HM entries" do
-      entry.update_attributes! customer_number: "NOT-HM"
-      expect(described_class.accept? snapshot).to be_falsey
+      entry.customer_number = "NOT-HM"
+      expect(described_class.accept? snapshot).to eq false
     end
 
     it "does not accept non-Kewill entries" do
-      entry.update_attributes! source_system: "NOT-Alliance"
-      expect(described_class.accept? snapshot).to be_falsey
+      entry.source_system = "NOT-Alliance"
+      expect(described_class.accept? snapshot).to eq false
+    end
+
+    it "does not accept entries with an export country of Canada" do
+      entry.export_country_codes = "CA"
+      expect(described_class.accept? snapshot).to eq false
     end
   end
 
 
   describe "compare", :snapshot do
-
+    let (:importer) { Factory(:importer, system_code: "HENNE")}
+    let (:entry) { Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) }
+    let (:snapshot) { entry.create_snapshot user }
+    let (:user) { Factory(:user) }
     let (:tempfile) { Tempfile.new(['testfile', '.pdf']) }
     let (:cdefs) { subject.instance_variable_get("@cdefs")}
     let (:us) { Country.where(iso_code: "US").first_or_create! }
