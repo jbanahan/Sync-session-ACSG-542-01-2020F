@@ -11,10 +11,13 @@ describe SchedulableJobsController do
     end
     it "should load all jobs" do
       sign_in_as Factory(:sys_admin_user)
-      2.times {Factory(:schedulable_job)}
+      # The sorting of the classes should be based on their class name (sans module)
+      sj1 = Factory(:schedulable_job, run_class: "A::Fully::Qualified::Module::FirstClassName")
+      sj2 = Factory(:schedulable_job, run_class: "Seoncd::Fully::Qualified::Module::ClassName")
+
       get :index
       expect(response).to be_success
-      expect(assigns(:schedulable_jobs).size).to eq(2)
+      expect(assigns(:schedulable_jobs).map(&:run_class_name)).to eq ["ClassName", "FirstClassName"]
     end
   end
 
@@ -106,25 +109,31 @@ describe SchedulableJobsController do
   end
 
   describe "run" do
-    before :each do
-      @sj = Factory(:schedulable_job, run_class: "My::RunClass")
-    end
+    let (:scheduled_job) { Factory(:schedulable_job, run_class: "My::RunClass") }
 
     it "runs a job on demand" do
       sign_in_as Factory(:sys_admin_user)
-      sj = double
-      expect_any_instance_of(SchedulableJob).to receive(:delay).and_return @sj
-      expect(@sj).to receive(:run_if_needed).with(force_run: true)
+      expect_any_instance_of(SchedulableJob).to receive(:delay).and_return scheduled_job
+      expect(scheduled_job).to receive(:run_if_needed).with(force_run: true)
 
-      post :run, id: @sj.id
+      post :run, id: scheduled_job.id
 
       expect(response).to redirect_to schedulable_jobs_path
       expect(flash[:notices].first).to eq "RunClass is running."
     end
 
+    it "runs with adjusted priority" do
+      scheduled_job.update_attributes! queue_priority: 100
+      sign_in_as Factory(:sys_admin_user)
+      expect_any_instance_of(SchedulableJob).to receive(:delay).with(priority: 100).and_return scheduled_job
+      expect(scheduled_job).to receive(:run_if_needed).with(force_run: true)
+
+      post :run, id: scheduled_job.id
+    end
+
     it "only allows sysadmins" do
       sign_in_as Factory(:user)
-      post :run, id: @sj.id
+      post :run, id: scheduled_job.id
       expect(response).to be_redirect
       expect(flash[:errors].first).to match /Only system admins/
     end

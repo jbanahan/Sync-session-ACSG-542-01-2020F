@@ -25,6 +25,7 @@
     <%=field_bootstrap 'Prevent Concurrent Job Runs', f.check_box(:no_concurrent_jobs) %>
     <%=field_bootstrap 'Email address for successes', f.text_field(:success_email, style: "width: 40em;") %>
     <%=field_bootstrap 'Email address for failures', f.text_field(:failure_email, style: "width: 40em;") %>
+    <%=field_bootstrap 'Queue Priority (Lower Number = Higher Priority)', f.number_field(:queue_priority, min: -100, max:100, style: "width: 4em;") %>
     <%=field_bootstrap 'Options', f.text_area(:opts,rows:10, style: "width: 40em;")-%>
     <%=field_bootstrap 'Last Start Time', @sj.last_start_time.blank? ? 'Never' : @sj.last_start_time.in_time_zone(@sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')-%>
     <%- next_run_time = @sj.next_run_time -%>

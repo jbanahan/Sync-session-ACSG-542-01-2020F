@@ -1,7 +1,8 @@
 class SchedulableJobsController < ApplicationController
   def index
     sys_admin_secure do
-      @schedulable_jobs = SchedulableJob.order(:run_class)  
+      jobs = SchedulableJob.all
+      @schedulable_jobs  = jobs.sort_by {|a| a.run_class_name.to_s.upcase }
     end
   end
 
@@ -49,10 +50,14 @@ class SchedulableJobsController < ApplicationController
   def run
     sys_admin_secure do
       sj = SchedulableJob.find(params[:id])
-      if sj
-        sj.delay.run_if_needed force_run: true
-        add_flash :notices, "#{sj.run_class.to_s.split("::").last} is running."
+      if !sj.queue_priority.nil?
+        sj = sj.delay(priority: sj.queue_priority)
+      else
+        sj = sj.delay()
       end
+
+      sj.run_if_needed force_run: true
+      add_flash :notices, "#{sj.run_class_name} is running."
       
       redirect_to schedulable_jobs_path
     end
@@ -64,7 +69,7 @@ class SchedulableJobsController < ApplicationController
       sj.running = false
       sj.save!
 
-      add_flash :notices, "#{sj.run_class.to_s.split("::").last} has been marked as not running."
+      add_flash :notices, "#{sj.run_class_name} has been marked as not running."
       
       redirect_to schedulable_jobs_path
     end

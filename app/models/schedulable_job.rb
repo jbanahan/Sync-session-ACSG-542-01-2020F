@@ -3,7 +3,7 @@ require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
-    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped
+    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped, :queue_priority
 
   def self.create_default_jobs!
     base_opts = {run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true}
@@ -120,6 +120,10 @@ class SchedulableJob < ActiveRecord::Base
   def allow_concurrency?
     # Be default, I want jobs to allow concurrency (.ie same job running at same time in different process), so the attribute is no_concurrent_jobs.
     !self.no_concurrent_jobs
+  end
+
+  def run_class_name
+    self.run_class.to_s.demodulize
   end
 
   private

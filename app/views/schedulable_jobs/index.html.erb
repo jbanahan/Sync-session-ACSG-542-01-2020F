@@ -24,7 +24,7 @@
           <%-@schedulable_jobs.each do |sj|-%>
           <tr class='hover'>
             <td><%=link_to 'Edit', edit_schedulable_job_path(sj), {class:'btn btn-xs'}%></td>
-            <td><span title="<%=sj.run_class%>"><%=sj.run_class.to_s.split("::").last%></span></td>
+            <td><span title="<%=sj.run_class%>"><%=sj.run_class_name%></span></td>
             <td><%=sj.running ? "Running" : "Waiting" %>
             <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
             <%- next_run = sj.next_run_time -%>

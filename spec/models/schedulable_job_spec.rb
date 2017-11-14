@@ -104,4 +104,20 @@ describe SchedulableJob do
       }.to raise_error "Invalid time zone name: BAD"
     end
   end
+
+  describe "run_class_name" do
+    let (:job) { SchedulableJob.new job_class}
+
+    it "strips module information from job class" do
+      expect(SchedulableJob.new(run_class: "ModuleA::ModuleB::ClassName").run_class_name).to eq "ClassName"
+    end
+
+    it "handles blank run class" do
+      expect(SchedulableJob.new.run_class_name).to eq ""
+    end
+
+    it "handles run classes without modules" do
+      expect(SchedulableJob.new(run_class: "ClassName").run_class_name).to eq "ClassName"
+    end
+  end
 end

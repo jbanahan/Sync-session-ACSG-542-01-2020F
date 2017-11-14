@@ -150,7 +150,7 @@ module OpenChain
       elsif command['path'].include?('_hm_i1/') && master_setup.custom_feature?('H&M I1 Interface')
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?("/_hm_i2") && master_setup.custom_feature?('H&M I2 Interface')
-        OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay.process_from_s3 bucket, remote_path
+        OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, remote_path
       elsif command['path'].include?('_kewill_isf/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_gtn_asn_xml') && master_setup.custom_feature?('Lumber SAP')
