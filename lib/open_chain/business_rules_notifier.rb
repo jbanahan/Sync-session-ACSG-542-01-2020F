@@ -32,7 +32,7 @@ module OpenChain
       OpenChain::SlackClient.new
     end
 
-    def log_error e, message
+    def self.log_error e, message
       # This method is mostly broken out for ease of testing
       e.log_me [message]
     end
