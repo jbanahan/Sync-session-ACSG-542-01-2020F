@@ -25,7 +25,7 @@ describe AttachmentArchiveManifest do
   describe "generate_manifest_tempfile!" do
     before :each do
       @rel_date = 1.day.ago
-      @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123',:release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago, :po_numbers => "PO")
+      @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123', :entry_number=> 'abc123', :release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago, :po_numbers => "PO")
       @inv = Factory(:broker_invoice, :entry=>@ent, :invoice_date => 2.months.ago)
       @att1 = @ent.attachments.create!(:attached_file_name=>'a.txt',:attached_file_size=>100,:attachment_type=>'EDOC')
       @a_setup = @c.create_attachment_archive_setup(:start_date=>10.years.ago)
@@ -45,7 +45,7 @@ describe AttachmentArchiveManifest do
       expect(@tmp.read).not_to eq ""
       sheet = Spreadsheet.open(@tmp).worksheet(0)
       title_row = sheet.row(0)
-      ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "PO Numbers",
+      ["Archive Name","Archive Date","Entry Number","Broker Reference", "Master Bill of Lading", "PO Numbers",
         "Release Date","Doc Type","Doc Name"].each_with_index do |n,i|
         expect(title_row[i]).to eq(n)
       end
@@ -56,22 +56,24 @@ describe AttachmentArchiveManifest do
 
       expect(r[0]).to eq("aname")
       expect(r[1]).to eq(Time.now.to_date)
-      expect(r[2]).to eq('123')
-      expect(r[3]).to eq('mbol')
-      expect(r[4]).to eq("PO")
-      expect(r[5]).to eq(@rel_date.to_date)
-      expect(r[6]).to eq('EDOC')
-      expect(r[7]).to eq(@att1.unique_file_name) 
+      expect(r[2]).to eq('abc123')
+      expect(r[3]).to eq('123')
+      expect(r[4]).to eq('mbol')
+      expect(r[5]).to eq("PO")
+      expect(r[6]).to eq(@rel_date.to_date)
+      expect(r[7]).to eq('EDOC')
+      expect(r[8]).to eq(@att1.unique_file_name) 
 
       r = lines[1]
       expect(r[0]).to eq("bname")
       expect(r[1]).to eq(Time.now.to_date)
-      expect(r[2]).to eq('123')
-      expect(r[3]).to eq('mbol')
-      expect(r[4]).to eq("PO")
-      expect(r[5]).to eq(@rel_date.to_date)
-      expect(r[6]).to eq('7501')
-      expect(r[7]).to eq(@att2.unique_file_name) 
+      expect(r[2]).to eq('abc123')
+      expect(r[3]).to eq('123')
+      expect(r[4]).to eq('mbol')
+      expect(r[5]).to eq("PO")
+      expect(r[6]).to eq(@rel_date.to_date)
+      expect(r[7]).to eq('7501')
+      expect(r[8]).to eq(@att2.unique_file_name) 
 
       r = sheet.row(3)
       expect(r[0]).to be_nil
