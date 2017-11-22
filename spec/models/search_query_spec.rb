@@ -190,6 +190,30 @@ describe SearchQuery do
       r = @sq.execute(per_page: 1000)
       expect(r.size).to eq 2
     end
+
+    context "excessive results" do
+      it "raises an error if the maximum number of results is exceeded and the 'raise max results error' flag is true" do
+        allow(@sq.search_setup).to receive(:max_results).and_return 1
+        expect {@sq.execute(per_page: 1000, raise_max_results_error:true)}.to raise_error SearchExceedsMaxResultsError, "Your query returned 1+ results.  Please adjust your parameter settings to reduce the amount of results."
+      end
+
+      it "raises an error if the maximum number of results is reached and the 'raise max results error' flag is true" do
+        allow(@sq.search_setup).to receive(:max_results).and_return 2
+        expect {@sq.execute(per_page: 1000, raise_max_results_error:true)}.to raise_error SearchExceedsMaxResultsError, "Your query returned 2+ results.  Please adjust your parameter settings to reduce the amount of results."
+      end
+
+      it "does not raise an error if the maximum number of results is exceeded but the 'raise max results error' flag is false" do
+        allow(@sq.search_setup).to receive(:max_results).and_return 1
+        r = @sq.execute(per_page: 1000, raise_max_results_error:false)
+        expect(r.size).to eq 2
+      end
+
+      it "does not raise an error if the maximum number of results is exceeded with no 'raise max results error' flag value provided" do
+        allow(@sq.search_setup).to receive(:max_results).and_return 1
+        r = @sq.execute(per_page: 1000)
+        expect(r.size).to eq 2
+      end
+    end
     
     context "custom_values" do
       before :each do

@@ -16,12 +16,14 @@ describe CsvMaker do
     end
 
     it "should build a csv file from a search query" do
-      raw_csv, data_row_count = CsvMaker.new.make_from_search_query(@query)
+      opts_hash = {}
+      raw_csv, data_row_count = CsvMaker.new.make_from_search_query(@query, opts_hash)
       csv = CSV.parse raw_csv
       expect(data_row_count).to eq 1
       expect(csv.length).to eq 2
       expect(csv[0]).to eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label]
       expect(csv[1]).to eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
+      expect(opts_hash[:raise_max_results_error]).to eq(true)
     end
 
     it "should count 0 rows when csv is empty" do
@@ -87,16 +89,6 @@ describe CsvMaker do
       expect(ss).to receive(:downloadable?) {|e| e << "Error!"; false}
 
       expect {CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))}.to raise_error "Error!"
-    end
-
-    it "raises an error if the report exceeds maximum row size" do
-      Factory(:product)
-      ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
-      ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
-      ss.search_columns.create!(:model_field_uid=>'prod_uid')
-      
-      allow(ss).to receive(:max_results).and_return 0
-      expect {CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))}.to raise_error "Your report has over 0 rows.  Please adjust your parameter settings to limit the size of the report."
     end
   end
 end

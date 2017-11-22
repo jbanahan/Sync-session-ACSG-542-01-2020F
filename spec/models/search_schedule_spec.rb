@@ -5,7 +5,7 @@ describe SearchSchedule do
     let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001,2,3,4,5,6) }
     before :each do
       @temp = Tempfile.new ["search_schedule_spec", ".xls"]
-      @u = Factory(:user, :time_zone => "Hawaii")
+      @u = Factory(:user, :time_zone => "Hawaii", :email=>'tufnel@stonehenge.biz')
       @setup = SearchSetup.new(:user=>@u, 
         # use a name that needs to be sanitized -> -test.txt
         :name => 'test/-#t!e~s)t .^t&x@t', :download_format => 'csv'
@@ -39,7 +39,7 @@ describe SearchSchedule do
       Timecop.freeze(now) { @ss.run log }
        
       expect(@ss.last_finish_time).not_to be_nil
-      
+      expect(@ss.report_failure_count).to eq(0)
     end
 
     it "should run with a custom report and no search" do
@@ -203,6 +203,101 @@ describe SearchSchedule do
       expect(m.body).to include "Error Message: Failed"
     end
 
+    context "excessive results handling" do
+      before(:each) {
+        @ss.search_setup.name = 'Green Globule'
+        @ss.custom_report = nil
+        @ss.disabled = false
+      }
+
+      it "should increment failure count when too many results exception thrown and no prior issues" do
+        @ss.report_failure_count = nil
+
+        log = double
+        expect(log).to receive(:info).once
+
+        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
+        expect(@ss).not_to receive(:send_email)
+        expect(@ss).not_to receive(:send_ftp)
+
+        @ss.run log
+
+        expect(@ss.report_failure_count).to eq(1)
+        expect(@ss.disabled).to eq(false)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq(['tufnel@stonehenge.biz'])
+        expect(mail.subject).to eq("Scheduled Report 'Green Globule' failed")
+        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed 1 time.  On the 5th consecutive failure, VFI Track will disable the report."))
+        expect(mail.attachments.size).to eq 0
+      end
+
+      it "should increment failure count when too many results exception thrown and prior count below 4" do
+        @ss.report_failure_count = 3
+
+        log = double
+        expect(log).to receive(:info).once
+
+        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
+        expect(@ss).not_to receive(:send_email)
+        expect(@ss).not_to receive(:send_ftp)
+
+        @ss.run log
+
+        expect(@ss.report_failure_count).to eq(4)
+        expect(@ss.disabled).to eq(false)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq("Scheduled Report 'Green Globule' failed")
+        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed 4 times in a row.  On the 5th consecutive failure, VFI Track will disable the report."))
+      end
+
+      it "should increment failure count and disable search when too many results exception thrown and prior count is 4" do
+        @ss.update_attributes(:download_format => "xls")
+        @ss.report_failure_count = 4
+
+        log = double
+        expect(log).to receive(:info).once
+
+        expect(@ss).to receive(:write_xls).and_raise(SearchExceedsMaxResultsError)
+        expect(@ss).not_to receive(:send_email)
+        expect(@ss).not_to receive(:send_ftp)
+
+        @ss.run log
+
+        expect(@ss.report_failure_count).to eq(5)
+        expect(@ss.disabled).to eq(true)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq(['tufnel@stonehenge.biz'])
+        expect(mail.subject).to eq("Scheduled Report 'Green Globule' was DISABLED")
+        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."))
+        expect(mail.attachments.size).to eq 0
+      end
+
+      it "should increment failure count and disable search when too many results exception thrown and prior count above 5" do
+        # Non-disabled status with count above 5 could happen if a user re-enables their search without actually
+        # having fixed the bad params that let it be disabled in the first place.
+        @ss.report_failure_count = 6
+
+        log = double
+        expect(log).to receive(:info).once
+
+        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
+        expect(@ss).not_to receive(:send_email)
+        expect(@ss).not_to receive(:send_ftp)
+
+        @ss.run log
+
+        expect(@ss.report_failure_count).to eq(7)
+        expect(@ss.disabled).to eq(true)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq("Scheduled Report 'Green Globule' was DISABLED")
+        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."))
+      end
+
+    end
   end
 
   describe "send_ftp" do
@@ -379,6 +474,59 @@ describe SearchSchedule do
         expect(subject.report_name(search_setup, "xls", include_timestamp: true)).to eq "search_#{now.strftime "%Y%m%d%H%M%S%L"}.xls"
       end
       
+    end
+  end
+
+  describe "stopped?" do
+    before :each do
+      @u = Factory(:user)
+      @setup = SearchSetup.new(:user=>@u)
+      @report = CustomReport.new(:user => @u, name: "blah")
+      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report)
+    end
+
+    it "returns false for an enabled search with an active user" do
+      @ss.custom_report = nil
+      @ss.disabled = false
+      @u.disabled = false
+
+      expect(@ss.stopped?).to eq(false)
+    end
+
+    it "returns false for an enabled custom report with an active user" do
+      @ss.search_setup = nil
+      @ss.disabled = false
+      @u.disabled = false
+
+      expect(@ss.stopped?).to eq(false)
+    end
+
+    it "returns true for a disabled search" do
+      @ss.custom_report = nil
+      @ss.disabled = true
+
+      expect(@ss.stopped?).to eq(true)
+    end
+
+    it "returns true for a disabled custom report" do
+      @ss.search_setup = nil
+      @ss.disabled = true
+
+      expect(@ss.stopped?).to eq(true)
+    end
+
+    it "returns true for a search with an inactive (disabled) user" do
+      @ss.custom_report = nil
+      @u.disabled = true
+
+      expect(@ss.stopped?).to eq(true)
+    end
+
+    it "returns true for a custom report with an inactive (disabled) user" do
+      @ss.search_setup = nil
+      @u.disabled = true
+
+      expect(@ss.stopped?).to eq(true)
     end
   end
 

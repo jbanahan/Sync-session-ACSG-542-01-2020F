@@ -26,13 +26,13 @@ class XlsMaker
     sheet = wb.worksheet 0
     row_number = 1
     base_objects = {}
+    search_query_opts[:raise_max_results_error] = true
     search_query.execute(search_query_opts) do |row_hash|
       #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
       key = row_hash[:row_key]
       base_objects[key] ||= (@include_links ? ss.core_module.find(key) : nil)
       process_row sheet, row_number, row_hash[:result], base_objects[key]
-      
-      raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
+      row_number += 1
     end
     generate_criteria_tab(wb, search_query)
     [wb, row_number - 1]

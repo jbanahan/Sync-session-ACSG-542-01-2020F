@@ -124,7 +124,7 @@ describe AdvancedSearchController do
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
         {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
           :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false,
-          :exclude_file_timestamp=>true, },
+          :exclude_file_timestamp=>true, :disabled=>true, :report_failure_count=>2 },
         {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
       ], :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
       expect(response).to be_success
@@ -142,6 +142,8 @@ describe AdvancedSearchController do
       expect(email.run_saturday?).to be_falsey
       expect(email.run_sunday?).to be_falsey
       expect(email.exclude_file_timestamp).to be_truthy
+      expect(email.disabled).to be_truthy
+      expect(email.report_failure_count).to eq(2)
 
       ftp = @ss.search_schedules.find_by_ftp_server("ftp.example.com")
       expect(ftp.ftp_username).to eq('user')
@@ -206,7 +208,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8, :exclude_file_timestamp=>true,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8, :exclude_file_timestamp=>true,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :disabled=>"true", :report_failure_count=>2)
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -236,7 +238,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
-          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true}
+          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
@@ -256,7 +258,7 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,:disabled=>"false",:report_failure_count=>2,
                                   :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :ftp_port=>"123")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
@@ -266,7 +268,7 @@ describe AdvancedSearchController do
       expect(h['allow_ftp']).to be_truthy
       expect(h['search_schedules']).to eq([
         {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
-          "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
+          "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,"disabled"=>false,"report_failure_count"=>2,
           "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", 
           "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
       ])

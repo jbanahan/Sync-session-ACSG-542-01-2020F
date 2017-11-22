@@ -1,0 +1,2 @@
+class SearchExceedsMaxResultsError < StandardError
+end

@@ -33,6 +33,8 @@ class SearchQuery
     # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
     core_module_id_aliases = ordered_core_modules(opts)
 
+    raise SearchExceedsMaxResultsError, "Your query returned #{@search_setup.max_results(@user)}+ results.  Please adjust your parameter settings to reduce the amount of results." if opts[:raise_max_results_error] && rs.size >= @search_setup.max_results(@user)
+
     rs.each do |row|
       # We want to remove these from the selected row since they're not actual query data
       # First column to remove is ALWAYS the core primary key

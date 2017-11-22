@@ -14,17 +14,18 @@ class CsvMaker
     generate results, columns, search_criterions, module_chain, user
   end
 
-  def make_from_search_query search_query, single_page = false
+  def make_from_search_query search_query, search_query_opts = {}
     ss = search_query.search_setup
     errors = []
-    raise errors.first unless ss.downloadable?(errors, single_page)
+    raise errors.first unless ss.downloadable?(errors, search_query_opts[:single_page])
     max_results = ss.max_results(search_query.user)
 
     columns = search_query.search_setup.search_columns.order('rank ASC')
     row_number = 1
     base_objects = {}
     report = CSV.generate(prep_opts(columns, search_query.user)) do |csv|
-      search_query.execute do |row_hash|
+      search_query_opts[:raise_max_results_error] = true
+      search_query.execute(search_query_opts) do |row_hash|
         #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
         key = row_hash[:row_key]
         base_objects[key] ||= (self.include_links ? ss.core_module.find(key) : nil)
@@ -34,8 +35,8 @@ class CsvMaker
         row << (base_objects[key] ? base_objects[key].view_url : "") if self.include_links
         
         csv << row
-      
-        raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
+
+        row_number += 1
       end
     end
     [report, row_number - 1]

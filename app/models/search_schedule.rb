@@ -28,6 +28,11 @@ class SearchSchedule < ActiveRecord::Base
     run_custom_report self.custom_report, log if self.custom_report
   end
 
+  # Prevents the scheduled search or custom report from running if it has been disabled or if the user associated with
+  # it has been deactivated.
+  def stopped?
+    self.disabled? || (!self.search_setup.nil? && !self.search_setup.user.active?) || (!self.custom_report.nil? && !self.custom_report.user.active?)
+  end
 
   def day_to_run
     self.day_of_month 
@@ -90,27 +95,33 @@ class SearchSchedule < ActiveRecord::Base
   private
 
   def run_search srch_setup, log
-    if !srch_setup.user.active?
-      log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
-      return
-    end
     User.run_with_user_settings(srch_setup.user) do
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
       attachment_name = self.class.report_name srch_setup, extension, include_timestamp: !exclude_file_timestamp
       Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
         t.binmode
-        if extension == "csv"
-         report_has_data = write_csv(srch_setup, t) 
-        else 
-         report_has_data = write_xls(srch_setup, t)
+        begin
+          if extension == "csv"
+           report_has_data = write_csv(srch_setup, t)
+          else
+           report_has_data = write_xls(srch_setup, t)
+          end
+
+          if send_if_empty? || report_has_data
+            send_email srch_setup.name, t, attachment_name, srch_setup.user, log
+            send_ftp srch_setup.name, t, attachment_name, log
+          end
+          self.update_attributes(:last_finish_time => Time.now, :report_failure_count => 0)
+          log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+        rescue SearchExceedsMaxResultsError
+          self.update_attributes(:report_failure_count => (self.report_failure_count.to_i + 1))
+          if self.report_failure_count >= 5
+            self.update_attributes(:disabled => true)
+            send_excessive_size_failure_email user, true
+          else
+            send_excessive_size_failure_email user, false
+          end
         end
-        
-        if send_if_empty? || report_has_data
-          send_email srch_setup.name, t, attachment_name, srch_setup.user, log
-          send_ftp srch_setup.name, t, attachment_name, log
-        end
-        self.update_attributes(:last_finish_time => Time.now)
-        log.info "#{Time.now}: Search schedule #{self.id} complete." if log
       end
     end
   rescue => e
@@ -119,11 +130,6 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   def run_custom_report rpt, log
-    if !rpt.user.active?
-      log.info "#{Time.now}: Custom Report schedule #{self.id} stopped, user is locked." if log
-      return
-    end
-    
     User.run_with_user_settings(rpt.user) do
       t = nil
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
@@ -222,7 +228,18 @@ class SearchSchedule < ActiveRecord::Base
 
     user.messages.create!(subject: "Search Transmission Failure", body: message_body)
   end
-  
+
+  def send_excessive_size_failure_email user, disable_threshold_reached
+    search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
+    if disable_threshold_reached
+      subject = "Scheduled Report '#{search_name}' was DISABLED"
+      body = "Your Scheduled Report '#{search_name}' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."
+    else
+      subject = "Scheduled Report '#{search_name}' failed"
+      body = "Your Scheduled Report '#{search_name}' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed #{self.report_failure_count} time#{(self.report_failure_count > 1 ? "s in a row" : "")}.  On the 5th consecutive failure, VFI Track will disable the report."
+    end
+    OpenMailer.send_simple_html(user.email, subject, body).deliver!
+  end
 
   def make_days_of_week
     d = []
