@@ -62,7 +62,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 {
                   label: "Ascena First Sale Validation",
                   enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}
-                }
+                },
+                ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"}
               }
 
   def self.subclasses_array
