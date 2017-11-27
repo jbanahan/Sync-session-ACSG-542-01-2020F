@@ -23,6 +23,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_article_xml_par
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_order_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_pir_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_vendor_xml_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_shipment_attachment_file_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
@@ -163,6 +164,8 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_sap_pir_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/shipment_docs') && master_setup.custom_feature?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFileParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ua_article_master/') && MasterSetup.get.custom_feature?('Under Armour Feeds')
         OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_from_msl/') && master_setup.custom_feature?('MSL+')

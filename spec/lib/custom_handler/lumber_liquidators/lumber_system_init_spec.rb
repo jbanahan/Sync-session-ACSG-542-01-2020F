@@ -27,6 +27,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator)
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator)
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator)
+        expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentChangeComparator)
         OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
       end
       it 'should register order acceptance' do

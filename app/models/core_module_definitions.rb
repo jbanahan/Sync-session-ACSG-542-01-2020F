@@ -131,8 +131,16 @@ module CoreModuleDefinitions
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
     :key_model_field_uids => [:shp_ref],
     :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference, :shp_shipped_orders, :shp_booked_orders],
-    :module_chain => [Shipment, ModuleChain::SiblingModules.new(ShipmentLine, BookingLine)]
-    })
+    :module_chain => [Shipment, ModuleChain::SiblingModules.new(ShipmentLine, BookingLine)],
+    snapshot_descriptor: SnapshotDescriptor.for(Shipment, {
+        shipment_lines: {type: ShipmentLine},
+        booking_lines: {type: BookingLine},
+        containers: {type: Container},
+        attachments: {type: Attachment},
+        comments: { type: Comment },
+        folders: { descriptor: Folder }
+    }, descriptor_repository: DESCRIPTOR_REPOSITORY
+    )})
   SALE_LINE = CoreModule.new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:soln_line_number,

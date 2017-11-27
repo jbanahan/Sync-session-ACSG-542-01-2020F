@@ -35,4 +35,13 @@ module OpenChain; module IntegrationClientParser
     parse OpenChain::S3.get_data(bucket, key), {:bucket=>bucket, :key=>key}.merge(opts)
   end
 
+  # When the code that runs on the FTP server picks up files, it inserts a timestamp into the filename, ostensibly
+  # so we don't get two files named the same thing put into the archive in the same day.  This method returns the
+  # "original" filename without the timestamp.
+  def get_s3_key_without_timestamp s3_key
+    split_name = s3_key.nil? ? [] : s3_key.split(".")
+    return s3_key unless split_name.length > 2
+    (split_name[0..-3] + split_name[-1..-1]).join "."
+  end
+
 end; end

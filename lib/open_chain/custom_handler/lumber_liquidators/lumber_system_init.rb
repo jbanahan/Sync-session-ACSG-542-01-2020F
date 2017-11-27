@@ -2,6 +2,7 @@ require 'open_chain/order_acceptance_registry'
 require 'open_chain/order_booking_registry'
 require 'open_chain/custom_handler/custom_view_selector'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_view_selector'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_entry_packet_shipment_change_comparator'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_acceptance'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_booking'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_change_comparator'
@@ -33,7 +34,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSy
     [
       OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator,
       OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator,
-      OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator
+      OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator,
+      OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentChangeComparator
     ].each {
       |c| OpenChain::EntityCompare::ComparatorRegistry.register c
     }
