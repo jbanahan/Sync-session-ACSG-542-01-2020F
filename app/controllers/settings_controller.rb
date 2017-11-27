@@ -1,5 +1,4 @@
 class SettingsController < ApplicationController
-  
   def index
     admin_secure("Only administrators can adjust system settings.") { 
       render layout:false 
@@ -7,6 +6,7 @@ class SettingsController < ApplicationController
   end
   
   def tools
+    @page_title = 'Tools'
     render :layout=>'one_col'
   end
 

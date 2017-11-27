@@ -21,6 +21,7 @@ class ApplicationController < ActionController::Base
   before_filter :force_reset
   before_filter :set_legacy_scripts
   before_filter :set_x_frame_options_header
+  before_filter :set_page_title
 
   helper_method :master_company
   helper_method :add_flash
@@ -34,6 +35,10 @@ class ApplicationController < ActionController::Base
   after_filter :reset_state_values
   after_filter :set_csrf_cookie
   after_filter :set_authtoken_cookie
+
+  def set_page_title
+    @page_title = "VFI Track"
+  end
 
   # render generic json error message
   def render_json_error message, response_code=500
@@ -65,6 +70,10 @@ class ApplicationController < ActionController::Base
 
   def master_setup
     MasterSetup.get
+  end
+
+  def adv_search_title(search_module)
+    "#{master_setup.friendly_name} - #{search_module}"
   end
 
   #controller action to display generic history page

@@ -2,6 +2,10 @@ class UsersController < ApplicationController
   skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
   skip_before_filter :require_user, only: [:disable_run_as]
     # GET /users
+    def set_page_title
+      @page_title ||= 'User'
+    end
+
     def index
       respond_to do |format|
         format.html {

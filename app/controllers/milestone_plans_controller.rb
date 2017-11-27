@@ -1,5 +1,8 @@
 class MilestonePlansController < ApplicationController
 
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     respond_to do |format|
       format.json { render :json => MilestonePlan.all}

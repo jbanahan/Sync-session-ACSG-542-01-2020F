@@ -1,6 +1,10 @@
 require 'open_chain/report'
 
 class ReportResultsController < ApplicationController
+  def set_page_title
+    @page_title ||= 'Report'
+  end
+
   def download
     r = ReportResult.find(params[:id])
     action_secure(r.can_view?(current_user),r,{:verb=>"download",:module_name=>"report",:lock_check=>false}) {

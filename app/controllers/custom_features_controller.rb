@@ -69,6 +69,10 @@ class CustomFeaturesController < ApplicationController
   PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
   ISF_LATE_FLAG_FILE_PARSER ||= 'OpenChain::CustomHandler::Generic::IsfLateFlagFileParser'
 
+  def set_page_title
+    @page_title ||= 'Custom Feature'
+  end
+
   def index
     render :layout=>'one_col'
   end

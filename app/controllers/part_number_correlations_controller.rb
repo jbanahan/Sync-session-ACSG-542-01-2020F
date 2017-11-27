@@ -1,6 +1,9 @@
 require 'open_chain/tariff_finder'
 
 class PartNumberCorrelationsController < ApplicationController
+  def set_page_title
+    @page_title = "Part Number Correlation"
+  end
   def create
     if PartNumberCorrelation.can_view?(current_user)
       importer_ids = params["part_number_correlation"].delete("importers")

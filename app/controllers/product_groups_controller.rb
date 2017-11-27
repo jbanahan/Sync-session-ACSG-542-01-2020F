@@ -1,5 +1,8 @@
 class ProductGroupsController < ApplicationController
   around_filter :admin_secure
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
   end
 

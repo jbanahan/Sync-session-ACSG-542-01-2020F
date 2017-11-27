@@ -1,4 +1,8 @@
 class SurveysController < ApplicationController
+  def set_page_title
+    @page_title ||= 'Survey'
+  end
+
   def index
     if current_user.view_surveys?
       @surveys = Survey.where(:company_id=>current_user.company_id, :archived => false)

@@ -204,6 +204,7 @@ class AdvancedSearchController < ApplicationController
         h = {
           :id=>ss.id,
           :module_type=>ss.module_type,
+          :title=>adv_search_title(ss.module_type),
           :name=>ss.name,
           :include_links=>ss.include_links?,
           :no_time=>ss.no_time?,

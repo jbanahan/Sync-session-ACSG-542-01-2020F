@@ -1,5 +1,8 @@
 class InstantClassificationsController < ApplicationController
 
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     admin_secure {
       @instant_classifications = InstantClassification.ranked

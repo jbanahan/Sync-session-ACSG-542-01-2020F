@@ -1,5 +1,8 @@
 class PublicFieldsController < ApplicationController
 
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def save
     admin_secure {
       PublicField.destroy_all #start over every time

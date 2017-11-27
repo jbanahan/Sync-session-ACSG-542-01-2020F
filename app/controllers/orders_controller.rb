@@ -8,6 +8,10 @@ class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::BulkAction::BulkActionSupport
 
+  def set_page_title
+    @page_title ||= 'Order'
+  end
+
 	def root_class
 		Order
 	end

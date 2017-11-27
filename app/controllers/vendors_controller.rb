@@ -3,6 +3,10 @@ class VendorsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   around_filter :view_vendors_filter, only: [:index, :matching_vendors]
 
+  def set_page_title
+    @page_title ||= 'Vendor'
+  end
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::COMPANY, params[:force_search]

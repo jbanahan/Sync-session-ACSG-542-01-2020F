@@ -1,5 +1,8 @@
 class ProjectsController < ApplicationController
   include ProjectsHelper
+  def set_page_title
+    @page_title = "Project"
+  end
   def index
     if !current_user.view_projects?
       error_redirect "You do not have permission to view projects."

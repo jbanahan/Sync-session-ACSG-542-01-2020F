@@ -1,4 +1,7 @@
 class ChargeCodesController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     admin_secure {
       @charge_codes = ChargeCode.order("code ASC")

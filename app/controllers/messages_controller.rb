@@ -1,6 +1,9 @@
 class MessagesController < ApplicationController
   newrelic_ignore :only=>[:message_count]
   skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset,:log_last_request_time, :only=>:message_count
+  def set_page_title
+    @page_title = 'Tools'
+  end
   # GET /messages
   # GET /messages.xml
   def index

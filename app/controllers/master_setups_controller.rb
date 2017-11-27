@@ -4,6 +4,9 @@ require 'open_chain/delayed_job_extensions'
 class MasterSetupsController < ApplicationController
   include OpenChain::DelayedJobExtensions
 
+  def set_page_title
+    @page_title = 'Master Setup'
+  end
   def perf
     t = Time.now
     params[:count].to_i.times {MasterSetup.get}

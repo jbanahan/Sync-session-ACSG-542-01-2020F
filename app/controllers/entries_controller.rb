@@ -8,7 +8,11 @@ class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
   include OpenChain::BusinessRuleValidationResultsSupport
-  
+
+  def set_page_title
+    @page_title = "Entry"
+  end
+
   def root_class
     Entry 
   end

@@ -8,6 +8,10 @@ class SentEmailsController < ApplicationController
     'date' => {:field => 'email_date', :label => "Date"},
   }
 
+  def set_page_title
+    @page_title ||= 'Sent Emails'
+  end
+
   def index
     admin_secure {
       sp = SEARCH_PARAMS.clone

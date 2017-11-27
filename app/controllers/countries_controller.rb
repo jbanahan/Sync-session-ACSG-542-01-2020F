@@ -1,4 +1,7 @@
 class CountriesController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   # GET /countries
   # GET /countries.xml
   def index

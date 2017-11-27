@@ -2,6 +2,9 @@ require 'open_chain/business_rule_validation_results_support'
 require 'open_chain/custom_handler/vandegrift/kewill_product_generator'
 
 class CompaniesController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   include OpenChain::BusinessRuleValidationResultsSupport
 
   before_filter :translate_booking_types, only: [:create, :update]

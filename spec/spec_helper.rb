@@ -7,6 +7,7 @@ require 'rspec/rails'
 require File.dirname(__FILE__) + "/factories"
 require 'clearance/rspec'
 require 'webmock/rspec'
+require 'open_chain/delayed_job_extensions'
 
 # don't auto-run minitest which we don't use, but is required by ActiveSupport
 Test::Unit.run = true if defined?(Test::Unit) && Test::Unit.respond_to?(:run=)

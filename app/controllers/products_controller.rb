@@ -9,6 +9,10 @@ class ProductsController < ApplicationController
   include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
+  def set_page_title
+    @page_title ||= 'Product'
+  end
+
 	def root_class
 		Product
 	end

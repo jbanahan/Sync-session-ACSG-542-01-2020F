@@ -3,6 +3,10 @@ require 'open_chain/custom_handler/j_jill/j_jill_shipment_download_generator'
 
 class ShipmentsController < ApplicationController
 
+  def set_page_title
+    @page_title ||= 'Shipment'
+  end
+
 	def root_class
 	  Shipment
 	end

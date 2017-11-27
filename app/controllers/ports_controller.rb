@@ -7,6 +7,9 @@ class PortsController < ApplicationController
     'p_cs_code'=>{:field=>'cbsa_sublocation',:label=>'CBSA Sublocation'},
     'p_un_code'=>{:field=>'unlocode',:label=>'UN/LOCODE'}
   }
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     admin_secure {
       @ports = build_search(SEARCH_PARAMS,'p_name','p_name').paginate(:per_page=>50,:page=>params[:page])

@@ -1,6 +1,10 @@
 class SummaryStatementsController < ApplicationController
   include SummaryStatementsHelper
 
+  def set_page_title
+    @page_title = "Statement"
+  end
+
   def index
     if current_user.view_summary_statements?
       flash.keep

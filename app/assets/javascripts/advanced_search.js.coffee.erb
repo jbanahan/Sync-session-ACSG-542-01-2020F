@@ -107,6 +107,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   loadSearch = (id) ->
     $http.get('/advanced_search/'+id+'/setup.json').success((data,status,headers,config) ->
+      document.title = data.title
       $scope.searchSetup = data
       BulkActions.setCoreModule(data.module_type)
       resetAvailables()

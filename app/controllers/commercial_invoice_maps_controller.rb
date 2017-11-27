@@ -1,4 +1,7 @@
 class CommercialInvoiceMapsController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     action_secure(current_user.admin?,nil,{:lock_check=>false,:verb => "view",:module_name=>"invoice mappings"}) {
       @maps = CommercialInvoiceMap.all

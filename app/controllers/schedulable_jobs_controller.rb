@@ -1,4 +1,7 @@
 class SchedulableJobsController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     sys_admin_secure do
       jobs = SchedulableJob.all

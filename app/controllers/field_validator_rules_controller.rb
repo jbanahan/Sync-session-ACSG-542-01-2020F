@@ -1,5 +1,8 @@
 class FieldValidatorRulesController < ApplicationController
   skip_before_filter :portal_redirect, only: [:validate]
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def validate
     mf_id = params[:mf_id]
     msgs = []

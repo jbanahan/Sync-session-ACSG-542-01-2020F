@@ -5,6 +5,10 @@ require 'open_chain/search_query_controller_helper'
 class ImportedFilesController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
 
+  def set_page_title
+    @page_title ||= 'Uploads'
+  end
+
   def legacy_javascripts?
     false
   end

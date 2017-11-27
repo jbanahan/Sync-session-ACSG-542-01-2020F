@@ -6,6 +6,9 @@ class StatusRulesController < ApplicationController
     'm_type' => {:field => 'module_type', :label => 'Module'},
     't_rank' => {:field => 'test_rank', :label => 'Test Rank'},
   }
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     action_secure(current_user.edit_status_rules?, nil, {:verb => "work with", :lock_check => false, :module_name=>"status rule"}) {
       s = build_search(SEARCH_PARAMS,'m_type','m_type')

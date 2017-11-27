@@ -7,6 +7,9 @@ class CustomDefinitionsController < ApplicationController
 			'd_type' => {:field => 'data_type', :label => 'Data Type'},
 			's_rank' => {:field => 'rank', :label => 'Sort Rank'}
 	}
+	def set_page_title
+		@page_title = 'Tools'
+	end
   def index
 		s =  build_search(SEARCH_PARAMS,'label','m_type','a')
 

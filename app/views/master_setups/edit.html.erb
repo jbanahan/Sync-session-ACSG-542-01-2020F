@@ -66,6 +66,7 @@ $(function() {
         <%=field_bootstrap "Version", content_tag(:div, MasterSetup.current_code_version, class:(MasterSetup.current_code_version==@ms.target_version ? '' : 'bg-danger'))%>
         <%=field_bootstrap "Target Version", @ms.target_version%>
         <%=field_bootstrap "System Code", f.text_field(:system_code,:class=>'form-control') %>
+        <%=field_bootstrap "Friendly System Name", f.text_field(:friendly_name,:class=>'form_control') %>
         <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host,:class=>'form-control') %>
         <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key,:class=>'form-control') %>
         <%=field_bootstrap "Logo Image", f.text_field(:logo_image,:class=>'form-control') %>

@@ -1,4 +1,9 @@
 class DashboardWidgetsController < ApplicationController
+
+  def set_page_title
+    @page_title ||= "Dashboard"
+  end
+
   def index
     @widgets = current_user.dashboard_widgets
   end

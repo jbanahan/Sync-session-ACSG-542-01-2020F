@@ -1,5 +1,8 @@
 class RegionsController < ApplicationController
   before_filter :secure
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     @regions = Region.all
   end

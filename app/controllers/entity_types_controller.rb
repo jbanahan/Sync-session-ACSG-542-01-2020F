@@ -2,6 +2,9 @@ class EntityTypesController < ApplicationController
 
   HIDE_FROM_EDIT_SCREEN = [:prod_system_code,:prod_class_count, :prod_ent_type_id, :prod_ent_type]
 
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     admin_secure {
       @entity_types = EntityType.all

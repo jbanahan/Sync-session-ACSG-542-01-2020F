@@ -8,7 +8,7 @@
   ms = MasterSetup.get
 -%>
   <head>
-    <title><%=@page_title.blank? ? 'VFI Track' : @page_title%></title>
+    <title><%= "#{ms.friendly_name} - #{@page_title}" %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= favicon_links -%>
     <%= stylesheet_link_tag    "application", :media => "all" -%>
@@ -36,9 +36,21 @@
       <%= yield :javascript -%>
     </script>
   </head>
-  <body>
-      <% if @run_as_user %>
-        <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <body class="<%= !ms.custom_feature?('Production') || @run_as_user ? 'run-as' : '' %>">
+      <% if @run_as_user || !ms.custom_feature?('Production') %>
+        <div id='run_as_box'>
+          <div class="test-environment-message">
+            <% if !ms.custom_feature?('Production') %>
+                This Instance is a VFI Track Test Environment
+            <% end %>
+          </div>
+          <div class="run-as-message">
+            <% if @run_as_user %>
+                Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a>
+            <% end %>
+          </div>
+          <div class="clear"></div>
+        </div>
       <% end %>
       <% if show_navbar && current_user -%>
         <%= render "shared/nav_panel" %>

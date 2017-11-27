@@ -6,6 +6,10 @@ require 'open_chain/report/drawback_audit_report'
 class DrawbackClaimsController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
 
+  def set_page_title
+    @page_title = "Drawback"
+  end
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::DRAWBACK_CLAIM, params[:force_search]

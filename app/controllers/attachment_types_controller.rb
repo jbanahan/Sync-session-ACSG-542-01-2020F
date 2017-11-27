@@ -1,6 +1,9 @@
 class AttachmentTypesController < ApplicationController
   # GET /attachment_types
   # GET /attachment_types.xml
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     admin_secure {
       @attachment_types = AttachmentType.all

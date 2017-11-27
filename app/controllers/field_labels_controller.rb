@@ -1,4 +1,7 @@
 class FieldLabelsController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     if params[:module_type]
       cm = CoreModule.find_by_class_name params[:module_type]

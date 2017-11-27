@@ -7,6 +7,9 @@ class AwsBackupSessionsController < ApplicationController
     'created_at' => {:field => 'created_at', :label => "Created At"}
   }
 
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     sys_admin_secure {
       sp = SEARCH_PARAMS.clone

@@ -1,4 +1,7 @@
 class ErrorLogEntriesController < ApplicationController
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     sys_admin_secure {
       @error_entries = ErrorLogEntry.order("id desc").paginate(:per_page=>20, :page=>params[:page])

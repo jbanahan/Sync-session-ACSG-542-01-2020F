@@ -3,6 +3,9 @@ class UserManualsController < ApplicationController
 
   skip_before_filter :portal_redirect, only: [:download]
   around_filter :admin_secure, except: [:download,:for_referer]
+  def set_page_title
+    @page_title = 'Tools'
+  end
   def index
     @user_manuals = UserManual.all
   end

@@ -3,6 +3,10 @@ require 'email_validator'
 class SurveyResponsesController < ApplicationController
   include SurveyResponsesControllerSupport
 
+  def set_page_title
+    @page_title = "Survey"
+  end
+
   def show
     sr = nil
     begin
