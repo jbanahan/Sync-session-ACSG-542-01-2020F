@@ -316,6 +316,7 @@ class User < ActiveRecord::Base
     self.last_login_at = self.current_login_at
     self.current_login_at = Time.zone.now
     self.failed_login_count = 0
+    self.failed_logins = 0
     save validate: false
 
     History.create({:history_type => 'login', :user_id => self.id, :company_id => self.company_id})
@@ -331,6 +332,13 @@ class User < ActiveRecord::Base
     OpenMailer.send_password_reset(self).deliver
   end
 
+  def locked?
+    active? && (
+      password_reset.present? ||
+      password_expired.present? ||
+      password_locked.present?
+    )
+  end
   # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)
   def admin?

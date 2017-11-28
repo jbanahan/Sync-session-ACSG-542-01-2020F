@@ -1,6 +1,30 @@
 require 'spec_helper'
 
 describe User do
+  describe "locked?" do
+    let(:user) { Factory.create(:user) }
+    it 'returns false if user is not active' do
+      user.update_attribute(:disabled, true)
+      expect(user.locked?).to eq(false)
+    end
+
+    it 'returns true if password_reset is enabled' do
+      user.update_attribute(:password_reset, true)
+      expect(user.locked?).to eq(true)
+    end
+
+    it 'returns true if password_expired is true' do
+      user.update_attribute(:password_expired, true)
+      expect(user.locked?).to eq(true)
+    end
+
+    it 'returns true if password_locked is true' do
+      user.update_attribute(:password_locked, true)
+      expect(user.locked?).to eq(true)
+    end
+
+  end
+
   describe "valid_password?" do
     it 'returns false if any PasswordValidationRegistry tests return false' do
       u = User.new
@@ -842,6 +866,7 @@ describe User do
       expect(user.last_login_at).to eq last_login
       expect(user.current_login_at).to be >= 5.seconds.ago
       expect(user.failed_login_count).to eq 0
+      expect(user.failed_logins).to eq 0
       expect(user.host_with_port).to eq "localhost:3000"
       # Don't want the login to update the user timestamps
       expect(user.updated_at.to_i).to eq updated_at.to_i

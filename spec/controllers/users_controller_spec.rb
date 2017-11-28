@@ -439,6 +439,50 @@ describe UsersController do
 
   end
 
+  describe "unlock_user" do
+    before :each do
+      # So the :back redirect in the controller returns something
+      request.env["HTTP_REFERER"] = "/referer"
+    end
+
+    it "should error when the user is not found" do
+      @user.admin = true
+      @user.save
+
+      post :unlock_user, username: "AugustusGloop"
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("User with username AugustusGloop not found.")
+    end
+
+    it "should error when the current user is not an admin" do
+      @user.admin = false
+      @user.save
+
+      company = Factory.create(:company)
+      locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
+
+      post :unlock_user, username: "AugustusGloop"
+
+      expect(response).to redirect_to "/referer"
+      expect(flash[:errors].first).to eq("You must be an administrator to unlock a user.")
+    end
+
+    it "should unlock the user when the current user is an admin" do
+      @user.admin = true
+      @user.save
+
+      company = Factory.create(:company)
+      locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
+
+      post :unlock_user, username: "AugustusGloop"
+
+      expect(response).to redirect_to(edit_company_user_path(locked_user.company, locked_user))
+      expect(flash[:notices]).to include("User with username #{locked_user.username} unlocked.")
+      locked_user.reload
+      expect(locked_user.password_locked).to eq(false)
+    end
+  end
+
   describe "enable_run_as" do
     before :each do
       # So the :back redirect in the controller returns something
