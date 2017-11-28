@@ -91,18 +91,61 @@ describe OpenChain::Report::PvhContainerLogReport do
   end
 
   describe "permission?" do
-    it "allows permission for master users on www-vfitrack-net" do
-      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
-      expect(described_class.permission? Factory(:master_user)).to be_truthy
-    end
+    context "as www-vfitrack-net system code" do
+      let! (:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
+      }
 
-    it "denies permission for non-master users" do
-      expect(described_class.permission? Factory(:user)).to be_falsey
+      it "allows permission for master users on www-vfitrack-net" do
+        user = Factory(:master_user)
+        expect(user).to receive(:view_entries?).and_return true
+        expect(described_class.permission? user).to eq true
+      end
+
+      it "denies permission for users that can't view entries" do
+        user = Factory(:master_user)
+        expect(user).to receive(:view_entries?).and_return false
+        expect(described_class.permission? user).to eq false
+      end
+
+      context "with pvh company" do
+        let (:user) { 
+          user = Factory(:user) 
+          allow(user).to receive(:view_entries?).and_return true
+          user
+        }
+
+        let! (:pvh) { Factory(:company, importer: true, system_code: "PVH") }
+
+        it "denies users that are not linked to pvh" do
+          expect(described_class.permission? user).to eq false
+        end
+
+        it "allows to pvh users" do 
+          user.company = pvh
+          user.save!
+
+          expect(described_class.permission? user).to eq true
+        end
+
+        it "allows to users linked to pvh" do
+          company = Factory(:importer)
+          company.linked_companies << pvh
+          user.company = company
+          user.save! 
+          
+          expect(described_class.permission? user).to eq true
+        end
+      end
     end
 
     it "denies permission for non-vfitrack instance" do
-      expect_any_instance_of(MasterSetup).to receive(:system_code).and_return "blah"
-      expect(described_class.permission? Factory(:master_user)).to be_falsey
+      master_setup = stub_master_setup
+      expect(master_setup).to receive(:system_code).and_return "blah"
+      user = Factory(:master_user)
+      allow(user).to receive(:view_entries?).and_return true
+      expect(described_class.permission? user).to eq false
     end
   end
 end

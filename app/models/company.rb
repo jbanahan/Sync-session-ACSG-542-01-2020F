@@ -54,8 +54,9 @@ class Company < ActiveRecord::Base
   scope :has_slack_channel, where('slack_channel IS NOT NULL AND slack_channel <> ""')
 
   def linked_company? c
-    self.linked_companies.include? c
+    (self == c) || self.linked_companies.include?(c)
   end
+
   def self.find_can_view(user)
     if user.company.master
       return Company.where("1=1")

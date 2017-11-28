@@ -4,7 +4,13 @@ module OpenChain; module Report; class PvhContainerLogReport
   include OpenChain::Report::ReportHelper
 
   def self.permission? user
-    user.company.master? && (Rails.env.development? || MasterSetup.get.system_code == 'www-vfitrack-net')
+    return false unless user.view_entries?
+    return false unless (Rails.env.development? || MasterSetup.get.system_code == 'www-vfitrack-net')
+    return true if user.company.master?
+    pvh = Company.where(system_code: "PVH").first
+    return false unless pvh
+    # Allow PVH users or linked users (.ie master pvh account)
+    return user.company.linked_company?(pvh)
   end
 
   def self.run_report run_by, settings

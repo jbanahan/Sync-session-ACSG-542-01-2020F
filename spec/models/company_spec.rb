@@ -428,4 +428,31 @@ describe Company do
     end
   end
 
+  describe "linked_company?" do
+    let (:company) { Factory(:company) }
+
+    it "returns true if companies are linked" do
+      linked = Factory(:company)
+      company.linked_companies << linked
+
+      expect(company.linked_company? linked).to eq true
+    end
+
+    it "returns false if companies are not linked" do
+      linked = Factory(:company)
+
+      expect(company.linked_company? linked).to eq false
+    end
+
+    it "returns true if company is same" do
+      expect(company.linked_company? company).to eq true
+    end
+
+    it "returns false when an inverse link is not present" do
+      linked = Factory(:company)
+      company.linked_companies << linked
+
+      expect(linked.linked_company? company).to eq false
+    end
+  end
 end
