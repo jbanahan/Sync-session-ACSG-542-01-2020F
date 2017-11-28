@@ -619,6 +619,20 @@ describe Api::V1::ShipmentsController do
         @shipment.reload
         expect(@shipment.booking_lines.length).to eq 0
       end
+
+      it "destroys a booking line" do
+        line = @shipment.booking_lines.create! product_id: @product.id, quantity: 100, line_number: 1, order_line_id: order_line.id
+
+        booking_line = shipment_data['booking_lines'].first
+        booking_line.clear
+        booking_line["_destroy"] = true
+        booking_line["id"] = line.id
+
+        put :update, id: @shipment.id, shipment: shipment_data
+
+        @shipment.reload
+        expect(@shipment.booking_lines.length).to eq 0
+      end
     end
 
   end

@@ -698,7 +698,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def load_booking_lines(shipment, h)
     if h['booking_lines']
-      raise StatusableError.new("Order has different importer from shipment", 400) unless match_importer? shipment, h['booking_lines'].map{|bl| bl['bkln_order_line_id']}
+      # line deletes won't have order ids, so we can skip them
+      order_line_ids = h['booking_lines'].map {|bl| bl["_destroy"].to_s.to_boolean ? nil : bl['bkln_order_line_id']}.uniq.compact
+      raise StatusableError.new("Order has different importer from shipment", 400) unless match_importer?(shipment, order_line_ids)
+
       h['booking_lines'].each_with_index do |base_ln,i|
         ln = base_ln.clone
         s_line = shipment.booking_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['bkln_line_number'], obj.line_number)}
@@ -727,6 +730,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def match_importer? shipment, order_line_ids
+    # If we don't have any ids, then there's no conflict between the header and the lines
+    return true if order_line_ids.length == 0
+
     qry = <<-SQL
       SELECT DISTINCT imp.id 
       FROM companies imp
