@@ -51,7 +51,7 @@ class Company < ActiveRecord::Base
   scope :active_importers, where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')")
   #find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")
-  scope :has_slack_channel, where('slack_channel IS NOT NULL')
+  scope :has_slack_channel, where('slack_channel IS NOT NULL AND slack_channel <> ""')
 
   def linked_company? c
     self.linked_companies.include? c
