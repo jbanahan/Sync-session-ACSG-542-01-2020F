@@ -1,3 +1,61 @@
+# This contains definitions for every module in the system
+# Each module must contain keys for the following options:
+#
+# unique_id_field_name - Used to identify the model field name to use if a message should be written about the object.  For instance, the history
+# screen utilizes it as a dynamic way to determine how to identify the object who's history is being shown.
+#
+# key_model_field_uids - Used to identify the model field name(s) that uniquely identifies the module.
+#
+# quicksearch_fields - Fields to execute search over via the quicksearch functionaliy.
+#          - * Only required for "top level" modules (.ie parent level ones)
+#
+# module_chain - An array defining the chain of parent -> child modules that define the module's data structure
+#          - * Only required for top-level modules
+#
+# default_search_columns - Used when constructing a new advanced search, the model field uids used will constitute the columns for a new "Default" search
+#          - * Only required for top-level modules
+#
+# children - an Array of direct child classes of the core module object you're defining that make up its core module chain
+#          - * Only required if the module actually has children
+#
+# child_lambdas - a Hash containing keys for each class mentioned in the `children` array, and values as lambdas providing the means to access the child object ActiveRecord relations given the parent object
+#          - * Only required if the module actually has children  
+#
+# child_joins - a Hash containing keys for each class mentioned in the `children` array, the values provide SQL join clauses used to construct search queries, joining the child to the parent
+#          - * Only required if the module actually has children  
+# 
+
+# OPTIONAL KEYS:
+#
+# snapshot_descriptor - By default, the snapshot consists solely of the modules defined by module_chain.  If you need anythign beyond that, you must compose a snapshot descriptor.
+#
+# enabled_lambda - A lambda that will be used to determine at start up if the module is accessible on the running instance.  If not supplied, module will default to being enabled.
+#
+# show_field_prefix - Whether to display the module class as a field prefix on searches.  Should generally only be true for child level modules/classes.
+#
+# changed_at_parents_lambda - Used in a few places to indicate a change to the child module should push a change to the parents.  An array, each value returned by the lambda will have it's changed_at value set.
+# 
+# object_from_piece_set_lambda - Given a piece set object, extract the a module object from it.  Only required for classes accessible through piece sets.
+#
+# entity_json_lambda - Don't use
+# 
+# business_logic_validations - A lambda that can be used to apply validations on an object that is uploaded via a worksheet through the Import Files functionality.
+#
+# view_path_proc - A Proc that will define the URL to use to edit the object, will always be used in a context where path helpers are available.  Defaults to using standard helpers.
+#
+# edit_path_proc - See view_path_proc
+#
+# quicksearch_lambda - Provide scoping for quicksearch, used to limit results to values the user can see.  Only required if the class does not already define a Class level search_secure(User, Class) methods.
+#
+# quicksearch_extra_fields - Extra field values to show in the quick search results (values here will NOT be searched by) 
+#
+# quicksearch_sort_by_mf - The model field values will be sorted by (in descending order).  Defaults to created_at.
+# 
+# available_addresses_lambda - A lambda that will return all addresses linked to the module.  Referenced in a html field helper - do not use.
+#
+# logical_key_lambda - Returns the string representation of a module object's logical key.  Defaults to using the model field defined in the key unique_id_field_name
+#
+
 module CoreModuleDefinitions
 
   # This is used solely as a way to provide "state" between the snapshot descriptor creations as a way to
@@ -500,6 +558,45 @@ module CoreModuleDefinitions
     unique_id_field_name: :pro_key,
     changed_at_parents_lambda: lambda {|c| c.product.nil? ? [] : [c.product] },
     show_field_prefix: true
+  })
+
+  CUSTOMS_DAILY_STATEMENT_ENTRY_FEE = CoreModule.new("DailyStatementEntryFee", "Statement Fee", {
+    enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
+    show_field_prefix: true,
+    unique_id_field_name: :dsef_code,
+    key_model_field_uids: [:dsef_code]
+  })
+
+  CUSTOMS_DAILY_STATEMENT_ENTRY = CoreModule.new("DailyStatementEntry", "Statement Entry", {
+    enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
+    show_field_prefix: true,
+    unique_id_field_name: :dse_broker_reference,
+    key_model_field_uids: [:dse_broker_reference],
+    children: [DailyStatementEntryFee],
+    child_lambdas: {DailyStatementEntryFee => lambda {|s| s.daily_statement_entry_fees }},
+    child_joins: {DailyStatementEntryFee => "LEFT OUTER JOIN daily_statement_entry_fees on daily_statement_entries.id = daily_statement_entry_fees.daily_statement_entry_id"}
+  })
+
+  CUSTOMS_DAILY_STATEMENT = CoreModule.new("DailyStatement", "Daily Statement", {
+    default_search_columns: [:cds_statement_number, :cds_status, :cds_received_date, :cds_port_code, :cds_paid_date],
+    unique_id_field_name: :cds_statement_number,
+    key_model_field_uids: [:cds_statement_number], 
+    children: [DailyStatementEntry],
+    child_lambdas: {DailyStatementEntry => lambda {|s| s.daily_statement_entries }},
+    child_joins: {DailyStatementEntry => "LEFT OUTER JOIN daily_statement_entries on daily_statements.id = daily_statement_entries.daily_statement_id"},
+    enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
+    module_chain: [DailyStatement, DailyStatementEntry, DailyStatementEntryFee]
+  })
+
+  CUSTOMS_MONTHLY_STATEMENT = CoreModule.new("MonthlyStatement", "Monthly Statement", {
+    default_search_columns: [:cms_statement_number, :cms_status, :cms_received_date, :cms_port_code, :cms_paid_date],
+    unique_id_field_name: :cms_statement_number,
+    key_model_field_uids: [:cms_statement_number], 
+    children: [],
+    child_lambdas: {},
+    child_joins: {},
+    enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
+    module_chain: [MonthlyStatement]
   })
 
   # Don't need these any longer, clear them...this should be the last line in the file

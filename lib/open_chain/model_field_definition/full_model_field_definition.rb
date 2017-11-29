@@ -47,6 +47,10 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::FolderFieldDefinition
   include OpenChain::ModelFieldDefinition::CommentFieldDefinition
   include OpenChain::ModelFieldDefinition::GroupFieldDefinition
+  include OpenChain::ModelFieldDefinition::DailyStatementFieldDefinition
+  include OpenChain::ModelFieldDefinition::DailyStatementEntryFieldDefinition
+  include OpenChain::ModelFieldDefinition::DailyStatementEntryFeeFieldDefinition
+  include OpenChain::ModelFieldDefinition::MonthlyStatementFieldDefinition
 
   def add_field_definitions
     add_address_fields
@@ -93,5 +97,9 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_group_fields
     add_vfi_invoice_fields
     add_vfi_invoice_line_fields
+    add_daily_statement_fields
+    add_daily_statement_entry_fields
+    add_daily_statement_entry_fee_fields
+    add_monthly_statement_fields
   end
 end; end; end

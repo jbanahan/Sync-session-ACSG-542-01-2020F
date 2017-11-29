@@ -244,12 +244,24 @@ $(function() {
       <tr>
         <td style="width:50%;">
           <table>
-            <%= show_model_fields @entry, [:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date], table: true %>
+            <%= show_model_fields(@entry, [:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date], table: true) do |mf, form_field_name, field_value, html_attributes|
+                if mf.uid == :ent_daily_statement_number && current_user.view_statements? && !@entry.daily_statement_entry.try(:daily_statement).nil?
+                  link_to field_value, @entry.daily_statement_entry.daily_statement
+                else
+                  nil
+                end
+              end %>
           </table>
         </td>
         <td style="width:50%;">
           <table>
-            <%= show_model_fields @entry, [:ent_statement_month,:ent_monthly_statement_number,:ent_monthly_statement_due_date,:ent_monthly_statement_received_date,:ent_monthly_statement_paid_date], table: true %>
+            <%= show_model_fields(@entry, [:ent_statement_month,:ent_monthly_statement_number,:ent_monthly_statement_due_date,:ent_monthly_statement_received_date,:ent_monthly_statement_paid_date], table: true) do |mf, form_field_name, field_value, html_attributes|
+                if mf.uid == :ent_monthly_statement_number && current_user.view_statements? && !@entry.daily_statement_entry.try(:daily_statement).try(:monthly_statement).nil?
+                  link_to field_value, @entry.daily_statement_entry.daily_statement.monthly_statement
+                else
+                  nil
+                end
+              end %>
           </table>
         </td>
       </tr>

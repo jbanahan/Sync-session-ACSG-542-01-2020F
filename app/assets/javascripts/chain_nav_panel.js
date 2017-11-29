@@ -124,7 +124,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
 
 (function() {
   ChainNavPanel.MenuBuilder = function() {
-    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addSurveyMenu, addTradeLaneMenu, addVendorMenu, addVfiInvoiceMenu, makeItem, makeItemIf, makeMenuIf;
+    var addBrokerInvoiceMenu, addDrawbackMenu, addEntryMenu, addMoreMenu, addOrderMenu, addProductMenu, addSecurityFilingMenu, addShipmentMenu, addStatementsMenu, addSurveyMenu, addTradeLaneMenu, addVendorMenu, addVfiInvoiceMenu, makeItem, makeItemIf, makeMenuIf;
     makeItemIf = function(bool, itemArray, id, label, url) {
       if (bool) {
         return itemArray.push(makeItem(id, label, url));
@@ -193,6 +193,13 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
       makeItemIf(u.permissions.edit_summary_statements, items, 'brok-inv-stmnt-new', 'New Statement', '/summary_statements/new');
       return makeMenuIf(cat, 'nav-cat-brok-inv', 'Broker Invoice', items);
     };
+    addStatementsMenu = function(cat, u) {
+      var items;
+      items = [];
+      makeItemIf(u.permissions.view_statements, items, 'daily-statement-search', 'Daily Statements', '/daily_statements?force_search=true');
+      makeItemIf(u.permissions.view_statements, items, 'monthly-statment-search', 'Monthly Statements', '/monthly_statements?force_search=true');
+      return makeMenuIf(cat, 'nav-cat-customs-statements', 'Statements', items);
+    };
     addVfiInvoiceMenu = function(cat, u) {
       var items;
       items = [];
@@ -257,6 +264,7 @@ ChainNavPanelHtml["src/html/nav_panel.html"] = '<div id=\'chain-nav-panel\'>\n  
         addSecurityFilingMenu(categories, user);
         addEntryMenu(categories, user);
         addBrokerInvoiceMenu(categories, user);
+        addStatementsMenu(categories, user);
         addVfiInvoiceMenu(categories, user);
         addDrawbackMenu(categories, user);
         addSurveyMenu(categories, user);

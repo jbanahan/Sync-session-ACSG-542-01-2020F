@@ -1205,6 +1205,43 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = subject.process_entry @e
       expect(entry.summary_rejected).to eq true
     end
+
+    context "with statement updates" do
+      let (:statement) { DailyStatement.create! statement_number: "bstatement" }
+      let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }
+      let (:entry) { Factory(:entry, broker_reference: "12345", source_system: "Alliance") }
+
+      it "updates statement links" do
+        entry = subject.process_entry @e, {key: "file.json", bucket: "bucket"}
+
+        statement_entry.reload
+        statement.reload
+        expect(statement_entry.entry).to eq entry
+        expect(statement_entry.billed_amount).to eq BigDecimal("-100")
+
+        expect(statement.entity_snapshots.length).to eq 1
+        snap = statement.entity_snapshots.first
+        expect(snap.user).to eq User.integration
+        expect(snap.context).to eq "file.json"
+      end
+
+      it "does not snapshot statement if nothing changed" do
+        statement_entry.update_attributes! billed_amount: BigDecimal("-100"), entry_id: entry.id
+
+        entry = subject.process_entry @e, {key: "file.json", bucket: "bucket"}
+
+        statement.reload
+        expect(statement.entity_snapshots.length).to eq 0
+      end
+
+      it "snapshots statement if billed amount changes" do
+        statement_entry.update_attributes! entry_id: entry.id
+        entry = subject.process_entry @e, {key: "file.json", bucket: "bucket"}
+
+        statement.reload
+        expect(statement.entity_snapshots.length).to eq 1
+      end
+    end
   end
 
   describe "parse" do

@@ -56,7 +56,7 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     # we can determine if the data in the postback is still valid or if there should be another request forthcoming.
 
     # Make sure we're keeping the timezone we're sending in eastern time (the alliance parser expects it that way)
-    request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("Eastern Time (US & Canada)")}
+    request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("America/New_York")}
     request 'entry_details', {:file_number => file_number.to_i}, request_context
   end
 
@@ -95,10 +95,10 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   # during the timeframe specified by the parameters.  Which are expected 
   # to be Time objects.
   def request_updated_entry_numbers updated_since, updated_before, customer_numbers = nil
-    updated_since = updated_since.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
-    updated_before = updated_before.in_time_zone("Eastern Time (US & Canada)").strftime "%Y%m%d%H%M"
+    updated_since = updated_since.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
+    updated_before = updated_before.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
     params = {start_date: updated_since, end_date: updated_before}
-    params[:customer_numbers] = customer_numbers unless customer_numbers.blank?
+    params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
 
     request 'updated_entries', params, {}, {swallow_error: false}
   end
@@ -115,6 +115,22 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     context = {results_as_array: true}
 
     request "address_updates", params, context, {swallow_error: false}
+  end
+
+  def request_updated_statements updated_after_date, updated_before_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
+    updated_since = updated_after_date.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
+    updated_before = updated_before_date.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
+    params = {start_date: updated_since, end_date: updated_before}
+    params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
+
+    context = {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
+
+    request 'updated_statements_to_s3', params, context, {swallow_error: false}
+  end
+
+  def csv_customer_list customers
+    # Remove the newline that to_csv adds
+    Array.wrap(customers).to_csv.strip
   end
 
 end; end;

@@ -97,9 +97,9 @@ describe OpenChain::KewillSqlProxyClient do
       start = Time.zone.now.in_time_zone("Eastern Time (US & Canada)")
       end_t = start + 1.hour
 
-      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M"), customer_numbers: "CUST1, CUST2"}}
+      request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M"), customer_numbers: "CUST1,CUST2"}}
       expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/updated_entries", request_body, {}, @proxy_config['test']['auth_token'])
-      @c.request_updated_entry_numbers start, end_t, "CUST1, CUST2"
+      @c.request_updated_entry_numbers start, end_t, ["CUST1", "CUST2"]
     end
 
     it "does not swallow errors ocurring during the request" do
@@ -170,6 +170,45 @@ describe OpenChain::KewillSqlProxyClient do
     it "sends a request for address updates" do
       expect(subject).to receive(:request).with("address_updates", {updated_date: 20161010}, {results_as_array: true}, {swallow_error: false})
       subject.request_address_updates(Date.new(2016, 10, 10))
+    end
+  end
+
+  describe "request_updated_statements" do
+    it 'sends a request for updated statements' do 
+      my_params = nil
+      my_context = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        expect(path).to eq 'updated_statements_to_s3'
+        expect(opts).to eq({swallow_error: false})
+        my_params = params
+        my_context = context
+        nil
+      end
+
+      start_date = ActiveSupport::TimeZone["America/New_York"].parse("2017-11-28 12:00")
+      end_date = ActiveSupport::TimeZone["America/New_York"].parse("2017-11-28 13:00")
+
+      subject.request_updated_statements start_date.utc, end_date.utc, "bucket", "path", "queue"
+
+      expect(my_params[:start_date]).to eq "201711281200"
+      expect(my_params[:end_date]).to eq "201711281300"
+      expect(my_params[:customer_numbers]).to be_nil
+
+      expect(my_context[:s3_bucket]).to eq "bucket"
+      expect(my_context[:s3_path]).to eq "path"
+      expect(my_context[:sqs_queue]).to eq "queue"
+    end
+
+    it "sends a request for updated statements with customer numbers" do 
+      my_params = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        my_params = params
+        nil
+      end
+
+      subject.request_updated_statements Time.zone.now, Time.zone.now, "bucket", "path", "queue", customer_numbers: ["ABC", "123"]
+
+      expect(my_params[:customer_numbers]).to eq "ABC,123"
     end
   end
 end

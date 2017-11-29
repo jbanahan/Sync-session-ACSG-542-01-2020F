@@ -576,6 +576,7 @@ class ModelField
   def self.reset_custom_fields(update_cache_time=false)
     CoreModule.all.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
+      raise "No model fields configured for Core Module '#{cm.class_name}'." if h.nil?
       h.each do |k,v|
         if !v.custom_id.nil?
           h.delete k

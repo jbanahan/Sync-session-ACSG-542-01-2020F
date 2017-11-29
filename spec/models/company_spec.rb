@@ -455,4 +455,31 @@ describe Company do
       expect(linked.linked_company? company).to eq false
     end
   end
+  
+  describe "view_statements" do 
+    let (:master_setup) { stub_master_setup }
+
+    context "with statements enabled" do
+      before :each do 
+        allow(master_setup).to receive(:customs_statements_enabled?).and_return true
+      end
+
+      it "allows master companies to view statements" do
+        expect(Factory(:master_company).view_statements?).to eq true
+      end
+
+      it "allows importers to view statements" do
+        expect(Factory(:company, importer: true).view_statements?).to eq true
+      end
+
+      it "doesn't allow other company types to view statements" do
+        expect(Factory(:company).view_statements?).to eq false
+      end
+    end
+
+    it "doesn't allow access to statements if they are disabled" do
+      expect(master_setup).to receive(:customs_statements_enabled?).and_return false
+      expect(Factory(:master_company).view_statements?).to eq false
+    end
+  end
 end

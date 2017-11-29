@@ -186,7 +186,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.last_file_bucket = opts[:bucket]
         end
 
-        postprocess e, entry
+        postprocess e, entry, user
 
         OpenChain::FiscalMonthAssigner.assign entry
 
@@ -350,12 +350,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     # Any sort of post-handling of the data that needs to be done prior to saving belongs in this method
-    def postprocess e, entry
+    def postprocess e, entry, user
       entry.monthly_statement_due_date = find_statement_due_date(e, entry)
 
       process_totals e, entry
 
       postprocess_notes entry
+
+      postprocess_statements entry, user
+      nil
     end
 
     def postprocess_notes entry
@@ -492,6 +495,26 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.split_release_option = e[:split_release_option].to_i if e[:split_release_option].to_i > 0
 
       nil
+    end
+
+    def postprocess_statements entry, user
+      if entry.daily_statement_number
+        daily_statement_entry = DailyStatementEntry.joins(:daily_statement).where(broker_reference: entry.broker_reference).where(daily_statements: {statement_number: entry.daily_statement_number}).readonly(false).first
+        # This could happen if the statement came over before the entry did (not entirely sure if that's really possible, but might as well program for it)
+        if daily_statement_entry
+          Lock.db_lock(daily_statement_entry) do 
+            daily_statement_entry.entry_id = entry.id
+
+            # If we changed the amount billed on the statement (like if new broker invoices come over), we need to snapshot the invoice then
+            daily_statement_entry.billed_amount = entry.broker_invoices.map {|bi| !bi.marked_for_destruction? ? bi.total_billed_duty_amount : 0 }.sum
+            if daily_statement_entry.changed?
+              daily_statement_entry.save!
+
+              daily_statement_entry.daily_statement.create_snapshot user, nil, entry.last_file_path
+            end
+          end
+        end
+      end
     end
 
     def process_liquidation e, entry

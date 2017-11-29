@@ -272,6 +272,11 @@ module ApplicationHelper
 
     user = User.current
 
+    label_mf = opts[:label]
+    if label_mf.nil?
+      label_mf = mf
+    end
+
     # Don't display model fields that are missing or the user doesn't have permission to view
     # OR if we're not showing read only fields, don't show any fields the user also can't edit
     html_attributes = create_field_html_attributes mf, opts
@@ -306,7 +311,7 @@ module ApplicationHelper
     end
 
     label = ""
-    label = render_field_label(mf,opts[:show_prefix]) unless opts[:editor_only]
+    label = render_field_label(label_mf, opts[:show_prefix]) unless opts[:editor_only]
 
 
     if opts[:editor_only] || hidden
@@ -332,10 +337,22 @@ module ApplicationHelper
 
     output = ""
     for_model_fields(model_field_uids) do |mf|
-      if block_given?
-        output << show_model_field(core_object, form_object, mf, opts, &Proc.new)
+
+      if mf.is_a? Hash
+        local_opts = opts.merge({label: mf[:label]})
+        local_mf = mf[:value]
+      elsif mf.is_a? Array
+        local_opts = opts.merge({label: mf[0]})
+        local_mf = mf[1]
       else
-        output << show_model_field(core_object, form_object, mf, opts)
+        local_mf = mf
+        local_opts = opts
+      end
+
+      if block_given?
+        output << show_model_field(core_object, form_object, local_mf, local_opts, &Proc.new)
+      else
+        output << show_model_field(core_object, form_object, local_mf, local_opts)
       end
     end
 
@@ -613,7 +630,15 @@ module ApplicationHelper
   end
 
   def render_field_label mf, show_prefix = false
-    content_tag(:span,mf.label(show_prefix),{:class=>"fld_lbl",:entity_type_ids=>entity_type_ids(mf)})
+    opts = {class: "fld_lbl"}
+    if mf.is_a?(String)
+      label = mf
+    else
+      label = mf.label(show_prefix)
+      opts = opts.merge(entity_type_ids: entity_type_ids(mf))
+    end
+
+    content_tag(:span, label, opts)
   end
 
   def merge_css_attributes a, b

@@ -118,6 +118,15 @@ module OpenChain; class SQS
     resp.attributes
   end
 
+  
+  def self.get_queue_url queue_name
+    # Raises an error if the queue does not exist, just return nil in that case
+    resp = sqs_client.get_queue_url queue_name: queue_name
+    resp.queue_url
+  rescue Aws::SQS::Errors::NonExistentQueue => e
+    nil
+  end
+
   def self.sqs_client
     Aws::SQS::Client.new(aws_config)
   end

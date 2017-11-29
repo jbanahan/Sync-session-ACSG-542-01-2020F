@@ -54,4 +54,9 @@ class BrokerInvoice < ActiveRecord::Base
     user.view_broker_invoices? && (user.company.master? || (entry && ( entry.importer_id==user.company_id || user.company.linked_companies.include?(entry.importer))))
   end
 
+  def total_billed_duty_amount
+    return BigDecimal("0") if self.marked_for_destruction?
+
+    self.broker_invoice_lines.map {|l| (!l.marked_for_destruction? && l.charge_amount && l.charge_code.to_s == "0001") ? l.charge_amount : 0 }.sum
+  end
 end

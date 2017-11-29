@@ -130,4 +130,19 @@ describe OpenChain::SQS do
       expect { subject.poll("queue", {max_message_count: 1}) }.not_to throw_symbol :stop_polling
     end
   end
+
+  describe "get_queue_url" do
+    it "returns a url" do 
+      response = instance_double(Aws::SQS::Types::GetQueueUrlResult)
+      expect(response).to receive(:queue_url).and_return "queue_url"
+      expect(sqs_client).to receive(:get_queue_url).with({queue_name: "queue_name"}).and_return response
+
+      expect(subject.get_queue_url "queue_name").to eq "queue_url"
+    end
+
+    it "handles error raised by non-existent queue" do
+      expect(sqs_client).to receive(:get_queue_url).and_raise Aws::SQS::Errors::NonExistentQueue.new(404, true)
+      expect(subject.get_queue_url "queue_name").to be_nil
+    end
+  end
 end

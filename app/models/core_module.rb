@@ -11,7 +11,7 @@ class CoreModule
       :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
       :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
       :object_from_piece_set_lambda, #lambda returning the appropriate object for this module based on the given PieceSet (or nil)
-      :entity_json_lambda, #lambda return hash suitable for conversion into json containing all model fields
+      :entity_json_lambda, #DO NOT USE - lambda return hash suitable for conversion into json containing all model fields - prefer snapshot_descriptor instead
       :business_logic_validations, #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
       :enabled_lambda, #is the module enabled in master setup
       :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database

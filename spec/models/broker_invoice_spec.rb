@@ -172,4 +172,31 @@ describe BrokerInvoice do
       expect(@inv.can_edit?(u)).to be_falsey
     end
   end
+
+  describe "total_billed_duty_amount" do
+    let (:broker_invoice) {
+      inv = BrokerInvoice.new
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "0001")
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "0001")
+
+      inv
+    }
+
+    it "sums charge amounts for duty lines" do
+      expect(broker_invoice.total_billed_duty_amount).to eq 50
+    end
+
+    it "returns zero if invoice is marked for destruction" do
+      broker_invoice.mark_for_destruction
+
+      expect(broker_invoice.total_billed_duty_amount).to eq 0
+    end
+
+    it "skips lines marked for destruction" do
+      broker_invoice.broker_invoice_lines[0].mark_for_destruction
+      expect(broker_invoice.total_billed_duty_amount).to eq 40
+    end
+  end
 end

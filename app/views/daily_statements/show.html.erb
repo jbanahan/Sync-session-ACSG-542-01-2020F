@@ -1,0 +1,83 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cds_statement_number, [:cds_status, :cds_status_description], [:cds_pay_type, :cds_pay_type_description], :cds_received_date, :cds_final_received_date, :cds_due_date, :cds_paid_date, :cds_payment_accepted_date]) -%>
+    </div>
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cds_customer_number, :cds_importer_name, :cds_port_code, :cds_port_name, :cds_monthly_statement_number]) do |mf, form_field_name, field_value, html_attributes|
+        if mf.uid == :cds_monthly_statement_number && !@statement.monthly_statement.nil?
+          link_to field_value, @statement.monthly_statement
+        else
+          nil
+        end
+      end -%>
+    </div>
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cds_duty_amount, :cds_tax_amount, :cds_interest_amount, :cds_add_amount, :cds_cvd_amount, :cds_fee_amount, :cds_total_amount]) -%>
+    </div>
+  </div>
+</div>
+
+<% if @statement.daily_statement_entries.length > 0 %>
+  <h1>Entries</h1>
+  <table class="detail_table">
+    <thead>
+      <tr>
+        <%= model_field_labels([:dse_broker_reference, :dse_entry_number, :dse_total_amount, :dse_total_billed_amount], {table: true, heading: true}) %>
+      </tr>
+    </thead>
+    <tbody>
+      <% @statement.daily_statement_entries.each do |entry|%>
+      <tr>
+        <%= show_model_fields(entry, [:dse_broker_reference, :dse_entry_number, :dse_total_amount, :dse_billed_amount], {editor_only: true, table: true}) do |mf, form_field_name, field_value, html_attributes|
+          if mf.uid == :dse_broker_reference
+            link_to(field_value, anchor: "daily_statement_entry_id_#{entry.id}")
+          else
+            nil
+          end
+        end %>
+      </tr>
+      <%end%>
+    </tbody>
+  </table>
+  <hr>
+  <% @statement.daily_statement_entries.each do |entry| %>
+    <a name="daily_statement_entry_id_<%=entry.id%>"></a>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12" style="background-color: lightgray">
+          <h4><%= model_field_labels([:dse_broker_reference])-%> - <%= show_model_fields(entry, [:dse_broker_reference], {editor_only: true}) -%></h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <%= show_model_fields(entry, [:dse_entry_number, :dse_entry_type, :dse_customer_number, :dse_port_name, :dse_billed_amount])  do |mf, form_field_name, field_value, html_attributes| 
+            if mf.uid == :dse_entry_number && !entry.entry.nil?
+              link_to(field_value, entry.entry)
+            else
+              nil
+            end
+          end %>
+        </div>
+        <div class="col-md-4">
+          <%= show_model_fields(entry, [:dse_duty_amount, :dse_tax_amount, :dse_interest_amount, :dse_add_amount, :dse_cvd_amount, :dse_fee_amount, :dse_total_amount]) %>
+        </div>
+        <div class="col-md-4">
+          <p><h4>Statement Fees</h4></p>
+          <table class="detail_table">
+            <thead>
+              <tr>
+                <%= model_field_labels([:dsef_description, :dsef_amount], {table: true, heading: true}) %>
+              </tr>
+            </thead>
+            <tbody>
+              <% entry.daily_statement_entry_fees.each do |fee| %>
+                <%= show_model_fields(fee, [:dsef_description, :dsef_amount], {editor_only: true, table: true}) %>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

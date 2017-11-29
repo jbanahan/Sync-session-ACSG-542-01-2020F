@@ -179,10 +179,7 @@ module OpenChain; class S3
     subfolders = subfolders.respond_to?(:to_a) ? subfolders.to_a : [subfolders]
 
     subfolders.each do |subfolder|
-      # Strip any leading slash from the subfolder since we add one below...this allows us to use the actual
-      # absolute path to the integration directory in the parsers, vs. what looks like a relative path.
-      subfolder = subfolder[1..-1] if subfolder.start_with? "/"
-      prefix = "#{upload_date.strftime("%Y-%m/%d")}/#{subfolder}"
+      prefix = integration_subfolder_path(subfolder, upload_date)
       
       # The sort call here is to make sure we're processing all the files nearest to the order they were received
       # in using the last modified date.  This is the only "standard" metadata date we get on all objects, so technically
@@ -195,6 +192,13 @@ module OpenChain; class S3
         yield obj.key
       end
     end
+  end
+
+  def self.integration_subfolder_path folder, upload_date
+    # Strip any leading slash from the subfolder since we add one below...this allows us to use the actual
+    # absolute path to the integration directory in the parsers, vs. what looks like a relative path.  
+    folder = folder[1..-1] if folder.start_with? "/"
+    "#{upload_date.strftime("%Y-%m/%d")}/#{folder}"
   end
 
   class UploadResult

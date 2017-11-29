@@ -16,6 +16,7 @@ class Entry < ActiveRecord::Base
   has_many :commercial_invoice_tariffs, :through => :commercial_invoice_lines
   has_many :entry_comments, :dependent => :destroy, :autosave => true
   has_many :containers, dependent: :destroy, inverse_of: :entry, autosave: true
+  has_one :daily_statement_entry, inverse_of: :entry
 
   belongs_to :importer, :class_name=>"Company"
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
@@ -88,11 +89,16 @@ class Entry < ActiveRecord::Base
 
   # where clause for search secure
   def self.search_where user
-    search_where_by_company_id user.company_id
+    search_where_by_company_id user.company
   end
 
   def self.search_where_by_company_id company_id
-    c = Company.find company_id
+    if company_id.is_a?(Company)
+      c = company_id
+    else
+      c = Company.find company_id
+    end
+    
     c.master? ? "1=1" : "(entries.importer_id = #{c.id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{c.id}))"
   end
 

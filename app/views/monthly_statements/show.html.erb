@@ -1,0 +1,43 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cms_statement_number, [:cms_status, :cms_status_description], [:cms_pay_type, :cms_pay_type_description], :cms_received_date, :cms_final_received_date, :cms_due_date, :cms_paid_date]) -%>
+    </div>
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cms_customer_number, :cms_importer_name, :cms_port_code, :cms_port_name]) do |mf, form_field_name, field_value, html_attributes|
+        if mf.uid == :cds_monthly_statement_number && !@statement.monthly_statement.nil?
+          link_to field_value, @statement.monthly_statement
+        else
+          nil
+        end
+      end -%>
+    </div>
+    <div class="col-md-4">
+      <%= show_model_fields(@statement, [:cms_duty_amount, :cms_tax_amount, :cms_interest_amount, :cms_add_amount, :cms_cvd_amount, :cms_fee_amount, :cms_total_amount]) -%>
+    </div>
+  </div>
+</div>
+
+<% if @statement.daily_statements.length > 0 %>
+  <h1>Daily Statements</h1>
+  <table class="detail_table">
+    <thead>
+      <tr>
+        <%= model_field_labels([:cds_statement_number, :cds_status_description, :cds_duty_amount, :cds_tax_amount, :cds_interest_amount, :cds_add_amount, :cds_cvd_amount, :cds_fee_amount, :cds_total_amount], {table: true, heading: true}) %>
+      </tr>
+    </thead>
+    <tbody>
+      <% @statement.daily_statements.each do |statement|%>
+      <tr>
+        <%= show_model_fields(statement, [:cds_statement_number, :cds_status_description, :cds_duty_amount, :cds_tax_amount, :cds_interest_amount, :cds_add_amount, :cds_cvd_amount, :cds_fee_amount, :cds_total_amount], {editor_only: true, table: true}) do |mf, form_field_name, field_value, html_attributes|
+          if mf.uid == :cds_statement_number
+            link_to(field_value, statement)
+          else
+            nil
+          end
+        end %>
+      </tr>
+      <%end%>
+    </tbody>
+  </table>
+<% end %>

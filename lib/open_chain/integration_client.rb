@@ -51,8 +51,12 @@ module OpenChain
   class IntegrationClient
 
     def self.run_schedulable opts = {}
-      opts = {'queue_name' => MasterSetup.get.system_code, 'max_message_count' => 500}.merge opts
+      opts = {'queue_name' => default_integration_queue_name, 'max_message_count' => 500}.merge opts
       process_queue opts['queue_name'], opts['max_message_count']
+    end
+
+    def self.default_integration_queue_name
+      MasterSetup.get.system_code
     end
 
     def self.process_queue queue_name, max_message_count = 500
@@ -138,6 +142,8 @@ module OpenChain
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_kewill_entry/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/kewill_statements/') && master_setup.custom_feature?("alliance")
+        OpenChain::CustomHandler::Vandegrift::KewillStatementParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_po/') && MasterSetup.get.custom_feature?('Ascena PO')
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
@@ -219,8 +225,6 @@ module OpenChain
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lands_end_canada_plus/') && master_setup.custom_feature?('Lands End Canada Plus')
         OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, remote_path
-      elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
-        LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
       elsif command['path'].include? '/to_chain/'
         ImportedFile.delay.process_integration_imported_file bucket, remote_path, command['path']
       elsif command['path'].include?('/_test_from_msl') && master_setup.custom_feature?('MSL+')
@@ -245,9 +249,15 @@ module OpenChain
       elsif command['path'].include?('/_talbots_856/') && master_setup.custom_feature?("Talbots")
         OpenChain::CustomHandler::Talbots::Talbots856Parser.delay.process_from_s3 bucket, remote_path
       else
-        response_type = 'error'
-        status_msg = "Can't figure out what to do for path #{command['path']}"
+        # This should always be the very last thing to process..that's why it's in the else
+        if LinkableAttachmentImportRule.find_import_rule(dir.to_s)
+          LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
+        else
+          response_type = 'error'
+          status_msg = "Can't figure out what to do for path #{command['path']}"
+        end
       end
+      
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
       raise e unless Rails.env.production?

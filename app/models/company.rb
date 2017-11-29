@@ -359,6 +359,10 @@ class Company < ActiveRecord::Base
     self.comment_trade_lanes?
   end
 
+  def view_statements?
+    (self.master? || self.importer?) && master_setup.customs_statements_enabled?
+  end
+
   def name_with_customer_number
     n = self.name
     n += " (#{self.fenix_customer_number})" unless self.fenix_customer_number.blank?

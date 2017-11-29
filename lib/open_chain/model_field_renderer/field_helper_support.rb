@@ -39,9 +39,31 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
   # takes an array or a single object
   # valid values are string, symbol or ModelField object
   def for_model_fields model_field_uids
-    to_get = model_field_uids.respond_to?(:each) ? model_field_uids : [model_field_uids]
-    to_get.each do |mf_uid|
-      mf = get_model_field(mf_uid)
+    Array.wrap(model_field_uids).each do |mf_uid|
+      if mf_uid.is_a? Hash
+        value = get_model_field(mf_uid[:value])
+        next if value.nil?
+
+        label = mf_uid[:label]
+        if label.is_a? Symbol
+          label = get_model_field(label)
+        end
+
+        mf = {label: label, value: value}
+      elsif mf_uid.is_a? Array
+        value = get_model_field(mf_uid[1])
+        next if value.nil?
+
+        label = mf_uid[0]
+        if label.is_a? Symbol
+          label = get_model_field(label)
+        end
+        
+        mf = [label, value]
+      else
+        mf = get_model_field(mf_uid)  
+      end
+
       yield mf unless mf.nil?
     end
   end

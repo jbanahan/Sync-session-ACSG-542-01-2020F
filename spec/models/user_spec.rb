@@ -993,4 +993,24 @@ describe User do
       expect(u.url).to eq "https://localhost:3000/companies/#{u.company.id}/users/#{u.id}"
     end
   end
+
+  describe "view_statements?" do
+    let (:user) { Factory(:user, statement_view: true) }
+
+    it "allows users with statement view and company access to view statements" do
+      expect(user.company).to receive(:view_statements?).and_return true
+      expect(user.view_statements?).to eq true
+    end
+
+    it "disallows users whose companies can't view statements from viewing statements" do 
+      expect(user.company).to receive(:view_statements?).and_return false
+      expect(user.view_statements?).to eq false
+    end
+
+    it "disallows users without permission" do
+      user.statement_view = false
+      expect(user.company).not_to receive(:view_statements?)
+      expect(user.view_statements?).to eq false
+    end
+  end
 end

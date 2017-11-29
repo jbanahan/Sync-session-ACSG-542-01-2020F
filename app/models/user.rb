@@ -40,7 +40,7 @@ class User < ActiveRecord::Base
     :tariff_subscribed, :homepage,
     :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids,
     :portal_mode,
-    :system_user
+    :system_user, :statement_view
 
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -254,7 +254,8 @@ class User < ActiveRecord::Base
         view_trade_preference_programs: self.view_trade_preference_programs?,
         edit_trade_preference_programs: self.edit_trade_preference_programs?,
         view_vfi_invoices: self.view_vfi_invoices?,
-        edit_vfi_invoices: self.edit_vfi_invoices?
+        edit_vfi_invoices: self.edit_vfi_invoices?,
+        view_statements: self.view_statements?
       }
     end
 
@@ -416,7 +417,7 @@ class User < ActiveRecord::Base
     :broker_invoice_view, :broker_invoice_edit,
     :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
-    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach].each do |p|
+    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach, :statement_view].each do |p|
       h[p] = true
     end
   end

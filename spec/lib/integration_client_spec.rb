@@ -4,7 +4,7 @@ require 'open_chain/s3'
 
 describe OpenChain::IntegrationClient do
   let! (:master_setup) { stub_master_setup }
-  let (:system_code) { "test" }
+  let (:system_code) { master_setup.system_code }
 
   describe "process_queue" do
 
@@ -86,6 +86,13 @@ describe OpenChain::IntegrationClient do
     it "uses provided parameters" do
       expect(OpenChain::IntegrationClient).to receive(:process_queue).with 'queue', 5
       OpenChain::IntegrationClient.run_schedulable({'queue_name' => 'queue', 'max_message_count' => 5})
+    end
+  end
+
+  describe "default_integration_queue_name" do
+    subject { described_class }
+    it "uses system code as default queue name" do
+      expect(subject.default_integration_queue_name).to eq system_code
     end
   end
 end
@@ -472,7 +479,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it "processes imported files" do
-      expect(LinkableAttachmentImportRule).to receive(:find_import_rule).and_return(nil)
       cmd = {'request_type'=>'remote_file','path'=>'/test/to_chain/module/file.csv','remote_path'=>'12345'}
       expect(ImportedFile).to receive(:delay).and_return ImportedFile
       expect(ImportedFile).to receive(:process_integration_imported_file).with(OpenChain::S3.integration_bucket_name, '12345', '/test/to_chain/module/file.csv')
@@ -581,6 +587,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(OpenChain::CustomHandler::KewillEntryParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_entry/file.json','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
+
+    it "handles kewill statements" do
+      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
+      p = class_double("OpenChain::CustomHandler::Vandegrift::KewillStatementParser")
+      expect(OpenChain::CustomHandler::Vandegrift::KewillStatementParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/kewill_statements/file.json','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
   end

@@ -78,6 +78,10 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_trade_preference_programs?
     when CoreModule::TPP_HTS_OVERRIDE
       return self.view_tpp_hts_overrides?
+    when CoreModule::CUSTOMS_DAILY_STATEMENT
+      return self.view_statements?
+    when CoreModule::CUSTOMS_MONTHLY_STATEMENT
+      return self.view_statements?
     end
     return false
   end
@@ -362,6 +366,10 @@ module OpenChain; module UserSupport; module UserPermissions
 
   def view_vendor_portal?
     self.order_view? && !User.where(portal_mode:'vendor').empty?
+  end
+
+  def view_statements?
+    self.statement_view? && self.company.view_statements?
   end
 
 end; end; end

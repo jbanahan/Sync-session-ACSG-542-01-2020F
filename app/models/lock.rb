@@ -278,6 +278,8 @@ class Lock
       raise e
     end
   end
+  # There's no class level 'alias' method in ruby, this is the equivalent
+  singleton_class.send(:alias_method, :db_lock, :with_lock_retry)
 
   def self.inside_nested_transaction?
     ActiveRecord::Base.connection.open_transactions > 0

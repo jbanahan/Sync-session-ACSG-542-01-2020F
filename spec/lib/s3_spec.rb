@@ -381,6 +381,21 @@ describe OpenChain::S3, s3: true do
     end
   end
 
+  describe "integration_subfolder_path" do 
+    subject { described_class }
+
+    let (:date) { Time.zone.parse "2017-11-28 12:00" }
+
+    it "appends the date to the given folder" do 
+      expect(subject.integration_subfolder_path("path/to/file.txt", date)).to eq "2017-11/28/path/to/file.txt"
+    end
+
+    it "strips leading slashes" do
+      expect(subject.integration_subfolder_path("/path/to/file.txt", date)).to eq "2017-11/28/path/to/file.txt"
+    end
+  end
+
+
   describe "url_for" do
     it "should return a url for the specified bucket / key" do
       url = OpenChain::S3.url_for "bucket", "path/to/file.txt"
