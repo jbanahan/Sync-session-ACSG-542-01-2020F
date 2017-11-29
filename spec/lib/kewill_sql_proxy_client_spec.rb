@@ -211,4 +211,48 @@ describe OpenChain::KewillSqlProxyClient do
       expect(my_params[:customer_numbers]).to eq "ABC,123"
     end
   end
+
+  describe "request_daily_statements" do
+    it "sends statements_to_s3 request" do
+      my_params = nil
+      my_context = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        expect(path).to eq 'statements_to_s3'
+        expect(opts).to eq({swallow_error: false})
+        my_params = params
+        my_context = context
+        nil
+      end
+
+      subject.request_daily_statements ["A", "B"], "bucket", "path", "queue"
+
+      expect(my_context[:s3_bucket]).to eq "bucket"
+      expect(my_context[:s3_path]).to eq "path"
+      expect(my_context[:sqs_queue]).to eq "queue"
+
+      expect(my_params[:daily_statement_numbers]).to eq ["A", "B"]
+    end
+  end
+
+  describe "request_monthly_statements" do
+    it "sends statements_to_s3 request" do
+      my_params = nil
+      my_context = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        expect(path).to eq 'statements_to_s3'
+        expect(opts).to eq({swallow_error: false})
+        my_params = params
+        my_context = context
+        nil
+      end
+
+      subject.request_monthly_statements ["A", "B"], "bucket", "path", "queue"
+
+      expect(my_context[:s3_bucket]).to eq "bucket"
+      expect(my_context[:s3_path]).to eq "path"
+      expect(my_context[:sqs_queue]).to eq "queue"
+
+      expect(my_params[:monthly_statement_numbers]).to eq ["A", "B"]
+    end
+  end
 end

@@ -125,8 +125,23 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
 
     context = {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
 
-    request 'updated_statements_to_s3', params, context, {swallow_error: false}
+    request 'updated_statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
+
+  def request_daily_statements statement_numbers, s3_bucket, s3_path, sqs_queue
+    params = {daily_statement_numbers: statement_numbers}
+    request 'statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+  end
+
+  def request_monthly_statements statement_numbers, s3_bucket, s3_path, sqs_queue
+    params = {monthly_statement_numbers: statement_numbers}
+    request 'statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+  end
+
+  def statement_context_hash s3_bucket, s3_path, sqs_queue
+    {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
+  end
+  private :statement_context_hash
 
   def csv_customer_list customers
     # Remove the newline that to_csv adds

@@ -48,4 +48,28 @@ describe DailyStatementsController do
       expect(flash[:errors]).to include "You do not have permission to view this statement."
     end
   end
+
+  describe "reload_statement" do
+    let (:statement) { DailyStatement.create! statement_number: "STATEMENT"}
+
+    it "reloads a statement from kewill customs" do
+      expect_any_instance_of(DailyStatement).to receive(:can_view?).with(user).and_return true
+      expect(OpenChain::CustomHandler::Vandegrift::KewillStatementRequester).to receive(:delay).and_return OpenChain::CustomHandler::Vandegrift::KewillStatementRequester
+      expect(OpenChain::CustomHandler::Vandegrift::KewillStatementRequester).to receive(:request_daily_statements).with ["STATEMENT"]
+
+      post :reload, id: statement.id
+
+      expect(response).to redirect_to(statement)
+      expect(flash[:notices]).to include "Updated statement has been requested.  Please allow 10 minutes for it to appear."
+    end
+
+    it "doesn't allow users who can't view to reload" do
+      expect_any_instance_of(DailyStatement).to receive(:can_view?).and_return false
+      expect(OpenChain::CustomHandler::Vandegrift::KewillStatementRequester).not_to receive(:delay)
+      post :reload, id: statement.id
+
+      expect(response).to redirect_to(statement)
+      expect(flash[:notices]).to be_nil
+    end
+  end
 end

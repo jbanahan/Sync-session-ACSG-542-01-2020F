@@ -44,4 +44,34 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementRequester do
       subject.run_schedulable({"sqs_queue" => "opts-queue"})
     end
   end
+
+  describe "request_daily_statements" do
+    let! (:sql_proxy_client) { 
+      c = instance_double(OpenChain::KewillSqlProxyClient)
+      allow(subject).to receive(:sql_proxy_client).and_return c
+      c
+    }
+
+    it "requests daily statements via sql proxy client" do
+      now = Time.zone.now
+      expect(subject).to receive(:aws_context_data).with(now, {}).and_return({s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"})
+      expect(sql_proxy_client).to receive(:request_daily_statements).with(["A", "B"], "bucket", "path", "queue")
+      Timecop.freeze(now) { subject.request_daily_statements ["A", "B"] }
+    end
+  end
+
+  describe "request_monthly_statements" do
+    let! (:sql_proxy_client) { 
+      c = instance_double(OpenChain::KewillSqlProxyClient)
+      allow(subject).to receive(:sql_proxy_client).and_return c
+      c
+    }
+
+    it "requests monthly statements via sql proxy client" do
+      now = Time.zone.now
+      expect(subject).to receive(:aws_context_data).with(now, {}).and_return({s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"})
+      expect(sql_proxy_client).to receive(:request_monthly_statements).with(["A", "B"], "bucket", "path", "queue")
+      Timecop.freeze(now) { subject.request_monthly_statements ["A", "B"] }
+    end
+  end
 end

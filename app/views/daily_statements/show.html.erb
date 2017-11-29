@@ -1,3 +1,8 @@
+<%content_for :action_bar do -%>
+  <%if current_user.company.master?-%>
+    <%= link_to raw("<i class='fa fa-refresh'></i>"), reload_daily_statement_path(@statement), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Reload Statement' %>
+  <% end -%>
+<% end-%>
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-4">
@@ -23,7 +28,7 @@
   <table class="detail_table">
     <thead>
       <tr>
-        <%= model_field_labels([:dse_broker_reference, :dse_entry_number, :dse_total_amount, :dse_total_billed_amount], {table: true, heading: true}) %>
+        <%= model_field_labels([:dse_broker_reference, :dse_entry_number, :dse_total_amount, :dse_billed_amount], {table: true, heading: true}) %>
       </tr>
     </thead>
     <tbody>
@@ -60,19 +65,21 @@
           end %>
         </div>
         <div class="col-md-4">
-          <%= show_model_fields(entry, [:dse_duty_amount, :dse_tax_amount, :dse_interest_amount, :dse_add_amount, :dse_cvd_amount, :dse_fee_amount, :dse_total_amount]) %>
+          <%= show_model_fields(entry, [:dse_duty_amount, :dse_tax_amount, :dse_interest_amount, :dse_add_amount, :dse_cvd_amount, :dse_fee_amount, :dse_total_amount, :dse_billed_amount]) %>
         </div>
         <div class="col-md-4">
           <p><h4>Statement Fees</h4></p>
           <table class="detail_table">
             <thead>
               <tr>
-                <%= model_field_labels([:dsef_description, :dsef_amount], {table: true, heading: true}) %>
+                <%= model_field_labels([:dsef_code, :dsef_description, :dsef_amount], {table: true, heading: true}) %>
               </tr>
             </thead>
             <tbody>
               <% entry.daily_statement_entry_fees.each do |fee| %>
-                <%= show_model_fields(fee, [:dsef_description, :dsef_amount], {editor_only: true, table: true}) %>
+                <tr>
+                  <%= show_model_fields(fee, [:dsef_code, :dsef_description, :dsef_amount], {editor_only: true, table: true}) %>
+                </tr>
               <% end %>
             </tbody>
           </table>

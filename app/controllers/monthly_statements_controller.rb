@@ -1,7 +1,9 @@
+require 'open_chain/custom_handler/vandegrift/kewill_statement_requester'
+
 class MonthlyStatementsController < ApplicationController
 
   def set_page_title
-    @page_title || "Monthly Statement"
+    @page_title ||= "Monthly Statement"
   end
 
   def index
@@ -22,5 +24,15 @@ class MonthlyStatementsController < ApplicationController
     else
       error_redirect "You do not have permission to view Statements."
     end
+  end
+
+  def reload
+    statement = MonthlyStatement.find params[:id]
+    if current_user.company.master? && statement.can_view?(current_user)
+      OpenChain::CustomHandler::Vandegrift::KewillStatementRequester.delay.request_monthly_statements [statement.statement_number]
+      add_flash :notices, "Updated statement has been requested.  Please allow 10 minutes for it to appear."
+    end
+    
+    redirect_to statement
   end
 end

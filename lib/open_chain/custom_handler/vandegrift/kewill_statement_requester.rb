@@ -20,6 +20,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
     "America/New_York"
   end
 
+  def self.request_daily_statements statement_numbers
+    aws_data = aws_context_data(Time.zone.now.in_time_zone(timezone), {})
+    sql_proxy_client.request_daily_statements(statement_numbers, aws_data[:s3_bucket], aws_data[:s3_path], aws_data[:sqs_queue])
+  end
+
+  def self.request_monthly_statements statement_numbers
+    aws_data = aws_context_data(Time.zone.now.in_time_zone(timezone), {})
+    sql_proxy_client.request_monthly_statements(statement_numbers, aws_data[:s3_bucket], aws_data[:s3_path], aws_data[:sqs_queue])
+  end
+
   def self.sql_proxy_client
     OpenChain::KewillSqlProxyClient.new
   end
