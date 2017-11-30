@@ -8,7 +8,7 @@
   ms = MasterSetup.get
 -%>
   <head>
-    <title><%= "#{ms.friendly_name} - #{@page_title}" %></title>
+    <title><%= page_title(@page_title) %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= favicon_links -%>
     <%= stylesheet_link_tag    "application", :media => "all" -%>

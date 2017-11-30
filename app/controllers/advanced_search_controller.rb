@@ -5,6 +5,7 @@ require 'open_chain/email_validation_support'
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
   include OpenChain::EmailValidationSupport
+  include ApplicationHelper
 
   def legacy_javascripts?
     false
@@ -204,7 +205,7 @@ class AdvancedSearchController < ApplicationController
         h = {
           :id=>ss.id,
           :module_type=>ss.module_type,
-          :title=>adv_search_title(ss.module_type),
+          :title=>page_title(ss.core_module.try(:label)),
           :name=>ss.name,
           :include_links=>ss.include_links?,
           :no_time=>ss.no_time?,

@@ -72,10 +72,6 @@ class ApplicationController < ActionController::Base
     MasterSetup.get
   end
 
-  def adv_search_title(search_module)
-    "#{master_setup.friendly_name} - #{search_module}"
-  end
-
   #controller action to display generic history page
   def history
     p = root_class.find params[:id]

@@ -693,4 +693,9 @@ module ApplicationHelper
   def polymorphic_action obj, action
     "/#{obj.class.to_s.pluralize.underscore}/#{obj.id}/#{action}"
   end
+
+  def page_title page_title
+    name = MasterSetup.get.friendly_name
+    title = "#{name.blank? ? "" : "#{name} - "}#{page_title}"
+  end
 end

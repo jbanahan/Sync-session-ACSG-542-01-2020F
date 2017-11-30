@@ -219,6 +219,7 @@ describe AdvancedSearchController do
       expect(h['allow_ftp']).to be_falsey
       expect(h['user']['email']).to eq(@user.email)
       expect(h['module_type']).to eq(@ss.module_type)
+      expect(h['title']).to eq "Product"
       expect(h['allow_template']).to be_falsey
       search_list = h['search_list']
       expect(search_list.size).to eq(1)
