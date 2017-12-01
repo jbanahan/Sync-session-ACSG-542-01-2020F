@@ -83,7 +83,7 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
       [16, :bkln_order_line_number, :order_line_number, "Order Line Number", {data_type: :integer, read_only: true, 
           export_lambda: lambda {|detail| detail.order_line.try(:line_number)},
           qualified_field_name: "(SELECT line_number FROM order_lines AS booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}],
-     [17, :bkln_order_line_quantity, :order_line_quantity, "Order Quantity", {data_type: :integer, read_only: true,
+     [17, :bkln_order_line_quantity, :order_line_quantity, "Order Quantity", {data_type: :decimal, read_only: true,
          export_lambda: lambda {|detail| detail.order_line.try(:quantity)},
          qualified_field_name: "(SELECT quantity FROM order_lines as booking_order_line WHERE booking_order_line.id = booking_lines.order_line_id)"}],
      [18, :bkln_quantity_diff, :order_line_quantity_diff, "Percentage Booked", {data_type: :decimal, read_only: true,
