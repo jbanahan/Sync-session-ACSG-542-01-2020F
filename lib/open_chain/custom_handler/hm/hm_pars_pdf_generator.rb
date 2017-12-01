@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module Hm; class HmParsPdfGenerator
         pars_cell = pars.pars_number.to_s
       end
 
-      table_data << ["H & M", "Vandegrift Canada ULC", "Wearing Apparel & Accessories", pars.cartons.to_s, "#{pars.weight} KG", pars.invoice_number, pars_cell]
+      table_data << ["H & M", "Vandegrift Canada ULC", commodity_description, pars.cartons.to_s, "#{pars.weight} KG", pars.invoice_number, pars_cell]
       total_cartons += pars.cartons if pars.cartons.to_f > 0
       total_weight += pars.weight if pars.weight.to_f > 0
     end
@@ -92,11 +92,11 @@ module OpenChain; module CustomHandler; module Hm; class HmParsPdfGenerator
       t.column(1).width = 73
       # Row 2 is the row we can potentially squeeze if we're printing barcodes
       if barcode_files.size == 0
-        t.column(2).width = 94
+        t.column(2).width = 86
       end
       t.column(3).width = 32
       t.column(4).width = 35
-      t.column(5).width = 40
+      t.column(5).width = 48
       # When we're printing barcodes, let column 6 take up as much space as it needs and we'll let it steal width from column 2 (the commodity column)
 
       last_row = t.row(-1)
@@ -112,6 +112,20 @@ module OpenChain; module CustomHandler; module Hm; class HmParsPdfGenerator
     if barcode_files.try(:size) > 0
       barcode_files.values.each {|f| f.close! unless f.closed? }
     end
+  end
+
+  def self.commodity_description
+<<-DESC
+Men's Jersey / Pullover
+Women's Jersey / Pullover
+Baby Clothes
+T-Shirts
+Women's Pants - Knit
+Women's Pants - Woven
+Men's Pants - Knit
+Men's Pants - Woven
+Women's Blouses
+DESC
   end
 
 end; end; end; end

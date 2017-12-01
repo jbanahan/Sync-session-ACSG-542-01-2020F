@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
 
         mail = ActionMailer::Base.deliveries.second
-        expect(mail.to).to eq ["H&M_supervisors@ohl.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"]
+        expect(mail.to).to eq ["H&M_supervisors@ohl.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com", "ManhattanSupport.cl.us@geodis.com"]
         expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"]
         expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
         expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
