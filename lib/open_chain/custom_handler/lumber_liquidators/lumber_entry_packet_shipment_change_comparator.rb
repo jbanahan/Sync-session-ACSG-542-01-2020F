@@ -80,7 +80,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
         # Eat useless warning messages (e.g. "PDF 1.5 Object streams found - they are not fully supported! attempting
         # to extract objects.") to prevent them from filling up the log.
         Kernel.silence_warnings do
-          entry_packet_pdf << CombinePDF.load(pdf_temp_file.path)
+          entry_packet_pdf << CombinePDF.load(pdf_temp_file.path, allow_optional_content: true)
         end
       end
     end
