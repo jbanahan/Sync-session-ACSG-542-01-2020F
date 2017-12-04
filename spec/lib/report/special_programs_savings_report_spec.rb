@@ -111,6 +111,19 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
                                        @invoice_tariffs[0].duty_amount.to_f, nil, nil, duty_without_spi.to_f, savings.to_f]
     end
 
+    it 'should handle an array as an argument' do
+      tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run ["HANNAH","BRUCE"], 1.year.ago.to_s, 1.day.from_now.to_s
+
+      wb = Spreadsheet.open tmp
+      sheet = wb.worksheet 0
+      expect(sheet.row(1)).to be_empty
+
+      @entry.update_attribute(:customer_number, 'HANNAH')
+      tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run ["HANNAH","BRUCE"], 1.year.ago.to_s, 1.day.from_now.to_s
+      wb = Spreadsheet.open tmp
+      sheet = wb.worksheet 0
+      expect(sheet.row(1)).to be_present
+    end
     it 'should handle different customers' do
       # We would expect this to not return any records
       tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run "HANNAH\nBRUCE", 1.year.ago.to_s, 1.day.from_now.to_s

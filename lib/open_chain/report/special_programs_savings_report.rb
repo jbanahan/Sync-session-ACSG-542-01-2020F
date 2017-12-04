@@ -100,6 +100,9 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
   end
 
   def split_companies(companies)
+    if companies.is_a?(Array)
+      companies = companies.join("\n")
+    end
     companies.split("\n").map { |str| ActiveRecord::Base.connection.quote(str.strip) }.join(',')
   end
 end; end; end
