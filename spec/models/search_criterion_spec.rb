@@ -772,18 +772,31 @@ describe SearchCriterion do
 
   context "Before _ Months Ago" do
     before :each do
+      # This is a DateTime field.
       @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"bma",:value=>1)
     end
 
     context "test?" do
+      before :each do
+        # This is a Date field.
+        @sc2 = SearchCriterion.new(:model_field_uid=>:pro_start_date,:operator=>"bma",:value=>1)
+        @rate_override = Factory(:product_rate_override, product_id: @product.id)
+      end
+
       it "accepts product created prior to first of the previous month" do
         @product.created_at = 2.months.ago.end_of_month
         expect(@sc.test?(@product)).to be_truthy
+
+        @rate_override.start_date = 2.months.ago.end_of_month
+        expect(@sc2.test?(@rate_override)).to be_truthy
       end
 
       it "does not accept product created on first of the previous month" do
         @product.created_at = 1.months.ago.beginning_of_month.at_midnight
         expect(@sc.test?(@product)).to be_falsey
+
+        @rate_override.start_date = 1.months.ago.beginning_of_month.at_midnight
+        expect(@sc2.test?(@rate_override)).to be_falsey
       end
     end
 
@@ -802,18 +815,31 @@ describe SearchCriterion do
 
   context "After _ Months Ago" do
     before :each do
+      # This is a DateTime field.
       @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"ama",:value=>1)
     end
 
     context "test?" do
+      before :each do
+        # This is a Date field.
+        @sc2 = SearchCriterion.new(:model_field_uid=>:pro_start_date,:operator=>"ama",:value=>1)
+        @rate_override = Factory(:product_rate_override, product_id: @product.id)
+      end
+
       it "accepts product created after the first of the previous month" do
         @product.created_at = Time.zone.now.beginning_of_month.at_midnight
         expect(@sc.test?(@product)).to be_truthy
+
+        @rate_override.start_date = Time.zone.now.beginning_of_month.at_midnight
+        expect(@sc2.test?(@rate_override)).to be_truthy
       end
 
       it "does not accept product created prior to the first of the previous month" do
         @product.created_at = (Time.zone.now.beginning_of_month.at_midnight - 1.second)
         expect(@sc.test?(@product)).to be_falsey
+
+        @rate_override.start_date = (Time.zone.now.beginning_of_month.at_midnight - 1.second)
+        expect(@sc2.test?(@rate_override)).to be_falsey
       end
     end
 
@@ -832,18 +858,31 @@ describe SearchCriterion do
 
   context "After _ Months From Now" do
     before :each do
+      # This is a DateTime field.
       @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"amf",:value=>1)
     end
 
     context "test?" do
+      before :each do
+        # This is a Date field.
+        @sc2 = SearchCriterion.new(:model_field_uid=>:pro_start_date,:operator=>"amf",:value=>1)
+        @rate_override = Factory(:product_rate_override, product_id: @product.id)
+      end
+
       it "accepts product created after 1 month from now" do
         @product.created_at = (Time.zone.now.beginning_of_month + 2.month).at_midnight
         expect(@sc.test?(@product)).to be_truthy
+
+        @rate_override.start_date = ((Time.zone.now.beginning_of_month + 2.month).at_midnight)
+        expect(@sc2.test?(@rate_override)).to be_truthy
       end
 
       it "does not accept product created on last of the next month" do
         @product.created_at = ((Time.zone.now.beginning_of_month + 2.month).at_midnight - 1.second)
         expect(@sc.test?(@product)).to be_falsey
+
+        @rate_override.start_date = ((Time.zone.now.beginning_of_month + 2.month).at_midnight - 1.second)
+        expect(@sc2.test?(@rate_override)).to be_falsey
       end
     end
 
@@ -862,18 +901,31 @@ describe SearchCriterion do
 
   context "Before _ Months From Now" do
     before :each do
+      # This is a DateTime field.
       @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"bmf",:value=>1)
     end
 
     context "test?" do
+      before :each do
+        # This is a Date field.
+        @sc2 = SearchCriterion.new(:model_field_uid=>:pro_start_date,:operator=>"bmf",:value=>1)
+        @rate_override = Factory(:product_rate_override, product_id: @product.id)
+      end
+
       it "accepts product created before 1 month from now" do
         @product.created_at = ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
         expect(@sc.test?(@product)).to be_truthy
+
+        @rate_override.start_date = ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
+        expect(@sc2.test?(@rate_override)).to be_truthy
       end
 
       it "does not accept product created on first of the next month" do
         @product.created_at = (Time.zone.now.beginning_of_month + 1.month).at_midnight
         expect(@sc.test?(@product)).to be_falsey
+
+        @rate_override.start_date = ((Time.zone.now.beginning_of_month + 1.month).at_midnight)
+        expect(@sc2.test?(@rate_override)).to be_falsey
       end
     end
 

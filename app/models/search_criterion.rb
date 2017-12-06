@@ -465,16 +465,16 @@ class SearchCriterion < ActiveRecord::Base
         base_date = Date.new(base_date.year,base_date.month,1)
         return (vt < Time.now.to_date) && (vt >= base_date) && !(vt.month == 0.seconds.ago.month && vt.year == 0.seconds.ago.year)
       elsif self.operator == "bma"
-        return vt < (Time.zone.now - self_val.months).beginning_of_month.at_midnight
+        return vt < get_safe_date(d, (Time.zone.now - self_val.months).beginning_of_month.at_midnight)
       elsif self.operator == "ama"
         # Adding 1 day so that we're making sure we're truly comparing that the month is after the given months ago.
         # .ie. If it's currently June..user selects "After 2 months ago", this should mean they get values after April (.ie only from May and beyond).
-        return vt >= ((Time.zone.now - self_val.months).end_of_month + 1.day).at_midnight
+        return vt >= get_safe_date(d, ((Time.zone.now - self_val.months).end_of_month + 1.day).at_midnight)
       elsif self.operator == "amf"
         # See note above...same situation
-        return vt >= ((Time.zone.now + self_val.months).end_of_month + 1.day).at_midnight
+        return vt >= get_safe_date(d, ((Time.zone.now + self_val.months).end_of_month + 1.day).at_midnight)
       elsif self.operator == "bmf"
-        return vt < (Time.zone.now + self_val.months).beginning_of_month.at_midnight
+        return vt < get_safe_date(d, (Time.zone.now + self_val.months).beginning_of_month.at_midnight)
       elsif self.operator == "cmo"
         # Includes items that may be in the future, provided that they occur within the current month.
         return vt >= Time.zone.now.beginning_of_month && vt <= Time.zone.now.end_of_month
@@ -538,6 +538,16 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.to_s.match(self.value).nil?
       end
     end
+  end
+
+  # A few of the operator types use greater than/less than comparisons.  These work fine when comparing a the base
+  # datetime to a DateTime-type database column, but when the database column is a Date, it blows up.  This method
+  # ensures that we're comparing like to like.
+  def get_safe_date data_type, date
+    if data_type == :date
+      date = date.to_date
+    end
+    date
   end
 
   def number_value data_type, value
