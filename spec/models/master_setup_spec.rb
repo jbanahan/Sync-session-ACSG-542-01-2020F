@@ -139,4 +139,85 @@ describe MasterSetup do
       expect(master_setup.migration_host).to be_nil
     end
   end
+
+  describe "config_true?" do
+
+    it "returns false if config value isn't set" do
+      expect(MasterSetup.config_true? :some_value).to eq false
+    end
+
+    it "returns true if config value is set" do
+      Rails.application.config.vfitrack[:key] = true
+      expect(MasterSetup.config_true? :key).to eq true
+    end
+
+    it "returns true if config value is set to string value 'true'" do
+      Rails.application.config.vfitrack[:key] = 'true'
+      expect(MasterSetup.config_true? :key).to eq true
+    end
+
+    it "returns false if config value is anything else" do 
+      Rails.application.config.vfitrack[:key] = Object.new
+      expect(MasterSetup.config_true? :key).to eq false
+    end
+
+    it "yields block if value is true" do
+      Rails.application.config.vfitrack[:key] = true
+      expect { |b| MasterSetup.config_true?(:key, &b) }.to yield_control
+    end
+
+    it "does not yield if value is not true" do
+      Rails.application.config.vfitrack[:key] = false
+      expect { |b| MasterSetup.config_true?(:key, &b) }.not_to yield_control
+    end
+  end
+
+  describe "config_value" do 
+    
+    context "with a config value" do
+      before :each do
+        Rails.application.config.vfitrack[:key] = "value"
+      end
+
+      it "returns configuration value" do
+        expect(MasterSetup.config_value(:key)).to eq "value"
+      end
+
+      it "yields the configuration value" do
+        expect { |b| MasterSetup.config_value(:key, &b)}.to yield_with_args("value")
+      end
+
+      it "yields config value over default" do
+        expect { |b| MasterSetup.config_value(:key, default: "default", &b)}.to yield_with_args("value")
+      end
+
+      it "only yields if yield_if_equals value matches" do
+        expect { |b| MasterSetup.config_value(:key, yield_if_equals: "value", &b)}.to yield_with_args("value")
+      end
+
+      it "does not yield if yield_if_equals value does not match" do
+        expect { |b| MasterSetup.config_value(:key, yield_if_equals: "not the value", &b)}.not_to yield_control
+      end
+    end
+
+    it "returns nil if configuration is nil" do
+      expect(MasterSetup.config_value(:key)).to eq nil
+    end
+
+    it "does not yield if configuration is nil" do
+      expect {|b| MasterSetup.config_value(:key, &b)}.not_to yield_control
+    end
+
+    it "returns default value if key is nil" do
+      expect(MasterSetup.config_value(:key, default: "key")).to eq "key"
+    end
+
+    it "yields default if key is nil" do
+      expect { |b| MasterSetup.config_value(:key, default: "default", &b)}.to yield_with_args("default")
+    end
+
+    it "uses default value as yield_if_equals value if key is nil" do
+      expect { |b| MasterSetup.config_value(:key, default: "default", yield_if_equals: "default", &b)}.to yield_with_args("default")
+    end
+  end
 end

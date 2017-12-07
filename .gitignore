@@ -36,6 +36,7 @@ config/fenix_b3_forwarding.yml
 config/kewill_imaging.yml
 config/kewill_imaging_sql_proxy.yml
 config/fenix_google_drive_sqs_copy.yml
+config/vfitrack_settings.yml
 .idea
 dump.rdb
 .byebug_history

@@ -70,6 +70,19 @@ module OpenChain
       end
     end
 
+    # In rails 4 use custom-configuration setting instead
+    # These are meant to ONLY house settings that might be machine specific.  In essence, it should only be used
+    # for things that are meant to be run in production, but out of the normal application flow and a secondary backend system
+    # ...such as disabling outbound notifications when reprocessing files or disabling other functionality that would normally
+    # be on or controlled system-wide by the MasterSetup custom features
+    config.vfitrack = {}
+    if File.exists?("config/vfitrack_settings.yml")
+      settings = YAML::load_file("config/vfitrack_settings.yml")
+      if settings.is_a?(Hash)
+        config.vfitrack = settings.with_indifferent_access
+      end
+    end
+
     # Enable the asset pipeline
     config.assets.enabled = true
 
@@ -80,7 +93,7 @@ module OpenChain
 
     config.action_mailer.delivery_method = :postmark
 
-    email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))
+    email_settings = YAML::load_file("config/email.yml")
     postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?
     config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
 

@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe OpenChain::EntityCompare::EntityComparator do
+  subject { described_class }
+
   let (:comparator) {
     Class.new do
       COMPARED ||= []
@@ -25,20 +27,21 @@ describe OpenChain::EntityCompare::EntityComparator do
   describe "process_by_id" do
     it "should find EntitySnapshot and process" do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
-      expect(described_class).to receive(:process).with(instance_of(EntitySnapshot))
+      expect(subject).to receive(:process).with(instance_of(EntitySnapshot))
 
-      described_class.process_by_id "EntitySnapshot", es.id
+      subject.process_by_id "EntitySnapshot", es.id
     end
   end
   describe "process" do
     before :each do
-      allow(comparator).to receive(:delay).and_return(comparator)
+      allow(subject).to receive(:delay_options).and_return({delay_opts: true})
+      allow(comparator).to receive(:delay).with({delay_opts: true}).and_return(comparator)
       OpenChain::EntityCompare::ComparatorRegistry.register comparator
     end
     it "should handle object with one snapshot" do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
-      described_class.process(es)
+      subject.process(es)
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
@@ -47,7 +50,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
-      described_class.process(es)
+      subject.process(es)
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
@@ -61,7 +64,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
 
-      described_class.process(es)
+      subject.process(es)
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','b','d','v']]
@@ -73,7 +76,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       processed_es = EntitySnapshot.create!(compared_at: 1.hour.ago, created_at: 1.hour.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
 
-      described_class.process(old_es)
+      subject.process(old_es)
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq []
@@ -85,7 +88,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       create_time = Time.now
       first_es = EntitySnapshot.create!(created_at: create_time, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       EntitySnapshot.create!(created_at: create_time, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
-      described_class.process(first_es)
+      subject.process(first_es)
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil, nil, nil,'ob2','od2','ov2']]
@@ -98,7 +101,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       # match this one
       EntitySnapshot.create!(compared_at: old_time, created_at: old_time, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv2')
       to_process = EntitySnapshot.create!(created_at: Time.now, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
-      described_class.process(to_process)
+      subject.process(to_process)
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv2','ob2','od2','ov2']]
     end
 
@@ -107,7 +110,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       es = EntitySnapshot.create!(recordable: order, user:user)
 
-      described_class.process(es)
+      subject.process(es)
 
       #Normally, we'd be expecting the es snapshot to process, but since it doesn't have a bucket or doc path, it shouldn't get picked up yet.
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','ob','od','ov']]
@@ -121,7 +124,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       order.destroy
       es.reload
 
-      described_class.process(es)
+      subject.process(es)
     end
   end
 
@@ -130,22 +133,23 @@ describe OpenChain::EntityCompare::EntityComparator do
 
     context "non-test environment" do
       before :each do
-        expect(described_class).to receive(:test?).and_return false
+        allow(subject).to receive(:delay_options).and_return({delay_opts: true})
+        expect(subject).to receive(:test?).and_return false
       end
 
       it "delays process_by_id call if there is a comparator set to handle the snapshot" do
         OpenChain::EntityCompare::ComparatorRegistry.register comparator
 
-        expect(described_class).to receive(:delay).with(priority: 10).and_return described_class
-        expect(described_class).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
+        expect(subject).to receive(:delay).with({delay_opts: true}).and_return subject
+        expect(subject).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
 
-        described_class.handle_snapshot snapshot
+        subject.handle_snapshot snapshot
       end
 
       it "does not call process_by_id if no comparator is set to handle the snapshot" do
-        expect(described_class).not_to receive(:delay)
+        expect(subject).not_to receive(:delay)
 
-        described_class.handle_snapshot snapshot
+        subject.handle_snapshot snapshot
       end
 
       it "skips process by id if snapshot's recordable type is disabled" do
@@ -158,9 +162,9 @@ describe OpenChain::EntityCompare::EntityComparator do
         product = Factory(:product, unique_identifier: "UAPARTS-123")
         es = EntitySnapshot.new id: 6, recordable: product
 
-        expect(described_class).not_to receive(:delay)
+        expect(subject).not_to receive(:delay)
 
-        described_class.handle_snapshot es
+        subject.handle_snapshot es
       end
     end
 
@@ -171,13 +175,26 @@ describe OpenChain::EntityCompare::EntityComparator do
         product = Factory(:product, unique_identifier: "UAPARTS-123")
         es = EntitySnapshot.new id: 6, recordable: product
 
-        expect(described_class).to receive(:delay).and_return described_class
-        expect(described_class).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
+        expect(subject).to receive(:delay).and_return subject
+        expect(subject).to receive(:process_by_id).with("EntitySnapshot", snapshot.id)
 
-        described_class.handle_snapshot es
+        subject.handle_snapshot es
       end
     end
+  end
 
-    
+  describe "delay_options" do 
+    it "returns default options" do
+      expect(subject.delay_options).to eq({priority: 10})
+    end
+
+    it "allows overriding priority" do
+      expect(subject.delay_options priority: 100).to eq({priority: 100})
+    end
+
+    it "allows assigning the queue for processing using application config" do
+      expect(MasterSetup).to receive(:config_value).with(:snapshot_processing_queue).and_yield "test_queue"
+      expect(subject.delay_options).to eq({priority: 10, queue: "test_queue"})
+    end
   end
 end

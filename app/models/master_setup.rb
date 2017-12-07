@@ -136,4 +136,31 @@ class MasterSetup < ActiveRecord::Base
     end
     @@root
   end
+
+  def self.config_true?(settings_key) 
+    result = config[settings_key].to_s == "true"
+
+    if block_given?
+      yield if result
+    end
+
+    result
+  end
+
+  def self.config_value(settings_key, default: nil, yield_if_equals: nil)
+    result = config[settings_key]
+    return_val = result.nil? ? default : result
+
+    if block_given?
+      # If the yield_if_equals option is used only yield if the value actually equals the give value
+      yield return_val if !return_val.nil? && (yield_if_equals.nil? || return_val == yield_if_equals)
+    end
+
+    return_val
+  end
+
+  def self.config
+    Rails.application.config.vfitrack
+  end
+  private_class_method :config
 end

@@ -59,7 +59,9 @@ class EntitySnapshot < ActiveRecord::Base
       OpenChain::EntityCompare::EntityComparator.handle_snapshot es
     end
 
-    write_snapshot_caller(es) if File.exists?('tmp/write_snapshot_caller')
+    MasterSetup.config_true?(:write_snapshot_caller) do 
+      write_snapshot_caller(es)
+    end
     
     es
   end

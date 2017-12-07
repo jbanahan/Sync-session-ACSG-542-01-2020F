@@ -143,6 +143,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter / Autoflow Order Approver"
       subject.execute_business_logic(1,old_data,new_data)
     end
+
+    it "removes approvals from logic list if approval resets are disabled" do
+      expect(subject).to receive(:disable_approval_resets?).and_return true
+      order
+      expect(subject).not_to receive(:reset_vendor_approvals)
+      expect(subject).not_to receive(:reset_product_compliance_approvals)
+
+
+      subject.execute_business_logic(1,old_data,new_data)
+    end
   end
 
   describe '#set_price_revised_dates' do
@@ -964,6 +974,30 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         [od, nd].each {|d,i| allow(d).to receive(:fingerprint).and_return('x'); allow(d).to receive(:ship_from_address).and_return('sf')}
         expect(order_data_klass.vendor_visible_fields_changed?(od, nd)).to be_falsey
       end
+    end
+  end
+
+  describe "all_logic_steps" do
+    it "returns all logic steps to use" do
+      expect(subject.all_logic_steps).to eq [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
+                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+    end
+
+    it "excludes approval steps if approval resets are disabled" do
+      expect(subject).to receive(:disable_approval_resets?).and_return true
+      expect(subject.all_logic_steps).to eq [:set_defaults, :planned_handover, :forecasted_handover, :autoflow_approvals,
+                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+    end
+  end
+
+  describe "disable_approval_resets?" do
+    it "reads vfitrack configuration and returns false if missing" do
+      expect(subject.disable_approval_resets?).to eq false
+    end
+
+    it "returns true if configuration has resets disabled" do
+      expect(MasterSetup).to receive(:config_true?).with(:disable_lumber_approval_resets).and_return true
+      expect(subject.disable_approval_resets?).to eq true
     end
   end
 

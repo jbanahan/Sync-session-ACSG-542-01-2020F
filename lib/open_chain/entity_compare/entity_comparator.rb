@@ -15,7 +15,7 @@ module OpenChain; module EntityCompare; class EntityComparator
     # reports and such if they're running at a lower priority
     return unless process_snapshot?(snapshot)
 
-    self.delay(priority: 10).process_by_id(snapshot.class.to_s, snapshot.id) if registry(snapshot)
+    self.delay(delay_options).process_by_id(snapshot.class.to_s, snapshot.id) if registry(snapshot)
     
     nil
   end
@@ -82,7 +82,7 @@ module OpenChain; module EntityCompare; class EntityComparator
 
       
       registry(snapshot).registered_for(snapshot).each do |comp|
-        comp.delay(priority: 10).compare(rec_type, rec_id,
+        comp.delay(delay_options).compare(rec_type, rec_id,
           old_bucket, old_path, old_version,
           newest_unprocessed.bucket, newest_unprocessed.doc_path, newest_unprocessed.version
         )
@@ -90,5 +90,14 @@ module OpenChain; module EntityCompare; class EntityComparator
 
       all_unprocessed.update_all(compared_at:0.seconds.ago)
     end
+  end
+
+  def self.delay_options priority: 10
+    opts = {priority: priority}
+    MasterSetup.config_value(:snapshot_processing_queue) do |queue|
+      opts[:queue] = queue
+    end
+
+    opts
   end
 end; end; end

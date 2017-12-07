@@ -26,8 +26,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.all_logic_steps
-    [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
+    steps = [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
                     :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+    approvals_disabled = disable_approval_resets?
+    steps.reject {|k| approvals_disabled && [:vendor_approvals, :compliance_approvals].include?(k)}
   end
 
   def self.execute_business_logic id, old_data, new_data, logic_steps = nil
@@ -485,5 +487,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       
       updated
     end
+  end
+
+  def self.disable_approval_resets?
+    MasterSetup.config_true?(:disable_lumber_approval_resets)
   end
 end; end; end; end

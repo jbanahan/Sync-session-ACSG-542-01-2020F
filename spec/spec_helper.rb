@@ -41,6 +41,8 @@ RSpec.configure do |config|
       request.env["HTTP_REFERER"] = "/"
   end
   config.before :each do |example|
+    Rails.application.config.vfitrack = {}
+
     EntitySnapshotSupport.disable_async = true
     CustomDefinition.skip_reload_trigger = true
     stub_event_publisher
