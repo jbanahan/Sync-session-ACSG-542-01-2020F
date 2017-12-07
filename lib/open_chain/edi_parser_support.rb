@@ -511,9 +511,39 @@ module OpenChain; module EdiParserSupport
     end
 
     def parse data, opts={}
+      # What we want to do is only delay processing if there's more than one transaction.  Part of the reasoning
+      # for this is that sometimes we get really large EDI transactions in a file and the system has trouble serializing those transactions.
+      # Those files have never come multiple transactions to a file, so we can avoid the serialization issue just by processing them without
+      # queueing them to the delayed_jobs table.
+
+      # I also want to use the block form of each_transaction to limit the amount of memory utilized to store the REX12 transactions that
+      # are stored locally.  This way, at most, we store 2 transactions in memory.
+      first_transaction = nil
+      transaction_count = 0
       REX12::Document.each_transaction(data) do |transaction|
-        self.delay.process_transaction(transaction, opts)
+        if transaction_count == 0
+          first_transaction = transaction
+        else
+          if !first_transaction.nil?
+            run_transaction(first_transaction, opts)
+            first_transaction = nil
+          end
+
+          run_transaction(transaction, opts)
+        end
+
+        transaction_count += 1
       end
+
+      # Here's where we tell it to not delay the first transaction
+      run_transaction(first_transaction, opts.merge({no_delay: true})) unless first_transaction.nil?
+
+      nil
+    end
+
+    def run_transaction transaction, opts
+      myself = opts[:no_delay] ? self : self.delay
+      myself.process_transaction(transaction, opts)
     end
 
     def process_transaction transaction, opts

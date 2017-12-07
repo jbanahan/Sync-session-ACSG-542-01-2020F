@@ -492,6 +492,14 @@ describe OpenChain::EdiParserSupport do
       "IEA^1^000001357\n"
     }
 
+    let (:single_transaction_edi) {
+      "ISA^00^          ^00^          ^ZZ^INSD           ^01^014492501      ^170725^1040^U^00401^000001357^0^P^>\n" +
+      "GS^SH^INSD^014492501^20170725^1040^1356^X^004010\n" +
+      transaction_1 +
+      "GE^1^1356\n" +
+      "IEA^1^000001357\n"
+    }
+
     let (:transaction_1) {
       "ST^856^13560001\n" +
       "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" + 
@@ -519,6 +527,20 @@ describe OpenChain::EdiParserSupport do
       # Just make sure the transactions were received in the correct order
       expect(subject.find_element_value(transactions.first.segments, "ST02")).to eq "13560001"
       expect(subject.find_element_value(transactions.second.segments, "ST02")).to eq "13560002"
+    end
+
+    it "does not delay edi transactions that are sent 1 to a file" do
+      expect(subject.class).not_to receive(:delay)
+      expect(subject.class).to receive(:process_transaction).once
+
+      subject.class.parse(single_transaction_edi, key: "value")
+    end
+
+    it "does not delay edi transactions if no_delay option is used" do
+      expect(subject.class).not_to receive(:delay)
+      expect(subject.class).to receive(:process_transaction).twice
+
+      subject.class.parse(edi_data, key: "value", no_delay: true)
     end
   end
 
