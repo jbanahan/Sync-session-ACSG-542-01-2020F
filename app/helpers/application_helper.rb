@@ -704,7 +704,7 @@ module ApplicationHelper
       concat('<body class="run-as">'.html_safe)
       concat(render("shared/run_as_box"))
     else
-      concat("<body>")
+      concat("<body>".html_safe)
     end
   end
 end
