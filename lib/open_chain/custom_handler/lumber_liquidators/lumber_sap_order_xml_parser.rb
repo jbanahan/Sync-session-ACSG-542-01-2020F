@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       subject = "Order #{order_number} XML rejected."
       body = "Order #{order_number} was rejected: #{message}"
 
-      if MasterSetup.get.custom_feature?("Production")
+      if MasterSetup.get.production?
         to = ['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com']
       else
         to = ['ll-support@vandegriftinc.com']

@@ -1013,4 +1013,25 @@ describe User do
       expect(user.view_statements?).to eq false
     end
   end
+
+  describe "user_auth_token" do
+    let (:user) { 
+      Factory(:user, username: "username", api_auth_token: "authtoken")
+    }
+
+    it "returns token if already set" do
+      expect(user.user_auth_token).to eq "username:authtoken"
+    end
+
+    it "generates a new authtoken and saves user if token is not already set" do
+      user.api_auth_token = nil
+      user.save!
+      expect(User).to receive(:generate_authtoken).with(user).and_return "newtoken"
+
+      expect(user.user_auth_token).to eq "username:newtoken"
+
+      user.reload
+      expect(user.api_auth_token).to eq "newtoken"
+    end
+  end
 end

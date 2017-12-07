@@ -14,7 +14,7 @@
         <tr><td>Check X- headers for original email addresses.</td></tr>
       </table>
     <%-end-%>
-    <%-if !MasterSetup.get.custom_feature?("Production")-%>
+    <%-if !MasterSetup.get.production? -%>
       <table border='0' width='100%'>
         <tr><td bgcolor='#FF0000' align='center'><b>This email notification was generated from a VFI Track test environment.</b></td></tr>
       </table>

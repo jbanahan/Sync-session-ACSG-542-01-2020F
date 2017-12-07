@@ -36,31 +36,15 @@
       <%= yield :javascript -%>
     </script>
   </head>
-  <body class="<%= !ms.custom_feature?('Production') || @run_as_user ? 'run-as' : '' %>">
-      <% if @run_as_user || !ms.custom_feature?('Production') %>
-        <div id='run_as_box'>
-          <div class="test-environment-message">
-            <% if !ms.custom_feature?('Production') %>
-                This Instance is a VFI Track Test Environment
-            <% end %>
-          </div>
-          <div class="run-as-message">
-            <% if @run_as_user %>
-                Logged In As: <%=@run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a>
-            <% end %>
-          </div>
-          <div class="clear"></div>
-        </div>
-      <% end %>
-      <% if show_navbar && current_user -%>
-        <%= render "shared/nav_panel" %>
-      <% end %>
-      <%= render "shared/flash_notice" %>
-      <div id='main-content'>
-        <%=yield%>
-      </div>
+  <% body_tag(ms, current_user, run_as_user) %>
 
-
+    <% if show_navbar && current_user -%>
+      <%= render "shared/nav_panel" %>
+    <% end %>
+    <%= render "shared/flash_notice" %>
+    <div id='main-content'>
+      <%=yield%>
+    </div>
 
 
     <%unless @no_action_bar-%>

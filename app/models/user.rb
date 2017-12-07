@@ -324,7 +324,7 @@ class User < ActiveRecord::Base
   end
 
   def debug_active?
-    !self.debug_expires.blank? && self.debug_expires>Time.now
+    !self.debug_expires.blank? && self.debug_expires > Time.zone.now
   end
 
   #send password reset email to user
@@ -390,7 +390,12 @@ class User < ActiveRecord::Base
   end
 
   def user_auth_token
-    "#{username}:#{api_auth_token}"
+    if self.api_auth_token.blank?
+      self.api_auth_token = User.generate_authtoken(self)
+      self.save!
+    end
+
+    "#{self.username}:#{self.api_auth_token}"
   end
 
   def master_company?

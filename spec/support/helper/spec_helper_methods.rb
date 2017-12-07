@@ -175,6 +175,7 @@ module Helpers
     allow(ms).to receive(:system_code).and_return "test"
     allow(ms).to receive(:uuid).and_return "test-uuid"
     allow(ms).to receive(:custom_feature?).and_return false
+    allow(ms).to receive(:production?).and_return false
     allow(MasterSetup).to receive(:get).and_return ms
     ms
   end

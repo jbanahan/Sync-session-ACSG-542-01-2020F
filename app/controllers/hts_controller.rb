@@ -1,6 +1,6 @@
 class HtsController < ApplicationController
 
-  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset
+  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:log_run_as_request,:set_cursor_position,:force_reset
 
 
   def index

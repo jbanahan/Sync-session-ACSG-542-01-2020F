@@ -82,7 +82,7 @@ XML
     end
 
     def ftp_credentials
-      folder = MasterSetup.get.custom_feature?("Production") ? "to_ua/events" : "to_ua/events/test"
+      folder = MasterSetup.get.production? ? "to_ua/events" : "to_ua/events/test"
 
       {server: 'connect.vfitrack.net', username: 'underarmour', password: 'xkcoeit', folder: folder}
     end

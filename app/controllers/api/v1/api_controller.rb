@@ -1,14 +1,22 @@
 module Api; module V1; class ApiController < ActionController::Base
+  include RequestLoggingSupport
+  include AuthTokenSupport
   rescue_from StandardError, :with => :error_handler
 
   before_filter :validate_format
   around_filter :validate_authtoken
+  before_filter :log_request
+  before_filter :log_run_as_request
   around_filter :set_user_settings
   before_filter :new_relic
   before_filter :prep_model_fields
 
   def current_user
     @user
+  end
+
+  def run_as_user
+    @run_as_user
   end
 
   def render_forbidden message = "Access denied."
@@ -82,27 +90,25 @@ module Api; module V1; class ApiController < ActionController::Base
       begin
         api_user = authenticate_with_http_token do |token, options|
           # Token should be username:token (username is there to mitigate timing attacks)
-          user_from_token token
+          user_from_auth_token token
         end
       rescue
         # Invalid authentication tokens will blow up the rails token parser (stupid), we don't really want to hear about this error
         # since it's the client's fault they didn't set up their request correctly, so just let the api_user check below handle
         # this as an access denied error
       end
+
       if api_user.nil?
-        t = cookies['AUTH-TOKEN']
-        api_user = user_from_token t unless t.blank?
+        api_user = user_from_cookie cookies
       end
 
       raise StatusableError.new("Access denied.", :unauthorized) unless api_user
 
       @user = api_user
-      yield
-    end
+      # The way we handle knowing if the user is running as another user is to add a secondary AUTH-TOKEN cookie
+      @run_as_user = run_as_user_from_cookie cookies
 
-    def user_from_token t
-      username, auth_token = t.split(":")
-      User.includes(:groups).find_by_username_and_api_auth_token username, (auth_token ? auth_token : "PREVENTS_ACCIDENTAL_NULL_TOKEN_USAGE")
+      yield
     end
 
     def set_user_settings

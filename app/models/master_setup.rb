@@ -126,6 +126,9 @@ class MasterSetup < ActiveRecord::Base
     CACHE.set CACHE_KEY, nil
   end
 
+  def production?
+    self.custom_feature?('Production')
+  end
 
   def self.instance_identifier
     @@root ||= begin

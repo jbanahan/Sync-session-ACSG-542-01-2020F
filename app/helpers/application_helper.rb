@@ -698,4 +698,13 @@ module ApplicationHelper
     name = MasterSetup.get.friendly_name
     title = "#{name.blank? ? "" : "#{name} - "}#{page_title}"
   end
+  
+  def body_tag master_setup, current_user, run_as_user
+    if (run_as_user || !master_setup.production?)
+      concat('<body class="run-as">'.html_safe)
+      concat(render("shared/run_as_box"))
+    else
+      concat("<body>")
+    end
+  end
 end

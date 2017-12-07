@@ -1,9 +1,6 @@
 body {
   padding-bottom: 70px; //padding to accomodate sticky footer nav bar
 }
-body.run-as {
-  margin-top: 20px;
-}
 img {
   border-style: none;
 }
@@ -457,21 +454,7 @@ p {
 .sp_row {
   vertical-align: top;
 }
-#run_as_box {
-  background-color: #FF4747;
-  text-align: center;
-  font-weight: bold;
-  border-bottom: 1px solid black;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  padding: 0 15px;
 
-  .run-as-message { float: right; }
-  .test-environment-message { float: left; }
-}
 #show_all_columns {
   float: right;
   margin-right: 5%;

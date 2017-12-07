@@ -234,13 +234,16 @@ class UsersController < ApplicationController
       if current_user.admin?
         u = User.find_by_username params[:username]
         if u
-          if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
-            user = current_user
-            user.run_as = u
-            user.save
-            redirect_to "/"
-          else
-            error_redirect "This username is locked and not available for use with this feature.  Select another username or have this user account unlocked."
+          Lock.db_lock(current_user) do 
+            if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
+              user = current_user
+              user.run_as = u
+              user.save!
+              RunAsSession.create! user_id: user.id, run_as_user_id: u.id, start_time: Time.zone.now
+              redirect_to "/"
+            else
+              error_redirect "This username is locked and not available for use with this feature.  Select another username or have this user account unlocked."
+            end
           end
         else
           error_redirect "User with username #{params[:username]} not found."
@@ -252,10 +255,20 @@ class UsersController < ApplicationController
 
     def disable_run_as
       cu = current_user #load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
-      if cu && @run_as_user
-        @run_as_user.run_as = nil
-        @run_as_user.save
-        add_flash :notices, "Run As disabled."
+
+      # run_as_user is defined in application_controller
+      if cu && run_as_user
+        Lock.db_lock(run_as_user) do 
+          run_as_user.run_as = nil
+          run_as_user.save!
+          session = RunAsSession.current_session(run_as_user).first
+          if session
+            session.end_time = Time.zone.now
+            session.save!
+          end
+        end
+
+        add_flash :notices, "You are no longer running as '#{cu.username}'."
       end
       redirect_to '/'
     end

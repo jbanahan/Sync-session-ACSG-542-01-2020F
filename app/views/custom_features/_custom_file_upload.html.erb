@@ -1,5 +1,5 @@
 <h1><%=title%></h1>
-<%= form_tag "/custom_features/#{custom_feature}/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
+<%= form_tag "/dump_request", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
 <% if content_for? :upload_form %>
   <%= yield :upload_form %>
 <% end %>

@@ -1,5 +1,5 @@
 class OfficialTariffsController < ApplicationController
-  skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>[:auto_classify,:auto_complete]
+  skip_before_filter :require_user, :set_user_time_zone, :log_request, :log_run_as_request, :only=>[:auto_classify,:auto_complete]
 
   def auto_complete
     ot = OfficialTariff.limit(10)

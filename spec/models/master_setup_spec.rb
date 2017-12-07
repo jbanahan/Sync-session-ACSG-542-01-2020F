@@ -139,7 +139,7 @@ describe MasterSetup do
       expect(master_setup.migration_host).to be_nil
     end
   end
-
+  
   describe "config_true?" do
 
     it "returns false if config value isn't set" do
@@ -220,4 +220,17 @@ describe MasterSetup do
       expect { |b| MasterSetup.config_value(:key, default: "default", yield_if_equals: "default", &b)}.to yield_with_args("default")
     end
   end
+  
+  describe "production?" do
+    let (:master_setup) {  }
+
+    it "returns true if a production custom_feature is set" do
+      expect((MasterSetup.new custom_features: "production").production?).to eq true
+    end
+
+    it "returns false if a production custom feature is not set" do
+      expect(MasterSetup.new.production?).to eq false
+    end
+  end
+  
 end

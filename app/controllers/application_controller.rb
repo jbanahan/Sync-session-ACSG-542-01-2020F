@@ -1,10 +1,13 @@
+require 'yaml'
+require 'newrelic_rpm'
 require 'open_chain/application_controller_legacy'
+require 'open_chain/field_logic'
+
 class ApplicationController < ActionController::Base
   include Clearance::Controller
   include OpenChain::ApplicationControllerLegacy
-  require 'open_chain/field_logic'
-  require 'yaml'
-  require 'newrelic_rpm'
+  include RequestLoggingSupport
+  include AuthTokenSupport
 
   protect_from_forgery
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
@@ -14,10 +17,12 @@ class ApplicationController < ActionController::Base
   before_filter :new_relic
   before_filter :set_master_setup
   before_filter :require_user
+  before_filter :prep_exception_notifier
   before_filter :portal_redirect
   before_filter :set_user_time_zone
-  before_filter :log_last_request_time
   before_filter :log_request
+  before_filter :log_run_as_request
+  before_filter :log_last_request_time
   before_filter :force_reset
   before_filter :set_legacy_scripts
   before_filter :set_x_frame_options_header
@@ -31,10 +36,11 @@ class ApplicationController < ActionController::Base
   helper_method :merge_params
   helper_method :sortable_search_heading
   helper_method :master_setup
+  helper_method :run_as_user
 
   after_filter :reset_state_values
   after_filter :set_csrf_cookie
-  after_filter :set_authtoken_cookie
+  after_filter :set_auth_token_cookie
 
   def set_page_title
     @page_title = "VFI Track"
@@ -45,16 +51,12 @@ class ApplicationController < ActionController::Base
     render json: {error:message}, status: response_code
     true
   end
-  def log_request
+
+  def prep_exception_notifier
     #prep for exception notification
     request.env["exception_notifier.exception_data"] = {
       :user => current_user
     } if current_user
-    #user level application "debug" logging
-    if current_user && current_user.debug_active?
-      DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
-          :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
-    end
   end
 
   def help
@@ -87,11 +89,23 @@ class ApplicationController < ActionController::Base
       output = "REQUEST FROM IP: #{request.remote_ip}\n\nHEADERS\n========================\n\n"
       http_envs = {}.tap do |envs|
         request.headers.each do |key, value|
-          envs[key] = value if key.downcase.to_s.starts_with?('http')
+          # So this is kinda weird...rails (rack?) makes all the HTTP headers capitalized
+          envs[key] = value if key[0] == key[0].to_s.upcase
         end
       end
       http_envs.each_pair {|k, v| output += "#{k}: #{v}\n------------------------\n"}
-      render text: output
+      output += "PARAMS\n========================\n"
+      out = {}
+      params.each { |k, v| 
+        if v.is_a? String
+          out[k] = v
+        else
+          out[k] = "[extracted]"
+        end
+      }
+      output += out.to_s
+      
+      render text: output, content_type: "text/plain"
     else
       raise ActionController::RoutingError.new('Not Found')
     end
@@ -184,6 +198,13 @@ class ApplicationController < ActionController::Base
     end
 
     user
+  end
+
+  # If the current user is running as someone else, returns the REAL user behind the curtain.
+  # Returns nil if user isn't currently running as someone else
+  def run_as_user
+    return nil unless defined?(@run_as_user)
+    @run_as_user
   end
 
   protected
@@ -363,17 +384,6 @@ class ApplicationController < ActionController::Base
     # utilize the rails forgery protection.
     if protect_against_forgery?
       cookies['XSRF-TOKEN'] = {value: form_authenticity_token, secure: Rails.application.config.use_secure_cookies}
-    end
-  end
-
-  def set_authtoken_cookie
-    u = current_user
-    if u
-      if Rails.env == 'production' && u.api_auth_token.blank?
-        u.api_auth_token = User.generate_authtoken(u)
-        u.save
-      end
-      cookies['AUTH-TOKEN'] = {value:u.user_auth_token}
     end
   end
 

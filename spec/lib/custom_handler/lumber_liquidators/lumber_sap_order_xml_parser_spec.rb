@@ -38,6 +38,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   let! (:group) { Group.use_system_group("ORDER_REJECTED_EMAIL", name: "Order Rejected Email") }
 
   describe "parse_dom" do
+    before :each do 
+      # Something locally is creating master companys before this test runs (probably the custom defs above)
+      # rather than debugging I'm just going to use a before hook to destroy it
+      Company.where(master:true).first.try(:destroy)
+    end
     before :each do
       @usa = Factory(:country,iso_code:'US')
       @test_data = IO.read('spec/fixtures/files/ll_sap_order.xml')
@@ -157,7 +162,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     context "updates to booked" do
       let!(:master_setup) {
         ms = stub_master_setup
-        allow(ms).to receive(:custom_feature?).with("Production").and_return true
+        allow(ms).to receive(:production?).and_return true
         ms
       }
       let :prep_mailer do
@@ -223,7 +228,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
     context "updates to shipped" do
       let!(:master_setup) {
         ms = stub_master_setup
-        allow(ms).to receive(:custom_feature?).with("Production").and_return true
+        allow(ms).to receive(:production?).and_return true
         ms
       }
       let :prep_mailer do
