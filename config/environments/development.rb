@@ -19,11 +19,9 @@ OpenChain::Application.configure do
 #  config.action_view.debug_rjs             = true
 
   config.action_controller.perform_caching = false #on for testing cache, turn this OFF
-  # Use a different cache store in production
-  # We want to to make sure to namespace the data based on the instance name of the app to
-  # definitively avoid all potential key collision and cross contamination of cache keys
-  memcache_namespace = "Chain-#{Rails.root.basename.to_s}"
-  config.cache_store = :dalli_store, 'localhost', {:namespace => memcache_namespace, :compress=>true}
+  
+  memcache_server, memcache_settings = CacheWrapper.memcache_settings
+  config.cache_store = :dalli_store, memcache_server, memcache_settings
 
   # Don't care if the mailer can't send
   config.action_mailer.raise_delivery_errors = false

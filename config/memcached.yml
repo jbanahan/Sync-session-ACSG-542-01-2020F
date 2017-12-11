@@ -1,11 +1,8 @@
 development:
-  server: localhost
-  port: 11211
+  server: localhost:11211
 
 test:
-  server: localhost
-  port: 11211
+  server: localhost:11211
 
 production:
-  server: chain-cache.roatcx.0001.use1.cache.amazonaws.com:11211 
-  port: 11211
+  configuration_endpoint: chain-cache.roatcx.cfg.use1.cache.amazonaws.com:11211

@@ -20,6 +20,7 @@ gem 'delayed_job', '3.0.5'
 # daemons is needed for the delayed job command line
 gem 'daemons', '1.1.9'
 gem 'dalli', '2.6.4'
+gem 'dalli-elasticache', '~> 0.2'
 gem 'postmark-rails', '0.5.2'
 gem 'rubyzip', '~> 1.1'
 gem 'jquery-rails', '2.3.0'
