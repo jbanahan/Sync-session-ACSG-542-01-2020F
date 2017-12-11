@@ -159,10 +159,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ord_manual_send_to_sap_date: {label: "Manual Send To SAP Date", data_type: :datetime, module_type: "Order", read_only: true, cdef_uid: "ord_manual_send_to_sap_date"},
     ord_total_freight: {label: 'Total Freight', data_type: :decimal, module_type: 'Order', read_only: true, cdef_uid: "ord_total_freight"},
     ord_grand_total: {label: 'Grand Total', data_type: :decimal, module_type: 'Order', read_only: true, cdef_uid: "ord_grand_total"},
-    ordln_old_art_number: { label: 'Old Article Number', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_old_art_number"},
-    ordln_part_name: {label: 'Part Name', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_part_name"},
     ord_delay_reason: { label: "Delay Reason", data_type: :string, module_type: "Order", cdef_uid: "ord_delay_reason"},
     ord_delay_dispo: { label: "Delay Disposition", data_type: :string, module_type: "Order", cdef_uid: "ord_delay_dispo"},
+    ordln_old_art_number: { label: 'Old Article Number', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_old_art_number"},
+    ordln_part_name: {label: 'Part Name', data_type: :string, module_type: 'OrderLine', cdef_uid: "ordln_part_name"},
     ordln_pc_approved_by:  {label: 'PC Approved By', data_type: :integer, module_type: 'OrderLine', cdef_uid: "ordln_pc_approved_by"},
     ordln_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'OrderLine', cdef_uid: "ordln_pc_approved_date"},
     ordln_pc_approved_by_executive:  {label: 'PC Approved By - Executive', data_type: :integer, module_type: 'OrderLine', cdef_uid: "ordln_pc_approved_by_executive"},
@@ -174,6 +174,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_inland_freight_vendor_number: {label: 'Inland Freight Vendor Number', data_type: :string, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_vendor_number"},
     ordln_inland_freight_amount: {label: 'Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_inland_freight_amount"},
     ordln_vendor_inland_freight_amount: {label: 'Vendor Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_vendor_inland_freight_amount"},
+    ordln_gross_weight_kg: {label: 'Gross Weight (KGS)', data_type: :decimal, module_type: 'OrderLine', cdef_uid: "ordln_gross_weight_kg"},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"},
     shp_booking_unlocked_date: {label: "Booking Unlocked Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_booking_unlocked_date"}
   }
