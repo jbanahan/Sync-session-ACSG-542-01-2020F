@@ -4,7 +4,7 @@ require 'rexml/document'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   before :all do
     #This is here purely to speed up spec loading...so that the custom defs only have to get created once, since they can take a while to generate.
-    described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg]
+    described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total]
   end
 
   after :all do
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @importer = Factory(:master_company, importer:true)
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',system_code:'123-CORP',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total]
       @product1= Factory(:product,name: 'Widgets',unique_identifier:'000000000010001547')
       cv = @product1.find_and_set_custom_value @cdefs[:prod_old_article], '123456'
       cv.save!
@@ -92,7 +92,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       # No terms in XML should be "Due Immediately"
       expect(o.terms_of_payment).to eq 'Due Immediately'
       expect(o.terms_of_sale).to eq 'FOB'
-      expect(o.fob_point).to eq('Free on Board')
       expect(o.get_custom_value(@cdefs[:ord_buyer_name]).value).to eq 'Purchasing Grp 100'
       expect(o.get_custom_value(@cdefs[:ord_buyer_phone]).value).to eq '757-259-4280'
       expect(o.get_custom_value(@cdefs[:ord_total_freight]).value).to eq 55.22
@@ -115,8 +114,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq ol.product.name
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq '123456'
       expect(ol.get_custom_value(@cdefs[:ordln_custom_article_description]).value).to eq "Custom Text:Sale # 124511692 Quote # ST 12311134-2\n11 Box Retread Hickory 36\" X 11.5\" X 5/8\" Pre-Finished Stained\n***CUSTOM***Casa De Colour Cherry Hickory"
-      # Converted from LB to KG.
-      expect(ol.get_custom_value(@cdefs[:ordln_gross_weight_kg]).value).to eq BigDecimal("4599.907")
       expect(ol.get_custom_value(@cdefs[:ordln_inland_freight_amount]).value).to eq 49.3
       expect(ol.get_custom_value(@cdefs[:ordln_inland_freight_vendor_number]).value).to eq '0000201814'
       # Vendor number (above) does not matches the @vendor's system code, resulting in this field getting a nil value.
@@ -141,8 +138,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol2.quantity).to eq 8168.4
       expect(ol2.price_per_unit).to eq 1.82
       expect(ol2.get_custom_value(@cdefs[:ordln_custom_article_description]).value).to eq "Custom Text Goes Here"
-      # UOM is KG, so not converted.
-      expect(ol2.get_custom_value(@cdefs[:ordln_gross_weight_kg]).value).to eq BigDecimal("25567.092")
       expect(ol2.get_custom_value(@cdefs[:ordln_inland_freight_amount]).value).to eq 55.22
       expect(ol2.get_custom_value(@cdefs[:ordln_inland_freight_vendor_number]).value).to eq '0000100131'
       # Vendor number (above) matches the @vendor's system code, resulting in this field getting the same value as the
