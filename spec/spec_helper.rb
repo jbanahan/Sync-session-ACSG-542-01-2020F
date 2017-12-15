@@ -8,6 +8,7 @@ require File.dirname(__FILE__) + "/factories"
 require 'clearance/rspec'
 require 'webmock/rspec'
 require 'open_chain/delayed_job_extensions'
+require 'database_cleaner'
 
 # don't auto-run minitest which we don't use, but is required by ActiveSupport
 Test::Unit.run = true if defined?(Test::Unit) && Test::Unit.respond_to?(:run=)
@@ -33,9 +34,13 @@ RSpec.configure do |config|
   # instead of true.
   config.use_transactional_fixtures = true
   config.before(:all) do
+    DatabaseCleaner.strategy = :deletion
     WebMock.disable!
     # load "#{Rails.root}/config/routes.rb"
     ModelField.reload
+  end
+  config.after(:all) do
+    DatabaseCleaner.clean
   end
   config.before(:each, :type => :controller) do
       request.env["HTTP_REFERER"] = "/"

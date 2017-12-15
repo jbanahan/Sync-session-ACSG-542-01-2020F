@@ -103,6 +103,7 @@ group :development,:test do
   # gem 'rack-mini-profiler'
   gem 'minitest'
   gem 'active_record_query_trace'
+  gem 'database_cleaner'
 end
 
 group :test do

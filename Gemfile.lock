@@ -108,6 +108,7 @@ GEM
     dalli (2.6.4)
     dalli-elasticache (0.2.0)
       dalli (>= 1.0.0)
+    database_cleaner (1.6.2)
     declarative (0.0.10)
     declarative-option (0.1.0)
     delayed_job (3.0.5)
@@ -413,6 +414,7 @@ DEPENDENCIES
   daemons (= 1.1.9)
   dalli (= 2.6.4)
   dalli-elasticache (~> 0.2)
+  database_cleaner
   delayed_job (= 3.0.5)
   delayed_job_active_record (= 0.4.4)
   email_validator (~> 1.6.0)
