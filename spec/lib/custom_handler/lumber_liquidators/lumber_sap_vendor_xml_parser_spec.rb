@@ -10,6 +10,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       @country = Country.where(iso_code:'PY').first_or_create!(name:"Paraguay")
       @integration_user = double(:user)
       allow(User).to receive(:integration).and_return @integration_user
+      Company.where(master: true).delete_all
       @master = Factory(:master_company)
       allow_any_instance_of(Company).to receive(:create_snapshot)
     end

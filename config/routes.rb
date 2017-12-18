@@ -463,7 +463,7 @@ OpenChain::Application.routes.draw do
   match '/quick_search/by_module/:module_type' => 'quick_search#by_module', via: :get
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
-  match "/unlock_user/:username" => "users#unlock_user", :as => :unlock_user, :via => :post
+  match "/unlock_user/:user_id" => "users#unlock_user", :as => :unlock_user, :via => :post
   match "/users/set_homepage" => "users#set_homepage", :via => :post
   match "/me" => "users#me", via: :get
   match "/logo.png" => "logo#logo", via: :get

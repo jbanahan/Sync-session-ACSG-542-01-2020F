@@ -216,14 +216,14 @@ class UsersController < ApplicationController
 
     def unlock_user
       if current_user.admin?
-        u = User.find_by_username params[:username]
+        u = User.find_by_id params[:user_id]
         if u
           u.password_reset = u.password_expired = u.password_locked = false
           u.save!
-          add_flash :notices, "User with username #{params[:username]} unlocked."
+          add_flash :notices, "User with username #{u.username} unlocked."
           redirect_to edit_company_user_path u.company, u
         else
-          error_redirect "User with username #{params[:username]} not found."
+          error_redirect "User with ID #{params[:user_id]} not found."
         end
       else
         error_redirect "You must be an administrator to unlock a user."

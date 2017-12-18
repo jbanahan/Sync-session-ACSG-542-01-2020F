@@ -449,9 +449,9 @@ describe UsersController do
       user.admin = true
       user.save
 
-      post :unlock_user, username: "AugustusGloop"
+      post :unlock_user, user_id: 1
       expect(response).to redirect_to "/referer"
-      expect(flash[:errors].first).to eq("User with username AugustusGloop not found.")
+      expect(flash[:errors].first).to eq("User with ID 1 not found.")
     end
 
     it "should error when the current user is not an admin" do
@@ -461,7 +461,7 @@ describe UsersController do
       company = Factory.create(:company)
       locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
 
-      post :unlock_user, username: "AugustusGloop"
+      post :unlock_user, user_id: locked_user.id
 
       expect(response).to redirect_to "/referer"
       expect(flash[:errors].first).to eq("You must be an administrator to unlock a user.")
@@ -474,7 +474,7 @@ describe UsersController do
       company = Factory.create(:company)
       locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
 
-      post :unlock_user, username: "AugustusGloop"
+      post :unlock_user, user_id: locked_user.id
 
       expect(response).to redirect_to(edit_company_user_path(locked_user.company, locked_user))
       expect(flash[:notices]).to include("User with username #{locked_user.username} unlocked.")

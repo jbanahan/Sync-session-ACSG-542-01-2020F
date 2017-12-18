@@ -68,7 +68,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% if current_user.admin? %>
     <button id='btn_run_as'>Run As</button>
     <% if @user.locked? %>
-      <%= button_to 'Unlock User', unlock_user_path(@user.username), data: {}, method: :post, class: 'btn navbar-btn btn-default',  form_class:'inline-button-to' -%>
+      <%= button_to 'Unlock User', unlock_user_path(@user.id), data: {}, method: :post, class: 'btn navbar-btn btn-default',  form_class:'inline-button-to' -%>
     <% end %>
   <% end %>
   <% if @user.id -%>
