@@ -333,7 +333,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [218, :ent_split_release_option, :split_release_option, "Split Release Option", {data_type: :string,
         export_lambda: lambda {|obj| obj.split_release_option_value },
         qualified_field_name: "(CASE split_release_option WHEN '1' THEN 'Hold All' WHEN '2' THEN 'Incremental' ELSE '' END)"
-      }]
+      }],
+      [219, :ent_first_release_received_date, :first_release_received_date, "First Release Received Date", {data_type: :datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

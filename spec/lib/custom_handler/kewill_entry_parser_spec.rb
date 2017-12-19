@@ -139,7 +139,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>5055, 'date'=>201701041000},
           {'date_no'=>5053, 'date'=>201701041100},
           {'date_no'=>5056, 'date'=>201701041200},
-          {'date_no'=>91065, 'date'=>201701041300}
+          {'date_no'=>91065, 'date'=>201701041300},
+          {'date_no'=>92033, 'date'=>201712181400},
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -494,6 +495,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
       expect(entry.import_date).to eq Date.new(2017, 10, 19)
+      expect(entry.first_release_received_date).to eq tz.parse("201712181400")
 
       expect(entry.master_bills_of_lading).to eq "XXXXMASTER\n XXXXMASTER2"
       expect(entry.house_bills_of_lading).to eq "HOUSE\n SCAC2HOUSE2\n SCACHOUSE"

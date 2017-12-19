@@ -44,6 +44,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     5023 => :cancelled_date,
     92007 => :isf_sent_date,
     92008 => :isf_accepted_date,
+    92033 => :first_release_received_date,
     93002 => :fda_review_date,
     99202 => :first_release_date,
     99212 => :first_entry_sent_date,
