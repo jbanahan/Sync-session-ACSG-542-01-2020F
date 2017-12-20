@@ -13,7 +13,7 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    REX12 (0.1.4)
+    REX12 (0.2.0)
     RedCloth (4.2.9)
     actionmailer (3.2.22)
       actionpack (= 3.2.22)
@@ -398,7 +398,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  REX12 (~> 0.1.4)
+  REX12 (~> 0.2)
   RedCloth (= 4.2.9)
   active_record_query_trace
   aws-sdk (~> 2.6)

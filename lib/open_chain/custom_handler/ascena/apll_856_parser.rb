@@ -4,7 +4,7 @@ require 'open_chain/edi_parser_support'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   extend OpenChain::IntegrationClientParser
-  extend OpenChain::EdiParserSupport
+  include OpenChain::EdiParserSupport
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
@@ -12,14 +12,14 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
   def self.parse data, opts={}
     errors = []
-    isa_code = 'UNKNOWN'
+    isa = 'UNKNOWN'
+    parser = self.new
     begin
-      cdefs = {}
       shipment_segments = []
-      REX12::Document.each_transaction(data) do |transaction|
-        isa_code = transaction.isa_segment.elements[13].value
+      REX12.each_transaction(StringIO.new(data)) do |transaction|
+        isa = isa_code(transaction)
         begin
-          process_shipment(transaction.segments,cdefs, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+          parser.process_shipment(transaction.segments, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
         rescue
           errors << $!
         end
@@ -28,21 +28,21 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       errors << $!
     ensure
       if !errors.empty?
-        Tempfile.create(["APLLEDI-#{isa_code}",'.txt']) do |f|
+        Tempfile.create(["APLLEDI-#{isa}",'.txt']) do |f|
           f << data
           f.flush
           body = "<p>There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.</p><p>Errors:<br><ul>"
           errors.each {|err| body << "<li>#{ERB::Util.html_escape(err.message)}</li>"}
           body << "</ul></p>"
           to = "edisupport@vandegriftinc.com"
-          subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa_code})"
+          subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa})"
           OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver!
         end
       end
     end
   end
 
-  def self.process_shipment shipment_segments, cdefs, last_file_path: nil, last_file_bucket: nil
+  def process_shipment shipment_segments, last_file_path: nil, last_file_bucket: nil
     shipment = nil
     ActiveRecord::Base.transaction do
       hbol = find_ref_value(shipment_segments,'BM')
@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     shipment
   end
 
-  def self.process_equipment shp, e_segs
+  def process_equipment shp, e_segs
     container_scac = find_element_value(e_segs,'TD302')
     container_num = find_element_value(e_segs,'TD303')
     con = shp.containers.build(
@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     errors
   end
 
-  def self.process_order shp, con, o_segs
+  def process_order shp, con, o_segs
     ord_num = find_element_value(o_segs,'PRF01')
     errors = []
     find_subloop(o_segs,'I').each do |i_segs| 
@@ -127,7 +127,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
   end
 
-  def self.process_item shp, con, order_number, i_segs
+  def process_item shp, con, order_number, i_segs
     style = find_element_value(i_segs,'LIN03')
     raise "Style number is required in LIN segment position 4." if style.blank?
     ol = OrderLine.joins(:order,:product).
@@ -148,7 +148,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
 
-  def self.find_subloop parent_segments, loop_type
+  def find_subloop parent_segments, loop_type
     # This method is now outdated and left alone purely for time constraint purposes...
     
     # Don't utilize this sort of processing any longer...see the extract_hl_loops method in edi_parser_support
@@ -160,7 +160,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     parent_segments.each do |seg|
       type = seg.segment_type
       next if type=='CTT' || type=='SE'
-      found_equipment_loop = true if type=='HL' && seg.elements[3].value==loop_type
+      found_equipment_loop = true if type=='HL' && seg[3] == loop_type
       all_segments << seg if found_equipment_loop
     end
 
@@ -169,7 +169,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     current_match = []
     all_segments.each do |seg|
       type = seg.segment_type
-      if type=='HL' && seg.elements[3].value==loop_type
+      if type=='HL' && seg[3] == loop_type
         r << current_match unless current_match.empty?
         current_match = []
       end
@@ -179,7 +179,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     r
   end
 
-  def self.find_mode segments
+  def find_mode segments
     case find_element_values(segments,'V109').first
     when 'O'
       'Ocean'
@@ -192,17 +192,18 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     end
   end
 
-  def self.find_port segments, qualifier
+  def find_port segments, qualifier
     port_code = find_value_by_qualifier(segments, "R401", qualifier, value_index: 3)
     port_code ? Port.find_by_unlocode(port_code) : nil
   end
 
-  def self.get_date segments, qualifier
+  def get_date segments, qualifier
     dt = find_date_value(segments, qualifier)
     dt.nil? ? nil : dt.to_date
   end
 
-  def self.importer
+  def importer
     @importer ||= Company.where(system_code: "ASCENA").first_or_create!(name:'ASCENA TRADE SERVICES LLC', importer:true)
   end
+
 end; end; end; end

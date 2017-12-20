@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
     context "standard_order" do
       let (:edi_data) { IO.read 'spec/fixtures/files/burlington_856.edi' }
-      let (:transaction) { REX12::Document.each_transaction(edi_data).first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(edi_data)).first }
       let! (:order_1) {
         o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product, quantity: 100
@@ -158,7 +158,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     end
 
     context "prepack_order" do
-      let (:transaction) { REX12::Document.each_transaction(IO.read 'spec/fixtures/files/burlington_prepack_856.edi').first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_prepack_856.edi')).first }
       let! (:order_1) {
         o = Factory(:order, order_number: "BURLI-641585114", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
@@ -229,7 +229,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     end
 
     context "with alernate loop structure" do
-      let (:transaction) { REX12::Document.each_transaction(IO.read 'spec/fixtures/files/burlington_856_alternate_loop.edi').first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_856_alternate_loop.edi')).first }
       let! (:order_1) {
         o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
@@ -277,7 +277,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     end
 
     context "with alernate loop structure" do
-      let (:transaction) { REX12::Document.each_transaction(IO.read 'spec/fixtures/files/burlington_856_alternate_prepack_loop.edi').first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_856_alternate_prepack_loop.edi')).first }
       let! (:order_1) {
         o = Factory(:order, order_number: "BURLI-365947702", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100
@@ -325,7 +325,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     end
 
     context "with prepacks missing SLN segments" do
-      let (:transaction) { REX12::Document.each_transaction(IO.read 'spec/fixtures/files/burlington_prepack_856_missing_sln.edi').first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(IO.read 'spec/fixtures/files/burlington_prepack_856_missing_sln.edi')).first }
       let! (:order) {
         o = Factory(:order, order_number: "BURLI-641585114", importer: importer)
         ol = o.order_lines.create! product: product_1, quantity: 100

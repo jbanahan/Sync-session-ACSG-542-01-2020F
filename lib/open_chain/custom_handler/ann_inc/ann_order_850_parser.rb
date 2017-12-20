@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
   end
 
   def self.parse data, opts={}
-    REX12::Document.each_transaction(data) do |transaction|
+    REX12.each_transaction(StringIO.new(data)) do |transaction|
       self.delay.process_transaction(transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
     end
   end

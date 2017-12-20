@@ -17,7 +17,7 @@ module OpenChain; module EdiParserSupport
   # Yields all segments that contain the value in the position/segment specified.
   def with_qualified_segments segments, segment_type, segment_position, qualifier_value
     find_segments(segments, segment_type) do |seg|
-      if seg.elements[segment_position].try(:value) == qualifier_value
+      if seg[segment_position] == qualifier_value
         yield seg
       end
     end
@@ -29,8 +29,8 @@ module OpenChain; module EdiParserSupport
   def find_elements_by_qualifier segments, segment_type, qualifier, qualifier_position, value_position
     values = []
     with_qualified_segments(segments, segment_type, qualifier_position, qualifier) do |seg|
-      val = seg.elements[value_position]
-      values << val.value unless val.nil?
+      element = seg.element(value_position)
+      values << element.value unless element.nil?
     end
 
     values
@@ -86,7 +86,7 @@ module OpenChain; module EdiParserSupport
   # to each other.
   def find_segment_qualified_value segment, qualifier
     segment.elements.each_with_index do |el, i|
-      return segment.elements[i+1].try(:value) if el.value == qualifier
+      return segment[i+1] if el.value == qualifier
     end
 
     nil
@@ -98,8 +98,8 @@ module OpenChain; module EdiParserSupport
     segment_type, segment_position = *parse_edi_coordinate(edi_position)
     values = []
     find_segments(segments, segment_type) do |seg|
-      val = seg.elements[segment_position]
-      values << val.value unless val.nil?
+      element = seg.element(segment_position)
+      values << element.value unless element.nil?
     end
 
     values
@@ -118,8 +118,15 @@ module OpenChain; module EdiParserSupport
   def value segment, index
     return nil if segment.nil?
 
-    vals = Array.wrap(segment.elements[index]).map {|element| element.value }
+    segment_length = segment.elements.size
+    if index.is_a?(Range)
+      index = index.to_a
+    else
+      index = [index]
+    end
 
+    index = index.delete_if {|x| x >= segment_length }
+    vals = index.map {|i| segment[i] }
     vals.length > 1 ? vals : vals[0]
   end
 
@@ -151,7 +158,7 @@ module OpenChain; module EdiParserSupport
 
     values = []
     with_qualified_segments(segments, segment_type, segment_position, qualifier) do |seg|
-      date_element = seg.elements[2]
+      date_element = seg.element(2)
       next unless date_element
 
       date_value = date_element.value
@@ -297,7 +304,7 @@ module OpenChain; module EdiParserSupport
     loops = extract_loop(segments, ["N1", "N2", "N3", "N4", "PER"], stop_segments: stop_segments)
     return loops if qualifier.nil?
 
-    loops.find_all {|l| l.first.elements[1].try(:value) == qualifier }
+    loops.find_all {|l| l.first[1] == qualifier }
   end
 
   # This method attempts to assemble HL segements into a heirarchy using the HL01 (ID) and the
@@ -320,7 +327,7 @@ module OpenChain; module EdiParserSupport
           hl_entities[current_entity[:id]] = current_entity
         end
 
-        current_entity = {id: seg.elements[1].value, hl_level: seg.elements[3].value, hl_segment: seg, segments: [], hl_children: [], parent_id: seg.elements[2].value}
+        current_entity = {id: seg[1], hl_level: seg[3], hl_segment: seg, segments: [], hl_children: [], parent_id: seg[2]}
         hl_entities[current_entity[:id]] = current_entity
       elsif !current_entity.nil?
         current_entity[:segments] << seg
@@ -365,8 +372,8 @@ module OpenChain; module EdiParserSupport
     self.class.send_error_email transaction, error, parser_name, filename, to_address: to_address, include_backtrace: include_backtrace
   end
 
-  def write_transaction transaction, io, segment_terminator: "\n"
-    self.class.write_transaction(transaction, io, segment_terminator: segment_terminator)
+  def write_transaction transaction, io
+    self.class.write_transaction(transaction, io)
   end
 
   def parser_name
@@ -476,7 +483,7 @@ module OpenChain; module EdiParserSupport
   module ClassMethods
 
     def isa_code transaction
-      transaction.isa_segment.elements[13].value
+      transaction.isa_segment[13]
     end
 
     def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com", include_backtrace: true
@@ -497,20 +504,36 @@ module OpenChain; module EdiParserSupport
       end
     end
 
-    # This method exists mostly for error reporting reaons, it takes a REX12::Transaction and 
+    # This method exists mostly for error reporting reaons, it takes an REX12::Transaction and 
     # generates (pseudo) EDI from it.
-    def write_transaction transaction, io, segment_terminator: "\n"
-      io << transaction.isa_segment.value + segment_terminator
-      if transaction.gs_segment
-        io << transaction.gs_segment.value + segment_terminator
+    def write_transaction transaction, io
+      isa_segment = transaction.isa_segment
+      io << build_segment(isa_segment, isa_segment.element_delimiter)
+      io << isa_segment.segment_terminator
+      io << build_segment(transaction.gs_segment, isa_segment.element_delimiter)
+      transaction.segments.each do |segment|
+        io << isa_segment.segment_terminator
+        io << build_segment(segment, isa_segment.element_delimiter)
       end
-      transaction.segments.each {|s| io << s.value + segment_terminator }
-      io.flush
 
+      io.flush
       nil
     end
 
-    def parse data, opts={}
+    def build_segment segment, element_delimiter
+      elements = []
+      segment.elements.each do |el|
+        if el.sub_elements?
+          elements << el.sub_elements.to_a.map {|se| se.value }.join(el.sub_element_separator)
+        else
+          elements << el.value
+        end
+      end
+
+      elements.join(element_delimiter)
+    end
+
+    def parse raw_data, opts={}
       # What we want to do is only delay processing if there's more than one transaction.  Part of the reasoning
       # for this is that sometimes we get really large EDI transactions in a file and the system has trouble serializing those transactions.
       # Those files have never come multiple transactions to a file, so we can avoid the serialization issue just by processing them without
@@ -520,7 +543,7 @@ module OpenChain; module EdiParserSupport
       # are stored locally.  This way, at most, we store 2 transactions in memory.
       first_transaction = nil
       transaction_count = 0
-      REX12::Document.each_transaction(data) do |transaction|
+      REX12.each_transaction(StringIO.new(raw_data)) do |transaction|
         if transaction_count == 0
           first_transaction = transaction
         else

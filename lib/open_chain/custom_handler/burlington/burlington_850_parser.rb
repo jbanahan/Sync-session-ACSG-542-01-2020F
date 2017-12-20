@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   def self.parse data, opts={}
     user = User.integration
     parser = self.new
-    REX12::Document.each_transaction(data) do |transaction|
+    REX12.each_transaction(StringIO.new(data)) do |transaction|
       begin
         parser.process_order(user, transaction.segments, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
       rescue => e
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
   def process_order(user, edi_segments, last_file_bucket:, last_file_path:)
     beg_segment = find_segment(edi_segments, "BEG")
-    cancelled = (beg_segment.elements[1].value.to_i == 1)
+    cancelled = (beg_segment[1].to_i == 1)
 
     # We need to FIRST generate all the products referenced by this PO, this is done outside the main 
     # order transaction because of transactional race-conditions that occur when trying to create products
@@ -78,8 +78,8 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def find_or_create_order beg_segment, last_file_bucket, last_file_path
-    cust_order_number = beg_segment.elements[3].value
-    revision = beg_segment.elements[4].value.to_i
+    cust_order_number = beg_segment[3]
+    revision = beg_segment[4].to_i
 
     order_number = "BURLI-#{cust_order_number}"
     order = nil
@@ -110,12 +110,12 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
     beg_segment = find_segment(edi_segments, "BEG")
 
-    order.find_and_set_custom_value(cdefs[:ord_type], beg_segment.elements[2].value)
-    order.order_date = parse_dtm_date_value(beg_segment.elements[5].value).try(:to_date)
+    order.find_and_set_custom_value(cdefs[:ord_type], beg_segment[2])
+    order.order_date = parse_dtm_date_value(beg_segment[5]).try(:to_date)
 
     find_segment(edi_segments, "FOB") do |fob|
-      order.terms_of_payment = fob.elements[1].value
-      order.terms_of_sale = fob.elements[5].value
+      order.terms_of_payment = fob[1]
+      order.terms_of_sale = fob[5]
     end
     
     order.ship_window_start = find_date_value(edi_segments, "375").try(:to_date)
@@ -126,7 +126,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
     if forwarder_segments.try(:length) > 0
       # N1 will always be the first segment returned
-      order.find_and_set_custom_value(cdefs[:ord_planned_forwarder], forwarder_segments.first.elements[2].value)
+      order.find_and_set_custom_value(cdefs[:ord_planned_forwarder], forwarder_segments.first[2])
     end
 
     order
@@ -180,16 +180,16 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
   def process_standard_line order, product_cache, segments, department
     po1 = find_segment(segments, "PO1")
-    line_number = po1.elements[1].value.to_i
+    line_number = po1[1].to_i
     
     line = find_or_build_order_line order, line_number
     # Line may be nil if the line is already shipping...in that case
     # we do not update the lines
     return nil unless line
 
-    line.quantity = BigDecimal(po1.elements[2].value)
-    line.unit_of_measure = po1.elements[3].value
-    line.price_per_unit = BigDecimal(po1.elements[4].value)
+    line.quantity = BigDecimal(po1[2])
+    line.unit_of_measure = po1[3]
+    line.price_per_unit = BigDecimal(po1[4])
     style = find_segment_qualified_value(po1, "IT")
 
     line.product = product_cache[style]
@@ -205,11 +205,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     line.find_and_set_custom_value(cdefs[:ord_line_buyer_item_number], find_segment_qualified_value(po1, "IN"))
 
     find_segments(segments, "CTP") do |ctp|
-      case ctp.elements[2].value
+      case ctp[2]
       when "ELC"
-        line.find_and_set_custom_value(cdefs[:ord_line_estimated_unit_landing_cost], BigDecimal(ctp.elements[3].value))
+        line.find_and_set_custom_value(cdefs[:ord_line_estimated_unit_landing_cost], BigDecimal(ctp[3]))
       when "RTL"
-        line.find_and_set_custom_value(cdefs[:ord_line_retail_unit_price], BigDecimal(ctp.elements[3].value))
+        line.find_and_set_custom_value(cdefs[:ord_line_retail_unit_price], BigDecimal(ctp[3]))
       end
     end
 
@@ -218,7 +218,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
   def process_prepack_lines order, product_cache, segments, department
     po1 = find_segment(segments, "PO1")
-    line_number = po1.elements[1].value.to_i
+    line_number = po1[1].to_i
     sublines = extract_loop(segments, ["SLN", "TC2", "CTP"])
 
     lines = []
@@ -227,7 +227,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       # We're going to make the line number a function of the max number of possible sublines (according to the edi spec, which is 1000)
       sln = find_segment(subline_segments, "SLN")
 
-      subline_number = (line_number*1000) + sln.elements[1].value.to_i
+      subline_number = (line_number*1000) + sln[1].to_i
 
       line = find_or_build_order_line order, subline_number
       next if line.nil?
@@ -235,10 +235,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       # In this case, the po1 line is the outer pack quantity and the sln is the # of units per the inner pack
       # (Think of a bag with a bunch of inner bags in it, with each inner bag having a couple items in them)
       # For the PO quantity, we want to know the total # of units that ordered
-      order_quantity = BigDecimal(po1.elements[2].value)
-      prepack_quantity = BigDecimal(sln.elements[4].value)
+      order_quantity = BigDecimal(po1[2])
+      prepack_quantity = BigDecimal(sln[4])
       line.quantity = order_quantity * prepack_quantity
-      line.price_per_unit = BigDecimal(sln.elements[6].value)
+      line.price_per_unit = BigDecimal(sln[6])
       # Even though technically the UOM on the PO isn't eaches, since we're exploding the prepacks into
       # individual lines and then showing the quantities as the total prepack quantity, technically we're
       # showing them as eaches now, so code this to EA.
@@ -258,11 +258,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
 
       find_segments(subline_segments, "CTP") do |ctp|
-        case ctp.elements[2].value
+        case ctp[2]
         when "ELC"
-          line.find_and_set_custom_value(cdefs[:ord_line_estimated_unit_landing_cost], BigDecimal(ctp.elements[3].value))
+          line.find_and_set_custom_value(cdefs[:ord_line_estimated_unit_landing_cost], BigDecimal(ctp[3]))
         when "RTL"
-          line.find_and_set_custom_value(cdefs[:ord_line_retail_unit_price], BigDecimal(ctp.elements[3].value))
+          line.find_and_set_custom_value(cdefs[:ord_line_retail_unit_price], BigDecimal(ctp[3]))
         end
       end
 
@@ -327,7 +327,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     description = find_segment_qualified_value(style_segment, "PU").to_s.strip
 
     # In order to keep the tariffs in a consistent order if we have multiple ones (.ie sets), sort them.
-    hts_values = Array.wrap(hts_segments).map {|v| v.elements[2].value.to_s.gsub(".", "") }.sort
+    hts_values = Array.wrap(hts_segments).map {|v| v[2].to_s.gsub(".", "") }.sort
 
     product = nil
     unique_identifier = "BURLI-#{style}"
@@ -383,7 +383,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def prepack? po1_segment
-    po1_segment.elements[3].value.to_s.upcase == "AS"
+    po1_segment[3].to_s.upcase == "AS"
   end
 
   def process_file? order, file_revision

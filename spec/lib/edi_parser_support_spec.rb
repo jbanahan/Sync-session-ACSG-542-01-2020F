@@ -8,11 +8,11 @@ describe OpenChain::EdiParserSupport do
   let (:file_path) { 'spec/support/bin/ascena_apll_856.txt' }
 
   let (:segments) {
-    REX12::Document.read file_path
+    REX12.each_segment(file_path).to_a
   }
 
   let (:first_transaction) {
-    REX12::Document.each_transaction(IO.read(file_path)).first
+    REX12.each_transaction(file_path).first
   }
 
   let (:first_transaction_segments) {
@@ -53,7 +53,7 @@ describe OpenChain::EdiParserSupport do
       segs = subject.find_segments_by_qualifier(segments, "ST01", "856")
       expect(segs.length).to eq 9
       # THis is mostly just to ensure that the return value we get is as expected
-      expect(segs.map {|s| s.elements[1].value }.uniq).to eq ["856"]
+      expect(segs.map {|s| s[1] }.uniq).to eq ["856"]
     end
 
     it "doesn't fail if edi position doesn't exist" do
@@ -186,21 +186,21 @@ describe OpenChain::EdiParserSupport do
     it "finds all segments matching the given segment type" do
       segs = subject.find_segments segments, "GS"
       expect(segs.length).to eq 1
-      expect(segs.first.elements[0].value).to eq "GS"
+      expect(segs.first[0]).to eq "GS"
     end
 
     it "finds all segments matching the given segment types" do
       segs = subject.find_segments segments, "GS", "GE"
       expect(segs.length).to eq 2
-      expect(segs.first.elements[0].value).to eq "GS"
-      expect(segs.second.elements[0].value).to eq "GE"
+      expect(segs.first[0]).to eq "GS"
+      expect(segs.second[0]).to eq "GE"
     end
 
     it "yields matching segments" do
       vals = []
       expect(subject.find_segments(segments, "GS") {|s| vals << s} ).to be_nil
       expect(vals.length).to eq 1
-      expect(vals.first.elements[0].value).to eq "GS"
+      expect(vals.first[0]).to eq "GS"
     end
   end
 
@@ -218,7 +218,7 @@ describe OpenChain::EdiParserSupport do
 
     # Use the burlington po edi for this as it's more succint, and actually uncovered
     # a bug in the looping.
-    let (:segments) { REX12::Document.read 'spec/fixtures/files/burlington_850_standard.edi'}
+    let (:segments) { REX12.each_segment('spec/fixtures/files/burlington_850_standard.edi').to_a}
 
     it "extracts all described loops from given segments" do
       loops = subject.extract_loop segments, ["N1", "N2", "N3", "N4", "PER"]
@@ -239,8 +239,8 @@ describe OpenChain::EdiParserSupport do
       loops = subject.extract_loop segments, ["PER"], stop_segments: "FOB"
 
       expect(loops.size).to eq 2
-      expect(loops[0][0].elements[1].value).to eq "BD"
-      expect(loops[1][0].elements[1].value).to eq "AA"
+      expect(loops[0][0][1]).to eq "BD"
+      expect(loops[1][0][1]).to eq "AA"
     end
 
     it "allows for multiple stop segments" do 
@@ -253,7 +253,7 @@ describe OpenChain::EdiParserSupport do
 
   describe "find_segment_qualified_value" do
 
-    let (:segment) { REX12::Segment.new "SLN|1||I|3|EA|10.75|WE||IN|14734100|IT|87027|BO|QIXELS|IZ|QTY|PU|QIXELS S3 KINGDOM WEAPON|BL|QIXELS|VA|87027|VE|QIXELS|SZ|QTY", "|", "~", 1 }
+    let (:segment) { REX12::Segment.new([REX12::Element.new("SLN", 0), REX12::Element.new("1", 1), REX12::Element.new("IT", 0), REX12::Element.new("87027", 1)], 1) }
 
     it "returns the qualfied element's value" do
       expect(subject.find_segment_qualified_value(segment, "IT")).to eq "87027"
@@ -269,14 +269,14 @@ describe OpenChain::EdiParserSupport do
     it "returns the expected segment" do
       seg = subject.find_segment segments, "ST"
       expect(seg).not_to be_nil
-      expect(seg.elements[2].value).to eq "0001"
+      expect(seg[2]).to eq "0001"
     end
 
     it "yields the expected segment" do
       seg = nil
       expect(subject.find_segment(segments, "ST") {|s| seg = s }).to be_nil
       expect(seg).not_to be_nil
-      expect(seg.elements[2].value).to eq "0001"
+      expect(seg[2]).to eq "0001"
     end
 
     it "returns nil if segment is not found" do
@@ -288,7 +288,7 @@ describe OpenChain::EdiParserSupport do
 
     let (:order_segment) {
       loops = subject.extract_loop(first_transaction_segments, ["HL", "PRF", "PO4", "N1", "N2", "N3", "N4", "PER"])
-      loops.find {|l| l.first.elements[3].value == "O"}
+      loops.find {|l| l.first[3] == "O"}
     }
 
     it "extracts all n1 segments" do
@@ -309,7 +309,7 @@ describe OpenChain::EdiParserSupport do
       expect(n1.length).to eq 1
 
       expect(n1.first.length).to eq 3
-      expect(n1.first.first.elements[1].value).to eq "TE"
+      expect(n1.first.first[1]).to eq "TE"
     end
 
     it "returns blank array if nothing found" do
@@ -329,25 +329,9 @@ describe OpenChain::EdiParserSupport do
       subject.write_transaction first_transaction, io
       io.rewind
 
-      transactions = REX12::Document.each_transaction(io.read)
+      transactions = REX12.each_transaction(io).to_a
       expect(transactions.length).to eq 1
       expect(transactions.first.segments.length).to eq first_transaction.segments.length
-    end
-
-    it "allows for alternate segment terminators" do
-      io = StringIO.new
-      subject.write_transaction first_transaction, io, segment_terminator: "^"
-      io.rewind
-      data = io.read
-
-      transactions = REX12::Document.each_transaction(data)
-      expect(transactions.length).to eq 1
-      expect(transactions.first.segments.length).to eq first_transaction.segments.length
-
-      # So, read up to the first segment terminator from the data we read and make sure its the exact
-      # same values as those in our original transaction
-      data =~ /(.*?)\^/
-      expect($1).to eq first_transaction.isa_segment.value
     end
   end
 
@@ -397,7 +381,7 @@ describe OpenChain::EdiParserSupport do
 
   describe "extract_hl_loops" do
     let (:file_path) { 'spec/fixtures/files/burlington_856.edi' }
-    let (:segments) { REX12::Document.read file_path }
+    let (:segments) { REX12.each_segment(file_path).to_a }
 
     it "creates hl heirarchy structure" do
       heirarchy = subject.extract_hl_loops segments
@@ -656,7 +640,7 @@ describe OpenChain::EdiParserSupport do
       address = h[:address]
 
       expect(address).not_to be_nil
-     expect(address.line_1).to eq "17/F SOUTH ASIS BLDG"
+      expect(address.line_1).to eq "17/F SOUTH ASIS BLDG"
       expect(address.line_2).to eq "108 HOW MING STREET"
       expect(address.city).to eq "City"
       expect(address.state).to eq "State"

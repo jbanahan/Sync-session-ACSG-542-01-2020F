@@ -201,7 +201,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
   describe "update_standard_product" do
     let (:edi_segments) {
-      REX12::Document.each_transaction(standard_data) { |t| return t.segments }
+      REX12.each_transaction(StringIO.new(standard_data)) { |t| return t.segments }
     }
 
     let (:po1_segment) {

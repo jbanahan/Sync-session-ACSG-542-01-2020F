@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
       
       subject { FakeStandard850Parser.new }
 
-      let (:transaction) { REX12::Document.each_transaction(standard_transaction_data).first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(standard_transaction_data)).first }
 
       it "parses a standard 850" do
         subject.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
       end
 
       it "handles cancelled orders" do
-        t = REX12::Document.each_transaction(standard_transaction_data.gsub("BEG*07*", "BEG*01*")).first
+        t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*", "BEG*01*"))).first
 
         subject.process_transaction(user, t, last_file_bucket: "bucket", last_file_path: "path")
 
@@ -177,12 +177,12 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
     context "with configuration changes" do
 
       subject { FakeStandard850Parser }
-      let (:transaction) { REX12::Document.each_transaction(standard_transaction_data).first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(standard_transaction_data)).first }
 
       it "allows for different cancellation codes" do
         expect(subject).to receive(:configuration).and_return({canceled_order_transmission_code: 10})
 
-        t = REX12::Document.each_transaction(standard_transaction_data.gsub("BEG*07*", "BEG*10*")).first
+        t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*", "BEG*10*"))).first
 
         subject.new.process_transaction(user, t, last_file_bucket: "bucket", last_file_path: "path")
 
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
           expect(subject).to receive(:configuration).and_return({track_order_by: :revision})
           parser = subject.new
 
-          t = REX12::Document.each_transaction(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202")).first
+          t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202"))).first
        
           parser.process_transaction(user, t, last_file_bucket: "bucket", last_file_path: "path")
 
@@ -239,7 +239,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
           parser = subject.new
           importer = parser.importer
 
-          t = REX12::Document.each_transaction(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202")).first
+          t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202"))).first
        
           order = Order.create!(importer_id: importer.id, order_number: "Test-5086819")
           order.update_custom_value! parser.cdefs[:ord_revision], 10
@@ -258,7 +258,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
     context "with prepack order lines" do
       subject { FakePrepack850Parser.new }
 
-      let (:transaction) { REX12::Document.each_transaction(prepack_transaction_data).first }
+      let (:transaction) { REX12.each_transaction(StringIO.new(prepack_transaction_data)).first }
 
       it "parses an 850 that has prepack lines, without exploding the lines" do
         subject.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")
@@ -385,7 +385,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
 
   describe "find_or_create_company_from_n1_data" do
     subject { FakeStandard850Parser.new }
-    let (:transaction) { REX12::Document.each_transaction(standard_transaction_data).first }
+    let (:transaction) { REX12.each_transaction(StringIO.new(standard_transaction_data)).first }
     let (:n1_loop) { subject.extract_n1_loops(transaction.segments, qualifier: "ST").first }
     let (:n1_data) { subject.extract_n1_entity_data n1_loop }
     let! (:us) { Factory(:country, iso_code: "US") }
