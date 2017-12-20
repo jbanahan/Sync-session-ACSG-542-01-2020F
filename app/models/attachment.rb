@@ -3,6 +3,9 @@ require 'open_chain/s3'
 
 class Attachment < ActiveRecord::Base
   has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
+  # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
+  # at all, so this disables that validation.
+  do_not_validate_attachment_file_type :attached
   before_create :sanitize
   before_post_process :no_post
 

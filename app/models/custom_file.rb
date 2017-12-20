@@ -30,8 +30,10 @@ class CustomFile < ActiveRecord::Base
   has_many :linked_objects, :through => :custom_file_records
   has_many :search_runs
   belongs_to :uploaded_by, :class_name=>'User'
-  has_attached_file :attached,
-    :path => ":master_setup_uuid/custom_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+  has_attached_file :attached, path: ":master_setup_uuid/custom_file/:id/:filename"
+  # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
+  # at all, so this disables that validation.
+  do_not_validate_attachment_file_type :attached
   before_create :sanitize
   before_post_process :no_post
 

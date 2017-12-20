@@ -466,13 +466,10 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(tmp_content[2][0]).to eq("3221691177NY")
     end
     it "should FTP acknowledgement file" do
-      @tmp = File.new('spec/support/tmp/abc.csv','w')
-      @tmp << 'ABC'
-      @tmp.flush
-      expect(@h).to receive(:send_file).with(@tmp,'abc-ack.csv')
-      @h.send_and_delete_ack_file @tmp, 'abc.csv'
-      expect(File.exists?(@tmp.path)).to be_falsey
-      @tmp = nil
+      file = instance_double(File)
+      expect(@h).to receive(:send_file).with(file, 'abc-ack.csv')
+      expect(File).to receive(:delete).with file
+      @h.send_and_delete_ack_file file, 'abc.csv'
     end
   end
 

@@ -378,6 +378,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       @user = Factory(:user, username: 'rbjork')
       @f = Tempfile.new ['file', '.txt']
       @f << "content"
+      @f.flush
+      @f.rewind
       Attachment.add_original_filename_method @f
       @f.original_filename = "file.txt"
     end

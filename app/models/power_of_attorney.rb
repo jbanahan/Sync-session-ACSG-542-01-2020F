@@ -5,6 +5,9 @@ class PowerOfAttorney < ActiveRecord::Base
   belongs_to :user, :foreign_key => :uploaded_by, :class_name => "User"
 
   has_attached_file :attachment, :path => ":master_setup_uuid/power_of_attorney/:id/:filename"
+  # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
+  # at all, so this disables that validation.
+  do_not_validate_attachment_file_type :attachment
 
   validates_attachment_presence :attachment
   validates :user, :presence => true

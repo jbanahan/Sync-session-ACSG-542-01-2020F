@@ -6,13 +6,13 @@ gem 'sqlite3'
 gem 'aws-sdk', '~> 2.6'
 # Handles AWS SNS posts
 gem 'heroic-sns', '~> 1.1'
-gem 'will_paginate', '3.0.4'
+gem 'will_paginate', '3.1.6'
 # AWS SDK V1 is ONLY needed for Paperclip - all of our code should be using v2
 # Paperclip v5 added support for aws-sdk V2 - v5 only supports rails >= 4.2 (not the 3 series)
 gem 'aws-sdk-v1', '~> 1.66'
-gem 'paperclip', '3.5.1'
+gem 'paperclip', '4.3.7'
 gem 'uuidtools', '2.1.4'
-gem 'spreadsheet', '~> 1.0'
+gem 'spreadsheet', '1.1.5'
 gem 'exception_notification', '4.0.0'
 gem 'rufus-scheduler', '2.0.24'
 gem 'delayed_job_active_record', '0.4.4'
@@ -23,7 +23,7 @@ gem 'dalli', '2.6.4'
 gem 'dalli-elasticache', '~> 0.2'
 gem 'postmark-rails', '0.5.2'
 gem 'rubyzip', '~> 1.1'
-gem 'jquery-rails', '2.3.0'
+gem 'jquery-rails', '~> 3.1.3'
 gem 'newrelic_rpm', '~> 3.16.0'
 
 #text processing/encoding stuff
