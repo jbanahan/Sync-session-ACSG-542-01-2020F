@@ -219,6 +219,12 @@ class Order < ActiveRecord::Base
 	  return r
 	end
 
+  def related_bookings
+    r = Set.new
+    self.booking_lines.each { |line| r.add line.shipment }
+    return r
+  end
+
   # useful order number to show to user
   def display_order_number
     return self.customer_order_number unless self.customer_order_number.blank?

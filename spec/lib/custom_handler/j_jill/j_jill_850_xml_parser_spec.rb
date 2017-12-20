@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
+
   describe "parse" do
     before :each do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return true
@@ -172,59 +173,86 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       o.reload
       expect(o.custom_value(cdefs[:ord_original_gac_date])).to eq Date.new(2014,12,25)
     end
-    it "should not update order already on a shipment" do
-      u = 3.days.ago
-      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',updated_at:u)
-      ol = Factory(:order_line,order:o)
-      s = Factory(:shipment)
-      sl = s.shipment_lines.build(product_id:ol.product_id,quantity:1)
-      sl.linked_order_line_id = ol.id
-      sl.save!
+    context "notifications" do
+      let(:u)   { 3.days.ago }
+      let(:o)   { Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',fob_point: "PK", updated_at:u, approval_status: "Accepted") }
+      let(:ol)  { Factory(:order_line,order:o,sku:"SKU") }
+      let(:s)   { Factory(:shipment, reference: "REF1", booking_mode: "Air") }
+      let(:bl)  { s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id) }
+      let(:s2)  { Factory(:shipment, reference: "REF2") }
+      let(:bl2) { s2.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id) }
 
-      run_file
-      o.reload
-      expect(o.order_lines.to_a).to eq [ol]
-      expect(o.updated_at.to_i).to eq u.to_i
+      it "doesn't update order assigned to multiple bookings" do
+        bl; bl2
 
-      m = OpenMailer.deliveries.pop
-      expect(m).not_to be_nil
-      expect(m.to).to eq ["jjill_orders@vandegriftinc.com"]
-      expect(m.subject).to eq "[VFI Track] Order #1001368 already assigned to a Shipment"
+        run_file
+        o.reload
+        expect(o.order_lines.to_a).to eq [ol]
+        expect(o.fob_point).to eq "PK"
+        expect(o.updated_at.to_i).to eq u.to_i
 
-    end
-    it "should update order header when force_header_updates = true and order on shipment" do
-      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
-      ol = Factory(:order_line,order:o)
-      s = Factory(:shipment)
-      sl = s.shipment_lines.build(product_id:ol.product_id,quantity:1)
-      sl.linked_order_line_id = ol.id
-      sl.save!
+        m = OpenMailer.deliveries.pop
+        expect(m).not_to be_nil
+        expect(m.to).to eq ["jjill_orders@vandegriftinc.com"]
+        expect(m.subject).to eq "[VFI Track] Revisions to JJill Purchase Order 1001368 were Rejected."
+        expect(m.body.raw_source).to match(/Revisions for PO 1001368 was rejected because the Purchase Order exists on multiple Shipments: REF1, REF2/)
+      end
+      it "doesn't update shipped order" do
+        bl
+        s.shipment_lines.create!(product:ol.product,quantity:1,linked_order_line_id: ol.id)
+        
+        run_file
+        o.reload
+        expect(o.order_lines.to_a).to eq [ol]
+        expect(o.fob_point).to eq "PK"
+        expect(o.updated_at.to_i).to eq u.to_i
 
-      run_file force_header_updates:true
+        m = OpenMailer.deliveries.pop
+        expect(m).not_to be_nil
+        expect(m.to).to eq ["jjill_orders@vandegriftinc.com"]
+        expect(m.subject).to eq "[VFI Track] Revisions to JJill Purchase Order 1001368 were Rejected."
+        expect(m.body.raw_source).to match(/Revisions for PO 1001368 were rejected because the Shipment REF1 was already shipped./)
+      end
+      it "sends warning if revised order mode and booking mode don't match" do
+        bl
 
-      o.reload
-      expect(o.order_lines.to_a).to eq [ol]
-      expect(o.fob_point).to eq 'CN'
+        run_file
+        o.reload
+        expect(o.order_lines.first.sku).to eq "SKU"
+        expect(o.mode).to eq "Ocean"
+        expect(o.approval_status).to be_nil
+      
+        m = OpenMailer.deliveries.pop
+        expect(m).not_to be_nil
+        expect(m.to).to eq ["jjill_orders@vandegriftinc.com"]
+        expect(m.subject).to eq "[VFI Track] Mode of Transport Discrepancy for PO 1001368 and Shipment REF1"
+        expect(m.body.raw_source).to match(/The Mode of Transport for PO 1001368 does not match the Booked Mode of Transport for Shipment REF1/)
+      end
+      it "matches only first part of the booking mode to the revised order mode" do
+        bl
+        s.update_attributes! booking_mode: "OCEAN - FCL"
 
-      m = OpenMailer.deliveries.pop
-      expect(m).not_to be_nil
-    end
+        run_file
+        o.reload
+        expect(o.order_lines.first.sku).to eq "SKU"
+        expect(o.mode).to eq "Ocean"
+        expect(o.approval_status).to eq "Accepted"
+      
+        m = OpenMailer.deliveries.pop
+        expect(m).to be_nil
+      end
+      it "should update order header when force_header_updates = true and order on shipment" do
+        s.shipment_lines.create!(product:ol.product,quantity:1,linked_order_line_id:ol.id)
 
-    it "updates only an order header when order is booked but not shipped" do
-      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
-      ol = Factory(:order_line,order:o)
-      s = Factory(:shipment)
-      bl = s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
-    
-      run_file
+        run_file force_header_updates:true
 
-      o.reload
-      expect(o.order_lines.to_a).to eq [ol]
-      expect(o.fob_point).to eq 'CN'
+        o.reload
+        expect(o.order_lines.to_a).to eq [ol]
+        expect(o.fob_point).to eq 'CN'
 
-      # No email should be sent in this case
-      m = OpenMailer.deliveries.pop
-      expect(m).to be_nil
+        m = OpenMailer.deliveries.pop
+        expect(m).not_to be_nil
+      end
     end
   end
 end

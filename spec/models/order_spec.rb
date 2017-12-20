@@ -569,4 +569,18 @@ describe Order do
       expect(order.booked_qty).to eq 0
     end
   end
+
+  describe "related_bookings" do
+    it "returns booked shipments associated with order" do
+      o = Factory(:order)
+      s1 = Factory(:shipment, reference: "ref")
+      ol1 = Factory(:order_line, order: o)
+      bl1 = Factory(:booking_line, shipment: s1, order_line: ol1)
+      s2 = Factory(:shipment, reference: "ref2")
+      ol2 = Factory(:order_line, order: o)
+      bl2 = Factory(:booking_line, shipment: s2, order_line: ol2)
+
+      expect(o.related_bookings).to eq Set.new([s1, s2])
+    end
+  end
 end

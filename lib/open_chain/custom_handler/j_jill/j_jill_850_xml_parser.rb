@@ -46,21 +46,25 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     Lock.acquire(ord_num) do
       ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
-
+        
       update_lines = true
       update_header = true
       po_assigned_to_shipment = false
       
+      if ord
+        shp_refs = ord.booking_lines.map{ |bl| bl.try(:shipment).try(:reference) }.compact.uniq
+        multiple_bookings = shp_refs.count > 1
+        booked = ord.booked?
+        shipped = ord.shipping?
+      end
       # If an order is booked or shipping we can't update the lines, this is because we don't
       # get indempotent line numbers from Jill on the 850 (we actually just autogenerate them here).
       # Therefore, we have no way to know if lines were removed / added on a transfer and end up just deleting
       # and recreating the lines that were sent, and we could
       # end up essentially trashing a booking or shipment by deleting an order line it references.
-      booked = ord && ord.booked?
-      shipped = ord && ord.shipping?
       if booked || shipped
         # Allow updates to orders if they're booked but not shipped
-        update_header = (@inner_opts[:force_header_updates] == true || booked)
+        update_header = (@inner_opts[:force_header_updates] == true || (booked && !shipped && shp_refs.count <= 1))
         update_lines = false
         po_assigned_to_shipment = true if shipped
       end
@@ -90,13 +94,20 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         update_line_custom_values ord
       end
 
-      if po_assigned_to_shipment
-        message = "Order ##{cust_ord} already assigned to a Shipment"
-        OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{message}", message).deliver!
+      if multiple_bookings
+        notify_about_multiple_shipments cust_ord, shp_refs
+      elsif po_assigned_to_shipment
+        notify_about_shipped_po cust_ord, ord.related_shipments.first.reference
       elsif cancel && !ord.closed?
         ord.close! @user
       elsif !cancel && ord.closed?
         ord.reopen! @user
+      end
+
+      transport_mode_diff = !compare_transport_modes(shp_refs.first, order_root) if shp_refs && shp_refs.present?
+      if !po_assigned_to_shipment && !multiple_bookings && transport_mode_diff
+        ord.unaccept! @user if ord.approval_status = 'Accepted'
+        notify_about_transport_mode_diff(cust_ord, ord.related_bookings.first.reference) 
       end
 
       fingerprint = generate_order_fingerprint ord
@@ -106,12 +117,39 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
       elsif fingerprint!=fp
         ord.post_update_logic! @user
-        if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
+        # We've already rejected changes if shipped or multiple bookings found
+        if (!po_assigned_to_shipment && !multiple_bookings) && ord.approval_status == 'Accepted'
           ord.unaccept! @user
         end
         DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
       end
     end
+  end
+
+  def notify_about_multiple_shipments cust_ord, shp_refs
+    subject = "Revisions to JJill Purchase Order #{cust_ord} were Rejected."
+    message = "Revisions for PO #{cust_ord} was rejected because the Purchase Order exists on multiple Shipments: #{shp_refs.join(", ")}"
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!  
+  end
+
+  def notify_about_shipped_po cust_ord, shp_ref
+    subject = "Revisions to JJill Purchase Order #{cust_ord} were Rejected."
+    message = "Revisions for PO #{cust_ord} were rejected because the Shipment #{shp_ref} was already shipped."
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!
+  end
+
+  def notify_about_transport_mode_diff cust_ord, shp_ref
+    subject = "Mode of Transport Discrepancy for PO #{cust_ord} and Shipment #{shp_ref}"
+    message = "The Mode of Transport for PO #{cust_ord} does not match the Booked Mode of Transport for Shipment #{shp_ref}"
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!
+  end
+
+  def compare_transport_modes shp_ref, order_root
+    order_transport_mode = ship_mode(REXML::XPath.first(order_root,'TD5/TD504').text).upcase
+    booking_mode = Shipment.where(reference: shp_ref).first.booking_mode
+    #Many of these are hyphenated, e.g. "Ocean - FCL". Return "OCEAN"
+    normalized_booking_mode = /\w+(?=\W)*/.match(booking_mode)[0].upcase if booking_mode
+    order_transport_mode == normalized_booking_mode
   end
 
   def update_order_header ord, extract_date, cust_ord, order_root
