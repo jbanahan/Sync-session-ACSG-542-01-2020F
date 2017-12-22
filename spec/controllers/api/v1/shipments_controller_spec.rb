@@ -333,12 +333,13 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['Attachment not linked to Shipment.']
     end
-    it "should fail if AttachmentProcessJob already exists" do
+    it "should fail if AttachmentProcessJob already exists and doesn't have an error" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-      @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
+      apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['This manifest has already been submitted for processing.']
+      expect(apj.error_message).to be_nil
     end
     it "should process job" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
@@ -352,6 +353,26 @@ describe Api::V1::ShipmentsController do
       expect(aj.user).to eq @u
       expect(aj.start_at).to_not be_nil
       expect(aj.job_name).to eq 'Tradecard Pack Manifest'
+    end
+    context "error reporting" do
+      before do
+        allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
+      end
+
+      it "logs exception" do
+        expect_any_instance_of(AttachmentProcessJob).to receive(:process).and_raise "Failed to process!"
+        post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}
+        expect(JSON.parse(response.body)['errors']).to eq ['Failed to process!']
+        expect(AttachmentProcessJob.first.error_message).to eq 'Failed to process!'
+      end
+
+      it "clears log on retry if it doesn't contain 'already submitted' error" do
+        apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,error_message:"ERROR",job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
+        expect_any_instance_of(AttachmentProcessJob).to receive(:process)
+        post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}
+        apj.reload
+        expect(apj.error_message).to be_nil
+      end
     end
   end
   describe "create" do

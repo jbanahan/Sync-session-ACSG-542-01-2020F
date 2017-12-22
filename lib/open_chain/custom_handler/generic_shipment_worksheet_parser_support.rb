@@ -1,20 +1,21 @@
 require 'open_chain/xl_client'
 require 'open_chain/custom_handler/custom_file_csv_excel_parser'
+require 'open_chain/custom_handler/shipment_parser_support'
 
 module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSupport
   extend ActiveSupport::Concern
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
+  include OpenChain::CustomHandler::ShipmentParserSupport
 
   module ClassMethods
     def process_attachment(shipment, attachment, user, opts = {})
-      # Just swallow the opts if the initializer doesn't have any parameters
-      if self.instance_method(:initialize).arity != 0
-        self.new(opts).process_attachment(shipment, attachment, user)
-      else
-        self.new.process_attachment(shipment, attachment, user)
-      end
-      
+      self.new(opts).process_attachment(shipment, attachment, user)
     end
+  end
+
+  # sub-class must return :manifest or :bookings
+  def parser_type
+    raise "This method must be overridden."
   end
 
   def process_attachment(shipment, attachment, user) 
@@ -79,12 +80,24 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
       shipment_lines(rows) do |row|
         add_line_data shipment, row, (line_number += 1)
       end
+      check_orders(shipment.reference) if @check_orders
       shipment.save!
       # This is techincally done from the front-end (.ie files are processed as part of the request cycle).
       # So make sure the snapshot is done asyncronously.
       shipment.create_async_snapshot user
     end
-  end  
+  end
+
+  def check_orders reference
+    case parser_type
+    when :manifest
+      orders_on_multi_manifests(@order_cache.values.map(&:order_number), reference)
+    when :bookings
+      orders_on_multi_bookings(@order_cache.values.map(&:order_number), reference)
+    else
+      raise "Parser-type not assigned."
+    end
+  end 
 
   def shipment_lines(rows) 
     cursor = file_layout[:header_row]

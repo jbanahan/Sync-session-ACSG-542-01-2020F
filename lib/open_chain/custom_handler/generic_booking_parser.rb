@@ -5,6 +5,14 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   include OpenChain::CustomHandler::GenericShipmentWorksheetParserSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
+  def initialize opts = {}
+    @check_orders = opts[:check_orders]
+  end
+
+  def parser_type
+    :bookings
+  end
+
   ##
   # The highest line number of all a shipment's booking lines
   # @param [Shipment] shipment
@@ -62,7 +70,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
     # order line for an importer and SKU combination if there was no PO, but this was removed in Sep 2017.  Per JH,
     # that logic was "flat out wrong and bad."
     if !po.blank?
-      order = find_order shipment, po, error_if_not_found: false
+      order = find_order shipment, po, error_if_not_found: true
       if order
         sku = text_value row[file_layout[:sku_column]]
         style = text_value row[file_layout[:style_no_column]]

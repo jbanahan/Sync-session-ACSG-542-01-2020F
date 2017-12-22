@@ -38,7 +38,8 @@ describe Api::V1::SupportRequestsController do
 
     it "rolls back save if error occurs in sending" do
       expect_any_instance_of(SupportRequest::TestingSender).to receive(:send_request).and_raise "Error!"
-      expect {post :create, support_request: {body: "Help!", importance: "Critical"}}.to raise_error(/Error/)
+      post :create, support_request: {body: "Help!", importance: "Critical"}
+      expect(JSON.parse(response.body)).to eq("errors"=>["Error!"])
 
       expect(response).not_to be_success
 

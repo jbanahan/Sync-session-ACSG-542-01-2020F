@@ -5,14 +5,14 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 describe OpenChain::CustomHandler::GenericBookingParser do
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  describe 'with valid data' do
+  context 'with valid data' do
     let!(:importer) { FactoryGirl.create :company, importer:true, system_code:'SYSTEM'}
     let!(:product) { FactoryGirl.create :product, unique_identifier:"#{importer.system_code}-WPT028533"}
     let!(:shipment) { FactoryGirl.create(:shipment, importer_id:importer.id) }
-    let!(:first_order) { FactoryGirl.create :order, customer_order_number: 1502377, importer_id:importer.id }
-    let!(:second_order) { FactoryGirl.create :order, customer_order_number: 1502396, importer_id:importer.id }
-    let!(:third_order) { FactoryGirl.create :order, customer_order_number: 1502397, importer_id:importer.id }
-    let!(:fourth_order) { FactoryGirl.create :order, customer_order_number: 1502398, importer_id:importer.id }
+    let!(:first_order) { FactoryGirl.create :order, order_number: 2502377, customer_order_number: 1502377, importer_id:importer.id }
+    let!(:second_order) { FactoryGirl.create :order, order_number: 2502396, customer_order_number: 1502396, importer_id:importer.id }
+    let!(:third_order) { FactoryGirl.create :order, order_number: 2502397, customer_order_number: 1502397, importer_id:importer.id }
+    let!(:fourth_order) { FactoryGirl.create :order, order_number: 2502398, customer_order_number: 1502398, importer_id:importer.id }
     let!(:order_lines) { [FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248678), FactoryGirl.create(:order_line, order_id: first_order.id, sku: 32248654), FactoryGirl.create(:order_line, order_id: second_order.id, sku: 32248838)]}
     let!(:user) { FactoryGirl.create(:master_user, shipment_edit: true, shipment_view: true) }
     let(:form_data) { StandardBookingFormSpecData.form_lines }
@@ -104,9 +104,22 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       expect(shipment.mode).to eq "Ocean - LCL"
       expect(shipment.booking_mode).to eq "Ocean - LCL"
     end
+
+    it "fails when order belongs to another shipment if check_orders provided in constructor options" do
+      ol = first_order.order_lines.first
+      Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
+      
+      expect{described_class.new(check_orders: true).process_rows shipment, form_data, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"1502377":["2nd shipment"]}'
+    end
+
+    it "throws exception if data contains unmatched order" do
+      first_order.update_attributes! customer_order_number: "foo"
+      expect{subject.process_rows shipment, form_data, user}.to raise_error "Order Number 1502377 not found."
+      expect(BookingLine.count).to eq 0
+    end
   end
 
-  describe 'with incomplete data' do
+  context 'with incomplete data' do
     let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
     let(:importer) { Factory(:importer) }
     let(:shipment) { FactoryGirl.build :shipment, importer_id:importer.id }

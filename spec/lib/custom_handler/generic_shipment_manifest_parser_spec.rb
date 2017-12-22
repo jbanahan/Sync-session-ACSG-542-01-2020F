@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       add_row_data rows, 28, 8, "Mode"
       add_row_data rows, 35, 0, "Marks And Numbers"
 
-      add_details_row rows, 35, 2, ["PONumber", "Style", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["CustOrdNum", "Style", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
       rows
     }
     let(:cdefs) { self.class.prep_custom_definitions([:prod_part_number]) }
@@ -40,8 +40,8 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       p
     }
 
-    let (:order) {
-      o = Factory(:order, importer: importer, customer_order_number: "PONumber")
+    let! (:order) {
+      o = Factory(:order, importer: importer, order_number: "OrdNum", customer_order_number: "CustOrdNum")
       o.order_lines.create! product_id: product.id, sku: "Sku"
 
       o
@@ -52,29 +52,15 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       allow(shipment).to receive(:create_async_snapshot)
     end
 
-    it "parses shipment data, skipping lines that don't match to an order" do
-      expect(shipment).to receive(:create_async_snapshot).with user
-      subject.process_rows shipment, rows, user
-
-      expect(shipment).to be_persisted
-      expect(shipment.receipt_location).to eq "Receipt"
-      expect(shipment.cargo_ready_date).to eq Date.new(2016, 6, 1)
-      expect(shipment.freight_terms).to eq "TERMS"
-      expect(shipment.shipment_type).to eq "Type"
-      expect(shipment.lcl).to be_falsey
-      expect(shipment.marks_and_numbers).to eq "Marks And Numbers"
-
-      expect(shipment.containers.length).to eq 1
-      expect(shipment.containers.first.container_number).to eq "CONTAINER#"
-      expect(shipment.containers.first.seal_number).to eq "SEAL#"
-
+    it "throws exception if data contains unmatched order" do
+      order.update_attributes! customer_order_number: "foo"
+      expect{subject.process_rows shipment, rows, user}.to raise_error "Order Number CustOrdNum not found."
       expect(shipment.shipment_lines.length).to eq 0
-
     end
 
     it "parses shipment data, linking to order lines by sku" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["CustOrdNum", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
 
       subject.process_rows shipment, rows, user
       expect(shipment).to be_persisted
@@ -91,7 +77,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "parses shipment data, linking to order lines by product part number" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "Style", "", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["CustOrdNum", "Style", "", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
       subject.process_rows shipment, rows, user
       expect(shipment).to be_persisted
 
@@ -145,13 +131,22 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
 
     it "handles manufacturer_address_id if provided in constructor options" do
       order
-      add_details_row rows, 35, 2, ["PONumber", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
+      add_details_row rows, 35, 2, ["CustOrdNum", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
 
       address = Factory(:full_address)
       described_class.new(manufacturer_address_id: address.id).process_rows shipment, rows, user
       expect(shipment).to be_persisted
 
       expect(shipment.shipment_lines.map {|l| l.manufacturer_address_id }.uniq.first).to eq address.id
+    end
+
+    it "fails when order belongs to another shipment if check_orders provided in constructor options" do
+      ol = order.order_lines.first
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
+      PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
+
+      expect{described_class.new(check_orders: true).process_rows shipment, rows, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"CustOrdNum":["REF2"]}'
+      expect(shipment).to_not be_persisted
     end
   end
 end

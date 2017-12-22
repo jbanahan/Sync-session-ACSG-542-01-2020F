@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(att).to receive(:attached).and_return atchd
       path = 'xyz'
       expect(atchd).to receive(:path).and_return path
-      expect(described_class).to receive(:parse).with(s,path,u,nil).and_return 'x'
+      expect(described_class).to receive(:parse).with(s,path,u,nil,nil).and_return 'x'
       expect(described_class.process_attachment(s, att, u)).to eq 'x'
     end
   end
@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(OpenChain::XLClient).to receive(:new).with(path).and_return x
       t = double('x')
       expect(described_class).to receive(:new).and_return t
-      expect(t).to receive(:run).with(s,x,u,nil)
+      expect(t).to receive(:run).with(s,x,u,nil,nil)
       described_class.parse s, path, u
     end
   end
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       r = double('rows')
       expect(x).to receive(:all_row_values).and_return r
       d = described_class.new
-      expect(d).to receive(:process_rows).with(s,r,u,nil)
+      expect(d).to receive(:process_rows).with(s,r,u,nil,nil)
       d.run(s,x,u)
     end
   end
@@ -395,6 +395,25 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       }
       rows = init_mock_array 90, row_seed
       expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error "SKU sk12345 not found in order ordnum (ID: #{o.id})."
+    end
+    it "fails when order belongs to another shipment if check_orders is present" do
+      @s.update_attributes! reference: "REF1"
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'custordnum',order_number:'ordnum')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: p)
+      PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
+      
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('CARTON DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:'custordnum',sku:'sk12345',item_qty:'8'})
+      }
+      rows = init_mock_array 90, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u,nil,true)}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"custordnum":["REF2"]}'
     end
     it "should rollback changes on error" do
       c = Factory(:company)

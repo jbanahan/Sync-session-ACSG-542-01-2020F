@@ -205,9 +205,29 @@ describe 'ShipmentService', ->
     describe 'processTradecardPackManifest', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2}).respond resp
+        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2, manufacturer_address_id:3, check_orders:true}).respond resp
         shp = null
-        svc.processTradecardPackManifest({id: 1},{id: 2}).then (data) ->
+        svc.processTradecardPackManifest({id: 1},{id: 2}, 3, true).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
+
+    describe 'processManifestWorksheet', ->
+      it 'should submit', ->
+        resp = {shipment: {id: 1}}
+        http.expectPOST('/api/v1/shipments/1/process_manifest_worksheet',{attachment_id: 2, check_orders:true}).respond resp
+        shp = null
+        svc.processManifestWorksheet({id: 1},{id: 2}, null, true).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
+
+    describe 'processBookingWorksheet', ->
+      it 'should submit', ->
+        resp = {shipment: {id: 1}}
+        http.expectPOST('/api/v1/shipments/1/process_booking_worksheet',{attachment_id: 2, check_orders:true}).respond resp
+        shp = null
+        svc.processBookingWorksheet({id: 1},{id: 2}, null, true).then (data) ->
           shp = data.data
         http.flush()
         expect(shp).toEqual resp
@@ -215,8 +235,8 @@ describe 'ShipmentService', ->
     describe 'getOrderShipmentRefs', ->
       it 'returns a list of shipment references associated with an order ID', ->
         resp = {results: [{shp_ref: 'REF1'},{shp_ref: 'REF2'},{shp_ref: 'REF3'}]}
-        searchArgs = {sid1:'shp_booked_order_ids', sop1:'co', sv1:1}
-        http.expectGET('/api/v1/shipments.json?sid1=shp_booked_order_ids&sop1=co&sv1=1').respond resp
+        searchArgs = {sid1:'shp_shipped_order_ids', sop1:'co', sv1:1}
+        http.expectGET('/api/v1/shipments.json?sid1=shp_shipped_order_ids&sop1=co&sv1=1').respond resp
         d = null
         svc.getOrderShipmentRefs(1).then (data) ->
           d = data

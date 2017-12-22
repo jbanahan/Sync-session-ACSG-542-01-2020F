@@ -7,6 +7,11 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
 
   def initialize opts = {}
     @manufacturer_address_id = opts[:manufacturer_address_id]
+    @check_orders = opts[:check_orders]
+  end
+
+  def parser_type
+    :manifest
   end
 
   def max_line_number shipment
@@ -62,7 +67,7 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
     # A po and sku/style must be present before we bother trying to process this line
     return if po.blank? || (style.blank? && sku.blank?)
 
-    order = find_order(shipment, po)
+    order = find_order(shipment, po, error_if_not_found: true)
     return if order.nil?
 
     # Use the sku as the first lookup value if given as that should be the more precise.

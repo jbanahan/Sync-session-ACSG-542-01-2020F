@@ -164,8 +164,6 @@ module Api; module V1; class ApiController < ActionController::Base
         message = "\n#{error.class} (#{error.message}):\n"
         message << "  " << error.backtrace.join("\n  ")
         Rails.logger.error "#{message}\n\n"
-
-        raise error if Rails.env == 'test'
       end
     end
 

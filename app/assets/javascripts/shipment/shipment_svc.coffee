@@ -85,21 +85,21 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
       $http.get('/api/v1/orders/'+id)
 
     getOrderShipmentRefs: (orderId)->
-      searchArgs = {sid1:'shp_booked_order_ids', sop1:'co', sv1:orderId}
+      searchArgs = {sid1:'shp_shipped_order_ids', sop1:'co', sv1:orderId}
       $http.get('/api/v1/shipments.json',{params: searchArgs}).then (resp) ->
         r = []
         for v in resp.data.results
           r.push(v)
         return r.map (s) -> s.shp_ref
 
-    processTradecardPackManifest: (shp, attachment, manufacturerAddressId) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId})
+    processTradecardPackManifest: (shp, attachment, manufacturerAddressId, checkOrders) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId, check_orders:checkOrders})
 
-    processBookingWorksheet: (shp, attachment) ->
-      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id})
+    processBookingWorksheet: (shp, attachment, placeHolder, checkOrders) ->
+      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id, check_orders:checkOrders})
 
-    processManifestWorksheet: (shp, attachment) ->
-      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id})
+    processManifestWorksheet: (shp, attachment, placeHolder, checkOrders) ->
+      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id, check_orders:checkOrders})
 
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')

@@ -2,7 +2,25 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.shp = null
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
+    error = rejection.data.errors[0]
+    if /ORDERS FOUND/.exec(error)
+      @.clear()
+      msgJSON = JSON.parse(error.split("~")[1])
+      $scope.warningModalMsg = $scope.formatMultiShipmentError msgJSON
+      $('#shipmentWarningModal').modal 'show'
     $scope.notificationMessage = null
+
+  $scope.formatMultiShipmentError = (errJson) ->
+    segments = []
+    for ordNum,refs of errJson
+      for r in refs
+        segments.push "#{ordNum} (#{r})"
+    segments.join(", ")
+
+  $scope.confirmCancel = ->
+    setTimeout ->
+      $window.alert("All processing has been cancelled")
+    , 500
 
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
@@ -13,7 +31,7 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.cancel = ->
     $state.go('show',{shipmentId: $scope.shp.id})
 
-  $scope.process = (shipment, attachment, attachmentType) ->
+  $scope.process = (shipment, attachment, attachmentType, checkOrders) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
     if attachmentType == 'Booking Worksheet'
@@ -27,7 +45,7 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
       $state.go('show', {shipmentId: shipment.id})
 
     if handler
-      handler(shipment, attachment, shipment.manufacturerId).then((resp) ->
+      handler(shipment, attachment, shipment.manufacturerId, checkOrders).then((resp) ->
         $state.go('process_manifest.success')
       ).finally -> $scope.loadingFlag = null
 

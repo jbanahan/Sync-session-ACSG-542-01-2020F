@@ -1,25 +1,27 @@
 require 'open_chain/xl_client'
+require 'open_chain/custom_handler/shipment_parser_support'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
-
+  include OpenChain::CustomHandler::ShipmentParserSupport
+  
   def self.process_attachment shipment, attachment, user, opts = {}
-    parse shipment, attachment.attached.path, user, opts[:manufacturer_address_id]
+    parse shipment, attachment.attached.path, user, opts[:manufacturer_address_id], opts[:check_orders]
   end
-  def self.parse shipment, path, user, manufacturer_address_id=nil
-    self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id)
-  end
-
-  def run shipment, xl_client, user, manufacturer_address_id=nil
-    process_rows shipment, xl_client.all_row_values, user, manufacturer_address_id
+  def self.parse shipment, path, user, manufacturer_address_id=nil, check_orders=nil
+    self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id, check_orders)
   end
 
-  def process_rows shipment, rows, user, manufacturer_address_id=nil
+  def run shipment, xl_client, user, manufacturer_address_id=nil, check_orders=nil
+    process_rows shipment, xl_client.all_row_values, user, manufacturer_address_id, check_orders
+  end
+
+  def process_rows shipment, rows, user, manufacturer_address_id=nil, check_orders=nil
     ActiveRecord::Base.transaction do
       raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
       validate_heading rows
       # Containers should be added first...the lines parsing also updates container data
       add_containers shipment, rows if mode(rows)=='OCEAN'
-      lines_added = add_lines shipment, rows, manufacturer_address_id
+      lines_added = add_lines shipment, rows, manufacturer_address_id, check_orders
       add_totals(shipment, lines_added)
       shipment.save!
     end
@@ -54,7 +56,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     end
   end
 
-  def add_lines shipment, rows, manufacturer_address_id
+  def add_lines shipment, rows, manufacturer_address_id, check_orders
     max_line_number = 0
     shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
     carton_detail_header_row = header_row_index(rows,'CARTON DETAIL', 'PACKAGE DETAIL')
@@ -78,7 +80,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
         lines_added << add_line(shipment, r, container, max_line_number, manufacturer_address_id)
       end
     end
-
+    orders_on_multi_manifests(@order_cache.values.map(&:order_number), shipment.reference) if check_orders
     lines_added
   end
 

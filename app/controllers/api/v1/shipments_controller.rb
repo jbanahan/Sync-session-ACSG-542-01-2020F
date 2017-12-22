@@ -817,22 +817,27 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def attachment_job(job_name)
-    s = Shipment.find params[:id]
-    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
-    att = s.attachments.find_by_id(params[:attachment_id])
-    raise StatusableError.new("Attachment not linked to Shipment.", 400) unless att
-    aj = s.attachment_process_jobs.where(attachment_id:att.id,
-                                         job_name: job_name).first_or_create!(user_id:current_user.id)
-    if aj.start_at
-      raise StatusableError.new("This manifest has already been submitted for processing.",400)
-    else
-      aj.update_attributes(start_at:Time.now)
-      if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
-        aj.process manufacturer_address_id: params[:manufacturer_address_id]
+    begin
+      s = Shipment.find params[:id]
+      raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
+      att = s.attachments.find_by_id(params[:attachment_id])
+      raise StatusableError.new("Attachment not linked to Shipment.", 400) unless att
+      aj = s.attachment_process_jobs.where(attachment_id:att.id,
+                                           job_name: job_name).first_or_create!(user_id:current_user.id)
+      if aj.start_at && aj.error_message.blank?
+        raise AttachmentAlreadyProcessedError.new
       else
-        aj.process
+        aj.update_attributes!(start_at:Time.now, error_message: nil)
+        if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
+          aj.process manufacturer_address_id: params[:manufacturer_address_id], check_orders: params[:check_orders]
+        else
+          aj.process check_orders: params[:check_orders]
+        end
+        render_show CoreModule::SHIPMENT
       end
-      render_show CoreModule::SHIPMENT
+    rescue => e
+      aj.update_attributes!(error_message: e.message) if aj && !(e.instance_of? AttachmentAlreadyProcessedError)
+      raise e
     end
   end
 
@@ -857,5 +862,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       lines << bl
     end
     [lines, o]
+  end
+
+  class AttachmentAlreadyProcessedError < StatusableError
+    def initialize
+      super "This manifest has already been submitted for processing.", 400
+    end
   end
 end; end; end

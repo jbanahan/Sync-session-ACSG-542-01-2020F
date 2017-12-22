@@ -23,27 +23,27 @@ describe 'ShipmentApp', ->
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
-        scope.process(shipment,attachment, 'Tradecard Manifest')
+        scope.process(shipment,attachment, 'Tradecard Manifest', true)
         r.resolve({data: {id: 1}})
-        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2)
+        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2, true)
 
       it 'should delegate to booking worksheet service and redirect', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processBookingWorksheet').andReturn(r.promise)
-        scope.process(shipment,attachment, 'Booking Worksheet')
+        scope.process(shipment,attachment, 'Booking Worksheet', null)
         r.resolve({data: {id: 1}})
-        expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2)
+        expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, null)
 
       it 'should delegate to booking worksheet service and redirect', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processManifestWorksheet').andReturn(r.promise)
-        scope.process(shipment,attachment, 'Manifest Worksheet')
+        scope.process(shipment,attachment, 'Manifest Worksheet', true)
         r.resolve({data: {id: 1}})
-        expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,attachment, 2)
+        expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, true)
 
       it 'notifies of error if no service is set up', ->
         spyOn(win, 'alert')
@@ -51,8 +51,12 @@ describe 'ShipmentApp', ->
         scope.process({id: 1}, {}, 'test')
         expect(win.alert).toHaveBeenCalledWith("Unknown worksheet type test selected.")
         expect(state.go).toHaveBeenCalledWith("show", {shipmentId: 1})
-      
 
+    describe 'formatMultiShipmentError', ->
+      it 'stringifies order/shipment JSON for error message', ->
+        json = {"ord1":["ref1","ref2"], "ord2":["ref3"]}
+        expect(scope.formatMultiShipmentError json).toEqual "ord1 (ref1), ord1 (ref2), ord2 (ref3)"
+      
   describe 'ShipmentAddOrderCtrl', ->
     ctrl = svc = state = scope = q = null
 
