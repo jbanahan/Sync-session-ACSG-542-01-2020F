@@ -598,6 +598,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/kewill_statements/file.json','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+
+    it "handles ellery orders" do
+      expect(master_setup).to receive(:custom_feature?).with('Ellery').and_return(true)
+      p = class_double("OpenChain::CustomHandler::Ellery::ElleryOrderParser")
+      expect(OpenChain::CustomHandler::Ellery::ElleryOrderParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/ellery_po/file.csv','remote_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
   end
 
   it 'should return error if bad request type' do

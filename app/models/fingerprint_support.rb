@@ -51,6 +51,9 @@ module FingerprintSupport
         else
           target = [target] unless association.reflection.collection?
           target.each do |child_object|
+            # Skip lines that are meant to be deleted
+            next if child_object.marked_for_destruction? || child_object.destroyed?
+
             # Keep all the values we get back flat, not nested at the entity level.
             values.push *process_fingerprint(child_object, value, user)
           end

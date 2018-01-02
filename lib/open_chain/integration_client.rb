@@ -46,6 +46,7 @@ require 'open_chain/custom_handler/amersports/amersports_856_ci_load_parser'
 require 'open_chain/custom_handler/talbots/talbots_850_parser'
 require 'open_chain/custom_handler/talbots/talbots_856_parser'
 require 'open_chain/custom_handler/kewill_entry_parser'
+require 'open_chain/custom_handler/ellery/ellery_order_parser'
 
 module OpenChain
   class IntegrationClient
@@ -248,6 +249,8 @@ module OpenChain
         OpenChain::CustomHandler::Talbots::Talbots850Parser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_talbots_856/') && master_setup.custom_feature?("Talbots")
         OpenChain::CustomHandler::Talbots::Talbots856Parser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/ellery_po/') && master_setup.custom_feature?("Ellery")
+        OpenChain::CustomHandler::Ellery::ElleryOrderParser.delay.process_from_s3 bucket, remote_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(dir.to_s)

@@ -9,16 +9,18 @@ describe Country do
     it "should create countries" do
       Country.load_default_countries
       expect(Country.scoped.count).to eq(Country::ALL_COUNTRIES.size)
-      expect(Country.find_by_iso_code('VN').name).to eq('VIET NAM')
-      expect(Country.find_by_iso_code('IT').european_union?).to be_truthy
+      c = Country.where(iso_code: "VN").first
+      expect(c.name).to eq('VIET NAM')
+      expect(c.iso_3_code).to eq('VNM')
+      expect(Country.where(iso_code: 'IT').first.european_union?).to be_truthy
     end
     it "should not run if country count matches all countries" do
       Country.load_default_countries
-      c = Country.find_by_iso_code('VN')
+      c = Country.where(iso_code: 'VN').first
       c.name = "OVN"
       c.save!
       Country.load_default_countries
-      expect(Country.find_by_iso_code('VN').name).to eq('OVN')
+      expect(Country.where(iso_code: 'VN').first.name).to eq('OVN')
     end
   end
   describe "quicksearch_only_for_import_locations" do

@@ -78,6 +78,14 @@ describe FingerprintSupport do
       fingerprint_definition[:model_fields] << :prod_name
       expect(product.generate_fingerprint fingerprint_definition, user).not_to eq fingerprint
     end
+
+    it "skips child objects that are marked for destruction" do
+      fingerprint = product.generate_fingerprint fingerprint_definition, user
+      product.classifications.first.mark_for_destruction
+      updated_fingerprint = product.generate_fingerprint fingerprint_definition, user
+
+      expect(fingerprint).not_to eq updated_fingerprint      
+    end
   end
 
 end
