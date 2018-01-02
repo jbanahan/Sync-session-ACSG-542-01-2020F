@@ -267,20 +267,8 @@ class SearchCriterion < ActiveRecord::Base
   # return July 1, 2016: the beginning of the summer quarter 4 quarters (a year) prior.  If a negative quarter_count
   # is provided, the method works in the opposite direction, looking into a later quarter.
   def self.get_previous_quarter_start_date d, quarter_count
-    current_quarter = SearchCriterion.get_quarter_number(d)
-    start_quarter = (current_quarter - quarter_count.remainder(4)).abs
-    # start_quarter = (current_quarter - (quarter_count % 4)).abs
-    if start_quarter == 0
-      start_quarter = 4
-    elsif start_quarter == 5
-      start_quarter = 1
-    end
-    years_spanned = (quarter_count.abs / 4)
-    if ((quarter_count >= 0 && start_quarter > current_quarter) || (quarter_count < 0 && start_quarter < current_quarter))
-      years_spanned += 1
-    end
-    past_adjuster = quarter_count >= 0 ? 1 : -1
-    SearchCriterion.get_quarter_start_date(start_quarter, d.year - (years_spanned * past_adjuster))
+    month_adjusted_d = d - (quarter_count * 3).months
+    get_quarter_start_date(get_quarter_number(month_adjusted_d), month_adjusted_d.year)
   end
 
   # Looks forward from a date by the specified number of quarters, returning the start date to that quarter.

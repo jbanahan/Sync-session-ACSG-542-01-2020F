@@ -1200,6 +1200,7 @@ describe SearchCriterion do
       expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 8, 4), 4)).to eq(Date.new(2016, 7, 1))
       expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 8, 4), 8)).to eq(Date.new(2015, 7, 1))
       expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2017, 5, 13), 1)).to eq(Date.new(2017, 1, 1))
+      expect(SearchCriterion.get_previous_quarter_start_date(Date.new(2018, 1, 2), 2)).to eq(Date.new(2017, 7, 1))
     end
   end
 
@@ -1211,6 +1212,7 @@ describe SearchCriterion do
       expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 8, 4), 4)).to eq(Date.new(2018, 7, 1))
       expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 8, 4), 8)).to eq(Date.new(2019, 7, 1))
       expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 5, 13), 1)).to eq(Date.new(2017, 7, 1))
+      expect(SearchCriterion.get_next_quarter_start_date(Date.new(2017, 7, 2), 2)).to eq(Date.new(2018, 1, 1))
     end
   end
 
