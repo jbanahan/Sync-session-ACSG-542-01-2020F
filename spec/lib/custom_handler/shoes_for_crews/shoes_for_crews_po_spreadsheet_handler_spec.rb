@@ -302,10 +302,10 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect_any_instance_of(Order).to receive(:post_create_logic!)
 
       subject.process_po data, "bucket", "key"
-      po = Order.where(order_number: "SHOES-ORDERID").first
+      po = Order.where(order_number: "SHOES-ORDER#").first
       expect(po).not_to be_nil
       expect(po.importer).to eq importer
-      expect(po.customer_order_number).to eq "ORDERID"
+      expect(po.customer_order_number).to eq "ORDER#"
       expect(po.order_date).to eq Date.new(2013,11,14)
       expect(po.mode).to eq "Ship Via"
       expect(po.first_expected_delivery_date).to eq Date.new(2013, 11, 15)
@@ -357,7 +357,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "updates a PO" do
-      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer)
+      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
       expect_any_instance_of(Order).to receive(:post_update_logic!)
 
       subject.process_po data, "bucket", "key"
@@ -374,7 +374,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "does not update an order if the order is shipping" do
-      order = Factory(:order, order_number: "SHOES-" + workbook_data[:order_id], importer: importer)
+      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
 
       # mock the find_order so we can provide our own order to make sure that when an order is 
       # said to be shipping that it's not updated.
@@ -396,7 +396,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       # using the same dataset.
 
       subject.process_po data, "bucket", "key"
-      po = Order.where(order_number: "SHOES-" + workbook_data[:order_id]).first
+      po = Order.where(order_number: "SHOES-ORDER#").first
       expect(subject).to receive(:find_order).and_yield true, po
       expect(po).not_to receive(:post_update_logic!)
 
@@ -404,12 +404,11 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     it "uses the alternate PO number if standard order id and order number fields are blank" do
-      @overrides[:order_id] = ""
       @overrides[:order_number] = ""
       
       subject.process_po data, "bucket", "key"
 
-      po = Order.where(order_number: "SHOES-" + workbook_data[:alternate_po_number]).first
+      po = Order.where(order_number: "SHOES-PO#").first
       expect(po).not_to be_nil
       expect(po.customer_order_number).to eq workbook_data[:alternate_po_number]
     end

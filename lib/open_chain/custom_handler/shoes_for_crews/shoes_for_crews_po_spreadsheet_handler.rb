@@ -133,9 +133,9 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       po = nil
       update_status = nil
 
-      order_id, order_number = *get_order_data(data)
+      order_number = get_order_number(data)
 
-      raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_id.blank?
+      raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_number.blank?
 
       # I'm not entirely sure why, but I keep getting duplicate products when I'm creating products inside the find_order transaction/lock.
       # I'm guessing it has to do w/ multiple distinct transactions running and then being merged at the same time, each distinct transaction
@@ -144,10 +144,10 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
       products = find_all_products data[:items]
 
-      find_order(order_id) do |existing_order, order|
+      find_order(order_number) do |existing_order, order|
         po = order
 
-        order.customer_order_number = order_id
+        order.customer_order_number = order_number
         order.order_date = parse_date(data[:order_date])
         order.mode = data[:ship_via]
         order.first_expected_delivery_date = parse_date(data[:expected_delivery_date])
@@ -197,15 +197,11 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
     private 
 
-      def get_order_data data
-        order_id = data[:order_id]
-        order_id = data[:order_number] if order_id.blank?
-        order_id = data[:alternate_po_number] if order_id.blank?
-
+      def get_order_number data
         order_number = data[:order_number]
         order_number = data[:alternate_po_number] if order_number.blank?
 
-        [order_id, order_number]
+        order_number
       end
 
       def safe_row sheet, row
@@ -359,11 +355,11 @@ module OpenChain; module CustomHandler; module ShoesForCrews
         end
       end
 
-      def find_order order_id
+      def find_order order_number
         order = nil
         existing = true
-        Lock.acquire("SHOES-"+order_id) do 
-          order = Order.where(order_number: "#{SHOES_SYSTEM_CODE}-#{order_id}", importer_id: importer.id).first_or_create! {|order| existing = false }
+        Lock.acquire("Order-SHOES-"+order_number) do 
+          order = Order.where(order_number: "#{SHOES_SYSTEM_CODE}-#{order_number}", importer_id: importer.id).first_or_create! {|order| existing = false }
         end
 
         if order
