@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should ftp file" do
       sync = SyncRecord.new trading_partner: "test"
       expect_any_instance_of(described_class).to receive(:find_entries).and_return(['ents'])
-      expect_any_instance_of(described_class).to receive(:generate_file).with(['ents']).and_yield('x', [sync], [])
+      expect_any_instance_of(described_class).to receive(:generate_file).with(['ents']).and_yield('x', {sent: [sync], ignored: []}, [])
       expect_any_instance_of(described_class).to receive(:ftp_sync_file).with('x', [sync])
       described_class.run_schedulable
       expect(sync.persisted?).to eq true
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     end
     it "generates file and saves yielded sync records and ftps yield file" do
 
-      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, {sent: [@sync_record], ignored: []}, [])
       expect(subject).to receive(:ftp_sync_file).with @file, [@sync_record]
 
       subject.run_for_entries @entries
@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     end
 
     it "rolls back all sync records saved if ftp fails" do
-      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [])
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, {sent: [@sync_record], ignored: []}, [])
       expect(subject).to receive(:ftp_sync_file).with(@file, [@sync_record]).and_raise StandardError, "Error"
 
       expect {subject.run_for_entries @entries}.to raise_error StandardError, "<ul><li>Error</li></ul>"
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     end
 
     it "combines errors together into one mega error" do
-      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, [@sync_record], [StandardError.new("Error 1"), StandardError.new("Error 2")])
+      expect(subject).to receive(:generate_file).with(@entries).and_yield(@file, {sent: [@sync_record], ignored: []}, [StandardError.new("Error 1"), StandardError.new("Error 2")])
       expect(subject).to receive(:ftp_sync_file).with(@file, [@sync_record])
 
 
@@ -84,8 +84,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
           file.rewind
           expect(file.read).to eq "abc"
 
-          expect(sync_records.size).to eq 1
-          sr = sync_records.first
+          expect(sync_records[:sent].size).to eq 1
+          sr = sync_records[:sent].first
           expect(sr).not_to be_persisted
           expect(sr.syncable).to eq @ent
           expect(sr.trading_partner).to eq described_class::SYNC_CODE
@@ -110,9 +110,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         subject.generate_file([@ent]) do |file, sync_records, errors|
           file.rewind
           expect(file.read).to be_blank
-
-          expect(sync_records.size).to eq 1
-          sr = sync_records.first
+          expect(sync_records[:sent].length).to eq 0
+          expect(sync_records[:ignored].length).to eq 1
+          sr = sync_records[:ignored].first
           expect(sr).to be_changed
           expect(sr.ignore_updates_before).to be_within(2.minutes).of Time.zone.now
           expect(sr.sent_at.to_i).to eq sent_at.to_i
@@ -127,8 +127,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         subject.generate_file([@ent]) do |file, sync_records, errors|
           file.rewind
           expect(file.read).to eq "abc"
-          expect(sync_records.size).to eq 1
-          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+          expect(sync_records[:sent].size).to eq 1
+          expect(sync_records[:sent].first.sent_at).to be_within(1.minute).of Time.zone.now
         end
       end
 
@@ -138,8 +138,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         subject.generate_file([@ent]) do |file, sync_records, errors|
           file.rewind
           expect(file.read).to eq "abc"
-          expect(sync_records.size).to eq 1
-          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+          expect(sync_records[:sent].size).to eq 1
+          expect(sync_records[:sent].first.sent_at).to be_within(1.minute).of Time.zone.now
         end
       end
     end
@@ -157,9 +157,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         subject.generate_file([@ent, @ent2]) do |file, sync_records, errors|
           file.rewind
           expect(file.read).to eq "data"
-          expect(sync_records.size).to eq 1
-          expect(sync_records.first.syncable).to eq @ent2
-          expect(sync_records.first.sent_at).to be_within(1.minute).of Time.zone.now
+          expect(sync_records[:sent].size).to eq 1
+          expect(sync_records[:sent].first.syncable).to eq @ent2
+          expect(sync_records[:sent].first.sent_at).to be_within(1.minute).of Time.zone.now
 
           expect(errors.size).to eq 1
           expect(errors.first.message).to eq "File ##{@ent.broker_reference}: An Error"

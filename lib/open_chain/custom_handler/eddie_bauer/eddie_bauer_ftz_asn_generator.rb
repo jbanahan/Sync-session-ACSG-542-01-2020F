@@ -26,9 +26,11 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     generate_file(entries) do |file, sync_records, errors|
       begin
         ActiveRecord::Base.transaction do
-          ftp_sync_file file, sync_records
-          sync_records.each {|sr| sr.save!}
+          ftp_sync_file(file, sync_records[:sent]) if sync_records[:sent].length > 0
+          sync_records[:sent].each {|sr| sr.save! }
+          sync_records[:ignored].each {|sr| sr.save! }
         end
+
       rescue => e
         errors << e
       end
@@ -60,7 +62,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
 
   def generate_file entries
     Tempfile.open(['EDDIEFTZASN','.txt']) do |t|
-      sync_records = []
+      sync_records = {sent: [], ignored: []}
       errors = []
       entries.each_with_index do |ent,i|
         begin
@@ -74,10 +76,11 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
             t << data
             sr.sent_at = Time.zone.now
             sr.fingerprint = new_fingerprint
+            sync_records[:sent] << sr
           else
             sr.ignore_updates_before = ent.updated_at
+            sync_records[:ignored] << sr
           end
-          sync_records << sr
         rescue => e
           # We're copying our error into a new one so that we can prepend the Entry # to the message so we know exactly which entry the 
           # error occurred on.
