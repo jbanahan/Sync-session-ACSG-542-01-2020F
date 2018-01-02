@@ -173,6 +173,15 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       # that we're doing this via the top-level interface.
 
       context "with valid dates" do
+
+        around :each do |example|
+          # The code only accepts dates that are within 2 years from the current time..so use Timecop 
+          # to freeze time, and allow us to use hardcoded values.
+          Timecop.freeze(Time.zone.parse("2015-02-01 00:00")) do 
+            example.run
+          end
+        end
+
         after :each do
           expect(subject).to receive(:foreach).and_return row_data
 
@@ -203,7 +212,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         end
 
         it "parses yyyymmdd values to date" do
-          row_data[0][3] = "02012015"
+          row_data[0][3] = "20150201"
         end
       end
 
