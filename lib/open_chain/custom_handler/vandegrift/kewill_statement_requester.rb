@@ -33,7 +33,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
   def self.sql_proxy_client
     OpenChain::KewillSqlProxyClient.new
   end
-  private_class_method :sql_proxy_client
 
   def self.aws_context_data date, opts
     default_context = {s3_bucket: opts['s3_bucket'], s3_path: opts['s3_path'], sqs_queue: opts['sqs_queue']}
@@ -56,6 +55,5 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
     default_context
   end
-  private_class_method :aws_context_data
 
 end; end; end; end;

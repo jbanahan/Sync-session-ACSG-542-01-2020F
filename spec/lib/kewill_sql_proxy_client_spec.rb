@@ -255,4 +255,38 @@ describe OpenChain::KewillSqlProxyClient do
       expect(my_params[:monthly_statement_numbers]).to eq ["A", "B"]
     end
   end
+
+  describe "request_monthly_statements_between" do
+    it "requests statements received between given dates" do
+      my_params = nil
+      my_context = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        expect(path).to eq 'monthly_statements_to_s3'
+        expect(opts).to eq({swallow_error: false})
+        my_params = params
+        my_context = context
+        nil
+      end
+
+      subject.request_monthly_statements_between Date.new(2017,12,1), Date.new(2017, 12, 2), "bucket", "path", "queue"
+
+      expect(my_context[:s3_bucket]).to eq "bucket"
+      expect(my_context[:s3_path]).to eq "path"
+      expect(my_context[:sqs_queue]).to eq "queue"
+
+      expect(my_params[:start_date]).to eq 20171201
+      expect(my_params[:end_date]).to eq 20171202
+    end
+
+    it "handles customer_numbers param" do
+      my_params = nil
+      expect(subject).to receive(:request) do |path, params, context, opts|
+        my_params = params
+        nil
+      end
+
+      subject.request_monthly_statements_between Date.new(2017,12,1), Date.new(2017, 12, 2), "bucket", "path", "queue", customer_numbers: ["1", "2", "3"]
+      expect(my_params[:customer_numbers]).to eq "1,2,3"
+    end
+  end
 end

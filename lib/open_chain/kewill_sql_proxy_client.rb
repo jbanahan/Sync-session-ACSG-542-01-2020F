@@ -138,6 +138,13 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request 'statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
+  def request_monthly_statements_between start_date, end_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
+    params = {start_date: start_date.strftime("%Y%m%d").to_i, end_date: end_date.strftime("%Y%m%d").to_i}
+    params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
+    
+    request 'monthly_statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+  end
+
   def statement_context_hash s3_bucket, s3_path, sqs_queue
     {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
   end

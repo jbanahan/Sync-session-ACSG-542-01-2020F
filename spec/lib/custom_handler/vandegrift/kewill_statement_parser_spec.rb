@@ -297,8 +297,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       s = subject.process_daily_statement user, statement, "bucket", "path"
 
       expect(s.status).to eq "F"
-      expect(s.paid_date).to eq Date.new(2017, 12, 1)
-      expect(s.payment_accepted_date).to eq Date.new(2017, 12, 2)
       expect(s.received_date).to eq Date.new(2017, 12, 3)
       expect(s.final_received_date).to eq Date.new(2017, 11, 1)
       # The final statement recrods in Kewill do not have monthly statement numbers associated with them...therefore do not blank out the monthly number
@@ -393,7 +391,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(s.pay_type).to eq "7"
       expect(s.received_date).to eq Date.new(2017, 11, 16)
       expect(s.final_received_date).to be_nil
-      expect(s.paid_date).to eq Date.new(2017, 11, 18)
+      # Monthly prelims paid date is always nil
+      expect(s.paid_date).to be_nil
       expect(s.due_date).to eq Date.new(2017, 11, 17)
       expect(s.final_received_date).to be_nil
       expect(s.last_file_bucket).to eq "bucket"
@@ -443,7 +442,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(s.pay_type).to eq "7"
       expect(s.received_date).to be_nil
       expect(s.final_received_date).to eq Date.new(2017, 11, 16)
-      expect(s.paid_date).to be_nil
+      expect(s.paid_date).to eq Date.new(2017, 11, 18)
       expect(s.due_date).to eq Date.new(2017, 11, 17)
       expect(s.last_file_bucket).to eq "bucket"
       expect(s.last_file_path).to eq "file.json"

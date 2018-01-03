@@ -119,13 +119,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       else
         statement.importer = Company.importers.where(alliance_customer_number: statement.customer_number).first
       end
-      if statement.final_statement?
+
+      if json["status"] == "F"
         statement.final_received_date = parse_date(json["received_date"])
-      else
+        # Paid date never comes on a prelim
         statement.paid_date = parse_date(json["paid_date"])
+      else
         statement.received_date = parse_date(json["received_date"])
       end
-
 
       statement
     end
@@ -185,9 +186,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
         end
       end
 
-      if statement.final_statement?
+      if json["status"] == "F"
         statement.final_received_date = parse_date(json["received_date"])
       else
+        # Final daily statements never receive a paid date or accepted date (only prelims)
         statement.paid_date = parse_date(json["paid_date"])
         statement.payment_accepted_date = parse_date(json["payment_accepted_date"])
         statement.received_date = parse_date(json["received_date"])
