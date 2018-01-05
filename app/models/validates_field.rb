@@ -8,7 +8,7 @@ module ValidatesField
 
     tested = 0
     messages = []
-    validation_expressions(['operator', 'value', 'fail_if_matches', 'allow_blank']).each_pair do |model_field, attrs|
+    validation_expressions(['operator', 'value', 'fail_if_matches', 'allow_blank', 'split_field']).each_pair do |model_field, attrs|
       # If we have "if criterions", we don't evaluate the rule unless all the IF statements pass
       passed = true
       Array.wrap(attrs['if_criterions']).each do |sc|
@@ -33,9 +33,9 @@ module ValidatesField
       op_label = CriterionOperator::OPERATORS.find{ |op| op.key == attrs["operator"]}.label.downcase
       #If this option is used, any block will have to check this attribute and adjust message accordingly
       fail_if_matches = attrs['fail_if_matches'] 
-      fail = fail_if_matches ? sc.test?(obj) : !sc.test?(obj)
+      fail = fail_if_matches ? sc.test?(obj, nil, {split_field: attrs['split_field']}) : !sc.test?(obj, nil, {split_field: attrs['split_field']})
       allow_blank = attrs['allow_blank'].to_s.to_boolean
-
+      
       unless allow_blank && tested_val.blank?
         if fail
           if opt[:yield_failures] && block_given?

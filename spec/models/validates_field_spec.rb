@@ -186,5 +186,20 @@ describe ValidatesField do
       end
     end
 
+    context "with split field" do
+      let (:entry) { Factory(:entry, customer_references: "XabcY\n XdefY\n XghiY")}
+      let (:rule) { Rule.new({'model_field_uid' => 'ent_customer_references', 'operator' => 'regexp', 'value' => '^X\w+Y$', 'split_field' => true}) }
+      let (:block) { Proc.new { |mf, tested_val, op_label, value, fail_if_matches| "There is at least one value in #{mf.label} that doesn't match '#{value}'." } }
+
+      it "validates all fields using single comparison" do
+        expect(rule.validate_field(entry, {yield_failures: true}, &block)).to be_nil
+      end
+
+      it "fails if any field doesn't match" do
+        entry.update_attributes! customer_references: "XabcY\n defY\n XghiY"
+        expect(rule.validate_field(entry, {yield_failures: true}, &block)).to eq "There is at least one value in Customer References that doesn't match '^X\\w+Y$'."
+      end
+    end
+
   end
 end

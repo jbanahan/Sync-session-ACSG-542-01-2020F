@@ -16,6 +16,62 @@ describe SearchCriterion do
     end
   end
 
+  context "split field" do
+    let(:ss) { SearchSetup.new(module_type:'Entry') }
+    
+    context "non-relative fields" do
+      let(:sc) { ss.search_criterions.new(model_field_uid:'ent_customer_references',operator:'regexp',value:'X\d{3}Y') }
+
+      it "passes if all field segments validate" do
+        ent = Factory(:entry, customer_references: "X123Y\n X456Y")
+        expect(sc.test?(ent,nil,{split_field:true})).to be_truthy
+      end
+
+      it "fails if any field segment fails to validate" do
+        ent = Factory(:entry, customer_references: "X123Y\n 456Y")
+        expect(sc.test?(ent,nil,{split_field:true})).to be_falsey
+      end
+
+      context "with pass_if_any option" do
+        it "passes if at least one field segment validates" do
+          ent = Factory(:entry, customer_references: "X123Y\n 456Y")
+          expect(sc.test?(ent,nil,{split_field:true, pass_if_any:true})).to be_truthy
+        end
+
+        it "fails if all field segments fail to validate" do
+          ent = Factory(:entry, customer_references: "123Y\n 456Y")
+          expect(sc.test?(ent,nil,{split_field:true, pass_if_any:true})).to be_falsey
+        end
+      end
+    end
+
+    context "relative fields" do
+      let(:sc) { ss.search_criterions.new(model_field_uid:'ent_customer_references',operator:'eqf',value:'ent_cust_num' ) }
+
+      it "passes if all field segments validate" do
+        ent = Factory(:entry, customer_references: "FOO\n FOO", customer_number: "FOO")
+        expect(sc.test?(ent,nil,{split_field:true})).to be_truthy
+      end
+
+      it "fails if any field segment fails to validate" do
+        ent = Factory(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
+        expect(sc.test?(ent,nil,{split_field:true})).to be_falsey
+      end
+
+      context "with pass_if_any option" do
+        it "passes if at least one field segment validates" do
+          ent = Factory(:entry, customer_references: "FOO\n BAR", customer_number: "FOO")
+          expect(sc.test?(ent,nil,{split_field:true, pass_if_any:true})).to be_truthy
+        end
+
+        it "fails if all field segments fail to validate" do
+          ent = Factory(:entry, customer_references: "BAR\n BAR", customer_number: "FOO")
+          expect(sc.test?(ent,nil,{split_field:true, pass_if_any:true})).to be_falsey
+        end
+      end
+    end
+  end
+
   context "not equal to (field)" do
     before do
       @u = Factory(:master_user)

@@ -89,10 +89,10 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
-  def test? obj, user=nil
+  def test? obj, user=nil, opts={}
     mf = ModelField.find_by_uid(self.model_field_uid)
     return false if mf.disabled?
-
+    
     r = false
     if field_relative?
       # for relative fields, if a secondary object is needed to supply a value (ie. when we're dealing with
@@ -106,9 +106,9 @@ class SearchCriterion < ActiveRecord::Base
         primary_obj, secondary_obj = obj.take(2)
       end
 
-      r = passes_relative? mf.process_query_parameter(primary_obj), get_relative_model_field.process_query_parameter(secondary_obj)
+      r = passes_relative? mf.process_query_parameter(primary_obj), get_relative_model_field.process_query_parameter(secondary_obj), opts
     else
-      r = passes?(mf.process_query_parameter(obj))
+      r = passes?(mf.process_query_parameter(obj), opts)
     end
     r
   end
@@ -288,32 +288,36 @@ class SearchCriterion < ActiveRecord::Base
     ModelField.find_by_uid self.value
   end
 
-  def passes_relative? my_value, other_value
-    passes = false
+  def passes_relative? my_value, other_value, opts
+    my_values = opts[:split_field] ? split(my_value) : [my_value]
+    results = []
+    my_values.each do |my_value|
+      passes = false
 
-    if my_value.blank? || other_value.blank?
-      passes = self.include_empty?
-    else
-      # We're specifically truncating the time values for these (even for on datetimes fields) to try and avoid
-      # confusion.  If we need to have after/before field operators for more advanced usage we'll create a new
-      # operator type that explicity states time is being compared.
-      case self.operator
-      when 'bfld'
-        passes = my_value.to_date < other_value.to_date
-      when 'afld'
-        passes = my_value.to_date > other_value.to_date
-      when 'eqf'
-        passes = my_value == other_value
-      when 'nqf'
-        passes = my_value != other_value
-      when 'eqfd'
-        passes = my_value.to_date == other_value.to_date
-      when 'nqfd'
-        passes = my_value.to_date != other_value.to_date
+      if my_value.blank? || other_value.blank?
+        passes = self.include_empty?
+      else
+        # We're specifically truncating the time values for these (even for on datetimes fields) to try and avoid
+        # confusion.  If we need to have after/before field operators for more advanced usage we'll create a new
+        # operator type that explicity states time is being compared.
+        case self.operator
+        when 'bfld'
+          passes = my_value.to_date < other_value.to_date
+        when 'afld'
+          passes = my_value.to_date > other_value.to_date
+        when 'eqf'
+          passes = my_value == other_value
+        when 'nqf'
+          passes = my_value != other_value
+        when 'eqfd'
+          passes = my_value.to_date == other_value.to_date
+        when 'nqfd'
+          passes = my_value.to_date != other_value.to_date
+        end
       end
+      results << passes
     end
-
-    passes
+    opts[:pass_if_any] ? results.any? : results.all?
   end
 
   def relative_where_clause
@@ -354,10 +358,21 @@ class SearchCriterion < ActiveRecord::Base
     clause
   end
 
+  def split str
+    str.blank? ? [str] : str.split("\n ")
+  end
+
   #does the given value pass the criterion test
-  def passes?(value_to_test)
+  def passes? value_to_test, opts
     mf = find_model_field
     return false if mf.disabled?
+    values_to_test = opts[:split_field] ? split(value_to_test) : [value_to_test]
+    results = []
+    values_to_test.each { |value| results << mf_passes?(mf, value) }
+    opts[:pass_if_any] ? results.any? : results.all?
+  end
+
+  def mf_passes?(mf, value_to_test)
 
     d = mf.data_type
 
