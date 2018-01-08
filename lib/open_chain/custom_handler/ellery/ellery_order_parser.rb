@@ -356,7 +356,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
   end
 
   def importer
-    @importer ||= Company.importers.where(system_code: "ELLERY").first
+    @importer ||= Company.importers.where(system_code: "ELLHOL").first
   end
 
   def cdefs

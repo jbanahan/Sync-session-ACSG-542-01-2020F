@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     '1,"0020","BE1220","United Linens Limited(Benetex)","Suite 701, Bldg. No. 1","Art & Tech Space","63 Haier Road","Qingdao","State","266061","CHI",14945,20160519,20160713,"FAYETTEVILLE DC","107 TOM STARLING RD.","FAYETTEVILLE","NC","28306","USA","USD","QINDG","FAYD","FAYETTEVILLE - DOMESTI","ANUNEZ","O/A 90 DAYS",4,"15828052084LAK","885308443526","BELK","DERON DISPLAY","052084","LAKE",1.0000,1.0000,"WINDOW","DISPLAYS","DISPLAY","DERON",2,3,"6303.92.2010",20160713,8.5000,55.00,.00,123'
   }
 
-  let! (:ellery) { Factory(:importer, system_code: "ELLERY") }
+  let! (:ellery) { Factory(:importer, system_code: "ELLHOL") }
   let! (:us) { Factory(:country, iso_code: "US", iso_3_code: "USA") }
   let! (:china) { Factory(:country, iso_code: "CN", iso_3_code: "CHN" )}
 
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     it "parses CSV data and creates an order" do
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
 
-      o = Order.where(order_number: "ELLERY-14945").first
+      o = Order.where(order_number: "ELLHOL-14945").first
       expect(o).not_to be_nil
 
       expect(o.importer).to eq ellery
@@ -66,11 +66,11 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
 
       v = o.vendor
       expect(v).not_to be_nil
-      expect(v.system_code).to eq "ELLERY-BE1220"
+      expect(v.system_code).to eq "ELLHOL-BE1220"
       expect(v.name).to eq "United Linens Limited(Benetex)"
       a = v.addresses.first
       expect(a).not_to be_nil
-      expect(a.system_code).to eq "ELLERY-BE1220"
+      expect(a.system_code).to eq "ELLHOL-BE1220"
       expect(a.line_1).to eq "Suite 701, Bldg. No. 1"
       expect(a.line_2).to eq "Art & Tech Space"
       expect(a.line_3).to eq "63 Haier Road"
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
 
       p = l.product
       expect(p).not_to be_nil
-      expect(p.unique_identifier).to eq "ELLERY-15828052084MAR"
+      expect(p.unique_identifier).to eq "ELLHOL-15828052084MAR"
       expect(p.importer).to eq ellery
       expect(p.name).to eq "DERON DISPLAY"
       expect(p.custom_value(cdefs[:prod_part_number])).to eq "15828052084MAR"
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "updates an order" do
-      existing = Factory(:order, importer: ellery, order_number: "ELLERY-14945")
+      existing = Factory(:order, importer: ellery, order_number: "ELLHOL-14945")
       existing_line = Factory(:order_line, order: existing)
 
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
@@ -137,7 +137,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "does not delete unreferenced order lines that have been booked" do
-      existing = Factory(:order, importer: ellery, order_number: "ELLERY-14945")
+      existing = Factory(:order, importer: ellery, order_number: "ELLHOL-14945")
       existing_line = Factory(:order_line, order: existing)
       booking_line = Factory(:booking_line, product: existing_line.product, order_line: existing_line, order: existing)
 
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "does not delete unreferenced order lines that have been shipped" do
-      existing = Factory(:order, importer: ellery, order_number: "ELLERY-14945")
+      existing = Factory(:order, importer: ellery, order_number: "ELLHOL-14945")
       existing_line = Factory(:order_line, order: existing)
       shipment_line = Factory(:shipment_line, product: existing_line.product)
       piece_set = PieceSet.create! order_line: existing_line, shipment_line: shipment_line, quantity: 100
@@ -170,7 +170,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "doesn't update existing product data if hts stays the same" do
-      existing = Factory(:product, importer: ellery, unique_identifier: "ELLERY-15828052084MAR")
+      existing = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "6303922010")
 
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "updates hts on existing product if the number changes" do
-      existing = Factory(:product, importer: ellery, unique_identifier: "ELLERY-15828052084MAR")
+      existing = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "1234567890")
 
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
@@ -192,7 +192,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "doesn't update vendor data" do
-      vendor = Factory(:vendor, system_code: "ELLERY-BE1220", name: "Existing Vendor")
+      vendor = Factory(:vendor, system_code: "ELLHOL-BE1220", name: "Existing Vendor")
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
 
       vendor.reload 
@@ -212,7 +212,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     it "doesn't update if nothing changed" do
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
 
-      o = Order.where(order_number: "ELLERY-14945").first
+      o = Order.where(order_number: "ELLHOL-14945").first
       o.entity_snapshots.destroy_all
 
       subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
