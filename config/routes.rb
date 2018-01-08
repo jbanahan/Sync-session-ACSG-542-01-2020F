@@ -304,8 +304,6 @@ OpenChain::Application.routes.draw do
     end
 
     collection do
-      get 'reprocess'
-
       post 'bulk_get_images'
       post 'bulk_request_entry_data'
     end

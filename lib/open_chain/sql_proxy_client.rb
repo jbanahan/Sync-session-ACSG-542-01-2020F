@@ -1,5 +1,5 @@
-require 'open_chain/json_http_client'
 require 'open_chain/field_logic'
+require 'open_chain/json_http_client'
 
 module OpenChain; class SqlProxyClient
 

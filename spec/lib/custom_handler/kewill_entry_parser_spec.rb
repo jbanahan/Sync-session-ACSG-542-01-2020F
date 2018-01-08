@@ -735,8 +735,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer.name).to eq entry.customer_name
       expect(entry.importer.alliance_customer_number).to eq entry.customer_number
       expect(entry.importer.importer).to be_truthy
-
-      # Uncomment this once this feed is the "One True Source" instead of the AllianceParser
       expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
 
       # This should all be nil because the liquidation date is not set
@@ -1283,34 +1281,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = Entry.new(broker_reference: "TESTING")
       expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
       described_class.parse json.to_json
-    end
-
-  end
-
-  describe "save_to_s3" do
-    it "saves entry data to s3 and returns s3 bucket/key" do
-      ms = double
-      expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:system_code).and_return "system-code"
-      json = {'entry' => {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
-
-      contents = nil
-      bucket = nil
-      key = nil
-      expect(OpenChain::S3).to receive(:upload_file) do |b, k, file|
-        bucket = b
-        key = k
-        contents = file.read
-      end
-
-      described_class.save_to_s3 json
-
-      expect(bucket).to eq OpenChain::S3.integration_bucket_name
-      expect(key).to eq "#{Time.zone.now.strftime("%Y-%m/%d")}/home/ubuntu/ftproot/chainroot/system-code/_kewill_entry/12345-2015-04-01-00-00.json"
-    end
-
-    it "handles empty datasets" do
-      expect(described_class.save_to_s3({})).to be_nil
     end
   end
 

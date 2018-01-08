@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMonthlyStatementRequester d
       date = Time.zone.parse("2017-12-22 12:00")
 
       expect(sql_proxy_client).to receive(:request_monthly_statements_between).with(Date.new(2017, 12, 21), Date.new(2017, 12, 22), "bucket", "path", "queue", customer_numbers: nil)
-      expect(subject).to receive(:aws_context_data).with(date, opts).and_return aws_data
+      expect(subject).to receive(:aws_context_data).with(sql_proxy_client, date, opts).and_return aws_data
 
       Timecop.freeze(date) do 
         subject.run_schedulable opts

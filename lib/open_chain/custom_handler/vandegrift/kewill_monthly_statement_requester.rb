@@ -6,8 +6,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMonthlySt
     opts = opts.with_indifferent_access
     start_date, end_date = dates(opts)
 
-    aws_data = aws_context_data(Time.zone.now, opts)
-    sql_proxy_client.request_monthly_statements_between(start_date, end_date, aws_data[:s3_bucket], aws_data[:s3_path], aws_data[:sqs_queue], customer_numbers: opts[:customer_numbers])
+    client = sql_proxy_client
+    aws_data = aws_context_data(client, Time.zone.now, opts)
+    client.request_monthly_statements_between(start_date, end_date, aws_data[:s3_bucket], aws_data[:s3_path], aws_data[:sqs_queue], customer_numbers: opts[:customer_numbers])
   end
 
   def self.dates opts

@@ -47,16 +47,6 @@ describe OpenChain::KewillSqlProxyClient do
     end
   end
 
-  describe "request_alliance_entry_details" do
-    it "requests alliance entry details" do
-      last_exported_date = Time.zone.now
-      body = {'job_params' => {:file_number => 12345}, 'context' => {'broker_reference' => '12345', 'last_exported_from_source' => last_exported_date.in_time_zone("Eastern Time (US & Canada)")}}
-
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/entry_details", body, {}, @proxy_config['test']['auth_token'])
-      @c.request_alliance_entry_details "12345", last_exported_date
-    end
-  end
-
   describe "request_check_details" do
     it "requests check details" do
       request_body = {'job_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
@@ -289,4 +279,13 @@ describe OpenChain::KewillSqlProxyClient do
       expect(my_params[:customer_numbers]).to eq "1,2,3"
     end
   end
+
+  describe "request_entry_data" do
+    it "sends request for entry data to sql proxy system" do
+      expect(subject).to receive(:aws_context_hash).with(OpenChain::CustomHandler::KewillEntryParser, "json", filename_prefix: "12345").and_return({hash: :data})
+      expect(subject).to receive(:request).with('entry_data_to_s3', {file_no: 12345}, {hash: :data})
+      subject.request_entry_data "12345"
+    end
+  end
+
 end

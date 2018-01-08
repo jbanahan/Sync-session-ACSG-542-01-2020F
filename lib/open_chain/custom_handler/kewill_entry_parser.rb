@@ -1,4 +1,3 @@
-require 'open_chain/sql_proxy_client'
 require 'open_chain/s3'
 require 'open_chain/integration_client_parser'
 require 'open_chain/alliance_imaging_client'
@@ -151,18 +150,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     entry
   end
-
-  def self.save_to_s3 entry_data
-    json = entry_data['entry']
-    return nil if json.nil?
-
-    key = s3_file_path(json)
-    bucket = OpenChain::S3.integration_bucket_name
-    json_to_tempfile(entry_data) {|f| OpenChain::S3.upload_file(bucket, key, f) }
-
-    {bucket: bucket, key: key}
-  end
-
+  
   def process_entry json, opts={}
     start_time = Time.zone.now
     user = User.integration

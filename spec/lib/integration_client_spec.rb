@@ -405,18 +405,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq({"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix_invoices/x.y"})
     end
-    it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
-      # This path is a no-op now.
-      expect(OpenChain::AllianceParser).not_to receive(:delay)
-      cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
-    end
-    it 'should not send data to alliance parser if custom feature is not enabled' do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(false)
-      cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq({"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"})
-    end
     it 'should send data to Alliance Day End Invoice parser if custom feature enabled and path contains _alliance_day_end_invoices' do
       expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser

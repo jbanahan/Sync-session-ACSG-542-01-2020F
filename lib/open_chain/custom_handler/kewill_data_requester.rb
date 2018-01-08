@@ -85,7 +85,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
       expected_update_time = time_zone.parse expected_update_time.to_s
     end
 
-    e = Entry.where(broker_reference: broker_reference, source_system: OpenChain::AllianceParser::SOURCE_CODE).select([:expected_update_time, :last_exported_from_source]).
+    e = Entry.where(broker_reference: broker_reference, source_system: Entry::KEWILL_SOURCE_SYSTEM).select([:expected_update_time, :last_exported_from_source]).
           joins("LEFT OUTER JOIN broker_invoices ON broker_invoices.entry_id = entries.id").
           select("count(broker_invoices.id) 'invoice_count'").first
 

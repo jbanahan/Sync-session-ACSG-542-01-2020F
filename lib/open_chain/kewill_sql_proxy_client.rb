@@ -1,7 +1,10 @@
 require 'open_chain/sql_proxy_client'
 require 'open_chain/field_logic'
+require 'open_chain/custom_handler/kewill_entry_parser'
+require 'open_chain/sql_proxy_aws_export_support'
 
 module OpenChain; class KewillSqlProxyClient < SqlProxyClient
+  include OpenChain::SqlProxyAwsExportSupport
 
   def self.proxy_config_file
     Rails.root.join('config', 'sql_proxy.yml')
@@ -47,19 +50,6 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
                                 check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i, check_amount: amt}, request_context, swallow_error: false
   end
 
-  def self.request_alliance_entry_details file_number, last_exported_from_source
-    self.new.request_alliance_entry_details file_number, last_exported_from_source
-  end
-
-  def request_alliance_entry_details file_number, last_exported_from_source
-    # We're sending this context so that when the results are sent back to us from sql proxy's postback job
-    # we can determine if the data in the postback is still valid or if there should be another request forthcoming.
-
-    # Make sure we're keeping the timezone we're sending in eastern time (the alliance parser expects it that way)
-    request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("America/New_York")}
-    request 'entry_details', {:file_number => file_number.to_i}, request_context
-  end
-
   def self.request_file_tracking_info start_date, end_time
     self.new.request_file_tracking_info start_date, end_time
   end
@@ -69,7 +59,7 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   end
 
   def request_entry_data file_no
-    request 'entry_data', {file_no: file_no.to_i}, {}
+    request 'entry_data_to_s3', {file_no: file_no.to_i}, aws_context_hash(OpenChain::CustomHandler::KewillEntryParser, "json", filename_prefix: file_no)
   end
 
   def self.delayed_bulk_entry_data search_run_id, primary_keys
@@ -149,6 +139,11 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
   end
   private :statement_context_hash
+
+  def aws_context_hash parser_class, file_extension, path_date: Time.zone.now, filename_prefix: nil
+    s3_path = self.class.s3_export_path_from_parser(parser_class, file_extension, path_date: path_date, filename_prefix: filename_prefix)
+    self.class.aws_file_export_context_data(s3_path)
+  end
 
   def csv_customer_list customers
     # Remove the newline that to_csv adds

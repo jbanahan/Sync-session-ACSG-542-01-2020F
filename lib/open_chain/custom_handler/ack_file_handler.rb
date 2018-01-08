@@ -1,3 +1,5 @@
+require 'open_chain/integration_client_parser'
+
 module OpenChain
   module CustomHandler
     # Process CSV Acknowledgements
