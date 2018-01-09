@@ -1,0 +1,21 @@
+# To install the script for systemd purposes, run the following command:
+# sudo cp chainio.service /etc/systemd/system/chainio.service
+# sudo chmod +x chainio.sh
+#
+# Enable for auto starting on boot
+# sudo systemctl enable chainio
+#
+# https://wiki.ubuntu.com/SystemdForUpstartUsers
+# https://www.freedesktop.org/software/systemd/man/systemd.service.html
+[Unit]
+Description=Manages the startup of ChainIO server processes
+After=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=~
+ExecStart=/home/ubuntu/chainio.sh
+
+# Closest equivelant to: start on runlevel [2345]
+[Install]
+WantedBy=multi-user.target

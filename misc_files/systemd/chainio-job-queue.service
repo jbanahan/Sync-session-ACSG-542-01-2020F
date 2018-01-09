@@ -1,0 +1,15 @@
+# To install the script for systemd purposes, run the following command:
+# sudo cp chainio-job-queue.service /etc/systemd/system/chainio-job-queue.service
+#
+# https://wiki.ubuntu.com/SystemdForUpstartUsers
+# https://www.freedesktop.org/software/systemd/man/systemd.service.html
+[Unit]
+Description=Start / Monitor ChainIO Job Queue
+
+[Service]
+User=ubuntu
+Environment=TAG_FS_BASE=/etc/aws-fs/tags
+WorkingDirectory=~
+ExecStart=/etc/init.d/chainio-job-queue.sh
+Restart=on-failure
+RestartSec=15
