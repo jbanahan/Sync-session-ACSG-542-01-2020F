@@ -135,15 +135,13 @@ module OpenChain
       status_msg = 'success'
       response_type = 'remote_file'
       master_setup = MasterSetup.get
-      if command['path'].include?('_alliance/') && master_setup.custom_feature?('alliance')
-        # Just no-op if we get alliance files...the kewill_entry_parser feed handles these now.
-      elsif command['path'].include?('_alliance_day_end_invoices/') && master_setup.custom_feature?('alliance')
+      if command['path'].include?('_alliance_day_end_invoices/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_alliance_day_end_checks/') && master_setup.custom_feature?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_kewill_entry/') && master_setup.custom_feature?('alliance')
+      elsif command['path'].include?('_kewill_entry/') && master_setup.custom_feature?("Kewill Entries")
         OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/kewill_statements/') && master_setup.custom_feature?("alliance")
+      elsif command['path'].include?('/kewill_statements/') && master_setup.custom_feature?("Kewill Statements")
         OpenChain::CustomHandler::Vandegrift::KewillStatementParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('_ascena_po/') && MasterSetup.get.custom_feature?('Ascena PO')
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
@@ -159,7 +157,7 @@ module OpenChain
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?("/_hm_i2") && master_setup.custom_feature?('H&M I2 Interface')
         OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_kewill_isf/') && master_setup.custom_feature?('alliance')
+      elsif command['path'].include?('_kewill_isf/') && master_setup.custom_feature?('Kewill ISF')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_gtn_asn_xml') && master_setup.custom_feature?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser.delay.process_from_s3 bucket, remote_path
@@ -233,7 +231,7 @@ module OpenChain
       elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
-      elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('alliance')
+      elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('Kewill Exports')
         OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_ua_po_xml/') && master_setup.custom_feature?('Under Armour Feeds')
         OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser.delay.process_from_s3 bucket, remote_path

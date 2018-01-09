@@ -362,8 +362,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_csm_sync/a.xls','remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
-    it 'should send data to Kewill parser if Alliance is enabled and path contains _kewill_isf' do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
+    it 'should send data to Kewill parser if Kewill ISF is enabled and path contains _kewill_isf' do
+      expect(master_setup).to receive(:custom_feature?).with('Kewill ISF').and_return(true)
       expect(OpenChain::CustomHandler::KewillIsfXmlParser).to receive(:delay).and_return  OpenChain::CustomHandler::KewillIsfXmlParser
       expect(OpenChain::CustomHandler::KewillIsfXmlParser).to receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_isf/x.y','remote_path'=>'12345'}
@@ -488,7 +488,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it 'handles kewill export files' do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
+      expect(master_setup).to receive(:custom_feature?).with('Kewill Exports').and_return(true)
       p = double("OpenChain::CustomHandler::KewillExportShipmentParser")
       expect_any_instance_of(OpenChain::CustomHandler::KewillExportShipmentParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
@@ -570,7 +570,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it "handles kewill entries" do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
+      expect(master_setup).to receive(:custom_feature?).with('Kewill Entries').and_return(true)
       p = class_double("OpenChain::CustomHandler::KewillEntryParser")
       expect(OpenChain::CustomHandler::KewillEntryParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
@@ -579,7 +579,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it "handles kewill statements" do
-      expect(master_setup).to receive(:custom_feature?).with('alliance').and_return(true)
+      expect(master_setup).to receive(:custom_feature?).with('Kewill Statements').and_return(true)
       p = class_double("OpenChain::CustomHandler::Vandegrift::KewillStatementParser")
       expect(OpenChain::CustomHandler::Vandegrift::KewillStatementParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
