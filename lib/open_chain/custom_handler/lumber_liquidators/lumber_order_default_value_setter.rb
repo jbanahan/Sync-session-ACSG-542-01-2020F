@@ -10,16 +10,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     run_snapshot = false
     save_order = false
 
-    # fob point
-    current_fob = ord.fob_point
-    if current_fob.blank?
-      vendor_fob = v.custom_value(cdefs[:cmp_default_handover_port])
-      if !vendor_fob.blank?
-        ord.fob_point = vendor_fob
-        save_order = true
-      end
-    end
-
     # ship_from
     current_ship_from = ord.ship_from_id
     address_search = v.addresses.where(shipping:true)

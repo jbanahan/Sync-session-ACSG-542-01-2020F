@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent,
       :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description,
       :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number,
-      :ord_total_freight, :ord_grand_total
+      :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg
     ]
     @opts = opts
   end
@@ -76,6 +76,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         terms_of_sale = ship_terms(base)
         o.terms_of_sale = terms_of_sale unless terms_of_sale.blank?
         o.order_from_address = order_from_address(base,vend)
+        o.fob_point = fob_point base
 
         header_ship_to = ship_to_address(base,@imp)
 
@@ -526,6 +527,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
 
       ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], description
+      ol.find_and_set_custom_value @cdefs[:ordln_gross_weight_kg], gross_weight(line_el)
 
       inland_freight_el = get_inland_freight_element line_el
       if inland_freight_el
@@ -706,6 +708,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
        "LC60" => "Letter of Credit 60 Days"}
     end
 
+    def fob_point base
+      REXML::XPath.first(base, "./E1EDK17/LKTEXT").try(:text)
+    end
+
     def parse_date str
       return nil if str.match(/^0*$/)
       return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
@@ -725,6 +731,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       vals = {'FTK'=>'FT2','FOT'=>'FT'}
       new_str = vals[str]
       new_str.blank? ? str : new_str
+    end
+
+    def gross_weight line_el
+      weight = BigDecimal(et(line_el, 'BRGEW', true))
+      uom = et(line_el, 'GEWEI')
+      # If the provided weight is in
+      if uom == 'LBR'
+        weight = (weight * BigDecimal("0.453592"))
+      end
+      weight.round(3, BigDecimal::ROUND_HALF_UP)
     end
 
 end; end; end; end
