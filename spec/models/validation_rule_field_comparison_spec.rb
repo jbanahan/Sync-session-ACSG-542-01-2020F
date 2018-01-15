@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe ValidationRuleFieldComparison do
+
   it "validates a field with specified operator/operand" do
     json = {model_field_uid: :ent_total_packages, operator: "gt", value: 5}.to_json
     vr = ValidationRuleFieldComparison.create!(rule_attributes_json:json)

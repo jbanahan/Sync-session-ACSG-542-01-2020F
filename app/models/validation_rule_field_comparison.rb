@@ -1,3 +1,4 @@
+# DO NOT TOUCH THIS FILE. IT IS DEAD TO EVERYONE.
 class ValidationRuleFieldComparison < BusinessValidationRule
   include ValidatesField
 

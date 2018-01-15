@@ -92,7 +92,7 @@ class SearchCriterion < ActiveRecord::Base
   def test? obj, user=nil, opts={}
     mf = ModelField.find_by_uid(self.model_field_uid)
     return false if mf.disabled?
-    
+
     r = false
     if field_relative?
       # for relative fields, if a secondary object is needed to supply a value (ie. when we're dealing with
@@ -107,6 +107,10 @@ class SearchCriterion < ActiveRecord::Base
       end
 
       r = passes_relative? mf.process_query_parameter(primary_obj), get_relative_model_field.process_query_parameter(secondary_obj), opts
+    elsif field_decimal?
+      mf_two = get_secondary_model_field
+
+      r = passes_decimal? mf, mf_two, obj
     else
       r = passes?(mf.process_query_parameter(obj), opts)
     end
@@ -125,6 +129,10 @@ class SearchCriterion < ActiveRecord::Base
 
     if field_relative?
       return relative_where_clause
+    end
+
+    if field_decimal?
+      return decimal_where_clause
     end
 
     table_name = mf.join_alias
@@ -280,12 +288,47 @@ class SearchCriterion < ActiveRecord::Base
 
   private
 
+  def field_decimal?
+    ['nqfdec', 'eqfdec', 'gtfdec', 'ltfdec'].include? self.operator
+  end
+
   def field_relative?
     ['bfld', 'afld', 'eqf', 'nqf', 'nqfd', 'eqfd'].include? self.operator
   end
 
+  def get_secondary_model_field
+    ModelField.find_by_uid self.secondary_model_field_uid
+  end
+
   def get_relative_model_field
     ModelField.find_by_uid self.value
+  end
+
+  def passes_decimal? first_field, second_field, obj
+    passes = false
+
+    if first_field.blank? || second_field.blank?
+      passes = self.include_empty?
+    else
+      # We want to run the math here since it is universal across all cases.
+      field_one_value = first_field.process_query_parameter(obj)
+      field_two_value = second_field.process_query_parameter(obj)
+
+      decimal_value = (((field_one_value - field_two_value) / field_two_value).abs) * 100
+
+      case self.operator
+      when 'nqfdec'
+        passes = decimal_value != BigDecimal.new(self.value)
+      when 'eqfdec'
+        passes = decimal_value == BigDecimal.new(self.value)
+      when 'gtfdec'
+        passes = decimal_value < BigDecimal.new(self.value)
+      when 'ltfdec'
+        passes = decimal_value > BigDecimal.new(self.value)
+      end
+    end
+
+    passes
   end
 
   def passes_relative? my_value, other_value, opts
@@ -320,6 +363,24 @@ class SearchCriterion < ActiveRecord::Base
     opts[:pass_if_any] ? results.any? : results.all?
   end
 
+  def decimal_where_clause
+    first_mf = ModelField.find_by_uid(self.model_field_uid)
+    second_mf = get_secondary_model_field
+
+    clause = ""
+    case self.operator
+    when 'nqfdec'
+      clause = "(ABS((#{first_mf.qualified_field_name}-#{second_mf.qualified_field_name})/#{second_mf.qualified_field_name}) * 100) != #{self.value}"
+    when 'eqfdec'
+      clause = "(ABS((#{first_mf.qualified_field_name}-#{second_mf.qualified_field_name})/#{second_mf.qualified_field_name}) * 100) = #{self.value}"
+    when 'gtfdec'
+      clause = "(ABS((#{first_mf.qualified_field_name}-#{second_mf.qualified_field_name})/#{second_mf.qualified_field_name}) * 100) < #{self.value}"
+    when 'ltfdec'
+      clause = "(ABS((#{first_mf.qualified_field_name}-#{second_mf.qualified_field_name})/#{second_mf.qualified_field_name}) * 100) > #{self.value}"
+    end
+
+    clause
+  end
   def relative_where_clause
     my_mf = find_model_field
     other_mf = get_relative_model_field

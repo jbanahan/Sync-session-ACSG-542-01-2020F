@@ -15,6 +15,97 @@ describe SearchCriterion do
       expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
     end
   end
+  context "less than decimal" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'CommercialInvoiceLine',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'cil_value',operator:'ltfdec',value:'50',secondary_model_field_uid:'cil_contract_amount')
+    end
+
+    it "should not pass if field is greater than other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      @sc.update_attribute(:value, '200')
+      expect(@sc.test?(cil)).to be_falsey
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils).to be_empty
+    end
+
+    it "should pass if field is less than other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_truthy
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils.first).to eq(cil)
+    end
+  end
+
+  context "greater than decimal" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'CommercialInvoiceLine',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'cil_value',operator:'gtfdec',value:'200',secondary_model_field_uid:'cil_contract_amount')
+    end
+
+    it "should not pass if field is less than other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      @sc.update_attribute(:value, '0.4')
+      expect(@sc.test?(cil)).to be_falsey
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils).to be_empty
+    end
+
+    it "should pass if field is greater than other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_truthy
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils.first).to eq(cil)
+    end
+  end
+
+  context "equal decimal" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'CommercialInvoiceLine',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'cil_value',operator:'eqfdec',value:'100',secondary_model_field_uid:'cil_contract_amount')
+    end
+
+    it "should pass if field is equal to other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_truthy
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils.first).to eq(cil)
+    end
+
+    it "should not pass if field is not equal to other field's value as decimal" do
+      @sc.update_attribute(:value, '50')
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_falsey
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils).to be_empty
+    end
+  end
+
+  context "not equal decimal" do
+    before do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'CommercialInvoiceLine',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'cil_value',operator:'nqfdec',value:'50',secondary_model_field_uid:'cil_contract_amount')
+    end
+
+    it "should pass if field is not equal to other field's value as decimal" do
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_truthy
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils.first).to eq(cil)
+    end
+
+    it "should not pass if field is equal to other field's value as decimal" do
+      @sc.update_attribute(:value, '100')
+      cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
+      expect(@sc.test?(cil)).to be_falsey
+      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      expect(cils).to be_empty
+    end
+  end
 
   context "split field" do
     let(:ss) { SearchSetup.new(module_type:'Entry') }

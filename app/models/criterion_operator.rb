@@ -54,6 +54,10 @@ class CriterionOperator
   
   OPERATORS = [
     new("eq","_fn_ = ?","Equals"),
+    new("eqfdec", "_fn_ = ?", "Decimal Equals"),
+    new("nqfdec", "_fn_ <> ?", "Decimal Not Equal"),
+    new("gtfdec", "_fn_ < ?", "Decimal Greater Than"),
+    new("ltfdec", "_fn_ > ?", "Decimal Less Than"),
     new("gt","_fn_ > ?","Greater Than"),
     new("gteq","_fn_ >= ?","Greater Than (Inclusive)"),
     new("lt","_fn_ < ?","Less Than"),

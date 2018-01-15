@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe ValidationRuleFieldFormat do
+  it "validates two fields when secondary_model_field_uid is present" do
+    commercial_invoice_line = Factory(:commercial_invoice_line, value: 10, contract_amount: 5)
+    json = {model_field_uid: :cil_value, operator: "gtfdec", secondary_model_field_uid: :cil_contract_amount, value: '10'}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to eq "#{ModelField.find_by_uid(:cil_value).label} must match '10' format but was '100.0'."
+    json = {model_field_uid: :cil_value, operator: "gtfdec", secondary_model_field_uid: :cil_contract_amount, value: '200'}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to be_nil
+  end
   it "should validate a field by regex" do
     json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
     vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
