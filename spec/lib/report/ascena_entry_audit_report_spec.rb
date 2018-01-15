@@ -11,7 +11,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   let(:date_5) { DateTime.new(2016,03,19) }
   let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price, :prod_reference_number] }
   
-  let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Duty Due Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'Container Count', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'MID Supplier Name', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Invoice Value - Brand', 'Invoice Value - 7501', 'Invoice Value - Contract', 'Entered Value', 'Rounded Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Unit Price - Brand', 'Unit Price - PO', 'Unit Price - 7501', 'Duty Savings - NDC', 'Duty Savings - First Sale', 'First Sale Flag', 'Related Parties', 'Fiscal Month', 'Fiscal Year', 'Web Link'] }
+  let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Duty Due Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'Container Count', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'MID Supplier Name', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Invoice Value - Brand', 'Invoice Value - 7501', 'Invoice Value - Contract', 'Entered Value', 'Rounded Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Unit Price - Brand', 'Unit Price - PO', 'Unit Price - 7501', 'Duty Savings - NDC', 'Duty Savings - First Sale', 'First Sale Flag', 'Related Parties', 'Fiscal Month', 'Fiscal Year', 'Vessel/Airline', 'Voyage/Flight', 'Web Link'] }
 
   def create_data
     vend = Factory(:company, name: "vend name", system_code: "vend sys code")
@@ -19,7 +19,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     @ent = Factory(:entry, customer_number: 'ASCE', broker_reference: 'brok ref', entry_number: 'ent num', entry_type: 'ent type', first_release_date: date_1, 
                    first_entry_sent_date: date_2, entry_filed_date: date_3, final_statement_date: date_4, release_date: date_5, duty_due_date: date_5, transport_mode_code: 'transport mode', 
                    master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols', unlading_port_code: 'unlading', lading_port_code: 'lading', importer_tax_id: 'imp tax', 
-                   customer_name: 'cust name', total_non_dutiable_amount: 1, source_system: 'Alliance', entry_port_code: '0123', fiscal_month: 9, fiscal_year: 2017)
+                   customer_name: 'cust name', total_non_dutiable_amount: 1, source_system: 'Alliance', entry_port_code: '0123', fiscal_month: 9, fiscal_year: 2017,
+                   vessel: "HMS Pinafore", voyage: "Silk Road")
     ci = Factory(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 1, non_dutiable_amount: 2)
     @cil = Factory(:commercial_invoice_line, commercial_invoice: ci, po_number: 'po num', part_number: "part num", product_line: 'prod line', country_origin_code: 'coo', 
                    country_export_code: 'export code', department: 'dept', mid: 'mid', subheader_number: 1, line_number: 2,
@@ -46,7 +47,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
   describe "permission?" do
     before do
       ms = stub_master_setup
-      allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
+      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
     end
 
     it "allows access for master users who can view entries" do
@@ -158,7 +159,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'Entered Value'=>4, 'Rounded Entered Value'=>4, 'Total Duty'=>13, 'MPF - Prorated'=>3, 'MPF - Full'=>4, 'HMF'=>5, 'Total Fees'=>16, 'ADD Value'=>6, 
          'CVD Value'=>7, 'Excise Amount'=>5, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 'Inv Ln Non-Dutiable Amount'=>9, 
          'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
-         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Web Link'=>@ent.id})
+         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 
+         'Voyage/Flight' => 'Silk Road', 'Web Link'=>@ent.id})
 
       expect(rows[1]).to eq(
         {'Broker Reference'=>'brok ref', 'Entry Number'=>'ent num', 'Entry Type'=>'ent type', 'First Release Date'=>date_1, 'First Summary Sent Date'=>date_2, 
@@ -172,7 +174,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'Invoice Value - Contract'=>20, 'Entered Value'=>5, 'Rounded Entered Value'=>5, 'Total Duty'=>13, 'MPF - Prorated'=>3.0, 'MPF - Full'=>4, 'HMF'=>5, 
          'Total Fees'=>16, 'ADD Value'=>6, 'CVD Value'=>7, 'Excise Amount'=>6, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 
          'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
-         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Web Link'=>@ent.id}
+         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 
+         'Voyage/Flight' => 'Silk Road', 'Web Link'=>@ent.id}
         )      
     end
 

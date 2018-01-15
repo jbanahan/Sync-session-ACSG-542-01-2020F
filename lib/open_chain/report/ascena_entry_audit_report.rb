@@ -8,7 +8,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   include OpenChain::CustomHandler::Ascena::AscenaReportHelper
 
   def self.permission? user
-    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && 
       (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
   end
 
@@ -140,6 +140,8 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              IF(cil.related_parties, 'Y', 'N') AS 'Related Parties', 
              e.fiscal_month AS 'Fiscal Month', 
              e.fiscal_year AS 'Fiscal Year',  
+             e.vessel AS 'Vessel/Airline',
+             e.voyage AS 'Voyage/Flight',
              e.id AS 'Web Link'
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
