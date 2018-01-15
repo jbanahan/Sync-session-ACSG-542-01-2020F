@@ -6,9 +6,9 @@ class ValidationRuleEntryInvoiceFieldFormat < BusinessValidationRule
     validate_field_format(invoice) do |mf, val, regex, fail_if_matches|
       stop_validation unless has_flag?("validate_all")
       if fail_if_matches
-        "At least one #{mf.label} value matches '#{regex}' format."
+        "Invoice #{invoice.invoice_number} #{mf.label} value should not match '#{regex}' format."
       else
-        "All #{mf.label} values do not match '#{regex}' format."
+        "Invoice #{invoice.invoice_number} #{mf.label} value '#{val}' does not match '#{regex}' format."
       end
     end
   end

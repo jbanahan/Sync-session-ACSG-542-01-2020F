@@ -13,9 +13,9 @@ class ValidationRuleEntryInvoiceLineTariffFieldFormat < BusinessValidationRule
         stop = true
         stop_validation unless has_flag?("validate_all")
         if fail_if_matches
-          "Invoice # #{invoice_line.commercial_invoice.invoice_number} #{mf.label} value should not match '#{regex}' format."
+          "Invoice # #{invoice_line.commercial_invoice.invoice_number} / Line # #{invoice_line.line_number} #{mf.label} value should not match '#{regex}' format."
         else
-          "Invoice # #{invoice_line.commercial_invoice.invoice_number} #{mf.label} value '#{val}' does not match '#{regex}' format."
+          "Invoice # #{invoice_line.commercial_invoice.invoice_number} / Line # #{invoice_line.line_number} #{mf.label} value '#{val}' does not match '#{regex}' format."
         end
       end
     end
