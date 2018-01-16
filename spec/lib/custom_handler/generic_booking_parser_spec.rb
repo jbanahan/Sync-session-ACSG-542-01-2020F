@@ -105,6 +105,13 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       expect(shipment.booking_mode).to eq "Ocean - LCL"
     end
 
+    it "handles Ship Mode Air" do
+      form_data[28][8] = "air"
+      subject.process_rows shipment, form_data, user
+      expect(shipment.booking_mode).to eq "Air"
+      expect(shipment.mode).to eq "Air"
+    end
+
     it "fails when order belongs to another shipment if check_orders provided in constructor options" do
       ol = first_order.order_lines.first
       Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)

@@ -45,6 +45,9 @@ module OpenChain; module CustomHandler; class GenericBookingParser
                         nil
                       end
       shipment.booking_mode = shipment.mode
+    elsif mode.to_s.upcase == "AIR"
+      shipment.booking_mode = "Air"
+      shipment.mode = shipment.booking_mode
     end
 
     marks_and_numbers = []

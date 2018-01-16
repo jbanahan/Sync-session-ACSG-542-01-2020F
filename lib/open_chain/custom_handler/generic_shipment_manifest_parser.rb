@@ -36,6 +36,8 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
                       else
                         nil
                       end
+    elsif mode.to_s.upcase == "AIR"
+      shipment.mode = "Air"
     end
 
     marks_and_numbers = []

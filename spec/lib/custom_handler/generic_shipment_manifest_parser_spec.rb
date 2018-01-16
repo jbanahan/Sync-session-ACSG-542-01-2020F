@@ -129,6 +129,13 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       expect(shipment.lcl).to be_truthy
     end
 
+    it "handles ship mode air" do
+      add_row_data rows, 28, 8, "air"
+      subject.process_rows shipment, rows, user
+
+      expect(shipment.mode).to eq "Air"
+    end
+
     it "handles manufacturer_address_id if provided in constructor options" do
       order
       add_details_row rows, 35, 2, ["CustOrdNum", "", "Sku", "1234.56.7890", 10, 100, "", 2, 200, "", "Container#", "Seal#"]
