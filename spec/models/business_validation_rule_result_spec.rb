@@ -107,7 +107,62 @@ describe BusinessValidationRuleResult do
       expect(rule.run_validation(Order.new)).to be_falsey
       expect(rule.state).to eq 'X'
     end
+
+    context "mocked business_validation_rule" do
+      let!(:rule) { 
+        d = double(BusinessValidationRule)
+        allow(subject).to receive(:business_validation_rule).and_return d
+        allow(d).to receive(:delete_pending?).and_return false
+        allow(d).to receive(:should_skip?).and_return false
+        allow(d).to receive(:fail_state).and_return "Failure"
+
+        d
+      }
+
+      let (:object) { Object.new }
+
+      it "allows returning arrays of messages to indicate failure" do 
+        expect(rule).to receive(:run_validation).with(object).and_return ["Failure"]
+
+        expect(subject.run_validation object).to eq true
+        expect(subject.state).to eq "Failure"
+      end
+
+      it "allows returning arrays with multiple messages to indicate failure" do 
+        expect(rule).to receive(:run_validation).with(object).and_return ["Failure 1", "Failure 2"]
+
+        expect(subject.run_validation object).to eq true
+        expect(subject.message).to eq "Failure 1\nFailure 2"
+        expect(subject.state).to eq "Failure"
+      end
+
+      it "handles blank arrays as not a failure" do
+        expect(rule).to receive(:run_validation).with(object).and_return []
+        expect(subject.run_validation object).to eq true
+        expect(subject.state).to eq "Pass"
+      end
+
+      it "allows returning of strings to indicate failure" do
+        expect(rule).to receive(:run_validation).with(object).and_return "Failure"
+
+        expect(subject.run_validation object).to eq true
+        expect(subject.state).to eq "Failure"
+      end
+
+      it "handles blank string as not a failure" do
+        expect(rule).to receive(:run_validation).with(object).and_return ""
+        expect(subject.run_validation object).to eq true
+        expect(subject.state).to eq "Pass"
+      end
+
+      it "handles nil as not a failure" do
+        expect(rule).to receive(:run_validation).with(object).and_return nil
+        expect(subject.run_validation object).to eq true
+        expect(subject.state).to eq "Pass"
+      end
+    end
   end
+
   describe "override" do
     it "should set overriden_at and overriden_by" do
       u = User.new

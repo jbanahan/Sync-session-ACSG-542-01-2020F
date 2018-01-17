@@ -50,6 +50,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'recon_class' => "Y",
         'recon_9802' => "Y",
         'fees_tot' => 12345,
+        'taxes_tot' => 234,
         'duty_tot' => 123,
         'duty_paid_direct_amt' => 890,
         'value_entered' => 99999,
@@ -417,6 +418,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.division_number).to eq "0009"
       expect(entry.recon_flags).to eq "NAFTA VALUE CLASS 9802"
       expect(entry.total_fees).to eq BigDecimal.new("123.45")
+      expect(entry.total_taxes).to eq BigDecimal.new("2.34")
+      expect(entry.total_duty).to eq BigDecimal.new("1.23")
       expect(entry.total_duty_direct).to eq BigDecimal.new("8.90")
       expect(entry.entered_value).to eq BigDecimal.new("999.99")
       expect(entry.gross_weight).to eq 987654

@@ -117,4 +117,15 @@ describe DailyStatement do
       end
     end
   end
+
+  describe "final_statement?" do
+    it "identifies statement status of F as final" do
+      expect(described_class.new(status: "F").final_statement?).to eq true
+      expect(described_class.new(status: "f").final_statement?).to eq true
+    end
+
+    it "identifies anything else as not final statement" do
+      expect(subject.final_statement?).to eq false
+    end
+  end
 end

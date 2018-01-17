@@ -507,4 +507,38 @@ describe Entry do
     end
   end
 
+  describe "total_billed_duty_amount" do
+
+    let (:entry) {
+      # Create multiple broker invoices with multiple lines, each having a single duty line
+      broker_invoice_line = Factory(:broker_invoice_line, charge_code: "0001", charge_amount: 10)
+      broker_invoice_line_2 = Factory(:broker_invoice_line, broker_invoice: broker_invoice_line.broker_invoice, charge_code: "0002", charge_amount: 20)
+      broker_invoice_2_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: broker_invoice_line.broker_invoice.entry), charge_code: "0001", charge_amount: 30)
+      broker_invoice_2_line_2 = Factory(:broker_invoice_line, broker_invoice: broker_invoice_line.broker_invoice, charge_code: "0003", charge_amount: 40)
+
+      broker_invoice_line.broker_invoice.entry
+    }
+
+    it "sums total duty from broker invoices" do
+      expect(entry.total_billed_duty_amount).to eq BigDecimal("40")
+    end
+
+    it "returns zero if not invoiced" do
+      expect(subject.total_billed_duty_amount).to eq BigDecimal("0")
+    end
+  end
+
+  describe "total_duty_taxes_fees_amount" do
+
+    let (:entry) { Entry.new total_duty: BigDecimal("1"), total_taxes: BigDecimal("2"), total_fees: BigDecimal("3"), total_add: BigDecimal("4"), total_cvd: BigDecimal("5") }
+
+    it "returns sum of duty, taxes, fees, penalties" do
+      expect(entry.total_duty_taxes_fees_amount).to eq BigDecimal("15")
+    end
+
+    it "handles nil values" do
+      expect(Entry.new.total_duty_taxes_fees_amount).to eq BigDecimal('0')
+    end
+  end
+
 end

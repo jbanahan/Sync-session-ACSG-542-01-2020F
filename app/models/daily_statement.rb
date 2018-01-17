@@ -66,4 +66,8 @@ class DailyStatement < ActiveRecord::Base
       ""
     end
   end
+
+  def final_statement?
+    self.status.to_s.upcase == "F"
+  end
 end

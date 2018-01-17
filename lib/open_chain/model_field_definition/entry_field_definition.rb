@@ -334,7 +334,16 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         export_lambda: lambda {|obj| obj.split_release_option_value },
         qualified_field_name: "(CASE split_release_option WHEN '1' THEN 'Hold All' WHEN '2' THEN 'Incremental' ELSE '' END)"
       }],
-      [219, :ent_first_release_received_date, :first_release_received_date, "First Release Received Date", {data_type: :datetime}]
+      [219, :ent_first_release_received_date, :first_release_received_date, "First Release Received Date", {data_type: :datetime}],
+      [220, :ent_total_billed_duty_amount, :total_billed_duty_amount, "Total Billed Duty Amount", {:data_type=>:decimal,:currency=>:usd, read_only: true,
+        :export_lambda=>lambda {|obj| obj.total_billed_duty_amount },
+        :qualified_field_name=>"(SELECT IFNULL(SUM(charge_amount), 0) FROM broker_invoices tbd_i INNER JOIN broker_invoice_lines tbd_il ON tbd_i.id = tbd_il.broker_invoice_id WHERE tbd_i.entry_id = entries.id AND tbd_il.charge_code = '0001')"
+      }],
+      [221, :ent_total_taxes, :total_taxes, "Total Taxes", {data_type: :decimal, currency: :usd}],
+      [222, :ent_total_duty_taxes_fees_penalties, :total_duty_taxes_fees_penalties, "Total Duty, Taxes, Fees & Penalties", {:data_type=>:decimal,:currency=>:usd, read_only: true,
+        :export_lambda=>lambda {|obj| obj.total_duty_taxes_fees_amount },
+        :qualified_field_name=>"(IFNULL(entries.total_duty,0) + IFNULL(entries.total_taxes,0) + IFNULL(entries.total_fees,0) + IFNULL(entries.total_cvd,0) + IFNULL(entries.total_add,0))"
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

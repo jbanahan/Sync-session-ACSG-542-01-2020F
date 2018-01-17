@@ -77,7 +77,7 @@ class CacheWrapper
       # Just attempt any get...we're just checking if memcache is running or not here...that's it.
       client.get 't'
     rescue Dalli::RingError => e
-      settings = memcache_settings(nil)
+      settings = memcache_settings
       raise "Memcache does not appear to be running.  Please ensure it is installed and running at #{settings["server"]}:#{settings["port"]}."
     end
     self.new(client)

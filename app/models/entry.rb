@@ -184,6 +184,16 @@ class Entry < ActiveRecord::Base
       ""
     end
   end
+
+  def total_billed_duty_amount
+    amt = BigDecimal("0")
+    broker_invoices.each {|i| amt += i.total_billed_duty_amount }
+    amt
+  end
+
+  def total_duty_taxes_fees_amount
+    [self.total_duty, self.total_taxes, self.total_fees, self.total_add, self.total_cvd].compact.sum
+  end
   
   private
 

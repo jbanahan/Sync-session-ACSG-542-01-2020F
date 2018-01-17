@@ -444,6 +444,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.total_packages = e[:piece_count]
       entry.total_packages_uom = e[:piece_count_uom]
       entry.total_fees = parse_decimal(e[:fees_tot])
+      entry.total_taxes = parse_decimal(e[:taxes_tot])
       entry.total_duty = parse_decimal(e[:duty_tot])
       entry.total_duty_direct = parse_decimal(e[:duty_paid_direct_amt])
       entry.entered_value = parse_decimal(e[:value_entered])

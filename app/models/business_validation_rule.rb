@@ -16,7 +16,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleManual: {label:"Manual"},
                 'OpenChain::CustomHandler::Polo::PoloValidationRuleEntryInvoiceLineMatchesPoLine'.to_sym=>
                   {label:"Polo Entry Invoice Line Matches PO Line", 
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}},
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }},
                 ValidationRuleEntryInvoiceLineTariffFieldFormat: {label:"Entry Invoice Tariff Field Format"},
                 ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
                 ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
@@ -36,34 +36,35 @@ class BusinessValidationRule < ActiveRecord::Base
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
                   {
                     label: "Ascena Entry Invoice Audit",
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='ll'}
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Lumber Business Rules" }
                   },
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym=>
                   {
                     label: 'Lumber Entry Invoice Part Matches Order',
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
                 'OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique'.to_sym=>
                   {
                     label: 'Quaker Entry PO Number Unique',
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}  
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
                 'OpenChain::CustomHandler::Hm::ValidationRuleHmInvoiceLineFieldFormat'.to_sym=>
                   {
                     label: 'H&M Invoice Line Field Format',
-                    enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}  
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale'.to_sym=>
                 {
                   label: "Ascena First Sale Validation",
-                  enabled_lambda: lambda {Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net'}
+                  enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                 },
-                ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"}
+                ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"},
+                "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lamda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} }
               }
 
   def self.subclasses_array
@@ -130,3 +131,4 @@ require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validati
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_first_sale'
 require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line_field_format'
+require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'

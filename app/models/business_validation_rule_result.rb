@@ -29,7 +29,16 @@ class BusinessValidationRuleResult < ActiveRecord::Base
       self.state = 'Skipped'
       return self.state != original_value
     end
-    self.message = self.business_validation_rule.run_validation(obj)
+    messages = self.business_validation_rule.run_validation(obj)
+    # Use blank because we do allow arrays to be returned, so we consider any value 
+    # of blank that is returned (blank strings, blank arrays) to be an indication of passing
+    if !messages.blank?
+      # Allow for returning multiple messages directly from the run_validation method
+      self.message = Array.wrap(messages).map(&:to_s).join("\n")
+    else
+      self.message = nil
+    end
+
     if self.message.nil?
       self.state = 'Pass'
     else
