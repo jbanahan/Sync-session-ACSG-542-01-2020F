@@ -34,6 +34,7 @@ require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
 require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
 require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
 require 'open_chain/custom_handler/generic/isf_late_flag_file_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_intacct_invoice_report_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -68,6 +69,7 @@ class CustomFeaturesController < ApplicationController
   ASCENA_PARTS_PARSER ||= 'OpenChain::CustomHandler::Ascena::AscenaProductUploadParser'
   PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
   ISF_LATE_FLAG_FILE_PARSER ||= 'OpenChain::CustomHandler::Generic::IsfLateFlagFileParser'
+  INTACCT_INVOICE_REPORT ||= 'OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler'
 
   def set_page_title
     @page_title ||= 'Custom Feature'
@@ -608,6 +610,22 @@ class CustomFeaturesController < ApplicationController
 
   def isf_late_filing_download
     generic_download 'ISF Late Filing Reports'
+  end
+
+  def intacct_invoice_index
+    generic_index INTACCT_INVOICE_REPORT.constantize, INTACCT_INVOICE_REPORT, 'Intacct Invoice Report'
+  end
+
+  def intacct_invoice_upload
+    generic_upload(INTACCT_INVOICE_REPORT, 'Intacct Invoice Report', 'intacct_invoice', flash_notice: "Your file is being processed.  You'll receive an email when it completes.") do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file."
+      end
+    end
+  end
+
+  def intacct_invoice_download
+    generic_download 'Intacct Invoice Report'
   end
 
   private

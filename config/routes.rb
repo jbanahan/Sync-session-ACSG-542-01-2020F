@@ -601,6 +601,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/isf_late_filing/upload" => "custom_features#isf_late_filing_upload"
   get "/custom_features/isf_late_filing/:id/download" => "custom_features#isf_late_filing_download"
 
+  get "/custom_features/intacct_invoice" => "custom_features#intacct_invoice_index"
+  post "/custom_features/intacct_invoice/upload" => "custom_features#intacct_invoice_upload"
+  get "/custom_features/intacct_invoice/:id/download" => "custom_features#intacct_invoice_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

@@ -51,10 +51,10 @@ module OpenChain
     end
 
     # wraps the set_cell command
-    def set_cell sheet, row, column, value
+    def set_cell sheet, row, column, value, url=nil
       datatype = determine_datatype value
       output_value = format_value datatype, value
-      c = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>sheet,"row"=>row,"column"=>column},"cell"=>{"value"=>output_value,"datatype"=>datatype}}}
+      c = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>sheet,"row"=>row,"column"=>column},"cell"=>{"value"=>output_value,"link"=>url,"datatype"=>datatype}}}
       send c
     end
     

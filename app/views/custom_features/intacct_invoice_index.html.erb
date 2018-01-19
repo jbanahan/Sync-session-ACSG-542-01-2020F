@@ -1,0 +1,5 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY .xls or .xlsx files. Invoice numbers should appear in column C. Column Q should be empty.</h2>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Intacct Invoice Report Files", custom_feature: "intacct_invoice"} %>

@@ -257,4 +257,11 @@
         </div>
       </div>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler.can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-4 col-md-offset-4'>
+          <%=link_to "Intacct Invoice Report Upload", '/custom_features/intacct_invoice', :class=>'btn btn-lg btn-default btn-block'%>
+        </div>
+      </div>
+  <%-end-%>
 </div>

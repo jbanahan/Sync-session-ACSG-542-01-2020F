@@ -126,7 +126,7 @@ describe OpenChain::XLClient do
 
   describe "set_cell" do
     after :each do
-      cmd = {"command"=>"set_cell","path"=>path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"datatype"=>@datatype}}}
+      cmd = {"command"=>"set_cell","path"=>path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"link"=>nil,"datatype"=>@datatype}}}
       expect(subject).to receive(:send).with(cmd).and_return(dummy_response)
       expect(subject.set_cell(  0, 1, 2, @value )).to eq(dummy_response)
 
