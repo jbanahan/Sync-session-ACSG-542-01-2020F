@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
   include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_invoice"
+    ["www-vfitrack-net/_ann_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_invoice"]
   end
 
   def self.parse data, opts = {}

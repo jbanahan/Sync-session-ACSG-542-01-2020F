@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; class EcellerateXmlRouter
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ecellerate_shipment"]
+    ["www-vfitrack-net/_ecellerate_shipment", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ecellerate_shipment"]
   end
 
   def self.parse data, user, opts={}

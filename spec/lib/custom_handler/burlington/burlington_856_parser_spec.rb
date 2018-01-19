@@ -416,7 +416,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     subject { described_class }
     
     it "uses correct integration folder path" do
-      expect(subject.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
+      expect(subject.integration_folder).to eq ["www-vfitrack-net/_burlington_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"]
     end
   end
 

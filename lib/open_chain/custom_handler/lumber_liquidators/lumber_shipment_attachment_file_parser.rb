@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/ll/shipment_docs"
+    ["ll/shipment_docs", "/home/ubuntu/ftproot/chainroot/ll/shipment_docs"]
   end
 
   def self.process_from_s3 s3_bucket, s3_key, opts = {}

@@ -162,7 +162,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     subject { described_class }
 
     it "uses the correct folder" do
-      expect(subject.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_856_xml"
+      expect(subject.integration_folder).to eq ["www-vfitrack-net/_ua_856_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_856_xml"]
     end
   end
 

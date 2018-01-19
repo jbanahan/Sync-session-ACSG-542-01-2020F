@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
   describe "integration_folder" do
     it "uses integration folder" do
-      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_article_master"
+      expect(described_class.integration_folder).to eq ["www-vfitrack-net/_ua_article_master", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_article_master"]
     end
   end
 

@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
   describe "integration_folder" do
     it "should use the correct folder" do
-      expect(described_class.new.integration_folder).to eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
+      expect(described_class.new.integration_folder).to eq ["www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
   end
 

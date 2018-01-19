@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
   include OpenChain::CustomHandler::UnderArmour::UnderArmourBusinessLogic
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_po_xml"
+    ["www-vfitrack-net/_ua_po_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_po_xml"]
   end
 
   def self.parse xml, opts = {}

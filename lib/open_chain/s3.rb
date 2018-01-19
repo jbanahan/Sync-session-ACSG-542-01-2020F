@@ -176,9 +176,7 @@ module OpenChain; class S3
     # For the time being, we need to support looking for files in multiple locations after migrating the integration code
     # to a new machine.  The integration_client_parser implementations will all return multiple integration folders to check
     # for files to process.  This ammounts primarily just to a single extra HTTP call per subfolder listed.
-    subfolders = subfolders.respond_to?(:to_a) ? subfolders.to_a : [subfolders]
-
-    subfolders.each do |subfolder|
+    Array.wrap(subfolders).each do |subfolder|
       prefix = integration_subfolder_path(subfolder, upload_date)
       
       # The sort call here is to make sure we're processing all the files nearest to the order they were received

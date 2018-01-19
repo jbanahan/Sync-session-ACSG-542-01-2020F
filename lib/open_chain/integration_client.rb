@@ -129,133 +129,145 @@ module OpenChain
       # 1 second per file to process (including any retries that may occur) without exceeding the visibility
       # timeout.
 
-      bucket = OpenChain::S3.integration_bucket_name
-      dir, fname = Pathname.new(command['path']).split
-      remote_path = command['remote_path']
+      # The ||'s below are there for legacy continuity while we deploy an update to the software that pushes
+      # inbound files to S3/SQS...which will reside on our new ftp server.  Once the old software is removed,
+      # we can do away with the legacy checks.
+      bucket = command['s3_bucket'].presence || OpenChain::S3.integration_bucket_name
+      s3_path = command['s3_path'].presence || command['remote_path']
+      original_path = command['original_path'].presence || command['path']
+
+      original_directory, original_filename = Pathname.new(original_path).split
+      original_filename = original_filename.to_s
+
+      # Strip any leading or trailing underscores...they're pointless.
+      parser_identifier = original_directory.basename.to_s.downcase.sub(/^_/, "").sub(/_$/, "")
+      original_directory = original_directory.to_s
+
       status_msg = 'success'
       response_type = 'remote_file'
-      master_setup = MasterSetup.get
-      if command['path'].include?('_alliance_day_end_invoices/') && master_setup.custom_feature?('alliance')
-        OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_alliance_day_end_checks/') && master_setup.custom_feature?('alliance')
-        OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_kewill_entry/') && master_setup.custom_feature?("Kewill Entries")
-        OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/kewill_statements/') && master_setup.custom_feature?("Kewill Statements")
-        OpenChain::CustomHandler::Vandegrift::KewillStatementParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_ascena_po/') && MasterSetup.get.custom_feature?('Ascena PO')
-        OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_ascena_apll_asn') && master_setup.custom_feature?('Ascena APLL ASN')
-        OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, remote_path)
-      elsif command['path'].include?('/_po_xml') && master_setup.custom_feature?("Baillie")
-        OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser.delay.process_from_s3(bucket, remote_path)
-      elsif command['path'].include?('_fenix_invoices/') && master_setup.custom_feature?('fenix')
-        OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_fenix/') && (master_setup.custom_feature?('fenix') || master_setup.custom_feature?("Fenix B3 Files"))
-        OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_hm_i1/') && master_setup.custom_feature?('H&M I1 Interface')
-        OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?("/_hm_i2") && master_setup.custom_feature?('H&M I2 Interface')
-        OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_kewill_isf/') && master_setup.custom_feature?('Kewill ISF')
-        OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_gtn_asn_xml') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_vendor_xml') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_po_xml') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_article_xml') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_sap_pir_xml') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/shipment_docs') && master_setup.custom_feature?('Lumber SAP')
-        OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFileParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_ua_article_master/') && MasterSetup.get.custom_feature?('Under Armour Feeds')
-        OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_from_msl/') && master_setup.custom_feature?('MSL+')
-        if fname.to_s.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
+
+      custom_features = Set.new MasterSetup.get.custom_features_list
+
+      if (parser_identifier == "alliance_day_end_invoices") && custom_features.include?('alliance')
+        OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "alliance_day_end_checks") && custom_features.include?('alliance')
+        OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "kewill_entry") && custom_features.include?("Kewill Entries")
+        OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "kewill_statements") && custom_features.include?("Kewill Statements")
+        OpenChain::CustomHandler::Vandegrift::KewillStatementParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ascena_po") && custom_features.include?('Ascena PO')
+        OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ascena_apll_asn") && custom_features.include?('Ascena APLL ASN')
+        OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, s3_path)
+      elsif (parser_identifier == "po_xml") && custom_features.include?("Baillie")
+        OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser.delay.process_from_s3(bucket, s3_path)
+      elsif (parser_identifier == "fenix_invoices") && custom_features.include?('fenix')
+        OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "fenix") && (custom_features.include?('fenix') || custom_features.include?("Fenix B3 Files"))
+        OpenChain::FenixParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_i1") && custom_features.include?('H&M I1 Interface')
+        OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_i2") && custom_features.include?('H&M I2 Interface')
+        OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "kewill_isf") && custom_features.include?('Kewill ISF')
+        OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "gtn_asn_xml") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "sap_vendor_xml") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "sap_po_xml") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "sap_article_xml") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "sap_pir_xml") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "shipment_docs") && custom_features.include?('Lumber SAP')
+        OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFileParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ua_article_master") && custom_features.include?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "from_msl") && custom_features.include?('MSL+')
+        if original_filename.match /-ack/
+          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
         else
-          OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, remote_path, fname.to_s
+          OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, s3_path, original_filename
         end
-      elsif command['path'].include?('_csm_sync/') && master_setup.custom_feature?('CSM Sync')
-        OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
-      elsif command['path'].include?('_from_csm/ACK') && master_setup.custom_feature?('CSM Sync')
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
-      elsif command['path'].include?('/_efocus_ack/') && master_setup.custom_feature?("e-Focus Products")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
-      elsif command['path'].include?('/_from_sap/') && master_setup.custom_feature?('Ann SAP')
-        if fname.to_s.match /^zym_ack/
-          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
+      elsif (parser_identifier == "csm_sync") && custom_features.include?('CSM Sync')
+        OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "from_csm") && original_filename.upcase.start_with?("ACK") && custom_features.include?('CSM Sync')
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
+      elsif (parser_identifier == "efocus_ack") && custom_features.include?("e-Focus Products")
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
+      elsif (parser_identifier == "from_sap") && custom_features.include?('Ann SAP')
+        if original_filename.match /^zym_ack/
+          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'ANN-ZYM'
         else
-          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.delay.process_from_s3 bucket, remote_path
+          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.delay.process_from_s3 bucket, s3_path
         end
-      elsif command['path'].include?('/_ann_850/') && master_setup.custom_feature?("Ann Brokerage Feeds")
-        OpenChain::CustomHandler::AnnInc::AnnOrder850Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_ann_invoice/') && master_setup.custom_feature?("Ann Brokerage Feeds")
-        OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, remote_path
-     
-      elsif command['path'].include? '/_polo_850/'
-        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_850/') && master_setup.custom_feature?("RL 850")
-        OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_shoes_for_crews_po_zip/'
-        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_shoes_po/'
-        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_eddie_po/') && master_setup.custom_feature?("Eddie Bauer Feeds")
-        OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_eb_ftz_ack/') && master_setup.custom_feature?("Eddie Bauer Feeds")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
-      elsif command['path'].include?('/_eddie_invoice') && master_setup.custom_feature?("Eddie Bauer Feeds")
-        OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lenox_product/') && master_setup.custom_feature?('Lenox')
-        OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lenox_po/') && master_setup.custom_feature?('Lenox')
-        OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_polo_tradecard_810'
-        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_jjill_850/') && master_setup.custom_feature?('JJill')
-        OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_ecellerate_shipment')
-        OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lands_end_parts/') && master_setup.custom_feature?('Lands End Parts')
-        OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lands_end_canada_plus/') && master_setup.custom_feature?('Lands End Canada Plus')
-        OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/to_chain/'
-        ImportedFile.delay.process_integration_imported_file bucket, remote_path, command['path']
-      elsif command['path'].include?('/_test_from_msl') && master_setup.custom_feature?('MSL+')
+      elsif (parser_identifier == "ann_850") && custom_features.include?("Ann Brokerage Feeds")
+        OpenChain::CustomHandler::AnnInc::AnnOrder850Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ann_invoice") && custom_features.include?("Ann Brokerage Feeds")
+        OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "polo_850")
+        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "850") && custom_features.include?("RL 850")
+        OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "shoes_for_crews_po_zip")
+        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "shoes_po")
+        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "eddie_po") && custom_features.include?("Eddie Bauer Feeds")
+        OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "eb_ftz_ack") && custom_features.include?("Eddie Bauer Feeds")
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+      elsif (parser_identifier == "eddie_invoice") && custom_features.include?("Eddie Bauer Feeds")
+        OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "lenox_product") && custom_features.include?('Lenox')
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "lenox_po") && custom_features.include?('Lenox')
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "polo_tradecard_810")
+        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "jjill_850") && custom_features.include?('JJill')
+        OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ecellerate_shipment")
+        OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "lands_end_parts") && custom_features.include?('Lands End Parts')
+        OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "lands_end_canada_plus") && custom_features.include?('Lands End Canada Plus')
+        OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, s3_path
+      elsif (original_directory.include?("to_chain/"))
+        ImportedFile.delay.process_integration_imported_file bucket, s3_path, original_path
+      elsif (parser_identifier == "test_from_msl") && custom_features.include?('MSL+')
         #prevent errors; don't do anything else
-      elsif command['path'].include?('/_siemens_decrypt/') && File.basename(command['path']).to_s.upcase.ends_with?(".DAT.PGP")
+      elsif (parser_identifier == "siemens_decrypt") && original_filename.to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
-        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, remote_path, original_filename: File.basename(command['path'])
-      elsif command['path'].include?('/_kewill_exports/') && master_setup.custom_feature?('Kewill Exports')
-        OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_ua_po_xml/') && master_setup.custom_feature?('Under Armour Feeds')
-        OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_ua_856_xml/') && master_setup.custom_feature?('Under Armour Feeds')
-        OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_burlington_850/') && master_setup.custom_feature?("Burlington")
-        OpenChain::CustomHandler::Burlington::Burlington850Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_burlington_856/') && master_setup.custom_feature?("Burlington")
-        OpenChain::CustomHandler::Burlington::Burlington856Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_amersports_856/') && master_setup.custom_feature?("AmerSports")
-        OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_talbots_850/') && master_setup.custom_feature?("Talbots")
-        OpenChain::CustomHandler::Talbots::Talbots850Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_talbots_856/') && master_setup.custom_feature?("Talbots")
-        OpenChain::CustomHandler::Talbots::Talbots856Parser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/ellery_po/') && master_setup.custom_feature?("Ellery")
-        OpenChain::CustomHandler::Ellery::ElleryOrderParser.delay.process_from_s3 bucket, remote_path
+        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "kewill_exports") && custom_features.include?('Kewill Exports')
+        OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ua_po_xml") && custom_features.include?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ua_856_xml") && custom_features.include?('Under Armour Feeds')
+        OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "burlington_850") && custom_features.include?("Burlington")
+        OpenChain::CustomHandler::Burlington::Burlington850Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "burlington_856") && custom_features.include?("Burlington")
+        OpenChain::CustomHandler::Burlington::Burlington856Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "amersports_856") && custom_features.include?("AmerSports")
+        OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "talbots_850") && custom_features.include?("Talbots")
+        OpenChain::CustomHandler::Talbots::Talbots850Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "talbots_856") && custom_features.include?("Talbots")
+        OpenChain::CustomHandler::Talbots::Talbots856Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ellery_po") && custom_features.include?("Ellery")
+        OpenChain::CustomHandler::Ellery::ElleryOrderParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
-        if LinkableAttachmentImportRule.find_import_rule(dir.to_s)
-          LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
+        if LinkableAttachmentImportRule.find_import_rule(original_directory)
+          LinkableAttachmentImportRule.delay.process_from_s3 bucket, s3_path, original_filename: original_filename, original_path: original_directory
         else
           response_type = 'error'
-          status_msg = "Can't figure out what to do for path #{command['path']}"
+          status_msg = "Can't figure out what to do for path #{original_path}"
         end
       end
       

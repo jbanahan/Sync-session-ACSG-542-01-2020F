@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
   include PoloCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/polo/_polo_850"
+    ["polo/_polo_850", "/home/ubuntu/ftproot/chainroot/polo/_polo_850"]
   end
 
   def self.parse data, opts = {}

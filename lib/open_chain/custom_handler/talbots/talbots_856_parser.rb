@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_talbots_856"
+    ["www-vfitrack-net/_talbots_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_talbots_856"]
   end
 
   # NOTE: The self.parse method definition is defined in EdiParserSupport

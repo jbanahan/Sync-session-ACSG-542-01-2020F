@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_article_master"
+    ["www-vfitrack-net/_ua_article_master", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_article_master"]
   end
 
   def self.parse data, opts={}

@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
   describe "integration folder" do
     it "uses integration folder" do
-      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"
+      expect(described_class.integration_folder).to eq ["www-vfitrack-net/_ascena_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"]
     end
   end
 

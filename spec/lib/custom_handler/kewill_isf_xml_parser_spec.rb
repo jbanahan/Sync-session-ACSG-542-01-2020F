@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   describe 'process_day' do
     it 'should process all files from the given day' do
       d = Date.new
-      expect(OpenChain::S3).to receive(:integration_keys).with(d, ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
+      expect(OpenChain::S3).to receive(:integration_keys).with(d, ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
       expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
       expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
       expect(@k).to receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})

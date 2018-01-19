@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Polo
     end
 
     def integration_folder
-      ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
+      ["www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
 
     def parse data, opts = {}

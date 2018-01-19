@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_850"
+    ["www-vfitrack-net/_ann_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_850"]
   end
 
   def self.parse data, opts={}

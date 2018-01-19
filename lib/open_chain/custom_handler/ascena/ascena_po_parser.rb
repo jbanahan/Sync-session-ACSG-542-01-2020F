@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"
+    ["www-vfitrack-net/_ascena_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"]
   end
 
   def self.parse pipe_delimited_content, opts={}

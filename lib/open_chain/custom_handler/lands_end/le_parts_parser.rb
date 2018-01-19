@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
+    ["www-vfitrack-net/_lands_end_products", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
   end
 
   def self.process_from_s3 bucket, key, opts = {}

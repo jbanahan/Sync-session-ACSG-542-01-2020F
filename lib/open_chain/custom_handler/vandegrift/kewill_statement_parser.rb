@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
     # If we move to having multiple integration folders (like w/ an ftp server change), make sure the newest 
     # folder is the first returned in the array.
-    "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/kewill_statements"
+    ["#{MasterSetup.get.system_code}/kewill_statements", "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/kewill_statements"]
   end
 
   def self.parse data, opts = {}

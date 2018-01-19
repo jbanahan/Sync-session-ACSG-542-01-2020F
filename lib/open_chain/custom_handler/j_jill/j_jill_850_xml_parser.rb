@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
   SHIP_VIA_CODES ||= {'2'=>'Air Collect','3'=>'Boat','4'=>'Air Prepaid','5'=>'Air Sea Diff'}
   def self.integration_folder
-    ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
+    ["www-vfitrack-net/_jjill_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
 
   def self.parse data, opts={}

@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   include OpenChain::DelayedJobExtensions
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"
+    ["www-vfitrack-net/_burlington_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"]
   end
 
   def process_transaction user, transaction, last_file_bucket:, last_file_path:

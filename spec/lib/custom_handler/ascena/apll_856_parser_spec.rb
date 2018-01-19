@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(described_class.respond_to?(:process_from_s3)).to be_truthy
     end
     it "should set integration folder" do
-      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
+      expect(described_class.integration_folder).to eq ["www-vfitrack-net/_ascena_apll_asn", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"]
     end
   end
   describe '#parse' do

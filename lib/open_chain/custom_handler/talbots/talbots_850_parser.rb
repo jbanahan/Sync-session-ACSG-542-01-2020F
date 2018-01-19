@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_talbots_850"
+    ["www-vfitrack-net/_talbots_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_talbots_850"]
   end
 
   def prep_importer

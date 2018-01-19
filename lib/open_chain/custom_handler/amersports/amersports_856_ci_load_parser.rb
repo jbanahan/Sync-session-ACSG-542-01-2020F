@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_amersports_856"
+    ["www-vfitrack-net/_amersports_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_amersports_856"]
   end
 
   def self.parse data, opts = {}

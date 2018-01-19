@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser do
   end
   describe '#integration_folder' do
     it "should return integration folder" do
-      expect(described_class.integration_folder).to eq '/home/ubuntu/ftproot/chainroot/baillie/_po_xml'
+      expect(described_class.integration_folder).to eq ['baillie/_po_xml', '/home/ubuntu/ftproot/chainroot/baillie/_po_xml']
     end
   end
 end

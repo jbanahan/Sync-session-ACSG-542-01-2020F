@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
   end
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_856_xml"
+    ["www-vfitrack-net/_ua_856_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_856_xml"]
   end
 
   def self.parse xml, opts = {}

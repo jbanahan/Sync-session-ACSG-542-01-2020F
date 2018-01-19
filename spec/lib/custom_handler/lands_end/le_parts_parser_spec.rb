@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
  
   describe "integration_folder" do 
     it "uses correct folder" do
-      expect(described_class.integration_folder).to eq ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
+      expect(described_class.integration_folder).to eq ["www-vfitrack-net/_lands_end_products", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
     end
   end
 

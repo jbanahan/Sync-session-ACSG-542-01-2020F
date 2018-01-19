@@ -171,7 +171,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     subject { described_class }
 
     it "uses the correct folder" do
-      expect(subject.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_po_xml"
+      expect(subject.integration_folder).to eq ["www-vfitrack-net/_ua_po_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_po_xml"]
     end
   end
 end

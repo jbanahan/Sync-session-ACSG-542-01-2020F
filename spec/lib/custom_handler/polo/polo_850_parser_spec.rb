@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
 
   describe "integration_folder" do
     it "uses correct folder" do
-      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/polo/_polo_850"
+      expect(described_class.integration_folder).to eq ["polo/_polo_850", "/home/ubuntu/ftproot/chainroot/polo/_polo_850"]
     end
   end
 

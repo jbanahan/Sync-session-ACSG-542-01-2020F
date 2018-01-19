@@ -13,7 +13,7 @@ module OpenChain
                         "REPLACE" => "Replaced", "ACCEPTED" => "Accepted", "ACCWARNING" => "Accepted With Warnings", "DELETED" => "Deleted"}
   
       def self.integration_folder
-        ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
+        ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
       end
 
       def self.parse data, opts={}

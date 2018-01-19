@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/ll/_sap_article_xml"
+    ["ll/_sap_article_xml", "/home/ubuntu/ftproot/chainroot/ll/_sap_article_xml"]
   end
 
   def initialize

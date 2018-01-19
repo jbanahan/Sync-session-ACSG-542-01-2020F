@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"
+    ["www-vfitrack-net/_burlington_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"]
   end
 
   def self.parse data, opts={}

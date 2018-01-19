@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   include OpenChain::EdiParserSupport
 
   def self.integration_folder
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"
+    ["www-vfitrack-net/_ascena_apll_asn", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"]
   end
 
   def self.parse data, opts={}

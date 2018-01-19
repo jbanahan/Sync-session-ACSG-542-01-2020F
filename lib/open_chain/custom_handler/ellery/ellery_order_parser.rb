@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder 
-    "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ellery_po"
+    ["www-vfitrack-net/_ellery_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ellery_po"]
   end
 
   def self.parse data, opts = {}

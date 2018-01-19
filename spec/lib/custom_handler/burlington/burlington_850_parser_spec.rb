@@ -323,7 +323,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
 
   describe "integration_folder" do
     it "uses the correct folder" do
-      expect(described_class.integration_folder).to eq "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"
+      expect(described_class.integration_folder).to eq ["www-vfitrack-net/_burlington_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"]
     end
   end
 end
