@@ -483,6 +483,8 @@ OpenChain::Application.routes.draw do
     get 'total_objects', :on=>:member
   end
 
+  resources :run_as_sessions, :only => [:index, :show]
+
   #custom features
   match "/custom_features" => "custom_features#index", :via => :get
   match "/custom_features/ua_winshuttle_b" => "custom_features#ua_winshuttle_b_index", :via=>:get

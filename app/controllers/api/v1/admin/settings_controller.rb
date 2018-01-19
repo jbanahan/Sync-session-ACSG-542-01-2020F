@@ -23,6 +23,7 @@ module Api; module V1; module Admin; class SettingsController < Api::V1::Admin::
                user_manuals: user_manuals_path,
                user_templates: user_templates_path,
                worksheet_configs: worksheet_configs_path,
+               run_as_logs: run_as_sessions_path,
              
               # field
                field_labels: field_labels_path,

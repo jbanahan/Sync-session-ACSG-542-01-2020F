@@ -599,6 +599,15 @@ module CoreModuleDefinitions
     module_chain: [MonthlyStatement]
   })
 
+  RUN_AS_SESSION = CoreModule.new("RunAsSession", "Run As Session",
+    unique_id_field_name: :ras_start_time,
+    key_model_field_uids: [:ras_start_time],
+    children: [],
+    child_lambdas: {},
+    child_joins: {},
+    default_search_columns: [:ras_admin_username, :ras_run_as_username, :ras_start_time, :ras_end_time]
+  )
+
   # Don't need these any longer, clear them...this should be the last line in the file
   DESCRIPTOR_REPOSITORY.clear
 end

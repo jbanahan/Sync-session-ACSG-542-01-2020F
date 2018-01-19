@@ -51,6 +51,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::DailyStatementEntryFieldDefinition
   include OpenChain::ModelFieldDefinition::DailyStatementEntryFeeFieldDefinition
   include OpenChain::ModelFieldDefinition::MonthlyStatementFieldDefinition
+  include OpenChain::ModelFieldDefinition::RunAsSessionFieldDefinition
 
   def add_field_definitions
     add_address_fields
@@ -101,5 +102,6 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_daily_statement_entry_fields
     add_daily_statement_entry_fee_fields
     add_monthly_statement_fields
+    add_run_as_session_fields
   end
 end; end; end

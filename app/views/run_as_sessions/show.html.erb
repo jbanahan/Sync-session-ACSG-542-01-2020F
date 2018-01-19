@@ -1,0 +1,43 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h1>Attributes</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class='col-md-6 run_as_attr'>
+      <%= show_model_fields @run_as_session, [:ras_admin_username, :ras_run_as_username] %>
+    </div>
+    <div class='col-md-6 run_as_attr'>
+      <%= show_model_fields @run_as_session, [:ras_start_time, :ras_end_time] %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <h1>Logs</h1>
+    </div>
+  </div>
+    <div class="row">
+      <div class="col-md-12" id="request_log_attrs">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>HTTP Method</th>
+              <th>URL</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @run_as_session.request_logs.each do |rl| %>
+              <tr>
+                <td><%= rl.http_method %></td>
+                <td><%= rl.url %></td>
+                <td><%= link_to('Download', download_attachment_path(rl.attachment.id)) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

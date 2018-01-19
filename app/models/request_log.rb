@@ -53,4 +53,8 @@ class RequestLog < ActiveRecord::Base
 
     io
   end
+
+  def can_view?(user)
+    user.admin?
+  end
 end
