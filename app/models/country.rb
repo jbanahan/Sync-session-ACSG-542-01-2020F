@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: countries
+#
+#  id                  :integer          not null, primary key
+#  name                :string(255)
+#  iso_code            :string(2)
+#  created_at          :datetime
+#  updated_at          :datetime
+#  import_location     :boolean
+#  classification_rank :integer
+#  european_union      :boolean
+#  quicksearch_show    :boolean
+#  iso_3_code          :string(255)
+#
+# Indexes
+#
+#  index_countries_on_iso_3_code  (iso_3_code)
+#
+
 class Country < ActiveRecord::Base
 
   ALL_COUNTRIES ||= [

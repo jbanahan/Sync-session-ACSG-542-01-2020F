@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: business_validation_templates
+#
+#  id             :integer          not null, primary key
+#  name           :string(255)
+#  module_type    :string(255)      not null
+#  description    :string(255)
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  delete_pending :boolean
+#  disabled       :boolean
+#
+
 require 'open_chain/stat_client'
 # This is kind of weird but because of the way the invoice line rule extends the validation rule the load ordering
 # matters here, so the validation rule is required first

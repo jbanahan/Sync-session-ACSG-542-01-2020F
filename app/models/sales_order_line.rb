@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: sales_order_lines
+#
+#  id             :integer          not null, primary key
+#  price_per_unit :decimal(13, 4)
+#  sales_order_id :integer
+#  line_number    :integer
+#  created_at     :datetime
+#  updated_at     :datetime
+#  product_id     :integer
+#  quantity       :decimal(13, 4)
+#
+# Indexes
+#
+#  index_sales_order_lines_on_sales_order_id  (sales_order_id)
+#
+
 class SalesOrderLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport

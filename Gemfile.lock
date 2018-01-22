@@ -45,6 +45,9 @@ GEM
       multi_json (~> 1.0)
     addressable (2.5.2)
       public_suffix (>= 2.0.2, < 4.0)
+    annotate (2.7.2)
+      activerecord (>= 3.2, < 6.0)
+      rake (>= 10.4, < 13.0)
     arel (3.0.3)
     aws-sdk (2.10.61)
       aws-sdk-resources (= 2.10.61)
@@ -401,6 +404,7 @@ DEPENDENCIES
   REX12 (~> 0.2)
   RedCloth (= 4.2.9)
   active_record_query_trace
+  annotate
   aws-sdk (~> 2.6)
   aws-sdk-v1 (~> 1.66)
   barby (~> 0.6)

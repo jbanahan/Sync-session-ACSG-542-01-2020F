@@ -1,3 +1,30 @@
+# == Schema Information
+#
+# Table name: attachments
+#
+#  id                      :integer          not null, primary key
+#  attachable_id           :integer
+#  attachable_type         :string(255)
+#  attached_file_name      :string(255)
+#  attached_content_type   :string(255)
+#  attached_file_size      :integer
+#  attached_updated_at     :datetime
+#  uploaded_by_id          :integer
+#  created_at              :datetime
+#  updated_at              :datetime
+#  attachment_type         :string(255)
+#  source_system_timestamp :datetime
+#  alliance_suffix         :string(255)
+#  alliance_revision       :integer
+#  checksum                :string(255)
+#  is_private              :boolean
+#
+# Indexes
+#
+#  index_attachments_on_attachable_id_and_attachable_type  (attachable_id,attachable_type)
+#  index_attachments_on_updated_at                         (updated_at)
+#
+
 require 'open_chain/google_drive'
 require 'open_chain/s3'
 

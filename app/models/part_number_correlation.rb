@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: part_number_correlations
+#
+#  id                :integer          not null, primary key
+#  starting_row      :integer
+#  part_column       :string(255)
+#  part_regex        :string(255)
+#  entry_country_iso :string(255)
+#  importers         :string(255)
+#  finished_time     :datetime
+#  user_id           :integer
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#
+
 require 'open_chain/xl_client'
 require 'open_chain/tariff_finder'
 

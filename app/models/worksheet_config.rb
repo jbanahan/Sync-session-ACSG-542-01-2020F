@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: worksheet_configs
+#
+#  id          :integer          not null, primary key
+#  name        :string(255)
+#  module_type :string(255)
+#  created_at  :datetime
+#  updated_at  :datetime
+#
+
 require 'spreadsheet'
 
 class WorksheetConfig < ActiveRecord::Base

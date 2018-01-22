@@ -1,3 +1,40 @@
+# == Schema Information
+#
+# Table name: drawback_import_lines
+#
+#  id                     :integer          not null, primary key
+#  quantity               :decimal(13, 4)
+#  product_id             :integer
+#  line_number            :integer
+#  created_at             :datetime
+#  updated_at             :datetime
+#  entry_number           :string(255)
+#  import_date            :date
+#  received_date          :date
+#  port_code              :string(255)
+#  box_37_duty            :decimal(10, 2)
+#  box_40_duty            :decimal(10, 2)
+#  total_mpf              :decimal(10, 2)
+#  country_of_origin_code :string(255)
+#  part_number            :string(255)
+#  hts_code               :string(255)
+#  description            :string(255)
+#  unit_of_measure        :string(255)
+#  unit_price             :decimal(16, 7)
+#  rate                   :decimal(12, 8)
+#  duty_per_unit          :decimal(16, 9)
+#  compute_code           :string(255)
+#  ocean                  :boolean
+#  total_invoice_value    :decimal(10, 2)
+#  importer_id            :integer
+#
+# Indexes
+#
+#  index_drawback_import_lines_on_importer_id  (importer_id)
+#  index_drawback_import_lines_on_part_number  (part_number)
+#  index_drawback_import_lines_on_product_id   (product_id)
+#
+
 class DrawbackImportLine < ActiveRecord::Base
   include LinesSupport
 

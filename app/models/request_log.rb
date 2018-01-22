@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: request_logs
+#
+#  id                :integer          not null, primary key
+#  user_id           :integer
+#  http_method       :string(255)
+#  url               :string(255)
+#  run_as_session_id :integer
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#
+# Indexes
+#
+#  index_request_logs_on_run_as_session_id  (run_as_session_id)
+#  index_request_logs_on_user_id            (user_id)
+#
+
 class RequestLog < ActiveRecord::Base
   belongs_to :user
   belongs_to :run_as_session, inverse_of: :request_logs

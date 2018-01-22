@@ -1,3 +1,66 @@
+# == Schema Information
+#
+# Table name: orders
+#
+#  id                           :integer          not null, primary key
+#  order_number                 :string(255)
+#  order_date                   :date
+#  division_id                  :integer
+#  created_at                   :datetime
+#  updated_at                   :datetime
+#  vendor_id                    :integer
+#  ship_to_id                   :integer
+#  importer_id                  :integer
+#  customer_order_number        :string(255)
+#  last_file_bucket             :string(255)
+#  last_file_path               :string(255)
+#  last_exported_from_source    :datetime
+#  mode                         :string(255)
+#  ship_window_start            :date
+#  ship_window_end              :date
+#  first_expected_delivery_date :date
+#  last_revised_date            :date
+#  agent_id                     :integer
+#  approval_status              :string(255)
+#  fob_point                    :string(255)
+#  closed_at                    :datetime
+#  closed_by_id                 :integer
+#  factory_id                   :integer
+#  terms_of_sale                :string(255)
+#  season                       :string(255)
+#  product_category             :string(255)
+#  currency                     :string(255)
+#  terms_of_payment             :string(255)
+#  ship_from_id                 :integer
+#  order_from_address_id        :integer
+#  tpp_survey_response_id       :integer
+#  accepted_by_id               :integer
+#  accepted_at                  :datetime
+#  customer_order_status        :string(255)
+#  selling_agent_id             :integer
+#
+# Indexes
+#
+#  index_orders_on_accepted_at                            (accepted_at)
+#  index_orders_on_accepted_by_id                         (accepted_by_id)
+#  index_orders_on_agent_id                               (agent_id)
+#  index_orders_on_approval_status                        (approval_status)
+#  index_orders_on_closed_at                              (closed_at)
+#  index_orders_on_closed_by_id                           (closed_by_id)
+#  index_orders_on_factory_id                             (factory_id)
+#  index_orders_on_first_expected_delivery_date           (first_expected_delivery_date)
+#  index_orders_on_fob_point                              (fob_point)
+#  index_orders_on_importer_id_and_customer_order_number  (importer_id,customer_order_number)
+#  index_orders_on_importer_id_and_order_number           (order_number)
+#  index_orders_on_order_from_address_id                  (order_from_address_id)
+#  index_orders_on_order_number                           (order_number)
+#  index_orders_on_season                                 (season)
+#  index_orders_on_ship_from_id                           (ship_from_id)
+#  index_orders_on_ship_window_end                        (ship_window_end)
+#  index_orders_on_ship_window_start                      (ship_window_start)
+#  index_orders_on_tpp_survey_response_id                 (tpp_survey_response_id)
+#
+
 require 'open_chain/event_publisher'
 require 'open_chain/order_acceptance_registry'
 require 'open_chain/order_booking_registry'

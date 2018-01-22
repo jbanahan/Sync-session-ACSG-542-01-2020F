@@ -1,3 +1,33 @@
+# == Schema Information
+#
+# Table name: addresses
+#
+#  id              :integer          not null, primary key
+#  name            :string(255)
+#  line_1          :string(255)
+#  line_2          :string(255)
+#  line_3          :string(255)
+#  city            :string(255)
+#  state           :string(255)
+#  postal_code     :string(255)
+#  company_id      :integer
+#  created_at      :datetime
+#  updated_at      :datetime
+#  country_id      :integer
+#  shipping        :boolean
+#  address_hash    :string(255)
+#  system_code     :string(255)
+#  in_address_book :boolean
+#  phone_number    :string(255)
+#  fax_number      :string(255)
+#
+# Indexes
+#
+#  index_addresses_on_address_hash  (address_hash)
+#  index_addresses_on_company_id    (company_id)
+#  index_addresses_on_system_code   (system_code)
+#
+
 require 'digest/md5'
 
 class Address < ActiveRecord::Base

@@ -1,3 +1,52 @@
+# == Schema Information
+#
+# Table name: companies
+#
+#  id                            :integer          not null, primary key
+#  name                          :string(255)
+#  carrier                       :boolean
+#  vendor                        :boolean
+#  master                        :boolean
+#  created_at                    :datetime
+#  updated_at                    :datetime
+#  locked                        :boolean
+#  customer                      :boolean
+#  system_code                   :string(255)
+#  importer                      :boolean
+#  alliance_customer_number      :string(255)
+#  broker                        :boolean
+#  fenix_customer_number         :string(255)
+#  drawback                      :boolean
+#  last_alliance_product_push_at :datetime
+#  name_2                        :string(255)
+#  consignee                     :boolean
+#  ecellerate_customer_number    :string(255)
+#  agent                         :boolean
+#  factory                       :boolean
+#  show_business_rules           :boolean
+#  enabled_booking_types         :string(255)
+#  irs_number                    :string(255)
+#  slack_channel                 :string(255)
+#  forwarder                     :boolean
+#  mid                           :string(255)
+#  ticketing_system_code         :string(255)
+#  fiscal_reference              :string(255)
+#  selling_agent                 :boolean
+#
+# Indexes
+#
+#  index_companies_on_agent                       (agent)
+#  index_companies_on_alliance_customer_number    (alliance_customer_number)
+#  index_companies_on_carrier                     (carrier)
+#  index_companies_on_customer                    (customer)
+#  index_companies_on_drawback                    (drawback)
+#  index_companies_on_ecellerate_customer_number  (ecellerate_customer_number)
+#  index_companies_on_factory                     (factory)
+#  index_companies_on_fenix_customer_number       (fenix_customer_number)
+#  index_companies_on_master                      (master)
+#  index_companies_on_vendor                      (vendor)
+#
+
 class Company < ActiveRecord::Base
   include CoreObjectSupport
   validates  :name,  :presence => true

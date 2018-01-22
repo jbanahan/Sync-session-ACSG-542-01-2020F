@@ -1,3 +1,34 @@
+# == Schema Information
+#
+# Table name: shipment_lines
+#
+#  id                      :integer          not null, primary key
+#  line_number             :integer
+#  created_at              :datetime
+#  updated_at              :datetime
+#  shipment_id             :integer
+#  product_id              :integer
+#  quantity                :decimal(13, 4)
+#  container_id            :integer
+#  gross_kgs               :decimal(13, 4)
+#  cbms                    :decimal(13, 4)
+#  carton_qty              :integer
+#  carton_set_id           :integer
+#  fcr_number              :string(255)
+#  canceled_order_line_id  :integer
+#  manufacturer_address_id :integer
+#  variant_id              :integer
+#
+# Indexes
+#
+#  index_shipment_lines_on_carton_set_id  (carton_set_id)
+#  index_shipment_lines_on_container_id   (container_id)
+#  index_shipment_lines_on_fcr_number     (fcr_number)
+#  index_shipment_lines_on_product_id     (product_id)
+#  index_shipment_lines_on_shipment_id    (shipment_id)
+#  index_shipment_lines_on_variant_id     (variant_id)
+#
+
 require 'open_chain/validator/variant_line_integrity_validator'
 class ShipmentLine < ActiveRecord::Base
   include LinesSupport

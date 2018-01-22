@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: instant_classification_result_records
+#
+#  id                               :integer          not null, primary key
+#  instant_classification_result_id :integer
+#  entity_snapshot_id               :integer
+#  product_id                       :integer
+#  created_at                       :datetime
+#  updated_at                       :datetime
+#
+# Indexes
+#
+#  result_ids  (instant_classification_result_id)
+#
+
 class InstantClassificationResultRecord < ActiveRecord::Base
   belongs_to :instant_classification_result
   belongs_to :entity_snapshot

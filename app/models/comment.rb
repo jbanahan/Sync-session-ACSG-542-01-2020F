@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: comments
+#
+#  id               :integer          not null, primary key
+#  body             :text
+#  subject          :string(255)
+#  user_id          :integer
+#  commentable_id   :integer
+#  commentable_type :string(255)
+#  created_at       :datetime
+#  updated_at       :datetime
+#
+# Indexes
+#
+#  index_comments_on_commentable_id_and_commentable_type  (commentable_id,commentable_type)
+#
+
 require 'open_chain/event_publisher'
 class Comment < ActiveRecord::Base
   belongs_to :commentable, :polymorphic => true

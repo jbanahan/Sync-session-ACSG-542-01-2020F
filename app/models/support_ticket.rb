@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: support_tickets
+#
+#  id                  :integer          not null, primary key
+#  requestor_id        :integer
+#  agent_id            :integer
+#  subject             :string(255)
+#  body                :text
+#  state               :text
+#  email_notifications :boolean
+#  last_saved_by_id    :integer
+#  created_at          :datetime
+#  updated_at          :datetime
+#
+# Indexes
+#
+#  index_support_tickets_on_agent_id      (agent_id)
+#  index_support_tickets_on_requestor_id  (requestor_id)
+#
+
 class SupportTicket < ActiveRecord::Base
   belongs_to :requestor, :class_name => "User"
   belongs_to :agent, :class_name => "User"

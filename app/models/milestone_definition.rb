@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: milestone_definitions
+#
+#  id                               :integer          not null, primary key
+#  milestone_plan_id                :integer
+#  model_field_uid                  :string(255)
+#  days_after_previous              :integer
+#  previous_milestone_definition_id :integer
+#  final_milestone                  :boolean
+#  custom_definition_id             :integer
+#  display_rank                     :integer
+#
+# Indexes
+#
+#  index_milestone_definitions_on_milestone_plan_id  (milestone_plan_id)
+#
+
 class MilestoneDefinition < ActiveRecord::Base
   include HoldsCustomDefinition
 

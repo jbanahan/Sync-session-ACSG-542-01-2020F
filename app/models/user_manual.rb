@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: user_manuals
+#
+#  id             :integer          not null, primary key
+#  name           :string(255)
+#  page_url_regex :string(255)
+#  groups         :text
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  wistia_code    :string(255)
+#  category       :string(255)
+#
+
 class UserManual < ActiveRecord::Base
   attr_accessible :groups, :name, :page_url_regex, :wistia_code, :category
   validates :name, presence: true

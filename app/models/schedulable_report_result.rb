@@ -1,3 +1,31 @@
+# == Schema Information
+#
+# Table name: report_results
+#
+#  id                       :integer          not null, primary key
+#  name                     :string(255)
+#  run_at                   :datetime
+#  friendly_settings_json   :text
+#  settings_json            :text
+#  report_class             :string(255)
+#  report_data_file_name    :string(255)
+#  report_data_content_type :string(255)
+#  report_data_file_size    :integer
+#  report_data_updated_at   :datetime
+#  status                   :string(255)
+#  run_errors               :text
+#  run_by_id                :integer
+#  created_at               :datetime
+#  updated_at               :datetime
+#  custom_report_id         :integer
+#  email_to                 :string(255)
+#
+# Indexes
+#
+#  index_report_results_on_custom_report_id  (custom_report_id)
+#  index_report_results_on_run_by_id         (run_by_id)
+#
+
 # This class exists pretty much solely because report result already has a run_schedulable method
 # associated with it which does report result purges.
 class SchedulableReportResult < ReportResult

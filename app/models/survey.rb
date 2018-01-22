@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: surveys
+#
+#  id                          :integer          not null, primary key
+#  company_id                  :integer
+#  created_by_id               :integer
+#  name                        :string(255)
+#  email_subject               :string(255)
+#  email_body                  :text
+#  created_at                  :datetime
+#  updated_at                  :datetime
+#  ratings_list                :text
+#  expiration_days             :integer
+#  archived                    :boolean          default(FALSE)
+#  system_code                 :string(255)
+#  trade_preference_program_id :integer
+#  require_contact             :boolean
+#
+# Indexes
+#
+#  index_surveys_on_company_id   (company_id)
+#  index_surveys_on_system_code  (system_code)
+#  tpp_id                        (trade_preference_program_id)
+#
+
 class Survey < ActiveRecord::Base
   belongs_to :created_by, :class_name=>"User"
   belongs_to :company

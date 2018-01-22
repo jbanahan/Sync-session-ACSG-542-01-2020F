@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: questions
+#
+#  id                              :integer          not null, primary key
+#  survey_id                       :integer
+#  rank                            :integer
+#  choices                         :text
+#  content                         :text
+#  created_at                      :datetime
+#  updated_at                      :datetime
+#  warning                         :boolean
+#  require_attachment              :boolean          default(FALSE)
+#  require_comment                 :boolean          default(FALSE)
+#  attachment_required_for_choices :string(255)
+#  comment_required_for_choices    :string(255)
+#
+# Indexes
+#
+#  index_questions_on_survey_id  (survey_id)
+#
+
 class Question < ActiveRecord::Base
   belongs_to :survey, touch: true, inverse_of: :questions
   has_many :attachments, :as=>:attachable, :dependent=>:destroy

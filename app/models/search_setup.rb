@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: search_setups
+#
+#  id              :integer          not null, primary key
+#  name            :string(255)
+#  user_id         :integer
+#  module_type     :string(255)
+#  simple          :boolean
+#  created_at      :datetime
+#  updated_at      :datetime
+#  download_format :string(255)
+#  include_links   :boolean
+#  no_time         :boolean
+#
+# Indexes
+#
+#  index_search_setups_on_user_id_and_module_type  (user_id,module_type)
+#
+
 require 'open_chain/search_base'
 class SearchSetup < ActiveRecord::Base
   

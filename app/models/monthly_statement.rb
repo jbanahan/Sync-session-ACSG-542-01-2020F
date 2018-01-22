@@ -1,3 +1,44 @@
+# == Schema Information
+#
+# Table name: monthly_statements
+#
+#  id                          :integer          not null, primary key
+#  statement_number            :string(255)
+#  status                      :string(255)
+#  received_date               :date
+#  final_received_date         :date
+#  due_date                    :date
+#  paid_date                   :date
+#  port_code                   :string(255)
+#  pay_type                    :string(255)
+#  customer_number             :string(255)
+#  importer_id                 :integer
+#  total_amount                :decimal(11, 2)
+#  preliminary_total_amount    :decimal(11, 2)
+#  duty_amount                 :decimal(11, 2)
+#  preliminary_duty_amount     :decimal(11, 2)
+#  tax_amount                  :decimal(11, 2)
+#  preliminary_tax_amount      :decimal(11, 2)
+#  cvd_amount                  :decimal(11, 2)
+#  preliminary_cvd_amount      :decimal(11, 2)
+#  add_amount                  :decimal(11, 2)
+#  preliminary_add_amount      :decimal(11, 2)
+#  interest_amount             :decimal(11, 2)
+#  preliminary_interest_amount :decimal(11, 2)
+#  fee_amount                  :decimal(11, 2)
+#  preliminary_fee_amount      :decimal(11, 2)
+#  last_file_bucket            :string(255)
+#  last_file_path              :string(255)
+#  last_exported_from_source   :datetime
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
+# Indexes
+#
+#  index_monthly_statements_on_importer_id       (importer_id)
+#  index_monthly_statements_on_statement_number  (statement_number) UNIQUE
+#
+
 class MonthlyStatement < ActiveRecord::Base
   include CoreObjectSupport
 

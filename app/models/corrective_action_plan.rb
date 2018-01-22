@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: corrective_action_plans
+#
+#  id                 :integer          not null, primary key
+#  survey_response_id :integer
+#  created_by_id      :integer
+#  status             :string(255)
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_corrective_action_plans_on_created_by_id       (created_by_id)
+#  index_corrective_action_plans_on_survey_response_id  (survey_response_id)
+#
+
 class CorrectiveActionPlan < ActiveRecord::Base
   belongs_to :survey_response
   belongs_to :created_by, :class_name => 'User'

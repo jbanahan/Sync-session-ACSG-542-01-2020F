@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: summary_statements
+#
+#  id               :integer          not null, primary key
+#  statement_number :string(255)
+#  customer_id      :integer          not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#
+
 class SummaryStatement < ActiveRecord::Base
   attr_accessible :statement_number, :customer
   has_many :broker_invoices

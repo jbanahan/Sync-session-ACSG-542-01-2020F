@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: bulk_process_logs
+#
+#  id                   :integer          not null, primary key
+#  user_id              :integer
+#  bulk_type            :string(255)
+#  started_at           :datetime
+#  finished_at          :datetime
+#  total_object_count   :integer
+#  changed_object_count :integer
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#
+
 class BulkProcessLog < ActiveRecord::Base
   BULK_TYPES ||= {update: "Bulk Update", classify: "Bulk Classify"}
   belongs_to :user

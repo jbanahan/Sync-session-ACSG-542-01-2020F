@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: custom_files
+#
+#  id                    :integer          not null, primary key
+#  uploaded_by_id        :integer
+#  file_type             :string(255)
+#  attached_content_type :string(255)
+#  attached_file_size    :integer
+#  attached_updated_at   :datetime
+#  attached_file_name    :string(255)
+#  created_at            :datetime
+#  updated_at            :datetime
+#  module_type           :string(255)
+#  start_at              :datetime
+#  finish_at             :datetime
+#  error_at              :datetime
+#  error_message         :string(255)
+#
+# Indexes
+#
+#  ftype  (file_type)
+#
+
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'

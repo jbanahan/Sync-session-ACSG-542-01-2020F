@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: ftp_sessions
+#
+#  id                   :integer          not null, primary key
+#  username             :string(255)
+#  server               :string(255)
+#  file_name            :string(255)
+#  log                  :text
+#  data                 :binary
+#  created_at           :datetime
+#  updated_at           :datetime
+#  last_server_response :string(255)
+#  protocol             :string(255)
+#  retry_count          :integer
+#
+
 class FtpSession < ActiveRecord::Base
   has_one :attachment, :as => :attachable, :dependent=>:destroy
 

@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: business_validation_results
+#
+#  id                              :integer          not null, primary key
+#  business_validation_template_id :integer
+#  validatable_id                  :integer
+#  validatable_type                :string(255)
+#  state                           :string(255)
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#
+# Indexes
+#
+#  business_validation_template  (business_validation_template_id)
+#  validatable                   (validatable_id,validatable_type)
+#
+
 class BusinessValidationResult < ActiveRecord::Base
   belongs_to :business_validation_template
   belongs_to :validatable, polymorphic: true

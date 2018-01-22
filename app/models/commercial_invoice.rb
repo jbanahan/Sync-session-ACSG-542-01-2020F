@@ -1,3 +1,41 @@
+# == Schema Information
+#
+# Table name: commercial_invoices
+#
+#  id                    :integer          not null, primary key
+#  invoice_number        :string(255)
+#  vendor_name           :string(255)
+#  entry_id              :integer
+#  created_at            :datetime
+#  updated_at            :datetime
+#  currency              :string(255)
+#  exchange_rate         :decimal(8, 6)
+#  invoice_value_foreign :decimal(13, 2)
+#  invoice_value         :decimal(13, 2)
+#  country_origin_code   :string(255)
+#  gross_weight          :integer
+#  total_charges         :decimal(11, 2)
+#  invoice_date          :date
+#  mfid                  :string(255)
+#  vendor_id             :integer
+#  importer_id           :integer
+#  consignee_id          :integer
+#  total_quantity        :decimal(12, 5)
+#  total_quantity_uom    :string(255)
+#  docs_received_date    :date
+#  docs_ok_date          :date
+#  issue_codes           :string(255)
+#  rater_comments        :text
+#  destination_code      :string(255)
+#  non_dutiable_amount   :decimal(13, 2)
+#
+# Indexes
+#
+#  index_commercial_invoices_on_entry_id        (entry_id)
+#  index_commercial_invoices_on_invoice_date    (invoice_date)
+#  index_commercial_invoices_on_invoice_number  (invoice_number)
+#
+
 class CommercialInvoice < ActiveRecord::Base
   include CoreObjectSupport
   has_many :commercial_invoice_lines, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice

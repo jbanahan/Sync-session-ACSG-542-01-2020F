@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: folders
+#
+#  id               :integer          not null, primary key
+#  name             :string(255)
+#  base_object_id   :integer          not null
+#  base_object_type :string(255)      not null
+#  created_by_id    :integer          not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  archived         :boolean
+#
+# Indexes
+#
+#  index_folders_on_base_object_id_and_base_object_type  (base_object_id,base_object_type)
+#  index_folders_on_created_by_id                        (created_by_id)
+#
+
 class Folder < ActiveRecord::Base
 
   belongs_to :base_object, polymorphic: true, inverse_of: :folders

@@ -1,3 +1,32 @@
+# == Schema Information
+#
+# Table name: piece_sets
+#
+#  id                         :integer          not null, primary key
+#  order_line_id              :integer
+#  created_at                 :datetime
+#  updated_at                 :datetime
+#  quantity                   :decimal(13, 4)
+#  adjustment_type            :string(255)
+#  sales_order_line_id        :integer
+#  unshipped_remainder        :boolean
+#  shipment_line_id           :integer
+#  delivery_line_id           :integer
+#  milestone_plan_id          :integer
+#  drawback_import_line_id    :integer
+#  commercial_invoice_line_id :integer
+#  security_filing_line_id    :integer
+#  booking_line_id            :integer
+#
+# Indexes
+#
+#  index_piece_sets_on_commercial_invoice_line_id  (commercial_invoice_line_id)
+#  index_piece_sets_on_drawback_import_line_id     (drawback_import_line_id)
+#  index_piece_sets_on_order_line_id               (order_line_id)
+#  index_piece_sets_on_security_filing_line_id     (security_filing_line_id)
+#  index_piece_sets_on_shipment_line_id            (shipment_line_id)
+#
+
 class PieceSet < ActiveRecord::Base
 #PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
   belongs_to :order_line

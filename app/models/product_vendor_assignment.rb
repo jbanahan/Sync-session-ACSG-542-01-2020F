@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: product_vendor_assignments
+#
+#  id         :integer          not null, primary key
+#  product_id :integer
+#  vendor_id  :integer
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_product_vendor_assignments_on_product_id                (product_id)
+#  index_product_vendor_assignments_on_vendor_id                 (vendor_id)
+#  index_product_vendor_assignments_on_vendor_id_and_product_id  (vendor_id,product_id) UNIQUE
+#
+
 class ProductVendorAssignment < ActiveRecord::Base
   include CoreObjectSupport
 

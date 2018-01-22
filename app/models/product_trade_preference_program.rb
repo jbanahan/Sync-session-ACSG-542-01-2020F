@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: product_trade_preference_programs
+#
+#  id                          :integer          not null, primary key
+#  product_id                  :integer
+#  trade_preference_program_id :integer
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
+# Indexes
+#
+#  ptpp_product_id     (product_id)
+#  ptpp_trade_pref_id  (trade_preference_program_id)
+#
+
 class ProductTradePreferenceProgram < ActiveRecord::Base
   belongs_to :product, inverse_of: :product_trade_preference_programs
   belongs_to :trade_preference_program, inverse_of: :product_trade_preference_programs

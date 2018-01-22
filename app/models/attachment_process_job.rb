@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: attachment_process_jobs
+#
+#  id                      :integer          not null, primary key
+#  attachment_id           :integer
+#  job_name                :string(255)
+#  start_at                :datetime
+#  finish_at               :datetime
+#  error_message           :string(255)
+#  user_id                 :integer
+#  attachable_id           :integer
+#  attachable_type         :string(255)
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  manufacturer_address_id :integer
+#
+# Indexes
+#
+#  attachable_idx                                  (attachable_id,attachable_type)
+#  index_attachment_process_jobs_on_attachment_id  (attachment_id)
+#  index_attachment_process_jobs_on_user_id        (user_id)
+#
+
 require 'open_chain/custom_handler/tradecard/tradecard_pack_manifest_parser'
 require 'open_chain/custom_handler/generic_booking_parser'
 require 'open_chain/custom_handler/generic_shipment_manifest_parser'

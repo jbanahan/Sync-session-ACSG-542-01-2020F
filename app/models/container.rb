@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: containers
+#
+#  id                :integer          not null, primary key
+#  container_number  :string(255)
+#  container_size    :string(255)
+#  size_description  :string(255)
+#  weight            :integer
+#  quantity          :integer
+#  uom               :string(255)
+#  goods_description :string(255)
+#  seal_number       :string(255)
+#  teus              :integer
+#  fcl_lcl           :string(255)
+#  entry_id          :integer
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  shipment_id       :integer
+#
+# Indexes
+#
+#  index_containers_on_entry_id     (entry_id)
+#  index_containers_on_shipment_id  (shipment_id)
+#
+
 class Container < ActiveRecord::Base
   include CoreObjectSupport
   belongs_to :entry, inverse_of: :containers

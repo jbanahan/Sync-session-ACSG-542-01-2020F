@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: data_cross_references
+#
+#  id                   :integer          not null, primary key
+#  key                  :string(255)
+#  value                :string(255)
+#  cross_reference_type :string(255)
+#  company_id           :integer
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#
+# Indexes
+#
+#  index_data_cross_references_on_cross_reference_type_and_value  (cross_reference_type,value)
+#  index_data_xref_on_key_and_xref_type_and_company_id            (key,cross_reference_type,company_id) UNIQUE
+#
+
 require 'open_chain/data_cross_reference_upload_preprocessor'
 require 'csv'
 

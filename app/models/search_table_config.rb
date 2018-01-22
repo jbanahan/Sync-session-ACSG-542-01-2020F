@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: search_table_configs
+#
+#  id          :integer          not null, primary key
+#  page_uid    :string(255)
+#  name        :string(255)
+#  config_json :text
+#  user_id     :integer
+#  company_id  :integer
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+# Indexes
+#
+#  index_search_table_configs_on_company_id  (company_id)
+#  index_search_table_configs_on_page_uid    (page_uid)
+#  index_search_table_configs_on_user_id     (user_id)
+#
+
 class SearchTableConfig < ActiveRecord::Base
   # user and company are optional
   belongs_to :user

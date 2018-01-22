@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: error_log_entries
+#
+#  id                       :integer          not null, primary key
+#  exception_class          :string(255)
+#  error_message            :text
+#  additional_messages_json :text
+#  backtrace_json           :text
+#  created_at               :datetime
+#  updated_at               :datetime
+#
+
 class ErrorLogEntry < ActiveRecord::Base
 
   def self.create_from_exception exception, additional_messages=[]

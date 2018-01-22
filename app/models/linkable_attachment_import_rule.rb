@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: linkable_attachment_import_rules
+#
+#  id              :integer          not null, primary key
+#  path            :string(255)
+#  model_field_uid :string(255)
+#  created_at      :datetime
+#  updated_at      :datetime
+#
+
 class LinkableAttachmentImportRule < ActiveRecord::Base
 
   validates :path, :presence=>true, :uniqueness=>true

@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: linked_attachments
+#
+#  id                     :integer          not null, primary key
+#  linkable_attachment_id :integer
+#  attachable_type        :string(255)
+#  attachable_id          :integer
+#  created_at             :datetime
+#  updated_at             :datetime
+#
+# Indexes
+#
+#  linked_attch_id  (linkable_attachment_id)
+#  linked_type      (attachable_id,attachable_type)
+#
+
 class LinkedAttachment < ActiveRecord::Base
 
   belongs_to :linkable_attachment

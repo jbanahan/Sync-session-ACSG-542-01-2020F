@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: plants
+#
+#  id         :integer          not null, primary key
+#  name       :string(255)
+#  company_id :integer
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_plants_on_company_id  (company_id)
+#
+
 class Plant < ActiveRecord::Base
   include CoreObjectSupport
   belongs_to :company, inverse_of: :plants, touch: true

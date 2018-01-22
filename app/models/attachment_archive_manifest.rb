@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: attachment_archive_manifests
+#
+#  id         :integer          not null, primary key
+#  start_at   :datetime
+#  finish_at  :datetime
+#  company_id :integer
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_attachment_archive_manifests_on_company_id  (company_id)
+#
+
 class AttachmentArchiveManifest < ActiveRecord::Base
   attr_accessible :company_id, :finish_at, :start_at
 

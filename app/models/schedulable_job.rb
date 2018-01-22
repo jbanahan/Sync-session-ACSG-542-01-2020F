@@ -1,3 +1,33 @@
+# == Schema Information
+#
+# Table name: schedulable_jobs
+#
+#  id                 :integer          not null, primary key
+#  run_monday         :boolean
+#  run_tuesday        :boolean
+#  run_wednesday      :boolean
+#  run_thursday       :boolean
+#  run_friday         :boolean
+#  run_saturday       :boolean
+#  run_sunday         :boolean
+#  run_hour           :integer
+#  run_minute         :integer
+#  day_of_month       :integer
+#  time_zone_name     :string(255)
+#  run_class          :string(255)
+#  opts               :text
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  last_start_time    :datetime
+#  success_email      :string(255)
+#  failure_email      :string(255)
+#  run_interval       :string(255)
+#  no_concurrent_jobs :boolean
+#  running            :boolean
+#  stopped            :boolean
+#  queue_priority     :integer
+#
+
 require 'open_chain/schedule_support'
 
 class SchedulableJob < ActiveRecord::Base

@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: milestone_notification_configs
+#
+#  id              :integer          not null, primary key
+#  customer_number :string(255)
+#  setup           :text
+#  enabled         :boolean
+#  output_style    :string(255)
+#  testing         :boolean
+#  module_type     :string(255)
+#
+# Indexes
+#
+#  index_milestone_configs_on_type_cust_no_testing  (module_type,customer_number,testing)
+#
+
 class MilestoneNotificationConfig < ActiveRecord::Base
   # In other words...a config for outputting a 315
   has_many :search_criterions, dependent: :destroy, autosave: true

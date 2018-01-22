@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: entity_snapshot_failures
+#
+#  id            :integer          not null, primary key
+#  snapshot_id   :integer
+#  snapshot_type :string(255)
+#  snapshot_json :text(2147483647)
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#
+
 class EntitySnapshotFailure < ActiveRecord::Base
   belongs_to :snapshot, polymorphic: true
 

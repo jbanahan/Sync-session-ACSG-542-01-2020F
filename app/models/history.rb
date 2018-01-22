@@ -1,3 +1,33 @@
+# == Schema Information
+#
+# Table name: histories
+#
+#  id                    :integer          not null, primary key
+#  order_id              :integer
+#  shipment_id           :integer
+#  product_id            :integer
+#  company_id            :integer
+#  user_id               :integer
+#  order_line_id         :integer
+#  walked                :datetime
+#  created_at            :datetime
+#  updated_at            :datetime
+#  history_type          :string(255)
+#  sales_order_id        :integer
+#  sales_order_line_id   :integer
+#  delivery_id           :integer
+#  entry_id              :integer
+#  broker_invoice_id     :integer
+#  commercial_invoice_id :integer
+#  security_filing_id    :integer
+#  container_id          :integer
+#
+# Indexes
+#
+#  index_histories_on_container_id        (container_id)
+#  index_histories_on_security_filing_id  (security_filing_id)
+#
+
 class History < ActiveRecord::Base
   belongs_to  :order
   belongs_to  :product

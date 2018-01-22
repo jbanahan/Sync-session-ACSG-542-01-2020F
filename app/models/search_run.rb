@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: search_runs
+#
+#  id                      :integer          not null, primary key
+#  search_setup_id         :integer
+#  created_at              :datetime
+#  updated_at              :datetime
+#  starting_cache_position :integer
+#  last_accessed           :datetime
+#  imported_file_id        :integer
+#  user_id                 :integer
+#  custom_file_id          :integer
+#  page                    :integer
+#  per_page                :integer
+#
+# Indexes
+#
+#  cf_id                                           (custom_file_id)
+#  index_search_runs_on_user_id_and_last_accessed  (user_id,last_accessed)
+#
+
 class SearchRun < ActiveRecord::Base
 
   PAGE_SIZE = 20

@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: support_requests
+#
+#  id            :integer          not null, primary key
+#  ticket_number :string(255)
+#  body          :text
+#  severity      :string(255)
+#  referrer_url  :string(255)
+#  user_id       :integer
+#  external_link :string(255)
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#
+
 require 'open_chain/trello'
 
 class SupportRequest < ActiveRecord::Base

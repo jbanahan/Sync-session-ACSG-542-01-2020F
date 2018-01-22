@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: custom_reports
+#
+#  id            :integer          not null, primary key
+#  name          :string(255)
+#  user_id       :integer
+#  type          :string(255)
+#  include_links :boolean
+#  created_at    :datetime
+#  updated_at    :datetime
+#  no_time       :boolean
+#
+# Indexes
+#
+#  index_custom_reports_on_type     (type)
+#  index_custom_reports_on_user_id  (user_id)
+#
+
 require 'custom_report_entry_invoice_breakdown_support'
 
 class CustomReportTieredEntryInvoiceBreakdown < CustomReport

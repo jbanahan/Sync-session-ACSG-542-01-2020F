@@ -1,3 +1,26 @@
+# == Schema Information
+#
+# Table name: project_deliverables
+#
+#  id              :integer          not null, primary key
+#  project_id      :integer
+#  description     :text
+#  assigned_to_id  :integer
+#  start_date      :date
+#  end_date        :date
+#  due_date        :date
+#  estimated_hours :integer
+#  complete        :boolean
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  priority        :string(255)
+#
+# Indexes
+#
+#  index_project_deliverables_on_assigned_to_id  (assigned_to_id)
+#  index_project_deliverables_on_project_id      (project_id)
+#
+
 class ProjectDeliverable < ActiveRecord::Base
   belongs_to :assigned_to, class_name:'User'
   belongs_to :project, touch: true, inverse_of: :project_deliverables

@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: delivery_lines
+#
+#  id          :integer          not null, primary key
+#  line_number :integer
+#  created_at  :datetime
+#  updated_at  :datetime
+#  delivery_id :integer
+#  product_id  :integer
+#  quantity    :decimal(13, 4)
+#
+# Indexes
+#
+#  index_delivery_lines_on_delivery_id  (delivery_id)
+#
+
 class DeliveryLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport

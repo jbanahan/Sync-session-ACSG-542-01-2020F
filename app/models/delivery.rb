@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: deliveries
+#
+#  id           :integer          not null, primary key
+#  ship_from_id :integer
+#  ship_to_id   :integer
+#  carrier_id   :integer
+#  reference    :string(255)
+#  mode         :string(255)
+#  customer_id  :integer
+#  created_at   :datetime
+#  updated_at   :datetime
+#
+
 class Delivery < ActiveRecord::Base
   
   include CoreObjectSupport

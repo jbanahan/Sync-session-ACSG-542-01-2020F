@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: classifications
+#
+#  id                        :integer          not null, primary key
+#  country_id                :integer
+#  product_id                :integer
+#  created_at                :datetime
+#  updated_at                :datetime
+#  instant_classification_id :integer
+#
+# Indexes
+#
+#  index_classifications_on_country_id  (country_id)
+#  index_classifications_on_product_id  (product_id)
+#
+
 class Classification < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger

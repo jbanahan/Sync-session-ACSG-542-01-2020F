@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: tariff_records
+#
+#  id                :integer          not null, primary key
+#  hts_1             :string(255)
+#  hts_2             :string(255)
+#  hts_3             :string(255)
+#  classification_id :integer
+#  created_at        :datetime
+#  updated_at        :datetime
+#  line_number       :integer
+#  schedule_b_1      :string(255)
+#  schedule_b_2      :string(255)
+#  schedule_b_3      :string(255)
+#
+# Indexes
+#
+#  index_tariff_records_on_classification_id  (classification_id)
+#  index_tariff_records_on_hts_1              (hts_1)
+#  index_tariff_records_on_hts_2              (hts_2)
+#  index_tariff_records_on_hts_3              (hts_3)
+#
+
 class TariffRecord < ActiveRecord::Base
   include ShallowMerger
   include CustomFieldSupport

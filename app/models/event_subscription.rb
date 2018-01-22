@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: event_subscriptions
+#
+#  id             :integer          not null, primary key
+#  user_id        :integer
+#  event_type     :string(255)
+#  email          :boolean
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  system_message :boolean
+#
+# Indexes
+#
+#  index_event_subscriptions_on_user_id  (user_id)
+#
+
 class EventSubscription < ActiveRecord::Base
   belongs_to :user, inverse_of: :event_subscriptions, touch: true
 

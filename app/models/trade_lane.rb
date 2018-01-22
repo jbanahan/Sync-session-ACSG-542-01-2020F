@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: trade_lanes
+#
+#  id                           :integer          not null, primary key
+#  origin_country_id            :integer
+#  destination_country_id       :integer
+#  tariff_adjustment_percentage :decimal(5, 2)
+#  notes                        :text
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
+#
+# Indexes
+#
+#  index_trade_lanes_on_destination_country_id  (destination_country_id)
+#  index_trade_lanes_on_origin_country_id       (origin_country_id)
+#  unique_country_pair                          (origin_country_id,destination_country_id) UNIQUE
+#
+
 class TradeLane < ActiveRecord::Base
   include CoreObjectSupport
 

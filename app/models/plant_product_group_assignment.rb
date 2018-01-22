@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: plant_product_group_assignments
+#
+#  id               :integer          not null, primary key
+#  plant_id         :integer
+#  product_group_id :integer
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#
+# Indexes
+#
+#  index_plant_product_group_assignments_on_plant_id          (plant_id)
+#  index_plant_product_group_assignments_on_product_group_id  (product_group_id)
+#
+
 class PlantProductGroupAssignment < ActiveRecord::Base
   include CoreObjectSupport
 

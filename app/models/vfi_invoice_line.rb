@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: vfi_invoice_lines
+#
+#  id                 :integer          not null, primary key
+#  vfi_invoice_id     :integer          not null
+#  line_number        :integer
+#  charge_description :string(255)
+#  charge_amount      :decimal(11, 2)
+#  charge_code        :string(255)
+#  quantity           :decimal(11, 2)
+#  unit               :string(255)
+#  unit_price         :decimal(11, 2)
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_vfi_invoice_lines_on_vfi_invoice_id  (vfi_invoice_id)
+#
+
 class VfiInvoiceLine < ActiveRecord::Base
   include DefaultLineNumberSupport
   belongs_to :vfi_invoice, :inverse_of => :vfi_invoice_lines, :touch => true

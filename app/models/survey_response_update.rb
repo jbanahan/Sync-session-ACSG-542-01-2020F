@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: survey_response_updates
+#
+#  id                 :integer          not null, primary key
+#  user_id            :integer
+#  survey_response_id :integer
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_survey_response_updates_on_survey_response_id_and_user_id  (survey_response_id,user_id) UNIQUE
+#  index_survey_response_updates_on_user_id                         (user_id)
+#
+
 class SurveyResponseUpdate < ActiveRecord::Base
   belongs_to :user
   belongs_to :survey_response

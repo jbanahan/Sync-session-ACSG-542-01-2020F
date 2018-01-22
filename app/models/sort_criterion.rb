@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: sort_criterions
+#
+#  id                   :integer          not null, primary key
+#  search_setup_id      :integer
+#  rank                 :integer
+#  model_field_uid      :string(255)
+#  custom_definition_id :integer
+#  descending           :boolean
+#  created_at           :datetime
+#  updated_at           :datetime
+#
+# Indexes
+#
+#  index_sort_criterions_on_search_setup_id  (search_setup_id)
+#
+
 class SortCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport

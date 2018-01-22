@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: business_rule_snapshots
+#
+#  id              :integer          not null, primary key
+#  recordable_id   :integer          not null
+#  recordable_type :string(255)      not null
+#  bucket          :string(255)
+#  doc_path        :string(255)
+#  version         :string(255)
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  compared_at     :datetime
+#
+# Indexes
+#
+#  business_rule_snapshots_on_recordable_id_and_recordable_type  (recordable_id,recordable_type)
+#
+
 require 'open_chain/s3'
 require 'open_chain/entity_compare/entity_comparator'
 

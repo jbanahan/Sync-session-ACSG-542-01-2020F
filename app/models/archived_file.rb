@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: archived_files
+#
+#  id         :integer          not null, primary key
+#  file_type  :string(255)
+#  comment    :string(255)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_archived_files_on_created_at  (created_at)
+#  index_archived_files_on_file_type   (file_type)
+#
+
 class ArchivedFile < ActiveRecord::Base
   attr_accessible :comment, :file_type
   has_one :attachment, :as => :attachable, :dependent=>:destroy

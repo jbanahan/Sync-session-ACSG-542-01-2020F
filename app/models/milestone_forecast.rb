@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: milestone_forecasts
+#
+#  id                        :integer          not null, primary key
+#  milestone_definition_id   :integer
+#  milestone_forecast_set_id :integer
+#  planned                   :date
+#  forecast                  :date
+#  state                     :string(255)
+#  created_at                :datetime
+#  updated_at                :datetime
+#
+# Indexes
+#
+#  mf_state          (state)
+#  unique_forecasts  (milestone_forecast_set_id,milestone_definition_id) UNIQUE
+#
+
 class MilestoneForecast < ActiveRecord::Base
 
   ORDERED_STATES = ["Achieved","Pending","Unplanned","Missed","Trouble","Overdue"]

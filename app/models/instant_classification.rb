@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: instant_classifications
+#
+#  id         :integer          not null, primary key
+#  name       :string(255)
+#  rank       :integer
+#  created_at :datetime
+#  updated_at :datetime
+#
+
 #The definition of a test and resulting classification that could be applied to a product using the Instant Classification feature
 class InstantClassification < ActiveRecord::Base
   include UpdateModelFieldsSupport

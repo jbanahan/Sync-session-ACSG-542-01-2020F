@@ -1,3 +1,13 @@
+# == Schema Information
+#
+# Table name: product_groups
+#
+#  id         :integer          not null, primary key
+#  name       :string(255)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+
 class ProductGroup < ActiveRecord::Base
 
   has_many :plant_product_group_assignments, inverse_of: :product_group, dependent: :destroy

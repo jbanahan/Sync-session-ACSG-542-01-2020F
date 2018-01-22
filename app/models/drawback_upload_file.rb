@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: drawback_upload_files
+#
+#  id            :integer          not null, primary key
+#  processor     :string(255)
+#  start_at      :datetime
+#  finish_at     :datetime
+#  created_at    :datetime
+#  updated_at    :datetime
+#  error_message :string(255)
+#
+# Indexes
+#
+#  index_drawback_upload_files_on_processor  (processor)
+#
+
 require 'open_chain/custom_handler/under_armour/under_armour_receiving_parser'
 require 'open_chain/ohl_drawback_parser'
 require 'open_chain/custom_handler/under_armour/under_armour_drawback_processor'

@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: support_ticket_comments
+#
+#  id                :integer          not null, primary key
+#  support_ticket_id :integer
+#  user_id           :integer
+#  body              :text
+#  created_at        :datetime
+#  updated_at        :datetime
+#
+# Indexes
+#
+#  index_support_ticket_comments_on_support_ticket_id  (support_ticket_id)
+#
+
 class SupportTicketComment < ActiveRecord::Base
   belongs_to :support_ticket, :inverse_of=>:support_ticket_comments
   belongs_to :user

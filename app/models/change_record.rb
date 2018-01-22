@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: change_records
+#
+#  id                     :integer          not null, primary key
+#  file_import_result_id  :integer
+#  recordable_id          :integer
+#  recordable_type        :string(255)
+#  record_sequence_number :integer
+#  created_at             :datetime
+#  updated_at             :datetime
+#  failed                 :boolean
+#  bulk_process_log_id    :integer
+#  unique_identifier      :string(255)
+#
+# Indexes
+#
+#  index_change_records_on_bulk_process_log_id    (bulk_process_log_id)
+#  index_change_records_on_file_import_result_id  (file_import_result_id)
+#
+
 class ChangeRecord < ActiveRecord::Base
   belongs_to :file_import_result
   belongs_to :recordable, :polymorphic=>true

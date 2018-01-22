@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: file_import_results
+#
+#  id                   :integer          not null, primary key
+#  imported_file_id     :integer
+#  started_at           :datetime
+#  finished_at          :datetime
+#  run_by_id            :integer
+#  created_at           :datetime
+#  updated_at           :datetime
+#  changed_object_count :integer
+#  expected_rows        :integer
+#  rows_processed       :integer
+#
+# Indexes
+#
+#  index_file_import_results_on_imported_file_id_and_finished_at  (imported_file_id,finished_at)
+#
+
 class FileImportResult < ActiveRecord::Base
   belongs_to :imported_file
   belongs_to :run_by, :class_name => "User"

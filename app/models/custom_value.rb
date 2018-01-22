@@ -1,3 +1,35 @@
+# == Schema Information
+#
+# Table name: custom_values
+#
+#  id                   :integer          not null, primary key
+#  customizable_id      :integer          not null
+#  customizable_type    :string(255)      not null
+#  string_value         :string(255)
+#  decimal_value        :decimal(13, 4)
+#  integer_value        :integer
+#  date_value           :date
+#  custom_definition_id :integer
+#  created_at           :datetime
+#  updated_at           :datetime
+#  text_value           :text
+#  boolean_value        :boolean
+#  datetime_value       :datetime
+#
+# Indexes
+#
+#  cv_unique_composite                                           (customizable_id,customizable_type,custom_definition_id) UNIQUE
+#  index_custom_values_on_boolean_value                          (boolean_value)
+#  index_custom_values_on_custom_definition_id                   (custom_definition_id)
+#  index_custom_values_on_customizable_id_and_customizable_type  (customizable_id,customizable_type)
+#  index_custom_values_on_date_value                             (date_value)
+#  index_custom_values_on_datetime_value                         (datetime_value)
+#  index_custom_values_on_decimal_value                          (decimal_value)
+#  index_custom_values_on_integer_value                          (integer_value)
+#  index_custom_values_on_string_value                           (string_value)
+#  index_custom_values_on_text_value                             (text_value)
+#
+
 class CustomValue < ActiveRecord::Base
   include TouchesParentsChangedAt
 

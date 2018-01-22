@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: custom_reports
+#
+#  id            :integer          not null, primary key
+#  name          :string(255)
+#  user_id       :integer
+#  type          :string(255)
+#  include_links :boolean
+#  created_at    :datetime
+#  updated_at    :datetime
+#  no_time       :boolean
+#
+# Indexes
+#
+#  index_custom_reports_on_type     (type)
+#  index_custom_reports_on_user_id  (user_id)
+#
+
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 class CustomReportAnnSapChanges < CustomReport

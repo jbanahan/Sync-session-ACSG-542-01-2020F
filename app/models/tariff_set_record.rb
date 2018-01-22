@@ -1,3 +1,38 @@
+# == Schema Information
+#
+# Table name: tariff_set_records
+#
+#  id                               :integer          not null, primary key
+#  tariff_set_id                    :integer
+#  country_id                       :integer
+#  hts_code                         :string(255)
+#  full_description                 :text
+#  special_rates                    :text
+#  general_rate                     :string(255)
+#  chapter                          :text
+#  heading                          :text
+#  sub_heading                      :text
+#  remaining_description            :text
+#  add_valorem_rate                 :string(255)
+#  per_unit_rate                    :string(255)
+#  calculation_method               :string(255)
+#  most_favored_nation_rate         :string(255)
+#  general_preferential_tariff_rate :string(255)
+#  erga_omnes_rate                  :string(255)
+#  unit_of_measure                  :string(255)
+#  column_2_rate                    :string(255)
+#  import_regulations               :string(255)
+#  export_regulations               :string(255)
+#  created_at                       :datetime
+#  updated_at                       :datetime
+#  fda_indicator                    :string(255)
+#
+# Indexes
+#
+#  index_tariff_set_records_on_hts_code       (hts_code)
+#  index_tariff_set_records_on_tariff_set_id  (tariff_set_id)
+#
+
 class TariffSetRecord < ActiveRecord::Base
   belongs_to :tariff_set
   belongs_to :country

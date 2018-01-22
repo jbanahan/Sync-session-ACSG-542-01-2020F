@@ -1,3 +1,139 @@
+# == Schema Information
+#
+# Table name: shipments
+#
+#  id                               :integer          not null, primary key
+#  ship_from_id                     :integer
+#  ship_to_id                       :integer
+#  carrier_id                       :integer
+#  created_at                       :datetime
+#  updated_at                       :datetime
+#  reference                        :string(255)
+#  mode                             :string(255)
+#  vendor_id                        :integer
+#  importer_id                      :integer
+#  master_bill_of_lading            :string(255)
+#  house_bill_of_lading             :string(255)
+#  booking_number                   :string(255)
+#  receipt_location                 :string(255)
+#  lading_port_id                   :integer
+#  unlading_port_id                 :integer
+#  entry_port_id                    :integer
+#  destination_port_id              :integer
+#  freight_terms                    :string(255)
+#  lcl                              :boolean
+#  shipment_type                    :string(255)
+#  booking_shipment_type            :string(255)
+#  booking_mode                     :string(255)
+#  vessel                           :string(255)
+#  voyage                           :string(255)
+#  vessel_carrier_scac              :string(255)
+#  booking_received_date            :datetime
+#  booking_confirmed_date           :datetime
+#  booking_cutoff_date              :date
+#  booking_est_arrival_date         :date
+#  booking_est_departure_date       :date
+#  docs_received_date               :date
+#  cargo_on_hand_date               :date
+#  est_departure_date               :date
+#  departure_date                   :date
+#  est_arrival_port_date            :date
+#  arrival_port_date                :date
+#  est_delivery_date                :date
+#  delivered_date                   :date
+#  cargo_on_board_date              :date
+#  last_exported_from_source        :datetime
+#  importer_reference               :string(255)
+#  cargo_ready_date                 :date
+#  booking_requested_by_id          :integer
+#  booking_confirmed_by_id          :integer
+#  booking_approved_date            :datetime
+#  booking_approved_by_id           :integer
+#  booked_quantity                  :decimal(11, 2)
+#  canceled_date                    :datetime
+#  canceled_by_id                   :integer
+#  vessel_nationality               :string(255)
+#  first_port_receipt_id            :integer
+#  last_foreign_port_id             :integer
+#  marks_and_numbers                :text
+#  number_of_packages               :integer
+#  number_of_packages_uom           :string(255)
+#  gross_weight                     :decimal(9, 2)
+#  booking_carrier                  :string(255)
+#  booking_vessel                   :string(255)
+#  delay_reason_codes               :string(255)
+#  shipment_cutoff_date             :date
+#  fish_and_wildlife                :boolean
+#  volume                           :decimal(9, 2)
+#  cancel_requested_at              :datetime
+#  cancel_requested_by_id           :integer
+#  seller_address_id                :integer
+#  buyer_address_id                 :integer
+#  ship_to_address_id               :integer
+#  container_stuffing_address_id    :integer
+#  consolidator_address_id          :integer
+#  consignee_id                     :integer
+#  isf_sent_at                      :datetime
+#  isf_sent_by_id                   :integer
+#  est_load_date                    :date
+#  final_dest_port_id               :integer
+#  confirmed_on_board_origin_date   :date
+#  eta_last_foreign_port_date       :date
+#  departure_last_foreign_port_date :date
+#  booking_revised_date             :datetime
+#  booking_revised_by_id            :integer
+#  freight_total                    :decimal(11, 2)
+#  invoice_total                    :decimal(11, 2)
+#  inland_destination_port_id       :integer
+#  est_inland_port_date             :date
+#  inland_port_date                 :date
+#  asn_triggered_at                 :datetime
+#  asn_triggered_by_id              :integer
+#  asn_sent_at                      :datetime
+#  requested_equipment              :text
+#  forwarder_id                     :integer
+#  booking_cargo_ready_date         :date
+#  booking_first_port_receipt_id    :integer
+#  booking_requested_equipment      :string(255)
+#  booking_request_count            :integer
+#  hazmat                           :boolean
+#  solid_wood_packing_materials     :boolean
+#  lacey_act                        :boolean
+#  export_license_required          :boolean
+#  shipment_instructions_sent_date  :date
+#  shipment_instructions_sent_by_id :integer
+#  last_file_bucket                 :string(255)
+#  last_file_path                   :string(255)
+#  do_issued_at                     :date
+#  trucker_name                     :string(255)
+#  port_last_free_day               :date
+#  pickup_at                        :date
+#  in_warehouse_time                :datetime
+#
+# Indexes
+#
+#  index_shipments_on_arrival_port_date           (arrival_port_date)
+#  index_shipments_on_booking_approved_by_id      (booking_approved_by_id)
+#  index_shipments_on_booking_cargo_ready_date    (booking_cargo_ready_date)
+#  index_shipments_on_booking_confirmed_by_id     (booking_confirmed_by_id)
+#  index_shipments_on_booking_number              (booking_number)
+#  index_shipments_on_booking_request_count       (booking_request_count)
+#  index_shipments_on_booking_requested_by_id     (booking_requested_by_id)
+#  index_shipments_on_canceled_by_id              (canceled_by_id)
+#  index_shipments_on_canceled_date               (canceled_date)
+#  index_shipments_on_departure_date              (departure_date)
+#  index_shipments_on_est_arrival_port_date       (est_arrival_port_date)
+#  index_shipments_on_est_departure_date          (est_departure_date)
+#  index_shipments_on_forwarder_id                (forwarder_id)
+#  index_shipments_on_house_bill_of_lading        (house_bill_of_lading)
+#  index_shipments_on_importer_id                 (importer_id)
+#  index_shipments_on_importer_reference          (importer_reference)
+#  index_shipments_on_inland_destination_port_id  (inland_destination_port_id)
+#  index_shipments_on_master_bill_of_lading       (master_bill_of_lading)
+#  index_shipments_on_mode                        (mode)
+#  index_shipments_on_reference                   (reference)
+#
+
 require 'open_chain/order_booking_registry'
 class Shipment < ActiveRecord::Base
   include CoreObjectSupport

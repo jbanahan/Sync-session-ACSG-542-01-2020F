@@ -1,3 +1,43 @@
+# == Schema Information
+#
+# Table name: search_criterions
+#
+#  id                               :integer          not null, primary key
+#  operator                         :string(255)
+#  value                            :text
+#  created_at                       :datetime
+#  updated_at                       :datetime
+#  status_rule_id                   :integer
+#  model_field_uid                  :string(255)
+#  search_setup_id                  :integer
+#  custom_definition_id             :integer
+#  instant_classification_id        :integer
+#  imported_file_id                 :integer
+#  search_run_id                    :integer
+#  custom_report_id                 :integer
+#  include_empty                    :boolean
+#  business_validation_template_id  :integer
+#  business_validation_rule_id      :integer
+#  state_toggle_button_id           :integer
+#  milestone_notification_config_id :integer
+#  automated_billing_setup_id       :integer
+#  custom_view_template_id          :integer
+#  secondary_model_field_uid        :string(255)
+#
+# Indexes
+#
+#  business_validation_rule                                     (business_validation_rule_id)
+#  business_validation_template                                 (business_validation_template_id)
+#  index_search_criterions_on_automated_billing_setup_id        (automated_billing_setup_id)
+#  index_search_criterions_on_custom_report_id                  (custom_report_id)
+#  index_search_criterions_on_custom_view_template_id           (custom_view_template_id)
+#  index_search_criterions_on_imported_file_id                  (imported_file_id)
+#  index_search_criterions_on_milestone_notification_config_id  (milestone_notification_config_id)
+#  index_search_criterions_on_search_run_id                     (search_run_id)
+#  index_search_criterions_on_search_setup_id                   (search_setup_id)
+#  index_search_criterions_on_state_toggle_button_id            (state_toggle_button_id)
+#
+
 class SearchCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport

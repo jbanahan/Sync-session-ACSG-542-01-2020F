@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: result_caches
+#
+#  id                    :integer          not null, primary key
+#  result_cacheable_id   :integer
+#  result_cacheable_type :string(255)
+#  page                  :integer
+#  per_page              :integer
+#  object_ids            :text
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#
+# Indexes
+#
+#  result_cacheable  (result_cacheable_id,result_cacheable_type)
+#
+
 # Cache of search result primary keys
 # Expects result_cacheable to implmenent result_keys and take has with :per_page & :page
 class ResultCache < ActiveRecord::Base

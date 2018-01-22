@@ -104,6 +104,7 @@ group :development,:test do
   gem 'minitest'
   gem 'active_record_query_trace'
   gem 'database_cleaner'
+  gem 'annotate'
 end
 
 group :test do

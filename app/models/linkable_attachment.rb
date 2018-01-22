@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: linkable_attachments
+#
+#  id              :integer          not null, primary key
+#  model_field_uid :string(255)
+#  value           :string(255)
+#  attachment_id   :integer
+#  created_at      :datetime
+#  updated_at      :datetime
+#
+# Indexes
+#
+#  linkable_attachment_id  (attachment_id)
+#  linkable_mfuid          (model_field_uid)
+#
+
 class LinkableAttachment < ActiveRecord::Base
   has_one :attachment, :as => :attachable, :dependent => :destroy
   has_many :linked_attachments

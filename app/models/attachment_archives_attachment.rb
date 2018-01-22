@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: attachment_archives_attachments
+#
+#  id                    :integer          not null, primary key
+#  attachment_archive_id :integer
+#  attachment_id         :integer
+#  file_name             :string(255)
+#
+# Indexes
+#
+#  arch_id  (attachment_archive_id)
+#  att_id   (attachment_id)
+#
+
 class AttachmentArchivesAttachment < ActiveRecord::Base
   attr_accessible :attachment_archive_id, :attachment_id, :file_name
 

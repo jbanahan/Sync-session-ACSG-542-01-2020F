@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: groups
+#
+#  id          :integer          not null, primary key
+#  system_code :string(255)
+#  name        :string(255)
+#  description :string(255)
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+# Indexes
+#
+#  index_groups_on_system_code  (system_code) UNIQUE
+#
+
 class Group < ActiveRecord::Base
   has_and_belongs_to_many :users, join_table: "user_group_memberships"
 

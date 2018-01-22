@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: duty_calc_export_files
+#
+#  id          :integer          not null, primary key
+#  user_id     :integer
+#  created_at  :datetime
+#  updated_at  :datetime
+#  importer_id :integer
+#
+# Indexes
+#
+#  index_duty_calc_export_files_on_importer_id  (importer_id)
+#
+
 require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcExportFile < ActiveRecord::Base

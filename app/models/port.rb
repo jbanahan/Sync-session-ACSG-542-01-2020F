@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: ports
+#
+#  id                 :integer          not null, primary key
+#  schedule_d_code    :string(255)
+#  schedule_k_code    :string(255)
+#  name               :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#  cbsa_port          :string(255)
+#  cbsa_sublocation   :string(255)
+#  unlocode           :string(255)
+#  active_origin      :boolean
+#  active_destination :boolean
+#
+# Indexes
+#
+#  index_ports_on_cbsa_port         (cbsa_port)
+#  index_ports_on_cbsa_sublocation  (cbsa_sublocation)
+#  index_ports_on_name              (name)
+#  index_ports_on_schedule_d_code   (schedule_d_code)
+#  index_ports_on_schedule_k_code   (schedule_k_code)
+#  index_ports_on_unlocode          (unlocode)
+#
+
 class Port < ActiveRecord::Base
 
   validates :schedule_k_code, :format => {:with=>/^[0-9]{5}$/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}

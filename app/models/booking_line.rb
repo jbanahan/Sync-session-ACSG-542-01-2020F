@@ -1,3 +1,32 @@
+# == Schema Information
+#
+# Table name: booking_lines
+#
+#  id             :integer          not null, primary key
+#  product_id     :integer
+#  shipment_id    :integer
+#  line_number    :integer
+#  quantity       :decimal(13, 4)
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  gross_kgs      :decimal(9, 2)
+#  cbms           :decimal(9, 5)
+#  carton_qty     :integer
+#  carton_set_id  :integer
+#  order_id       :integer
+#  order_line_id  :integer
+#  container_size :string(255)
+#  variant_id     :integer
+#
+# Indexes
+#
+#  index_booking_lines_on_order_id_and_order_line_id  (order_id,order_line_id)
+#  index_booking_lines_on_order_line_id               (order_line_id)
+#  index_booking_lines_on_product_id                  (product_id)
+#  index_booking_lines_on_shipment_id                 (shipment_id)
+#  index_booking_lines_on_variant_id                  (variant_id)
+#
+
 class BookingLine < ActiveRecord::Base
   belongs_to :shipment
   belongs_to :carton_set

@@ -1,3 +1,33 @@
+# == Schema Information
+#
+# Table name: entity_snapshots
+#
+#  id                  :integer          not null, primary key
+#  recordable_type     :string(255)
+#  recordable_id       :integer
+#  snapshot            :text
+#  user_id             :integer
+#  created_at          :datetime
+#  updated_at          :datetime
+#  imported_file_id    :integer
+#  change_record_id    :integer
+#  bulk_process_log_id :integer
+#  bucket              :string(255)
+#  doc_path            :string(255)
+#  version             :string(255)
+#  compared_at         :datetime
+#  context             :string(255)
+#
+# Indexes
+#
+#  Uncompared Items                                             (bucket,doc_path,compared_at)
+#  index_entity_snapshots_on_bulk_process_log_id                (bulk_process_log_id)
+#  index_entity_snapshots_on_change_record_id                   (change_record_id)
+#  index_entity_snapshots_on_imported_file_id                   (imported_file_id)
+#  index_entity_snapshots_on_recordable_id_and_recordable_type  (recordable_id,recordable_type)
+#  index_entity_snapshots_on_user_id                            (user_id)
+#
+
 require 'open_chain/s3'
 require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base

@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: field_labels
+#
+#  id              :integer          not null, primary key
+#  model_field_uid :string(255)
+#  label           :string(255)
+#  created_at      :datetime
+#  updated_at      :datetime
+#
+# Indexes
+#
+#  index_field_labels_on_model_field_uid  (model_field_uid)
+#
+
 #represents labels for ModelFields which may come from static definitions within this class or from the database (user configured labels)
 #You should only need to access this method through the static self.set_label(model_field_uid,label) and self.label_text(model_field_uid) methods.  
 #Everything else is handled internally.

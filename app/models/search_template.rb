@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: search_templates
+#
+#  id          :integer          not null, primary key
+#  name        :string(255)
+#  module_type :string(255)
+#  search_json :text
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+
 class SearchTemplate < ActiveRecord::Base
   validates :name, uniqueness: true, presence: true
   validates :search_json, presence: true

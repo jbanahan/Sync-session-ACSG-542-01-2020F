@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: product_rate_overrides
+#
+#  id                     :integer          not null, primary key
+#  product_id             :integer
+#  origin_country_id      :integer
+#  destination_country_id :integer
+#  rate                   :decimal(8, 4)
+#  start_date             :date
+#  end_date               :date
+#  notes                  :text
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
+# Indexes
+#
+#  countries  (origin_country_id,destination_country_id)
+#  prod_id    (product_id)
+#  start_end  (start_date,end_date)
+#
+
 require 'open_chain/active_dates_support'
 class ProductRateOverride < ActiveRecord::Base
   include CoreObjectSupport

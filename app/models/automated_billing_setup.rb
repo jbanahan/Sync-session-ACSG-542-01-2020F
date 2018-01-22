@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: automated_billing_setups
+#
+#  id              :integer          not null, primary key
+#  customer_number :string(255)
+#  enabled         :boolean
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
+
 # This is essentially a setup for automated 210 XML docs to be sent out from Entry Broker Invoices.
 class AutomatedBillingSetup < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy, autosave: true

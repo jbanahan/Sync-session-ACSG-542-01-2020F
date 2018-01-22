@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: carton_sets
+#
+#  id              :integer          not null, primary key
+#  starting_carton :integer
+#  carton_qty      :integer
+#  length_cm       :decimal(8, 4)
+#  width_cm        :decimal(8, 4)
+#  height_cm       :decimal(8, 4)
+#  net_net_kgs     :decimal(8, 4)
+#  net_kgs         :decimal(8, 4)
+#  gross_kgs       :decimal(8, 4)
+#  shipment_id     :integer
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#
+# Indexes
+#
+#  index_carton_sets_on_shipment_id  (shipment_id)
+#
+
 class CartonSet < ActiveRecord::Base
   belongs_to :shipment, inverse_of: :carton_sets
   has_many :shipment_lines, inverse_of: :carton_set

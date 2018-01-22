@@ -1,3 +1,34 @@
+# == Schema Information
+#
+# Table name: order_lines
+#
+#  id                :integer          not null, primary key
+#  price_per_unit    :decimal(13, 4)
+#  order_id          :integer
+#  created_at        :datetime
+#  updated_at        :datetime
+#  line_number       :integer
+#  product_id        :integer
+#  quantity          :decimal(13, 4)
+#  currency          :string(255)
+#  country_of_origin :string(255)
+#  hts               :string(255)
+#  sku               :string(255)
+#  unit_of_measure   :string(255)
+#  ship_to_id        :integer
+#  total_cost_digits :integer
+#  variant_id        :integer
+#  unit_msrp         :decimal(13, 4)
+#
+# Indexes
+#
+#  index_order_lines_on_order_id    (order_id)
+#  index_order_lines_on_product_id  (product_id)
+#  index_order_lines_on_ship_to_id  (ship_to_id)
+#  index_order_lines_on_sku         (sku)
+#  index_order_lines_on_variant_id  (variant_id)
+#
+
 require 'open_chain/validator/variant_line_integrity_validator'
 class OrderLine < ActiveRecord::Base
   include LinesSupport

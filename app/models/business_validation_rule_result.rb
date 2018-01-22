@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: business_validation_rule_results
+#
+#  id                            :integer          not null, primary key
+#  business_validation_result_id :integer
+#  business_validation_rule_id   :integer
+#  state                         :string(255)
+#  message                       :text
+#  note                          :text
+#  overridden_by_id              :integer
+#  overridden_at                 :datetime
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#
+# Indexes
+#
+#  business_validation_result                                  (business_validation_result_id)
+#  business_validation_rule                                    (business_validation_rule_id)
+#  index_business_validation_rule_results_on_overridden_by_id  (overridden_by_id)
+#
+
 class BusinessValidationRuleResult < ActiveRecord::Base
   belongs_to :business_validation_result, touch: true
   belongs_to :business_validation_rule, inverse_of: :business_validation_rule_results

@@ -1,3 +1,42 @@
+# == Schema Information
+#
+# Table name: survey_responses
+#
+#  id                              :integer          not null, primary key
+#  survey_id                       :integer
+#  user_id                         :integer
+#  email_sent_date                 :datetime
+#  email_opened_date               :datetime
+#  response_opened_date            :datetime
+#  submitted_date                  :datetime
+#  accepted_date                   :datetime
+#  created_at                      :datetime
+#  updated_at                      :datetime
+#  status                          :string(255)
+#  rating                          :string(255)
+#  name                            :string(255)
+#  address                         :text
+#  phone                           :string(255)
+#  fax                             :string(255)
+#  email                           :string(255)
+#  subtitle                        :string(255)
+#  archived                        :boolean
+#  expiration_notification_sent_at :datetime
+#  base_object_type                :string(255)
+#  base_object_id                  :integer
+#  group_id                        :integer
+#  checkout_by_user_id             :integer
+#  checkout_token                  :string(255)
+#  checkout_expiration             :datetime
+#
+# Indexes
+#
+#  index_survey_responses_on_base_object_type_and_base_object_id  (base_object_type,base_object_id)
+#  index_survey_responses_on_rating                               (rating)
+#  index_survey_responses_on_survey_id                            (survey_id)
+#  index_survey_responses_on_user_id                              (user_id)
+#
+
 class SurveyResponse < ActiveRecord::Base
   attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at, :checkout_by_user, :checkout_token, :checkout_expiration
   belongs_to :user

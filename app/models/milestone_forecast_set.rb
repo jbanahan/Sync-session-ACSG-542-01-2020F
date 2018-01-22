@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: milestone_forecast_sets
+#
+#  id           :integer          not null, primary key
+#  piece_set_id :integer
+#  state        :string(255)
+#  created_at   :datetime
+#  updated_at   :datetime
+#
+# Indexes
+#
+#  mfs_state          (state)
+#  one_per_piece_set  (piece_set_id) UNIQUE
+#
+
 class MilestoneForecastSet < ActiveRecord::Base
 
   belongs_to :piece_set

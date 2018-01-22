@@ -1,3 +1,49 @@
+# == Schema Information
+#
+# Table name: daily_statements
+#
+#  id                          :integer          not null, primary key
+#  statement_number            :string(255)
+#  monthly_statement_number    :string(255)
+#  monthly_statement_id        :integer
+#  status                      :string(255)
+#  received_date               :date
+#  final_received_date         :date
+#  due_date                    :date
+#  paid_date                   :date
+#  payment_accepted_date       :date
+#  port_code                   :string(255)
+#  pay_type                    :string(255)
+#  customer_number             :string(255)
+#  importer_id                 :integer
+#  total_amount                :decimal(11, 2)
+#  preliminary_total_amount    :decimal(11, 2)
+#  duty_amount                 :decimal(11, 2)
+#  preliminary_duty_amount     :decimal(11, 2)
+#  tax_amount                  :decimal(11, 2)
+#  preliminary_tax_amount      :decimal(11, 2)
+#  cvd_amount                  :decimal(11, 2)
+#  preliminary_cvd_amount      :decimal(11, 2)
+#  add_amount                  :decimal(11, 2)
+#  preliminary_add_amount      :decimal(11, 2)
+#  interest_amount             :decimal(11, 2)
+#  preliminary_interest_amount :decimal(11, 2)
+#  fee_amount                  :decimal(11, 2)
+#  preliminary_fee_amount      :decimal(11, 2)
+#  last_file_bucket            :string(255)
+#  last_file_path              :string(255)
+#  last_exported_from_source   :datetime
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
+# Indexes
+#
+#  index_daily_statements_on_importer_id               (importer_id)
+#  index_daily_statements_on_monthly_statement_id      (monthly_statement_id)
+#  index_daily_statements_on_monthly_statement_number  (monthly_statement_number)
+#  index_daily_statements_on_statement_number          (statement_number) UNIQUE
+#
+
 class DailyStatement < ActiveRecord::Base
   include CoreObjectSupport
 

@@ -1,3 +1,44 @@
+# == Schema Information
+#
+# Table name: broker_invoices
+#
+#  id                   :integer          not null, primary key
+#  entry_id             :integer
+#  suffix               :string(255)
+#  invoice_date         :date
+#  customer_number      :string(255)
+#  invoice_total        :decimal(11, 2)
+#  bill_to_name         :string(255)
+#  bill_to_address_1    :string(255)
+#  bill_to_address_2    :string(255)
+#  bill_to_city         :string(255)
+#  bill_to_state        :string(255)
+#  bill_to_zip          :string(255)
+#  bill_to_country_id   :integer
+#  created_at           :datetime
+#  updated_at           :datetime
+#  locked               :boolean
+#  currency             :string(255)
+#  invoice_number       :string(255)
+#  source_system        :string(255)
+#  broker_reference     :string(255)
+#  last_file_bucket     :string(255)
+#  last_file_path       :string(255)
+#  summary_statement_id :integer
+#  fiscal_date          :date
+#  fiscal_month         :integer
+#  fiscal_year          :integer
+#
+# Indexes
+#
+#  index_broker_invoices_on_broker_reference_and_source_system  (broker_reference,source_system)
+#  index_broker_invoices_on_customer_number                     (customer_number)
+#  index_broker_invoices_on_entry_id                            (entry_id)
+#  index_broker_invoices_on_invoice_date                        (invoice_date)
+#  index_broker_invoices_on_invoice_number                      (invoice_number)
+#  index_broker_invoices_on_summary_statement_id                (summary_statement_id)
+#
+
 class BrokerInvoice < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport

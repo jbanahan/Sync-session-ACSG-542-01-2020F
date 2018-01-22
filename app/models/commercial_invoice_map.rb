@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: commercial_invoice_maps
+#
+#  id               :integer          not null, primary key
+#  source_mfid      :string(255)
+#  destination_mfid :string(255)
+#  created_at       :datetime
+#  updated_at       :datetime
+#
+
 class CommercialInvoiceMap < ActiveRecord::Base
   #generate a commercial invoice based on the given shipment lines (which all must be from the same shipment)
   def self.generate_invoice! user, shipment_lines, field_override_hash = {}

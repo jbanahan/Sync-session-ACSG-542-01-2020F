@@ -1,3 +1,41 @@
+# == Schema Information
+#
+# Table name: official_tariffs
+#
+#  id                               :integer          not null, primary key
+#  country_id                       :integer
+#  hts_code                         :string(255)
+#  full_description                 :text
+#  special_rates                    :text
+#  general_rate                     :string(255)
+#  created_at                       :datetime
+#  updated_at                       :datetime
+#  chapter                          :string(800)
+#  heading                          :string(800)
+#  sub_heading                      :string(800)
+#  remaining_description            :string(800)
+#  add_valorem_rate                 :string(255)
+#  per_unit_rate                    :string(255)
+#  calculation_method               :string(255)
+#  most_favored_nation_rate         :string(255)
+#  general_preferential_tariff_rate :string(255)
+#  erga_omnes_rate                  :string(255)
+#  unit_of_measure                  :string(255)
+#  column_2_rate                    :string(255)
+#  import_regulations               :string(255)
+#  export_regulations               :string(255)
+#  common_rate                      :string(255)
+#  use_count                        :integer
+#  special_rate_key                 :string(255)
+#  common_rate_decimal              :decimal(8, 4)
+#  fda_indicator                    :string(255)
+#
+# Indexes
+#
+#  index_official_tariffs_on_country_id_and_hts_code  (country_id,hts_code)
+#  index_official_tariffs_on_hts_code                 (hts_code)
+#
+
 require 'digest/md5'
 require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base

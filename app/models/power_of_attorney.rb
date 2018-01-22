@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: power_of_attorneys
+#
+#  id                      :integer          not null, primary key
+#  company_id              :integer
+#  start_date              :date
+#  expiration_date         :date
+#  uploaded_by             :integer
+#  attachment_file_name    :string(255)
+#  attachment_content_type :string(255)
+#  attachment_file_size    :integer
+#  attachment_updated_at   :datetime
+#  created_at              :datetime
+#  updated_at              :datetime
+#
+
 require 'open_chain/s3'
 
 class PowerOfAttorney < ActiveRecord::Base

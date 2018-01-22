@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: tpp_hts_overrides
+#
+#  id                          :integer          not null, primary key
+#  trade_preference_program_id :integer
+#  hts_code                    :string(255)
+#  rate                        :decimal(8, 4)
+#  note                        :text
+#  start_date                  :date
+#  end_date                    :date
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#
+# Indexes
+#
+#  active_dates                         (start_date,end_date)
+#  index_tpp_hts_overrides_on_hts_code  (hts_code)
+#  tpp_id                               (trade_preference_program_id)
+#
+
 require 'open_chain/active_dates_support'
 class TppHtsOverride < ActiveRecord::Base
   include CoreObjectSupport

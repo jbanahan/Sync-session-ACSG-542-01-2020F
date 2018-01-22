@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: sent_emails
+#
+#  id             :integer          not null, primary key
+#  email_subject  :string(255)
+#  email_to       :string(255)
+#  email_cc       :string(255)
+#  email_bcc      :string(255)
+#  email_from     :string(255)
+#  email_reply_to :string(255)
+#  email_date     :datetime
+#  email_body     :text
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#
+
 class SentEmail < ActiveRecord::Base
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
 

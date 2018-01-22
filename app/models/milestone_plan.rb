@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: milestone_plans
+#
+#  id         :integer          not null, primary key
+#  name       :string(255)
+#  code       :string(255)
+#  created_at :datetime
+#  updated_at :datetime
+#
+
 class MilestonePlan < ActiveRecord::Base
   has_many :piece_sets
   has_many :milestone_definitions, :dependent => :destroy, :autosave=>true

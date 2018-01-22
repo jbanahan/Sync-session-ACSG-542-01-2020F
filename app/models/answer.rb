@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: answers
+#
+#  id                 :integer          not null, primary key
+#  survey_response_id :integer
+#  question_id        :integer
+#  choice             :string(255)
+#  rating             :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#
+# Indexes
+#
+#  index_answers_on_question_id         (question_id)
+#  index_answers_on_survey_response_id  (survey_response_id)
+#
+
 class Answer < ActiveRecord::Base
   belongs_to :survey_response, :touch=>true
   belongs_to :question

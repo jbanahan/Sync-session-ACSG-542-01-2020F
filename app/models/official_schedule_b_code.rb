@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: official_schedule_b_codes
+#
+#  id                     :integer          not null, primary key
+#  hts_code               :string(255)
+#  short_description      :text
+#  long_description       :text
+#  quantity_1             :text
+#  quantity_2             :text
+#  sitc_code              :string(255)
+#  end_use_classification :string(255)
+#  usda_code              :string(255)
+#  naics_classification   :string(255)
+#  hitech_classification  :string(255)
+#  created_at             :datetime
+#  updated_at             :datetime
+#
+
 class OfficialScheduleBCode < ActiveRecord::Base
 
   #clears current schedule b list and reloads it from census file

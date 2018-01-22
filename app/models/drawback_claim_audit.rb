@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: drawback_claim_audits
+#
+#  id                  :integer          not null, primary key
+#  export_part_number  :string(255)
+#  export_ref_1        :string(255)
+#  export_date         :date
+#  import_part_number  :string(255)
+#  import_ref_1        :string(255)
+#  import_date         :date
+#  import_entry_number :string(255)
+#  quantity            :decimal(13, 4)
+#  drawback_claim_id   :integer
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#
+# Indexes
+#
+#  export_idx                                        (export_part_number,export_ref_1,export_date)
+#  import_idx                                        (import_part_number,import_entry_number,import_ref_1)
+#  index_drawback_claim_audits_on_drawback_claim_id  (drawback_claim_id)
+#
+
 class DrawbackClaimAudit < ActiveRecord::Base
   attr_accessible :drawback_claim_id, :export_date, :export_part_number, :export_ref_1, :import_date, :import_entry_number, :import_part_number, :import_ref_1, :quantity
 

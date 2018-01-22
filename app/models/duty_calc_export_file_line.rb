@@ -1,3 +1,45 @@
+# == Schema Information
+#
+# Table name: duty_calc_export_file_lines
+#
+#  id                       :integer          not null, primary key
+#  export_date              :date
+#  ship_date                :date
+#  part_number              :string(255)
+#  carrier                  :string(255)
+#  ref_1                    :string(255)
+#  ref_2                    :string(255)
+#  ref_3                    :string(255)
+#  ref_4                    :string(255)
+#  destination_country      :string(255)
+#  quantity                 :integer
+#  schedule_b_code          :string(255)
+#  hts_code                 :string(255)
+#  description              :string(255)
+#  uom                      :string(255)
+#  exporter                 :string(255)
+#  status                   :string(255)
+#  action_code              :string(255)
+#  nafta_duty               :integer
+#  nafta_us_equiv_duty      :integer
+#  nafta_duty_rate          :integer
+#  duty_calc_export_file_id :integer
+#  created_at               :datetime
+#  updated_at               :datetime
+#  importer_id              :integer
+#  customs_line_number      :integer
+#
+# Indexes
+#
+#  index_duty_calc_export_file_lines_on_duty_calc_export_file_id  (duty_calc_export_file_id)
+#  index_duty_calc_export_file_lines_on_export_date               (export_date)
+#  index_duty_calc_export_file_lines_on_importer_id               (importer_id)
+#  index_duty_calc_export_file_lines_on_part_number               (part_number)
+#  index_duty_calc_export_file_lines_on_ref_1                     (ref_1)
+#  index_duty_calc_export_file_lines_on_ref_2                     (ref_2)
+#  unique_refs                                                    (ref_1,ref_2,ref_3,ref_4,part_number,importer_id)
+#
+
 class DutyCalcExportFileLine < ActiveRecord::Base
   belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines

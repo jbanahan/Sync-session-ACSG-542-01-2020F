@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: custom_definitions
+#
+#  id               :integer          not null, primary key
+#  label            :string(255)
+#  data_type        :string(255)
+#  rank             :integer
+#  module_type      :string(255)
+#  created_at       :datetime
+#  updated_at       :datetime
+#  tool_tip         :string(255)
+#  default_value    :string(255)
+#  quick_searchable :boolean
+#  definition       :text
+#  is_user          :boolean
+#  is_address       :boolean
+#  cdef_uid         :string(255)
+#
+# Indexes
+#
+#  index_custom_definitions_on_cdef_uid     (cdef_uid) UNIQUE
+#  index_custom_definitions_on_module_type  (module_type)
+#
+
 class CustomDefinition < ActiveRecord::Base
   cattr_accessor :skip_reload_trigger
 

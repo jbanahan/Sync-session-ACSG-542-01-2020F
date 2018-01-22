@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: imported_file_downloads
+#
+#  id                    :integer          not null, primary key
+#  imported_file_id      :integer
+#  user_id               :integer
+#  additional_countries  :string(255)
+#  attached_file_name    :string(255)
+#  attached_content_type :string(255)
+#  attached_file_size    :integer
+#  attached_updated_at   :datetime
+#  created_at            :datetime
+#  updated_at            :datetime
+#
+# Indexes
+#
+#  index_imported_file_downloads_on_imported_file_id  (imported_file_id)
+#
+
 class ImportedFileDownload < ActiveRecord::Base
   belongs_to :imported_file, :inverse_of=>:imported_file_downloads
   belongs_to :user, :inverse_of=>:imported_file_downloads

@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: hts_translations
+#
+#  id                    :integer          not null, primary key
+#  company_id            :integer
+#  country_id            :integer
+#  hts_number            :string(255)
+#  translated_hts_number :string(255)
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#
+# Indexes
+#
+#  index_hts_translations_on_hts_and_country_id_and_company_id  (hts_number,country_id,company_id)
+#
+
 class HtsTranslation < ActiveRecord::Base
   belongs_to :company
   belongs_to :country

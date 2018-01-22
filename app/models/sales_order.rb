@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: sales_orders
+#
+#  id           :integer          not null, primary key
+#  order_number :string(255)
+#  order_date   :date
+#  customer_id  :integer
+#  division_id  :integer
+#  ship_to_id   :integer
+#  created_at   :datetime
+#  updated_at   :datetime
+#
+
 class SalesOrder < ActiveRecord::Base
   include CoreObjectSupport
 

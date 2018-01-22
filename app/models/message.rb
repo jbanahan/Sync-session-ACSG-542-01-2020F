@@ -1,3 +1,24 @@
+# == Schema Information
+#
+# Table name: messages
+#
+#  id         :integer          not null, primary key
+#  user_id    :string(255)
+#  subject    :string(255)
+#  body       :text
+#  folder     :string(255)      default("inbox")
+#  viewed     :boolean          default(FALSE)
+#  link_name  :string(255)
+#  link_path  :string(255)
+#  created_at :datetime
+#  updated_at :datetime
+#
+# Indexes
+#
+#  index_messages_on_user_id             (user_id)
+#  index_messages_on_user_id_and_viewed  (user_id,viewed)
+#
+
 class Message < ActiveRecord::Base
   belongs_to  :user
   

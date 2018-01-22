@@ -1,3 +1,123 @@
+# == Schema Information
+#
+# Table name: users
+#
+#  id                      :integer          not null, primary key
+#  username                :string(255)
+#  email                   :string(255)
+#  crypted_password        :string(255)
+#  password_salt           :string(255)
+#  persistence_token       :string(255)
+#  failed_login_count      :integer          default(0), not null
+#  last_request_at         :datetime
+#  current_login_at        :datetime
+#  last_login_at           :datetime
+#  created_at              :datetime
+#  updated_at              :datetime
+#  disabled                :boolean
+#  company_id              :integer
+#  first_name              :string(255)
+#  last_name               :string(255)
+#  time_zone               :string(255)
+#  email_format            :string(255)
+#  admin                   :boolean
+#  sys_admin               :boolean
+#  perishable_token        :string(255)      default(""), not null
+#  debug_expires           :datetime
+#  search_open             :boolean
+#  order_view              :boolean
+#  order_edit              :boolean
+#  order_delete            :boolean
+#  order_comment           :boolean
+#  order_attach            :boolean
+#  shipment_view           :boolean
+#  shipment_edit           :boolean
+#  shipment_delete         :boolean
+#  shipment_comment        :boolean
+#  shipment_attach         :boolean
+#  sales_order_view        :boolean
+#  sales_order_edit        :boolean
+#  sales_order_delete      :boolean
+#  sales_order_comment     :boolean
+#  sales_order_attach      :boolean
+#  delivery_view           :boolean
+#  delivery_edit           :boolean
+#  delivery_delete         :boolean
+#  delivery_comment        :boolean
+#  delivery_attach         :boolean
+#  product_view            :boolean
+#  product_edit            :boolean
+#  product_delete          :boolean
+#  product_comment         :boolean
+#  product_attach          :boolean
+#  classification_edit     :boolean
+#  email_new_messages      :boolean          default(FALSE)
+#  host_with_port          :string(255)
+#  entry_view              :boolean
+#  broker_invoice_view     :boolean
+#  run_as_id               :integer
+#  entry_comment           :boolean
+#  entry_attach            :boolean
+#  entry_edit              :boolean
+#  survey_view             :boolean
+#  survey_edit             :boolean
+#  commercial_invoice_view :boolean
+#  commercial_invoice_edit :boolean
+#  support_agent           :boolean
+#  password_reset          :boolean
+#  broker_invoice_edit     :boolean
+#  drawback_view           :boolean
+#  drawback_edit           :boolean
+#  simple_entry_mode       :boolean
+#  security_filing_view    :boolean
+#  security_filing_edit    :boolean
+#  security_filing_attach  :boolean
+#  security_filing_comment :boolean
+#  hidden_message_json     :text
+#  tariff_subscribed       :boolean
+#  api_auth_token          :string(255)
+#  api_request_counter     :integer
+#  project_view            :boolean
+#  project_edit            :boolean
+#  homepage                :string(255)
+#  encrypted_password      :string(128)
+#  confirmation_token      :string(128)
+#  remember_token          :string(128)
+#  provider                :string(255)
+#  uid                     :string(255)
+#  google_name             :string(255)
+#  oauth_token             :string(255)
+#  oauth_expires_at        :datetime
+#  disallow_password       :boolean
+#  vendor_view             :boolean
+#  vendor_edit             :boolean
+#  vendor_attach           :boolean
+#  vendor_comment          :boolean
+#  task_email              :boolean
+#  variant_edit            :boolean
+#  portal_mode             :string(255)
+#  User                    :string(255)
+#  trade_lane_view         :boolean
+#  trade_lane_edit         :boolean
+#  trade_lane_attach       :boolean
+#  trade_lane_comment      :boolean
+#  vfi_invoice_edit        :boolean
+#  vfi_invoice_view        :boolean
+#  system_user             :boolean
+#  password_changed_at     :datetime
+#  failed_logins           :integer          default(0)
+#  password_locked         :boolean          default(FALSE)
+#  password_expired        :boolean          default(FALSE)
+#  forgot_password         :boolean
+#  statement_view          :boolean
+#
+# Indexes
+#
+#  index_users_on_email           (email)
+#  index_users_on_remember_token  (remember_token)
+#  index_users_on_username        (username)
+#
+
 require 'securerandom'
 require 'digest/sha1'
 require 'email_validator'

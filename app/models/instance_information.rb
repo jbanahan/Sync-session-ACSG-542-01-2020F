@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: instance_informations
+#
+#  id            :integer          not null, primary key
+#  host          :string(255)
+#  last_check_in :datetime
+#  version       :string(255)
+#  created_at    :datetime
+#  updated_at    :datetime
+#  name          :string(255)
+#  role          :string(255)
+#
+
 class InstanceInformation < ActiveRecord::Base
 
   has_many :upgrade_logs, :dependent => :destroy

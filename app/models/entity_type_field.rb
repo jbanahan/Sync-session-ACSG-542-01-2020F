@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: entity_type_fields
+#
+#  id              :integer          not null, primary key
+#  model_field_uid :string(255)
+#  entity_type_id  :integer
+#  created_at      :datetime
+#  updated_at      :datetime
+#
+# Indexes
+#
+#  index_entity_type_fields_on_entity_type_id  (entity_type_id)
+#
+
 class EntityTypeField < ActiveRecord::Base
   belongs_to :entity_type
 

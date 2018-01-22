@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: variants
+#
+#  id                 :integer          not null, primary key
+#  product_id         :integer          not null
+#  variant_identifier :string(255)
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#
+# Indexes
+#
+#  index_variants_on_product_id  (product_id)
+#
+
 class Variant < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger

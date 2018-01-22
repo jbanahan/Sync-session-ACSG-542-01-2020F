@@ -1,3 +1,14 @@
+# == Schema Information
+#
+# Table name: user_templates
+#
+#  id            :integer          not null, primary key
+#  name          :string(255)
+#  template_json :text
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#
+
 class UserTemplate < ActiveRecord::Base
   # storing as string instead of hash to preserve comments for display to user in view
   DEFAULT_TEMPLATE_JSON = <<dtemp

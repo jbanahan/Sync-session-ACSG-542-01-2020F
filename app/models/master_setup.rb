@@ -1,3 +1,39 @@
+# == Schema Information
+#
+# Table name: master_setups
+#
+#  id                          :integer          not null, primary key
+#  uuid                        :string(255)
+#  created_at                  :datetime
+#  updated_at                  :datetime
+#  logo_image                  :string(255)
+#  system_code                 :string(255)
+#  order_enabled               :boolean          default(TRUE), not null
+#  shipment_enabled            :boolean          default(TRUE), not null
+#  sales_order_enabled         :boolean          default(TRUE), not null
+#  delivery_enabled            :boolean          default(TRUE), not null
+#  classification_enabled      :boolean          default(TRUE), not null
+#  ftp_polling_active          :boolean
+#  system_message              :text
+#  migration_host              :string(255)
+#  target_version              :string(255)
+#  custom_features             :text
+#  entry_enabled               :boolean
+#  broker_invoice_enabled      :boolean
+#  request_host                :string(255)
+#  drawback_enabled            :boolean
+#  last_delayed_job_error_sent :datetime         default(2012-12-11 20:53:04 UTC)
+#  security_filing_enabled     :boolean
+#  stats_api_key               :string(255)
+#  project_enabled             :boolean
+#  vendor_management_enabled   :boolean
+#  variant_enabled             :boolean
+#  trade_lane_enabled          :boolean
+#  vfi_invoice_enabled         :boolean
+#  customs_statements_enabled  :boolean
+#  friendly_name               :string(255)
+#
+
 class MasterSetup < ActiveRecord::Base
   cattr_accessor :current
 

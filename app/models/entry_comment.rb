@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: entry_comments
+#
+#  id             :integer          not null, primary key
+#  entry_id       :integer
+#  body           :text
+#  generated_at   :datetime
+#  username       :string(255)
+#  created_at     :datetime
+#  updated_at     :datetime
+#  public_comment :boolean
+#
+# Indexes
+#
+#  index_entry_comments_on_entry_id  (entry_id)
+#
+
 class EntryComment < ActiveRecord::Base
   belongs_to :entry, :inverse_of=>:entry_comments
   before_save :identify_public_comments

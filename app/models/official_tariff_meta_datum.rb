@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: official_tariff_meta_datas
+#
+#  id                   :integer          not null, primary key
+#  hts_code             :string(255)
+#  country_id           :integer
+#  auto_classify_ignore :boolean
+#  notes                :text
+#  created_at           :datetime
+#  updated_at           :datetime
+#  summary_description  :string(255)
+#
+# Indexes
+#
+#  index_official_tariff_meta_datas_on_country_id_and_hts_code  (country_id,hts_code)
+#
+
 class OfficialTariffMetaDatum < ActiveRecord::Base
   validates :country_id, :presence=>true
   validates :hts_code, :presence=>true

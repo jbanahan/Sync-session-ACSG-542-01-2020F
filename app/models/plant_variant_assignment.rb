@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: plant_variant_assignments
+#
+#  id         :integer          not null, primary key
+#  plant_id   :integer          not null
+#  variant_id :integer          not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  disabled   :boolean
+#
+# Indexes
+#
+#  index_plant_variant_assignments_on_disabled                 (disabled)
+#  index_plant_variant_assignments_on_plant_id                 (plant_id)
+#  index_plant_variant_assignments_on_plant_id_and_disabled    (plant_id,disabled)
+#  index_plant_variant_assignments_on_variant_id               (variant_id)
+#  index_plant_variant_assignments_on_variant_id_and_disabled  (variant_id,disabled)
+#
+
 class PlantVariantAssignment < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger

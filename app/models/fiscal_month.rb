@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: fiscal_months
+#
+#  id           :integer          not null, primary key
+#  year         :integer
+#  month_number :integer
+#  start_date   :date
+#  end_date     :date
+#  company_id   :integer
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+# Indexes
+#
+#  index_fiscal_months_on_start_date_and_end_date  (start_date,end_date)
+#
+
 class FiscalMonth < ActiveRecord::Base
   belongs_to :company
   validates_presence_of :company

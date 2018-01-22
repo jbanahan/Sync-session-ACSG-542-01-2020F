@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: tariff_sets
+#
+#  id         :integer          not null, primary key
+#  country_id :integer
+#  label      :string(255)
+#  created_at :datetime
+#  updated_at :datetime
+#  active     :boolean
+#
+
 require 'open_chain/official_tariff_processor/tariff_processor'
 class TariffSet < ActiveRecord::Base
   has_many :tariff_set_records, :dependent => :destroy

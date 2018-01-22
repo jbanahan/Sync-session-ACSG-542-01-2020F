@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: custom_view_templates
+#
+#  id                  :integer          not null, primary key
+#  template_identifier :string(255)
+#  template_path       :string(255)
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  module_type         :string(255)
+#
+# Indexes
+#
+#  index_custom_view_templates_on_template_identifier  (template_identifier)
+#
+
 class CustomViewTemplate < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy
 

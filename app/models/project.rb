@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: projects
+#
+#  id           :integer          not null, primary key
+#  name         :string(255)
+#  due          :date
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  closed_at    :datetime
+#  objective    :text
+#  drive_folder :string(255)
+#  on_hold      :boolean
+#
+# Indexes
+#
+#  index_projects_on_closed_at  (closed_at)
+#
+
 class Project < ActiveRecord::Base
   attr_accessible :due, :name, :closed_at, :objective, :drive_folder, :updated_at, :on_hold
   

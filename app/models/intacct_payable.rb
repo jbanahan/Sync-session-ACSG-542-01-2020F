@@ -1,3 +1,29 @@
+# == Schema Information
+#
+# Table name: intacct_payables
+#
+#  id                         :integer          not null, primary key
+#  intacct_alliance_export_id :integer
+#  company                    :string(255)
+#  bill_number                :string(255)
+#  bill_date                  :date
+#  vendor_number              :string(255)
+#  vendor_reference           :string(255)
+#  currency                   :string(255)
+#  intacct_upload_date        :datetime
+#  intacct_key                :string(255)
+#  intacct_errors             :text
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  payable_type               :string(255)
+#  check_number               :string(255)
+#
+# Indexes
+#
+#  index_intacct_payables_on_intacct_alliance_export_id   (intacct_alliance_export_id)
+#  intacct_payables_by_company_vendor_number_bill_number  (company,vendor_number,bill_number)
+#
+
 class IntacctPayable < ActiveRecord::Base
   belongs_to :intacct_alliance_export, :inverse_of => :intacct_payables
   has_many :intacct_payable_lines, :dependent => :destroy

@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: official_quotas
+#
+#  id                             :integer          not null, primary key
+#  hts_code                       :string(255)
+#  country_id                     :integer
+#  square_meter_equivalent_factor :decimal(13, 4)
+#  category                       :string(255)
+#  unit_of_measure                :string(255)
+#  official_tariff_id             :integer
+#  created_at                     :datetime
+#  updated_at                     :datetime
+#
+# Indexes
+#
+#  index_official_quotas_on_country_id_and_hts_code  (country_id,hts_code)
+#
+
 class OfficialQuota < ActiveRecord::Base
   belongs_to :country
   belongs_to :official_tariff

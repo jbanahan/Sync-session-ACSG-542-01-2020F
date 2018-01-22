@@ -1,3 +1,72 @@
+# == Schema Information
+#
+# Table name: security_filings
+#
+#  id                            :integer          not null, primary key
+#  transaction_number            :string(255)
+#  host_system_file_number       :string(255)
+#  host_system                   :string(255)
+#  importer_id                   :integer
+#  importer_account_code         :string(255)
+#  broker_customer_number        :string(255)
+#  importer_tax_id               :string(255)
+#  transport_mode_code           :string(255)
+#  scac                          :string(255)
+#  booking_number                :string(255)
+#  vessel                        :string(255)
+#  voyage                        :string(255)
+#  lading_port_code              :string(255)
+#  unlading_port_code            :string(255)
+#  entry_port_code               :string(255)
+#  status_code                   :string(255)
+#  late_filing                   :boolean
+#  master_bill_of_lading         :string(255)
+#  house_bills_of_lading         :string(255)
+#  container_numbers             :string(255)
+#  entry_numbers                 :string(255)
+#  entry_reference_numbers       :string(255)
+#  file_logged_date              :datetime
+#  first_sent_date               :datetime
+#  first_accepted_date           :datetime
+#  last_sent_date                :datetime
+#  last_accepted_date            :datetime
+#  estimated_vessel_load_date    :date
+#  po_numbers                    :string(255)
+#  created_at                    :datetime
+#  updated_at                    :datetime
+#  notes                         :text
+#  last_event                    :datetime
+#  last_file_bucket              :string(255)
+#  last_file_path                :string(255)
+#  time_to_process               :integer
+#  estimated_vessel_arrival_date :date
+#  countries_of_origin           :text
+#  estimated_vessel_sailing_date :date
+#  cbp_updated_at                :datetime
+#  status_description            :string(255)
+#  manufacturer_names            :text
+#  ams_match_date                :datetime
+#  delete_accepted_date          :datetime
+#  us_customs_first_file_date    :datetime
+#  vessel_departure_date         :datetime
+#
+# Indexes
+#
+#  index_security_filings_on_container_numbers           (container_numbers)
+#  index_security_filings_on_entry_numbers               (entry_numbers)
+#  index_security_filings_on_entry_reference_numbers     (entry_reference_numbers)
+#  index_security_filings_on_estimated_vessel_load_date  (estimated_vessel_load_date)
+#  index_security_filings_on_first_accepted_date         (first_accepted_date)
+#  index_security_filings_on_first_sent_date             (first_sent_date)
+#  index_security_filings_on_host_system                 (host_system)
+#  index_security_filings_on_host_system_file_number     (host_system_file_number)
+#  index_security_filings_on_house_bills_of_lading       (house_bills_of_lading)
+#  index_security_filings_on_importer_id                 (importer_id)
+#  index_security_filings_on_master_bill_of_lading       (master_bill_of_lading)
+#  index_security_filings_on_po_numbers                  (po_numbers)
+#  index_security_filings_on_transaction_number          (transaction_number)
+#
+
 class SecurityFiling < ActiveRecord::Base
   include CoreObjectSupport 
   include IntegrationParserSupport

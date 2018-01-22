@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: key_json_items
+#
+#  id          :integer          not null, primary key
+#  key_scope   :string(255)
+#  logical_key :string(255)
+#  json_data   :text
+#
+# Indexes
+#
+#  scoped_logical_keys  (key_scope,logical_key) UNIQUE
+#
+
 # Stores JSON data keyed against the key_scope & logical_key fields
 #
 # `key_scope` must be the same for all entries serving the same purpose

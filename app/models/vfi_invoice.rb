@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: vfi_invoices
+#
+#  id             :integer          not null, primary key
+#  customer_id    :integer          not null
+#  invoice_date   :date
+#  invoice_number :string(255)
+#  currency       :string(255)
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#
+# Indexes
+#
+#  index_vfi_invoices_on_customer_id_and_invoice_number  (customer_id,invoice_number) UNIQUE
+#
+
 class VfiInvoice < ActiveRecord::Base
   include CoreObjectSupport
   

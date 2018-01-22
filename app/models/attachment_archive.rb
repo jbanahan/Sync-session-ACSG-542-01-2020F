@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: attachment_archives
+#
+#  id         :integer          not null, primary key
+#  company_id :integer
+#  name       :string(255)
+#  start_at   :datetime
+#  finish_at  :datetime
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_attachment_archives_on_company_id  (company_id)
+#
+
 class AttachmentArchive < ActiveRecord::Base
   attr_accessible :company_id, :finish_at, :name, :start_at
 

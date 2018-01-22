@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: status_rules
+#
+#  id          :integer          not null, primary key
+#  module_type :string(255)
+#  name        :string(255)
+#  description :string(255)
+#  test_rank   :integer
+#  created_at  :datetime
+#  updated_at  :datetime
+#
+
 class StatusRule < ActiveRecord::Base
   has_many :search_criterions, :dependent => :destroy
   

@@ -1,3 +1,27 @@
+# == Schema Information
+#
+# Table name: state_toggle_buttons
+#
+#  id                            :integer          not null, primary key
+#  module_type                   :string(255)
+#  user_attribute                :string(255)
+#  user_custom_definition_id     :integer
+#  date_attribute                :string(255)
+#  date_custom_definition_id     :integer
+#  permission_group_system_codes :text
+#  activate_text                 :string(255)
+#  activate_confirmation_text    :string(255)
+#  deactivate_text               :string(255)
+#  deactivate_confirmation_text  :string(255)
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#
+# Indexes
+#
+#  index_state_toggle_buttons_on_module_type  (module_type)
+#  index_state_toggle_buttons_on_updated_at   (updated_at)
+#
+
 class StateToggleButton < ActiveRecord::Base
   # Permission group system codes should be separated by newlines
 

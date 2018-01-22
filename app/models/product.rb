@@ -1,3 +1,30 @@
+# == Schema Information
+#
+# Table name: products
+#
+#  id                 :integer          not null, primary key
+#  unique_identifier  :string(255)
+#  name               :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#  division_id        :integer
+#  unit_of_measure    :string(255)
+#  status_rule_id     :integer
+#  changed_at         :datetime
+#  entity_type_id     :integer
+#  last_updated_by_id :integer
+#  importer_id        :integer
+#  last_file_bucket   :string(255)
+#  last_file_path     :string(255)
+#
+# Indexes
+#
+#  index_products_on_changed_at         (changed_at)
+#  index_products_on_importer_id        (importer_id)
+#  index_products_on_name               (name)
+#  index_products_on_unique_identifier  (unique_identifier)
+#
+
 require 'jsonpath'
 class Product < ActiveRecord::Base
   include CoreObjectSupport

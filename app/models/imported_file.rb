@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: imported_files
+#
+#  id                    :integer          not null, primary key
+#  created_at            :datetime
+#  updated_at            :datetime
+#  processed_at          :datetime
+#  search_setup_id       :integer
+#  attached_file_name    :string(255)
+#  attached_content_type :string(255)
+#  attached_file_size    :integer
+#  attached_updated_at   :datetime
+#  user_id               :integer
+#  module_type           :string(255)
+#  update_mode           :string(255)
+#  starting_row          :integer          default(1)
+#  starting_column       :integer          default(1)
+#  note                  :text
+#
+# Indexes
+#
+#  index_imported_files_on_user_id  (user_id)
+#
+
 require 'open_chain/xl_client'
 require 'open_chain/s3'
 class ImportedFile < ActiveRecord::Base

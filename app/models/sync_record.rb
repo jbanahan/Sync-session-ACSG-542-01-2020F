@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: sync_records
+#
+#  id                     :integer          not null, primary key
+#  syncable_id            :integer
+#  syncable_type          :string(255)
+#  trading_partner        :string(255)
+#  sent_at                :datetime
+#  confirmed_at           :datetime
+#  confirmation_file_name :string(255)
+#  failure_message        :string(255)
+#  created_at             :datetime
+#  updated_at             :datetime
+#  fingerprint            :string(255)
+#  ignore_updates_before  :datetime
+#  ftp_session_id         :integer
+#
+# Indexes
+#
+#  index_sync_records_id_type_trading_partner  (syncable_id,syncable_type,trading_partner) UNIQUE
+#  index_sync_records_on_ftp_session_id        (ftp_session_id)
+#  index_sync_records_on_trading_partner       (trading_partner)
+#
+
 class SyncRecord < ActiveRecord::Base
   belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true

@@ -1,3 +1,42 @@
+# == Schema Information
+#
+# Table name: search_schedules
+#
+#  id                     :integer          not null, primary key
+#  email_addresses        :string(255)
+#  ftp_server             :string(255)
+#  ftp_username           :string(255)
+#  ftp_password           :string(255)
+#  ftp_subfolder          :string(255)
+#  run_monday             :boolean
+#  run_tuesday            :boolean
+#  run_wednesday          :boolean
+#  run_thursday           :boolean
+#  run_friday             :boolean
+#  run_saturday           :boolean
+#  run_sunday             :boolean
+#  run_hour               :integer
+#  last_start_time        :datetime
+#  last_finish_time       :datetime
+#  search_setup_id        :integer
+#  created_at             :datetime
+#  updated_at             :datetime
+#  download_format        :string(255)
+#  day_of_month           :integer
+#  custom_report_id       :integer
+#  protocol               :string(255)
+#  send_if_empty          :boolean
+#  exclude_file_timestamp :boolean
+#  ftp_port               :string(255)
+#  report_failure_count   :integer          default(0)
+#  disabled               :boolean
+#
+# Indexes
+#
+#  index_search_schedules_on_custom_report_id  (custom_report_id)
+#  index_search_schedules_on_search_setup_id   (search_setup_id)
+#
+
 require 'open_chain/schedule_support'
 require 'open_chain/email_validation_support'
 
