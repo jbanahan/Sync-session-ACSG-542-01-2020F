@@ -3,6 +3,7 @@ require 'open_chain/model_field_definition/full_model_field_definition'
 require 'open_chain/model_field_generator/full_model_field_generator'
 require 'open_chain/model_field_definition/custom_field_support'
 
+# -*- SkipSchemaAnnotations
 class ModelField
   extend OpenChain::ModelFieldGenerator::FullModelFieldGenerator
   extend OpenChain::ModelFieldDefinition::FullModelFieldDefinition
