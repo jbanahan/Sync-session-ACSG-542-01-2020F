@@ -23,7 +23,26 @@ describe ValidatesFieldFormat do
       order_line.hts = nil
       expect(rule.validate_field_format(order_line, &block)).to be_nil
     end
-  
+
+    it 'handles \w with dates with dt_notregexp' do
+      date_rule = Rule.new('operator' => 'notregexp', 'value' => '\w', 'model_field_uid' => 'ent_release_date')
+      entry = Factory(:entry, release_date: Time.zone.now)
+      expect(date_rule.validate_field_format(entry, &block)).to eql("All Release Date values do not match '\\w' format.")
+      entry.update_attribute(:release_date, nil)
+      entry.reload
+      expect(date_rule.validate_field_format(entry, &block)).to be_nil
+
+    end
+
+    it 'handles \w with dates' do
+      date_rule = Rule.new('regex' => '\w', 'model_field_uid' => 'ent_release_date')
+      entry = Factory(:entry, release_date: Time.zone.now)
+      expect(date_rule.validate_field_format(entry, &block)).to be_nil
+      entry.update_attribute(:release_date, nil)
+      entry.reload
+      expect(date_rule.validate_field_format(entry, &block)).to eql("All Release Date values do not match '\\w' format.")
+    end
+
     context "failure" do
 
       context "without fail_if_matches" do

@@ -45,7 +45,7 @@ module ValidatesFieldFormat
       op_label = CriterionOperator::OPERATORS.find{ |op| op.key == cc_hash["operator"]}.label.downcase
       #If this option is used, any block will have to check this attribute and adjust message accordingly
       fail_if_matches = attrs['fail_if_matches']
-      fail = fail_if_matches ? val.to_s.match(reg) : !val.to_s.match(reg)
+      fail = fail_if_matches ? sc.test?(obj, nil) : !sc.test?(obj, nil)
       allow_blank = attrs['allow_blank'].to_s.to_boolean
 
       unless allow_blank && val.blank?
