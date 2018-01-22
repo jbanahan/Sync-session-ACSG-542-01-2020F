@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom
+    self.new(opts).parse_dom dom, bucket: opts[:bucket], key: opts[:key]
   end
 
   def self.integration_folder
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @opts = opts
   end
 
-  def parse_dom dom
+  def parse_dom dom, bucket:, key:
     root = dom.root
     raise "Incorrect root element #{root.name}, expecting 'INFREC01'." unless root.name == 'INFREC01'
 
@@ -41,14 +41,25 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     product_uid = et(base,'MATNR')
     raise "IDOC #{idoc_number} failed, no MATR value." if product_uid.blank?
-    p = Product.where(unique_identifier:product_uid).first_or_create!
-
-    pva = ProductVendorAssignment.where(product_id:p.id,vendor_id:vendor.id).first
-    if pva.nil?
-      pva = ProductVendorAssignment.create!(product_id:p.id,vendor_id:vendor.id)
-      pva.create_snapshot(User.integration, nil, "System Job: SAP PIR XML Parser") if pva.entity_snapshots.empty?
+    p = nil
+    Lock.acquire("Product-#{product_uid}") do 
+      p = Product.where(unique_identifier:product_uid).first_or_create!
     end
-    return pva #return value not required but helpful for debugging
+    
+    return unless p
+
+    pva = nil
+    pva_created = false
+    Lock.db_lock(p) do
+      pva = ProductVendorAssignment.where(product_id:p.id,vendor_id:vendor.id).first_or_initialize
+
+      if !pva.persisted?
+        pva.save!
+        pva.create_snapshot(User.integration, nil, key)
+      end
+    end
+
+    pva #return value not required but helpful for debugging
   end
 
 end; end; end; end
