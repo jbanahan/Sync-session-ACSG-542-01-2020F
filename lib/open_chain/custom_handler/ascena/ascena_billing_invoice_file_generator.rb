@@ -155,34 +155,39 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
       charge_description = mf(broker_invoice_line, "bi_line_charge_description")
 
-      # Don't round this value, we'll truncate the actual calculated values.
-      proration_factor = (charge_amount / po_numbers.length)
-
-      # If there are more PO's than charge dollars (super tiny corner case), then we don't 
-      # have to turn the factor into a fraction...tne proration factor is the actual charge amount
-      # already. - > $3 / 4 PO's -> .75 per PO. $20 / 40 PO's -> .50 per PO
-      fractional = po_numbers.length > charge_amount
-      proration_factor = proration_factor / 100 unless fractional
-
       prorations = {}
-      total_remaining = BigDecimal(charge_amount)
+      if po_numbers.length == 1
+        prorations[po_numbers.first] = charge_amount
+      else
+        # Don't round this value, we'll truncate the actual calculated values.
+        proration_factor = (charge_amount / po_numbers.length)
 
-      po_numbers.each do |po|
-        prorated_value = (fractional ? proration_factor : (charge_amount * proration_factor)).round(2, BigDecimal::ROUND_DOWN)
-        prorations[po] = prorated_value
-        total_remaining -= prorated_value
-      end
+        # If there are more PO's than charge dollars (super tiny corner case), then we don't 
+        # have to turn the factor into a fraction...tne proration factor is the actual charge amount
+        # already. - > $3 / 4 PO's -> .75 per PO. $20 / 40 PO's -> .50 per PO
+        fractional = po_numbers.length > charge_amount
+        proration_factor = proration_factor / 100 unless fractional
 
-      # Now distribute the remaining amounts after the rounded proration across the po's one cent at a time.
-      begin
-        one_cent = BigDecimal("0.01")
+        
+        total_remaining = BigDecimal(charge_amount)
+
         po_numbers.each do |po|
-          total_remaining -= one_cent
-          prorations[po] += one_cent
-
-          break if total_remaining == 0
+          prorated_value = (fractional ? proration_factor : (charge_amount * proration_factor)).round(2, BigDecimal::ROUND_DOWN)
+          prorations[po] = prorated_value
+          total_remaining -= prorated_value
         end
-      end while total_remaining > 0
+
+        # Now distribute the remaining amounts after the rounded proration across the po's one cent at a time.
+        begin
+          one_cent = BigDecimal("0.01")
+          po_numbers.each do |po|
+            total_remaining -= one_cent
+            prorations[po] += one_cent
+
+            break if total_remaining == 0
+          end
+        end while total_remaining > 0
+      end
 
       lines = []
       next_line_number -= 1 # Just so we can always use +=1 in the loop

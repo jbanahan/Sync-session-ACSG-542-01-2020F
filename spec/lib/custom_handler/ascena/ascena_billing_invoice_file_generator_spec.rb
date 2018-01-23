@@ -132,6 +132,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "77519", "0.33", "Brokerage", "PO 3", "151"]
     end
 
+    it "handles no prorations" do
+      # The prorations amounts are handled solely based on the number of PO #'s on the entry..so the only place we
+      # end up looking for those is the entry header field that enumerates them all (rather than parsing it out of the lines)
+      entry.update_attributes! po_numbers: "PO 1"
+      data = nil
+      expect(subject).to receive(:ftp_file) do |file, opts|
+        data = file.read
+      end
+
+      subject.generate_and_send broker_invoice_with_brokerage_snapshot
+
+      lines = CSV.parse data, col_sep: "|"
+
+      expect(lines.length).to eq 2
+
+      expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "100.0", "USD", "For Customs Entry # ENTRYNO"]
+      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "100.0", "Brokerage", "PO 1", "7218"]
+    end
+
     it "generates brokerage and duty files if needed" do
       data = []
       expect(subject).to receive(:ftp_file).exactly(2).times do |file, opts|
