@@ -219,64 +219,76 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
     it "intializes the report class and runs it" do
       settings = {"email_to"=>["goofus@fakeemail.com"], "quarterly"=>true, "fiscal_day"=>35}
 
-      current_fiscal_month = FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 2, start_date: Date.today - 5.days, end_date: Date.today + 25.days)
-      current_fiscal_quarter_start_month = FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: current_fiscal_month.start_date - 30.days, end_date: current_fiscal_month.start_date - 1.day)
-      prev_fiscal_quarter_end_month = FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 12, start_date: current_fiscal_quarter_start_month.start_date - 30.days, end_date: current_fiscal_quarter_start_month.start_date - 1.day)
-      prev_fiscal_quarter_start_month = FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 10, start_date: prev_fiscal_quarter_end_month.start_date - 60.days, end_date: prev_fiscal_quarter_end_month.start_date - 31.day)
+      Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
+        # Current fiscal month, which is the second month of the quarter.
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 2, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
+        # First month of the current quarter.
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,3,1), end_date: Date.new(2017,3,31))
+        # Last month of the previous quarter.
+        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 12, start_date: Date.new(2017,2,1), end_date: Date.new(2017,2,28))
+        # First month of the previous quarter.
+        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 10, start_date: Date.new(2016,12,1), end_date: Date.new(2016,12,31))
 
-      expect_any_instance_of(subject).to receive(:run_scorecard_report)
-      m = double('mail')
-      expect(OpenMailer).to receive(:send_simple_html).with(
-          ["goofus@fakeemail.com"],
-          "[VFI Track] Ascena Vendor Scorecard [Q4 2016]",
-          "Attached is the Ascena Vendor Scorecard Report for Q4 2016, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.",
-          # Temp file is evidently purged by the time this comparison is made.
-          [nil]
-      ).and_return(m)
-      expect(m).to receive(:deliver!)
+        expect_any_instance_of(subject).to receive(:run_scorecard_report)
+        m = double('mail')
+        expect(OpenMailer).to receive(:send_simple_html).with(
+            ["goofus@fakeemail.com"],
+            "[VFI Track] Ascena Vendor Scorecard [Q4 2016]",
+            "Attached is the Ascena Vendor Scorecard Report for Q4 2016, 12/01/2016 - 02/28/2017.",
+            # Temp file is evidently purged by the time this comparison is made.
+            [nil]
+        ).and_return(m)
+        expect(m).to receive(:deliver!)
 
-      subject.run_schedulable(settings)
+        subject.run_schedulable(settings)
 
-      # Verify some settings values were populated by the scheduling method for report-running purposes.
-      expect(settings['range_field']).to eq('first_release_date')
-      expect(settings['start_release_date']).to eq(prev_fiscal_quarter_start_month.start_date)
-      expect(settings['end_release_date']).to eq(prev_fiscal_quarter_end_month.end_date)
-      expect(settings['file_name']).to eq("Ascena Vendor Scorecard [Q4 2016]")
+        # Verify some settings values were populated by the scheduling method for report-running purposes.
+        expect(settings['range_field']).to eq('first_release_date')
+        expect(settings['start_release_date']).to eq(Date.new(2016,12,1))
+        expect(settings['end_release_date']).to eq(Date.new(2017,2,28))
+        expect(settings['file_name']).to eq("Ascena Vendor Scorecard [Q4 2016]")
+      end
     end
 
     it "does not run if the wrong fiscal day" do
       settings = {"email_to"=>["goofus@fakeemail.com"], "quarterly"=>true, "fiscal_day"=>4}
 
-      # The current day is day 5 of the fiscal month, not day 4 (what the settings are looking for).
-      current_fiscal_month = FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.today - 5.days, end_date: Date.today + 25.days)
+      Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
+        # The current day is day 5 of the fiscal month, not day 4 (what the settings are looking for).
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
 
-      expect_any_instance_of(subject).not_to receive(:run_report)
-      expect(OpenMailer).not_to receive(:send_simple_html)
+        expect_any_instance_of(subject).not_to receive(:run_report)
+        expect(OpenMailer).not_to receive(:send_simple_html)
 
-      subject.run_schedulable(settings)
+        subject.run_schedulable(settings)
 
-      # Verify some settings values were not populated.
-      expect(settings['range_field']).to eq(nil)
-      expect(settings['start_release_date']).to eq(nil)
-      expect(settings['end_release_date']).to eq(nil)
-      expect(settings['file_name']).to eq(nil)
+        # Verify some settings values were not populated.
+        expect(settings['range_field']).to eq(nil)
+        expect(settings['start_release_date']).to eq(nil)
+        expect(settings['end_release_date']).to eq(nil)
+        expect(settings['file_name']).to eq(nil)
+      end
     end
 
     it "does not run if previous fiscal quarter info cannot be found" do
       settings = {"email_to"=>["goofus@fakeemail.com"], "quarterly"=>true, "fiscal_day"=>5}
 
-      current_fiscal_month = FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.today - 5.days, end_date: Date.today + 25.days)
+      Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
+        # Current quarter.
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
+        # There is no info on file for previous quarter.
 
-      expect_any_instance_of(subject).not_to receive(:run_report)
-      expect(OpenMailer).not_to receive(:send_simple_html)
+        expect_any_instance_of(subject).not_to receive(:run_report)
+        expect(OpenMailer).not_to receive(:send_simple_html)
 
-      subject.run_schedulable(settings)
+        subject.run_schedulable(settings)
 
-      # Verify some settings values were not populated.
-      expect(settings['range_field']).to eq(nil)
-      expect(settings['start_release_date']).to eq(nil)
-      expect(settings['end_release_date']).to eq(nil)
-      expect(settings['file_name']).to eq(nil)
+        # Verify some settings values were not populated.
+        expect(settings['range_field']).to eq(nil)
+        expect(settings['start_release_date']).to eq(nil)
+        expect(settings['end_release_date']).to eq(nil)
+        expect(settings['file_name']).to eq(nil)
+      end
     end
   end
 
