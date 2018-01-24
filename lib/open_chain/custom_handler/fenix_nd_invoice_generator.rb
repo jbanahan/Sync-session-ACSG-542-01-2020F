@@ -64,8 +64,9 @@ module OpenChain; module CustomHandler
         #File should use \r\n newlines and be straight ASCII chars
         #Ack: MRI Ruby 1.9 has a bug in tempfile that doesn't allow you to use string :mode option here
         importer_tax_id = invoice.importer.try(:fenix_customer_number)
+        invoice_number = invoice.invoice_number
 
-        Tempfile.open(["#{importer_tax_id}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"}) do |t|
+        Tempfile.open(["#{importer_tax_id}_fenix_invoice_#{invoice_number}_",'.txt'], {:external_encoding =>"ASCII"}) do |t|
           # Write out the header information
           write_fields t, "H", FenixNdInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
 

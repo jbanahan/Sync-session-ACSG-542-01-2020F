@@ -93,6 +93,8 @@ module OpenChain; module CustomHandler; module Polo
 
         invoice = CommercialInvoice.new invoice_number: v(column_map, invoice_row, "BOL#"), importer: importer
         invoice.invoice_date = date_value(v(column_map, invoice_row, "DATE"))
+        raise PoloParserError.new("No Invoice Date found. Invoice Date must be present in the cell directly below the 'Date' heading.") if invoice.invoice_date.nil?
+
         po_number = v(column_map, invoice_row, "PO #")
 
         # Find the "country of export" and Terms of Sale / Currency cells
@@ -165,7 +167,7 @@ module OpenChain; module CustomHandler; module Polo
       def date_value value
         unless value.nil? || value.acts_like?(:time) || value.acts_like?(:date)
           # We'll assume at this point we can try and parse a date out of whatever value we got.
-          Date.strptime(value.to_s, "%m/%d/%Y") rescue value = nil
+          value = Date.strptime(value.to_s, "%m/%d/%Y") rescue value = nil
         end
         value
       end
