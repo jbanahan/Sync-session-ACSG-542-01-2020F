@@ -1,6 +1,4 @@
 <chain-nav-panel-wrapper></chain-nav-panel-wrapper>
-<script type="text/javascript" src='/js/chain_nav_panel.min.js'></script>
-<link rel="stylesheet" media="all" href="/css/chain_nav_panel.min.css">
 <script type="text/javascript">
   $(function() {
     var userPromise = {
@@ -12,6 +10,6 @@
       wrapper.html("<a href='#' data-toggle='notification-center' onclick='return false;' title='shortcut key: n' class='message-envelope-wrapper'><i class='fa fa-bell message_envelope'></i></a>");
       ChainNotificationCenter.initialize('<%=current_user.id%>', 30);
     }
-    ChainNavPanel.write(ChainNavPanelHtml,$('chain-nav-panel-wrapper'),userPromise,writeNotificationCenter);
+    ChainNavPanel.write(false,$('chain-nav-panel-wrapper'),userPromise,writeNotificationCenter);
   });
 </script>

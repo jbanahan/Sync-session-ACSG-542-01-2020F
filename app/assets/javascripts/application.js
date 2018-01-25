@@ -15,6 +15,7 @@
 //= require json3
 //= require bootstrap
 //= require angular
+//= require_directory ./every_page
 //= require_directory ./domainer
 //= require_directory ./comment
 //= require_directory ./product
