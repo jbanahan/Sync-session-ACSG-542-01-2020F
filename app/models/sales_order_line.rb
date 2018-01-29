@@ -6,8 +6,8 @@
 #  price_per_unit :decimal(13, 4)
 #  sales_order_id :integer
 #  line_number    :integer
-#  created_at     :datetime
-#  updated_at     :datetime
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
 #  product_id     :integer
 #  quantity       :decimal(13, 4)
 #

@@ -6,8 +6,8 @@
 #  order_number                 :string(255)
 #  order_date                   :date
 #  division_id                  :integer
-#  created_at                   :datetime
-#  updated_at                   :datetime
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
 #  vendor_id                    :integer
 #  ship_to_id                   :integer
 #  importer_id                  :integer

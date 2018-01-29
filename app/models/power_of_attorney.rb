@@ -11,8 +11,8 @@
 #  attachment_content_type :string(255)
 #  attachment_file_size    :integer
 #  attachment_updated_at   :datetime
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #
 
 require 'open_chain/s3'

@@ -10,8 +10,8 @@
 #  confirmed_at           :datetime
 #  confirmation_file_name :string(255)
 #  failure_message        :string(255)
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  fingerprint            :string(255)
 #  ignore_updates_before  :datetime
 #  ftp_session_id         :integer

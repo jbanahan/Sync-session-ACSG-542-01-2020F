@@ -32,8 +32,8 @@
 #  last_accepted_date            :datetime
 #  estimated_vessel_load_date    :date
 #  po_numbers                    :string(255)
-#  created_at                    :datetime
-#  updated_at                    :datetime
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
 #  notes                         :text
 #  last_event                    :datetime
 #  last_file_bucket              :string(255)

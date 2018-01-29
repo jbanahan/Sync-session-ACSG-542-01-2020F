@@ -8,8 +8,8 @@
 #  customer_id  :integer
 #  division_id  :integer
 #  ship_to_id   :integer
-#  created_at   :datetime
-#  updated_at   :datetime
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
 #
 
 class SalesOrder < ActiveRecord::Base

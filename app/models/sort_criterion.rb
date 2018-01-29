@@ -8,8 +8,8 @@
 #  model_field_uid      :string(255)
 #  custom_definition_id :integer
 #  descending           :boolean
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

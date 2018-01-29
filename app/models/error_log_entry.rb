@@ -7,8 +7,8 @@
 #  error_message            :text
 #  additional_messages_json :text
 #  backtrace_json           :text
-#  created_at               :datetime
-#  updated_at               :datetime
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
 #
 
 class ErrorLogEntry < ActiveRecord::Base

@@ -5,8 +5,8 @@
 #  id                  :integer          not null, primary key
 #  name                :string(255)
 #  iso_code            :string(2)
-#  created_at          :datetime
-#  updated_at          :datetime
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
 #  import_location     :boolean
 #  classification_rank :integer
 #  european_union      :boolean

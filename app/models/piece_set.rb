@@ -4,8 +4,8 @@
 #
 #  id                         :integer          not null, primary key
 #  order_line_id              :integer
-#  created_at                 :datetime
-#  updated_at                 :datetime
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
 #  quantity                   :decimal(13, 4)
 #  adjustment_type            :string(255)
 #  sales_order_line_id        :integer

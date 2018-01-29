@@ -7,8 +7,8 @@
 #  country_id           :integer
 #  auto_classify_ignore :boolean
 #  notes                :text
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #  summary_description  :string(255)
 #
 # Indexes

@@ -3,8 +3,8 @@
 # Table name: imported_files
 #
 #  id                    :integer          not null, primary key
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #  processed_at          :datetime
 #  search_setup_id       :integer
 #  attached_file_name    :string(255)

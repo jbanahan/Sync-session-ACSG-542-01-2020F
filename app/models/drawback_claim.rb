@@ -22,8 +22,8 @@
 #  billed_date                 :date
 #  duty_check_received_date    :date
 #  duty_check_amount           :decimal(11, 2)
-#  created_at                  :datetime
-#  updated_at                  :datetime
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
 #  bill_amount                 :decimal(11, 2)
 #  net_claim_amount            :decimal(11, 2)
 #  hmf_mpf_check_number        :string(255)

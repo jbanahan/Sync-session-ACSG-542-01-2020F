@@ -4,8 +4,8 @@
 #
 #  id                      :integer          not null, primary key
 #  search_setup_id         :integer
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #  starting_cache_position :integer
 #  last_accessed           :datetime
 #  imported_file_id        :integer

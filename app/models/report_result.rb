@@ -15,8 +15,8 @@
 #  status                   :string(255)
 #  run_errors               :text
 #  run_by_id                :integer
-#  created_at               :datetime
-#  updated_at               :datetime
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
 #  custom_report_id         :integer
 #  email_to                 :string(255)
 #

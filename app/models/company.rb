@@ -7,8 +7,8 @@
 #  carrier                       :boolean
 #  vendor                        :boolean
 #  master                        :boolean
-#  created_at                    :datetime
-#  updated_at                    :datetime
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
 #  locked                        :boolean
 #  customer                      :boolean
 #  system_code                   :string(255)

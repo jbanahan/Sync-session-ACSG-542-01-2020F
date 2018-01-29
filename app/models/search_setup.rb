@@ -7,8 +7,8 @@
 #  user_id         :integer
 #  module_type     :string(255)
 #  simple          :boolean
-#  created_at      :datetime
-#  updated_at      :datetime
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
 #  download_format :string(255)
 #  include_links   :boolean
 #  no_time         :boolean

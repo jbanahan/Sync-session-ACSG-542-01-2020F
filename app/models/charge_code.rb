@@ -6,8 +6,8 @@
 #  code        :string(255)
 #  description :string(255)
 #  apply_hst   :boolean
-#  created_at  :datetime
-#  updated_at  :datetime
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 
 class ChargeCode < ActiveRecord::Base

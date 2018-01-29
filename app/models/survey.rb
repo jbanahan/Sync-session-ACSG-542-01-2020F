@@ -8,8 +8,8 @@
 #  name                        :string(255)
 #  email_subject               :string(255)
 #  email_body                  :text
-#  created_at                  :datetime
-#  updated_at                  :datetime
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
 #  ratings_list                :text
 #  expiration_days             :integer
 #  archived                    :boolean          default(FALSE)

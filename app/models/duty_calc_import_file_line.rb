@@ -4,8 +4,8 @@
 #
 #  id                       :integer          not null, primary key
 #  drawback_import_line_id  :integer
-#  created_at               :datetime
-#  updated_at               :datetime
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
 #  duty_calc_import_file_id :integer
 #
 # Indexes

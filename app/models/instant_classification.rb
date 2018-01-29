@@ -5,8 +5,8 @@
 #  id         :integer          not null, primary key
 #  name       :string(255)
 #  rank       :integer
-#  created_at :datetime
-#  updated_at :datetime
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
 #
 
 #The definition of a test and resulting classification that could be applied to a product using the Instant Classification feature

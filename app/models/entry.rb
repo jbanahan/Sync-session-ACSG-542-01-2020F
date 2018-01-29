@@ -19,8 +19,8 @@
 #  last_billed_date                  :datetime
 #  invoice_paid_date                 :datetime
 #  liquidation_date                  :datetime
-#  created_at                        :datetime
-#  updated_at                        :datetime
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
 #  master_bills_of_lading            :text
 #  house_bills_of_lading             :text
 #  sub_house_bills_of_lading         :text

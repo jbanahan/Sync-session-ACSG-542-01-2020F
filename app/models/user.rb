@@ -12,8 +12,8 @@
 #  last_request_at         :datetime
 #  current_login_at        :datetime
 #  last_login_at           :datetime
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #  disabled                :boolean
 #  company_id              :integer
 #  first_name              :string(255)

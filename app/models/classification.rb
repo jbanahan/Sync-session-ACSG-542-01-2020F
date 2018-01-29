@@ -5,8 +5,8 @@
 #  id                        :integer          not null, primary key
 #  country_id                :integer
 #  product_id                :integer
-#  created_at                :datetime
-#  updated_at                :datetime
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
 #  instant_classification_id :integer
 #
 # Indexes

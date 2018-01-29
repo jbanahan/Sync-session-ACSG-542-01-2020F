@@ -8,8 +8,8 @@
 #  file_name            :string(255)
 #  log                  :text
 #  data                 :binary
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #  last_server_response :string(255)
 #  protocol             :string(255)
 #  retry_count          :integer

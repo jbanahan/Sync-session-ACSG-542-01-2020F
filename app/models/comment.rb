@@ -8,8 +8,8 @@
 #  user_id          :integer
 #  commentable_id   :integer
 #  commentable_type :string(255)
-#  created_at       :datetime
-#  updated_at       :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
 #
 # Indexes
 #

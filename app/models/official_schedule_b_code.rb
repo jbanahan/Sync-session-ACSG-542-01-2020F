@@ -13,8 +13,8 @@
 #  usda_code              :string(255)
 #  naics_classification   :string(255)
 #  hitech_classification  :string(255)
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #
 
 class OfficialScheduleBCode < ActiveRecord::Base

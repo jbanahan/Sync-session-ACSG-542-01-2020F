@@ -5,8 +5,8 @@
 #  id            :integer          not null, primary key
 #  email         :string(1024)
 #  attachment_id :integer
-#  created_at    :datetime
-#  updated_at    :datetime
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #
 
 class EmailAttachment < ActiveRecord::Base

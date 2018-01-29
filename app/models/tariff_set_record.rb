@@ -23,8 +23,8 @@
 #  column_2_rate                    :string(255)
 #  import_regulations               :string(255)
 #  export_regulations               :string(255)
-#  created_at                       :datetime
-#  updated_at                       :datetime
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
 #  fda_indicator                    :string(255)
 #
 # Indexes

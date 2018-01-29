@@ -8,8 +8,8 @@
 #  po_number              :string(255)
 #  unit_of_measure        :string(255)
 #  commercial_invoice_id  :integer
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  value                  :decimal(11, 2)
 #  drawback_qty           :decimal(11, 2)
 #  quantity               :decimal(12, 3)

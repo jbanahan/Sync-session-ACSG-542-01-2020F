@@ -6,8 +6,8 @@
 #  company_id  :integer
 #  charge_code :string(255)
 #  category    :string(255)
-#  created_at  :datetime
-#  updated_at  :datetime
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 # Indexes
 #

@@ -10,8 +10,8 @@
 #  state               :text
 #  email_notifications :boolean
 #  last_saved_by_id    :integer
-#  created_at          :datetime
-#  updated_at          :datetime
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
 #
 # Indexes
 #

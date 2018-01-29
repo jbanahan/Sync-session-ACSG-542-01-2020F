@@ -9,8 +9,8 @@
 #  product_id            :integer
 #  app_message           :boolean
 #  email                 :boolean
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #  sales_order_id        :integer
 #  delivery_id           :integer
 #  entry_id              :integer

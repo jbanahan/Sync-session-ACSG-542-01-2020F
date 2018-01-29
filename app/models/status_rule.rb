@@ -7,8 +7,8 @@
 #  name        :string(255)
 #  description :string(255)
 #  test_rank   :integer
-#  created_at  :datetime
-#  updated_at  :datetime
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 
 class StatusRule < ActiveRecord::Base

@@ -6,8 +6,8 @@
 #  quantity               :decimal(13, 4)
 #  product_id             :integer
 #  line_number            :integer
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  entry_number           :string(255)
 #  import_date            :date
 #  received_date          :date

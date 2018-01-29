@@ -7,8 +7,8 @@
 #  recordable_id       :integer
 #  snapshot            :text
 #  user_id             :integer
-#  created_at          :datetime
-#  updated_at          :datetime
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
 #  imported_file_id    :integer
 #  change_record_id    :integer
 #  bulk_process_log_id :integer

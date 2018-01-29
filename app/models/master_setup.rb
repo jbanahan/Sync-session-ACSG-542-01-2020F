@@ -4,8 +4,8 @@
 #
 #  id                          :integer          not null, primary key
 #  uuid                        :string(255)
-#  created_at                  :datetime
-#  updated_at                  :datetime
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
 #  logo_image                  :string(255)
 #  system_code                 :string(255)
 #  order_enabled               :boolean          default(TRUE), not null

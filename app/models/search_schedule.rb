@@ -19,8 +19,8 @@
 #  last_start_time        :datetime
 #  last_finish_time       :datetime
 #  search_setup_id        :integer
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  download_format        :string(255)
 #  day_of_month           :integer
 #  custom_report_id       :integer

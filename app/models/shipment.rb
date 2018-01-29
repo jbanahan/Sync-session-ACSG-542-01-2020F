@@ -6,8 +6,8 @@
 #  ship_from_id                     :integer
 #  ship_to_id                       :integer
 #  carrier_id                       :integer
-#  created_at                       :datetime
-#  updated_at                       :datetime
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
 #  reference                        :string(255)
 #  mode                             :string(255)
 #  vendor_id                        :integer
@@ -109,6 +109,10 @@
 #  port_last_free_day               :date
 #  pickup_at                        :date
 #  in_warehouse_time                :datetime
+#  booking_requested_date           :datetime
+#  booking_voyage                   :string(255)
+#  packing_list_sent_date           :datetime
+#  packing_list_sent_by_id          :integer
 #
 # Indexes
 #

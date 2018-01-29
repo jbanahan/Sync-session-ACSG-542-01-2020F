@@ -8,8 +8,8 @@
 #  full_description                 :text
 #  special_rates                    :text
 #  general_rate                     :string(255)
-#  created_at                       :datetime
-#  updated_at                       :datetime
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
 #  chapter                          :string(800)
 #  heading                          :string(800)
 #  sub_heading                      :string(800)

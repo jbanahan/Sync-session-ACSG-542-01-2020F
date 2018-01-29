@@ -5,8 +5,8 @@
 #  id               :integer          not null, primary key
 #  change_record_id :integer
 #  message          :string(255)
-#  created_at       :datetime
-#  updated_at       :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
 #
 # Indexes
 #

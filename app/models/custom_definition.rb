@@ -7,8 +7,8 @@
 #  data_type        :string(255)
 #  rank             :integer
 #  module_type      :string(255)
-#  created_at       :datetime
-#  updated_at       :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
 #  tool_tip         :string(255)
 #  default_value    :string(255)
 #  quick_searchable :boolean

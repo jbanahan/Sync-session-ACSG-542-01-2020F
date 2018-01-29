@@ -10,8 +10,8 @@
 #  attached_content_type :string(255)
 #  attached_file_size    :integer
 #  attached_updated_at   :datetime
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #
 # Indexes
 #

@@ -12,8 +12,8 @@
 #  commercial_invoice_number :string(255)
 #  mid                       :string(255)
 #  country_of_origin_code    :string(255)
-#  created_at                :datetime
-#  updated_at                :datetime
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
 #  manufacturer_name         :string(255)
 #
 # Indexes

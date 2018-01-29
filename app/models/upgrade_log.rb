@@ -9,8 +9,8 @@
 #  finished_at             :datetime
 #  log                     :text
 #  instance_information_id :integer
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #
 
 class UpgradeLog < ActiveRecord::Base

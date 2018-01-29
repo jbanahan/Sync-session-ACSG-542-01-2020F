@@ -18,8 +18,8 @@
 #  gross_weight               :integer
 #  integer                    :integer
 #  tariff_description         :string(255)
-#  created_at                 :datetime
-#  updated_at                 :datetime
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
 #  tariff_provision           :string(255)
 #  value_for_duty_code        :string(255)
 #  gst_rate_code              :string(255)

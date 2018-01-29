@@ -23,8 +23,8 @@
 #  one_of                 :text
 #  minimum_length         :integer
 #  maximum_length         :integer
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  custom_definition_id   :integer
 #  read_only              :boolean
 #  disabled               :boolean

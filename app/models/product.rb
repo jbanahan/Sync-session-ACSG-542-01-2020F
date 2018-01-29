@@ -5,8 +5,8 @@
 #  id                 :integer          not null, primary key
 #  unique_identifier  :string(255)
 #  name               :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #  division_id        :integer
 #  unit_of_measure    :string(255)
 #  status_rule_id     :integer

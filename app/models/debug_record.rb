@@ -7,8 +7,8 @@
 #  request_method :string(255)
 #  request_params :text
 #  request_path   :string(255)
-#  created_at     :datetime
-#  updated_at     :datetime
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
 #
 
 class DebugRecord < ActiveRecord::Base

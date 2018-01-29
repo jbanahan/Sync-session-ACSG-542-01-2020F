@@ -6,8 +6,8 @@
 #  answer_id  :integer
 #  user_id    :integer
 #  content    :text
-#  created_at :datetime
-#  updated_at :datetime
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
 #  private    :boolean
 #
 # Indexes

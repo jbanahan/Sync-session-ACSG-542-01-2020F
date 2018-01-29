@@ -5,8 +5,8 @@
 #  id              :integer          not null, primary key
 #  model_field_uid :string(255)
 #  label           :string(255)
-#  created_at      :datetime
-#  updated_at      :datetime
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
 #
 # Indexes
 #

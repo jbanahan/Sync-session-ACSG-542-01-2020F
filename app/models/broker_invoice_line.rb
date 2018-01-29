@@ -10,8 +10,8 @@
 #  vendor_name        :string(255)
 #  vendor_reference   :string(255)
 #  charge_type        :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #  hst_percent        :decimal(4, 3)
 #
 # Indexes

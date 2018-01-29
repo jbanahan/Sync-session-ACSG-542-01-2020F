@@ -5,8 +5,8 @@
 #  id                 :integer          not null, primary key
 #  survey_response_id :integer
 #  message            :text
-#  created_at         :datetime
-#  updated_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #  user_id            :integer
 #
 # Indexes

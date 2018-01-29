@@ -7,8 +7,8 @@
 #  started_at           :datetime
 #  finished_at          :datetime
 #  run_by_id            :integer
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #  changed_object_count :integer
 #  expected_rows        :integer
 #  rows_processed       :integer

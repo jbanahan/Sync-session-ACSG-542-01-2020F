@@ -6,8 +6,8 @@
 #  linked_object_type :string(255)
 #  linked_object_id   :integer
 #  custom_file_id     :integer
-#  created_at         :datetime
-#  updated_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #
 # Indexes
 #

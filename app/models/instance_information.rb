@@ -6,8 +6,8 @@
 #  host          :string(255)
 #  last_check_in :datetime
 #  version       :string(255)
-#  created_at    :datetime
-#  updated_at    :datetime
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #  name          :string(255)
 #  role          :string(255)
 #

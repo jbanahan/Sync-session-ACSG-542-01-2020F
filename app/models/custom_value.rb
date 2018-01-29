@@ -10,8 +10,8 @@
 #  integer_value        :integer
 #  date_value           :date
 #  custom_definition_id :integer
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #  text_value           :text
 #  boolean_value        :boolean
 #  datetime_value       :datetime

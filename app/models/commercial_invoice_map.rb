@@ -5,8 +5,8 @@
 #  id               :integer          not null, primary key
 #  source_mfid      :string(255)
 #  destination_mfid :string(255)
-#  created_at       :datetime
-#  updated_at       :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
 #
 
 class CommercialInvoiceMap < ActiveRecord::Base

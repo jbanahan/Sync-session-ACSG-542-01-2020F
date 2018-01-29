@@ -6,8 +6,8 @@
 #  schedule_d_code    :string(255)
 #  schedule_k_code    :string(255)
 #  name               :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
 #  cbsa_port          :string(255)
 #  cbsa_sublocation   :string(255)
 #  unlocode           :string(255)

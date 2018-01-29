@@ -4,8 +4,8 @@
 #
 #  id                      :integer          not null, primary key
 #  line_number             :integer
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #  shipment_id             :integer
 #  product_id              :integer
 #  quantity                :decimal(13, 4)

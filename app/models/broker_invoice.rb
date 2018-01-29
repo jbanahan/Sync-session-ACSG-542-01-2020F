@@ -15,8 +15,8 @@
 #  bill_to_state        :string(255)
 #  bill_to_zip          :string(255)
 #  bill_to_country_id   :integer
-#  created_at           :datetime
-#  updated_at           :datetime
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
 #  locked               :boolean
 #  currency             :string(255)
 #  invoice_number       :string(255)

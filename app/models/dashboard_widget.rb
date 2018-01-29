@@ -6,8 +6,8 @@
 #  user_id         :integer
 #  search_setup_id :integer
 #  rank            :integer
-#  created_at      :datetime
-#  updated_at      :datetime
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
 #
 # Indexes
 #

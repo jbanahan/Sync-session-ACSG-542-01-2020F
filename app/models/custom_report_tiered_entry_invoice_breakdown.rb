@@ -7,8 +7,8 @@
 #  user_id       :integer
 #  type          :string(255)
 #  include_links :boolean
-#  created_at    :datetime
-#  updated_at    :datetime
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #  no_time       :boolean
 #
 # Indexes

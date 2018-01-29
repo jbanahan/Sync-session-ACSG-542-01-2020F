@@ -5,8 +5,8 @@
 #  id                               :integer          not null, primary key
 #  operator                         :string(255)
 #  value                            :text
-#  created_at                       :datetime
-#  updated_at                       :datetime
+#  created_at                       :datetime         not null
+#  updated_at                       :datetime         not null
 #  status_rule_id                   :integer
 #  model_field_uid                  :string(255)
 #  search_setup_id                  :integer

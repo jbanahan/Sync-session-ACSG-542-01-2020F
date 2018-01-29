@@ -7,8 +7,8 @@
 #  recordable_id          :integer
 #  recordable_type        :string(255)
 #  record_sequence_number :integer
-#  created_at             :datetime
-#  updated_at             :datetime
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #  failed                 :boolean
 #  bulk_process_log_id    :integer
 #  unique_identifier      :string(255)

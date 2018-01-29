@@ -6,8 +6,8 @@
 #  processor     :string(255)
 #  start_at      :datetime
 #  finish_at     :datetime
-#  created_at    :datetime
-#  updated_at    :datetime
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #  error_message :string(255)
 #
 # Indexes

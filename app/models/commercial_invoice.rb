@@ -6,8 +6,8 @@
 #  invoice_number        :string(255)
 #  vendor_name           :string(255)
 #  entry_id              :integer
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #  currency              :string(255)
 #  exchange_rate         :decimal(8, 6)
 #  invoice_value_foreign :decimal(13, 2)

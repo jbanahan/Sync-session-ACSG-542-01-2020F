@@ -7,8 +7,8 @@
 #  hts_2             :string(255)
 #  hts_3             :string(255)
 #  classification_id :integer
-#  created_at        :datetime
-#  updated_at        :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
 #  line_number       :integer
 #  schedule_b_1      :string(255)
 #  schedule_b_2      :string(255)

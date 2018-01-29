@@ -5,8 +5,8 @@
 #  id                :integer          not null, primary key
 #  price_per_unit    :decimal(13, 4)
 #  order_id          :integer
-#  created_at        :datetime
-#  updated_at        :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
 #  line_number       :integer
 #  product_id        :integer
 #  quantity          :decimal(13, 4)

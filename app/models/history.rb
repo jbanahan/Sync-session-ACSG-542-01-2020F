@@ -10,8 +10,8 @@
 #  user_id               :integer
 #  order_line_id         :integer
 #  walked                :datetime
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #  history_type          :string(255)
 #  sales_order_id        :integer
 #  sales_order_line_id   :integer

@@ -24,8 +24,8 @@
 #  nafta_us_equiv_duty      :integer
 #  nafta_duty_rate          :integer
 #  duty_calc_export_file_id :integer
-#  created_at               :datetime
-#  updated_at               :datetime
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
 #  importer_id              :integer
 #  customs_line_number      :integer
 #

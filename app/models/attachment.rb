@@ -10,8 +10,8 @@
 #  attached_file_size      :integer
 #  attached_updated_at     :datetime
 #  uploaded_by_id          :integer
-#  created_at              :datetime
-#  updated_at              :datetime
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
 #  attachment_type         :string(255)
 #  source_system_timestamp :datetime
 #  alliance_suffix         :string(255)

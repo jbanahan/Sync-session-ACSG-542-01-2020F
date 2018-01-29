@@ -7,8 +7,8 @@
 #  rank                            :integer
 #  choices                         :text
 #  content                         :text
-#  created_at                      :datetime
-#  updated_at                      :datetime
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
 #  warning                         :boolean
 #  require_attachment              :boolean          default(FALSE)
 #  require_comment                 :boolean          default(FALSE)

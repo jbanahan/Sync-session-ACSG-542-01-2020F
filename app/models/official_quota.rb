@@ -9,8 +9,8 @@
 #  category                       :string(255)
 #  unit_of_measure                :string(255)
 #  official_tariff_id             :integer
-#  created_at                     :datetime
-#  updated_at                     :datetime
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
 #
 # Indexes
 #

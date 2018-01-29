@@ -9,8 +9,8 @@
 #  attached_file_size    :integer
 #  attached_updated_at   :datetime
 #  attached_file_name    :string(255)
-#  created_at            :datetime
-#  updated_at            :datetime
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
 #  module_type           :string(255)
 #  start_at              :datetime
 #  finish_at             :datetime

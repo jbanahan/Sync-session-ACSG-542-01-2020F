@@ -11,8 +11,8 @@
 #  state           :string(255)
 #  postal_code     :string(255)
 #  company_id      :integer
-#  created_at      :datetime
-#  updated_at      :datetime
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
 #  country_id      :integer
 #  shipping        :boolean
 #  address_hash    :string(255)
