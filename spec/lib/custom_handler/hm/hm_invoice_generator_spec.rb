@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   let(:hm) { Factory(:company, alliance_customer_number: "HENNE", name: "H&M") }
   let(:country) { Factory(:country, iso_code: "CA") }
@@ -15,8 +14,10 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     it "finds the new billable events, new invoiceable events, creates a VFI invoice, bills new entries" do
       billables_to_be_invoiced = double "billables to be invoiced"
       billables_to_be_skipped = double "billables to be skipped"
+      detail_tmp = double "detail temp file"
       new_billables = {to_be_invoiced: billables_to_be_invoiced, to_be_skipped: billables_to_be_skipped}
-      invoice = instance_double(VfiInvoice)
+      invoice = Factory(:vfi_invoice, invoice_date: Date.new(2018,1,1), invoice_number: "inv num", currency: "USD")
+      Factory(:vfi_invoice_line, vfi_invoice: invoice, line_number: 1, charge_description: "descr", charge_amount: 5, charge_code: "code", quantity: 2, unit: "ea", unit_price: 2.50)
       generator = instance_double(described_class)
       report_generator = instance_double(described_class::ReportGenerator)
       cdefs = double("cdefs")
@@ -27,10 +28,11 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       expect(generator).to receive(:bill_new_classifications).with(billables_to_be_invoiced, invoice)
       expect(generator).to receive(:cdefs).and_return cdefs
       expect(described_class::ReportGenerator).to receive(:new).with(cdefs).and_return report_generator
-      expect(report_generator).to receive(:create_report_for_invoice).with(billables_to_be_invoiced, invoice)
+      expect(report_generator).to receive(:create_report_for_invoice).with(billables_to_be_invoiced, invoice).and_return detail_tmp
       expect(generator).to receive(:write_non_invoiced_events).with(billables_to_be_skipped)
+      expect(generator).to receive(:email_invoice).with(invoice,'sthubbins@hellhole.co.uk', "HM autobill invoice 12-17", "HM autobill invoice 12-17", detail_tmp)
 
-      described_class.run_schedulable
+      Timecop.freeze(DateTime.new(2018,1,5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
     end
   end
 

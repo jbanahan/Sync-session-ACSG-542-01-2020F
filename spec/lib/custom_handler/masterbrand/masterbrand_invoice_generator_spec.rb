@@ -4,15 +4,23 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "run_schedulable" do
     it "finds the new billable events, creates a VFI invoice, bills new entries and monthly charges" do
-      new_billables = double("new billables")
-      invoice = double("vfi invoice")
+      e1 = Factory(:entry)
+      e2 = Factory(:entry)
+      e3 = Factory(:entry)
+      under_limit_billables = [Factory(:billable_event, billable_eventable: e1), Factory(:billable_event, billable_eventable: e2)]
+      over_limit_billables = [Factory(:billable_event, billable_eventable: e3)]
+      invoice = double "vfi invoice"
+      detail_tmp = double "detail tempfile"
 
-      expect(described_class).to receive(:get_new_billables).twice.and_return new_billables
+      expect(described_class).to receive(:get_new_billables).with(described_class::ENTRY_LIMIT).and_return under_limit_billables
+      expect(described_class).to receive(:get_new_billables).and_return over_limit_billables
       expect(described_class).to receive(:create_invoice).and_return invoice
-      expect(described_class).to receive(:bill_monthly_charge).with(new_billables, invoice)
-      expect(described_class).to receive(:bill_new_entries).with(new_billables, invoice)
+      expect(described_class).to receive(:bill_monthly_charge).with(under_limit_billables, invoice)
+      expect(described_class).to receive(:bill_new_entries).with(over_limit_billables, invoice)
+      expect_any_instance_of(described_class::ReportGenerator).to receive(:create_report_for_invoice).with([e1.id, e2.id, e3.id], invoice).and_return detail_tmp
+      expect(described_class).to receive(:email_invoice).with(invoice, "sthubbins@hellhole.co.uk", "MasterBrand autobill invoice 12-17", "MasterBrand autobill invoice 12-17", detail_tmp)
 
-      described_class.run_schedulable
+      Timecop.freeze(DateTime.new(2018,1,5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
     end
   end
 
@@ -80,7 +88,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       expect(line.quantity).to eq billables.length
       expect(line.unit).to eq 'ea'
       expect(line.unit_price).to eq 2.5
-      expect(line.charge_description).to eq 'Unified Entry Audit; Up To 250 Entries'
+      expect(line.charge_description).to eq 'Unified Entry Audit; Over 250 Entries'
     end
   end
 
@@ -110,6 +118,41 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       ev = InvoicedEvent.all.sort.first
       expected = [be_1, inv_line, "MasterbrandInvoiceGenerator", "unified_entry_line"]
       expect([ev.billable_event, ev.vfi_invoice_line, ev.invoice_generator_name, ev.charge_type]).to eq expected
+    end
+  end
+
+  describe "ReportGenerator" do
+    let(:generator) { described_class::ReportGenerator.new }
+
+    describe "create_report_for_invoice" do
+      it "creates and attaches spreadsheet to invoice" do
+        stub_paperclip
+        entry_ids = double "ids"
+        inv = Factory(:vfi_invoice, invoice_number: "inv-num")
+        workbook_double = XlsMaker.create_workbook 'workbook_double'
+        expect(generator).to receive(:create_workbook).with(entry_ids, "inv-num").and_return workbook_double
+        generator.create_report_for_invoice(entry_ids, inv)
+
+        expect(inv.attachments.length).to eq 1
+        att = inv.attachments.first
+        expect(att.attached_file_name).to eq "entries_for_inv-num.xls"
+        expect(att.attachment_type).to eq "VFI Invoice Support"
+      end
+    end
+
+    describe "create_workbook" do
+      it "returns list of entry numbers corresponding to the specified billable events" do
+        e1 = Factory(:entry, entry_number: "321")
+        e2 = Factory(:entry, entry_number: "123")
+
+        wb = generator.create_workbook([e1.id, e2.id], "inv num")
+        sheet = wb.worksheets[0]
+        expect(sheet.name).to eq "inv num"
+        expect(sheet.rows.count).to eq 3
+        expect(sheet.row(0)[0]).to eq "Entry Number"
+        expect(sheet.row(1)[0]).to eq "123"
+        expect(sheet.row(2)[0]).to eq "321"
+      end
     end
   end
 

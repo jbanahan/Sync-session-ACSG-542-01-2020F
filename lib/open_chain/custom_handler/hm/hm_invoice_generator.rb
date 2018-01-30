@@ -1,20 +1,28 @@
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/report/report_helper'
+require 'open_chain/invoice_generator_support'
 
 module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::InvoiceGeneratorSupport
 
   UNIT_PRICE = 2.00
   
-  def self.run_schedulable
+  def self.run_schedulable settings
     generator = self.new
+    billables = inv = nil
     ActiveRecord::Base.transaction do
       billables = generator.get_new_billables
       inv = generator.create_invoice
       generator.bill_new_classifications(billables[:to_be_invoiced], inv)
-      ReportGenerator.new(generator.cdefs).create_report_for_invoice(billables[:to_be_invoiced], inv)
       generator.write_non_invoiced_events(billables[:to_be_skipped])
     end
+    detail_tmp = ReportGenerator.new(generator.cdefs).create_report_for_invoice(billables[:to_be_invoiced], inv)
+    generator.email_invoice(inv, settings['email'], title, title, detail_tmp) if settings["email"]
+  end
+
+  def self.title
+    date = (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].today - 1.month).strftime("%m-%y")
+    "HM autobill invoice #{date}"
   end
 
   def cdefs
@@ -113,8 +121,9 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
       file_name = "products_for_#{invoice.invoice_number}.xls"
       att = invoice.attachments.new(attached_file_name: file_name, attachment_type: "VFI Invoice Support")
       wb = create_workbook(billables, invoice.invoice_number)
-      workbook_to_tempfile(wb, "", file_name: file_name) { |t| att.attached = t }
-      att.save!
+      detail_tmp = workbook_to_tempfile(wb, "", file_name: file_name)
+      att.update_attributes! attached: detail_tmp
+      detail_tmp
     end
     
     def create_workbook billables, invoice_number
@@ -147,7 +156,7 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
       INNER JOIN classifications c ON p.id = c.product_id
       INNER JOIN billable_events be ON be.billable_eventable_id = c.id AND be.billable_eventable_type = "Classification"
       INNER JOIN invoiced_events ie ON be.id = ie.billable_event_id AND ie.invoice_generator_name = "HMInvoiceGenerator"
-      WHERE p.id IN (#{prod_ids.join(",")})
+      WHERE p.id IN (#{prod_ids.empty? ? "\"\"" : prod_ids.join(",")})
     SQL
   end
 
