@@ -80,6 +80,10 @@ class OpenChain::AllianceImagingClient
           response = process_image_file file, hsh, user
           if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
             proxy_fenix_drive_docs response[:entry], hash
+          else
+            # File is only zeroed out when proxy_fenix_drive_docs is not run. This is because the file
+            # originates from Google Drive and is forwarded to other VFI Track instances. 
+            OpenChain::S3.zero_file bucket, key
           end
         end
 

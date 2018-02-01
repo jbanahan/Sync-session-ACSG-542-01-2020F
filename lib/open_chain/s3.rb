@@ -22,6 +22,11 @@ module OpenChain; class S3
     end
   end
 
+  # Create or replace the data at a given key with a blank file
+  def self.zero_file bucket, key
+    upload_data(bucket, key, nil)
+  end
+
   # Use when you want to upload the data given in the data param as the body of the file (.ie data is NOT a path to a file)
   def self.upload_data bucket, key, data, write_options = {}
     if !data.is_a?(IO)
@@ -111,7 +116,7 @@ module OpenChain; class S3
   # To retrieve versioned data, pass the file version with the version option
   #
   # If a block is passed, the tempfile is yielded to the block as the sole argument and cleanup
-  # of the tempfile is handled transparently to the caller.  The tempfile's will be set to read from the
+  # of the tempfile is handled transparently to the caller. The tempfile's will be set to read from the
   # beginning of the file when yielded.
   def self.download_to_tempfile bucket, key, options = {}
     t = nil

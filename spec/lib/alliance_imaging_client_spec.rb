@@ -346,6 +346,7 @@ describe OpenChain::AllianceImagingClient do
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash, user)
+      expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
       OpenChain::AllianceImagingClient.consume_images
     end
@@ -357,6 +358,7 @@ describe OpenChain::AllianceImagingClient do
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(t)
       expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash, user)
+      expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
       OpenChain::AllianceImagingClient.consume_images
     end
@@ -399,6 +401,7 @@ describe OpenChain::AllianceImagingClient do
         hash['export_process'] = "Not Canada Google Drive"
         expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
         expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
         described_class.consume_images
       end
@@ -407,6 +410,7 @@ describe OpenChain::AllianceImagingClient do
         entry.source_system = "Not Fenix"
         expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
         expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
         described_class.consume_images
       end
@@ -415,6 +419,7 @@ describe OpenChain::AllianceImagingClient do
         expect(master_setup).to receive(:custom_feature?).with("Proxy Fenix Drive Docs").and_return false
         expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
         expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
         described_class.consume_images
       end
@@ -422,6 +427,7 @@ describe OpenChain::AllianceImagingClient do
       it 'does not call proxy docs if process image file returns nil' do
         expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return nil
         expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
         described_class.consume_images
       end
