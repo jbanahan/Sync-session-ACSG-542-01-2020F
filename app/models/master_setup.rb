@@ -22,7 +22,7 @@
 #  broker_invoice_enabled      :boolean
 #  request_host                :string(255)
 #  drawback_enabled            :boolean
-#  last_delayed_job_error_sent :datetime         default(2012-12-11 20:53:04 UTC)
+#  last_delayed_job_error_sent :datetime         default(2001-01-01 00:00:00 UTC)
 #  security_filing_enabled     :boolean
 #  stats_api_key               :string(255)
 #  project_enabled             :boolean
