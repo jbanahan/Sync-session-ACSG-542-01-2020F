@@ -3,7 +3,11 @@
   <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
 <%end%>
 <h2>Stale Tariffs Report</h2>
-<p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
 <%=form_tag reports_run_stale_tariffs_path, :id=>'frm_run' do -%>
-
+  <%if @customer_number_selector%>
+    <p>Enter each Customer Number on its own line or leave blank to include all customers.</p>
+    <%= text_area_tag :customer_numbers, nil, cols: 15, rows: 10%>
+  <% else %>
+    <p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
+  <% end %>
 <%end%>

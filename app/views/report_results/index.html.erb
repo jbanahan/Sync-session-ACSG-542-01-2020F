@@ -10,10 +10,11 @@
 <% if @show_basic -%>
 <h2>Run A Basic Report</h2>
 <table class='detail_table'>
-  <%if current_user.company.master?%>
+  <% if OpenChain::Report::StaleTariffs.permission? current_user %>
     <tr class='hover'><td><%=link_to "Stale Tariffs", reports_show_stale_tariffs_path%></td>
     <td>Shows all products with tariff numbers that are no longer valid.</td></tr>
-
+  <% end %>
+  <%if current_user.company.master?%>
     <tr class='hover'><td><%=link_to "Tariff Comparison", reports_show_tariff_comparison_path%></td>
     <td>Compares two tariff files for the same country and shows you the HTS numbers that were added, removed, or changed.</td></tr>
   <%end%>

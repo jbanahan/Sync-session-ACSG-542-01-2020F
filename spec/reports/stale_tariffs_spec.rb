@@ -11,21 +11,22 @@ describe OpenChain::Report::StaleTariffs do
     @fresh_tariff_record = Factory(:tariff_record, :hts_1=>official_tariff.hts_code, :classification_id=>@fresh_classification.id)
   end
   
-  describe 'security' do
-    it 'throws error when user does not have view product & is from master company' do
-      expect(@u).to receive(:view_products?).and_return(false)
-      expect {
-        OpenChain::Report::StaleTariffs.run_report(@u)
-      }.to raise_error(/have permission to view products/)
+  describe 'permission' do
+    before { allow(@u).to receive(:view_products?).and_return true }
+    
+    it "allows master users who can view products" do
+      expect(described_class.permission? @u).to eq true
     end
 
-    it 'throws error when user has view product & is not from master company' do
-      c = Factory(:company)
-      @u.update_attributes(:company_id=>c.id)
+    it "blocks non-master users" do
+      @u.company.update_attributes! master: false
       @u.reload
-      expect {
-        OpenChain::Report::StaleTariffs.run_report(@u)
-      }.to raise_error(/not from company/)
+      expect(described_class.permission? @u).to eq false
+    end
+
+    it "blocks users who can't view products" do
+      expect(@u).to receive(:view_products?).and_return false
+      expect(described_class.permission? @u).to eq false
     end
   end
 
@@ -34,9 +35,9 @@ describe OpenChain::Report::StaleTariffs do
     expect(report).to be_a Tempfile
   end
 
-  context 'with stale tariffs' do
+  context 'run_report with stale tariffs' do
 
-    let (:importer) { Factory(:importer) }
+    let (:importer) { Factory(:importer, system_code: "ACME") }
     
     before(:each) do
       @stale_classification = Factory(:classification, :country_id=>@fresh_classification.country_id)
@@ -88,13 +89,72 @@ describe OpenChain::Report::StaleTariffs do
       sheet = wb.worksheet 0
       sheet.row(0)[0] == 'abc'
     end
+    
+    context "with customer_numbers" do
+      before do
+        @stale_tariff_record.update_attributes(:hts_1=>'999999')
+      end
+
+      it "includes tariffs associated with company's products" do
+        wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers"=>["ACME"])
+        sheet = wb.worksheet 0
+        expect(sheet.row(1)[3]).to eq('999999')
+      end
+
+      it "excludes others" do
+        Factory(:company, system_code: "KONVENIENTZ")
+        wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers"=>["KONVENIENTZ"])
+        sheet = wb.worksheet 0
+        expect(sheet.row(1)[0]).to eq("Congratulations! You don't have any stale tariffs.")
+      end
+    end
+
   end
 
-  context 'without stale tariffs' do
+  context 'run_report without stale tariffs' do
     it 'should write message in spreadsheet' do
       wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
       sheet = wb.worksheet 0
       expect(sheet.row(1)[0]).to eq("Congratulations! You don't have any stale tariffs.")
+    end
+  end
+
+  context "run_schedulable" do
+    it "runs and emails report" do
+      Timecop.freeze(DateTime.new(2018,1,15)){ described_class.run_schedulable("email" => "tufnel@stonehenge.biz") }
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["tufnel@stonehenge.biz"]
+      expect(mail.subject).to eq "Stale Tariffs Report 2018-01"
+      expect(mail.body.raw_source).to match(/Report attached./)
+      expect(mail.attachments.count).to eq 1
+      expect(mail.attachments["Stale Tariffs Report 2018-01.xls"]).to_not be_nil
+    end
+  end
+
+  describe "with ids_from_customer_numbers" do
+    let(:report) { described_class.new }
+    before do
+      @acme = Factory(:company, system_code: "ACME")
+      @konvenientz = Factory(:company, system_code: "KONVENIENTZ")
+      @food_marmot = Factory(:company, system_code: "FOOD MARMOT")
+    end
+
+    it "handles string" do
+      expect(report.ids_from_customer_numbers "ACME\n\r KONVENIENTZ").to eq [@acme.id, @konvenientz.id]
+    end
+
+    it "handles array" do
+      expect(report.ids_from_customer_numbers ["ACME","KONVENIENTZ"]).to eq [@acme.id, @konvenientz.id]
+    end
+
+    it "handles null" do
+      expect(report.ids_from_customer_numbers nil).to be_nil
+    end
+
+    it "handles empty string" do
+      expect(report.ids_from_customer_numbers "").to be_nil
     end
   end
 

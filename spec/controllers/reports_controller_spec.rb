@@ -25,21 +25,61 @@ describe ReportsController do
     end
   end
   describe 'stale tariffs report' do
+    let(:report_class) { OpenChain::Report::StaleTariffs }
+    before do
+      @ms = stub_master_setup
+      allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
+    end
+    
     context 'show' do
-      it 'should render the page' do
+      it 'renders the page for authorized users' do
+        expect(report_class).to receive(:permission?).with(@u).and_return true
         get :show_stale_tariffs
         expect(response).to be_success
+        expect(assigns(:customer_number_selector)).to eq true
+      end
+
+      it "renders without customer-number selector for other instances" do
+        expect(report_class).to receive(:permission?).with(@u).and_return true
+        allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
+        get :show_stale_tariffs
+        expect(response).to be_success
+        expect(assigns(:customer_number_selector)).to be_nil
+      end
+
+      it "rejects unauthorized users" do
+        expect(report_class).to receive(:permission?).with(@u).and_return false
+        get :show_stale_tariffs
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report."
       end
     end
     context 'run' do
-      it 'should execute the report' do
-        allow(ReportResult).to receive(:execute_report) #don't really run the report
-        post :run_stale_tariffs
+      it 'executes the report for authorized users' do
+        expect(report_class).to receive(:permission?).with(@u).and_return(true)
+        expect(ReportResult).to receive(:run_report!).with("Stale Tariffs", @u, OpenChain::Report::StaleTariffs, :settings=>{"customer_numbers"=>"code1\ncode2"}, :friendly_settings=>[])
+        
+        post :run_stale_tariffs, {"customer_numbers"=>"code1\ncode2"}
         expect(response).to redirect_to('/report_results')
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
 
-        found = ReportResult.find_by_name 'Stale Tariffs'
-        expect(found.run_by).to eq(@u)
+      it 'executes the report without customer-number parameter for other instances' do
+        allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
+        expect(report_class).to receive(:permission?).with(@u).and_return(true)
+        expect(ReportResult).to receive(:run_report!).with("Stale Tariffs", @u, OpenChain::Report::StaleTariffs, :settings=>{"customer_numbers"=>nil}, :friendly_settings=>[])
+        
+        post :run_stale_tariffs, {"customer_numbers"=>"code1\ncode2"}
+        expect(response).to redirect_to('/report_results')
+        expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "rejects unauthorized users" do
+        expect(report_class).to receive(:permission?).with(@u).and_return(false)
+        expect(ReportResult).to_not receive(:execute_report)
+        
+        post :run_stale_tariffs
+        expect(flash[:errors].first).to eq "You do not have permission to view this report."
       end
     end
   end

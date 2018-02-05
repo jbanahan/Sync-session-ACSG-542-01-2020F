@@ -59,11 +59,21 @@ class ReportsController < ApplicationController
   end
 
   def show_stale_tariffs
-    #nothing to do here, no report options
+    if OpenChain::Report::StaleTariffs.permission? current_user
+      @customer_number_selector = true if MasterSetup.get.custom_feature? "WWW VFI Track Reports"
+      render
+    else
+      error_redirect "You do not have permission to view this report."
+    end
   end
 
   def run_stale_tariffs
-    run_report "Stale Tariffs", OpenChain::Report::StaleTariffs, {}, []
+    if OpenChain::Report::StaleTariffs.permission? current_user
+      cust_nums = params[:customer_numbers] if MasterSetup.get.custom_feature? "WWW VFI Track Reports"
+      run_report "Stale Tariffs", OpenChain::Report::StaleTariffs, {"customer_numbers"=>cust_nums}, []
+    else
+      error_redirect "You do not have permission to view this report."
+    end
   end
 
   def show_drawback_exports_without_imports
