@@ -8,6 +8,10 @@
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #
+# Indexes
+#
+#  index_automated_billing_setups_on_customer_number  (customer_number)
+#
 
 # This is essentially a setup for automated 210 XML docs to be sent out from Entry Broker Invoices.
 class AutomatedBillingSetup < ActiveRecord::Base

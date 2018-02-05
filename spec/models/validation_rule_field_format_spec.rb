@@ -1,6 +1,50 @@
 require 'spec_helper'
 
 describe ValidationRuleFieldFormat do
+  it "handles checking equality on two fields" do
+    commercial_invoice_line = Factory(:commercial_invoice_line, value: 35, contract_amount: 6)
+    json = {model_field_uid: :cil_value, operator: "eq", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to eq "#{ModelField.find_by_uid(:cil_value).label} must match '6.0' format but was '35.0'."
+    commercial_invoice_line.update_attribute(:contract_amount, 35)
+    json = {model_field_uid: :cil_value, operator: "eq", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to be_nil
+  end
+
+  it "handles checking if two fields are greater than one another" do
+    commercial_invoice_line = Factory(:commercial_invoice_line, value: 6, contract_amount: 35)
+    json = {model_field_uid: :cil_value, operator: "gt", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to eq "#{ModelField.find_by_uid(:cil_value).label} must match '35.0' format but was '6.0'."
+    commercial_invoice_line.update_attribute(:contract_amount, 1)
+    json = {model_field_uid: :cil_value, operator: "gt", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to be_nil
+  end
+
+  it "handles checking if two fields are less than one another" do
+    commercial_invoice_line = Factory(:commercial_invoice_line, value: 40, contract_amount: 35)
+    json = {model_field_uid: :cil_value, operator: "lt", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to eq "#{ModelField.find_by_uid(:cil_value).label} must match '35.0' format but was '40.0'."
+    commercial_invoice_line.update_attribute(:contract_amount, 45)
+    json = {model_field_uid: :cil_value, operator: "lt", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to be_nil
+  end
+
+  it "handles checking inequality on two fields" do
+    commercial_invoice_line = Factory(:commercial_invoice_line, value: 35, contract_amount: 35)
+    json = {model_field_uid: :cil_value, operator: "nq", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to eq "#{ModelField.find_by_uid(:cil_value).label} must match '35.0' format but was '35.0'."
+    commercial_invoice_line.update_attribute(:contract_amount, 6)
+    json = {model_field_uid: :cil_value, operator: "nq", value: :cil_contract_amount}.to_json
+    vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+    expect(vr.run_validation(commercial_invoice_line)).to be_nil
+  end
+
   it "validates two fields when secondary_model_field_uid is present" do
     commercial_invoice_line = Factory(:commercial_invoice_line, value: 10, contract_amount: 5)
     json = {model_field_uid: :cil_value, operator: "gtfdec", secondary_model_field_uid: :cil_contract_amount, value: '10'}.to_json

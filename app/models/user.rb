@@ -113,7 +113,6 @@
 #
 # Indexes
 #
-#  index_users_on_email           (email)
 #  index_users_on_remember_token  (remember_token)
 #  index_users_on_username        (username)
 #

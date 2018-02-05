@@ -36,8 +36,8 @@
 #  tpp_survey_response_id       :integer
 #  accepted_by_id               :integer
 #  accepted_at                  :datetime
-#  customer_order_status        :string(255)
 #  selling_agent_id             :integer
+#  customer_order_status        :string(255)
 #
 # Indexes
 #
@@ -51,7 +51,6 @@
 #  index_orders_on_first_expected_delivery_date           (first_expected_delivery_date)
 #  index_orders_on_fob_point                              (fob_point)
 #  index_orders_on_importer_id_and_customer_order_number  (importer_id,customer_order_number)
-#  index_orders_on_importer_id_and_order_number           (order_number)
 #  index_orders_on_order_from_address_id                  (order_from_address_id)
 #  index_orders_on_order_number                           (order_number)
 #  index_orders_on_season                                 (season)

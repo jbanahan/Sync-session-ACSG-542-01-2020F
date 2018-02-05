@@ -87,9 +87,6 @@
 #  inland_destination_port_id       :integer
 #  est_inland_port_date             :date
 #  inland_port_date                 :date
-#  asn_triggered_at                 :datetime
-#  asn_triggered_by_id              :integer
-#  asn_sent_at                      :datetime
 #  requested_equipment              :text
 #  forwarder_id                     :integer
 #  booking_cargo_ready_date         :date
@@ -109,10 +106,6 @@
 #  port_last_free_day               :date
 #  pickup_at                        :date
 #  in_warehouse_time                :datetime
-#  booking_requested_date           :datetime
-#  booking_voyage                   :string(255)
-#  packing_list_sent_date           :datetime
-#  packing_list_sent_by_id          :integer
 #
 # Indexes
 #

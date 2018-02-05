@@ -28,13 +28,21 @@ module ValidatesFieldFormat
         field_1 = model_field.process_export(obj, nil, true)
         field_2 = attrs['secondary_model_field'].process_export(obj, nil, true)
         val = (((field_1 - field_2) / field_2).abs) * 100
+      elsif ['eq', 'nq', 'gt', 'lt'].include? attrs['operator']
+        # To make this code simpler, we act as if we are getting actual numbers vs a field.
+        val = model_field.process_export(obj,nil,true)
+        second_field = ModelField.find_by_uid(attrs['value'])
+        # We want reg to sync up with value, for the error message
+        # we also want to use the exported value if second_field is indeed a model field.
+        # All of this needs to be renamed, but that is a discussion for another day.
+        reg = attrs['value'] = second_field.blank? ? attrs['value'] : second_field.process_export(obj,nil,true)
       else
         val = model_field.process_export(obj,nil,true)
       end
       if attrs['regex']
-        reg = attrs['regex']
+        reg ||= attrs['regex']
       else
-        reg = attrs['value']
+        reg ||= attrs['value']
       end
       cc_hash = {"model_field_uid" => model_field.uid.to_s,  "value" => reg}
       cc_hash['operator'] = attrs['regex'].present? ? 'regexp' : attrs['operator']

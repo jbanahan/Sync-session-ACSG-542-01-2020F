@@ -30,8 +30,8 @@
 #  variant_enabled             :boolean
 #  trade_lane_enabled          :boolean
 #  vfi_invoice_enabled         :boolean
-#  customs_statements_enabled  :boolean
 #  friendly_name               :string(255)
+#  customs_statements_enabled  :boolean
 #
 
 class MasterSetup < ActiveRecord::Base
