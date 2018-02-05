@@ -1,11 +1,20 @@
 require 'spec_helper'
 
 describe Api::V1::OrdersController do
-  before(:each) do
-    MasterSetup.get.update_attributes(order_enabled:true)
-    @u = Factory(:master_user,order_edit:true,order_view:true,product_view:true)
-    allow_api_access @u
-  end
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:order_enabled?).and_return true
+    allow(ms).to receive(:order_enabled).and_return true
+    ms
+  }
+
+  let! (:user) {
+    u = Factory(:master_user,order_edit:true,order_view:true,product_view:true)
+    allow_api_access u
+    u
+  }
+  
   describe "index" do
     it 'should list orders' do
       Factory(:order,order_number:'123')
