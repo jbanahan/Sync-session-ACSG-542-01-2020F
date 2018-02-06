@@ -597,6 +597,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
 
+    it "handles ellery 856s" do
+      expect(master_setup).to receive(:custom_features_list).and_return ['Ellery']
+      p = class_double("OpenChain::CustomHandler::Ellery::Ellery856Parser")
+      expect(OpenChain::CustomHandler::Ellery::Ellery856Parser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      cmd = {'request_type'=>'remote_file','original_path'=>'/ellery_856/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
+
     it "handles legacy style sqs messages" do 
       expect(master_setup).to receive(:custom_features_list).and_return ['Ellery']
       p = class_double("OpenChain::CustomHandler::Ellery::ElleryOrderParser")

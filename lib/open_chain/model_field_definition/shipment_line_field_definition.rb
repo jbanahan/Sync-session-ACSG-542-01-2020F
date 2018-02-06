@@ -76,7 +76,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
           sl.carton_set_id = cs.id
           "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} set to #{cs.id}."
         }
-        }]
+        }],
+      [13, :shpln_mbol, :master_bill_of_lading, "Master Bill", {data_type: :string}]
     ]
     add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
     add_fields CoreModule::SHIPMENT_LINE, make_address_arrays(200,'shpln','shipment_lines','manufacturer')

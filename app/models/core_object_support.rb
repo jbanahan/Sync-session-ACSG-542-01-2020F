@@ -98,6 +98,13 @@ module CoreObjectSupport
     end
   end
 
+  def clear_attributes exceptions
+    skip = ([:id, :created_at, :updated_at] + exceptions).map(&:to_s)
+    attrs_to_erase = {}
+    self.attributes.keys.each { |att| attrs_to_erase[att] = nil unless att.match(/_id$/) || (skip.member? att) }
+    self.assign_attributes(attrs_to_erase, :without_protection => true)
+  end
+
   def process_linked_attachments
     LinkedAttachment.delay(:priority=>600).create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end

@@ -323,10 +323,6 @@ module OpenChain; module EdiParserSupport
       break if stop_segments.include? seg.segment_type
 
       if seg.segment_type == "HL"
-        if current_entity
-          hl_entities[current_entity[:id]] = current_entity
-        end
-
         current_entity = {id: seg[1], hl_level: seg[3], hl_segment: seg, segments: [], hl_children: [], parent_id: seg[2]}
         hl_entities[current_entity[:id]] = current_entity
       elsif !current_entity.nil?

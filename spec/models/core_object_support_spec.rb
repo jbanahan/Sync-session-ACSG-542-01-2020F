@@ -162,6 +162,18 @@ describe CoreObjectSupport do
       expect(r[3]).to eq(fourth)
     end
   end
+  describe "clear_attributes" do
+    it "it sets every attribute to nil except those specified, timestamps, primary key, foreign keys" do
+      e = Factory(:entry)
+      ci = Factory(:commercial_invoice, entry: e, invoice_number: "123456", currency: "USD", created_at: DateTime.new(2018,1,1))
+      ci.clear_attributes([:currency])
+      ci.save!
+      expect(ci.invoice_number).to be_nil
+      expect(ci.currency).to eq "USD"
+      expect(ci.entry).to eq e
+      expect(ci.created_at).to eq DateTime.new(2018,1,1)
+    end
+  end
 
   context "TestCoreObject" do
     before :each do
