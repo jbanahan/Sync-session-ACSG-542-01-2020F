@@ -204,7 +204,17 @@ end
     # We also want to underscore'ize invalid windows chars from the filename (in cases where you upload a file from
     # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
     character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
-    filename.gsub(character_filter_regex, "_")
+    filename = filename.gsub(character_filter_regex, "_")
+
+    # For some reason, some of our users are dumping docs into the system that are like pdf_ or tif_.  They're not sophisticated
+    # enough to know how to deal with this...for this reason, I'm stripping any trailing _'s from file extensions because they
+    # then cause the filetype detection in paperclip to trip up.
+    extension = File.extname(filename)
+    if !extension.blank?
+      filename = filename.gsub(/_+$/, "")
+    end
+
+    filename
   end
 
   # Downloads attachment data from S3 and pushes it to the google drive account, path given.

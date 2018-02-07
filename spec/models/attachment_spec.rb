@@ -173,6 +173,20 @@ describe Attachment do
       Attachment.sanitize_filename r, :report_data
       expect(r.report_data_file_name).to eq("___________________________________.jpg")
     end
+
+    it "removes trailing _ from extension" do
+      a = Attachment.new
+      a.attached_file_name = "test_file_.tif___"
+      Attachment.sanitize_filename a, :attached
+      expect(a.attached_file_name).to eq("test_file_.tif")
+    end
+
+    it "does not remove trailing _ if there is no extension" do
+      a = Attachment.new
+      a.attached_file_name = "test_file_"
+      Attachment.sanitize_filename a, :attached
+      expect(a.attached_file_name).to eq("test_file_")
+    end
   end
 
   describe "email_attachments" do
