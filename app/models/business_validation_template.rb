@@ -60,12 +60,17 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   # call create_result for all templates with matching module types
   # for the given object
-  def self.create_results_for_object! obj, snapshot_entity: true
+  def self.create_results_for_object! obj, snapshot_entity: true, user: nil
     cm = CoreModule.find_by_object(obj)
     return if cm.nil?
+
+    tracking_results = []
     BusinessValidationTemplate.where(module_type:cm.class_name).each do |bvt|
-      bvt.create_result!(obj, run_validation: true, snapshot_entity: snapshot_entity)
+      tracking_results << bvt.create_result!(obj, run_validation: true, snapshot_entity: snapshot_entity)
     end
+
+    user = User.integration if user.nil?
+    handle_snapshots(tracking_results.compact, obj, user, snapshot_entity: snapshot_entity) 
 
     nil
   end
@@ -75,12 +80,13 @@ class BusinessValidationTemplate < ActiveRecord::Base
   end
 
   #run create
-  def create_results! run_validation: false, snapshot_entity: true
+  def create_results! run_validation: false, snapshot_entity: true, user: nil
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
     return if self.search_criterions.length == 0
 
+    user = User.integration if user.nil?
     cm = CoreModule.find_by_class_name(self.module_type)
     klass = cm.klass
     # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be
@@ -93,7 +99,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
       begin
         # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
         obj = klass.where(id: id.id).first
-        self.create_result!(obj, run_validation: run_validation) unless obj.nil?
+        result = self.create_result!(obj, run_validation: run_validation) unless obj.nil?
+        self.class.handle_snapshots(result, obj, user, snapshot_entity: snapshot_entity) unless result.nil?
       rescue => e
         # Don't let one bad object spoil the whole rule run
         if obj
@@ -131,6 +138,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # time the calling code will already have obtained a lock on the obj (since this code is called when snapshoting an object)
     # therefore, there's going to be few situations where it shouldn't be able to also obtain the bvr lock for the obj.''
     bvr = nil
+    state_tracking = nil
     Lock.with_lock_retry(obj) do 
       bvr = obj.business_validation_results.where(business_validation_template_id: self.id).first_or_create!
       
@@ -140,26 +148,40 @@ class BusinessValidationTemplate < ActiveRecord::Base
         # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
         # This should mean that only a single process is running validations for this module obj at a time
         if run_validation
-          state_changed = bvr.run_validation
-          bvr.updated_at = Time.zone.now #force save
-          bvr.save!
+          state_tracking = bvr.run_validation_with_state_tracking
 
-          # Because of the way we're embedding this inside rule_result! (which runs only for a single template), objects
-          # that have multiple rule templates associated with them will have extra snapshots.  This situation occurs
-          # infrequently enough that I'm not worrying about it now (only 750 total of 100K's of records we have are linked to multiple
-          # templates - pretty sure even those are due to bad initial template setups)
-          BusinessRuleSnapshot.create_from_entity(obj)
-
-          # There's times where you might not want to snapshot the entity when evaluating business rules (say like when
-          # you're actually in the process of generating a snapshot for the entity)
-          if snapshot_entity && state_changed
-            bvr.validatable.create_snapshot(User.integration,nil,"Business Rule Update") if bvr.validatable.respond_to?(:create_snapshot)
+          # We only need to save the validation result if something actually changed
+          if self.class.state_tracking_changed?(state_tracking)
+            bvr.updated_at = Time.zone.now #force save
+            bvr.save!
           end
         end
       end
     end
     
-    bvr
+    {result: bvr, tracking: state_tracking}
+  end
+
+  def self.handle_snapshots state_tracking, obj, user, snapshot_entity: true
+
+    # The only time we want to snapshot the business rules is if any rule changed
+    results_changed = Array.wrap(state_tracking).any? {|tracking| !tracking.nil? && state_tracking_changed?(tracking[:tracking]) }
+
+    # We'll want to snapshot if the overall results or any individual rules changed
+    if results_changed
+      BusinessRuleSnapshot.create_from_entity(obj)
+      # There's times where you might not want to snapshot the entity when evaluating business rules (say like when
+      # you're actually in the process of generating a snapshot for the entity)
+      if snapshot_entity
+        obj.create_snapshot(user, nil, "Business Rule Update") if obj.respond_to?(:create_snapshot)
+      end
+    end
+  end
+
+  def self.state_tracking_changed? state_tracking
+    # check if any rule state inside the result changed or the overall state
+    state_tracking[:changed] == true ||
+      Array.wrap(state_tracking[:rule_states]).any? {|state| state[:changed] == true }
   end
 
   def initialize_business_validation_result business_validation_result, obj

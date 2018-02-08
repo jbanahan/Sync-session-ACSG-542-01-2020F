@@ -34,6 +34,7 @@ describe BusinessValidationTemplate do
     end
     it "should update results for entries that match search criterions and have old business_validation_result" do
       match = Factory(:entry,customer_number:'12345')
+      expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(match).exactly(2).times
       @bvt.create_results! run_validation: true
       bvr = BusinessValidationResult.first
       expect(bvr.validatable).to eq match
@@ -43,6 +44,12 @@ describe BusinessValidationTemplate do
       @bvt.create_results! run_validation: true
       bvr.reload
       expect(bvr.state).to eq 'Pass'
+
+      # There should be 2 snapshots (1 for the first create_results call, one for the second)
+      expect(match.entity_snapshots.length).to eq 2
+      s = match.entity_snapshots.first
+      expect(s.user).to eq User.integration
+      expect(s.context).to eq "Business Rule Update"
     end
     it "should only call once per entry" do
       match = Factory(:entry,customer_number:'12345')
@@ -84,6 +91,21 @@ describe BusinessValidationTemplate do
       @bvt.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
+    it "does not re-snapshot objects where the rule state doesn't change" do
+      match = Factory(:entry,customer_number:'12345')
+      expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(match).exactly(1).times
+      @bvt.create_results! run_validation: true
+      bvr = BusinessValidationResult.first
+      expect(bvr.validatable).to eq match
+      expect(bvr.state).to eq 'Fail'
+      bvr.update_attributes(updated_at:10.seconds.ago)
+      @bvt.create_results! run_validation: true
+      bvr.reload
+      expect(bvr.state).to eq 'Fail'
+
+      # There should be 1 snapshot because the result didn't change and no rule states changed internally
+      expect(match.entity_snapshots.length).to eq 1
+    end
   end
   describe "create_result!" do
     before :each do
@@ -96,7 +118,9 @@ describe BusinessValidationTemplate do
     end
 
     it "should create result based on rules" do
-      bvr = @bvt.create_result! @o
+      result = @bvt.create_result! @o
+      bvr = result[:result]
+
       bvr.reload
       expect(bvr.validatable).to eq @o
       expect(bvr.business_validation_rule_results.count).to eq 1
@@ -106,8 +130,8 @@ describe BusinessValidationTemplate do
     it "should return nil if object doeesn't pass search criterions" do
       @o.update_attribute(:order_number, 'DontMatch')
       @bvt.search_criterions.create!(model_field_uid:'ord_ord_num',operator:'eq',value:'xx')
-      bvr = @bvt.create_result! @o
-      expect(bvr).to be_nil
+      result = @bvt.create_result! @o
+      expect(result).to be_nil
       expect(BusinessValidationResult.count).to eq 0
     end
     it "should not duplicate rules that already exist" do
@@ -130,9 +154,9 @@ describe BusinessValidationTemplate do
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(Order)).and_yield
       expect(Lock).to receive(:with_lock_retry).ordered.with(an_instance_of(BusinessValidationResult)).and_yield
       
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"Business Rule Update")
       @bvt.business_validation_rules.first.update_attribute(:rule_attributes_json, {model_field_uid:'ord_ord_num',regex:'X'}.to_json)
-      bvr = @bvt.create_result! @o, run_validation: true
+      result = @bvt.create_result! @o, run_validation: true
+      bvr = result[:result]
       expect(bvr.validatable).to eq @o
       expect(bvr.state).not_to be_nil
     end
@@ -182,13 +206,15 @@ describe BusinessValidationTemplate do
       bvt_ignore = described_class.create!(module_type:'Entry')
 
       ord = Factory(:order, order_number: "ABCD")
+      expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord)
       expect{described_class.create_results_for_object!(ord)}.to change(BusinessValidationResult,:count).from(0).to(2)
       [bvt1,bvt2].each do |b|
         b.reload
         expect(b.business_validation_results.first.validatable).to eq ord
       end
 
-      expect(ord.entity_snapshots.length).to eq 2
+      # Only a single snapshot should be generated, even though 2 templates are evaluated
+      expect(ord.entity_snapshots.length).to eq 1
     end
 
     it "does not snapshot the entity if flag is utilized" do
@@ -202,6 +228,42 @@ describe BusinessValidationTemplate do
 
       expect_any_instance_of(Order).not_to receive(:create_snapshot)
       described_class.create_results_for_object!(ord, snapshot_entity: false)
+    end
+
+    it "does not snapshot if the overall rule state stays the same and no rule states change" do
+      ord = Factory(:order, order_number: "ABCD")
+      bvt = described_class.create!(module_type:'Order')
+      bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      rule1 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule2 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord).exactly(1).times
+
+      described_class.create_results_for_object!(ord)
+      ord.reload 
+      expect(ord.entity_snapshots.length).to eq 1
+
+      described_class.create_results_for_object!(ord)
+      ord.reload 
+      expect(ord.entity_snapshots.length).to eq 1
+    end
+
+    it "snapshots if the overall rule state stays the same but rule status changes" do
+      ord = Factory(:order, order_number: "ABCD")
+      bvt = described_class.create!(module_type:'Order')
+      bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
+      rule1 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule2 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord).exactly(2).times
+
+      described_class.create_results_for_object!(ord)
+
+      # Update rule2 so that it passes, which should result in a rule status change, but the overall rule state staying the same
+      rule2.update_attributes! rule_attributes_json: {model_field_uid:'ord_ord_num',regex:'ABCD'}.to_json
+
+      described_class.create_results_for_object!(ord)
+      ord.reload 
+
+      expect(ord.entity_snapshots.length).to eq 2
     end
   end
   describe "run_schedulable" do

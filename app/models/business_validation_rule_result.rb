@@ -69,6 +69,14 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     return self.state != original_value
   end
 
+  def run_validation_with_state_tracking obj
+    old_state = self.state
+    changed = run_validation(obj)
+    new_state = self.state
+
+    {id: self.id, changed: changed, new_state: new_state, old_state: old_state}
+  end
+
   def override override_user
     self.overridden_by = override_user
     self.overridden_at = Time.now

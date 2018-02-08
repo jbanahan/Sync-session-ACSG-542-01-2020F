@@ -30,20 +30,30 @@ class BusinessValidationResult < ActiveRecord::Base
   end
 
   def run_validation
+    run_validation_internal[:changed]
+  end
+
+  def run_validation_with_state_tracking
+    run_validation_internal
+  end
+
+  def run_validation_internal 
     original_state = self.state
     base_state = 'Skipped'
     results = self.business_validation_rule_results
     validation_states = results.collect do |r|
-      r.run_validation self.validatable
-      r.state
+      r.run_validation_with_state_tracking self.validatable
     end
-    validation_states.uniq.each do |vs|
-      base_state = self.class.worst_state(base_state,vs)
+
+    validation_states.each do |state|
+      base_state = self.class.worst_state(base_state, state[:new_state])
     end
+
     self.state = base_state
     # return true if state changed
-    return original_state != self.state
+    return {changed: (original_state != self.state), rule_states: validation_states}
   end
+  private :run_validation_internal
 
   def self.worst_state s1, s2
     r = [s1,s2].sort do |a,b|

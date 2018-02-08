@@ -8,7 +8,17 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
   PASS_STATE = ['Pass', 'Skipped']
   
   def self.accept? snapshot
-    super
+    return false unless super
+    return false unless snapshot.recordable
+
+    # Only accept if any of the rules associated w/ the object actually have a notification type set up
+    snapshot.recordable.business_validation_results.each do |result|
+      result.business_validation_template.business_validation_rules.each do |rule|
+        return true if !rule.notification_type.blank?
+      end if result.business_validation_template
+    end
+
+    false
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

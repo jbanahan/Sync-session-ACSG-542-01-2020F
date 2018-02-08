@@ -5,22 +5,22 @@ describe BusinessValidationResult do
     it "should allow users who can view results" do
       u = Factory(:master_user)
       u.company.update_attributes(show_business_rules:true)
-      expect(described_class.new.can_view?(u)).to be_truthy
+      expect(described_class.new.can_view?(u)).to eq true
     end
     it "should not allow who can't view results" do
       u = Factory(:user)
-      expect(described_class.new.can_view?(u)).to be_falsey
+      expect(described_class.new.can_view?(u)).to eq false
     end
   end
   describe "can_edit" do
     it "should allow users from master company" do
       u = Factory(:master_user)
       u.company.update_attributes(show_business_rules:true)
-      expect(described_class.new.can_edit?(u)).to be_truthy
+      expect(described_class.new.can_edit?(u)).to eq true
     end
     it "should not allow users not from master company" do
       u = Factory(:user)
-      expect(described_class.new.can_edit?(u)).to be_falsey
+      expect(described_class.new.can_edit?(u)).to eq false
     end
   end
   describe "run_validation" do
@@ -44,7 +44,7 @@ describe BusinessValidationResult do
         expect(x).to receive(:run_validation).with(o)
       end
 
-      expect(bvr.run_validation).to be_truthy
+      expect(bvr.run_validation).to eq true
       expect(bvr.state).to eq 'Fail'
     end
     it "should pass if all rules pass" do
@@ -63,7 +63,7 @@ describe BusinessValidationResult do
         expect(x).to receive(:run_validation).with(o)
       end
 
-      expect(bvr.run_validation).to be_truthy
+      expect(bvr.run_validation).to eq true
       expect(bvr.state).to eq 'Pass'
     end
     it "should return false if the state doesn't change" do
@@ -80,7 +80,7 @@ describe BusinessValidationResult do
         expect(x).to receive(:run_validation).with(o)
       end
 
-      expect(bvr.run_validation).to be_falsey
+      expect(bvr.run_validation).to eq false
       expect(bvr.state).to eq 'Pass'
     end
   end
@@ -94,6 +94,26 @@ describe BusinessValidationResult do
     it "identifies non-failed state" do
       subject.state = "Literally anything else"
       expect(subject).not_to be_failed
+    end
+  end
+
+  describe "run_validation_with_state_tracking" do
+    let (:order) { Factory(:order, order_number: "ajklsdfajl") }
+    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json}
+    let (:rule_result) { 
+      rr = BusinessValidationRuleResult.new
+      rr.business_validation_rule = rule 
+      rr.save!
+      rr
+    }
+    let (:business_validation_result) { 
+      r = BusinessValidationResult.create! validatable: order, state: "Failed"
+      r.business_validation_rule_results << rule_result
+      r
+    }
+
+    it "returns the states of all the rules" do
+      expect(business_validation_result.run_validation_with_state_tracking).to eq({changed: true, rule_states: [{id: rule_result.id, changed: true, new_state: "Fail", old_state: nil}]})
     end
   end
 end

@@ -252,4 +252,36 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
     end
   end
 
+  describe "accept?" do
+    subject { described_class }
+
+    let (:entry) {
+      Factory(:entry)
+    }
+
+    let (:business_validation_rule_result) {
+      result = Factory(:business_validation_rule_result)
+      entry.business_validation_results << result.business_validation_result
+
+      result
+    }
+
+    let (:business_validation_rule) {
+      business_validation_rule_result.business_validation_rule
+    }
+
+    let (:snapshot) {
+      BusinessRuleSnapshot.new recordable: entry
+    }
+
+    it "accepts snapshots for any objects that have rules with notifications configured" do
+      business_validation_rule.update_attributes! notification_type: "email"
+      expect(subject.accept? snapshot).to eq true
+    end
+
+    it "does not accept snapshots for any object that does not have a notification type" do
+      expect(subject.accept? snapshot).to eq false
+    end
+  end
+
 end

@@ -163,6 +163,24 @@ describe BusinessValidationRuleResult do
     end
   end
 
+  describe "run_validation_with_state_tracking" do
+
+    subject {
+      r = described_class.new 
+      r.id = 1
+      r
+    }
+
+    it "wraps run_validation in state tracking" do
+      obj = Object.new
+      expect(subject).to receive(:state).ordered.and_return "State 1"
+      expect(subject).to receive(:state).ordered.and_return "State 2"
+      expect(subject).to receive(:run_validation).with(obj).and_return true
+
+      expect(subject.run_validation_with_state_tracking(obj)).to eq( {id: 1, changed: true, new_state: "State 2", old_state: "State 1"} )
+    end
+  end
+
   describe "override" do
     it "should set overriden_at and overriden_by" do
       u = User.new
