@@ -238,13 +238,26 @@ describe BusinessValidationTemplate do
       rule2 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord).exactly(1).times
 
-      described_class.create_results_for_object!(ord)
+      tz = ActiveSupport::TimeZone["America/New_York"]
+
+      first_time = tz.parse("2018-01-01 00:00")
+      Timecop.freeze(first_time) {
+        described_class.create_results_for_object!(ord)
+      }
+      
       ord.reload 
       expect(ord.entity_snapshots.length).to eq 1
 
-      described_class.create_results_for_object!(ord)
+      second_time = tz.parse("2018-02-01 00:00")
+      Timecop.freeze(second_time) {
+        described_class.create_results_for_object!(ord)
+      }
+      
       ord.reload 
       expect(ord.entity_snapshots.length).to eq 1
+
+      # The rule result's updated at should have been updated even though no rule states changed at all
+      expect(ord.business_validation_results.first.updated_at).to eq second_time
     end
 
     it "snapshots if the overall rule state stays the same but rule status changes" do

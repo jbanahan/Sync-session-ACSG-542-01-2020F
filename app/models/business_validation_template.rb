@@ -150,10 +150,15 @@ class BusinessValidationTemplate < ActiveRecord::Base
         if run_validation
           state_tracking = bvr.run_validation_with_state_tracking
 
-          # We only need to save the validation result if something actually changed
+          # We only need to save the whole validation result object if something actually changed
           if self.class.state_tracking_changed?(state_tracking)
             bvr.updated_at = Time.zone.now #force save
             bvr.save!
+          else
+            # If nothing changed, we'll still want to update the rule result's updated_at column so we know if there might be any issue with
+            # rules not evaluating by looking at the object's updated_at column and comparing it to the rule result's one (rule result should always be after),
+            # but let's do it in the most efficient fashion if nothing about the rule result changed.
+            bvr.update_column :updated_at, Time.zone.now
           end
         end
       end
