@@ -13,7 +13,7 @@ describe ValidatesFieldFormat do
     end
   end
 
-  let (:order_line) { Factory(:order_line, line_number: 1, hts: "foo")}
+  let (:order_line) { Factory(:order_line, line_number: 1, hts: "foo", price_per_unit: 10, quantity: 1)}
   let (:rule) { Rule.new('regex' => 'ABC', 'model_field_uid' => 'ordln_hts') }
   let (:block) { Proc.new {|mf, val, regex| "All #{mf.label} values do not match '#{regex}' format."} }
 
@@ -31,7 +31,6 @@ describe ValidatesFieldFormat do
       entry.update_attribute(:release_date, nil)
       entry.reload
       expect(date_rule.validate_field_format(entry, &block)).to be_nil
-
     end
 
     it 'handles \w with dates' do
@@ -204,6 +203,27 @@ describe ValidatesFieldFormat do
       it "skips evaluating the rule if only one condition is not met" do
         r = Rule.new({'model_field_uid' => "ordln_hts", "regex" => "ABC", "unless" => [{"model_field_uid" => "ordln_line_number", "operator"=>"eq", "value"=>2}, {"model_field_uid" => "ordln_hts", "operator"=>"eq", "value"=>"foo"}]})
         expect(r.validate_field_format(order_line)).to be_nil
+      end
+    end
+
+    context "with comparison to another field" do
+      let (:rule) {
+        Rule.new({'model_field_uid' => "ordln_ordered_qty", "operator" => "gt", "value" => "ordln_ppu"})
+      }
+
+      it "evaluates the rule against another model field on the same object" do
+        expect(rule.validate_field_format(order_line)).to eq "Order Line - Order Quantity must match '10.0' format but was '1.0'."
+      end
+    end
+
+    context "with comparison to an actual numeric value" do
+
+      let (:rule) {
+        Rule.new({'model_field_uid' => "ordln_ordered_qty", "operator" => "gt", "value" => 10})
+      }
+
+      it "evaluates the rule against a numeric value" do
+        expect(rule.validate_field_format(order_line)).to eq "Order Line - Order Quantity must match '10' format but was '1.0'."
       end
     end
 

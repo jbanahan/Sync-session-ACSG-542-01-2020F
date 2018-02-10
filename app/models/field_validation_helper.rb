@@ -1,6 +1,6 @@
 module FieldValidationHelper
 
-   def validation_expressions args 
+   def validation_expressions args
      unless defined?(@expressions)
        @expressions = {}
        if rule_attribute('model_field_uid')
@@ -44,7 +44,9 @@ module FieldValidationHelper
        end
      end
  
-     @expressions
+     # Dupe the hash so that if the caller modifies it, we don't end up having information clobbered that we need to return later
+     # Deep dup ends up screwing with the model field, so we can't use it
+     @expressions.dup
    end
 
   def rule_attribute key

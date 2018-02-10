@@ -7,6 +7,10 @@ module ValidatesFieldFormat
     tested = 0
     messages = []
     validation_expressions(['regex', 'operator', 'value', 'secondary_model_field_uid', 'fail_if_matches', 'allow_blank']).each_pair do |model_field, attrs|
+      # we're going to modify the attrs below, which somehow gets passed through to multiple commercial invoice lines...so lets clone it here to avoid
+      # clobbering anything from the hash that was passed in
+      attrs = attrs.dup
+
       # If we have "if criterions", we don't evaluate the rule unless all the IF statements pass
       passed = true
       Array.wrap(attrs['if_criterions']).each do |sc|
@@ -31,11 +35,19 @@ module ValidatesFieldFormat
       elsif ['eq', 'nq', 'gt', 'lt'].include? attrs['operator']
         # To make this code simpler, we act as if we are getting actual numbers vs a field.
         val = model_field.process_export(obj,nil,true)
-        second_field = ModelField.find_by_uid(attrs['value'])
-        # We want reg to sync up with value, for the error message
-        # we also want to use the exported value if second_field is indeed a model field.
-        # All of this needs to be renamed, but that is a discussion for another day.
-        reg = attrs['value'] = second_field.blank? ? attrs['value'] : second_field.process_export(obj,nil,true)
+
+        # If an actual numeric value was passed in from the setup, then we don't really have to evaluate the field
+        # just use it as is.  We'll consider any string value as indicating a model field (at gt/lt doesn't make sense on Strings really)
+        if attrs['value'].is_a?(String)
+          second_field = ModelField.find_by_uid(attrs['value'])
+
+          # we also want to use the exported value if second_field is indeed a model field.
+          # All of this needs to be renamed, but that is a discussion for another day.
+          attrs['value'] = second_field.blank? ? attrs['value'] : second_field.process_export(obj,nil,true)
+        end
+
+        # We want reg to sync up with attrs value since reg is used in the error message below
+        reg = attrs['value']
       else
         val = model_field.process_export(obj,nil,true)
       end
