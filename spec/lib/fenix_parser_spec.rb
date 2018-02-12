@@ -1183,4 +1183,33 @@ describe OpenChain::FenixParser do
       described_class.parse_lvs_query_results rs
     end
   end
+
+  describe OpenChain::FenixParser::HoldReleaseSetter do
+    let(:date) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,1,12)}
+    let(:e) { Factory(:entry) }
+    let(:setter) { described_class.new e}
+
+    describe "set_hold_date" do
+      it "assigns hold_date to the exam_ordered_date" do
+        e.update_attributes! exam_ordered_date: date, hold_date: nil
+        expect{setter.set_hold_date}.to change(e, :hold_date).from(nil).to(date)
+      end
+    end
+
+    describe "set_hold_release_date" do
+      it "assigns both hold_release_date and exam_release_date to release_date" do
+        e.update_attributes! release_date: date, hold_release_date: nil, exam_release_date: nil
+        setter.set_hold_release_date
+        expect(e.exam_release_date).to eq date
+        expect(e.hold_release_date).to eq date
+      end
+    end
+
+    describe "set_on_hold" do
+      it "assigns 'true' to on_hold if hold_date is populated but hold_release_date is not" do
+        e.update_attributes! hold_date: date, on_hold: nil, hold_release_date: nil
+        expect{setter.set_on_hold}.to change(e, :on_hold).from(nil).to true 
+      end
+    end
+  end
 end

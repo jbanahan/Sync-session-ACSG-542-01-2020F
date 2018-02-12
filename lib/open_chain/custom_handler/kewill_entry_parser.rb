@@ -113,7 +113,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     5055  => {attribute: :usda_hold_release_date, directive: :hold_release},
     5053  => {attribute: :other_agency_hold_date, directive: :hold},
     5056  => {attribute: :other_agency_hold_release_date, directive: :hold_release},
-    91065 => {attribute: :one_usg_date, directive: :hold_release}
+    91065 => {attribute: :one_usg_date, directive: :hold_release},
+    99844 => :fish_and_wildlife_transmitted_date,
+    99851 => [:fish_and_wildlife_secure_facility_date, {attribute: :fish_and_wildlife_hold_date, directive: :hold}],
+    99847 => {attribute: :fish_and_wildlife_hold_date, directive: :hold},
+    99850 => {attribute: :fish_and_wildlife_hold_date, directive: :hold},
+    99853 => {attribute: :fish_and_wildlife_hold_date, directive: :hold},
+    99846 => {attribute: :fish_and_wildlife_hold_release_date, directive: :hold_release}
   }
 
   def self.integration_folder
@@ -201,32 +207,80 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     entry
   end
 
-  # Sets hold date while blanking corresponding release date if it's a secondary hold
-  def set_any_hold_date date, attribute, entry
-    hold_date_attr, release_date_attr = entry.hold_attributes.find{ |att| att[:hold] == attribute }.values_at(:hold, :release)
-    entry[release_date_attr] = nil if entry[hold_date_attr].present?
-    entry[hold_date_attr] = date
-  end
+  class HoldReleaseSetter
+    attr_accessor :entry, :updated_before_one_usg, :updated_after_one_usg
 
-  # Sets release date only if corresponding hold date already set; if it's One USG, assigns that date to release dates for all current holds
-  def set_any_hold_release_date date, attribute, entry
-    if attribute == :one_usg_date
-      set_one_usg_date date, entry
-    else
-      hold_date_attr = entry.hold_attributes.find{ |att| att[:release] == attribute }[:hold]
-      entry[attribute] = entry[hold_date_attr].present? ? date : nil
+    def initialize ent
+      @entry = ent
+      @updated_before_one_usg = {}
+      @updated_after_one_usg = {}
     end
-  end
 
-  private 
+    # Sets hold date while blanking corresponding release date if it's a secondary hold
+    def set_any_hold_date date, attribute
+      hold_date_attr, release_date_attr = entry.hold_attributes.find{ |att| att[:hold] == attribute }.values_at(:hold, :release)
+      if entry[hold_date_attr].present?
+        entry[release_date_attr] = nil
+        updated_before_one_usg.delete release_date_attr
+        updated_after_one_usg.delete release_date_attr
+      end
+      entry[hold_date_attr] = date
+    end
 
-    def set_one_usg_date date, entry
-      entry.one_usg_date = date
-      entry.all_holds.each do |h| 
-        release_date_attr = h[:release][:attribute]
-        entry[release_date_attr] = date unless entry[release_date_attr].present?
+    # Sets release date only if corresponding hold date already set; if it's One USG, assigns that date to release dates for all active holds
+    def set_any_hold_release_date date, attribute
+      if attribute == :one_usg_date
+        set_one_usg_date date
+      else
+        hold_date_attr = entry.hold_attributes.find{ |att| att[:release] == attribute }[:hold]
+        if entry[hold_date_attr].present?
+          entry[attribute] = date
+          if entry.one_usg_date
+            updated_after_one_usg[attribute] = date
+          else
+            updated_before_one_usg[attribute] = date
+          end
+        end
       end
     end
+
+    def set_on_hold
+      entry.on_hold = entry.active_holds.present?
+    end
+    
+    def set_summary_hold_date
+      entry.hold_date = entry.populated_holds.map{ |pair| pair[:hold][:value] }.min
+    end
+
+    #If entry isn't on hold: Sets hold_release to One USG if One USG exists and hasn't been overridden, to most recent hold 
+    #release since One USG was overridden, or to most recent hold release overall when One USG hasn't been set.
+    def set_summary_hold_release_date
+      set_on_hold
+      if entry.on_hold?
+        entry.hold_release_date = nil 
+      else
+        dates = entry.one_usg_date ? updated_after_one_usg : updated_before_one_usg
+        latest = dates.values.compact.max
+        if entry.populated_holds.map{ |pair| pair[:release][:value] }.compact.present?
+          entry.hold_release_date = latest || entry.one_usg_date
+        else
+          entry.hold_release_date = nil
+        end
+      end
+    end
+
+    private
+
+    def set_one_usg_date date
+      entry.one_usg_date = date
+      entry.active_holds.each do |h| 
+        release_date_attr = h[:release][:attribute]
+        entry[release_date_attr] = date
+      end
+    end
+  end   
+  
+  private 
 
     def self.json_to_tempfile json
        Tempfile.open([Time.zone.now.iso8601, ".json"]) do |f|
@@ -703,6 +757,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_dates e, entry
+      hrs = HoldReleaseSetter.new entry
       Array.wrap(e[:dates]).each do |date|
         configs = get_date_config date[:date_no].to_i
         next if configs.empty?
@@ -721,9 +776,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             next unless entry.read_attribute(c[:attribute]).blank?
             val = in_val
           when :hold
-            set_any_hold_date in_val, c[:attribute], entry
+            hrs.set_any_hold_date in_val, c[:attribute]
           when :hold_release
-            set_any_hold_release_date in_val, c[:attribute], entry
+            hrs.set_any_hold_release_date in_val, c[:attribute]
           else
             val = in_val
           end
@@ -732,8 +787,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         end
       end
 
-      entry.set_hold_date
-      entry.set_hold_release_date
+      hrs.set_summary_hold_date
+      hrs.set_summary_hold_release_date
       nil
     end
 

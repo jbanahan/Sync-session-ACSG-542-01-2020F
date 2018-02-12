@@ -141,7 +141,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>5053, 'date'=>201701041100},
           {'date_no'=>5056, 'date'=>201701041200},
           {'date_no'=>91065, 'date'=>201701041300},
-          {'date_no'=>92033, 'date'=>201712181400},
+          {'date_no'=>99851, 'date'=>201701041400}, #multi
+          {'date_no'=>99846, 'date'=>201701041500},          
+          {'date_no'=>99844, 'date'=>201701041600},
+          
+          {'date_no'=>92033, 'date'=>201712181400}
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -465,6 +469,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
       expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
 
+      #hold/release dates
       expect(entry.ams_hold_date).to eq tz.parse "201701031300" 
       expect(entry.ams_hold_release_date).to eq tz.parse "201701031400" 
       expect(entry.aphis_hold_date).to eq tz.parse "201701031500" 
@@ -493,8 +498,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.other_agency_hold_release_date).to eq tz.parse "201701041200"
       expect(entry.one_usg_date).to eq tz.parse "201701041300"
       expect(entry.hold_date).to eq tz.parse "201701031300"
-      expect(entry.hold_release_date).to eq tz.parse "201701041300"
-
+      expect(entry.hold_release_date).to eq tz.parse "201701041500" 
+      expect(entry.fish_and_wildlife_hold_date).to eq tz.parse "201701041400"
+      expect(entry.fish_and_wildlife_hold_release_date).to eq tz.parse "201701041500" 
+      
+      expect(entry.fish_and_wildlife_transmitted_date).to eq tz.parse "201701041600"
+      expect(entry.fish_and_wildlife_secure_facility_date).to eq tz.parse "201701041400"
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
       expect(entry.last_7501_print).to eq tz.parse "201503201247"
       expect(entry.import_date).to eq Date.new(2017, 10, 19)
@@ -1209,6 +1218,17 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.summary_rejected).to eq true
     end
 
+    it "does not use One USG as the hold release date if a hold is issued after One USG" do
+      @e['dates'] << {'date_no'=>91065, 'date'=>201711131200} # ONE USG
+      @e['dates'] << {'date_no'=>99616, 'date'=>201711131300} # APHIS HOLD DATE
+
+      entry = subject.process_entry @e
+      expect(entry.hold_release_date).to be_nil
+      expect(entry.aphis_hold_date).to eq tz.parse "201711131300"
+      expect(entry.aphis_hold_release_date).to be_nil
+      expect(entry.one_usg_date).to eq tz.parse "201711131200"
+    end
+
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }
@@ -1287,24 +1307,31 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
   end
 
-  context "hold/hold-release date assigners" do
+  describe OpenChain::CustomHandler::KewillEntryParser::HoldReleaseSetter do
     let(:ent) { Factory(:entry, aphis_hold_date: nil, aphis_hold_release_date: nil) }
-    let(:date) { DateTime.new(2017,3,15) }
+    let(:date1) { DateTime.new(2017,3,15) }
     let(:date2) { DateTime.new(2017,3,16)}
+    let(:date3) { DateTime.new(2017,3,17)}
+    let(:setter) { described_class.new ent }
     
     describe "set_any_hold_date" do
       let(:attribute) { :aphis_hold_date }
 
       it "sets hold date" do
-        described_class.new.set_any_hold_date date, attribute, ent
-        expect(ent.aphis_hold_date).to eq date
+        setter.set_any_hold_date date1, attribute
+        expect(ent.aphis_hold_date).to eq date1
       end
 
-      it "also sets corresponding release date to nil if hold is already populated" do
+      it "also sets corresponding release date to nil (along w/ 'updated' hashes) if hold is already populated" do
         ent.update_attributes!(aphis_hold_date: date2, aphis_hold_release_date: date2)
-        described_class.new.set_any_hold_date date, attribute, ent
-        expect(ent.aphis_hold_date).to eq date
+        setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
+        setter.updated_after_one_usg = { aphis_hold_release_date: date2 }
+
+        setter.set_any_hold_date date1, attribute
+        expect(ent.aphis_hold_date).to eq date1
         expect(ent.aphis_hold_release_date).to be_nil
+        expect(setter.updated_before_one_usg).to be_empty
+        expect(setter.updated_after_one_usg).to be_empty
       end
     end
 
@@ -1312,38 +1339,111 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       let(:attribute) { :aphis_hold_release_date }
     
       it "sets release date" do
-        ent.update_attributes!(aphis_hold_date: date)
-        described_class.new.set_any_hold_release_date date, attribute, ent
-        expect(ent.aphis_hold_release_date).to eq date
+        ent.update_attributes!(aphis_hold_date: date1)
+        setter.set_any_hold_release_date date1, attribute
+        expect(ent.aphis_hold_release_date).to eq date1
+        expect(setter.updated_before_one_usg).to eq({aphis_hold_release_date: date1})
       end
 
       it "sets release date to nil if hold date isn't set" do
-        described_class.new.set_any_hold_release_date date, attribute, ent
+        setter.set_any_hold_release_date date1, attribute
         expect(ent.aphis_hold_release_date).to be_nil
       end
 
       it "delegates to #set_one_usg_date if needed" do
         attribute = :one_usg_date
-        expect_any_instance_of(described_class).to receive(:set_one_usg_date).with(date, ent)
-        described_class.new.set_any_hold_release_date date, attribute, ent
+        expect_any_instance_of(described_class).to receive(:set_one_usg_date).with date1
+        setter.set_any_hold_release_date date1, attribute
+      end
+
+      it "adds to 'updated_after_one_usg' when appropriate" do
+        ent.update_attributes!(aphis_hold_date: date1 , one_usg_date: date1)
+        setter.set_any_hold_release_date date2, attribute
+        expect(setter.updated_after_one_usg).to eq({aphis_hold_release_date: date2})
       end
     
       context "one_usg_date" do
         let(:attribute) { :one_usg_date }    
 
         it "sets One USG date" do
-          described_class.new.set_any_hold_release_date date, attribute, ent
-          expect(ent.one_usg_date).to eq date
+          setter.set_any_hold_release_date date1, attribute
+          expect(ent.one_usg_date).to eq date1
+          expect(setter.updated_before_one_usg).to be_empty
+          expect(setter.updated_after_one_usg).to be_empty
         end
 
         it "also sets the empty release dates of all populated hold dates" do
-          ent.update_attributes!(aphis_hold_date: date, ams_hold_date: date, ams_hold_release_date: nil, nmfs_hold_date: date, nmfs_hold_release_date: date)
-          described_class.new.set_any_hold_release_date date2, attribute, ent
+          ent.update_attributes!(aphis_hold_date: date1, ams_hold_date: date1, ams_hold_release_date: nil, nmfs_hold_date: date1, nmfs_hold_release_date: date1)
+          setter.set_any_hold_release_date date2, attribute
           expect(ent.one_usg_date).to eq date2
           expect(ent.aphis_hold_release_date).to eq date2
           expect(ent.ams_hold_release_date).to eq date2
-          expect(ent.nmfs_hold_release_date).to eq date # unchanged
+          expect(ent.nmfs_hold_release_date).to eq date1 # unchanged
         end
+      end
+    end
+
+    describe "set_summary_hold_date" do
+      it "assigns the earliest hold date" do
+        ent.update_attributes! aphis_hold_date: date1, cbp_hold_date: date2, nmfs_hold_date: date3, hold_date: nil
+        setter.entry = ent
+        expect{setter.set_summary_hold_date}.to change(ent, :hold_date).from(nil).to date1
+      end
+    end
+
+    describe "set_summary_hold_release_date" do
+      it "assigns nil if entry is on hold" do
+        ent.update_attributes! hold_release_date: date1
+        expect(ent).to receive(:on_hold?).and_return true
+        setter.set_summary_hold_release_date
+        expect(ent.hold_release_date).to be_nil
+      end
+
+      it "assigns 'One USG One date' if it exists and hasn't been overridden, entry is not on hold, and there is at least one inactive hold" do
+        ent.update_attributes! aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date3
+        expect(ent).to receive(:on_hold?).and_return false
+        setter.updated_before_one_usg = {aphis_hold_release_date: date2}
+        setter.set_summary_hold_release_date
+        expect(ent.hold_release_date).to eq date3
+      end
+
+      it "if 'One USG date' has been overridden, assign most recent overriding hold-release date" do
+        ent.update_attributes! aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date2
+        setter.updated_after_one_usg = { aphis_hold_release_date: date2, nmfs_hold_date: date3}
+        setter.set_summary_hold_release_date
+        expect(ent.hold_release_date).to eq date3
+      end
+
+      it "assigns most recent release date if the entry is not on hold and 'One USG date' is nil" do
+        ent.update_attributes! fda_hold_date: date1, fda_hold_release_date: date3, one_usg_date: nil
+        expect(ent).to receive(:on_hold?).and_return false
+        setter.updated_before_one_usg = {aphis_hold_release_date: date2, fda_hold_release_date: date3}
+        setter.set_summary_hold_release_date
+        expect(ent.hold_release_date).to eq date3
+      end
+      
+      it "assigns nil if 'One USG date' exists and there are no holds" do
+        ent.update_attributes! one_usg_date: date3
+        expect(ent).to receive(:on_hold?).and_return false
+        setter.set_summary_hold_release_date
+        expect(ent.hold_release_date).to be_nil
+      end
+    end
+
+    describe "set_on_hold" do
+      it "returns 'true' if any of the customs hold dates are assigned without a corresponding release date" do
+        ent.update_attributes!(aphis_hold_date: date1, on_hold: nil)
+        expect{setter.set_on_hold}.to change(ent, :on_hold).from(nil).to true
+      end
+
+      it "returns 'false' if no customs hold dates are assigned" do
+        ent.update_attributes!(on_hold: true)
+        expect{setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
+      end
+
+      it "returns 'false' if a customs hold date is assigned with a corresponding release date" do
+        ent.update_attributes!(on_hold: true, aphis_hold_date: date1, aphis_hold_release_date: date2)
+        expect{setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
       end
     end
   end

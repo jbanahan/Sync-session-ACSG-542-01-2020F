@@ -382,24 +382,20 @@ class Entry < ActiveRecord::Base
   def first_sale_savings
     commercial_invoice_lines.map {|cil| cil.first_sale_savings }.compact.sum
   end
-
-  def set_on_hold
-    canadian? ? set_ca_on_hold : set_us_on_hold
-  end
   
-  def set_hold_date
-    canadian? ? set_ca_hold_date : set_us_hold_date
-  end
-
-  def set_hold_release_date
-    canadian? ? set_ca_hold_release_dates : set_us_hold_release_date
-  end                       
-  
-  def all_holds
+  def populated_holds
     if canadian?
       raise RuntimeError, "Only valid for US entries!"
     else
-      all_us_holds
+      populated_us_holds
+    end
+  end
+
+  def active_holds
+    if canadian?
+      raise RuntimeError, "Only valid for US entries!"
+    else
+      active_us_holds
     end
   end
 
@@ -407,7 +403,7 @@ class Entry < ActiveRecord::Base
     if canadian?
       raise RuntimeError, "Only valid for US entries!"
     else
-      us_holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
+      all_us_holds.map{ |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
     end
   end
 
@@ -434,30 +430,15 @@ class Entry < ActiveRecord::Base
   
   private
 
-  def set_us_on_hold
-    self.on_hold = self.one_usg_date ? false : us_holds.reject{ |pair| pair[:release][:value].present? }.map{ |p| p[:hold][:value]}.compact.present?
+  def populated_us_holds
+    all_us_holds.select{ |pair| pair[:hold][:value].present? }
   end
 
-  def set_us_hold_date
-    self.hold_date = us_holds.map{ |pair| pair[:hold][:value] }.compact.min
-  end
-
-  def set_us_hold_release_date
-    set_on_hold
-    if self.one_usg_date 
-      self.hold_release_date = self.one_usg_date
-    elsif self.on_hold?
-      self.hold_release_date = nil 
-    else
-      self.hold_release_date = us_holds.map{ |pair| pair[:release][:value] }.compact.max
-    end
+  def active_us_holds
+    populated_us_holds.reject{ |pair| pair[:release][:value].present? }
   end
 
   def all_us_holds
-    us_holds.select{ |pair| pair[:hold][:value].present? }
-  end
-
-  def us_holds
     [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}}, 
      {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}}, 
      {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}}, 
@@ -470,20 +451,9 @@ class Entry < ActiveRecord::Base
      {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date}, release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
      {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
      {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
-     {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}}]
+     {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}},
+     {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
   end     
-
-  def set_ca_on_hold
-    self.on_hold = self.hold_date && !self.hold_release_date ? true : false
-  end
-
-  def set_ca_hold_date
-    self.hold_date = self.exam_ordered_date
-  end
-
-  def set_ca_hold_release_dates
-    self.hold_release_date = self.exam_release_date = self.release_date
-  end
 
   def split_newline_values values
     values.blank? ? [] : values.split(/\r?\n */)

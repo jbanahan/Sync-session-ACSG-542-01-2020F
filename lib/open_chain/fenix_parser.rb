@@ -265,6 +265,26 @@ module OpenChain
       ecs_connect_vfitrack_net(nil)
     end
 
+    class HoldReleaseSetter
+      attr_accessor :entry
+      
+      def initialize ent
+        @entry = ent
+      end
+  
+      def set_on_hold
+        entry.on_hold = entry.hold_date && !entry.hold_release_date ? true : false
+      end
+      
+      def set_hold_date
+        entry.hold_date = entry.exam_ordered_date
+      end
+  
+      def set_hold_release_date
+        entry.hold_release_date = entry.exam_release_date = entry.release_date
+      end
+    end
+
     private
 
     def self.parse_timestamp line
@@ -530,10 +550,11 @@ module OpenChain
       values
     end
 
-    def update_holds entry
-      entry.set_hold_date
-      entry.set_hold_release_date
-      entry.set_on_hold
+    def update_hold_summaries entry
+      hrss = OpenChain::FenixParser::HoldReleaseSetter.new entry
+      hrss.set_hold_date
+      hrss.set_hold_release_date
+      hrss.set_on_hold
     end
 
     def process_cargo_control_line line
@@ -646,7 +667,7 @@ module OpenChain
         entry.release_date = entry.cadex_accept_date
       end
 
-      update_holds entry
+      update_hold_summaries entry
     end
 
     def accumulated_string string_code

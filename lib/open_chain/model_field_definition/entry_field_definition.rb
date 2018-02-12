@@ -312,7 +312,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :data_type=>:boolean,
         :read_only=>true,
         :import_lambda=> lambda{ |obj, data| "On Hold ignored. (read only)"}}],
-      [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {:date_type=>:datetime}],
+      [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {:data_type=>:datetime}],
       [214, :ent_entry_filer, :entry_filer, "Entry Filer", {
         :import_lambda=>lambda {|obj,data| "Entry Filer ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.entry_number ? (obj.canadian? ? obj.entry_number[0, 5] : obj.entry_number[0, 3]) : nil},
@@ -343,6 +343,24 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [222, :ent_total_duty_taxes_fees_penalties, :total_duty_taxes_fees_penalties, "Total Duty, Taxes, Fees & Penalties", {:data_type=>:decimal,:currency=>:usd, read_only: true,
         :export_lambda=>lambda {|obj| obj.total_duty_taxes_fees_amount },
         :qualified_field_name=>"(IFNULL(entries.total_duty,0) + IFNULL(entries.total_taxes,0) + IFNULL(entries.total_fees,0) + IFNULL(entries.total_cvd,0) + IFNULL(entries.total_add,0))"
+      }],
+      [223, :ent_fish_and_wildlife_transmitted_date, :fish_and_wildlife_transmitted_date, "Fish & Wildlife Transmitted Date", {data_type: :datetime}],
+      [224, :ent_fish_and_wildlife_secure_facility_date, :fish_and_wildlife_secure_facility_date, "Fish & Wildlife Secure Facility Date", {data_type: :datetime}],
+      [225, :ent_fish_and_wildlife_hold_date, :fish_and_wildlife_hold_date, "Fish & Wildlife Hold Date", {
+        :data_type => :datetime,
+        :read_only => true,
+        :import_lambda=> lambda{ |obj, data| "Fish & Wildlife Hold Date ignored. (read only)"}
+      }],
+      [226, :ent_fish_and_wildlife_hold_release_date, :fish_and_wildlife_hold_release_date, "Fish & Wildlife Hold Release Date", {
+        :data_type => :datetime,
+        :read_only => true,
+        :import_lambda  => lambda{ |obj, data| "Fish & Wildlife Hold Release Date ignored. (read only)"}
+      }],
+      [227, :ent_fish_and_wildlife_secure_facility, :fish_and_wildlife_secure_facility, "Fish & Wildlife Secure Facility", {
+        :data_type => :boolean,
+        :export_lambda => lambda{ |obj| obj.fish_and_wildlife_secure_facility_date.present? },
+        :qualified_field_name => "(SELECT IF(fish_and_wildlife_secure_facility_date IS NOT NULL, true, false))",
+        :import_lambda => lambda{ |obj, data| "Fish & Wildlife Secure Facility ignored. (read only)"}
       }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
