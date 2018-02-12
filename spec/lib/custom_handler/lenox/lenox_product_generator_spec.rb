@@ -24,11 +24,13 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
   end
 
   describe "sync_fixed_position" do
+    let (:us) { Factory(:country, iso_code: "US") }
+    let (:ca) { Factory(:country, iso_code: "CA") }
     before :each do
       @g = described_class.new
       @cust_defs = @g.class.prep_custom_definitions [:prod_fda_product_code, :prod_part_number]
 
-      @t = Factory(:tariff_record, hts_1: "1234567890", classification: Factory(:classification, product: Factory(:product, importer: Factory(:importer, system_code: "LENOX"))))
+      @t = Factory(:tariff_record, line_number: 0, hts_1: "1234567890", classification: Factory(:classification, country: us, product: Factory(:product, importer: Factory(:importer, system_code: "LENOX"))))
       @c = @t.classification
       @p = @t.product
       
@@ -81,14 +83,15 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
     end
 
     it "sends lines for each classification" do
-      t2 = Factory(:tariff_record, hts_1: "7531594560", classification: Factory(:classification, product: @p))
+      t2 = Factory(:tariff_record, hts_1: "7531594560", classification: Factory(:classification, product: @p, country: ca))
 
       @temp = @g.sync_fixed_position
       lines = IO.readlines @temp.path
 
       expect(lines.length).to eq 2
-      verify_line lines[0], part: "PARTNO", iso: @c.country.iso_code, hts: @t.hts_1, line: 0, fda: "FDA"
-      verify_line lines[1], part: "PARTNO", iso: t2.classification.country.iso_code, hts: t2.hts_1, line: 0, fda: "FDA"
+      # Lines are ordered by Country ISO and then by Tariff Line number
+      verify_line lines[0], part: "PARTNO", iso: t2.classification.country.iso_code, hts: t2.hts_1, line: 0, fda: "FDA"
+      verify_line lines[1], part: "PARTNO", iso: @c.country.iso_code, hts: @t.hts_1, line: 0, fda: "FDA"
     end
 
     it "sends the second tariff line for XVV sets" do
