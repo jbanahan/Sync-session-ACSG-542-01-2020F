@@ -6,7 +6,8 @@ module ValidatesFieldFormat
     opt = {yield_matches: false, yield_failures: true}.merge opt
     tested = 0
     messages = []
-    validation_expressions(['regex', 'operator', 'value', 'secondary_model_field_uid', 'fail_if_matches', 'allow_blank']).each_pair do |model_field, attrs|
+
+    validation_expressions(['regex', 'operator', 'value', 'secondary_model_field_uid', 'fail_if_matches', 'allow_blank', 'split_field']).each_pair do |model_field, attrs|
       # we're going to modify the attrs below, which somehow gets passed through to multiple commercial invoice lines...so lets clone it here to avoid
       # clobbering anything from the hash that was passed in
       attrs = attrs.dup
@@ -65,7 +66,7 @@ module ValidatesFieldFormat
       op_label = CriterionOperator::OPERATORS.find{ |op| op.key == cc_hash["operator"]}.label.downcase
       #If this option is used, any block will have to check this attribute and adjust message accordingly
       fail_if_matches = attrs['fail_if_matches']
-      fail = fail_if_matches ? sc.test?(obj, nil) : !sc.test?(obj, nil)
+      fail = fail_if_matches ? sc.test?(obj, nil, {split_field: attrs['split_field']}) : !sc.test?(obj, nil, {split_field: attrs['split_field']})
       allow_blank = attrs['allow_blank'].to_s.to_boolean
 
       unless allow_blank && val.blank?

@@ -56,7 +56,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
                 ValidationRuleProductClassificationFieldFormat: {label:"Product Classification Field Format"},
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
-                ValidationRuleFieldComparison: {label: "Field Comparison"},
+                #DEPRECATED - doesn't appear in menu
+                ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
                   {
                     label: "Ascena Entry Invoice Audit",
