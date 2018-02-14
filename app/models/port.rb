@@ -30,7 +30,7 @@ class Port < ActiveRecord::Base
   validates :schedule_d_code, :format => {:with=>/^[0-9]{4}$/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
   validates :cbsa_port, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
   validates :cbsa_sublocation, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
-  validates :unlocode, :format => {:with=>/^[A-Z]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
+  validates :unlocode, :format => {:with=>/^[A-Z0-9]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
 
 
   # Find the country who's port of entry this represents (or nil)
@@ -104,6 +104,24 @@ class Port < ActiveRecord::Base
         #do nothing if port is found
         next if p || ary[0].blank? || ary[1].blank? || ary[2].blank?
         Port.create!(:name=>ary[2].strip,:cbsa_port=>ary[0].strip,:cbsa_sublocation=>ary[1].strip)
+      end
+    end
+  end
+
+  # load csv UNLOC ports from http://www.unece.org/cefact/codesfortrade/codes_index.html
+  # Assumes Windows-1252 encoding
+  def self.load_unlocode data, overwrite=false
+    Port.transaction do
+      CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
+        next unless row[2].present? && row[6] =~ /(1|4)/
+        code = row[1] + row[2]
+        name = row[3].encode("UTF-8") rescue row[4].encode("UTF-8")
+        p = Port.where(unlocode: code).first
+        if p 
+          p.update_attributes! name: name if overwrite
+        else
+          Port.create! name: name, unlocode: code
+        end
       end
     end
   end

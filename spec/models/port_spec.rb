@@ -43,10 +43,12 @@ describe Port do
       end
     end
     it 'should only allow 5 character UN LOCODES' do
-      good = 'ABCDE'
-      p = Port.new(:unlocode=>good)
-      expect(p.save).to eq(true)
-      ['ABC',' ABCDE','A1234','abcde'].each do |bad|
+      ["ABCDE", "ABC12"].each do |good|
+        p = Port.new(:unlocode=>good)
+        expect(p.save).to eq(true)
+      end
+
+      ['ABC',' ABCDE','abcde'].each do |bad|
         p = Port.new(:unlocode=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first).to include "UN/LOCODE"
@@ -105,6 +107,42 @@ describe Port do
       expect(Port.all.size).to eq(1)
       expect(Port.find_by_schedule_k_code("01530").name).to eq("Mississauga, ONT, Canada")
     end
+
+    context "UNLOC codes" do
+      let!(:data) do 
+        [["*", "CA", "", ".CANADA", "*","*","*","*","*","*","*"],
+         ["*", "CA", "MON", "Montréal", "Montreal", "*", "---4----", "*","*","*","*"],
+         ["*", "CA", "VAN", "Vancouver", "Vancouver", "*", "1-------", "*","*","*","*"],
+         ["*", "CA", "TOR", "Toronto", "Toronto", "*", "1-------", "*","*","*","*"],
+         ["*", "CA", "STJ", "St. John's", "St. John's", "*", "--3----", "*","*","*","*"]].map{ |r| r.join(",") }.join("\n").encode("Windows-1252")
+      end
+
+      it "loads UNLOC codes, skipping those that already exist" do
+        Factory(:port, name: "Toronto, haha", unlocode: "CATOR")
+        Port.load_unlocode data
+        expect(Port.count).to eq 3
+        expect(Port.where(unlocode: "CAMON").first.name).to eq "Montréal"
+        expect(Port.where(unlocode: "CAVAN").first.name).to eq "Vancouver"
+        expect(Port.where(unlocode: "CATOR").first.name).to eq "Toronto, haha"
+      end
+
+      it "overwrites existing codes when indicated" do
+        Factory(:port, name: "Toronto, haha", unlocode: "CATOR")
+        Port.load_unlocode data, true
+        expect(Port.count).to eq 3
+        expect(Port.where(unlocode: "CAMON").first.name).to eq "Montréal"
+        expect(Port.where(unlocode: "CAVAN").first.name).to eq "Vancouver"
+        expect(Port.where(unlocode: "CATOR").first.name).to eq "Toronto"
+      end
+
+      it "assigns name from column E if column D doesn't convert to UTF-8" do
+        r = ["*", "CA", "WIN", "Winnip\x81g", "Winnipeg", "*", "---4----", "*","*","*","*"].join(",").force_encoding("Windows-1252")
+        data << "\n"<< r
+        Port.load_unlocode data
+        expect(Port.count).to eq 4
+        expect(Port.where(unlocode: "CAWIN").first.name).to eq "Winnipeg"
+      end
+    end
   end
 
   describe "entry_country" do
@@ -129,6 +167,5 @@ describe Port do
       expect(Port.new(unlocode:'0123').search_friendly_port_code).to eq('0123')
     end
   end
-
 
 end
