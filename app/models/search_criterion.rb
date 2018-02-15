@@ -599,7 +599,7 @@ class SearchCriterion < ActiveRecord::Base
       # The screen does't use 'eq', 'nq' for boolean types, it uses 'null', 'notnull' (evaluated above)
       # So this code doesn't run for searches initiated by the screen.
       truthiness = ["t","true","yes","y"]
-      self_val = truthiness.include?(self.value.downcase)
+      self_val = truthiness.include?(self.value.to_s.downcase)
       if self.operator == "eq"
         return value_to_test == self_val
       elsif self.operator == "nq"
