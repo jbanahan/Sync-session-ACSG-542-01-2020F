@@ -41,7 +41,7 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
       [14,:cmp_factory,:factory,"Is Factory",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
       }],
-      [16, :comp_show_buiness_rules, :show_business_rules, "Show Business Rules", {datatype: :boolean, can_edit_lambda: admin_edit_lambda(), can_view_lambda: admin_edit_lambda()}],
+      [16, :comp_show_buiness_rules, :show_business_rules, "Show Business Rules", {data_type: :boolean, can_edit_lambda: admin_edit_lambda(), can_view_lambda: admin_edit_lambda()}],
       [17,:cmp_enabled_booking_types,:enabled_booking_types,'Enabled Booking Types',{data_type: :string, can_edit_lambda: admin_edit_lambda()}],
       [18,:cmp_slack_channel,:slack_channel,'Slack Channel',{data_type: :string, can_view_lambda: admin_edit_lambda(), can_edit_lambda: admin_edit_lambda()}],
       [19,:cmp_forwarder,:forwarder,"Is Forwarder",{data_type: :boolean,
