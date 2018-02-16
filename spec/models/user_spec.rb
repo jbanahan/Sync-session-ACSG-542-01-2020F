@@ -72,7 +72,7 @@ describe User do
   end
 
   describe "api_hash" do
-    let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', email_new_messages:true) }
+    let (:user) { Factory(:user, first_name:'Joe', last_name:'User', username:'uname', email:'j@sample.com', department:'something', email_new_messages:true) }
     it "should get hash" do
       allow(user).to receive(:view_orders?).and_return true
       h = user.api_hash
@@ -90,7 +90,8 @@ describe User do
         email:'j@sample.com',
         email_new_messages:true,
         id:user.id,
-        company_id:user.company_id
+        company_id:user.company_id,
+        department:user.department
       }
       expect(h).to eq expected
     end
@@ -106,7 +107,8 @@ describe User do
         email:'j@sample.com',
         email_new_messages:true,
         id:user.id,
-        company_id:user.company_id
+        company_id:user.company_id,
+        department:user.department
       })
     end
   end

@@ -132,6 +132,11 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
           </div>
         <% end %>
 
+        <div class="form-group">
+          <label>Department</label>
+          <%= f.text_field :department, {class: "form-control", title: "Department"} %>
+        </div>
+
         <table>
           <% if current_user.admin? || current_user.view_official_tariffs? -%>
             <%= field_row "Email me when tariffs are updated", f.check_box(:tariff_subscribed) -%>

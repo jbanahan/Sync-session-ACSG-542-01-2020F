@@ -24,7 +24,7 @@ describe OpenChain::Report::MonthlyUserAuditReport do
       wb = Spreadsheet.open t.path
       sheet = wb.worksheet(0)
       
-      expect(sheet.row(0).count).to eq 65
+      expect(sheet.row(0).count).to eq 66
       expect(sheet.count).to eq 7
       expect(sheet.row(1)[7]).to eq "Soldier"
       expect(sheet.row(2)[7]).to eq "Tinker"

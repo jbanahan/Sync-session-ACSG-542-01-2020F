@@ -11,6 +11,7 @@ describe UserTemplate do
       expect(User).not_to receive(:send_invite_emails)
       override_template = {
         homepage:'/something',
+        department:'blah',
         permissions: ['order_view','classification_edit'],
         groups: ['SYSG'],
         event_subscriptions: [
@@ -28,6 +29,7 @@ describe UserTemplate do
       expect(u.email).to eq 'jsmith@example.com'
       expect(u.time_zone).to eq 'Eastern Time (US & Canada)'
       expect(u.homepage).to eq '/something'
+      expect(u.department).to eq 'blah'
       expect(u.disallow_password).to eq false
       expect(u.email_format).to eq 'html'
       expect(u.email_new_messages).to eq false

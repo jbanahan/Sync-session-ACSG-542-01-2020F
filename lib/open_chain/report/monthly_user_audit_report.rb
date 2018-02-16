@@ -43,6 +43,7 @@ module OpenChain
             users.last_name AS 'Last Name', 
             users.username AS 'Username', 
             users.email AS 'Email', 
+            users.department AS 'Department',
             IFNULL(portal_mode,'') AS 'Portal Mode', 
             IF(admin=1,'Yes','No') AS 'Admin',
             IF(sys_admin=1,'Yes','No') AS 'Sys Admin',

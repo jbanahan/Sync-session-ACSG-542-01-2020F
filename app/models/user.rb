@@ -110,6 +110,7 @@
 #  password_expired        :boolean          default(FALSE)
 #  forgot_password         :boolean
 #  statement_view          :boolean
+#  department              :string(255)
 #
 # Indexes
 #
@@ -159,7 +160,7 @@ class User < ActiveRecord::Base
     :tariff_subscribed, :homepage,
     :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids,
     :portal_mode,
-    :system_user, :statement_view
+    :system_user, :statement_view, :department
 
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -341,7 +342,8 @@ class User < ActiveRecord::Base
       email: self.email,
       email_new_messages: self.email_new_messages,
       username: self.username,
-      company_id: self.company_id
+      company_id: self.company_id,
+      department: self.department
     }
 
     if include_permissions

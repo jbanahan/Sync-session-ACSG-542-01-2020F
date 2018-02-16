@@ -57,6 +57,7 @@ dtemp
       u.email_format = template_hash['email_format']
       u.email_new_messages = template_hash['email_new_messages']
       u.homepage = template_hash['homepage']
+      u.department = template_hash['department']
       u.password_reset = template_hash['password_reset']
       u.portal_mode = template_hash['portal_mode']
       u.tariff_subscribed = template_hash['tariff_subscribed']

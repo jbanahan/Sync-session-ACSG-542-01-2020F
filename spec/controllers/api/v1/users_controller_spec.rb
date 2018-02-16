@@ -143,7 +143,8 @@ describe Api::V1::UsersController do
         'email'=>'j@sample.com',
         'email_new_messages'=>true,
         'id'=>u.id,
-        'company_id'=>u.company_id}}
+        'company_id'=>u.company_id,
+        'department'=>u.department}}
       response_json = JSON.parse(response.body)
       # not testing every permission
       expect(response_json['user']['permissions'].size).to be > 0
