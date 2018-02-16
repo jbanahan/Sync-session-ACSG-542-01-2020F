@@ -435,6 +435,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_pvh_air_shipment_log
+    if OpenChain::Report::PvhAirShipmentLogReport.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_pvh_air_shipment_log
+    if OpenChain::Report::PvhAirShipmentLogReport.permission?(current_user)
+      settings = {:start_date => params[:start_date].to_date, :end_date => params[:end_date].to_date}
+      run_report "PVH Air Shipment Log", OpenChain::Report::PvhAirShipmentLogReport, settings, ["On or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
   def show_sg_duty_due_report
     if OpenChain::Report::SgDutyDueReport.permission?(current_user)
       @choices = ['sgi', 'sgold', 'rugged'].map{ |cust_num| Company.where(alliance_customer_number: cust_num).first }

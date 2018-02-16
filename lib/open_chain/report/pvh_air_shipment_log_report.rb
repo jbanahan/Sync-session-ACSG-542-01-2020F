@@ -1,11 +1,11 @@
 require 'open_chain/report/report_helper'
 
-module OpenChain; module Report; class PvhContainerLogReport
+module OpenChain; module Report; class PvhAirShipmentLogReport
   include OpenChain::Report::ReportHelper
 
   def self.permission? user
     return false unless user.view_entries?
-    return false unless (Rails.env.development? || MasterSetup.get.system_code == 'www-vfitrack-net')
+    return false unless MasterSetup.get.custom_feature?("WWW VFI Track Reports")
     return true if user.company.master?
     pvh = Company.where(system_code: "PVH").first
     return false unless pvh
@@ -18,12 +18,12 @@ module OpenChain; module Report; class PvhContainerLogReport
   end
 
   def self.run_schedulable settings
-    raise "Scheduled instances of the PVH Container Report must include an email_to setting with an array of email addresses." unless settings['email_to'] && settings['email_to'].respond_to?(:each)
+    raise "Scheduled instances of the PVH Air Shipment Report must include an email_to setting with an array of email addresses." unless settings['email_to'] && settings['email_to'].respond_to?(:each)
     temp = nil
     begin
       temp = self.new.run_report settings
       date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.strftime "%m/%d/%Y %I:%M %p"
-      OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] PVH Container Log", "Attached is the PVH Container Log Report for #{date}", [temp]).deliver!
+      OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] PVH Air Shipment Log", "Attached is the PVH Air Shipment Log Report for #{date}", [temp]).deliver!
     ensure
       temp.close! if temp && !temp.closed?
     end
@@ -31,15 +31,15 @@ module OpenChain; module Report; class PvhContainerLogReport
 
   def run_report settings
     wb = XlsMaker.new_workbook
-    sheet = XlsMaker.create_sheet wb, "Container Log"
+    sheet = XlsMaker.create_sheet wb, "Air Shipment Log"
     
-    table_from_query sheet, container_log_query(settings), conversions
+    table_from_query sheet, air_shipment_log_query(settings), conversions
 
-    workbook_to_tempfile wb, "PVH Container Log-"
+    workbook_to_tempfile wb, "PVH Air Shipment Log-"
   end
 
   private 
-    def container_log_query settings
+    def air_shipment_log_query settings
       if !settings['start_date'].blank? || !settings['end_date'].blank?
         date_clause = ""
         if !settings['start_date'].blank?
@@ -58,10 +58,11 @@ SELECT e.broker_reference as 'Broker Reference', e.entry_number as 'Entry Number
  e.eta_date as 'ETA Date', e.arrival_date as 'Arrival Date', pe.name as 'Port of Entry Name', e.docs_received_date as 'Docs Received Date', e.first_entry_sent_date as 'First Summary Sent', 
  e.first_release_date as 'First Release Date', e.available_date as 'Available Date', null as 'First DO Date', '' as 'Trucker', '' as 'Comments', e.id as 'Links'
 FROM entries e
-INNER JOIN containers c ON e.id = c.entry_id
+LEFT OUTER JOIN containers c ON e.id = c.entry_id
 LEFT OUTER JOIN ports pe on e.entry_port_code = pe.schedule_d_code
 WHERE 
  e.entry_port_code NOT IN ('5201', '5203')
+ AND e.transport_mode_code = '40'
  AND e.customer_number = 'PVH'
  #{date_clause}
 QRY

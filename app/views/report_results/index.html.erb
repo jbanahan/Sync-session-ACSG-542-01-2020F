@@ -130,6 +130,10 @@
     <tr class='hover'><td><%=link_to "PVH Container Log", reports_show_pvh_container_log_path%></td>
     <td>List PVH Container information relative to arrival dates.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::PvhAirShipmentLogReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "PVH Air Shipment Log", reports_show_pvh_air_shipment_log_path%></td>
+    <td>List PVH Air Shipment information relative to arrival dates.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::SgDutyDueReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "SG Duty Due Report", reports_show_sg_duty_due_report_path%></td>
     <td>List all outstanding duty owed (PDF).</td></tr>

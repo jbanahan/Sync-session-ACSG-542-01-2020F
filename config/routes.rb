@@ -674,6 +674,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_special_programs_savings_report" => "reports#run_special_programs_savings_report", :via => :post
   get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
+  get "/reports/show_pvh_air_shipment_log" => "reports#show_pvh_air_shipment_log"
+  post "/reports/run_pvh_air_shipment_log" => "reports#run_pvh_air_shipment_log"
   get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
   post "reports/run_monthly_entry_summation" => "reports#run_monthly_entry_summation"
   get "/reports/show_container_cost_breakdown" => "reports#show_container_cost_breakdown"
