@@ -62,6 +62,12 @@ class BookingLine < ActiveRecord::Base
     this_product.try(:unique_identifier)
   end
 
+  def product_summed_order_quantity
+    if self.order
+      self.order.order_lines.select { |ol| self.product_id == ol.product_id }.inject(0) {|acc, nxt| acc + nxt.quantity }
+    end
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment

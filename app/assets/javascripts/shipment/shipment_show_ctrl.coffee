@@ -38,7 +38,20 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
         $scope.shp._warehouse_time_moment = moment()
         $scope.shp._shp_warehouse_time_date = ''
         $scope.shp._shp_warehouse_time_hour = ''
+      addConditionalFields $scope.shp
       $scope.loadingFlag = null
+
+  addConditionalFields = (shp) ->
+    fields = {}
+    if shp.screen_settings.percentage_field == "by product"
+      fields.orderNumber = {label: "Order Number", fieldName: "bkln_order_number"}
+      fields.orderQuantity = {label: "Product Summed<br>Order Quantity", fieldName: "bkln_summed_order_line_quantity"}
+      fields.percentageBooked = {label: "Percentage Booked<br>By Product", fieldName: "bkln_quantity_diff_by_product"}
+    else
+      fields.orderNumber = {label: "Order Number - Line", fieldName: "bkln_order_and_line_number"}
+      fields.orderQuantity = {label: "Order Quantity", fieldName: "bkln_order_line_quantity"}
+      fields.percentageBooked = {label: "Percentage Booked", fieldName: "bkln_quantity_diff"}
+    shp.conditionalFields = fields
 
   $scope.shipmentLinesSelected = (shp) ->
     # Only load shipment lines on tab selection the first time

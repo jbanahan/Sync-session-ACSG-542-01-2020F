@@ -266,11 +266,11 @@
                       <tr>
                         <th>Line #</th>
                         <th>Product</th>
-                        <th>Order Number - Line</th>
+                        <th ng-bind-html="shp.conditionalFields.orderNumber.label"></th>
                         <th>Container<br>Size</th>
-                        <th>Order Quantity</th>
+                        <th ng-bind-html="shp.conditionalFields.orderQuantity.label"></th>
                         <th>Booked Quantity</th>
-                        <th>Percentage Booked</th>
+                        <th ng-bind-html="shp.conditionalFields.percentageBooked.label"></th>
                         <th>Cartons</th>
                         <th>Volume<br>(CBMS)</th>
                         <th>Gross Weight<br>(KGS)</th>
@@ -282,19 +282,19 @@
                         <td>{{ln.bkln_line_number}}</td>
                         <td>{{ln.bkln_puid}}</td>
                         <td>
-                          <a ng-href='/orders/{{ln.bkln_order_id}}'>{{ln.bkln_order_and_line_number}}</a>
+                          <a ng-href='/orders/{{ln.bkln_order_id}}'>{{ln[shp.conditionalFields.orderNumber.fieldName]}}</a>
                         </td>
                         <td>
                           {{ln.bkln_container_size}}
                         </td>
                         <td>
-                          {{ln.bkln_order_line_quantity}}
+                          {{ln[shp.conditionalFields.orderQuantity.fieldName]}}
                         </td>
                         <td>
                           {{ln.bkln_quantity}}
                         </td>
                           <td>
-                            {{ln.bkln_quantity_diff | number:2}}%
+                            {{ln[shp.conditionalFields.percentageBooked.fieldName] | number:2}}%
                           </td>
                         <td>
                           {{ln.bkln_carton_qty}}

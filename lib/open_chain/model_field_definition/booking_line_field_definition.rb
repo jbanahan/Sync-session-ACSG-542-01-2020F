@@ -98,8 +98,34 @@ WHERE booking_lines.order_id = order_lines.order_id AND booking_lines.order_line
 FROM
 order_lines
 WHERE
-order_lines.id = booking_lines.order_line_id)"}]
+order_lines.id = booking_lines.order_line_id)"}],
+      [19, :bkln_summed_order_line_quantity, :order_line_summed_quantity, "Product Summed Order Quantity", {data_type: :decimal, read_only: true,
+        import_lambda: lambda {|obj,data| "Product Summed Order Quantity ignored. (read only)"},
+        export_lambda: lambda {|detail| detail.product_summed_order_quantity},
+        qualified_field_name: order_line_summed_quantity_qry
+       }],                   
+      [20, :bkln_quantity_diff_by_product, :order_line_quantity_diff_by_product, "Percentage Booked By Product", {data_type: :decimal, read_only: true,
+        import_lambda: lambda {|obj,data| "Percentage Booked By Product ignored. (read only)"},
+        export_lambda: lambda {|detail| 
+            summed_quantity = detail.product_summed_order_quantity
+            if summed_quantity.try(:nonzero?) && detail.try(:quantity)
+              (detail.quantity / summed_quantity) * 100
+            else
+              nil
+            end
+          },
+        qualified_field_name: "(SELECT ROUND(IFNULL((booking_lines.quantity / #{order_line_summed_quantity_qry}) * 100, 0), 2))"
+        }]
     ]
     add_fields CoreModule::BOOKING_LINE, make_variant_arrays(100,'bkln','booking_lines')
   end
+
+  def order_line_summed_quantity_qry
+    <<-SQL 
+       (SELECT SUM(bol.quantity)
+        FROM order_lines bol 
+        WHERE bol.product_id = booking_lines.product_id AND bol.order_id = booking_lines.order_id)
+    SQL
+  end
+
 end; end; end

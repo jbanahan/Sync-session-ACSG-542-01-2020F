@@ -23,7 +23,7 @@ describe Api::V1::ShipmentsController do
       expect(response).to be_success
       j = JSON.parse(response.body)['results']
       j.first.delete 'permissions' #not testing permissions hash
-      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[],'booking_lines'=>[]}]
+      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[],'booking_lines'=>[], 'screen_settings'=>{}}]
     end
   end
 
@@ -181,6 +181,15 @@ describe Api::V1::ShipmentsController do
       expect(j['shipment']['comments'].size).to eq 1
       expect(j['shipment']['comments'].first['subject']).to eq "Subject"
       expect(j['shipment']['comments'].first['body']).to eq "Comment Body"
+    end
+    it "renders importer-specific view settings" do
+      s = Factory(:shipment, reference: "123", importer: Factory(:company, system_code: "ACME"))
+      KeyJsonItem.shipment_settings("ACME").first_or_create!(:json_data=>{"percentage_field"=>"by product"}.to_json)
+      get :show, id: s.id
+
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j['shipment']['screen_settings']).to eq({"percentage_field"=>"by product"})
     end
   end
   describe "request booking" do
@@ -1202,7 +1211,7 @@ describe Api::V1::ShipmentsController do
       hash = JSON.parse(response.body)["results"].first
       # Rip out permissions, we want to make sure the other shipment fields were limited by the fields parameter
       hash.delete 'permissions'
-      expect(hash).to eq({"id" => shipment.id, "shp_ref" => shipment.reference})
+      expect(hash).to eq({"id" => shipment.id, "shp_ref" => shipment.reference, "screen_settings"=>{}})
     end
 
     it "does not return shipments that have shipment instructions" do

@@ -381,6 +381,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     if !custom_view.blank?
       h['custom_view'] = custom_view
     end
+    h['screen_settings'] = JSON.parse(KeyJsonItem.shipment_settings(s.importer.try(:system_code)).first.try(:json_data) || '{}')
     h
   end
 
@@ -498,6 +499,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def booking_line_fields_to_render
     limit_fields([
       :bkln_line_number,
+      :bkln_order_number,
       :bkln_quantity,
       :bkln_puid,
       :bkln_carton_qty,
@@ -512,7 +514,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :bkln_order_line_id,
       :bkln_product_db_id,
       :bkln_order_line_quantity,
-      :bkln_quantity_diff
+      :bkln_quantity_diff,
+      :bkln_summed_order_line_quantity,
+      :bkln_quantity_diff_by_product
      ])
   end
 

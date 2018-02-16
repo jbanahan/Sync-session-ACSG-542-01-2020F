@@ -41,6 +41,7 @@ class KeyJsonItem < ActiveRecord::Base
   POLLING_JOB ||= "polling_job"
   ENTRY_DOCUMENT_COUNTS ||= "ent_doc_count"
   ISF_CI_LOAD_CONFIG ||= "isf_config"
+  SHIPMENT_SETTINGS ||= "shipment_settings"
 
 
   # turn the object into a json string and store it in the json_data field
@@ -62,4 +63,5 @@ class KeyJsonItem < ActiveRecord::Base
   scope :polling_job, lambda {|logical_key| where(:key_scope=>POLLING_JOB, :logical_key=>logical_key)}
   scope :entry_document_counts, lambda {|logical_key| where(key_scope: ENTRY_DOCUMENT_COUNTS, logical_key: logical_key) }
   scope :isf_config, lambda {|logical_key| where(key_scope: ISF_CI_LOAD_CONFIG, logical_key: logical_key) }
+  scope :shipment_settings, lambda {|logical_key| where(key_scope: SHIPMENT_SETTINGS, logical_key: logical_key)}
 end
