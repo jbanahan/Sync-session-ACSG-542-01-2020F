@@ -49,6 +49,15 @@ describe BusinessValidationRuleResult do
       expect(rule.state).to eq 'x'
       expect(rule.message).to eq vr.run_validation(Order.new)
     end
+    it "returns 'true' if new state matches previous one but message has changed" do
+      json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
+      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      rule = BusinessValidationRuleResult.new state: 'x', message: 'original msg'
+      rule.business_validation_rule = vr
+      expect(rule.run_validation(Order.new)).to be_truthy
+      expect(rule.state).to eq 'x'
+      expect(rule.message).to eq vr.run_validation(Order.new)
+    end
     it "should default state to Fail if no fail_state" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
@@ -94,7 +103,6 @@ describe BusinessValidationRuleResult do
       expect(rule.run_validation(Order.new)).to be_falsey
       expect(rule.state).to eq 'X'
     end
-
     it "should not do anything if validation rule has delete_pending" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)

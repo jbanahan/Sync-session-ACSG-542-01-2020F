@@ -42,6 +42,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
 
   # updates the state of the object based on the validation and returns true if it changed
   def run_validation obj
+    original_message = self.message
     original_value = self.state
     # validation rule can be nil if it's in the process of getting deleted (which can take time since there's
     # potentially hundreds of thousands of rule results).
@@ -66,7 +67,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     else
       self.state = self.business_validation_rule.fail_state.presence || 'Fail'
     end
-    return self.state != original_value
+    return (self.state != original_value) || (self.message != original_message)
   end
 
   def run_validation_with_state_tracking obj
