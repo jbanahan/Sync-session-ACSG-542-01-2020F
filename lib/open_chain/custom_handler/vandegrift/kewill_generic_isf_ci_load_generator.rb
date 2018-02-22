@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericIs
         if hts.length < 10
           prod_hts = product.hts_for_country("US").first
 
-          if prod_hts.starts_with? hts
+          if prod_hts.to_s.starts_with? hts
             cil.hts = prod_hts
           end
         end
