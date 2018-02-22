@@ -34,12 +34,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   def parse_dom dom
     r = dom.root
+    # if line number doesn't appears in the first order, all line changes are full replacement
+    replace_lines = !REXML::XPath.first(dom.root, '//PO101').try(:text).try(:present?)
     extract_date = parse_extract_date r
-    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date}
+    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date, replace_lines }
   end
 
   private
-  def parse_order order_root, extract_date
+  def parse_order order_root, extract_date, replace_lines
     @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text.to_i == 1
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
@@ -57,16 +59,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         booked = ord.booked?
         shipped = ord.shipping?
       end
-      # If an order is booked or shipping we can't update the lines, this is because we don't
-      # get indempotent line numbers from Jill on the 850 (we actually just autogenerate them here).
-      # Therefore, we have no way to know if lines were removed / added on a transfer and end up just deleting
-      # and recreating the lines that were sent, and we could
-      # end up essentially trashing a booking or shipment by deleting an order line it references.
-      if booked || shipped
-        # Allow updates to orders if they're booked but not shipped
-        update_header = (@inner_opts[:force_header_updates] == true || (booked && !shipped && shp_refs.count <= 1))
+      
+      if shipped
+        update_header = @inner_opts[:force_header_updates] == true
         update_lines = false
-        po_assigned_to_shipment = true if shipped
+        po_assigned_to_shipment = true
+      elsif booked
+        update_header = @inner_opts[:force_header_updates] == true || !multiple_bookings
+        update_lines = !multiple_bookings
       end
 
       ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
@@ -78,11 +78,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.agent = agents.first if agents.size == 1
       end
 
-      if update_lines
-        ord.order_lines.destroy_all
-        parse_lines ord, order_root
-      end
-
+      parse_lines ord, order_root, replace_lines if update_lines
+        
       if update_header || update_lines
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
         ord.save!
@@ -193,20 +190,51 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
     nil #return
   end
-  def parse_lines order, order_root
+  
+  def parse_lines order, order_root, replace_lines
+    if replace_lines
+      parse_lines_with_replace order, order_root
+    else
+      parse_lines_with_update order, order_root
+    end
+  end
+
+  def parse_lines_with_replace order, order_root 
     line_number = 1
+    order.order_lines.destroy_all
     REXML::XPath.each(order_root,'GROUP_11') do |group_el|
       po1_el = REXML::XPath.first(group_el,'PO1')
       ol = order.order_lines.build
       ol.line_number = line_number
-      line_number += 1
-      ol.quantity = et po1_el, 'PO102'
-      ol.price_per_unit = et po1_el, 'PO104'
-      ol.sku = et po1_el, 'PO109'
-      ol.hts = et(po1_el,'PO115',true).gsub(/\./,'')
-      ol.product = parse_product group_el
-      add_placeholder_fields_to_order_line ol, po1_el
+      line_number += 1    
+      parse_line_remaining_fields ol, group_el
     end
+  end
+
+  def parse_lines_with_update order, order_root
+    old_line_nums = order.order_lines.map(&:line_number)
+    new_line_nums = []
+    REXML::XPath.each(order_root,'GROUP_11') do |group_el|
+      po1_el = REXML::XPath.first(group_el,'PO1')
+      line_number = et(po1_el, 'PO101').to_i
+      raise "Missing line number in source file" unless line_number.present?
+      new_line_nums << line_number
+      ln = order.order_lines.find{ |ordln| ordln.line_number == line_number }  
+      ol = ln ? ln : order.order_lines.build(line_number: line_number)
+      parse_line_remaining_fields ol, group_el
+    end
+    line_nums_missing_from_xml = old_line_nums - new_line_nums
+    order.order_lines.where(line_number: line_nums_missing_from_xml).destroy_all
+  end
+
+  def parse_line_remaining_fields order_line, group_el
+    po1_el = REXML::XPath.first(group_el,'PO1')
+    order_line.quantity = et po1_el, 'PO102'
+    order_line.price_per_unit = et po1_el, 'PO104'
+    order_line.sku = et po1_el, 'PO109'
+    order_line.hts = et(po1_el,'PO115',true).gsub(/\./,'')
+    order_line.product = parse_product group_el
+    add_placeholder_fields_to_order_line order_line, po1_el
   end
 
   def add_placeholder_fields_to_order_line ol, po1_el

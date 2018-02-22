@@ -95,6 +95,40 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
       expect(EntitySnapshot.count).to eq 1
     end
+    context "when line numbers are found" do
+      it "updates existing order lines when line" do
+        o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+        old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        original_line_id = old_ol.id
+
+        run_file
+        new_ol = OrderLine.find original_line_id
+        expect(new_ol.line_number).to eq 1
+        expect(new_ol.quantity).to eq 299
+      end
+      it "removes order lines not present in the XML" do
+        o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+        Factory(:order_line, order: o, line_number: 5, quantity: 111 )
+
+        run_file
+        expect(OrderLine.where(line_number: 5)).to be_empty
+      end
+    end
+    context "when line numbers aren't found" do
+      it "does full replace of order lines" do
+        dom = REXML::Document.new(IO.read(@path))
+        REXML::XPath.each(dom.root,'//PO101') {|el| el.text = ''}
+        o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+        old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        original_line_id = old_ol.id
+
+        described_class.parse_dom dom
+        expect{ OrderLine.find original_line_id }.to raise_error ActiveRecord::RecordNotFound
+        new_ol = o.order_lines.first
+        expect(new_ol.line_number).to eq 1
+        expect(new_ol.quantity).to eq 299
+      end
+    end
     it "should update product name" do
       original_product_name = "SPACE-DYED COTTON PULLOVER"
       new_product_name = "SOMETHING ELSE"
@@ -159,6 +193,18 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.order_lines.count).to eq 4
       expect(o.approval_status).to be_nil
     end
+    it "updates booked (but unshipped) order" do
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',fob_point: "PK", approval_status: "Accepted")
+      ol = Factory(:order_line,order:o,sku:"SKU")
+      s = Factory(:shipment, reference: "REF")
+      s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
+      
+      run_file
+      o.reload
+      expect(o.order_lines.first.sku).to eq '28332664'
+      expect(o.fob_point).to eq "CN"
+      expect(o.approval_status).to be_nil
+    end
     it "should not update order with newer last_exported_from_source" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',last_exported_from_source:Date.new(2014,8,1))
       run_file
@@ -218,7 +264,6 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
         run_file
         o.reload
-        expect(o.order_lines.first.sku).to eq "SKU"
         expect(o.mode).to eq "Ocean"
         expect(o.approval_status).to be_nil
       
@@ -234,7 +279,6 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
         run_file
         o.reload
-        expect(o.order_lines.first.sku).to eq "SKU"
         expect(o.mode).to eq "Ocean"
         expect(o.approval_status).to eq "Accepted"
       
