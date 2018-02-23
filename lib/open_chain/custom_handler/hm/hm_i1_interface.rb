@@ -1,89 +1,103 @@
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-module OpenChain
-  module CustomHandler
-    module Hm
-      class HmI1Interface
-        include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-        extend OpenChain::IntegrationClientParser
+module OpenChain; module CustomHandler; module Hm; class HmI1Interface
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  extend OpenChain::IntegrationClientParser
 
-        def initialize
-           @cust_id = Company.where(alliance_customer_number: 'HENNE').first.id
-           @cdefs = (self.class.prep_custom_definitions [:prod_po_numbers, :prod_sku_number, :prod_earliest_ship_date, :prod_earliest_arrival_date, 
-            :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin, :prod_set, :prod_fabric_content, :prod_units_per_set])
-        end
+  def initialize
+     @cust_id = Company.where(alliance_customer_number: 'HENNE').first.id
+     @cdefs = (self.class.prep_custom_definitions [:prod_po_numbers, :prod_sku_number, :prod_earliest_ship_date, :prod_earliest_arrival_date, 
+      :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin, :prod_set, :prod_fabric_content, :prod_units_per_set])
+  end
 
-        def self.parse file_content, opts = {}
-          self.new.process file_content
-        end
+  def self.parse file_content, opts = {}
+    self.new.process file_content
+  end
 
-        def process file_content
-          CSV.parse(file_content, skip_blanks: true, :col_sep => ";") do |row|
-            *, uid = get_part_number_and_uid(row[3])
-            p = nil
-            Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
-            Lock.with_lock_retry(p) do 
-              update_product p, row, @cdefs, @cust_id
-              p.create_snapshot User.integration
-            end
-          end
-        end
-
-        def update_product product, row, cdefs, cust_id
-          part_number, * = get_part_number_and_uid(row[3])
-          
-          product.importer_id = cust_id
-          product.find_and_set_custom_value cdefs[:prod_part_number], part_number
-          cv_concat product, :prod_po_numbers, row[0], cdefs
-          assign_earlier product, :prod_earliest_ship_date, format_date(row[1]), cdefs
-          assign_earlier product, :prod_earliest_arrival_date, format_date(row[2]), cdefs
-          product.find_and_set_custom_value cdefs[:prod_sku_number], row[3]
-          cv_concat product, :prod_season, row[4], cdefs
-          product.name = row[5]
-          product.find_and_set_custom_value cdefs[:prod_suggested_tariff], row[6]
-          cv_concat product, :prod_countries_of_origin, row[7], cdefs
-          product.find_and_set_custom_value(cdefs[:prod_fabric_content], row[8].to_s.strip) unless row[8].blank?
-          product.find_and_set_custom_value(cdefs[:prod_units_per_set], row[9].to_s.strip.to_i) unless row[9].blank?
-          product.find_and_set_custom_value(cdefs[:prod_set], row[10].to_s.strip.downcase == "yes") unless row[10].blank?
-
-          product.save!
-          product
-        end
-
-        def cv_concat product, cv_uid, str, cdefs
-          old_str = (product.get_custom_value cdefs[cv_uid]).value
-          arr = old_str.blank? ? [] : old_str.split("\n ")
-          arr << str unless arr.include? str
-          new_str = arr.join("\n ")
-          product.find_and_set_custom_value cdefs[cv_uid], new_str unless new_str == old_str
-          product
-        end
-
-        def assign_earlier product, cv_uid, date_str, cdefs
-          current_date = (product.get_custom_value cdefs[cv_uid]).value
-          parsed_date = Date.strptime(date_str,'%m/%d/%Y')
-          product.find_and_set_custom_value(cdefs[cv_uid], parsed_date) if current_date.nil? || parsed_date < current_date
-          product
-        end   
-      
-        private
-
-        def get_part_number_and_uid sku
-          trunc_sku = sku[0..6]
-          [trunc_sku, "HENNE-#{trunc_sku}"]
-        end
-
-        def format_date date
-          if (date =~ /^\d{8}$/)
-            year = date[0..3]
-            month = date[4..5]
-            day = date[6..7]
-            "#{month}/#{day}/#{year}"
-          else
-            nil
-          end
-        end
+  def process file_content
+    CSV.parse(file_content, skip_blanks: true, :col_sep => ";") do |row|
+      *, uid = get_part_number_and_uid(row[3])
+      p = nil
+      Lock.acquire("Product-#{uid}") { p = Product.where(unique_identifier: uid).first_or_create! }
+      Lock.with_lock_retry(p) do 
+        update_product p, row, @cdefs, @cust_id
+        p.create_snapshot User.integration if p.changed_by_i1?
       end
+    end
+  end
 
-    end 
-  end 
-end
+  def update_product product, row, cdefs, cust_id
+    self.class.add_custom_methods product
+    part_number, * = get_part_number_and_uid(row[3])
+    
+    product.update_attr_with_flag :importer_id, cust_id
+    product.update_field_with_flag cdefs[:prod_part_number], part_number
+    cv_concat product, cdefs[:prod_po_numbers], row[0]
+    assign_earlier product, cdefs[:prod_earliest_ship_date], format_date(row[1])
+    assign_earlier product, cdefs[:prod_earliest_arrival_date], format_date(row[2])
+    cv_concat product, cdefs[:prod_season], row[4]
+    product.update_attr_with_flag :name, row[5], true
+    product.update_field_with_flag cdefs[:prod_suggested_tariff], row[6]
+    cv_concat product, cdefs[:prod_countries_of_origin], row[7]
+    product.update_field_with_flag cdefs[:prod_fabric_content], row[8].to_s.strip unless row[8].blank?
+    product.update_field_with_flag cdefs[:prod_units_per_set], row[9].to_s.strip.to_i unless row[9].blank?
+    product.update_field_with_flag cdefs[:prod_set], (row[10].to_s.strip.downcase == "yes") unless row[10].blank?
+
+    product.save!
+    product
+  end
+
+  def cv_concat product, cdef, str
+    old_str = product.custom_value cdef
+    arr = old_str.blank? ? [] : old_str.split("\n ")
+    new_str = (arr << str).uniq.join("\n ")
+    product.update_field_with_flag cdef, new_str
+    product
+  end
+
+  def assign_earlier product, cdef, date_str
+    old_date = product.custom_value cdef
+    parsed_date = Date.strptime(date_str,'%m/%d/%Y')
+    product.update_field_with_flag cdef, parsed_date if old_date.nil? || parsed_date < old_date
+    product
+  end   
+
+  private
+
+  def get_part_number_and_uid sku
+    trunc_sku = sku[0..6]
+    [trunc_sku, "HENNE-#{trunc_sku}"]
+  end
+
+  def format_date date
+    if (date =~ /^\d{8}$/)
+      year = date[0..3]
+      month = date[4..5]
+      day = date[6..7]
+      "#{month}/#{day}/#{year}"
+    else
+      nil
+    end
+  end
+
+  def self.add_custom_methods product
+    def product.update_attr_with_flag attribute, value, skip_if_assigned=false
+      return if skip_if_assigned && self.send(attribute).present?
+      @changed_by_i1 = true if self.send(attribute) != value
+      self.send "#{attribute}=", value
+    end
+
+    def product.update_field_with_flag field, value, skip_if_assigned=false
+      cv = self.get_custom_value field
+      return if skip_if_assigned && cv.value.present?
+      if cv.value != value
+        @changed_by_i1 = true
+        cv.value = value
+      end
+    end
+
+    def product.changed_by_i1?
+      @changed_by_i1 == true
+    end
+  end
+  
+end; end; end; end
