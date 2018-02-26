@@ -2,32 +2,34 @@
 #
 # Table name: commercial_invoices
 #
-#  id                    :integer          not null, primary key
-#  invoice_number        :string(255)
-#  vendor_name           :string(255)
-#  entry_id              :integer
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  currency              :string(255)
-#  exchange_rate         :decimal(8, 6)
-#  invoice_value_foreign :decimal(13, 2)
-#  invoice_value         :decimal(13, 2)
-#  country_origin_code   :string(255)
-#  gross_weight          :integer
-#  total_charges         :decimal(11, 2)
-#  invoice_date          :date
-#  mfid                  :string(255)
-#  vendor_id             :integer
-#  importer_id           :integer
-#  consignee_id          :integer
-#  total_quantity        :decimal(12, 5)
-#  total_quantity_uom    :string(255)
-#  docs_received_date    :date
-#  docs_ok_date          :date
-#  issue_codes           :string(255)
-#  rater_comments        :text
-#  destination_code      :string(255)
-#  non_dutiable_amount   :decimal(13, 2)
+#  id                     :integer          not null, primary key
+#  invoice_number         :string(255)
+#  vendor_name            :string(255)
+#  entry_id               :integer
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  currency               :string(255)
+#  exchange_rate          :decimal(8, 6)
+#  invoice_value_foreign  :decimal(13, 2)
+#  invoice_value          :decimal(13, 2)
+#  country_origin_code    :string(255)
+#  gross_weight           :integer
+#  total_charges          :decimal(11, 2)
+#  invoice_date           :date
+#  mfid                   :string(255)
+#  vendor_id              :integer
+#  importer_id            :integer
+#  consignee_id           :integer
+#  total_quantity         :decimal(12, 5)
+#  total_quantity_uom     :string(255)
+#  docs_received_date     :date
+#  docs_ok_date           :date
+#  issue_codes            :string(255)
+#  rater_comments         :text
+#  destination_code       :string(255)
+#  non_dutiable_amount    :decimal(13, 2)
+#  master_bills_of_lading :text
+#  house_bills_of_lading  :text
 #
 # Indexes
 #

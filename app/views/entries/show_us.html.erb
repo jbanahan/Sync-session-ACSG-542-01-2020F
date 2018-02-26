@@ -307,19 +307,24 @@ $(function() {
       <table class='ent_columns'>
         <tbody>
           <tr>
-            <td colspan='2'>
+            <td colspan='3'>
               <h3><%= model_field_labels :ci_invoice_number %><%= show_model_fields ci, :ci_invoice_number, editor_only: true, wrap_with: lambda {|mf, value| (" - " + value).html_safe} %></h3>
             </td>
           </tr>
           <tr>
-            <td style='width:50%;'>
+            <td style='width:33%;'>
               <table>
-                <%= show_model_fields ci, [:ci_vendor_name,:ci_mfid,:ci_invoice_date,:ci_gross_weight,:ci_country_origin_code,:ci_currency], table:true %>
+                <%= show_model_fields ci, [:ci_invoice_value,:ci_total_charges,:ci_non_dutiable_amount,:ci_invoice_value_foreign,:ci_currency], table:true %>
               </table>
             </td>
-            <td style='width:50%;'>
+            <td style='width:34%;'>
               <table>
-                <%= show_model_fields ci, [:ci_invoice_value,:ci_total_charges,:ci_non_dutiable_amount,:ci_invoice_value_foreign,:ci_total_quantity, :ci_total_quantity_uom], table:true %>
+                <%= show_model_fields ci, [:ci_invoice_date,:ci_vendor_name,:ci_mfid,:ci_country_origin_code], table:true %>
+              </table>
+            </td>
+            <td style='width:33%;'>
+              <table>
+                <%= show_model_fields ci, [:ci_total_quantity,:ci_total_quantity_uom,:ci_gross_weight,:ci_mbols,:ci_hbols], table:true %>
               </table>
             </td>
           </tr>

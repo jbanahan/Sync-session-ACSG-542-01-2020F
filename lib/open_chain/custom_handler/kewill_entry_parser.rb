@@ -863,6 +863,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Find the first line w/ a non-blank mid and use that
       mid = Array.wrap(i[:lines]).find {|l| !l[:mid].blank?}.try(:[], :mid)
       inv.mfid = mid
+
+      inv.master_bills_of_lading = i[:master_bills].join("\n ") unless i[:master_bills].blank?
+      inv.house_bills_of_lading = i[:house_bills].join("\n ") unless i[:house_bills].blank?
     end
 
     def set_invoice_line_data l, line, entry

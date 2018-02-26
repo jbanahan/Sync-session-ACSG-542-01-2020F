@@ -311,7 +311,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                   }
                 ]
               }
-            ]
+            ],
+            "master_bills":["MOLU13903762056", "MOLU13903762057"],
+            "house_bills":["ABCD1029384756", "ABCD1029384757"]
           },
           {
             'ci_no' => 'INV2',
@@ -374,7 +376,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                   }
                 ]
               }
-            ]
+            ],
+            "master_bills":[],
+            "house_bills":[]
           }
         ]
       }
@@ -624,6 +628,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # MID is pulled up from the first line.
       expect(ci.mfid).to eq "MANFU"
       expect(ci.non_dutiable_amount).to eq BigDecimal("123.45")
+      expect(ci.master_bills_of_lading).to eq("MOLU13903762056\n MOLU13903762057")
+      expect(ci.house_bills_of_lading).to eq("ABCD1029384756\n ABCD1029384757")
 
       line = ci.commercial_invoice_lines.first
       expect(line.line_number).to eq 1
@@ -715,6 +721,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # There's a couple different scenarios to check out in the second invoice
       ci = entry.commercial_invoices.second
       line = ci.commercial_invoice_lines.first
+      expect(ci.master_bills_of_lading).to be_nil
+      expect(ci.house_bills_of_lading).to be_nil
+
       # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point,
       # which was wrong and has since been fixed.
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
