@@ -139,18 +139,18 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
     
     it "errors if Ellery is missing" do
       ellery.destroy
-      expect { subject.parse data }.to raise_error "No importer found with system code ELLHOL."
+      expect { subject.parse data }.to raise_error "No importer found with System Code ELLHOL."
     end
 
     it "errors if Order is missing" do
       order.destroy
-      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "No Ellery Order found for Order # '60460'."
+      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>Ellery orders are missing for the following Order Numbers:<br>60460"
     end
 
     it "errors if Order Line is missing" do
       order.order_lines.destroy_all
 
-      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "No order line found on Order # '60460' with a Part Number of '17363BEDDFULMUL'."
+      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>Ellery order lines are missing for the following Order / Part Number pairs:<br>60460 / 17363BEDDFULMUL<br>60460 / 17363BEDDKNGMUL"
     end
 
   end

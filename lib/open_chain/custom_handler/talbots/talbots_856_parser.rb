@@ -13,6 +13,10 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
 
   # NOTE: The self.parse method definition is defined in EdiParserSupport
 
+  def business_logic_errors
+    @business_logic_errors ||= Hash.new { |h,k| h[k] = [] }
+  end
+
   def process_transaction user, transaction, last_file_bucket:, last_file_path:
     edi_segments = transaction.segments
     bsn_segment = find_segment(edi_segments, "BSN")
@@ -33,10 +37,23 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
       else
         process_shipment(shipment, edi_segments)
       end
-
+      raise_business_logic_errors if business_logic_errors.keys.present?
       shipment.save!
       shipment.create_snapshot user, nil, last_file_path
     end
+  end
+
+  def raise_business_logic_errors
+    message = "".html_safe
+    if business_logic_errors[:missing_orders].present?
+      message << "<br>Talbots orders are missing for the following Order Numbers:<br>".html_safe
+      message << business_logic_errors[:missing_orders].map{ |o| CGI.escapeHTML o }.join('<br>').html_safe
+    end
+    if business_logic_errors[:missing_lines].present?
+      message << "<br>Talbots order lines are missing for the following Order Number / Sku pairs:<br>".html_safe
+      message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
+    end
+    raise EdiBusinessLogicError, message
   end
 
   def process_shipment(shipment, segments)
@@ -50,8 +67,8 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
       equipment_loop[:hl_children].each do |order_loop|
         order = process_order(shipment, order_loop[:segments])
 
-        order_loop[:hl_children].each do |item_loop|
-          process_item(shipment, container, order, item_loop[:segments])
+        if order
+          order_loop[:hl_children].each { |item_loop| process_item(shipment, container, order, item_loop[:segments]) }
         end
       end
     end
@@ -160,7 +177,10 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
 
     order_line = order.order_lines.find { |line| line.product.try(:custom_value, cdefs[:prod_part_number]) == style }
 
-    raise EdiBusinessLogicError, "No order line found on Order # '#{order.customer_order_number}' with a Sku of '#{style}'." if order_line.nil?
+    unless order_line
+      business_logic_errors[:missing_lines] << "#{order.customer_order_number} / #{style}"
+      return
+    end
 
     line = shipment.shipment_lines.build
     line.container = container
@@ -219,7 +239,10 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   def find_order order_number
     @cache = Hash.new do |h, k|
       order = Order.where(importer_id: importer.id, customer_order_number: order_number).first
-      raise EdiBusinessLogicError, "No Talbots Order found for Order # '#{order_number}'." unless order
+      unless order
+        business_logic_errors[:missing_orders] << order_number
+        return
+      end
       h[k] = order
     end
 

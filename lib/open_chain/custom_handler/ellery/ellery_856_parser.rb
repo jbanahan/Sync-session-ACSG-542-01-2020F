@@ -13,12 +13,16 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
 
   def importer
     @imp ||= Company.where(importer: true, system_code: "ELLHOL").first
-    raise "No importer found with system code ELLHOL." unless @imp
+    raise "No importer found with System Code ELLHOL." unless @imp
     @imp
   end
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shpln_invoice_number, :shpln_received_date, :prod_part_number, :shp_invoice_prepared])
+  end
+
+  def business_logic_errors
+    @business_logic_errors ||= Hash.new { |h,k| h[k] = [] }
   end
   
   def port port_code
@@ -44,9 +48,23 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
 
     find_and_process_shipment(importer, imp_reference, last_exported_from_source, last_file_bucket, last_file_path) do |shipment|      
       process_shipment(shipment, edi_segments)
+      raise_business_logic_errors if business_logic_errors.keys.present?
       shipment.save!
       shipment.create_snapshot user, nil, last_file_path
     end
+  end
+
+  def raise_business_logic_errors
+    message = "".html_safe
+    if business_logic_errors[:missing_orders].present?
+      message << "<br>Ellery orders are missing for the following Order Numbers:<br>".html_safe
+      message << business_logic_errors[:missing_orders].map{ |o| CGI.escapeHTML o }.join('<br>').html_safe
+    end
+    if business_logic_errors[:missing_lines].present?
+      message << "<br>Ellery order lines are missing for the following Order / Part Number pairs:<br>".html_safe
+      message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
+    end
+    raise EdiBusinessLogicError, message
   end
 
   def find_and_process_shipment importer, imp_reference, last_exported_from_source, last_file_bucket, last_file_path
@@ -80,7 +98,9 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
       equipment_loop[:hl_children].each do |order_loop|
         order = process_order(shipment, order_loop[:segments])
 
-        order_loop[:hl_children].each { |item_loop| process_item(shipment, container, order, item_loop[:segments]) }
+        if order
+          order_loop[:hl_children].each { |item_loop| process_item(shipment, container, order, item_loop[:segments]) }
+        end
       end
     end
 
@@ -178,7 +198,11 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
   def find_order order_number
     @cache = Hash.new do |h, k|
       order = Order.where(importer_id: importer.id, customer_order_number: order_number).first
-      raise EdiBusinessLogicError, "No Ellery Order found for Order # '#{order_number}'." unless order
+      unless order
+        business_logic_errors[:missing_orders] << order_number
+        return
+      end
+      
       h[k] = order
     end
 
@@ -193,8 +217,9 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
     if part_num
       order_line = order.order_lines.find { |line| line.product.try(:custom_value, cdefs[:prod_part_number]) == part_num }
     end
-    if order_line.nil?
-      raise EdiBusinessLogicError, "No order line found on Order # '#{order.customer_order_number}' with a Part Number of '#{part_num}'." 
+    unless order_line
+      business_logic_errors[:missing_lines] << "#{order.customer_order_number} / #{part_num}"
+      return
     end
 
     line = shipment.shipment_lines.build(container: container, linked_order_line_id: order_line.id, product: order_line.product)

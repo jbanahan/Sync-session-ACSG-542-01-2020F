@@ -130,13 +130,13 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
     it "errors if Order is missing" do
       order.destroy
 
-      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "No Talbots Order found for Order # '833754'."
+      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>Talbots orders are missing for the following Order Numbers:<br>833754"
     end
 
     it "errors if an order line is missing" do
       order.order_lines.destroy_all
 
-      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "No order line found on Order # '833754' with a Sku of '15D2020DT'."
+      expect { subject.parse data }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>Talbots order lines are missing for the following Order Number / Sku pairs:<br>833754 / 15D2020DT"
     end
 
     it "errors if Talbots is missing" do
