@@ -96,15 +96,23 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(EntitySnapshot.count).to eq 1
     end
     context "when line numbers are found" do
-      it "updates existing order lines when line" do
+      it "updates existing order lines when not booked" do
         o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
-        old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
-        original_line_id = old_ol.id
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
 
         run_file
-        new_ol = OrderLine.find original_line_id
-        expect(new_ol.line_number).to eq 1
-        expect(new_ol.quantity).to eq 299
+        ol.reload
+        expect(ol.quantity).to eq 299
+      end
+      it "updates existing order lines when booked" do
+        o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        s = Factory(:shipment, reference: "REF")
+        s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
+
+        run_file
+        ol.reload
+        expect(ol.quantity).to eq 299
       end
       it "removes order lines not present in the XML" do
         o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
@@ -115,18 +123,27 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       end
     end
     context "when line numbers aren't found" do
-      it "does full replace of order lines" do
-        dom = REXML::Document.new(IO.read(@path))
-        REXML::XPath.each(dom.root,'//PO101') {|el| el.text = ''}
+      let(:dom) { REXML::Document.new(IO.read(@path)) }
+      before { REXML::XPath.each(dom.root,'//PO101') {|el| el.text = ''} }
+      
+      it "replaces order lines when not booked" do
         o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
         old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
-        original_line_id = old_ol.id
 
         described_class.parse_dom dom
-        expect{ OrderLine.find original_line_id }.to raise_error ActiveRecord::RecordNotFound
-        new_ol = o.order_lines.first
-        expect(new_ol.line_number).to eq 1
+        expect {old_ol.reload}.to raise_error ActiveRecord::RecordNotFound
+        new_ol = OrderLine.where(line_number: 1).first
         expect(new_ol.quantity).to eq 299
+      end
+      it "doesn't change lines when booked" do
+        o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        s = Factory(:shipment, reference: "REF")
+        s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
+
+        described_class.parse_dom dom
+        ol.reload
+        expect(ol.quantity).to eq 111
       end
     end
     it "should update product name" do
@@ -193,15 +210,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.order_lines.count).to eq 4
       expect(o.approval_status).to be_nil
     end
-    it "updates booked (but unshipped) order" do
+    it "updates booked (but unshipped) order header" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',fob_point: "PK", approval_status: "Accepted")
-      ol = Factory(:order_line,order:o,sku:"SKU")
+      ol = Factory(:order_line,order:o)
       s = Factory(:shipment, reference: "REF")
       s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
       
       run_file
       o.reload
-      expect(o.order_lines.first.sku).to eq '28332664'
       expect(o.fob_point).to eq "CN"
       expect(o.approval_status).to be_nil
     end

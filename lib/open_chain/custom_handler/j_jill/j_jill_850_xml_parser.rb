@@ -34,14 +34,13 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   def parse_dom dom
     r = dom.root
-    # if line number doesn't appears in the first order, all line changes are full replacement
-    replace_lines = !REXML::XPath.first(dom.root, '//PO101').try(:text).try(:present?)
+    line_numbers_exist = REXML::XPath.first(dom.root, '//PO101').try(:text).try(:present?)
     extract_date = parse_extract_date r
-    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date, replace_lines }
+    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date, line_numbers_exist }
   end
 
   private
-  def parse_order order_root, extract_date, replace_lines
+  def parse_order order_root, extract_date, line_numbers_exist
     @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text.to_i == 1
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
@@ -66,7 +65,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         po_assigned_to_shipment = true
       elsif booked
         update_header = @inner_opts[:force_header_updates] == true || !multiple_bookings
-        update_lines = !multiple_bookings
+        update_lines = !multiple_bookings && line_numbers_exist
       end
 
       ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
@@ -78,7 +77,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.agent = agents.first if agents.size == 1
       end
 
-      parse_lines ord, order_root, replace_lines if update_lines
+      parse_lines ord, order_root, line_numbers_exist if update_lines
         
       if update_header || update_lines
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
@@ -191,11 +190,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     nil #return
   end
   
-  def parse_lines order, order_root, replace_lines
-    if replace_lines
-      parse_lines_with_replace order, order_root
-    else
+  def parse_lines order, order_root, line_numbers_exist
+    if line_numbers_exist
       parse_lines_with_update order, order_root
+    else
+      # only when order isn't booked
+      parse_lines_with_replace order, order_root
     end
   end
 
