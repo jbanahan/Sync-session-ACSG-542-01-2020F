@@ -13,8 +13,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h = described_class.new @check_file, @invoice_file
     end
 
-    it "reads custom files, generates sql proxy requests, kicks off upload, reports errors" do
-      user = Factory(:user)
+    it "reads custom files, generates sql proxy requests, kicks off upload" do
+      user = Factory(:user, email: "st-hubbins@hellhole.co.uk")
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(@h).to receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
       expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
-      expect(@h).to receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
       expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
@@ -34,8 +34,45 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       @h.process user
 
-      # No messages are generated if everything is good w/ the load
       m = user.messages.first
+      expect(m).to be_nil
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["st-hubbins@hellhole.co.uk"]
+      expect(mail.subject).to eq "Day End Processing Complete"
+      expect(mail.body.raw_source).to match(/Day End Processing has completed./)
+
+      @check_file.reload
+      @invoice_file.reload
+      expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@check_file.finish_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "reports errors for checks that have already been sent" do
+      user = Factory(:user, email: "st-hubbins@hellhole.co.uk")
+      check_info = {checks: ""}
+      invoice_info = {invoices: ""}
+      expect(@h).to receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
+      expect(@h).to receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
+
+      check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)], errors: ["Check # 1234 for $500.00"]}
+
+      expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+
+      @h.process user
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["st-hubbins@hellhole.co.uk", described_class::ERROR_EMAIL]
+      expect(mail.subject).to eq "Error creating Intacct-Alliance check(s)"
+      expect(mail.body.raw_source).to match(/The following checks have already been sent to Intacct/)
+      expect(mail.body.raw_source).to match(/Check # 1234 for \$500.00/)      
+      
       @check_file.reload
       @invoice_file.reload
       expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
@@ -78,7 +115,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
       expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
-      expect(@h).to receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
       expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
@@ -111,7 +148,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
       expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
-      expect(@h).to receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
       expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({checks: ["Error", "Error"], invoices: ["Error", "Error"]})
       
@@ -145,7 +182,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
       expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
-      expect(@h).to receive(:wait_for_export_updates).with check_results[:exports] + invoice_results[:exports]
+      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
       expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
@@ -154,6 +191,11 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.process
 
       expect(user.messages.first).not_to be_nil
+    end
+
+    it "errors if missing either invoice file" do
+      h = described_class.new(@check_file)
+      expect{h.process}.to raise_error "Missing invoice file!"
     end
   end
 
@@ -224,7 +266,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail).not_to be_nil
-      expect(mail.to).to eq ["me@there.com"]
+      expect(mail.to).to eq ["me@there.com", described_class::ERROR_EMAIL]
       expect(mail.subject).to eq "Alliance Day End Errors"
       expect(mail.body.raw_source).to include "Errors were encountered while attempting to read the Alliance Day end files.<br>"
       expect(mail.body.raw_source).to include 'Found 2 errors in the Check Register File check_name.<br'
@@ -289,44 +331,47 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
   end
 
   describe "wait_for_export_updates" do
+    let(:u) { Factory(:user, email: "tufnel@stonehenge.biz") }
+
     it 'waits for alliance exports to all get updated' do
       export = IntacctAllianceExport.create! data_received_date: Time.zone.now
       export2 = IntacctAllianceExport.create! 
 
       h = described_class.new(nil, nil)
-      allow(h).to receive(:all_exports_finished?).with([export.id, export2.id]).and_return false
+      allow(h).to receive(:unfinished_exports).with([export.id, export2.id]).and_return [export2]
 
       t = Thread.new {
-        h.wait_for_export_updates [export, export2], 1, 5
+        h.wait_for_export_updates [u], [export, export2], 1, 5
       }
       started = Time.zone.now.to_i
 
       sleep 1
       # Make sure the thread is still sleeping
       expect(t).to be_alive
-      allow(h).to receive(:all_exports_finished?).with([export.id, export2.id]).and_return true
+      allow(h).to receive(:unfinished_exports).with([export.id, export2.id]).and_return []
       t.join(2)
       stopped = Time.zone.now.to_i
       expect(stopped - started).not_to be > 6
+      expect(ActionMailer::Base.deliveries.count).to eq 0
     end
 
-    it "raises an error if too much time has passed" do
+    it "emails a list of IntacctAllianceExport objects missing data after the timeout" do
       export = IntacctAllianceExport.create! data_received_date: Time.zone.now
-      export2 = IntacctAllianceExport.create!
+      export2 = IntacctAllianceExport.create! export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, ap_total: 1, check_number: "cnum 1", file_number: "fnum 1"
+      export3 = IntacctAllianceExport.create! export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE, ap_total: 2, ar_total: 3, check_number: "cnum 2", file_number: "fnum 2", suffix: "ABC"
       h = described_class.new(nil, nil)
-      allow(h).to receive(:all_exports_finished?).with([export.id, export2.id]).and_return false
-      error = nil
-      t = Thread.new {
-        begin
-          h.wait_for_export_updates [export, export2], 1, 2
-        rescue => e
-          error = e
-        end
-      }
+      allow(h).to receive(:unfinished_exports).with([export.id, export2.id, export3.id]).and_return [export2, export3]
+      t = Thread.new { h.wait_for_export_updates [u], [export, export2, export3], 1, 2 }
       t.join(3)
       
       expect(t).not_to be_alive
-      expect(error).not_to be_nil
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["tufnel@stonehenge.biz", described_class::ERROR_EMAIL]
+      expect(mail.subject).to eq "Intacct-Alliance data not received"
+      expect(mail.body.raw_source).to match(/\$1.00 for check cnum 1 \/ file fnum 1 could not be retrieved\./)
+      expect(mail.body.raw_source).to match(/\$3.00 AR \/ 2.00 AP for Invoice fnum 2ABC could not be retrieved\./)
     end
   end
 
@@ -367,15 +412,15 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
   end
 
-  describe "all_exports_finished?" do
-    it "returns true if there are no exports waiting to receive data" do
+  describe "unfinished_exports" do
+    it "returns list of exports waiting to receive data" do
       h = described_class.new(nil, nil)
       export = IntacctAllianceExport.create! data_received_date: Time.zone.now
       export2 = IntacctAllianceExport.create!
-      expect(h.all_exports_finished?([export.id, export2.id])).to be_falsey
+      expect(h.unfinished_exports([export.id, export2.id])).to eq [export2]
 
       export2.update_attributes! data_received_date: Time.zone.now
-      expect(h.all_exports_finished?([export.id, export2.id])).to be_truthy
+      expect(h.unfinished_exports([export.id, export2.id])).to be_empty
     end
   end
 

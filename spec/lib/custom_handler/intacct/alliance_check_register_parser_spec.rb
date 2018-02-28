@@ -206,7 +206,7 @@ FILE
       check, errors = described_class.new.create_and_request_check @check_info, nil
       expect(check).to be_nil
       expect(errors.length).to eq 1
-      expect(errors).to include "Check # #{@check_info[:check_number]} has already been sent to Intacct."
+      expect(errors).to include "Check # #{@check_info[:check_number]} for $#{sprintf('%.2f', @check_info[:check_amount])}"
     end
 
     it "creates a single check when multiple rows reference the same check number with different file number" do

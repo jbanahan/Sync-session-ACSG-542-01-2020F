@@ -196,9 +196,9 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # The amount thing here is a DelayedJob workaround...the version we're using doesn't serialize BigDecimal correctly.
       # Instead it ends up in the delayed_job process as a float, which ends up being inexact when attempting to do any sort of multiplication
       # Just do the amount change to Alliance format here instead
-      sql_proxy_client.delay.request_check_details check.file_number, check.check_number, check.check_date, check.bank_number, check.amount.to_s
+      sql_proxy_client.delay(priority: -1).request_check_details check.file_number, check.check_number, check.check_date, check.bank_number, check.amount.to_s
     else
-      errors << "Check # #{check_info[:check_number]} has already been sent to Intacct."
+      errors << "Check # #{check_info[:check_number]} for $#{sprintf('%.2f', check_info[:check_amount])}"
     end
 
     [check, errors]

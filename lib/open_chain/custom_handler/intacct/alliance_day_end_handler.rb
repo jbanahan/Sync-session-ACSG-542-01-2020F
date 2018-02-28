@@ -9,6 +9,8 @@ require 'spreadsheet'
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHandler
   include ActionView::Helpers::NumberHelper
 
+  ERROR_EMAIL = "support@vandegriftinc.com"
+
   def self.process_delayed check_register_file_id, invoice_file_id, user_id
     user = user_id ? User.find(user_id) : nil
     check_register_file = CustomFile.find check_register_file_id
@@ -18,7 +20,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     p.process user
   end
 
-  def initialize check_register_file, invoice_file
+  # 2nd arg optional for compatibility with CustomFeatureController#generic_download
+  def initialize check_register_file, invoice_file=nil
     @check_register = check_register_file
     @invoices = invoice_file
   end
@@ -27,7 +30,12 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     IntacctErrorsController.allowed_user?(user)
   end
 
+  def can_view? user
+    self.class.can_view? user
+  end
+
   def process user = nil
+    raise "Missing invoice file!" unless @invoices
     users = []
     if user.nil?
       users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
@@ -59,6 +67,11 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       proxy_client = OpenChain::KewillSqlProxyClient
       check_results = create_checks(check_info, check_parser, proxy_client)
 
+      if check_results[:errors].present?
+        handle_check_errors(users.map(&:email), check_results[:errors]) 
+        return nil
+      end
+
       check_sum = BigDecimal.new "0"
       check_results[:exports].each do |ex|
         check_sum += ex.ap_total
@@ -72,7 +85,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         ar_sum += ex.ar_total
       end
 
-      wait_for_export_updates check_results[:exports] + invoice_results[:exports]
+      wait_for_export_updates users, check_results[:exports] + invoice_results[:exports]
       wait_for_dimension_uploads
 
       errors = validate_export_amounts_received start, check_sum, ar_sum, ap_sum
@@ -97,14 +110,18 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         subject += " With Errors"
         message += "<br>#{error_count} errors were encountered.  A separate report containing errors will be mailed to you."
       end
-      send_messages_to_users(users, subject, message) if error_count > 0
+      if error_count > 0
+        send_messages_to_users(users, subject, message)
+      else
+        OpenMailer.send_simple_html(users.map(&:email), subject, message.html_safe).deliver!
+      end
     end
 
     nil
   ensure
     end_time = Time.zone.now
     @check_register.update_attributes! finish_at: end_time
-    @invoices.update_attributes! finish_at: end_time
+    @invoices.try(:update_attributes!, finish_at: end_time)
   end
 
   def read_check_register check_file, parser
@@ -151,7 +168,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
       body += "Please see the attached report for all error messages and resolve the issues before resending the files."
 
-      OpenMailer.send_simple_html(email_to, "Alliance Day End Errors", body.html_safe, [f]).deliver!
+      OpenMailer.send_simple_html(email_to << ERROR_EMAIL, "Alliance Day End Errors", body.html_safe, [f]).deliver!
     end
   end
 
@@ -175,11 +192,11 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     {errors: all_errors, exports: exports}
   end
 
-  def all_exports_finished? export_ids
-     IntacctAllianceExport.where(id: export_ids).where("data_received_date IS NULL").count == 0
+  def unfinished_exports export_ids
+     IntacctAllianceExport.where(id: export_ids).where("data_received_date IS NULL")
   end
 
-  def wait_for_export_updates exports, sleep_time = 10, max_wait_time = 3600
+  def wait_for_export_updates users, exports, sleep_time = 10, max_wait_time = 1800
     export_ids = exports.map &:id
 
     # Give the data at most an hour to come across...it shouldn't take anywhere near this amount of time, but be generous.
@@ -187,14 +204,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     count = 0
     while ((count +=1) <= max_loop_count)
       # Check is moved to another method primarily for testing purposes
-      break if all_exports_finished?(export_ids)
+      break if unfinished_exports(export_ids).empty?
       sleep(sleep_time)
     end
 
-    raise Timeout::Error if count > max_loop_count
+    email_unfinished_exports users, unfinished_exports(export_ids)
   end
 
-  def wait_for_dimension_uploads sleep_time = 1, max_wait_time = 3600
+  def wait_for_dimension_uploads sleep_time = 1, max_wait_time = 900
     # We need to make sure all dimension uploads clear before kicking off 
     # the actual intacct uploads, otherwise, there's a distinct chance of an upload
     # failing because the file number isn't in Intacct yet.
@@ -241,7 +258,15 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     report.run ['vfc', 'lmd'], email_to
   end
 
-  private 
+  def handle_check_errors users, errors
+    subject = "Error creating Intacct-Alliance check(s)"
+    body = "<p>The following checks have already been sent to Intacct and need to be manually removed from the Check Register report.  Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
+    errors.each { |err| body += "<li>#{CGI.escapeHTML err}</li>" }
+    body += "</ul></p>"
+    OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver!
+  end
+
+  private
 
     def generate_errors_xls check_errors, invoice_errors
       wb = Spreadsheet::Workbook.new
@@ -258,6 +283,19 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       end
 
       wb
+    end
+
+    def email_unfinished_exports users, exports
+      return if exports.empty?
+      subject = "Intacct-Alliance data not received"
+      body = exports.inject("<ul>") do |msg, ex|
+        if ex.export_type == IntacctAllianceExport::EXPORT_TYPE_CHECK
+          msg << "<li>$#{sprintf('%.2f', ex.ap_total)} for check #{ex.check_number} / file #{ex.file_number} could not be retrieved.</li>"
+        elsif ex.export_type == IntacctAllianceExport::EXPORT_TYPE_INVOICE
+          msg << "<li>$#{sprintf('%.2f', ex.ar_total)} AR / #{sprintf('%.2f', ex.ap_total)} AP for Invoice #{ex.file_number}#{ex.suffix} could not be retrieved.</li>"
+        end
+      end.<<("/ul").html_safe
+      OpenMailer.send_simple_html(users.map(&:email) << ERROR_EMAIL, subject, body).deliver!
     end
 
     def send_messages_to_users users, subject, message

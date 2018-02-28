@@ -185,7 +185,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
         export.save!
       end
 
-      sql_proxy_client.delay.request_alliance_invoice_details export.file_number, export.suffix
+      sql_proxy_client.delay(priority: -1).request_alliance_invoice_details export.file_number, export.suffix
     end
 
     [export, errors]

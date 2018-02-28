@@ -8,14 +8,14 @@ module Api; module V1; class IntacctDataController < SqlProxyPostbacksController
 
   def receive_alliance_invoice_details
     extract_results(params) do |p, context|
-      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay.parse_query_results p.to_json
+      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay(priority: -1).parse_query_results p.to_json
       render json: {"OK" => ""}
     end
   end
 
   def receive_check_result
     extract_results(params) do |p, context|
-      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay.parse_check_result p.to_json
+      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay(priority: -1).parse_check_result p.to_json
       render json: {"OK" => ""}
     end
   end
