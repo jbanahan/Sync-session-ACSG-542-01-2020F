@@ -1,4 +1,5 @@
 require 'open_chain/xl_client'
+require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser

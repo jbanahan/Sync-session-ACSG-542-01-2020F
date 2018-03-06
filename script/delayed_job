@@ -16,6 +16,6 @@ Delayed::Worker.destroy_failed_jobs = false
 # Preload all of lib (this prevents use from having to individually require files for delayed usage in an initializer)
 # If we didn't do this, any .rb files referenced from delayed methods that aren't required when rails loads the .rb files
 # from the app directory will fail to run.  This ends up being a minimal memory bump for delayed jobs, so it's worth it.
-Dir[Rails.root + 'lib/**/*.rb'].each {|f| require f}
+Dir[Rails.root.join("lib/**/*.rb")].sort.each {|f| require f}
 
 Delayed::Command.new(ARGV).daemonize

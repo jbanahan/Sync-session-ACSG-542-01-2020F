@@ -13,10 +13,10 @@ require 'database_cleaner'
 # don't auto-run minitest which we don't use, but is required by ActiveSupport
 Test::Unit.run = true if defined?(Test::Unit) && Test::Unit.respond_to?(:run=)
 
-Dir[Rails.root.join("lib/**/*.rb")].each {|f| require f}
+Dir[Rails.root.join("lib/**/*.rb")].sort.each {|f| require f}
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
-Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
+Dir[Rails.root.join("spec/support/**/*.rb")].sort.each {|f| require f}
 include Helpers
 
 Rails.logger.level = 4
