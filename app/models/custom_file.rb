@@ -37,6 +37,7 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_style_color_region_parser'
 require 'open_chain/custom_handler/under_armour/ua_style_color_factory_parser'
 require 'open_chain/custom_handler/ci_load_handler'
+require 'open_chain/custom_handler/lands_end/le_chapter_98_parser'
 require 'open_chain/custom_handler/fisher/fisher_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/j_crew/j_crew_returns_parser'
 require 'open_chain/custom_handler/ascena/ascena_ca_invoice_handler'
@@ -75,6 +76,7 @@ class CustomFile < ActiveRecord::Base
       # multiple method params, just check if process has an arity greater than one, and pass parameters if so,
       # otherwise, pass just the user
       h = handler
+      byebug
       if h.method(:process).arity > 1
         r = h.process user, parameters
       else

@@ -538,6 +538,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/le_ci_load" => "custom_features#le_ci_load_index", :via=>:get
   match "/custom_features/le_ci_load/upload" => "custom_features#le_ci_load_upload", :via => :post
   match "/custom_features/le_ci_load/:id/download" => "custom_features#le_ci_load_download", :via => :get
+  match "/custom_features/le_chapter_98/:id/download" => "custom_features#le_chapter_98_download", :via => :get
+  match "/custom_features/le_chapter_98_load" => "custom_features#le_chapter_98_index", :via => :get
+  match "/custom_features/le_chapter_98/upload" => "custom_features#le_chapter_98_upload", :via => :post
   match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_index", :via=>:get
   match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_run", :via=>:post
   match "/custom_features/alliance_day_end" => "custom_features#alliance_day_end_index", :via=>:get
