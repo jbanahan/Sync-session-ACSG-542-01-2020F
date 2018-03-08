@@ -21,52 +21,43 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
       expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing."
     end
 
-    it "should put errors into the user messages" do
-      expect(@h).to receive(:parse).with(@cf.attached.path).and_return ["Error1", "Error2"]
+    it "should catch handler errors and store message to user" do
+      expect(@h).to receive(:parse).with(@cf.attached.path).and_raise described_class::AscenaCaInvoiceHandlerError.new("ERROR")
 
-      @h.process @user
+      @h.process(@user)
 
-      expect(@user.messages.length).to eq 1
       expect(@user.messages.first.subject).to eq "Ascena Invoice File Processing Completed With Errors"
-      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nError1\nError2"
+      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.<br>Unrecoverable errors were encountered while processing this file.<br>ERROR"
     end
 
-    it "should handle uncaught errors" do
-      expect(@h).to receive(:parse).with(@cf.attached.path).and_raise "Error"
+    it "should catch and re-throw other errors" do
+      expect(@h).to receive(:parse).with(@cf.attached.path).and_raise "ERROR"
 
-      expect {@h.process(@user)}.to raise_error "Error"
+      expect{ @h.process(@user) }.to raise_error "ERROR"
 
       expect(@user.messages.first.subject).to eq "Ascena Invoice File Processing Completed With Errors"
-      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.\n\nUnrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
+      expect(@user.messages.first.body).to eq "Ascena Invoice File '#{@cf.attached_file_name}' has finished processing.<br>Unrecoverable errors were encountered while processing this file.<br>ERROR"
     end
   end
 
   describe "parse" do
-    it "should call s3_to_db and return any errors" do
-      handler = described_class.new "file.csv" # dummy input 
-      s3_path = "path/to/s3_file"
-      expect(handler).to receive(:s3_to_db).with(s3_path).and_raise "ERROR"
-      expect(handler.parse s3_path).to eq ["Failed to process invoice due to the following error: 'ERROR'."]
-    end
-  end
-
-  describe "s3_to_db" do
-    before :each do
-      @handler = described_class.new "file.csv" # dummy input 
+    let(:handler) { described_class.new "some file" }
+    let(:temp_file) { double "temp file" }
+    let(:s3_path) { "path/to/s3_file.csv" }
+    
+    before do
+      allow(OpenChain::S3).to receive(:download_to_tempfile).with('chain-io', s3_path).and_yield temp_file
     end
 
     it "parses the input file if it's a .csv" do
-      s3_path = "path/to/s3_file.csv"
-      temp_file = double()
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with('chain-io', s3_path).and_yield temp_file
-      expect(@handler).to receive(:parse_csv).with(temp_file)
-      @handler.s3_to_db s3_path
+      expect(handler).to receive(:parse_csv).with(temp_file)
+      handler.parse s3_path
     end
 
     it "raises an error and doesn't parse the file if it isn't a .csv" do
       s3_path = "path/to/s3_file.xls"
-      expect(@handler).not_to receive(:parse_csv)
-      expect{ @handler.s3_to_db s3_path }.to raise_error "No CI Upload processor exists for .xls file types."
+      expect(handler).not_to receive(:parse_csv)
+      expect{ handler.parse s3_path }.to raise_error described_class::AscenaCaInvoiceHandlerError, "No CI Upload processor exists for .xls file types."
     end
   end
 
@@ -91,7 +82,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
 
       @co = Factory(:company, fenix_customer_number: "858053119RM0001")
       @ci = Factory(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: @co.id) 
-      @handler = described_class.new "file.csv" # dummy input
+      @handler = described_class.new "some file"
     end
 
     describe "parse_csv" do

@@ -9,19 +9,14 @@ module OpenChain; module CustomHandler; module Ascena
     def process user
       errors = []
       begin
-        errors = parse @custom_file.attached.path
-      rescue
-        errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
-        raise 
+        parse(@custom_file.attached.path)
+      rescue AscenaCaInvoiceHandlerError => e
+        load_errors(errors, e.message)
+      rescue => e
+        load_errors(errors, e.message)
+        raise e
       ensure
-        body = "Ascena Invoice File '#{@custom_file.attached_file_name}' has finished processing."
-        subject = "Ascena Invoice File Processing Completed"
-        unless errors.blank?
-          body += "\n\n#{errors.join("\n")}"
-          subject += " With Errors"
-        end
-       
-        user.messages.create(:subject=>subject, :body=>body)
+        assign_message user, errors, @custom_file.attached_file_name 
       end
       nil
     end
@@ -31,21 +26,11 @@ module OpenChain; module CustomHandler; module Ascena
     end
 
     def parse s3_path
-      errors = []
-      begin
-        s3_to_db s3_path
-      rescue => e
-        errors << "Failed to process invoice due to the following error: '#{e.message}'."
+      if File.extname(s3_path).downcase == ".csv"
+        OpenChain::S3.download_to_tempfile('chain-io', s3_path) { |file| parse_csv file }
+      else
+        raise AscenaCaInvoiceHandlerError, "No CI Upload processor exists for #{File.extname(s3_path).downcase} file types."
       end
-      errors
-    end
-
-    def s3_to_db s3_path
-        if File.extname(s3_path).downcase == ".csv"
-          OpenChain::S3.download_to_tempfile('chain-io', s3_path) { |file| parse_csv file }
-        else
-          raise "No CI Upload processor exists for #{File.extname(s3_path).downcase} file types."
-        end
     end
 
     def parse_csv csv_file
@@ -100,9 +85,9 @@ module OpenChain; module CustomHandler; module Ascena
 
     def read_line csv_line
       result = {invoice_number: csv_line[0], part_number: csv_line[7..9].join('-'), country_origin_code: csv_line[23], 
-                hts_code: csv_line[27].delete('.'), quantity: csv_line[29], value: csv_line[30]}
-      raise "Tariff number has wrong format!" unless result[:hts_code] =~ /^\d{10}$/
-      raise "Invoice number has wrong format!" unless result[:invoice_number] =~ /^[A-Z]{2}\d{9}$/
+                hts_code: csv_line[27].try(:delete, '.'), quantity: csv_line[29], value: csv_line[30]}
+      raise AscenaCaInvoiceHandlerError, "Tariff number has wrong format!" unless result[:hts_code] =~ /^\d{10}$/
+      raise AscenaCaInvoiceHandlerError, "Invoice number has wrong format!" unless result[:invoice_number] =~ /^[A-Z]{2}\d{9}$/
       result
     end
 
@@ -114,6 +99,23 @@ module OpenChain; module CustomHandler; module Ascena
       existing_invoice
     end
 
+    def load_errors errors, message
+      errors << "Unrecoverable errors were encountered while processing this file." << message
+    end
+
+    def assign_message user, errors, file_name 
+      body = "Ascena Invoice File '#{file_name}' has finished processing."
+      subject = "Ascena Invoice File Processing Completed"
+      unless errors.blank?
+        body += "<br>#{errors.join("<br>")}"
+        subject += " With Errors"
+      end
+      
+      user.messages.create(:subject=>subject, :body=>body)
+    end
+  
+    class AscenaCaInvoiceHandlerError < StandardError
+    end
 
   end
 end; end; end
