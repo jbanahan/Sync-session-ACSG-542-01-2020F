@@ -70,8 +70,6 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
   end
   def generate_initial_hash(lines)
     roll_up_hash = {}
-    roll_up_hash['file_number'] =  '123456789'
-    roll_up_hash['customer'] = 'LANDS1'
     roll_up_hash['inv_number'] = lines.first[2]
     roll_up_hash['inv_date'] = Time.zone.now
     roll_up_hash['country_origin'] = lines.first[19]
