@@ -334,6 +334,16 @@ describe OpenChain::AllianceImagingClient do
       {"sqs_receive_queue" => "sqs"}.with_indifferent_access
     }
 
+    let (:tempfile) {
+      # Have to use a double here rather than a class_double because Tempfile is stupid
+      # and delegates method calls to and internal File object...which means it doesn't technically
+      # implement the File methods and the rspec mocks complains if you try and use class_double and mock
+      # an actual tempfile.
+      t = double(Tempfile)
+      allow(t).to receive(:length).and_return 1
+      t
+    }
+
     let (:hash) { {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"} }
 
     before :each do 
@@ -342,10 +352,9 @@ describe OpenChain::AllianceImagingClient do
 
     it "should use SQS queue to download messages and use the S3 client with tempfile to download the file" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
-      t = double
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
-      expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash, user)
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(tempfile)
+      expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(tempfile, hash, user)
       expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
       OpenChain::AllianceImagingClient.consume_images
@@ -354,10 +363,9 @@ describe OpenChain::AllianceImagingClient do
     it "passes s3 version if present" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
       hash["s3_version"] = "version"
-      t = double
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(t)
-      expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(t, hash, user)
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(tempfile)
+      expect(OpenChain::AllianceImagingClient).to receive(:process_image_file).with(tempfile, hash, user)
       expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
       OpenChain::AllianceImagingClient.consume_images
@@ -367,6 +375,17 @@ describe OpenChain::AllianceImagingClient do
       error = StandardError.new
       expect(OpenChain::SQS).to receive(:poll).exactly(10).times.and_raise error
       expect(error).to receive(:log_me).with(["Alliance imaging client hash: null"]).exactly(10).times
+
+      OpenChain::AllianceImagingClient.consume_images
+    end
+
+    it "skips zero-length files" do
+      t = double(Tempfile)
+      expect(t).to receive(:length).and_return 0
+
+      expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
+      expect(OpenChain::AllianceImagingClient).not_to receive(:process_image_file)
 
       OpenChain::AllianceImagingClient.consume_images
     end
@@ -381,7 +400,15 @@ describe OpenChain::AllianceImagingClient do
 
       let (:entry) { Entry.new source_system: Entry::FENIX_SOURCE_SYSTEM }
       let (:attachment) { Attachment.new }
-      let (:tempfile) {class_double(Tempfile)}
+      let (:tempfile) {
+        # Have to use a double here rather than a class_double because Tempfile is stupid
+        # and delegates method calls to and internal File object...which means it doesn't technically
+        # implement the File methods and the rspec mocks complains if you try and use class_double and mock
+        # an actual tempfile.
+        t = double(Tempfile)
+        allow(t).to receive(:length).and_return 1
+        t
+      }
 
       before :each do 
         hash['export_process'] = "Canada Google Drive"

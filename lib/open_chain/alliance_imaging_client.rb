@@ -74,16 +74,21 @@ class OpenChain::AllianceImagingClient
         end
 
         file = OpenChain::S3.download_to_tempfile bucket, key, opts
-        if hsh["source_system"] == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "sql_proxy"
-          process_fenix_nd_image_file file, hsh, user
-        else
-          response = process_image_file file, hsh, user
-          if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
-            proxy_fenix_drive_docs response[:entry], hash
+        # Due to the possibility of an SQS message getting rerun and how we zero out 
+        # files from the staging S3 location below...zero length files are almost certainly files that have gotten requeued
+        # somehow. so we should ignore them
+        if file.length > 0
+          if hsh["source_system"] == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "sql_proxy"
+            process_fenix_nd_image_file file, hsh, user
           else
-            # File is only zeroed out when proxy_fenix_drive_docs is not run. This is because the file
-            # originates from Google Drive and is forwarded to other VFI Track instances. 
-            OpenChain::S3.zero_file bucket, key
+            response = process_image_file file, hsh, user
+            if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
+              proxy_fenix_drive_docs response[:entry], hash
+            else
+              # File is only zeroed out when proxy_fenix_drive_docs is not run. This is because the file
+              # originates from Google Drive and is forwarded to other VFI Track instances. 
+              OpenChain::S3.zero_file bucket, key
+            end
           end
         end
 
