@@ -24,7 +24,7 @@
       Label: <%=text_field_tag "label"%><br />
       S3 Path: <%=text_field_tag "path", "", :size=>70 %><br />
       Activate: <%=check_box_tag "activate", "yes", true%><br />
-      Process At: <%=select_datetime(Time.zone.now, :ampm => true)%>
+      Process At: <%=select_datetime(Time.zone.now.change(hour: 21, minute: 0, second: 0), :ampm => true)%>
     <%end%>
   </div>
 <%end%>
