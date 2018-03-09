@@ -17,7 +17,6 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
   end
 
   def process user, parameters
-    byebug
     invoices = []
     csv = foreach(@custom_file, skip_headers:true, skip_blank_lines: true)
 
@@ -121,7 +120,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
 
 
   def sort_csv(csv)
-    sorted = csv.sort_by { |line| line[19] <=> line[19] }.group_by { |line| line[19] }
+    sorted = csv.sort { |line, line2| line[19] <=> line2[19] }.group_by { |line| line[19] }
 
     # sorting returns a hash so we just want the values.
     sorted.values
