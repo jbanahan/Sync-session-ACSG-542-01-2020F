@@ -76,7 +76,6 @@ class CustomFile < ActiveRecord::Base
       # multiple method params, just check if process has an arity greater than one, and pass parameters if so,
       # otherwise, pass just the user
       h = handler
-      byebug
       if h.method(:process).arity > 1
         r = h.process user, parameters
       else
