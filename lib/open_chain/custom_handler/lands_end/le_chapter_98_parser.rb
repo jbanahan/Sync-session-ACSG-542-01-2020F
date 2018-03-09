@@ -35,39 +35,32 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
   end
 
   def generate_entry(invoices, file_number)
-    CiLoadEntry.new(
-                   file_number,
-                   'LANDS1',
-                   invoices,
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-                   '',
-    )
+    entry = CiLoadEntry.new
+    entry.file_number = file_number
+    entry.customer = 'LANDS1'
+    entry.invoices = invoices
+    entry
   end
 
   def generate_invoice(roll_up_hash, invoice_lines)
-    CiLoadInvoice.new(
-                     roll_up_hash['inv_number'],
-                     roll_up_hash['inv_date'],
-                     invoice_lines,
-                     '',
-                     '',
-                     '',
-                     '',
-                     ''
-    )
+    invoice = CiLoadInvoice.new
+    invoice.invoice_number = roll_up_hash['inv_number']
+    invoice.invoice_date = roll_up_hash['inv_date']
+    invoice.invoice_lines = invoice_lines
+    invoice
   end
+
+  def generate_invoice_line(roll_up_hash)
+    line = CiLoadInvoiceLine.new
+    line.part_number = roll_up_hash['part_style']
+    line.country_of_origin = roll_up_hash['country_origin']
+    line.pieces = roll_up_hash['pcs']
+    line.hts = roll_up_hash['tariff_number']
+    line.foreign_value = roll_up_hash['value']
+    line.mid = roll_up_hash['mid']
+    line
+  end
+
   def generate_initial_hash(lines)
     roll_up_hash = {}
     roll_up_hash['inv_number'] = lines.first[2]
@@ -76,7 +69,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
     roll_up_hash['part_style'] = lines.first[12]
     roll_up_hash['pcs'] = 0
     roll_up_hash['mid'] = 'XORUSFAR6220LAS'
-    roll_up_hash['tarrif_number'] = '9801001098'
+    roll_up_hash['tariff_number'] = '9801001098'
     roll_up_hash['cotton_fee'] = ''
     roll_up_hash['value'] = 0
     roll_up_hash['qty1'] = ''
@@ -86,36 +79,10 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
     roll_up_hash
   end
 
-  def generate_invoice_line(roll_up_hash)
-    CiLoadInvoiceLine.new(
-        roll_up_hash['part_style'],
-        roll_up_hash['country_origin'],
-        '',
-        roll_up_hash['pcs'],
-        roll_up_hash['tarrif_number'],
-        roll_up_hash['value'],
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        roll_up_hash['mid'],
-        '',
-        '',
-        '',
-        '',
-        ''
-    )
-  end
-
   def sum_roll_up(roll_up_hash, lines)
     roll_up_hash['pcs'] = lines.inject(0) { |sum, line | sum + line[20].to_d }
     roll_up_hash['value'] = lines.inject(0) {|sum, line| sum + line[22].to_d }
   end
-
 
   def sort_csv(csv)
     sorted = csv.sort { |line, line2| line[19] <=> line2[19] }.group_by { |line| line[19] }

@@ -61,63 +61,30 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
   end
 
   def generate_default_invoice_line
-    OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadInvoiceLine.new(
-        default_values[:part_style],
-        default_values[:country_origin],
-        '',
-        default_values[:pcs].to_d,
-        '9801001098',
-        default_values[:value].to_d,
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        'XORUSFAR6220LAS',
-        '',
-        '',
-        '',
-        '',
-        ''
-    )
+    line = OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadInvoiceLine.new
+    line.part_number = default_values[:part_style]
+    line.country_of_origin = default_values[:country_origin]
+    line.pieces = default_values[:pcs].to_d
+    line.hts = '9801001098'
+    line.foreign_value = default_values[:value].to_d
+    line.mid = 'XORUSFAR6220LAS'
+    line
   end
 
   def generate_default_invoice
-    OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadInvoice.new(
-        default_values[:export_control],
-        Time.zone.now,
-        [generate_default_invoice_line],
-        '',
-        '',
-        '',
-        '',
-        ''
-    )
+    invoice = OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadInvoice.new
+    invoice.invoice_number = default_values[:export_control]
+    invoice.invoice_date = Time.zone.now
+    invoice.invoice_lines = [generate_default_invoice_line]
+    invoice
   end
 
   def generate_default_entry
-    OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadEntry.new(
-        '1234567890',
-        'LANDS1',
-        [generate_default_invoice],
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-    )
+    e = OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport::CiLoadEntry.new
+    e.file_number = '1234567890'
+    e.customer = 'LANDS1'
+    e.invoices = [generate_default_invoice]
+    e
   end
 
   describe 'generate_invoice_line' do
