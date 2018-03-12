@@ -87,6 +87,7 @@ describe OpenChain::SQS do
       message = instance_double("Aws:SQS::Types::Message")
       allow(message).to receive(:body).and_return '{"abc":123}'
       expect(poller).to receive(:poll).and_yield([message])
+      expect(poller).to receive(:delete_messages).with [message]
 
       messages = []
       subject.poll("queue") {|msg| messages << msg}
@@ -101,6 +102,7 @@ describe OpenChain::SQS do
       message = instance_double("Aws:SQS::Types::Message")
       allow(message).to receive(:body).and_return '{"abc":123}'
       expect(poller).to receive(:poll).and_yield(message)
+      expect(poller).to receive(:delete_messages).with [message]
 
       messages = []
       subject.poll("queue", max_number_of_messages: 1) {|msg| messages << msg}
@@ -128,6 +130,24 @@ describe OpenChain::SQS do
       expect(poller).to receive(:before_request).and_yield stats
 
       expect { subject.poll("queue", {max_message_count: 1}) }.not_to throw_symbol :stop_polling
+    end
+
+    it "ensures any messages received prior to a message that raises an error are deleted from the queue" do
+      poller = instance_double("Aws::SQS::QueuePoller")
+      expect(subject).to receive(:queue_poller).and_return poller
+
+      message = instance_double("Aws:SQS::Types::Message")
+      allow(message).to receive(:body).and_return '{"abc":123}'
+      message2 = instance_double("Aws:SQS::Types::Message")
+      allow(message2).to receive(:body).and_return '{"abc":123}'
+
+      expect(poller).to receive(:poll).and_yield([message, message2])
+      expect(poller).to receive(:delete_messages).with [message]
+
+      messages = []
+      expect{subject.poll("queue") {|msg| raise "Error" if messages.length > 0; messages << msg }}.to raise_error "Error"
+
+      expect(messages.length).to eq 1
     end
   end
 

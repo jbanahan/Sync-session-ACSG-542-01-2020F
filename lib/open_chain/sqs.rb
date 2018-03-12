@@ -60,17 +60,27 @@ module OpenChain; class SQS
 
     # If you need to, you can also throw :stop_polling from your block if you want to stop polling as well.
     # You can throw :skip_delete as a means of telling the polling process not to delete the message
-    poller.poll do |sqs_message|
+
+    # We're going to manage deleting the messages on our own...the is to allow for making sure that if you're
+    # processing say 10 messages and the 5th one fails (raises an error), that we ensure the first 4 are deleted.
+    # The queue poller does NOT ensure this happens by default...if anything raises, then any previous messages are NOT
+    # deleted from the queue...this is dumb.
+    poller.poll(skip_delete: true) do |sqs_messages|
       messages = []
       if opts[:max_number_of_messages].to_i > 1
-        messages = sqs_message
+        messages = sqs_messages
       else
-        messages << sqs_message
+        messages << sqs_messages
       end
-
-      messages.each do |msg|
-        obj = JSON.parse msg.body
-        yield obj
+      completed_messages = []
+      begin
+        messages.each do |msg|
+          obj = JSON.parse msg.body
+          yield obj
+          completed_messages << msg
+        end
+      ensure
+        poller.delete_messages(completed_messages) if completed_messages.length > 0
       end
     end
 
