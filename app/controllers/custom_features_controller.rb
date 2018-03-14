@@ -35,6 +35,7 @@ require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
 require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
 require 'open_chain/custom_handler/generic/isf_late_flag_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_intacct_invoice_report_handler'
+require 'open_chain/custom_handler/lands_end/le_chapter_98_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -70,6 +71,7 @@ class CustomFeaturesController < ApplicationController
   PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
   ISF_LATE_FLAG_FILE_PARSER ||= 'OpenChain::CustomHandler::Generic::IsfLateFlagFileParser'
   INTACCT_INVOICE_REPORT ||= 'OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler'
+  LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
 
   def set_page_title
     @page_title ||= 'Custom Feature'
@@ -77,6 +79,24 @@ class CustomFeaturesController < ApplicationController
 
   def index
     render :layout=>'one_col'
+  end
+
+  def le_chapter_98_index
+    generic_index OpenChain::CustomHandler::LandsEnd::LeChapter98Parser.new(nil), LE_CHAPTER_98_PARSER, "Land's End Chapter 98 Parser"
+  end
+
+  def le_chapter_98_download
+    generic_download "Lands' End Chapter 98 Return Files"
+  end
+
+  def le_chapter_98_upload
+    generic_upload(LE_CHAPTER_98_PARSER, "Lands' End Chapter 98 Return Upload", "le_chapter_98_load", additional_process_params: {"file_number"=>params[:file_number]}) do
+      file_number = params[:file_number]
+
+      if file_number.nil?
+        add_flash :errors, "You must enter a file number"
+      end
+    end
   end
 
   def lumber_epd_index

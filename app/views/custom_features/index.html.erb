@@ -150,6 +150,14 @@
     </div>
   </div>
   <%-end%>
+  <%-if OpenChain::CustomHandler::LandsEnd::LeChapter98Parser.new(nil).can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-4 col-md-offset-4'>
+          <%=link_to "Lands' End Chapter 98 Returns", '/custom_features/le_chapter_98_load', :class=>'btn btn-lg btn-default btn-block'%>
+        </div>
+      </div>
+  <%-end%>
+
   <%-if OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>
