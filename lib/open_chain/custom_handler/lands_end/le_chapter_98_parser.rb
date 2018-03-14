@@ -12,8 +12,8 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
     @custom_file = file
   end
 
-  def can_view?(user)
-    user.company.master? && (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?)
+  def can_view? user
+    MasterSetup.get.custom_feature?("alliance") && user.company.master?
   end
 
   def process user, parameters
