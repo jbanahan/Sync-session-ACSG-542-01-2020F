@@ -17,17 +17,21 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
   end
 
   def process user, parameters
-    invoices = []
     csv = foreach(@custom_file, skip_headers:true, skip_blank_lines: true)
+    invoice_lines = {}
+    invoices = []
 
     sorted_csv = sort_csv(csv)
     sorted_csv.each do |lines|
-      invoice_lines = []
       roll_up_hash = generate_initial_hash(lines)
       sum_roll_up(roll_up_hash, lines)
 
-      invoice_lines << generate_invoice_line(roll_up_hash)
-      invoices << generate_invoice(roll_up_hash, invoice_lines)
+      invoice_lines[roll_up_hash['inv_number']] ||= []
+      invoice_lines[roll_up_hash['inv_number']] << generate_invoice_line(roll_up_hash)
+    end
+
+    invoice_lines.each do |key, value|
+      invoices << generate_invoice(key, Time.zone.now, value)
     end
 
     entry = generate_entry(invoices, parameters['file_number'])
@@ -42,10 +46,10 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
     entry
   end
 
-  def generate_invoice(roll_up_hash, invoice_lines)
+  def generate_invoice(inv_number, date, invoice_lines)
     invoice = CiLoadInvoice.new
-    invoice.invoice_number = roll_up_hash['inv_number']
-    invoice.invoice_date = roll_up_hash['inv_date']
+    invoice.invoice_number = inv_number
+    invoice.invoice_date = date
     invoice.invoice_lines = invoice_lines
     invoice
   end
@@ -85,7 +89,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
   end
 
   def sort_csv(csv)
-    sorted = csv.sort { |line, line2| line[19] <=> line2[19] }.group_by { |line| line[19] }
+    sorted = csv.sort { |line, line2| line[19] <=> line2[19] }.group_by { |line| [line[2], line[19]] }
 
     # sorting returns a hash so we just want the values.
     sorted.values

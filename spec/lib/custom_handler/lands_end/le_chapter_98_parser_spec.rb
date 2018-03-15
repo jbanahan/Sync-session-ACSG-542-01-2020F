@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
         lines = []
         lines << subject.generate_invoice_line(roll_up_hash)
         expected = generate_default_invoice
-        result = subject.generate_invoice(roll_up_hash, lines)
+        result = subject.generate_invoice(default_values[:export_control], Time.zone.now, lines)
         expect(expected).to eql(result)
       end
     end
