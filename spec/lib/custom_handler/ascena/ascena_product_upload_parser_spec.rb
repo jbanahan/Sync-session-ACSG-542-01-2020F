@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
   describe "process_file" do
     let (:file_row) do 
-      row = [nil, "Style", "Garment Type", "ParentID", 300, nil, "Description", nil, "CO", "1234.56.7890"]
+      row = ["Brand", "Style", "Garment Type", "ParentID", 300, nil, "Description", nil, "CO", "1234.56.7890"]
       row[33] = "FDA Product Code"
       row[38] = "Customs Description"
 
@@ -65,6 +65,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
       expect(prod.name).to eq "Description"
       expect(prod.importer).to eq ascena
+      expect_custom_value(prod, cdefs[:prod_brand], "Brand")
       expect_custom_value(prod, cdefs[:prod_part_number], "Style")
       expect_custom_value(prod, cdefs[:prod_reference_number], "ParentID")
       expect_custom_value(prod, cdefs[:prod_department_code], "300")

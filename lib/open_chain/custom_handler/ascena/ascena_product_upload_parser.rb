@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def cdefs 
-    @cdefs ||= self.class.prep_custom_definitions [:prod_part_number, :prod_reference_number, :prod_department_code, :prod_fda_product_code, :prod_fda_product, :class_customs_description, :class_classification_notes]
+    @cdefs ||= self.class.prep_custom_definitions [:prod_brand, :prod_part_number, :prod_reference_number, :prod_department_code, :prod_fda_product_code, :prod_fda_product, :class_customs_description, :class_classification_notes]
   end
 
   def process_file custom_file, user
@@ -151,6 +151,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
       parent_id = text(row[3])
       parent_id = nil if style == parent_id
 
+      set_custom_value(product, cdefs[:prod_brand], text(row[0]), changed)
       set_custom_value(product, cdefs[:prod_reference_number], parent_id, changed)
       set_custom_value(product, cdefs[:prod_department_code], text(row[4]), changed)
       assign_fda(product, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], text(row[33]), changed)
