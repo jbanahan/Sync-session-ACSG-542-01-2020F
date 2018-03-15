@@ -53,7 +53,7 @@ module OpenChain; module Report; class PvhAirShipmentLogReport
         date_clause = "AND DATEDIFF(now(), e.arrival_date) <= 6"
       end
       q = <<QRY
-SELECT e.broker_reference as 'Broker Reference', e.entry_number as 'Entry Number', e.carrier_code as 'Carrier Code', e.vessel as 'Vessel/Airline', e.export_country_codes as 'Country Export Codes',
+SELECT e.broker_reference as 'Broker Reference', e.entry_number as 'Entry Number', e.master_bills_of_lading as 'Master Bills', e.house_bills_of_lading as 'House Bills', e.carrier_code as 'Carrier Code', e.vessel as 'Vessel/Airline', e.export_country_codes as 'Country Export Codes',
  e.customer_references as 'Customer References', e.worksheet_date as 'Worksheet Date', e.store_names as 'Departments', c.quantity as 'Total Packages', c.container_number as 'Container Numbers', 
  e.eta_date as 'ETA Date', e.arrival_date as 'Arrival Date', pe.name as 'Port of Entry Name', e.docs_received_date as 'Docs Received Date', e.first_entry_sent_date as 'First Summary Sent', 
  e.first_release_date as 'First Release Date', e.available_date as 'Available Date', null as 'First DO Date', '' as 'Trucker', '' as 'Comments', e.id as 'Links'
