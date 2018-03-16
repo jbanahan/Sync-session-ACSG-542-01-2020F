@@ -43,7 +43,31 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
           GROUP BY review_bvr.validatable_id)",
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
+      }],
+      [rank_start+3,"#{uid_prefix}_failed_business_rule_templates",:failed_business_rule_templates,"Failed Business Rule Template Names",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Failed Business Rule Template Names ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.failed_business_rule_templates.join("\n ") },
+        :qualified_field_name=> business_rule_templates_qry(table_name, module_type, "Fail"),
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
+        :read_only=>true
+      }],
+      [rank_start+4,"#{uid_prefix}_review_business_rule_templates",:review_business_rule_templates,"Review Business Rule Template Names",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Failed Business Rule Template Names ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.review_business_rule_templates.join("\n ") },
+        :qualified_field_name=> business_rule_templates_qry(table_name, module_type, "Review"),
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
+        :read_only=>true
       }]
     ]
+  end
+
+  def business_rule_templates_qry table_name, module_type, state
+    <<-SQL
+      (SELECT GROUP_CONCAT(templates.name ORDER BY templates.name SEPARATOR "\n ")
+       FROM business_validation_results results
+        INNER JOIN business_validation_templates templates ON templates.id = results.business_validation_template_id AND results.state = "#{state}"
+       WHERE results.validatable_id = #{table_name}.id AND results.validatable_type = "#{module_type}"
+       GROUP BY results.validatable_id)
+    SQL
   end
 end; end; end

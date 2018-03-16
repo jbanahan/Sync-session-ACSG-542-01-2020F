@@ -69,6 +69,24 @@ module CoreObjectSupport
       pluck("business_validation_rules.name")
   end
 
+  def failed_business_rule_templates
+    self.business_validation_results.
+      joins(:business_validation_template).
+      where(business_validation_results: {state: "Fail"}).
+      uniq.
+      order("business_validation_templates.name").
+      pluck("business_validation_templates.name")
+  end
+
+  def review_business_rule_templates
+    self.business_validation_results.
+      joins(:business_validation_template).
+      where(business_validation_results: {state: "Review"}).
+      uniq.
+      order("business_validation_templates.name").
+      pluck("business_validation_templates.name")
+  end
+
   def any_failed_rules?
     self.business_validation_results.any? {|r| r.failed? }
   end

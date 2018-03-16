@@ -235,6 +235,28 @@ describe CoreObjectSupport do
     end
   end
 
+  describe "failed_business_rule_templates" do
+    it "lists the templates of all failed business rules for an object" do
+      entry = Factory(:entry)
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 2"), state: "Fail")
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 3"), state: "Pass")
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 1"), state: "Fail")
+
+      expect(entry.failed_business_rule_templates).to eq ["bvt 1", "bvt 2"]
+    end
+  end
+
+  describe "review_business_rule_templates" do
+    it "lists the templates of all 'review' business rules for an object" do
+      entry = Factory(:entry)
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 2"), state: "Review")
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 3"), state: "Pass")
+      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 1"), state: "Review")
+
+      expect(entry.review_business_rule_templates).to eq ["bvt 1", "bvt 2"]
+    end
+  end
+
   describe "can_run_validations?" do
     before :each do
       @u = Factory(:user)
