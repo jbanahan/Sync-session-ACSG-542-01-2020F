@@ -27,7 +27,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
       [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}],
       [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}],
       [26,:cit_quota_category,:quota_category,"Quota Category",{:data_type=>:integer}],
-      [27,:cit_special_authority,:special_authority,"Special Authority",{:data_type=>:string}]
+      [27,:cit_special_authority,:special_authority,"Special Authority",{:data_type=>:string}],
+      [28,:cit_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}]
     ]
   end
 end; end; end

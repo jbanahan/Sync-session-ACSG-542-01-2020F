@@ -16,7 +16,6 @@ class Report
       SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, SYSTEM_CODE)} AS 'Invoice Value - Brand', 
              #{invoice_value_7501('cil')} AS 'Invoice Value - 7501', 
              #{invoice_value_contract('cil')} AS 'Invoice Value - Contract', 
-             #{rounded_entered_value('cit')} AS 'Rounded Entered Value', 
              #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, SYSTEM_CODE)} AS 'Unit Price - Brand', 
              #{unit_price_po('o', 'cil', ref_cdef_id, SYSTEM_CODE)} AS 'Unit Price - PO', 
              #{unit_price_7501('cil')} AS 'Unit Price - 7501'
@@ -45,11 +44,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
 
   it "returns expected results when products are linked by unique_id" do
     result = report.run_query @cdefs
-    expect(result.columns).to eq ["Invoice Value - Brand", "Invoice Value - 7501", "Invoice Value - Contract", "Rounded Entered Value", 
+    expect(result.columns).to eq ["Invoice Value - Brand", "Invoice Value - 7501", "Invoice Value - Contract",
                                   "Unit Price - Brand", "Unit Price - PO", "Unit Price - 7501"]
     expect(result.count).to eq 1
     expect(result.first).to eq(
-      {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4, "Rounded Entered Value" => 6, 
+      {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4,
        "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3,6)})                                  
   end
 
@@ -59,7 +58,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
     result = report.run_query @cdefs
     expect(result.count).to eq 1
     expect(result.first).to eq(
-      {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4, "Rounded Entered Value" => 6, 
+      {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4,
        "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3,6)})                                  
   end
 

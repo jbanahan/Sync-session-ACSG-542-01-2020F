@@ -238,7 +238,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                     'duty_advalorem' => 200,
                     'duty_additional' => 300,
                     'duty_other' => 400,
-                    'value_entered' => 10000,
+                    'value_entered' => 9960,
                     'spi_primary' => 'JO',
                     'spi_secondary' => 'EY',
                     'qty_1' => 100,
@@ -630,6 +630,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(ci.non_dutiable_amount).to eq BigDecimal("123.45")
       expect(ci.master_bills_of_lading).to eq("MOLU13903762056\n MOLU13903762057")
       expect(ci.house_bills_of_lading).to eq("ABCD1029384756\n ABCD1029384757")
+      expect(ci.entered_value_7501).to eq 300
 
       line = ci.commercial_invoice_lines.first
       expect(line.line_number).to eq 1
@@ -681,7 +682,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
       expect(tariff.duty_amount).to eq 10.00
-      expect(tariff.entered_value).to eq BigDecimal.new("100.00")
+      expect(tariff.entered_value).to eq BigDecimal.new("99.60")
+      expect(tariff.entered_value_7501).to eq 100
       expect(tariff.duty_rate).to eq BigDecimal.new("0.1")
       expect(tariff.spi_primary).to eq "JO"
       expect(tariff.spi_secondary).to eq "EY"

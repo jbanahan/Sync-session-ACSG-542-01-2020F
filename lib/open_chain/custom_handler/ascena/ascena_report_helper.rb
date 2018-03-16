@@ -15,10 +15,6 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
     "IF(#{inv_line_alias}.contract_amount > 0, #{inv_line_alias}.contract_amount, #{inv_line_alias}.value)"
   end
 
-  def rounded_entered_value tariff_alias
-    "ROUND(#{tariff_alias}.entered_value)"
-  end
-
   def duty_savings_first_sale inv_line_alias
     "IF(#{inv_line_alias}.contract_amount IS NULL OR #{inv_line_alias}.contract_amount = 0, 0, (SELECT ROUND((l.contract_amount - l.value) * (t.duty_amount / t.entered_value), 2)
     FROM commercial_invoice_lines l

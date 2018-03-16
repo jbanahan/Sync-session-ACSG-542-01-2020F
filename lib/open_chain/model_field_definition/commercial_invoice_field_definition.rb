@@ -31,7 +31,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
                                  WHERE commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id)"
         }],
       [22,:ci_mbols, :master_bills_of_lading, "Master Bills", {:data_type=>:text}],
-      [22,:ci_hbols, :house_bills_of_lading, "House Bills", {:data_type=>:text}]
+      [22,:ci_hbols, :house_bills_of_lading, "House Bills", {:data_type=>:text}],
+      [23,:ci_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
   end

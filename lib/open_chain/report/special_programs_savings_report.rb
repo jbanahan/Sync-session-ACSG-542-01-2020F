@@ -24,7 +24,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
   end
 
   def self.permission? user
-    (Rails.env=='development' || MasterSetup.get.system_code=='www-vfitrack-net') && user.company.master?
+    user.company.master? && MasterSetup.get.custom_feature?('WWW VFI Track Reports')
   end
 
   def run(companies, release_date_start, release_date_end)
@@ -43,13 +43,13 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
           cil.part_number AS 'Invoice Line - Part Number',
           cit.hts_code AS 'Invoice Tariff - HTS Code',
           cit.tariff_description AS 'Invoice Tariff - Description',
-          cit.entered_value AS 'Invoice Tariff - Entered Value',
+          IFNULL(cit.entered_value_7501, ROUND(cit.entered_value, 0)) AS 'Invoice Tariff - 7501 Entered Value',
           cit.duty_rate AS 'Invoice Tariff - Duty Rate',
           cit.duty_amount AS 'Invoice Tariff - Duty',
           cit.spi_primary AS 'SPI (Primary)',
           ot.common_rate_decimal AS 'Common Rate',
-          IFNULL(ROUND((ot.common_rate_decimal * cit.entered_value), 2), 0) AS 'Duty without SPI',
-          IFNULL(ROUND(ot.common_rate_decimal * cit.entered_value, 2) - cit.duty_amount, 0) AS 'Savings'
+          IFNULL(ROUND((ot.common_rate_decimal * IFNULL(cit.entered_value_7501, cit.entered_value)), 2), 0) AS 'Duty without SPI',
+          IFNULL(ROUND(ot.common_rate_decimal * IFNULL(cit.entered_value_7501, cit.entered_value), 2) - cit.duty_amount, 0) AS 'Savings'
       FROM
           entries e
               INNER JOIN

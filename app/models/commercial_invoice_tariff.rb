@@ -31,6 +31,7 @@
 #  quota_category             :integer
 #  special_authority          :string(255)
 #  sima_code                  :string(255)
+#  entered_value_7501         :integer
 #
 # Indexes
 #

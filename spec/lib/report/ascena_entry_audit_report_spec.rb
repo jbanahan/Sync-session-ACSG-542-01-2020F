@@ -27,10 +27,10 @@ describe OpenChain::Report::AscenaEntryAuditReport do
                    customs_line_number: 3, quantity: 1, unit_of_measure: 'uom', add_case_number: 'add case', value: 18, prorated_mpf: 3, mpf: 4, hmf: 5, 
                    add_case_value: 6, cvd_case_value: 7, cotton_fee: 8, non_dutiable_amount: 9, unit_price: 10, contract_amount: 20, related_parties: true)
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', duty_rate: 1, spi_primary: 'spi', classification_qty_1: 2,
-                    classification_qty_2: 3, classification_uom_1: 'class uom 1', classification_uom_2: 'class uom 2', entered_value: 4,
+                    classification_qty_2: 3, classification_uom_1: 'class uom 1', classification_uom_2: 'class uom 2', entered_value: 4, entered_value_7501:4,
                     excise_amount: 5, duty_amount: 6)
     @cit_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts2', duty_rate: 2, spi_primary: 'spi2', classification_qty_1: 3,
-                     classification_qty_2: 4, classification_uom_1: 'class uom 1(2)', classification_uom_2: 'class uom 2(2)', entered_value: 5, excise_amount: 6, 
+                     classification_qty_2: 4, classification_uom_1: 'class uom 1(2)', classification_uom_2: 'class uom 2(2)', entered_value: 5, entered_value_7501: 5, excise_amount: 6,
                      duty_amount: 7)
     Factory(:port, name: 'fenix port', cbsa_port: '0123')
     Factory(:port, name: 'alliance port', schedule_d_code: '0123')
@@ -156,7 +156,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
          'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi', 'Quantity 1'=>2, 'Quantity 2'=>3, 'UOM 1'=>'class uom 1', 
          'UOM 2'=>'class uom 2', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 'Invoice Value - Contract'=>20, 
-         'Entered Value'=>4, 'Rounded Entered Value'=>4, 'Total Duty'=>13, 'MPF - Prorated'=>3, 'MPF - Full'=>4, 'HMF'=>5, 'Total Fees'=>16, 'ADD Value'=>6, 
+         'Entered Value'=>4, 'Rounded Entered Value'=>4, 'Total Duty'=>13, 'MPF - Prorated'=>3, 'MPF - Full'=>4, 'HMF'=>5, 'Total Fees'=>16, 'ADD Value'=>6,
          'CVD Value'=>7, 'Excise Amount'=>5, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 'Inv Ln Non-Dutiable Amount'=>9, 
          'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
          'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 
@@ -171,7 +171,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
          'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
          'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi2', 'Quantity 1'=>3, 'Quantity 2'=>4, 
          'UOM 1'=>'class uom 1(2)', 'UOM 2'=>'class uom 2(2)', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 
-         'Invoice Value - Contract'=>20, 'Entered Value'=>5, 'Rounded Entered Value'=>5, 'Total Duty'=>13, 'MPF - Prorated'=>3.0, 'MPF - Full'=>4, 'HMF'=>5, 
+         'Invoice Value - Contract'=>20, 'Entered Value'=>5, 'Rounded Entered Value'=>5, 'Total Duty'=>13, 'MPF - Prorated'=>3.0, 'MPF - Full'=>4, 'HMF'=>5,
          'Total Fees'=>16, 'ADD Value'=>6, 'CVD Value'=>7, 'Excise Amount'=>6, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 
          'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
          'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 

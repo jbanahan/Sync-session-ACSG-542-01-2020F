@@ -30,6 +30,7 @@
 #  non_dutiable_amount    :decimal(13, 2)
 #  master_bills_of_lading :text
 #  house_bills_of_lading  :text
+#  entered_value_7501     :integer
 #
 # Indexes
 #

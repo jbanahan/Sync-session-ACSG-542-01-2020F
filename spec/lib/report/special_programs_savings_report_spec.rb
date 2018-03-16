@@ -3,11 +3,34 @@ require 'spec_helper'
 describe OpenChain::Report::SpecialProgramsSavingsReport do
   let(:report_headers) { ['Customer Number', 'Broker Reference', 'Entry Number', 'Release Date', 'Country ISO Code',
                     'Invoice-Invoice Number', 'Invoice Line - PO Number', 'Invoice Line - Country Origin Code',
-                    'Invoice Line - Part Number', 'Invoice Tariff - HTS Code', 'Invoice Tariff - Description', 'Invoice Tariff - Entered Value',
+                    'Invoice Line - Part Number', 'Invoice Tariff - HTS Code', 'Invoice Tariff - Description', 'Invoice Tariff - 7501 Entered Value',
                     'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'SPI (Primary)', 'Common Rate',
                     'Duty without SPI', 'Savings'] }
 
-  context "run_schedulable" do
+  describe "permission?" do
+    let(:user) { Factory(:user) }
+    let(:ms) { stub_master_setup }
+
+    it "allow master users on systems with feature" do
+      expect(ms).to receive(:custom_feature?).with('WWW VFI Track Reports').and_return true
+      expect(user.company).to receive(:master?).and_return true
+      expect(described_class.permission? user).to eq true
+    end
+
+    it "blocks non-master users on systems with feature" do
+      allow(ms).to receive(:custom_feature?).with('WWW VFI Track Reports').and_return true
+      expect(user.company).to receive(:master?).and_return false
+      expect(described_class.permission? user).to eq false
+    end
+
+    it "blocks master users on systems without feature" do
+      expect(ms).to receive(:custom_feature?).with('WWW VFI Track Reports').and_return false
+      expect(user.company).to receive(:master?).and_return true
+      expect(described_class.permission? user).to eq false
+    end
+  end
+
+  describe "run_schedulable" do
     it 'takes in a timezone opt and uses that instead of EST' do
       start_date = nil
       end_date = nil
@@ -72,8 +95,8 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
 
       ['Invoice Tariff 1'].each_with_index do |inv_line, inv_num|
         invoice_tariff = Factory(:commercial_invoice_tariff, :commercial_invoice_line=>@invoice_lines[inv_num],
-                                 :hts_code=>'123456789', :tariff_description=>'XYZ123', :entered_value=>'134634',
-                                 :duty_rate=>0.18, :duty_amount=>'1514.83', :spi_primary=>"2")
+                                 :hts_code=>'123456789', :tariff_description=>'XYZ123', :entered_value=>'134631.67',
+                                 :entered_value_7501=>'134634', :duty_rate=>0.18, :duty_amount=>'1514.83', :spi_primary=>"2")
         @invoice_tariffs << invoice_tariff
       end
 
@@ -85,13 +108,30 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
       wb = Spreadsheet.open tmp
       sheet = wb.worksheet 0
       expect(sheet.row(0)).to eq(report_headers)
+      duty_without_spi = @ot.common_rate_decimal * @invoice_tariffs[0].entered_value_7501
+      savings = duty_without_spi - @invoice_tariffs[0].duty_amount
+      expect(sheet.row(1)).to eq([@entry.customer_number, @entry.broker_reference, @entry.entry_number, excel_date(@entry.release_date.to_date), @country.iso_code,
+                                  @invoices[0].invoice_number, @invoice_lines[0].po_number, @invoice_lines[0].country_origin_code,
+                                  @invoice_lines[0].part_number, @invoice_tariffs[0].hts_code, @invoice_tariffs[0].tariff_description,
+                                  @invoice_tariffs[0].entered_value_7501.to_i, @invoice_tariffs[0].duty_rate.to_f, @invoice_tariffs[0].duty_amount.to_f,
+                                  @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, duty_without_spi.to_f, savings.to_f])
+    end
+
+    it 'should work around null value for entered_value_7501' do
+      @invoice_tariffs[0].entered_value_7501 = nil
+      @invoice_tariffs[0].save!
+
+      tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run 'SPECIAL', 1.year.ago.to_s, 1.day.from_now.to_s
+      wb = Spreadsheet.open tmp
+      sheet = wb.worksheet 0
+      expect(sheet.row(0)).to eq(report_headers)
       duty_without_spi = @ot.common_rate_decimal * @invoice_tariffs[0].entered_value
       savings = duty_without_spi - @invoice_tariffs[0].duty_amount
       expect(sheet.row(1)).to eq([@entry.customer_number, @entry.broker_reference, @entry.entry_number, excel_date(@entry.release_date.to_date), @country.iso_code,
                                   @invoices[0].invoice_number, @invoice_lines[0].po_number, @invoice_lines[0].country_origin_code,
                                   @invoice_lines[0].part_number, @invoice_tariffs[0].hts_code, @invoice_tariffs[0].tariff_description,
-                                  @invoice_tariffs[0].entered_value.to_f, @invoice_tariffs[0].duty_rate.to_f, @invoice_tariffs[0].duty_amount.to_f,
-                                  @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, duty_without_spi.to_f, savings.to_f])
+                                  @invoice_tariffs[0].entered_value.round.to_f, @invoice_tariffs[0].duty_rate.to_f, @invoice_tariffs[0].duty_amount.to_f,
+                                  @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, duty_without_spi.round(2).to_f, savings.round(2).to_f])
     end
 
     it 'should include the notification' do
@@ -101,11 +141,12 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
      sheet = wb.worksheet 0
      expect(sheet.row(sheet.rows.count - 1)).to eql [msg]
     end
+
     it 'should total the Invoice Tariff - Duty, Duty without SPI, and Savings columns' do
       tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run "SPECIAL", 1.year.ago.to_s, 1.day.from_now.to_s
       wb = Spreadsheet.open tmp
       sheet = wb.worksheet 0
-      duty_without_spi = @ot.common_rate_decimal * @invoice_tariffs[0].entered_value
+      duty_without_spi = @ot.common_rate_decimal * @invoice_tariffs[0].entered_value_7501
       savings = duty_without_spi - @invoice_tariffs[0].duty_amount
       expect(sheet.row(sheet.rows.count - 3)).to eql ['Grand Totals', nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
                                        @invoice_tariffs[0].duty_amount.to_f, nil, nil, duty_without_spi.to_f, savings.to_f]

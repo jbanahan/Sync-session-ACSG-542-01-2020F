@@ -105,7 +105,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
              #{invoice_value_7501('cil')} AS 'Invoice Value - 7501',
              #{invoice_value_contract('cil')} AS 'Invoice Value - Contract',
              cit.entered_value AS 'Entered Value',
-             #{rounded_entered_value('cit')} AS 'Rounded Entered Value',
+             cit.entered_value_7501 AS 'Rounded Entered Value',
              (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0) 
               FROM commercial_invoice_tariffs total_duty_t
               WHERE total_duty_t.commercial_invoice_line_id = cil.id) AS 'Total Duty',
