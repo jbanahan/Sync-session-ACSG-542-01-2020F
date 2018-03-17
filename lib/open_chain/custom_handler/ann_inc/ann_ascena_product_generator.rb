@@ -41,7 +41,7 @@ module OpenChain
 
         def ftp_credentials
           # This is not a bug or typo, these files are to be delivered to the same location as the files from the ZYM product generator
-          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=> (@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM")}
+          ftp2_vandegrift_inc((@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM"))
         end
 
         def sync_csv

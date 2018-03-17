@@ -43,7 +43,7 @@ module OpenChain
     end
 
     def ftp2_vandegrift_inc folder, remote_file_name = nil
-      opts = {server: 'ftp2.vandegriftinc.com', username: 'VFITRACK', password: 'RL2VFftp', folder: folder}
+      opts = {server: 'ftp2.vandegriftinc.com', username: 'VFITRACK', password: 'RL2VFftp', folder: folder, protocol: 'sftp'}
       opts[:remote_file_name] = remote_file_name unless remote_file_name.blank?
       opts
     end

@@ -28,8 +28,9 @@ module OpenChain
         def sync_code
           SYNC_CODE
         end
+        
         def ftp_credentials
-          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/MIL"}
+          ftp2_vandegrift_inc("to_ecs/Ann/MIL")
         end
 
         def sync_csv

@@ -935,7 +935,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
   describe "ftp_credentials" do
     it "uses ftp2" do
-      expect(@gen.ftp_credentials).to eq server: "ftp2.vandegriftinc.com", username: "VFITRACK", password: "RL2VFftp", folder: "to_ecs/Ralph_Lauren/sap_invoices"
+      expect(@gen.ftp_credentials).to eq server: "ftp2.vandegriftinc.com", username: "VFITRACK", password: "RL2VFftp", folder: "to_ecs/Ralph_Lauren/sap_invoices", protocol: "sftp"
     end
   end
 end

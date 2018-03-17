@@ -184,7 +184,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
   end
   describe "ftp_credentials" do
     it "should send proper credentials" do
-      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'})
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL',:protocol=>"sftp"})
     end
   end
   it "should have sync_code" do

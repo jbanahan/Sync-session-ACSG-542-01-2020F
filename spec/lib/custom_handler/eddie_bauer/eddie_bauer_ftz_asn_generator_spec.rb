@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
 
   describe "ftp_credentials" do
     it "should generate base credentials" do
-      exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/test/to_eb/ftz_asn"}
+      exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'zB1RrN9J',:folder=>"/test/to_eb/ftz_asn"}
       found = described_class.new.ftp_credentials
       expect(found[:server]).to eq exp[:server]
       expect(found[:username]).to eq exp[:username]

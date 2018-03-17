@@ -128,6 +128,7 @@ describe "FtpFileSupport" do
       expect(c[:password]).to eq 'RL2VFftp'
       expect(c[:folder]).to eq 'folder'
       expect(c[:remote_file_name]).to be_nil
+      expect(c[:protocol]).to eq "sftp"
     end
 
     it "should add remote filename when given" do

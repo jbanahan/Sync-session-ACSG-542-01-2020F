@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
   end
 
   def ftp_credentials
-    {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/efocus_products"}
+    ftp2_vandegrift_inc("to_ecs/Ralph_Lauren/efocus_products")
   end
 
   def query

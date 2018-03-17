@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
 
   describe "ftp_credentials" do
     it "should send credentials" do
-      expect(subject.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'})
+      expect(subject.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products', :protocol=>"sftp"})
     end
   end
   describe "auto_confirm?" do

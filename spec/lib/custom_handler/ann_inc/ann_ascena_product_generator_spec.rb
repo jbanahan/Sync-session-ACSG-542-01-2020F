@@ -183,7 +183,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnAscenaProductGenerator do
 
   describe "ftp_credentials" do
     it "should send proper credentials" do
-      expect(subject.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM'})
+      expect(subject.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM',:protocol=>"sftp"})
     end
 
     it "uses qa folder if instructed" do

@@ -39,7 +39,7 @@ module OpenChain
           [fp,row]
         end
         def ftp_credentials
-          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=> (@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM")}
+          ftp2_vandegrift_inc((@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM"))
         end
         def preprocess_row outer_row, opts = {}
           explode_lines_with_related_styles(outer_row) do |row|
