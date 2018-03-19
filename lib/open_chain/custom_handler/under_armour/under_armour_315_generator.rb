@@ -84,7 +84,7 @@ XML
     def ftp_credentials
       folder = MasterSetup.get.production? ? "to_ua/events" : "to_ua/events/test"
 
-      {server: 'connect.vfitrack.net', username: 'underarmour', password: 'xkcoeit', folder: folder}
+      {server: 'connect.vfitrack.net', username: 'underarmour', password: 'xkcoeit', folder: folder, protocol: "sftp"}
     end
 
     private 
