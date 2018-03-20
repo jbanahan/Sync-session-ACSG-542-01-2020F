@@ -9,6 +9,7 @@ require 'open_chain/custom_handler/kewill_isf_manual_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_allport_billing_file_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_order_closer'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
@@ -71,6 +72,7 @@ class CustomFeaturesController < ApplicationController
   PVH_CA_WORKFLOW ||= 'OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser'
   ISF_LATE_FLAG_FILE_PARSER ||= 'OpenChain::CustomHandler::Generic::IsfLateFlagFileParser'
   INTACCT_INVOICE_REPORT ||= 'OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler'
+  LUMBER_ALLPORT_BILLING_FILE_PARSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser'
   LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
 
   def set_page_title
@@ -646,6 +648,22 @@ class CustomFeaturesController < ApplicationController
 
   def intacct_invoice_download
     generic_download 'Intacct Invoice Report'
+  end
+
+  def lumber_allport_billing_index
+    generic_index OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser.new(nil), LUMBER_ALLPORT_BILLING_FILE_PARSER, 'Lumber ACS Billing Validation'
+  end
+
+  def lumber_allport_billing_upload
+    generic_upload(LUMBER_ALLPORT_BILLING_FILE_PARSER, 'Lumber ACS Billing Validation', 'lumber_allport_billing') do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file."
+      end
+    end
+  end
+
+  def lumber_allport_billing_download
+    generic_download 'Lumber ACS Billing Validation'
   end
 
   private

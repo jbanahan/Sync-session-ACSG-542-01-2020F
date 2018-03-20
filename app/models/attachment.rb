@@ -230,16 +230,24 @@ end
   end
 
   def download_to_tempfile
+    if block_given?
+      self.class.download_to_tempfile(self.attached, original_file_name:self.attached_file_name, &Proc.new)
+    else
+      self.class.download_to_tempfile(self.attached, original_file_name:self.attached_file_name)
+    end
+  end
+
+  def self.download_to_tempfile attached, original_file_name: nil
     if attached
       # Attachments are always in chain-io bucket regardless of environment
       opts = {}
-      opts[:original_filename] = self.attached_file_name if self.attached_file_name
+      opts[:original_filename] = original_file_name if original_file_name
       if block_given?
-        return OpenChain::S3.download_to_tempfile(bucket, path, opts) do |f|
+        return OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts) do |f|
           yield f
         end
       else
-        return OpenChain::S3.download_to_tempfile(bucket, path, opts)
+        return OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts)
       end
     end
   end
@@ -277,11 +285,19 @@ end
 
   # We're aping the custom_file processing api touchpoints here (plus, it's a convenient accessor method anyway)
   def bucket
+    self.class.bucket attached
+  end
+
+  def self.bucket attached
     attached.try(:options).try(:[], :bucket)
   end
 
   # We're aping the custom_file processing api touchpoints here (plus, it's a convenient accessor method anyway)
   def path
+    self.class.path attached
+  end
+
+  def self.path attached
     attached.try(:path)
   end
 

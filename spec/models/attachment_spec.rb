@@ -375,10 +375,12 @@ describe Attachment do
       att = Attachment.new
       allow(att).to receive(:attached).and_return a
       allow(a).to receive(:path).and_return "path/to/file.txt"
+      allow(Attachment).to receive(:path).and_return "path/to/file.txt"
       allow(a).to receive(:options).and_return bucket: "test-bucket"
+      allow(Attachment).to receive(:bucket).and_return "test-bucket"
       att
     }
-    
+
     it "should use S3 to download to tempfile and yield the given block (if block given)" do
       attachment.attached_file_name = "file.txt"
       expect(OpenChain::S3).to receive(:download_to_tempfile).with("test-bucket", "path/to/file.txt", {original_filename: "file.txt"}).and_yield "Test"
@@ -390,9 +392,25 @@ describe Attachment do
       end).to eq "Pass"
     end
 
+    it "should use S3 to download to tempfile and yield the given block (if block given, class-level)" do
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("test-bucket", "path/to/file.txt", {original_filename: "file.txt"}).and_yield "Test"
+
+      expect(Attachment.download_to_tempfile(attachment, original_file_name:"file.txt") do |f|
+        expect(f).to eq "Test"
+
+        "Pass"
+      end).to eq "Pass"
+    end
+
     it "should use S3 to download to tempfile and return the tempfile (if no block given)" do
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('test-bucket', "path/to/file.txt", {}).and_return "Test"
       tfile = attachment.download_to_tempfile
+      expect(tfile).to eq "Test"
+    end
+
+    it "should use S3 to download to tempfile and return the tempfile (if no block given, class-level)" do
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with('test-bucket', "path/to/file.txt", {:original_filename=>"file.txt"}).and_return "Test"
+      tfile = Attachment.download_to_tempfile(attachment, original_file_name:"file.txt")
       expect(tfile).to eq "Test"
     end
   end

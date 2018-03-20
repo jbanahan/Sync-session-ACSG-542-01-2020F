@@ -237,6 +237,13 @@
     </div>
   </div>
   <%-end%>
+  <%- if OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser.new(nil).can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "LL ACS Billing Validation", '/custom_features/lumber_allport_billing', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
   <%- if OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser.can_view?(current_user) -%>
   <div class='row'>
     <div class='col-md-4 col-md-offset-4'>
