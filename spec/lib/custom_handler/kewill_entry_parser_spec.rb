@@ -1344,6 +1344,26 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         expect(setter.updated_before_one_usg).to be_empty
         expect(setter.updated_after_one_usg).to be_empty
       end
+
+      context "when One USG is already set" do
+        it "doesn't clear hold-release if hold is before One USG" do
+          ent.update_attributes!(aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date3)
+          setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
+
+          setter.set_any_hold_date date2, attribute
+          expect(ent.aphis_hold_date).to eq date2
+          expect(ent.aphis_hold_release_date).to eq date2
+          expect(setter.updated_before_one_usg).to be_empty
+        end
+
+        it "sets hold-release to One USG if blank" do
+          ent.update_attributes!(aphis_hold_date: nil, aphis_hold_release_date: nil, one_usg_date: date3)
+
+          setter.set_any_hold_date date2, attribute
+          expect(ent.aphis_hold_date).to eq date2
+          expect(ent.aphis_hold_release_date).to eq date3
+        end
+      end
     end
 
     describe "set_any_hold_release_date" do
@@ -1390,6 +1410,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           expect(ent.aphis_hold_release_date).to eq date2
           expect(ent.ams_hold_release_date).to eq date2
           expect(ent.nmfs_hold_release_date).to eq date1 # unchanged
+        end
+
+        it "treats any release date earlier than One USG as if it arrived first" do
+          ent.update_attributes!(aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date3)
+          setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
+          setter.set_any_hold_release_date date1, :aphis_hold_release_date
+          expect(ent.aphis_hold_release_date).to eq date1
+          expect(setter.updated_before_one_usg[:aphis_hold_release_date]).to eq date1
+          expect(setter.updated_after_one_usg[:aphis_hold_release_date]).to be_nil
         end
       end
     end
