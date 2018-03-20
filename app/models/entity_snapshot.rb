@@ -165,7 +165,7 @@ class EntitySnapshot < ActiveRecord::Base
   end
 
   def s3_integration_file_context?
-    (self.context.to_s =~ /\A\d{4}-\d{2}\/\d{2}\/home\/ubuntu\//).present?
+    (self.context.to_s =~ /\A\d{4}-\d{2}\/\d{2}\//).present?
   end
 
   def s3_integration_file_context_download_link

@@ -457,7 +457,7 @@ describe EntitySnapshot, :snapshot do
 
   describe "s3_integration_file_context?" do
     it "identifies context by having date followed by /home/ubuntu" do
-      subject.context = "2017-04/12/home/ubuntu/file.txt"
+      subject.context = "2017-04/12/system/parser/file.txt"
       expect(subject.s3_integration_file_context?).to eq true
     end
 
@@ -468,10 +468,10 @@ describe EntitySnapshot, :snapshot do
   end
 
   describe "s3_integration_file_context_download_link" do
-    subject {  EntitySnapshot.new context: "2017-04/12/home/ubuntu/file.txt" }
+    subject {  EntitySnapshot.new context: "2017-04/12/system/parser/file.txt" }
 
     it "generates an s3 link" do
-      expect(OpenChain::S3).to receive(:url_for).with(OpenChain::S3.integration_bucket_name, "2017-04/12/home/ubuntu/file.txt").and_return "url"
+      expect(OpenChain::S3).to receive(:url_for).with(OpenChain::S3.integration_bucket_name, "2017-04/12/system/parser/file.txt").and_return "url"
       expect(subject.s3_integration_file_context_download_link).to eq "url"
     end
 
