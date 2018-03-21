@@ -10,6 +10,10 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #
+# Indexes
+#
+#  index_error_log_entries_on_created_at  (created_at)
+#
 
 class ErrorLogEntry < ActiveRecord::Base
 
