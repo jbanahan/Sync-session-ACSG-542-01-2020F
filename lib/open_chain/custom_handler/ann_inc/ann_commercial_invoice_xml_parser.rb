@@ -1,11 +1,7 @@
 require 'open_chain/integration_client_parser'
-require 'open_chain/api/product_api_client'
-require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generator'
-require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
 
 module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoiceXmlParser
   extend OpenChain::IntegrationClientParser
-  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
 
   def self.integration_folder
     ["www-vfitrack-net/_ann_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_invoice"]
@@ -15,89 +11,124 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     self.new.parse(REXML::Document.new data)
   end
 
+  def ann_importer
+    @ann ||= Company.importers.where(system_code: "ATAYLOR").first
+    raise "No Ann Taylor importer with system code 'ATAYLOR'." unless @ann
+
+    @ann
+  end
+
   def parse xml
-    REXML::XPath.each(xml, "/UniversalInterchange/Body/UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice").each do |invoice|
-      process_invoice(invoice)
-    end
+    invoice_path = "/UniversalInterchange/Body/UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice"
+    REXML::XPath.each(xml, invoice_path).each { |invoice| process_invoice(invoice) }
   end
 
   def process_invoice invoice_xml
-    invoice = process_invoice_header(invoice_xml)
-    REXML::XPath.each(invoice_xml, "CommercialInvoiceLineCollection/CommercialInvoiceLine") do |line_xml|
-      invoice.invoice_lines << process_invoice_line(invoice_xml, line_xml)
+    check_importer invoice_xml
+    inv_number = invoice_xml.text("InvoiceNumber").gsub(/\W/,"")
+    inv = nil
+    Lock.acquire("Invoice-ATAYLOR-#{inv_number}") { inv = Invoice.where(importer_id: ann_importer.id, invoice_number: inv_number).first_or_create! }
+    Lock.with_lock_retry(inv) do
+      assign_invoice_header inv, invoice_xml
+      inv_line_path = "CommercialInvoiceLineCollection/CommercialInvoiceLine"
+      inv.invoice_lines.destroy_all
+      REXML::XPath.each(invoice_xml, inv_line_path) { |line_xml| process_invoice_line(inv, line_xml) }
+      inv.save!
     end
-
-    # We need to wrap the invoice in an entry struct before sending
-    entry = CiLoadEntry.new
-    entry.invoices = [invoice]
-    entry.customer = ann_importer.alliance_customer_number
-
-    send_invoice entry
   end
 
-  def process_invoice_header invoice_xml
-    inv = CiLoadInvoice.new
+  def assign_invoice_header inv, invoice_xml
+    assign_header_fields inv, invoice_xml
+    assign_vendor inv, invoice_xml
+    assign_factory inv, invoice_xml
+  end
 
-    inv.invoice_number = invoice_xml.text("InvoiceNumber")
-    inv.currency = invoice_xml.text "InvoiceCurrency/Code"
+  def check_importer invoice_xml
+    importer_code = invoice_xml.text "OrganizationAddressCollection/OrganizationAddress[AddressType='Importer']/OrganizationCode"
+    raise "Unexpected importer code: #{importer_code}" unless importer_code == "ANNTAYNYC"
+  end
+
+  def assign_header_fields inv, invoice_xml
+    inv.importer = ann_importer
     inv.exchange_rate = dec(invoice_xml.text "AgreedExchangeRate")
+    inv.gross_weight = dec(invoice_xml.text "Weight")
+    inv.gross_weight_uom = "KG"
     inv.invoice_date = date(invoice_xml.text "InvoiceDate")
-    inv.invoice_lines = []
+    inv.currency = invoice_xml.text "InvoiceCurrency/Code"
+    inv.invoice_total_foreign = dec(invoice_xml.text "InvoiceAmount")
+    inv.invoice_total_domestic = inv.exchange_rate.zero? ? 0 : inv.invoice_total_foreign / inv.exchange_rate
 
-    inv
+    nil
   end
 
-  def process_invoice_line invoice_xml, line_xml
-    line = CiLoadInvoiceLine.new
-    line.po_number = line_xml.text "OrderNumber"
-    line.part_number = line_xml.text "PartNo"
-    line.country_of_origin = REXML::XPath.first(invoice_xml, "OrganizationAddressCollection/OrganizationAddress[AddressType = 'Manufacturer']/Country/Code").try(:text)
-    line.quantity_2 = net_weight(line_xml)
-    line.pieces = dec(line_xml.text "InvoiceQuantity")
-    line.hts = us_hts(line.part_number)
-    
-    # Geodis doesn't include all the discounts / etc in the 810 XML, so we don't really
-    # have any actual way to know what the actual entered value should be on the entry, 
-    # therefore operations will have to manually do all that.  All we'll do here is 
-    # pass through the invoice line amount
-    line.foreign_value = dec(line_xml.text "LinePrice")
-
-    line.quantity_1 = dec(line_xml.text "CustomsQuantity")
-    line.department = customized_field_value(line_xml, "Department")
-
-    line.buyer_customer_number = ann_importer.alliance_customer_number
-    line.cartons = dec(customized_field_value(line_xml, "Cartons"))
-
-    # Always add back in the sum of the discounts to the foreign value
-    discounts = discounts_total(line_xml)
-    line.foreign_value += discounts
-
-    # If middleman is more than the discounts, send a First Sale of LinePrice + Discounts + Middleman Charge
-    middleman = middleman_charge(line_xml)
-    if middleman > discounts
-      line.non_dutiable_amount = (middleman * -1)
-      line.first_sale = (line.foreign_value + middleman)
+  def assign_vendor inv, invoice_xml
+    vendor_xml = REXML::XPath.first invoice_xml, "Supplier"
+    new_vendor = Company.new(vendor: true, name: vendor_xml.text("CompanyName"))
+    addr = create_address new_vendor, vendor_xml
+    uid = "#{ann_importer.system_code}-#{Address.make_hash_key addr}"
+    old_vendor = Company.where(system_code: uid).includes(:addresses).first
+    if old_vendor
+      # each address defines a new vendor, so one address can be assumed
+      inv.country_origin = old_vendor.addresses.first.country 
+      inv.vendor = old_vendor
     else
-      # This is done w/ a negative value because the CI Load handler looks for a negative value in the MMV/NDC field 
-      # as an indicator of whether to use the value there for non_dutiable_amount or not.
-      line.non_dutiable_amount = (discounts * -1) if discounts > 0
+      new_vendor.update_attributes!(system_code: uid, addresses: [addr])
+      inv.country_origin = addr.country
+      inv.vendor = new_vendor
+    end
+    
+    nil
+  end
+
+  def assign_factory inv, invoice_xml
+    factory_xml = REXML::XPath.first invoice_xml, "OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']"
+    new_factory = Company.new(factory: true, name: factory_xml.text("CompanyName") )
+    addr = create_address new_factory, factory_xml 
+    uid = "#{ann_importer.system_code}-#{Address.make_hash_key addr}"
+    old_factory = Company.where(system_code: uid).first
+    if old_factory
+      inv.factory = old_factory
+    else
+      new_factory.update_attributes! system_code: uid, addresses: [addr]
+      inv.factory = new_factory
     end
 
-    if line.foreign_value && line.pieces
-      line.unit_price = (line.foreign_value / line.pieces).round(2, :half_up)
-    end
+    nil
+  end
 
-    line.mid = mid(line.po_number) unless line.po_number.blank?
+  def create_address co, xml
+    addr = Address.new(company: co)
+    addr.name = co.name
+    addr.line_1 = xml.text "Address1"
+    addr.line_2 = xml.text "Address2"
+    addr.city = xml.text "City"
+    addr.country = Country.where(iso_code: xml.text("Country/Code")).first
+    addr
+  end
+
+  def process_invoice_line invoice, line_xml
+    line = invoice.invoice_lines.build
+    
+    line.air_sea_discount = dec(customized_field_value line_xml, 'Air/Sea Discount')
+    line.department =  customized_field_value(line_xml, 'Department')
+    line.early_pay_discount = dec(customized_field_value line_xml, 'Early Payment Discount')
+    line.trade_discount = dec(customized_field_value line_xml, "Trade Discount")
+    line.fish_wildlife = customized_field_value line_xml, 'Fish &amp; Wildlife' 
+    line.line_number = line_xml.text "LineNo"
+    line.middleman_charge = middleman_charge line_xml
+    line.net_weight = line_xml.text("NetWeight")
+    line.net_weight_uom = line_xml.text("NetWeightUnit/Code")
+    line.part_description = line_xml.text "Description"
+    line.part_number = line_xml.text "PartNo"
+    line.po_number = line_xml.text "OrderNumber"
+    line.pieces = dec(line_xml.text "InvoiceQuantity")
+    line.quantity = dec(line_xml.text "CustomsQuantity")
+    line.quantity_uom = line_xml.text "CustomsQuantityUnit/Code"
+    line.value_foreign = dec(line_xml.text "CustomsValue")
+    line.value_domestic = invoice.exchange_rate.to_f.zero? ? 0 : line.value_foreign / invoice.exchange_rate
+    line.unit_price = (line.value_foreign / line.pieces).round(2, :half_up) if line.value_foreign && line.pieces
 
     line
-  end
-
-  def send_invoice invoice_data
-    kewill_generator.generate_xls_to_google_drive "Ann CI Load/#{Attachment.get_sanitized_filename(invoice_data.invoices.first.invoice_number)}.xls", [invoice_data]
-  end
-
-  def kewill_generator
-    OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
   end
 
   def dec v
@@ -125,37 +156,6 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     weight
   end
 
-  def us_hts part_number
-    product = api_client.find_by_uid part_number, ["class_cntry_iso", "hts_hts_1"]
-    if product["product"].nil?
-      # It's possible the part_number we have is actually a related style, so we have to do a search for that
-      product = related_style_search part_number
-    else
-      product = product["product"]
-    end
-
-    hts = nil
-    if product
-      classification = product["classifications"].find {|c| c["class_cntry_iso"].to_s.upcase == "US" }
-      if classification
-        hts = classification["tariff_records"].first.try(:[], 'hts_hts_1')
-      end
-    end
-
-    hts
-  end
-
-  def related_style_search part_number
-    # This is kinda hairy, in that, the model field uid here is hardcoded, but it's never going to change
-    # in Ann's system.
-    criterion = SearchCriterion.new operator: "co", value: part_number
-    # This is a hack to avoid having the custom definition criterion load (since the cf value we're using is not in the current system)
-    criterion[:model_field_uid] = "*cf_35"
-
-    search_result = api_client.search fields: ["class_cntry_iso", "hts_hts_1"], search_criterions: [criterion], per_page: 1
-    search_result["results"].try :first
-  end
-
   def calculate_discount invoice_line_xml
     discount_sum = discounts_total(invoice_line_xml)
     middleman = middleman_charge(invoice_line_xml)
@@ -164,32 +164,15 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
   end
 
   def discounts_total invoice_line_xml
-    air_sea = BigDecimal(customized_field_value(invoice_line_xml, "Air/Sea Discount").to_s)
-    early_payment = BigDecimal(customized_field_value(invoice_line_xml, "Early Payment Discount").to_s)
-    trade_discount = BigDecimal(customized_field_value(invoice_line_xml, "Trade Discount").to_s)
+    air_sea = BigDecimal(customized_field_value(invoice_line_xml, "Air/Sea Discount"))
+    early_payment = BigDecimal(customized_field_value(invoice_line_xml, "Early Payment Discount"))
+    trade_discount = BigDecimal(customized_field_value(invoice_line_xml, "Trade Discount"))
 
     [air_sea, early_payment, trade_discount].sum
   end
 
   def middleman_charge invoice_line_xml
-    BigDecimal(customized_field_value(invoice_line_xml, "Middleman Charges").to_s)
-  end
-
-  def ann_importer
-    @ann ||= Company.importers.where(system_code: "ATAYLOR").first
-    raise "No Ann Taylor importer with system code 'ATAYLOR'." unless @ann
-
-    @ann
-  end
-
-  def api_client
-    OpenChain::Api::ProductApiClient.new 'ann'
-  end
-
-  def mid po_number
-    # Look up the MID for the line using the Factory linked to the PO
-    order = Order.where(importer_id: ann_importer.id, customer_order_number: po_number).first
-    order.try(:factory).try(:mid)
+    BigDecimal(customized_field_value(invoice_line_xml, "Middleman Charges"))
   end
 
 end; end; end; end
