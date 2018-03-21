@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module Ascena
       counter = 0
       invoice_number = nil
       CSV.foreach(csv_file) do |row|
-        invoice_number = row[0] if counter == 1  
+        invoice_number = read_str(row[0]) if counter == 1  
         counter += 1
         break if counter > 1
       end
@@ -84,11 +84,15 @@ module OpenChain; module CustomHandler; module Ascena
    private
 
     def read_line csv_line
-      result = {invoice_number: csv_line[0], part_number: csv_line[7..9].join('-'), country_origin_code: csv_line[23], 
-                hts_code: csv_line[27].try(:delete, '.'), quantity: csv_line[29], value: csv_line[30]}
+      result = {invoice_number: read_str(csv_line[0]), part_number: read_str(csv_line[7..9].join('-')), country_origin_code: read_str(csv_line[23]), 
+                hts_code: read_str(csv_line[27].try(:delete, '.')), quantity: csv_line[29], value: csv_line[30]}
       raise AscenaCaInvoiceHandlerError, "Tariff number has wrong format!" unless result[:hts_code] =~ /^\d{10}$/
       raise AscenaCaInvoiceHandlerError, "Invoice number has wrong format!" unless result[:invoice_number] =~ /^[A-Z]{2}\d{9}$/
       result
+    end
+
+    def read_str v
+      v.to_s.strip
     end
 
     def build_line parsed_hsh, existing_invoice
