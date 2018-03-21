@@ -1,3 +1,4 @@
+
 describe 'ShipmentService', ->
 
   beforeEach module('ShipmentApp')
@@ -205,7 +206,7 @@ describe 'ShipmentService', ->
     describe 'processTradecardPackManifest', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2, manufacturer_address_id:3, check_orders:true}).respond resp
+        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id: 2, manufacturer_address_id:3, enable_warnings:true}).respond resp
         shp = null
         svc.processTradecardPackManifest({id: 1},{id: 2}, 3, true).then (data) ->
           shp = data.data
@@ -215,7 +216,7 @@ describe 'ShipmentService', ->
     describe 'processManifestWorksheet', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments/1/process_manifest_worksheet',{attachment_id: 2, check_orders:true}).respond resp
+        http.expectPOST('/api/v1/shipments/1/process_manifest_worksheet',{attachment_id: 2, enable_warnings:true}).respond resp
         shp = null
         svc.processManifestWorksheet({id: 1},{id: 2}, null, true).then (data) ->
           shp = data.data
@@ -225,7 +226,7 @@ describe 'ShipmentService', ->
     describe 'processBookingWorksheet', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}
-        http.expectPOST('/api/v1/shipments/1/process_booking_worksheet',{attachment_id: 2, check_orders:true}).respond resp
+        http.expectPOST('/api/v1/shipments/1/process_booking_worksheet',{attachment_id: 2, enable_warnings:true}).respond resp
         shp = null
         svc.processBookingWorksheet({id: 1},{id: 2}, null, true).then (data) ->
           shp = data.data

@@ -757,4 +757,17 @@ describe Shipment do
       expect(shipment.can_edit_booking? user).to eq true
     end
   end
+
+  describe "normalized_booking_mode" do
+    let(:s) { Factory(:shipment, booking_mode: "Ocean - FCL" )}
+
+    it "strips everything after the first whitespace" do
+      expect(s.normalized_booking_mode).to eq "OCEAN"
+    end
+
+    it "returns nil if booking_mode blank" do
+      s.update_attributes! booking_mode: nil
+      expect(s.normalized_booking_mode).to be_nil
+    end
+  end
 end

@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
 
   def initialize opts = {}
     @manufacturer_address_id = opts[:manufacturer_address_id]
-    @check_orders = opts[:check_orders]
+    @enable_warnings = opts[:enable_warnings]
   end
 
   def parser_type

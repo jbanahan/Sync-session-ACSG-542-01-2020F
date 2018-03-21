@@ -112,11 +112,20 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       expect(shipment.mode).to eq "Air"
     end
 
-    it "fails when order belongs to another shipment if check_orders provided in constructor options" do
+    it "raises error when order/booking check fails if enable_warnings provided in constructor options" do
       ol = first_order.order_lines.first
       Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
       
-      expect{described_class.new(check_orders: true).process_rows shipment, form_data, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"1502377":["2nd shipment"]}'
+      expect{described_class.new(enable_warnings: true).process_rows shipment, form_data, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"1502377":["2nd shipment"]}'
+    end
+
+    it "assigns warning_overridden attribs when enable_warnings is absent" do
+      ol = first_order.order_lines.first
+      Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
+      
+      Timecop.freeze(DateTime.new(2018,1,1)) { described_class.new(enable_warnings: false).process_rows shipment, form_data, user }
+      expect(shipment.warning_overridden_by).to eq user
+      expect(shipment.warning_overridden_at).to eq DateTime.new(2018,1,1)
     end
 
     it "throws exception if data contains unmatched order" do

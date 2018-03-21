@@ -239,7 +239,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :import_lambda => lambda {|obj,val| "Container(s) is read only."},
         :export_lambda => lambda {|obj| obj.containers.map(&:container_number).sort.join("\n ") },
         :qualified_field_name => "(SELECT GROUP_CONCAT(c.container_number ORDER BY c.container_number SEPARATOR '\n ') FROM containers AS c INNER JOIN shipments s ON s.id = c.shipment_id WHERE shipments.id = c.shipment_id )"
-      }]
+      }],
+      [86, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -263,6 +264,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
     add_fields CoreModule::SHIPMENT, make_forwarder_arrays(1500,'shp','shipments')
     add_fields CoreModule::SHIPMENT, make_attachment_arrays(1600,'shp',CoreModule::SHIPMENT)
+    add_fields CoreModule::SHIPMENT, make_user_fields(1700, :shp_warning_overridden_by, "Warning Overridden By", CoreModule::SHIPMENT, :warning_overridden_by)
 
   end
 end; end; end

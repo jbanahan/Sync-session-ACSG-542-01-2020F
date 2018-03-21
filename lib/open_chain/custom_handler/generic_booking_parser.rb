@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; class GenericBookingParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize opts = {}
-    @check_orders = opts[:check_orders]
+    @enable_warnings = opts[:enable_warnings]
   end
 
   def parser_type

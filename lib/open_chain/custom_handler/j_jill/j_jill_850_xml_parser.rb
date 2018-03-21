@@ -142,9 +142,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   def compare_transport_modes shp_ref, order_root
     order_transport_mode = ship_mode(REXML::XPath.first(order_root,'TD5/TD504').text).upcase
-    booking_mode = Shipment.where(reference: shp_ref).first.booking_mode
-    #Many of these are hyphenated, e.g. "Ocean - FCL". Return "OCEAN"
-    normalized_booking_mode = /\w+(?=\W)*/.match(booking_mode)[0].upcase if booking_mode
+    normalized_booking_mode = Shipment.where(reference: shp_ref).first.normalized_booking_mode
     order_transport_mode == normalized_booking_mode
   end
 

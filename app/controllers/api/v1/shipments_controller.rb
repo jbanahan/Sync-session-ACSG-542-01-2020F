@@ -833,9 +833,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       else
         aj.update_attributes!(start_at:Time.now, error_message: nil)
         if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
-          aj.process manufacturer_address_id: params[:manufacturer_address_id], check_orders: params[:check_orders]
+          aj.process manufacturer_address_id: params[:manufacturer_address_id], enable_warnings: params[:enable_warnings]
         else
-          aj.process check_orders: params[:check_orders]
+          aj.process enable_warnings: params[:enable_warnings]
         end
         render_show CoreModule::SHIPMENT
       end

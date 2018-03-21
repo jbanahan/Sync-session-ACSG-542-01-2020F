@@ -116,6 +116,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Standard Dry 40 foot Seal #: SEAL1234']
       }
       rows = init_mock_array 85, row_seed
+      expect_any_instance_of(described_class).to receive(:review_orders).with @u, @s, nil
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
       cont = @s.containers.first
@@ -133,6 +134,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: High Cube 40 ft. Seal #: SEAL1234']
       }
       rows = init_mock_array 85, row_seed
+      expect_any_instance_of(described_class).to receive(:review_orders).with @u, @s, nil
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
       cont = @s.containers.first
@@ -150,6 +152,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Standard Dry 20 ft Seal #: null']
       }
       rows = init_mock_array 85, row_seed
+      expect_any_instance_of(described_class).to receive(:review_orders).with @u, @s, nil
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
       cont = @s.containers.first
@@ -168,6 +171,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: High Cube 45 foot. Seal #: SEAL1234']
       }
       rows = init_mock_array 85, row_seed
+      expect_any_instance_of(described_class).to receive(:review_orders).with @u, @s, nil
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
       cont = @s.containers.first
@@ -186,6 +190,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         83=>[nil, nil, nil, 'Equipment #: ABCD12345 Type: Seal #: ']
       }
       rows = init_mock_array 85, row_seed
+      expect_any_instance_of(described_class).to receive(:review_orders).with @u, @s, nil
       expect{described_class.new.process_rows(@s,rows,@u)}.to change(Container,:count).from(0).to(1)
       @s.reload
       cont = @s.containers.first
@@ -218,7 +223,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should add lines" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       ol2 = Factory(:order_line,quantity:100,product:p,sku:'sk55555',order:o)
       @s.update_attributes(importer_id:c.id)
@@ -247,7 +252,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should add lines even if order# / sku is a numeric value" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'123')
+      o = Factory(:order,importer:c,customer_order_number:'123', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'12345',order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
@@ -269,7 +274,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should add lines when PACKAGE DETAIL header is used" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       ol2 = Factory(:order_line,quantity:100,product:p,sku:'sk55555',order:o)
       @s.update_attributes(importer_id:c.id)
@@ -297,7 +302,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should handle commas in quantity" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {
@@ -317,7 +322,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should not add lines for a different importer" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       @s.update_attributes(importer_id:Factory(:company).id)
       row_seed = {
@@ -332,7 +337,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should assign lines to container" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {61=>mode_row('OCEAN'),
@@ -353,7 +358,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     it "should handle blank line between EQUIPMENT SUMMARY and container table" do
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       @s.update_attributes(importer_id:c.id)
       row_seed = {61=>mode_row('OCEAN'),
@@ -385,7 +390,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
     end
     it "should fail on missing SKU" do
       c = Factory(:company)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),
@@ -396,11 +401,11 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       rows = init_mock_array 90, row_seed
       expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error "SKU sk12345 not found in order ordnum (ID: #{o.id})."
     end
-    it "fails when order belongs to another shipment if check_orders is present" do
+    it "raises error when order/manifest check fails if enable_warnings is present" do
       @s.update_attributes! reference: "REF1"
       c = Factory(:company)
       p = Factory(:product)
-      o = Factory(:order,importer:c,customer_order_number:'custordnum',order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'custordnum',order_number:'ordnum', approval_status: 'Accepted')
       ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: p)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
@@ -415,9 +420,49 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       rows = init_mock_array 90, row_seed
       expect{described_class.new.process_rows(@s,rows,@u,nil,true)}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"custordnum":["REF2"]}'
     end
+    it "assigns warning_overridden attribs when enable_warnings is absent" do
+      @s.update_attributes! reference: "REF1"
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'custordnum',order_number:'ordnum', approval_status: 'Accepted')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: p)
+      PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
+      
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('CARTON DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:'custordnum',sku:'sk12345',item_qty:'8'})
+      }
+      rows = init_mock_array 90, row_seed
+      Timecop.freeze(DateTime.new(2018,1,1)) { described_class.new.process_rows(@s,rows,@u,nil,false) }
+      expect(@s.warning_overridden_by).to eq @u
+      expect(@s.warning_overridden_at).to eq DateTime.new(2018,1,1)
+    end
+    it "errors if an order is 'unaccepted'" do
+      @s.update_attributes! reference: "REF1"
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'custordnum',order_number:'ordnum', approval_status: nil)
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: p)
+      PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
+      
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('CARTON DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:'custordnum',sku:'sk12345',item_qty:'8'})
+      }
+      rows = init_mock_array 90, row_seed
+      expect{ described_class.new.process_rows(@s,rows,@u,nil,false) }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: custordnum'
+    end
     it "should rollback changes on error" do
       c = Factory(:company)
-      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      o = Factory(:order,importer:c,customer_order_number:'ordnum', approval_status: 'Accepted')
       @s.update_attributes(importer_id:c.id)
       row_seed = {
         61=>mode_row('OCEAN'),
@@ -439,7 +484,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       before :each do
         c = Factory(:company)
         p = Factory(:product)
-        o = Factory(:order,importer:c,customer_order_number:'ORD')
+        o = Factory(:order,importer:c,customer_order_number:'ORD', approval_status: 'Accepted')
         ol = Factory(:order_line,quantity:100,product:p,sku:'SK',order:o)
         @s.update_attributes(importer_id:c.id)
       end

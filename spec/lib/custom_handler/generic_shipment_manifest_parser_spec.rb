@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
     }
 
     let! (:order) {
-      o = Factory(:order, importer: importer, order_number: "OrdNum", customer_order_number: "CustOrdNum")
+      o = Factory(:order, importer: importer, order_number: "OrdNum", customer_order_number: "CustOrdNum", approval_status: "Accepted")
       o.order_lines.create! product_id: product.id, sku: "Sku"
 
       o
@@ -147,13 +147,27 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       expect(shipment.shipment_lines.map {|l| l.manufacturer_address_id }.uniq.first).to eq address.id
     end
 
-    it "fails when order belongs to another shipment if check_orders provided in constructor options" do
+    it "raises error when order/manifest check fails if enable_warnings provided in constructor options" do
       ol = order.order_lines.first
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
-      expect{described_class.new(check_orders: true).process_rows shipment, rows, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"CustOrdNum":["REF2"]}'
-      expect(shipment).to_not be_persisted
+      expect{described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"CustOrdNum":["REF2"]}'
+    end
+
+    it "assigns warning_overridden attribs when enable_warnings is absent" do
+      ol = order.order_lines.first
+      sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
+      PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
+
+      Timecop.freeze(DateTime.new(2018,1,1)) { described_class.new(enable_warnings: false).process_rows shipment, rows, user }
+      expect(shipment.warning_overridden_by).to eq user
+      expect(shipment.warning_overridden_at).to eq DateTime.new(2018,1,1)
+    end
+
+    it "errors if an order is 'unaccepted'" do
+      order.update_attributes! approval_status: nil
+      expect{ subject.process_rows shipment, rows, user }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: CustOrdNum'
     end
   end
 end

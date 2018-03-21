@@ -106,6 +106,8 @@
 #  port_last_free_day               :date
 #  pickup_at                        :date
 #  in_warehouse_time                :datetime
+#  warning_overridden_at            :datetime
+#  warning_overridden_by_id         :integer
 #
 # Indexes
 #
@@ -160,6 +162,7 @@ class Shipment < ActiveRecord::Base
   belongs_to :isf_sent_by, :class_name => "User"
   belongs_to :booking_revised_by, :class_name => "User"
   belongs_to :shipment_instructions_sent_by, :class_name => "User"
+  belongs_to :warning_overridden_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -466,6 +469,11 @@ class Shipment < ActiveRecord::Base
 
   def air?
     'AIR' == self.mode.to_s.upcase
+  end
+
+  def normalized_booking_mode
+    # strip hyphenated additions
+    /\w+(?=\W)*/.match(booking_mode)[0].upcase if booking_mode
   end
 
 	def can_view?(user)

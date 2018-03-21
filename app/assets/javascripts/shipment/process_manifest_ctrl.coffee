@@ -5,10 +5,22 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
     error = rejection.data.errors[0]
     if /ORDERS FOUND/.exec(error)
       @.clear()
-      msgJSON = JSON.parse(error.split("~")[1])
-      $scope.warningModalMsg = $scope.formatMultiShipmentError msgJSON
+      $scope.warningModalMsg = $scope.formatErrors error
       $('#shipmentWarningModal').modal 'show'
     $scope.notificationMessage = null
+
+  $scope.formatErrors = (error) ->
+    messages = {}
+    for i in error.split("*")
+      [k, v] = i.split("~")
+      messages[$scope.errLookup k] = JSON.parse v
+    messages["other_shipments"] = $scope.formatMultiShipmentError(messages["other_shipments"]) if messages["other_shipments"]
+    messages["transport_mode"] = messages["transport_mode"].join(", ") if messages["transport_mode"]
+    messages
+
+  $scope.errLookup = (k) ->
+    l = {"ORDERS FOUND ON MULTIPLE SHIPMENTS: " : "other_shipments", "ORDERS FOUND WITH MISMATCHED MODE: " : "transport_mode"}
+    l[k]
 
   $scope.formatMultiShipmentError = (errJson) ->
     segments = []
@@ -31,7 +43,7 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.cancel = ->
     $state.go('show',{shipmentId: $scope.shp.id})
 
-  $scope.process = (shipment, attachment, attachmentType, checkOrders) ->
+  $scope.process = (shipment, attachment, attachmentType, enableWarnings) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
     if attachmentType == 'Booking Worksheet'
@@ -45,7 +57,7 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
       $state.go('show', {shipmentId: shipment.id})
 
     if handler
-      handler(shipment, attachment, shipment.manufacturerId, checkOrders).then((resp) ->
+      handler(shipment, attachment, shipment.manufacturerId, enableWarnings).then((resp) ->
         $state.go('process_manifest.success')
       ).finally -> $scope.loadingFlag = null
 

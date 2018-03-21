@@ -92,14 +92,14 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
           r.push(v)
         return r.map (s) -> s.shp_ref
 
-    processTradecardPackManifest: (shp, attachment, manufacturerAddressId, checkOrders) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId, check_orders:checkOrders})
+    processTradecardPackManifest: (shp, attachment, manufacturerAddressId, enableWarnings) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId, enable_warnings:enableWarnings})
 
-    processBookingWorksheet: (shp, attachment, placeHolder, checkOrders) ->
-      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id, check_orders:checkOrders})
+    processBookingWorksheet: (shp, attachment, placeHolder, enableWarnings) ->
+      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id, enable_warnings:enableWarnings})
 
-    processManifestWorksheet: (shp, attachment, placeHolder, checkOrders) ->
-      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id, check_orders:checkOrders})
+    processManifestWorksheet: (shp, attachment, placeHolder, enableWarnings) ->
+      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id, enable_warnings:enableWarnings})
 
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')

@@ -80,7 +80,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
       shipment_lines(rows) do |row|
         add_line_data shipment, row, (line_number += 1)
       end
-      check_orders(shipment.reference) if @check_orders
+      review_orders user, shipment
       shipment.save!
       # This is techincally done from the front-end (.ie files are processed as part of the request cycle).
       # So make sure the snapshot is done asyncronously.
@@ -88,16 +88,27 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
     end
   end
 
-  def check_orders reference
+  def review_orders user, shipment
+    ord_nums = @order_cache.values.map(&:order_number)
+    flag_unaccepted ord_nums
+    if @enable_warnings      
+      warnings ord_nums, shipment
+    else
+      shipment.warning_overridden_at = Time.zone.now
+      shipment.warning_overridden_by = user
+    end
+  end
+
+  def warnings ord_nums, shipment
     case parser_type
     when :manifest
-      orders_on_multi_manifests(@order_cache.values.map(&:order_number), reference)
+      warn_for_manifest(ord_nums, shipment)
     when :bookings
-      orders_on_multi_bookings(@order_cache.values.map(&:order_number), reference)
+      warn_for_bookings(ord_nums, shipment)
     else
       raise "Parser-type not assigned."
     end
-  end 
+  end
 
   def shipment_lines(rows) 
     cursor = file_layout[:header_row]

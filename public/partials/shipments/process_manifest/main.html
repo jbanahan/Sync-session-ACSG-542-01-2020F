@@ -31,7 +31,9 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-body">
-        <p>The following PO numbers are assigned to other shipments: {{warningModalMsg}}</p><p>Continue?</p>
+        <p ng-show='warningModalMsg.other_shipments'>The following purchase orders are assigned to other shipments: {{warningModalMsg.other_shipments}}</p>
+        <p ng-show='warningModalMsg.transport_mode'>The following purchase orders have a mode of transport that doesn't match the assigned shipment: {{warningModalMsg.transport_mode}}</p>
+        <p>Continue?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="confirmCancel()">Close</button>
