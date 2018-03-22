@@ -48,6 +48,7 @@ require 'open_chain/custom_handler/talbots/talbots_856_parser'
 require 'open_chain/custom_handler/kewill_entry_parser'
 require 'open_chain/custom_handler/ellery/ellery_order_parser'
 require 'open_chain/custom_handler/ellery/ellery_856_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
 
 module OpenChain
   class IntegrationClient
@@ -264,6 +265,8 @@ module OpenChain
         OpenChain::CustomHandler::Ellery::ElleryOrderParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ellery_856") && custom_features.include?("Ellery")
         OpenChain::CustomHandler::Ellery::Ellery856Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "vfi_kewill_customer_activity_report")
+        OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

@@ -1,0 +1,75 @@
+
+VANDEGRIFT FORWARDING CO., INC.                       Customer Activity Report                     ARCSTPRS-D0-07/10/06    Page   1
+Date: 02/07/2018     Time: 08:33   Company All    From Division First to Last        Report No 300
+From Acct of Cust First to Last                   From Acct of Terr First to Last    Non-divisionalized
+Invoice Date 01/01/2018 to 01/31/2018                 Sorted By Customer             All Accounts
+------------------------------------------------------------------------------------------------------------------------------------
+Customer # Name and Address             Mgr Anyst Slsmn  Terr Add Date              Billing Amt      Revenue Amt   Profit%     Files
+---------- ---------------------------- --- ----- -----  ---- --------            -------------    -------------   -------  --------
+
+ABCCOMP    ABC Company                  X   Y     CG     Z    08/28/03                15,783.75           355.00      2.249        3
+           GREEN BROWN                                      818-555-1234
+              Directs:          3 Houses:                  Total Files:                    3
+
+
+DEFCOMP    DEF Company                                        04/12/17                10,866.90           937.50      8.627       11
+              Directs:         11 Houses:                  Total Files:                   11
+
+
+VANDEGRIFT FORWARDING CO., INC.                       Customer Activity Report                     ARCSTPRS-D0-07/10/06    Page   2
+Date: 02/07/2018     Time: 08:33   Company All    From Division First to Last        Report No 300
+From Acct of Cust First to Last                   From Acct of Terr First to Last    Non-divisionalized
+Invoice Date 01/01/2018 to 01/31/2018                 Sorted By Customer             All Accounts
+------------------------------------------------------------------------------------------------------------------------------------
+Customer # Name and Address             Mgr Anyst Slsmn  Terr Add Date              Billing Amt      Revenue Amt   Profit%     Files
+---------- ---------------------------- --- ----- -----  ---- --------            -------------    -------------   -------  --------
+
+GHICOMP    GHI INC                                BOS         10/17/08                 7,387.24         1,265.00     17.124        3
+           ABE LINCOLN                                      201-555-6789
+              Directs:          3 Houses:                  Total Files:                    3
+
+
+JKLCOMP    JKL Enterprises                        HZ          04/24/17                   718.78           120.00     16.695        1
+                                                                       3
+              Directs:          1 Houses:                  Total Files:                    1
+
+MNOCOMP    MNO INTERNATIONAL                                  12/10/01                    80.00-        2,260.00-  2825.000-       0
+           DAVID GNATS                                    522-555-3553
+              Directs:            Houses:                  Total Files:
+
+
+VANDEGRIFT FORWARDING CO., INC.                       Customer Activity Report                     ARCSTPRS-D0-07/10/06    Page  3
+Date: 02/07/2018     Time: 08:33   Company All    From Division First to Last        Report No 300
+From Acct of Cust First to Last                   From Acct of Terr First to Last    Non-divisionalized
+Invoice Date 01/01/2018 to 01/31/2018                 Sorted By Customer             All Accounts
+------------------------------------------------------------------------------------------------------------------------------------
+Customer # Name and Address             Mgr Anyst Slsmn  Terr Add Date              Billing Amt      Revenue Amt   Profit%     Files
+---------- ---------------------------- --- ----- -----  ---- --------            -------------    -------------   -------  --------
+
+Company 01 Totals                                                                 55,534,756.67         2,671.50     7.686        18
+              Directs:         18     Houses:       367            Total Files:            18
+
+
+Grand Totals:                                                                     55,534,756.67         2,671.50     7.686        18
+              Directs:         18     Houses:       367            Total Files:            18
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

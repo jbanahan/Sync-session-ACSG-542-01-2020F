@@ -614,6 +614,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/ellery_po/file.csv', 'remote_path'=>'12345'}
       expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
     end
+
+    it "handles vandegrift customer activity reports" do
+      p = class_double("OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser")
+      expect(OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser).to receive(:delay).and_return p
+      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      cmd = {'request_type'=>'remote_file','original_path'=>'/vfi_kewill_customer_activity_report/file.rpt','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+      expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+    end
   end
 
   it 'should return error if bad request type' do
