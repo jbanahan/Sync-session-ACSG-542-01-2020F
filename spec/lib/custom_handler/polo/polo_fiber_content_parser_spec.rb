@@ -73,51 +73,51 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       end
 
       it "parses simple footwear fiber content" do
-        expect(@p.parse_fiber_content "CANVAS UPPER / LEATHER OUTSOLE").to eq proxy_result({fiber_1: "CANVAS", type_1: "Outer", percent_1: "100", fiber_2: "LEATHER", type_2: "Sole", percent_2: "100", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "CANVAS UPPER / LEATHER OUTSOLE").to include proxy_result({fiber_1: "CANVAS", type_1: "Outer", percent_1: "100", fiber_2: "LEATHER", type_2: "Sole", percent_2: "100", algorithm: "footwear"})
       end
 
       it "parses mispelled upper as uper" do
-        expect(@p.parse_fiber_content "CANVAS UPER / LEATHER OUTSOLE").to eq proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "CANVAS UPER / LEATHER OUTSOLE").to include proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses leader upper as uper" do
-        expect(@p.parse_fiber_content "UPER: CANVAS / OUTSOLE: LEATHER").to eq proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "UPER: CANVAS / OUTSOLE: LEATHER").to include proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses mispelled upper as upppper" do
-        expect(@p.parse_fiber_content "CANVAS UPPPER / LEATHER OUTSOLE").to eq proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "CANVAS UPPPER / LEATHER OUTSOLE").to include proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses leader upper as uper" do
-        expect(@p.parse_fiber_content "UPPPER: CANVAS / OUTSOLE: LEATHER").to eq proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "UPPPER: CANVAS / OUTSOLE: LEATHER").to include proxy_result({percent_1: "100", fiber_1: "CANVAS", type_1: "Outer", percent_2: "100", fiber_2: "LEATHER", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses multi-line leading upper footwear" do
-        expect(@p.parse_fiber_content "UPPER - 100% COW LEATHER\nOUTSOLE - 100% COW LEATHER").to eq proxy_result({percent_1: "100", fiber_1: "COW LEATHER", type_1: "Outer", percent_2: "100", fiber_2: "COW LEATHER", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "UPPER - 100% COW LEATHER\nOUTSOLE - 100% COW LEATHER").to include proxy_result({percent_1: "100", fiber_1: "COW LEATHER", type_1: "Outer", percent_2: "100", fiber_2: "COW LEATHER", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses footwear fiber content with multiple components for each type" do
-        expect(@p.parse_fiber_content "95% COTTON +5% LEATHER Upper / 45.8% RUBBER + 54.2% FABRIC Outsole").to eq proxy_result({percent_1: "95", fiber_1: "COTTON", type_1: "Outer", percent_2: "5", fiber_2: "LEATHER", type_2: "Outer", percent_3: "45.8", fiber_3: "RUBBER", type_3: "Sole", percent_4: "54.2", fiber_4: "FABRIC", type_4: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "95% COTTON +5% LEATHER Upper / 45.8% RUBBER + 54.2% FABRIC Outsole").to include proxy_result({percent_1: "95", fiber_1: "COTTON", type_1: "Outer", percent_2: "5", fiber_2: "LEATHER", type_2: "Outer", percent_3: "45.8", fiber_3: "RUBBER", type_3: "Sole", percent_4: "54.2", fiber_4: "FABRIC", type_4: "Sole", algorithm: "footwear"})
       end
 
       it "parses footwear with no space after uppers" do
-        expect(@p.parse_fiber_content "100%synthetic  Uppers100% rubber  Outsoles").to eq proxy_result({percent_1: "100", fiber_1: "synthetic", type_1: "Outer", percent_2: "100", fiber_2: "rubber", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "100%synthetic  Uppers100% rubber  Outsoles").to include proxy_result({percent_1: "100", fiber_1: "synthetic", type_1: "Outer", percent_2: "100", fiber_2: "rubber", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "parses footwear fiber content with conjunctions in them" do
-        expect(@p.parse_fiber_content "62% Cotton 38% PU Uppers and 100% Polyester Outsole").to eq proxy_result({percent_1: "62", fiber_1: "Cotton", type_1: "Outer", percent_2: "38", fiber_2: "PU", type_2: "Outer", percent_3: "100", fiber_3: "Polyester", type_3: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "62% Cotton 38% PU Uppers and 100% Polyester Outsole").to include proxy_result({percent_1: "62", fiber_1: "Cotton", type_1: "Outer", percent_2: "38", fiber_2: "PU", type_2: "Outer", percent_3: "100", fiber_3: "Polyester", type_3: "Sole", algorithm: "footwear"})
       end
 
       it "handles sole in place of outsole" do
-        expect(@p.parse_fiber_content "NYLON UPPER / ESO SOLE").to eq proxy_result({percent_1: "100", fiber_1: "NYLON", type_1: "Outer", percent_2: "100", fiber_2: "ESO", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "NYLON UPPER / ESO SOLE").to include proxy_result({percent_1: "100", fiber_1: "NYLON", type_1: "Outer", percent_2: "100", fiber_2: "ESO", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "handles comments in footwear" do
-        expect(@p.parse_fiber_content "NYLON UPPER / ESO SOLE\nHAS FOXING, SLIP-ON STYLE").to eq proxy_result({percent_1: "100", fiber_1: "NYLON", type_1: "Outer", percent_2: "100", fiber_2: "ESO", type_2: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "NYLON UPPER / ESO SOLE\nHAS FOXING, SLIP-ON STYLE").to include proxy_result({percent_1: "100", fiber_1: "NYLON", type_1: "Outer", percent_2: "100", fiber_2: "ESO", type_2: "Sole", algorithm: "footwear"})
       end
 
       it "handles footwear with leading component descriptors" do
-        expect(@p.parse_fiber_content "Uppers:   55%polyester/45%PU   Outsoles: 100%polyester").to eq proxy_result({percent_1: "55", fiber_1: "polyester", type_1: "Outer", percent_2: "45", fiber_2: "PU", type_2: "Outer", percent_3: "100", fiber_3: "polyester", type_3: "Sole", algorithm: "footwear"})
+        expect(@p.parse_fiber_content "Uppers:   55%polyester/45%PU   Outsoles: 100%polyester").to include proxy_result({percent_1: "55", fiber_1: "polyester", type_1: "Outer", percent_2: "45", fiber_2: "PU", type_2: "Outer", percent_3: "100", fiber_3: "polyester", type_3: "Sole", algorithm: "footwear"})
       end
 
       it "only uses first in series of fiber components" do
@@ -344,8 +344,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     end
 
     context "clean fiber handling" do
-
-      ["61", "62"].each do |chapter|
+      ["42", "61", "62", "63", "65"].each do |chapter|
 
         before :each do 
           @tariff.update_attribute :hts_1, "#{chapter}34567890"

@@ -90,6 +90,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       fiber = product.get_custom_value(@cdefs[:fiber_content]).value
       unless fiber.blank?
         result = parse_fiber_content(fiber, force_clean_fiber: use_clean_fiber_algorithm?(product))
+        result[:algorithm] = 'clean_fiber' if use_clean_fiber_algorithm? product
       end
       failed = false
       status_message = "Passed"
@@ -120,10 +121,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     
     footwear = footwear? fiber
 
-    if force_clean_fiber
+    if force_clean_fiber && !footwear
       results = clean_fiber_parse fiber
     elsif footwear
       results = parse_footwear fiber
+      results['is_footwear'] = true
     else
       results = non_footwear_parse fiber
     end
@@ -577,6 +579,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       clean_fiber_content = results[:algorithm] == "clean_fiber" ? generate_clean_fiber_content(results, parse_failed) : nil
+      # Since there is a chance that there can be a trailing slash, let's kill it.
+      clean_fiber_content = clean_fiber_content.gsub(/\/$/, '').strip if clean_fiber_content
       update_or_create_cv(product, :clean_fiber_content,  clean_fiber_content, changed)
       update_or_create_cv(product, :msl_fiber_failure, parse_failed, changed)
       update_or_create_cv(product, :msl_fiber_status, status_message, changed)
@@ -598,7 +602,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           percent = number_with_precision(percent, precision: 5, strip_insignificant_zeros: true)
 
           clean_fiber << " " if clean_fiber.length > 0
-          clean_fiber << "#{percent}% #{fiber.upcase}"
+          if results['is_footwear']
+            clean_fiber << "#{fiber.upcase} #{type.upcase} /"
+          else
+            clean_fiber << "#{percent}% #{fiber.upcase}"
+          end
         end
 
         # Prefix the clean_fiber with the component, if there is any
@@ -646,7 +654,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         end if hts.nil?
       end
 
-      hts.nil? ? false : ( (hts =~ /^(61|62)/).present? )
+      hts.nil? ? false : ( (hts =~ /^(42|61|62|63|65)/).present? )
     end
 
     def xref_value fabric

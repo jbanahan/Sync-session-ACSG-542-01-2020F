@@ -23,9 +23,9 @@
 #  ecellerate_customer_number    :string(255)
 #  agent                         :boolean
 #  factory                       :boolean
-#  show_business_rules           :boolean
 #  enabled_booking_types         :string(255)
 #  irs_number                    :string(255)
+#  show_business_rules           :boolean
 #  slack_channel                 :string(255)
 #  forwarder                     :boolean
 #  mid                           :string(255)

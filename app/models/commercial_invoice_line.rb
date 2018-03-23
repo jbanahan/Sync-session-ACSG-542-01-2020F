@@ -44,13 +44,13 @@
 #  cvd_case_percent       :decimal(5, 2)
 #  customer_reference     :string(255)
 #  adjustments_amount     :decimal(12, 3)
+#  value_foreign          :decimal(11, 2)
+#  currency               :string(255)
 #  customs_line_number    :integer
 #  product_line           :string(255)
 #  visa_number            :string(255)
 #  visa_quantity          :decimal(12, 3)
 #  visa_uom               :string(255)
-#  value_foreign          :decimal(11, 2)
-#  currency               :string(255)
 #  store_name             :string(255)
 #  subheader_number       :integer
 #  container_id           :integer
