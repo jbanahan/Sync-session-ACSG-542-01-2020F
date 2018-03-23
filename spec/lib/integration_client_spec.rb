@@ -624,6 +624,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
   end
 
+  it "handles vandegrift kewill accounting report 5001" do
+    p = class_double("OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001")
+    expect(OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001).to receive(:delay).and_return p
+    expect(p).to receive(:process_from_s3).with "bucket", '12345'
+    cmd = {'request_type'=>'remote_file','original_path'=>'/arprfsub/file.rpt','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+  end
+
   it 'should return error if bad request type' do
     cmd = {'something_bad'=>'crap'}
     expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq({'response_type'=>'error','message'=>"Unknown command: #{cmd}"})

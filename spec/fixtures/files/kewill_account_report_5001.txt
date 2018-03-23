@@ -1,0 +1,132 @@
+
+VANDEGRIFT FORWARDING CO., INC.                       luca 2018                                    ARPRFSUM-D0-07/31/07    Page  35
+Date: 03/15/2018     Time: 12:14   Company All    From Division First to Last        Report No 5001
+From Acct of Cust FIRST to LAST                   From File No First to Last         Do NOT Consolidate Masters
+From AWB/BL # First to Last                       Sorted By Customer                 Currency USD
+From Dest Country First to Last      Invoice Date 03/01/2018 to 03/15/2018           All Accounts
+From Exprt Country First to Last     From Acct of Terr First to Last                 NOT Negative Profit Only
+Include DD,Over/Under Pay            Non-divisionalized                              Exclude Blank Customers
+------------------------------------------------------------------------------------------------------------------------------------
+
+            File Number  Master Bill   Div   Inv Date     Open A/R     Open A/P    Total A/R -  Total A/P =     Profit  Bill To
+            -----------  ------------  ----  --------  -----------  -----------  -----------  -----------  -----------  ----------
+                9039116  APLU75064216    11  03/08/18                   2078.00                                         KORMAN     A
+                9039130  17287004805     12  03/08/18                   2705.00                                         KORMAN     A
+                9039134  29733642626     11  03/08/18                   1885.20                                         KORMAN     A
+                9039135  eur             11  03/08/18                   1528.41                                         KORMAN     A
+                9039145  12543970706     12  03/08/18                    627.00                                         KORMAN     A
+                9039168  0160399246      11  03/08/18                    250.00                                         KORMAN     A
+                9039175  60712855474     11  03/12/18                    677.00                                         NOI        A
+                9039203  29733642954     12  03/08/18                   4382.20                                         JILL       A
+                9039218  29733642965     12  03/08/18                    787.27                                         JILL       A
+                9039236  ACLUSA002116    11  03/08/18                   1020.00                   2454.00      2454.00- BINBR
+                9039240  16086252364     11  03/08/18                    318.25-                                        JILL       A
+                9039263  92682-G         12  03/14/18                    596.20                                         JILL       A
+                9039264  07943772525     12  03/08/18                   1956.02                                         JILL       A
+                9039273  SA00215230      11  03/08/18                   1020.00                   2454.00      2454.00- BINBR
+                9039311  12127/15        12  03/14/18                   2855.76                                         NOI        A
+               90391021  LIBU32REV101    11  03/05/18       621.00                    621.00                    621.00  ASAIDES
+
+KORMAN        Totals:                                       621.00    202916.05       621.00      4908.00      4287.00-
+              Directs:                Houses:                      Total Shipments:
+
+                2336157  30245492        10  03/01/18       325.00                    325.00                    325.00  LANDS1
+                2338027  30245419        10  03/07/18        50.00                     50.00                     50.00  LANDS1
+                2338028  30245542        10  03/07/18        50.00                     50.00                     50.00  LANDS1
+                2338029  30245583        10  03/07/18        50.00                     50.00                     50.00  LANDS1
+                2338060  30245435        10  03/12/18        50.00                     50.00                     50.00  LANDS1
+                2338061  30245427        10  03/12/18        50.00                     50.00                     50.00  LANDS1
+                2338062  30245468        10  03/12/18        50.00                     50.00                     50.00  LANDS1
+                2338063  30245500        10  03/12/18        50.00                     50.00                     50.00  LANDS1
+                2339045  30245476        10  03/14/18       425.00                    425.00                    425.00  LANDS1
+                2339291  30245518        10  03/14/18        65.00                     65.00                     65.00  LANDS1
+
+LANDS1        Totals:                                      1165.00                   1165.00                   1165.00
+              Directs:         10     Houses:                      Total Shipments:        10
+
+                7094677  354013           3  03/12/18      1225.00       150.00      1225.00       150.00      1075.00  LAPMA
+
+LAPMA         Totals:                                      1225.00       150.00      1225.00       150.00      1075.00
+              Directs:          1     Houses:                      Total Shipments:         1
+
+                                                                   Total Shipments:
+
+Company 01 Totals:                                       882365.87    529896.83    663109.91    476926.79    186183.12
+              Directs:      1,333     Houses:        44            Total Shipments:     1,377
+
+
+
+
+
+
+
+
+
+
+
+Grand Totals:                                            882365.87    529896.83    663109.91    476926.79    186183.12
+              Directs:      1,333     Houses:        44            Total Shipments:     1,377
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -49,6 +49,7 @@ require 'open_chain/custom_handler/kewill_entry_parser'
 require 'open_chain/custom_handler/ellery/ellery_order_parser'
 require 'open_chain/custom_handler/ellery/ellery_856_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
 
 module OpenChain
   class IntegrationClient
@@ -267,6 +268,8 @@ module OpenChain
         OpenChain::CustomHandler::Ellery::Ellery856Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "vfi_kewill_customer_activity_report")
         OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "arprfsub")
+        OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)
@@ -276,7 +279,7 @@ module OpenChain
           status_msg = "Can't figure out what to do for path #{original_path}"
         end
       end
-      
+
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
       raise e unless Rails.env.production?
