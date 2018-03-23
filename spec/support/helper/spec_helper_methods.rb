@@ -28,6 +28,13 @@ module Helpers
     EntitySnapshot.snapshot_writer_impl = EntitySnapshot::DefaultSnapshotWriterImpl
   end
 
+  def extract_excel_from_email email, attachment_name
+    attachment = email.attachments[attachment_name]
+    return nil if attachment.nil?
+
+    Spreadsheet.open(StringIO.new(attachment.read))
+  end
+
   class MockS3
     class AwsErrors < StandardError; end
     class NoSuchKeyError < AwsErrors; end 

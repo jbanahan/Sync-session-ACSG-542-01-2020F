@@ -585,7 +585,9 @@ module CoreModuleDefinitions
     child_lambdas: {DailyStatementEntry => lambda {|s| s.daily_statement_entries }},
     child_joins: {DailyStatementEntry => "LEFT OUTER JOIN daily_statement_entries on daily_statements.id = daily_statement_entries.daily_statement_id"},
     enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
-    module_chain: [DailyStatement, DailyStatementEntry, DailyStatementEntryFee]
+    module_chain: [DailyStatement, DailyStatementEntry, DailyStatementEntryFee],
+    quicksearch_fields: [:cds_statement_number],
+    quicksearch_extra_fields: [:cds_status, :cds_total_amount, :cds_received_date, :cds_final_received_date]
   })
 
   CUSTOMS_MONTHLY_STATEMENT = CoreModule.new("MonthlyStatement", "Monthly Statement", {
@@ -596,7 +598,9 @@ module CoreModuleDefinitions
     child_lambdas: {},
     child_joins: {},
     enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
-    module_chain: [MonthlyStatement]
+    module_chain: [MonthlyStatement],
+    quicksearch_fields: [:cms_statement_number],
+    quicksearch_extra_fields: [:cms_status, :cms_total_amount, :cms_received_date, :cms_final_received_date]
   })
 
   RUN_AS_SESSION = CoreModule.new("RunAsSession", "Run As Session",

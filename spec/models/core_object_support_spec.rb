@@ -201,6 +201,28 @@ describe CoreObjectSupport do
         expect(sql).to include "test_core_objects.updated_at"
       end
     end
+
+    describe "has_never_been_synced_where_clause" do
+      it "finds objects that have never been synced" do
+        entry = Factory(:entry)
+        found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
+        expect(found).to eq entry
+      end
+
+      it "finds objects that have been synced but have a blank sent_at" do
+        entry = Factory(:entry)
+        entry.sync_records.create! trading_partner: 'partner'
+        found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
+        expect(found).to eq entry
+      end
+
+      it "does not find objects that have a sync record with a sent_at value" do
+        entry = Factory(:entry)
+        entry.sync_records.create! trading_partner: 'partner', sent_at: Time.zone.now
+        found = Entry.joins(Entry.need_sync_join_clause('partner')).where(Entry.has_never_been_synced_where_clause).first
+        expect(found).to be_nil
+      end
+    end
   end
 
   describe "attachment_types" do

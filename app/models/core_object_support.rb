@@ -146,6 +146,13 @@ module CoreObjectSupport
     def find_by_custom_value custom_definition, value
       self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_type}_value = ?",value).first
     end
+
+    def has_never_been_synced_where_clause
+      # This is solely for the cause where we only ever want to sync an object a single time...therefore, we ONLY want to return results that either
+      # do not have a sync record or the sync record sent at date is null - sent_date is null is to allow for clearing and manual resends
+      "sync_records.id IS NULL OR sync_records.sent_at IS NULL"
+    end
+
     def need_sync_join_clause trading_partner, join_table = self.table_name
       sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{join_table}.id and sync_records.trading_partner = ?"
       sanitize_sql_array([sql, name, trading_partner])

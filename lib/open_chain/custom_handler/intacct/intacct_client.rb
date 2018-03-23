@@ -7,14 +7,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   # This is the answer to the security question: :$hSU'ZW^x6>E7'
 
   INTACCT_CONNECTION_INFO ||= {
-    :sender_id => 'vandegriftinc',
-    :sender_password => '9gUMGbFIMy',
     :url => 'https://api.intacct.com/ia/xml/xmlgw.phtml',
-    :company_id => 'vfi',
-    :user_id => 'integration',
-    # encode call is because of the & and > in the password since we're just templating the xml as a string below rather than
-    # building the xml piece by piece
-    :user_password => 'b,Z+&W>6dFR:'.encode(xml: :text),
     :api_version => "2.1"
   }.freeze
 
@@ -163,7 +156,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
   def get_object_fields location_id, object_name, key, *fields
     function_control_id, xml = @generator.generate_get_object_fields object_name, key, *fields
-    response = post_xml location_id, false, false, xml, function_control_id
+    response = post_xml location_id, false, false, xml, function_control_id, read_only: true
     obj = REXML::XPath.first response, "//result[controlid = '#{function_control_id}']/data/#{object_name}"
     raise "Failed to find #{object_name} object with key #{key}." unless obj
     object_fields = {}
@@ -172,15 +165,81 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     object_fields
   end
 
+  # multiple keys can be passed using an array
+  def read_object location_id, intacct_object_type, keys, fields: nil
+    control_ids = []
+    combined_xml = ""
+    Array.wrap(keys).each do |key|
+      function_control_id, xml = @generator.generate_read_query intacct_object_type, key, fields: fields
+      control_ids << function_control_id
+      combined_xml << xml
+    end
+    
+    response = post_xml location_id, false, false, combined_xml, control_ids, request_options: {api_version: "3.0"}, read_only: true
+
+    objects = []
+    control_ids.each do |id|
+      object = REXML::XPath.first response, "//result[controlid = '#{id}']/data/#{intacct_object_type}"
+      objects << object if object
+    end
+
+    # If an Array was passed to keys, then return an array back
+    if keys.is_a?(Array)
+      return objects
+    else
+      return objects.first
+    end
+  end
+
+  def list_objects location_id, intacct_object_type, query, fields: nil, max_results: 1000
+    results = []
+    function_control_id, xml = @generator.generate_read_by_query intacct_object_type, query, fields: fields
+    response = post_xml location_id, false, false, xml, function_control_id, request_options: {api_version: "3.0"}, read_only: true
+    data = parse_list_results response, function_control_id, results
+    
+    # Now determine if there's any more results that we have to retrieve
+    result_id = nil
+    while (results.length < max_results && data.attributes["numremaining"].to_i > 0 && !(result_id = data.attributes["resultId"].to_s).blank?)
+      function_control_id, xml = @generator.generate_read_more result_id
+      response = post_xml location_id, false, false, xml, function_control_id, request_options: {api_version: "3.0"}, read_only: true
+      data = parse_list_results response, function_control_id, results
+    end
+
+    (results.length > max_results) ? results[0, max_results] : results
+  end
+
+  def sanitize_query_parameter_value value
+    # Intacct requires escaping apostrophes in data with a \   .ie test'ing -> test\'ing
+    # The extra slashes are there because \' in a gsub actually means "part of the string after the match"
+    # So then we need to also escape that.
+    value.to_s.gsub("'", "\\\\\'")
+  end
+
+  def parse_list_results response, function_control_id, results
+    data = REXML::XPath.first response, "//result[controlid = '#{function_control_id}']/data"
+    data.each_element {|e| results << e }
+    data
+  end
+  private :parse_list_results
+
+  def post_payment location_id, ap_payment
+    function_control_id, xml = @generator.generate_ap_payment ap_payment
+    response = post_xml location_id, false, false, xml, function_control_id, request_options: {api_version: "3.0"}
+    extract_record_no(response, function_control_id, "appymt")
+  end
+
   # Receives XML data that should be nested under the <content>
   # element of the Intacct request and sends it, returning the XML
   # response from the API.  The XML data should already be stringified (sans <?xml version..>)
   # DON'T use this method directly, use the other public feeder methods in this class.  The method
   # is primarily exposed as non-private for simplified testing.
-  def post_xml location_id, transaction, unique_request, intacct_content_xml, function_control_id, request_options = {}
-    raise "Cannot post to Intacct in development mode" unless production?
-
+  def post_xml location_id, transaction, unique_request, intacct_content_xml, function_control_id, request_options: {}, read_only: false
     connection_options = INTACCT_CONNECTION_INFO.merge(request_options)
+    connection_options = connection_options.merge(self.class.intacct_config)
+
+    # We're going to allow connecting to the production intacct system if the xml post is marked as read_only, regardless of the 
+    # status of the current system.
+    can_send_request?(connection_options) unless read_only
 
     uri = URI.parse connection_options[:url]
     post = Net::HTTP::Post.new(uri)
@@ -202,13 +261,16 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     # Verify all the control ids passed in resulted in a valid response.
     # There's no need for this now, but we may need to not fail if transaction == false and multiple control ids
     # are present.  Since in that scenario, any results w/ non-failed statuses would have taken effect in Intacct.
-    control_ids = function_control_id.respond_to?(:each) ? function_control_id : [function_control_id]
-    control_ids.each {|id| handle_error xml, id}
+    Array.wrap(function_control_id).each {|id| handle_error xml, id}
 
     xml
   end
 
   private
+
+    def can_send_request? connection_options
+      raise "Cannot post to Intacct in development mode" unless production? || company_id(connection_options).include?("-sandbox")
+    end
     
     def process_response response
       # The response from Intacct should always be an XML document.
@@ -253,6 +315,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       xml.text("//result[controlid = '#{function_control_id}']/key")
     end
 
+    def extract_record_no xml, function_control_id, object_type
+      xml.text("//result[controlid = '#{function_control_id}']/data/#{object_type}/RECORDNO")
+    end
+
     def assemble_request_xml location_id, transaction, unique_content, connection_options, intacct_content_xml
       # This uniquely identifies the content section part of the request, if uniqueid is true, then
       # ANY request with the same SHA-1 digest will fail (even non-transactional ones).  In general,
@@ -277,7 +343,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     <authentication>
       <login>
         <userid>#{connection_options[:user_id]}</userid>
-        <companyid>#{connection_options[:company_id]}</companyid>
+        <companyid>#{company_id(connection_options)}</companyid>
         <password>#{connection_options[:user_password]}</password>
         #{(location_id.blank? ? "" : "<locationid>#{location_id}</locationid>")}
       </login>
@@ -289,6 +355,15 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 </request>
 XML
       xml
+    end
+
+    def company_id connection_options
+      id = connection_options[:company_id]
+      if MasterSetup.get.production?
+        id
+      else
+        "#{id}-sandbox"
+      end
     end
 
     def production?
@@ -311,6 +386,22 @@ XML
       end
 
       return should_retry
+    end
+
+    def self.intacct_config
+      @intacct_config ||= begin
+        config = YAML.load_file(Rails.root.join('config', 'intacct.yml')).symbolize_keys
+        # Since these properties get loaded to an XML file, need to encode all the values properly
+        # Not expecting multi-level config values for this yet, so don't worry about parsing hashes,etc.
+        config.each_pair do |k, v|
+          # Expected keys are 
+          config[k] = v.encode(xml: :text) if v.is_a?(String)
+        end
+      rescue Errno::ENOENT
+        # do nothing...if the load raises we'll report a nicer error
+      end
+      raise "No Intacct client configuration file found at 'config/intacct.yml'." unless @intacct_config
+      @intacct_config
     end
 
 end; end; end; end

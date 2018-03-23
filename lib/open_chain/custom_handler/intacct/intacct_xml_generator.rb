@@ -9,9 +9,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
     'Freight File' => 'project'
   }
 
+  # See https://developer.intacct.com/api/accounts-payable/ap-payments/#create-ap-payment
+  IntacctApPayment ||= Struct.new(:financial_entity, :payment_method, :payment_request_method, :vendor_id, :document_number, :description, :payment_date, :currency, :payment_details)
+  # If you want to add a "credit" to a payment (essentially mark a credit bill as being paid), then put the intacct apbill recordno in the credit_bill_record_no attribute
+  # Otherwise, just put the apbill's intacct recordno as the bill_record_no and set the payment amount
+  IntacctApPaymentDetail ||= Struct.new(:bill_record_no, :bill_line_id, :bill_amount, :credit_bill_record_no, :credit_bill_line_id, :credit_amount)
+
   def generate_receivable_xml receivable
-    build_function do |func|
-      trans = add_element func, "create_sotransaction"
+    build_function("create_sotransaction") do |trans|
       add_element trans, "transactiontype", receivable.receivable_type
       add_date trans, "datecreated", receivable.invoice_date
       add_date trans, "dateposted", (receivable.canada? ? receivable.created_at.in_time_zone("Eastern Time (US & Canada)") : receivable.invoice_date)
@@ -45,8 +50,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   end
 
   def generate_payable_xml payable, termname
-    build_function do |func|
-      bill = add_element func, "create_bill"
+    build_function("create_bill") do |bill|
       add_element bill, "vendorid", payable.vendor_number
       add_date bill, "datecreated", payable.bill_date
       add_date bill, "dateposted", (payable.canada? ? payable.created_at.in_time_zone("Eastern Time (US & Canada)") : payable.bill_date)
@@ -79,9 +83,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   end
 
   def generate_ap_adjustment check, payable
-    build_function do |func|
-
-      adj = add_element func, "create_apadjustment"
+    build_function("create_apadjustment") do |adj|
       add_element adj, "vendorid", check.vendor_number
       add_date adj, "datecreated", (payable ? payable.bill_date : check.check_date)
       add_date adj, "dateposted", (payable ? payable.bill_date : check.check_date)
@@ -110,9 +112,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   end
 
   def generate_check_gl_entry_xml check
-
-    build_function do |func|
-      req = add_element func, "create_gltransaction"
+    build_function("create_gltransaction") do |req|
       # This is the GL Journal for Alliance checks - the only system we actually send checks for
       # so this should be fine hardcoded here.
       add_element req, "journalid", "GLAC"
@@ -161,8 +161,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   end
 
   def generate_get_object_fields object_type, key, *fields
-    build_function do |func|
-      get_obj = add_element func, "get"
+    build_function("get") do |get_obj|
       get_obj.attributes["object"] = object_type
       get_obj.attributes["key"] = key
 
@@ -173,11 +172,84 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
     end
   end
 
+  # This method returns a full API object (.ie a single APBILL, APPayable, etc) from intacct
+  # If you need more than one object, you need to utilize the #generate_read_by_query method and then 
+  # you can generate a read for each result returned.  See IntacctClient's #read_object method which
+  # implements this pattern for reading muliple objects.
+  def generate_read_query object_type, key, fields: nil
+    build_function("read") do |query_element|
+      add_element query_element, "object", object_type
+      add_element query_element, "keys", key
+      add_element(query_element, "fields", Array.wrap(fields).join(",")) if !fields.blank?
+    end
+  end
+
+  # This is essentially a search function, returning only top level data for the object (no detail field)
+  # Query is a SQL-like string # https://developer.intacct.com/web-services/queries/
+  def generate_read_by_query object_type, query, fields: nil, page_size: nil
+    build_function("readByQuery") do |query_element|
+      add_element query_element, "object", object_type
+      add_element(query_element, "fields", Array.wrap(fields).join(",")) if !fields.blank?
+      add_element query_element, "query", query
+      add_element(query_element, "pagesize", page_size) if page_size.to_i > 0
+    end
+  end
+
+  def generate_read_more result_id
+    build_function("readMore") do |more_element|
+      add_element more_element, "resultId", result_id
+    end
+  end
+
+  # ap_payment is expected to be an IntacctApPayment (see struct above)
+  def generate_ap_payment ap_payment
+    build_function("create") do |create|
+      appmt = add_element create, "APPYMT"
+      add_element(appmt, "FINANCIALENTITY", ap_payment.financial_entity)
+      add_element(appmt, "PAYMENTMETHOD", ap_payment.payment_method)
+      add_element(appmt, "PAYMENTREQUESTMETHOD", ap_payment.payment_request_method, allow_blank: false)
+      add_element(appmt, "VENDORID", ap_payment.vendor_id)
+      add_element(appmt, "DOCNUMBER", ap_payment.document_number)
+      add_element(appmt, "DESCRIPTION", ap_payment.description)
+      add_element(appmt, "PAYMENTDATE", ap_payment.payment_date.strftime("%m/%d/%Y"))
+      add_element(appmt, "CURRENCY", ap_payment.currency)
+
+      # Details are required, so I'm not even going to check if they're present, if there's
+      # no details, this can fail hard.
+      appmt_details = add_element(appmt, "APPYMTDETAILS")
+
+      ap_payment.payment_details.each do |detail|
+        d = add_element(appmt_details, "appymtdetail")
+        if detail.bill_record_no
+          add_element(d, "RECORDKEY", detail.bill_record_no)
+          add_element(d, "ENTRYKEY", detail.bill_line_id)
+          # Anything with a credit should never use the TRX_PAYMENTAMOUNT, but I actually want 
+          # this to bomb hard w/ an error from intacct if that happens, rather than protect it here
+          # since it's possible the caller has the wrong expectation about how to credit a bill line
+          # and the Intacct error will dispell that.
+          add_element(d, "TRX_PAYMENTAMOUNT", detail.bill_amount, allow_blank: false)
+        end
+
+        if detail.credit_bill_record_no
+          add_element(d, "INLINEKEY", detail.credit_bill_record_no)
+          add_element(d, "INLINEENTRYKEY", detail.credit_bill_line_id)
+          add_element(d, "TRX_INLINEAMOUNT", detail.credit_amount)
+        end
+      end
+    end
+  end
+
   private
 
-    def build_function 
+    def build_function function_child_name = nil
       root = function_element
-      yield root
+      if function_child_name
+        child = add_element root, function_child_name
+        yield child
+      else
+        yield root
+      end
+      
 
       control_id = nil
       if root.elements.size == 1
