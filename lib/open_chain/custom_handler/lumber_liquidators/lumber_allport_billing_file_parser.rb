@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
       # Find the matching entry by bill of lading, assuming we have one.  This can be a match to either master or house.
       entries = []
       if bill_of_lading
-        entries = Entry.where("master_bills_of_lading LIKE ? OR house_bills_of_lading LIKE ?", "%#{bill_of_lading}%", "%#{bill_of_lading}%")
+        entries = find_matching_lumber_entries Entry.where("master_bills_of_lading LIKE ? OR house_bills_of_lading LIKE ?", "%#{bill_of_lading}%", "%#{bill_of_lading}%")
       end
 
       # If multiple BOL-matching rows have been found, try to reduce the number by matching to container number
@@ -140,7 +140,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
       else
         # If a match couldn't be made via bill of lading and we have a container number, try to match on that.
         if entries.length == 0 && container_number
-          entries = Entry.where("container_numbers LIKE ?", "%#{container_number}%")
+          entries = find_matching_lumber_entries Entry.where("container_numbers LIKE ?", "%#{container_number}%")
           if entries.length > 1
             errors << "Row #{row_number}: Multiple entry matches found for container '#{container_number}': #{get_file_numbers(entries).join(", ")}."
           end
@@ -154,6 +154,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
       end
 
       matching_entry
+    end
+
+    # Limits all entry lookups to LL Kewill entries released within the last 6 months only.
+    def find_matching_lumber_entries base_lookup
+      base_lookup.where(customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM).where("release_date >= '#{(DateTime.now - 6.months).to_s(:db)}'")
     end
 
     def get_file_numbers entries

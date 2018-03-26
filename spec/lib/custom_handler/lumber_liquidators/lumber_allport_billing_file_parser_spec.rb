@@ -58,24 +58,28 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
     let(:row_2) { ["x", "BOL-2", "CON-3", "x", "x", "x", "25.25"] }
     let(:totals_row) { ["", "", "", "", "", "", "75.75"] }
 
-    it "parses file and generates new spreadsheet based on it" do
-      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
+    def yield_standard_header base
+      base.and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
           and_yield(header_row).and_yield(header_row).and_yield(blank_row).
           and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+          and_yield(header_row).and_yield(blank_row).and_yield(header_row)
+    end
+
+    it "parses file and generates new spreadsheet based on it" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1).and_yield(row_2).and_yield(blank_row).and_yield(totals_row)
 
       entry_1 = Factory(:entry,
+          customer_number:'LUMBER',
+          source_system:Entry::KEWILL_SOURCE_SYSTEM,
           customer_name:'Crudco',
-          customer_number:'CUS123',
           broker_reference:'BR12345',
           entry_number:'ENT12345',
           bol_received_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-07 10:35:11'),
           export_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-08 11:45:22'),
           entry_filed_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-09 12:55:33'),
-          release_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-10 13:05:44'),
+          release_date:ActiveSupport::TimeZone['UTC'].parse('2017-02-10 13:05:44'),
           master_bills_of_lading:'BOL-1,BOL-X',
           house_bills_of_lading:'BOL-Y',
           container_numbers:'CON-1,CON-2',
@@ -87,14 +91,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       invoice_1 = Factory(:broker_invoice, entry:entry_1)
 
       entry_2 = Factory(:entry,
+          customer_number:'LUMBER',
+          source_system:Entry::KEWILL_SOURCE_SYSTEM,
           customer_name:'Stufftek',
-          customer_number:'CUS456',
           broker_reference:'BR67890',
           entry_number:'ENT67890',
           bol_received_date:ActiveSupport::TimeZone['UTC'].parse('2017-03-07 10:35:11'),
           export_date:ActiveSupport::TimeZone['UTC'].parse('2017-03-08 11:45:22'),
           entry_filed_date:ActiveSupport::TimeZone['UTC'].parse('2017-03-09 12:55:33'),
-          release_date:ActiveSupport::TimeZone['UTC'].parse('2017-03-10 13:05:44'),
+          release_date:ActiveSupport::TimeZone['UTC'].parse('2017-02-11 13:05:44'),
           master_bills_of_lading:'OTHER BOL',
           house_bills_of_lading:'BOL-2',
           container_numbers:'CON-3',
@@ -104,7 +109,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       container_3 = Factory(:container, container_number:'CON-3', entry:entry_2)
       invoice_2 = Factory(:broker_invoice, entry:entry_2)
 
-      now = ActiveSupport::TimeZone['UTC'].parse('2018-03-06 16:30:12')
+      now = ActiveSupport::TimeZone['UTC'].parse('2017-03-06 16:30:12')
       Timecop.freeze(now) do
         subject.process user
       end
@@ -118,19 +123,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
       # The newly-generated spreadsheet is the first attachment.
       attachment_1 = mail.attachments[0]
-      expect(attachment_1.filename).to eq("Lumber_ACS_billing_report_2018-03-06.xls")
+      expect(attachment_1.filename).to eq("Lumber_ACS_billing_report_2017-03-06.xls")
       sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
       expect(sheet.rows.length).to eq 4
       expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
 
       expect(sheet.row(1)[0]).to eq 'Crudco'
-      expect(sheet.row(1)[1]).to eq 'CUS123'
+      expect(sheet.row(1)[1]).to eq 'LUMBER'
       expect(sheet.row(1)[2]).to eq 'BR12345'
       expect(sheet.row(1)[3]).to eq 'ENT12345'
       expect(sheet.row(1)[4]).to eq ActiveSupport::TimeZone['UTC'].parse('2018-03-07 10:35:11')
       expect(sheet.row(1)[5]).to eq ActiveSupport::TimeZone['UTC'].parse('2018-03-08 11:45:22').to_date
       expect(sheet.row(1)[6]).to eq ActiveSupport::TimeZone['UTC'].parse('2018-03-09 12:55:33')
-      expect(sheet.row(1)[7]).to eq ActiveSupport::TimeZone['UTC'].parse('2018-03-10 13:05:44')
+      expect(sheet.row(1)[7]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-02-10 13:05:44')
       expect(sheet.row(1)[8]).to eq 'BOL-1,BOL-X'
       expect(sheet.row(1)[9]).to eq 'BOL-Y'
       expect(sheet.row(1)[10]).to eq 'CON-1,CON-2'
@@ -143,13 +148,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(1)[15].to_s).to eq "Web View"
 
       expect(sheet.row(2)[0]).to eq 'Stufftek'
-      expect(sheet.row(2)[1]).to eq 'CUS456'
+      expect(sheet.row(2)[1]).to eq 'LUMBER'
       expect(sheet.row(2)[2]).to eq 'BR67890'
       expect(sheet.row(2)[3]).to eq 'ENT67890'
       expect(sheet.row(2)[4]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-03-07 10:35:11')
       expect(sheet.row(2)[5]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-03-08 11:45:22').to_date
       expect(sheet.row(2)[6]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-03-09 12:55:33')
-      expect(sheet.row(2)[7]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-03-10 13:05:44')
+      expect(sheet.row(2)[7]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-02-11 13:05:44')
       expect(sheet.row(2)[8]).to eq 'OTHER BOL'
       expect(sheet.row(2)[9]).to eq 'BOL-2'
       expect(sheet.row(2)[10]).to eq 'CON-3'
@@ -184,14 +189,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles lines that cannot be matched by BOL or container" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1).and_yield(row_2).and_yield(row_1).and_yield(blank_row).and_yield(totals_row)
 
-      entry_2 = Factory(:entry, master_bills_of_lading:'OTHER BOL', house_bills_of_lading:'BOL-2')
+      entry_2 = Factory(:entry, master_bills_of_lading:'OTHER BOL', house_bills_of_lading:'BOL-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
       invoice_2 = Factory(:broker_invoice, entry:entry_2)
 
       subject.process user
@@ -221,16 +222,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles line that has multiple BOL matches but only one container number match" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2')
+      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
       invoice_1 = Factory(:broker_invoice, entry:entry_1)
-      entry_2 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-3')
+      entry_2 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-3', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
 
       subject.process user
 
@@ -250,16 +247,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles line that has multiple BOL and container number matches" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2')
+      entry_1 = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
       invoice_1 = Factory(:broker_invoice, entry:entry_1)
-      entry_2 = Factory(:entry, broker_reference:'BR67890', master_bills_of_lading:'BOL-1', container_numbers:'CON-3,CON-1')
+      entry_2 = Factory(:entry, broker_reference:'BR67890', master_bills_of_lading:'BOL-1', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
       invoice_2 = Factory(:broker_invoice, entry:entry_2)
 
       subject.process user
@@ -278,15 +271,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles line that matches multiple entries by container number" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2')
-      entry_2 = Factory(:entry, broker_reference:'BR67890', container_numbers:'CON-3,CON-1')
+      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+      entry_2 = Factory(:entry, broker_reference:'BR67890', container_numbers:'CON-3,CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
 
       subject.process user
 
@@ -304,14 +293,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles line that matches a skeletal entry by master bill" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2')
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
       # No broker invoices.
 
       subject.process user
@@ -330,14 +315,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     it "handles line that successfully matches on container number" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2')
+      entry_1 = Factory(:entry, broker_reference:'BR12345', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
 
       subject.process user
 
@@ -354,13 +335,151 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_1.id}"
     end
 
+    # This should be viewed as a mismatch, despite the BOL match.
+    it "handles line that matches a non-Lumber entry by BOL" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    # This should be viewed as a mismatch, despite the container match.
+    it "handles line that matches a non-Lumber entry by container" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'*NOT* LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    # This should be viewed as a mismatch, despite the BOL match.
+    it "handles line that matches a non-Kewill entry by BOL" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    # This should be viewed as a mismatch, despite the container match.
+    it "handles line that matches a non-Kewill entry by container" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::FENIX_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    # This should be viewed as a mismatch, despite the BOL match.
+    it "handles line that matches an entry by BOL, but it was released too long ago" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016,9,4))
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      Timecop.freeze(DateTime.new(2017,3,6)) do
+        subject.process user
+      end
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    # This should be viewed as a mismatch, despite the container match.
+    it "handles line that matches an entry by container, but it was released too long ago" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
+          and_yield(row_1)
+
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016,9,4))
+      invoice = Factory(:broker_invoice, entry:entry)
+
+      Timecop.freeze(DateTime.new(2017,3,6)) do
+        subject.process user
+      end
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email.<br><br>Errors encountered:<br>Row 17: There were no matching entries for bill of lading 'BOL-1' or container 'CON-1'."
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 1
+      expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
     it "handles unexpected exception" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
-      expect(file_reader).to receive(:foreach).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
-          and_yield(header_row).and_yield(header_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row).
+      yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
       allow(Entry).to receive(:where).and_raise(StandardError.new("This is a terrible error."))
