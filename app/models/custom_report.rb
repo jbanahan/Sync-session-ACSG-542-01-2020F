@@ -63,7 +63,7 @@ class CustomReport < ActiveRecord::Base
     fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
-  def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".xls"] )
+  def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
     @listener = XlsListener.new self.no_time?
     run run_by
     @listener.workbook.write file.path
@@ -75,7 +75,7 @@ class CustomReport < ActiveRecord::Base
     xls_file run_by
   end
 
-  def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".csv"])
+  def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".csv"])
     @listener = ArraysListener.new self.no_time?
     run run_by
     a = @listener.arrays
@@ -84,6 +84,10 @@ class CustomReport < ActiveRecord::Base
     end
     file.flush
     file
+  end
+
+  def clean_filename str
+    str.gsub(/[\/~#&\*\%{\}\\:<>\?\+\|"']/, '_')
   end
 
   def to_arrays run_by, row_limit=nil, preview_run=false

@@ -86,8 +86,9 @@ describe CustomReport do
     end
     it 'should output xls to tmp file' do
       user= Factory(:user)
+      @rpt.name = "my&report.xls"
       @tmp = @rpt.xls_file user
-      expect(@tmp.path).to match(/xls/)
+      expect(@tmp.path).to match(/my_report.xls/) # swaps out illegal characters
       sheet = Spreadsheet.open(@tmp.path).worksheet(0)
       expect(sheet.row(0).default_format.name).to eq(XlsMaker::HEADER_FORMAT.name)
       expect(sheet.row(0)[0]).to eq("MY HEADING")
@@ -124,8 +125,9 @@ describe CustomReport do
     end
 
     it 'should output csv' do
+      @rpt.name = "my/report.csv"
       @tmp = @rpt.csv_file Factory(:user)
-      expect(@tmp.path).to match(/csv/)
+      expect(@tmp.path).to match(/my_report.csv/) # swaps out illegal characters
       r = CSV.read @tmp.path
       expect(r[0][0]).to eq("MY HEADING")
       expect(r[1][0]).to eq("my data")
