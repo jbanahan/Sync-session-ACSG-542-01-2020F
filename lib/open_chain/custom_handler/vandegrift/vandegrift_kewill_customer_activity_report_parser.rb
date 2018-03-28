@@ -82,15 +82,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
               # Terr
               output_line << input_line[57...62].strip
               # Add Date
-              output_line << input_line[62...78].strip
+              output_line << format_date(input_line[62...78].strip)
               # Billing Amt
-              output_line << input_line[78...96].strip
+              output_line << format_decimal(input_line[78...96].strip)
               # Revenue Amt
-              output_line << input_line[96...113].strip
+              output_line << format_decimal(input_line[96...113].strip)
               # Profit%
-              output_line << input_line[113...124].strip
+              output_line << format_decimal(input_line[113...124].strip)
               # Files
-              output_line << input_line[124...132].strip
+              output_line << input_line[124...132].strip.to_i
 
               XlsMaker.add_body_row sheet, outbound_row_number, output_line
               outbound_row_number += 1
@@ -123,6 +123,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
         body_text = "Attached is a Kewill-based report."
         OpenMailer.send_simple_html(to_addr, subject, body_text, [outbound_file]).deliver!
       end
+    end
+
+    def format_date val
+      Date.strptime(val.strip, '%m/%d/%y') rescue nil
+    end
+
+    def format_decimal val
+      # Negative values are provided with trailing decimals.  Fix that.
+      if val.end_with? '-'
+        val = '-' + val[0...val.length-1]
+      end
+      # Remove commas.
+      val = val.gsub(',','')
+      BigDecimal(val)
     end
 
 end; end; end; end;
