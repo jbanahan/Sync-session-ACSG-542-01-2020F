@@ -35,7 +35,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
 
       inv = row[1].to_s
       if !inv.blank?
-        invoices_to_query[inv] = {invoice_number: inv, invoice_date: format_date_string(row[4].to_s)}
+        invoices_to_query[inv] = {broker_reference: ref, invoice_number: inv, invoice_date: format_date_string(row[4].to_s)}
       end
     end
 
@@ -49,7 +49,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
       found = Entry.where(source_system: 'Alliance', broker_reference: list).where("last_exported_from_source IS NOT NULL").pluck :broker_reference
       if found.size < list.size
         list.each do |e|
-          missing_entries << entries_to_query[e] if !found.include?(e)
+          missing_entries << entries_to_query[e] if !found.include?(e) && EntryPurge.where(broker_reference: e, source_system: "Alliance").first.nil?
         end
       end
     end
@@ -60,12 +60,15 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
       found = BrokerInvoice.joins(:entry).where(entries: {source_system: 'Alliance'}, invoice_number: list).pluck "trim(broker_invoices.invoice_number)"
       if found.size < list.size
         list.each do |i|
-          missing_invoices << invoices_to_query[i] if !found.include?(i)
+          inv = invoices_to_query[i]
+          missing_invoices << inv if !found.include?(i) && EntryPurge.where(broker_reference: inv[:broker_reference], source_system: "Alliance").first.nil?
         end
       end
     end
 
     if missing_invoices.length > 0 || missing_entries.length > 0
+      request_missing_data(missing_entries, missing_invoices)
+
       wb = XlsMaker.new_workbook
 
       if missing_entries.length > 0
@@ -97,6 +100,24 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
   end
 
   private
+
+    def self.request_missing_data missing_entries, missing_invoices
+      requested = Set.new
+      Array.wrap(missing_entries).each do |missing_entry|
+        ref = missing_entry[:broker_reference]
+        next if requested.include? ref
+        OpenChain::KewillSqlProxyClient.delay.request_entry_data ref
+        requested << ref
+      end
+
+      Array.wrap(missing_invoices).each do |missing_invoice|
+        ref = missing_invoice[:broker_reference]
+        next if requested.include? ref
+        OpenChain::KewillSqlProxyClient.delay.request_entry_data missing_invoice[:broker_reference]
+        requested << ref
+      end
+      nil
+    end
 
     def self.add_results wb, sheet_name, headers, columns, results
       sheet = XlsMaker.create_sheet wb, sheet_name, headers

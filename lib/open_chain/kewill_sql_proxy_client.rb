@@ -58,6 +58,10 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_date => end_time.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {results_as_array: true}, swallow_error: false
   end
 
+  def self.request_entry_data file_no
+    self.new.request_entry_data file_no
+  end
+
   def request_entry_data file_no
     request 'entry_data_to_s3', {file_no: file_no.to_i}, aws_context_hash(OpenChain::CustomHandler::KewillEntryParser, "json", filename_prefix: file_no)
   end
