@@ -159,7 +159,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
   private
 
     def post_payment payment
-      #@intacct_client.post_payment 'vfc', payment
+      @intacct_client.post_payment 'vfc', payment
       nil
     end
 
