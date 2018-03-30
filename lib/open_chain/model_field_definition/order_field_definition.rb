@@ -94,6 +94,7 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
         qualified_field_name: "(SELECT IF((SELECT count(*) FROM order_lines INNER JOIN products ON order_lines.product_id = products.id INNER JOIN variants ON variants.product_id = products.id where order_lines.order_id = orders.id)>0,1,null))"
       }],
       [32,:ord_cust_ord_status, :customer_order_status, "Customer Order Status",{:data_type=>"string"}],
+      [33,:ord_processing_errors, :processing_errors, "Processing Errors", {:data_type=>"string"}]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")

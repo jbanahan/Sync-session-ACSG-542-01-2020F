@@ -36,8 +36,8 @@
 #  tpp_survey_response_id       :integer
 #  accepted_by_id               :integer
 #  accepted_at                  :datetime
-#  selling_agent_id             :integer
 #  customer_order_status        :string(255)
+#  processing_errors            :text
 #
 # Indexes
 #
@@ -417,6 +417,14 @@ class Order < ActiveRecord::Base
 
   def self.compose_po_number company_identifer, order_number
     "#{company_identifer}-#{order_number}"
+  end
+
+  def add_processing_error message
+    if self.processing_errors
+      self.processing_errors + "\n " + message
+    else
+      self.processing_errors = message
+    end
   end
 
   private

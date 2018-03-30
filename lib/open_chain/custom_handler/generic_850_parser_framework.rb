@@ -325,6 +325,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
         # Double call of process_file? happens here because the with lock retry reloads the order object, and it's very possible another process
         # has come along and updated the order since then and updated the revision number since we've been waiting here on the update lock
         if process_file?(order, beg_segment, edi_segments, transaction)
+          order.processing_errors = nil
           order.last_file_bucket = last_file_bucket
           order.last_file_path = last_file_path
 

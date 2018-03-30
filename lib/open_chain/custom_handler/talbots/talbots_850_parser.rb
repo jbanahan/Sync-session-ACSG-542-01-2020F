@@ -29,6 +29,16 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
     style
   end
 
+  def process_order user, order, edi_segments, product_cache
+    begin
+      super
+    # we don't want these generating emails
+    rescue EdiBusinessLogicError => e
+      order.add_processing_error e.message
+      order.save!
+    end
+  end
+
   def process_order_header user, order, edi_segments
     # Since Talbots doesn't use line_numbers in any real meaningful way, we're going to destroy every line and rebuild them on each send
     # (This has the side effect of not being able to update orders once any line has started shipping)
@@ -232,6 +242,5 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   def standard_variant_identifier po1_segment, line_segments
     find_segment_qualified_value(po1_segment, "SK")
   end
-
 
 end; end; end; end

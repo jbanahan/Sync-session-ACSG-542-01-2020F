@@ -174,13 +174,21 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(line.variant).to eq variant2
     end
 
+    it "assigns business-logic error to order without sending email" do
+      expect_any_instance_of(subject).to receive(:handle_order_header).and_raise described_class::EdiBusinessLogicError.new("BUSINESS LOGIC ERROR!")
+      subject.parse standard_data, bucket: "bucket", key: "talbots.edi"
+      order = Order.where(order_number: "TALBO-5086819").first
+      expect(order.processing_errors).to eq "BUSINESS LOGIC ERROR!"
+      expect(ActionMailer::Base.deliveries.pop).to be_nil
+    end
+
     context "with existing data" do
       let (:product) {
         Factory(:product, importer:talbots, unique_identifier: "TALBO-53903309P")
       }
 
       let (:order) {
-        order = Factory(:order, importer: talbots, order_number: "TALBO-5086819")
+        order = Factory(:order, importer: talbots, order_number: "TALBO-5086819", processing_errors: "earlier error")
       }
 
       let! (:order_line) {
@@ -194,6 +202,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
         expect(order.order_lines.length).to eq 2
         # If the exisitng order line was removed, then it will raise an error trying to reload it
         expect { order_line.reload }.to raise_error ActiveRecord::RecordNotFound
+        expect(order.processing_errors).to be_nil
       end
     end
   end
