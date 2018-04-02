@@ -187,21 +187,27 @@ describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
     subject { described_class }
 
     it "runs monthly statements" do
-      expect_any_instance_of(subject).to receive(:run_monthly_statements).with "me@there.com", start_date: nil
+      expect_any_instance_of(subject).to receive(:run_monthly_statements).with "me@there.com", start_date: nil, send_blank_reports: true
 
-      subject.run_schedulable({"monthly" => true, "email_to" => "me@there.com"})
+      subject.run_schedulable({"monthly" => true, "email_to" => "me@there.com", "send_blank_reports" => true})
     end
 
     it "runs daily statements" do
-      expect_any_instance_of(subject).to receive(:run_daily_statements).with "me@there.com", start_date: nil
+      expect_any_instance_of(subject).to receive(:run_daily_statements).with "me@there.com", start_date: nil, send_blank_reports: true
 
-      subject.run_schedulable({"daily" => true, "email_to" => "me@there.com"})
+      subject.run_schedulable({"daily" => true, "email_to" => "me@there.com", "send_blank_reports" => true})
     end
 
     it "utilizes given start date" do
-      expect_any_instance_of(subject).to receive(:run_daily_statements).with "me@there.com", start_date: Date.new(2018, 4, 1)
+      expect_any_instance_of(subject).to receive(:run_daily_statements).with "me@there.com", start_date: Date.new(2018, 4, 1), send_blank_reports: false
 
       subject.run_schedulable({"daily" => true, "email_to" => "me@there.com", "start_date" => '2018-4-1'})
+    end
+
+    it "defaults to not sending blank reports" do
+      expect_any_instance_of(subject).to receive(:run_daily_statements).with "me@there.com", start_date: nil, send_blank_reports: false
+
+      subject.run_schedulable({"daily" => true, "email_to" => "me@there.com"})
     end
 
     it "errors if start date is invalid" do

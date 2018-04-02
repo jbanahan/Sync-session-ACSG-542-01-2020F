@@ -8,11 +8,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
     raise "At least one email recipient must be configured." if opts["email_to"].blank?
 
     start_date = parse_start_date opts
+    send_blank_reports = (opts["send_blank_reports"].presence || "false").to_s.to_boolean
 
     if opts["monthly"]
-      instance.run_monthly_statements opts["email_to"], start_date: start_date
+      instance.run_monthly_statements opts["email_to"], start_date: start_date, send_blank_reports: send_blank_reports
     elsif opts["daily"]
-      instance.run_daily_statements opts["email_to"], start_date: start_date
+      instance.run_daily_statements opts["email_to"], start_date: start_date, send_blank_reports: send_blank_reports
     else
       raise "A 'daily' or 'monthly' configuration value must be present."
     end
@@ -115,14 +116,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
     pay_statements(discover_statements(6, start_date))
   end
 
-  def run_daily_statements email_to, start_date: nil
+  def run_daily_statements email_to, start_date: nil, send_blank_reports: false
     results = find_and_pay_daily_statements start_date
-    send_report(email_to, results, false)
+    send_report(email_to, results, false)if send_blank_reports || !blank_results?(results)
   end
 
-  def run_monthly_statements email_to, start_date: nil
+  def run_monthly_statements email_to, start_date: nil, send_blank_reports: false
     results = find_and_pay_monthly_statements start_date
-    send_report(email_to, results, true)
+    send_report(email_to, results, true) if send_blank_reports || !blank_results?(results)
   end
 
   def send_report email_to, results, monthly
@@ -203,6 +204,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
 
   def has_pay_errors? results
     errors = Array.wrap(results[:errored_statements]).length > 0
+  end
+
+  def blank_results? results
+    Array.wrap(results[:errored_statements]).length == 0 && Array.wrap(results[:paid_statements]).length == 0
   end
 
 end; end; end; end
