@@ -27,34 +27,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
   private
     def process_file custom_file, user
       errors = []
-      inbound_row_number = 1
-      outbound_row_number = 1
+      inbound_file_hash = condense_inbound_file_by_entry custom_file, errors
 
+      outbound_row_number = 1
       wb, sheet = XlsMaker.create_workbook_and_sheet "Results", ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
       total_cost = 0
-
-      # Source file is an Excel spreadsheet.  We're dealing with it remotely, on a server equipped to deal with Excel crud.
-      # Here, thanks to the handy 'foreach' method below, the parser doesn't need to be aware of the original data format.
-      foreach(custom_file) do |row|
+      inbound_file_hash.values.each do |entry_row|
         begin
-          # Skip the first 16 lines of the file.  It's a multi-line header.
-          # Also skip blank lines.  (We can't exclude these in 'foreach' because there could be blanks in the header,
-          # and that is being excluded via line count.)
-          # Finally, skip lines that don't contain a PO number, BOL or container: this leaves out the totals row at
-          # the bottom of the document.
-          if inbound_row_number >= 17 && !blank_row?(row) && (row[0].present? || row[1].present? || row[2].present?)
-            line_cost = parse_row row, errors, sheet, inbound_row_number, outbound_row_number
-            if line_cost
-              total_cost += line_cost
-              # If line cost is nil, it means that the matching entry couldn't be found.  There's no need to advance
-              # the row counter for the outbound file in this case.
-              outbound_row_number += 1
-            end
-          end
+          add_row_to_sheet entry_row.entry, entry_row.total_management_fee, sheet, outbound_row_number
+          outbound_row_number += 1
+          total_cost += entry_row.total_management_fee
         rescue => e
-          errors << "Row #{inbound_row_number}: Failed to process line due to the following error: '#{e.message}'"
+          errors << "Row #{entry_row.row_number}: Failed to process line due to the following error: '#{e.message}'"
         end
-        inbound_row_number += 1
       end
 
       # Add a totals row.  This is blank except for the Cost column.
@@ -72,40 +57,67 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
       nil
     end
 
-    def parse_row inbound_row, errors, sheet, inbound_row_number, outbound_row_number
-      entry = find_matching_entry inbound_row[1], inbound_row[2], inbound_row_number, errors
-      line_cost = nil
-
-      if entry
-        management_fee = inbound_row[6].to_f
-        # In the event there aren't any containers, default the container count to 1.  This shouldn't happen.
-        container_count = entry.containers.length > 0 ? entry.containers.length : 1
-        line_cost = (container_count * management_fee)
-
-        output_line = []
-        output_line << entry.customer_name
-        output_line << entry.customer_number
-        output_line << entry.broker_reference
-        output_line << entry.entry_number
-        output_line << entry.bol_received_date
-        output_line << entry.export_date
-        output_line << entry.entry_filed_date
-        output_line << entry.release_date
-        output_line << entry.master_bills_of_lading
-        output_line << entry.house_bills_of_lading
-        output_line << entry.container_numbers
-        output_line << entry.container_sizes
-        output_line << entry.broker_invoice_total
-        output_line << container_count
-        output_line << line_cost
-        output_line << Spreadsheet::Link.new(entry.excel_url, "Web View")
-
-        XlsMaker.add_body_row sheet, outbound_row_number, output_line
-        sheet.row(outbound_row_number).set_format(12, MONEY_FORMAT)
-        sheet.row(outbound_row_number).set_format(14, MONEY_FORMAT)
+    # Generates a hash that condenses a container-level file into entry-level data for an outbound feed.  This process
+    # involves an entry look-up, which could log errors.
+    def condense_inbound_file_by_entry custom_file, errors
+      inbound_row_number = 1
+      inbound_file_hash = {}
+      # Source file is an Excel spreadsheet.  We're dealing with it remotely, on a server equipped to deal with Excel crud.
+      # Here, thanks to the handy 'foreach' method below, the parser doesn't need to be aware of the original data format.
+      foreach(custom_file) do |row|
+        # Skip the first 16 lines of the file.  It's a multi-line header.
+        # Also skip blank lines.  (We can't exclude these in 'foreach' because there could be blanks in the header,
+        # and that is being excluded via line count.)
+        # Finally, skip lines that don't contain a PO number, BOL or container: this leaves out the totals row at
+        # the bottom of the document.
+        if inbound_row_number >= 17 && !blank_row?(row) && (row[0].present? || row[1].present? || row[2].present?)
+          bill_of_lading = row[1]
+          container_number = row[2]
+          entry = find_matching_entry bill_of_lading, container_number, inbound_row_number, errors
+          if entry
+            data = inbound_file_hash[entry.id]
+            if data.nil?
+              data = CondensedAllportData.new
+              data.entry = entry
+              data.row_number = inbound_row_number
+              data.total_management_fee = 0
+              inbound_file_hash[entry.id] = data
+            end
+            data.total_management_fee = data.total_management_fee + row[6].to_f
+          end
+        end
+        inbound_row_number += 1
       end
+      inbound_file_hash
+    end
 
-      line_cost
+    class CondensedAllportData
+      attr_accessor :entry, :row_number, :total_management_fee
+    end
+
+    def add_row_to_sheet entry, total_management_fee, sheet, outbound_row_number
+      output_line = []
+      output_line << entry.customer_name
+      output_line << entry.customer_number
+      output_line << entry.broker_reference
+      output_line << entry.entry_number
+      output_line << entry.bol_received_date
+      output_line << entry.export_date
+      output_line << entry.entry_filed_date
+      output_line << entry.release_date
+      output_line << entry.split_master_bills_of_lading.join(',')
+      output_line << entry.split_house_bills_of_lading.join(',')
+      output_line << entry.split_newline_values(entry.container_numbers).join(',')
+      output_line << entry.split_newline_values(entry.container_sizes).join(',')
+      output_line << entry.broker_invoice_total
+      # In the event there aren't any containers, default the container count to 1.  This shouldn't happen.
+      output_line << (entry.containers.length > 0 ? entry.containers.length : 1)
+      output_line << total_management_fee
+      output_line << Spreadsheet::Link.new(entry.excel_url, "Web View")
+
+      XlsMaker.add_body_row sheet, outbound_row_number, output_line
+      sheet.row(outbound_row_number).set_format(12, MONEY_FORMAT)
+      sheet.row(outbound_row_number).set_format(14, MONEY_FORMAT)
     end
 
     def find_matching_entry bill_of_lading, container_number, row_number, errors

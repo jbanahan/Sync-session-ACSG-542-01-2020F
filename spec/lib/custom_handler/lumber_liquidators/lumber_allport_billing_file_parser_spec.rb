@@ -55,6 +55,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
     let(:header_row) { ["A", "B", "C", "D", "E", "F", "G"] }
     let(:blank_row) { ["", "", "", "", "", "", ""] }
     let(:row_1) { ["x", "BOL-1", "CON-1", "x", "x", "x", "50.55"] }
+    let(:row_1b) { ["x", "BOL-1", "CON-2", "x", "x", "x", "20.10"] }
     let(:row_2) { ["x", "BOL-2", "CON-3", "x", "x", "x", "25.25"] }
     let(:totals_row) { ["", "", "", "", "", "", "75.75"] }
 
@@ -68,7 +69,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
     it "parses file and generates new spreadsheet based on it" do
       expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
       yield_standard_header(expect(file_reader).to receive(:foreach)).
-          and_yield(row_1).and_yield(row_2).and_yield(blank_row).and_yield(totals_row)
+          and_yield(row_1).and_yield(row_1b).and_yield(row_2).and_yield(blank_row).and_yield(totals_row)
 
       entry_1 = Factory(:entry,
           customer_number:'LUMBER',
@@ -80,15 +81,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
           export_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-08 11:45:22'),
           entry_filed_date:ActiveSupport::TimeZone['UTC'].parse('2018-03-09 12:55:33'),
           release_date:ActiveSupport::TimeZone['UTC'].parse('2017-02-10 13:05:44'),
-          master_bills_of_lading:'BOL-1,BOL-X',
-          house_bills_of_lading:'BOL-Y',
-          container_numbers:'CON-1,CON-2',
-          container_sizes:'45ft',
+          master_bills_of_lading:"BOL-1\nBOL-X",
+          house_bills_of_lading:"BOL-Y\nBOL-Z",
+          container_numbers:"CON-1\nCON-2",
+          container_sizes:"45ft\n25ft",
           broker_invoice_total:1234.56
       )
       container_1 = Factory(:container, container_number:'CON-1', entry:entry_1)
       container_2 = Factory(:container, container_number:'CON-2', entry:entry_1)
       invoice_1 = Factory(:broker_invoice, entry:entry_1)
+      entry_1.save!
 
       entry_2 = Factory(:entry,
           customer_number:'LUMBER',
@@ -108,6 +110,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       )
       container_3 = Factory(:container, container_number:'CON-3', entry:entry_2)
       invoice_2 = Factory(:broker_invoice, entry:entry_2)
+      entry_2.save!
 
       now = ActiveSupport::TimeZone['UTC'].parse('2017-03-06 16:30:12')
       Timecop.freeze(now) do
@@ -137,12 +140,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(1)[6]).to eq ActiveSupport::TimeZone['UTC'].parse('2018-03-09 12:55:33')
       expect(sheet.row(1)[7]).to eq ActiveSupport::TimeZone['UTC'].parse('2017-02-10 13:05:44')
       expect(sheet.row(1)[8]).to eq 'BOL-1,BOL-X'
-      expect(sheet.row(1)[9]).to eq 'BOL-Y'
+      expect(sheet.row(1)[9]).to eq 'BOL-Y,BOL-Z'
       expect(sheet.row(1)[10]).to eq 'CON-1,CON-2'
-      expect(sheet.row(1)[11]).to eq '45ft'
+      expect(sheet.row(1)[11]).to eq '45ft,25ft'
       expect(sheet.row(1)[12]).to eq 1234.56
       expect(sheet.row(1)[13]).to eq 2
-      expect(sheet.row(1)[14]).to eq 101.10
+      expect(sheet.row(1)[14]).to eq 70.65
       expect(sheet.row(1)[15]).to be_an_instance_of Spreadsheet::Link
       expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_1.id}"
       expect(sheet.row(1)[15].to_s).to eq "Web View"
@@ -180,7 +183,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(3)[11]).to be_nil
       expect(sheet.row(3)[12]).to be_nil
       expect(sheet.row(3)[13]).to be_nil
-      expect(sheet.row(3)[14]).to eq 126.35
+      expect(sheet.row(3)[14]).to eq 95.90
       expect(sheet.row(3)[15]).to be_nil
 
       # The original spreadsheet is the second attachment.
@@ -482,7 +485,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      allow(Entry).to receive(:where).and_raise(StandardError.new("This is a terrible error."))
+      entry = Factory(:entry, broker_reference:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+
+      allow(XlsMaker).to receive(:add_body_row).and_raise(StandardError.new("This is a terrible error."))
 
       subject.process user
 

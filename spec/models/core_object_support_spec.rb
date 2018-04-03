@@ -304,4 +304,23 @@ describe CoreObjectSupport do
       expect(@ent.can_run_validations? @u).to eq false
     end
   end
+
+  describe "split_newline_values" do
+    let(:ent) { Factory(:entry) }
+
+    it "splits a string containing newline values into an array" do
+      res = ent.split_newline_values(" a
+                b \n  c  ")
+      expect(res.length).to eq(3)
+      expect(res[0]).to eq(' a')
+      expect(res[1]).to eq('b ')
+      expect(res[2]).to eq('c  ')
+    end
+
+    it "handles nil value" do
+      res = ent.split_newline_values(nil)
+      expect(res).to_not be_nil
+      expect(res.length).to eq(0)
+    end
+  end
 end

@@ -142,6 +142,12 @@ module CoreObjectSupport
     self.class.excel_url self.id
   end
 
+  # Splits a string into an array based on newline characters it contains within it.  Strips leading whitespace from
+  # most internal values, but not trailing whitespace, nor is leading whitespace removed from the first value found.
+  def split_newline_values string_containing_newlines
+    string_containing_newlines.blank? ? [] : string_containing_newlines.split(/\r?\n */)
+  end
+
   module ClassMethods
     def find_by_custom_value custom_definition, value
       self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_type}_value = ?",value).first

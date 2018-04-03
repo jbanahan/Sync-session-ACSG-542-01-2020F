@@ -455,9 +455,6 @@ class Entry < ActiveRecord::Base
      {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
   end     
 
-  def split_newline_values values
-    values.blank? ? [] : values.split(/\r?\n */)
-  end
   def company_permission? user
     Entry.can_view_importer? self.importer, user
   end
