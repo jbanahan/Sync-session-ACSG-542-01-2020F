@@ -1240,6 +1240,46 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.one_usg_date).to eq tz.parse "201711131200"
     end
 
+    it "clears entry level field accumulations when new json does not have values" do
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", customer_references: "0", commercial_invoice_numbers: "1", mfids: "2", export_country_codes: "3", origin_country_codes: "4", 
+        vendor_names: "5", total_units_uoms: "6", special_program_indicators: "7", po_numbers: "8", part_numbers: "9", container_numbers: "10", container_sizes: "11",
+        charge_codes: "12", departments: "13", store_names: "14", fcl_lcl: "15", product_lines: "16",
+        total_invoiced_value: 17, broker_invoice_total: 18, total_units: 19, total_cvd: 20, total_add: 21, total_non_dutiable_amount: 22, other_fees: 23)
+
+      # By stripping out the containers, invoices, broker_invoices, all the accumulation fields we're setting should be blanked.
+      @e['cust_refs'] = []
+      @e['containers'] = []
+      @e['broker_invoices'] = []
+      @e['commercial_invoices'] = []
+      entry = subject.process_entry @e
+
+      expect(entry.customer_references).to eq ""
+      expect(entry.commercial_invoice_numbers).to eq ""
+      expect(entry.mfids).to eq ""
+      expect(entry.export_country_codes).to eq ""
+      expect(entry.origin_country_codes).to eq ""
+      expect(entry.vendor_names).to eq ""
+      expect(entry.total_units_uoms).to eq ""
+      expect(entry.special_program_indicators).to eq ""
+      expect(entry.po_numbers).to eq ""
+      expect(entry.part_numbers).to eq ""
+      expect(entry.container_numbers).to eq ""
+      expect(entry.container_sizes).to eq ""
+      expect(entry.charge_codes).to eq ""
+      expect(entry.commercial_invoice_numbers).to eq ""
+      expect(entry.departments).to eq ""
+      expect(entry.store_names).to eq ""
+      expect(entry.fcl_lcl).to eq ""
+      expect(entry.product_lines).to eq ""
+      expect(entry.total_invoiced_value).to eq 0
+      expect(entry.broker_invoice_total).to eq 0
+      expect(entry.total_units).to eq 0
+      expect(entry.total_cvd).to eq 0
+      expect(entry.total_add).to eq 0
+      expect(entry.total_non_dutiable_amount).to eq 0
+      expect(entry.other_fees).to eq 0
+    end
+
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }

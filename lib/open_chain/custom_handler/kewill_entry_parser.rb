@@ -585,13 +585,17 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_totals e, entry
-      accumulations = Hash.new do |h, k|
-        h[k] = Set.new
-      end
+      accumulations = {}
+      [
+        :commercial_invoice_numbers, :total_packages_uom, :mids, :country_export_codes, :country_origin_code, :vendor_names, :total_units_uoms, 
+        :po_numbers, :part_numbers, :departments, :store_names, :product_lines, :spis, :charge_codes, :container_numbers, 
+        :container_sizes, :fcl_lcls, :customer_references
+      ].each {|v| accumulations[v] = Set.new }
 
-      totals = Hash.new do |h, k|
-        h[k] = BigDecimal.new(0)
-      end
+      totals = {}
+      [
+        :total_invoiced_value, :total_non_dutiable_amount, :total_units, :total_cvd, :total_add, :other_fees, :broker_invoice_total
+      ].each {|v| totals[v] = BigDecimal("0")}
 
       entry.commercial_invoices.each do |ci|
         accumulations[:commercial_invoice_numbers] << ci.invoice_number
@@ -682,7 +686,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         when :store_names
           entry.store_names = vals
         when :fcl_lcls
-          entry.fcl_lcl = v.size > 1 ? "Mixed" : (v.first.upcase == "L" ? "LCL" : "FCL") unless v.blank?
+          if v.blank?
+            entry.fcl_lcl = ""
+          else
+            entry.fcl_lcl = v.size > 1 ? "Mixed" : (v.first.upcase == "L" ? "LCL" : "FCL")
+          end
         when :product_lines
           entry.product_lines = vals
         end
@@ -697,13 +705,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         when :total_units
           entry.total_units = value
         when :total_cvd
-          entry.total_cvd = value if value.nonzero?
+          #Only set a zero value if the entry value has already been set and we're clearing it
+          entry.total_cvd = value if value.nonzero? || entry.total_cvd.nonzero?
         when :total_add
-          entry.total_add = value if value.nonzero?
+          entry.total_add = value if value.nonzero? || entry.total_add.nonzero?
         when :total_non_dutiable_amount
-          entry.total_non_dutiable_amount = value if value.nonzero?
+          entry.total_non_dutiable_amount = value if value.nonzero? || entry.total_non_dutiable_amount.nonzero?
         when :other_fees
-          entry.other_fees = value if value.nonzero?
+          entry.other_fees = value if value.nonzero? || entry.other_fees.nonzero?
         end
       end
 
