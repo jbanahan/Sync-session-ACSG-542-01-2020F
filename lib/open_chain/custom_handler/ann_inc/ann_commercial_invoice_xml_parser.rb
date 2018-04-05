@@ -144,7 +144,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
   end
 
   def net_weight line_xml
-    weight = BigDecimal(line_xml.text("NetWeight") || "0")
+    weight = dec(line_xml.text("NetWeight"))
     return nil unless weight.nonzero?
 
     uom = line_xml.text("NetWeightUnit/Code")
@@ -164,15 +164,15 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
   end
 
   def discounts_total invoice_line_xml
-    air_sea = BigDecimal(customized_field_value(invoice_line_xml, "Air/Sea Discount"))
-    early_payment = BigDecimal(customized_field_value(invoice_line_xml, "Early Payment Discount"))
-    trade_discount = BigDecimal(customized_field_value(invoice_line_xml, "Trade Discount"))
+    air_sea = dec(customized_field_value(invoice_line_xml, "Air/Sea Discount"))
+    early_payment = dec(customized_field_value(invoice_line_xml, "Early Payment Discount"))
+    trade_discount = dec(customized_field_value(invoice_line_xml, "Trade Discount"))
 
     [air_sea, early_payment, trade_discount].sum
   end
 
   def middleman_charge invoice_line_xml
-    BigDecimal(customized_field_value(invoice_line_xml, "Middleman Charges"))
+    dec(customized_field_value(invoice_line_xml, "Middleman Charges"))
   end
 
 end; end; end; end
