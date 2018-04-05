@@ -706,13 +706,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.total_units = value
         when :total_cvd
           #Only set a zero value if the entry value has already been set and we're clearing it
-          entry.total_cvd = value if value.nonzero? || entry.total_cvd.nonzero?
+          entry.total_cvd = value if value.nonzero? || entry.total_cvd.try(:nonzero?)
         when :total_add
-          entry.total_add = value if value.nonzero? || entry.total_add.nonzero?
+          entry.total_add = value if value.nonzero? || entry.total_add.try(:nonzero?)
         when :total_non_dutiable_amount
-          entry.total_non_dutiable_amount = value if value.nonzero? || entry.total_non_dutiable_amount.nonzero?
+          entry.total_non_dutiable_amount = value if value.nonzero? || entry.total_non_dutiable_amount.try(:nonzero?)
         when :other_fees
-          entry.other_fees = value if value.nonzero? || entry.other_fees.nonzero?
+          entry.other_fees = value if value.nonzero? || entry.other_fees.try(:nonzero?)
         end
       end
 
