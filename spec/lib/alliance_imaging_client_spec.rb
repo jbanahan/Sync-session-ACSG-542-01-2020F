@@ -573,6 +573,23 @@ describe OpenChain::AllianceImagingClient do
       ]
     end
 
+    it "skips attachment types not in combined_attachment_order if flag is set" do
+      @archive_setup.update_attributes! include_only_listed_attachments: true
+      @entry.attachments.create! attached_file_name: "test3.pdf", attachment_type: "C"
+
+      stitch_request = nil
+      expect(OpenChain::SQS).to receive(:send_json) do |queue, request|
+        stitch_request = request
+      end
+
+      expect(OpenChain::AllianceImagingClient.send_entry_stitch_request @entry.id).to be_truthy
+
+      expect(stitch_request['stitch_request']['source_files']).to eq [
+        {'path' => "/chain-io/#{MasterSetup.get.uuid}/attachment/#{@a2.id}/#{@a2.attached_file_name}", 'service' => "s3"},
+        {'path' => "/chain-io/#{MasterSetup.get.uuid}/attachment/#{@a1.id}/#{@a1.attached_file_name}", 'service' => "s3"}
+      ]
+    end
+    
     it 'skips non image formats' do
       @a2.update_attributes! attached_file_name: "file.zip"
 
@@ -587,6 +604,7 @@ describe OpenChain::AllianceImagingClient do
         {'path' => "/chain-io/#{MasterSetup.get.uuid}/attachment/#{@a1.id}/#{@a1.attached_file_name}", 'service' => "s3"}
       ]
     end
+
 
     it 'skips sending when no attachments need to be sent' do
       @entry.attachments.update_all attached_file_name: "file.zip"
@@ -629,7 +647,10 @@ describe OpenChain::AllianceImagingClient do
       StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path/to/file.pdf').and_yield @t
       expect(OpenChain::S3).to receive(:delete).with('bucket', 'path/to/file.pdf')
-
+      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "Archive Packet") do |val|
+        expect(val.id).to eq @entry.id
+      end
+      
       expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_truthy
 
       @entry.reload

@@ -10,6 +10,8 @@ require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
 require 'open_chain/custom_handler/vandegrift/kewill_ci_load_shipment_comparator'
 require 'open_chain/custom_handler/talbots/talbots_landed_cost_comparator'
 require 'open_chain/custom_handler/vandegrift/kewill_ci_load_isf_comparator'
+require 'open_chain/custom_handler/vandegrift/vandegrift_entry_archive_comparator'
+
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSystemInit
 
@@ -32,6 +34,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadIsfComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator
   end
   private_class_method :register_change_comparators
 

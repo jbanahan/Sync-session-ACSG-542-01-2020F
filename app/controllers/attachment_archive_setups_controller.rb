@@ -13,7 +13,7 @@ class AttachmentArchiveSetupsController < ApplicationController
   end
   def update
     s = AttachmentArchiveSetup.find(params[:id])
-    params[:attachment_archive_setup][:combined_attachment_order] = "" unless params[:attachment_archive_setup][:combine_attachments] == "1"
+    make_params_consistent(params)
     if s.update_attributes(params[:attachment_archive_setup])
       add_flash :notices, "Your setup was successfully updated."
       redirect_to [s.company,s]
@@ -22,6 +22,7 @@ class AttachmentArchiveSetupsController < ApplicationController
     end
   end
   def create
+    make_params_consistent(params)
     @aas = AttachmentArchiveSetup.new(params[:attachment_archive_setup])
 
     c = Company.find params[:company_id]
@@ -41,8 +42,16 @@ class AttachmentArchiveSetupsController < ApplicationController
   end
 
 
-
   private
+  
+  def make_params_consistent ps
+    unless ps[:attachment_archive_setup][:combine_attachments] == "1"
+      ps[:attachment_archive_setup][:combined_attachment_order] = "" 
+      ps[:attachment_archive_setup][:include_only_listed_attachments] = "0" 
+      ps[:attachment_archive_setup][:send_in_real_time] = "0"
+    end
+  end
+
   def secure_me
     if !current_user.admin?
       error_redirect "You do not have permission to access this page."

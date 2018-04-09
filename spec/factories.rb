@@ -541,3 +541,6 @@ end
 Factory.define :fiscal_month do |f|
   f.association :company
 end
+Factory.define :attachment_archive_setup do |f|
+  f.association :company
+end

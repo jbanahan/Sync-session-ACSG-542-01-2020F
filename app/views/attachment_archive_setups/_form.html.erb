@@ -19,7 +19,9 @@ $(function() {
   function enableFormElements(){
     $("#attachment_archive_setup_archive_scheme").removeAttr('disabled');
     $("#attachment_archive_setup_combine_attachments").removeAttr('disabled');
-    $('input[name*="combine_attachments"][type="hidden"]').removeAttr('disabled');
+    $('input[name*="combine_attachments"]').removeAttr('disabled');
+    $('input[name*="include_only_listed_attachments"]').removeAttr('disabled');
+    $('input[name*="send_in_real_time"]').removeAttr('disabled');
     $("#attachment_archive_setup_combined_attachment_order").removeAttr('disabled');
     $("#attachment_archive_setup_save").removeAttr('disabled');
   }
@@ -27,7 +29,9 @@ $(function() {
   function disableFormElements(){
     $("#attachment_archive_setup_archive_scheme").attr('disabled','disabled');
     $("#attachment_archive_setup_combine_attachments").attr('disabled','disabled');
-    $('input[name*="combine_attachments"][type="hidden"]').attr('disabled','disabled');
+    $('input[name*="combine_attachments"]').attr('disabled','disabled');
+    $('input[name*="include_only_listed_attachments"]').attr('disabled','disabled');
+    $('input[name*="send_in_real_time"]').attr('disabled','disabled');
     $("#attachment_archive_setup_combined_attachment_order").attr('disabled','disabled');
     $("#attachment_archive_setup_save").attr('disabled','disabled');
   }
@@ -52,7 +56,10 @@ $(function() {
         <%=field_bootstrap "Combine Attachments", f.check_box(:combine_attachments, disabled: true)%>
         <div id="combine_attachments_order_container" style="display: <%=s.combine_attachments ? "block" : "none"%>">
           <%=field_bootstrap "Combine Attachments Order", f.text_area(:combined_attachment_order, :rows=>"10", :cols=>"30", :placeholder => "Enter one entry Document Type/Title per line in the order they should be stitched together in the 'Archive Packet'.  Any types not included in this list will be added to the packet chronologically.")%>
+          <%=field_bootstrap "Only Include Listed Attachments", f.check_box(:include_only_listed_attachments, disabled: true)%>
+          <%=field_bootstrap "Send in Real Time", f.check_box(:send_in_real_time, disabled: true)%>
         <div>
+
       </div>
     </div>
   </div>

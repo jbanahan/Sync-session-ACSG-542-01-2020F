@@ -67,6 +67,18 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
+    it "blanks the order, include only, and real time attributes if combined attribute is not checked" do
+      sign_in_as @admin
+      target_date = Date.new(2011,12,1)
+      post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"0", :include_only_listed_attachments=>"1", :send_in_real_time=>"1", :combined_attachment_order=>"A\nB\nC"}
+      @c.reload
+      expect(@c.attachment_archive_setup.start_date).to eq target_date
+      expect(@c.attachment_archive_setup.combine_attachments).to be_falsey
+      expect(@c.attachment_archive_setup.combined_attachment_order).to eq ""
+      expect(@c.attachment_archive_setup.include_only_listed_attachments).to eq false
+      expect(@c.attachment_archive_setup.send_in_real_time).to eq false
+      expect(response).to redirect_to [@c,@c.attachment_archive_setup]
+    end
   end
   describe "update" do
     before :each do
@@ -92,14 +104,16 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq ["You do not have permission to access this page."]
     end
-    it "blanks the order attribute if combined attribute is not checked" do
+    it "blanks the order, include only, and real time attributes if combined attribute is not checked" do
       sign_in_as @admin
       target_date = Date.new(2011,12,1)
-      post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"0", :combined_attachment_order=>"A\nB\nC"}
+      post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"0", :include_only_listed_attachments=>"1", :send_in_real_time=>"1", :combined_attachment_order=>"A\nB\nC"}
       @c.reload
       expect(@c.attachment_archive_setup.start_date).to eq target_date
       expect(@c.attachment_archive_setup.combine_attachments).to be_falsey
       expect(@c.attachment_archive_setup.combined_attachment_order).to eq ""
+      expect(@c.attachment_archive_setup.include_only_listed_attachments).to eq false
+      expect(@c.attachment_archive_setup.send_in_real_time).to eq false
       expect(response).to redirect_to [@c,@c.attachment_archive_setup]
     end
   end

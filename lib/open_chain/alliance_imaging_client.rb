@@ -342,8 +342,9 @@ class OpenChain::AllianceImagingClient
       end
     end
 
+    include_only_listed_attachments = entry.importer.attachment_archive_setup.include_only_listed_attachments?
     # Just sort unordered attachments by the updated_date in ascending order, we'll plop them onto the request after the ordered ones
-    unordered_attachments = unordered_attachments.sort_by {|a| a.updated_at}
+    unordered_attachments =  include_only_listed_attachments ? [] : unordered_attachments.sort_by {|a| a.updated_at}
     sort_order = {}
     attachment_order.each_with_index {|o, x| sort_order[o] = x}
 
@@ -406,7 +407,7 @@ class OpenChain::AllianceImagingClient
       Attachment.add_original_filename_method f
       f.original_filename = "#{entity.entry_number}.pdf"
 
-      Attachment.transaction do 
+      Lock.db_lock(entity) do 
         attachment = entity.attachments.build
         attachment.attachment_type = Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
         attachment.attached = f
@@ -421,6 +422,7 @@ class OpenChain::AllianceImagingClient
 
         # Clear out any other archive packets already associated with this entry
         entity.attachments.where("NOT attachments.id = ?", attachment.id).where(:attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE).destroy_all
+        entity.create_snapshot User.integration, nil, "Archive Packet"
       end
 
       # Now that we've moved the file to its final attachment location, we can delete it from the stitched path

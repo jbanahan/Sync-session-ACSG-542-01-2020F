@@ -2,15 +2,17 @@
 #
 # Table name: attachment_archive_setups
 #
-#  id                        :integer          not null, primary key
-#  company_id                :integer
-#  start_date                :date
-#  created_at                :datetime         not null
-#  updated_at                :datetime         not null
-#  combine_attachments       :boolean
-#  combined_attachment_order :text
-#  archive_scheme            :string(255)
-#  end_date                  :date
+#  id                              :integer          not null, primary key
+#  company_id                      :integer
+#  start_date                      :date
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  combine_attachments             :boolean
+#  combined_attachment_order       :text
+#  archive_scheme                  :string(255)
+#  end_date                        :date
+#  include_only_listed_attachments :boolean
+#  send_in_real_time               :boolean
 #
 # Indexes
 #
@@ -18,7 +20,7 @@
 #
 
 class AttachmentArchiveSetup < ActiveRecord::Base
-  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :archive_scheme, :end_date
+  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :include_only_listed_attachments, :send_in_real_time, :archive_scheme, :end_date
 
   belongs_to :company
 
