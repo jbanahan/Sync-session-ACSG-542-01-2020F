@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices, :containers, :master_bill, :house_bill, :customer_reference, :vessel, :voyage, :carrier, :customs_ship_mode, :lading_port, :unlading_port, :est_arrival_date, :export_date, :est_departure_date, :unique_identifier)
     CiLoadContainer ||= Struct.new(:container_number, :seal_number)
     CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate)
-    CiLoadInvoiceLine ||= Struct.new(:part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :buyer_customer_number, :seller_mid)
+    CiLoadInvoiceLine ||= Struct.new(:part_number, :country_of_origin, :gross_weight, :pieces, :hts, :foreign_value, :quantity_1, :quantity_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :buyer_customer_number, :seller_mid, :spi2)
   end
 
   def generate_entry_xml element, entry, add_entry_info: true
@@ -192,6 +192,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "contract", g.number(line.first_sale, 12, decimal_places: 2, strip_trailing_zeros: true, pad_string: false)) if nonzero?(line.first_sale)
     add_element(parent, "department", g.number(line.department, 6, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(line.department)
     add_element(parent, "spiPrimary", g.string(line.spi, 2, pad_string: false)) unless line.spi.blank?
+    add_element(parent, "spiSecondary", g.string(line.spi2, 2, pad_string: false)) unless line.spi2.blank?
     add_element(parent, "nonDutiableAmt", g.number(line.non_dutiable_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.non_dutiable_amount)
     add_element(parent, "addToMakeAmt", g.number(line.add_to_make_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.add_to_make_amount)
     if ["Y", "YES", "TRUE", "1"].include?(line.cotton_fee_flag.to_s.upcase)

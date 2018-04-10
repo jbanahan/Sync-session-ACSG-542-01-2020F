@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
 
   let (:row_data) {
     [
-      ["12345", "CUST", "INV-123", "2015-01-01", "US", "PART-1", 12.0, "MID12345", "1234.56.7890", "N", 22.50, 10, 35, 50.5, "Purchase Order", 12, "21.50", "123.45", "19", "A+", "BuyerCustNo", "SellerMID"]
+      ["12345", "CUST", "INV-123", "2015-01-01", "US", "PART-1", 12.0, "MID12345", "1234.56.7890", "N", 22.50, 10, 35, 50.5, "Purchase Order", 12, "21.50", "123.45", "19", "A+", "BuyerCustNo", "SellerMID", "X"]
     ]
   }
 
@@ -462,6 +462,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         expect(l.cartons).to eq BigDecimal("12")
         expect(l.buyer_customer_number).to eq "BuyerCustNo"
         expect(l.seller_mid).to eq "SellerMID"
+        expect(l.spi2).to eq "X"
       end
 
       it "handles negative value in col 17 as non-dutiable charge" do

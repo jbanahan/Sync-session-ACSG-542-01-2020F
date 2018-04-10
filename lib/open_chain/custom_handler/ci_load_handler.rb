@@ -229,6 +229,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.spi = text_value(row[19])
         l.buyer_customer_number = text_value(row[20])
         l.seller_mid = text_value(row[21])
+        l.spi2 = text_value(row[22])
         
         l
       end
