@@ -2,10 +2,10 @@
 #
 # Table name: attachment_archives_attachments
 #
-#  id                    :integer          not null, primary key
 #  attachment_archive_id :integer
 #  attachment_id         :integer
 #  file_name             :string(255)
+#  id                    :integer          not null, primary key
 #
 # Indexes
 #

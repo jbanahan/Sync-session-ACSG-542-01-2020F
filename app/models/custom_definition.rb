@@ -2,20 +2,20 @@
 #
 # Table name: custom_definitions
 #
-#  id               :integer          not null, primary key
-#  label            :string(255)
-#  data_type        :string(255)
-#  rank             :integer
-#  module_type      :string(255)
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  tool_tip         :string(255)
-#  default_value    :string(255)
-#  quick_searchable :boolean
-#  definition       :text
-#  is_user          :boolean
-#  is_address       :boolean
 #  cdef_uid         :string(255)
+#  created_at       :datetime         not null
+#  data_type        :string(255)
+#  default_value    :string(255)
+#  definition       :text
+#  id               :integer          not null, primary key
+#  is_address       :boolean
+#  is_user          :boolean
+#  label            :string(255)
+#  module_type      :string(255)
+#  quick_searchable :boolean
+#  rank             :integer
+#  tool_tip         :string(255)
+#  updated_at       :datetime         not null
 #
 # Indexes
 #

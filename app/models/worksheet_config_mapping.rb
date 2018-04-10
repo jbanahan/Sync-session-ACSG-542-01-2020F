@@ -2,14 +2,14 @@
 #
 # Table name: worksheet_config_mappings
 #
-#  id                   :integer          not null, primary key
-#  row                  :integer
 #  column               :integer
-#  model_field_uid      :string(255)
-#  custom_definition_id :integer
-#  worksheet_config_id  :integer
 #  created_at           :datetime         not null
+#  custom_definition_id :integer
+#  id                   :integer          not null, primary key
+#  model_field_uid      :string(255)
+#  row                  :integer
 #  updated_at           :datetime         not null
+#  worksheet_config_id  :integer
 #
 
 class WorksheetConfigMapping < ActiveRecord::Base

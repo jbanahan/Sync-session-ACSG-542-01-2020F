@@ -2,11 +2,11 @@
 #
 # Table name: groups
 #
-#  id          :integer          not null, primary key
-#  system_code :string(255)
-#  name        :string(255)
-#  description :string(255)
 #  created_at  :datetime         not null
+#  description :string(255)
+#  id          :integer          not null, primary key
+#  name        :string(255)
+#  system_code :string(255)
 #  updated_at  :datetime         not null
 #
 # Indexes

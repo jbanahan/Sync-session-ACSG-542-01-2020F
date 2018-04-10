@@ -2,13 +2,13 @@
 #
 # Table name: delivery_lines
 #
+#  created_at  :datetime         not null
+#  delivery_id :integer
 #  id          :integer          not null, primary key
 #  line_number :integer
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  delivery_id :integer
 #  product_id  :integer
 #  quantity    :decimal(13, 4)
+#  updated_at  :datetime         not null
 #
 # Indexes
 #

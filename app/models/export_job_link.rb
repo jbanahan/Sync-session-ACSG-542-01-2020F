@@ -2,10 +2,10 @@
 #
 # Table name: export_job_links
 #
-#  id              :integer          not null, primary key
 #  export_job_id   :integer          not null
 #  exportable_id   :integer          not null
 #  exportable_type :string(255)      not null
+#  id              :integer          not null, primary key
 #
 # Indexes
 #

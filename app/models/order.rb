@@ -2,42 +2,42 @@
 #
 # Table name: orders
 #
-#  id                           :integer          not null, primary key
-#  order_number                 :string(255)
-#  order_date                   :date
-#  division_id                  :integer
-#  created_at                   :datetime         not null
-#  updated_at                   :datetime         not null
-#  vendor_id                    :integer
-#  ship_to_id                   :integer
-#  importer_id                  :integer
-#  customer_order_number        :string(255)
-#  last_file_bucket             :string(255)
-#  last_file_path               :string(255)
-#  last_exported_from_source    :datetime
-#  mode                         :string(255)
-#  ship_window_start            :date
-#  ship_window_end              :date
-#  first_expected_delivery_date :date
-#  last_revised_date            :date
+#  accepted_at                  :datetime
+#  accepted_by_id               :integer
 #  agent_id                     :integer
 #  approval_status              :string(255)
-#  fob_point                    :string(255)
 #  closed_at                    :datetime
 #  closed_by_id                 :integer
-#  factory_id                   :integer
-#  terms_of_sale                :string(255)
-#  season                       :string(255)
-#  product_category             :string(255)
+#  created_at                   :datetime         not null
 #  currency                     :string(255)
-#  terms_of_payment             :string(255)
-#  ship_from_id                 :integer
-#  order_from_address_id        :integer
-#  tpp_survey_response_id       :integer
-#  accepted_by_id               :integer
-#  accepted_at                  :datetime
+#  customer_order_number        :string(255)
 #  customer_order_status        :string(255)
+#  division_id                  :integer
+#  factory_id                   :integer
+#  first_expected_delivery_date :date
+#  fob_point                    :string(255)
+#  id                           :integer          not null, primary key
+#  importer_id                  :integer
+#  last_exported_from_source    :datetime
+#  last_file_bucket             :string(255)
+#  last_file_path               :string(255)
+#  last_revised_date            :date
+#  mode                         :string(255)
+#  order_date                   :date
+#  order_from_address_id        :integer
+#  order_number                 :string(255)
 #  processing_errors            :text
+#  product_category             :string(255)
+#  season                       :string(255)
+#  ship_from_id                 :integer
+#  ship_to_id                   :integer
+#  ship_window_end              :date
+#  ship_window_start            :date
+#  terms_of_payment             :string(255)
+#  terms_of_sale                :string(255)
+#  tpp_survey_response_id       :integer
+#  updated_at                   :datetime         not null
+#  vendor_id                    :integer
 #
 # Indexes
 #

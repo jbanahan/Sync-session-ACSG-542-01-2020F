@@ -2,11 +2,11 @@
 #
 # Table name: instant_classification_results
 #
-#  id          :integer          not null, primary key
-#  run_by_id   :integer
-#  run_at      :datetime
-#  finished_at :datetime
 #  created_at  :datetime         not null
+#  finished_at :datetime
+#  id          :integer          not null, primary key
+#  run_at      :datetime
+#  run_by_id   :integer
 #  updated_at  :datetime         not null
 #
 # Indexes

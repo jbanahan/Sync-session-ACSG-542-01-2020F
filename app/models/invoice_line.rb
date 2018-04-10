@@ -2,10 +2,10 @@
 #
 # Table name: invoice_lines
 #
-#  id                 :integer          not null, primary key
 #  air_sea_discount   :decimal(12, 2)
 #  country_export_id  :integer
 #  country_origin_id  :integer
+#  created_at         :datetime         not null
 #  department         :string(255)
 #  early_pay_discount :decimal(12, 2)
 #  first_sale         :boolean
@@ -13,6 +13,7 @@
 #  gross_weight       :integer
 #  gross_weight_uom   :string(255)
 #  hts_number         :string(255)
+#  id                 :integer          not null, primary key
 #  invoice_id         :integer
 #  line_number        :integer
 #  mid                :string(255)
@@ -30,13 +31,12 @@
 #  quantity_uom       :string(255)
 #  trade_discount     :decimal(12, 2)
 #  unit_price         :decimal(12, 3)
+#  updated_at         :datetime         not null
 #  value_domestic     :decimal(13, 2)
 #  value_foreign      :decimal(11, 2)
 #  variant_id         :integer
 #  volume             :decimal(11, 2)
 #  volume_uom         :string(255)
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
 #
 # Indexes
 #

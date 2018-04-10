@@ -2,16 +2,16 @@
 #
 # Table name: imported_file_downloads
 #
-#  id                    :integer          not null, primary key
-#  imported_file_id      :integer
-#  user_id               :integer
 #  additional_countries  :string(255)
-#  attached_file_name    :string(255)
 #  attached_content_type :string(255)
+#  attached_file_name    :string(255)
 #  attached_file_size    :integer
 #  attached_updated_at   :datetime
 #  created_at            :datetime         not null
+#  id                    :integer          not null, primary key
+#  imported_file_id      :integer
 #  updated_at            :datetime         not null
+#  user_id               :integer
 #
 # Indexes
 #

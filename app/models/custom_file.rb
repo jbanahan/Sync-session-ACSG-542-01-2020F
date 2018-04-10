@@ -2,20 +2,20 @@
 #
 # Table name: custom_files
 #
-#  id                    :integer          not null, primary key
-#  uploaded_by_id        :integer
-#  file_type             :string(255)
 #  attached_content_type :string(255)
+#  attached_file_name    :string(255)
 #  attached_file_size    :integer
 #  attached_updated_at   :datetime
-#  attached_file_name    :string(255)
 #  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  module_type           :string(255)
-#  start_at              :datetime
-#  finish_at             :datetime
 #  error_at              :datetime
 #  error_message         :string(255)
+#  file_type             :string(255)
+#  finish_at             :datetime
+#  id                    :integer          not null, primary key
+#  module_type           :string(255)
+#  start_at              :datetime
+#  updated_at            :datetime         not null
+#  uploaded_by_id        :integer
 #
 # Indexes
 #

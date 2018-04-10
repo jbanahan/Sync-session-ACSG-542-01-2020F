@@ -2,13 +2,13 @@
 #
 # Table name: event_subscriptions
 #
-#  id             :integer          not null, primary key
-#  user_id        :integer
-#  event_type     :string(255)
-#  email          :boolean
 #  created_at     :datetime         not null
-#  updated_at     :datetime         not null
+#  email          :boolean
+#  event_type     :string(255)
+#  id             :integer          not null, primary key
 #  system_message :boolean
+#  updated_at     :datetime         not null
+#  user_id        :integer
 #
 # Indexes
 #

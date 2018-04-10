@@ -2,21 +2,21 @@
 #
 # Table name: imported_files
 #
-#  id                    :integer          not null, primary key
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  processed_at          :datetime
-#  search_setup_id       :integer
-#  attached_file_name    :string(255)
 #  attached_content_type :string(255)
+#  attached_file_name    :string(255)
 #  attached_file_size    :integer
 #  attached_updated_at   :datetime
-#  user_id               :integer
+#  created_at            :datetime         not null
+#  id                    :integer          not null, primary key
 #  module_type           :string(255)
-#  update_mode           :string(255)
-#  starting_row          :integer          default(1)
-#  starting_column       :integer          default(1)
 #  note                  :text
+#  processed_at          :datetime
+#  search_setup_id       :integer
+#  starting_column       :integer          default(1)
+#  starting_row          :integer          default(1)
+#  update_mode           :string(255)
+#  updated_at            :datetime         not null
+#  user_id               :integer
 #
 # Indexes
 #

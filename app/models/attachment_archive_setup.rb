@@ -2,17 +2,17 @@
 #
 # Table name: attachment_archive_setups
 #
-#  id                              :integer          not null, primary key
-#  company_id                      :integer
-#  start_date                      :date
-#  created_at                      :datetime         not null
-#  updated_at                      :datetime         not null
+#  archive_scheme                  :string(255)
 #  combine_attachments             :boolean
 #  combined_attachment_order       :text
-#  archive_scheme                  :string(255)
+#  company_id                      :integer
+#  created_at                      :datetime         not null
 #  end_date                        :date
+#  id                              :integer          not null, primary key
 #  include_only_listed_attachments :boolean
 #  send_in_real_time               :boolean
+#  start_date                      :date
+#  updated_at                      :datetime         not null
 #
 # Indexes
 #

@@ -2,25 +2,25 @@
 #
 # Table name: histories
 #
-#  id                    :integer          not null, primary key
-#  order_id              :integer
-#  shipment_id           :integer
-#  product_id            :integer
-#  company_id            :integer
-#  user_id               :integer
-#  order_line_id         :integer
-#  walked                :datetime
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  history_type          :string(255)
-#  sales_order_id        :integer
-#  sales_order_line_id   :integer
-#  delivery_id           :integer
-#  entry_id              :integer
 #  broker_invoice_id     :integer
 #  commercial_invoice_id :integer
-#  security_filing_id    :integer
+#  company_id            :integer
 #  container_id          :integer
+#  created_at            :datetime         not null
+#  delivery_id           :integer
+#  entry_id              :integer
+#  history_type          :string(255)
+#  id                    :integer          not null, primary key
+#  order_id              :integer
+#  order_line_id         :integer
+#  product_id            :integer
+#  sales_order_id        :integer
+#  sales_order_line_id   :integer
+#  security_filing_id    :integer
+#  shipment_id           :integer
+#  updated_at            :datetime         not null
+#  user_id               :integer
+#  walked                :datetime
 #
 # Indexes
 #

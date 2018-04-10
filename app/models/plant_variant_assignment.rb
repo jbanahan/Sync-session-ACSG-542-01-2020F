@@ -2,12 +2,12 @@
 #
 # Table name: plant_variant_assignments
 #
+#  created_at :datetime         not null
+#  disabled   :boolean
 #  id         :integer          not null, primary key
 #  plant_id   :integer          not null
-#  variant_id :integer          not null
-#  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  disabled   :boolean
+#  variant_id :integer          not null
 #
 # Indexes
 #

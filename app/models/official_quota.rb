@@ -2,14 +2,14 @@
 #
 # Table name: official_quotas
 #
-#  id                             :integer          not null, primary key
-#  hts_code                       :string(255)
-#  country_id                     :integer
-#  square_meter_equivalent_factor :decimal(13, 4)
 #  category                       :string(255)
-#  unit_of_measure                :string(255)
-#  official_tariff_id             :integer
+#  country_id                     :integer
 #  created_at                     :datetime         not null
+#  hts_code                       :string(255)
+#  id                             :integer          not null, primary key
+#  official_tariff_id             :integer
+#  square_meter_equivalent_factor :decimal(13, 4)
+#  unit_of_measure                :string(255)
 #  updated_at                     :datetime         not null
 #
 # Indexes

@@ -2,24 +2,24 @@
 #
 # Table name: state_toggle_buttons
 #
-#  id                            :integer          not null, primary key
-#  module_type                   :string(255)
-#  user_attribute                :string(255)
-#  user_custom_definition_id     :integer
+#  activate_confirmation_text    :string(255)
+#  activate_text                 :string(255)
+#  created_at                    :datetime         not null
 #  date_attribute                :string(255)
 #  date_custom_definition_id     :integer
-#  permission_group_system_codes :text
-#  activate_text                 :string(255)
-#  activate_confirmation_text    :string(255)
-#  deactivate_text               :string(255)
 #  deactivate_confirmation_text  :string(255)
-#  created_at                    :datetime         not null
+#  deactivate_text               :string(255)
+#  id                            :integer          not null, primary key
+#  module_type                   :string(255)
+#  permission_group_system_codes :text
 #  updated_at                    :datetime         not null
+#  user_attribute                :string(255)
+#  user_custom_definition_id     :integer
 #
 # Indexes
 #
-#  index_state_toggle_buttons_on_module_type  (module_type)
-#  index_state_toggle_buttons_on_updated_at   (updated_at)
+#  index_state_toggle_buttons_on_module_type    (module_type)
+#  index_state_toggle_buttons_on_updated_at     (updated_at)
 #
 
 class StateToggleButton < ActiveRecord::Base

@@ -2,17 +2,17 @@
 #
 # Table name: drawback_claim_audits
 #
-#  id                  :integer          not null, primary key
+#  created_at          :datetime         not null
+#  drawback_claim_id   :integer
+#  export_date         :date
 #  export_part_number  :string(255)
 #  export_ref_1        :string(255)
-#  export_date         :date
-#  import_part_number  :string(255)
-#  import_ref_1        :string(255)
+#  id                  :integer          not null, primary key
 #  import_date         :date
 #  import_entry_number :string(255)
+#  import_part_number  :string(255)
+#  import_ref_1        :string(255)
 #  quantity            :decimal(13, 4)
-#  drawback_claim_id   :integer
-#  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #
 # Indexes

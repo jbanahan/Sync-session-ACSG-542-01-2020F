@@ -2,20 +2,20 @@
 #
 # Table name: intacct_alliance_exports
 #
-#  id                  :integer          not null, primary key
-#  file_number         :string(255)
-#  suffix              :string(255)
-#  data_requested_date :datetime
-#  data_received_date  :datetime
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  division            :string(255)
-#  customer_number     :string(255)
-#  invoice_date        :date
-#  check_number        :string(255)
 #  ap_total            :decimal(10, 2)
 #  ar_total            :decimal(10, 2)
+#  check_number        :string(255)
+#  created_at          :datetime         not null
+#  customer_number     :string(255)
+#  data_received_date  :datetime
+#  data_requested_date :datetime
+#  division            :string(255)
 #  export_type         :string(255)
+#  file_number         :string(255)
+#  id                  :integer          not null, primary key
+#  invoice_date        :date
+#  suffix              :string(255)
+#  updated_at          :datetime         not null
 #
 # Indexes
 #

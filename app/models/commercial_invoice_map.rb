@@ -2,10 +2,10 @@
 #
 # Table name: commercial_invoice_maps
 #
+#  created_at       :datetime         not null
+#  destination_mfid :string(255)
 #  id               :integer          not null, primary key
 #  source_mfid      :string(255)
-#  destination_mfid :string(255)
-#  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #
 

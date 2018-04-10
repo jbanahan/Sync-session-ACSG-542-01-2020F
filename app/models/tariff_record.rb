@@ -2,17 +2,17 @@
 #
 # Table name: tariff_records
 #
-#  id                :integer          not null, primary key
+#  classification_id :integer
+#  created_at        :datetime         not null
 #  hts_1             :string(255)
 #  hts_2             :string(255)
 #  hts_3             :string(255)
-#  classification_id :integer
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
+#  id                :integer          not null, primary key
 #  line_number       :integer
 #  schedule_b_1      :string(255)
 #  schedule_b_2      :string(255)
 #  schedule_b_3      :string(255)
+#  updated_at        :datetime         not null
 #
 # Indexes
 #

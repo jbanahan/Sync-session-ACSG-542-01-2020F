@@ -2,11 +2,11 @@
 #
 # Table name: corrective_action_plans
 #
-#  id                 :integer          not null, primary key
-#  survey_response_id :integer
-#  created_by_id      :integer
-#  status             :string(255)
 #  created_at         :datetime         not null
+#  created_by_id      :integer
+#  id                 :integer          not null, primary key
+#  status             :string(255)
+#  survey_response_id :integer
 #  updated_at         :datetime         not null
 #
 # Indexes

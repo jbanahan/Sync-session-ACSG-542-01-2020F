@@ -2,21 +2,21 @@
 #
 # Table name: piece_sets
 #
-#  id                         :integer          not null, primary key
-#  order_line_id              :integer
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  quantity                   :decimal(13, 4)
 #  adjustment_type            :string(255)
-#  sales_order_line_id        :integer
-#  unshipped_remainder        :boolean
-#  shipment_line_id           :integer
-#  delivery_line_id           :integer
-#  milestone_plan_id          :integer
-#  drawback_import_line_id    :integer
-#  commercial_invoice_line_id :integer
-#  security_filing_line_id    :integer
 #  booking_line_id            :integer
+#  commercial_invoice_line_id :integer
+#  created_at                 :datetime         not null
+#  delivery_line_id           :integer
+#  drawback_import_line_id    :integer
+#  id                         :integer          not null, primary key
+#  milestone_plan_id          :integer
+#  order_line_id              :integer
+#  quantity                   :decimal(13, 4)
+#  sales_order_line_id        :integer
+#  security_filing_line_id    :integer
+#  shipment_line_id           :integer
+#  unshipped_remainder        :boolean
+#  updated_at                 :datetime         not null
 #
 # Indexes
 #

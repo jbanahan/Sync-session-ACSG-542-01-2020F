@@ -2,11 +2,11 @@
 #
 # Table name: linked_attachments
 #
+#  attachable_id          :integer
+#  attachable_type        :string(255)
+#  created_at             :datetime         not null
 #  id                     :integer          not null, primary key
 #  linkable_attachment_id :integer
-#  attachable_type        :string(255)
-#  attachable_id          :integer
-#  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #
 # Indexes

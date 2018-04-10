@@ -2,12 +2,12 @@
 #
 # Table name: entry_purges
 #
-#  id               :integer          not null, primary key
 #  broker_reference :string(255)
 #  country_iso      :string(255)
-#  source_system    :string(255)
-#  date_purged      :datetime
 #  created_at       :datetime         not null
+#  date_purged      :datetime
+#  id               :integer          not null, primary key
+#  source_system    :string(255)
 #  updated_at       :datetime         not null
 #
 

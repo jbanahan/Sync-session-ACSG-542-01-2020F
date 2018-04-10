@@ -2,15 +2,15 @@
 #
 # Table name: bulk_process_logs
 #
-#  id                   :integer          not null, primary key
-#  user_id              :integer
 #  bulk_type            :string(255)
-#  started_at           :datetime
-#  finished_at          :datetime
-#  total_object_count   :integer
 #  changed_object_count :integer
 #  created_at           :datetime         not null
+#  finished_at          :datetime
+#  id                   :integer          not null, primary key
+#  started_at           :datetime
+#  total_object_count   :integer
 #  updated_at           :datetime         not null
+#  user_id              :integer
 #
 
 class BulkProcessLog < ActiveRecord::Base

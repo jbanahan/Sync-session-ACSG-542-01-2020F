@@ -2,12 +2,12 @@
 #
 # Table name: linkable_attachments
 #
-#  id              :integer          not null, primary key
-#  model_field_uid :string(255)
-#  value           :string(255)
 #  attachment_id   :integer
 #  created_at      :datetime         not null
+#  id              :integer          not null, primary key
+#  model_field_uid :string(255)
 #  updated_at      :datetime         not null
+#  value           :string(255)
 #
 # Indexes
 #

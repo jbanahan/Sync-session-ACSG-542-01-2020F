@@ -2,20 +2,20 @@
 #
 # Table name: surveys
 #
-#  id                          :integer          not null, primary key
-#  company_id                  :integer
-#  created_by_id               :integer
-#  name                        :string(255)
-#  email_subject               :string(255)
-#  email_body                  :text
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  ratings_list                :text
-#  expiration_days             :integer
 #  archived                    :boolean          default(FALSE)
+#  company_id                  :integer
+#  created_at                  :datetime         not null
+#  created_by_id               :integer
+#  email_body                  :text
+#  email_subject               :string(255)
+#  expiration_days             :integer
+#  id                          :integer          not null, primary key
+#  name                        :string(255)
+#  ratings_list                :text
+#  require_contact             :boolean
 #  system_code                 :string(255)
 #  trade_preference_program_id :integer
-#  require_contact             :boolean
+#  updated_at                  :datetime         not null
 #
 # Indexes
 #

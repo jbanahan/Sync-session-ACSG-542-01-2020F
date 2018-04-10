@@ -2,27 +2,27 @@
 #
 # Table name: search_criterions
 #
-#  id                               :integer          not null, primary key
-#  operator                         :string(255)
-#  value                            :text
-#  created_at                       :datetime         not null
-#  updated_at                       :datetime         not null
-#  status_rule_id                   :integer
-#  model_field_uid                  :string(255)
-#  search_setup_id                  :integer
-#  custom_definition_id             :integer
-#  instant_classification_id        :integer
-#  imported_file_id                 :integer
-#  search_run_id                    :integer
-#  custom_report_id                 :integer
-#  include_empty                    :boolean
-#  business_validation_template_id  :integer
-#  business_validation_rule_id      :integer
-#  state_toggle_button_id           :integer
-#  milestone_notification_config_id :integer
 #  automated_billing_setup_id       :integer
+#  business_validation_rule_id      :integer
+#  business_validation_template_id  :integer
+#  created_at                       :datetime         not null
+#  custom_definition_id             :integer
+#  custom_report_id                 :integer
 #  custom_view_template_id          :integer
+#  id                               :integer          not null, primary key
+#  imported_file_id                 :integer
+#  include_empty                    :boolean
+#  instant_classification_id        :integer
+#  milestone_notification_config_id :integer
+#  model_field_uid                  :string(255)
+#  operator                         :string(255)
+#  search_run_id                    :integer
+#  search_setup_id                  :integer
 #  secondary_model_field_uid        :string(255)
+#  state_toggle_button_id           :integer
+#  status_rule_id                   :integer
+#  updated_at                       :datetime         not null
+#  value                            :text
 #
 # Indexes
 #

@@ -2,16 +2,16 @@
 #
 # Table name: change_records
 #
-#  id                     :integer          not null, primary key
+#  bulk_process_log_id    :integer
+#  created_at             :datetime         not null
+#  failed                 :boolean
 #  file_import_result_id  :integer
+#  id                     :integer          not null, primary key
+#  record_sequence_number :integer
 #  recordable_id          :integer
 #  recordable_type        :string(255)
-#  record_sequence_number :integer
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  failed                 :boolean
-#  bulk_process_log_id    :integer
 #  unique_identifier      :string(255)
+#  updated_at             :datetime         not null
 #
 # Indexes
 #

@@ -2,13 +2,13 @@
 #
 # Table name: debug_records
 #
+#  created_at     :datetime         not null
 #  id             :integer          not null, primary key
-#  user_id        :integer
 #  request_method :string(255)
 #  request_params :text
 #  request_path   :string(255)
-#  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  user_id        :integer
 #
 
 class DebugRecord < ActiveRecord::Base

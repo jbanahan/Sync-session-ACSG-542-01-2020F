@@ -2,14 +2,14 @@
 #
 # Table name: fiscal_months
 #
-#  id           :integer          not null, primary key
-#  year         :integer
-#  month_number :integer
-#  start_date   :date
-#  end_date     :date
 #  company_id   :integer
 #  created_at   :datetime         not null
+#  end_date     :date
+#  id           :integer          not null, primary key
+#  month_number :integer
+#  start_date   :date
 #  updated_at   :datetime         not null
+#  year         :integer
 #
 # Indexes
 #

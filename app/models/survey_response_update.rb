@@ -2,11 +2,11 @@
 #
 # Table name: survey_response_updates
 #
-#  id                 :integer          not null, primary key
-#  user_id            :integer
-#  survey_response_id :integer
 #  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  survey_response_id :integer
 #  updated_at         :datetime         not null
+#  user_id            :integer
 #
 # Indexes
 #

@@ -2,11 +2,11 @@
 #
 # Table name: instant_classification_result_records
 #
+#  created_at                       :datetime         not null
+#  entity_snapshot_id               :integer
 #  id                               :integer          not null, primary key
 #  instant_classification_result_id :integer
-#  entity_snapshot_id               :integer
 #  product_id                       :integer
-#  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #
 # Indexes

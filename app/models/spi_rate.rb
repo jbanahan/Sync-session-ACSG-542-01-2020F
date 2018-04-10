@@ -2,13 +2,13 @@
 #
 # Table name: spi_rates
 #
-#  id               :integer          not null, primary key
 #  country_id       :integer
-#  special_rate_key :string(255)
+#  created_at       :datetime         not null
+#  id               :integer          not null, primary key
 #  program_code     :string(255)
 #  rate             :decimal(8, 4)
 #  rate_text        :string(255)
-#  created_at       :datetime         not null
+#  special_rate_key :string(255)
 #  updated_at       :datetime         not null
 #
 # Indexes

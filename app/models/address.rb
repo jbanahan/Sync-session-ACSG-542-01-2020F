@@ -2,24 +2,24 @@
 #
 # Table name: addresses
 #
+#  address_hash    :string(255)
+#  city            :string(255)
+#  company_id      :integer
+#  country_id      :integer
+#  created_at      :datetime         not null
+#  fax_number      :string(255)
 #  id              :integer          not null, primary key
-#  name            :string(255)
+#  in_address_book :boolean
 #  line_1          :string(255)
 #  line_2          :string(255)
 #  line_3          :string(255)
-#  city            :string(255)
-#  state           :string(255)
-#  postal_code     :string(255)
-#  company_id      :integer
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  country_id      :integer
-#  shipping        :boolean
-#  address_hash    :string(255)
-#  system_code     :string(255)
-#  in_address_book :boolean
+#  name            :string(255)
 #  phone_number    :string(255)
-#  fax_number      :string(255)
+#  postal_code     :string(255)
+#  shipping        :boolean
+#  state           :string(255)
+#  system_code     :string(255)
+#  updated_at      :datetime         not null
 #
 # Indexes
 #

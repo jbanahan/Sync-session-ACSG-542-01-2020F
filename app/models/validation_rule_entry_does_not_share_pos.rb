@@ -1,3 +1,4 @@
+# -*- SkipSchemaAnnotations
 class ValidationRuleEntryDoesNotSharePos < BusinessValidationRule
 
   def run_validation entry

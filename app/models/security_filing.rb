@@ -2,53 +2,53 @@
 #
 # Table name: security_filings
 #
-#  id                            :integer          not null, primary key
-#  transaction_number            :string(255)
-#  host_system_file_number       :string(255)
-#  host_system                   :string(255)
-#  importer_id                   :integer
-#  importer_account_code         :string(255)
-#  broker_customer_number        :string(255)
-#  importer_tax_id               :string(255)
-#  transport_mode_code           :string(255)
-#  scac                          :string(255)
+#  ams_match_date                :datetime
 #  booking_number                :string(255)
-#  vessel                        :string(255)
-#  voyage                        :string(255)
-#  lading_port_code              :string(255)
-#  unlading_port_code            :string(255)
-#  entry_port_code               :string(255)
-#  status_code                   :string(255)
-#  late_filing                   :boolean
-#  master_bill_of_lading         :string(255)
-#  house_bills_of_lading         :string(255)
+#  broker_customer_number        :string(255)
+#  cbp_updated_at                :datetime
 #  container_numbers             :string(255)
-#  entry_numbers                 :string(255)
-#  entry_reference_numbers       :string(255)
-#  file_logged_date              :datetime
-#  first_sent_date               :datetime
-#  first_accepted_date           :datetime
-#  last_sent_date                :datetime
-#  last_accepted_date            :datetime
-#  estimated_vessel_load_date    :date
-#  po_numbers                    :string(255)
+#  countries_of_origin           :text
 #  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  notes                         :text
+#  delete_accepted_date          :datetime
+#  entry_numbers                 :string(255)
+#  entry_port_code               :string(255)
+#  entry_reference_numbers       :string(255)
+#  estimated_vessel_arrival_date :date
+#  estimated_vessel_load_date    :date
+#  estimated_vessel_sailing_date :date
+#  file_logged_date              :datetime
+#  first_accepted_date           :datetime
+#  first_sent_date               :datetime
+#  host_system                   :string(255)
+#  host_system_file_number       :string(255)
+#  house_bills_of_lading         :string(255)
+#  id                            :integer          not null, primary key
+#  importer_account_code         :string(255)
+#  importer_id                   :integer
+#  importer_tax_id               :string(255)
+#  lading_port_code              :string(255)
+#  last_accepted_date            :datetime
 #  last_event                    :datetime
 #  last_file_bucket              :string(255)
 #  last_file_path                :string(255)
-#  time_to_process               :integer
-#  estimated_vessel_arrival_date :date
-#  countries_of_origin           :text
-#  estimated_vessel_sailing_date :date
-#  cbp_updated_at                :datetime
-#  status_description            :string(255)
+#  last_sent_date                :datetime
+#  late_filing                   :boolean
 #  manufacturer_names            :text
-#  ams_match_date                :datetime
-#  delete_accepted_date          :datetime
+#  master_bill_of_lading         :string(255)
+#  notes                         :text
+#  po_numbers                    :string(255)
+#  scac                          :string(255)
+#  status_code                   :string(255)
+#  status_description            :string(255)
+#  time_to_process               :integer
+#  transaction_number            :string(255)
+#  transport_mode_code           :string(255)
+#  unlading_port_code            :string(255)
+#  updated_at                    :datetime         not null
 #  us_customs_first_file_date    :datetime
+#  vessel                        :string(255)
 #  vessel_departure_date         :datetime
+#  voyage                        :string(255)
 #
 # Indexes
 #

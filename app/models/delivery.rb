@@ -2,14 +2,14 @@
 #
 # Table name: deliveries
 #
+#  carrier_id   :integer
+#  created_at   :datetime         not null
+#  customer_id  :integer
 #  id           :integer          not null, primary key
+#  mode         :string(255)
+#  reference    :string(255)
 #  ship_from_id :integer
 #  ship_to_id   :integer
-#  carrier_id   :integer
-#  reference    :string(255)
-#  mode         :string(255)
-#  customer_id  :integer
-#  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #
 

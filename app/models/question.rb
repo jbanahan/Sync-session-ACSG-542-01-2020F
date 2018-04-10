@@ -2,18 +2,18 @@
 #
 # Table name: questions
 #
-#  id                              :integer          not null, primary key
-#  survey_id                       :integer
-#  rank                            :integer
+#  attachment_required_for_choices :string(255)
 #  choices                         :text
+#  comment_required_for_choices    :string(255)
 #  content                         :text
 #  created_at                      :datetime         not null
-#  updated_at                      :datetime         not null
-#  warning                         :boolean
+#  id                              :integer          not null, primary key
+#  rank                            :integer
 #  require_attachment              :boolean          default(FALSE)
 #  require_comment                 :boolean          default(FALSE)
-#  attachment_required_for_choices :string(255)
-#  comment_required_for_choices    :string(255)
+#  survey_id                       :integer
+#  updated_at                      :datetime         not null
+#  warning                         :boolean
 #
 # Indexes
 #

@@ -2,16 +2,16 @@
 #
 # Table name: search_setups
 #
-#  id              :integer          not null, primary key
-#  name            :string(255)
-#  user_id         :integer
-#  module_type     :string(255)
-#  simple          :boolean
 #  created_at      :datetime         not null
-#  updated_at      :datetime         not null
 #  download_format :string(255)
+#  id              :integer          not null, primary key
 #  include_links   :boolean
+#  module_type     :string(255)
+#  name            :string(255)
 #  no_time         :boolean
+#  simple          :boolean
+#  updated_at      :datetime         not null
+#  user_id         :integer
 #
 # Indexes
 #

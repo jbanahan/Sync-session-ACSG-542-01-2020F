@@ -2,11 +2,11 @@
 #
 # Table name: stitch_queue_items
 #
-#  id                   :integer          not null, primary key
-#  stitch_type          :string(255)
-#  stitch_queuable_type :string(255)
-#  stitch_queuable_id   :integer
 #  created_at           :datetime         not null
+#  id                   :integer          not null, primary key
+#  stitch_queuable_id   :integer
+#  stitch_queuable_type :string(255)
+#  stitch_type          :string(255)
 #  updated_at           :datetime         not null
 #
 # Indexes

@@ -2,14 +2,14 @@
 #
 # Table name: milestone_definitions
 #
+#  custom_definition_id             :integer
+#  days_after_previous              :integer
+#  display_rank                     :integer
+#  final_milestone                  :boolean
 #  id                               :integer          not null, primary key
 #  milestone_plan_id                :integer
 #  model_field_uid                  :string(255)
-#  days_after_previous              :integer
 #  previous_milestone_definition_id :integer
-#  final_milestone                  :boolean
-#  custom_definition_id             :integer
-#  display_rank                     :integer
 #
 # Indexes
 #

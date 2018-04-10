@@ -2,17 +2,17 @@
 #
 # Table name: ports
 #
-#  id                 :integer          not null, primary key
-#  schedule_d_code    :string(255)
-#  schedule_k_code    :string(255)
-#  name               :string(255)
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
+#  active_destination :boolean
+#  active_origin      :boolean
 #  cbsa_port          :string(255)
 #  cbsa_sublocation   :string(255)
+#  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  name               :string(255)
+#  schedule_d_code    :string(255)
+#  schedule_k_code    :string(255)
 #  unlocode           :string(255)
-#  active_origin      :boolean
-#  active_destination :boolean
+#  updated_at         :datetime         not null
 #
 # Indexes
 #

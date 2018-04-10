@@ -2,19 +2,19 @@
 #
 # Table name: official_schedule_b_codes
 #
-#  id                     :integer          not null, primary key
+#  created_at             :datetime         not null
+#  end_use_classification :string(255)
+#  hitech_classification  :string(255)
 #  hts_code               :string(255)
-#  short_description      :text
+#  id                     :integer          not null, primary key
 #  long_description       :text
+#  naics_classification   :string(255)
 #  quantity_1             :text
 #  quantity_2             :text
+#  short_description      :text
 #  sitc_code              :string(255)
-#  end_use_classification :string(255)
-#  usda_code              :string(255)
-#  naics_classification   :string(255)
-#  hitech_classification  :string(255)
-#  created_at             :datetime         not null
 #  updated_at             :datetime         not null
+#  usda_code              :string(255)
 #
 
 class OfficialScheduleBCode < ActiveRecord::Base

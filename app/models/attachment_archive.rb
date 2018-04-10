@@ -2,12 +2,12 @@
 #
 # Table name: attachment_archives
 #
-#  id         :integer          not null, primary key
 #  company_id :integer
+#  created_at :datetime         not null
+#  finish_at  :datetime
+#  id         :integer          not null, primary key
 #  name       :string(255)
 #  start_at   :datetime
-#  finish_at  :datetime
-#  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 # Indexes

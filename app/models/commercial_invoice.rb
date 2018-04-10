@@ -2,35 +2,35 @@
 #
 # Table name: commercial_invoices
 #
-#  id                     :integer          not null, primary key
-#  invoice_number         :string(255)
-#  vendor_name            :string(255)
-#  entry_id               :integer
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  currency               :string(255)
-#  exchange_rate          :decimal(8, 6)
-#  invoice_value_foreign  :decimal(13, 2)
-#  invoice_value          :decimal(13, 2)
-#  country_origin_code    :string(255)
-#  gross_weight           :integer
-#  total_charges          :decimal(11, 2)
-#  invoice_date           :date
-#  mfid                   :string(255)
-#  vendor_id              :integer
-#  importer_id            :integer
 #  consignee_id           :integer
+#  country_origin_code    :string(255)
+#  created_at             :datetime         not null
+#  currency               :string(255)
+#  destination_code       :string(255)
+#  docs_ok_date           :date
+#  docs_received_date     :date
+#  entered_value_7501     :integer
+#  entry_id               :integer
+#  exchange_rate          :decimal(8, 6)
+#  gross_weight           :integer
+#  house_bills_of_lading  :text
+#  id                     :integer          not null, primary key
+#  importer_id            :integer
+#  invoice_date           :date
+#  invoice_number         :string(255)
+#  invoice_value          :decimal(13, 2)
+#  invoice_value_foreign  :decimal(13, 2)
+#  issue_codes            :string(255)
+#  master_bills_of_lading :text
+#  mfid                   :string(255)
+#  non_dutiable_amount    :decimal(13, 2)
+#  rater_comments         :text
+#  total_charges          :decimal(11, 2)
 #  total_quantity         :decimal(12, 5)
 #  total_quantity_uom     :string(255)
-#  docs_received_date     :date
-#  docs_ok_date           :date
-#  issue_codes            :string(255)
-#  rater_comments         :text
-#  destination_code       :string(255)
-#  non_dutiable_amount    :decimal(13, 2)
-#  master_bills_of_lading :text
-#  house_bills_of_lading  :text
-#  entered_value_7501     :integer
+#  updated_at             :datetime         not null
+#  vendor_id              :integer
+#  vendor_name            :string(255)
 #
 # Indexes
 #

@@ -2,13 +2,13 @@
 #
 # Table name: request_logs
 #
-#  id                :integer          not null, primary key
-#  user_id           :integer
-#  http_method       :string(255)
-#  url               :string(255)
-#  run_as_session_id :integer
 #  created_at        :datetime         not null
+#  http_method       :string(255)
+#  id                :integer          not null, primary key
+#  run_as_session_id :integer
 #  updated_at        :datetime         not null
+#  url               :string(255)
+#  user_id           :integer
 #
 # Indexes
 #

@@ -2,15 +2,15 @@
 #
 # Table name: drawback_export_histories
 #
+#  claim_amount          :decimal(13, 4)
+#  claim_amount_per_unit :decimal(13, 4)
+#  created_at            :datetime         not null
+#  drawback_claim_id     :integer
+#  export_date           :date
+#  export_ref_1          :string(255)
 #  id                    :integer          not null, primary key
 #  part_number           :string(255)
-#  export_ref_1          :string(255)
-#  export_date           :date
 #  quantity              :decimal(13, 4)
-#  claim_amount_per_unit :decimal(13, 4)
-#  claim_amount          :decimal(13, 4)
-#  drawback_claim_id     :integer
-#  created_at            :datetime         not null
 #  updated_at            :datetime         not null
 #
 # Indexes

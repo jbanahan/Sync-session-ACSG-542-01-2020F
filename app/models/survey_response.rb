@@ -2,32 +2,32 @@
 #
 # Table name: survey_responses
 #
-#  id                              :integer          not null, primary key
-#  survey_id                       :integer
-#  user_id                         :integer
-#  email_sent_date                 :datetime
-#  email_opened_date               :datetime
-#  response_opened_date            :datetime
-#  submitted_date                  :datetime
 #  accepted_date                   :datetime
-#  created_at                      :datetime         not null
-#  updated_at                      :datetime         not null
-#  status                          :string(255)
-#  rating                          :string(255)
-#  name                            :string(255)
 #  address                         :text
-#  phone                           :string(255)
-#  fax                             :string(255)
-#  email                           :string(255)
-#  subtitle                        :string(255)
 #  archived                        :boolean
-#  expiration_notification_sent_at :datetime
-#  base_object_type                :string(255)
 #  base_object_id                  :integer
-#  group_id                        :integer
+#  base_object_type                :string(255)
 #  checkout_by_user_id             :integer
-#  checkout_token                  :string(255)
 #  checkout_expiration             :datetime
+#  checkout_token                  :string(255)
+#  created_at                      :datetime         not null
+#  email                           :string(255)
+#  email_opened_date               :datetime
+#  email_sent_date                 :datetime
+#  expiration_notification_sent_at :datetime
+#  fax                             :string(255)
+#  group_id                        :integer
+#  id                              :integer          not null, primary key
+#  name                            :string(255)
+#  phone                           :string(255)
+#  rating                          :string(255)
+#  response_opened_date            :datetime
+#  status                          :string(255)
+#  submitted_date                  :datetime
+#  subtitle                        :string(255)
+#  survey_id                       :integer
+#  updated_at                      :datetime         not null
+#  user_id                         :integer
 #
 # Indexes
 #

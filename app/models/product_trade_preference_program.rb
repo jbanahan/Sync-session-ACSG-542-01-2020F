@@ -2,10 +2,10 @@
 #
 # Table name: product_trade_preference_programs
 #
+#  created_at                  :datetime         not null
 #  id                          :integer          not null, primary key
 #  product_id                  :integer
 #  trade_preference_program_id :integer
-#  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
 #
 # Indexes

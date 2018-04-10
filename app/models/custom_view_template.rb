@@ -2,12 +2,12 @@
 #
 # Table name: custom_view_templates
 #
+#  created_at          :datetime         not null
 #  id                  :integer          not null, primary key
+#  module_type         :string(255)
 #  template_identifier :string(255)
 #  template_path       :string(255)
-#  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  module_type         :string(255)
 #
 # Indexes
 #

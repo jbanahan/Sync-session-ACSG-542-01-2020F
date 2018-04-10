@@ -2,13 +2,13 @@
 #
 # Table name: sales_orders
 #
-#  id           :integer          not null, primary key
-#  order_number :string(255)
-#  order_date   :date
+#  created_at   :datetime         not null
 #  customer_id  :integer
 #  division_id  :integer
+#  id           :integer          not null, primary key
+#  order_date   :date
+#  order_number :string(255)
 #  ship_to_id   :integer
-#  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #
 

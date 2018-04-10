@@ -2,11 +2,11 @@
 #
 # Table name: product_vendor_assignments
 #
+#  created_at :datetime         not null
 #  id         :integer          not null, primary key
 #  product_id :integer
-#  vendor_id  :integer
-#  created_at :datetime         not null
 #  updated_at :datetime         not null
+#  vendor_id  :integer
 #
 # Indexes
 #

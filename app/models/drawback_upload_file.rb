@@ -2,13 +2,13 @@
 #
 # Table name: drawback_upload_files
 #
+#  created_at    :datetime         not null
+#  error_message :string(255)
+#  finish_at     :datetime
 #  id            :integer          not null, primary key
 #  processor     :string(255)
 #  start_at      :datetime
-#  finish_at     :datetime
-#  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  error_message :string(255)
 #
 # Indexes
 #

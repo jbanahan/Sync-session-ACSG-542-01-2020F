@@ -2,17 +2,17 @@
 #
 # Table name: search_runs
 #
-#  id                      :integer          not null, primary key
-#  search_setup_id         :integer
 #  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  starting_cache_position :integer
-#  last_accessed           :datetime
-#  imported_file_id        :integer
-#  user_id                 :integer
 #  custom_file_id          :integer
+#  id                      :integer          not null, primary key
+#  imported_file_id        :integer
+#  last_accessed           :datetime
 #  page                    :integer
 #  per_page                :integer
+#  search_setup_id         :integer
+#  starting_cache_position :integer
+#  updated_at              :datetime         not null
+#  user_id                 :integer
 #
 # Indexes
 #

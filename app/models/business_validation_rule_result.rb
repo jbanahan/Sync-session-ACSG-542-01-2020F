@@ -2,15 +2,15 @@
 #
 # Table name: business_validation_rule_results
 #
-#  id                            :integer          not null, primary key
 #  business_validation_result_id :integer
 #  business_validation_rule_id   :integer
-#  state                         :string(255)
+#  created_at                    :datetime         not null
+#  id                            :integer          not null, primary key
 #  message                       :text
 #  note                          :text
-#  overridden_by_id              :integer
 #  overridden_at                 :datetime
-#  created_at                    :datetime         not null
+#  overridden_by_id              :integer
+#  state                         :string(255)
 #  updated_at                    :datetime         not null
 #
 # Indexes

@@ -2,21 +2,21 @@
 #
 # Table name: entity_snapshots
 #
-#  id                  :integer          not null, primary key
-#  recordable_type     :string(255)
-#  recordable_id       :integer
-#  snapshot            :text
-#  user_id             :integer
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  imported_file_id    :integer
-#  change_record_id    :integer
-#  bulk_process_log_id :integer
 #  bucket              :string(255)
-#  doc_path            :string(255)
-#  version             :string(255)
+#  bulk_process_log_id :integer
+#  change_record_id    :integer
 #  compared_at         :datetime
 #  context             :string(255)
+#  created_at          :datetime         not null
+#  doc_path            :string(255)
+#  id                  :integer          not null, primary key
+#  imported_file_id    :integer
+#  recordable_id       :integer
+#  recordable_type     :string(255)
+#  snapshot            :text
+#  updated_at          :datetime         not null
+#  user_id             :integer
+#  version             :string(255)
 #
 # Indexes
 #

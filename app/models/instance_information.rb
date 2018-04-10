@@ -2,14 +2,14 @@
 #
 # Table name: instance_informations
 #
-#  id            :integer          not null, primary key
-#  host          :string(255)
-#  last_check_in :datetime
-#  version       :string(255)
 #  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  host          :string(255)
+#  id            :integer          not null, primary key
+#  last_check_in :datetime
 #  name          :string(255)
 #  role          :string(255)
+#  updated_at    :datetime         not null
+#  version       :string(255)
 #
 
 class InstanceInformation < ActiveRecord::Base

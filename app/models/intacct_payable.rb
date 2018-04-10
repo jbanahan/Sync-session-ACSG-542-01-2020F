@@ -2,21 +2,21 @@
 #
 # Table name: intacct_payables
 #
+#  bill_date                  :date
+#  bill_number                :string(255)
+#  check_number               :string(255)
+#  company                    :string(255)
+#  created_at                 :datetime         not null
+#  currency                   :string(255)
 #  id                         :integer          not null, primary key
 #  intacct_alliance_export_id :integer
-#  company                    :string(255)
-#  bill_number                :string(255)
-#  bill_date                  :date
+#  intacct_errors             :text
+#  intacct_key                :string(255)
+#  intacct_upload_date        :datetime
+#  payable_type               :string(255)
+#  updated_at                 :datetime         not null
 #  vendor_number              :string(255)
 #  vendor_reference           :string(255)
-#  currency                   :string(255)
-#  intacct_upload_date        :datetime
-#  intacct_key                :string(255)
-#  intacct_errors             :text
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  payable_type               :string(255)
-#  check_number               :string(255)
 #
 # Indexes
 #

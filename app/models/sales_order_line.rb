@@ -2,14 +2,14 @@
 #
 # Table name: sales_order_lines
 #
-#  id             :integer          not null, primary key
-#  price_per_unit :decimal(13, 4)
-#  sales_order_id :integer
-#  line_number    :integer
 #  created_at     :datetime         not null
-#  updated_at     :datetime         not null
+#  id             :integer          not null, primary key
+#  line_number    :integer
+#  price_per_unit :decimal(13, 4)
 #  product_id     :integer
 #  quantity       :decimal(13, 4)
+#  sales_order_id :integer
+#  updated_at     :datetime         not null
 #
 # Indexes
 #

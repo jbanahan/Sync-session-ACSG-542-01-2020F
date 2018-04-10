@@ -2,21 +2,22 @@
 #
 # Table name: shipment_lines
 #
-#  id                      :integer          not null, primary key
-#  line_number             :integer
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  shipment_id             :integer
-#  product_id              :integer
-#  quantity                :decimal(13, 4)
-#  container_id            :integer
-#  gross_kgs               :decimal(13, 4)
-#  cbms                    :decimal(13, 4)
+#  canceled_order_line_id  :integer
 #  carton_qty              :integer
 #  carton_set_id           :integer
+#  cbms                    :decimal(13, 4)
+#  container_id            :integer
+#  created_at              :datetime         not null
 #  fcr_number              :string(255)
-#  canceled_order_line_id  :integer
+#  gross_kgs               :decimal(13, 4)
+#  id                      :integer          not null, primary key
+#  line_number             :integer
 #  manufacturer_address_id :integer
+#  master_bill_of_lading   :string(255)
+#  product_id              :integer
+#  quantity                :decimal(13, 4)
+#  shipment_id             :integer
+#  updated_at              :datetime         not null
 #  variant_id              :integer
 #
 # Indexes

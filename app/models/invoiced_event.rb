@@ -2,13 +2,13 @@
 #
 # Table name: invoiced_events
 #
-#  id                     :integer          not null, primary key
 #  billable_event_id      :integer          not null
-#  vfi_invoice_line_id    :integer
-#  invoice_generator_name :string(255)
 #  charge_type            :string(255)
 #  created_at             :datetime         not null
+#  id                     :integer          not null, primary key
+#  invoice_generator_name :string(255)
 #  updated_at             :datetime         not null
+#  vfi_invoice_line_id    :integer
 #
 # Indexes
 #

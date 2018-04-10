@@ -2,35 +2,35 @@
 #
 # Table name: monthly_statements
 #
-#  id                          :integer          not null, primary key
-#  statement_number            :string(255)
-#  status                      :string(255)
-#  received_date               :date
-#  final_received_date         :date
-#  due_date                    :date
-#  paid_date                   :date
-#  port_code                   :string(255)
-#  pay_type                    :string(255)
-#  customer_number             :string(255)
-#  importer_id                 :integer
-#  total_amount                :decimal(11, 2)
-#  preliminary_total_amount    :decimal(11, 2)
-#  duty_amount                 :decimal(11, 2)
-#  preliminary_duty_amount     :decimal(11, 2)
-#  tax_amount                  :decimal(11, 2)
-#  preliminary_tax_amount      :decimal(11, 2)
-#  cvd_amount                  :decimal(11, 2)
-#  preliminary_cvd_amount      :decimal(11, 2)
 #  add_amount                  :decimal(11, 2)
-#  preliminary_add_amount      :decimal(11, 2)
-#  interest_amount             :decimal(11, 2)
-#  preliminary_interest_amount :decimal(11, 2)
+#  created_at                  :datetime         not null
+#  customer_number             :string(255)
+#  cvd_amount                  :decimal(11, 2)
+#  due_date                    :date
+#  duty_amount                 :decimal(11, 2)
 #  fee_amount                  :decimal(11, 2)
-#  preliminary_fee_amount      :decimal(11, 2)
+#  final_received_date         :date
+#  id                          :integer          not null, primary key
+#  importer_id                 :integer
+#  interest_amount             :decimal(11, 2)
+#  last_exported_from_source   :datetime
 #  last_file_bucket            :string(255)
 #  last_file_path              :string(255)
-#  last_exported_from_source   :datetime
-#  created_at                  :datetime         not null
+#  paid_date                   :date
+#  pay_type                    :string(255)
+#  port_code                   :string(255)
+#  preliminary_add_amount      :decimal(11, 2)
+#  preliminary_cvd_amount      :decimal(11, 2)
+#  preliminary_duty_amount     :decimal(11, 2)
+#  preliminary_fee_amount      :decimal(11, 2)
+#  preliminary_interest_amount :decimal(11, 2)
+#  preliminary_tax_amount      :decimal(11, 2)
+#  preliminary_total_amount    :decimal(11, 2)
+#  received_date               :date
+#  statement_number            :string(255)
+#  status                      :string(255)
+#  tax_amount                  :decimal(11, 2)
+#  total_amount                :decimal(11, 2)
 #  updated_at                  :datetime         not null
 #
 # Indexes

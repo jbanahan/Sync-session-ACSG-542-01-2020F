@@ -2,20 +2,20 @@
 #
 # Table name: products
 #
-#  id                 :integer          not null, primary key
-#  unique_identifier  :string(255)
-#  name               :string(255)
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  division_id        :integer
-#  unit_of_measure    :string(255)
-#  status_rule_id     :integer
 #  changed_at         :datetime
+#  created_at         :datetime         not null
+#  division_id        :integer
 #  entity_type_id     :integer
-#  last_updated_by_id :integer
+#  id                 :integer          not null, primary key
 #  importer_id        :integer
 #  last_file_bucket   :string(255)
 #  last_file_path     :string(255)
+#  last_updated_by_id :integer
+#  name               :string(255)
+#  status_rule_id     :integer
+#  unique_identifier  :string(255)
+#  unit_of_measure    :string(255)
+#  updated_at         :datetime         not null
 #
 # Indexes
 #

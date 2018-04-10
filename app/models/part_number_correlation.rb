@@ -2,16 +2,16 @@
 #
 # Table name: part_number_correlations
 #
+#  created_at        :datetime         not null
+#  entry_country_iso :string(255)
+#  finished_time     :datetime
 #  id                :integer          not null, primary key
-#  starting_row      :integer
+#  importers         :string(255)
 #  part_column       :string(255)
 #  part_regex        :string(255)
-#  entry_country_iso :string(255)
-#  importers         :string(255)
-#  finished_time     :datetime
-#  user_id           :integer
-#  created_at        :datetime         not null
+#  starting_row      :integer
 #  updated_at        :datetime         not null
+#  user_id           :integer
 #
 
 require 'open_chain/xl_client'

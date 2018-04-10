@@ -2,10 +2,10 @@
 #
 # Table name: change_record_messages
 #
-#  id               :integer          not null, primary key
 #  change_record_id :integer
-#  message          :string(255)
 #  created_at       :datetime         not null
+#  id               :integer          not null, primary key
+#  message          :string(255)
 #  updated_at       :datetime         not null
 #
 # Indexes

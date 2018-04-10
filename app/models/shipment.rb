@@ -2,110 +2,111 @@
 #
 # Table name: shipments
 #
-#  id                               :integer          not null, primary key
-#  ship_from_id                     :integer
-#  ship_to_id                       :integer
-#  carrier_id                       :integer
-#  created_at                       :datetime         not null
-#  updated_at                       :datetime         not null
-#  reference                        :string(255)
-#  mode                             :string(255)
-#  vendor_id                        :integer
-#  importer_id                      :integer
-#  master_bill_of_lading            :string(255)
-#  house_bill_of_lading             :string(255)
-#  booking_number                   :string(255)
-#  receipt_location                 :string(255)
-#  lading_port_id                   :integer
-#  unlading_port_id                 :integer
-#  entry_port_id                    :integer
-#  destination_port_id              :integer
-#  freight_terms                    :string(255)
-#  lcl                              :boolean
-#  shipment_type                    :string(255)
-#  booking_shipment_type            :string(255)
-#  booking_mode                     :string(255)
-#  vessel                           :string(255)
-#  voyage                           :string(255)
-#  vessel_carrier_scac              :string(255)
-#  booking_received_date            :datetime
+#  arrival_port_date                :date
+#  booked_quantity                  :decimal(11, 2)
+#  booking_approved_by_id           :integer
+#  booking_approved_date            :datetime
+#  booking_cargo_ready_date         :date
+#  booking_carrier                  :string(255)
+#  booking_confirmed_by_id          :integer
 #  booking_confirmed_date           :datetime
 #  booking_cutoff_date              :date
 #  booking_est_arrival_date         :date
 #  booking_est_departure_date       :date
-#  docs_received_date               :date
-#  cargo_on_hand_date               :date
-#  est_departure_date               :date
-#  departure_date                   :date
-#  est_arrival_port_date            :date
-#  arrival_port_date                :date
-#  est_delivery_date                :date
-#  delivered_date                   :date
-#  cargo_on_board_date              :date
-#  last_exported_from_source        :datetime
-#  importer_reference               :string(255)
-#  cargo_ready_date                 :date
+#  booking_first_port_receipt_id    :integer
+#  booking_mode                     :string(255)
+#  booking_number                   :string(255)
+#  booking_received_date            :datetime
+#  booking_request_count            :integer
 #  booking_requested_by_id          :integer
-#  booking_confirmed_by_id          :integer
-#  booking_approved_date            :datetime
-#  booking_approved_by_id           :integer
-#  booked_quantity                  :decimal(11, 2)
-#  canceled_date                    :datetime
-#  canceled_by_id                   :integer
-#  vessel_nationality               :string(255)
-#  first_port_receipt_id            :integer
-#  last_foreign_port_id             :integer
-#  marks_and_numbers                :text
-#  number_of_packages               :integer
-#  number_of_packages_uom           :string(255)
-#  gross_weight                     :decimal(9, 2)
-#  booking_carrier                  :string(255)
+#  booking_requested_equipment      :string(255)
+#  booking_revised_by_id            :integer
+#  booking_revised_date             :datetime
+#  booking_shipment_type            :string(255)
 #  booking_vessel                   :string(255)
-#  delay_reason_codes               :string(255)
-#  shipment_cutoff_date             :date
-#  fish_and_wildlife                :boolean
-#  volume                           :decimal(9, 2)
+#  buyer_address_id                 :integer
 #  cancel_requested_at              :datetime
 #  cancel_requested_by_id           :integer
-#  seller_address_id                :integer
-#  buyer_address_id                 :integer
-#  ship_to_address_id               :integer
-#  container_stuffing_address_id    :integer
-#  consolidator_address_id          :integer
+#  canceled_by_id                   :integer
+#  canceled_date                    :datetime
+#  cargo_on_board_date              :date
+#  cargo_on_hand_date               :date
+#  cargo_ready_date                 :date
+#  carrier_id                       :integer
+#  confirmed_on_board_origin_date   :date
 #  consignee_id                     :integer
+#  consolidator_address_id          :integer
+#  container_stuffing_address_id    :integer
+#  country_origin_id                :integer
+#  created_at                       :datetime         not null
+#  delay_reason_codes               :string(255)
+#  delivered_date                   :date
+#  departure_date                   :date
+#  departure_last_foreign_port_date :date
+#  destination_port_id              :integer
+#  do_issued_at                     :date
+#  docs_received_date               :date
+#  entry_port_id                    :integer
+#  est_arrival_port_date            :date
+#  est_delivery_date                :date
+#  est_departure_date               :date
+#  est_inland_port_date             :date
+#  est_load_date                    :date
+#  eta_last_foreign_port_date       :date
+#  export_license_required          :boolean
+#  final_dest_port_id               :integer
+#  first_port_receipt_id            :integer
+#  fish_and_wildlife                :boolean
+#  forwarder_id                     :integer
+#  freight_terms                    :string(255)
+#  freight_total                    :decimal(11, 2)
+#  gross_weight                     :decimal(9, 2)
+#  hazmat                           :boolean
+#  house_bill_of_lading             :string(255)
+#  id                               :integer          not null, primary key
+#  importer_id                      :integer
+#  importer_reference               :string(255)
+#  in_warehouse_time                :datetime
+#  inland_destination_port_id       :integer
+#  inland_port_date                 :date
+#  invoice_total                    :decimal(11, 2)
 #  isf_sent_at                      :datetime
 #  isf_sent_by_id                   :integer
-#  est_load_date                    :date
-#  final_dest_port_id               :integer
-#  confirmed_on_board_origin_date   :date
-#  eta_last_foreign_port_date       :date
-#  departure_last_foreign_port_date :date
-#  booking_revised_date             :datetime
-#  booking_revised_by_id            :integer
-#  freight_total                    :decimal(11, 2)
-#  invoice_total                    :decimal(11, 2)
-#  inland_destination_port_id       :integer
-#  est_inland_port_date             :date
-#  inland_port_date                 :date
-#  requested_equipment              :text
-#  forwarder_id                     :integer
-#  booking_cargo_ready_date         :date
-#  booking_first_port_receipt_id    :integer
-#  booking_requested_equipment      :string(255)
-#  booking_request_count            :integer
-#  hazmat                           :boolean
-#  solid_wood_packing_materials     :boolean
 #  lacey_act                        :boolean
-#  export_license_required          :boolean
-#  shipment_instructions_sent_date  :date
-#  shipment_instructions_sent_by_id :integer
+#  lading_port_id                   :integer
+#  last_exported_from_source        :datetime
 #  last_file_bucket                 :string(255)
 #  last_file_path                   :string(255)
-#  do_issued_at                     :date
-#  trucker_name                     :string(255)
-#  port_last_free_day               :date
+#  last_foreign_port_id             :integer
+#  lcl                              :boolean
+#  marks_and_numbers                :text
+#  master_bill_of_lading            :string(255)
+#  mode                             :string(255)
+#  number_of_packages               :integer
+#  number_of_packages_uom           :string(255)
 #  pickup_at                        :date
-#  in_warehouse_time                :datetime
+#  port_last_free_day               :date
+#  receipt_location                 :string(255)
+#  reference                        :string(255)
+#  requested_equipment              :text
+#  seller_address_id                :integer
+#  ship_from_id                     :integer
+#  ship_to_address_id               :integer
+#  ship_to_id                       :integer
+#  shipment_cutoff_date             :date
+#  shipment_instructions_sent_by_id :integer
+#  shipment_instructions_sent_date  :date
+#  shipment_type                    :string(255)
+#  solid_wood_packing_materials     :boolean
+#  trucker_name                     :string(255)
+#  unlading_port_id                 :integer
+#  updated_at                       :datetime         not null
+#  vendor_id                        :integer
+#  vessel                           :string(255)
+#  vessel_carrier_scac              :string(255)
+#  vessel_nationality               :string(255)
+#  volume                           :decimal(9, 2)
+#  voyage                           :string(255)
 #  warning_overridden_at            :datetime
 #  warning_overridden_by_id         :integer
 #

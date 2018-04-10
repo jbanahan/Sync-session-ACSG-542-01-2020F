@@ -2,14 +2,14 @@
 #
 # Table name: comments
 #
-#  id               :integer          not null, primary key
 #  body             :text
-#  subject          :string(255)
-#  user_id          :integer
 #  commentable_id   :integer
 #  commentable_type :string(255)
 #  created_at       :datetime         not null
+#  id               :integer          not null, primary key
+#  subject          :string(255)
 #  updated_at       :datetime         not null
+#  user_id          :integer
 #
 # Indexes
 #

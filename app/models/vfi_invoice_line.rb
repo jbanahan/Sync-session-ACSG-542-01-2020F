@@ -2,17 +2,17 @@
 #
 # Table name: vfi_invoice_lines
 #
-#  id                 :integer          not null, primary key
-#  vfi_invoice_id     :integer          not null
-#  line_number        :integer
-#  charge_description :string(255)
 #  charge_amount      :decimal(11, 2)
 #  charge_code        :string(255)
+#  charge_description :string(255)
+#  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  line_number        :integer
 #  quantity           :decimal(11, 2)
 #  unit               :string(255)
 #  unit_price         :decimal(11, 2)
-#  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#  vfi_invoice_id     :integer          not null
 #
 # Indexes
 #

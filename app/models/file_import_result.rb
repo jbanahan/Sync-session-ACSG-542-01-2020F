@@ -2,16 +2,16 @@
 #
 # Table name: file_import_results
 #
+#  changed_object_count :integer
+#  created_at           :datetime         not null
+#  expected_rows        :integer
+#  finished_at          :datetime
 #  id                   :integer          not null, primary key
 #  imported_file_id     :integer
-#  started_at           :datetime
-#  finished_at          :datetime
-#  run_by_id            :integer
-#  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  changed_object_count :integer
-#  expected_rows        :integer
 #  rows_processed       :integer
+#  run_by_id            :integer
+#  started_at           :datetime
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

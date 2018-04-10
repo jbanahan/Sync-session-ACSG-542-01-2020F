@@ -2,19 +2,19 @@
 #
 # Table name: security_filing_lines
 #
-#  id                        :integer          not null, primary key
-#  security_filing_id        :integer
-#  line_number               :integer
-#  quantity                  :integer
-#  hts_code                  :string(255)
-#  part_number               :string(255)
-#  po_number                 :string(255)
 #  commercial_invoice_number :string(255)
-#  mid                       :string(255)
 #  country_of_origin_code    :string(255)
 #  created_at                :datetime         not null
-#  updated_at                :datetime         not null
+#  hts_code                  :string(255)
+#  id                        :integer          not null, primary key
+#  line_number               :integer
 #  manufacturer_name         :string(255)
+#  mid                       :string(255)
+#  part_number               :string(255)
+#  po_number                 :string(255)
+#  quantity                  :integer
+#  security_filing_id        :integer
+#  updated_at                :datetime         not null
 #
 # Indexes
 #

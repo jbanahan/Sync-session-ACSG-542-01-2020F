@@ -2,17 +2,17 @@
 #
 # Table name: broker_invoice_lines
 #
-#  id                 :integer          not null, primary key
 #  broker_invoice_id  :integer
+#  charge_amount      :decimal(11, 2)
 #  charge_code        :string(255)
 #  charge_description :string(255)
-#  charge_amount      :decimal(11, 2)
-#  vendor_name        :string(255)
-#  vendor_reference   :string(255)
 #  charge_type        :string(255)
 #  created_at         :datetime         not null
-#  updated_at         :datetime         not null
 #  hst_percent        :decimal(4, 3)
+#  id                 :integer          not null, primary key
+#  updated_at         :datetime         not null
+#  vendor_name        :string(255)
+#  vendor_reference   :string(255)
 #
 # Indexes
 #

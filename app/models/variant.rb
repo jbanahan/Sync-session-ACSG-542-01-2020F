@@ -2,11 +2,11 @@
 #
 # Table name: variants
 #
+#  created_at         :datetime         not null
 #  id                 :integer          not null, primary key
 #  product_id         :integer          not null
-#  variant_identifier :string(255)
-#  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#  variant_identifier :string(255)
 #
 # Indexes
 #

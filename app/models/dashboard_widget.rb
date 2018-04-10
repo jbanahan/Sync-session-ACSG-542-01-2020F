@@ -2,12 +2,12 @@
 #
 # Table name: dashboard_widgets
 #
-#  id              :integer          not null, primary key
-#  user_id         :integer
-#  search_setup_id :integer
-#  rank            :integer
 #  created_at      :datetime         not null
+#  id              :integer          not null, primary key
+#  rank            :integer
+#  search_setup_id :integer
 #  updated_at      :datetime         not null
+#  user_id         :integer
 #
 # Indexes
 #

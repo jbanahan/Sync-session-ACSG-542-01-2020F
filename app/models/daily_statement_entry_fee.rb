@@ -2,11 +2,11 @@
 #
 # Table name: daily_statement_entry_fees
 #
-#  id                       :integer          not null, primary key
-#  daily_statement_entry_id :integer
-#  code                     :string(255)
-#  description              :string(255)
 #  amount                   :decimal(11, 2)
+#  code                     :string(255)
+#  daily_statement_entry_id :integer
+#  description              :string(255)
+#  id                       :integer          not null, primary key
 #  preliminary_amount       :decimal(11, 2)
 #
 # Indexes

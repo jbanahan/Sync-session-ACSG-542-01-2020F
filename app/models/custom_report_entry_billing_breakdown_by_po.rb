@@ -2,14 +2,14 @@
 #
 # Table name: custom_reports
 #
-#  id            :integer          not null, primary key
-#  name          :string(255)
-#  user_id       :integer
-#  type          :string(255)
-#  include_links :boolean
 #  created_at    :datetime         not null
-#  updated_at    :datetime         not null
+#  id            :integer          not null, primary key
+#  include_links :boolean
+#  name          :string(255)
 #  no_time       :boolean
+#  type          :string(255)
+#  updated_at    :datetime         not null
+#  user_id       :integer
 #
 # Indexes
 #

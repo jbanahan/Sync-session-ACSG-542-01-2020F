@@ -2,10 +2,10 @@
 #
 # Table name: public_fields
 #
+#  created_at      :datetime         not null
 #  id              :integer          not null, primary key
 #  model_field_uid :string(255)
 #  searchable      :boolean
-#  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #
 # Indexes

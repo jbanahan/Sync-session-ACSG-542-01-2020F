@@ -2,32 +2,32 @@
 #
 # Table name: duty_calc_export_file_lines
 #
-#  id                       :integer          not null, primary key
-#  export_date              :date
-#  ship_date                :date
-#  part_number              :string(255)
+#  action_code              :string(255)
 #  carrier                  :string(255)
+#  created_at               :datetime         not null
+#  customs_line_number      :integer
+#  description              :string(255)
+#  destination_country      :string(255)
+#  duty_calc_export_file_id :integer
+#  export_date              :date
+#  exporter                 :string(255)
+#  hts_code                 :string(255)
+#  id                       :integer          not null, primary key
+#  importer_id              :integer
+#  nafta_duty               :integer
+#  nafta_duty_rate          :integer
+#  nafta_us_equiv_duty      :integer
+#  part_number              :string(255)
+#  quantity                 :integer
 #  ref_1                    :string(255)
 #  ref_2                    :string(255)
 #  ref_3                    :string(255)
 #  ref_4                    :string(255)
-#  destination_country      :string(255)
-#  quantity                 :integer
 #  schedule_b_code          :string(255)
-#  hts_code                 :string(255)
-#  description              :string(255)
-#  uom                      :string(255)
-#  exporter                 :string(255)
+#  ship_date                :date
 #  status                   :string(255)
-#  action_code              :string(255)
-#  nafta_duty               :integer
-#  nafta_us_equiv_duty      :integer
-#  nafta_duty_rate          :integer
-#  duty_calc_export_file_id :integer
-#  created_at               :datetime         not null
+#  uom                      :string(255)
 #  updated_at               :datetime         not null
-#  importer_id              :integer
-#  customs_line_number      :integer
 #
 # Indexes
 #

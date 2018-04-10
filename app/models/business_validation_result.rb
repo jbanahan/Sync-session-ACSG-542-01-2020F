@@ -2,13 +2,13 @@
 #
 # Table name: business_validation_results
 #
-#  id                              :integer          not null, primary key
 #  business_validation_template_id :integer
+#  created_at                      :datetime         not null
+#  id                              :integer          not null, primary key
+#  state                           :string(255)
+#  updated_at                      :datetime         not null
 #  validatable_id                  :integer
 #  validatable_type                :string(255)
-#  state                           :string(255)
-#  created_at                      :datetime         not null
-#  updated_at                      :datetime         not null
 #
 # Indexes
 #

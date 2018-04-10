@@ -3,9 +3,9 @@
 # Table name: key_json_items
 #
 #  id          :integer          not null, primary key
+#  json_data   :text
 #  key_scope   :string(255)
 #  logical_key :string(255)
-#  json_data   :text
 #
 # Indexes
 #

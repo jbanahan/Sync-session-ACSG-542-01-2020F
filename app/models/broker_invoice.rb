@@ -2,32 +2,32 @@
 #
 # Table name: broker_invoices
 #
-#  id                   :integer          not null, primary key
-#  entry_id             :integer
-#  suffix               :string(255)
-#  invoice_date         :date
-#  customer_number      :string(255)
-#  invoice_total        :decimal(11, 2)
-#  bill_to_name         :string(255)
 #  bill_to_address_1    :string(255)
 #  bill_to_address_2    :string(255)
 #  bill_to_city         :string(255)
+#  bill_to_country_id   :integer
+#  bill_to_name         :string(255)
 #  bill_to_state        :string(255)
 #  bill_to_zip          :string(255)
-#  bill_to_country_id   :integer
-#  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  locked               :boolean
-#  currency             :string(255)
-#  invoice_number       :string(255)
-#  source_system        :string(255)
 #  broker_reference     :string(255)
-#  last_file_bucket     :string(255)
-#  last_file_path       :string(255)
-#  summary_statement_id :integer
+#  created_at           :datetime         not null
+#  currency             :string(255)
+#  customer_number      :string(255)
+#  entry_id             :integer
 #  fiscal_date          :date
 #  fiscal_month         :integer
 #  fiscal_year          :integer
+#  id                   :integer          not null, primary key
+#  invoice_date         :date
+#  invoice_number       :string(255)
+#  invoice_total        :decimal(11, 2)
+#  last_file_bucket     :string(255)
+#  last_file_path       :string(255)
+#  locked               :boolean
+#  source_system        :string(255)
+#  suffix               :string(255)
+#  summary_statement_id :integer
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

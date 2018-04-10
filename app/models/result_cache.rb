@@ -2,13 +2,13 @@
 #
 # Table name: result_caches
 #
+#  created_at            :datetime         not null
 #  id                    :integer          not null, primary key
-#  result_cacheable_id   :integer
-#  result_cacheable_type :string(255)
+#  object_ids            :text
 #  page                  :integer
 #  per_page              :integer
-#  object_ids            :text
-#  created_at            :datetime         not null
+#  result_cacheable_id   :integer
+#  result_cacheable_type :string(255)
 #  updated_at            :datetime         not null
 #
 # Indexes

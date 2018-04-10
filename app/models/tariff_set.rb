@@ -2,12 +2,12 @@
 #
 # Table name: tariff_sets
 #
-#  id         :integer          not null, primary key
-#  country_id :integer
-#  label      :string(255)
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
 #  active     :boolean
+#  country_id :integer
+#  created_at :datetime         not null
+#  id         :integer          not null, primary key
+#  label      :string(255)
+#  updated_at :datetime         not null
 #
 
 require 'open_chain/official_tariff_processor/tariff_processor'

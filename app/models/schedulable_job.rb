@@ -2,30 +2,30 @@
 #
 # Table name: schedulable_jobs
 #
+#  created_at         :datetime         not null
+#  day_of_month       :integer
+#  failure_email      :string(255)
 #  id                 :integer          not null, primary key
-#  run_monday         :boolean
-#  run_tuesday        :boolean
-#  run_wednesday      :boolean
-#  run_thursday       :boolean
+#  last_start_time    :datetime
+#  no_concurrent_jobs :boolean
+#  opts               :text
+#  queue_priority     :integer
+#  run_class          :string(255)
 #  run_friday         :boolean
+#  run_hour           :integer
+#  run_interval       :string(255)
+#  run_minute         :integer
+#  run_monday         :boolean
 #  run_saturday       :boolean
 #  run_sunday         :boolean
-#  run_hour           :integer
-#  run_minute         :integer
-#  day_of_month       :integer
-#  time_zone_name     :string(255)
-#  run_class          :string(255)
-#  opts               :text
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  last_start_time    :datetime
-#  success_email      :string(255)
-#  failure_email      :string(255)
-#  run_interval       :string(255)
-#  no_concurrent_jobs :boolean
+#  run_thursday       :boolean
+#  run_tuesday        :boolean
+#  run_wednesday      :boolean
 #  running            :boolean
 #  stopped            :boolean
-#  queue_priority     :integer
+#  success_email      :string(255)
+#  time_zone_name     :string(255)
+#  updated_at         :datetime         not null
 #
 
 require 'open_chain/schedule_support'

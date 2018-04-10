@@ -2,19 +2,19 @@
 #
 # Table name: sync_records
 #
+#  confirmation_file_name :string(255)
+#  confirmed_at           :datetime
+#  created_at             :datetime         not null
+#  failure_message        :string(255)
+#  fingerprint            :string(255)
+#  ftp_session_id         :integer
 #  id                     :integer          not null, primary key
+#  ignore_updates_before  :datetime
+#  sent_at                :datetime
 #  syncable_id            :integer
 #  syncable_type          :string(255)
 #  trading_partner        :string(255)
-#  sent_at                :datetime
-#  confirmed_at           :datetime
-#  confirmation_file_name :string(255)
-#  failure_message        :string(255)
-#  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  fingerprint            :string(255)
-#  ignore_updates_before  :datetime
-#  ftp_session_id         :integer
 #
 # Indexes
 #

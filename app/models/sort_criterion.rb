@@ -2,13 +2,13 @@
 #
 # Table name: sort_criterions
 #
-#  id                   :integer          not null, primary key
-#  search_setup_id      :integer
-#  rank                 :integer
-#  model_field_uid      :string(255)
+#  created_at           :datetime         not null
 #  custom_definition_id :integer
 #  descending           :boolean
-#  created_at           :datetime         not null
+#  id                   :integer          not null, primary key
+#  model_field_uid      :string(255)
+#  rank                 :integer
+#  search_setup_id      :integer
 #  updated_at           :datetime         not null
 #
 # Indexes

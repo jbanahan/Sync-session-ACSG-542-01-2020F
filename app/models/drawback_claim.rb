@@ -2,35 +2,35 @@
 #
 # Table name: drawback_claims
 #
+#  abi_accepted_date           :date
+#  bill_amount                 :decimal(11, 2)
+#  billed_date                 :date
+#  created_at                  :datetime         not null
+#  duty_check_amount           :decimal(11, 2)
+#  duty_check_received_date    :date
+#  duty_claimed                :decimal(11, 2)
+#  entry_number                :string(255)
+#  exports_end_date            :date
+#  exports_start_date          :date
+#  hmf_claimed                 :decimal(11, 2)
+#  hmf_mpf_check_amount        :decimal(9, 2)
+#  hmf_mpf_check_number        :string(255)
+#  hmf_mpf_check_received_date :date
 #  id                          :integer          not null, primary key
 #  importer_id                 :integer
-#  name                        :string(255)
-#  exports_start_date          :date
-#  exports_end_date            :date
-#  entry_number                :string(255)
-#  total_export_value          :decimal(11, 2)
-#  total_pieces_exported       :integer
-#  total_pieces_claimed        :integer
-#  planned_claim_amount        :decimal(11, 2)
-#  total_duty                  :decimal(11, 2)
-#  duty_claimed                :decimal(11, 2)
-#  hmf_claimed                 :decimal(11, 2)
-#  mpf_claimed                 :decimal(11, 2)
-#  total_claim_amount          :decimal(11, 2)
-#  abi_accepted_date           :date
-#  sent_to_customs_date        :date
-#  billed_date                 :date
-#  duty_check_received_date    :date
-#  duty_check_amount           :decimal(11, 2)
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  bill_amount                 :decimal(11, 2)
-#  net_claim_amount            :decimal(11, 2)
-#  hmf_mpf_check_number        :string(255)
-#  hmf_mpf_check_amount        :decimal(9, 2)
-#  hmf_mpf_check_received_date :date
-#  sent_to_client_date         :date
 #  liquidated_date             :date
+#  mpf_claimed                 :decimal(11, 2)
+#  name                        :string(255)
+#  net_claim_amount            :decimal(11, 2)
+#  planned_claim_amount        :decimal(11, 2)
+#  sent_to_client_date         :date
+#  sent_to_customs_date        :date
+#  total_claim_amount          :decimal(11, 2)
+#  total_duty                  :decimal(11, 2)
+#  total_export_value          :decimal(11, 2)
+#  total_pieces_claimed        :integer
+#  total_pieces_exported       :integer
+#  updated_at                  :datetime         not null
 #
 # Indexes
 #

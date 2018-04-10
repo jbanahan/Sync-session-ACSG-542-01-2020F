@@ -2,33 +2,33 @@
 #
 # Table name: intacct_checks
 #
-#  id                         :integer          not null, primary key
-#  company                    :string(255)
-#  file_number                :string(255)
-#  suffix                     :string(255)
-#  bill_number                :string(255)
-#  customer_number            :string(255)
-#  vendor_number              :string(255)
-#  check_number               :string(255)
-#  check_date                 :date
-#  bank_number                :string(255)
-#  vendor_reference           :string(255)
 #  amount                     :decimal(10, 2)
-#  freight_file               :string(255)
-#  broker_file                :string(255)
-#  location                   :string(255)
-#  line_of_business           :string(255)
-#  currency                   :string(255)
-#  gl_account                 :string(255)
 #  bank_cash_gl_account       :string(255)
-#  intacct_alliance_export_id :integer
-#  intacct_upload_date        :datetime
-#  intacct_key                :string(255)
-#  intacct_errors             :text
-#  intacct_payable_id         :integer
-#  intacct_adjustment_key     :string(255)
+#  bank_number                :string(255)
+#  bill_number                :string(255)
+#  broker_file                :string(255)
+#  check_date                 :date
+#  check_number               :string(255)
+#  company                    :string(255)
 #  created_at                 :datetime         not null
+#  currency                   :string(255)
+#  customer_number            :string(255)
+#  file_number                :string(255)
+#  freight_file               :string(255)
+#  gl_account                 :string(255)
+#  id                         :integer          not null, primary key
+#  intacct_adjustment_key     :string(255)
+#  intacct_alliance_export_id :integer
+#  intacct_errors             :text
+#  intacct_key                :string(255)
+#  intacct_payable_id         :integer
+#  intacct_upload_date        :datetime
+#  line_of_business           :string(255)
+#  location                   :string(255)
+#  suffix                     :string(255)
 #  updated_at                 :datetime         not null
+#  vendor_number              :string(255)
+#  vendor_reference           :string(255)
 #  voided                     :boolean
 #
 # Indexes

@@ -2,12 +2,12 @@
 #
 # Table name: history_details
 #
-#  id         :integer          not null, primary key
-#  history_id :integer
-#  source_key :string(255)
-#  value      :string(255)
 #  created_at :datetime         not null
+#  history_id :integer
+#  id         :integer          not null, primary key
+#  source_key :string(255)
 #  updated_at :datetime         not null
+#  value      :string(255)
 #
 
 class HistoryDetail < ActiveRecord::Base

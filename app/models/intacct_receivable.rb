@@ -2,21 +2,21 @@
 #
 # Table name: intacct_receivables
 #
+#  company                    :string(255)
+#  created_at                 :datetime         not null
+#  currency                   :string(255)
+#  customer_number            :string(255)
+#  customer_reference         :string(255)
 #  id                         :integer          not null, primary key
 #  intacct_alliance_export_id :integer
-#  receivable_type            :string(255)
-#  company                    :string(255)
-#  invoice_number             :string(255)
-#  invoice_date               :date
-#  customer_number            :string(255)
-#  currency                   :string(255)
-#  intacct_upload_date        :datetime
-#  intacct_key                :string(255)
 #  intacct_errors             :text
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  customer_reference         :string(255)
+#  intacct_key                :string(255)
+#  intacct_upload_date        :datetime
+#  invoice_date               :date
+#  invoice_number             :string(255)
 #  lmd_identifier             :string(255)
+#  receivable_type            :string(255)
+#  updated_at                 :datetime         not null
 #
 # Indexes
 #

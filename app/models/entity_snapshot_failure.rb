@@ -2,11 +2,11 @@
 #
 # Table name: entity_snapshot_failures
 #
+#  created_at    :datetime         not null
 #  id            :integer          not null, primary key
 #  snapshot_id   :integer
-#  snapshot_type :string(255)
 #  snapshot_json :text(2147483647)
-#  created_at    :datetime         not null
+#  snapshot_type :string(255)
 #  updated_at    :datetime         not null
 #
 

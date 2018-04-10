@@ -2,10 +2,10 @@
 #
 # Table name: milestone_forecast_sets
 #
+#  created_at   :datetime         not null
 #  id           :integer          not null, primary key
 #  piece_set_id :integer
 #  state        :string(255)
-#  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #
 # Indexes

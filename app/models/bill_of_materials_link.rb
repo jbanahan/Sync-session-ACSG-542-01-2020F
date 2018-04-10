@@ -2,9 +2,9 @@
 #
 # Table name: bill_of_materials_links
 #
+#  child_product_id  :integer
 #  id                :integer          not null, primary key
 #  parent_product_id :integer
-#  child_product_id  :integer
 #  quantity          :integer
 #
 # Indexes

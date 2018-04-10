@@ -2,11 +2,11 @@
 #
 # Table name: attachment_archive_manifests
 #
-#  id         :integer          not null, primary key
-#  start_at   :datetime
-#  finish_at  :datetime
 #  company_id :integer
 #  created_at :datetime         not null
+#  finish_at  :datetime
+#  id         :integer          not null, primary key
+#  start_at   :datetime
 #  updated_at :datetime         not null
 #
 # Indexes

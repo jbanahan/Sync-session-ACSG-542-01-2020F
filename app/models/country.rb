@@ -2,16 +2,16 @@
 #
 # Table name: countries
 #
-#  id                  :integer          not null, primary key
-#  name                :string(255)
-#  iso_code            :string(2)
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  import_location     :boolean
 #  classification_rank :integer
+#  created_at          :datetime         not null
 #  european_union      :boolean
-#  quicksearch_show    :boolean
+#  id                  :integer          not null, primary key
+#  import_location     :boolean
 #  iso_3_code          :string(255)
+#  iso_code            :string(2)
+#  name                :string(255)
+#  quicksearch_show    :boolean
+#  updated_at          :datetime         not null
 #
 # Indexes
 #

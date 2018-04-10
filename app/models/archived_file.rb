@@ -2,10 +2,10 @@
 #
 # Table name: archived_files
 #
-#  id         :integer          not null, primary key
-#  file_type  :string(255)
 #  comment    :string(255)
 #  created_at :datetime         not null
+#  file_type  :string(255)
+#  id         :integer          not null, primary key
 #  updated_at :datetime         not null
 #
 # Indexes

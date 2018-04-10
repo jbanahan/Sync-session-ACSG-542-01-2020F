@@ -2,15 +2,16 @@
 #
 # Table name: invoices
 #
-#  id                        :integer          not null, primary key
 #  country_origin_id         :integer
+#  created_at                :datetime         not null
 #  currency                  :string(255)
 #  customer_reference_number :string(255)
 #  description_of_goods      :text
 #  exchange_rate             :decimal(8, 6)
 #  factory_id                :integer
-#  gross_weight              :integer
+#  gross_weight              :decimal(11, 2)
 #  gross_weight_uom          :string(255)
+#  id                        :integer          not null, primary key
 #  importer_id               :integer
 #  invoice_date              :date
 #  invoice_number            :string(255)
@@ -25,11 +26,10 @@
 #  terms_of_sale             :string(255)
 #  total_charges             :decimal(11, 2)
 #  total_discounts           :decimal(12, 2)
+#  updated_at                :datetime         not null
 #  vendor_id                 :integer
 #  volume                    :decimal(11, 5)
 #  volume_uom                :string(255)
-#  created_at                :datetime         not null
-#  updated_at                :datetime         not null
 #
 
 class Invoice < ActiveRecord::Base

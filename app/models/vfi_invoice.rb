@@ -2,12 +2,12 @@
 #
 # Table name: vfi_invoices
 #
-#  id             :integer          not null, primary key
+#  created_at     :datetime         not null
+#  currency       :string(255)
 #  customer_id    :integer          not null
+#  id             :integer          not null, primary key
 #  invoice_date   :date
 #  invoice_number :string(255)
-#  currency       :string(255)
-#  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #
 # Indexes

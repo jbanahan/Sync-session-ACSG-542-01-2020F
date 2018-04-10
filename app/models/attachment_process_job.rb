@@ -2,18 +2,18 @@
 #
 # Table name: attachment_process_jobs
 #
-#  id                      :integer          not null, primary key
-#  attachment_id           :integer
-#  job_name                :string(255)
-#  start_at                :datetime
-#  finish_at               :datetime
-#  error_message           :string(255)
-#  user_id                 :integer
 #  attachable_id           :integer
 #  attachable_type         :string(255)
+#  attachment_id           :integer
 #  created_at              :datetime         not null
-#  updated_at              :datetime         not null
+#  error_message           :string(255)
+#  finish_at               :datetime
+#  id                      :integer          not null, primary key
+#  job_name                :string(255)
 #  manufacturer_address_id :integer
+#  start_at                :datetime
+#  updated_at              :datetime         not null
+#  user_id                 :integer
 #
 # Indexes
 #

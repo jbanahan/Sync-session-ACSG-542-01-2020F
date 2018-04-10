@@ -2,13 +2,13 @@
 #
 # Table name: run_as_sessions
 #
+#  created_at     :datetime         not null
+#  end_time       :datetime
 #  id             :integer          not null, primary key
-#  user_id        :integer
 #  run_as_user_id :integer
 #  start_time     :datetime
-#  end_time       :datetime
-#  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  user_id        :integer
 #
 # Indexes
 #

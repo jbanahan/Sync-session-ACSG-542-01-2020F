@@ -2,15 +2,15 @@
 #
 # Table name: product_rate_overrides
 #
-#  id                     :integer          not null, primary key
-#  product_id             :integer
-#  origin_country_id      :integer
+#  created_at             :datetime         not null
 #  destination_country_id :integer
+#  end_date               :date
+#  id                     :integer          not null, primary key
+#  notes                  :text
+#  origin_country_id      :integer
+#  product_id             :integer
 #  rate                   :decimal(8, 4)
 #  start_date             :date
-#  end_date               :date
-#  notes                  :text
-#  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #
 # Indexes

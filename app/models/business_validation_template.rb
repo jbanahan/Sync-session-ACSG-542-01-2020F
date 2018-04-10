@@ -2,14 +2,14 @@
 #
 # Table name: business_validation_templates
 #
-#  id             :integer          not null, primary key
-#  name           :string(255)
-#  module_type    :string(255)      not null
-#  description    :string(255)
 #  created_at     :datetime         not null
-#  updated_at     :datetime         not null
 #  delete_pending :boolean
+#  description    :string(255)
 #  disabled       :boolean
+#  id             :integer          not null, primary key
+#  module_type    :string(255)      not null
+#  name           :string(255)
+#  updated_at     :datetime         not null
 #
 
 require 'open_chain/stat_client'

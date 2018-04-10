@@ -2,10 +2,10 @@
 #
 # Table name: survey_response_logs
 #
-#  id                 :integer          not null, primary key
-#  survey_response_id :integer
-#  message            :text
 #  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  message            :text
+#  survey_response_id :integer
 #  updated_at         :datetime         not null
 #  user_id            :integer
 #

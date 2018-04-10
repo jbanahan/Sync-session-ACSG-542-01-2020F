@@ -2,12 +2,12 @@
 #
 # Table name: status_rules
 #
+#  created_at  :datetime         not null
+#  description :string(255)
 #  id          :integer          not null, primary key
 #  module_type :string(255)
 #  name        :string(255)
-#  description :string(255)
 #  test_rank   :integer
-#  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #
 

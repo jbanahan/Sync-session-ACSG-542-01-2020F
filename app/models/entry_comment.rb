@@ -2,14 +2,14 @@
 #
 # Table name: entry_comments
 #
-#  id             :integer          not null, primary key
-#  entry_id       :integer
 #  body           :text
-#  generated_at   :datetime
-#  username       :string(255)
 #  created_at     :datetime         not null
-#  updated_at     :datetime         not null
+#  entry_id       :integer
+#  generated_at   :datetime
+#  id             :integer          not null, primary key
 #  public_comment :boolean
+#  updated_at     :datetime         not null
+#  username       :string(255)
 #
 # Indexes
 #

@@ -2,38 +2,38 @@
 #
 # Table name: field_validator_rules
 #
+#  allow_everyone_to_view :boolean
+#  can_edit_groups        :text
+#  can_mass_edit_groups   :text
+#  can_view_groups        :text
+#  comment                :text
+#  contains               :string(255)
+#  created_at             :datetime         not null
+#  custom_definition_id   :integer
+#  custom_message         :string(255)
+#  disabled               :boolean
+#  ends_with              :string(255)
+#  greater_than           :decimal(13, 4)
+#  greater_than_date      :date
 #  id                     :integer          not null, primary key
+#  less_than              :decimal(13, 4)
+#  less_than_date         :date
+#  less_than_from_now     :integer
+#  less_than_from_now_uom :string(255)
+#  mass_edit              :boolean
+#  maximum_length         :integer
+#  minimum_length         :integer
 #  model_field_uid        :string(255)
 #  module_type            :string(255)
-#  greater_than           :decimal(13, 4)
-#  less_than              :decimal(13, 4)
 #  more_than_ago          :integer
-#  less_than_from_now     :integer
 #  more_than_ago_uom      :string(255)
-#  less_than_from_now_uom :string(255)
-#  greater_than_date      :date
-#  less_than_date         :date
+#  one_of                 :text
+#  read_only              :boolean
 #  regex                  :string(255)
-#  comment                :text
-#  custom_message         :string(255)
 #  required               :boolean
 #  starts_with            :string(255)
-#  ends_with              :string(255)
-#  contains               :string(255)
-#  one_of                 :text
-#  minimum_length         :integer
-#  maximum_length         :integer
-#  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  custom_definition_id   :integer
-#  read_only              :boolean
-#  disabled               :boolean
-#  can_edit_groups        :text
-#  can_view_groups        :text
 #  xml_tag_name           :string(255)
-#  mass_edit              :boolean
-#  can_mass_edit_groups   :text
-#  allow_everyone_to_view :boolean
 #
 # Indexes
 #

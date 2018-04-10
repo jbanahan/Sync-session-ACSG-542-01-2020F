@@ -2,13 +2,13 @@
 #
 # Table name: milestone_forecasts
 #
+#  created_at                :datetime         not null
+#  forecast                  :date
 #  id                        :integer          not null, primary key
 #  milestone_definition_id   :integer
 #  milestone_forecast_set_id :integer
 #  planned                   :date
-#  forecast                  :date
 #  state                     :string(255)
-#  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #
 # Indexes

@@ -2,16 +2,16 @@
 #
 # Table name: messages
 #
-#  id         :integer          not null, primary key
-#  user_id    :string(255)
-#  subject    :string(255)
 #  body       :text
+#  created_at :datetime         not null
 #  folder     :string(255)      default("inbox")
-#  viewed     :boolean          default(FALSE)
+#  id         :integer          not null, primary key
 #  link_name  :string(255)
 #  link_path  :string(255)
-#  created_at :datetime         not null
+#  subject    :string(255)
 #  updated_at :datetime         not null
+#  user_id    :string(255)
+#  viewed     :boolean          default(FALSE)
 #
 # Indexes
 #

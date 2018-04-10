@@ -2,11 +2,11 @@
 #
 # Table name: project_updates
 #
-#  id            :integer          not null, primary key
-#  project_id    :integer
-#  created_by_id :integer
 #  body          :text
 #  created_at    :datetime         not null
+#  created_by_id :integer
+#  id            :integer          not null, primary key
+#  project_id    :integer
 #  updated_at    :datetime         not null
 #
 # Indexes

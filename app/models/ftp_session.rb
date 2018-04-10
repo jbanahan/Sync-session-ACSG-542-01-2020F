@@ -2,17 +2,17 @@
 #
 # Table name: ftp_sessions
 #
-#  id                   :integer          not null, primary key
-#  username             :string(255)
-#  server               :string(255)
-#  file_name            :string(255)
-#  log                  :text
-#  data                 :binary
 #  created_at           :datetime         not null
-#  updated_at           :datetime         not null
+#  data                 :binary
+#  file_name            :string(255)
+#  id                   :integer          not null, primary key
 #  last_server_response :string(255)
+#  log                  :text
 #  protocol             :string(255)
 #  retry_count          :integer
+#  server               :string(255)
+#  updated_at           :datetime         not null
+#  username             :string(255)
 #
 
 class FtpSession < ActiveRecord::Base

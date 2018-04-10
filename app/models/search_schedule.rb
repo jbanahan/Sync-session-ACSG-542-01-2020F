@@ -2,34 +2,34 @@
 #
 # Table name: search_schedules
 #
-#  id                     :integer          not null, primary key
+#  created_at             :datetime         not null
+#  custom_report_id       :integer
+#  day_of_month           :integer
+#  disabled               :boolean
+#  download_format        :string(255)
 #  email_addresses        :string(255)
-#  ftp_server             :string(255)
-#  ftp_username           :string(255)
+#  exclude_file_timestamp :boolean
 #  ftp_password           :string(255)
+#  ftp_port               :string(255)
+#  ftp_server             :string(255)
 #  ftp_subfolder          :string(255)
-#  run_monday             :boolean
-#  run_tuesday            :boolean
-#  run_wednesday          :boolean
-#  run_thursday           :boolean
+#  ftp_username           :string(255)
+#  id                     :integer          not null, primary key
+#  last_finish_time       :datetime
+#  last_start_time        :datetime
+#  protocol               :string(255)
+#  report_failure_count   :integer          default(0)
 #  run_friday             :boolean
+#  run_hour               :integer
+#  run_monday             :boolean
 #  run_saturday           :boolean
 #  run_sunday             :boolean
-#  run_hour               :integer
-#  last_start_time        :datetime
-#  last_finish_time       :datetime
+#  run_thursday           :boolean
+#  run_tuesday            :boolean
+#  run_wednesday          :boolean
 #  search_setup_id        :integer
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  download_format        :string(255)
-#  day_of_month           :integer
-#  custom_report_id       :integer
-#  protocol               :string(255)
 #  send_if_empty          :boolean
-#  exclude_file_timestamp :boolean
-#  ftp_port               :string(255)
-#  report_failure_count   :integer          default(0)
-#  disabled               :boolean
+#  updated_at             :datetime         not null
 #
 # Indexes
 #

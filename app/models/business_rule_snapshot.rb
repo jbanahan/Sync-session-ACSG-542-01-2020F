@@ -2,15 +2,15 @@
 #
 # Table name: business_rule_snapshots
 #
+#  bucket          :string(255)
+#  compared_at     :datetime
+#  created_at      :datetime         not null
+#  doc_path        :string(255)
 #  id              :integer          not null, primary key
 #  recordable_id   :integer          not null
 #  recordable_type :string(255)      not null
-#  bucket          :string(255)
-#  doc_path        :string(255)
-#  version         :string(255)
-#  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  compared_at     :datetime
+#  version         :string(255)
 #
 # Indexes
 #

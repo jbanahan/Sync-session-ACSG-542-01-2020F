@@ -2,11 +2,11 @@
 #
 # Table name: survey_subscriptions
 #
+#  created_at :datetime         not null
 #  id         :integer          not null, primary key
 #  survey_id  :integer
-#  user_id    :integer
-#  created_at :datetime         not null
 #  updated_at :datetime         not null
+#  user_id    :integer
 #
 
 class SurveySubscription < ActiveRecord::Base

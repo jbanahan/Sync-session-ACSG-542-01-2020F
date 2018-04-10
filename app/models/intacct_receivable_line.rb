@@ -2,19 +2,19 @@
 #
 # Table name: intacct_receivable_lines
 #
-#  id                    :integer          not null, primary key
-#  intacct_receivable_id :integer
 #  amount                :decimal(10, 2)
+#  broker_file           :string(255)
 #  charge_code           :string(255)
 #  charge_description    :string(255)
-#  location              :string(255)
-#  line_of_business      :string(255)
+#  created_at            :datetime         not null
 #  freight_file          :string(255)
-#  broker_file           :string(255)
+#  id                    :integer          not null, primary key
+#  intacct_receivable_id :integer
+#  line_of_business      :string(255)
+#  location              :string(255)
+#  updated_at            :datetime         not null
 #  vendor_number         :string(255)
 #  vendor_reference      :string(255)
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
 #
 # Indexes
 #

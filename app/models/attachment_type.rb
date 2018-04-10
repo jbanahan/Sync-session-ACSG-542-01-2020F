@@ -2,13 +2,13 @@
 #
 # Table name: attachment_types
 #
-#  id                           :integer          not null, primary key
-#  name                         :string(255)
 #  created_at                   :datetime         not null
-#  updated_at                   :datetime         not null
-#  kewill_document_code         :string(255)
-#  kewill_attachment_type       :string(255)
 #  disable_multiple_kewill_docs :boolean
+#  id                           :integer          not null, primary key
+#  kewill_attachment_type       :string(255)
+#  kewill_document_code         :string(255)
+#  name                         :string(255)
+#  updated_at                   :datetime         not null
 #
 
 class AttachmentType < ActiveRecord::Base

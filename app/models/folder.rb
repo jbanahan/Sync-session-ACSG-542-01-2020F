@@ -2,14 +2,14 @@
 #
 # Table name: folders
 #
-#  id               :integer          not null, primary key
-#  name             :string(255)
+#  archived         :boolean
 #  base_object_id   :integer          not null
 #  base_object_type :string(255)      not null
-#  created_by_id    :integer          not null
 #  created_at       :datetime         not null
+#  created_by_id    :integer          not null
+#  id               :integer          not null, primary key
+#  name             :string(255)
 #  updated_at       :datetime         not null
-#  archived         :boolean
 #
 # Indexes
 #

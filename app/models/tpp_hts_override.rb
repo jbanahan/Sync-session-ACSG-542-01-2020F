@@ -2,14 +2,14 @@
 #
 # Table name: tpp_hts_overrides
 #
-#  id                          :integer          not null, primary key
-#  trade_preference_program_id :integer
-#  hts_code                    :string(255)
-#  rate                        :decimal(8, 4)
-#  note                        :text
-#  start_date                  :date
-#  end_date                    :date
 #  created_at                  :datetime         not null
+#  end_date                    :date
+#  hts_code                    :string(255)
+#  id                          :integer          not null, primary key
+#  note                        :text
+#  rate                        :decimal(8, 4)
+#  start_date                  :date
+#  trade_preference_program_id :integer
 #  updated_at                  :datetime         not null
 #
 # Indexes

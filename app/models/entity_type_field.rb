@@ -2,10 +2,10 @@
 #
 # Table name: entity_type_fields
 #
+#  created_at      :datetime         not null
+#  entity_type_id  :integer
 #  id              :integer          not null, primary key
 #  model_field_uid :string(255)
-#  entity_type_id  :integer
-#  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #
 # Indexes

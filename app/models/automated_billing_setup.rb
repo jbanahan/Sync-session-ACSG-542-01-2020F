@@ -2,10 +2,10 @@
 #
 # Table name: automated_billing_setups
 #
-#  id              :integer          not null, primary key
+#  created_at      :datetime         not null
 #  customer_number :string(255)
 #  enabled         :boolean
-#  created_at      :datetime         not null
+#  id              :integer          not null, primary key
 #  updated_at      :datetime         not null
 #
 # Indexes

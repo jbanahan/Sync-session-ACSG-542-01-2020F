@@ -2,19 +2,19 @@
 #
 # Table name: custom_values
 #
-#  id                   :integer          not null, primary key
+#  boolean_value        :boolean
+#  created_at           :datetime         not null
+#  custom_definition_id :integer
 #  customizable_id      :integer          not null
 #  customizable_type    :string(255)      not null
-#  string_value         :string(255)
-#  decimal_value        :decimal(13, 4)
-#  integer_value        :integer
 #  date_value           :date
-#  custom_definition_id :integer
-#  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  text_value           :text
-#  boolean_value        :boolean
 #  datetime_value       :datetime
+#  decimal_value        :decimal(13, 4)
+#  id                   :integer          not null, primary key
+#  integer_value        :integer
+#  string_value         :string(255)
+#  text_value           :text
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

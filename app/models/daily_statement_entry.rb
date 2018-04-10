@@ -2,28 +2,28 @@
 #
 # Table name: daily_statement_entries
 #
-#  id                          :integer          not null, primary key
-#  daily_statement_id          :integer
-#  broker_reference            :string(255)
-#  entry_id                    :integer
-#  port_code                   :string(255)
-#  duty_amount                 :decimal(11, 2)
-#  preliminary_duty_amount     :decimal(11, 2)
-#  tax_amount                  :decimal(11, 2)
-#  preliminary_tax_amount      :decimal(11, 2)
-#  cvd_amount                  :decimal(11, 2)
-#  preliminary_cvd_amount      :decimal(11, 2)
 #  add_amount                  :decimal(11, 2)
-#  preliminary_add_amount      :decimal(11, 2)
-#  fee_amount                  :decimal(11, 2)
-#  preliminary_fee_amount      :decimal(11, 2)
-#  interest_amount             :decimal(11, 2)
-#  preliminary_interest_amount :decimal(11, 2)
-#  total_amount                :decimal(11, 2)
-#  preliminary_total_amount    :decimal(11, 2)
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
 #  billed_amount               :decimal(11, 2)
+#  broker_reference            :string(255)
+#  created_at                  :datetime         not null
+#  cvd_amount                  :decimal(11, 2)
+#  daily_statement_id          :integer
+#  duty_amount                 :decimal(11, 2)
+#  entry_id                    :integer
+#  fee_amount                  :decimal(11, 2)
+#  id                          :integer          not null, primary key
+#  interest_amount             :decimal(11, 2)
+#  port_code                   :string(255)
+#  preliminary_add_amount      :decimal(11, 2)
+#  preliminary_cvd_amount      :decimal(11, 2)
+#  preliminary_duty_amount     :decimal(11, 2)
+#  preliminary_fee_amount      :decimal(11, 2)
+#  preliminary_interest_amount :decimal(11, 2)
+#  preliminary_tax_amount      :decimal(11, 2)
+#  preliminary_total_amount    :decimal(11, 2)
+#  tax_amount                  :decimal(11, 2)
+#  total_amount                :decimal(11, 2)
+#  updated_at                  :datetime         not null
 #
 # Indexes
 #

@@ -2,13 +2,13 @@
 #
 # Table name: trade_preference_programs
 #
+#  created_at                   :datetime         not null
+#  destination_country_id       :integer
 #  id                           :integer          not null, primary key
 #  name                         :string(255)
 #  origin_country_id            :integer
-#  destination_country_id       :integer
-#  tariff_identifier            :string(255)
 #  tariff_adjustment_percentage :decimal(5, 2)
-#  created_at                   :datetime         not null
+#  tariff_identifier            :string(255)
 #  updated_at                   :datetime         not null
 #
 # Indexes

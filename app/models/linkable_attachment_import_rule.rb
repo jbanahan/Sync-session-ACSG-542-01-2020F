@@ -2,10 +2,10 @@
 #
 # Table name: linkable_attachment_import_rules
 #
-#  id              :integer          not null, primary key
-#  path            :string(255)
-#  model_field_uid :string(255)
 #  created_at      :datetime         not null
+#  id              :integer          not null, primary key
+#  model_field_uid :string(255)
+#  path            :string(255)
 #  updated_at      :datetime         not null
 #
 

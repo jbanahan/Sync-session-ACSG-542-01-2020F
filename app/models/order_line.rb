@@ -2,23 +2,23 @@
 #
 # Table name: order_lines
 #
-#  id                :integer          not null, primary key
-#  price_per_unit    :decimal(13, 4)
-#  order_id          :integer
+#  country_of_origin :string(255)
 #  created_at        :datetime         not null
-#  updated_at        :datetime         not null
+#  currency          :string(255)
+#  hts               :string(255)
+#  id                :integer          not null, primary key
 #  line_number       :integer
+#  order_id          :integer
+#  price_per_unit    :decimal(13, 4)
 #  product_id        :integer
 #  quantity          :decimal(13, 4)
-#  currency          :string(255)
-#  country_of_origin :string(255)
-#  hts               :string(255)
-#  sku               :string(255)
-#  unit_of_measure   :string(255)
 #  ship_to_id        :integer
+#  sku               :string(255)
 #  total_cost_digits :integer
-#  variant_id        :integer
 #  unit_msrp         :decimal(13, 4)
+#  unit_of_measure   :string(255)
+#  updated_at        :datetime         not null
+#  variant_id        :integer
 #
 # Indexes
 #

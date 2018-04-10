@@ -2,12 +2,12 @@
 #
 # Table name: answers
 #
-#  id                 :integer          not null, primary key
-#  survey_response_id :integer
-#  question_id        :integer
 #  choice             :string(255)
-#  rating             :string(255)
 #  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  question_id        :integer
+#  rating             :string(255)
+#  survey_response_id :integer
 #  updated_at         :datetime         not null
 #
 # Indexes

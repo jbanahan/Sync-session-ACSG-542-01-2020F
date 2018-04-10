@@ -2,12 +2,12 @@
 #
 # Table name: hts_translations
 #
-#  id                    :integer          not null, primary key
 #  company_id            :integer
 #  country_id            :integer
-#  hts_number            :string(255)
-#  translated_hts_number :string(255)
 #  created_at            :datetime         not null
+#  hts_number            :string(255)
+#  id                    :integer          not null, primary key
+#  translated_hts_number :string(255)
 #  updated_at            :datetime         not null
 #
 # Indexes

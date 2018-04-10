@@ -2,14 +2,14 @@
 #
 # Table name: corrective_issues
 #
-#  id                        :integer          not null, primary key
-#  corrective_action_plan_id :integer
-#  description               :text
-#  suggested_action          :text
 #  action_taken              :string(255)
+#  corrective_action_plan_id :integer
 #  created_at                :datetime         not null
-#  updated_at                :datetime         not null
+#  description               :text
+#  id                        :integer          not null, primary key
 #  resolved                  :boolean
+#  suggested_action          :text
+#  updated_at                :datetime         not null
 #
 # Indexes
 #

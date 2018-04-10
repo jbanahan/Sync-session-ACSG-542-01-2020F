@@ -2,12 +2,12 @@
 #
 # Table name: billable_events
 #
-#  id                      :integer          not null, primary key
 #  billable_eventable_id   :integer          not null
 #  billable_eventable_type :string(255)      not null
+#  created_at              :datetime         not null
 #  entity_snapshot_id      :integer          not null
 #  event_type              :string(255)
-#  created_at              :datetime         not null
+#  id                      :integer          not null, primary key
 #  updated_at              :datetime         not null
 #
 # Indexes

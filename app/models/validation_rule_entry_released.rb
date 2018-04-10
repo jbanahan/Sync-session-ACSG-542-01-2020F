@@ -1,3 +1,4 @@
+# -*- SkipSchemaAnnotations
 class ValidationRuleEntryReleased < BusinessValidationRule
   def run_validation entry
     timezone = rule_attributes['timezone'] || "America/New_York"

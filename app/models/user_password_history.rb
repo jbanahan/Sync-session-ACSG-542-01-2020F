@@ -2,12 +2,12 @@
 #
 # Table name: user_password_histories
 #
-#  id              :integer          not null, primary key
-#  user_id         :integer
-#  hashed_password :string(255)
-#  password_salt   :string(255)
 #  created_at      :datetime         not null
+#  hashed_password :string(255)
+#  id              :integer          not null, primary key
+#  password_salt   :string(255)
 #  updated_at      :datetime         not null
+#  user_id         :integer
 #
 # Indexes
 #

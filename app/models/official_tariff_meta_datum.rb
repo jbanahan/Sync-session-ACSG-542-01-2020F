@@ -2,14 +2,14 @@
 #
 # Table name: official_tariff_meta_datas
 #
-#  id                   :integer          not null, primary key
-#  hts_code             :string(255)
-#  country_id           :integer
 #  auto_classify_ignore :boolean
-#  notes                :text
+#  country_id           :integer
 #  created_at           :datetime         not null
-#  updated_at           :datetime         not null
+#  hts_code             :string(255)
+#  id                   :integer          not null, primary key
+#  notes                :text
 #  summary_description  :string(255)
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

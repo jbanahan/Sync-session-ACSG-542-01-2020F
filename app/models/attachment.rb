@@ -2,22 +2,22 @@
 #
 # Table name: attachments
 #
-#  id                      :integer          not null, primary key
+#  alliance_revision       :integer
+#  alliance_suffix         :string(255)
 #  attachable_id           :integer
 #  attachable_type         :string(255)
-#  attached_file_name      :string(255)
 #  attached_content_type   :string(255)
+#  attached_file_name      :string(255)
 #  attached_file_size      :integer
 #  attached_updated_at     :datetime
-#  uploaded_by_id          :integer
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
 #  attachment_type         :string(255)
-#  source_system_timestamp :datetime
-#  alliance_suffix         :string(255)
-#  alliance_revision       :integer
 #  checksum                :string(255)
+#  created_at              :datetime         not null
+#  id                      :integer          not null, primary key
 #  is_private              :boolean
+#  source_system_timestamp :datetime
+#  updated_at              :datetime         not null
+#  uploaded_by_id          :integer
 #
 # Indexes
 #

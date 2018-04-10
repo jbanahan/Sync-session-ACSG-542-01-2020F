@@ -2,14 +2,14 @@
 #
 # Table name: upgrade_logs
 #
-#  id                      :integer          not null, primary key
-#  from_version            :string(255)
-#  to_version              :string(255)
-#  started_at              :datetime
-#  finished_at             :datetime
-#  log                     :text
-#  instance_information_id :integer
 #  created_at              :datetime         not null
+#  finished_at             :datetime
+#  from_version            :string(255)
+#  id                      :integer          not null, primary key
+#  instance_information_id :integer
+#  log                     :text
+#  started_at              :datetime
+#  to_version              :string(255)
 #  updated_at              :datetime         not null
 #
 

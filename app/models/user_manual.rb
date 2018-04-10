@@ -2,14 +2,14 @@
 #
 # Table name: user_manuals
 #
+#  category       :string(255)
+#  created_at     :datetime         not null
+#  groups         :text
 #  id             :integer          not null, primary key
 #  name           :string(255)
 #  page_url_regex :string(255)
-#  groups         :text
-#  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  wistia_code    :string(255)
-#  category       :string(255)
 #
 
 class UserManual < ActiveRecord::Base

@@ -2,18 +2,18 @@
 #
 # Table name: carton_sets
 #
-#  id              :integer          not null, primary key
-#  starting_carton :integer
 #  carton_qty      :integer
-#  length_cm       :decimal(8, 4)
-#  width_cm        :decimal(8, 4)
-#  height_cm       :decimal(8, 4)
-#  net_net_kgs     :decimal(8, 4)
-#  net_kgs         :decimal(8, 4)
-#  gross_kgs       :decimal(8, 4)
-#  shipment_id     :integer
 #  created_at      :datetime         not null
+#  gross_kgs       :decimal(8, 4)
+#  height_cm       :decimal(8, 4)
+#  id              :integer          not null, primary key
+#  length_cm       :decimal(8, 4)
+#  net_kgs         :decimal(8, 4)
+#  net_net_kgs     :decimal(8, 4)
+#  shipment_id     :integer
+#  starting_carton :integer
 #  updated_at      :datetime         not null
+#  width_cm        :decimal(8, 4)
 #
 # Indexes
 #

@@ -2,12 +2,12 @@
 #
 # Table name: aws_backup_sessions
 #
+#  created_at :datetime         not null
+#  end_time   :datetime
 #  id         :integer          not null, primary key
+#  log        :text
 #  name       :string(255)
 #  start_time :datetime
-#  end_time   :datetime
-#  log        :text
-#  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 

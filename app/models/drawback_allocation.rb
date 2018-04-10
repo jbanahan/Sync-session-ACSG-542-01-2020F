@@ -2,11 +2,11 @@
 #
 # Table name: drawback_allocations
 #
-#  id                            :integer          not null, primary key
-#  duty_calc_export_file_line_id :integer
-#  drawback_import_line_id       :integer
-#  quantity                      :decimal(13, 4)
 #  created_at                    :datetime         not null
+#  drawback_import_line_id       :integer
+#  duty_calc_export_file_line_id :integer
+#  id                            :integer          not null, primary key
+#  quantity                      :decimal(13, 4)
 #  updated_at                    :datetime         not null
 #
 # Indexes

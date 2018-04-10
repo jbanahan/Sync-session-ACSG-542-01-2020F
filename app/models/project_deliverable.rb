@@ -2,18 +2,18 @@
 #
 # Table name: project_deliverables
 #
-#  id              :integer          not null, primary key
-#  project_id      :integer
-#  description     :text
 #  assigned_to_id  :integer
-#  start_date      :date
-#  end_date        :date
-#  due_date        :date
-#  estimated_hours :integer
 #  complete        :boolean
 #  created_at      :datetime         not null
-#  updated_at      :datetime         not null
+#  description     :text
+#  due_date        :date
+#  end_date        :date
+#  estimated_hours :integer
+#  id              :integer          not null, primary key
 #  priority        :string(255)
+#  project_id      :integer
+#  start_date      :date
+#  updated_at      :datetime         not null
 #
 # Indexes
 #

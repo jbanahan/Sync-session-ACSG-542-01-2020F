@@ -2,12 +2,12 @@
 #
 # Table name: support_ticket_comments
 #
-#  id                :integer          not null, primary key
-#  support_ticket_id :integer
-#  user_id           :integer
 #  body              :text
 #  created_at        :datetime         not null
+#  id                :integer          not null, primary key
+#  support_ticket_id :integer
 #  updated_at        :datetime         not null
+#  user_id           :integer
 #
 # Indexes
 #

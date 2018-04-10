@@ -2,12 +2,12 @@
 #
 # Table name: export_jobs
 #
+#  created_at  :datetime         not null
+#  end_time    :datetime
+#  export_type :string(255)
 #  id          :integer          not null, primary key
 #  start_time  :datetime
-#  end_time    :datetime
 #  successful  :boolean
-#  export_type :string(255)
-#  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #
 

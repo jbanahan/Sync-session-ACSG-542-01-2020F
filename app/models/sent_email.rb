@@ -2,16 +2,16 @@
 #
 # Table name: sent_emails
 #
-#  id             :integer          not null, primary key
-#  email_subject  :string(255)
-#  email_to       :string(255)
-#  email_cc       :string(255)
+#  created_at     :datetime         not null
 #  email_bcc      :string(255)
+#  email_body     :text
+#  email_cc       :string(255)
+#  email_date     :datetime
 #  email_from     :string(255)
 #  email_reply_to :string(255)
-#  email_date     :datetime
-#  email_body     :text
-#  created_at     :datetime         not null
+#  email_subject  :string(255)
+#  email_to       :string(255)
+#  id             :integer          not null, primary key
 #  updated_at     :datetime         not null
 #
 

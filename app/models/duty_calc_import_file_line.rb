@@ -2,11 +2,11 @@
 #
 # Table name: duty_calc_import_file_lines
 #
-#  id                       :integer          not null, primary key
-#  drawback_import_line_id  :integer
 #  created_at               :datetime         not null
-#  updated_at               :datetime         not null
+#  drawback_import_line_id  :integer
 #  duty_calc_import_file_id :integer
+#  id                       :integer          not null, primary key
+#  updated_at               :datetime         not null
 #
 # Indexes
 #

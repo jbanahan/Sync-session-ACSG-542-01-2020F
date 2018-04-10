@@ -2,15 +2,15 @@
 #
 # Table name: support_tickets
 #
-#  id                  :integer          not null, primary key
-#  requestor_id        :integer
 #  agent_id            :integer
-#  subject             :string(255)
 #  body                :text
-#  state               :text
-#  email_notifications :boolean
-#  last_saved_by_id    :integer
 #  created_at          :datetime         not null
+#  email_notifications :boolean
+#  id                  :integer          not null, primary key
+#  last_saved_by_id    :integer
+#  requestor_id        :integer
+#  state               :text
+#  subject             :string(255)
 #  updated_at          :datetime         not null
 #
 # Indexes

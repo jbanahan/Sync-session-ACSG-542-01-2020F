@@ -2,19 +2,19 @@
 #
 # Table name: aws_snapshots
 #
-#  id                    :integer          not null, primary key
-#  snapshot_id           :string(255)
-#  description           :string(255)
-#  instance_id           :string(255)
-#  volume_id             :string(255)
-#  tags_json             :text
-#  start_time            :datetime
-#  end_time              :datetime
-#  errored               :boolean
-#  purged_at             :datetime
 #  aws_backup_session_id :integer          not null
 #  created_at            :datetime         not null
+#  description           :string(255)
+#  end_time              :datetime
+#  errored               :boolean
+#  id                    :integer          not null, primary key
+#  instance_id           :string(255)
+#  purged_at             :datetime
+#  snapshot_id           :string(255)
+#  start_time            :datetime
+#  tags_json             :text
 #  updated_at            :datetime         not null
+#  volume_id             :string(255)
 #
 # Indexes
 #

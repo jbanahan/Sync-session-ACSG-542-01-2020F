@@ -2,23 +2,23 @@
 #
 # Table name: report_results
 #
-#  id                       :integer          not null, primary key
-#  name                     :string(255)
-#  run_at                   :datetime
-#  friendly_settings_json   :text
-#  settings_json            :text
-#  report_class             :string(255)
-#  report_data_file_name    :string(255)
-#  report_data_content_type :string(255)
-#  report_data_file_size    :integer
-#  report_data_updated_at   :datetime
-#  status                   :string(255)
-#  run_errors               :text
-#  run_by_id                :integer
 #  created_at               :datetime         not null
-#  updated_at               :datetime         not null
 #  custom_report_id         :integer
 #  email_to                 :string(255)
+#  friendly_settings_json   :text
+#  id                       :integer          not null, primary key
+#  name                     :string(255)
+#  report_class             :string(255)
+#  report_data_content_type :string(255)
+#  report_data_file_name    :string(255)
+#  report_data_file_size    :integer
+#  report_data_updated_at   :datetime
+#  run_at                   :datetime
+#  run_by_id                :integer
+#  run_errors               :text
+#  settings_json            :text
+#  status                   :string(255)
+#  updated_at               :datetime         not null
 #
 # Indexes
 #

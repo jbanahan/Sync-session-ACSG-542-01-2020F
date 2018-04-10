@@ -2,36 +2,36 @@
 #
 # Table name: companies
 #
-#  id                            :integer          not null, primary key
-#  name                          :string(255)
-#  carrier                       :boolean
-#  vendor                        :boolean
-#  master                        :boolean
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  locked                        :boolean
-#  customer                      :boolean
-#  system_code                   :string(255)
-#  importer                      :boolean
+#  agent                         :boolean
 #  alliance_customer_number      :string(255)
 #  broker                        :boolean
-#  fenix_customer_number         :string(255)
-#  drawback                      :boolean
-#  last_alliance_product_push_at :datetime
-#  name_2                        :string(255)
+#  carrier                       :boolean
 #  consignee                     :boolean
+#  created_at                    :datetime         not null
+#  customer                      :boolean
+#  drawback                      :boolean
 #  ecellerate_customer_number    :string(255)
-#  agent                         :boolean
-#  factory                       :boolean
 #  enabled_booking_types         :string(255)
+#  factory                       :boolean
+#  fenix_customer_number         :string(255)
+#  fiscal_reference              :string(255)
+#  forwarder                     :boolean
+#  id                            :integer          not null, primary key
+#  importer                      :boolean
 #  irs_number                    :string(255)
+#  last_alliance_product_push_at :datetime
+#  locked                        :boolean
+#  master                        :boolean
+#  mid                           :string(255)
+#  name                          :string(255)
+#  name_2                        :string(255)
+#  selling_agent                 :boolean
 #  show_business_rules           :boolean
 #  slack_channel                 :string(255)
-#  forwarder                     :boolean
-#  mid                           :string(255)
+#  system_code                   :string(255)
 #  ticketing_system_code         :string(255)
-#  fiscal_reference              :string(255)
-#  selling_agent                 :boolean
+#  updated_at                    :datetime         not null
+#  vendor                        :boolean
 #
 # Indexes
 #

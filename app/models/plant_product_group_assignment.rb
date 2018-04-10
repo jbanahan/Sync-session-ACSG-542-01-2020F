@@ -2,10 +2,10 @@
 #
 # Table name: plant_product_group_assignments
 #
+#  created_at       :datetime         not null
 #  id               :integer          not null, primary key
 #  plant_id         :integer
 #  product_group_id :integer
-#  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #
 # Indexes

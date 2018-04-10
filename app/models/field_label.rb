@@ -2,10 +2,10 @@
 #
 # Table name: field_labels
 #
-#  id              :integer          not null, primary key
-#  model_field_uid :string(255)
-#  label           :string(255)
 #  created_at      :datetime         not null
+#  id              :integer          not null, primary key
+#  label           :string(255)
+#  model_field_uid :string(255)
 #  updated_at      :datetime         not null
 #
 # Indexes

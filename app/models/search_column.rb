@@ -2,15 +2,15 @@
 #
 # Table name: search_columns
 #
-#  id                   :integer          not null, primary key
-#  search_setup_id      :integer
-#  rank                 :integer
-#  model_field_uid      :string(255)
-#  custom_definition_id :integer
 #  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  imported_file_id     :integer
+#  custom_definition_id :integer
 #  custom_report_id     :integer
+#  id                   :integer          not null, primary key
+#  imported_file_id     :integer
+#  model_field_uid      :string(255)
+#  rank                 :integer
+#  search_setup_id      :integer
+#  updated_at           :datetime         not null
 #
 # Indexes
 #

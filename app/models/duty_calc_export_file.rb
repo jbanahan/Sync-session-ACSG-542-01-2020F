@@ -2,11 +2,11 @@
 #
 # Table name: duty_calc_export_files
 #
-#  id          :integer          not null, primary key
-#  user_id     :integer
 #  created_at  :datetime         not null
-#  updated_at  :datetime         not null
+#  id          :integer          not null, primary key
 #  importer_id :integer
+#  updated_at  :datetime         not null
+#  user_id     :integer
 #
 # Indexes
 #

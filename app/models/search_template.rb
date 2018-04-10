@@ -2,11 +2,11 @@
 #
 # Table name: search_templates
 #
-#  id          :integer          not null, primary key
-#  name        :string(255)
-#  module_type :string(255)
-#  search_json :text
 #  created_at  :datetime         not null
+#  id          :integer          not null, primary key
+#  module_type :string(255)
+#  name        :string(255)
+#  search_json :text
 #  updated_at  :datetime         not null
 #
 

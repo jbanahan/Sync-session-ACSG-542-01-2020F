@@ -2,23 +2,23 @@
 #
 # Table name: item_change_subscriptions
 #
-#  id                    :integer          not null, primary key
-#  user_id               :integer
-#  order_id              :integer
-#  shipment_id           :integer
-#  product_id            :integer
 #  app_message           :boolean
-#  email                 :boolean
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  sales_order_id        :integer
-#  delivery_id           :integer
-#  entry_id              :integer
 #  broker_invoice_id     :integer
 #  commercial_invoice_id :integer
-#  security_filing_id    :integer
-#  container_id          :integer
 #  company_id            :integer
+#  container_id          :integer
+#  created_at            :datetime         not null
+#  delivery_id           :integer
+#  email                 :boolean
+#  entry_id              :integer
+#  id                    :integer          not null, primary key
+#  order_id              :integer
+#  product_id            :integer
+#  sales_order_id        :integer
+#  security_filing_id    :integer
+#  shipment_id           :integer
+#  updated_at            :datetime         not null
+#  user_id               :integer
 #
 # Indexes
 #

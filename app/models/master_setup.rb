@@ -2,36 +2,36 @@
 #
 # Table name: master_setups
 #
-#  id                          :integer          not null, primary key
-#  uuid                        :string(255)
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  logo_image                  :string(255)
-#  system_code                 :string(255)
-#  order_enabled               :boolean          default(TRUE), not null
-#  shipment_enabled            :boolean          default(TRUE), not null
-#  sales_order_enabled         :boolean          default(TRUE), not null
-#  delivery_enabled            :boolean          default(TRUE), not null
-#  classification_enabled      :boolean          default(TRUE), not null
-#  ftp_polling_active          :boolean
-#  system_message              :text
-#  migration_host              :string(255)
-#  target_version              :string(255)
-#  custom_features             :text
-#  entry_enabled               :boolean
 #  broker_invoice_enabled      :boolean
-#  request_host                :string(255)
-#  drawback_enabled            :boolean
-#  security_filing_enabled     :boolean
-#  last_delayed_job_error_sent :datetime         default(2017-03-23 15:19:34 UTC)
-#  stats_api_key               :string(255)
-#  project_enabled             :boolean
-#  vendor_management_enabled   :boolean
-#  variant_enabled             :boolean
-#  trade_lane_enabled          :boolean
-#  vfi_invoice_enabled         :boolean
-#  friendly_name               :string(255)
+#  classification_enabled      :boolean          default(TRUE), not null
+#  created_at                  :datetime         not null
+#  custom_features             :text
 #  customs_statements_enabled  :boolean
+#  delivery_enabled            :boolean          default(TRUE), not null
+#  drawback_enabled            :boolean
+#  entry_enabled               :boolean
+#  friendly_name               :string(255)
+#  ftp_polling_active          :boolean
+#  id                          :integer          not null, primary key
+#  last_delayed_job_error_sent :datetime         default(2001-01-01 00:00:00 UTC)
+#  logo_image                  :string(255)
+#  migration_host              :string(255)
+#  order_enabled               :boolean          default(TRUE), not null
+#  project_enabled             :boolean
+#  request_host                :string(255)
+#  sales_order_enabled         :boolean          default(TRUE), not null
+#  security_filing_enabled     :boolean
+#  shipment_enabled            :boolean          default(TRUE), not null
+#  stats_api_key               :string(255)
+#  system_code                 :string(255)
+#  system_message              :text
+#  target_version              :string(255)
+#  trade_lane_enabled          :boolean
+#  updated_at                  :datetime         not null
+#  uuid                        :string(255)
+#  variant_enabled             :boolean
+#  vendor_management_enabled   :boolean
+#  vfi_invoice_enabled         :boolean
 #
 
 class MasterSetup < ActiveRecord::Base

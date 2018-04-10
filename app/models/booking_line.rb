@@ -2,20 +2,20 @@
 #
 # Table name: booking_lines
 #
-#  id             :integer          not null, primary key
-#  product_id     :integer
-#  shipment_id    :integer
-#  line_number    :integer
-#  quantity       :decimal(13, 4)
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  gross_kgs      :decimal(9, 2)
-#  cbms           :decimal(9, 5)
 #  carton_qty     :integer
 #  carton_set_id  :integer
+#  cbms           :decimal(9, 5)
+#  container_size :string(255)
+#  created_at     :datetime         not null
+#  gross_kgs      :decimal(9, 2)
+#  id             :integer          not null, primary key
+#  line_number    :integer
 #  order_id       :integer
 #  order_line_id  :integer
-#  container_size :string(255)
+#  product_id     :integer
+#  quantity       :decimal(13, 4)
+#  shipment_id    :integer
+#  updated_at     :datetime         not null
 #  variant_id     :integer
 #
 # Indexes

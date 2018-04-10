@@ -2,14 +2,14 @@
 #
 # Table name: search_table_configs
 #
-#  id          :integer          not null, primary key
-#  page_uid    :string(255)
-#  name        :string(255)
-#  config_json :text
-#  user_id     :integer
 #  company_id  :integer
+#  config_json :text
 #  created_at  :datetime         not null
+#  id          :integer          not null, primary key
+#  name        :string(255)
+#  page_uid    :string(255)
 #  updated_at  :datetime         not null
+#  user_id     :integer
 #
 # Indexes
 #

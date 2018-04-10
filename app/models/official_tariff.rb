@@ -2,33 +2,33 @@
 #
 # Table name: official_tariffs
 #
-#  id                               :integer          not null, primary key
-#  country_id                       :integer
-#  hts_code                         :string(255)
-#  full_description                 :text
-#  special_rates                    :text
-#  general_rate                     :string(255)
-#  created_at                       :datetime         not null
-#  updated_at                       :datetime         not null
-#  chapter                          :string(800)
-#  heading                          :string(800)
-#  sub_heading                      :string(800)
-#  remaining_description            :string(800)
 #  add_valorem_rate                 :string(255)
-#  per_unit_rate                    :string(255)
 #  calculation_method               :string(255)
-#  most_favored_nation_rate         :string(255)
-#  general_preferential_tariff_rate :string(255)
-#  erga_omnes_rate                  :string(255)
-#  unit_of_measure                  :string(255)
+#  chapter                          :string(800)
 #  column_2_rate                    :string(255)
-#  import_regulations               :string(255)
-#  export_regulations               :string(255)
 #  common_rate                      :string(255)
-#  use_count                        :integer
-#  special_rate_key                 :string(255)
 #  common_rate_decimal              :decimal(8, 4)
+#  country_id                       :integer
+#  created_at                       :datetime         not null
+#  erga_omnes_rate                  :string(255)
+#  export_regulations               :string(255)
 #  fda_indicator                    :string(255)
+#  full_description                 :text
+#  general_preferential_tariff_rate :string(255)
+#  general_rate                     :string(255)
+#  heading                          :string(800)
+#  hts_code                         :string(255)
+#  id                               :integer          not null, primary key
+#  import_regulations               :string(255)
+#  most_favored_nation_rate         :string(255)
+#  per_unit_rate                    :string(255)
+#  remaining_description            :string(800)
+#  special_rate_key                 :string(255)
+#  special_rates                    :text
+#  sub_heading                      :string(800)
+#  unit_of_measure                  :string(255)
+#  updated_at                       :datetime         not null
+#  use_count                        :integer
 #
 # Indexes
 #

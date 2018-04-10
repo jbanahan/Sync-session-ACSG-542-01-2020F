@@ -2,13 +2,13 @@
 #
 # Table name: data_cross_references
 #
-#  id                   :integer          not null, primary key
-#  key                  :string(255)
-#  value                :string(255)
-#  cross_reference_type :string(255)
 #  company_id           :integer
 #  created_at           :datetime         not null
+#  cross_reference_type :string(255)
+#  id                   :integer          not null, primary key
+#  key                  :string(255)
 #  updated_at           :datetime         not null
+#  value                :string(255)
 #
 # Indexes
 #

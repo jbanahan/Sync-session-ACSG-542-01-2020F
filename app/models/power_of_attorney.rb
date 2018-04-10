@@ -2,17 +2,17 @@
 #
 # Table name: power_of_attorneys
 #
-#  id                      :integer          not null, primary key
-#  company_id              :integer
-#  start_date              :date
-#  expiration_date         :date
-#  uploaded_by             :integer
-#  attachment_file_name    :string(255)
 #  attachment_content_type :string(255)
+#  attachment_file_name    :string(255)
 #  attachment_file_size    :integer
 #  attachment_updated_at   :datetime
+#  company_id              :integer
 #  created_at              :datetime         not null
+#  expiration_date         :date
+#  id                      :integer          not null, primary key
+#  start_date              :date
 #  updated_at              :datetime         not null
+#  uploaded_by             :integer
 #
 
 require 'open_chain/s3'

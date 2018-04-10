@@ -2,16 +2,16 @@
 #
 # Table name: manufacturer_ids
 #
-#  id          :integer          not null, primary key
-#  mid         :string(255)
-#  name        :string(255)
+#  active      :boolean
 #  address_1   :string(255)
 #  address_2   :string(255)
 #  city        :string(255)
-#  postal_code :string(255)
 #  country     :string(255)
-#  active      :boolean
 #  created_at  :datetime         not null
+#  id          :integer          not null, primary key
+#  mid         :string(255)
+#  name        :string(255)
+#  postal_code :string(255)
 #  updated_at  :datetime         not null
 #
 # Indexes

@@ -2,13 +2,13 @@
 #
 # Table name: milestone_notification_configs
 #
-#  id              :integer          not null, primary key
 #  customer_number :string(255)
-#  setup           :text
 #  enabled         :boolean
-#  output_style    :string(255)
-#  testing         :boolean
+#  id              :integer          not null, primary key
 #  module_type     :string(255)
+#  output_style    :string(255)
+#  setup           :text
+#  testing         :boolean
 #
 # Indexes
 #

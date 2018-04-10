@@ -2,10 +2,10 @@
 #
 # Table name: summary_statements
 #
+#  created_at       :datetime         not null
+#  customer_id      :integer          not null
 #  id               :integer          not null, primary key
 #  statement_number :string(255)
-#  customer_id      :integer          not null
-#  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #
 

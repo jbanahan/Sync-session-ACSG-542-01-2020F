@@ -2,12 +2,12 @@
 #
 # Table name: classifications
 #
-#  id                        :integer          not null, primary key
 #  country_id                :integer
-#  product_id                :integer
 #  created_at                :datetime         not null
-#  updated_at                :datetime         not null
+#  id                        :integer          not null, primary key
 #  instant_classification_id :integer
+#  product_id                :integer
+#  updated_at                :datetime         not null
 #
 # Indexes
 #

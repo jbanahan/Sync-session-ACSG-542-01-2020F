@@ -2,15 +2,15 @@
 #
 # Table name: projects
 #
+#  closed_at    :datetime
+#  created_at   :datetime         not null
+#  drive_folder :string(255)
+#  due          :date
 #  id           :integer          not null, primary key
 #  name         :string(255)
-#  due          :date
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  closed_at    :datetime
 #  objective    :text
-#  drive_folder :string(255)
 #  on_hold      :boolean
+#  updated_at   :datetime         not null
 #
 # Indexes
 #
