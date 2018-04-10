@@ -408,8 +408,6 @@ describe EntriesController do
         ["Released In The Last 28 Days",'4w'],
         ["Filed / Not Released",'op'],
         ["Released Year To Date",'ytd'],
-        ["Released After Arrival - Air Last 28 Days", '4wa'],
-        ["Released After Arrival - Ocean Last 28 Days", '4wo'],
         ["Entries On Hold", 'holds']
       ]
 
