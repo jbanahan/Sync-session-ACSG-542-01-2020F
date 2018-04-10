@@ -149,6 +149,18 @@ describe OpenChain::SQS do
 
       expect(messages.length).to eq 1
     end
+
+    it "yields raw message object if option is specified" do
+      poller = instance_double("Aws::SQS::QueuePoller")
+      expect(subject).to receive(:queue_poller).and_return poller
+
+      message = instance_double("Aws:SQS::Types::Message")
+
+      expect(poller).to receive(:poll).and_yield [message]
+      expect(poller).to receive(:delete_messages).with [message]
+
+      expect {|b| subject.poll("queue", yield_raw: true, &b) }.to yield_with_args(message)
+    end
   end
 
   describe "get_queue_url" do

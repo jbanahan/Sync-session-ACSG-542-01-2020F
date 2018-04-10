@@ -40,6 +40,7 @@ module OpenChain; class SQS
     opts = {wait_time_seconds: 0, idle_timeout: 0, max_number_of_messages: 10, client: sqs_client}.merge opts
 
     max_message_count = opts.delete(:max_message_count).to_i
+    yield_raw = opts.delete(:yield_raw)
 
     poller = queue_poller(queue_url, opts)
 
@@ -75,7 +76,11 @@ module OpenChain; class SQS
       completed_messages = []
       begin
         messages.each do |msg|
-          obj = JSON.parse msg.body
+          if yield_raw == true
+            obj = msg
+          else
+            obj = JSON.parse msg.body
+          end
           yield obj
           completed_messages << msg
         end

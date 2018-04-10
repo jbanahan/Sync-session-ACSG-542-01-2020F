@@ -56,73 +56,71 @@ module OpenChain
   class IntegrationClient
 
     def self.run_schedulable opts = {}
-      opts = {'queue_name' => default_integration_queue_name, 'max_message_count' => 500}.merge opts
-      process_queue opts['queue_name'], opts['max_message_count']
+      opts = {'queue_name' => default_integration_queue_name, 'max_message_count' => 500, 'visibility_timeout' => 300}.merge opts
+      process_queue opts['queue_name'], max_message_count: opts['max_message_count'], visibility_timeout: opts['visibility_timeout']
     end
 
     def self.default_integration_queue_name
       MasterSetup.get.system_code
     end
 
-    def self.process_queue queue_name, max_message_count = 500
+    def self.process_queue queue_name, max_message_count: 500, visibility_timeout: 300
       raise "Queue Name must be provided." if queue_name.blank?
       queue_url = OpenChain::SQS.create_queue queue_name
 
       messages_processed = 0
-      current_queue_messages = retrieve_queue_messages queue_url, max_message_count
-      current_queue_messages.each do |m|
+      OpenChain::SQS.poll(queue_url, max_message_count: max_message_count, visibility_timeout: visibility_timeout, yield_raw: true) do |m|
+        cmd = nil
         begin
+          # If any bad json gets in here...we don't want to reprocess the message...just notify about it
           cmd = JSON.parse m.body
-          r = IntegrationClientCommandProcessor.process_command cmd
-          raise r['message'] if r['response_type']=='error'
-          messages_processed += 1
-
-          # There's not really much point to a shutdown response with this running via a scheduler,
-          # but I suppose it can't hurt either.
-          break if r=='shutdown'
         rescue => e
           e.log_me ["SQS Message: #{m.body}"]
-        ensure
-          OpenChain::SQS.delete_message queue_url, m
         end
+
+        if cmd
+          # Any other error we get here, reprocess the message after the visibility timeout occurs
+          response = IntegrationClientCommandProcessor.process_command cmd
+          process_command_response response, m
+        end
+        messages_processed += 1
       end
 
       messages_processed
     end
 
-    def self.retrieve_queue_messages queue_url, max_message_count
-      available_messages = []
-      # The max message count is just to try and avoid a situation where the
-      # message count gets out of control (due to something queueing files like crazy).
+    def self.process_command_response response, sqs_message
+      case response.try(:[], 'response_type').to_s.downcase
+      when "remote_file" 
+        # Do Nothing...successful processing, which just results in teh message getting removed
+      when "shutdown"
+        # There's not really much point to a shutdown response with this running via a scheduler,
+        # but I suppose it can't hurt either.
 
-      # Considering the integration client should be set up to run every minute, limiting the
-      # number of messages received per run shouldn't be an issue.
-      while available_messages.length < max_message_count && OpenChain::SQS.visible_message_count(queue_url) > 0
-        # NOTE: The messages are not deleted from the queue until delete is called on them
-        # when receive_message is used in this manner (this is different than the block form of the method)
-        response = OpenChain::SQS.retrieve_messages queue_url, max_number_of_messages: 10, wait_time_seconds: 0, visibility_timeout: (max_message_count + 60), attribute_names: [:SentTimestamp]
-        available_messages.push(*response.messages) if response.messages.size > 0
+        # Throw here is caught by the SQS.poll method as the means to tell it to stop...any messages already processed will
+        # be removed from the queue and no more messages will be yielded
+        throw :stop_polling
+      else
+        # The easest thing to do here as a notifiation is to create an error object and use the log_me of it.  We don't want to raise
+        # because that will requeue the message - which, if we got response object, means the error was not transient and something unexpected
+        # with a file happened and should be reported, not reprocessed.
+        StandardError.new(response.try(:[], "message").to_s).log_me ["SQS Message: #{sqs_message.try(:body)}"]
       end
-      # AWS Queue messages are not guaranteed to be returned in order..this
-      # is about the best we can do without actually numbering the message data and blocking
-      # until missing numbers are received.
-      available_messages.sort_by {|msg| msg.attributes['SentTimestamp'].to_i }
     end
   end
 
   class IntegrationClientCommandProcessor
     def self.process_command command
-      case command['request_type']
+      case command.try(:[], 'request_type')
       when 'remote_file'
         return process_remote_file command
       when 'shutdown'
-        return 'shutdown'
+        return {'response_type' => 'shutdown', 'message' => "Shutting Down"}
       else
         return {'response_type'=>'error','message'=>"Unknown command: #{command}"}
       end
     end
 
-    private
     def self.process_remote_file command, total_attempts = 3
       # Even though this process runs in a delayed job queue, we still primarily want to delay()
       # the processing of each job so that each call to the process_remote_file runs quickly.  This
@@ -283,14 +281,16 @@ module OpenChain
 
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
-      raise e unless Rails.env.production?
+      error_message = {'response_type'=>"error", "message" => e.message}
+
+      return error_message unless Rails.env.production?
 
       total_attempts -= 1
       if total_attempts > 0
         sleep 0.25
         retry
       else
-        raise e
+        return error_message
       end
     end
 
