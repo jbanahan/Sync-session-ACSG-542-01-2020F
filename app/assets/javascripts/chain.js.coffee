@@ -96,6 +96,9 @@ root.Chain =
       window.location = baseUrl+'?page='+$(this).val()
 
   # generates html string for a bootstrap error panel
+  makeAlertPanel: (messages, needs_container = true) ->
+    Chain.makePanel messages, "alert", needs_container 
+
   makeErrorPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "error", needs_container
 

@@ -407,14 +407,23 @@ describe EntriesController do
         ["Released In The Last 7 Days",'1w'],
         ["Released In The Last 28 Days",'4w'],
         ["Filed / Not Released",'op'],
-        ["Released Year To Date",'ytd']
+        ["Released Year To Date",'ytd'],
+        ["Released After Arrival - Air Last 28 Days", '4wa'],
+        ["Released After Arrival - Ocean Last 28 Days", '4wo'],
+        ["Entries On Hold", 'holds']
       ]
 
       expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
+      expect(assigns(:date_uid)).to eq :ent_first_release_received_date
+    end
+
+    it "assigns :ent_hold_date if flag is set in release_range" do
+      get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: 'holds'
+      expect(assigns(:date_uid)).to eq :ent_hold_date
     end
 
     it "handles argument error raised from query call" do
-      expect(OpenChain::ActivitySummary).to receive(:create_by_release_range_query).and_raise ArgumentError.new("Testing")
+      expect_any_instance_of(OpenChain::ActivitySummary::USEntrySummaryGenerator).to receive(:create_by_release_range_query).and_raise ArgumentError.new("Testing")
 
       get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
 
@@ -532,11 +541,35 @@ describe EntriesController do
 
       single_company_report = double('report')
       linked_company_reports = [double('linked report 1'), double('linked report 2'), double('linked report 3')]
-      expect(OpenChain::ActivitySummary::DutyDetail).to receive(:create_digest).with(@user, @company).and_return single_company_report
-      expect(OpenChain::ActivitySummary::DutyDetail).to receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
+      expect_any_instance_of(OpenChain::ActivitySummary::USEntrySummaryGenerator).to receive(:create_digest).with(@user, @company).and_return single_company_report
+      expect_any_instance_of(OpenChain::ActivitySummary::USEntrySummaryGenerator).to receive(:create_linked_digests).with(@user, @company).and_return linked_company_reports
       get :us_duty_detail, importer_id: @company.id
       expect(response).to be_success
       expect(assigns(:reports)).to eq [single_company_report].concat(linked_company_reports)
+    end
+  end
+
+  describe "by_release_range_download" do
+    let!(:us) { Factory(:country, iso_code: "US") }
+
+    it "returns XLS file" do
+      get :by_release_range_download, importer_id: @u.company.id, iso_code: "US", release_range: "1w"
+      
+      expect(response).to be_success
+      Tempfile.open("temp") do |t|
+        t.binmode
+        t.write response.body
+        wb = Spreadsheet.open t
+        expect(wb.worksheets[0].name).to eq "Released In The Last 7 Days"
+      end
+    end
+
+    it "rejects unauthorized users" do
+      u = Factory(:user)
+      sign_in_as u
+      get :by_release_range_download, importer_id: @u.company.id, iso_code: "US", release_range: "1w"
+      expect(response).to redirect_to request.referer
+      expect(flash[:errors]).to include "You do not have permission to download this file."
     end
   end
 

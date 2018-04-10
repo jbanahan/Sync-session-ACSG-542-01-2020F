@@ -29,6 +29,8 @@ OpenChain::Application.routes.draw do
       match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
       match '/messages/count/:user_id' => 'messages#count'
       get "/emails/validate_email_list" => "emails#validate_email_list"
+      post "/entries/importer/:importer_id/activity_summary/us/download" => 'entries#store_us_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/ca/download" => 'entries#store_ca_activity_summary_download'
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
@@ -279,16 +281,17 @@ OpenChain::Application.routes.draw do
   end
 
   match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
-  match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get
+  match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get, :as => :entries_activity_summary_us_with_importer
   match '/entries/importer/:importer_id/activity_summary/us/content' => 'entries#us_activity_summary_content', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us/duty_detail' => 'entries#us_duty_detail', :via => :get
 
   match '/entries/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get
-  match '/entries/importer/:importer_id/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get
+  match '/entries/importer/:importer_id/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get, :as => :entries_activity_summary_ca_with_importer
   match '/entries/importer/:importer_id/activity_summary/ca/content' => 'entries#ca_activity_summary_content', :via => :get
 
   match '/entries/importer/:importer_id/entry_port/:port_code' => 'entries#by_entry_port', :via => :get
   match '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range' => 'entries#by_release_range', :via=>:get
+  match '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range/download' => 'entries#by_release_range_download', :via=>:get
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get

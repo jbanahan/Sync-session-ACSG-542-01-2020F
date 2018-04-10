@@ -166,6 +166,15 @@ describe XlsMaker do
       XlsMaker.add_body_row @sheet, 1, ["Test"], [], false, format: Spreadsheet::Format.new(pattern_fg_color: :yellow, pattern: 1)
       expect(@sheet.row(1).formats[0].pattern_fg_color).to eq :yellow
     end
+
+    it "uses list of formats" do
+      format_1 = Spreadsheet::Format.new(pattern_fg_color: :yellow)
+      format_2 = Spreadsheet::Format.new(pattern_fg_color: :blue)
+      XlsMaker.add_body_row @sheet, 1, ["foo", "bar", "baz"], [], false, formats: [format_1, format_2, nil]
+      expect(@sheet.row(1).formats[0].pattern_fg_color).to eq :yellow
+      expect(@sheet.row(1).formats[1].pattern_fg_color).to eq :blue
+      expect(@sheet.row(1).formats[2]).to be_nil
+    end
   end
 
   context "insert_body_row" do

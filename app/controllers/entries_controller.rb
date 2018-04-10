@@ -45,18 +45,23 @@ class EntriesController < ApplicationController
   def by_release_range
     @imp = Company.find params[:importer_id]
     action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
-      @range_descriptions = [
-        ["Released In The Last 7 Days",'1w'],
-        ["Released In The Last 28 Days",'4w'],
-        ["Filed / Not Released",'op'],
-        ["Released Year To Date",'ytd']
-      ]
+      @range_descriptions = OpenChain::ActivitySummary::DETAILS.map{ |k,v| [v,k] }
 
       begin
-        @entries = OpenChain::ActivitySummary.create_by_release_range_query(@imp.id, params[:iso_code], params[:release_range])
+        generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
+        @entries = generator.create_by_release_range_query @imp.id, params[:release_range]
+        @date_uid = (params[:release_range] == "holds") ? :ent_hold_date : generator.release_date_mf.uid
       rescue ArgumentError => e
         error_redirect e.message
       end
+    }
+  end
+  def by_release_range_download
+    imp = Company.find params[:importer_id]
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(imp,current_user),nil,{lock_check:false,verb:'download',module_name:'file'}) {
+      generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
+      xls = generator.create_by_release_range_download params[:importer_id], params[:release_range]
+      send_file xls.path, filename: xls.original_filename, type: :xls, disposition: "attachment"
     }
   end
   def show
@@ -193,8 +198,9 @@ class EntriesController < ApplicationController
       return
     end
     
-    @reports = [OpenChain::ActivitySummary::DutyDetail.create_digest(current_user, @imp)]
-    @reports.push(*OpenChain::ActivitySummary::DutyDetail.create_linked_digests(current_user, @imp))
+    generator = OpenChain::ActivitySummary.generator_for_country "US"
+    @reports = [generator.create_digest(current_user, @imp)]
+    @reports.push(*generator.create_linked_digests(current_user, @imp))
     @reports.compact!
   end
 

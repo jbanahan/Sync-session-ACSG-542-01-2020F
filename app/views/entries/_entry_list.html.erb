@@ -1,4 +1,4 @@
-<%-pg_entries = entries.order('ifnull(entries.release_date,"2999-01-01") DESC').paginate(page:params[:page],per_page:30)-%>
+<%-pg_entries = entries.paginate(page:params[:page],per_page:30)-%>
 <div class='container'>
   <div class='row'>
     <div class='col-md-8 col-md-offset-2'>
@@ -8,7 +8,7 @@
     </div>
   </div>
 </div>
-<%-fields_to_use = ModelField.viewable_model_fields(current_user, [:ent_entry_num,:ent_filed_date,:ent_release_date,:ent_entered_value,:ent_customer_references,:ent_po_numbers,:ent_cust_name])-%>
+<%-fields_to_use = ModelField.viewable_model_fields(current_user, [:ent_entry_num,:ent_filed_date,@date_uid,:ent_entered_value,:ent_customer_references,:ent_po_numbers,:ent_cust_name])-%>
 <table class="table table-striped table-bordered table-condensed table-hover">
   <thead>
     <tr>
@@ -31,7 +31,7 @@
 </table>
 <script type='text/javascript'> <%# needs to be javascript so it executes inside of cache, can't use content_for%>
   $(document).ready(function() {
-    $('#nav-action-bar').append("<form class='navbar-form pull-right btn-group' id='browsenav'></form>")
+    $('#nav-action-bar').append("<inline><a class='btn btn-default navbar-btn' href='/entries/importer/<%=params[:importer_id]%>/country/<%=params[:iso_code]%>/release_range/<%=params[:release_range]%>/download' title='Download'><i class='fa fa-download'></i></a><form class='navbar-form pull-right btn-group' id='browsenav'></form></inline>")
     Chain.addPagination('#browsenav','<%=request.original_fullpath.split("?").first%>',<%=params[:page]%>,<%=pg_entries.total_pages%>);
   });
 </script>

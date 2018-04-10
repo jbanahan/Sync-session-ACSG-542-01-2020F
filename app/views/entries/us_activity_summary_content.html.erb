@@ -1,4 +1,9 @@
-  <div class="container">
+  <script>
+    $(function() {
+      entryActivitySummary();
+    });
+  </script>
+  <div id="main-container" class="container">
     <div class="row" style='margin-bottom:20px;'>
       <div class="col-md-12 text-center">
         <h1>US Entry Activity</h1>
@@ -65,6 +70,15 @@
               <td class='numeric'><%=number_to_currency hsh['summary']['open']['entered']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['open']['invoiced']%></td>
               <td class='numeric'><%=number_with_precision(hsh['summary']['open']['units'],precision:2,delimiter:',')%></td>
+            </tr>
+            <tr>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/holds'>Entries on Hold <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td class='numeric'><%=number_with_delimiter hsh['summary']['holds']['count']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['holds']['duty']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['holds']['fees']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['holds']['entered']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['holds']['invoiced']%></td>
+              <td class='numeric'><%=number_with_precision(hsh['summary']['holds']['units'],precision:2,delimiter:',')%></td>
             </tr>
           </tbody>
         </table>

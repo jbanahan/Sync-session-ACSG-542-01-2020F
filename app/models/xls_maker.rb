@@ -135,7 +135,6 @@ class XlsMaker
     end
     width = 23 if width > 23
     XlsMaker.calc_column_width sheet, column_number, column_widths, width
-
     if options[:format]
       sheet.row(row_number).set_format(column_number, options[:format])
     end
@@ -145,8 +144,11 @@ class XlsMaker
 
   def self.make_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], options = {}
     row_data.each_with_index do |cell_base, col| 
-      col = starting_column_number + col
-      set_cell_value sheet, row_number, col, cell_base, column_widths, options
+      abs_col = starting_column_number + col
+      set_cell_value sheet, row_number, abs_col, cell_base, column_widths, options
+      if options[:formats]
+        sheet.row(row_number).set_format(abs_col, options[:formats][col]) if options[:formats][col]
+      end
     end
   end
   private_class_method :make_body_row

@@ -12,7 +12,7 @@ describe OpenChain::ActivitySummary do
 
   describe "generate_us_entry_summary" do
     it "should make json" do
-      ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,release_date:'2013-12-25 05:00:00 UTC')
+      ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,first_release_received_date:'2013-12-25 05:00:00 UTC')
       h = described_class.generate_us_entry_summary(ent.importer_id, Time.parse('2013-12-27 16:00:00 UTC'))
       expect(h['activity_summary']['summary']['1w']['count']).to eq(1)
     end
@@ -29,10 +29,10 @@ describe OpenChain::ActivitySummary do
 
     it "should create summary section" do
       importer = Factory(:company)
-      ent = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date:'2013-12-25 05:00:00 UTC', total_duty:100,total_gst:50,total_duty_gst:150,entered_value:1000,total_invoiced_value:1100,total_units:70)
-      ent2 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date: '2013-12-15 05:00:00 UTC', total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
-      ent3 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,file_logged_date:'2013-12-18 05:00:00 UTC',total_duty:50,total_gst:40,total_duty_gst:90,entered_value:60,total_invoiced_value:66,total_units:3)
-      ent2 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-24 05:00:00 UTC', release_date:'2013-12-25 05:00:00 UTC', total_duty:100,total_gst:50,total_duty_gst:150,entered_value:1000,total_invoiced_value:1100,total_units:70)
+      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-14 05:00:00 UTC', release_date: '2013-12-15 05:00:00 UTC', total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-17 05:00:00 UTC', file_logged_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_gst:40,total_duty_gst:90,entered_value:60,total_invoiced_value:66,total_units:3)
+      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2012-12-24 05:00:00 UTC', release_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
 
       h = OpenChain::ActivitySummary::CAEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
       expect(h['summary']['1w']['count']).to eq(1)
@@ -42,6 +42,7 @@ describe OpenChain::ActivitySummary do
       expect(h['summary']['1w']['entered']).to eq(1000)
       expect(h['summary']['1w']['invoiced']).to eq(1100)
       expect(h['summary']['1w']['units']).to eq(70)
+      
       expect(h['summary']['4w']['count']).to eq(2)
       expect(h['summary']['4w']['duty']).to eq(300)
       expect(h['summary']['4w']['gst']).to eq(125)
@@ -49,6 +50,15 @@ describe OpenChain::ActivitySummary do
       expect(h['summary']['4w']['entered']).to eq(2500)
       expect(h['summary']['4w']['invoiced']).to eq(2700)
       expect(h['summary']['4w']['units']).to eq(110)
+      
+      expect(h['summary']['holds']['count']).to eq(1)
+      expect(h['summary']['holds']['duty']).to eq(50)
+      expect(h['summary']['holds']['gst']).to eq(40)
+      expect(h['summary']['holds']['duty_gst']).to eq(90)
+      expect(h['summary']['holds']['entered']).to eq(60)
+      expect(h['summary']['holds']['invoiced']).to eq(66)
+      expect(h['summary']['holds']['units']).to eq(3)
+
       expect(h['summary']['open']['count']).to eq(1)
       expect(h['summary']['open']['duty']).to eq(50)
       expect(h['summary']['open']['gst']).to eq(40)
@@ -56,6 +66,7 @@ describe OpenChain::ActivitySummary do
       expect(h['summary']['open']['entered']).to eq(60)
       expect(h['summary']['open']['invoiced']).to eq(66)
       expect(h['summary']['open']['units']).to eq(3)
+      
       expect(h['summary']['ytd']['count']).to eq(2)
       expect(h['summary']['ytd']['duty']).to eq(300)
       expect(h['summary']['ytd']['gst']).to eq(125)
@@ -101,12 +112,12 @@ describe OpenChain::ActivitySummary do
       it "should create summary section" do
         importer = Factory(:company)
 
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:'2013-12-25 05:00:00 UTC',total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:'2013-12-15 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:'2013-12-18 05:00:00 UTC',total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 40,arrival_date: "2013-12-24 05:00:00 UTC",first_release_received_date:'2013-12-25 05:00:00 UTC',total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-14 05:00:00 UTC",first_release_received_date:'2013-12-15 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2012-12-24 05:00:00 UTC",first_release_received_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
         #don't find for wrong country
-        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,first_release_received_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
         expect(h['summary']['1w']['count']).to eq(1)
         expect(h['summary']['1w']['duty']).to eq(100)
@@ -114,18 +125,28 @@ describe OpenChain::ActivitySummary do
         expect(h['summary']['1w']['entered']).to eq(1000)
         expect(h['summary']['1w']['invoiced']).to eq(1100)
         expect(h['summary']['1w']['units']).to eq(70)
+        
         expect(h['summary']['4w']['count']).to eq(2)
         expect(h['summary']['4w']['duty']).to eq(300)
         expect(h['summary']['4w']['fees']).to eq(125)
         expect(h['summary']['4w']['entered']).to eq(2500)
         expect(h['summary']['4w']['invoiced']).to eq(2700)
         expect(h['summary']['4w']['units']).to eq(110)
+
+        expect(h['summary']['holds']['count']).to eq(1)
+        expect(h['summary']['holds']['duty']).to eq(50)
+        expect(h['summary']['holds']['fees']).to eq(40)
+        expect(h['summary']['holds']['entered']).to eq(60)
+        expect(h['summary']['holds']['invoiced']).to eq(66)
+        expect(h['summary']['holds']['units']).to eq(3)
+        
         expect(h['summary']['open']['count']).to eq(1)
         expect(h['summary']['open']['duty']).to eq(50)
         expect(h['summary']['open']['fees']).to eq(40)
         expect(h['summary']['open']['entered']).to eq(60)
         expect(h['summary']['open']['invoiced']).to eq(66)
         expect(h['summary']['open']['units']).to eq(3)
+        
         expect(h['summary']['ytd']['count']).to eq(2)
         expect(h['summary']['ytd']['duty']).to eq(300)
         expect(h['summary']['ytd']['fees']).to eq(125)
@@ -134,7 +155,7 @@ describe OpenChain::ActivitySummary do
         expect(h['summary']['ytd']['units']).to eq(110)
       end
 
-      it "should create statments section" do
+      it "should create statements section" do
         importer = Factory(:company,name:'IMP')
         not_paid = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
         paid1 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
@@ -187,28 +208,28 @@ describe OpenChain::ActivitySummary do
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,release_date:"2013-12-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
             )
           )
         ).commercial_invoice_line.commercial_invoice_tariffs.create!(entered_value:150)
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,release_date:"2013-11-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-11-01",importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V2',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,release_date:"2013-12-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,release_date:"2012-11-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2012-11-01",importer_id:importer.id)
             )
           )
         )
@@ -216,7 +237,7 @@ describe OpenChain::ActivitySummary do
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:Factory(:country).id,release_date:"2013-12-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:Factory(:country).id,first_release_received_date:"2013-12-01",importer_id:importer.id)
             )
           )
         )
@@ -232,13 +253,13 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:'2013-12-25 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
         # don't find not released
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',release_date:nil)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
         # don't find for wrong country
-        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:'2013-12-24 16:00:00 UTC')
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-24 16:00:00 UTC')
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
         p = h['ports_ytd']
         expect(p.entries.size).to eq(2)
@@ -253,12 +274,12 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:'2013-12-25 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',release_date:nil)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
         #don't find for wrong country
-        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-24 16:00:00 UTC',release_date:nil)
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-24 16:00:00 UTC',first_release_received_date:nil)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
         bp = h['by_port']
         expect(bp.size).to eq(3)
@@ -286,7 +307,7 @@ describe OpenChain::ActivitySummary do
             #everything for 1 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:'2013-12-25 16:00:00 UTC')
+                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,first_release_received_date:'2013-12-25 16:00:00 UTC')
               )
             )
           )
@@ -294,7 +315,7 @@ describe OpenChain::ActivitySummary do
             #every other for 4 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:'2013-12-18 16:00:00 UTC')
+                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,first_release_received_date:'2013-12-18 16:00:00 UTC')
               )
             )
           ) if i%2 == 0
@@ -337,11 +358,11 @@ describe OpenChain::ActivitySummary do
       end
       it "should create unpaid duty breakouts" do
         date = Date.today + 10
-        release_date = date.to_datetime
+        first_release_received_date = date.to_datetime
         company = Factory(:company, name: 'Acme', importer: true)
         company.update_attributes(linked_companies: [company])
-        Factory(:entry, importer_id: company.id, customer_name: company.name, release_date: release_date, duty_due_date: date, total_duty: 100, total_fees: 200)
-        Factory(:entry, importer_id: company.id, customer_name: company.name, release_date: release_date, duty_due_date: date, total_duty: 200, total_fees: 250)
+        Factory(:entry, importer_id: company.id, customer_name: company.name, first_release_received_date: first_release_received_date, duty_due_date: date, total_duty: 100, total_fees: 200)
+        Factory(:entry, importer_id: company.id, customer_name: company.name, first_release_received_date: first_release_received_date, duty_due_date: date, total_duty: 200, total_fees: 250)
 
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash company.id, Time.parse('2013-12-27 16:00:00 UTC')
         unpaid_duty = h['unpaid_duty']
@@ -384,24 +405,24 @@ describe OpenChain::ActivitySummary do
         @date1 = Date.today
         @date2 = Date.today + 15
         @date3 = Date.today - 10
-        @release_date = @date1.to_datetime
+        @first_release_received_date = @date1.to_datetime
         @company = Factory(:company, name: 'Acme')
       end
 
       it "should not include unreleased entries in totals" do
-        Factory(:entry, importer_id: @company.id, release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
+        Factory(:entry, importer_id: @company.id, first_release_received_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.single_company_unpaid_duty @company, Date.today
         expect(h).to be_empty
       end
 
       it "should not include in totals entries with duty_due_date before today" do
-        Factory(:entry, importer_id: @company.id, release_date: @release_date, duty_due_date: @date3, total_duty: 700, total_fees: 750)
+        Factory(:entry, importer_id: @company.id, first_release_received_date: @first_release_received_date, duty_due_date: @date3, total_duty: 700, total_fees: 750)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.single_company_unpaid_duty @company, Date.today
         expect(h).to be_empty
       end
 
       it "should not include in totals entries on monthly statement" do
-        Factory(:entry, importer_id: @company.id, release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
+        Factory(:entry, importer_id: @company.id, first_release_received_date: @first_release_received_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.single_company_unpaid_duty @company, Date.today
         expect(h).to be_empty
       end
@@ -410,16 +431,18 @@ describe OpenChain::ActivitySummary do
   end
 
   describe "create_by_release_range_query" do
+    let(:us_generator) { OpenChain::ActivitySummary.generator_for_country "US" }
+    let(:ca_generator) { OpenChain::ActivitySummary.generator_for_country "CA" }
 
     before :each do
       @importer = Factory(:company, importer: true)
-      @e1 = Factory(:entry, importer: @importer, release_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
-      @e2 = Factory(:entry, importer: @importer, release_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
+      @e1 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
+      @e2 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
     end
 
     it "returns a query finding all entries released within 1w" do
-      @e2.update_attributes! release_date: '2013-12-31 15:00:00 UTC'
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', '1w', Time.parse('2014-01-08 12:00:00 UTC')
+      @e2.update_attributes! first_release_received_date: '2013-12-31 15:00:00 UTC'
+      qry = us_generator.create_by_release_range_query @importer.id, '1w', Time.parse('2014-01-08 12:00:00 UTC')
       results = qry.all
 
       expect(results.size).to eq(1)
@@ -427,8 +450,10 @@ describe OpenChain::ActivitySummary do
     end
 
     it "returns a query finding all CA entries released within 1w" do
-      @e1.update_attributes! import_country: @ca
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'CA', '1w', Time.parse('2014-01-08 12:00:00 UTC')
+      @e1.update_attributes! import_country: @ca, release_date: @e1.first_release_received_date
+      @e2.update_attributes! release_date: @e2.first_release_received_date
+
+      qry = ca_generator.create_by_release_range_query @importer.id, '1w', Time.parse('2014-01-08 12:00:00 UTC')
       results = qry.all
 
       expect(results.size).to eq(1)
@@ -436,18 +461,24 @@ describe OpenChain::ActivitySummary do
     end
 
     it "returns a query finding all entries released within 4w" do
-      @e2.update_attributes! release_date: '2013-12-03 15:00:00 UTC'
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', '4w', Time.parse('2014-01-08 12:00:00 UTC')
+      @e2.update_attributes! first_release_received_date: '2013-12-03 15:00:00 UTC'
+      qry = us_generator.create_by_release_range_query @importer.id, '4w', Time.parse('2014-01-08 12:00:00 UTC')
       results = qry.all
 
       expect(results.size).to eq(1)
       expect(results.first.id).to eq @e1.id
     end
 
-    it "returns a query finding all open entries ytd" do
-      @e2.update_attributes! release_date: '2013-12-31 15:00:00 UTC'
+    it "returns a query finding all entries that are on hold" do
+      @e1.update_attributes on_hold: true
+      qry = us_generator.create_by_release_range_query @importer.id, 'holds', Time.parse('2014-01-08 12:00:00 UTC')
+      expect(qry.all).to eq [@e1]
+    end
 
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', 'ytd', Time.parse('2014-01-08 12:00:00 UTC')
+    it "returns a query finding all open entries ytd" do
+      @e2.update_attributes! first_release_received_date: '2013-12-31 15:00:00 UTC'
+
+      qry = us_generator.create_by_release_range_query @importer.id, 'ytd', Time.parse('2014-01-08 12:00:00 UTC')
       results = qry.all
 
       expect(results.size).to eq(1)
@@ -456,8 +487,8 @@ describe OpenChain::ActivitySummary do
 
     it "returns a query finding all unreleased entries" do
       # unreleased also means the release date is in the future
-      @e1.update_attributes release_date: nil
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', 'op', Time.parse('2014-01-07 12:00:00 UTC')
+      @e1.update_attributes first_release_received_date: nil
+      qry = us_generator.create_by_release_range_query @importer.id, 'op', Time.parse('2014-01-07 12:00:00 UTC')
       results = qry.all
       expect(results.size).to eq(2)
     end
@@ -466,175 +497,382 @@ describe OpenChain::ActivitySummary do
       @e1.update_attributes! entry_filed_date: nil
       @e2.update_attributes! tracking_status: Entry::TRACKING_STATUS_CLOSED
 
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', '1w', Time.parse('2014-01-08 12:00:00 UTC')
+      qry = us_generator.create_by_release_range_query @importer.id, '1w', Time.parse('2014-01-08 12:00:00 UTC')
       expect(qry.all.size).to eq(0)
     end
 
     it "excludes entries for other importers" do
       @e2.update_attributes! importer: Factory(:company)
 
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', '1w', Time.parse('2014-01-08 12:00:00 UTC')
+      qry = us_generator.create_by_release_range_query @importer.id,'1w', Time.parse('2014-01-08 12:00:00 UTC')
       expect(qry.all.size).to eq(1)
     end
 
     it "excludes entries for other countries" do
       @e2.update_attributes! import_country: @ca
 
-      qry = OpenChain::ActivitySummary.create_by_release_range_query @importer.id, 'US', '1w', Time.parse('2014-01-08 12:00:00 UTC')
+      qry = us_generator.create_by_release_range_query @importer.id,'1w', Time.parse('2014-01-08 12:00:00 UTC')
       expect(qry.all.size).to eq(1)
     end
   end
 
-  describe OpenChain::ActivitySummary::DutyDetail do
-    before(:each) do
-          @date1 = Date.today
-          @date2 = Date.today + 15
-          date3 = Date.today - 10
-          @release_date = @date1.to_datetime
-
-          @company = Factory(:company, name: 'Acme', master: true)
-          @non_master_company = Factory(:company, name: "Emca")
-          @user = Factory(:user, company: @company)
-          port1 = Factory(:port, schedule_d_code: '1234', name: 'Boston')
-          port2 = Factory(:port, schedule_d_code: '4321', name: 'New York')
-
-          #included in totals
-          @ent1 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '12345678912', release_date: @release_date, duty_due_date: @date1, total_duty: 100, total_fees: 200)
-          @ent2 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '21987654321', release_date: @release_date, duty_due_date: @date1, total_duty: 200, total_fees: 250)
-          @ent3 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '53471126928', release_date: @release_date, duty_due_date: @date2, total_duty: 300, total_fees: 350)
-          @ent4 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '14215923867', release_date: @release_date, duty_due_date: @date2, total_duty: 400, total_fees: 450)
-          @ent5 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '59172148623', release_date: @release_date, duty_due_date: @date2, total_duty: 500, total_fees: 550)
-
-          #excluded from totals
-          @ent6 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '95711284263', release_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
-          @ent7 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '36248211759', release_date: @release_date, duty_due_date: date3, total_duty: 700, total_fees: 750)
-          @ent8 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '63422811579', release_date: @release_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
-          @ent9 = Factory(:entry, importer_id: @non_master_company.id, entry_port_code: port1.schedule_d_code, entry_number: '23821946175', release_date: @release_date, duty_due_date: @date1, total_duty: 900, total_fees: 950)
-        end
-
-      describe "create_linked_digests" do
-        it "should populate an array with digests of an importer's linked companies" do
-          allow(@company).to receive(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
-          expect(OpenChain::ActivitySummary::DutyDetail).to receive(:create_digest) { |u, c| {company_name: c.name} }.exactly(3).times
-          expect(OpenChain::ActivitySummary::DutyDetail.create_linked_digests(@user, @company)).to eq [{company_name: "RiteChoys"}, {company_name: "Super Pow"}, {company_name: "Walshop"}]
-        end
-      end
-
-      describe "create_digest" do
-        it "should delegate to build and get_entries" do
-          u = double('user')
-          c = double('company')
-          e = double('entries')
-          expect(OpenChain::ActivitySummary::DutyDetail).to receive(:get_entries).with(u, c).and_return e
-          expect(OpenChain::ActivitySummary::DutyDetail).to receive(:build_digest).with(e).and_return 'abc'
-          expect(OpenChain::ActivitySummary::DutyDetail.create_digest(u, c)).to eq 'abc'
-        end
-      end
-
-      describe "build_digest" do
-        it "should return empty if entries are empty" do
-          allow(@company).to receive(:view_vendors?).with(@user) {true}
-          allow(@user).to receive(:view_entries?) {true}
-
-          entries = []
-          expect(OpenChain::ActivitySummary::DutyDetail.build_digest(entries)).to be nil
-        end
-
-        it "should return digest for multiple dates, ports" do
-          allow(@company).to receive(:view_vendors?) {true}
-          allow(@user).to receive(:view_entries?) {true}
-
-          entries = OpenChain::ActivitySummary::DutyDetail.get_entries @user, @company
-          digest = {:company_name=>"Acme",
-                    :company_report=>{:date_hsh=>{@date1=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300,
-                                                                                  :port_total_fees=>450,
-                                                                                  :port_total_duty_and_fees=>750,
-                                                                                  :port_entry_count=> 2,
-                                                                                  :entries=>[{ent_id: @ent1.id, ent_entry_number: "12345678912", ent_entry_type: nil, ent_port_name: "Boston",
-                                                                                              ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1,
-                                                                                              ent_total_fees: 200, ent_total_duty: 100, ent_total_duty_and_fees: 300},
-                                                                                             {ent_id: @ent2.id, ent_entry_number: "21987654321", ent_entry_type: nil, ent_port_name: "Boston",
-                                                                                              ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date1,
-                                                                                              ent_total_fees: 250, ent_total_duty: 200, ent_total_duty_and_fees: 450}]}},
-                                                          :date_total_duty=>300,
-                                                          :date_total_fees=>450,
-                                                          :date_total_duty_and_fees=>750,
-                                                          :date_entry_count=>2},
-                                                 @date2=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300,
-                                                                                 :port_total_fees=>350,
-                                                                                 :port_total_duty_and_fees=>650,
-                                                                                 :port_entry_count=> 1,
-                                                                                 :entries=>[{ent_id: @ent3.id, ent_entry_number: "53471126928", ent_entry_type: nil, ent_port_name: "Boston",
-                                                                                             ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2,
-                                                                                             ent_total_fees: 350, ent_total_duty: 300, ent_total_duty_and_fees: 650}]},
-                                                                       "New York"=>{:port_total_duty=>900,
-                                                                                    :port_total_fees=>1000,
-                                                                                    :port_total_duty_and_fees=>1900,
-                                                                                    :port_entry_count=>2,
-                                                                                    :entries=>[{ent_id: @ent4.id, ent_entry_number: "14215923867", ent_entry_type: nil, ent_port_name: "New York",
-                                                                                                ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2,
-                                                                                                ent_total_fees: 450, ent_total_duty: 400, ent_total_duty_and_fees: 850},
-                                                                                               {ent_id: @ent5.id, ent_entry_number: "59172148623", ent_entry_type: nil, ent_port_name: "New York",
-                                                                                                ent_release_date: @release_date, ent_customer_references: nil, ent_duty_due_date: @date2,
-                                                                                                ent_total_fees: 550, ent_total_duty: 500, ent_total_duty_and_fees: 1050}]}},
-                                                          :date_total_duty=>1200,
-                                                          :date_total_fees=>1350,
-                                                          :date_total_duty_and_fees=>2550,
-                                                          :date_entry_count=> 3}},
-                                     :company_entry_count=> 5,
-                                     :company_total_duty=>1500,
-                                     :company_total_fees=>1800,
-                                     :company_total_duty_and_fees=>3300}}
-          expect(OpenChain::ActivitySummary::DutyDetail.build_digest(entries)).to eq digest
-        end
-      end
-
-      describe "get_entries" do
-
-        it "should return results only for specified company" do
-          allow(@company).to receive(:can_view?).with(@user).and_return(true)
-          allow(@user).to receive(:view_entries?).and_return(true)
-
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company).where("importer_id = ? ", @non_master_company.id)).to be_empty
-        end
-
-        it "should return empty if user cannot view entries" do
-          allow(@company).to receive(:can_view?).with(@user).and_return(true)
-
-          allow(@user).to receive(:view_entries?).and_return(false)
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company)).to be_empty
-        end
-
-        it "should return empty if user does not have permission to companies provided" do
-          allow(@user).to receive(:view_entries?) {true}
-
-          allow(@company).to receive(:can_view?).with(@user).and_return(false)
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company)).to be_empty
-        end
-
-        it "should not return unreleased entries" do
-          allow(@company).to receive(:can_view?).with(@user).and_return(true)
-          allow(@user).to receive(:view_entries?).and_return(true)
-
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company).where("release_date IS NULL")).to be_empty
-        end
-
-        it "should not return where duty_due_date is before today" do
-          allow(@company).to receive(:can_view?).with(@user).and_return(true)
-          allow(@user).to receive(:view_entries?).and_return(true)
-
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company).where("duty_due_date < ?", Date.today)).to be_empty
-        end
-
-        it "should not return items on monthly statement" do
-          allow(@company).to receive(:can_view?).with(@user).and_return(true)
-          allow(@user).to receive(:view_entries?).and_return(true)
-
-          expect(OpenChain::ActivitySummary::DutyDetail.get_entries(@user, @company).where("monthly_statement_due_date IS NOT NULL")).to be_empty
-        end
-
-      end
-
+  describe "create_by_release_range_download" do
+    it "creates spreadsheet of summary detail" do
+      stub_master_setup
+      date1 = ActiveSupport::TimeZone["UTC"].parse('2013-12-25')
+      date2 = ActiveSupport::TimeZone["UTC"].parse('2014-01-01')
+      Factory(:entry, importer: (imp = Factory :company, name: "Acme"), import_country: @us, entry_filed_date: date1, first_release_received_date: date2, 
+              entry_number: "ENTRY NUM", entered_value: 10, customer_references: "CUST REF", po_numbers: "PO NUMs", customer_name: "CUST NAME", source_system: 'Alliance')
+      gen = OpenChain::ActivitySummary.generator_for_country "US"
+      f = gen.create_by_release_range_download imp.id, '1w', ActiveSupport::TimeZone["UTC"].parse('2014-01-05')
+      wb = Spreadsheet.open f.path
+      sheet = wb.worksheets[0]
+      
+      expect(sheet.name).to eq "Released In The Last 7 Days"
+      expect(sheet.rows.count).to eq 2
+      expect(sheet.row(0)).to eq ["Entry Number","Entry Filed Date","First Release Received Date","Total Entered Value","Customer References","PO Numbers","Customer Name", "Link"]
+      # rows test split up because otherwise dates aren't evaluated correctly
+      expect(sheet.row(1)[0]).to eq "ENTRY NUM"
+      expect(sheet.row(1)[1]).to eq date1
+      expect(sheet.row(1)[2]).to eq date2
+      expect(sheet.row(1)[3..7]).to eq [10, "CUST REF", "PO NUMs", "CUST NAME", "Web View"]
     end
+  end
+
+  describe "DutyDetail" do
+    before(:each) do
+      @date1 = Date.new(2018,2,15)
+      @date2 = @date1 + 15
+      date3 = @date1 - 10
+      @first_release_received_date = @date1.to_datetime
+
+      @company = Factory(:company, name: 'Acme', master: true)
+      @non_master_company = Factory(:company, name: "Emca")
+      @user = Factory(:user, company: @company)
+      port1 = Factory(:port, schedule_d_code: '1234', name: 'Boston')
+      port2 = Factory(:port, schedule_d_code: '4321', name: 'New York')
+
+      #included in totals
+      @ent1 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '12345678912', first_release_received_date: @first_release_received_date, duty_due_date: @date1, total_duty: 100, total_fees: 200)
+      @ent2 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '21987654321', first_release_received_date: @first_release_received_date, duty_due_date: @date1, total_duty: 200, total_fees: 250)
+      @ent3 = Factory(:entry, importer_id: @company.id, entry_port_code: port1.schedule_d_code, entry_number: '53471126928', first_release_received_date: @first_release_received_date, duty_due_date: @date2, total_duty: 300, total_fees: 350)
+      @ent4 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '14215923867', first_release_received_date: @first_release_received_date, duty_due_date: @date2, total_duty: 400, total_fees: 450)
+      @ent5 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '59172148623', first_release_received_date: @first_release_received_date, duty_due_date: @date2, total_duty: 500, total_fees: 550)
+
+      #excluded from totals
+      @ent6 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '95711284263', first_release_received_date: nil, duty_due_date: @date2, total_duty: 600, total_fees: 650)
+      @ent7 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '36248211759', first_release_received_date: @first_release_received_date, duty_due_date: date3, total_duty: 700, total_fees: 750)
+      @ent8 = Factory(:entry, importer_id: @company.id, entry_port_code: port2.schedule_d_code, entry_number: '63422811579', first_release_received_date: @first_release_received_date, duty_due_date: @date1, monthly_statement_due_date: @date2, total_duty: 800, total_fees: 850)
+      @ent9 = Factory(:entry, importer_id: @non_master_company.id, entry_port_code: port1.schedule_d_code, entry_number: '23821946175', first_release_received_date: @first_release_received_date, duty_due_date: @date1, total_duty: 900, total_fees: 950)
+    end
+
+    let(:generator) { OpenChain::ActivitySummary.generator_for_country "US" }
+
+
+    describe "create_linked_digests" do
+      it "should populate an array with digests of an importer's linked companies" do
+        allow(@company).to receive(:linked_companies) {[Company.new(name: 'RiteChoys', importer: true), Company.new(name: 'Super Pow', importer: true), Company.new(name: 'Walshop', importer: true)]}
+        expect(generator).to receive(:create_digest) { |u, c| {company_name: c.name} }.exactly(3).times
+        expect(generator.create_linked_digests(@user, @company)).to eq [{company_name: "RiteChoys"}, {company_name: "Super Pow"}, {company_name: "Walshop"}]
+      end
+    end
+
+    describe "create_digest" do
+      it "should delegate to build and get_entries" do
+        u = double('user')
+        c = double('company')
+        e = double('entries')
+        expect(generator).to receive(:get_entries).with(u, c).and_return e
+        expect(generator).to receive(:build_digest).with(e).and_return 'abc'
+        expect(generator.create_digest(u, c)).to eq 'abc'
+      end
+    end
+
+    describe "build_digest" do
+      it "should return empty if entries are empty" do
+        allow(@company).to receive(:view_vendors?).with(@user) {true}
+        allow(@user).to receive(:view_entries?) {true}
+
+        entries = []
+        expect(generator.build_digest(entries)).to be nil
+      end
+
+      it "should return digest for multiple dates, ports" do
+        allow(@company).to receive(:view_vendors?) {true}
+        allow(@user).to receive(:view_entries?) {true}
+
+        digest = {:company_name=>"Acme",
+                  :company_report=>{:date_hsh=>{@date1=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300,
+                                                                                :port_total_fees=>450,
+                                                                                :port_total_duty_and_fees=>750,
+                                                                                :port_entry_count=> 2,
+                                                                                :entries=>[{ent_id: @ent1.id, ent_entry_number: "12345678912", ent_entry_type: nil, ent_port_name: "Boston",
+                                                                                            ent_first_release_received_date: @first_release_received_date, ent_customer_references: nil, ent_duty_due_date: @date1,
+                                                                                            ent_total_fees: 200, ent_total_duty: 100, ent_total_duty_and_fees: 300},
+                                                                                           {ent_id: @ent2.id, ent_entry_number: "21987654321", ent_entry_type: nil, ent_port_name: "Boston",
+                                                                                            ent_first_release_received_date: @first_release_received_date, ent_customer_references: nil, ent_duty_due_date: @date1,
+                                                                                            ent_total_fees: 250, ent_total_duty: 200, ent_total_duty_and_fees: 450}]}},
+                                                        :date_total_duty=>300,
+                                                        :date_total_fees=>450,
+                                                        :date_total_duty_and_fees=>750,
+                                                        :date_entry_count=>2},
+                                               @date2=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300,
+                                                                               :port_total_fees=>350,
+                                                                               :port_total_duty_and_fees=>650,
+                                                                               :port_entry_count=> 1,
+                                                                               :entries=>[{ent_id: @ent3.id, ent_entry_number: "53471126928", ent_entry_type: nil, ent_port_name: "Boston",
+                                                                                           ent_first_release_received_date: @first_release_received_date, ent_customer_references: nil, ent_duty_due_date: @date2,
+                                                                                           ent_total_fees: 350, ent_total_duty: 300, ent_total_duty_and_fees: 650}]},
+                                                                     "New York"=>{:port_total_duty=>900,
+                                                                                  :port_total_fees=>1000,
+                                                                                  :port_total_duty_and_fees=>1900,
+                                                                                  :port_entry_count=>2,
+                                                                                  :entries=>[{ent_id: @ent4.id, ent_entry_number: "14215923867", ent_entry_type: nil, ent_port_name: "New York",
+                                                                                              ent_first_release_received_date: @first_release_received_date, ent_customer_references: nil, ent_duty_due_date: @date2,
+                                                                                              ent_total_fees: 450, ent_total_duty: 400, ent_total_duty_and_fees: 850},
+                                                                                             {ent_id: @ent5.id, ent_entry_number: "59172148623", ent_entry_type: nil, ent_port_name: "New York",
+                                                                                              ent_first_release_received_date: @first_release_received_date, ent_customer_references: nil, ent_duty_due_date: @date2,
+                                                                                              ent_total_fees: 550, ent_total_duty: 500, ent_total_duty_and_fees: 1050}]}},
+                                                        :date_total_duty=>1200,
+                                                        :date_total_fees=>1350,
+                                                        :date_total_duty_and_fees=>2550,
+                                                        :date_entry_count=> 3}},
+                                   :company_entry_count=> 5,
+                                   :company_total_duty=>1500,
+                                   :company_total_fees=>1800,
+                                   :company_total_duty_and_fees=>3300}}
+
+        Timecop.freeze(@date1.to_datetime) do 
+          entries = generator.get_entries @user, @company
+          expect(generator.build_digest(entries)).to eq digest
+        end
+      end
+    end
+
+    describe "get_entries" do
+
+      it "should return results only for specified company" do
+        allow(@company).to receive(:can_view?).with(@user).and_return(true)
+        allow(@user).to receive(:view_entries?).and_return(true)
+
+        expect(generator.get_entries(@user, @company).where("importer_id = ? ", @non_master_company.id)).to be_empty
+      end
+
+      it "should return empty if user cannot view entries" do
+        allow(@company).to receive(:can_view?).with(@user).and_return(true)
+
+        allow(@user).to receive(:view_entries?).and_return(false)
+        expect(generator.get_entries(@user, @company)).to be_empty
+      end
+
+      it "should return empty if user does not have permission to companies provided" do
+        allow(@user).to receive(:view_entries?) {true}
+
+        allow(@company).to receive(:can_view?).with(@user).and_return(false)
+        expect(generator.get_entries(@user, @company)).to be_empty
+      end
+
+      it "should not return unreleased entries" do
+        allow(@company).to receive(:can_view?).with(@user).and_return(true)
+        allow(@user).to receive(:view_entries?).and_return(true)
+
+        expect(generator.get_entries(@user, @company).where("first_release_received_date IS NULL")).to be_empty
+      end
+
+      it "should not return where duty_due_date is before today" do
+        allow(@company).to receive(:can_view?).with(@user).and_return(true)
+        allow(@user).to receive(:view_entries?).and_return(true)
+
+        expect(generator.get_entries(@user, @company).where("duty_due_date < ?", Date.today)).to be_empty
+      end
+
+      it "should not return items on monthly statement" do
+        allow(@company).to receive(:can_view?).with(@user).and_return(true)
+        allow(@user).to receive(:view_entries?).and_return(true)
+
+        expect(generator.get_entries(@user, @company).where("monthly_statement_due_date IS NOT NULL")).to be_empty
+      end
+    end
+  end
+
+  describe OpenChain::ActivitySummary::EntrySummaryDownload do
+    let(:summary) do
+      {'activity_summary'=> {'summary' => {'1w' => {'count' => 1, 'duty' => 2, 'fees' => 3, 'gst' => 3.5, 'duty_gst' => 3.6, 'entered' => 4, 'invoiced' => 5, 'units' => 6},
+                                           '4w' => {'count' => 7, 'duty' => 8, 'fees' => 9, 'gst' => 9.5, 'duty_gst' => 9.6, 'entered' => 10, 'invoiced' => 11, 'units' => 12},
+                                           '4wa' => {'count' => 13, 'duty' => 14, 'fees' => 15, 'gst' => 15.5, 'duty_gst' => 15.6, 'entered' => 16, 'invoiced' => 17, 'units' => 18},
+                                           '4wo' => {'count' => 19, 'duty' => 20, 'fees' => 21, 'gst' => 21.5, 'duty_gst' => 21.6, 'entered' => 22, 'invoiced' => 23, 'units' => 24},
+                                           'holds' => {'count' => 25, 'duty' => 26, 'fees' => 27, 'gst' => 27.5, 'duty_gst' => 27.6, 'entered' => 28, 'invoiced' => 29, 'units' => 30},
+                                           'open' => {'count' => 31, 'duty' => 32, 'fees' => 33, 'gst' => 33.5, 'duty_gst' => 33.6, 'entered' => 34, 'invoiced' => 35, 'units' => 36},
+                                           'ytd' => {'count' => 37, 'duty' => 38, 'fees' => 39, 'gst' => 39.5, 'duty_gst' => 39.6, 'entered' => 40, 'invoiced' => 41, 'units' => 42}},
+                             'pms' => [{'importer_name' => 'Super Pow', 'due' => 43, 'paid' => 44, 'amount' => 45}],
+                             'by_port' => [{'name'=>'NYC','1w'=> 46,'4w'=> 47,'open'=> 48}],
+                             'by_hts' => [{'name'=>'chpt','1w'=> 49,'4w'=> 50,'open'=> 51}],
+                             'vendors_ytd' => [{'name'=>'ACME','entered'=> 52}],
+                             'ports_ytd' => [{'name'=>'LA', 'count'=> 53}]}}
+    end
+
+    let(:imp)  { Factory(:company, system_code: "SYSCODE", name: "Konvenientz") }
+    let(:user) { Factory(:user, company: imp, time_zone: "Central Time (US & Canada)")}
+
+    describe "permission?" do
+      it "allows users who can view entries for the importer" do
+        expect(Entry).to receive(:can_view_importer?).with(imp, user).and_return true
+        expect(described_class.permission? user, imp.id).to eq true
+      end
+      
+      it "blocks users who can't view entries for the importer" do
+        expect(Entry).to receive(:can_view_importer?).with(imp, user).and_return false
+        expect(described_class.permission? user, imp.id).to eq false
+      end
+    end
+
+    describe "find_company" do
+      before { imp }
+
+      it "returns company identified by system_code if it exists" do
+        expect(described_class.find_company "iso_code" => "US", 'system_code' => "SYSCODE").to eq imp
+      end
+
+      context "with missing system_code" do
+        it "returns company identified by alliance number for 'US' iso code" do
+          imp.update_attributes! system_code: nil, alliance_customer_number: "ALLIANCE"
+          expect(described_class.find_company "iso_code" => "US", "alliance_customer_number" => "ALLIANCE").to eq imp
+        end
+
+        it "returns company identified by fenix number for 'CA' iso code" do
+          imp.update_attributes! system_code: nil, fenix_customer_number: "FENIX"
+          expect(described_class.find_company "iso_code" => "US", "fenix_customer_number" => "FENIX").to eq imp
+        end
+      end
+    end
+
+    describe "run_report" do
+      it "creates US spreadsheet with periodic monthly statement" do
+        stub_master_setup
+        expect(OpenChain::ActivitySummary).to receive(:generate_us_entry_summary).with(imp.id).and_return summary
+        date = DateTime.new(2018,3,15)
+        file = nil
+        Timecop.freeze(date) { file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'US' }
+        wb = Spreadsheet.open file.path
+        sheet = wb.worksheets[0]
+          
+        expect(sheet.name).to eq "Konvenientz Summary"
+        expect(sheet.row(0)).to eq ["US Entry Activity"]
+        expect(sheet.row(1)[0..1]).to eq ["Date", DateTime.new(2018,3,14,19,00)]
+        expect(sheet.row(2)).to eq ["Customer Number", "SYSCODE"]
+        expect(sheet.row(3)).to eq ["View Summary in Real Time", "Link"]
+        expect(sheet.row(6)).to eq ["Summary",nil,nil,nil,nil,nil,nil]
+        expect(sheet.row(7)).to eq [nil, "# of Entries", "Duty", "Fees", "Entered Value", "Invoiced Value", "Units"]
+        expect(sheet.row(8)).to eq ["Released Last 7 Days", 1,2,3,4,5,6]
+        expect(sheet.row(9)).to eq ["Released Last 28 Days", 7,8,9,10,11,12]
+        expect(sheet.row(10)).to eq ["Filed / Not Released", 31,32,33,34,35,36]
+        expect(sheet.row(11)).to eq ["Entries On Hold", 25,26,27,28,29,30]
+        # column 1
+        expect(sheet.row(14)[0..3]).to eq ["Periodic Monthly Statement",nil,nil,nil]
+        expect(sheet.row(15)[0..3]).to eq ["Company", "Due", "Paid", "Amount"]
+        expect(sheet.row(16)[0..3]).to eq ["Super Pow", 43,44,45]
+        expect(sheet.row(19)[0..3]).to eq ["Entry Breakouts", nil,nil,nil]
+        expect(sheet.row(20)[0..3]).to eq ["Entries by Port", nil,nil,nil]
+        expect(sheet.row(21)[0..3]).to eq ["Port", "1 Week", "4 Weeks", "Open"]
+        expect(sheet.row(22)[0..3]).to eq ["NYC", 46,47,48]
+        expect(sheet.row(24)[0..3]).to eq ["Lines by Chapter", nil,nil,nil]
+        expect(sheet.row(25)[0..3]).to eq ["Chapter", "1 Week", "4 Weeks", "Open"]
+        expect(sheet.row(26)[0..3]).to eq ["chpt", 49,50,51]
+        # column 2
+        expect(sheet.row(14)[5..6]).to eq ["Released Year To Date", nil]
+        expect(sheet.row(15)[5..6]).to eq ["Summary", nil]
+        expect(sheet.row(16)[5..6]).to eq ["Entries", 37]
+        expect(sheet.row(17)[5..6]).to eq ["Duty", 38]
+        expect(sheet.row(18)[5..6]).to eq ["Fees", 39]
+        expect(sheet.row(19)[5..6]).to eq ["Entered Value", 40]
+        expect(sheet.row(20)[5..6]).to eq ["Invoiced Value", 41]
+        expect(sheet.row(21)[5..6]).to eq ["Units", 42]
+        expect(sheet.row(23)[5..6]).to eq ["Top 5 Vendors", nil]
+        expect(sheet.row(24)[5..6]).to eq [nil, "Entered Value"]
+        expect(sheet.row(25)[5..6]).to eq ["ACME", 52]
+        expect(sheet.row(27)[5..6]).to eq ["Ports", nil]
+        expect(sheet.row(28)[5..6]).to eq [nil, "Shipments"]
+        expect(sheet.row(29)[5..6]).to eq ["LA", 53]        
+        
+        file.close
+      end
+
+      it "creates US spreadsheet with unpaid duty section" do
+        stub_master_setup
+        summary['activity_summary'].delete('pms')
+        summary['activity_summary']['unpaid_duty'] = [{'customer_name' => 'RiteChoys', 'total_duty' => 54, 'total_fees' => 55, 'total_duty_and_fees' => 56}]
+        expect(OpenChain::ActivitySummary).to receive(:generate_us_entry_summary).with(imp.id).and_return summary
+        file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'US'
+        wb = Spreadsheet.open file.path
+        sheet = wb.worksheets[0]
+        
+        expect(sheet.row(14)[0..3]).to eq ["Unpaid Duty",nil,nil,nil]
+        expect(sheet.row(15)[0..3]).to eq ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"]
+        expect(sheet.row(16)[0..3]).to eq ["RITECHOYS", 54,55,56]
+        
+        file.close
+      end
+
+      it "creates CA spreadsheet" do
+        stub_master_setup
+        summary['activity_summary'].delete('pms')
+        summary['activity_summary']['k84'] = [{'importer_name' => 'Walshop', 'due' => 57, 'amount' => 58}]
+        expect(OpenChain::ActivitySummary).to receive(:generate_ca_entry_summary).with(imp.id).and_return summary
+        file = file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'CA'
+        wb = Spreadsheet.open file.path
+        sheet = wb.worksheets[0]
+
+        expect(sheet.row(0)).to eq ["CA Entry Activity"]
+        expect(sheet.row(7)).to eq [nil, '# of Entries', 'Duty', 'GST', 'Duty/GST', 'Entered Value', 'Invoiced Value', 'Units']
+        expect(sheet.row(8)).to eq ["Released Last 7 Days", 1,2,3.5,3.6,4,5,6]
+        expect(sheet.row(9)).to eq ["Released Last 28 Days", 7,8,9.5,9.6,10,11,12]
+        expect(sheet.row(10)).to eq ["Filed / Not Released", 31,32,33.5,33.6,34,35,36]
+        expect(sheet.row(11)).to eq ["Entries On Hold", 25,26,27.5,27.6,28,29,30]
+        # column 1 (where different from US)
+        expect(sheet.row(14)[0..2]).to eq ["Estimated K84 Statement",nil,nil]
+        expect(sheet.row(15)[0..2]).to eq ["Name", "Due", "Amount"]
+        expect(sheet.row(16)[0..2]).to eq ["Walshop", 57,58,]
+        # column 2
+        expect(sheet.row(14)[6..7]).to eq ["Released Year To Date", nil]
+        expect(sheet.row(15)[6..7]).to eq ["Summary", nil]
+        expect(sheet.row(16)[6..7]).to eq ["Entries", 37]
+        expect(sheet.row(17)[6..7]).to eq ["Duty", 38]
+        expect(sheet.row(18)[6..7]).to eq ["GST", 39.5]
+        expect(sheet.row(19)[6..7]).to eq ["Duty/GST", 39.6]
+        expect(sheet.row(20)[6..7]).to eq ["Entered Value", 40]
+        expect(sheet.row(21)[6..7]).to eq ["Invoiced Value", 41]
+        expect(sheet.row(22)[6..7]).to eq ["Units", 42]
+        expect(sheet.row(24)[6..7]).to eq ["Top 5 Vendors", nil]
+        expect(sheet.row(25)[6..7]).to eq [nil, "Entered Value"]
+        expect(sheet.row(26)[6..7]).to eq ["ACME", 52]
+        expect(sheet.row(28)[6..7]).to eq ["Ports", nil]
+        expect(sheet.row(29)[6..7]).to eq [nil, "Shipments"]
+        expect(sheet.row(30)[6..7]).to eq ["LA", 53]        
+
+        file.close
+      end
+    end
+
+    describe "run_schedulable" do
+      it "creates and emails spreadsheet" do
+        stub_master_setup
+        now = DateTime.new(2018,3,15)
+        Timecop.freeze(now) { described_class.run_schedulable('system_code' => imp.system_code, 'iso_code' => 'US', 'email' => 'tufnel@stonehenge.biz') }
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq ['tufnel@stonehenge.biz']
+        expect(mail.subject).to eq "Konvenientz US entry summary for 2018-03-14"
+        expect(mail.body.raw_source).to match(/Konvenientz US entry summary for 2018-03-14 is attached./)
+        att = mail.attachments['Konvenientz_entry_detail.xls']
+        Tempfile.open("temp") do |t|
+          t.binmode
+          t << att.read
+          t.flush
+          wb = Spreadsheet.open t.path
+          sheet = wb.worksheets[0]
+          expect(sheet.row(0)).to eq ["US Entry Activity"]
+        end
+      end
+    end
+  end
 
 end
