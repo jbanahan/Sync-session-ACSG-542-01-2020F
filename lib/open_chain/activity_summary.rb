@@ -368,8 +368,8 @@ module OpenChain; class ActivitySummary
       select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name
 from entries 
 inner join companies on companies.id = entries.importer_id
-where k84_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
-and k84_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
+where k84_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) )
+and k84_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) )
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, k84_due_date
@@ -426,7 +426,7 @@ order by importer_id, k84_due_date desc"
                    "Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees")
                   .where("entries.importer_id = #{importer.id}")
                   .where("#{release_date_mf.field_name} IS NOT NULL")
-                  .where("duty_due_date >= ?", base_date_utc)
+                  .where("duty_due_date >= ?", base_date_utc.to_date)
                   .where(monthly_statement_due_date: nil)
                   .group("customer_number")
     end
@@ -439,8 +439,8 @@ order by importer_id, k84_due_date desc"
       importer_id, companies.name
 from entries 
 inner join companies on companies.id = entries.importer_id
-where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
-and monthly_statement_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
+where monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH)) 
+and monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH)) 
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, monthly_statement_due_date, monthly_statement_paid_date

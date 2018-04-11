@@ -40,6 +40,7 @@ class EntriesController < ApplicationController
     action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
       # We've already established the user can view the importer so we don't have to further secure the Entry query at the user level
       @entries = Entry.where(entry_port_code:params[:port_code]).where(Entry.search_where_by_company_id(@imp.id))
+      @date_uid = OpenChain::ActivitySummary.generator_for_country(params[:iso_code]).release_date_mf.uid
     }
   end
   def by_release_range

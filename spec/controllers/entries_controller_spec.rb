@@ -440,10 +440,11 @@ describe EntriesController do
 
   describe "by_entry_port" do
     it "validates access and creates an entry port query" do
-      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
+      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id, iso_code: 'US'
 
       expect(response).to be_success
-      expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
+      expect(assigns(:entries).to_sql).to match(/SELECT.*FROM/i)
+      expect(assigns(:date_uid)).to eq :ent_first_release_received_date
     end
 
     it "secures action" do
