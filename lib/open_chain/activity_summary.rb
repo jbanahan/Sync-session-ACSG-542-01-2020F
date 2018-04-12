@@ -109,7 +109,7 @@ module OpenChain; class ActivitySummary
       select_clause = mf_uids.map { |uid| mf = ModelField.find_by_uid(uid); "#{mf.field_name} AS \"#{mf.label}\"" }.push("id AS \"Link\"").join(", ")
       qry = create_by_release_range_query(company_id, range, base_date).select(select_clause).to_sql
       wb, sheet = XlsMaker.create_workbook_and_sheet DETAILS[range]
-      dt_lambda = datetime_translation_lambda(base_date.zone)
+      dt_lambda = datetime_translation_lambda(base_date.time_zone.name)
       table_from_query sheet, qry, {1 => dt_lambda, 2 => dt_lambda, "Link" => weblink_translation_lambda(CoreModule::ENTRY)}
       workbook_to_tempfile wb, "temp", file_name: "#{Company.find(company_id).name}_entry_detail.xls"
     end
@@ -287,8 +287,9 @@ module OpenChain; class ActivitySummary
       "(#{release_date_mf.field_name} > DATE_ADD('#{base_date_utc}',INTERVAL -4 WEEK) AND #{release_date_mf.field_name} < '#{end_of_day(base_date_utc)}')"
     end
     # generate a where clause for open entries that are not released
+    # "...AND entries.release_date IS NULL" is needed to prevent US entries released before we introduced first_release_received_date from being included.
     def not_released_clause base_date_utc
-      "(entries.#{release_date_mf.field_name} is null OR entries.#{release_date_mf.field_name} > '#{base_date_utc}')"
+      "((entries.#{release_date_mf.field_name} IS NULL AND entries.release_date IS NULL) OR entries.#{release_date_mf.field_name} > '#{base_date_utc}')"
     end
     # genereate a where clause for Released Year to Date
     def ytd_clause base_date_utc
@@ -567,17 +568,19 @@ order by importer_id, monthly_statement_due_date desc"
 
     def convert_to_spreadsheet summary
       imp_name = importer.name
-      wb, sheet = XlsMaker.create_workbook_and_sheet "#{imp_name} Summary"
-      write_xls sheet, summary
+      wb = XlsMaker.create_workbook "#{imp_name} Summary"
+      write_xls wb, summary
       workbook_to_tempfile wb, "temp", file_name: "#{imp_name}_entry_detail.xls"
     end
 
-    def write_xls sheet, summary
+    def write_xls wb, summary
+      XlsMaker.add_vfi_color_to_workbook wb
+      sheet = wb.worksheet 0
       write_header sheet
       write_summary_header sheet
       write_summary_body sheet, summary['summary']
       # FIRST COLUMN
-      self.row_num = 11
+      self.row_num = 12
       if us?
         write_pms sheet, summary['pms'], (self.row_num += 3) if summary['pms'].present?
         write_unpaid_duty sheet, summary['unpaid_duty'], (self.row_num += 3) if summary['unpaid_duty'].present?
@@ -586,30 +589,31 @@ order by importer_id, monthly_statement_due_date desc"
       end
       write_breakouts sheet, summary, (self.row_num += 3)
       # SECOND COLUMN
-      self.row_num = 11
+      self.row_num = 12
       write_released_ytd sheet, summary, (self.row_num += 3)
       XlsMaker.set_column_widths sheet, [40, 20, 20, 20, 20, 20, 20,20]
     end
 
     def write_header sheet
-      XlsMaker.insert_cell_value sheet, 0, 0, "#{iso_code} Entry Activity", [], format: FORMATS[:bold]
-      XlsMaker.insert_body_row sheet,   1, 0, ["Date", now], [], false, formats: [nil, XlsMaker::DATE_TIME_FORMAT]
-      XlsMaker.insert_body_row sheet,   2, 0, ["Customer Number", importer.system_code.presence || (us? ? importer.alliance_customer_number : importer.fenix_customer_number)]
-      XlsMaker.insert_body_row sheet,   3, 0, ["View Summary in Real Time", XlsMaker.create_link_cell(activity_summary_url, "Link")]
+      XlsMaker.insert_body_row sheet, 0, 0, ["Vandegrift VFI Track Insights"] + Array.new(us? ? 6 : 7, nil), [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:blue_header])
+      XlsMaker.insert_cell_value sheet, 1, 0, "#{iso_code} Entry Activity", [], format: FORMATS[:bold]
+      XlsMaker.insert_body_row sheet,   2, 0, ["Date", now], [], false, formats: [nil, XlsMaker::DATE_TIME_FORMAT]
+      XlsMaker.insert_body_row sheet,   3, 0, ["Customer Number", importer.system_code.presence || (us? ? importer.alliance_customer_number : importer.fenix_customer_number)]
+      XlsMaker.insert_body_row sheet,   4, 0, ["View Summary in Real Time", XlsMaker.create_link_cell(activity_summary_url, "Link")]
     end
 
     def write_summary_header sheet
       us_headers = ["# of Entries", "Duty", "Fees", "Entered Value", "Invoiced Value", "Units"]
       ca_headers = ["# of Entries", "Duty", "GST", "Duty/GST", "Entered Value", "Invoiced Value", "Units"]
-      XlsMaker.insert_body_row sheet, 6, 0, ["Summary"] + Array.new(us? ? 6 : 7, nil), [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:blue_header])
-      XlsMaker.insert_body_row sheet, 7, 1, us? ? us_headers : ca_headers, [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:bold])
+      XlsMaker.insert_body_row sheet, 7, 0, ["Summary"] + Array.new(us? ? 6 : 7, nil), [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:blue_header])
+      XlsMaker.insert_body_row sheet, 8, 1, us? ? us_headers : ca_headers, [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:bold])
     end
 
     def write_summary_body sheet, sum
-      XlsMaker.insert_body_row sheet,  8,  0, summary_fields("Released Last 7 Days", sum['1w']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet,  9,  0, summary_fields("Released Last 28 Days", sum['4w']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet, 10,  0, summary_fields("Filed / Not Released", sum['open']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet, 11,  0, summary_fields("Entries On Hold", sum['holds']), [], false, formats: summary_formats
+      XlsMaker.insert_body_row sheet,  9,  0, summary_fields("Released Last 7 Days", sum['1w']), [], false, formats: summary_formats
+      XlsMaker.insert_body_row sheet, 10,  0, summary_fields("Released Last 28 Days", sum['4w']), [], false, formats: summary_formats
+      XlsMaker.insert_body_row sheet, 11,  0, summary_fields("Filed / Not Released", sum['open']), [], false, formats: summary_formats
+      XlsMaker.insert_body_row sheet, 12,  0, summary_fields("Entries On Hold", sum['holds']), [], false, formats: summary_formats
     end
 
     def summary_fields heading, row

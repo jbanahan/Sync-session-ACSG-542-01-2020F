@@ -172,7 +172,6 @@ class XlsMaker
     # First 41 param means we're mapping this to xl_color_41 in spreadsheet gem
     wb.set_custom_color(41, 98, 187, 243) if wb.palette[41] != [98, 187, 243]
   end
-  private_class_method :add_vfi_color_to_workbook
 
   def self.calc_column_width sheet, col, column_widths, width
     if column_widths[col].nil? || column_widths[col] < width
