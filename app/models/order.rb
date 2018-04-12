@@ -78,6 +78,7 @@ class Order < ActiveRecord::Base
   belongs_to :factory, :class_name=>'Company'
   belongs_to :tpp_survey_response, :class_name=>'SurveyResponse'
   belongs_to :accepted_by, :class_name=>'User'
+  belongs_to :selling_agent, :class_name=>'Company'
 
 	validates :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
@@ -315,8 +316,10 @@ class Order < ActiveRecord::Base
         (user.company_id == self.importer_id) ||
         (user.company_id == self.agent_id) ||
         (user.company_id == self.factory_id) ||
+        (user.company_id == self.selling_agent_id) ||
         user.company.linked_companies.include?(importer) ||
-        user.company.linked_companies.include?(vendor)
+        user.company.linked_companies.include?(vendor) ||
+        user.company.linked_companies.include?(selling_agent)
       )
 	end
 

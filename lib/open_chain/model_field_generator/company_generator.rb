@@ -62,6 +62,9 @@ module OpenChain; module ModelFieldGenerator; module CompanyGenerator
   def make_agent_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, 'agent', 'Agent', 'agent'
   end
+  def make_selling_agent_arrays(rank_start, uid_prefix, table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, 'selling_agent', 'Selling Agent', 'selling_agent'
+  end
   def make_factory_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, 'factory', 'Factory', 'factory'
   end

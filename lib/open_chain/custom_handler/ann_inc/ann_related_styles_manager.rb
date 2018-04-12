@@ -12,17 +12,19 @@ module OpenChain
         # Pass in a style and it's related styles and get back a single clean 
         # object with everything handled properly and the style / related styles
         # in the right place and persisted to the database
-        def self.get_style base_style, missy, petite, tall
-          c = self.new base_style, missy, petite, tall
+        def self.get_style base_style:, missy:, petite:, tall:, short:, plus:
+          c = self.new base_style: base_style, missy: missy, petite: petite, tall: tall, short: short, plus: plus
           p = c.product_to_use c.find_all_styles
         end
         
         # don't call. Use the static get_style method
-        def initialize base_style, missy, petite, tall
+        def initialize base_style:, missy:, petite:, tall:, short:, plus:
           @base = base_style
           @missy = missy
           @petite = petite
           @tall = tall
+          @short = short
+          @plus = plus
           @related_cd = self.class.prep_custom_definitions([:related_styles]).values.first
           @aggregate_defs = self.class.prep_custom_definitions AGGREGATE_FIELDS
           @ac_date_cd = self.class.prep_custom_definitions([:ac_date]).values.first
@@ -37,15 +39,19 @@ module OpenChain
               OR custom_values.text_value LIKE :base_like 
               OR custom_values.text_value LIKE :missy_like 
               OR custom_values.text_value LIKE :petite_like 
-              OR custom_values.text_value LIKE :tall_like",
+              OR custom_values.text_value LIKE :tall_like
+              OR custom_values.text_value LIKE :short_like
+              OR custom_values.text_value LIKE :plus_like",
             {
-              uid:[@base,@missy,@petite,@tall].collect{|b| make_no_match b},
+              uid:[@base,@missy,@petite,@tall,@short,@plus].collect{|b| make_no_match b},
               base_like:"%#{make_no_match @base}%",
               missy_like:"%#{make_no_match @missy}%",
               petite_like:"%#{make_no_match @petite}%",
-              tall_like:"%#{make_no_match @tall}%"
+              tall_like:"%#{make_no_match @tall}%",
+              short_like:"%#{make_no_match @short}%",
+              plus_like: "%#{make_no_match @plus}%"
             }).
-            order('products.updated_at DESC')
+            order('products.updated_at DESC').all
         end
 
         # figure out which style to use as the base for modifications
@@ -136,12 +142,12 @@ module OpenChain
         # return the missy style if it can be figured out, else nil
         def missy_style
           return @missy unless @missy.blank?
-          return @base if !@petite.blank? && !@tall.blank?
+          return @base if !@petite.blank? && !@tall.blank? && !@short.blank? && !@plus.blank?
           nil
         end
 
         def related_styles_value
-          r = [@base,@missy,@petite,@tall].collect {|x| x.blank? ? nil : x}.compact
+          r = [@base,@missy,@petite,@tall,@short,@plus].collect {|x| x.blank? ? nil : x}.compact
           m = missy_style
           if m
             r.delete m

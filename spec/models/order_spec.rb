@@ -365,6 +365,35 @@ describe Order do
   describe "can_view?" do
     let (:order) { Order.new }
 
+    context "selling agent" do
+      before :each do
+        @selling_agent = Factory(:company, selling_agent: true)
+        order.selling_agent = @selling_agent
+        @user = Factory(:user, company: @selling_agent)
+        allow(@user).to receive(:view_orders?).and_return true
+      end
+
+      it "allows a selling agent to view their orders" do
+        expect(order.can_view? @user).to be_truthy
+      end
+
+      it "allows user to view if linked company is selling agent" do
+        order.selling_agent = Factory(:company, selling_agent: true)
+
+        @user.company.linked_company_ids = [order.selling_agent.id]
+        expect(order.can_view? @user).to be_truthy
+      end
+
+      it "allows a selling agent to view their orders" do
+        selling_agent = Factory(:company, selling_agent: true)
+        order.selling_agent = selling_agent
+        u = Factory(:user, company: selling_agent)
+        allow(u).to receive(:view_orders?).and_return true
+
+        expect(order.can_view? u).to be_truthy
+      end
+    end
+
     context "importer" do
       before :each do
         @importer = Factory(:company, importer: true)

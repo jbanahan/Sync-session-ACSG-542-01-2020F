@@ -24,6 +24,7 @@ class AttachmentsController < ApplicationController
           saved = true
           attachable.log_update(current_user) if attachable.respond_to?(:log_update)
           attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)
+          attachable.create_async_snapshot current_user, nil, "Attachment Added: #{att.attached_file_name}" if attachable.respond_to?(:create_async_snapshot)
         else
           errors_to_flash att
         end

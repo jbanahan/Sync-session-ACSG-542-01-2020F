@@ -19,6 +19,7 @@
 #  shipment_id             :integer
 #  updated_at              :datetime         not null
 #  variant_id              :integer
+#  master_bill_of_lading   :string(255)
 #
 # Indexes
 #

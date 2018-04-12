@@ -59,6 +59,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
 
         obj.log_update(current_user) if obj.respond_to?(:log_update)
         obj.attachment_added(attachment) if obj.respond_to?(:attachment_added)
+        obj.create_async_snapshot current_user, nil, "Attachment Added: #{attachment.attached_file_name}" if obj.respond_to?(:create_async_snapshot)
 
         render json: {"attachment" => attachment_view(current_user, attachment)}
       end

@@ -40,6 +40,15 @@ describe AttachmentsController do
         expect(att.attached_file_name).to eq "test.txt"
       end
 
+      it "creates a snapshot" do
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
+        expect(response).to redirect_to prod
+        prod.reload
+        att = prod.attachments.first
+        expect(prod.entity_snapshots.length).to eq(1)
+        expect(prod.entity_snapshots.first.context).to eq "Attachment Added: #{att.attached_file_name}"
+      end
+
       it "errors if no file is given" do
         post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}
         expect(response).to redirect_to request.referrer

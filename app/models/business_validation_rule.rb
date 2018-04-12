@@ -91,7 +91,17 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"},
                 "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lamda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
                 ValidationRuleEntryDoesNotSharePos: {label:"Entry PO Numbers Not Shared"},
-                ValidationRuleEntryReleased: {label: "Entry Not On Hold"}
+                ValidationRuleEntryReleased: {label: "Entry Not On Hold"},
+                'OpenChain::CustomHandler::AnnInc::AnnMpTypeAllDocsValidationRule'.to_sym =>
+                  {
+                    label: 'Ann Vendor MP Type All Docs',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='ann'}
+                  },
+                'OpenChain::CustomHandler::AnnInc::AnnMpTypeUponRequestValidationRule'.to_sym =>
+                  {
+                    label: 'Ann Vendor MP Type Upon Request',
+                    enabled_lambda: lambda {MasterSetup.get.system_code=='ann'}
+                  }
               }
 
   def self.subclasses_array
@@ -140,7 +150,7 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def self.destroy_rule_results rule_id
-    # There's far too many business_validation_rule_results linked to a single rule to be able to cascade and delete in a single transaction (.ie directly 
+    # There's far too many business_validation_rule_results linked to a single rule to be able to cascade and delete in a single transaction (.ie directly
     # via a destroy and a defined dependents destroy in the relation definition).
     # Destroy them in groups of 1000 in their own distinct asynchronous transactions
 
@@ -158,4 +168,7 @@ require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validati
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_first_sale'
 require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line_field_format'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_all_docs_validation_rule'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_upon_request_validation_rule'
+
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'

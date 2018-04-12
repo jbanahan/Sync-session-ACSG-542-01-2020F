@@ -108,5 +108,6 @@ module OpenChain; module ModelFieldDefinition; module OrderFieldDefinition
     add_fields CoreModule::ORDER, make_address_arrays(1000,"ord",'orders','order_from')
     add_fields CoreModule::ORDER, make_comment_arrays(1100,"ord","Order")
     add_fields CoreModule::ORDER, make_attachment_arrays(1200,'ord',CoreModule::ORDER)
+    add_fields CoreModule::ORDER, make_selling_agent_arrays(1300, 'ord', 'orders')
   end
 end; end; end

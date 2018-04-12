@@ -141,6 +141,16 @@ describe Api::V1::AttachmentsController do
       expect(product.attachments.length).to eq 1
     end
 
+    it "creates a snapshot" do
+      post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
+      expect(response).to be_success
+
+      product.reload
+      att = product.attachments.first
+      expect(product.entity_snapshots.length).to eq(1)
+      expect(product.entity_snapshots.first.context).to eq "Attachment Added: #{att.attached_file_name}"
+    end
+
     it "calls log_update and attachment_added if base object responds to those methods" do
       expect_any_instance_of(Product).to receive(:log_update).with(user)
       attachment_id = nil

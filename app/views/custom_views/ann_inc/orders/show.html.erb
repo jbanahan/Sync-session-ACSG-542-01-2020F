@@ -1,0 +1,267 @@
+<%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
+<% content_for :javascript do %>
+  $("window").ready(function() {
+    $("[data-toggle='popover']").popover({html:true});
+  });
+  $(function() {
+    <% if current_user.company.master %>
+    $( "#btn_edit" )
+      .click(function() {
+        window.location = '<%=edit_order_path(@order)%>';
+      });
+      OpenChain.addClickMap('e','Edit','btn_edit');
+    <% end %>
+    <% if @order.related_shipments.length == 0  && current_user.company.master %>
+    OpenChain.addClickMap('d','Delete','btn_delete');
+    <% end %>
+    $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
+      width:'auto',
+      buttons:{"Save":function() {$("#frm_edit_line").submit();},
+               "Cancel":function() {window.location = '<%=order_path(@order)%>';}}
+    });
+    $("#btn_add_line").click(function() {
+      $("#mod_edit_line").dialog('open');
+    });
+    <% if @line.nil? && @order.can_edit?(current_user)%>
+      OpenChain.addClickMap('a','Add Product','btn_add_line');
+    <% end %>
+    $("#mod_subscriptions").dialog({autoOpen:false,title:'Subscriptions',
+        buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
+      });
+    $("#btn_subscriptions")
+      .click(function() {
+        $("#mod_subscriptions").dialog('open');
+      });
+    $("#btn_line_cancel").click(function() {
+      window.location = '<%=order_path(@order)%>';
+    });
+    <% if @order.can_edit?(current_user) && !@line.nil? %>
+      $("#mod_edit_line").dialog('open');
+    <% end %>
+    $("#btn_delete_shell").click(function() {
+      $("#btn_delete").click();
+    });
+
+    $("[id^=lnk_det_s_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      OpenChain.showOrderLineDetail(lineId,<%=current_user.admin? ? 'true' : 'false' %>);
+      $('#lnk_det_h_' + lineId).show();
+      $('#lnk_det_s_' + lineId).hide();
+      return false;
+    });
+
+    $("[id^=lnk_det_h_]").click(function(e) {
+      e.preventDefault();
+      var lineId = e.currentTarget.id.split('_')[3]
+      $('#det_' + lineId).fadeOut('slow');
+      $('#lnk_det_s_' + lineId).show();
+      $('#lnk_det_h_' + lineId).hide();
+      return false;
+    });
+
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <% if !@order.closed? %>
+    <% if current_user.company.master && !@order.locked? %>
+    <button id='btn_edit'>Edit Header</button>
+    <% end %>
+    <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? -%>
+      <button class='btn' id='btn_delete_shell'>Delete</button>
+    <% end -%>
+    <% if @line.nil? && @order.can_edit?(current_user)%>
+      <button id='btn_add_line'>Add Product</button>
+    <% end %>
+  <%end%>
+  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
+  <% if @order.can_close?(current_user) && !current_user.in_any_group?(['ANN_USERS', 'ANN_VENDORS'])%>
+    <% if @order.closed? %>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+    <% else %>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+    <% end %>
+  <% end %>
+  <% if @order.can_accept?(current_user) && !current_user.in_any_group?(['ANN_USERS', 'ANN_VENDORS'])%>
+    <% if @order.approval_status=='Accepted' %>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+    <% elsif @order.can_be_accepted? %>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+    <% end %>
+  <% end %>
+  <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
+  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
+  <button class='btn_link' link_to='/vendor_portal#/orders/<%=@order.id%>' title='Vendor Portal'><i class='fa fa-industry'></i></a>
+<% end %>
+
+<div class="container">
+  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field,validation_path:validation_results_order_path(@order)}%>
+  <% if @order.closed? %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Order Closed</h3>
+            </div>
+            <div class="panel-body">
+              Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
+            </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  <div class="row">
+    <div class="col-md-6">
+      <% if @order.vendor %>
+        <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
+        <%=field_bootstrap vendor_name_fld.label, link_to(vendor_name_fld.process_export(@order, User.current), vendor_path(@order.vendor)) %>
+      <% end %>
+      <% if @order.agent %>
+          <%agent_name_fld = ModelField.find_by_uid(:ord_agent_name) %>
+          <%= field_bootstrap "Buying Agent", agent_name_fld.process_export(@order, User.current) %>
+      <% end %>
+      <% if @order.selling_agent %>
+          <%selling_agent_name_fld = ModelField.find_by_uid(:ord_selling_agent_name) %>
+          <%= field_bootstrap "Supplier", selling_agent_name_fld.process_export(@order, User.current) %>
+      <% end %>
+      <%= show_model_fields @order, [:ord_ord_num, :ord_cust_ord_no, :ord_approval_status, :ord_accepted_at, :ord_accepted_by, :ord_imp_name, :ord_div_name, :ord_factory_name, :ord_ship_to_name, :ord_mode, :ord_terms, :ord_fob_point, :ord_payment_terms, :ord_season, :ord_product_category] %>
+    </div>
+    <div class="col-md-6">
+      <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
+      <hr />
+      <%=show_custom_fields @order%>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="detail_table">
+        <thead>
+          <th>&nbsp;</th>
+          <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty], table:true, heading:true) %>
+          <th>Shipped</th>
+          <th>Received</th>
+          <%= model_field_labels([:prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, heading:true) %>
+          <th>&nbsp;</th>
+        </thead>
+
+          <% @order.order_lines.each do |line| %>
+          <% line_state = line.worst_milestone_state %>
+        <tr class='hover ord_det_row'>
+          <td>
+            <%if @order.can_edit?(current_user) && !@order.locked?%>
+              <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
+            <%end%>
+          </td>
+          <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true, attributes: {class: (line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}")}) %>
+          <% if ModelField.find_by_uid(:prod_uid).can_view?(User.current) %>
+            <% if ModelField.find_by_uid(:prod_name).can_view?(User.current) %>
+              <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>">
+            <% else %>
+              <td>
+            <% end %>
+            <%-if line.product.can_view?(current_user)-%>
+              <%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %>
+            <%-else-%>
+              <%=ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current)%>
+            <%-end-%>
+            </td>
+          <% end %>
+          <%= show_model_fields(line, [:ordln_sku, :ordln_ordered_qty], table: true, editor_only: true) %>
+          <td class="has_numeric"><%=number_with_precision(line.shipped_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+          <td class="has_numeric"><%=number_with_precision(line.received_qty, precision: 5, strip_insignificant_zeros: true)%></td>
+        <% if line.product.unit_of_measure.blank? && !line.unit_of_measure.blank? %>
+          <%= show_model_fields(line, :ordln_unit_of_measure, table: true, editor_only: true) %>
+        <% else %>
+          <%= show_model_fields(line.product, :prod_uom, table: true, editor_only: true) %>
+        <% end %>
+          <%= show_model_fields(line, [:ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, editor_only: true) %>
+          <td>
+            <% if @order.can_edit?(current_user) && !@order.locked?%>
+              <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+              &nbsp;|&nbsp;
+            <% end %>
+            <a id='lnk_det_s_<%=line.id%>' href="#">Detail</a>
+            <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="#">Detail</a>
+          </td>
+        </tr>
+        <tr style='display:none;' id='det_<%=line.id%>'>
+            <td>&nbsp;</td>
+            <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :prod_uom, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
+              <div class="container col-md-6">
+                <%= show_model_fields line, [:ordln_country_of_origin, :ordln_hts] %>
+                <%= show_custom_fields line %>
+                <% if ModelField.find_by_uid(:shp_ref).can_view?(User.current) %>
+                  <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+                    <% next unless s.can_view?(User.current) %>
+                    <%=field_bootstrap "Shipment", link_to(ModelField.find_by_uid(:shp_ref).process_export(s, User.current), s) %>
+                  <%end%>
+                <% end %>
+                <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
+              </div>
+            </td>
+        </tr>
+      <%end %>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+    </div>
+    <div class="col-md-6">
+      <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
+    </div>
+  </div>
+</div>
+      <% form_line = @line.nil? ? @order.order_lines.build : @line %>
+      <div id='mod_edit_line' style='display:none;'>
+        <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
+        <table>
+          <% form_line.default_line_number%>
+          <%= show_model_fields f, :ordln_line_number, table: true, ordln_line_number: {style: "width: 3em"} %>
+          <% if form_line.new_record? %>
+            <%= show_model_fields(f, :ordln_prod_id, table: true) do |mf, field_name, value, attrs|
+                  attrs[:select_options] = options_from_collection_for_select(@products, :id, :unique_identifier, value)
+                  attrs[:prompt] = "Select a product"
+                  attrs[:id] = "edit_line_product"
+                  model_select_field_tag(field_name, mf, value, attrs)
+                end %>
+          <% else %>
+            <%= show_model_fields form_line.product, :prod_name, table: true %>
+          <% end %>
+          <%= show_model_fields f, :ordln_ordered_qty, table: true, ordln_ordered_qty: {style: "width: 5em"} %>
+          <% prod = form_line.product ? form_line.product : Product.new %>
+          <%= show_model_fields prod, :prod_uom, {table:true, wrap_with: lambda {|mf, editor| content_tag(:span, editor, :id=>"edit_line_uom")}} %>
+          <%= show_model_fields f, :ordln_ppu, table: true, ordln_ppu: {style: "width: 5em"} %>
+          <% plans = MilestonePlan.all %>
+          <%if form_line.new_record? && plans.length > 0 %>
+            <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(plans,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{prompt:"Select a plan", class:"form-control"})%>
+          <%end%>
+          <%= show_custom_fields f, table: true%>
+        </table>
+        <% end %>
+      </div>
+
+<div id='mod_subscriptions' style='display:none;'>
+  <%
+  change_subs = ItemChangeSubscription.where({:order_id => @order.id, :user_id => current_user.id})
+  if change_subs.length == 0
+   @ics = @order.item_change_subscriptions.build
+   @ics.user = current_user
+  else
+   @ics = change_subs[0]
+  end
+ %>
+ <%= form_for @ics, :html => {:id=>'frm_sub'} do |ics| %>
+    <%= ics.hidden_field :user_id %>
+    <%= ics.hidden_field :order_id %>
+    <%= ics.check_box :app_message %> Message<br />
+    <%= ics.check_box :email %> Email<br />
+ <% end %>
+</div>
+<div style='display:none;'>
+  <!--hidden and linked through delete on button bar-->
+  <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+</div>
+<%=secure_link @order, current_user%>
