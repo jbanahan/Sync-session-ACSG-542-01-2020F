@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       # Just mock out the method that generates the report, it's tested above
       expect(subject).to receive(:generate_report).with([invoice], Date.new(2016, 3, 1)).and_return workbook
 
-      subject.generate_and_send_report [invoice], Date.new(2016, 3, 1)
+      subject.generate_and_send_report [invoice], Date.new(2016, 3, 1), email_to:["me@there.com"]
 
       invoice.reload
       expect(invoice.sync_records.length).to eq 1
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
       m = ActionMailer::Base.deliveries.first
-      expect(m.to).to eq ["otwap@lumberliquidators.com"]
+      expect(m.to).to eq ["me@there.com"]
       expect(m.bcc).to eq ["payments@vandegriftinc.com"]
       expect(m.subject).to eq "Vandegrift, Inc. Billing for Mar 01, 2016"
       expect(m.body.raw_source).to include "Attached is the Vandegrift weekly invoice file."
@@ -203,7 +203,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       synced_invoice.sync_records.first.update_attributes! sent_at: ActiveSupport::TimeZone["UTC"].parse("2016-04-11 03:59")
 
       Timecop.freeze(DateTime.new(2016, 4, 16, 4, 0)) do
-        described_class.run_schedulable
+        described_class.run_schedulable({"email_to" => ["me@there.com"]})
       end
 
       invoice.reload
@@ -211,6 +211,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       expect(invoice.sync_records.find {|sr| sr.trading_partner == "LL BILLING" }).not_to be_nil
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["me@there.com"]
     end
   end
 end

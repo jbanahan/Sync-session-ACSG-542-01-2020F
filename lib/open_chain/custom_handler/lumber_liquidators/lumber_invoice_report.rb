@@ -5,11 +5,12 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_supplemental_invoic
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberInvoiceReport
   include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport
 
-  def self.run_schedulable
+  def self.run_schedulable settings = {}
+    raise "Report must have an email_to attribute configured." unless Array.wrap(settings['email_to']).length > 0
     r = self.new
     invoices = r.find_invoices *start_end_dates
 
-    r.generate_and_send_report invoices, ActiveSupport::TimeZone["America/New_York"].now.to_date
+    r.generate_and_send_report invoices, ActiveSupport::TimeZone["America/New_York"].now.to_date, email_to: settings['email_to']
   end
 
   def self.start_end_dates time_zone = "America/New_York"
@@ -58,7 +59,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
     end
   end
 
-  def generate_and_send_report invoices, invoice_date
+  def generate_and_send_report invoices, invoice_date, email_to: nil
     workbook = generate_report invoices, invoice_date
     Tempfile.open(["LL_Billing_Report", ".xls"]) do |file|
       Attachment.add_original_filename_method file, "VFI Weekly Invoice #{invoice_date.strftime("%Y-%m-%d")}.xls"
@@ -74,7 +75,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
           sr.save!
         end
 
-        OpenMailer.send_simple_html("otwap@lumberliquidators.com", "Vandegrift, Inc. Billing for #{invoice_date.strftime "%b %d, %Y"}", "Attached is the Vandegrift weekly invoice file.", file, bcc: "payments@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(email_to, "Vandegrift, Inc. Billing for #{invoice_date.strftime "%b %d, %Y"}", "Attached is the Vandegrift weekly invoice file.", file, bcc: "payments@vandegriftinc.com").deliver!
       end
     end
   end
