@@ -59,11 +59,12 @@ module OpenChain
           buying_agent = nil
 
           vendor = find_or_create_vendor row[20], row[21], master_company, dsp_type
-          unless row[23].blank?
+
+          unless row[23].blank? || row[24].blank?
             selling_agent = find_or_create_vendor row[23], row[24], master_company, dsp_type
             selling_agent[:company].update_attribute(:selling_agent, true)
           end
-          buying_agent = find_or_create_vendor row[25], row[26], master_company, dsp_type unless row[25].blank?
+          buying_agent = find_or_create_vendor row[25], row[26], master_company, dsp_type unless row[25].blank? || row[26].blank?
 
           [vendor, selling_agent, buying_agent]
         end
@@ -166,16 +167,23 @@ module OpenChain
         end
 
         def find_or_create_vendor system_code, name, master_company, dsp_type
-          co = Company.where(system_code: system_code).first_or_initialize(name: name, vendor: true)
-          new_record = co.new_record?
-          co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
-          co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
-          co.save!
-          master_company.linked_companies << co if new_record
-          {company: co, new_record: new_record}
+          if system_code.present? && name.present?
+            co = Company.where(system_code: system_code).first_or_initialize(name: name, vendor: true)
+            new_record = co.new_record?
+            co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
+            co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
+            co.show_business_rules = true
+            co.save!
+            master_company.linked_companies << co if new_record
+            {company: co, new_record: new_record}
+          else
+            {company: nil, new_record: false}
+          end
+
         end
 
         def find_order order_number, vendor
+          return if vendor[:company].blank?
           o = nil
           Lock.acquire("ANN-#{order_number}") do
             po = Order.where(order_number: order_number).first_or_create! vendor: vendor[:company]

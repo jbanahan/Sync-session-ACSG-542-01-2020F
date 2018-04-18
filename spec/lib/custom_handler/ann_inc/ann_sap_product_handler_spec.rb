@@ -173,6 +173,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     c = Company.find_by_system_code(h[:vendor_code])
     expect(c).to be_present
     expect(c.vendor).to be true
+    expect(c.show_business_rules).to be true
   end
 
   it "should assign a newly created account to Ann" do
@@ -347,6 +348,16 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     expect(ol.quantity.to_f).to eql(h[:order_quantity].to_f)
     expect(ol.price_per_unit.to_f).to eql(h[:unit_cost].to_f)
     expect(ol.hts).to eql(h[:proposed_hts])
+  end
+
+  it "handles a blank vendor during order creation" do
+    h = default_values
+    @h.process make_row({vendor_name: nil}), @user
+    o = Order.find_by_order_number(h[:po])
+    expect(o).to_not be_present
+    @h.process make_row({vendor_code: nil}), @user
+    o = Order.find_by_order_number(h[:po])
+    expect(o).to_not be_present
   end
 
   it "generates a new order based on the PO Number" do
