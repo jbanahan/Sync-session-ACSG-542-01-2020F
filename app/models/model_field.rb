@@ -13,7 +13,7 @@ class ModelField
   # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
   # This means the class won't call memchached on every call to ModelField.find_by_uid to see if the ModelFieldSetups are stale
   # This should not be used outside of the web environment where jobs will be long running
-  cattr_accessor :web_mode
+  cattr_accessor :disable_stale_checks
 
   # if not empty, used by initializer to figure out the read_only? state
   @@field_validator_rules = HashWithIndifferentAccess.new
@@ -781,7 +781,7 @@ class ModelField
 
   def self.reload_if_stale
     reloaded = false
-    if !ModelField.web_mode #see documentation at web_mode accessor
+    if !ModelField.disable_stale_checks #see documentation at disable_stale_checks accessor
       cache_time = CACHE.get "ModelField:last_loaded"
       if !cache_time.nil? && !cache_time.is_a?(Time)
         begin

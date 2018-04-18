@@ -42,7 +42,7 @@ class ChainDelayedJobPlugin < Delayed::Plugin
       # to date version of the code stay running.  If we kill off outdated queues, the monitor script will then
       # restart the job queues.
       upgrade_job = is_upgrade_delayed_job?(job)
-      if Rails.env == "production" && MasterSetup.need_upgrade? && !upgrade_job
+      if Rails.env.production? && MasterSetup.need_upgrade? && !upgrade_job
         
         # We can actually save off this job just by rescheduling it, that way after the upgrade is complete it will
         # run with any updated code.  The job attempts reset is to prevent the reschedule from running too many times and
@@ -81,6 +81,10 @@ class ChainDelayedJobPlugin < Delayed::Plugin
           Thread.current.thread_variable_set("delayed_job", true)
           Thread.current.thread_variable_set("delayed_job_attempts", job.attempts)
           Thread.current.thread_variable_set("delayed_job_queue", job.queue)
+          # Before each job we're going to check if model fields need to be updated, if they do, then we'll update
+          # them..if not, then we'll run the job and lock them down so no reloads occur during the job run.
+          ModelField.reload_if_stale
+          ModelField.disable_stale_checks = true
           begin
             result = block.call(worker, job, *args)
 
@@ -91,6 +95,7 @@ class ChainDelayedJobPlugin < Delayed::Plugin
             Thread.current.thread_variable_set("delayed_job", nil)
             Thread.current.thread_variable_set("delayed_job_attempts", nil)
             Thread.current.thread_variable_set("delayed_job_queue", nil)
+            ModelField.disable_stale_checks = false
           end
         end
         result

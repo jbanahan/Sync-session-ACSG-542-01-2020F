@@ -177,7 +177,7 @@ module Api; module V1; class ApiController < ActionController::Base
     end
     def prep_model_fields
       ModelField.reload_if_stale
-      ModelField.web_mode = true
+      ModelField.disable_stale_checks = true
     end
 
 end; end; end

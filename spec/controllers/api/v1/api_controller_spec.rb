@@ -50,7 +50,7 @@ describe Api::V1::ApiController do
       expect(ModelField).to receive(:reload_if_stale)
       get :index
       expect(response).to be_success
-      expect(ModelField.web_mode).to be_truthy
+      expect(ModelField.disable_stale_checks).to be_truthy
     end
   end
 
