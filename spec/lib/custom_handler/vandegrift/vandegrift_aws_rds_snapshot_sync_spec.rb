@@ -6,33 +6,38 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     {name: "Testing", destination_regions: ["us-test-2"], db_instance: "testing"}.with_indifferent_access
   }
 
+  def expect_find_db_instance instance, region: nil, cluster: false
+    inst = instance_double(OpenChain::Rds::RdsDbInstance)
+    expect(OpenChain::Rds).to receive(:find_db_instance).with(instance, region: region, cluster: cluster).and_return inst
+  end
+
   describe "sync_rds_snapshots" do 
 
     let (:source_snapshot) {
       source = instance_double(OpenChain::Rds::RdsSnapshot)
-      allow(source).to receive(:db_snapshot_identifier).and_return "snapshot-id"
-      allow(source).to receive(:db_instance_identifier).and_return "db-id"
+      allow(source).to receive(:snapshot_identifier).and_return "snapshot-id"
+      allow(source).to receive(:source_db_identifier).and_return "db-id"
       allow(source).to receive(:region).and_return "us-test-1"
-      allow(source).to receive(:db_snapshot_arn).and_return "snapshot-id-arn"
+      allow(source).to receive(:snapshot_arn).and_return "snapshot-id-arn"
 
       source
     }
 
     let (:destination_snapshot) {
       dest = instance_double(OpenChain::Rds::RdsSnapshot)
-      allow(dest).to receive(:db_snapshot_identifier).and_return "dest-snapshot-id"
-      allow(dest).to receive(:db_instance_identifier).and_return "db-id"
+      allow(dest).to receive(:snapshot_identifier).and_return "dest-snapshot-id"
+      allow(dest).to receive(:source_db_identifier).and_return "db-id"
       allow(dest).to receive(:region).and_return "us-test-2"
       allow(dest).to receive(:tags).and_return({"SourceSnapshotType" => "automated"})
-      allow(dest).to receive(:source_db_snapshot_identifier).and_return "snapshot-id-arn"
+      allow(dest).to receive(:source_snapshot_arn).and_return "snapshot-id-arn"
 
       dest
     }
 
     let (:copy_snapshot) {
       copy = instance_double(OpenChain::Rds::RdsSnapshot)
-      allow(copy).to receive(:db_snapshot_identifier).and_return "dest-snapshot-id"
-      allow(copy).to receive(:db_instance_identifier).and_return "db-id"
+      allow(copy).to receive(:snapshot_identifier).and_return "dest-snapshot-id"
+      allow(copy).to receive(:source_db_identifier).and_return "db-id"
       allow(copy).to receive(:region).and_return "us-test-2"
       allow(copy).to receive(:tags).and_return({"SourceSnapshotType" => "automated"})
 
@@ -40,8 +45,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     }
 
     it "copies snapshots from source to destination" do
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return [source_snapshot]
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return []
+      expect_find_db_instance(setup[:db_instance])
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return []
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return [source_snapshot]
       expect(OpenChain::Rds).to receive(:copy_snapshot_to_region).with(source_snapshot, "us-test-2", tags: {"SourceSnapshotType" => "automated"}).and_return copy_snapshot
 
       now = Time.zone.now
@@ -64,15 +70,16 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
       expect(snap.tags).to eq({"SourceSnapshotType" => "automated"})
       expect(snap.start_time.to_i).to eq now.to_i
       expect(snap.end_time.to_i).to eq now.to_i
-      expect(snap.errored?).to be_falsy
+      expect(snap.errored?).to eq false
     end
 
     it "deletes automated snapshots that are not in the source region" do
       previous_sess = AwsBackupSession.create! name: "Old Snapshot"
       aws_snap = previous_sess.aws_snapshots.create! snapshot_id: "dest-snapshot-id"
 
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return []
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return [destination_snapshot]
+      expect_find_db_instance(setup[:db_instance])
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return []
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return [destination_snapshot]
       expect(OpenChain::Rds).to receive(:delete_snapshot).with destination_snapshot
 
       now = Time.zone.now
@@ -89,10 +96,11 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     end
 
     it "does not delete non-automated snapshots" do
+      expect_find_db_instance(setup[:db_instance])
       expect(destination_snapshot).to receive(:tags).and_return({})
 
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return []
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return [destination_snapshot]
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return []
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return [destination_snapshot]
       expect(OpenChain::Rds).not_to receive(:delete_snapshot)
 
       subject.sync_rds_snapshots setup
@@ -102,8 +110,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     end
 
     it "does not delete snapshots that exist in the source region or add snapshots that already exist in the destionation region" do
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return [source_snapshot]
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return [destination_snapshot]
+      expect_find_db_instance(setup[:db_instance])
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return [source_snapshot]
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return [destination_snapshot]
       expect(OpenChain::Rds).not_to receive(:copy_snapshot_to_region)
       expect(OpenChain::Rds).not_to receive(:delete_snapshot)
 
@@ -113,8 +122,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     end
 
     it "logs errors raised by snapshot deletes" do
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return []
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return [destination_snapshot]
+      expect_find_db_instance(setup[:db_instance])
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return []
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return [destination_snapshot]
       expect(OpenChain::Rds).to receive(:delete_snapshot).with(destination_snapshot).and_raise StandardError, "Error!"
 
       slack = instance_double(OpenChain::SlackClient)
@@ -135,8 +145,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     end
 
     it "logs errors raised by snapshot copies" do
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil).and_return [source_snapshot]
-      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", region: "us-test-2").and_return []
+      expect_find_db_instance(setup[:db_instance])
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: false).and_return [source_snapshot]
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: false).and_return []
       expect(OpenChain::Rds).to receive(:copy_snapshot_to_region).and_raise StandardError, "Error!"
 
       slack = instance_double(OpenChain::SlackClient)
@@ -163,7 +174,35 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
       expect(snap.tags).to eq({})
       expect(snap.start_time).not_to be_nil
       expect(snap.end_time).not_to be_nil
-      expect(snap.errored?).to be_truthy
+      expect(snap.errored?).to eq true
+    end
+
+    it "copies cluster snapshots from source to destination" do
+      expect_find_db_instance(setup[:db_instance], cluster: true)
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: false, region: "us-test-2", cluster: true).and_return []
+      expect(OpenChain::Rds).to receive(:find_snapshots).with("testing", automated_snapshot: true, region: nil, cluster: true).and_return [source_snapshot]
+      expect(OpenChain::Rds).to receive(:copy_snapshot_to_region).with(source_snapshot, "us-test-2", tags: {"SourceSnapshotType" => "automated"}).and_return copy_snapshot
+
+      setup["cluster"] = true
+
+      now = Time.zone.now
+      Timecop.freeze(now) { subject.sync_rds_snapshots setup }
+      
+      session = AwsBackupSession.last
+      expect(session).not_to be_nil
+
+      expect(session.aws_snapshots.length).to eq 1
+      snap = session.aws_snapshots.first
+      expect(snap.errored?).to eq false
+    end
+
+    it "errors if db instance is not found" do
+      expect(OpenChain::Rds).to receive(:find_db_instance).with("testing", region: nil, cluster: false).and_return nil
+      expect { subject.sync_rds_snapshots setup }.to raise_error "Failed to locate database instance 'testing'.  Verify sync setup."
+      # Make sure a session was created and a log message is in it
+      session = AwsBackupSession.last
+      expect(session).not_to be_nil
+      expect(session.log).to eq "Failed to locate database instance 'testing'.  Verify sync setup."
     end
   end
 

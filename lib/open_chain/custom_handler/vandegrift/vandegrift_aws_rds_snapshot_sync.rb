@@ -21,17 +21,28 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
 
   def sync_rds_snapshots(setup)
     session = AwsBackupSession.create! name: setup['name'], start_time: Time.zone.now, log: ""
-
     log_messages = []
+
+    # Raise an error if the db instance doesn't exist...this would indicate a setup error (or perhaps a
+    # change in database set that would indicate the need for the job to be changed)
+    db_cluster = (setup["cluster"] || "false").to_s.to_boolean
+    db_instance =  OpenChain::Rds.find_db_instance(setup['db_instance'], region: setup["source_region"], cluster: db_cluster)
+
+    if db_instance.nil?
+      message = "Failed to locate database instance '#{setup['db_instance']}'.  Verify sync setup."
+      log_messages << message
+      raise message
+    end
+    
     Array.wrap(setup['destination_regions']).each do |region|
       # Find all the automated snapshots in the source and destination regions (destination region snapshots
       # will be tagged with their source db-instance identifier, since that value is not retained across regions)
-      destination_snapshots = OpenChain::Rds.find_snapshots(setup['db_instance'], region: region)
+      destination_snapshots = OpenChain::Rds.find_snapshots(setup['db_instance'], region: region, automated_snapshot: false, cluster: db_cluster)
       # If source region is null, the code falls back to the default region...
-      source_snapshots = OpenChain::Rds.find_snapshots(setup['db_instance'], automated_snapshot: true, region: setup["source_region"])
+      source_snapshots = OpenChain::Rds.find_snapshots(setup['db_instance'], automated_snapshot: true, region: setup["source_region"], cluster: db_cluster)
 
       # Remove any snapshots from the destination region that are not present in the source region
-      # - Copied snapshots have a source_db_snapshot_identifier that is the ARN of the source snapshot
+      # - Copied snapshots have a source_snapshot_arn that is the ARN of the source snapshot
       #   so if a destination region's source identifier is not present in our list of the source region's snapshots
       #   then we're clear to delete it.
       destination_snapshots.each do |destination_snapshot|
@@ -41,7 +52,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
         rescue => e
           # If something happens and we can't delete the snapshot, don't bail on the whole process...just log the error and continue
           # purging snapshots isn't something we should stop the world over.
-          message = "Failed to purge snapshot #{destination_snapshot.db_snapshot_identifier} from region #{region}."
+          message = "Failed to purge snapshot #{destination_snapshot.snapshot_identifier} from region #{region}."
           log_messages << msg(message)
           handle_errors(error: e, error_message: message, database_identifier: setup['db_instance'])
         end
@@ -55,8 +66,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
         begin
           copy_snapshot_to_region(source_snapshot, region, session, log_messages)
         rescue => e
-          session.aws_snapshots.create! snapshot_id: source_snapshot.db_snapshot_identifier, instance_id: source_snapshot.db_instance_identifier, description: "#{region} - #{source_snapshot.db_snapshot_identifier}", start_time: Time.zone.now, end_time: Time.zone.now, errored: true
-          message = "Failed to copy RDS snapshot #{source_snapshot.db_snapshot_identifier} from region #{source_snapshot.region} to #{region}."
+          session.aws_snapshots.create! snapshot_id: source_snapshot.snapshot_identifier, instance_id: source_snapshot.source_db_identifier, description: "#{region} - #{source_snapshot.snapshot_identifier}", start_time: Time.zone.now, end_time: Time.zone.now, errored: true
+          message = "Failed to copy RDS snapshot #{source_snapshot.snapshot_identifier} from region #{source_snapshot.region} to #{region}."
           log_messages << msg(message)
           handle_errors(error: e, error_message: message, database_identifier: setup['db_instance'])
         end
@@ -72,10 +83,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
 
     if source_snapshot.nil?
       OpenChain::Rds.delete_snapshot destination_snapshot
-      log_messages << msg("Deleted RDS snapshot #{destination_snapshot.db_snapshot_identifier} from region #{destination_snapshot.region}.")
+      log_messages << msg("Deleted RDS snapshot #{destination_snapshot.snapshot_identifier} from region #{destination_snapshot.region}.")
 
       # Find the existing aws_snapshot for the destination snapshot and mark it as purged.
-      snapshot = AwsSnapshot.where(snapshot_id: destination_snapshot.db_snapshot_identifier).first
+      snapshot = AwsSnapshot.where(snapshot_id: destination_snapshot.snapshot_identifier).first
       snapshot.update_attributes!(purged_at: Time.zone.now) if snapshot
     end
   end
@@ -85,9 +96,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
     # (since automated snapshots are the only ones we're purging)
     snapshot_copy = OpenChain::Rds.copy_snapshot_to_region source_snapshot, region, tags: {"SourceSnapshotType" => "automated"}
 
-    log_messages << msg("Copied RDS snapshot #{source_snapshot.db_snapshot_identifier} to region #{region} as #{snapshot_copy.db_snapshot_identifier}.")
+    log_messages << msg("Copied RDS snapshot #{source_snapshot.snapshot_identifier} to region #{region} as #{snapshot_copy.snapshot_identifier}.")
     # We're not going to wait on the cross region copy to finish (it could take a long time), so just mark the time as finished now (rather than leave it blank)
-    session.aws_snapshots.create! snapshot_id: snapshot_copy.db_snapshot_identifier, instance_id: snapshot_copy.db_instance_identifier, description: "#{region} - #{snapshot_copy.db_snapshot_identifier}", tags_json: snapshot_copy.tags.to_json, start_time: Time.zone.now, end_time: Time.zone.now
+    session.aws_snapshots.create! snapshot_id: snapshot_copy.snapshot_identifier, instance_id: snapshot_copy.source_db_identifier, description: "#{region} - #{snapshot_copy.snapshot_identifier}", tags_json: snapshot_copy.tags.to_json, start_time: Time.zone.now, end_time: Time.zone.now
   end
 
   def automated_copy? snapshot
@@ -99,13 +110,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
 
 
   def find_matching_source_snapshot destination_snapshot, source_snapshots
-    raise "Destination Snapshot #{destination_snapshot.db_snapshot_arn} does not have a source snapshot identifier." if destination_snapshot.source_db_snapshot_identifier.blank?
+    raise "Destination Snapshot #{destination_snapshot.snapshot_arn} does not have a source snapshot identifier." if destination_snapshot.source_snapshot_arn.blank?
 
-    source_snapshots.find {|s| destination_snapshot.source_db_snapshot_identifier == s.db_snapshot_arn}
+    source_snapshots.find {|s| destination_snapshot.source_snapshot_arn == s.snapshot_arn}
   end
 
   def find_matching_destination_snapshot source_snapshot, destination_snapshots
-    destination_snapshots.find {|s| source_snapshot.db_snapshot_arn == s.source_db_snapshot_identifier }
+    destination_snapshots.find {|s| source_snapshot.snapshot_arn == s.source_snapshot_arn }
   end
 
 
