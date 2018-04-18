@@ -331,7 +331,7 @@ class Order < ActiveRecord::Base
     return "1=1" if user.company.master?
     cid = user.company_id
     lstr = "(SELECT child_id FROM linked_companies WHERE parent_id = #{cid})"
-    "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr} OR orders.factory_id = #{cid})"
+    "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr} OR orders.factory_id = #{cid} OR orders.selling_agent_id = #{cid} OR orders.agent_id = #{cid})"
   end
 
   def can_edit?(user)
