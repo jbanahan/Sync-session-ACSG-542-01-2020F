@@ -176,6 +176,28 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     expect(c.show_business_rules).to be true
   end
 
+  it "does not change the company's DSP type if the company already exists" do
+    h = default_values
+    @h.process make_row, @user
+    c = Company.find_by_system_code(h[:vendor_code])
+    expect(c).to be_present
+    expect(c.custom_value(@cdefs[:dsp_type])).to eq "Standard"
+    @h.process make_row({dsp_type: 'MP'}), @user
+    c.reload
+    expect(c.custom_value(@cdefs[:dsp_type])).to eq "Standard"
+  end
+
+  it "changes the company name if it exists" do
+    h = default_values
+    @h.process make_row, @user
+    c = Company.find_by_system_code(h[:vendor_code])
+    expect(c).to be_present
+    expect(c.name).to eql(h[:vendor_name])
+    @h.process make_row({vendor_name: 'A New Name'}), @user
+    c.reload
+    expect(c.name).to eql('A New Name')
+  end
+
   it "should assign a newly created account to Ann" do
     Factory.create(:company, master:true)
     h = default_values

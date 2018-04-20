@@ -168,12 +168,19 @@ module OpenChain
 
         def find_or_create_vendor system_code, name, master_company, dsp_type
           if system_code.present? && name.present?
-            co = Company.where(system_code: system_code).first_or_initialize(name: name, vendor: true)
+            co = Company.where(system_code: system_code).first_or_initialize(vendor: true, name: name)
             new_record = co.new_record?
-            co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
-            co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
-            co.show_business_rules = true
-            co.save!
+
+            if new_record
+              co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
+              co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
+              co.show_business_rules = true
+              co.save!
+            elsif co.name != name
+              co.name = name
+              co.save!
+            end
+
             master_company.linked_companies << co if new_record
             {company: co, new_record: new_record}
           else
