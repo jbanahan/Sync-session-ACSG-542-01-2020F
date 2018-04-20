@@ -376,10 +376,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     h = default_values
     @h.process make_row({vendor_name: nil}), @user
     o = Order.find_by_order_number(h[:po])
-    expect(o).to_not be_present
-    @h.process make_row({vendor_code: nil}), @user
-    o = Order.find_by_order_number(h[:po])
-    expect(o).to_not be_present
+    expect(o).to be_present
   end
 
   it "generates a new order based on the PO Number" do

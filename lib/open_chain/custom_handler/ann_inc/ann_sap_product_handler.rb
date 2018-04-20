@@ -111,7 +111,7 @@ module OpenChain
               else
                 vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type
 
-                find_order row[0], vendor do |o|
+                find_order(row[0], master_company, vendor) do |o|
                   [vendor, buying_agent, selling_agent].each do |co|
                     next if co.blank?
                     send_new_company_email(co[:company], o) if co[:new_record] && co[:company].get_custom_value(@cdefs[:dsp_type]).value == "MP"
@@ -121,7 +121,6 @@ module OpenChain
                   related = extract_related_styles base_row
                   p = OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager.get_style(base_style: style, missy: related[:missy], petite: related[:petite], tall: related[:tall], short: related[:short], plus: related[:plus])
                   o.terms_of_sale = row[13]
-                  o.importer = master_company
                   o.agent = buying_agent[:company] if buying_agent.present?
                   o.selling_agent = selling_agent[:company] if selling_agent.present?
                   o.find_and_set_custom_value(@cdefs[:ord_type], row[19])
@@ -168,20 +167,24 @@ module OpenChain
 
         def find_or_create_vendor system_code, name, master_company, dsp_type
           if system_code.present? && name.present?
-            co = Company.where(system_code: system_code).first_or_initialize(vendor: true, name: name)
-            new_record = co.new_record?
+            co = nil
+            new_record = false
+            Lock.acquire("Company-#{system_code}") do 
+              co = Company.where(system_code: system_code).first_or_initialize(vendor: true, name: name)
+              new_record = co.new_record?
 
-            if new_record
-              co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
-              co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
-              co.show_business_rules = true
-              co.save!
-            elsif co.name != name
-              co.name = name
-              co.save!
+              if new_record
+                co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
+                co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
+                co.show_business_rules = true
+                co.save!
+              elsif co.name != name
+                co.name = name
+                co.save!
+              end
+
+              master_company.linked_companies << co if new_record
             end
-
-            master_company.linked_companies << co if new_record
             {company: co, new_record: new_record}
           else
             {company: nil, new_record: false}
@@ -189,11 +192,10 @@ module OpenChain
 
         end
 
-        def find_order order_number, vendor
-          return if vendor[:company].blank?
+        def find_order order_number, importer, vendor
           o = nil
           Lock.acquire("ANN-#{order_number}") do
-            po = Order.where(order_number: order_number).first_or_create! vendor: vendor[:company]
+            po = Order.where(order_number: order_number).first_or_create! vendor: vendor[:company], importer: importer
             po.customer_order_number = order_number
 
             Lock.with_lock_retry(po) do
