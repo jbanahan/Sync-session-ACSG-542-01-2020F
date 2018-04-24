@@ -43,6 +43,7 @@ describe BusinessValidationRuleResult do
     it "should set failure state and message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
       expect(rule.run_validation(Order.new)).to be_truthy
@@ -52,6 +53,7 @@ describe BusinessValidationRuleResult do
     it "returns 'true' if new state matches previous one but message has changed" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new state: 'x', message: 'original msg'
       rule.business_validation_rule = vr
       expect(rule.run_validation(Order.new)).to be_truthy
@@ -61,6 +63,7 @@ describe BusinessValidationRuleResult do
     it "should default state to Fail if no fail_state" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       expect(rule.business_validation_rule = vr).to be_truthy
       rule.run_validation(Order.new)
@@ -69,6 +72,7 @@ describe BusinessValidationRuleResult do
     it "defaults state to Fail if fail_state is blank" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json, fail_state: "")
+      expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       expect(rule.business_validation_rule = vr).to be_truthy
       rule.run_validation(Order.new)
@@ -77,6 +81,7 @@ describe BusinessValidationRuleResult do
     it "should set state to Pass if no fail message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
       expect(rule.run_validation(Order.new(order_number:'XabcY'))).to be_truthy
@@ -86,6 +91,7 @@ describe BusinessValidationRuleResult do
     it "should set state to skipped if rule search_criterions aren't met" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      expect(vr).to receive(:active?).and_return true
       vr.search_criterions.create!(model_field_uid: :ord_ord_num, operator: 'eq', value:'ZZ')
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
@@ -103,13 +109,13 @@ describe BusinessValidationRuleResult do
       expect(rule.run_validation(Order.new)).to be_falsey
       expect(rule.state).to eq 'X'
     end
-    it "should not do anything if validation rule has delete_pending" do
+    it "should not do anything if validation rule is inactive" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
       vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      expect(vr).to receive(:active?).and_return false
       rule = Factory(:business_validation_rule_result)
       rule.business_validation_rule = vr
       rule.state = 'X'
-      rule.business_validation_rule.delete_pending = true
       rule.business_validation_rule.save!
       rule.save!
       expect(rule.run_validation(Order.new)).to be_falsey
@@ -120,7 +126,7 @@ describe BusinessValidationRuleResult do
       let!(:rule) { 
         d = double(BusinessValidationRule)
         allow(subject).to receive(:business_validation_rule).and_return d
-        allow(d).to receive(:delete_pending?).and_return false
+        allow(d).to receive(:active?).and_return true
         allow(d).to receive(:should_skip?).and_return false
         allow(d).to receive(:fail_state).and_return "Failure"
 

@@ -113,6 +113,7 @@ describe BusinessValidationResult do
     }
 
     it "returns the states of all the rules" do
+      expect(rule).to receive(:active?).and_return true
       expect(business_validation_result.run_validation_with_state_tracking).to eq({changed: true, rule_states: [{id: rule_result.id, changed: true, new_state: "Fail", old_state: nil}]})
     end
   end

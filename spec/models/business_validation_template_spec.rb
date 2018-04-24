@@ -117,6 +117,11 @@ describe BusinessValidationTemplate do
       allow_any_instance_of(Order).to receive(:create_snapshot)
     end
 
+    it "returns nil if not active" do
+      expect(@bvt).to receive(:active?).and_return false
+      expect(@bvt.create_result! @o).to be_nil
+    end
+
     it "should create result based on rules" do
       result = @bvt.create_result! @o
       bvr = result[:result]
@@ -140,13 +145,12 @@ describe BusinessValidationTemplate do
       expect(BusinessValidationResult.count).to eq 1
       expect(BusinessValidationRuleResult.count).to eq 1
     end
-    it "doesn't create rule results if the rule has delete_pending" do
-      @bvt.business_validation_rules.first.update_attribute(:delete_pending, true)
-      @bvt.create_result! @o
-      expect(BusinessValidationRuleResult.count).to eq 0
-    end
-    it "doesn't create rule results if the rule is disabled" do
-      @bvt.business_validation_rules.first.update_attribute(:disabled, true)
+    it "doesn't create rule results if the rule isn't active" do
+      bvru = @bvt.business_validation_rules.first
+      expect_any_instance_of(BusinessValidationRule).to receive(:active?) do |rule| 
+        expect(rule.id).to eq bvru.id
+        false
+      end
       @bvt.create_result! @o
       expect(BusinessValidationRuleResult.count).to eq 0
     end
@@ -320,6 +324,29 @@ describe BusinessValidationTemplate do
     it "allows for passing single id, not as an array" do
       expect(subject).to receive(:create_results_for_object!).with(object, snapshot_entity: true)
       subject.create_results_for_object_ids! "Product", object.id
+    end
+  end
+
+   describe "active?" do
+    subject { Factory(:business_validation_template, disabled: false, delete_pending: false, search_criterions: [Factory(:search_criterion)]) }
+
+    it "returns false if disabled" do
+      subject.update_attributes! disabled: true
+      expect(subject.active?).to eq false
+    end
+
+    it "returns false if delete_pending" do
+      subject.update_attributes! delete_pending: true
+      expect(subject.active?).to eq false
+    end
+
+    it "returns false if there are no search criterions" do
+      subject.search_criterions.destroy_all
+      expect(subject.active?).to eq false
+    end
+
+    it "returns true otherwise" do
+      expect(subject.active?).to eq true
     end
   end
 end

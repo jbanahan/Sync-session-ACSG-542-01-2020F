@@ -76,7 +76,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   end
 
   def active?
-    !self.disabled? && !self.delete_pending?
+    !self.disabled? && !self.delete_pending? && search_criterions.present?
   end
 
   #run create
@@ -116,7 +116,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
-    return nil if self.search_criterions.length == 0 || self.disabled?
+    return nil unless active?
 
     template_applies = false
     self.search_criterions.each do |sc|
@@ -192,7 +192,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   def initialize_business_validation_result business_validation_result, obj
     rule_built = false
     self.business_validation_rules.each do |rule|
-      unless rule.delete_pending? || rule.disabled?
+      if rule.active?
         # Rather than doing a first_or_create for every rule (which used to be here and resulted in a separate query executed for each rule)
         #...we can load the association once and then search through it for the rule id...then build the result if it's not present yet.
         # The result will be created a few lines below when the validation result is saved.

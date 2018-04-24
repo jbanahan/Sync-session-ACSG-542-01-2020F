@@ -113,7 +113,7 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def active?
-    !self.disabled? && self.business_validation_template.active?
+    !self.disabled? && !self.delete_pending && !!self.business_validation_template.try(:active?)
   end
 
   def rule_attributes

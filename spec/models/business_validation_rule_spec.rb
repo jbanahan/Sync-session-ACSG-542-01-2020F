@@ -68,4 +68,29 @@ describe BusinessValidationRule do
     end
     
   end
+
+  describe "active?" do
+    let(:bvt) { Factory(:business_validation_template)}
+    let(:bvru) { Factory(:business_validation_rule, business_validation_template: bvt, disabled: false, delete_pending: false)}
+    before { allow(bvt).to receive(:active?).and_return true }
+  
+    it "returns false if disabled" do
+      bvru.update_attributes! disabled: true
+      expect(bvru.active?).to eq false
+    end
+
+    it "returns false if delete_pending" do
+      bvru.update_attributes! delete_pending: true
+      expect(bvru.active?).to eq false
+    end
+
+    it "returns false if template isn't active" do
+      allow(bvt).to receive(:active?).and_return false
+      expect(bvru.active?).to eq false
+    end
+    
+    it "returns true otherwise" do
+      expect(bvru.active?).to eq true
+    end
+  end
 end

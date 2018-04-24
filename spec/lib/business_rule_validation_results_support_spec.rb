@@ -217,7 +217,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
               {
                 id: @bvrr_1.id,
                 state: "Pass",
-                rule: {name: "Rule no. 1", description: "desc of rule 1"},
+                rule: {name: "Rule no. 1", description: "desc of rule 1", active: true},
                 note: nil,
                 message: nil,
                 overridden_by: nil,
@@ -227,7 +227,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
               {
                 id: @bvrr_2.id,
                 state: "Fail",
-                rule: {name: "Rule no. 2", description: "desc of rule 2"},
+                rule: {name: "Rule no. 2", description: "desc of rule 2", active: true},
                 note: "Why is this failing?",
                 message: "This entry's no good!",
                 overridden_by: nil,
@@ -245,7 +245,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
               {
                 id: @bvrr_3.id,
                 state: "Pass",
-                rule: {name: "Rule no. 3", description: "desc of rule 3"},
+                rule: {name: "Rule no. 3", description: "desc of rule 3", active: true},
                 note: nil,
                 message: nil,
                 overridden_by: {full_name: "Nigel Tufnel"},
@@ -260,6 +260,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
 
     it "returns a hash of the business rule results associated with an object if the user has permission to view ALL of them" do
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
+      allow_any_instance_of(BusinessValidationRule).to receive(:active?).and_return true
       r = subject.results_to_hsh @u, @obj
       expect(r.to_json).to eq @target.to_json #to_json resolves millisecond discrepancy
     end
@@ -268,27 +269,5 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
       r = subject.results_to_hsh @u, @obj
       expect(r).to be_nil
     end
-
-    it "doesn't return results belonging to template with delete_pending" do
-      @bvt.update_attributes! delete_pending: true
-      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
-      r = subject.results_to_hsh @u, @obj
-      expect(r[:bv_results]).to be_empty
-    end
-
-    it "doesn't return results belonging to disabled template" do
-      @bvt.update_attributes! disabled: true
-      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
-      r = subject.results_to_hsh @u, @obj
-      expect(r[:bv_results]).to be_empty
-    end
-
-    it "doesn't return rule result belonging to disabled rule" do
-      @bvru_3.update_attributes! disabled: true
-      allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
-      r = subject.results_to_hsh @u, @obj
-      expect(r[:bv_results][1][:rule_results]).to be_empty
-    end
-
   end
 end

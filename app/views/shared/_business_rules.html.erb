@@ -1,46 +1,18 @@
 <script type="text/javascript">
   $(function() {
-    findOldestBrUpdate = function(validation_result) {
-      var this_result, this_updated_at, oldest;
-      for (var i = validation_result.bv_results.length - 1; i >= 0; i--) {
-        this_result = validation_result.bv_results[i];
-        this_updated_at = moment(this_result.updated_at);
-        if(!oldest || (oldest.valueOf() > this_updated_at.valueOf)) {
-          oldest = this_updated_at;
-        }
-      }
-      return oldest;
-    };
-
     updateBusinessRules = function() {
       var panel = $('#business_rules_panel');
       $.get('/<%=CoreModule.find_by_object(base_object).table_name%>/<%=base_object.id%>/validation_results.json',function(resp) {
         var msg, bvr, panelClass, colorClass, objUpdatedAt, oldestBRUpdate;
         bvr = resp.business_validation_result;
-        objUpdatedAt = moment(bvr.object_updated_at);
-        oldestBRUpdate = findOldestBrUpdate(bvr);
         msg = panelClass = '';
-        if(oldestBRUpdate && oldestBRUpdate.valueOf() < objUpdatedAt.valueOf()) {
-          msg = "Retrying business rules....";
-          colorClass = 'info';
-          $.ajax('/api/v1/<%=base_object.class.name.downcase.pluralize%>/<%=base_object.id%>/validate.json', {
-            method:'POST',
-            headers: { 
-              Accept : "application/json",
-              "Content-Type": "application/json"
-            }
-          }).done(function() {
-            updateBusinessRules()
-          });
-        } else {
-          if(bvr.state == 'Fail') {
-            msg = "Business rules have failed.  Click the <i class='fa fa-medkit'></i> button to review.";
-            colorClass = 'danger';
-            $('#business_rules_link_button').css("color","red");
-          } else if (bvr.state == 'Review') {
-            msg = "Business rules are in review status.  Click the <i class='fa fa-medkit'></i> button to review.";
-            colorClass = 'warning';
-          }
+        if(bvr.state == 'Fail') {
+          msg = "Business rules have failed.  Click the <i class='fa fa-medkit'></i> button to review.";
+          colorClass = 'danger';
+          $('#business_rules_link_button').css("color","red");
+        } else if (bvr.state == 'Review') {
+          msg = "Business rules are in review status.  Click the <i class='fa fa-medkit'></i> button to review.";
+          colorClass = 'warning';
         }
         if(msg.length > 0) {
           panel.find('.panel-body').html(msg);

@@ -46,7 +46,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     original_value = self.state
     # validation rule can be nil if it's in the process of getting deleted (which can take time since there's
     # potentially hundreds of thousands of rule results).
-    return false if self.overridden_at || self.business_validation_rule.nil? || self.business_validation_rule.delete_pending?
+    return false if self.overridden_at || self.business_validation_rule.nil? || !self.business_validation_rule.active?
     if self.business_validation_rule.should_skip? obj
       self.message = nil
       self.state = 'Skipped'

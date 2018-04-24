@@ -32,7 +32,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
           can_run_validations: obj.can_run_validations?(run_by),
           bv_results:[]
         }
-    obj.business_validation_results.select{ |bvre| bvre.business_validation_template.active? }.each do |bvr|
+    obj.business_validation_results.each do |bvr|
       return nil unless bvr.can_view?(run_by)
       h = {
             id:bvr.id,
@@ -41,7 +41,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
             updated_at:bvr.updated_at,
             rule_results:[]
           }
-      bvr.business_validation_rule_results.select{ |bvrr| bvrr.business_validation_rule.active? }.each do |rr|
+      bvr.business_validation_rule_results.each do |rr|
         h[:rule_results] << business_validation_rule_result_json(rr, run_by)
       end
       r[:bv_results] << h

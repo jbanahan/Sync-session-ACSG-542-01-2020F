@@ -19,14 +19,11 @@
               </h3>
             </div>
             <div class="panel-body">
-              <div ng-show="bvr.updated_at < result.object_updated_at" class='alert-warning'>
-                This {{result.single_object.toLowerCase()}} has been updated recently and is queued to have its business rules revalidated.  Please check back in a few minutes.
-              </div>
               <div ng-repeat="rr in bvr.rule_results">
                 <span ng-class='svc.stateToBootstrap("text",rr.state)'>
                   <state-icon state='rr.state'></state-icon>
                   <a href='' ng-click='editRuleResult(rr)' title='{{rr.rule.description}}'>
-                    {{rr.rule.name}} - {{rr.state}}
+                    {{rr.rule.name}} - {{rr.state}} {{!rr.rule.active ? "[disabled]" : ""}}
                   </a>
                 </span>
               </div>
