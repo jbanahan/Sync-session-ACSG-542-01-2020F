@@ -1,7 +1,12 @@
 class OpenMailer < ActionMailer::Base
   include AbstractController::Callbacks # This can be removed when migrating to rails 4
 
-  after_filter :modify_email_for_development, :log_email
+  after_filter :log_email
+  # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
+  after_filter :possibly_suppress_email, except: :send_generic_exception
+  # In dev, we don't actually want to email errors,..we're actually going to use the logger instead to render them 
+  after_filter :redirect_to_developer, only: :send_generic_exception
+
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -545,13 +550,48 @@ EOS
       end
     end
 
-    def modify_email_for_development
-      if Rails.env.development?
+    require 'mail/check_delivery_params'
+    class NoOpMailer
+      attr_accessor :settings
+      def initialize settings
+        @settings = settings
+      end
+
+      def deliver!(mail)
+        # We'll still want to check the mail for validity so that errors raised normally on an email would be 
+        # Below is what the standard mailer does
+        Mail::CheckDeliveryParams.check(mail)
+      end
+    end
+
+    def possibly_suppress_email
+      # We don't want to suppress emails in test env, since the test mailer is used to capture emails for test cases to introspect
+      if !test_env? && !MasterSetup.email_enabled?
+        message.delivery_method NoOpMailer
+      end
+
+      true
+    end
+
+    # Broken out for ease of mocking without forcing Rails.env to return bad values in test
+    def test_env?
+      Rails.env.test?
+    end
+
+    def development_env?
+      Rails.env.development?
+    end
+    
+    def redirect_to_developer
+      if development_env?
         headers['X-ORIGINAL-TO'] = message.to.blank? ? 'blank' : message.to.join(", ")
         headers['X-ORIGINAL-CC'] = message.cc.blank? ? 'blank' : message.cc.join(", ")
         headers['X-ORIGINAL-BCC'] = message.bcc.blank? ? 'blank' : message.bcc.join(", ")
-        message.to = User.first.email
-        message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
+        #Postmark doesn't like blank strings, nils, or blank lists...
+        message.cc = [""]
+        message.bcc = [""]
+
+        message.to = [MasterSetup.config_value("exception_email_to", default: "you-must-set-exception_email_to-in-vfitrack-config@vandegriftinc.com")]
       end
     end
 

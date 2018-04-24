@@ -23,6 +23,8 @@
 #  security_filing_enabled     :boolean
 #  shipment_enabled            :boolean          default(TRUE), not null
 #  stats_api_key               :string(255)
+#  suppress_email              :boolean
+#  suppress_ftp                :boolean
 #  system_code                 :string(255)
 #  system_message              :text
 #  target_version              :string(255)
@@ -129,6 +131,30 @@ class MasterSetup < ActiveRecord::Base
     end
     m
   end
+
+  def self.ftp_enabled?
+    # Never enable ftp for development / test environments
+    if production_env?
+      !MasterSetup.get.suppress_ftp?
+    else
+      false
+    end
+  end
+
+  def self.email_enabled?
+    # Never enable ftp for development / test environments
+    if production_env?
+      !MasterSetup.get.suppress_email?
+    else
+      false
+    end
+  end
+
+  # Almost solely for test casing purposes
+  def self.production_env?
+    Rails.env.production?
+  end
+  private_class_method :production_env?
 
   # checks to see if the given custom feature is in the custom features list
   def custom_feature? feature

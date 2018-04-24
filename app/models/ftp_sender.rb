@@ -175,7 +175,7 @@ class FtpSender
   private_class_method :get_file_to_ftp
 
   def self.get_ftp_client my_opts
-    if Rails.configuration.enable_ftp
+    if MasterSetup.ftp_enabled?
       my_opts[:protocol] == "sftp" ? SftpClient.new : FtpClient.new
     else
       NoOpFtpClient.new

@@ -33,7 +33,8 @@ module OpenChain
       end
       
       ms.request_host = req_host
-      ms.ftp_polling_active = false
+      ms.suppress_ftp = true
+      ms.suppress_email = true
       ms.custom_features = ''
       ms.stats_api_key = ""
       ms.save!

@@ -590,17 +590,17 @@ describe FtpSender do
 
   describe "get_ftp_client" do
     it "returns a no-op client if enable_ftp is false" do
-      expect(Rails.configuration).to receive(:enable_ftp).and_return false
+      expect(MasterSetup).to receive(:ftp_enabled?).and_return false
       expect(FtpSender.send(:get_ftp_client, {}).class.name).to eq "FtpSender::NoOpFtpClient"
     end
 
     it "returns an ftp client by default" do
-      expect(Rails.configuration).to receive(:enable_ftp).and_return true
+      expect(MasterSetup).to receive(:ftp_enabled?).and_return true
       expect(FtpSender.send(:get_ftp_client, {}).class.name).to eq "FtpSender::FtpClient"
     end
 
     it "returns an sftp client if requested" do
-      expect(Rails.configuration).to receive(:enable_ftp).and_return true
+      expect(MasterSetup).to receive(:ftp_enabled?).and_return true
       expect(FtpSender.send(:get_ftp_client, {protocol: 'sftp'}).class.name).to eq "FtpSender::SftpClient"
     end
   end

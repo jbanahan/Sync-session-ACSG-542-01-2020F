@@ -26,32 +26,25 @@ describe OpenChain::TestInstanceManager do
   end
   describe "update_master_setup" do
     before :each do 
-      MasterSetup.get.update_attributes(system_code:'oldcode',uuid:'olduuid',ftp_polling_active:true,custom_features:'cf',request_host:'oldhost')
+      MasterSetup.get.update_attributes!(system_code:'oldcode',uuid:'olduuid',suppress_ftp:false,suppress_email:false,custom_features:'cf',request_host:'oldhost')
     end
+    
     context "without uuid" do
-      before :each do      
-        described_class.new.update_master_setup! 'new.request.host', nil
-      end
-      it "should change system code" do
-        expect(MasterSetup.get.system_code).to eq('new') 
-      end
-      it "should change UUID" do
-        expect(MasterSetup.get.uuid).to eq UUIDTools::UUID.md5_create(UUIDTools::UUID_DNS_NAMESPACE, 'new.request.host').to_s
-      end
-      it "should disable FTP polling" do
-        expect(MasterSetup.get).not_to be_ftp_polling_active
-      end
-      it "should clear custom features" do
-        expect(MasterSetup.get.custom_features).to be_blank
-      end
-      it "should set request host" do
-        expect(MasterSetup.get.request_host).to eq('new.request.host')
+      it "updates master setup test values" do
+        subject.update_master_setup! 'new.request.host', nil
+        ms = MasterSetup.first
+        expect(ms.system_code).to eq('new') 
+        expect(ms.uuid).to eq UUIDTools::UUID.md5_create(UUIDTools::UUID_DNS_NAMESPACE, 'new.request.host').to_s
+        expect(ms.suppress_email).to eq true
+        expect(ms.suppress_ftp).to eq true
+        expect(ms.custom_features).to eq ""
+        expect(ms.request_host).to eq 'new.request.host'
       end
     end
 
     it "reuses uuid if given" do
       described_class.new.update_master_setup! 'new.request.host', "uuid"
-      expect(MasterSetup.get.uuid).to eq "uuid"
+      expect(MasterSetup.first.uuid).to eq "uuid"
     end
   end
   describe "update_users" do

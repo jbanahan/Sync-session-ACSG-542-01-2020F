@@ -50,8 +50,5 @@ OpenChain::Application.configure do
   config.serve_static_assets = true #need this to allow /public directory to work
 
   config.broadcast_model_events = false
-  # If false, file sending is disabled.  This prevents any accidental sending of ftp files in testing/production via 
-  # the use of a no-op ftp client.  No connection is attempted to any server.
-  config.enable_ftp = false
 end
 

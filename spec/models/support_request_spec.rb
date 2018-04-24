@@ -8,13 +8,16 @@ describe SupportRequest do
     r = SupportRequest.new user: user, created_at: Time.zone.parse("2015-12-29 15:00"), referrer_url: "http://www.vfitrack.net", body: "Help!", severity: "OMG!!!", ticket_number: "Ticket", external_link: "Link"
   }
 
+  before :each do 
+    allow(described_class).to receive(:test_env?).and_return false
+  end
+
   context "with trello config" do
     let(:config) {
       {"trello" => {"board_id" => "the_board", "list_name" => "The List", "severity_colors" => {"OMG!!!" => "red", "Meh" => "green"}}}
     }
 
     before :each do
-      allow(Rails.env).to receive(:test?).and_return false
       expect(described_class).to receive(:support_request_config).and_return config
     end
 
@@ -51,7 +54,6 @@ describe SupportRequest do
     }
 
     before :each do
-      allow(Rails.env).to receive(:test?).and_return false
       expect(described_class).to receive(:support_request_config).and_return config
     end
 
@@ -82,7 +84,6 @@ describe SupportRequest do
     }
 
     before :each do
-      allow(Rails.env).to receive(:test?).and_return false
       expect(described_class).to receive(:support_request_config).and_return config
     end
 
@@ -93,9 +94,6 @@ describe SupportRequest do
   end
 
   describe "request_sender" do
-    before :each do
-      allow(Rails.env).to receive(:test?).and_return false
-    end
 
     it "raises an error when an invalid sender is selected" do
       expect(described_class).to receive(:support_request_config).and_return({"invalid" => ""})

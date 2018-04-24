@@ -43,7 +43,4 @@ OpenChain::Application.configure do
   #logger for showing sql
   #ActiveRecord::Base.logger = Logger.new(STDOUT)
   config.broadcast_model_events = false
-  # If false, file sending is disabled.  This prevents any accidental sending of ftp files in testing/production via 
-  # the use of a no-op ftp client.  No connection is attempted to any server.
-  config.enable_ftp = false
 end

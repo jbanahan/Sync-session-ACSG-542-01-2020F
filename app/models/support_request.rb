@@ -24,7 +24,7 @@ class SupportRequest < ActiveRecord::Base
   end
 
   def self.request_sender
-    return TestingSender.new if Rails.env.test?
+    return TestingSender.new if test_env?
 
     config = support_request_config
     raise "No ticket sender configured." if config.nil?
@@ -134,4 +134,9 @@ class SupportRequest < ActiveRecord::Base
       support_request
     end
   end
+
+  def self.test_env?
+    Rails.env.test?
+  end
+  private_class_method :test_env?
 end 

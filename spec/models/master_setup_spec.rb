@@ -232,5 +232,43 @@ describe MasterSetup do
       expect(MasterSetup.new.production?).to eq false
     end
   end
+
+  describe "ftp_enabled?" do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+    }
+
+    it "returns false when not in production, regardless of master setup value" do
+      expect(MasterSetup).to receive(:production_env?).and_return false
+      expect(master_setup).not_to receive(:suppress_ftp?)
+      expect(MasterSetup.ftp_enabled?).to eq false
+    end
+
+    it "returns negation of suppress ftp when in production" do
+      expect(MasterSetup).to receive(:production_env?).and_return true
+      expect(master_setup).to receive(:suppress_ftp?).and_return false
+      expect(MasterSetup.ftp_enabled?).to eq true
+    end
+  end
+
+  describe "email_enabled?" do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+    }
+
+    it "returns false when not in production, regardless of master setup value" do
+      expect(MasterSetup).to receive(:production_env?).and_return false
+      expect(master_setup).not_to receive(:suppress_email?)
+      expect(MasterSetup.email_enabled?).to eq false
+    end
+
+    it "returns negation of suppress email when in production" do
+      expect(MasterSetup).to receive(:production_env?).and_return true
+      expect(master_setup).to receive(:suppress_email?).and_return false
+      expect(MasterSetup.email_enabled?).to eq true
+    end
+  end
   
 end
