@@ -86,7 +86,11 @@ class XlsMaker
     # The redirect gets around this by providing the IE discovery component the correct URL to hand off to the default browser.
 
     # The relative url is encoded so any page parameters are not fed to the redirect page.
-    "http://#{request_host}/redirect.html?page=#{CGI.escape(relative_url)}"
+    if Rails.env.production?
+      "https://#{request_host + relative_url}"
+    else
+      "http://#{request_host + relative_url}"
+    end
   end
   
   def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false, options = {}

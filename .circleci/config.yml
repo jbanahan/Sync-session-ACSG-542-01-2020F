@@ -56,8 +56,8 @@ jobs:
         # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
         - v1-dep-
     # This is based on your 1.0 configuration file or project settings
-    - run: mkdir ./tmp
-    - run: mkdir ./spec/support/tmp
+    - run: mkdir -p ./tmp
+    - run: mkdir -p ./spec/support/tmp
     # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
     - run: echo -e "export RAILS_ENV=test\nexport RACK_ENV=test" >> $BASH_ENV
     - run: 'bundle check --path=vendor/bundle || bundle install --path=vendor/bundle

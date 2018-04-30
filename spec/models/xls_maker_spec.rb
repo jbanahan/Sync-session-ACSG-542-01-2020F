@@ -351,9 +351,9 @@ describe XlsMaker do
   end
 
   describe "excel_url" do
-    it "wraps the given relative url in a redirect" do
+    it "checks and builds a URL with a given location and the machine's host information" do
       allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
-      expect(XlsMaker.excel_url("/page.html?a=1&b=2")).to eq "http://localhost/redirect.html?page=#{CGI.escape("/page.html?a=1&b=2")}"
+      expect(XlsMaker.excel_url("/page.html?a=1&b=2")).to eq "http://localhost/page.html?a=1&b=2"
     end
   end
 

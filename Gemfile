@@ -93,6 +93,9 @@ gem 'email_validator', '~> 1.6.0'
 # EDI Processor
 gem 'REX12', '~> 0.2'
 
+# Fix for links not working in the Microsoft Suite
+gem 'fix_microsoft_links'
+
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
