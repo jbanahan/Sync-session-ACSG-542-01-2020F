@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
       left outer join jiradb.issuetype t on t.ID = i.issuetype
       left outer join jiradb.issuestatus s on s.id = i.issuestatus
       left outer join jiradb.customfieldvalue v on v.customfield = 10003 and v.issue = i.id
-      left outer join wwwvfitracknet.entries e on e.source_system = 'Fenix' and (e.broker_reference = v.STRINGVALUE OR v.stringvalue = e.cargo_control_number or e.master_bills_of_lading = v.stringvalue) and e.importer_tax_id in ('806167003RM0001', '871349163RM0001', '866806458RM0001', '806167003RM0002') and e.file_logged_date >= '#{logged_date_start}'
+      left outer join wwwvfitracknet.entries e on e.source_system = 'Fenix' and (e.entry_number = v.stringvalue OR e.broker_reference = v.stringvalue OR e.cargo_control_number = v.stringvalue OR e.master_bills_of_lading = v.stringvalue) and e.importer_tax_id in ('806167003RM0001', '871349163RM0001', '866806458RM0001', '806167003RM0002') and e.file_logged_date >= '#{logged_date_start}'
       where i.PROJECT = 10101
       and i.CREATED >= '#{start_date}' and i.created < '#{end_date}'
       order by i.CREATED asc
