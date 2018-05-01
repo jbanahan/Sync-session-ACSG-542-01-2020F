@@ -80,9 +80,7 @@ describe FtpSender do
     context "error" do
 
       before :each do
-        @conf = double("Rails.configuration")
-        allow(Rails).to receive(:configuration).and_return @conf
-        allow(@conf).to receive(:enable_ftp).and_return true
+        allow(MasterSetup).to receive(:ftp_enabled?).and_return true
       end
 
       it "should log message and requeue if error is raised" do
@@ -205,7 +203,7 @@ describe FtpSender do
       end
 
       it "does not queue send retry if ftp is not enabled" do
-        allow(@conf).to receive(:enable_ftp).and_return false
+        allow(MasterSetup).to receive(:ftp_enabled?).and_return false
         # Raise an error early in the send block, since all we care about is that the resend isn't queued
         allow(FtpSender).to receive(:get_ftp_client).and_raise "Error"
         expect(FtpSender).not_to receive(:delay)
@@ -589,7 +587,7 @@ describe FtpSender do
   end
 
   describe "get_ftp_client" do
-    it "returns a no-op client if enable_ftp is false" do
+    it "returns a no-op client if MasterSetup#ftp_enabled? is false" do
       expect(MasterSetup).to receive(:ftp_enabled?).and_return false
       expect(FtpSender.send(:get_ftp_client, {}).class.name).to eq "FtpSender::NoOpFtpClient"
     end
