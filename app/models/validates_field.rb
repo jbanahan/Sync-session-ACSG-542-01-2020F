@@ -11,6 +11,7 @@ module ValidatesField
     messages = []
     validation_expressions(['operator', 'value', 'fail_if_matches', 'allow_blank', 'secondary_model_field_uid', 'split_field']).each_pair do |model_field, attrs|
       # If we have "if criterions", we don't evaluate the rule unless all the IF statements pass
+      # NOTE: Do not use "if_criterions" in a validation's JSON. Use if instead.
       passed = true
       Array.wrap(attrs['if_criterions']).each do |sc|
         passed = sc.test?(obj)
@@ -19,6 +20,7 @@ module ValidatesField
       next unless passed
 
       # If we have 'unless_criterions', we don't evaluate the rule if any of statements pass
+      # NOTE: Do not use "unless_criterions" in a validation's JSON. Use unless instead.
       passed = true
       Array.wrap(attrs['unless_criterions']).each do |sc|
         passed = !sc.test?(obj)

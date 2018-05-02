@@ -55,6 +55,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
                 ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
                 ValidationRuleProductClassificationFieldFormat: {label:"Product Classification Field Format"},
+                ValidationRuleBrokerInvoiceFieldFormat: {label: 'Broker Invoice Field Format'},
+                ValidationRuleBrokerInvoiceLineFieldFormat: {label: 'Broker Invoice Line Field Format'},
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
                 #DEPRECATED - doesn't appear in menu
                 ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },

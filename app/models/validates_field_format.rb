@@ -13,6 +13,7 @@ module ValidatesFieldFormat
       attrs = attrs.dup
 
       # If we have "if criterions", we don't evaluate the rule unless all the IF statements pass
+      # NOTE: Do not use "if_criterions" in a validation's JSON. Use if instead.
       passed = true
       Array.wrap(attrs['if_criterions']).each do |sc|
         passed = sc.test?(obj)
@@ -21,6 +22,7 @@ module ValidatesFieldFormat
       next unless passed
 
       # If we have 'unless_criterions', we don't evaluate the rule if any of statements pass
+      # NOTE: Do not use "unless_criterions" in a validation's JSON. Use unless instead.
       passed = true
       Array.wrap(attrs['unless_criterions']).each do |sc|
         passed = !sc.test?(obj)
