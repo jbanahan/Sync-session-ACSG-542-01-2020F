@@ -1,28 +1,28 @@
-require 'open_chain/entity_compare/comparator_registry'
-require 'open_chain/custom_handler/vandegrift/vandegrift_ace_entry_comparator'
-require 'open_chain/custom_handler/hm/hm_entry_docs_comparator'
-require 'open_chain/billing_comparators/product_comparator'
-require 'open_chain/custom_handler/hm/hm_system_classify_product_comparator'
-require 'open_chain/custom_handler/under_armour/under_armour_shipment_comparator'
-require 'open_chain/custom_handler/ascena/ascena_entry_billing_comparator'
-require 'open_chain/entity_compare/product_comparator/stale_tariff_comparator'
-require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
-require 'open_chain/custom_handler/vandegrift/kewill_ci_load_shipment_comparator'
-require 'open_chain/custom_handler/talbots/talbots_landed_cost_comparator'
-require 'open_chain/custom_handler/vandegrift/kewill_ci_load_isf_comparator'
-require 'open_chain/custom_handler/vandegrift/vandegrift_entry_archive_comparator'
-
-
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSystemInit
 
   def self.init
-    code = MasterSetup.get.system_code
-    return unless ['www-vfitrack-net', 'test'].include? code
+    return unless MasterSetup.get.custom_feature?("WWW")
 
     register_change_comparators
   end
 
   def self.register_change_comparators
+    # Add requires here so that other systems don't load them uneccesarily
+    require 'open_chain/entity_compare/comparator_registry'
+    require 'open_chain/custom_handler/vandegrift/vandegrift_ace_entry_comparator'
+    require 'open_chain/custom_handler/hm/hm_entry_docs_comparator'
+    require 'open_chain/billing_comparators/product_comparator'
+    require 'open_chain/custom_handler/hm/hm_system_classify_product_comparator'
+    require 'open_chain/custom_handler/under_armour/under_armour_shipment_comparator'
+    require 'open_chain/custom_handler/ascena/ascena_entry_billing_comparator'
+    require 'open_chain/entity_compare/product_comparator/stale_tariff_comparator'
+    require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
+    require 'open_chain/custom_handler/vandegrift/kewill_ci_load_shipment_comparator'
+    require 'open_chain/custom_handler/talbots/talbots_landed_cost_comparator'
+    require 'open_chain/custom_handler/vandegrift/kewill_ci_load_isf_comparator'
+    require 'open_chain/custom_handler/vandegrift/vandegrift_entry_archive_comparator'
+    require 'open_chain/custom_handler/foot_locker/foot_locker_entry_810_comparator'
+
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryDocsComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::BillingComparators::ProductComparator
@@ -35,6 +35,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadIsfComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator
   end
   private_class_method :register_change_comparators
 

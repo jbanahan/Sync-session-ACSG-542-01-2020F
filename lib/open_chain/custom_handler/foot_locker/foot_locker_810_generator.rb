@@ -3,45 +3,7 @@ require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Generator
   include OpenChain::XmlBuilder
-  include OpenChain::FtpFileSupport
   include ActionView::Helpers::NumberHelper
-
-  def accepts? event, entry
-    ['FOOLO', 'FOOCA', 'TEAED'].include?(entry.customer_number) && entry.broker_invoices.length > 0 && !entry.last_billed_date.nil? && MasterSetup.get.system_code == 'www-vfitrack-net'
-  end
-
-  def ftp_credentials
-    connect_vfitrack_net 'to_ecs/foot_locker/810'
-  end
-
-  def receive event, entry
-    sync_record = entry.sync_records.where(trading_partner: "foolo 810").first_or_create(fingerprint: "")
-    sent_invoices = sync_record.fingerprint.split "\n"
-    
-    new_invoices = entry.broker_invoices.select {|inv| !sent_invoices.include? inv.invoice_number}
-
-    # Due to the way we synthesize the duty fees (mpf, hmf, cotton fee, duty amounts), we're going to do a full resend 
-    # of all the invoice data for the whole entry so FOOLO can just do a full replace of the data for all the invoice files.
-    sent_invoices = []
-    unless new_invoices.blank?
-      entry.broker_invoices.each do |invoice|
-        xml = generate_xml invoice
-
-        # XML might be blank if the invoices have no charges that should be transmitted
-        unless xml.blank?
-          Tempfile.open(["Foolo810-#{invoice.invoice_number.strip}-",'.xml']) do |t|
-            t << xml.to_s
-            t.flush
-            t.rewind
-            ftp_file t
-            sent_invoices << invoice.invoice_number
-          end
-        end
-      end
-      sync_record.update_attributes! fingerprint: sent_invoices.join("\n"), sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
-    end
-    nil
-  end
 
   def generate_xml broker_invoice
     doc, root = build_xml_document "FootLockerInvoice810"
@@ -83,35 +45,40 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
     add_element root, "TotalMonetaryAmount", to_number(broker_invoice.invoice_total)
     add_element root, "TotalCommercialInvoiceAmount", to_number(entry.total_invoiced_value)
 
-    po_numbers = {}
+    inv_lines = Set.new
+
     entry.commercial_invoice_lines.each do |line|
       # We want to make sure we're sending out the tariff number even if the PO is blank
       # In these cases, we'll send 0 as po.
-      po = line.po_number.to_s.strip
-      po = "0" if po.blank?
+      po = (line.po_number.presence || "0").strip
+      inv = line.commercial_invoice.invoice_number.to_s.strip
+      part = (line.part_number.presence || "0").strip
 
       line.commercial_invoice_tariffs.each do |t|
         next if t.hts_code.blank?
 
-        po_numbers[po] ||= Set.new
-        po_numbers[po] << t.hts_code
+        inv_lines << [inv, po, part, t.hts_code].join("*~*")
       end
     end
 
     # We need to ensure that the Details/Detail/PoNumber tag is always present, regardless of whether we
     # have actual Detail elements below it for EDI handling purposes
     details = add_element root, "Details"
-    if po_numbers.blank?
+    if inv_lines.size == 0
       detail = add_element details, "Detail"
       add_element detail, "PoNumber", "0"
+      add_element detail, "Tariff", "0"
+      add_element detail, "Sku", "0"
+      add_element detail, "InvoiceNumber", "0"
     else
-      po_numbers.each_pair do |po, hts_codes|
-        hts_codes.each do |hts|
-          detail = add_element details, "Detail"
+      inv_lines.each do |line|
+        detail = add_element details, "Detail"
+        inv, po, part, hts = line.split("*~*")
 
-          add_element detail, "PoNumber", po
-          add_element detail, "Tariff", hts.hts_format
-        end
+        add_element detail, "PoNumber", po
+        add_element detail, "Tariff", hts.hts_format
+        add_element detail, "Sku", part
+        add_element detail, "InvoiceNumber", inv
       end
     end
 
