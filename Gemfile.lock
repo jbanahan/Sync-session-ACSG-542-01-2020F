@@ -136,7 +136,7 @@ GEM
     faraday_middleware (0.12.2)
       faraday (>= 0.7.4, < 1.0)
     ffi (1.9.18)
-    fix_microsoft_links (0.1.5)
+    fix_microsoft_links (0.1.6)
       rack (>= 1.1.1)
     gli (2.16.1)
     googleauth (0.5.3)
