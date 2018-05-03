@@ -94,6 +94,13 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       end
     end
 
+    it "does not fail with invoices containing slashes in the name" do
+      @i.update_attributes! invoice_number: "INV/2"
+      contents = generate
+
+      expect(contents.length).to eq(3)
+    end
+
     it "should use defaults for missing data" do
       # Default output handles missing data in Invoice Number, Cartons, Units, Value, HTS Code, tariff treatment
       @i.update_attributes! invoice_number: nil, total_quantity_uom: nil, invoice_value: nil, gross_weight: nil

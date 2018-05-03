@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler
         importer_tax_id = invoice.importer.try(:fenix_customer_number)
         invoice_number = invoice.invoice_number
 
-        Tempfile.open(["#{importer_tax_id}_fenix_invoice_#{invoice_number}_",'.txt'], {:external_encoding =>"ASCII"}) do |t|
+        Tempfile.open(["#{importer_tax_id}_fenix_invoice_#{invoice_number.to_s.gsub("/", "_")}_",'.txt'], {:external_encoding =>"ASCII"}) do |t|
           # Write out the header information
           write_fields t, "H", FenixNdInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
 
