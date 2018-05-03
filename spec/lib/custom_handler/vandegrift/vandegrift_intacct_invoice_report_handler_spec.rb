@@ -47,8 +47,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
     it "associates a list of invoice numbers with entry URLs, returning nil for those that aren't found" do
       bi1 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "1234")
       bi2 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "5678")
-      expect(handler.get_urls(["1234", "5678", "9012"])).to eq({"1234" => "http://localhost:3000/redirect.html?page=%2Fentries%2F#{bi1.entry.id}", 
-                                                                "5678" => "http://localhost:3000/redirect.html?page=%2Fentries%2F#{bi2.entry.id}",
+      expect(handler.get_urls(["1234", "5678", "9012"])).to eq({"1234" => bi1.entry.excel_url, 
+                                                                "5678" => bi2.entry.excel_url,
                                                                 "9012" => nil})
     end
   end

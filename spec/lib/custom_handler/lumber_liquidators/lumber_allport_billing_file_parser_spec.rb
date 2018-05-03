@@ -147,7 +147,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(1)[13]).to eq 2
       expect(sheet.row(1)[14]).to eq 70.65
       expect(sheet.row(1)[15]).to be_an_instance_of Spreadsheet::Link
-      expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_1.id}"
+      expect(sheet.row(1)[15].href).to include "entries/#{entry_1.id}"
       expect(sheet.row(1)[15].to_s).to eq "Web View"
 
       expect(sheet.row(2)[0]).to eq 'Stufftek'
@@ -166,7 +166,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(2)[13]).to eq 1
       expect(sheet.row(2)[14]).to eq 25.25
       expect(sheet.row(2)[15]).to be_an_instance_of Spreadsheet::Link
-      expect(sheet.row(2)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_2.id}"
+      expect(sheet.row(2)[15].href).to include "entries/#{entry_2.id}"
       expect(sheet.row(2)[15].to_s).to eq "Web View"
 
       expect(sheet.row(3)[0]).to be_nil
@@ -215,7 +215,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.row(1)[8]).to eq 'OTHER BOL'
       expect(sheet.row(1)[9]).to eq 'BOL-2'
       expect(sheet.row(1)[14]).to eq 25.25
-      expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_2.id}"
+      expect(sheet.row(1)[15].href).to include "entries/#{entry_2.id}"
 
       expect(sheet.row(2)[14]).to eq 25.25
 
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       expect(sheet.rows.length).to eq 3
       expect(sheet.row(1)[8]).to eq 'BOL-1'
       expect(sheet.row(1)[10]).to eq 'CON-1,CON-2'
-      expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_1.id}"
+      expect(sheet.row(1)[15].href).to include "entries/#{entry_1.id}"
     end
 
     it "handles line that has multiple BOL and container number matches" do
@@ -335,7 +335,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
       expect(sheet.rows.length).to eq 3
       expect(sheet.row(1)[10]).to eq 'CON-1,CON-2'
-      expect(sheet.row(1)[15].href).to eq "http://some_host/redirect.html?page=%2Fentries%2F#{entry_1.id}"
+      expect(sheet.row(1)[15].href).to include "entries/#{entry_1.id}"
     end
 
     # This should be viewed as a mismatch, despite the BOL match.

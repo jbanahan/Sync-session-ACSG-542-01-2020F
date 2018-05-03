@@ -1,0 +1,78 @@
+                                                                 J. CREW - COMMERCIAL INVOICE
+ Seller                                                                       Invoice Number                              Invoice Date
+ J. CREW FRANCE SAS                                                           2015-10-05                                  05/10/2015
+ 95 RUE LA BOETIE
+ PARIS FR 75008                                                               Purchase Order / Buyer's Reference          Order Date
+ Contact Name: WANDA TOM Tel: 212-209-2500                                    PO: 3700015360
+                                                                              Sales Order / Seller's Reference            Order Date
+
+
+                                                                              Other References:
+                                                                              Reason for Export: RETURN
+ Buyer                                                                        Consignee/Delivery Address
+ J.CREW OPCO                                                                  J. CREW RETAIL DC ASHEVILLE
+ 770 BROADWAY                                                                 2 CLIFFORD WAY
+ NEW YORK NY US 10003                                                         ASHEVILLE NC US 28810
+ Vendor
+ For Customs Clearance By                                                     Country of Dispatch
+ Expeditors Int'l of Washington, Inc.
+ Mode of Transport                      Carrier                               Vessel                                       Terms of Delivery
+                                                                                                                           FOB
+ Port of Loading                        Voyage / Flight                       Estimated Date of Departure                  Terms of Payment
+
+
+ Port of Unloading                      Country of Destination                Estimated Date of Delivery                   Currency              Total Quantity
+                                                                                                                           USD                   1
+ Number of             Type of          General Goods Description / Shipping Marks                                         Total Weight          Total Cube
+ Packages              Packages
+
+
+                  Product ID./
+    Line       Commodity Code/                              Description/
+                    ECCN/                                                                           Qty           Unit          Price                    Total
+    No.                                                   Country of Origin
+                Export Lic. Ref #
+1           62974                       MEN'S 100% COTTON WOVEN SHORT                                      1 EA                           8.95                    8.95
+            HS: 6203424050              Country of Origin: CN
+                                        PO: 3700015360
+                                        Color: NA6280
+                                        Size: 38
+                                        ITPO Line Item Number: 62974
+                                                                                                                                   Subtotal                       8.95
+
+
+
+
+ Declarations / Statements:
+
+
+ Comments:
+
+
+ Other References:
+
+
+
+                                                                                                                               Line Total                         8.95
+                                                                                                                         Line Adjustments                         0.00
+                                                                                                                                 Subtotal                         8.95
+                                                                                                              INVOICE TOTAL (USD)                                 8.95
+
+
+
+Signature
+
+
+
+Name                                     Title
+
+
+
+
+Date                                     Place of Issue
+
+
+
+
+                                                                                                                                                       Page 1 of 1
+

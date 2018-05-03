@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
 
   describe "ftp_credentials" do
     it "should send credentials" do
-     expect(described_class.new.ftp_credentials).to eq server: 'ftp2.vandegriftinc.com', username: "VFITRACK", password: 'RL2VFftp', folder: 'to_ecs/alliance_products', remote_file_name: "DAPART.DAT"
+     expect(described_class.new.ftp_credentials).to eq server: 'ftp2.vandegriftinc.com', username: "VFITRACK", password: 'RL2VFftp', folder: 'to_ecs/alliance_products', remote_file_name: "DAPART.DAT", protocol: "sftp"
     end
   end
 

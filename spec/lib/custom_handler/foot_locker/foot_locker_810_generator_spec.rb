@@ -28,8 +28,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
     let (:entry) {
       entry = Factory(:entry, master_bills_of_lading: "MB1\nMB2", house_bills_of_lading: "HB1\nHB2", broker_reference: "REF", entry_number: "NUM", entry_type: "TYPE", export_date: Date.new(2014, 11, 1), 
-        release_date: Date.new(2014, 11, 2), entry_filed_date: Date.new(2014, 11, 3), vessel: "VESS", voyage: "VOY", carrier_code: "CAR", unlading_port_code: "UNL", 
-        entry_port_code: "EPC", lading_port_code: "LPC", total_invoiced_value: "666.66", hmf: "123.45", mpf: "234.56", cotton_fee: "345.67", total_duty: "456.78", arrival_date: Date.new(2014, 11, 4))
+        release_date: "2014-11-02 12:00", entry_filed_date: "2014-11-03 12:00", vessel: "VESS", voyage: "VOY", carrier_code: "CAR", unlading_port_code: "UNL", 
+        entry_port_code: "EPC", lading_port_code: "LPC", total_invoiced_value: "666.66", hmf: "123.45", mpf: "234.56", cotton_fee: "345.67", total_duty: "456.78", arrival_date: "2014-11-04 12:00")
       
     }
 

@@ -81,6 +81,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       end
 
       it "parses a pdf file" do
+        # Mock out the actual convert_pdf_to_text call so we don't have to rely on Xpdf being installed on the user machine / ci system
+        expect(subject).to receive(:convert_pdf_to_text).and_return IO.read("spec/fixtures/files/crew_returns.txt")
         subject.parse_and_send custom_file, user
         expect(ActionMailer::Base.deliveries.size).to eq 1
 
