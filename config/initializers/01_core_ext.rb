@@ -1,3 +1,26 @@
+# This patch make sure that if the DB goes down for any reason, that any connections in the pool that were related
+# to it are revalidated and reconnected when checked out again.  This prevents us from having to restart the server
+# when there is database connectivity issues.
+# See https://github.com/rails/rails/issues/16213
+
+# This is fixed in Rails 5 (though I'm not sure if Rails 4 will work with the code below or not - hence the raise)
+# See https://github.com/rails/rails/pull/17468 for Rails 4 change that will resolve the issue too
+if Rails::VERSION::MAJOR == 3
+  module ActiveRecord; module ConnectionAdapters; class ConnectionPool
+
+    def checkout_and_verify_with_rescue(c)
+      checkout_and_verify_without_rescue(c)
+    rescue => exception
+      checkin(c)
+      throw exception
+    end
+    alias_method_chain :checkout_and_verify, :rescue
+
+  end; end ;end
+else
+  raise "ConnectionPool patch must be verified for Rails versions != 3."
+end
+
 ActiveSupport::TimeZone.class_eval do
   #parse a date in "01/28/2008 04:27am" format
   def parse_us_base_format str
