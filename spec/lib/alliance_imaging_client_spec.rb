@@ -841,6 +841,7 @@ ERR
       expect(a.attachment_type).to eq "B3"
       expect(a.source_system_timestamp).to eq Time.zone.parse("2015-09-04T05:30:35-10:00")
       expect(a.is_private).to be_nil
+      # Note the check on the absence of the leading underscore
       expect(a.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
 
       expect(entry.entity_snapshots.length).to eq 1
@@ -966,6 +967,15 @@ ERR
       @message["file_number"] = 11981001795105.0
 
       r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+    end
+
+    it "strips trailing underscores from the filename" do
+      @message["file_name"] = @message["file_name"] + "_"
+
+      r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+      a = r[:attachment]
+
+      expect(a.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
     end
 
   end

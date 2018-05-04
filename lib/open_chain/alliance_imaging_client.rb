@@ -133,8 +133,7 @@ class OpenChain::AllianceImagingClient
     # database index and ends up doing a table scan (VERY BAD)
     hsh["file_number"] = hsh["file_number"].to_i.to_s
 
-    Attachment.add_original_filename_method t
-    t.original_filename= hsh["file_name"]
+    Attachment.add_original_filename_method t, hsh["file_name"]
     source_system = hsh["source_system"].nil? ? Entry::KEWILL_SOURCE_SYSTEM : hsh["source_system"]
 
     attachment_type = hsh["doc_desc"]
@@ -242,10 +241,15 @@ class OpenChain::AllianceImagingClient
     # database index and ends up doing a table scan (VERY BAD)
     file_data["file_number"] = file_data["file_number"].to_i.to_s
 
-    Attachment.add_original_filename_method t
-
     # For some reason, the file_name for B3's starts w/ _, which is dumb...strip leading _'s (just do it on all files..leading underscores are pointless on anything)
-    t.original_filename = file_data["file_name"].to_s.gsub(/^_+/, "")
+    filename = file_data["file_name"].to_s.gsub(/^_+/, "")
+
+    # For some reason some Fenix files are coming over with an underscore at the end of the filename (after the extension)...this is throwing off the
+    # paperclip content spoof detector, since the content type of .tif_ is undefined...strip trailing underscores.
+    filename = filename.gsub(/_$/, "")
+
+
+    Attachment.add_original_filename_method t, filename
 
     entry = nil
     Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
