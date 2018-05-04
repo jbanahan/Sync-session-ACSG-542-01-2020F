@@ -93,10 +93,8 @@ RSpec.configure do |config|
     end
 
     unstub_snapshots
-  end
 
-  config.after(:each, :type => :controller) do
-    # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests
+    # Counteract the application controller (or anything else) setting MasterSetup.current, which bleeds across multiple tests
     # since it's not unset by the controller.
     MasterSetup.current = nil
   end

@@ -100,4 +100,25 @@ describe Api::V1::ApiController do
       subject.render_ok
     end
   end
+
+  describe "model_field_reload" do
+    let! (:ms) {
+      stub_master_setup
+    }
+
+    controller do
+      def index
+        render json: {ok: 'ok'}
+      end
+    end
+    
+    it "sets MasterSetup.current" do
+      u = Factory(:user)
+      allow_api_access u
+      
+      get :index
+      expect(response).to be_success
+      expect(MasterSetup.current).to eq ms
+    end
+  end
 end

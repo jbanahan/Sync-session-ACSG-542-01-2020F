@@ -32,6 +32,27 @@ class ChainDelayedJobPlugin < Delayed::Plugin
     `lsof -t #{File.join(Rails.root, 'log', 'delayed_job.log')}`.chomp.split("\n").size
   end
 
+  def self.job_wrapper job
+    Thread.current.thread_variable_set("delayed_job", true)
+    Thread.current.thread_variable_set("delayed_job_attempts", job.attempts)
+    Thread.current.thread_variable_set("delayed_job_queue", job.queue)
+    # Before each job we're going to check if model fields need to be updated, if they do, then we'll update
+    # them..if not, then we'll run the job and lock them down so no reloads occur during the job run.
+    ModelField.reload_if_stale
+    ModelField.disable_stale_checks = true
+    # This effectively reloads the master setup from memcache before each delayed job and then locks it in place for 
+    # the duration of the job.
+    MasterSetup.current = MasterSetup.get(false)
+    begin
+      yield job
+    ensure
+      Thread.current.thread_variable_set("delayed_job", nil)
+      Thread.current.thread_variable_set("delayed_job_attempts", nil)
+      Thread.current.thread_variable_set("delayed_job_queue", nil)
+      ModelField.disable_stale_checks = false
+    end
+  end
+
   callbacks do |lifecycle|
     # FYI..this call is currently made from delayed_job's worker.rb via the run_callbacks call.  Args passed to that method
     # (after the callback's identifier symbol) are what are passed into this block. args splat is here just in 
@@ -78,24 +99,12 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         # We really shouldn't have a case where we're getting an upgrade job in this process after we've already
         # run one, but since it's so easy to guard against we'll handle it just in case.
         unless OpenChain::Upgrade.upgraded?
-          Thread.current.thread_variable_set("delayed_job", true)
-          Thread.current.thread_variable_set("delayed_job_attempts", job.attempts)
-          Thread.current.thread_variable_set("delayed_job_queue", job.queue)
-          # Before each job we're going to check if model fields need to be updated, if they do, then we'll update
-          # them..if not, then we'll run the job and lock them down so no reloads occur during the job run.
-          ModelField.reload_if_stale
-          ModelField.disable_stale_checks = true
-          begin
+          ChainDelayedJobPlugin.job_wrapper(job) do |job|
             result = block.call(worker, job, *args)
 
             if upgrade_job
               worker.stop if OpenChain::Upgrade.upgraded?
             end
-          ensure
-            Thread.current.thread_variable_set("delayed_job", nil)
-            Thread.current.thread_variable_set("delayed_job_attempts", nil)
-            Thread.current.thread_variable_set("delayed_job_queue", nil)
-            ModelField.disable_stale_checks = false
           end
         end
         result

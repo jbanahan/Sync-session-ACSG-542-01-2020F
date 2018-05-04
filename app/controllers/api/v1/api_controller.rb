@@ -5,6 +5,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
   before_filter :validate_format
   around_filter :validate_authtoken
+  before_filter :set_master_setup
   before_filter :log_request
   before_filter :log_run_as_request
   around_filter :set_user_settings
@@ -132,6 +133,10 @@ module Api; module V1; class ApiController < ActionController::Base
 
       @default_tz = Time.zone
       Time.zone = User.current.time_zone
+    end
+
+    def set_master_setup
+      MasterSetup.current = MasterSetup.get(false)
     end
 
     def post_set_user_settings

@@ -61,14 +61,19 @@ class MasterSetup < ActiveRecord::Base
   #get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
   def self.get use_in_memory_version=true
     m = (use_in_memory_version ? MasterSetup.current : nil)
-    begin
-      m = CACHE.get CACHE_KEY unless m
-    rescue
+
+    if m.nil?
+      begin
+        m = CACHE.get CACHE_KEY unless m
+      rescue
+      end
     end
+    
     if m.nil? || !m.is_a?(MasterSetup)
       m = init_base_setup
       CACHE.set CACHE_KEY, m
     end
+
     m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
 
