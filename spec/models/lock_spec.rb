@@ -159,7 +159,7 @@ describe Lock do
       expect(open_transactions).to eq 0
     end
 
-    it "raises a timeout error when connection pool timesout" do
+    it "raises a timeout error when connection pool times out" do
       # Need to rejigger the connection pool so it only allows a single connection checked out
       # at a time so we can force a timeout
       config = YAML.load_file('config/redis.yml')
@@ -173,11 +173,9 @@ describe Lock do
       lockAcquired = false
       end_time = Time.now + 3.seconds
       t1 = Thread.new {
-        ActiveRecord::Base.connection_pool.with_connection do
-          Lock.acquire('LockSpec') do
-            lockAcquired = true
-            sleep(0.1) while !done && Time.now < end_time
-          end
+        Lock.acquire('LockSpec', yield_in_transaction: false) do
+          lockAcquired = true
+          sleep(0.1) while !done && Time.now < end_time
         end
       }
 
@@ -185,9 +183,7 @@ describe Lock do
       t2 = Thread.new {
         sleep (1.0 / 100.0) while !lockAcquired
         begin
-          ActiveRecord::Base.connection_pool.with_connection do
-            Lock.acquire('LockSpec', timeout: 1) {}
-          end
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false) {}
         rescue => e
           done = true
           error = e
@@ -209,11 +205,9 @@ describe Lock do
       lockAcquired = false
       end_time = Time.now + 10.seconds
       t1 = Thread.new {
-        ActiveRecord::Base.connection_pool.with_connection do
-          Lock.acquire('LockSpec') do
-            lockAcquired = true
-            sleep(0.1) while !done && Time.now < end_time
-          end
+        Lock.acquire('LockSpec', yield_in_transaction: false) do
+          lockAcquired = true
+          sleep(0.1) while !done && Time.now < end_time
         end
       }
       # Make sure t1 is the first to acquire the lock
@@ -225,9 +219,7 @@ describe Lock do
       t2 = Thread.new {
         sleep (0.1) while !lockAcquired
         begin
-          ActiveRecord::Base.connection_pool.with_connection do
-            Lock.acquire('LockSpec', timeout: 1) {}
-          end
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false) {}
         rescue => e
           done = true
           error = e
