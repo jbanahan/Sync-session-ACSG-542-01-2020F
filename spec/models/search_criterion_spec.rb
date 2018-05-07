@@ -1235,6 +1235,13 @@ describe SearchCriterion do
         expect(@sc.test?(@product)).to be_truthy
       end
 
+      it "accepts product created two years ago where date occurs in an earlier month within that year than today" do
+        Timecop.freeze(DateTime.new(2018,4,15)) do
+          @product.created_at = DateTime.new(2016,3,5)
+          expect(@sc.test?(@product)).to be_truthy
+        end
+      end
+
       it "does not accept product created during the current year" do
         @product.created_at = 1.second.ago
         expect(@sc.test?(@product)).to be_falsey
@@ -1260,6 +1267,13 @@ describe SearchCriterion do
       it "finds product created two years ago" do
         @product.update_column :created_at, 2.years.ago
         expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "finds product created two years ago where date occurs in an earlier month within that year than today" do
+        Timecop.freeze(DateTime.new(2018,4,15)) do
+          @product.update_column :created_at, DateTime.new(2016,3,5)
+          expect(@sc.apply(Product.where("1=1")).all).to include @product
+        end
       end
 
       it "does not find product created during the current year" do

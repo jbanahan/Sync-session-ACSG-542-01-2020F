@@ -92,7 +92,7 @@ class CriterionOperator
     new("cmo","MONTH(_fn_) = MONTH(_CURRENT_DATE_) AND YEAR(_fn_) = YEAR(_CURRENT_DATE_)","Current Month", relative_to_start_of_day: true),
     new("pqu","_fn_ >= (DATE_ADD(MAKEDATE(YEAR(CURDATE()), 1) + INTERVAL QUARTER(CURDATE()) QUARTER - INTERVAL 1 QUARTER, INTERVAL -? QUARTER)) and _fn_ < (MAKEDATE(YEAR(CURDATE()), 1) + INTERVAL QUARTER(CURDATE()) QUARTER - INTERVAL 1 QUARTER)","Previous _ Quarters", relative_to_start_of_day: true),
     new("cqu","_fn_ >= (MAKEDATE(YEAR(CURDATE()), 1) + INTERVAL QUARTER(CURDATE()) QUARTER - INTERVAL 1 QUARTER) AND _fn_ < (MAKEDATE(YEAR(now()), 1) + INTERVAL QUARTER(now()) QUARTER)","Current Quarter", relative_to_start_of_day: true),
-    new("pfcy","_fn_ >= CAST(DATE_FORMAT(DATE_ADD(_CURRENT_DATE_,INTERVAL -? YEAR) ,\"%Y-%m-01\") as DATE) AND YEAR(_fn_) < YEAR(_CURRENT_DATE_)","Previous _ Full Calendar Years", relative_to_start_of_day: true),
+    new("pfcy","_fn_ >= DATE_ADD(MAKEDATE(YEAR(_CURRENT_DATE_),1),INTERVAL -? YEAR) AND YEAR(_fn_) < YEAR(_CURRENT_DATE_)","Previous _ Full Calendar Years", relative_to_start_of_day: true),
     new("cytd","YEAR(_fn_) = YEAR(_CURRENT_DATE_) AND _fn_ < _CURRENT_DATE_","Current Year To Date", relative_to_start_of_day: true)
   ]
   
