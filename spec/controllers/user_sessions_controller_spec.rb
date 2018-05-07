@@ -80,7 +80,8 @@ describe UserSessionsController do
     it 'should fail with invalid credentials' do
       expect_any_instance_of(User).not_to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>"password"} 
-      expect(response).to render_template("new")
+      expect(response).to be_redirect
+      expect(response).to redirect_to "/user_sessions/new"
       expect(flash[:errors]).to include "Your login was not successful."
     end
 
@@ -89,18 +90,10 @@ describe UserSessionsController do
       @user.password_locked = true
       @user.save!
       @user.reload
-      post :create, :user_session => {'username'=>@user.username, 'password'=>"this is my password"}
-      expect(response).to render_template("new")
-      expect(flash[:errors]).to include "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
-    end
-
-    it 'should respond with password locked error if more than four failed logins' do
-      @user.failed_logins = 5
-      @user.password_locked = false
-      @user.save!
-      @user.reload
-      post :create, :user_session => {'username'=>@user.username, 'password'=>"this is my password"}
-      expect(response).to render_template("new")
+      expect_any_instance_of(User).not_to receive(:on_successful_login).with request
+      post :create, :user_session => {'username'=>@user.username, 'password'=>"password"}
+      expect(response).to be_redirect
+      expect(response).to redirect_to "/user_sessions/new"
       expect(flash[:errors]).to include "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
     end
 

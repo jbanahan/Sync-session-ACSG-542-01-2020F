@@ -1,3 +1,4 @@
 /* Manfest for the login screen
- *= require_directory ./login
+ *= require_directory ./login/lib
+ *= require_directory ./login/app
  */

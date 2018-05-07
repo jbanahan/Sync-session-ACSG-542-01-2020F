@@ -69,8 +69,8 @@ class UserSessionsController < ApplicationController
         end
         respond_to do |format|
           format.html {
-            add_flash :errors, error, now: true
-            render action: "new"
+            add_flash :errors, error
+            redirect_to new_user_session_path
           }
           format.json { render :json => {"errors"=>[error]} }
         end
