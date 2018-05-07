@@ -154,7 +154,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
       expect(root.text('VOAYGE_NBR')).to eq('voyage')
       expect(root.text('EST_SAIL_DATE')).to eq('2016-08-31T09:10:11')
       expect(root.text('SCAC_CD')).to eq('ABCD')
-      expect(root.text('BOOKING_NBR')).to eq('58363688')
+      expect(root.text('PO_NBR')).to eq('SHPREF')
+      expect(root.text('BOOKING_NBR')).to eq('ORDNUM1')
 
       elem_edi_bill_lading = root.elements['EdiBillLading']
       expect(elem_edi_bill_lading).to_not be_nil

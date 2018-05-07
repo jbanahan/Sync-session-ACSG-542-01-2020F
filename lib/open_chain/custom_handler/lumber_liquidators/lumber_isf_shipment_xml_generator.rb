@@ -24,7 +24,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
     add_element(elem_root, "VOAYGE_NBR", shipment.voyage)
     add_element(elem_root, 'EST_SAIL_DATE', format_date(shipment.est_departure_date))
     add_element(elem_root, 'SCAC_CD', get_scac_code(shipment.master_bill_of_lading))
-    add_element(elem_root, 'BOOKING_NBR', shipment.booking_number)
+    # The Shipment reference number is sent into the PO Number field, as this field gets pulled over onto the entry into the customer references field.
+    # There it is used so the shipment docs sent by the forwarder can be matched to the entry and automatically attached by the lumber entry pack change comparator.
+    add_element(elem_root, 'PO_NBR', shipment.reference)
+    add_element(elem_root, 'BOOKING_NBR', shipment.shipment_lines.first.try(:order_lines).first.try(:order).try(:order_number))
     if shipment.master_bill_of_lading
       add_edi_bill_lading_element elem_root, shipment.master_bill_of_lading
     end
