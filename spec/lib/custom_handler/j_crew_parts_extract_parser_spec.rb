@@ -135,8 +135,6 @@ FILE
       # expect(line1[60, 10]).to eq("6204624020")
       # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
       expect(product.name).to eq("womens knit swim cali hipster 82% polyester 18% elastane")
-      # Country of Origin
-      expect(product.custom_value(@cdefs[:prod_country_of_origin])).to eq("CN")
       expect(product.custom_value(@cdefs[:prod_part_number])).to eq('23346')
 
       product = Product.find_by_unique_identifier("JCREW-23953")
@@ -146,7 +144,6 @@ FILE
       # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
       expect(product.name).to eq("women's knit swim neon cali halter 82% polyester 18% elastane")
       # Country of Origin
-      expect(product.custom_value(@cdefs[:prod_country_of_origin])).to eq("CN")
     end
 
     it "does not call save or snapshot on an unchanged record" do

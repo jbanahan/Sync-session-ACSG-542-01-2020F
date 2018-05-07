@@ -77,7 +77,6 @@ module OpenChain
                 product[:season] = parse_data line[18, 14]
                 product[:article] = parse_data line[32, 15]
                 product[:hts] = parse_data line[47, 25]
-                product[:coo] = parse_data line[110, 11]
                 product[:cost] = parse_data line[134, 20]
               end
             else
@@ -110,11 +109,6 @@ module OpenChain
             p.name = product[:description]
             if p.custom_value(cdefs[:prod_part_number]) != product[:article]
               p.find_and_set_custom_value(cdefs[:prod_part_number], product[:article])
-              changed = true
-            end
-
-            if p.custom_value(cdefs[:prod_country_of_origin]) != product[:coo]
-              p.find_and_set_custom_value(cdefs[:prod_country_of_origin], product[:coo])
               changed = true
             end
 
