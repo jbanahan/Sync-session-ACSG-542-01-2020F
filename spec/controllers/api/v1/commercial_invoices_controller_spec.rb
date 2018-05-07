@@ -18,6 +18,9 @@ describe Api::V1::CommercialInvoicesController do
       res = j['results']
       expect(res.size).to eql 2
       expect(res[0]['ci_invoice_number']).to eql '0ci'
+      # make sure blank fields are rendered as blank string, not nil 
+      #(the view page reqires this for some reason that I currently don't have the time to investigat)
+      expect(res[0]['ci_currency']).to eq ""
       expect(res[1]['ci_invoice_number']).to eql '1ci'
     end
     it "should default to page 1" do

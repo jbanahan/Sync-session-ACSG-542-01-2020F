@@ -14,7 +14,7 @@
             <h3 class="panel-title">Shipment Canceled</h3>
           </div>
           <div class="panel-body">
-            This shipment was cancelled on {{shp.shp_canceled_date}} by {{shp.shp_canceled_by_full_name}}.
+            This shipment was cancelled on {{shp.shp_canceled_date}} by {{shp.shp_canceled_by_fullname}}.
           </div>
           <div class="panel-footer text-right" ng-show='shp.permissions.can_uncancel'>
             <button class='btn btn-sm btn-default' ng-click='uncancelShipment(shp)'>Undo Cancel</button>
@@ -63,15 +63,15 @@
                 <div class="panel-body">
                   <div class="row" >
                     <div class="col-md-4">
-                      <label for="con_container_number">Container Number</label>
+                      <label for="con_container_number">{{label('con_container_number')}}</label>
                       <div>{{con.con_container_number}}</div>
                     </div>
                     <div class="col-md-4">
-                      <label for="con_container_size">Container Size</label>
+                      <label for="con_container_size">{{label('con_container_size')}}</label>
                       <div>{{con.con_container_size}}</div>
                     </div>
                     <div class="col-md-4">
-                      <label for="con_seal_number">Seal Number(s)</label>
+                      <label for="con_seal_number">{{label('con_seal_number')}}</label>
                       <div>{{con.con_seal_number}}</div>
                     </div>
                   </div>
@@ -97,15 +97,15 @@
             </div>
             <div class="modal-body">
               <div class="form-group">
-                <label for="nc_con_container_number">Container Number</label>
+                <label for="nc_con_container_number">{{label('con_container_number')}}</label>
                 <input type="text" class='form-control' id='nc_con_container_number' ng-model="containerToEdit.con_container_number">
               </div>
               <div class="form-group">
-                <label for="nc_con_container_size">Container Size</label>
+                <label for="nc_con_container_size">{{label('con_container_size')}}</label>
                 <input type="text" class='form-control' id='nc_con_container_size' ng-model="containerToEdit.con_container_size">
               </div>
               <div class="form-group">
-                <label for="nc_con_seal_number">Seal Number(s)</label>
+                <label for="nc_con_seal_number">{{label('con_seal_number')}}</label>
                 <input type="text" class='form-control' id="nc_con_seal_number" ng-model="containerToEdit.con_seal_number">
               </div>
             </div>

@@ -1,20 +1,28 @@
 require 'api/v1/state_toggle_support'
+require 'open_chain/api/v1/api_json_http_context'
+require 'open_chain/api/v1/api_model_field_support'
 
 # Concrete implementations should implement
 # - core_module
-# - obj_to_json_hash
+# - json_generator (or directly implement/override obj_to_json_hash)
 # - save_object
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
-  include Api::V1::ApiJsonSupport
-  attr_accessor :jsonizer
-
+  include OpenChain::Api::V1::ApiModelFieldSupport
+  
   prepend_before_filter :allow_csv, only: [:index]
 
-  def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
-    @jsonizer = jsonizer
+  def output_generator
+    @g ||= begin
+      g = json_generator
+      g.json_context = OpenChain::Api::V1::ApiJsonHttpContext.new(params: params, user: current_user)
+      g
+    end
   end
 
+  def obj_to_json_hash obj
+    output_generator.obj_to_json_hash obj
+  end
 
   def index
     render_search core_module
@@ -110,26 +118,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
     nil
   end
-
-  #render field for json
-  def export_field model_field_uid, obj
-    jsonizer.export_field current_user, obj, ModelField.find_by_uid(model_field_uid)
-  end
-
-  def render_attachments?
-    include_association?("attachments")
-  end
-
-  # add attachments array to root of hash
-  def render_attachments obj, hash
-    hash['attachments'] = Attachment.attachments_as_json(obj)[:attachments]
-  end
-
-  #helper method to get model_field_uids for custom fields
-  def custom_field_keys core_module
-    core_module.model_fields(current_user) {|mf| mf.custom? }.keys
-  end
-
+  
   # Simple implementation of a save_object method, which is called by do_create and do_update
   def generic_save_object obj_hash
     # For any simple enough object structure that only grants access to the data found in the
@@ -281,7 +270,10 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   # if user cannot access a requested field.
   def validate_model_field field_type, model_field_uid, core_module, user
     mf = ModelField.find_by_uid model_field_uid
-    if mf.blank? || !mf.user_accessible || !mf.can_view?(user)
+    # Non-User Accessible fields (.ie database id fields) are intentionally allowed here since they're
+    # needed to limit searches to specific object ids (.ie only search for addresses for a certain company id, etc.)
+    # They're often tacked on as hidden search parameters.
+    if mf.blank? || !mf.can_view?(user)
       raise StatusableError.new("#{field_type} field #{model_field_uid} not found.", 400 )
     end
     if mf.core_module != core_module

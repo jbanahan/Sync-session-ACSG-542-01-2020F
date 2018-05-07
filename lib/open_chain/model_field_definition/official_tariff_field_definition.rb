@@ -57,6 +57,6 @@ module OpenChain; module ModelFieldDefinition; module OfficialTariffFieldDefinit
       }],
       [24,:ot_fda_indicator, :fda_indicator, "FDA Indicator", {:data_type => :string}]
     ]
-    add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
+    add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs", "country")
   end
 end; end; end

@@ -35,7 +35,7 @@ module CustomFieldSupport
     id = custom_definition.id
     cv = self.custom_values.find {|v| v.custom_definition_id == id}
 
-    cv ? cv.value : nil
+    cv ? cv.value(custom_definition) : nil
   end
 
 
@@ -49,7 +49,7 @@ module CustomFieldSupport
   def find_and_set_custom_value custom_definition, value
     cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id}
     cv = self.custom_values.build(:custom_definition => custom_definition) if cv.nil?
-    cv.value = value
+    cv.set_value(custom_definition, value)
     cv
   end
 
@@ -89,7 +89,7 @@ module CustomFieldSupport
     cd = custom_definition
     cd = CustomDefinition.find_by_id custom_definition if custom_definition.is_a?(Numeric)
     cv = get_custom_value(cd)
-    cv.value = value
+    cv.set_value(cd, value)
     cv.save!
   end
 

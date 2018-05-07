@@ -65,6 +65,8 @@ OpenChain::Application.routes.draw do
           get :booking_lines
           post :send_shipment_instructions
           put 'book_order/:order_id' => 'shipments#book_order'
+          get :state_toggle_buttons
+          post :toggle_state_button
         end
         collection do
           post 'booking_from_order/:order_id' => 'shipments#create_booking_from_order'
@@ -234,7 +236,11 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :addresses, only: [:index, :create, :update, :destroy]
+      resources :addresses, only: [:index, :create, :update, :destroy] do 
+        collection do 
+          get :autocomplete
+        end
+      end
 
       resources :countries, only: [:index]
 

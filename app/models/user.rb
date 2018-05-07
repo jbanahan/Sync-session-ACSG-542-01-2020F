@@ -124,7 +124,7 @@ require 'email_validator'
 require 'open_chain/user_support/user_permissions'
 require 'open_chain/user_support/groups'
 require 'open_chain/user_support/failed_password_handler'
-require 'open_chain/password_validation_registry'
+require 'open_chain/registries/password_validation_registry'
 
 class User < ActiveRecord::Base
   include Clearance::User
@@ -399,10 +399,8 @@ class User < ActiveRecord::Base
     r
   end
 
-  def valid_password? user, password
-    registered = OpenChain::PasswordValidationRegistry.registered_for_valid_password
-    return true if registered.empty?
-    registered.map { |oa| oa.valid_password?(user,password) }.all?
+  def self.valid_password? user, password
+    OpenChain::Registries::PasswordValidationRegistry.valid_password? user, password
   end
 
   def update_user_password password, password_confirmation
@@ -414,7 +412,7 @@ class User < ActiveRecord::Base
     else
       if password != password_confirmation
         errors.add(:password, "must match password confirmation.")
-      elsif !valid_password?(self, password)
+      elsif !User.valid_password?(self, password)
         valid = false
       else
         # This is the clearance method for updating the password.
@@ -423,7 +421,13 @@ class User < ActiveRecord::Base
     end
 
     if valid
-      update_attribute(:password_changed_at, Time.zone.now)
+      self.password_changed_at = Time.zone.now
+      self.password_locked = false
+      self.password_expired = false
+      self.forgot_password = false
+      self.failed_logins = 0
+      self.save!
+
       self.user_password_histories.create!(hashed_password: self.encrypted_password, password_salt: self.password_salt)
     end
 

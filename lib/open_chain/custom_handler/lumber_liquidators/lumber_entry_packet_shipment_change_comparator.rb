@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
     # Proceed only if the shipment has both attachment flavors.  These are required to generate an entry packet.
     if ods_attachment.present? && vds_attachment.present?
       shipment = Shipment.where(id: id).first
-      if shipment
+      if shipment && validate_attachment_is_pdf(shipment, ods_attachment) && validate_attachment_is_pdf(shipment, vds_attachment)
         Lock.with_lock_retry(shipment) do
           sr = shipment.sync_records.where(trading_partner: "Entry Packet").first_or_initialize
           # If there's no sent at date in the sync record (which will be the case for a new record or one blanked via
@@ -98,6 +98,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
         Attachment.add_original_filename_method entry_packet_pdf, 'EntryPacket - LUMBER.pdf'
         generate_missing_entry_email shp, entry_packet_pdf
       end
+    end
+
+    def validate_attachment_is_pdf shipment, attachment
+      if attachment.attached_content_type.to_s.match(/pdf/i).nil?
+        body = "Shipment with master bill '#{shipment.master_bill_of_lading}' / shipment reference '#{shipment.reference}' has an invalid #{attachment.attachment_type} attachment named #{attachment.attached_file_name}.  These attachment types must be PDF files.  Please remove the existing #{attachment.attachment_type} file and replace it with a PDF."
+        OpenMailer.send_simple_html("support@vandegriftinc.com", "Invalid Document Type for #{shipment.master_bill_of_lading} / #{shipment.reference}", body).deliver!
+        return false
+      end
+
+      true
     end
 
     def find_matching_entry shp

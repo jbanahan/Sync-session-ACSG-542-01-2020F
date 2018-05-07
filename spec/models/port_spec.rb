@@ -157,6 +157,9 @@ describe Port do
     it "should return truncated cbsa_port to match Fenix output" do
       expect(Port.new(cbsa_port:'0123').search_friendly_port_code).to eq('123')
     end
+    it "should not return truncated cbsa_port if specified" do
+      expect(Port.new(cbsa_port:'0123').search_friendly_port_code(trim_cbsa: false)).to eq('0123')
+    end
     it "should not truncate schedule d" do
       expect(Port.new(schedule_d_code:'0123').search_friendly_port_code).to eq('0123')
     end

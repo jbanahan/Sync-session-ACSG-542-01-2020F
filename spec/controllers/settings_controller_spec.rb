@@ -6,13 +6,13 @@ describe SettingsController do
     before { sign_in_as user }
       
     it "renders and assigns data" do
-      ord_cm = CoreModule::ORDER
-      mf = ModelField.find_by_uid(:ord_closed_by)
+      shp_cm = CoreModule::SHIPMENT
+      mf = ModelField.find_by_uid(:shp_ref)
       
-      allow(CoreModule).to receive(:all).and_return([ord_cm])
-      expect(ord_cm).to receive(:model_fields).and_return({ord_closed_by: mf})
+      allow(CoreModule).to receive(:all).and_return([shp_cm])
+      expect(shp_cm).to receive(:model_fields).and_return({shp_ref: mf})
 
-      stb = Factory(:state_toggle_button, module_type: "Order")
+      stb = Factory(:state_toggle_button, module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date")
       stc = Factory(:search_table_config)
       group = Factory(:group)
       non_import_country = Factory(:country, import_location: false)
@@ -23,8 +23,8 @@ describe SettingsController do
 
       get :system_summary
       expect(response).to be_success
-      expect(assigns(:collections)).to eq({ model_field: {"Order" => [mf]}, 
-                                            state_toggle_button: {"Order" => [stb]}, 
+      expect(assigns(:collections)).to eq({ model_field: {"Shipment" => [mf]}, 
+                                            state_toggle_button: {"Shipment" => [stb]}, 
                                             group: [group], 
                                             search_table_config: [stc], 
                                             import_country: [import_country],

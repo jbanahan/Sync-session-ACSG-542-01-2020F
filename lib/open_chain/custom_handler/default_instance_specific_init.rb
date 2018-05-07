@@ -1,15 +1,28 @@
-require 'open_chain/validations/password/password_complexity_validator'
-require 'open_chain/validations/password/password_length_validator'
-require 'open_chain/validations/password/previous_password_validator'
-require 'open_chain/validations/password/username_not_password_validator'
-require 'open_chain/password_validation_registry'
+require 'open_chain/registries/password_validation_registry'
+require 'open_chain/registries/order_booking_registry'
+require 'open_chain/registries/order_acceptance_registry'
+require 'open_chain/registries/shipment_registry'
 
 module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
   def self.init
-    if PasswordValidationRegistry.registered_for_valid_password.blank?
-      [OpenChain::Validations::Password::PasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator, OpenChain::Validations::Password::PasswordComplexityValidator].each do |klass|
-        OpenChain::PasswordValidationRegistry.register klass
-      end
+    if OpenChain::Registries::PasswordValidationRegistry.registered.length == 0
+      require "open_chain/registries/default_password_validation_registry"
+      OpenChain::Registries::PasswordValidationRegistry.register OpenChain::Registries::DefaultPasswordValidationRegistry
+    end
+
+    if OpenChain::Registries::OrderBookingRegistry.registered.length == 0
+      require 'open_chain/registries/default_order_booking_registry'
+      OpenChain::Registries::OrderBookingRegistry.register OpenChain::Registries::DefaultOrderBookingRegistry
+    end
+
+    if OpenChain::Registries::OrderAcceptanceRegistry.registered.length == 0
+      require 'open_chain/registries/default_order_acceptance_registry'
+      OpenChain::Registries::OrderAcceptanceRegistry.register OpenChain::Registries::DefaultOrderAcceptanceRegistry
+    end
+
+    if OpenChain::Registries::ShipmentRegistry.registered.length == 0
+      require 'open_chain/registries/default_shipment_registry'
+      OpenChain::Registries::ShipmentRegistry.register OpenChain::Registries::DefaultShipmentRegistry
     end
   end
 end; end; end

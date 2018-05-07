@@ -33,8 +33,7 @@ class PasswordResetsController < ApplicationController
 
     if @user.forgot_password.present? || current_password_valid || @user.password_locked || !@user.password_expired
       if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
-        @user.update_attributes(:password_reset => false, :password_expired => false, :password_locked => false)
-        @user.failed_logins = 0
+        @user.password_reset = false
         @user.save!
         # Have to actually sign in the user here via clearance to set their remember token
         sign_in(@user) do |status|
@@ -53,7 +52,6 @@ class PasswordResetsController < ApplicationController
     if success
       @user.on_successful_login request
       flash[:notice] = "Password successfully updated"
-      @user.update_attribute(:forgot_password, false)
       redirect_to root_url
     else 
       errors_to_flash @user, now: true

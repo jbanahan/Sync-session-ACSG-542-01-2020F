@@ -1,6 +1,7 @@
-module Api; module V1; class CommentsController < Api::V1::ApiController
+require 'open_chain/api/v1/comment_api_json_generator'
+
+module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControllerBase
   include PolymorphicFinders
-  include Api::V1::ApiJsonSupport
 
   def for_module
     r = {comments:[]}
@@ -34,7 +35,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       json = []
       obj.comments.each do |comment|
-        json << comment_view(current_user, comment)
+        json << obj_to_json_hash(comment)
       end
 
       render json: {"comments" => json}
@@ -45,7 +46,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       comment = obj.comments.find {|c| c.id == params[:id].to_i }
       if comment && comment.can_view?(current_user)
-        render json: {"comment" => comment_view(current_user, comment)}
+        render json: {"comment" => obj_to_json_hash(comment)}
       else
         render_forbidden
       end
@@ -73,21 +74,17 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
     end
   end
 
+  def json_generator
+    OpenChain::Api::V1::CommentApiJsonGenerator.new
+  end
+
   private
     def comment_json c
       h = {id:c.id,commentable_type:c.commentable_type,commentable_id:c.commentable_id,
           user:{id:c.user.id,full_name:c.user.full_name,email:c.user.email},
-          subject:c.subject,body:c.body,created_at:c.created_at,permissions:render_permissions(c)
+          subject:c.subject,body:c.body,created_at:c.created_at,permissions:json_generator.render_permissions(c, current_user)
         }
       h
-    end
-
-    def render_permissions c
-      {
-        can_view:c.can_view?(current_user),
-        can_edit:c.can_edit?(current_user),
-        can_delete:c.can_delete?(current_user)
-      }
     end
 
     def base_object params_base, module_type_param, id_param
@@ -125,18 +122,10 @@ module Api; module V1; class CommentsController < Api::V1::ApiController
         render_error comment.errors
       else
         comment.commentable.create_async_snapshot(current_user) if comment.commentable.respond_to?(:create_async_snapshot)
-        render json: {"comment" => comment_view(user, comment)}
+        render json: {"comment" => obj_to_json_hash(comment)}
       end
     end
 
-    def comment_view user, comment
-      fields = all_requested_model_field_uids(CoreModule::COMMENT)
-      hash = to_entity_hash(comment, fields, user: user)
-      if include_association?(:permissions)
-        hash['permissions'] = render_permissions(comment)
-      end
-
-      hash
-    end
+    
 
 end; end; end

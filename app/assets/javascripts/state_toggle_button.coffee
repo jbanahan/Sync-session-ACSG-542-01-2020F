@@ -19,18 +19,7 @@ app.controller 'stateToggleButtonCtrl', ['$scope', '$location', '$window', 'stat
   $scope.loadButton = (id) ->
     p = stateToggleButtonMaintSvc.loadButton id
     p.then (resp) ->
-      basicButton = resp["data"]["button"]["state_toggle_button"]
-      $scope.stb = 
-        module_type: basicButton["module_type"]
-        user_attribute: basicButton["user_attribute"]
-        user_custom_definition_id: basicButton["user_custom_definition_id"]
-        date_attribute: basicButton["date_attribute"]
-        date_custom_definition_id: basicButton["date_custom_definition_id"]
-        permission_group_system_codes: basicButton["permission_group_system_codes"]
-        activate_text: basicButton["activate_text"]
-        activate_confirmation_text: basicButton["activate_confirmation_text"]
-        deactivate_text: basicButton["deactivate_text"]
-        deactivate_confirmation_text: basicButton["deactivate_confirmation_text"]
+      $scope.stb = resp["data"]["button"]["state_toggle_button"]
       
       $scope.searchCriterions = resp["data"]["criteria"]
       $scope.scMfs = resp["data"]["sc_mfs"]

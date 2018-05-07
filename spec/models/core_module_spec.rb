@@ -137,6 +137,11 @@ describe CoreModule do
       allow_any_instance_of(ModelField).to receive(:can_view?).with(u).and_return false
       expect(CoreModule::SALE.model_fields(u).size).to eq 0
     end
+
+    it "returns all model fields (regardless of user_accessible)" do
+      all_fields = ModelField.find_by_core_module(CoreModule::SALE)
+      expect(CoreModule::SALE.model_fields(nil, true).values.size).to eq all_fields.size
+    end
   end
 
   describe "model_fields_including_children" do

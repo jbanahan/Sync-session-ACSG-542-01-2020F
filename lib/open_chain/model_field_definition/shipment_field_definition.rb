@@ -59,15 +59,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       }],
       [37,:shp_booking_approved_date,:booking_approved_date,"Booking Approved Date",{data_type: :datetime, read_only: true}],
       [38,:shp_booked_quantity,:booked_quantity,"Booked Quantity",{data_type: :decimal, read_only:true}],
-      [39,:shp_canceled_by_full_name,:username,"Canceled By", {
-        :import_lambda => lambda {|a,b| return "Canceled By cannot be set by import, ignored."},
-        :export_lambda => lambda {|obj|
-          u = obj.canceled_by
-          u.blank? ? "" : u.full_name
-        },
-        :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.canceled_by_id)",
-        :data_type=>:string
-      }],
       [40,:shp_canceled_date,:canceled_date,"Canceled Date",{data_type: :datetime, read_only: true}],
       [41,:shp_total_cartons,:total_cartons,"Total Cartons",{
         data_type: :integer,
@@ -142,25 +133,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
              export_lambda: lambda { |obj| obj.chargeable_weight },
              qualified_field_name: "(SELECT CASE WHEN IFNULL(shipments.gross_weight,0) > (IFNULL(shipments.volume,0) / 0.006) THEN IFNULL(shipments.gross_weight,0) ELSE (IFNULL(shipments.volume,0) / 0.006) END)"
          }],
-      [59,:shp_cancel_requested_by_full_name,:username,"Cancel Requested By", {
-             :import_lambda => lambda {|a,b| return "Cancel Requested By cannot be set by import, ignored."},
-             :export_lambda => lambda {|obj|
-               u = obj.cancel_requested_by
-               u.blank? ? "" : u.full_name
-             },
-             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.cancel_requested_by_id)",
-             :data_type=>:string
-         }],
       [60,:shp_cancel_requested_at,:cancel_requested_at,"Cancel Requested At",{data_type: :datetime, read_only: true}],
-      [61,:shp_isf_sent_by_full_name,:username,"ISf Sent By", {
-             :import_lambda => lambda {|a,b| return "ISF Sent By cannot be set by import, ignored."},
-             :export_lambda => lambda {|obj|
-               u = obj.isf_sent_by
-               u.blank? ? "" : u.full_name
-             },
-             :qualified_field_name => "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users where users.id = shipments.isf_sent_by_id)",
-             :data_type=>:string
-         }],
       [62,:shp_isf_sent_at,:isf_sent_at,"ISF Sent At",{data_type: :datetime, read_only: true}],
       [63, :shp_est_load_date, :est_load_date, 'Est Load Date', {data_type: :date}],
       [64, :shp_confirmed_on_board_origin_date, :confirmed_on_board_origin_date, 'Confirmed On Board Origin Date', {data_type: :date}],
@@ -240,7 +213,10 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :export_lambda => lambda {|obj| obj.containers.map(&:container_number).sort.join("\n ") },
         :qualified_field_name => "(SELECT GROUP_CONCAT(c.container_number ORDER BY c.container_number SEPARATOR '\n ') FROM containers AS c INNER JOIN shipments s ON s.id = c.shipment_id WHERE shipments.id = c.shipment_id )"
       }],
-      [86, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}]
+      [86, :shp_booking_voyage, :booking_voyage, "Booking Voyage", {data_type: :string}],
+      [87, :shp_packing_list_sent_date, :packing_list_sent_date, "Packing List Sent Date", {data_type: :datetime}],
+      [88, :shp_vgm_sent_date, :vgm_sent_date, "VGM Sent Date", {data_type: :datetime}],
+      [89, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
@@ -248,10 +224,11 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp")
     add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
+    add_fields CoreModule::SHIPMENT, make_consignee_arrays(550,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
     add_fields CoreModule::SHIPMENT, make_port_arrays(700, 'shp_dest_port','shipments','destination_port','Discharge Port')
-    add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt',port_selector:Port.where(active_origin:true))
-    add_fields CoreModule::SHIPMENT, make_port_arrays(850, 'shp_booking_first_port_receipt','shipments','booking_first_port_receipt','First Port of Receipt - Booked',port_selector:Port.where(active_origin:true))
+    add_fields CoreModule::SHIPMENT, make_port_arrays(800, 'shp_first_port_receipt','shipments','first_port_receipt','First Port of Receipt', port_selector: DefaultPortSelector)
+    add_fields CoreModule::SHIPMENT, make_port_arrays(850, 'shp_booking_first_port_receipt','shipments','booking_first_port_receipt','First Port of Receipt - Booked', port_selector: DefaultPortSelector)
     add_fields CoreModule::SHIPMENT, make_port_arrays(900, 'shp_lading_port','shipments','lading_port','Port of Lading')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1000, 'shp_last_foreign_port','shipments','last_foreign_port','Last Origin Port')
     add_fields CoreModule::SHIPMENT, make_port_arrays(1100, 'shp_unlading_port','shipments','unlading_port','Port of Unlading')
@@ -264,7 +241,12 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_address_arrays(1400,'shp','shipments','consolidator')
     add_fields CoreModule::SHIPMENT, make_forwarder_arrays(1500,'shp','shipments')
     add_fields CoreModule::SHIPMENT, make_attachment_arrays(1600,'shp',CoreModule::SHIPMENT)
-    add_fields CoreModule::SHIPMENT, make_user_fields(1700, :shp_warning_overridden_by, "Warning Overridden By", CoreModule::SHIPMENT, :warning_overridden_by)
-
+    add_fields CoreModule::SHIPMENT, make_user_fields(1700, :shp_isf_sent_by, "ISF Sent By", CoreModule::SHIPMENT, :isf_sent_by)
+    add_fields CoreModule::SHIPMENT, make_user_fields(1800, :shp_packing_list_sent_by, "Packing List Sent By", CoreModule::SHIPMENT, :packing_list_sent_by)
+    add_fields CoreModule::SHIPMENT, make_user_fields(1900, :shp_vgm_sent_by, "VGM Sent By", CoreModule::SHIPMENT, :vgm_sent_by)
+    add_fields CoreModule::SHIPMENT, make_user_fields(2000, :shp_canceled_by, "Canceled By", CoreModule::SHIPMENT, :canceled_by)
+    add_fields CoreModule::SHIPMENT, make_user_fields(2100, :shp_cancel_requested_by, "Cancel Requested By", CoreModule::SHIPMENT, :cancel_requested_by)
+    add_fields CoreModule::SHIPMENT, make_country_arrays(2200,"shp_origin","shipments", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)
+    add_fields CoreModule::SHIPMENT, make_user_fields(2300, :shp_warning_overridden_by, "Warning Overridden By", CoreModule::SHIPMENT, :warning_overridden_by)
   end
 end; end; end

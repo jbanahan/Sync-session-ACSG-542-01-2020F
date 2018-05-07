@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler', '$window', ($scope,shipmentSvc,$state,chainErrorHandler, $window) ->
+angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler', '$window', 'chainDomainerSvc', ($scope,shipmentSvc,$state,chainErrorHandler, $window, chainDomainerSvc) ->
   loadCarriers = (importerId) ->
     $scope.carriers = undefined
     shipmentSvc.getCarriers(importerId).success((data) ->
@@ -266,6 +266,38 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
   $scope.showHistory = (shipment) ->
     $window.location.href = '/shipments/'+shipment.id+'/history'
 
+  update_time = (newVal) ->
+    timeArray = newVal.split(':')
+    if timeArray.length == 2
+      $scope.tracking._warehouse_time_moment.hour(timeArray[0])
+      $scope.tracking._warehouse_time_moment.minute(timeArray[1])
+      format_in_warehouse_time()
+
+  format_in_warehouse_time = ->
+    $scope.tracking.shp_in_warehouse_time = $scope.tracking._warehouse_time_moment.format("YYYY-MM-DDTHH:mm")
+
+  update_date = (newVal) ->
+    dateArray = newVal.split('-')
+    if dateArray.length == 3
+
+      # Because moment 0 indexes month, let's strip off the 0 (If present) and subtract 1.
+      month = parseInt(dateArray[1], 10) - 1
+
+      $scope.tracking._warehouse_time_moment.year(dateArray[0])
+      $scope.tracking._warehouse_time_moment.month(month)
+      $scope.tracking._warehouse_time_moment.date(dateArray[2])
+      format_in_warehouse_time()
+
+  $scope.label = (fieldName) ->
+    if $scope.dictionary
+      fld = $scope.dictionary.field(fieldName)
+      if fld
+        fld.label
+      else
+        ''
+    else
+      ''
+
   $scope.$watch 'tracking._shp_warehouse_time_hour', (newVal, oldVal) ->
     if $scope.tracking && /\d{2}:\d{2}/.exec(newVal)
       update_time(newVal)
@@ -276,28 +308,11 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       update_date(newVal)
 
   if $state.params.shipmentId
-    $scope.loadShipment $state.params.shipmentId
-
-    update_time = (newVal) ->
-      timeArray = newVal.split(':')
-      if timeArray.length == 2
-        $scope.tracking._warehouse_time_moment.hour(timeArray[0])
-        $scope.tracking._warehouse_time_moment.minute(timeArray[1])
-        format_in_warehouse_time()
-
-    format_in_warehouse_time = ->
-      $scope.tracking.shp_in_warehouse_time = $scope.tracking._warehouse_time_moment.format("YYYY-MM-DDTHH:mm")
-
-    update_date = (newVal) ->
-      dateArray = newVal.split('-')
-      if dateArray.length == 3
-
-        # Because moment 0 indexes month, let's strip off the 0 (If present) and subtract 1.
-        month = parseInt(dateArray[1], 10) - 1
-
-        $scope.tracking._warehouse_time_moment.year(dateArray[0])
-        $scope.tracking._warehouse_time_moment.month(month)
-        $scope.tracking._warehouse_time_moment.date(dateArray[2])
-        format_in_warehouse_time()
+    if $scope.dictionary
+      $scope.loadShipment $state.params.shipmentId
+    else
+      chainDomainerSvc.withDictionary().then (dict) ->
+        $scope.dictionary = dict
+        $scope.loadShipment $state.params.shipmentId
 
 ]

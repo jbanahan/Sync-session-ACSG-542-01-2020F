@@ -1,3 +1,5 @@
+require 'open_chain/api/v1/variant_api_json_generator'
+
 module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControllerBase
 
   def core_module
@@ -37,20 +39,7 @@ module Api; module V1; class VariantsController < Api::V1::ApiCoreModuleControll
     Variant.includes([{plant_variant_assignments: {plant: :company}}])
   end
 
-  def obj_to_json_hash obj
-    variant_fields = limit_fields(
-      [:var_identifier] +
-      custom_field_keys(CoreModule::VARIANT)
-    )
-
-    plant_variant_assignment_fields = limit_fields(
-      [:pva_plant_name,:pva_company_name,:pva_company_id] +
-      custom_field_keys(CoreModule::PLANT_VARIANT_ASSIGNMENT)
-    )
-
-    field_list = variant_fields + plant_variant_assignment_fields
-
-    h = to_entity_hash(obj, field_list)
-    return h
+  def json_generator
+    OpenChain::Api::V1::VariantApiJsonGenerator.new
   end
 end; end; end

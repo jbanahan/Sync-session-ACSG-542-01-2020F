@@ -27,7 +27,7 @@ class ModelField
               :custom_id, :data_type, :core_module,
               :join_statement, :join_alias, :qualified_field_name, :uid,
               :public, :public_searchable, :definition, :disabled, :field_validator_rule,
-              :user_accessible, :autocomplete, :required
+              :user_accessible, :autocomplete, :required, :cdef_uid
 
   def initialize(rank, uid, core_module, field_name, options={})
     o = {entity_type_field: false, history_ignore: false, read_only: false, user_accessible: true, restore_field: true}.merge(options)
@@ -85,12 +85,15 @@ class ModelField
     @user_id_field = o[:user_id_field]
     @user_full_name_field = o[:user_full_name_field]
     @address_field = o[:address_field]
+    @address_field_full = o[:address_field_full]
+    @address_field_id = o[:address_field_id]
     @select_options_lambda = o[:select_options_lambda]
     @autocomplete = o[:autocomplete]
     @restore_field = o[:restore_field]
     @required = o[:required]
     @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
     @xml_tag_name = o[:xml_tag_name]
+    @cdef_uid = o[:cdef_uid] if self.custom?
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -150,7 +153,19 @@ class ModelField
   end
 
   def address_field?
-    @address_field
+    @address_field == true
+  end
+
+  def address_field_full?
+    @address_field_full == true
+  end
+
+  def address_field_id?
+    @address_field_id == true
+  end
+
+  def address_field_full?
+    @address_field_full
   end
 
   def restore_field?
@@ -255,6 +270,10 @@ class ModelField
   # returns the default currency code for the value as a lowercase symbol (like :usd) or nil
   def currency
     @currency
+  end
+
+  def numeric?
+    [:integer, :decimal].include? data_type 
   end
 
   def date?
@@ -485,9 +504,10 @@ class ModelField
     elsif(is_integer && custom_definition.is_address?)
       fields_to_add.push(*build_address_fields(custom_definition, core_module, index))
     else
-      fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-        :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-        :definition => custom_definition.definition, :default_label => "#{custom_definition.label}"
+      fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+        qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        definition: custom_definition.definition, default_label: "#{custom_definition.label}",
+        cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid)
       })
     end
     add_model_fields core_module, fields_to_add
@@ -665,6 +685,8 @@ class ModelField
   reload #does the reload when the class is loaded the first time
 
   def self.find_by_uid(uid,dont_retry=false)
+    uid = uid.model_field_uid if uid.is_a?(CustomDefinition)
+    
     uid_sym = uid.to_sym
     return ModelField.new(10000,:_blank,nil,nil,{
       :label_override => "[blank]",

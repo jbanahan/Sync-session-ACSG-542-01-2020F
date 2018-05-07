@@ -117,7 +117,7 @@
       <%   ship_to_hdr = @order.order_lines.first.ship_to.full_address_array.join('<br>').to_s.html_safe %>
       <% end %>
       <% #Uses Ship To detail label rather than header label: value pulled is from order detail, even though it's displayed at header. %>
-      <%=field_bootstrap ModelField.find_by_uid(:ordln_ship_to_name).label(false), ship_to_hdr %>
+      <%=field_bootstrap ModelField.find_by_uid(:ordln_ship_to_id).label(false), ship_to_hdr %>
       <hr />
       <%=show_custom_fields @order, {skip_fields:([:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract, :ord_manual_send_to_sap_date, :ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_change_log,:ord_testing_date_completed,:ord_total_freight,:ord_grand_total]+asn_cdefs).collect{|key| cdefs[key].model_field_uid}}%>
       <hr />

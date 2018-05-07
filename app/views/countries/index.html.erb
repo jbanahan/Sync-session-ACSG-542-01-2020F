@@ -1,8 +1,8 @@
 <table class='detail_table'>
-  <thead><th>Name</th><th>ISO Code</th><th>Imports</th></thead>
+  <thead><th>Name</th><th>ISO Code</th><th>Imports</th><th>Active Origin</th></thead>
   <tbody>
 <%Country.sort_name.all.each do |c|%>
-    <tr class='hover'><td><%=link_to c.name, edit_country_path(c)%></td><td><%=c.iso_code%></td><td><%=c.import_location? ? "Yes" : "No"%></td></tr>
+    <tr class='hover'><td><%=link_to c.name, edit_country_path(c)%></td><td><%=c.iso_code%></td><td><%=c.import_location? ? "Yes" : "No"%></td><td><%=c.active_origin? ? "Yes" : "No"%></td></tr>
 <%end%>
   </tbody>
 </table>

@@ -132,20 +132,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
   end
 
   def self.add_requested_equipment root, shipment
-    return if shipment.requested_equipment.blank?
-    pieces = shipment.requested_equipment.lines.collect do |ln|
-      ln.strip!
-      components = ln.split(' ')
-      case components.size
-      when 0
-        nil
-      when 2
-        components
-      else
-        raise "Bad requested equipment field, expected each line to have number and type like \"3 40HC\", got #{shipment.requested_equipment}."
-      end
-    end
-    pieces.compact!
+    pieces = shipment.get_requested_equipment_pieces
     return if pieces.empty?
     reqEl = add_element(root,'requested-equipment')
     pieces.each do |p|

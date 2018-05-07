@@ -8,7 +8,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "edit" do
-    let!(:stb) { Factory(:state_toggle_button) }
+    let!(:stb) { Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by') }
 
     it "renders template JSON for a admin" do
       sc_mfs = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}]
@@ -43,7 +43,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   describe "update" do
     context "search_criterions" do
       before(:each) do
-        Factory(:state_toggle_button)
+        Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
         @stb_new_criteria = [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}]
         @stb = StateToggleButton.first
         @stb.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
@@ -71,7 +71,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     end
     context "standard fields" do
       let(:stb) do 
-        Factory(:state_toggle_button, module_type: "Order", 
+        Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by',
                                       permission_group_system_codes: "CODE", 
                                       activate_text: "activate!",
                                       activate_confirmation_text: "activate sure?",
@@ -91,7 +91,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
         
-        expect(stb.module_type).to eq "Order"
+        expect(stb.module_type).to eq "Shipment"
         expect(stb.activate_text).to eq "activate! updated"
         expect(stb.activate_confirmation_text).to eq "activate sure? updated"
         expect(stb.deactivate_text).to eq "deactivate! updated"
@@ -165,7 +165,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "destroy" do
-    let!(:stb) { Factory(:state_toggle_button) }
+    let!(:stb) { Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by') }
 
     it "deletes STB for an admin" do
       delete :destroy, id: stb.id
@@ -201,34 +201,35 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "get_user_and_date_mfs" do
-    it "returns two arrays of model fields associated with button's module, the second including only those of type datetime" do
-      stb = Factory(:state_toggle_button, module_type: "Order")
+    it "returns two arrays of model fields associated with button's module, the second including only those of type date/datetime" do
+      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
 
-      expect_any_instance_of(CoreModule).to receive(:model_fields).and_return({ord_closed_by: ModelField.find_by_uid(:ord_closed_by),
-                                                                        ord_revised_date: ModelField.find_by_uid(:ord_revised_date),
-                                                                        ord_closed_at: ModelField.find_by_uid(:ord_closed_at)})
       user_list, date_list = described_class.new.get_user_and_date_mfs(stb)
-      expect(user_list).to include({mfid: "ord_closed_by", label: "Closed By"}, {mfid: "ord_revised_date", label: "Last Revised Date"}, {mfid: "ord_closed_at", label: "Closed At"})
-      expect(date_list).to include({mfid: "ord_closed_at", label: "Closed At"})
-      expect(user_list.count).to eq 3
-      expect(date_list.count).to eq 1
+      # Just make sure the list includes a known date field and user field and does not include a field we know is not either
+      expect(user_list).to include({mfid: "shp_canceled_by", label: "Canceled By"})
+      ref_mf = ModelField.find_by_uid(:shp_ref)
+      # Just make sure the model field actually exists
+      expect(ref_mf.blank?).to eq false
+      expect(user_list).not_to include({mfid: "shp_ref", label: ref_mf.label})
+      expect(date_list).to include({mfid: "shp_canceled_date", label: "Canceled Date"})
+      expect(date_list).not_to include({mfid: "shp_ref", label: ref_mf.label})
     end
   end
 
   describe "get_sc_mfs" do
     it "takes the model fields associated with a button's module returning only the mfid, label, and datatype fields" do
-      stb = Factory(:state_toggle_button, module_type: "Product")
+      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
       mfs = described_class.new.get_sc_mfs stb
-      expect(mfs.find{|mf| mf[:mfid] == :prod_uid}).to eq({:mfid => :prod_uid, label: "Unique Identifier", :datatype => :string })
+      expect(mfs.find{|mf| mf[:mfid] == :shp_ref}).to eq({:mfid => :shp_ref, label: "Reference Number", :datatype => :string })
     end
   end
 
   describe "get_user_and_date_cdefs" do
     it "returns two arrays of cdefs associated with the button's module, the first including only those of user_type, the second only those of datetime" do
-      stb = Factory(:state_toggle_button, module_type: "Order")
-      user = Factory(:custom_definition, module_type: "Order", data_type: "integer", is_user: true, label: "QA Hold By")
-      date = Factory(:custom_definition, module_type: "Order", data_type: "datetime", label: "QA Hold Date")
-      Factory(:custom_definition, module_type: "Order", data_type: "integer", label: "Foo")
+      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
+      user = Factory(:custom_definition, module_type: "Shipment", data_type: "integer", is_user: true, label: "QA Hold By")
+      date = Factory(:custom_definition, module_type: "Shipment", data_type: "datetime", label: "QA Hold Date")
+      Factory(:custom_definition, module_type: "Shipment", data_type: "integer", label: "Foo")
 
       user_list, date_list = described_class.new.get_user_and_date_cdefs(stb)
       expect(user_list).to eq [{cdef_id: user.id, label: "QA Hold By"}]

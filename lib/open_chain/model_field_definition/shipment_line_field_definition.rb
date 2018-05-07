@@ -77,10 +77,28 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
           "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} set to #{cs.id}."
         }
         }],
-      [13, :shpln_mbol, :master_bill_of_lading, "Master Bill", {data_type: :string}]
+      [13, :shpln_mbol, :master_bill_of_lading, "Master Bill", {data_type: :string}],
+      [14, :shpln_container_id, :container_id, "Container ID", {data_type: :integer, user_accessible: false}],
+      # This differs from the Order(s) field in that it only returns the first order. The VAST majority of customers (if not all) only have a single PO per shipment line
+      # so this gives them what they want
+      [15, :shpln_first_cust_ord_no,:first_customer_order_number,"Order",{data_type: :string,
+        read_only: true,
+        export_lambda: lambda {|sl| sl.order_lines.first.try(:order).try(:customer_order_number) },
+        import_lambda: lambda {|o,d| "Linked fields are read only."},
+        qualified_field_name: "(SELECT orders.customer_order_number FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id ORDER BY piece_sets.id)",
+        history_ignore:true
+        }],
+      [16,:shpln_container_seal_number,:container_seal_number,"Container Seal Number",{data_type: :string,
+        export_lambda: lambda {|sl| sl.container.try(:seal_number) },
+        import_lambda: lambda {|o,d| "Container Seal Number cannot be set via import."},
+        qualified_field_name: "(SELECT seal_number FROM containers WHERE containers.id = shipment_lines.container_id)",
+        history_ignore: true,
+        read_only:true
+        }]
     ]
     add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
     add_fields CoreModule::SHIPMENT_LINE, make_address_arrays(200,'shpln','shipment_lines','manufacturer')
     add_fields CoreModule::SHIPMENT_LINE, make_variant_arrays(300,"shpln","shipment_lines")
+    add_model_fields CoreModule::SHIPMENT_LINE, make_country_hts_fields(CoreModule::SHIPMENT_LINE, starting_index: 400, product_lambda: lambda {|line| line.product } )
   end
 end; end; end

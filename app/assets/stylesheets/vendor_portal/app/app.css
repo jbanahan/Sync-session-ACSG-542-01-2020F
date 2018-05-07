@@ -4,6 +4,11 @@
 ul.nav-tabs a[data-target] {
   cursor: pointer; }
 
+@media (min-width: 768px) {
+  .modal-xl {
+    width: 90%;
+    max-width: 1200px; } }
+
 /*# sourceMappingURL=base.css.map */
 
 @charset "UTF-8";

@@ -1,16 +1,18 @@
-module Api; module V1; class GroupsController < Api::V1::ApiController
-  include Api::V1::ApiJsonSupport
+require 'open_chain/api/v1/api_json_support'
+require 'open_chain/api/v1/group_api_json_generator.rb'
+
+module Api; module V1; class GroupsController < Api::V1::ApiCoreModuleControllerBase
   include PolymorphicFinders
 
   def index
     groups = Group.all
-    render json: {"groups" => groups.map {|g| group_view(current_user, g)}}
+    render json: {"groups" => groups.map {|g| obj_to_json_hash(g)}}
   end
 
   def show
     group = Group.where(id: params[:id]).first
     if group
-      render json: {"group" => group_view(current_user, group)}
+      render json: {"group" => obj_to_json_hash(group)}
     else
       raise ActiveRecord::RecordNotFound
     end
@@ -43,8 +45,12 @@ module Api; module V1; class GroupsController < Api::V1::ApiController
         obj.groups << groups
       end
 
-      render json: {"groups" => groups.map {|g| group_view(current_user, g)}}
+      render json: {"groups" => groups.map {|g| obj_to_json_hash(g)}}
     end
+  end
+
+  def json_generator
+    OpenChain::Api::V1::GroupApiJsonGenerator.new
   end
 
   protected
@@ -58,16 +64,6 @@ module Api; module V1; class GroupsController < Api::V1::ApiController
       end
     end
 
-    def group_view user, group
-      fields = all_requested_model_field_uids(CoreModule::GROUP)
-      hash = to_entity_hash(group, fields, user: user)
-      if include_association? "users"
-        hash['users'] = group.users.map {|u| u.api_hash(include_permissions: false)}
-        add_companies(hash['users'])
-      end
-      hash
-    end
-
     def excluded_user_view group
       hash = {}
       if group
@@ -79,14 +75,7 @@ module Api; module V1; class GroupsController < Api::V1::ApiController
       else
         hash['excl_users'] = User.where(system_user: [false, nil]).enabled.map{ |u| u.api_hash(include_permissions: false)}
       end
-      add_companies(hash['excl_users'])
-    end
-
-  private
-
-    def add_companies users
-      co = Company.all.inject({}) {|acc, c| acc[c.id] = {id: c.id, name: c.name, system_code: c.system_code}; acc}
-      users.map! {|u| u.merge({"company" => co[u[:company_id]]})}
+      json_generator.add_companies(hash['excl_users'])
     end
 
 end; end; end

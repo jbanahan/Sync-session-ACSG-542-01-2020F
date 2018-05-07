@@ -50,19 +50,19 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
   def get_user_and_date_mfs stb
     user_list, date_list = [], []
     cm = CoreModule.find_by_class_name(stb.module_type)
-    cm.model_fields.each do |uid, mf| 
-      user_list << {mfid: uid.to_s, label: mf.label}
-      date_list << {mfid: uid.to_s, label: mf.label} if mf.data_type == :datetime
+    cm.every_model_field { |mf| !mf.custom? }.each do |uid, mf| 
+      user_list << {mfid: uid.to_s, label: mf.label} if mf.user_id_field?
+      date_list << {mfid: uid.to_s, label: mf.label} if mf.date?
     end
     [user_list, date_list]
   end
 
   def get_user_and_date_cdefs stb
     user_list, date_list = [], []
-    all = CustomDefinition.where(module_type: stb.module_type)
-    all.each do |cdef|
-      user_list << {cdef_id: cdef.id, label: cdef.label} if cdef.is_user?
-      date_list << {cdef_id: cdef.id, label: cdef.label} if cdef.data_type == "datetime"
+    cm = CoreModule.find_by_class_name(stb.module_type)
+    cm.every_model_field { |mf| mf.custom? }.each do |uid, mf|
+      user_list << {cdef_id: mf.custom_definition.id, label: mf.label} if mf.user_id_field?
+      date_list << {cdef_id: mf.custom_definition.id, label: mf.label} if mf.date?
     end
     [user_list, date_list]
   end

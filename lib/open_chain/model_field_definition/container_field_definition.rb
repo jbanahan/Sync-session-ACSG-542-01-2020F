@@ -17,7 +17,12 @@ module OpenChain; module ModelFieldDefinition; module ContainerFieldDefinition
         qualified_field_name: "(SELECT count(*) FROM shipment_lines WHERE shipment_lines.container_id = containers.id)",
         history_ignore: true,
         read_only: true
-      }]
+      }],
+      [12,:con_container_pickup_date, :container_pickup_date, "Container Pickup Date", {date_type: :date}],
+      [13,:con_container_return_date, :container_return_date, "Container Return Date", {date_type: :date}]
     ]
+
+    add_fields CoreModule::CONTAINER, make_port_arrays(100, 'con_port_of_loading','containers','port_of_loading','Port Of Loading', port_selector: DefaultPortSelector)
+    add_fields CoreModule::CONTAINER, make_port_arrays(100, 'con_port_of_delivery','containers','port_of_delivery','Port Of Delivery', port_selector: DefaultPortSelector)
   end
 end; end; end

@@ -39,21 +39,22 @@
 }).call(this);
 
 (function() {
-  angular.module('VendorPortal').directive('chainVpBookOrder', [
+  angular.module('VendorPortal').factory("AbstractBookOrder", [
     '$state', 'chainApiSvc', 'chainDomainerSvc', function($state, chainApiSvc, chainDomainerSvc) {
       return {
         restrict: 'E',
         scope: {
-          order: '='
+          order: '=',
+          bookingFields: '=',
+          bookingIncludes: "=?"
         },
-        templateUrl: 'vendor_portal/partials/chain_vp_book_order.html',
         link: function(scope, el, attrs) {
           var loadModal;
           loadModal = function() {
             scope.loading = 'loading';
             return chainDomainerSvc.withDictionary().then(function(dict) {
               scope.dict = dict;
-              return chainApiSvc.Shipment.openBookings(["shp_booked_orders", "shp_ref"], scope.order.id).then(function(shipments) {
+              return chainApiSvc.Shipment.openBookings(scope.bookingFields, scope.order.id, scope.bookingIncludes).then(function(shipments) {
                 scope.shipments = shipments;
                 return delete scope.loading;
               });
@@ -93,17 +94,34 @@
     }
   ]);
 
+  angular.module('VendorPortal').directive('chainVpBookOrder', [
+    'AbstractBookOrder', function(AbstractBookOrder) {
+      return $.extend({
+        templateUrl: 'vendor_portal/partials/chain_vp_book_order.html'
+      }, AbstractBookOrder);
+    }
+  ]);
+
+  angular.module('VendorPortal').directive('llBookOrder', [
+    'AbstractBookOrder', function(AbstractBookOrder) {
+      return $.extend({
+        templateUrl: 'vendor_portal/partials/ll/ll_book_order.html'
+      }, AbstractBookOrder);
+    }
+  ]);
+
 }).call(this);
 
 (function() {
-  angular.module('VendorPortal').directive('chainVpBookings', [
-    'chainApiSvc', function(chainApiSvc) {
+  angular.module('VendorPortal').factory("AbstractBookings", [
+    '$state', 'chainApiSvc', 'chainDomainerSvc', function($state, chainApiSvc, chainDomainerSvc) {
       return {
         restrict: 'E',
         scope: {
-          order: '='
+          order: '=',
+          bookingFields: '=',
+          bookingIncludes: "=?"
         },
-        templateUrl: 'vendor_portal/partials/chain_vp_bookings.html',
         link: function(scope, el, attrs) {
           var init;
           init = function() {
@@ -136,6 +154,110 @@
       };
     }
   ]);
+
+  angular.module('VendorPortal').directive('chainVpBookings', [
+    'AbstractBookings', function(AbstractBookings) {
+      return $.extend({
+        templateUrl: 'vendor_portal/partials/chain_vp_bookings.html'
+      }, AbstractBookings);
+    }
+  ]);
+
+  angular.module('VendorPortal').directive('llBookings', [
+    'AbstractBookings', function(AbstractBookings) {
+      return $.extend({
+        templateUrl: 'vendor_portal/partials/ll/ll_bookings.html'
+      }, AbstractBookings);
+    }
+  ]);
+
+}).call(this);
+
+(function() {
+  angular.module('VendorPortal').directive('chainVpEditContainer', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        dictionary: '=',
+        detailColumns: '=?',
+        headerColumns: '=?',
+        detailFieldsTitle: '=?'
+      },
+      templateUrl: 'vendor_portal/partials/chain_vp_edit_container.html',
+      link: function(scope, el, attrs) {
+        var blankAttribute, emitSave, modalElement;
+        if (!angular.isDefined(scope.detailFieldsTitle)) {
+          scope.detailFieldsTitle = "Details";
+        }
+        if (angular.isDefined(scope.detailColumns)) {
+          scope.detailColumnWidth = 12 / scope.detailColumns.length;
+        } else {
+          scope.detailColumns = [];
+        }
+        if (!angular.isDefined(scope.headerColumns)) {
+          scope.headerColumns = [['con_container_number'], ['con_container_size'], ['con_seal_number']];
+        }
+        scope.headerColumnWidth = 12 / scope.headerColumns.length;
+        scope.editContainer = {};
+        scope.$on('chain-vp-edit-container', function(e, container, canEdit) {
+          scope.canEdit = canEdit;
+          scope.container = container;
+          scope.editContainer = {};
+          angular.merge(scope.editContainer, scope.container);
+          return scope.showModal();
+        });
+        scope.showModal = function() {
+          angular.merge(scope.editContainer, scope.container);
+          modalElement().modal('show');
+          return null;
+        };
+        modalElement = function() {
+          return el.find('#chain-vp-edit-container');
+        };
+        emitSave = function() {
+          modalElement().off("hidden.bs.modal");
+          return scope.$emit("chain-vp-container-added", scope.container);
+        };
+        blankAttribute = function(obj, fld) {
+          var val;
+          val = obj[fld.uid];
+          if (val === null || val === void 0) {
+            return true;
+          }
+          if (val.toString) {
+            val = val.toString();
+            return !val.trim();
+          } else {
+            return false;
+          }
+        };
+        scope.canSaveContainer = function() {
+          if (blankAttribute(scope.editContainer, scope.dictionary.field("con_container_number"))) {
+            return false;
+          }
+          if (blankAttribute(scope.editContainer, scope.dictionary.field("con_container_size"))) {
+            return false;
+          }
+          return true;
+        };
+        scope.saveContainer = function() {
+          var modal;
+          angular.merge(scope.container, scope.editContainer);
+          scope.editContainer = {};
+          modal = modalElement();
+          modal.on('hidden.bs.modal', emitSave);
+          modal.modal('hide');
+          return null;
+        };
+        return scope.cancel = function() {
+          scope.editContainer = {};
+          scope.container = {};
+          el.find('.modal').modal('hide');
+          return null;
+        };
+      }
+    };
+  });
 
 }).call(this);
 
@@ -208,216 +330,119 @@
 }).call(this);
 
 (function() {
-  angular.module('VendorPortal').directive('chainVpFullShipmentPack', [
+  angular.module('VendorPortal').directive('chainVpManifestBookingLines', [
     '$window', 'chainApiSvc', function($window, chainApiSvc) {
       return {
         restrict: 'E',
         scope: {
           shipment: '=',
-          dictionary: '='
+          dictionary: '=',
+          lineEditFields: "=",
+          requiredEditFields: "="
         },
-        templateUrl: 'vendor_portal/partials/chain_vp_full_shipment_pack.html',
+        templateUrl: 'vendor_portal/partials/chain_vp_manifest_booking_lines.html',
         link: function(scope, el, attrs) {
-          var cleanContainerNumber, getQuantity, matchingContainer, setUnshippedLines;
-          cleanContainerNumber = function(baseContainer) {
-            var baseCN;
-            baseCN = baseContainer.con_container_number;
-            if (!baseCN) {
-              baseCN = '';
-            }
-            baseCN = baseCN.trim().toUpperCase();
-            return baseCN;
-          };
-          matchingContainer = function(baseContainer, collection) {
-            var c, c1, i, len;
-            c1 = cleanContainerNumber(baseContainer);
-            if (collection) {
-              for (i = 0, len = collection.length; i < len; i++) {
-                c = collection[i];
-                if (cleanContainerNumber(c) === c1) {
-                  return c;
-                }
-              }
-            }
-            return null;
-          };
-          setUnshippedLines = function(shp) {
-            var bl, i, j, k, len, len1, len2, ol, ref, ref1, ref2, results, shippedOrderLineIds, sl;
-            scope.unShippedBookingLines = [];
-            shippedOrderLineIds = [];
-            if (shp.lines) {
-              ref = shp.lines;
-              for (i = 0, len = ref.length; i < len; i++) {
-                sl = ref[i];
-                ref1 = sl.order_lines;
-                for (j = 0, len1 = ref1.length; j < len1; j++) {
-                  ol = ref1[j];
-                  shippedOrderLineIds.push(ol.id);
-                }
-              }
-            }
-            if (shp.booking_lines) {
-              ref2 = shp.booking_lines;
-              results = [];
-              for (k = 0, len2 = ref2.length; k < len2; k++) {
-                bl = ref2[k];
-                if (!(shippedOrderLineIds.indexOf(bl.bkln_order_line_id) >= 0)) {
-                  results.push(scope.unShippedBookingLines.push(bl));
-                } else {
-                  results.push(void 0);
-                }
-              }
-              return results;
-            }
-          };
-          scope.bookingTableFields = ['bkln_line_number', 'bkln_order_and_line_number', 'bkln_puid', 'bkln_quantity'];
-          scope.containerTableFields = ['con_container_number', 'con_container_size'];
-          scope.shipmentLineTableFields = ['shpln_line_number', 'shpln_puid', 'shpln_shipped_qty'];
-          scope.containerToAdd = {};
-          scope.showModal = function(shp) {
-            setUnshippedLines(shp);
-            el.find('.modal').modal('show');
-            return null;
-          };
-          scope.addContainer = function(shp, con) {
-            var cleanCN, shpToSave;
-            scope.addingContainer = true;
-            if (matchingContainer(con, shp.containers)) {
-              cleanCN = cleanContainerNumber(con);
-              $window.alert("Container " + cleanCN + " is already on this shipment.");
-              return delete scope.addingContainer;
-            } else {
-              shpToSave = {
-                id: shp.id,
-                containers: [con]
+          var blankAttribute, fld, i, j, len, len1, ref, ref1;
+          scope.manifestingLines = [];
+          scope.additionalFields = [];
+          scope.requiredFields = [];
+          ref = scope.lineEditFields;
+          for (i = 0, len = ref.length; i < len; i++) {
+            fld = ref[i];
+            scope.additionalFields.push(scope.dictionary.field(fld));
+          }
+          ref1 = scope.requiredEditFields;
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            fld = ref1[j];
+            scope.requiredFields.push(scope.dictionary.field(fld));
+          }
+          scope.standardViewFields = ['bkln_order_number', 'bkln_puid', 'bkln_quantity'];
+          scope.standardEditFields = [scope.dictionary.field('shpln_shipped_qty')];
+          scope.buildManifestLines = function() {
+            var bl, k, l, len2, len3, ref2, ref3, results, shipment_line;
+            scope.manifestingLines = [];
+            ref2 = scope.shipment.booking_lines;
+            results = [];
+            for (k = 0, len2 = ref2.length; k < len2; k++) {
+              bl = ref2[k];
+              shipment_line = {
+                shpln_line_number: bl.bkln_line_number,
+                linked_order_line_id: bl.bkln_order_line_id,
+                shpln_shipped_qty: bl.bkln_quantity,
+                shpln_container_id: null,
+                shpln_prod_id: bl.bkln_product_db_id,
+                bkln_order_number: bl.bkln_order_number,
+                bkln_quantity: bl.bkln_quantity,
+                bkln_puid: bl.bkln_puid
               };
-              return chainApiSvc.Shipment.save(shpToSave).then(function(savedShp) {
-                var mc;
-                if (!shp.containers) {
-                  shp.containers = [];
-                }
-                mc = matchingContainer(con, savedShp.containers);
-                if (mc) {
-                  shp.containers.push(mc);
-                }
-                scope.containerToAdd = {};
-                return delete scope.addingContainer;
+              ref3 = scope.additionalFields;
+              for (l = 0, len3 = ref3.length; l < len3; l++) {
+                fld = ref3[l];
+                shipment_line[fld.uid] = null;
+              }
+              results.push(scope.manifestingLines.push(shipment_line));
+            }
+            return results;
+          };
+          scope.showModal = function() {
+            scope.buildManifestLines();
+            el.find(".modal").modal("show");
+            return null;
+          };
+          scope.saveShipmentLines = function() {
+            return scope.closeModal(function() {
+              return scope.$emit("chain-vp-shipment-lines-added", scope.manifestingLines);
+            });
+          };
+          scope.cancel = function() {
+            scope.manifestingLines = [];
+            return scope.closeModal();
+          };
+          scope.closeModal = function(callback) {
+            var modal;
+            modal = el.find('.modal');
+            if (callback) {
+              modal.on('hidden.bs.modal', function() {
+                return callback();
               });
             }
+            modal.modal('hide');
+            return null;
           };
-          scope.shouldDisableAddContainer = function() {
-            var cta;
-            if (scope.addingContainer) {
+          blankAttribute = function(obj, fld) {
+            var val;
+            val = obj[fld.uid];
+            if (val === null || val === void 0) {
               return true;
             }
-            cta = scope.containerToAdd;
-            if (!(cta.con_container_number && cta.con_container_number.length > 0 && cta.con_container_size)) {
-              return true;
+            if (val.toString) {
+              val = val.toString();
+              return !val.trim();
+            } else {
+              return false;
             }
-            return false;
           };
-          scope.packLines = function(shp, con) {
-            var bl, i, len, ref;
-            if (!con) {
-              return;
-            }
-            if (!shp.booking_lines) {
-              return;
-            }
-            if (!shp.lines) {
-              shp.lines = [];
-            }
-            ref = shp.booking_lines;
-            for (i = 0, len = ref.length; i < len; i++) {
-              bl = ref[i];
-              if (bl.readyForPack) {
-                delete bl.readyForPack;
-                shp.lines.push({
-                  shpln_line_number: bl.bkln_line_number,
-                  linked_order_line_id: bl.bkln_order_line_id,
-                  shpln_shipped_qty: bl.bkln_quantity,
-                  shpln_container_number: con.con_container_number,
-                  shpln_puid: bl.bkln_puid,
-                  order_lines: [
-                    {
-                      id: bl.bkln_order_line_id
-                    }
-                  ]
-                });
+          return scope.canSaveLines = function() {
+            var k, l, len2, len3, line, ref2, ref3;
+            ref2 = scope.manifestingLines;
+            for (k = 0, len2 = ref2.length; k < len2; k++) {
+              line = ref2[k];
+              if (isNaN(parseInt(line.shpln_container_id)) || parseInt(line.shpln_container_id) === 0) {
+                return false;
               }
-            }
-            return setUnshippedLines(shp);
-          };
-          getQuantity = function(collection, attribute) {
-            return collection.reduce((function(pv, obj) {
-              var val;
-              val = obj[attribute];
-              if (val === void 0 || val === '') {
-                val = 0;
+              if (isNaN(parseInt(line.shpln_shipped_qty)) || parseInt(line.shpln_shipped_qty) <= 0) {
+                return false;
               }
-              return pv + val;
-            }), 0);
-          };
-          scope.canSave = function(shp) {
-            if (scope.isSaving) {
-              return false;
-            }
-            if (!(shp.booking_lines && shp.lines && shp.booking_lines.length === shp.lines.length)) {
-              return false;
-            }
-            if (getQuantity(shp.booking_lines, 'bkln_quantity') !== getQuantity(shp.lines, 'shpln_shipped_qty')) {
-              return false;
+              ref3 = scope.requiredFields;
+              for (l = 0, len3 = ref3.length; l < len3; l++) {
+                fld = ref3[l];
+                if (blankAttribute(line, fld)) {
+                  return false;
+                }
+              }
             }
             return true;
           };
-          scope.save = function(shp) {
-            var con, i, len, ref;
-            scope.isSaving = true;
-            ref = shp.containers;
-            for (i = 0, len = ref.length; i < len; i++) {
-              con = ref[i];
-              if (scope.linesForContainer(shp, con).length === 0) {
-                con._destroy = true;
-              }
-            }
-            chainApiSvc.Shipment.save(shp).then(function(saved) {
-              var modal;
-              modal = el.find('.modal');
-              modal.on('hidden.bs.modal', function() {
-                return scope.$emit('chain-shipment-save', saved);
-              });
-              return modal.modal('hide');
-            });
-            return null;
-          };
-          scope.cancel = function(shp) {
-            var i, len, newSl, ref, sl;
-            newSl = [];
-            ref = shp.lines;
-            for (i = 0, len = ref.length; i < len; i++) {
-              sl = ref[i];
-              if (sl.id && sl.id > 0) {
-                newSl.push(sl);
-              }
-            }
-            shp.lines = newSl;
-            el.find('.modal').modal('hide');
-            return null;
-          };
-          scope.linesForContainer = function(shp, container) {
-            if (!shp.lines) {
-              return [];
-            }
-            return $.grep(shp.lines, function(sl) {
-              return sl.shpln_container_number === container.con_container_number;
-            });
-          };
-          scope.$on('chain-shipment-loaded', function() {
-            return setUnshippedLines(scope.shipment);
-          });
-          if (scope.shipment && scope.shipment.id) {
-            return setUnshippedLines(scope.shipment);
-          }
         }
       };
     }
@@ -679,7 +704,7 @@
 
 }).call(this);
 
-angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_book_order.html', 'vendor_portal/partials/chain_vp_bookings.html', 'vendor_portal/partials/chain_vp_equipment_requestor.html', 'vendor_portal/partials/chain_vp_full_shipment_pack.html', 'vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/chain_vp_shipment_panel.html', 'vendor_portal/partials/chain_vp_variant_selector.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/order_accept_button.html', 'vendor_portal/partials/select_ship_from.html', 'vendor_portal/partials/select_tpp_survey_response.html', 'vendor_portal/partials/standard_order_template.html', 'vendor_portal/partials/standard_shipment_template.html']);
+angular.module('VendorPortal-Templates', ['vendor_portal/partials/chain_vp_book_order.html', 'vendor_portal/partials/chain_vp_bookings.html', 'vendor_portal/partials/chain_vp_edit_container.html', 'vendor_portal/partials/chain_vp_equipment_requestor.html', 'vendor_portal/partials/chain_vp_full_shipment_pack.html', 'vendor_portal/partials/chain_vp_manifest_booking_lines.html', 'vendor_portal/partials/chain_vp_order_panel.html', 'vendor_portal/partials/chain_vp_shipment_panel.html', 'vendor_portal/partials/chain_vp_variant_selector.html', 'vendor_portal/partials/ll/ll_book_order.html', 'vendor_portal/partials/ll/ll_bookings.html', 'vendor_portal/partials/main.html', 'vendor_portal/partials/order_accept_button.html', 'vendor_portal/partials/select_ship_from.html', 'vendor_portal/partials/select_tpp_survey_response.html', 'vendor_portal/partials/standard_order_template.html', 'vendor_portal/partials/standard_shipment_template.html']);
 
 angular.module("vendor_portal/partials/chain_vp_book_order.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_book_order.html",
@@ -688,7 +713,12 @@ angular.module("vendor_portal/partials/chain_vp_book_order.html", []).run(["$tem
 
 angular.module("vendor_portal/partials/chain_vp_bookings.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_bookings.html",
-    "<small ng-if=\"loading\">Loading bookings</small><chain-vp-book-order order=\"order\" ng-if=\"shipments.length==0\"></chain-vp-book-order><span ng-repeat=\"s in shipments track by s.id\"><a ui-sref=\"showShipment(s)\">{{s.shp_ref}}</a><span ng-if=\"!$last\">,</span></span>");
+    "<small ng-if=\"loading\">Loading bookings</small><chain-vp-book-order order=\"order\" booking-fields=\"bookingFields\" ng-if=\"shipments.length==0\"></chain-vp-book-order><span ng-repeat=\"s in shipments track by s.id\"><a ui-sref=\"showShipment(s)\">{{s.shp_ref}}</a><span ng-if=\"!$last\">,</span></span>");
+}]);
+
+angular.module("vendor_portal/partials/chain_vp_edit_container.html", []).run(["$templateCache", function ($templateCache) {
+  $templateCache.put("vendor_portal/partials/chain_vp_edit_container.html",
+    "<div id=\"chain-vp-edit-container\" class=\"modal fade\" data-backdrop=\"static\" data-keyboard=\"false\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog modal-lg\"><div class=\"modal-content text-left\"><div class=\"modal-header\"><h4 ng-if=\"editContainer.id\" class=\"modal-title\">Edit Container</h4><h4 ng-if=\"!editContainer.id\" class=\"modal-title\">Create Container</h4></div><div class=\"modal-body\"><div class=\"row\"><div ng-repeat=\"fields in headerColumns track by $index\" class=\"col-md-{{headerColumnWidth}}\"><ul class=\"list-group\"><li class=\"list-group-item\" ng-repeat=\"fld in fields track by $index\"><chain-field-label field=\"dictionary.field(fld)\"></chain-field-label><div ng-if=\"canEdit\"><chain-field-input model=\"editContainer\" field=\"dictionary.field(fld)\"></chain-field-input></div><div ng-if=\"!canEdit\"><chain-field-value model=\"editContainer\" field=\"dictionary.field(fld)\"></chain-field-value></div></li></ul></div></div><div ng-if=\"detailColumns.length > 0\"><hr><h4>{{detailFieldsTitle}}</h4><div class=\"row\"><div ng-repeat=\"fields in detailColumns track by $index\" class=\"col-md-{{detailColumnWidth}}\"><ul class=\"list-group\"><li class=\"list-group-item\" ng-repeat=\"fld in fields track by $index\"><chain-field-label field=\"dictionary.field(fld)\"></chain-field-label><div ng-if=\"canEdit\"><chain-field-input model=\"editContainer\" field=\"dictionary.field(fld)\"></chain-field-input></div><div ng-if=\"!canEdit\"><chain-field-value model=\"editContainer\" field=\"dictionary.field(fld)\"></chain-field-value></div></li></ul></div></div></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</button> <button type=\"button\" class=\"btn btn-primary\" ng-click=\"saveContainer()\" ng-disabled=\"!canSaveContainer()\" )>Save</button></div></div></div></div>");
 }]);
 
 angular.module("vendor_portal/partials/chain_vp_equipment_requestor.html", []).run(["$templateCache", function ($templateCache) {
@@ -701,6 +731,11 @@ angular.module("vendor_portal/partials/chain_vp_equipment_requestor.html", []).r
 angular.module("vendor_portal/partials/chain_vp_full_shipment_pack.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("vendor_portal/partials/chain_vp_full_shipment_pack.html",
     "<button ng-click=\"showModal(shipment)\" ng-disabled=\"!shipment.permissions.can_add_remove_shipment_lines || shipment.shp_shipment_instructions_sent_date || unShippedBookingLines.length == 0\" class=\"btn btn-default\">Pack Manifest</button><div class=\"modal fade\" data-backdrop=\"static\" data-keyboard=\"false\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog\"><div class=\"modal-content text-left\"><div class=\"modal-header\"><h4 class=\"modal-title\">Pack Shipment</h4></div><div class=\"modal-body\"><h4>Available Booking Lines</h4><div class=\"alert alert-success\" ng-show=\"unShippedBookingLines.length>0\">All lines must be packed to save shipment.</div><table class=\"table available-lines\"><thead><tr><th></th><th ng-repeat=\"uid in bookingTableFields track by $index\">{{dictionary.field(uid).label}}</th></tr></thead><tbody><tr ng-repeat=\"bl in unShippedBookingLines track by bl.id\"><td><input type=\"checkbox\" ng-model=\"bl.readyForPack\"></td><td ng-repeat=\"uid in bookingTableFields track by $index\">{{bl[uid]}}</td></tr></tbody></table><div class=\"text-right\"><label>Container</label><select class=\"form-control\" ng-model=\"containerToPack\" ng-options=\"con.con_container_number for con in shipment.containers\"></select><button class=\"btn btn-default\" ng-click=\"packLines(shipment,containerToPack)\">Pack Lines</button></div><h4>Containers</h4><table class=\"table containers\"><thead><tr><th ng-repeat=\"uid in containerTableFields track by $index\">{{dictionary.field(uid).label}}</th><th><button class=\"btn btn-sm btn-success\" ng-show=\"!showAddContainer\" ng-click=\"showAddContainer = true\" title=\"Show Add Container\"><i class=\"fa fa-plus\"></i></button> <button class=\"btn btn-sm btn-success\" ng-show=\"showAddContainer\" ng-click=\"showAddContainer = false\" title=\"Hide Add Container\"><i class=\"fa fa-minus\"></i></button></th></tr></thead><tbody><tr class=\"add-container-row\" ng-show=\"showAddContainer\"><td ng-repeat=\"uid in containerTableFields track by $index\"><chain-field-input model=\"containerToAdd\" field=\"dictionary.field(uid)\"></chain-field-input></td><td><button class=\"btn btn-xm btn-success\" ng-disabled=\"shouldDisableAddContainer()\" title=\"Add Container\" ng-click=\"addContainer(shipment,containerToAdd)\"><i class=\"fa fa-plus\"></i></button></td></tr></tbody><tbody ng-repeat=\"con in shipment.containers track by con.id\"><tr class=\"info\"><td ng-repeat=\"uid in containerTableFields track by $index\"><chain-field-value model=\"con\" field=\"dictionary.field(uid)\"></chain-field-value></td><td></td></tr><tr><td colspan=\"{{containerTableFields.length + 1}}\"><table class=\"table\" ng-show=\"linesForContainer(shipment,con).length > 0\"><thead><tr><td ng-repeat=\"uid in shipmentLineTableFields track by $index\">{{dictionary.field(uid).label}}</td></tr></thead><tbody><tr ng-repeat=\"ln in linesForContainer(shipment,con)\"><td ng-repeat=\"uid in shipmentLineTableFields track by $index\"><chain-field-value model=\"ln\" field=\"dictionary.field(uid)\"></chain-field-value></td></tr></tbody></table><div class=\"text-warning\" ng-show=\"linesForContainer(shipment,con).length == 0\">Empty containers will be removed when you save.</div></td></tr></tbody></table></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" ng-click=\"cancel(shipment)\">Cancel</button> <button type=\"button\" class=\"btn btn-primary\" ng-disabled=\"!canSave(shipment)\" ng-click=\"save(shipment)\">Save</button></div></div></div></div>");
+}]);
+
+angular.module("vendor_portal/partials/chain_vp_manifest_booking_lines.html", []).run(["$templateCache", function ($templateCache) {
+  $templateCache.put("vendor_portal/partials/chain_vp_manifest_booking_lines.html",
+    "<button ng-click=\"showModal(shipment)\" ng-disabled=\"!shipment.permissions.can_add_remove_shipment_lines || shipment.shipment_lines.length > 0 || shipment.containers.length == 0 || shipment.booking_lines.length == 0\" class=\"btn btn-default\">Pack Manifest</button><div class=\"modal fade\" data-backdrop=\"static\" data-keyboard=\"false\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\" data-backdrop=\"static\" data-keyboard=\"false\"><div class=\"modal-dialog modal-xl\"><div class=\"modal-content text-left\"><div class=\"modal-header\"><h4 class=\"modal-title\">Pack Shipment</h4></div><div class=\"modal-body\"><h4>Available Booking Lines</h4><div class=\"alert alert-success\">All lines must be packed in order to save.</div><table class=\"table available-lines\"><thead><tr><th>{{dictionary.field('con_container_number').label}}</th><th ng-repeat=\"uid in standardViewFields track by $index\">{{dictionary.field(uid).label}}</th><th ng-repeat=\"fld in standardEditFields track by $index\">{{fld.label}}</th><th ng-repeat=\"fld in additionalFields track by $index\">{{fld.label}}</th></tr></thead><tbody><tr ng-repeat=\"line in manifestingLines track by line.shpln_line_number\"><td><select class=\"form-control\" ng-model=\"line.shpln_container_id\" ng-options=\"c.id as c.con_container_number for c in shipment.containers\" style=\"width: 12em\"></select></td><td ng-repeat=\"uid in standardViewFields track by $index\">{{line[uid]}}</td><td ng-repeat=\"fld in standardEditFields track by $index\"><chain-field-input model=\"line\" field=\"fld\"></chain-field-input></td><td ng-repeat=\"fld in additionalFields track by $index\"><chain-field-input model=\"line\" field=\"fld\"></chain-field-input></td></tr></tbody></table></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</button> <button type=\"button\" class=\"btn btn-primary\" ng-disabled=\"!canSaveLines()\" ng-click=\"saveShipmentLines()\">Save</button></div></div></div></div>");
 }]);
 
 angular.module("vendor_portal/partials/chain_vp_order_panel.html", []).run(["$templateCache", function ($templateCache) {
@@ -718,6 +753,16 @@ angular.module("vendor_portal/partials/chain_vp_variant_selector.html", []).run(
     "<span>{{orderLine.ordln_varuid}}</span> <button class=\"btn btn-xs btn-default\" ng-if=\"canEdit\" title=\"Change Variant\" ng-click=\"activateModal()\"><i class=\"fa fa-edit\"></i></button><div class=\"modal fade\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"\" aria-hidden=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button><h4 class=\"modal-title\">Change Variant</h4></div><div class=\"modal-body\"><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><div class=\"panel\" ng-repeat=\"v in variants track by v.id\" ng-class=\"{'panel-primary':v==selectedVariant,'panel-default':v!=selectedVariant}\"><div class=\"panel-heading\"><h3 class=\"panel-title\">{{v.var_identifier}}</h3></div><div class=\"panel-body\"><pre>\n" +
     "{{v[dictionary.fieldsByAttribute('label','Recipe',dictionary.fieldsByRecordType(dictionary.recordTypes.Variant))[0].uid]}}\n" +
     "</pre></div><div class=\"panel-footer text-right\"><button class=\"btn btn-primary btn-sm\" title=\"Select Variant\" ng-click=\"selectVariant(v)\">Select</button></div></div><div ng-show=\"variants && variants.length==0 && !loading\" class=\"text-danger\">No variants are assigned to this product.</div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button> <button type=\"button\" class=\"btn btn-success\" ng-disabled=\"!selectedVariant || loading\" ng-click=\"save()\">Save</button></div></div></div></div>");
+}]);
+
+angular.module("vendor_portal/partials/ll/ll_book_order.html", []).run(["$templateCache", function ($templateCache) {
+  $templateCache.put("vendor_portal/partials/ll/ll_book_order.html",
+    "<button class=\"btn btn-sm btn-primary\" ng-click=\"showModal()\">Book Order</button><div class=\"modal fade text-left\"><div class=\"modal-dialog modal-lg\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Select Shipment</h4></div><div class=\"modal-body\"><p><i>Only eligible orders with the same Delivery Location and Ship To can be added to an existing booking.</i></p><chain-loading-wrapper loading-flag=\"{{loading}}\"></chain-loading-wrapper><table class=\"table\" ng-hide=\"loading\"><thead><tr><th>{{dict.field('shp_ref').label}}</th><th>{{dict.field('shp_first_port_receipt_id').label}}</th><th>Ship To</th><th>{{dict.field('shp_booked_orders').label}}<br>(Forecasted Ship Windows)</th><th>&nbsp;</th></tr></thead><tbody><tr ng-repeat=\"s in shipments track by s.id\"><td ng-style=\"s.permissions.can_book_order_to_shipment ? {} : {'color':'gray'}\"><chain-field-value model=\"s\" field='dict.field(\"shp_ref\")'></chain-field-value></td><td ng-style=\"s.permissions.can_book_order_to_shipment ? {} : {'color':'gray'}\"><chain-field-value model=\"s\" field='dict.field(\"shp_first_port_receipt_code\")'></chain-field-value></td><td ng-style=\"s.permissions.can_book_order_to_shipment ? {} : {'color':'gray'}\"><chain-address address=\"{{s.shp_ship_to_address_full_address}}\"></chain-address></td><td ng-style=\"s.permissions.can_book_order_to_shipment ? {} : {'color':'gray'}\"><div ng-repeat=\"order in s.booked_orders track by order.id\"><chain-field-value model=\"order\" field='dict.field(\"ord_ord_num\")'></chain-field-value><br>(<chain-field-value model=\"order\" field='dict.field(\"*ord_forecasted_ship_window_start\")'></chain-field-value>&nbsp;/&nbsp;<chain-field-value model=\"order\" field='dict.field(\"*ord_forecasted_ship_window_end\")'></chain-field-value>)</div></td><td><button ng-if=\"s.permissions.can_book_order_to_shipment\" class=\"btn btn-sm btn-success\" title=\"Add to shipment\" ng-click=\"addToShipment(s)\"><i class=\"fa fa-plus\"></i></button></td></tr><tr><td colspan=\"5\"><button class=\"btn btn-success\" title=\"Add to NEW shipment\" ng-click=\"addToNewShipment()\">Create New Shipment</button></td></tr></tbody></table></div></div></div></div>");
+}]);
+
+angular.module("vendor_portal/partials/ll/ll_bookings.html", []).run(["$templateCache", function ($templateCache) {
+  $templateCache.put("vendor_portal/partials/ll/ll_bookings.html",
+    "<small ng-if=\"loading\">Loading bookings</small><ll-book-order order=\"order\" booking-fields=\"bookingFields\" booking-includes=\"bookingIncludes\" ng-if=\"shipments.length==0\"></ll-book-order><span ng-repeat=\"s in shipments track by s.id\"><a ui-sref=\"showShipment(s)\">{{s.shp_ref}}</a><span ng-if=\"!$last\">,</span></span>");
 }]);
 
 angular.module("vendor_portal/partials/main.html", []).run(["$templateCache", function ($templateCache) {
@@ -1002,7 +1047,9 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
         });
         return chainApiSvc.User.me().then(function(me) {
           $scope.me = me;
-          return chainApiSvc.Shipment.get(id).then(function(shipment) {
+          return chainApiSvc.Shipment.get(id, {
+            include: "order_lines,containers,shipment_lines,booking_lines,state_toggle_buttons"
+          }).then(function(shipment) {
             $scope.shipment = shipment;
             $scope.$broadcast('chain-shipment-loaded', shipment);
             return delete $scope.loading;
@@ -1011,7 +1058,9 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
       };
       $scope.reload = function(id) {
         $scope.loading = 'loading';
-        return chainApiSvc.Shipment.load(id).then(function(s) {
+        return chainApiSvc.Shipment.load(id, {
+          include: "order_lines,containers,shipment_lines,booking_lines,state_toggle_buttons"
+        }).then(function(s) {
           $scope.shipment = s;
           $scope.$broadcast('chain-shipment-loaded', s);
           return delete $scope.loading;
@@ -1022,6 +1071,16 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
         return chainApiSvc.Shipment.save(shp).then(function(s) {
           return $scope.reload(shp.id);
         });
+      };
+      $scope.editContainer = function(container) {
+        return $scope.$broadcast('chain-vp-edit-container', container, $scope.shipment.permissions.can_add_remove_shipment_lines);
+      };
+      $scope.addContainer = function() {
+        var container;
+        container = {
+          id: 0
+        };
+        return $scope.editContainer(container);
       };
       saveAndAct = function(shp, permission, failMessage, actionFunction) {
         if (!permission) {
@@ -1076,8 +1135,8 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
         }
       };
       $scope.clearManifest = function(shp) {
-        var c, i, j, len, len1, ln, nullFunc, ref, ref1, shpToSave;
-        if ($window.confirm("Are you sure you want to clear the manfiest and start over?")) {
+        var i, len, ln, nullFunc, ref, shpToSave;
+        if ($window.confirm("Are you sure you want to clear the manifest and start over?")) {
           nullFunc = function(shp) {
             var d;
             d = $q.defer();
@@ -1086,8 +1145,7 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
           };
           shpToSave = {
             id: shp.id,
-            lines: [],
-            containers: []
+            lines: []
           };
           ref = shp.lines;
           for (i = 0, len = ref.length; i < len; i++) {
@@ -1097,23 +1155,82 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
               _destroy: true
             });
           }
-          ref1 = shp.containers;
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            c = ref1[j];
-            shpToSave.containers.push({
-              id: c.id,
-              _destroy: true
-            });
-          }
           return saveAndAct(shpToSave, shp.permissions.can_add_remove_shipment_lines, "You do not have permission to remove lines from this shipment.", nullFunc);
         }
+      };
+      $scope.canDeleteContainer = function(container) {
+        var i, len, line, ref;
+        ref = $scope.shipment.lines;
+        for (i = 0, len = ref.length; i < len; i++) {
+          line = ref[i];
+          if (line.shpln_container_id === container.id) {
+            return false;
+          }
+        }
+        return true;
+      };
+      $scope.deleteContainer = function(container) {
+        var c, i, len, ref;
+        ref = $scope.shipment.containers;
+        for (i = 0, len = ref.length; i < len; i++) {
+          c = ref[i];
+          if (c.id === container.id) {
+            if (!$window.confirm("Are you sure you want to delete Container " + container.con_container_number + "?")) {
+              return false;
+            } else {
+              c["_destroy"] = true;
+            }
+          }
+        }
+        return $scope.save($scope.shipment);
+      };
+      $scope.stateToggleButton = function(identifier) {
+        var b, i, len, ref;
+        ref = $scope.shipment.state_toggle_buttons;
+        for (i = 0, len = ref.length; i < len; i++) {
+          b = ref[i];
+          if (b.identifier === identifier) {
+            return b;
+          }
+        }
+        return null;
+      };
+      $scope.complexStateToggleButtons = function() {
+        var b, buttons, i, len, ref;
+        buttons = [];
+        ref = $scope.shipment.containers;
+        for (i = 0, len = ref.length; i < len; i++) {
+          b = ref[i];
+          if (b.simple_button === null || !b.simple_button) {
+            buttons.push(b);
+          }
+        }
+        return buttons;
+      };
+      $scope.scopedReload = function() {
+        return $scope.reload($scope.shipment.id);
       };
       if (!$scope.$root.isTest) {
         $scope.init($stateParams.id);
       }
-      return $scope.$on('chain-shipment-save', function() {
-        return $scope.reload($scope.shipment.id);
+      $scope.$on('chain-shipment-save', function() {
+        return $scope.scopedReload();
       });
+      $scope.$on("chain-vp-container-added", function(e, container) {
+        if (container.id === 0) {
+          $scope.shipment.containers.push(container);
+        }
+        return $scope.save($scope.shipment);
+      });
+      $scope.$on("chain-vp-shipment-lines-added", function(e, lines) {
+        var i, len, line;
+        for (i = 0, len = lines.length; i < len; i++) {
+          line = lines[i];
+          $scope.shipment.lines.push(line);
+        }
+        return $scope.save($scope.shipment);
+      });
+      return null;
     }
   ]);
 

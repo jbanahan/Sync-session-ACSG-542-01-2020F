@@ -74,14 +74,13 @@ RSpec.configure do |config|
       stub_snapshots
     end
 
-    #clear ComparatorRegistry
+    #clear all registries
     OpenChain::EntityCompare::ComparatorRegistry.clear
-
-    # clear OrderBookingRegistry
-    OpenChain::OrderBookingRegistry.clear
-
-    # clear PasswordValidationRegistry
-    OpenChain::PasswordValidationRegistry.clear
+    OpenChain::Registries::OrderBookingRegistry.clear
+    OpenChain::Registries::PasswordValidationRegistry.clear
+    OpenChain::Registries::OrderAcceptanceRegistry.clear
+    OpenChain::Registries::CustomizedApiResponseRegistry.clear
+    OpenChain::Registries::ShipmentRegistry.clear
   end
 
   # Clears out the deliveries array before every test..which is only done automatically

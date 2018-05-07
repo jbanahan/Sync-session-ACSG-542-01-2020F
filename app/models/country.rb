@@ -2,6 +2,7 @@
 #
 # Table name: countries
 #
+#  active_origin       :boolean
 #  classification_rank :integer
 #  created_at          :datetime         not null
 #  european_union      :boolean
@@ -276,7 +277,7 @@ class Country < ActiveRecord::Base
 
   @@skip_reload = false
 
-  attr_accessible :import_location, :classification_rank, :quicksearch_show
+  attr_accessible :import_location, :classification_rank, :quicksearch_show, :active_origin
   after_save :update_model_fields
   after_commit :update_cache
 

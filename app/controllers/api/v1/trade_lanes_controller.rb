@@ -1,32 +1,9 @@
+require 'open_chain/api/v1/trade_lane_api_json_generator'
+
 module Api; module V1; class TradeLanesController < Api::V1::ApiCoreModuleControllerBase
+
   def core_module
     CoreModule::TRADE_LANE
-  end
-
-  def obj_to_json_hash obj
-    headers_to_render = limit_fields([
-      :lane_tariff_adjustment_percentage,
-      :lane_notes,
-      :lane_updated_at,
-      :lane_created_at,
-      :lane_origin_cntry_name,
-      :lane_origin_cntry_iso,
-      :lane_destination_cntry_name,
-      :lane_destination_cntry_iso
-    ] + custom_field_keys(CoreModule::TRADE_LANE))
-
-    h = to_entity_hash(obj, headers_to_render)
-    h['permissions'] = render_permissions(obj)
-    h
-  end
-  def render_permissions obj
-    cu = current_user #current_user is method, so saving as variable to prevent multiple calls
-    {
-      can_view: obj.can_view?(cu),
-      can_edit: obj.can_edit?(cu),
-      can_attach: obj.can_attach?(cu),
-      can_comment: obj.can_comment?(cu)
-    }
   end
 
   def save_object h
@@ -39,4 +16,9 @@ module Api; module V1; class TradeLanesController < Api::V1::ApiCoreModuleContro
     tl.save if tl.errors.full_messages.blank?
     tl
   end
+
+  def json_generator
+    OpenChain::Api::V1::TradeLaneApiJsonGenerator.new
+  end
+  
 end; end; end

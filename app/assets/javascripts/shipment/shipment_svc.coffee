@@ -37,7 +37,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
 
   return {
     getShipment: (shipmentId, shipmentLines, bookingLines) ->
-      requestParams = "summary=true&include=order_lines,attachments,comments"
+      requestParams = "summary=true&include=order_lines,attachments,comments,containers"
       requestParams += "&shipment_lines=true" if shipmentLines
       requestParams += "&booking_lines=true" if bookingLines
 

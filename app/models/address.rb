@@ -3,6 +3,7 @@
 # Table name: addresses
 #
 #  address_hash    :string(255)
+#  address_type    :string(255)
 #  city            :string(255)
 #  company_id      :integer
 #  country_id      :integer

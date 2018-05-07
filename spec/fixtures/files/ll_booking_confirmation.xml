@@ -1,0 +1,263 @@
+<?xml version="1.0"?>
+<ShippingOrderMessage>
+  <TransactionInfo>
+    <MessageSender>GTNEXUS</MessageSender>
+    <MessageRecipient>ACSLLQ</MessageRecipient>
+    <MessageID>20180119072427685</MessageID>
+    <Created>2018-01-19T07:24:27.685-08:00</Created>
+    <FileName>SO_20180119072427685.xml</FileName>
+  </TransactionInfo>
+  <ShippingOrder ShippingOrderNumber="2018574260" SaveDate="2018-01-19T07:24:27.643-08:00">
+    <Purpose>Create</Purpose>
+    <ShippingOrderNumber>2018574260</ShippingOrderNumber>
+    <TriggerList>
+      <Trigger>
+        <Name>SO Trigger</Name>
+      </Trigger>
+    </TriggerList>
+    <Version Major="2" Minor="1">2.1</Version>
+    <LocalLanguage>zh_CN</LocalLanguage>
+    <Status>Approved</Status>
+    <PackingStatus>Not Packed</PackingStatus>
+    <LabelStatus>NONE</LabelStatus>
+    <OriginCity>
+      <CityName>Nanjing</CityName>
+      <CityCode Qualifier="UN">CNNJG</CityCode>
+      <CountryCode>CN</CountryCode>
+      <CountryName>China</CountryName>
+    </OriginCity>
+    <PortOfLoading>
+      <CityName>Nanjing</CityName>
+      <CityCode Qualifier="UN">CNNJG</CityCode>
+      <CountryCode>CN</CountryCode>
+      <CountryName>China</CountryName>
+    </PortOfLoading>
+    <PortOfDischarge>
+      <CityName>Norfolk</CityName>
+      <CityCode Qualifier="UN">USORF</CityCode>
+      <CityCode Qualifier="D">1401</CityCode>
+      <State>VA</State>
+      <CountryCode>US</CountryCode>
+      <CountryName>United States</CountryName>
+    </PortOfDischarge>
+    <PlaceOfDelivery>
+      <CityName>Toano</CityName>
+      <CityCode Qualifier="UN">USTXV</CityCode>
+      <State>VA</State>
+      <CountryCode>US</CountryCode>
+      <CountryName>United States</CountryName>
+    </PlaceOfDelivery>
+    <FinalDestination>
+      <LocationCode>9444</LocationCode>
+      <Name>Lumber Liquidators ECDC</Name>
+      <Address>
+        <AddressLine>6115 Engineered Wood Way</AddressLine>
+      </Address>
+      <City>
+        <CityName>Sandston</CityName>
+        <CityCode Qualifier="UN">USSAX</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+      <PostalCode>23502</PostalCode>
+    </FinalDestination>
+    <LoadType>CY</LoadType>
+    <CargoType>Flat</CargoType>
+    <Haulage>None</Haulage>
+    <PaymentTerms>Collect</PaymentTerms>
+    <ShipTerms Code="FOB">Free on Board</ShipTerms>
+    <TransportationMode>Ocean</TransportationMode>
+    <Division>Lumber Liquidators</Division>
+    <Item>
+      <Division>Lumber Liquidators</Division>
+      <PurchaseOrderNumber>4500183395</PurchaseOrderNumber>
+      <UserRefNumber>1</UserRefNumber>
+      <ItemNumber>10041179</ItemNumber>
+      <FinalDestination>
+        <LocationCode>9444</LocationCode>
+        <Name>Lumber Liquidators ECDC</Name>
+        <Address>
+          <AddressLine>6115 Engineered Wood Way</AddressLine>
+        </Address>
+        <City>
+          <CityName>Sandston</CityName>
+          <CityCode Qualifier="UN">USSAX</CityCode>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>23502</PostalCode>
+      </FinalDestination>
+      <OriginCountry>China</OriginCountry>
+      <MarksAndNumber>CLX UL Old Dominion Walnut EVP 8mm</MarksAndNumber>
+      <CommodityDescription>CLX UL Old Dominion Walnut EVP 8mm</CommodityDescription>
+      <TotalCartons>100</TotalCartons>
+      <TotalPieces>12192.0</TotalPieces>
+      <TotalCubicMeters ANSICode="CR" Unit="CBMS">12.0</TotalCubicMeters>
+      <TotalGrossWeight ANSICode="KG" Unit="KGS">254.0</TotalGrossWeight>
+      <Quantity ANSICode="SFQTY" Unit="Square Feet (qty)">12192.0</Quantity>
+      <AssortmentQty>0.0</AssortmentQty>
+      <UOM Code="SFQTY">Square Feet (qty)</UOM>
+      <ShipTerms Code="FOB">Free on Board</ShipTerms>
+      <TransportationMode>Ocean</TransportationMode>
+      <PaymentTerms>Collect</PaymentTerms>
+      <PackingStatus>Not Packed</PackingStatus>
+      <LabelStatus>NONE</LabelStatus>
+      <PartyInfo>
+        <Type>Factory</Type>
+        <Code>None</Code>
+        <Name>Factory Not Listed</Name>
+      </PartyInfo>
+      <ShipWindow>
+        <StartDate>2017-06-08T12:00:00.000-07:00</StartDate>
+        <EndDate>2017-06-15T12:00:00.000-07:00</EndDate>
+      </ShipWindow>
+      <NetWeight ANSICode="KG" Unit="KGS">254.0</NetWeight>
+      <FirstCostPrice Currency="USD">1.4</FirstCostPrice>
+      <POReferences>
+        <PoReferenceDate1>2017-06-15T12:00:00.000-07:00</PoReferenceDate1>
+        <PoReferenceDate2>2017-06-22T12:00:00.000-07:00</PoReferenceDate2>
+        <References>
+          <Type>LCTransferable</Type>
+          <Value>No</Value>
+        </References>
+        <References>
+          <Type>RequiresOriginalBL</Type>
+          <Value>No</Value>
+        </References>
+      </POReferences>
+      <POLineReferences/>
+      <OrderLineShipmentTerms Code="FOB">Free on Board</OrderLineShipmentTerms>
+      <OrderLineParties>
+        <PartyInfo>
+          <Type>Consignee</Type>
+          <Code>LL</Code>
+          <Name>Lumber Liquidators Services, LLC</Name>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Supplier</Type>
+          <Code>0000100266</Code>
+          <Name>0000100266</Name>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Ship To</Type>
+          <Code>9444</Code>
+          <Name>Lumber Liquidators ECDC</Name>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Final Ship To</Type>
+          <Code>9444</Code>
+        </PartyInfo>
+      </OrderLineParties>
+    </Item>
+    <TotalCartons>100</TotalCartons>
+    <TotalNetWeight ANSICode="KG" Unit="KGS">254.0</TotalNetWeight>
+    <Volume ANSICode="CR" Unit="CBMS">12.0</Volume>
+    <Weight ANSICode="KG" Unit="KGS">254.0</Weight>
+    <PickupType>None</PickupType>
+    <PickupOrDropoffFlag>Pickup</PickupOrDropoffFlag>
+    <AppointmentType>PickUp</AppointmentType>
+    <FactoryIsShipper>false</FactoryIsShipper>
+    <ShippingDeclaration1 Label="Shipping Order Declaration 1">false</ShippingDeclaration1>
+    <ShippingDeclaration2 Label="Shipping Order Declaration 2">false</ShippingDeclaration2>
+    <ShippingDeclaration3 Label="Shipping Order Declaration 3">false</ShippingDeclaration3>
+    <ShippingDeclaration4 Label="Shipping Order Declaration 4">false</ShippingDeclaration4>
+    <ShippingDeclaration5 Label="Shipping Order Declaration 5">false</ShippingDeclaration5>
+    <ShippingDeclaration6 Label="Shipping Order Declaration 6">false</ShippingDeclaration6>
+    <ShippingDeclaration7 Label="Shipping Order Declaration 7">false</ShippingDeclaration7>
+    <ShippingDeclaration8 Label="Shipping Order Declaration 8">false</ShippingDeclaration8>
+    <Vessel>APL VENEZUELA</Vessel>
+    <Voyage>1111</Voyage>
+    <BLNumber>BILLNUMBER</BLNumber>
+    <ETAPortOfDischargeDate>2017-06-29T12:00:00.000-07:00</ETAPortOfDischargeDate>
+    <ETDPortOfLoadDate>2017-06-09T12:00:00.000-07:00</ETDPortOfLoadDate>
+    <ETAFinalDestinationDate>2017-06-30T12:00:00.000-07:00</ETAFinalDestinationDate>
+    <ShippingOrderDate>2018-01-19T12:00:00.000-08:00</ShippingOrderDate>
+    <ETDOriginDate>2017-06-08T12:00:00.000-07:00</ETDOriginDate>
+    <ETAPlaceOfDeliveryDate>2017-06-30T12:00:00.000-07:00</ETAPlaceOfDeliveryDate>
+    <UserDefReferenceDate2>2017-06-05T12:00:00.000-07:00</UserDefReferenceDate2>
+    <CargoCutOffDate>2017-06-07T12:00:00.000-07:00</CargoCutOffDate>
+    <PartyInfo>
+      <Type>Shipper</Type>
+      <Code>0000100266</Code>
+      <Name>0000100266</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Customer</Type>
+      <Code>None</Code>
+      <Name>Lumber Liquidators</Name>
+      <AddressLine1>3000 John Deere Road</AddressLine1>
+      <PostalCode>23168</PostalCode>
+      <City>
+        <CityName>Toano</CityName>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>US</CountryName>
+      </City>
+      <Phone>757-259-4280</Phone>
+      <CountryCode>US</CountryCode>
+      <CountryName>US</CountryName>
+      <DisplayAddress>
+        <AddressLine1>3000 John Deere Road</AddressLine1>
+        <AddressLine2>Toano, VA, US, 23168</AddressLine2>
+        <AddressLine3>United States</AddressLine3>
+      </DisplayAddress>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Carrier</Type>
+      <Code>APLU</Code>
+      <Name>APL</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Consignee</Type>
+      <Code>LL</Code>
+      <Name>Lumber Liquidators Services, LLC</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Consolidator</Type>
+      <Code>ACS</Code>
+      <Name>Allport Cargo Services USA Inc.</Name>
+      <AddressLine1>200 Broadacres Drive</AddressLine1>
+      <AddressLine2>Suite 130</AddressLine2>
+      <PostalCode>07003</PostalCode>
+      <City>
+        <CityName>Bloomfield</CityName>
+        <CityCode Qualifier="UN">USBMN</CityCode>
+        <State>NJ</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+      <CountryCode>US</CountryCode>
+      <CountryName>United States</CountryName>
+      <DisplayAddress>
+        <AddressLine1>200 Broadacres Drive</AddressLine1>
+        <AddressLine2>Suite 130</AddressLine2>
+        <AddressLine3>Bloomfield, NJ, US, 07003</AddressLine3>
+        <AddressLine4>United States</AddressLine4>
+      </DisplayAddress>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Supplier</Type>
+      <Code>0000100266</Code>
+      <Name>0000100266</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Ship To</Type>
+      <Code>9444</Code>
+      <Name>Lumber Liquidators ECDC</Name>
+      <AddressLine1>6115 Engineered Wood Way</AddressLine1>
+      <PostalCode>23502</PostalCode>
+      <City>
+        <CityName>Sandston</CityName>
+        <CityCode Qualifier="UN">USSAX</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </City>
+      <CountryCode>US</CountryCode>
+      <CountryName>United States</CountryName>
+    </PartyInfo>
+    <UserDefinedReferenceField2>CARRIERBKGNUM</UserDefinedReferenceField2>
+  </ShippingOrder>
+</ShippingOrderMessage>

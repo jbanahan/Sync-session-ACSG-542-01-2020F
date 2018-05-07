@@ -1,6 +1,7 @@
-module Api; module V1; class AttachmentsController < Api::V1::ApiController
+require 'open_chain/api/v1/attachment_api_json_generator'
+
+module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleControllerBase
   include PolymorphicFinders
-  include ApiJsonSupport
 
   # The create call is done via a multipart/form posting..so don't check for json
   skip_before_filter :validate_format, only: [:create]
@@ -9,7 +10,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       attachments = []
       obj.attachments.select {|a| a.can_view? current_user}.each do |a|
-        attachments << attachment_view(current_user, a)
+        attachments << obj_to_json_hash(a)
       end
 
       render json: {"attachments" => attachments}
@@ -20,7 +21,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
       if attachment && attachment.can_view?(current_user)
-        render json: {"attachment" => attachment_view(current_user, attachment)}
+        render json: {"attachment" => obj_to_json_hash(attachment)}
       else
         render_forbidden
       end
@@ -61,7 +62,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
         obj.attachment_added(attachment) if obj.respond_to?(:attachment_added)
         obj.create_async_snapshot current_user, nil, "Attachment Added: #{attachment.attached_file_name}" if obj.respond_to?(:create_async_snapshot)
 
-        render json: {"attachment" => attachment_view(current_user, attachment)}
+        render json: {"attachment" => obj_to_json_hash(attachment)}
       end
     end
   end
@@ -83,6 +84,10 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       render json: {"attachment_types" => AttachmentType.all.map {|t| {name: t.name, value: t.name}} }
     end
+  end
+
+  def json_generator
+    OpenChain::Api::V1::AttachmentApiJsonGenerator.new
   end
 
   private
@@ -116,13 +121,6 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiController
         render_forbidden
         nil
       end
-    end
-
-    def attachment_view user, attachment
-      fields = all_requested_model_field_uids(CoreModule::ATTACHMENT)
-      h = to_entity_hash(attachment, fields, user: user)
-      h['friendly_size'] = ActionController::Base.helpers.number_to_human_size(attachment.attached_file_size)
-      h
     end
 
 end; end; end;

@@ -1,39 +1,39 @@
-<label for="shp_cutoff_date">Shipment Cutoff Date</label>
+<label for="shp_cutoff_date">{{outerScope.label('shp_cutoff_date')}}</label>
 <input type="date" id="shp_cutoff_date" ng-model="outerScope.tracking.shp_cutoff_date" class="form-control" />
-<label for="shp_est_load_date">Est Load Date</label>
+<label for="shp_est_load_date">{{outerScope.label('shp_est_load_date')}}</label>
 <input type="date" id="shp_est_load_date" ng-model="outerScope.tracking.shp_est_load_date" class="form-control" />
-<label for="shp_est_departure_date">Est Departure Date</label>
+<label for="shp_est_departure_date">{{outerScope.label('shp_est_departure_date')}}</label>
 <input type="date" id="shp_est_departure_date" ng-model="outerScope.tracking.shp_est_departure_date" class="form-control" />
-<label for="shp_est_arrival_port_date">Est Arrival Discharge Date</label>
+<label for="shp_est_arrival_port_date">{{outerScope.label('shp_est_arrival_port_date')}}</label>
 <input type="date" id="shp_est_arrival_port_date" ng-model="outerScope.tracking.shp_est_arrival_port_date" class="form-control" />
-<label for="shp_est_inland_port_date">Est Inland Port Date</label>
+<label for="shp_est_inland_port_date">{{outerScope.label('shp_est_inland_port_date')}}</label>
 <input type="date" id="shp_est_inland_port_date" ng-model="outerScope.tracking.shp_est_inland_port_date" class="form-control" />
-<label for="shp_est_delivery_date">Est Delivery Date</label>
+<label for="shp_est_delivery_date">{{outerScope.label('shp_est_delivery_date')}}</label>
 <input type="date" id="shp_est_delivery_date" ng-model="outerScope.tracking.shp_est_delivery_date" class="form-control" />
 <hr />
-<label for="shp_confirmed_on_board_origin_date">Confirmed On Board Origin Date</label>
+<label for="shp_confirmed_on_board_origin_date">{{outerScope.label('shp_confirmed_on_board_origin_date')}}</label>
 <input type="date" id="shp_confirmed_on_board_origin_date" ng-model="outerScope.tracking.shp_confirmed_on_board_origin_date" class="form-control" />
-<label for="shp_docs_received_date">Docs Received Date</label>
+<label for="shp_docs_received_date">{{outerScope.label('shp_docs_received_date')}}</label>
 <input type="date" id="shp_docs_received_date" ng-model="outerScope.tracking.shp_docs_received_date" class="form-control" />
-<label for="shp_cargo_on_hand_date">Cargo On Hand Date</label>
+<label for="shp_cargo_on_hand_date">{{outerScope.label('shp_cargo_on_hand_date')}}</label>
 <input type="date" id="shp_cargo_on_hand_date" ng-model="outerScope.tracking.shp_cargo_on_hand_date" class="form-control" />
-<label for="shp_departure_date">Departure Date</label>
+<label for="shp_departure_date">{{outerScope.label('shp_departure_date')}}</label>
 <input type="date" id="shp_departure_date" ng-model="outerScope.tracking.shp_departure_date" class="form-control" />
-<label for="shp_arrival_port_date">Arrival Discharge Date</label>
+<label for="shp_arrival_port_date">{{outerScope.label('shp_arrival_port_date')}}</label>
 <input type="date" id="shp_arrival_port_date" ng-model="outerScope.tracking.shp_arrival_port_date" class="form-control" />
-<label for="shp_inland_port_date">Inland Port Date</label>
+<label for="shp_inland_port_date">{{outerScope.label('shp_inland_port_date')}}</label>
 <input type="date" id="shp_inland_port_date" ng-model="outerScope.tracking.shp_inland_port_date" class="form-control" />
-<label for="shp_do_issued_at">DO Issued At</label>
+<label for="shp_do_issued_at">{{outerScope.label('shp_do_issued_at')}}</label>
 <input type="date" id="shp_do_issued_at" ng-model="outerScope.tracking.shp_do_issued_at" class="form-control" />
-<label for="shp_trucker_name">Trucker Name</label>
+<label for="shp_trucker_name">{{outerScope.label('shp_trucker_name')}}</label>
 <input type="text" id="shp_trucker_name" ng-model="outerScope.tracking.shp_trucker_name" class="form-control" />
-<label for="shp_port_last_free_day">Port Last Free Day</label>
+<label for="shp_port_last_free_day">{{outerScope.label('shp_port_last_free_day')}}</label>
 <input type="date" id="shp_port_last_free_day" ng-model="outerScope.tracking.shp_port_last_free_day" class="form-control" />
-<label for="shp_pickup_at">Pickup Date</label>
+<label for="shp_pickup_at">{{outerScope.label('shp_pickup_at')}}</label>
 <input type="date" id="shp_pickup_at" ng-model="outerScope.tracking.shp_pickup_at" class="form-control" />
-<label for="shp_delivered_date">Delivered Date</label>
+<label for="shp_delivered_date">{{outerScope.label('shp_delivered_date')}}</label>
 <input type="date" id="shp_delivered_date" ng-model="outerScope.tracking.shp_delivered_date" class="form-control" />
-<label>In Warehouse Time</label>
+<label for="shp_in_warehouse_time">{{outerScope.label('shp_in_warehouse_time')}}</label>
 <div class="row">
     <div class="col-sm-6">
         <input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="col-sm-6 form-control" placeholder="YYYY-MM-DD"/>

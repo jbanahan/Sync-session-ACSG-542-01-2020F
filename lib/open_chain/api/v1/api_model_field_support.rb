@@ -1,24 +1,13 @@
-require 'open_chain/api/api_entity_jsonizer'
-
-module Api; module V1; module ApiJsonSupport
+# If you include this module, you MUST implement a `core_module` method.
+module OpenChain; module Api; module V1; module ApiModelFieldSupport
   extend ActiveSupport::Concern
 
-  attr_reader :jsonizer
-
-  def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
-    @jsonizer = jsonizer
+  def custom_field_keys core_module
+    core_module.model_fields(current_user) {|mf| mf.custom? }.keys
   end
 
-  # Utilizes the internal jsonizer object to generate an object hash
-  # containing the values for the given object for every model field uid listed in the
-  # field_list argument.
-  def to_entity_hash(obj, field_list, user: current_user)
-    jsonizer.entity_to_hash(user, obj, field_list.map {|f| f.to_s})
-  end
-
-  #render field for json
-  def export_field model_field_uid, obj, user: current_user
-    jsonizer.export_field user, obj, ModelField.find_by_uid(model_field_uid)
+  def field_list core_module
+    ModelField.find_by_module_type(core_module).map(&:uid)
   end
 
   def requested_field_list http_params: params
@@ -60,18 +49,12 @@ module Api; module V1; module ApiJsonSupport
     field_list.map {|f| f.to_sym}
   end
 
-
-  def include_association? association_name, http_params: params
-    http_params[:include] && http_params[:include].match(/#{association_name}/)
-  end
-
-
   # This method basically takes the place of limit fields, requested_field_list and include checks
   # and rolls them all into a single method.
   # You must pass an associations hash which is the name of the associations that may be included in the field
   # list (assuming a corresponding include param is present in the request).
   # 
-  # An associations hash for something like an entry might look like: {"commercial_invoices" => CoreModule::COMMERCIAL_INVOIE, 
+  # An associations hash for something like an entry might look like: {"commercial_invoices" => CoreModule::COMMERCIAL_INVOICE, 
   # "commercial_invoice_lines" => CoreModule::COMMERCIAL_INVOICE_LINES, "broker_invoices" => CoreModule::BROKER_INVOICE
   # 
   # 
@@ -88,8 +71,10 @@ module Api; module V1; module ApiJsonSupport
     # model fields from all the modules below
     client_fields = Set.new(requested_field_list http_params: http_params)
 
-    Array.wrap(modules).each do |core_module| 
-      mf_hash = core_module.model_fields(user) do |mf|
+    Array.wrap(modules).each do |core_module|
+      # return even user inaccessible fields (which are basically just database id fields)..these are marked this way primarily just
+      # so they're hidden from the search screen...they should be accessible from the API.
+      mf_hash = core_module.model_fields(user, true) do |mf|
         client_fields.blank? || client_fields.include?(mf.uid)
       end
 
@@ -103,4 +88,4 @@ module Api; module V1; module ApiJsonSupport
     all_requested_model_fields(core_module, http_params: http_params, user: current_user, include_all_modules: include_all_modules, associations: associations).map {|mf| mf.uid }
   end
 
-end; end; end;
+end; end; end; end;

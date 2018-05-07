@@ -1,16 +1,16 @@
 require 'spec_helper'
 
-describe Api::V1::ApiJsonSupport do
+describe OpenChain::Api::V1::ApiJsonSupport do
   let (:jsonize) { double("OpenChain::Api::ApiEntityJsonizer") }
   let (:user) { User.new username: "test" }
   let (:object) { Order.new order_number: "Order" }
 
   subject {
     Class.new do
-      include Api::V1::ApiJsonSupport
+      include OpenChain::Api::V1::ApiJsonSupport
 
       def initialize(jsonize)
-        super(jsonize)
+        super(jsonizer: jsonize)
       end
     end.new(jsonize)
   }
@@ -99,14 +99,14 @@ describe Api::V1::ApiJsonSupport do
   describe "all_requested_model_fields" do
     it "returns all the core model fields" do
       fields = subject.all_requested_model_fields CoreModule::FOLDER, user: user, http_params: {}
-      expect(fields.size).to eq(CoreModule::FOLDER.model_fields(user).size)
+      expect(fields.size).to eq(CoreModule::FOLDER.model_fields(user, true).size)
       # Just make sure a model field we know to be a folder field is actually in the list
       expect(fields).to include ModelField.find_by_uid(:fld_name)
     end
 
     it "returns all core model fields and those requested from child associations" do
       fields = subject.all_requested_model_fields CoreModule::FOLDER, user: user, http_params: {include: "comments, groups"}, associations: {'comments' => CoreModule::COMMENT, 'groups' => CoreModule::GROUP}
-      expect(fields.size).to eq (CoreModule::FOLDER.model_fields(user).size + CoreModule::COMMENT.model_fields(user).size + CoreModule::GROUP.model_fields(user).size)
+      expect(fields.size).to eq (CoreModule::FOLDER.model_fields(user, true).size + CoreModule::COMMENT.model_fields(user, true).size + CoreModule::GROUP.model_fields(user, true).size)
 
       # Just make sure a model field we know to be a folder field is actually in the list
       expect(fields).to include ModelField.find_by_uid(:fld_name)
@@ -116,7 +116,7 @@ describe Api::V1::ApiJsonSupport do
 
     it "does not return fields for those that are not requested in params" do
       fields = subject.all_requested_model_fields CoreModule::FOLDER, user: user, http_params: {include: "comments"}, associations: {'comments' => CoreModule::COMMENT, 'groups' => CoreModule::GROUP}
-      expect(fields.size).to eq (CoreModule::FOLDER.model_fields(user).size + CoreModule::COMMENT.model_fields(user).size)
+      expect(fields.size).to eq (CoreModule::FOLDER.model_fields(user, true).size + CoreModule::COMMENT.model_fields(user, true).size)
 
       # Just make sure a model field we know to be a folder field is actually in the list
       expect(fields).to include ModelField.find_by_uid(:fld_name)

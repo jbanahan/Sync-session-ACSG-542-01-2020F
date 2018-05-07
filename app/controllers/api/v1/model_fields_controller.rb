@@ -50,13 +50,16 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
             end
           end
           if mf.custom?
-            mf_h['cdef_uid'] = mf.custom_definition.cdef_uid
+            mf_h['cdef_uid'] = mf.cdef_uid
           end
           mf_h['user_id_field'] = true if mf.user_id_field?
           mf_h['user_field'] = true if mf.user_field?
           mf_h['user_full_name_field'] = true if mf.user_full_name_field?
           mf_h['required'] = true if mf.required?
           mf_h['user_accessible'] = mf.user_accessible?
+          mf_h['address_field'] = true if mf.address_field?
+          mf_h['address_field_full'] = true if mf.address_field_full?
+          mf_h['address_field_id'] = true if mf.address_field_id?
           h['fields'] << mf_h
         end
       end

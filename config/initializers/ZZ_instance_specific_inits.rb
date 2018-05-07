@@ -17,11 +17,12 @@ if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setup
   require 'open_chain/custom_handler/polo/polo_system_init'
   OpenChain::CustomHandler::Polo::PoloSystemInit.init
 
+  if Rails.env.development?
+    require 'open_chain/custom_handler/dev_system_init'
+    OpenChain::CustomHandler::DevSystemInit.init
+  end
+
   require 'open_chain/custom_handler/default_instance_specific_init'
   OpenChain::CustomHandler::DefaultInstanceSpecificInit.init
 end
 
-if Rails.env.development?
-  require 'open_chain/custom_handler/dev_system_init'
-  OpenChain::CustomHandler::DevSystemInit.init
-end

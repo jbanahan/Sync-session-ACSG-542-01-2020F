@@ -1,28 +1,28 @@
-<label for='shp_ref'>Reference</label>
+<label for='shp_ref'>{{outerScope.label('shp_ref')}}</label>
 <input type='text' ng-model='outerScope.$parent.header.shp_ref' id='shp_ref' class='form-control' />
-<label for='shp_importer_reference'>Importer Reference</label>
+<label for='shp_importer_reference'>{{outerScope.label('shp_importer_reference')}}</label>
 <input type='text' ng-model='outerScope.header.shp_importer_reference' id='shp_importer_reference' class='form-control' />
-<label for="shp_master_bill_of_lading">Master Bill</label>
+<label for="shp_master_bill_of_lading">{{outerScope.label('shp_master_bill_of_lading')}}</label>
 <input type="text" id="shp_master_bill_of_lading" ng-model="outerScope.header.shp_master_bill_of_lading" class="form-control" />
-<label for="shp_house_bill_of_lading">House Bill</label>
+<label for="shp_house_bill_of_lading">{{outerScope.label('shp_house_bill_of_lading')}}</label>
 <input type="text" id="shp_house_bill_of_lading" ng-model="outerScope.header.shp_house_bill_of_lading" class="form-control" />
-<label for="shp_booking_number">Booking #</label>
+<label for="shp_booking_number">{{outerScope.label('shp_booking_number')}}</label>
 <input type="text" id="shp_booking_number" ng-model="outerScope.header.shp_booking_number" class="form-control" />
-<label for="shp_receipt_location">Receipt Location</label>
+<label for="shp_receipt_location">{{outerScope.label('shp_receipt_location')}}</label>
 <input type="text" id="shp_receipt_location" ng-model="outerScope.header.shp_receipt_location" class="form-control" />
-<label for="shp_dest_port">Discharge Port</label>
+<label for="shp_dest_port">{{outerScope.label('shp_dest_port_id')}}</label>
 <angucomplete-alt id='shp_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.destPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_dest_port_name}}'></angucomplete-alt>
-<label for="shp_inland_dest_port">Inland Destination</label>
+<label for="shp_inland_dest_port">{{outerScope.label('shp_inland_dest_port_id')}}</label>
 <angucomplete-alt id='shp_inland_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.inlandDestPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_inland_dest_port_name}}'></angucomplete-alt>
-<label for="shp_final_dest_port">Final Destination</label>
+<label for="shp_final_dest_port">{{outerScope.label('shp_final_dest_port_id')}}</label>
 <angucomplete-alt id='shp_final_dest_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.finalDestPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_final_dest_port_name}}'></angucomplete-alt>
-<label for="shp_freight_terms">Freight Terms</label>
+<label for="shp_freight_terms">{{outerScope.label('shp_freight_terms')}}</label>
 <input type="text" id="shp_freight_terms" ng-model="outerScope.header.shp_freight_terms" class="form-control" />
-<label for="shp_lcl">LCL</label>
+<label for="shp_lcl">{{outerScope.label('shp_lcl')}}</label>
 <div>
   <input type="checkbox" id="shp_lcl" ng-model="outerScope.header.shp_lcl" />
 </div>
-<label for="shp_shipment_type">Shipment Type</label>
+<label for="shp_shipment_type">{{outerScope.label('shp_shipment_type')}}</label>
 <select id="shp_shipment_type" ng-model="outerScope.header.shp_shipment_type" class="form-control" >
   <option></option>
   <option>CY/CY</option>
@@ -30,13 +30,13 @@
   <option>CY/CFS</option>
   <option>CFS/CFS</option>
 </select>
-<label for="shp_vessel">Vessel</label>
+<label for="shp_vessel">{{outerScope.label('shp_vessel')}}</label>
 <input type="text" id="shp_vessel" ng-model="outerScope.header.shp_vessel" class="form-control" />
-<label for="shp_voyage">Voyage</label>
+<label for="shp_voyage">{{outerScope.label('shp_voyage')}}</label>
 <input type="text" id="shp_voyage" ng-model="outerScope.header.shp_voyage" class="form-control" />
-<label for="shp_vessel_carrier_scac">Vessel SCAC</label>
+<label for="shp_vessel_carrier_scac">{{outerScope.label('shp_vessel_carrier_scac')}}</label>
 <input type="text" id="shp_vessel_carrier_scac" ng-model="outerScope.header.shp_vessel_carrier_scac" class="form-control" />
-<label for='shp_mode'>Mode</label>
+<label for="shp_mode">{{outerScope.label('shp_mode')}}</label>
 <select id='shp_mode' ng-model='outerScope.header.shp_mode' class='form-control'>
   <option></option>
   <option>Air</option>
@@ -44,39 +44,39 @@
   <option>Ocean - FCL</option>
   <option>Truck</option>
 </select>
-<label for="shp_vessel_nationality">Vessel Nationality</label>
+<label for="shp_vessel_nationality">{{outerScope.label('shp_vessel_nationality')}}</label>
 <input type="text" class="form-control" id="shp_vessel_nationality" ng-model="outerScope.header.shp_vessel_nationality"/>
-<label for="shp_first_port_receipt">First Port of Receipt</label>
+<label for="shp_first_port_receipt">{{outerScope.label('shp_first_port_receipt')}}</label>
 <angucomplete-alt id='shp_first_port_receipt' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.firstPortReceiptSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_first_port_receipt_name}}'></angucomplete-alt>
-<label for="shp_lading_port">Port of Lading</label>
+<label for="shp_lading_port">{{outerScope.label('shp_lading_port')}}</label>
 <angucomplete-alt id='shp_lading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.ladingPortSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_lading_port_name}}'></angucomplete-alt>
-<label for="shp_eta_last_foreign_port_date">ETA Last Origin Port</label>
+<label for="shp_eta_last_foreign_port_date">{{outerScope.label('shp_eta_last_foreign_port_date')}}</label>
 <input type="date" id="shp_eta_last_foreign_port_date" ng-model="outerScope.header.shp_eta_last_foreign_port_date" class="form-control" />
-<label for="shp_last_foreign_port">Last Origin Port</label>
+<label for="shp_last_foreign_port">{{outerScope.label('shp_last_foreign_port')}}</label>
 <angucomplete-alt id='shp_last_foreign_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.lastForeignPortSelected' remote-url='/api/v1/ports/autocomplete?type=origin&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_last_foreign_port_name}}'></angucomplete-alt>
-<label for="shp_departure_last_foreign_port_date">Departure Last Origin Port Date</label>
+<label for="shp_departure_last_foreign_port_date">{{outerScope.label('shp_departure_last_foreign_port_date')}}</label>
 <input type="date" id="shp_departure_last_foreign_port_date" ng-model="outerScope.header.shp_departure_last_foreign_port_date" class="form-control" />
-<label for="shp_unlading_port">Unlading Port</label>
+<label for="shp_unlading_port">{{outerScope.label('shp_unlading_port')}}</label>
 <angucomplete-alt id='shp_unlading_port' input-class='form-control' placeholder='Port name' selected-object='outerScope.header.unladingPortSelected' remote-url='/api/v1/ports/autocomplete?type=destination&n=' title-field='name' minlength='2' initial-value='{{outerScope.header.shp_unlading_port_name}}'></angucomplete-alt>
-<label for="shp_marks_and_numbers">Marks & Numbers</label>
+<label for="shp_marks_and_numbers">{{outerScope.label('shp_marks_and_numbers')}}</label>
 <input type="text" id="shp_marks_and_numbers" ng-model="outerScope.header.shp_marks_and_numbers" class="form-control" />
-<label for="shp_number_of_packages">Number of Packages</label>
+<label for="shp_number_of_packages">{{outerScope.label('shp_number_of_packages')}}</label>
 <input type="number" id="shp_number_of_packages" ng-model="outerScope.header.shp_number_of_packages" class="form-control" />
-<label for="shp_number_of_packages_uom">Unit of Measurement</label>
+<label for="shp_number_of_packages_uom">{{outerScope.label('shp_number_of_packages_uom')}}</label>
 <input type="text" id="shp_number_of_packages_uom" ng-model="outerScope.header.shp_number_of_packages_uom" placeholder="Cartons, Pieces, etc..." class="form-control" />
-<label for="shp_gross_weight">Gross Weight (KGs)</label>
+<label for="shp_gross_weight">{{outerScope.label('shp_gross_weight')}}</label>
 <input type="text" id="shp_gross_weight" ng-model="outerScope.header.shp_gross_weight" class="form-control" />
-<label for="shp_volume">Volume (CBMs)</label>
+<label for="shp_volume">{{outerScope.label('shp_volume')}}</label>
 <input type="text" id="shp_volume" ng-model="outerScope.header.shp_volume" class="form-control" />
 <label for="shp_dimensional_weight" class="control-label">Dimensional Weight</label>
 <p class="form-control-static" id="shp_dimensional_weight">{{dimWeight = ((outerScope.header.shp_volume || 0) / 0.006).toFixed(2); dimWeight + ' kg' }}</p>
 <label for="shp_chargeable_weight" class="control-label">Chargable Weight</label>
 <p class="form-control-static" id="shp_chargeable_weight">{{(outerScope.header.shp_gross_weight > dimWeight ? outerScope.header.shp_gross_weight : dimWeight) + ' kg' }}</p>
-<label for="shp_freight_total">Freight Total</label>
+<label for="shp_freight_total">{{outerScope.label('shp_freight_total')}}</label>
 <input type="number" step="0.01" id="shp_freight_total" ng-model="outerScope.header.shp_freight_total" class="form-control" />
-<label for="shp_invoice_total">Invoice Total</label>
+<label for="shp_invoice_total">{{outerScope.label('shp_invoice_total')}}</label>
 <input type="number" step="0.01" id="shp_invoice_total" ng-model="outerScope.header.shp_invoice_total" class="form-control" />
-<label for="shp_fish_and_wildlife"> Fish And Wildlife</label>
+<label for="shp_fish_and_wildlife">{{outerScope.label('shp_fish_and_wildlife')}}</label>
 <div>
   <input type="checkbox" id="shp_fish_and_wildlife" ng-model="outerScope.header.shp_fish_and_wildlife">
 </div>

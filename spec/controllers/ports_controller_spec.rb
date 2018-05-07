@@ -62,7 +62,7 @@ describe PortsController do
 
   describe "update" do
     before :each do 
-      @p = Factory(:port,:name=>'old name')
+      @p = Factory(:port, name: 'old name', unlocode: "LOCOD", schedule_d_code: "1234", schedule_k_code: "12345", cbsa_port: "9876")
     end
 
     it "should only allow admins" do
@@ -74,12 +74,23 @@ describe PortsController do
       @p.reload
       expect(@p.name).to eq('old name')
     end
+
     it "should update port" do
       put :update, { :id=>@p.id, 'port'=>{'name'=>'my port'} }
       expect(response).to be_redirect
       expect(flash[:notices].size).to eq(1)
       @p.reload
       expect(@p.name).to eq('my port')
+    end
+
+    it "nulls blank parameter values" do
+      put :update, { :id=>@p.id, 'port'=>{'schedule_k_code'=>' ', 'schedule_d_code'=>' ', 'unlocode'=>' ', 'cbsa_port'=>' '} }
+      @p.reload
+      expect(flash[:errors]).to be_blank
+      expect(@p.schedule_k_code).to be_nil
+      expect(@p.schedule_d_code).to be_nil
+      expect(@p.unlocode).to be_nil
+      expect(@p.cbsa_port).to be_nil
     end
   end
 end

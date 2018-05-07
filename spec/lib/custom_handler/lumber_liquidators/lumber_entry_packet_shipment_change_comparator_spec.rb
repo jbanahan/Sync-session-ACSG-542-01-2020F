@@ -15,14 +15,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
   end
 
+  let (:ods_attachment) {
+    {attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1,  attached_content_type: "application/pdf"}
+  }
+
+  let (:vds_attachment) {
+    {attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1, attached_content_type: "application/pdf"}
+  }
+
   describe "compare", :snapshot do
     let (:shipment) { Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555') }
 
     it "generates an entry packet when both components are present and there is no sync record" do
       entry = Factory(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1
+      shipment.attachments.create! ods_attachment
+      shipment.attachments.create! vds_attachment
       snapshot = shipment.create_snapshot Factory(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
@@ -54,8 +62,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       # sent_at value is not set intentionally.
       synco = shipment.sync_records.create! trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1
+      shipment.attachments.create! ods_attachment
+      shipment.attachments.create! vds_attachment
       snapshot = shipment.create_snapshot Factory(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
@@ -83,8 +91,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
 
       synco = shipment.sync_records.create! sent_at:Time.zone.now, trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1, attached_updated_at:synco.sent_at + 1.hour
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1, attached_updated_at:synco.sent_at - 1.hour
+      shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at + 1.hour})
+      shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
       snapshot = shipment.create_snapshot Factory(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
@@ -112,8 +120,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
 
       synco = shipment.sync_records.create! sent_at:Time.zone.now, trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1, attached_updated_at:synco.sent_at - 1.hour
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1, attached_updated_at:synco.sent_at + 1.hour
+      shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
+      shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at + 1.hour})
+
       snapshot = shipment.create_snapshot Factory(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
@@ -142,8 +151,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1, attached_updated_at:synco.sent_at - 1.day
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1, attached_updated_at:synco.sent_at - 1.day
+      shipment.attachments.create! ods_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
+      shipment.attachments.create! vds_attachment.merge({attached_updated_at:synco.sent_at - 1.hour})
+
       snapshot = shipment.create_snapshot Factory(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
@@ -165,7 +175,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1, attached_updated_at:synco.sent_at + 1.day
+      shipment.attachments.create! ods_attachment
       snapshot = shipment.create_snapshot Factory(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
@@ -187,7 +197,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       original_sent_at = Time.zone.now - 1.hour
       synco = shipment.sync_records.create! sent_at:original_sent_at, trading_partner:'Entry Packet'
 
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1, attached_updated_at:synco.sent_at + 1.day
+      shipment.attachments.create! vds_attachment
       snapshot = shipment.create_snapshot Factory(:user)
 
       subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
@@ -204,8 +214,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
     end
 
     it "handles case where entry not found" do
-      shipment.attachments.create! attachment_type:'ODS-Forwarder Ocean Document Set', attached_file_name:'file_ods.pdf', attached_file_size:1
-      shipment.attachments.create! attachment_type:'VDS-Vendor Document Set', attached_file_name:'file_vds.pdf', attached_file_size:1
+      shipment.attachments.create! ods_attachment
+      shipment.attachments.create! vds_attachment
       snapshot = shipment.create_snapshot Factory(:user)
       expect(OpenChain::S3).to receive(:download_to_tempfile).twice.and_return(File.open('spec/fixtures/files/crew_returns.pdf', 'rb'))
 
@@ -227,6 +237,44 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       expect(mail.body).to include ERB::Util.html_escape("No entry could be found for master bill 'OOLU2100046990' / shipment reference '555'.  Once the entry has been opened, the attached Entry Packet document must be attached to it.")
       expect(mail.attachments.length).to eq(1)
       expect(mail.attachments[0].filename).to eq('EntryPacket - LUMBER.pdf')
+    end
+
+    it "sends an error email if vds document is not a pdf" do
+      shipment.attachments.create! ods_attachment
+      attachment = shipment.attachments.create! vds_attachment.merge({attached_content_type: "plain/text"})
+
+      snapshot = shipment.create_snapshot Factory(:user)
+
+      now = Time.zone.now
+      Timecop.freeze(now) do
+        subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
+      end
+
+      shipment.reload
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['support@vandegriftinc.com']
+      expect(mail.subject).to eq "Invalid Document Type for OOLU2100046990 / 555"
+      expect(mail.body).to include ERB::Util.html_escape("Shipment with master bill 'OOLU2100046990' / shipment reference '555' has an invalid VDS-Vendor Document Set attachment named file_vds.pdf.  These attachment types must be PDF files.  Please remove the existing VDS-Vendor Document Set file and replace it with a PDF.")
+    end
+
+    it "sends an error email if ods document is not a pdf" do
+      attachment = shipment.attachments.create! ods_attachment.merge({attached_content_type: "plain/text"})
+      shipment.attachments.create! vds_attachment
+
+      snapshot = shipment.create_snapshot Factory(:user)
+
+      now = Time.zone.now
+      Timecop.freeze(now) do
+        subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
+      end
+
+      shipment.reload
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['support@vandegriftinc.com']
+      expect(mail.subject).to eq "Invalid Document Type for OOLU2100046990 / 555"
+      expect(mail.body).to include ERB::Util.html_escape("Shipment with master bill 'OOLU2100046990' / shipment reference '555' has an invalid ODS-Forwarder Ocean Document Set attachment named file_ods.pdf.  These attachment types must be PDF files.  Please remove the existing ODS-Forwarder Ocean Document Set file and replace it with a PDF.")
     end
 
   end

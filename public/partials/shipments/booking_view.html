@@ -1,52 +1,64 @@
 <div class="form-group">
-  <label for="shp_booking_received_date" class="control-label">Booking Received</label>
+  <label for="shp_booking_received_date" class="control-label">{{outerScope.label('shp_booking_received_date')}}</label>
   <p class="form-control-static" id="shp_booking_received_date">{{outerScope.shp.shp_booking_received_date}} <i ng-show='outerScope.shp.shp_booking_requested_by_full_name' title='{{outerScope.shp.shp_booking_requested_by_full_name}}' class='text-muted fa fa-user'></i></p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_approved_date" class="control-label">Booking Approved</label>
+  <label for="shp_booking_approved_date" class="control-label">{{outerScope.label('shp_booking_approved_date')}}</label>
   <p class="form-control-static" id="shp_booking_approved_date">{{outerScope.shp.shp_booking_approved_date}} <i ng-show='outerScope.shp.shp_booking_approved_by_full_name' title='{{outerScope.shp.shp_booking_approved_by_full_name}}' class='text-muted fa fa-user'></i></p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_revised_date" class="control-label">Booking Revised</label>
+  <label for="shp_booking_revised_date" class="control-label">{{outerScope.label('shp_booking_revised_date')}}</label>
   <p class="form-control-static" id="shp_booking_revised_date">{{outerScope.shp.shp_booking_revised_date}} <i ng-show='outerScope.shp.shp_booking_revised_date' title='{{outerScope.shp.shp_booking_revised_by_full_name}}' class='text-muted fa fa-user'></i></p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_confirmed_date" class="control-label">Booking Confirmed</label>
+  <label for="shp_booking_confirmed_date" class="control-label">{{outerScope.label('shp_booking_confirmed_date')}}</label>
   <p class="form-control-static" id="shp_booking_confirmed_date">{{outerScope.shp.shp_booking_confirmed_date}} <i ng-show='outerScope.shp.shp_booking_confirmed_by_full_name' title='{{outerScope.shp.shp_booking_confirmed_by_full_name}}' class='text-muted fa fa-user'></i></p>
 </div>
 <div class="form-group" ng-show="outerScope.shp.shp_booked_quantity">
-  <label for="shp_booked_quantity" class="control-label">Booked Quantity</label>
+  <label for="shp_booked_quantity" class="control-label">{{outerScope.label('shp_booked_quantity')}}</label>
   <p class="form-control-static" id="shp_booked_quantity">{{outerScope.shp.shp_booked_quantity}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_cutoff_date" class="control-label">Booking Cutoff</label>
+  <label for="shp_booking_cutoff_date" class="control-label">{{outerScope.label('shp_booking_cutoff_date')}}</label>
   <p class="form-control-static" id="shp_booking_cutoff_date">{{outerScope.shp.shp_booking_cutoff_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_est_departure_date" class="control-label">Est Departure Date - Booked</label>
+  <label for="shp_booking_est_departure_date" class="control-label">{{outerScope.label('shp_booking_est_departure_date')}}</label>
   <p class="form-control-static" id="shp_booking_est_departure_date">{{outerScope.shp.shp_booking_est_departure_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_cargo_ready_date" class="control-label">Cargo Ready Date</label>
+  <label for="shp_cargo_ready_date" class="control-label">{{outerScope.label('shp_cargo_ready_date')}}</label>
   <p class="form-control-static" id="shp_cargo_ready_date">{{outerScope.shp.shp_cargo_ready_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_est_arrival_date" class="control-label">Est Arrival Date - Booked</label>
+  <label for="shp_isf_sent_at" class="control-label">{{outerScope.label('shp_isf_sent_at')}}</label>
+  <p class="form-control-static" id="shp_isf_sent_at">{{outerScope.shp.shp_isf_sent_at}} <i ng-show='outerScope.shp.shp_isf_sent_by_fullname' title='{{outerScope.shp.shp_isf_sent_by_fullname}}' class='text-muted fa fa-user'></i></p>
+</div>
+<div class="form-group">
+  <label for="shp_packing_list_sent_date" class="control-label">{{outerScope.label('shp_packing_list_sent_date')}}</label>
+  <p class="form-control-static" id="shp_packing_list_sent_date">{{outerScope.shp.shp_packing_list_sent_date}} <i ng-show='outerScope.shp.shp_packing_list_sent_by_fullname' title='{{outerScope.shp.shp_packing_list_sent_by_fullname}}' class='text-muted fa fa-user'></i></p>
+</div>
+<div class="form-group">
+  <label for="shp_booking_est_arrival_date" class="control-label">{{outerScope.label('shp_booking_est_arrival_date')}}</label>
   <p class="form-control-static" id="shp_booking_est_arrival_date">{{outerScope.shp.shp_booking_est_arrival_date}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_shipment_type" class="control-label">Booked Shipment Type</label>
+  <label for="shp_booking_shipment_type" class="control-label">{{outerScope.label('shp_booking_shipment_type')}}</label>
   <p class="form-control-static" id="shp_booking_shipment_type">{{outerScope.shp.shp_booking_shipment_type}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_mode" class="control-label">Booked Mode</label>
+  <label for="shp_booking_mode" class="control-label">{{outerScope.label('shp_booking_mode')}}</label>
   <p class="form-control-static" id="shp_booking_mode">{{outerScope.shp.shp_booking_mode}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_carrier" class="control-label">Booked Carrier</label>
+  <label for="shp_booking_carrier" class="control-label">{{outerScope.label('shp_booking_carrier')}}</label>
   <p class="form-control-static" id="shp_booking_carrier">{{outerScope.shp.shp_booking_carrier}}</p>
 </div>
 <div class="form-group">
-  <label for="shp_booking_vessel" class="control-label">Booked Vessel</label>
+  <label for="shp_booking_vessel" class="control-label">{{outerScope.label('shp_booking_vessel')}}</label>
   <p class="form-control-static" id="shp_booking_vessel">{{outerScope.shp.shp_booking_vessel}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_booking_voyage" class="control-label">{{outerScope.label('shp_booking_voyage')}}</label>
+  <p class="form-control-static" id="shp_booking_vessel">{{outerScope.shp.shp_booking_voyage}}</p>
 </div>

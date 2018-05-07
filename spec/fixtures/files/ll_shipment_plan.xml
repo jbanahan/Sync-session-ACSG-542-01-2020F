@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ShipmentPlanMessage>
+	<TransactionInfo>
+		<MessageSender>GTNEXUS</MessageSender>
+		<MessageRecipient>CUSTABCD</MessageRecipient>
+		<MessageID>20100610220357149</MessageID>
+		<Created>2010-06-10T22:03:57.149-07:00</Created>
+		<FileName>SP_20100610220357149.xml</FileName>
+	</TransactionInfo>
+	<ShipmentPlanList>
+		<ShipmentPlan>
+			<ShipmentPlanHeader>
+				<ShipmentPlanName>730</ShipmentPlanName>
+				<TransportationMode>Ocean</TransportationMode>
+				<ContainerLoad>Full Container Load</ContainerLoad>
+				<Status>Planned</Status>
+				<ServiceType>CFS (CY/Port) - CFS (CY/Port)</ServiceType>
+				<Version>1</Version>
+				<ShipmentTerms>FOB</ShipmentTerms>
+				<PaymentTerms>Collect</PaymentTerms>
+				<ApprovalStatus>Approved</ApprovalStatus>
+				<ContractCommodity>Lemonade</ContractCommodity>
+				<Voyage>13E</Voyage>
+				<Flight>Air Asia</Flight>
+				<Vessel>ABC Germany</Vessel>
+				<Vessel1Details>
+				    <VesselCode>GRR</VesselCode>
+				    <Qualifier>L</Qualifier>
+				    <CountryCode>US</CountryCode>
+				</Vessel1Details>
+				<Vessel2>Vessel2 Name</Vessel2>
+				<Vessel2Details>
+				   <VesselCode>GRR</VesselCode>
+				   <Qualifier>L</Qualifier>
+				   <CountryCode>US</CountryCode>
+				</Vessel2Details>
+				<Routing>Not Specified</Routing>
+				<ServiceLevel>Next Flight Out</ServiceLevel>
+				<ServiceString>service</ServiceString>
+				<OriginLocation>
+					<LocationCode>IDSUB</LocationCode>
+					<Name>Surabaya, ID</Name>
+                    <Address>
+                        <AddressLine>355 Valley Drive</AddressLine>
+                        <AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+					<City>
+						<CityName>Surabaya</CityName>
+						<CityCode Qualifier="UN">IDSUB</CityCode>
+						<CityCode Qualifier="K">56053</CityCode>
+						<CountryCode>ID</CountryCode>
+						<CountryName>Indonesia</CountryName>
+					</City>
+				</OriginLocation>
+				<OriginCity>
+					<CityName>Surabaya</CityName>
+					<CityCode Qualifier="UN">IDSUB</CityCode>
+					<CityCode Qualifier="K">56053</CityCode>
+					<CountryCode>ID</CountryCode>
+					<CountryName>Indonesia</CountryName>
+				</OriginCity>
+				<PortOfLoading>
+					<CityName>Surabaya</CityName>
+					<CityCode Qualifier="UN">IDSUB</CityCode>
+					<CityCode Qualifier="K">56053</CityCode>
+					<CountryCode>ID</CountryCode>
+					<CountryName>Indonesia</CountryName>
+				</PortOfLoading>
+				<PortOfDischarge>
+					<CityName>Laredo</CityName>
+					<CityCode Qualifier="UN">USLRD</CityCode>
+					<CityCode Qualifier="D">2304</CityCode>
+					<State>TX</State>
+					<CountryCode>US</CountryCode>
+					<CountryName>United States</CountryName>
+				</PortOfDischarge>
+				<BLDestination>
+					<CityName>Stockton</CityName>
+					<CityCode Qualifier="UN">USSCK</CityCode>
+					<CityCode Qualifier="D">2810</CityCode>
+					<State>CA</State>
+					<CountryCode>US</CountryCode>
+					<CountryName>United States</CountryName>
+				</BLDestination>
+				<FinalDestination>
+					<LocationCode>USSCK</LocationCode>
+					<Name>SDC</Name>
+                    <Address>
+                        <AddressLine>355 Valley Drive</AddressLine>
+                        <AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Stockton</AddressLine>
+                    </Address>
+					<City>
+						<CityName>Stockton</CityName>
+						<CityCode Qualifier="UN">USSCK</CityCode>
+						<CityCode Qualifier="D">2810</CityCode>
+						<State>CA</State>
+						<CountryCode>US</CountryCode>
+						<CountryName>United States</CountryName>
+					</City>
+				</FinalDestination>
+				<TransshipmentPort>
+				  <CityName>Dalian</CityName>
+				  <CityCode Qualifier="UN">CNDLC</CityCode>
+				  <CityCode Qualifier="K">57051</CityCode>
+				  <CountryCode>CN</CountryCode>
+				  <CountryName>China</CountryName>
+				</TransshipmentPort>
+				<TransshipmentDate>2013-04-10T15:09:40</TransshipmentDate>
+				<OffContractMove>false</OffContractMove>
+				<BookingNumber>B12345789</BookingNumber>
+				<BLNumber>BL4445678</BLNumber>
+				<HouseBLNumber>HBL788999</HouseBLNumber>
+                <AMSBLNumber>AMS666999</AMSBLNumber>
+				<ISFBLType>true</ISFBLType>
+				<ISFID>GTN0028284</ISFID>
+				<EquipmentPickUp>Hong Kong</EquipmentPickUp>
+				<EquipmentDropOff>Beijing</EquipmentDropOff>
+				<SPReferenceNumber1>Shanghai</SPReferenceNumber1>
+				<EarliestOriginLocationDate>2009-12-24T12:00:00.000-07:00</EarliestOriginLocationDate>
+				<LatestOriginLocationDate>2011-01-20T12:00:00.000-07:00</LatestOriginLocationDate>
+				<EarliestFinalDestinationDate>2010-03-05T12:00:00.000-07:00</EarliestFinalDestinationDate>
+				<LatestFinalDestinationDate>2010-03-17T12:00:00.000-07:00</LatestFinalDestinationDate>
+				<EarliestOriginDate>2010-03-18T12:00:00.000-07:00</EarliestOriginDate>
+				<LatestBLDestDate>2010-03-19T12:00:00.000-07:00</LatestBLDestDate>
+                <EstEarliestOriginDate>2010-03-12T12:00:00.000-07:00</EstEarliestOriginDate>
+                <EstLatestBLDestDate>2010-03-03T12:00:00.000-07:00</EstLatestBLDestDate>
+				<EstOriginLocationDate>2010-04-07T12:00:00.000-07:00</EstOriginLocationDate>
+				<EstOriginDate>2010-04-08T12:00:00.000-07:00</EstOriginDate>
+				<EstDepartDate>2010-04-09T12:00:00.000-07:00</EstDepartDate>
+				<EstDischargePortDate>2010-04-10T12:00:00.000-07:00</EstDischargePortDate>
+				<EstBLDestDate>2010-04-11T12:00:00.000-07:00</EstBLDestDate>
+				<EstFinalDestinationDate>2010-04-13T12:00:00.000-07:00</EstFinalDestinationDate>
+				<DocumentationCutOffDate>2010-04-14T12:00:00.000-07:00</DocumentationCutOffDate>
+				<EquipmentCutOffDate>2010-04-15T12:00:00.000-07:00</EquipmentCutOffDate>
+				<SPReferenceDate1>2010-04-16T12:00:00.000-07:00</SPReferenceDate1>
+				<PrePaidCost Currency="USD">3000.0</PrePaidCost>
+				<CollectCost Currency="USD">4000.0</CollectCost>
+				<ExpectedCost Currency="USD">1000.0</ExpectedCost>
+				<QuotedCost Currency="USD">2000.0</QuotedCost>
+				<PartyInfo>
+					<Type>Shipper</Type>
+					<Code>03</Code>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+						<AddressLine>Surabaya</AddressLine>
+					</Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Freight Forwarder</Type>
+					<Code>03</Code>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+						<AddressLine>Surabaya</AddressLine>
+					</Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+					<References>
+						<Type>LegalName</Type>
+						<Value>legalname</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Customer</Type>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+						<AddressLine>Surabaya</AddressLine>
+					</Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94607</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>(510) 893-7300</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>U.S. Principal Party in Interest</Type>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94607</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>(510) 893-7300</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Ship To</Type>
+					<Name>ABC Logistics Ltd. (FF) - STOCKTON DC</Name>
+					<Address>
+						<AddressLine>AKY Logistics #901 - STOCKTON DC</AddressLine>
+						<AddressLine>1735 ZEPHYR ST.</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>95206</PostalCode>
+					<Email>SEASONAL@y.COM</Email>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Buyer</Type>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94607</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>(510) 893-7300</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Seller</Type>
+					<Code>03</Code>
+					<Name>ABC New Century Ceramics Industry Co., Ltd</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Consignee</Type>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94607</PostalCode>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Notify</Type>
+					<Code>06</Code>
+					<Name>ABC Logistics Ltd. (FF)</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Also Notify</Type>
+					<Code>08</Code>
+					<Name>ABC Logistics Ltd. (FF) - VIRGINAI DC</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Bill To</Type>
+					<Code>9</Code>
+					<Name>ABC Logistics Ltd. (FF) - VIRGINAI DC</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>94005</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>415-508-2900</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Carrier</Type>
+					<Code>ABCC</Code>
+					<Name>ABC Carrier Pty Ltd.</Name>
+					<Address>
+						<AddressLine>355 Valley Drive</AddressLine>
+						<AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>n/a</PostalCode>
+					<References>
+						<Type>TelephoneNumber</Type>
+						<Value>02 2500 1566</Value>
+					</References>
+				</PartyInfo>
+				<PartyInfo>
+					<Type>Creator</Type>
+					<Name>XXX Supply Chain</Name>
+					<Address>
+                        <AddressLine>355 Valley Drive</AddressLine>
+                        <AddressLine>C Drive Street</AddressLine>
+                        <AddressLine>Surabaya</AddressLine>
+                    </Address>
+                    <City>
+                        <CityName>Stockton</CityName>
+                        <CityCode Qualifier="UN">USSCK</CityCode>
+                        <CityCode Qualifier="D">2810</CityCode>
+                        <State>CA</State>
+                        <CountryCode>US</CountryCode>
+                        <CountryName>United States</CountryName>
+                    </City>
+					<PostalCode>07652</PostalCode>
+					<References>
+						<Type>LegalName</Type>
+						<Value>legalname</Value>
+					</References>
+				</PartyInfo>
+				<EquipmentList>
+					<Equipment>
+						<Code>HR40</Code>
+						<Type>40' High Cube Reefer</Type>
+						<Quantity>5.0</Quantity>
+					</Equipment>
+					<Equipment>
+						<Code>D20</Code>
+						<Type>20' Standard Dry</Type>
+						<Quantity>3.0</Quantity>
+					</Equipment>
+					<Equipment>
+						<Code>HC53</Code>
+						<Type>53' High Cube Dry</Type>
+						<Quantity>7.0</Quantity>
+					</Equipment>
+					<Equipment>
+						<Code>R20</Code>
+						<Type>20' Reefer</Type>
+						<Quantity>1.0</Quantity>
+					</Equipment>
+				</EquipmentList>
+				<ReferenceList>
+					<Reference>
+						<Type>1</Type>
+						<Value>Reference 1</Value>
+					</Reference>
+					<Reference>
+						<Type>2</Type>
+						<Value>Reference 2</Value>
+					</Reference>
+					<Reference>
+						<Type>3</Type>
+						<Value>Reference 3</Value>
+					</Reference>
+					<Reference>
+						<Type>4</Type>
+						<Value>Reference 4</Value>
+					</Reference>
+					<Reference>
+						<Type>5</Type>
+						<Value>Reference 5</Value>
+					</Reference>
+					<Reference>
+						<Type>6</Type>
+						<Value>Reference 6</Value>
+					</Reference>
+					<Reference>
+						<Type>7</Type>
+						<Value>Reference 7</Value>
+					</Reference>
+					<Reference>
+						<Type>8</Type>
+						<Value>Reference 8</Value>
+					</Reference>
+				</ReferenceList>
+			</ShipmentPlanHeader>
+			<ShipmentPlanItemList>
+				<ShipmentPlanItem>
+					<PONumber>PO1234</PONumber>
+					<OrderClass>
+						<Code>AJ</Code>
+						<Name>Allocation Order</Name>
+					</OrderClass>
+					<PoReferenceNumber1>POref123423</PoReferenceNumber1>
+					<LineItemNumber>No.1</LineItemNumber>
+					<ProductCode>69R-00004</ProductCode>
+					<InvoiceNumber>2010371040</InvoiceNumber>
+					<Weight Unit="Kilograms" ANSICode="KG">3500</Weight>
+					<Volume Unit="Cubic Meters" ANSICode="CR">45000</Volume>
+					<ShipUnitQuantity Unit="Cartons" ANSICode="CT">56.45</ShipUnitQuantity>
+					<PackagesQuantity Unit="Each" ANSICode="EA">560.45</PackagesQuantity>
+                    <Dimension Unit="Centimeters" ANSICode="CM">
+                        <DimensionInfo>
+                        <Length>274.32</Length>
+                        <Width>264.16</Width>
+                        <Height>177.8</Height>
+                        </DimensionInfo>
+                    </Dimension>
+					<FlexRef1>028</FlexRef1>
+					<FlexRef2>Reference 2</FlexRef2>
+					<FlexRef3>2 Spring2005</FlexRef3>
+					<FlexRef4>Reference 4</FlexRef4>
+					<FlexRef5>Reference 5</FlexRef5>
+					<FlexRef6>AgentName</FlexRef6>
+					<FlexRef7>Reference 7</FlexRef7>
+					<FlexRef8>Reference 8</FlexRef8>
+					<FlexRef9>Reference 9</FlexRef9>
+					<FlexRef10>cm</FlexRef10>
+					<ProductName>Bluetooth</ProductName>
+					<HazardousFlag>true</HazardousFlag>
+					<LetterOfCredit>PackID</LetterOfCredit>
+					<SellerId>2010371040</SellerId>
+                    <POLineNum>No.1</POLineNum>
+					<EquipId>45344</EquipId>
+					<LatestDeliveryDate>2005-01-24T12:00:00.000-07:00</LatestDeliveryDate>
+					<EarliestShipDate>2010-03-25T12:00:00.000-07:00</EarliestShipDate>
+					<DivisionIdentifier>HK - Division</DivisionIdentifier>
+					<FactoryLoad>CY</FactoryLoad>
+                    <LineItemAgentRef>ABB Logistics</LineItemAgentRef>
+                    <Department>New York</Department>
+                    <QuotaCategoryNumber>Quota One</QuotaCategoryNumber>
+                    <PartyResponsibleForLocalCharges>Agent</PartyResponsibleForLocalCharges>
+					<FirstCostPrice Currency="USD">25.0</FirstCostPrice>
+					<MasterPackQuantity>50.0</MasterPackQuantity>
+					<ManufacturingOriginCountry>Bermuda</ManufacturingOriginCountry>
+                    <HTSCodeMaster>true</HTSCodeMaster>
+                    <ReceiptNumber>1232434</ReceiptNumber>
+                    <LineSource>SO</LineSource>
+					<HarmonizedCode>HTS1 232</HarmonizedCode>
+					<HTSCode>1234567</HTSCode>
+					<PartyInfo>
+						<Type>Manufacturer</Type>
+						<Code>25020</Code>
+						<Name>ABC Logistics</Name>
+						<Address>
+							<AddressLine>KWALBAL</AddressLine>
+							<AddressLine>JL.RAYA KUTA NO.80</AddressLine>
+							<AddressLine>KUTA, BALI 80361 ID</AddressLine>
+						</Address>
+                        <City>
+                            <CityName>Stockton</CityName>
+                            <CityCode Qualifier="UN">USSCK</CityCode>
+                            <CityCode Qualifier="D">2810</CityCode>
+                            <State>CA</State>
+                            <CountryCode>US</CountryCode>
+                            <CountryName>United States</CountryName>
+                        </City>
+						<PostalCode>80361</PostalCode>
+						<References>
+							<Type>TelephoneNumber</Type>
+							<Value>62-361752142</Value>
+						</References>
+					</PartyInfo>
+					<PartyInfo>
+						<Type>CONTAINER STUFFED LOCATION</Type>
+						<Code>25020</Code>
+						<Name>ABC Logistics</Name>
+						<Address>
+							<AddressLine>KWALBAL</AddressLine>
+							<AddressLine>JL.RAYA KUTA NO.80</AddressLine>
+							<AddressLine>KUTA, BALI 80361 ID</AddressLine>
+						</Address>
+                        <City>
+                            <CityName>Stockton</CityName>
+                            <CityCode Qualifier="UN">USSCK</CityCode>
+                            <CityCode Qualifier="D">2810</CityCode>
+                            <State>CA</State>
+                            <CountryCode>US</CountryCode>
+                            <CountryName>United States</CountryName>
+                        </City>
+						<PostalCode>80361</PostalCode>
+						<References>
+							<Type>TelephoneNumber</Type>
+							<Value>62-361752142</Value>
+						</References>
+					</PartyInfo>
+					<PartyInfo>
+						<Type>Supplier</Type>
+						<Code>25020</Code>
+						<Name>ABC Logistics</Name>
+						<Address>
+							<AddressLine>KWAL BALI</AddressLine>
+							<AddressLine>JL.RAYA KUTA NO.80</AddressLine>
+							<AddressLine>KUTA, BALI 80361 ID</AddressLine>
+						</Address>
+                        <City>
+                            <CityName>Stockton</CityName>
+                            <CityCode Qualifier="UN">USSCK</CityCode>
+                            <CityCode Qualifier="D">2810</CityCode>
+                            <State>CA</State>
+                            <CountryCode>US</CountryCode>
+                            <CountryName>United States</CountryName>
+                        </City>
+						<PostalCode>80361</PostalCode>
+						<References>
+							<Type>TelephoneNumber</Type>
+							<Value>62-361752142</Value>
+						</References>
+					</PartyInfo>
+					<PartyInfo>
+						<Type>Agent</Type>
+						<Name>AAA &amp; BBB -AGENT</Name>
+					</PartyInfo>
+					<PartyInfo>
+						<Type>Factory</Type>
+						<Name>BBB Company</Name>
+					</PartyInfo>
+				</ShipmentPlanItem>
+			</ShipmentPlanItemList>
+		</ShipmentPlan>
+	</ShipmentPlanList>
+</ShipmentPlanMessage>

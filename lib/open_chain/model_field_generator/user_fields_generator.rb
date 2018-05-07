@@ -30,10 +30,10 @@ module OpenChain; module ModelFieldGenerator; module UserFieldsGenerator
         u = obj.public_send(association_name.to_sym)
         u.nil? ? nil : u.full_name
       },
-      data_type: :string, user_field: true, user_full_name_field: true, restore_field: false, read_only: true
+      data_type: :string, user_field: true, user_full_name_field: true, restore_field: false, read_only: true, history_ignore: true,
     }]
 
-    fields_to_add << [starting_id += 1, uid_prefix.to_sym, attribute_name.to_sym, base_label, { data_type: :integer, read_only: true, user_id_field: true }]
+    fields_to_add << [starting_id += 1, uid_prefix.to_sym, attribute_name.to_sym, base_label, { data_type: :integer, read_only: false, user_id_field: true, user_accessible: false }]
 
 
     fields_to_add

@@ -50,6 +50,7 @@ describe Api::V1::ShipmentsController do
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       allow_any_instance_of(Shipment).to receive(:can_attach?).and_return true
       allow_any_instance_of(Shipment).to receive(:can_comment?).and_return false
+      allow_any_instance_of(Shipment).to receive(:can_edit_booking?).and_return false
       s = Factory(:shipment)
       get :show, id: s.id
       j = JSON.parse response.body
@@ -154,7 +155,7 @@ describe Api::V1::ShipmentsController do
       c = Factory(:container,entry:nil,shipment:Factory(:shipment),
         container_number:'CN1234')
       sl = Factory(:shipment_line,shipment:c.shipment,container:c)
-      get :show, id: sl.shipment_id, shipment_lines: true
+      get :show, id: sl.shipment_id, shipment_lines: true, include: "containers"
       expect(response).to be_success
       j = JSON.parse response.body
       slc = j['shipment']['containers'].first
@@ -440,6 +441,7 @@ describe Api::V1::ShipmentsController do
         {'con_container_number'=>'CNUM','con_container_size'=>'40'},
         {'con_container_number'=>'CNUM2','con_container_size'=>'20'}
       ]
+      @s_hash["include"] = "containers"
       expect {post :create, @s_hash}.to change(Shipment,:count).from(0).to(1)
       expect(response).to be_success
       s = Shipment.first
@@ -987,21 +989,6 @@ describe Api::V1::ShipmentsController do
   end
 
   context 'order booking' do
-    let :booking_callback do
-      order_booking = Class.new do
-        def self.can_book? user
-          return true
-        end
-        def self.book_from_order_hook ship_hash, order, booking_lines
-          ship_hash[:shp_master_bill_of_lading] = 'mbol'
-        end
-        def self.can_request_booking?(shipment, user); true; end
-        def self.can_revise_booking?(shipment, user); true; end
-        def self.can_edit_booking?(shipment, user); true; end
-      end
-      OpenChain::OrderBookingRegistry.register order_booking
-      order_booking
-    end
     let :importer do
       Factory(:company,importer:true)
     end
@@ -1026,7 +1013,10 @@ describe Api::V1::ShipmentsController do
         allow_any_instance_of(Order).to receive(:can_book?).and_return true
       end
       it 'should create booking' do
-        booking_callback
+        expect(OpenChain::Registries::OrderBookingRegistry).to receive(:book_from_order_hook) do |h, order, lines|
+          h[:shp_master_bill_of_lading] = "mbol"
+        end
+
         expect(Shipment).to receive(:generate_reference).and_return '12345678'
 
         expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to change(Shipment,:count).from(0).to(1)
@@ -1038,7 +1028,6 @@ describe Api::V1::ShipmentsController do
         expect(s.importer).to eq importer
         expect(s.vendor).to eq vendor
         expect(s.booking_lines.count).to eq 1
-        expect(s.ship_from).to eq o.ship_from
         expect(s.master_bill_of_lading).to eq 'mbol' #proves callback was run
         bl = s.booking_lines.first
         expect(bl.order_line).to eq order_line
@@ -1075,7 +1064,9 @@ describe Api::V1::ShipmentsController do
         allow_any_instance_of(Order).to receive(:can_book?).and_return true
       end
       it 'should add order to booking' do
-        booking_callback
+        expect(OpenChain::Registries::OrderBookingRegistry).to receive(:book_from_order_hook) do |h, order, lines|
+          h[:shp_master_bill_of_lading] = "mbol"
+        end
         s = shipment
         ol = order_line
 
@@ -1146,12 +1137,14 @@ describe Api::V1::ShipmentsController do
       let! (:order) { Factory(:order, importer: importer, vendor:vendor) }
 
       it "returns bookings user can see where the importer and vendor match the given order's ids" do
+        expect(OpenChain::Registries::OrderBookingRegistry).to receive(:can_book_order_to_shipment?).with(order, shipment).and_return "yes"
         get "open_bookings", order_id: order.id
 
         expect(response).to be_success
         json = JSON.parse(response.body)
         expect(json["results"].length).to eq 1
         expect(json["results"].first["id"]).to eq shipment.id
+        expect(json["results"].first["permissions"]["can_book_order_to_shipment"]).to eq "yes"
       end
 
       it "does not return results if importer is different than order" do
@@ -1214,54 +1207,21 @@ describe Api::V1::ShipmentsController do
       expect(hash).to eq({"id" => shipment.id, "shp_ref" => shipment.reference, "screen_settings"=>{}})
     end
 
-    it "does not return shipments that have shipment instructions" do
-      shipment.update_attributes! shipment_instructions_sent_date: Time.zone.now
+    it "uses order booking registry to add query restrictions to open bookings" do
+      # Make sure it's setup with a scenario where a shipment should be found
       @u.company = Factory(:master_company)
       @u.company.linked_companies << importer
       @u.save!
+
+      hook_user = nil
+      expect(OpenChain::Registries::OrderBookingRegistry).to receive(:open_bookings_hook) do |user, s, order|
+        hook_user = user
+        s.where("shipments.reference != ?", shipment.reference)
+      end
+
       get "open_bookings", fields: "shp_ref"
-
+      expect(hook_user).to eq @u
       expect(JSON.parse(response.body)["results"].length).to eq 0
-    end
-
-    context "with booking registry method" do
-      let!(:order_booking_registry) {
-        order_booking = Class.new {
-          def self.can_book?(user); true; end
-          def self.open_bookings_hook user, shipments_query, order
-            shipments_query.where(mode: "Ocean")
-          end
-          def self.can_request_booking?(shipment, user); true; end
-          def self.can_revise_booking?(shipment, user); true; end
-          def self.can_edit_booking?(shipment, user); true; end
-        }
-
-        OpenChain::OrderBookingRegistry.register order_booking
-        order_booking
-      }
-
-      it "uses an order booking registry" do
-        @u.company = Factory(:master_company)
-        @u.company.linked_companies << importer
-        @u.save!
-
-        get "open_bookings"
-
-        # This result should be blank because we're limiting bookings to only ocean ones.
-        expect(JSON.parse(response.body)["results"].length).to eq 0
-      end
-
-      it "uses an order booking registry" do
-        shipment.update_attributes! mode: "Ocean", shipment_instructions_sent_date: Time.zone.now
-        @u.company = Factory(:master_company)
-        @u.company.linked_companies << importer
-        @u.save!
-
-        get "open_bookings"
-
-        # This result should be blank because we're limiting bookings to only ocean ones.
-        expect(JSON.parse(response.body)["results"].length).to eq 1
-      end
     end
   end
 end

@@ -100,6 +100,11 @@
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_APPROVE' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_BOOK_APPROVE') ? 'checked="checked"' : ""%> </td>
             </tr>
             <tr>
+              <td>Booking Cancelled</td>
+              <td><input type='checkbox' event_type='SHIPMENT_CANCEL' sub_type='email' <%=email_subs.include?('SHIPMENT_CANCEL') ? 'checked="checked"' : ""%> </td>
+              <td><input type='checkbox' event_type='SHIPMENT_CANCEL' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_CANCEL') ? 'checked="checked"' : ""%> </td>
+            </tr>
+            <tr>
               <td>Booking Confirmation</td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_CONFIRM' sub_type='email' <%=email_subs.include?('SHIPMENT_BOOK_CONFIRM') ? 'checked="checked"' : ""%> </td>
               <td><input type='checkbox' event_type='SHIPMENT_BOOK_CONFIRM' sub_type='system_message' <%=system_message_subs.include?('SHIPMENT_BOOK_CONFIRM') ? 'checked="checked"' : ""%> </td>

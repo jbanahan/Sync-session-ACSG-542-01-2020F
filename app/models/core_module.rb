@@ -189,11 +189,11 @@ class CoreModule
 
   # Hash of model_fields keyed by UID, this method is
   # returns all user accessible methods the (optional) user is capable of viewing
-  def model_fields user=nil
+  def model_fields user=nil, disable_user_accessible=false
     r = ModelField.find_by_core_module self
     h = {}
     r.each do |mf|
-      if mf.user_accessible? && (user.nil? || mf.can_view?(user))
+      if (disable_user_accessible || mf.user_accessible?) && (user.nil? || mf.can_view?(user))
         add = block_given? ? yield(mf) : true
         h[mf.uid.to_sym] = mf if add
       end
@@ -209,6 +209,10 @@ class CoreModule
       r = r.merge(block_given? ? c.model_fields_including_children(user, &Proc.new) : c.model_fields_including_children(user))
     end
     r
+  end
+
+  def model_fields_for_snapshot include_non_restore_fields: true
+    model_fields(nil, true) { |mf| !mf.history_ignore? && (include_non_restore_fields || mf.restore_field?) }
   end
 
   def every_model_field
@@ -337,11 +341,9 @@ class CoreModule
     lambda do |entity,module_chain|
       master_hash = {'entity'=>{'core_module'=>core_module.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
       mf_hash = master_hash['entity']['model_fields']
-      core_module.model_fields.values.each do |mf|
-        unless mf.history_ignore?
-          v = SnapshotWriter.field_value entity, mf
-          mf_hash[mf.uid] = v unless v.nil?
-        end
+      core_module.model_fields_for_snapshot.values.each do |mf|
+        v = SnapshotWriter.field_value entity, mf
+        mf_hash[mf.uid] = v unless v.nil?
       end
       Array.wrap(module_chain.child(core_module)).each do |child_mc|
         child_objects = core_module.child_objects(child_mc,entity)

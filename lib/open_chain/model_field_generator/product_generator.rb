@@ -35,7 +35,7 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       :read_only => true,
       :data_type => :string
     }]
-    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :id,"Product ID", {user_accessible: false, history_ignore: true,
+    r << [rank_start+2, "#{uid_prefix}_prod_id".to_sym, :product_id, "Product ID", {user_accessible: false, history_ignore: true,
       :import_lambda => lambda {|detail, data, user|
         product_id = data.to_i
         if detail.product_id != product_id && !(prod = Product.where(id: product_id).first).nil?
@@ -54,7 +54,8 @@ module OpenChain; module ModelFieldGenerator; module ProductGenerator
       qualified_field_name: "(select count(*) from (select distinct order_lines.order_id, order_lines.product_id from order_lines) x where x.product_id = #{table_name}.product_id)",
       :data_type => :integer
     }]
-    r << [rank_start+4, "#{uid_prefix}_prod_db_id".to_sym, :product_id, "Product DB ID", {read_only:true}]
+    # I have no idea why there's 2 diffent fields for product id, but I'm afraid to remove one since they have conflicting setups (on is not read-only, one is history ignored)
+    r << [rank_start+4, "#{uid_prefix}_prod_db_id".to_sym, :product_id, "Product DB ID", {read_only: true, user_accessible: false}]
     r << [rank_start+5, "#{uid_prefix}_prod_var_count".to_sym, :variant_count, "Product Variant Count",{
       read_only: true,
       data_type: :integer,

@@ -20,6 +20,7 @@ class PortsController < ApplicationController
   def update
     admin_secure {
       p = Port.find params[:id]
+      nullify_blank_code_attributes
       p.update_attributes(params[:port])
       errors_to_flash p
       add_flash :notices, "Port created successfully." if flash[:errors].blank?
@@ -29,6 +30,7 @@ class PortsController < ApplicationController
 
   def create
     admin_secure {
+      nullify_blank_code_attributes
       errors_to_flash Port.create(params[:port])
       add_flash :notices, "Port created successfully." if flash[:errors].blank?
       redirect_to request.referrer
@@ -46,4 +48,13 @@ class PortsController < ApplicationController
   def secure 
     current_user.admin? ? Port.where('1=1') : Port.where('1=0')
   end
+
+  private 
+    def nullify_blank_code_attributes
+      # This is needed so the Port Code model field uses the correct field (without needing a massive case statement and length checking)
+      params["port"]["schedule_d_code"] = nil if params["port"]["schedule_d_code"].blank?
+      params["port"]["schedule_k_code"] = nil if params["port"]["schedule_k_code"].blank?
+      params["port"]["unlocode"] = nil if params["port"]["unlocode"].blank?
+      params["port"]["cbsa_port"] = nil if params["port"]["cbsa_port"].blank?
+    end
 end

@@ -43,6 +43,22 @@
                 <div class="col-md-8">{{stb.module_type}}</div>
               </div>
               <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Disabled?</div>
+                <input type="checkbox" ng-model=stb.disabled></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Button Identifier</div>
+                <input class="col-md-2" ng-model=stb.identifier></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Display Index</div>
+                <input type="number" class="col-md-1" ng-model=stb.display_index></input>
+              </div>
+              <div class='row bootstrap-hover'>
+                <div class="col-md-4" style="font-weight:bold;">Simple Button</div>
+                <input type="checkbox" ng-model=stb.simple_button></input>
+              </div>
+              <div class='row bootstrap-hover'>
                 <div class="col-md-4" style="font-weight:bold;">Permission Group System Codes</div> 
                 <div class="col-md-8"><textarea class="form-control" rows="4" ng-model="stb.permission_group_system_codes"></textarea></div>
               </div>
@@ -54,11 +70,11 @@
                 <div class="col-md-4" style="font-weight:bold;">Activate Confirmation Text</div>
                 <input class="col-md-8" ng-model="stb.activate_confirmation_text"></input>
               </div>
-              <div class='row bootstrap-hover'>
+              <div class='row bootstrap-hover' ng-if="!stb.simple_button">
                 <div class="col-md-4" style="font-weight:bold;">Deactivate Text</div>
                 <input class="col-md-8" ng-model="stb.deactivate_text"></input>
               </div>
-              <div class='row bootstrap-hover'>
+              <div class='row bootstrap-hover' ng-if="!stb.simple_button">
                 <div class="col-md-4" style="font-weight:bold;">Deactivate Confirmation Text</div>
                 <input class="col-md-8" ng-model="stb.deactivate_confirmation_text"></input>
               </div>
@@ -82,7 +98,6 @@
                 <div class="col-md-4" style="font-weight:bold;">Date Custom Definition</div>
                 <select class='form-control' style='width:30%;' ng-model="stb.date_custom_definition_id" ng-change="resetField('date_attribute')" ng-options='f.cdef_id as f.label for f in dateCdefs'></select>
               </div>
-
           </div>
         </div>
         <br><br>

@@ -321,6 +321,22 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(k).to receive(:process_from_s3).with("bucket",'12345')
         expect(subject.process_command(cmd)).to eq success_hash
       end
+
+      it "should send data to Lumber booking confirmation parser" do
+        cmd = {'request_type'=>'remote_file','original_path'=>'/ll_booking_confirmation/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationXmlParser
+        expect(k).to receive(:delay).and_return k
+        expect(k).to receive(:process_from_s3).with "bucket", '12345'
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
+
+      it "should send data to Lumber shipment plan parser" do
+        cmd = {'request_type'=>'remote_file','original_path'=>'/ll_shipment_plan/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        k = OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParser
+        expect(k).to receive(:delay).and_return k
+        expect(k).to receive(:process_from_s3).with "bucket", '12345'
+        expect(OpenChain::IntegrationClientCommandProcessor.process_command(cmd)).to eq(success_hash)
+      end
     end
     context "msl_plus_enterprise" do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do

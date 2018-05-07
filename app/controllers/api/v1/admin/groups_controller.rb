@@ -34,7 +34,7 @@ module Api; module V1; module Admin; class GroupsController < Api::V1::GroupsCon
       if group.errors.any?
         render_error g.errors
       else
-        render json: {"group" => group_view(user, group)}
+        render json: {"group" => obj_to_json_hash(group)}
       end
     end
 

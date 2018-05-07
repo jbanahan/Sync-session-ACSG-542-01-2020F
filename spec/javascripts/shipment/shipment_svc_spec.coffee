@@ -18,7 +18,7 @@ describe 'ShipmentService', ->
     describe 'getShipment', ->
       it 'should get shipment from server', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers').respond resp
         shp = null
         svc.getShipment(1).then (data) ->
           shp = data.data
@@ -27,7 +27,7 @@ describe 'ShipmentService', ->
 
       it 'should get shipment from server, including shipmentLines', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&shipment_lines=true').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&shipment_lines=true').respond resp
         shp = null
         svc.getShipment(1, true).then (data) ->
           shp = data.data
@@ -36,7 +36,7 @@ describe 'ShipmentService', ->
 
       it 'should get shipment from server, including bookingLines', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&booking_lines=true').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&booking_lines=true').respond resp
         shp = null
         svc.getShipment(1, false, true).then (data) ->
           shp = data.data
@@ -45,7 +45,7 @@ describe 'ShipmentService', ->
 
       it 'should get shipment from server, including shipment & bookingLines', ->
         resp = {shipment: {id: 1}}
-        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments&shipment_lines=true&booking_lines=true').respond resp
+        http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&shipment_lines=true&booking_lines=true').respond resp
         shp = null
         svc.getShipment(1, true, true).then (data) ->
           shp = data.data

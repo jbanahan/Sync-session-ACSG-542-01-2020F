@@ -11,7 +11,7 @@ module OpenChain; module ModelFieldGenerator; module VariantGenerator
       qualified_field_name: "(SELECT variant_identifier FROM variants WHERE variants.id = #{table_name}.variant_id)"
     }]
     r << [rank_start+1,"#{uid_prefix}_var_db_id".to_sym, :variant_id, "Variant DB ID", {
-      data_type: :integer
+      data_type: :integer, user_accessible: false
     }]
     r
   end

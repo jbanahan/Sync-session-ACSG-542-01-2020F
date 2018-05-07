@@ -50,12 +50,15 @@ module OpenChain; module ModelFieldGenerator; module CountryHtsGenerator
     "(SELECT hts_#{hts_number} FROM classifications hts_#{hts_number}_class INNER JOIN tariff_records hts_#{hts_number}_tariff ON hts_#{hts_number}_tariff.classification_id = hts_#{hts_number}_class.id WHERE hts_#{hts_number}_class.country_id = #{country.id} AND hts_#{hts_number}_class.product_id = #{join_table_name}.#{join_table_with_id ? "id" : "product_id"} ORDER BY hts_#{hts_number}_tariff.line_number LIMIT 1)"
   end
 
-  def make_country_hts_fields core_module, join_table_name: core_module.table_name, read_only: true, model_field_suffix: core_module.table_name, hts_numbers: 1..1, label_prefix: "Product - ", product_lambda:
+  def make_country_hts_fields core_module, join_table_name: core_module.table_name, read_only: true, model_field_suffix: core_module.table_name, hts_numbers: 1..1, label_prefix: "Product - ", starting_index: nil, product_lambda:
     model_fields = []
+
+    starting_index = starting_index.nil? ? next_index_number(core_module) : starting_index
+
     Country.import_locations.each do |c|
-      hts_numbers.each do |i|
+      hts_numbers.each_with_index do |i, x|
         field_name = "*fhts_#{i}_#{c.id}#{model_field_suffix.blank? ? "" : ("_" + model_field_suffix)}".to_sym
-        mf = ModelField.new(next_index_number(core_module), field_name, core_module, field_name,
+        mf = ModelField.new((starting_index + x), field_name, core_module, field_name,
           {label_override: "#{label_prefix}First HTS #{i} (#{c.iso_code})", data_type: :string, history_ignore: true, read_only: read_only,
             import_lambda: (read_only ? nil : import_lambda(product_lambda, i, c)),
             export_lambda: export_lambda(product_lambda, i, c), 

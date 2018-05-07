@@ -9,6 +9,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
   def build_address_fields custom_definition, core_module, index
     fields_to_add = []
     uid_prefix = "*af_#{custom_definition.id}_"
+    cdef_uid = custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid
 
     #name
     fields_to_add << ModelField.new(index, "#{uid_prefix}name", core_module, "#{uid_prefix}name", {
@@ -22,14 +23,15 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
+          a = Address.where(id: id).first
           r = a.name if a
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_name")
     })
 
     #city
@@ -44,14 +46,15 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
+          a = Address.where(id: id).first
           r = a.city if a
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_city")
     })
 
     #state
@@ -66,14 +69,15 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
+          a = Address.where(id: id).first
           r = a.state if a
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_state")
     })
 
     #postal code
@@ -88,14 +92,15 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
+          a = Address.where(id: id).first
           r = a.postal_code if a
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_postal_code")
     })
 
     #country iso code
@@ -110,9 +115,9 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
+          a = Address.where(id: id).first
           if a
             c = a.country
             r = c.iso_code if c
@@ -120,7 +125,8 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_iso_code")
     })
 
     #add the street field, concatenating lines 1 -3
@@ -135,25 +141,50 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       address_field: true,
       export_lambda: lambda {|obj|
         r = ""
-        id = obj.get_custom_value(custom_definition).value
+        id = obj.custom_value(custom_definition)
         if id
-          a = Address.find_by_id(id)
-          if a
-            ary = []
-            [a.line_1,a.line_2,a.line_3].each {|ln| ary << ln unless ln.blank?}
-            r = ary.join(' ').strip
+          add = Address.where(id: id).first
+          if add
+            r = [add.line_1, add.line_2, add.line_3].keep_if {|a| !a.blank?}.join(" ").strip
           end
         end
         return r
       },
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_street")
+    })
+
+    fields_to_add << ModelField.new(index + 5, "#{uid_prefix}full", core_module, "#{uid_prefix}full", {
+      custom_id: custom_definition.id,
+      label_override: "#{custom_definition.label} (Full)",
+      qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(addresses.name, ''), '\n', IFNULL(addresses.line_1, ''), IFNULL(addresses.line_2, ''), IFNULL(addresses.line_3, ''),'\n', IFNULL(addresses.city, ''), IFNULL(addresses.state, ''), IFNULL(addresses.postal_code, ''),'\n',IFNULL(countries.iso_code,''))  FROM addresses LEFT OUTER JOIN countries ON countries.id = addresses.country_id WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
+      definition: custom_definition.definition,
+      read_only: true,
+      data_type: :string,
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
+      address_field: true,
+      address_field_full: true,
+      export_lambda: lambda {|obj|
+        r = ""
+        id = obj.custom_value(custom_definition)
+        if id
+          a = Address.where(id: id).first
+          if a
+            r = a.full_address
+          end
+        end
+        return r
+      },
+      restore_field: false,
+      cdef_uid: (cdef_uid.blank? ? nil : "#{cdef_uid}_full_address")
     })
 
     #add the base field
     fld = custom_definition.model_field_uid.to_sym
-    fields_to_add << ModelField.new(index + 5,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-      :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-      :definition => custom_definition.definition, :default_label => "#{custom_definition.label} Unique ID", address_field: true
+    fields_to_add << ModelField.new(index + 6,fld, core_module, fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+      qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+      definition: custom_definition.definition, default_label: "#{custom_definition.label} Unique ID", address_field: true, address_field_id: true, user_accessible: false,
+      cdef_uid: (cdef_uid.blank? ? nil : cdef_uid)
     })
     fields_to_add
   end
@@ -187,7 +218,8 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       data_type: :string,
       field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid),
       user_field: true,
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (custom_definition.cdef_uid.blank? ? nil : "#{custom_definition.cdef_uid}_username")
     })
     fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
       custom_id: custom_definition.id,
@@ -212,13 +244,16 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       read_only: true,
       user_field: true,
       user_full_name_field: true,
-      restore_field: false
+      restore_field: false,
+      cdef_uid: (custom_definition.cdef_uid.blank? ? nil : "#{custom_definition.cdef_uid}_fullname")
     })
-    fields_to_add << ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-      :qualified_field_name=>"(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
-      :definition => custom_definition.definition, :default_label => "#{custom_definition.label}",
-      :read_only => true,
-      :user_id_field => true
+    fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+      qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+      definition: custom_definition.definition, default_label: "#{custom_definition.label}",
+      read_only: true,
+      user_id_field: true,
+      user_accessible: false,
+      cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid)
     })
     fields_to_add
   end

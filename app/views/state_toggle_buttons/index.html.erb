@@ -19,9 +19,7 @@ $(function() {
     <th>Permission Group System Codes</th>
     <th>Activate Text</th>
     <th>Deactivate Text</th>
-    <th>Parameters</th>
-    <th></th>
-    <th></th>
+    <th>Disabled?</th>
   </thead>
   <tbody>
     <%@buttons.each do |b|%>
@@ -32,7 +30,7 @@ $(function() {
         <td><%=b[:stb].permission_group_system_codes || ""%></td>
         <td><%=b[:stb].activate_text || ""%></td>
         <td><%=b[:stb].deactivate_text || ""%></td>
-        <td><%=b[:stb].search_criterions.count%></td>
+        <td><%=b[:stb].disabled? ? "Y" : "N"%></td>
       </tr>
     <%end%>
   </tbody>

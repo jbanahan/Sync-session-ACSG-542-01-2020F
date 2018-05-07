@@ -24,6 +24,7 @@
 #  booking_revised_date             :datetime
 #  booking_shipment_type            :string(255)
 #  booking_vessel                   :string(255)
+#  booking_voyage                   :string(255)
 #  buyer_address_id                 :integer
 #  cancel_requested_at              :datetime
 #  cancel_requested_by_id           :integer
@@ -84,6 +85,8 @@
 #  mode                             :string(255)
 #  number_of_packages               :integer
 #  number_of_packages_uom           :string(255)
+#  packing_list_sent_by_id          :integer
+#  packing_list_sent_date           :datetime
 #  pickup_at                        :date
 #  port_last_free_day               :date
 #  receipt_location                 :string(255)
@@ -105,6 +108,8 @@
 #  vessel                           :string(255)
 #  vessel_carrier_scac              :string(255)
 #  vessel_nationality               :string(255)
+#  vgm_sent_by_id                   :integer
+#  vgm_sent_date                    :datetime
 #  volume                           :decimal(9, 2)
 #  voyage                           :string(255)
 #  warning_overridden_at            :datetime
@@ -134,7 +139,9 @@
 #  index_shipments_on_reference                   (reference)
 #
 
-require 'open_chain/order_booking_registry'
+require 'open_chain/registries/order_booking_registry'
+require 'open_chain/registries/shipment_registry'
+
 class Shipment < ActiveRecord::Base
   include CoreObjectSupport
   include ISFSupport
@@ -163,6 +170,9 @@ class Shipment < ActiveRecord::Base
   belongs_to :isf_sent_by, :class_name => "User"
   belongs_to :booking_revised_by, :class_name => "User"
   belongs_to :shipment_instructions_sent_by, :class_name => "User"
+  belongs_to :packing_list_sent_by, class_name: "User"
+  belongs_to :vgm_sent_by, class_name: "User"
+  belongs_to :country_origin, class_name: "Country"
   belongs_to :warning_overridden_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
@@ -195,16 +205,8 @@ class Shipment < ActiveRecord::Base
   #########
   # Booking Request / Approve / Confirm / Revise
   #########
-  def can_request_booking? user, ignore_shipment_state=false
-    registered = OpenChain::OrderBookingRegistry.registered
-    if registered.empty?
-      return default_can_request_booking?(user, ignore_shipment_state)
-    else
-      registered.each do |r|
-        return false unless r.can_request_booking?(self,user)
-      end
-      return true
-    end
+  def can_request_booking? user
+    OpenChain::Registries::OrderBookingRegistry.can_request_booking? self, user
   end
 
   def default_can_request_booking? user, ignore_shipment_state=false
@@ -221,7 +223,7 @@ class Shipment < ActiveRecord::Base
     self.booking_requested_by = user
     self.booking_request_count ||= 0
     self.booking_request_count = (self.booking_request_count + 1)
-    OpenChain::OrderBookingRegistry.registered.each {|obr| obr.request_booking_hook(self,user)}
+    OpenChain::Registries::OrderBookingRegistry.request_booking_hook(self,user)
     self.save!
     OpenChain::EventPublisher.publish :shipment_booking_request, self
     self.create_snapshot_with_async_option async_snapshot, user
@@ -263,38 +265,31 @@ class Shipment < ActiveRecord::Base
   def confirm_booking! user, async_snapshot = false
     self.booking_confirmed_date = 0.seconds.ago
     self.booking_confirmed_by = user
-    self.booked_quantity = self.shipment_lines.sum('quantity')
+    self.booked_quantity = calculate_booked_quantity
     self.save!
     OpenChain::EventPublisher.publish :shipment_booking_confirm, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
+  def calculate_booked_quantity
+    # The system used to use shipment lines to calculate the booked_quantity..this was before we added the booking_lines
+    # Now, look for booking lines, if that's there then sum that amount...otherwise, fall back to summing the shipment lines
+
+    lines = (self.booking_lines.length > 0) ? self.booking_lines : self.shipment_lines
+    sum = BigDecimal("0")
+    lines.each {|l| sum += l.quantity unless l.quantity.nil? }
+    sum
+  end
+  private :calculate_booked_quantity
+
   def async_confirm_booking! user
     self.confirm_booking! user, true
   end
 
   def can_revise_booking? user
-    registered = OpenChain::OrderBookingRegistry.registered
-    if registered.empty?
-      # Can't revise bookings that have shipment lines
-      return false if self.shipment_lines.try(:size) > 0
-      # Can't revise bookings that haven't been confirmed or approved
-      return false unless self.booking_approved_date || self.booking_confirmed_date
-
-      if !self.booking_confirmed_date
-        # Users that can request or approve bookings can revise if it's not confirmed
-        return true if self.can_approve_booking?(user,true) || self.default_can_request_booking?(user,true)
-      else
-        # If there's a booking confirm date, only user's that can confirm can revise a booking
-        return true if self.can_confirm_booking?(user,true)
-      end
-      return false
-    else
-      registered.each do |r|
-        return false unless r.can_revise_booking?(self,user)
-      end
-      return true
-    end
+    OpenChain::Registries::OrderBookingRegistry.can_revise_booking? self, user
   end
+
   def revise_booking! user, async_snapshot = false
     # Booking data gets revised all the time apparently before its actually on-boarded, so while we clear
     # the approval/confirmation info, we don't want to clear the initial receipt/request info.
@@ -306,7 +301,7 @@ class Shipment < ActiveRecord::Base
     self.booking_revised_by = user
     self.booking_request_count ||= 0
     self.booking_request_count = (self.booking_request_count + 1)
-    OpenChain::OrderBookingRegistry.registered.each {|obr| obr.revise_booking_hook(self,user)}
+    OpenChain::Registries::OrderBookingRegistry.revise_booking_hook(self, user)
     self.save!
     self.create_snapshot_with_async_option async_snapshot, user
   end
@@ -318,15 +313,13 @@ class Shipment < ActiveRecord::Base
   # Cancel Shipment
   ###################
   def can_cancel? user
-    return false if self.canceled_date
-    return false unless self.can_edit?(user)
-    return true if self.can_cancel_by_role?(user)
-    return false
+    OpenChain::Registries::ShipmentRegistry.can_cancel?(self, user)
   end
   def cancel_shipment! user, async_snapshot = false
     Shipment.transaction do
       self.canceled_date = 0.seconds.ago
       self.canceled_by = user
+      OpenChain::Registries::ShipmentRegistry.cancel_shipment_hook(self, user)
       self.save!
       self.shipment_lines.each do |sl|
         sl.piece_sets.where('piece_sets.order_line_id IS NOT NULL').each do |ps|
@@ -347,10 +340,7 @@ class Shipment < ActiveRecord::Base
     self.cancel_shipment! user, true
   end
   def can_uncancel? user
-    return false unless self.canceled_date
-    return false unless self.can_edit?(user)
-    return true if self.can_cancel_by_role?(user)
-    return false
+    OpenChain::Registries::ShipmentRegistry.can_uncancel?(self, user)
   end
   def uncancel_shipment! user, async_snapshot = false
     Shipment.transaction do
@@ -381,12 +371,13 @@ class Shipment < ActiveRecord::Base
     return true
   end
   def request_cancel! user, async_snapshot = false
-    self.cancel_requested_at = 0.seconds.ago
+    self.cancel_requested_at = Time.zone.now
     self.cancel_requested_by = user
     self.save!
     OpenChain::EventPublisher.publish :shipment_cancel_request, self
     self.create_snapshot_with_async_option async_snapshot, user
-    OpenChain::OrderBookingRegistry.registered.each {|obr| obr.post_request_cancel_hook(self,user)}
+    OpenChain::Registries::OrderBookingRegistry.post_request_cancel_hook(self, user)
+    nil
   end
   def async_request_cancel! user
     self.request_cancel! user, true
@@ -499,16 +490,7 @@ class Shipment < ActiveRecord::Base
 	end
 
   def can_edit_booking? user
-    registered = OpenChain::OrderBookingRegistry.registered
-    if registered.empty?
-      # By default, just use the can_edit shipment register
-      return can_edit?(user)
-    else
-      registered.each do |r|
-        return false unless r.can_edit_booking?(self,user)
-      end
-      return true
-    end
+    OpenChain::Registries::OrderBookingRegistry.can_edit_booking? self, user
   end
 
   # can the user currently add lines to this shipment
@@ -518,7 +500,7 @@ class Shipment < ActiveRecord::Base
 
   def can_add_remove_booking_lines?(user)
     # At any point up till there are actual manifest/shipment lines users w/ edit ability
-    # can remove shipment lines.
+    # can remove booking lines.
     return false if self.shipment_lines.length > 0
     return self.can_edit?(user)
   end
@@ -574,5 +556,30 @@ class Shipment < ActiveRecord::Base
     self.isf_sent_by = user
     save!
     self.create_snapshot_with_async_option async_snapshot, user
+  end
+
+  # Requested Equipment is a text field that contains (potentially) multiple pairs of quantity and container type
+  # (e.g. "3 40HC").  If multiple container types are involved, they'll be split into multiple lines.  This method is a
+  # helper for dealing with the field, since it's fairly awkward.  It returns an array of 2-value arrays, each
+  # containing the quantity and type for the pair.  An empty array returned if the field is blank.  An exception is
+  # thrown if any of the lines do not fit the expected pattern.  Blank lines are removed from the output.
+  def get_requested_equipment_pieces
+    pieces = []
+    if self.requested_equipment.present?
+      pieces = self.requested_equipment.lines.collect do |ln|
+        ln.strip!
+        components = ln.split(' ')
+        case components.size
+          when 0
+            nil
+          when 2
+            components
+          else
+            raise "Bad requested equipment field, expected each line to have number and type like \"3 40HC\", got #{self.requested_equipment}."
+        end
+      end
+    end
+    pieces.compact!
+    pieces
   end
 end

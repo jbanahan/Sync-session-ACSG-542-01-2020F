@@ -1,4 +1,4 @@
-shipmentApp = angular.module('ShipmentApp', ['ChainComponents','ui.router','ChainComments','ngSanitize'])
+shipmentApp = angular.module('ShipmentApp', ['ChainComponents','ui.router','ChainComments','ngSanitize', 'ChainDomainer'])
 shipmentApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
   $httpProvider.interceptors.push 'chainHttpErrorInterceptor'

@@ -4,9 +4,9 @@ class StateToggleButtonsController < ApplicationController
   end
   def index
     admin_secure { 
-      @buttons = StateToggleButton.all.map do |stb| 
-        user_field = stb.user_attribute ? ModelField.find_by_uid(stb.user_attribute.to_sym).label : stb.user_custom_definition.try(:label)
-        date_field = stb.date_attribute ? ModelField.find_by_uid(stb.date_attribute.to_sym).label : stb.date_custom_definition.try(:label)
+      @buttons = StateToggleButton.order("module_type ASC, display_index ASC, id ASC").map do |stb| 
+        user_field = stb.user_field.try(:label)
+        date_field = stb.date_field.try(:label)
         {stb: stb, user_field: user_field, date_field: date_field}
       end
     }
@@ -25,7 +25,7 @@ class StateToggleButtonsController < ApplicationController
 
   def create
     admin_secure {
-      button = StateToggleButton.create!(module_type: params[:module_type], permission_group_system_codes: "PLACEHOLDER")  #prevents stb from being activated before remaining fields are supplied
+      button = StateToggleButton.create!(module_type: params[:module_type], disabled: true)  #prevents stb from being activated before all fields are supplied
       redirect_to edit_state_toggle_button_path(button)
     }
   end

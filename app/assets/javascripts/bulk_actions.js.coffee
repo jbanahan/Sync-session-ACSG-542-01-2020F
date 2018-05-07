@@ -66,7 +66,18 @@ makeBulkActions = ->
         $('body').append("<div class='modal fade' id='bulk-ord-update-modal' tabindex='-1' role='dialog' aria-labelledby='' aria-hidden='true'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h4 class='modal-title'>Update Orders</h4></div><div class='modal-body'><div id='bulk-ord-update-fields' class='row' style='line-height: 2.5'></div></div><div class='modal-footer'><button type='button' class='btn btn-default' data-dismiss='modal'>Close</button><button type='button' class='btn btn-primary' id='bulk-ord-update-modal-submit'>Save</button></div></div></div></div>
 ")
         $('#bulk-ord-update-fields').html(data.html)
-        $('.isdate').datepicker()
+        $('#bulk-ord-update-fields .isdate').datepicker()
+        # Copy the cv_chkbx values to their hidden equivalents...this is the same code found in the legacy jQuery open_chain.js file
+        $('#bulk-ord-update-fields .cv_chkbx').each ->
+          $(this).change ->
+            # We don't want to recognize the checkbox's unchecked value as false here, because if we did that
+            # it's very possible for a user to uncheck the box and inadvertently set a ton of bulk order's fields
+            # to false...when they just meant to not set the value at all.  At present, bulk update does not 
+            # allow for clearing of a true/false checkbox value.
+            value = $(this).is(':checked')
+            if !value
+              value = ""
+            $("#hdn_"+$(this).attr("id").substring(4)).val(value)
 
         $('#bulk-ord-update-modal-submit').click(BulkActions.completeBulkOrderUpdate)
         $('#bulk-ord-update-modal')
@@ -79,7 +90,7 @@ makeBulkActions = ->
 
     completeBulkOrderUpdate: ->
       mod = $('#bulk-ord-update-modal')
-      fields = mod.find('.form-control').map ->
+      fields = mod.find('.form-control,.hdn_cv_chkbx').map ->
         field = {}
         if this.value 
           field[this.name] = this.value

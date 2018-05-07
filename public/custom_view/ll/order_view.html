@@ -1,12 +1,8 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12 text-center">
-      <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
-      <h1>
-        <small>Purchase Order</small>
-        <br />
-        {{order.ord_ord_num}}
-      </h1>
+      <h3 style="margin: 0">Purchase Order</h3>
+      <h1 style="margin: 0">{{order.ord_ord_num}}</h1>
     </div>
   </div>
   <div class="row" ng-if='order[dictionary.fieldsByAttribute("label","Cancelled Date",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid].length > 0'>
@@ -116,7 +112,7 @@
             <li class='list-group-item' ng-if="me.permissions.view_shipments">
               Bookings
               <div class='text-right'>
-                <chain-vp-bookings order='order'></chain-vp-bookings>
+                <ll-bookings order='order' booking-fields="['shp_ref', 'shp_first_port_receipt_code', 'ord_ord_num', 'shp_ship_to_address_full_address', dictionary.field('*ord_forecasted_ship_window_start').uid, dictionary.field('*ord_forecasted_ship_window_end').uid]" booking-includes="['booked_orders']"></ll-bookings>
               </div>
             </li>
           </li>

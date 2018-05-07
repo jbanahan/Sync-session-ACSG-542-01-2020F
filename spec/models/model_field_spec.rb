@@ -1217,6 +1217,12 @@ describe ModelField do
       expect(ModelField).not_to receive(:reload)
       expect(ModelField.find_by_uid "not a model field").to be_blank
     end
+
+    it "allows passing CustomDefinition object to find its model field" do
+      cd = CustomDefinition.create!(label:'User',module_type:'Company',data_type: :integer)
+      mf = ModelField.find_by_uid cd
+      expect(mf.label).to eq "User"
+    end
   end
 
   describe "add_fields" do

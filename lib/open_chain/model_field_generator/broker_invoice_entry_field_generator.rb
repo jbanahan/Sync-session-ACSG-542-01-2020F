@@ -3,7 +3,8 @@ module OpenChain; module ModelFieldGenerator; module BrokerInvoiceEntryFieldGene
     h = {:data_type=>data_type,
         :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
         :export_lambda => lambda {|inv| inv.entry.blank? ? "" : ent_exp_lambda.call(inv.entry)},
-        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)"
+        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)",
+        :read_only => true
       }
     h[:can_view_lambda]=can_view_lambda unless can_view_lambda.nil?
     h.merge!(opts)

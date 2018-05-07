@@ -61,7 +61,7 @@ class SnapshotWriter
 
     def write_entity_model_fields core_module, entity
       model_fields = {}
-      core_module.model_fields {|mf| !mf.history_ignore? }.values.each do |mf|
+      core_module.model_fields_for_snapshot.values.each do |mf|
         v = field_value(entity, mf)
         model_fields[mf.uid] = v unless v.nil?
       end

@@ -363,7 +363,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :import_lambda => lambda{ |obj, data| "Fish & Wildlife Secure Facility ignored. (read only)"}
       }]
     ]
-    add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
+    add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
     add_fields CoreModule::ENTRY, make_attachment_arrays(700,'ent',CoreModule::ENTRY,{ent_attachment_types: lambda {|u| u.company.master?}})
     add_fields CoreModule::ENTRY, make_business_rule_arrays(800,'ent','entries','Entry')

@@ -18,14 +18,19 @@ module OpenChain; module ModelFieldDefinition; module AddressFieldDefinition
       [12, :add_phone_number, :phone_number, 'Phone Number', {data_type: :string}],
       [13, :add_fax_number, :fax_number, 'Fax Number', {data_type: :string}],
       [14, :add_full_address, :full_address, "Full Address", {
+         address_field: true,
+         address_field_full: true,
          data_type: :string,
          read_only:true,
          export_lambda: lambda {|obj| obj.full_address},
          qualified_field_name: "(CONCAT_WS(' ', IFNULL(line_1, ''), IFNULL(line_2, ''), IFNULL(line_3, ''),'\n', IFNULL(city, ''), IFNULL(state, ''), IFNULL(postal_code, ''),'\n',IFNULL((select iso_code from countries where addresses.country_id = countries.id),'')))"
        }],
-       [15, :add_comp_db_id, :company_id, 'Company DB ID', {data_type: :integer}]
+       [15, :add_comp_db_id, :company_id, 'Company DB ID', {data_type: :integer, user_accessible: false}],
+       [16, :add_id, :id, 'DB ID', {data_type: :integer, user_accessible: false}],
+       [17, :add_address_book, :in_address_book, 'In Address Book?', {data_type: :boolean, user_accessible: false}],
+       [18, :add_address_type, :address_type, 'Address Type', {data_type: :string, user_accessible: false}]
     ]
-    add_fields CoreModule::ADDRESS, make_country_arrays(100,'add','addresses')
+    add_fields CoreModule::ADDRESS, make_country_arrays(100,'add','addresses', "country")
     add_fields CoreModule::ADDRESS, make_company_arrays(200,'add','addresses','comp','Company','company')
   end
 end; end; end

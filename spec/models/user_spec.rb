@@ -26,26 +26,11 @@ describe User do
   end
 
   describe "valid_password?" do
-    it 'returns false if any PasswordValidationRegistry tests return false' do
+    it 'defers to PasswordValidationRegistry' do
       u = User.new
       p = 'password'
-      d1 = double('pv1')
-      d2 = double('pv2')
-      expect(d1).to receive(:valid_password?).with(u, p).and_return true
-      expect(d2).to receive(:valid_password?).with(u, p).and_return false
-      expect(OpenChain::PasswordValidationRegistry).to receive(:registered_for_valid_password).and_return [d1, d2]
-
-      expect(u.valid_password?(u,p)).to be false
-    end
-    it 'returns true if all PasswordValidationRegistry tests return true' do
-      u = User.new
-      p = 'password'
-      d1 = double('pv1')
-      d2 = double('pv2')
-      [d1,d2].each {|d| expect(d).to receive(:valid_password?).with(u, p).and_return true}
-      expect(OpenChain::PasswordValidationRegistry).to receive(:registered_for_valid_password).and_return [d1, d2]
-
-      expect(u.valid_password?(u, p)).to be true
+      expect(OpenChain::Registries::PasswordValidationRegistry).to receive(:valid_password?).with(u, p).and_return true
+      expect(User.valid_password? u, p).to eq true
     end
   end
 

@@ -1,153 +1,207 @@
 <div id="outer" class="container">
   <div class="row">
     <div class="col-md-12 text-center">
-      <a ui-sref='main'><img src="/logo.png" alt="Logo"></a>
-      <h1>
-        <small>Shipment</small>
-        <br />
-        {{shipment.shp_ref}}
-      </h1>
+      <h3 style="margin: 0">Shipment</h3>
+      <h1 style="margin: 0">{{shipment.shp_ref}}</h1>
     </div>
   </div>
-  <div class="row">
-    <div class="col-md-6">
-      <div class="panel panel-primary">
+  <div ng-hide='shipment.custom.valid_delivery_location' class="row">
+    <div class="col-md-12">
+      <div class="panel panel-danger">
         <div class="panel-heading">
-          <h3 class="panel-title">Ship Header</h3>
+          <h3 class="panel-title">Booking Error</h3>
         </div>
-        <ul class="list-group">
-          <li class="list-group-item list-group-item-info">
-            Booking
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_mode','shp_shipment_type','shp_cargo_ready_date']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <div ng-if="shipment.permissions.can_edit_booking">
-              <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
-            </div>
-            <div ng-if="!shipment.permissions.can_edit_booking">
-              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
-            </div>
-          </li>
-          <li class="list-group-item"">
-            <chain-field-label field="dictionary.field('shp_first_port_receipt_id')"></chain-field-label>
-            <div ng-if="shipment.permissions.can_edit_booking">
-              <chain-field-input model="shipment" field="dictionary.field('shp_first_port_receipt_id')"></chain-field-input>
-            </div>
-            <div ng-if="!shipment.permissions.can_edit_booking">
-              <chain-field-value model="shipment" field="dictionary.field('shp_first_port_receipt_name')"></chain-field-value>
-            </div>
-          </li>
-          <li class="list-group-item">
-            <chain-field-label field="dictionary.field('shp_requested_equipment')"></chain-field-label>
-            <div ng-if="shipment.permissions.can_edit_booking">
-              <chain-vp-equipment-requestor shipment="shipment" equipment-types="['20STD','40STD','40HQ','45STD','53','LCL']"></chain-vp-equipment-requestor>
-            </div>
-            <div ng-if="!shipment.permissions.can_edit_booking">
-              <chain-field-value model="shipment" field="dictionary.field('shp_requested_equipment')"></chain-field-value>
-            </div>
-          </li>
-          <!-- Commented out for now
-          <li class="list-group-item list-group-item-info">
-            Shipment Instructions
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_number_of_packages','shp_number_of_packages_uom','shp_gross_weight','shp_volume','shp_marks_and_numbers','shp_hazmat','shp_swpm','shp_lacey','shp_export_license_required']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
-          </li>
-          -->
-          <li class="list-group-item list-group-item-info">
-            Details
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_fwd_name']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <span class="pull-right">
-              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
-            </span>
-          </li>
-          <li class='list-group-item'>
-            <chain-field-label field="dictionary.field('shp_ship_from_full_address')"></chain-field-label>
-            <div class='text-right'>
-              <chain-field-value model="shipment" field="dictionary.field('shp_ship_from_full_address')"></chain-field-value>
-            </div>
-          </li>
-        </ul>
-        <div class="panel-footer text-right" ng-if='shipment.permissions.can_edit_booking'>
-          <button class='btn btn-xs btn-primary' title='Save' ng-click='save(shipment)'><i class='fa fa-save'></i></button>
+        <div class="panel-body">
+          Booking cannot proceed. Booking Delivery Location does not match the PO Delivery Location.  Contact Lumber Liquidators to have the PO updated.
         </div>
       </div>
     </div>
-    <div class="col-md-6">
+  </div>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Booking Header</h3>
+        </div>
+        <div>
+          <ul class="list-group">
+            <li class="list-group-item" ng-repeat="fld in ['shp_fwd_name', 'shp_ship_from_id']">
+              <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+              </div>
+            </li>
+            <li class="list-group-item" ng-repeat="fld in ['shp_mode','shp_shipment_type','shp_cargo_ready_date']">
+              <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+              <div ng-if="shipment.permissions.can_edit_booking">
+                <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+              </div>
+              <div ng-if="!shipment.permissions.can_edit_booking">
+                <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+              </div>
+            </li>
+            <li class="list-group-item"">
+              <chain-field-label field="dictionary.field('shp_first_port_receipt_id')"></chain-field-label>
+              <div ng-if="shipment.permissions.can_edit_booking">
+                <chain-field-input model="shipment" field="dictionary.field('shp_first_port_receipt_id')"></chain-field-input>
+              </div>
+              <div ng-if="!shipment.permissions.can_edit_booking">
+                <chain-field-value model="shipment" field="dictionary.field('shp_first_port_receipt_name')"></chain-field-value>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <chain-field-label field="dictionary.field('shp_requested_equipment')"></chain-field-label>
+              <div ng-if="shipment.permissions.can_edit_booking">
+                <chain-vp-equipment-requestor shipment="shipment" equipment-types="['20STD','40STD','40HQ','45STD','53','LCL']"></chain-vp-equipment-requestor>
+              </div>
+              <div ng-if="!shipment.permissions.can_edit_booking">
+                <chain-field-value model="shipment" field="dictionary.field('shp_requested_equipment')"></chain-field-value>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Booking Confirmation</h3>
+        </div>
+        <ul class="list-group" ng-if="shipment.shp_booking_confirmed_date">
+          <li class="list-group-item" ng-repeat="fld in ['shp_booking_number', 'shp_booking_confirmed_date', 'shp_booking_cutoff_date', 'shp_booking_est_departure_date', 'shp_booking_est_arrival_date', 'shp_booking_carrier', 'shp_booking_vessel', 'shp_booking_voyage', 'shp_importer_reference']">
+            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+            <div>
+              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-4">
       <div class="panel panel-primary">
         <div class="panel-heading">
           <h3 class="panel-title">Actions</h3>
         </div>
-        <ul class="list-group">
-          <li class="list-group-item" ng-if="shipment['shp_mode'] == '' || shipment['shp_shipment_type'] == '' || shipment['shp_cargo_ready_date'] == '' || shipment['shp_first_port_receipt_id'] == '' || shipment['shp_requested_equipment'] == ''">
-            <p>Please complete all fields in the Booking section and click save before requesting your booking.</p>
-          </li>
-          <li class="list-group-item">
-            <button ng-disabled="!shipment.permissions.can_request_booking" class="btn btn-sm btn-default btn-block" ng-click='requestBooking(shipment)'>Request Booking</button>
-          </li>
-          <li class="list-group-item">
-            <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-default btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
-          </li>
-          <!-- These will be needed later on
-          <li class="list-group-item">
-            <button ng-disabled="!shipment.permissions.can_send_shipment_instructions" class="btn btn-sm btn-default btn-block" ng-click='sendShipmentInstructions(shipment)'>Send Shipment Instructions</button>
-          </li>
-          <li class="list-group-item">
-            <button ng-disabled="!shipment.permissions.can_request_cancel" class="btn btn-sm btn-default btn-block" ng-click='requestCancel(shipment)'>Cancel Shipment</button>
-          </li>
-          <li class="list-group-item" ng-show='me.permissions.admin'>
-            <button ng-disabled="!shipment.permissions.can_uncancel" class="btn btn-sm btn-default btn-block" ng-click='uncancel(shipment)'>Undo Cancel Shipment</button>
-          </li>
-          -->
-        </ul>
-        <div class="panel-footer">
-
+        <div>
+          <ul class="list-group">
+            <li class="list-group-item" ng-if="shipment['shp_mode'] == '' || shipment['shp_shipment_type'] == '' || shipment['shp_cargo_ready_date'] == '' || shipment['shp_first_port_receipt_id'] == '' || shipment['shp_requested_equipment'] == ''">
+              <p>Please complete all fields in the Booking section and click save before requesting your booking.</p>
+            </li>
+            <li class="list-group-item">
+              <button ng-disabled="!shipment.permissions.can_edit_booking" class="btn btn-sm btn-default btn-block" ng-click='save(shipment)'>Save</button>
+            </li>
+            <li class="list-group-item">
+              <button ng-disabled="!shipment.permissions.can_request_booking" class="btn btn-sm btn-default btn-block" ng-click='requestBooking(shipment)'>Request Booking</button>
+            </li>
+            <li class="list-group-item">
+              <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-default btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_send_isf') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_isf')" disabled="!shipment.custom.can_send_isf"></chain-simple-state-toggle-button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_resend_isf') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_isf')" disabled="!shipment.custom.can_resend_isf"></chain-simple-state-toggle-button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_send_factory_pack') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_factory_pack')" disabled="!shipment.custom.can_send_factory_pack"></chain-simple-state-toggle-button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_resend_factory_pack') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_factory_pack')" disabled="!shipment.custom.can_resend_factory_pack"></chain-simple-state-toggle-button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_send_vgm') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_vgm')" disabled="!shipment.custom.can_send_vgm"></chain-simple-state-toggle-button>
+            </li>
+            <li class="list-group-item" ng-if="stateToggleButton('shp_resend_vgm') != null">
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_vgm')" disabled="!shipment.custom.can_resend_vgm"></chain-simple-state-toggle-button>
+            </li>
+          </ul>
         </div>
       </div>
       <div class="panel panel-primary" ng-if='shipment.shp_booking_received_date'>
         <div class="panel-heading">
-          <h3 class="panel-title">Booking Request</h3>
+          <h3 class="panel-title">Booking Activity</h3>
         </div>
-        <ul class="list-group" ng-if="shipment.shp_canceled_date">
-          <li class="list-group-item list-group-item-danger">
-            Cancellation
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_canceled_by_full_name','shp_canceled_date']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <span class="pull-right">
-              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
-            </span>
-          </li>
-        </ul>
-        <ul class="list-group">
-          <li class="list-group-item list-group-item-info">
-            Booking Activity
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_booking_requested_by_full_name','shp_booking_received_date','shp_booking_revised_by_full_name','shp_booking_revised_date', '*shp_booking_unlocked_date', 'shp_shipment_instructions_sent_date','shp_shipment_instructions_sent_by_full_name','shp_booking_request_count']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <span class="pull-right">
-              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
-            </span>
-          </li>
-          <li class="list-group-item list-group-item-info">
-            Details
-          </li>
-          <li class="list-group-item" ng-repeat="fld in ['shp_booking_mode','shp_booking_shipment_type','shp_booking_cargo_ready_date','shp_booking_first_port_receipt_name']">
-            <chain-field-label field="dictionary.field(fld)"></chain-field-label>
-            <span class="pull-right">
-              <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
-            </span>
-          </li>
-          <li class="list-group-item">
-            <chain-field-label field="dictionary.field('shp_booking_requested_equipment')"></chain-field-label>
-            <div class='text-right'>
-              <chain-field-value model="shipment" field="dictionary.field('shp_booking_requested_equipment')"></chain-field-value>
-            </div>
-          </li>
-        </ul>
+        <div>
+          <ul class="list-group">
+            <li class="list-group-item list-group-item-danger" ng-if="shipment.shp_canceled_date">
+              <chain-field-label field="dictionary.field('shp_canceled_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_canceled_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_canceled_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_booking_received_date">
+              <chain-field-label field="dictionary.field('shp_booking_received_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_booking_requested_by_full_name')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_booking_received_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_booking_revised_date">
+              <chain-field-label field="dictionary.field('shp_booking_revised_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_booking_revised_by_full_name')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_booking_revised_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_booking_request_count">
+              <chain-field-label field="dictionary.field('shp_booking_request_count')"></chain-field-label>
+              <div class="pull-right">
+                <chain-field-value model="shipment" field="dictionary.field('shp_booking_request_count')"></chain-field-value>
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment[dictionary.field('*shp_booking_unlocked_date').uid]">
+              <chain-field-label field="dictionary.field('*shp_booking_unlocked_date')"></chain-field-label>
+              <div class="pull-right">
+                <chain-field-value model="shipment" field="dictionary.field('*shp_booking_unlocked_date')"></chain-field-value>
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_isf_sent_at">
+              <chain-field-label field="dictionary.field('shp_isf_sent_at')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_isf_sent_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_isf_sent_at')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment[dictionary.field('*shp_isf_revised_date').uid]">
+              <chain-field-label field="dictionary.field('*shp_isf_revised_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('*shp_isf_revised_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('*shp_isf_revised_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_packing_list_sent_date">
+              <chain-field-label field="dictionary.field('shp_packing_list_sent_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_packing_list_sent_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_packing_list_sent_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment[dictionary.field('*shp_factory_pack_revised_date').uid]">
+              <chain-field-label field="dictionary.field('*shp_factory_pack_revised_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('*shp_factory_pack_revised_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('*shp_factory_pack_revised_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment.shp_vgm_sent_date">
+              <chain-field-label field="dictionary.field('shp_vgm_sent_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('shp_vgm_sent_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('shp_vgm_sent_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+            <li class="list-group-item" ng-if="shipment[dictionary.field('*shp_vgm_revised_date').uid]">
+              <chain-field-label field="dictionary.field('*shp_vgm_revised_date')"></chain-field-label>
+              <div>
+                <chain-field-value model="shipment" field="dictionary.field('*shp_vgm_revised_by_fullname')"></chain-field-value> - <chain-field-value model="shipment" field="dictionary.field('*shp_vgm_revised_date')">
+              </div>
+              <div class="clearfix"></div>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -157,10 +211,9 @@
         <div class="panel-body">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a data-target="#booking-tab" aria-controls="booking-tab" role="tab" data-toggle="tab">Booking</a></li>
-            <!-- 
-            We're going to need this back in at some point, so we're just commenting it out now
-            <li role="presentation"><a data-target="#manifest-tab" aria-controls="manifest-tab" role="tab" data-toggle="tab">Manifest</i></a></li>
-            -->
+            <li role="presentation"><a data-target="#container-tab" aria-controls="container-tab" role="tab" data-toggle="tab">Containers</a></li>
+            <li role="presentation" ng-if="shipment.lines.length > 0"><a data-target="#manifest-tab" aria-controls="manifest-tab" role="tab" data-toggle="tab">Manifest</a></li>
+            <li role="presentation" ng-if="shipment.lines.length > 0"><a data-target="#isf-tab" aria-controls="isf-tab" role="tab" data-toggle="tab">ISF</a></li>
           </ul>
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="booking-tab">
@@ -177,12 +230,15 @@
                       {{dictionary.field('bkln_puid').label}}
                     </th>
                     <th>
-                      {{dictionary.field('bkln_varuid').label}}
-                    </th>
-                    <th>
                       {{dictionary.field('bkln_quantity').label}}
                     </th>
                     <th>
+                      {{dictionary.field('bkln_gross_kgs').label}}
+                    </th>
+                    <th>
+                      {{dictionary.field('bkln_cbms').label}}
+                    </th>
+                    <th ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking">
                       Actions
                     </th>
                   </tr>
@@ -201,15 +257,83 @@
                       <chain-field-value model='bLine' field='dictionary.field("bkln_puid")'></chain-field-value>
                     </td>
                     <td>
-                      <chain-field-value model='bLine' field='dictionary.field("bkln_varuid")'></chain-field-value>
-                    </td>
-                    <td>
                       <chain-field-value model='bLine' field='dictionary.field("bkln_quantity")'></chain-field-value>
                     </td>
                     <td>
-                      <button ng-click='unBookOrder(bLine)' ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking" class='btn btn-sm btn-danger' title="Remove order from booking">
+                      <chain-field-value model='bLine' field='dictionary.field("bkln_gross_kgs")'></chain-field-value>
+                    </td>
+                    <td>
+                      <div ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking">
+                        <chain-field-input model='bLine' field='dictionary.field("bkln_cbms")'></chain-field-input>
+                      </div>
+                      <div ng-if="!shipment.permissions.can_add_remove_booking_lines || !shipment.permissions.can_edit_booking">
+                        <chain-field-value model='bLine' field='dictionary.field("bkln_cbms")'></chain-field-value>
+                      </div>
+                    </td>
+                    <td ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking">
+                      <button ng-click='unBookOrder(bLine)' class='btn btn-sm btn-danger' title="Remove order from booking">
                         <i class='fa fa-trash-o'></i>
                       </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking" class="row">
+                <div class="col-md-12">
+                  <div class="text-center">
+                    <button class="btn btn-sm btn-default" ng-click='save(shipment)' alt='Save'>Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="container-tab">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      {{dictionary.field('con_container_number').label}}
+                    </th>
+                    <th>
+                      {{dictionary.field('con_container_size').label}}
+                    </th>
+                    <th>
+                      {{dictionary.field('con_seal_number').label}}
+                    </th>
+                    <!-- Re-add this once we are going to start collecting VGM data
+                    <th>
+                      VGM Data
+                    </th>
+                    -->
+                    <th ng-if="shipment.permissions.can_add_remove_shipment_lines">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat='container in shipment.containers track by container.id'>
+                    <td>
+                      <chain-field-value model='container' field='dictionary.field("con_container_number")'></chain-field-value>
+                    </td>
+                    <td>
+                      <chain-field-value model='container' field='dictionary.field("con_container_size")'></chain-field-value>
+                    </td>
+                    <td>
+                      <chain-field-value model='container' field='dictionary.field("con_seal_number")'></chain-field-value>
+                    </td>
+                    <!-- Re-add this once we are going to start collecting VGM data
+                    <td style="font-size: 125%">
+                      <div ng-if="container.custom.has_all_vgm_data">
+                        <i class='fa fa-check text-success'></i>
+                      </div>
+                      <div ng-if="!container.custom.has_all_vgm_data">
+                        <i class='fa fa-exclamation-triangle text-danger'></i>
+                      </div>
+                    </td>
+                  -->
+                    <td ng-if="shipment.permissions.can_add_remove_shipment_lines">
+                      <button class="btn btn-sm btn-default btn-danger" ng-if="canDeleteContainer(container)" ng-click='deleteContainer(container)'><i class="fa fa-trash"></i></button>
+                      <span style="display: inline-block; width: 2em;">&nbsp;</span>
+                      <button class="btn btn-sm btn-default" ng-click='editContainer(container)' alt='Edit Container'><i class="fa fa-edit"></i></button>
                     </td>
                   </tr>
                 </tbody>
@@ -219,28 +343,120 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th ng-repeat="uid in ['shpln_line_number','shpln_cust_ord_no','shpln_puid','shpln_shipped_qty','shpln_container_number'] ">
+                    <th ng-repeat="uid in ['shpln_container_number', 'shpln_first_cust_ord_no', 'shpln_puid','shpln_shipped_qty','shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs']">
                       {{dictionary.field(uid).label}}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr ng-repeat='sl in shipment.lines'>
-                    <td ng-repeat="uid in ['shpln_line_number','shpln_cust_ord_no','shpln_puid','shpln_shipped_qty','shpln_container_number'] ">
+                    <td ng-repeat="uid in ['shpln_container_number', 'shpln_first_cust_ord_no', 'shpln_puid','shpln_shipped_qty','shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs'] ">
                       <chain-field-value model='sl' field='dictionary.field(uid)'></chain-field-value>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <div role="tabpanel" class="tab-pane" id="isf-tab">
+              <div class="row" style="margin-top: 1em;">
+                <div class="col-md-6">
+                  <div class="panel panel-primary">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">ISF Fields</h3>
+                    </div>
+                    <div>
+                      <ul class="list-group">
+                        <li class="list-group-item" ng-repeat="fld in ['shp_est_departure_date', 'shp_vessel', 'shp_voyage']">
+                          <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+                          <div ng-if="shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+                          </div>
+                          <div ng-if="!shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+                          </div>
+                        </li>
+                        <li class="list-group-item">
+                          <!-- Booking Number is read-only here -->
+                          <chain-field-label field="dictionary.field('shp_booking_number')"></chain-field-label>
+                          <div>
+                            <chain-field-value model="shipment" field="dictionary.field('shp_booking_number')"></chain-field-value>
+                          </div>
+                        </li>
+                        <li class="list-group-item" ng-repeat="fld in ['shp_master_bill_of_lading', 'shp_origin_cntry_id']">
+                          <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+                          <div ng-if="shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+                          </div>
+                          <div ng-if="!shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="panel panel-primary">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">ISF Lines</h3>
+                    </div>
+                    <div>
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th ng-repeat="uid in ['shpln_first_cust_ord_no', 'shpln_puid']">
+                              {{dictionary.field(uid).label}}
+                            </th>
+                            <th>HTS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr ng-repeat='sl in shipment.lines'>
+                            <td ng-repeat="uid in ['shpln_first_cust_ord_no', 'shpln_puid', '*fhts_1_234_shipment_lines'] ">
+                              <chain-field-value model='sl' field='dictionary.field(uid)'></chain-field-value>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="panel panel-primary">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">ISF Addresses</h3>
+                    </div>
+                    <div>
+                      <ul class="list-group">
+                        <li class="list-group-item" ng-repeat="fld in ['shp_ship_from_id', 'shp_seller_address_id', 'shp_container_stuffing_address_id', 'shp_consolidator_address_id', 'shp_ship_to_address_id']">
+                          <chain-field-label field="dictionary.field(fld)"></chain-field-label>
+                          <div ng-if="shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-input model="shipment" field="dictionary.field(fld)"></chain-field-input>
+                          </div>
+                          <div ng-if="!shipment.permissions.can_add_remove_shipment_lines">
+                            <chain-field-value model="shipment" field="dictionary.field(fld)"></chain-field-value>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div ng-if="shipment.permissions.can_add_remove_shipment_lines" class="row">
+                <div class="col-md-12">
+                  <div class="text-center">
+                    <button class="btn btn-sm btn-default" ng-click='save(shipment)' alt='Save'>Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- Commented out, not needed at the moment
         <div class="panel-footer text-right">
           <button class='btn btn-default' ng-if='shipment.lines.length > 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='clearManifest(shipment)'>Clear Manifest</button>
-          <chain-vp-full-shipment-pack shipment="shipment" dictionary="dictionary"></chain-vp-full-shipment-pack>
+          <span ng-if="shipment.lines.length == 0 && shipment.permissions.can_add_remove_shipment_lines">
+            <chain-vp-manifest-booking-lines shipment="shipment" dictionary="dictionary" line-edit-fields="['shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs']" required-edit-fields="['shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs']"></chain-vp-manifest-booking-lines>
+          </span>
+          <button class='btn btn-default' ng-if='shipment.lines.length == 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='addContainer()'>Add Container</button>
         </div>
-        -->
       </div>
     </div>
   </div>
@@ -252,5 +468,6 @@
       <chain-attachments-panel parent="shipment" module-type="Shipment"></chain-attachments-panel>
     </div>
   </div>
-
 </div>
+
+<chain-vp-edit-container dictionary="dictionary" detail-fields-title="'Factory Pack / VGM Fields'" detail-columns="[['con_container_pickup_date', 'con_container_return_date', 'con_port_of_loading_id', 'con_port_of_delivery_id'], ['*con_weighing_company', '*con_weighed_date', '*con_weighing_method'], ['*con_cargo_weight', '*con_dunnage_weight', '*con_tare_weight', '*con_total_vgm_weight', '*con_remarks']]"/>

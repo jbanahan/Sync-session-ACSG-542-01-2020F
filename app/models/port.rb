@@ -56,12 +56,12 @@ class Port < ActiveRecord::Base
   end
 
   # Get a version of the port code that will match the Entry module (because Fenix truncates leading zeroes from port codes)
-  def search_friendly_port_code
+  def search_friendly_port_code(trim_cbsa: true)
     return schedule_d_code unless schedule_d_code.blank?
     return schedule_k_code unless schedule_k_code.blank?
     return unlocode unless unlocode.blank?
     unless cbsa_port.blank?
-      return cbsa_port.match(/^0/) ? cbsa_port[1,3] : cbsa_port
+      return (trim_cbsa && cbsa_port.match(/^0/)) ? cbsa_port[1,3] : cbsa_port
     end
     nil
   end

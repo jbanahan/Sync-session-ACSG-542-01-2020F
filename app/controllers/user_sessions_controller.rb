@@ -24,10 +24,11 @@ class UserSessionsController < ApplicationController
     remember_me
 
     user = authenticate(params)
+    locked_password = locked_password?(user)
 
     # This call runs the clearance sign_in "guards" which runs business logic validations
     # to check if user is allowed to login (.ie user isn't locked, disabled etc)
-    handle_sign_in(user, locked_password: locked_password?(user))
+    handle_sign_in(user, locked_password: locked_password)
   end
 
   def create_from_omniauth
@@ -52,7 +53,7 @@ class UserSessionsController < ApplicationController
     sign_in(user) do |status|
       # I don't know why user would be nil here but it is sometimes (concurrency issue perhaps or something in clearance maybe?), so just
       # handle that like it was a bad login.
-      if user && status.success?
+      if user && !opts[:locked_password] && status.success?
         session[:user_id] = user.id
         user.on_successful_login request
         respond_to do |format|
@@ -88,11 +89,9 @@ class UserSessionsController < ApplicationController
   private
 
     def locked_password?(user)
-      return unless user.blank?
+      return false if user.blank?
 
-      user = User.where(username: params[:user_session][:username]).first
-
-      user && user.password_locked
+      user.password_locked || user.failed_logins > 4
     end
 
     def remember_me

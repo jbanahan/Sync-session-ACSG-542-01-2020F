@@ -1,9 +1,14 @@
 module OpenChain; module ServiceLocator
   def register obj
+
+    registries = obj.respond_to?(:child_services) ? obj.child_services : [obj]
+
     # implementations of check_validity should raise exceptions if
     # not valid
-    check_validity(obj) if self.respond_to?(:check_validity)
-    internal_registry << obj
+    registries.each {|r| check_validity(r) } if self.respond_to?(:check_validity)
+    
+    add_to_internal_registry registries
+
     self
   end
 
@@ -24,5 +29,10 @@ module OpenChain; module ServiceLocator
   def internal_registry
     @reg ||= Set.new
     @reg
+  end
+
+  def add_to_internal_registry obj
+    internal_registry.merge Array.wrap(obj)
+    nil
   end
 end; end

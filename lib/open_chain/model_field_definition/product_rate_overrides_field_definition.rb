@@ -36,7 +36,7 @@ module OpenChain; module ModelFieldDefinition; module ProductRateOverrideFieldDe
         qualified_field_name: "IF(#{ProductRateOverride.active_where_clause},1,0)"
       }],
     ]
-    add_fields CoreModule::PRODUCT_RATE_OVERRIDE, make_country_arrays(100,'pro_origin','product_rate_overrides','origin_country','Origin')
-    add_fields CoreModule::PRODUCT_RATE_OVERRIDE, make_country_arrays(200,'pro_destination','product_rate_overrides','destination_country','Destination')
+    add_fields CoreModule::PRODUCT_RATE_OVERRIDE, make_country_arrays(100,'pro_origin','product_rate_overrides','origin_country', association_title: 'Origin')
+    add_fields CoreModule::PRODUCT_RATE_OVERRIDE, make_country_arrays(200,'pro_destination','product_rate_overrides','destination_country', association_title: 'Destination')
   end
 end; end; end

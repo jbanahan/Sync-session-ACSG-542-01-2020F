@@ -176,7 +176,24 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_vendor_inland_freight_amount: {label: 'Vendor Inland Freight Amount', data_type: :decimal, module_type: 'OrderLine', read_only: true, cdef_uid: "ordln_vendor_inland_freight_amount"},
     ordln_gross_weight_kg: {label: 'Gross Weight (KGS)', data_type: :decimal, module_type: 'OrderLine', cdef_uid: "ordln_gross_weight_kg"},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"},
-    shp_booking_unlocked_date: {label: "Booking Unlocked Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_booking_unlocked_date"}
+    shp_booking_unlocked_date: {label: "Booking Unlocked Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_booking_unlocked_date"},
+    shp_vgm_revised_date: {label: "VGM Revised Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_vgm_revised_date"},
+    shp_vgm_revised_by: {label: "VGM Revised By", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_vgm_revised_by", read_only: true, is_user: true},
+    shp_factory_pack_revised_date: {label: "Factory Pack Revised Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_factory_pack_revised_date"},
+    shp_factory_pack_revised_by: {label: "Factory Pack Revised By", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_factory_pack_revised_by", read_only: true, is_user: true},
+    shp_vgm_electronic_signature: {label: "VGM Electronic Signature", data_type: :string, module_type: "Shipment", cdef_uid: "shp_vgm_electronic_signature"},
+    shp_vgm_signature_date: {label: "VGM Electronic Signature Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_vgm_signature_date"},
+    shp_isf_revised_by: {label: "ISF Revised By", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_isf_revised_by", read_only: true, is_user: true},
+    shp_isf_revised_date: {label: "ISF Revised Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_isf_revised_date"},
+    shp_testing_address: {label: "Testing Address", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_testing_address", is_address: true},
+    con_weighing_company: {label: "Weighing Company", data_type: :integer, module_type: "Container", cdef_uid: "con_weighing_company", is_address: true},
+    con_weighed_date: {label: "Weighed Date", data_type: :date, module_type: "Container", cdef_uid: "con_weighed_date"},
+    con_weighing_method: {label: "Weighing Method", data_type: :string, module_type: "Container", cdef_uid: "con_weighing_method"},
+    con_cargo_weight: {label: "Cargo Weight", data_type: :decimal, module_type: "Container", cdef_uid: "con_cargo_weight"},
+    con_dunnage_weight: {label: "Dunnage Weight", data_type: :decimal, module_type: "Container", cdef_uid: "con_dunnage_weight"},
+    con_tare_weight: {label: "Tare Weight", data_type: :decimal, module_type: "Container", cdef_uid: "con_tare_weight"},
+    con_total_vgm_weight: {label: "Total VGM Weight", data_type: :decimal, module_type: "Container", cdef_uid: "con_total_vgm_weight"},
+    con_remarks: {label: "Remarks", data_type: :text, module_type: "Container", cdef_uid: "con_remarks"}
   }
 
   def self.included(base)

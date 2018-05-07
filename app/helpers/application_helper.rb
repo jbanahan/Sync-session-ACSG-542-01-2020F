@@ -405,10 +405,12 @@ module ApplicationHelper
     case model_field.data_type
     when :boolean
       # The cv_chkbx tag is monitored by a jquery expression and copies the state of the check into the hidden field (which is what is read on form submission)
+      # DO NOT change this output without making sure you've handled all legacy cases that utilize this in open_chain.js and the bulk update 
+      # cases from bulk_actions.js.coffee
       html_attributes[:class] << "cv_chkbx"
       chb_field_name = form_field_name.gsub(/[\[\]*]/, '_')
       html_attributes[:id] = "cbx_"+chb_field_name
-      field = hidden_field_tag(form_field_name,c_val,:id=>"hdn_"+chb_field_name) + check_box_tag('ignore_me', "1", c_val, html_attributes)
+      field = hidden_field_tag(form_field_name,c_val, id: ("hdn_"+chb_field_name), class: "hdn_cv_chkbx") + check_box_tag('ignore_me', "1", c_val, html_attributes)
     when :text
       html_attributes[:rows] = 5 unless html_attributes[:rows]
       field = model_text_area_tag(form_field_name, model_field, c_val, html_attributes)

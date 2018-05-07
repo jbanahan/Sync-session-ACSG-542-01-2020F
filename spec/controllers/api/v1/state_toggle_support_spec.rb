@@ -8,7 +8,7 @@ describe Api::V1::CompaniesController do #because we have to test on some concre
   end
   describe "toggle_state_button" do
     it "should toggle state" do
-      btn = double('state toggle button')
+      btn = instance_double(StateToggleButton)
       expect(btn).to receive(:async_toggle!).with(@c,@u)
       allow(btn).to receive(:id).and_return 10
       expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([btn])
@@ -16,52 +16,33 @@ describe Api::V1::CompaniesController do #because we have to test on some concre
       expect(response).to be_success
     end
     it "should not toggle state if user cannot access button" do
-      btn = double('state toggle button')
+      btn = instance_double(StateToggleButton)
       expect(btn).not_to receive(:async_toggle!).with(@c,@u)
       allow(btn).to receive(:id).and_return 10
       expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([])
       post :toggle_state_button, id: @c.id.to_s, button_id: '10'
       expect(response.status).to eq 403
     end
+    it "allows access to the state toggle button via the button's identifier" do
+      btn = instance_double(StateToggleButton)
+      expect(btn).to receive(:async_toggle!).with(@c,@u)
+      allow(btn).to receive(:id).and_return 10
+      allow(btn).to receive(:identifier).and_return "identifier"
+      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([btn])
+      post :toggle_state_button, id: @c.id.to_s, identifier: 'identifier'
+      expect(response).to be_success
+    end
   end
 
   describe "state_toggle_buttons" do
     it "should render result of render_state_toggle_buttons" do
-      expect_any_instance_of(described_class).to receive(:render_state_toggle_buttons).with(@c,@u).and_return([{a:'b'}])
+      expect_any_instance_of(described_class).to receive(:render_state_toggle_buttons).with(@c,@u, api_hash: {}).and_return({"state_toggle_buttons" => [{a:'b'}]})
 
       get :state_toggle_buttons, id: @c.id.to_s
 
       expect(response).to be_success
       expected = {'state_toggle_buttons'=>[{'a'=>'b'}]}
       expect(response.body).to eq expected.to_json
-    end
-  end
-
-  #this is separate from the API method so they can be injected in other calls
-  describe "render_state_toggle_buttons" do
-    before :each do
-      @btn = Factory(:state_toggle_button,
-        activate_text:'A',activate_confirmation_text:'B',
-        deactivate_text:'C',deactivate_confirmation_text:'D'
-      )
-    end
-    it "should return array of buttons hash data" do
-      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([@btn])
-      allow(@btn).to receive(:to_be_activated?).and_return(true)
-
-      expect(described_class.new.render_state_toggle_buttons(@c,@u)).to eq [
-        {id:@btn.id,button_text:'A',button_confirmation:'B',
-          core_module_path:'companies',base_object_id:@c.id}
-      ]
-    end
-    it "should return activation based on to_be_activated? state" do
-      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([@btn])
-      allow(@btn).to receive(:to_be_activated?).and_return(false)
-
-      expect(described_class.new.render_state_toggle_buttons(@c,@u)).to eq [
-        {id:@btn.id,button_text:'C',button_confirmation:'D',
-          core_module_path:'companies',base_object_id:@c.id}
-      ]
     end
   end
 end

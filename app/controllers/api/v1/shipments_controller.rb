@@ -1,12 +1,9 @@
 require 'open_chain/custom_handler/isf_xml_generator'
-require 'open_chain/order_booking_registry'
+require 'open_chain/registries/order_booking_registry'
+require 'open_chain/api/v1/shipment_api_json_generator'
 
 module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControllerBase
   include ActionView::Helpers::NumberHelper
-
-  def initialize
-    super(OpenChain::Api::ApiEntityJsonizer.new(force_big_decimal_numeric:true, blank_if_nil:true))
-  end
 
   def core_module
     CoreModule::SHIPMENT
@@ -18,10 +15,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       shp_ref: Shipment.generate_reference,
       shp_imp_id: order.importer_id,
       shp_ven_id: order.vendor_id,
-      shp_ship_from_id: order.ship_from_id,
       booking_lines: lines
     }
-    OpenChain::OrderBookingRegistry.registered.each {|r| r.book_from_order_hook(h,order,lines)}
+    OpenChain::Registries::OrderBookingRegistry.book_from_order_hook(h,order,lines)
     params['shipment'] = h.with_indifferent_access
     do_create core_module
   end
@@ -36,7 +32,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       id: s.id,
       booking_lines: lines
     }
-    OpenChain::OrderBookingRegistry.registered.each {|r| r.book_from_order_hook(h,order,lines)}
+    OpenChain::Registries::OrderBookingRegistry.book_from_order_hook(h,order,lines)
     params['shipment'] = h.with_indifferent_access
     do_update core_module
   end
@@ -47,7 +43,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     r = []
     s.available_orders(current_user).order('customer_order_number').limit(25).each do |ord|
       hsh = {id:ord.id}
-      ord_fields.each {|uid| hsh[uid] = export_field(uid, ord)}
+      ord_fields.each {|uid| hsh[uid] = output_generator.export_field(uid, ord)}
       r << hsh
     end
     render json: {available_orders:r}
@@ -61,7 +57,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
     Order.where(id: order_ids).each do |order|
       hsh = {id:order.id}
-      ord_fields.each {|uid| hsh[uid] = export_field(uid, order)}
+      ord_fields.each {|uid| hsh[uid] = output_generator.export_field(uid, order)}
       result << hsh
     end
     render json: {booked_orders:result, lines_available: lines_available}
@@ -101,15 +97,18 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       shipments = shipments.where(importer_id: current_user.company.linked_companies.where(importer: true).pluck(:id))
     end
 
-    registry = OpenChain::OrderBookingRegistry.registered
-    if registry.length > 0
-      OpenChain::OrderBookingRegistry.registered.each {|r| shipments = r.open_bookings_hook(current_user, shipments, order)}
-    else
-      # By default, drop off any bookings where shipment instructions have been sent to the carrier
-      shipments = shipments.where(shipment_instructions_sent_date: nil)
+    shipments = OpenChain::Registries::OrderBookingRegistry.open_bookings_hook(current_user, shipments, order)
+    results = shipments.order("updated_at DESC").limit(200).map do |s|
+      ship_hash = obj_to_json_hash(s)
+
+      # We're going to add one special permission for this request that indicates if the order requested can be booked to the shipment
+      if order
+        ship_hash['permissions'][:can_book_order_to_shipment] = OpenChain::Registries::OrderBookingRegistry.can_book_order_to_shipment?(order, s)
+      end
+      ship_hash
     end
 
-    render json: {results: shipments.order("updated_at DESC").limit(200).map {|s| obj_to_json_hash(s) }}
+    render json: {results: results}
   end
 
   def process_tradecard_pack_manifest
@@ -209,204 +208,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     shp
 
   end
-  def obj_to_json_hash s
-    headers_to_render = limit_fields([
-      :shp_arrival_port_date,
-      :shp_booked_order_ids,
-      :shp_booked_orders,
-      :shp_booked_quantity,
-      :shp_booking_approved_by_full_name,
-      :shp_booking_approved_date,
-      :shp_booking_cargo_ready_date,
-      :shp_booking_carrier,
-      :shp_booking_confirmed_by_full_name,
-      :shp_booking_confirmed_date,
-      :shp_booking_cutoff_date,
-      :shp_booking_est_arrival_date,
-      :shp_booking_est_departure_date,
-      :shp_booking_first_port_receipt_name,
-      :shp_booking_mode,
-      :shp_booking_number,
-      :shp_booking_received_date,
-      :shp_booking_request_count,
-      :shp_booking_requested_by_full_name,
-      :shp_booking_requested_equipment,
-      :shp_booking_revised_by_full_name,
-      :shp_booking_revised_date,
-      :shp_booking_shipment_type,
-      :shp_booking_vessel,
-      :shp_buyer_address_full_address,
-      :shp_buyer_address_id,
-      :shp_buyer_address_name,
-      :shp_cancel_requested_at,
-      :shp_cancel_requested_by_full_name,
-      :shp_canceled_by_full_name,
-      :shp_canceled_date,
-      :shp_car_name,
-      :shp_car_syscode,
-      :shp_cargo_on_hand_date,
-      :shp_cargo_ready_date,
-      :shp_chargeable_weight,
-      :shp_comment_count,
-      :shp_confirmed_on_board_origin_date,
-      :shp_consolidator_address_full_address,
-      :shp_consolidator_address_id,
-      :shp_consolidator_address_name,
-      :shp_container_stuffing_address_full_address,
-      :shp_container_stuffing_address_id,
-      :shp_container_stuffing_address_name,
-      :shp_cutoff_date,
-      :shp_delay_reason_codes,
-      :shp_delivered_date,
-      :shp_departure_date,
-      :shp_departure_last_foreign_port_date,
-      :shp_dest_port_id,
-      :shp_dest_port_name,
-      :shp_dimensional_weight,
-      :shp_do_issued_at,
-      :shp_docs_received_date,
-      :shp_est_arrival_port_date,
-      :shp_est_delivery_date,
-      :shp_est_departure_date,
-      :shp_est_inland_port_date,
-      :shp_est_load_date,
-      :shp_eta_last_foreign_port_date,
-      :shp_export_license_required,
-      :shp_final_dest_port_id,
-      :shp_final_dest_port_name,
-      :shp_first_port_receipt_id,
-      :shp_first_port_receipt_name,
-      :shp_fish_and_wildlife,
-      :shp_freight_terms,
-      :shp_freight_total,
-      :shp_fwd_id,
-      :shp_fwd_name,
-      :shp_fwd_syscode,
-      :shp_gross_weight,
-      :shp_hazmat,
-      :shp_house_bill_of_lading,
-      :shp_imp_id,
-      :shp_imp_name,
-      :shp_imp_syscode,
-      :shp_importer_reference,
-      :shp_in_warehouse_time,
-      :shp_inland_dest_port,
-      :shp_inland_dest_port_id,
-      :shp_inland_dest_port_name,
-      :shp_inland_port_date,
-      :shp_invoice_total,
-      :shp_isf_sent_at,
-      :shp_lacey,
-      :shp_lading_port_id,
-      :shp_lading_port_name,
-      :shp_last_foreign_port_id,
-      :shp_last_foreign_port_name,
-      :shp_lcl,
-      :shp_manufacturer_address_full_address,
-      :shp_manufacturer_address_name,
-      :shp_marks_and_numbers,
-      :shp_master_bill_of_lading,
-      :shp_mode,
-      :shp_number_of_packages,
-      :shp_number_of_packages_uom,
-      :shp_pickup_at,
-      :shp_port_last_free_day,
-      :shp_receipt_location,
-      :shp_ref,
-      :shp_requested_equipment,
-      :shp_seller_address_full_address,
-      :shp_seller_address_id,
-      :shp_seller_address_name,
-      :shp_ship_from_id,
-      :shp_ship_from_name,
-      :shp_ship_from_full_address,
-      :shp_ship_to_full_address,
-      :shp_ship_to_id,
-      :shp_ship_to_name,
-      :shp_shipment_instructions_sent_date,
-      :shp_shipment_instructions_sent_by_full_name,
-      :shp_shipment_type,
-      :shp_swpm,
-      :shp_trucker_name,
-      :shp_unlading_port_id,
-      :shp_unlading_port_name,
-      :shp_ven_id,
-      :shp_ven_syscode,
-      :shp_vessel,
-      :shp_vessel_carrier_scac,
-      :shp_vessel_nationality,
-      :shp_volume,
-      :shp_voyage
-    ] + custom_field_keys(CoreModule::SHIPMENT))
 
-    container_fields_to_render = ([
-      :con_uid,
-      :con_container_number,
-      :con_container_size,
-      :con_size_description,
-      :con_weight,
-      :con_seal_number,
-      :con_teus,
-      :con_fcl_lcl,
-      :con_quantity,
-      :con_uom,
-      :con_shipment_line_count
-    ] + custom_field_keys(CoreModule::CONTAINER))
-
-    h = {id: s.id}
-    headers_to_render.each {|uid| h[uid] = export_field(uid, s)}
-    if render_shipment_lines?
-      h['lines'] = render_lines(preload_shipment_lines(s, render_order_fields?, true), shipment_line_fields_to_render, render_order_fields?)
-    end
-    if render_booking_lines?
-      h['booking_lines'] = render_lines(preload_booking_lines(s), booking_line_fields_to_render)
-    end
-
-    h['containers'] = render_lines(s.containers, container_fields_to_render) if s.containers.any?
-
-    if render_carton_sets?
-      h['carton_sets'] = render_carton_sets(s)
-    end
-    if render_attachments?
-      render_attachments(s,h)
-    end
-    if render_summary?
-      h['summary'] = render_summary(s)
-    end
-    if render_comments?
-      h['comments'] = render_comments(s, current_user)
-    end
-    h['permissions'] = render_permissions(s)
-    custom_view = OpenChain::CustomHandler::CustomViewSelector.shipment_view(s,current_user)
-    if !custom_view.blank?
-      h['custom_view'] = custom_view
-    end
-    h['screen_settings'] = JSON.parse(KeyJsonItem.shipment_settings(s.importer.try(:system_code)).first.try(:json_data) || '{}')
-    h
-  end
-
-  def preload_shipment_lines shipment, render_order_fields, custom_values
-    if render_order_fields?
-      if custom_values
-        return shipment.shipment_lines.includes([{piece_sets: {order_line: [:order]}}, :custom_values, {product: [:custom_values]}])
-      else
-        return shipment.shipment_lines.includes([{piece_sets: {order_line: [:order]}}, {product: [:custom_values]}])
-      end
-      
-    else
-      return shipment.shipment_lines
-    end
-  end
-
-  def preload_booking_lines shipment
-    shipment.booking_lines.includes([{order_line: [:order]}, :order])
+  def json_generator
+    OpenChain::Api::V1::ShipmentApiJsonGenerator.new
   end
 
   def shipment_lines
     s = get_shipment
     h = {id: s.id}
-  
-    h['lines'] = render_lines(preload_shipment_lines(s, render_order_fields?, true), shipment_line_fields_to_render, render_order_fields?)
+    render_order_fields = output_generator.render_order_fields?
+    h['lines'] = output_generator.render_lines(output_generator.preload_shipment_lines(s, render_order_fields, true), output_generator.shipment_line_fields_to_render, render_order_fields)
 
     render json: {'shipment' => h}
   end
@@ -414,7 +225,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def booking_lines
     s = get_shipment
     h = {id: s.id}
-    h['booking_lines'] = render_lines(preload_booking_lines(s), booking_line_fields_to_render)
+    h['booking_lines'] = output_generator.render_lines(output_generator.preload_booking_lines(s), output_generator.booking_line_fields_to_render)
 
     render json: {'shipment' => h}
   end
@@ -426,9 +237,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       :containers,
       :custom_values
     ]
-    includes_array[0][:shipment_lines][0] = {piece_sets: {order_line: [:custom_values, :product, :order]}} if render_order_fields?
+    render_order_fields = output_generator.render_order_fields?
+
+    includes_array[0][:shipment_lines][0] = {piece_sets: {order_line: [:custom_values, :product, :order]}} if render_order_fields
     s = Shipment.where(id:id).includes(includes_array).first
-    s = freeze_custom_values s, render_order_fields?
+    s = freeze_custom_values s, render_order_fields
     s
   end
 
@@ -490,190 +303,26 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   private
+
   def get_shipment
     s = Shipment.find params[:id]
     raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
     s
   end
 
-  def booking_line_fields_to_render
-    limit_fields([
-      :bkln_line_number,
-      :bkln_order_number,
-      :bkln_quantity,
-      :bkln_puid,
-      :bkln_carton_qty,
-      :bkln_gross_kgs,
-      :bkln_cbms,
-      :bkln_carton_set_id,
-      :bkln_order_and_line_number,
-      :bkln_order_id,
-      :bkln_container_size,
-      :bkln_var_db_id,
-      :bkln_varuid,
-      :bkln_order_line_id,
-      :bkln_product_db_id,
-      :bkln_order_line_quantity,
-      :bkln_quantity_diff,
-      :bkln_summed_order_line_quantity,
-      :bkln_quantity_diff_by_product
-     ])
-  end
-
-  def shipment_line_fields_to_render
-    limit_fields([
-      :shpln_line_number,
-      :shpln_shipped_qty,
-      :shpln_puid,
-      :shpln_pname,
-      :shpln_container_uid,
-      :shpln_container_number,
-      :shpln_container_size,
-      :shpln_cbms,
-      :shpln_gross_kgs,
-      :shpln_carton_qty,
-      :shpln_carton_set_uid,
-      :shpln_manufacturer_address_name,
-      :shpln_manufacturer_address_full_address,
-      :shpln_cust_ord_no
-    ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
-  end
-
-  def render_permissions shipment
-    {
-      can_edit:shipment.can_edit?(current_user),
-      can_view:shipment.can_view?(current_user),
-      can_attach:shipment.can_attach?(current_user),
-      can_comment:shipment.can_comment?(current_user),
-      can_book:shipment.can_book?,
-      can_request_booking:shipment.can_request_booking?(current_user),
-      can_approve_booking:shipment.can_approve_booking?(current_user),
-      can_confirm_booking:shipment.can_confirm_booking?(current_user),
-      can_revise_booking:shipment.can_revise_booking?(current_user),
-      can_edit_booking:shipment.can_edit_booking?(current_user),
-      can_add_remove_shipment_lines:shipment.can_add_remove_shipment_lines?(current_user),
-      can_add_remove_booking_lines:shipment.can_add_remove_booking_lines?(current_user),
-      can_request_cancel:shipment.can_request_cancel?(current_user),
-      can_cancel:shipment.can_cancel?(current_user),
-      can_uncancel:shipment.can_uncancel?(current_user),
-      can_send_isf:shipment.can_approve_booking?(current_user, true),
-      enabled_booking_types:shipment.enabled_booking_types,
-      can_send_shipment_instructions:shipment.can_send_shipment_instructions?(current_user)
-    }
-  end
-  def render_shipment_lines?
-    params[:shipment_lines].present? || action_name == 'create'
-  end
-  def render_booking_lines?
-    params[:booking_lines].present? || action_name == 'create'
-  end
-  def render_lines (lines, fields_to_render, with_order_lines=false)
-    lines.map do |sl|
-      rendered_line = {id: sl.id}
-      fields_to_render.each {|uid| rendered_line[uid] = export_field(uid, sl)}
-      rendered_line['order_lines'] = render_order_fields(sl) if with_order_lines
-      rendered_line
-    end
-  end
-  def render_carton_sets?
-    params[:include] && params[:include].match(/carton_sets/)
-  end
-  def render_carton_sets shipment
-    fields = limit_fields([
-      :cs_starting_carton,
-      :cs_carton_qty,
-      :cs_length,
-      :cs_width,
-      :cs_height,
-      :cs_net_net,
-      :cs_net,
-      :cs_gross
-    ])
-    render_lines(shipment.carton_sets, fields)
-  end
-  def render_summary?
-    params[:summary]
-  end
-  def render_summary shipment
-    booked_piece_count = 0
-    piece_count = 0
-    booked_order_ids = Set.new
-    order_ids = Set.new
-    booked_product_ids = Set.new
-    product_ids = Set.new
-    line_count = 0
-    booking_line_count = 0
-
-    # This query runs WAY faster than iterating over the shipment lines, piece sets, order lines to get counts.
-    ActiveRecord::Base.connection.execute("select ol.id, ol.order_id, ol.product_id, l.quantity FROM shipment_lines l
-      inner join piece_sets p on l.id = p.shipment_line_id
-      inner join order_lines ol on p.order_line_id = ol.id
-      where l.shipment_id = #{shipment.id}").each do |row|
-
-      order_ids << row[1] unless row[1].nil?
-      product_ids << row[2] unless row[2].nil?
-      line_count += 1
-      piece_count += row[3] unless row[3].nil?
-    end
-
-    preload_booking_lines(shipment).each do |bl|
-      booking_line_count += 1
-      booked_piece_count += bl.quantity unless bl.quantity.nil?
-      if bl.order_line_id.present?
-        booked_order_ids << bl.order_line.order_id
-      else
-        booked_order_ids << bl.order_id if bl.order_id.present?
-      end
-      booked_product_ids << bl.product_id if bl.product_id.present?
-    end
-    {
-      line_count: number_with_delimiter(line_count),
-      booked_line_count: number_with_delimiter(booking_line_count),
-      piece_count: number_with_delimiter(number_with_precision(piece_count, strip_insignificant_zeros:true)),
-      booked_piece_count: number_with_delimiter(number_with_precision(booked_piece_count, strip_insignificant_zeros:true)),
-      order_count: number_with_delimiter(order_ids.size),
-      booked_order_count: number_with_delimiter(booked_order_ids.size),
-      product_count: number_with_delimiter(product_ids.size),
-      booked_product_count: number_with_delimiter(booked_product_ids.to_a.compact.length)
-    }
-  end
-  def render_order_fields?
-    params[:include] && params[:include].match(/order_lines/)
-  end
-  #return hash with extra order line fields
-  def render_order_fields shipment_line
-    shipment_line.piece_sets.collect do |ps|
-      if ps.order_line_id
-        ol = ps.order_line
-        order = ol.order
-        olh = {'allocated_quantity'=>ps.quantity,
-          'order_id'=>order.id,
-          'ord_ord_num'=>export_field(:ord_ord_num,order),
-          'ord_cust_ord_no'=>export_field(:ord_cust_ord_no,order),
-          'id'=>ol.id
-        }
-        line_fields = limit_fields([
-          :ordln_line_number,
-          :ordln_puid,
-          :ordln_pname,
-          :ordln_ppu,
-          :ordln_currency,
-          :ordln_ordered_qty,
-          :ordln_country_of_origin,
-          :ordln_hts
-        ])
-        line_fields.each {|uid| olh[uid] = export_field(uid, ol)}
-        olh
-      else
-        nil
-      end
-    end
-  end
   def load_lines shipment, h
     if h['lines']
       h['lines'].each_with_index do |base_ln,i|
         ln = base_ln.clone
-        if !ln['shpln_puid'].blank? && !ln['shpln_pname'].blank?
+        # If the product id is set, then there's no need for these fields (and they'll slow down loading)
+        if ln["shpln_prod_id"].present? || ln["shpln_prod_db_id"].present?
+          ln.delete 'shpln_puid'
+          ln.delete 'shpln_pname'
+          if ln["shpln_prod_db_id"].present? && ln["shpln_prod_id"].present?
+            # If both of these are present, remove the shpln_prod_db_id because it doesn't validate user can view the product
+            ln.delete 'shpln_prod_db_id'
+          end
+        elsif !ln['shpln_puid'].blank? && !ln['shpln_pname'].blank?
           ln.delete 'shpln_pname' #dont' need to update for both
         end
         s_line = shipment.shipment_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['shpln_line_number'], obj.line_number)}
@@ -787,7 +436,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       return false
     end
   end
-  
 
   def match_numbers? hash_val, number
     hash_val.present? && hash_val.to_s == number.to_s
@@ -843,14 +491,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       aj.update_attributes!(error_message: e.message) if aj && !(e.instance_of? AttachmentAlreadyProcessedError)
       raise e
     end
-  end
-
-  def render_comments?
-    params[:include].present? && params[:include].match(/comments/)
-  end
-
-  def render_comments s, user
-    s.comments.map {|c| c.comment_json(user) }
   end
 
   def make_booking_lines_for_order order_id

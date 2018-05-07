@@ -71,4 +71,7 @@ module OpenChain; module ModelFieldGenerator; module CompanyGenerator
   def make_forwarder_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, 'fwd', 'Forwarder', 'forwarder'
   end
+  def make_consignee_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, 'consignee', 'Consignee', 'consignee'
+  end
 end; end; end

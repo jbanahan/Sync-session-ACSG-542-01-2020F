@@ -208,7 +208,7 @@ class EntitySnapshot < ActiveRecord::Base
     obj = core_module.klass.new unless obj
     custom_values = []
     @cm_cache ||= Hash.new do |h, k|
-      h[k] = k.model_fields {|mf| mf.restore_field? }.values
+      h[k] = k.model_fields_for_snapshot(include_non_restore_fields: false).values
     end
 
     if !obj.respond_to?(:can_edit?) || obj.can_edit?(user)

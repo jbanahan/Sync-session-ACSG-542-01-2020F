@@ -1,19 +1,14 @@
-require 'open_chain/api/descriptor_based_api_entity_jsonizer'
+require 'open_chain/api/v1/folder_api_json_generator'
 
-module Api; module V1; class FoldersController < Api::V1::ApiController
+module Api; module V1; class FoldersController < Api::V1::ApiCoreModuleControllerBase
   include PolymorphicFinders
-  include Api::V1::ApiJsonSupport
-
-  def initialize
-    super(OpenChain::Api::DescriptorBasedApiEntityJsonizer.new)
-  end
 
   def index
     find_object(params, current_user) do |obj|
       folders = obj.folders.select {|f| f.can_view?(current_user)}
       json = []
       folders.each do |folder|
-        json << folder_view(current_user, folder)
+        json << obj_to_json_hash(folder)
       end
 
       render json: {"folders" => json}
@@ -44,7 +39,7 @@ module Api; module V1; class FoldersController < Api::V1::ApiController
     find_object(params, current_user) do |obj|
       folder = obj.folders.find {|f| f.id == params[:id].to_i }
       if folder && folder.can_view?(current_user)
-        render json: {"folder" => folder_view(current_user, folder)}
+        render json: {"folder" => obj_to_json_hash(folder)}
       else
         render_forbidden
       end
@@ -66,31 +61,11 @@ module Api; module V1; class FoldersController < Api::V1::ApiController
     end
   end
 
+  def json_generator
+    OpenChain::Api::V1::FolderApiJsonGenerator.new
+  end
 
   private
-
-    def folder_view user, folder
-      comment_permissions = {}
-      folder.comments.each do |c|
-        comment_permissions[c.id] = Comment.comment_json_permissions(c, user)
-      end
-
-      fields = all_requested_model_field_uids(CoreModule::FOLDER, associations: {"attachments" => CoreModule::ATTACHMENT, "comments" => CoreModule::COMMENT, "groups" => CoreModule::GROUP})
-      hash = to_entity_hash(folder, fields, user: user)
-      # UI needs child keys even if it's blank, so add it in (the jsonizer doesn't build these..not sure I want to add this in there either)
-      hash[:attachments] = [] if hash[:attachments].nil?
-      hash[:comments] = [] if hash[:comments].nil?
-      hash[:groups] = [] if hash[:groups].nil?
-
-      hash[:comments].each do |comment|
-        comment[:permissions] = comment_permissions[comment['id']]
-        comment[:permissions] = {} if comment[:permissions].nil?
-      end
-
-      hash[:permissions] = {can_attach: folder.can_attach?(user), can_comment: folder.can_comment?(user), can_edit: folder.can_edit?(user)}
-      
-      hash
-    end
 
     def find_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
@@ -121,7 +96,7 @@ module Api; module V1; class FoldersController < Api::V1::ApiController
         render_error folder.errors
       else
         folder.base_object.create_async_snapshot(user) if folder.base_object.respond_to?(:create_async_snapshot)
-        render json: {"folder" => folder_view(user, folder)}
+        render json: {"folder" => obj_to_json_hash(folder)}
       end
     end
 

@@ -1,10 +1,7 @@
 require 'spec_helper'
 
 describe Order do
-  before :each do
-    OpenChain::OrderAcceptanceRegistry.clear
-    OpenChain::OrderBookingRegistry.clear
-  end
+  
   describe 'display_order_number' do
     it "shoud show order_number if no customer order number" do
       expect(Order.new(order_number:'abc').display_order_number).to eq 'abc'
@@ -53,46 +50,16 @@ describe Order do
       @o.async_post_update_logic!(@u)
     end
   end
-  describe 'can_book?' do
-    let :user do
-      u = double(:user)
-      allow(u).to receive(:edit_shipments?).and_return true
-      u
-    end
-    let :book_registry_array do
-      2.times do |x|
-        c = Class.new {
-          def self.can_book?(order, user); true; end
-          def self.can_request_booking?(shipment, user); true; end
-          def self.can_revise_booking?(shipment, user); true; end
-          def self.can_edit_booking?(shipment, user); true; end
-        }
-        OpenChain::OrderBookingRegistry.register(c)
-      end
-    end
-    it "should return true if can edit shipments and all OrderBookingRegistry entries return true" do
-      book_registry_array
-      expect(Order.new.can_book?(user)).to be_truthy
-    end
-    it "should return false if user cannot edit shipments" do
-      u = user
-      allow(u).to receive(:edit_shipments?).and_return false
-      book_registry_array
-      expect(Order.new.can_book?(user)).to be_falsey
-    end
-    it "should return false if any OrderBookingRegistry returns false" do
-      book_registry_array
-     c = Class.new {
-        def self.can_book?(order, user); false; end
-        def self.can_request_booking?(shipment, user); true; end
-        def self.can_revise_booking?(shipment, user); true; end
-        def self.can_edit_booking?(shipment, user); true; end
-      }
-      OpenChain::OrderBookingRegistry.register(c)
-      expect(Order.new.can_book?(user)).to be_falsey
-    end
 
+  describe 'can_book?' do
+    it "proxies call to booking registry" do
+      order = Order.new
+      user = User.new
+      expect(OpenChain::Registries::OrderBookingRegistry).to receive(:can_book?).with(order, user).and_return true
+      expect(order.can_book? user).to eq true
+    end
   end
+
   describe 'accept' do
     before :each do
       @o = Factory(:order)
@@ -119,27 +86,15 @@ describe Order do
       expect(@o.accepted_at).to_not be_nil
     end
   end
+  
   describe 'can_be_accepted?' do
-    it 'should return true if all OrderAcceptanceRegistry tests returns true' do
+    it "defers to OrderAcceptanceRegistry" do
       o = Order.new
-      d1 = double('oa1')
-      d2 = double('oa2')
-      [d1,d2].each {|d| expect(d).to receive(:can_be_accepted?).with(o).and_return true}
-      expect(OpenChain::OrderAcceptanceRegistry).to receive(:registered).and_return [d1,d2]
-
-      expect(o.can_be_accepted?).to be true
-    end
-    it 'should return false if any OrderAcceptanceRegistry test returns false' do
-      o = Order.new
-      d1 = double('oa1')
-      d2 = double('oa2')
-      expect(d1).to receive(:can_be_accepted?).with(o).and_return true
-      expect(d2).to receive(:can_be_accepted?).with(o).and_return false
-      expect(OpenChain::OrderAcceptanceRegistry).to receive(:registered).and_return [d1,d2]
-
-      expect(o.can_be_accepted?).to be false
+      expect(OpenChain::Registries::OrderAcceptanceRegistry).to receive(:can_be_accepted?).with(o).and_return true
+      expect(o.can_be_accepted?).to eq true
     end
   end
+
   describe 'unaccept' do
     before :each do
       @t = Time.now
@@ -169,67 +124,11 @@ describe Order do
     end
   end
   describe 'can_accept' do
-    context 'default behavior' do
-      before :each do
-        @g = Group.new(system_code:'ORDERACCEPT')
-      end
-      it "should not allow if user not in 'ORDERACCEPT' group" do
-        v = Company.new(vendor:true)
-        u = User.new
-        u.company = v
-        o = Order.new(vendor:v)
-        expect(o.can_accept?(u)).to be_falsey
-      end
-      it "should allow vendor user to accept" do
-        v = Company.new(vendor:true)
-        u = User.new
-        u.add_to_group_cache @g
-        u.company = v
-        o = Order.new(vendor:v)
-        expect(o.can_accept?(u)).to be_truthy
-      end
-      it "should allow agent to accept" do
-        a = Company.new(agent:true)
-        u = User.new
-        u.add_to_group_cache @g
-        u.company = a
-        o = Order.new(agent:a)
-        expect(o.can_accept?(u)).to be_truthy
-      end
-      it "should allow admin user to accept" do
-        c = Company.new(vendor:true)
-        u = User.new
-        u.add_to_group_cache @g
-        u.company = c
-        u.admin = true
-        o = Order.new
-        allow(o).to receive(:can_edit?).and_return true
-        expect(o.can_accept?(u)).to be_truthy
-      end
-      it "should not allow user who is not admin to accept" do
-        c = Company.new(vendor:true)
-        u = User.new
-        u.add_to_group_cache @g
-        u.company = c
-        u.admin = false
-        o = Order.new
-        allow(o).to receive(:can_edit?).and_return true
-        expect(o.can_accept?(u)).to be_falsey
-      end
-    end
-    it 'should not call default behavior if acceptance registry has values' do
-      c = Class.new do
-        def self.can_accept? ord, user
-          return true
-        end
-      end
-      OpenChain::OrderAcceptanceRegistry.register(c)
-      # This would fail under default behavior
-      v = Company.new(vendor:true)
+    it "defers to OrderAcceptanceRegistry" do
+      o = Order.new
       u = User.new
-      u.company = v
-      o = Order.new(vendor:v)
-      expect(o.can_accept?(u)).to be_truthy
+      expect(OpenChain::Registries::OrderAcceptanceRegistry).to receive(:can_accept?).with(o, u).and_return true
+      expect(o.can_accept? u).to eq true
     end
   end
   describe 'close' do

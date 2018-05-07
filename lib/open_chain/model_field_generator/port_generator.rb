@@ -18,12 +18,10 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
       qualified_field_name: "(SELECT id FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)"
     }
     if port_selector
-      id_hash[:select_options_lambda] = lambda {
-        port_selector.collect {|p| [p.id,p.name]}
-      }
+      id_hash[:select_options_lambda] = port_selector
     end
     r << [r_count,"#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix}",id_hash]
-    r << [r_count+r.size,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
+    r << [r_count+1,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
         import_lambda: lambda {|o,d| "#{name_prefix} is read only."},
         export_lambda: lambda {|obj|
           val = obj.public_send(join_field)
@@ -32,6 +30,18 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
         qualified_field_name: "(SELECT name FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)",
         data_type: :string,
         read_only: true
+      }]
+    r << [r_count+1, "#{uid_prefix}_code".to_sym, :code, "#{name_prefix} Code",{
+        import_lambda: lambda {|o,d| "#{name_prefix} is read only."},
+        export_lambda: lambda {|obj|
+          port = obj.public_send(join_field)
+
+          port.nil? ? '' : port.search_friendly_port_code(trim_cbsa: false).to_s
+        },
+        qualified_field_name: "(SELECT IFNULL(schedule_d_code, IFNULL(schedule_k_code, IFNULL(unlocode, IFNULL(cbsa_port, null)))) FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)",
+        data_type: :string,
+        read_only: true,
+        history_ignore: true
       }]
     r
   end
