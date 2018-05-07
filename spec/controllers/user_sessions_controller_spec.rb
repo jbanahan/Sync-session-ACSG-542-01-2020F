@@ -64,11 +64,7 @@ describe UserSessionsController do
         expect(cookies[:remember_me]).to be_nil
       end
     end
-
-
-
     
-
     it 'redirects to specified return to page' do
       session[:return_to] = "/return_to"
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
@@ -91,7 +87,7 @@ describe UserSessionsController do
       @user.save!
       @user.reload
       expect_any_instance_of(User).not_to receive(:on_successful_login).with request
-      post :create, :user_session => {'username'=>@user.username, 'password'=>"password"}
+      post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
       expect(response).to be_redirect
       expect(response).to redirect_to "/user_sessions/new"
       expect(flash[:errors]).to include "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
