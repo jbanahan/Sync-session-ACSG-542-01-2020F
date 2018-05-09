@@ -76,6 +76,64 @@ describe OpenChain::Report::MissingStatementSummaryEntryReport do
       @entry.save!
     end
 
+    it 'ignores fixed entries' do
+      @entry.entry_comments << EntryComment.create!(body: 'SUMMARY HAS BEEN ADDED' )
+
+      described_class.new.run ['bbommarito@vandegriftinc.com'], start_date, end_date
+
+      Timecop.freeze(Time.zone.now) do
+        sheet = get_emailed_worksheet 'Statement Entry Summary Not On File', "Statement Entry Summary Not On File - #{Time.zone.now.to_date}.xls"
+
+        expect(sheet).to_not be_nil
+        expect(sheet.row(0)).to eq ['Broker Reference', 'Entry Filed Date', 'Release Date', 'Release Certification Message', 'Port Code', 'Port Name', 'User Notes']
+        expect(sheet.row(1)).to eq ["No entries missing summaries"]
+      end
+    end
+
+    it 'handles more than one failure' do
+      second_entry = Factory.create(:entry)
+      second_entry.update_attributes(
+          last_exported_from_source: start_date,
+          entry_filed_date: start_date,
+          release_date: start_date,
+          file_logged_date: start_date,
+          broker_reference: 'BROKER1',
+          release_cert_message: 'CERT MESSAGE',
+          entry_port_code: @port.schedule_d_code,
+          source_system: 'Alliance'
+      )
+      second_entry.entry_comments << EntryComment.create!(body: 'STMNT ENTRY SUMMARY NOT ON FILE', created_at: 5.minutes.ago )
+
+      described_class.new.run ['bbommarito@vandegriftinc.com'], start_date, end_date
+
+      Timecop.freeze(Time.zone.now) do
+        sheet = get_emailed_worksheet 'Statement Entry Summary Not On File', "Statement Entry Summary Not On File - #{Time.zone.now.to_date}.xls"
+
+        expect(sheet).to_not be_nil
+        expect(sheet.row(0)).to eq ['Broker Reference', 'Entry Filed Date', 'Release Date', 'Release Certification Message', 'Port Code', 'Port Name', 'User Notes']
+        expect(sheet.row(1)).to eq ['BROKER', excel_date(end_date.to_date), excel_date(end_date.to_date), 'CERT MESSAGE', '1234', 'PORT', 'STMNT ENTRY SUMMARY NOT ON FILE']
+        expect(sheet.row(2)).to eq ['BROKER1', excel_date(end_date.to_date), excel_date(end_date.to_date), 'CERT MESSAGE', '1234', 'PORT', 'STMNT ENTRY SUMMARY NOT ON FILE']
+      end
+    end
+
+    it 'handles the most insane possible case' do
+      @entry.entry_comments << EntryComment.create!(body: "SUMMARY HAS BEEN ADDED", created_at: Time.zone.now)
+      @entry.entry_comments << EntryComment.create!(body: 'STMNT ENTRY SUMMARY NOT ON FILE', created_at: Time.zone.now + 1.second)
+      @entry.entry_comments << EntryComment.create!(body: "SUMMARY HAS BEEN ADDED", created_at: Time.zone.now + 2.seconds)
+      # We want the final 'failure' to be somewhat unique
+      @entry.entry_comments << EntryComment.create!(body: 'STMNT ENTRY SUMMARY NOT ON FILE 1234', created_at: Time.zone.now + 3.seconds)
+
+      described_class.new.run ['bbommarito@vandegriftinc.com'], start_date, end_date
+
+      Timecop.freeze(Time.zone.now) do
+        sheet = get_emailed_worksheet 'Statement Entry Summary Not On File', "Statement Entry Summary Not On File - #{Time.zone.now.to_date}.xls"
+
+        expect(sheet).to_not be_nil
+        expect(sheet.row(0)).to eq ['Broker Reference', 'Entry Filed Date', 'Release Date', 'Release Certification Message', 'Port Code', 'Port Name', 'User Notes']
+        expect(sheet.row(1)).to eq ['BROKER', excel_date(end_date.to_date), excel_date(end_date.to_date), 'CERT MESSAGE', '1234', 'PORT', 'STMNT ENTRY SUMMARY NOT ON FILE 1234']
+      end
+    end
+
     it 'identifies entries that have a missing entry summary' do
       described_class.new.run ['bbommarito@vandegriftinc.com'], start_date, end_date
 
