@@ -1,48 +1,54 @@
-require 'spec_helper'
+describe Api::V1::ShipmentsController do
 
-describe Api::V1::CompaniesController do #because we have to test on some concrete controller
-  before :each do
-    @c = Factory(:company)
-    @u = Factory(:admin_user)
-    allow_api_access @u
-  end
+  let! (:user) { 
+    u = Factory(:admin_user) 
+    allow_api_access u
+    u
+  }
+
+  let! (:shipment) { Factory(:shipment) }
+  let! (:state_toggle_button) { StateToggleButton.create! date_attribute: "shp_isf_sent_at", user_attribute: "shp_isf_sent_by", identifier: "shp_isf_sent", disabled: false, module_type: "Shipment"}
+
   describe "toggle_state_button" do
+    
     it "should toggle state" do
       btn = instance_double(StateToggleButton)
-      expect(btn).to receive(:async_toggle!).with(@c,@u)
+      expect(btn).to receive(:async_toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
-      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([btn])
-      post :toggle_state_button, id: @c.id.to_s, button_id: '10'
+      expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([btn])
+      post :toggle_state_button, id: shipment.id.to_s, button_id: '10'
       expect(response).to be_success
     end
+    
     it "should not toggle state if user cannot access button" do
       btn = instance_double(StateToggleButton)
-      expect(btn).not_to receive(:async_toggle!).with(@c,@u)
+      expect(btn).not_to receive(:async_toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
-      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([])
-      post :toggle_state_button, id: @c.id.to_s, button_id: '10'
+      expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([])
+      post :toggle_state_button, id: shipment.id.to_s, button_id: '10'
       expect(response.status).to eq 403
     end
+
     it "allows access to the state toggle button via the button's identifier" do
       btn = instance_double(StateToggleButton)
-      expect(btn).to receive(:async_toggle!).with(@c,@u)
+      expect(btn).to receive(:async_toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
       allow(btn).to receive(:identifier).and_return "identifier"
-      expect(StateToggleButton).to receive(:for_core_object_user).with(@c,@u).and_return([btn])
-      post :toggle_state_button, id: @c.id.to_s, identifier: 'identifier'
+      expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([btn])
+      post :toggle_state_button, id: shipment.id.to_s, identifier: 'identifier'
       expect(response).to be_success
     end
   end
 
   describe "state_toggle_buttons" do
-    it "should render result of render_state_toggle_buttons" do
-      expect_any_instance_of(described_class).to receive(:render_state_toggle_buttons).with(@c,@u, api_hash: {}).and_return({"state_toggle_buttons" => [{a:'b'}]})
 
-      get :state_toggle_buttons, id: @c.id.to_s
+    it "should render result of render_state_toggle_buttons" do
+      get :state_toggle_buttons, id: shipment.id
 
       expect(response).to be_success
-      expected = {'state_toggle_buttons'=>[{'a'=>'b'}]}
-      expect(response.body).to eq expected.to_json
+      # I don't really care what the contents of the actual rendered buttons look like, just that there are some contents
+      # there...the contents are tested elsewhere
+      expect(JSON.parse(response.body)["state_toggle_buttons"].length).to eq 1
     end
   end
 end

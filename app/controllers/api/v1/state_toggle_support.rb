@@ -30,9 +30,7 @@ module Api; module V1; module StateToggleSupport
 
   def state_toggle_buttons
     obj = find_object_by_id params[:id]
-    json = {}
-
-    render json: render_state_toggle_buttons(obj, current_user, api_hash: json)
+    render json: {state_toggle_buttons: render_state_toggle_buttons(obj, current_user)}
   end
 
 end; end; end
