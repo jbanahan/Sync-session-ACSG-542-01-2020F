@@ -21,7 +21,11 @@
       </div>
       <div class="row py-md-1">
         <div class="col-md-2"></div>
-        <div class="col-md-4 col-xs-12">
+      <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.scoped.empty? || MasterSetup.get.custom_feature?('fenix') -%>
+        <div class="col-md-4 col-sm-12">
+      <% else -%>
+        <div class="col-md-8 col-sm-12">
+      <% end -%>
           <div class="card mr-md-0">
             <div class="card-header pb-md-0">
               <h3>Sign In to VFI Track</h3>
