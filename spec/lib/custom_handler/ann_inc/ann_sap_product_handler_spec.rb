@@ -306,6 +306,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @h.process make_row, @user
     expect(Order.first.selling_agent.selling_agent).to be_truthy
   end
+
   it "sets the buying agent as the agent" do
     Factory.create(:company, master: true)
     expect(Order.count).to eql(0)
@@ -348,7 +349,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     h = default_values
     @h.process make_row, @user
     expect(Order.find_by_order_number(default_values[:po])).to be_present
-    expect{@h.process make_row, @user}.to change(Company, :count).by(0)
+    expect{@h.process make_row, @user}.to change(Order, :count).by(0)
+  end
+
+  it "does not duplicate order lines" do
+    h = default_values
+    @h.process make_row, @user
+    expect(OrderLine.count).to eql(1)
+    expect{@h.process make_row, @user}.to change(OrderLine, :count).by(0)
   end
 
   it "sets the ord_ac_date based on the new order" do

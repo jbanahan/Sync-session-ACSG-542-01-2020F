@@ -124,7 +124,7 @@ module OpenChain
                   o.agent = buying_agent[:company] if buying_agent.present?
                   o.selling_agent = selling_agent[:company] if selling_agent.present?
                   o.find_and_set_custom_value(@cdefs[:ord_type], row[19])
-                  ol = o.order_lines.find { |ol| ol.product.unique_identifier == style }
+                  ol = o.order_lines.find { |ol| ol.product.unique_identifier == p.unique_identifier }
                   ol = o.order_lines.build product: p if ol.blank?
                   ol.country_of_origin = row[3]
                   ol.price_per_unit = row[5]
