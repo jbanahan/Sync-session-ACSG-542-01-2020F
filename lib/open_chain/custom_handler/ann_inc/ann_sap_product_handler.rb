@@ -19,10 +19,10 @@ module OpenChain
         end
 
         def self.parse file_content, opts = {}
-          self.new.process file_content, User.find_by_username('integration')
+          self.new.process file_content, User.find_by_username('integration'), opts
         end
 
-        def process file_content, run_by
+        def process file_content, run_by, opts
           begin
             style_hash = {}
             # \007 turns the bell character into the quote char, which essentially turns off csv
@@ -38,7 +38,7 @@ module OpenChain
             end
             # The following custom feature is here pretty much solely to be able to reprocess just orders or just Products
             generate_products(style_hash, run_by) unless MasterSetup.get.custom_feature?("Ann Skip SAP Product Parsing")
-            generate_orders(style_hash, run_by) unless MasterSetup.get.custom_feature?("Ann Skip SAP Order Parsing")
+            generate_orders(style_hash, run_by, opts) unless MasterSetup.get.custom_feature?("Ann Skip SAP Order Parsing")
           rescue
             tmp = Tempfile.new(['AnnFileError','.csv'])
             tmp << file_content
@@ -53,18 +53,18 @@ module OpenChain
           row[0].match(/45\d{8}/)
         end
 
-        def find_vendors row, master_company, dsp_type
+        def find_vendors row, master_company, dsp_type, opts
           vendor = nil
           selling_agent = nil
           buying_agent = nil
 
-          vendor = find_or_create_vendor row[20], row[21], master_company, dsp_type
+          vendor = find_or_create_vendor row[20], row[21], master_company, dsp_type, opts
 
           unless row[23].blank? || row[24].blank?
-            selling_agent = find_or_create_vendor row[23], row[24], master_company, dsp_type
+            selling_agent = find_or_create_vendor row[23], row[24], master_company, dsp_type, opts
             selling_agent[:company].update_attribute(:selling_agent, true)
           end
-          buying_agent = find_or_create_vendor row[25], row[26], master_company, dsp_type unless row[25].blank? || row[26].blank?
+          buying_agent = find_or_create_vendor row[25], row[26], master_company, dsp_type, opts unless row[25].blank? || row[26].blank?
 
           [vendor, selling_agent, buying_agent]
         end
@@ -95,7 +95,7 @@ module OpenChain
           end
         end
 
-        def generate_orders(style_hash, run_by)
+        def generate_orders(style_hash, run_by, opts)
           master_company = Company.where(master: true).first
           style_hash.each do |style, rows|
             rows.each do |row|
@@ -109,7 +109,7 @@ module OpenChain
               if order_being_cancelled?(row)
                 cancel_order(row[0])
               else
-                vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type
+                vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type, opts
 
                 find_order(row[0], master_company, vendor) do |o|
                   [vendor, buying_agent, selling_agent].each do |co|
@@ -165,7 +165,7 @@ module OpenChain
           Time.zone.parse("#{d}/#{m}/#{y}")
         end
 
-        def find_or_create_vendor system_code, name, master_company, dsp_type
+        def find_or_create_vendor system_code, name, master_company, dsp_type, opts
           if system_code.present? && name.present?
             co = nil
             new_record = false
@@ -184,6 +184,8 @@ module OpenChain
               end
 
               master_company.linked_companies << co if new_record
+
+              co.create_snapshot(User.integration, nil, opts[:key]) if new_record
             end
             {company: co, new_record: new_record}
           else
