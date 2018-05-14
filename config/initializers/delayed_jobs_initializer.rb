@@ -69,7 +69,6 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         # run with any updated code.  The job attempts reset is to prevent the reschedule from running too many times and
         # having it kill the job.
         job.attempts -= 1
-        job.last_error = "This job queue was running the outdated code version '#{MasterSetup.current_code_version}'.  Requeing job to run in updated queue."
         # By including the job's run_at time, we avoid the delayed job manager pushing the next run_at time forward.
         # This means that once the delayed job queue is back running the original job order should be preserved.
         worker.reschedule(job, job.run_at)

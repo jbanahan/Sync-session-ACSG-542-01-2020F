@@ -1,14 +1,12 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
-require 'mono_logger'
 require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
 
 def execute_scheduler
   # Create your scheduler here
   scheduler = Rufus::Scheduler.start_new  
-  logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
-
+  
   # Set an exception handler to just call the exception's log_me method so we can
   # track down issues
   def scheduler.handle_exception(job, exception) 
@@ -63,48 +61,24 @@ def execute_scheduler
 
 end
 
-# Create the main logger and set some useful variables.
-main_logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
-
-if !File.directory?(Rails.root.to_s + "/tmp")
-  Dir.mkdir(Rails.root.to_s + "/tmp")
-end
-
-if !File.directory?(Rails.root.to_s + "/tmp/pids")
-  Dir.mkdir(Rails.root.to_s + "/tmp/pids")
-end
-  
-pid_file = (Rails.root.to_s + "/tmp/pids/scheduler").to_s
-File.delete(pid_file) if FileTest.exists?(pid_file)
-
-if defined?(PhusionPassenger) then
+if defined?(PhusionPassenger)
   # Passenger is starting a new process
   PhusionPassenger.on_event(:starting_worker_process) do |forked| 
-    # If we are forked and there's no pid file (that is no lock)
-    if forked && !FileTest.exists?(pid_file) then
-      main_logger.debug "SCHEDULER START ON PROCESS #{$$}"
-      # Write the current PID on the file
-      File.open(pid_file, "w") { |f| f.write($$) }
-      # Execute the scheduler
+    # Run the rufus scheduler ONLY in the foked web processes
+    if forked
+      # Execute the rufus scheduler
       execute_scheduler
     end
   end
 
   # Passenger is shutting down a process.   
   PhusionPassenger.on_event(:stopping_worker_process) do
-    # If a pid file exists and the process which 
-    # is being shutted down is the same which holds the lock 
-    # (in other words, the process which is executing the scheduler)
-    # we remove the lock.
-    if FileTest.exists?(pid_file) then
-      if File.open(pid_file, "r") {|f| pid = f.read.to_i} == $$ then 
-        main_logger.debug "SCHEDULER STOP ON PROCESS #{$$}"
-        File.delete(pid_file)
-      end
-    end
+    # Nothing needs to be done here, but I want to recall that this callback exists
   end
-main_logger.info "SCHEDULER START"
-else # Only execute one scheduler
-  #execute_scheduler 
+else
+  # Allow an easy way to have the scheduler run locally on a dev machine
+  if Rails.env.development? && MasterSetup.get.custom_feature?("Run Scheduler")
+    execute_scheduler
+  end
 end
 
