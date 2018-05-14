@@ -31,6 +31,11 @@
 #  volume                    :decimal(11, 5)
 #  volume_uom                :string(255)
 #
+# Indexes
+#
+#  index_invoices_on_importer_id     (importer_id)
+#  index_invoices_on_invoice_number  (invoice_number)
+#
 
 class Invoice < ActiveRecord::Base
   belongs_to :country_origin, :class_name => "Country"

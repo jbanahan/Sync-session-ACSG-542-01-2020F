@@ -215,6 +215,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "visa_qty" => 199,
                 "visa_uom" => "VISAUOM",
                 "uscs_line_no" => 1,
+                "freight_amt" => 12.30,
+                "other_amt" => 45.60,
+                "cash_discount" => 78.90,
+                "add_to_make_amt" => 1.23,
                 "value_foreign" => 99999,
                 "container_no" => "CONT1",
                 'value_appraisal_method' => "F",
@@ -653,6 +657,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.visa_quantity).to eq 1.99
       expect(line.visa_uom).to eq "VISAUOM"
       expect(line.customs_line_number).to eq 1
+      expect(line.freight_amount).to eq BigDecimal.new("12.3")
+      expect(line.other_amount).to eq BigDecimal.new("45.6")
+      expect(line.cash_discount).to eq BigDecimal.new("78.9")
+      expect(line.add_to_make_amount).to eq BigDecimal.new("1.23")
       expect(line.value_foreign).to eq BigDecimal.new("999.99")
       expect(line.mpf).to eq 1.23
       expect(line.prorated_mpf).to eq 2.34

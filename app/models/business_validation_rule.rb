@@ -103,7 +103,12 @@ class BusinessValidationRule < ActiveRecord::Base
                   {
                     label: 'Ann Vendor MP Type Upon Request',
                     enabled_lambda: lambda {MasterSetup.get.system_code=='ann'}
-                  }
+                  },
+                'OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule'.to_sym =>
+                 {
+                    label: 'Ann First Sale Validations',
+                    enabled_lambda: lambda {MasterSetup.get.custom_feature? "Ann"}
+                 }
               }
 
   def self.subclasses_array
@@ -172,5 +177,6 @@ require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_firs
 require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line_field_format'
 require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_all_docs_validation_rule'
 require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_upon_request_validation_rule'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_first_sale_validation_rule'
 
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'

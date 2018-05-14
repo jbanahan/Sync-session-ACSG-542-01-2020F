@@ -7,7 +7,9 @@
 #  add_case_percent       :decimal(5, 2)
 #  add_case_value         :decimal(12, 2)
 #  add_duty_amount        :decimal(12, 2)
+#  add_to_make_amount     :decimal(12, 2)
 #  adjustments_amount     :decimal(12, 3)
+#  cash_discount          :decimal(12, 2)
 #  charges                :decimal(11, 2)
 #  commercial_invoice_id  :integer
 #  computed_adjustments   :decimal(13, 2)
@@ -33,6 +35,7 @@
 #  fda_release_date       :datetime
 #  fda_review_date        :datetime
 #  first_sale             :boolean
+#  freight_amount         :decimal(12, 2)
 #  hmf                    :decimal(11, 2)
 #  id                     :integer          not null, primary key
 #  line_number            :integer
@@ -40,6 +43,7 @@
 #  miscellaneous_discount :decimal(12, 2)
 #  mpf                    :decimal(11, 2)
 #  non_dutiable_amount    :decimal(13, 2)
+#  other_amount           :decimal(12, 2)
 #  other_fees             :decimal(11, 2)
 #  part_number            :string(255)
 #  po_number              :string(255)

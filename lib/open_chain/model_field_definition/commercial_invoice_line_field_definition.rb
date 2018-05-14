@@ -109,7 +109,11 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
         qualified_field_name: "ROUND((commercial_invoice_lines.contract_amount / commercial_invoice_lines.quantity), 2)"
         }],
       [60, :cil_other_fees, :other_fees, "Other Taxes & Fees", {data_type: :decimal, currency: :usd}],
-      [61, :cil_miscellaneous_discount, :miscellaneous_discount, "Miscellaneous Discount", {data_type: :decimal, currency: :usd}]
+      [61, :cil_miscellaneous_discount, :miscellaneous_discount, "Miscellaneous Discount", {data_type: :decimal, currency: :usd}],
+      [62, :cil_freight_amount, :freight_amount, "Freight Amount", {data_type: :decimal, currency: :usd}],
+      [63, :cil_other_amount, :other_amount, "Other Adjustments", {data_type: :decimal, currency: :usd}],
+      [64, :cil_cash_discount, :cash_discount, "Cash Discount", {data_tyoe: :decimal, currency: :usd}],
+      [65, :cil_add_to_make_amount, :add_to_make_amount, "Additions to Value", {data_type: :decimal, currency: :usd}]
     ]
   end
 end; end; end

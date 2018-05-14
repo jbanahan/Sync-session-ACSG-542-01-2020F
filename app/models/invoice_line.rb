@@ -40,11 +40,13 @@
 #
 # Indexes
 #
-#  index_invoice_lines_on_invoice_id  (invoice_id)
+#  index_invoice_lines_on_invoice_id   (invoice_id)
+#  index_invoice_lines_on_part_number  (part_number)
+#  index_invoice_lines_on_po_number    (po_number)
 #
 
 class InvoiceLine < ActiveRecord::Base
-  belongs_to :invoice_line
+  belongs_to :invoice
   belongs_to :country_export, :class_name => "Country"
   belongs_to :country_origin, :class_name => "Country"
   belongs_to :order

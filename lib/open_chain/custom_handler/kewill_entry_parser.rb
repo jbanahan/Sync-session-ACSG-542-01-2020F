@@ -909,9 +909,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.visa_uom = l[:visa_uom]
       line.customs_line_number = l[:uscs_line_no]
       line.value_foreign = parse_decimal l[:value_foreign]
+      line.freight_amount = parse_decimal l[:freight_amt]
+      line.other_amount = parse_decimal l[:other_amt]
+      line.cash_discount = parse_decimal l[:cash_discount]
+      line.add_to_make_amount = parse_decimal l[:add_to_make_amt]
       line.computed_value = parse_decimal(l[:value_tot]) - parse_decimal(l[:non_dutiable_amt]) - parse_decimal(l[:add_to_make_amt])
       line.computed_adjustments = parse_decimal(l[:non_dutiable_amt]) + parse_decimal(l[:add_to_make_amt]) + parse_decimal(l[:other_amt]) +
-                                     parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amount])
+                                     parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amt])
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
       line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
       line.value_appraisal_method = l[:value_appraisal_method]
