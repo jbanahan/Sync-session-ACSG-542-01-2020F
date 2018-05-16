@@ -60,6 +60,10 @@ class Address < ActiveRecord::Base
   #make a key that will match the #address_hash if the two addresses are the same
   def self.make_hash_key a
     base = "#{a.name}#{a.line_1}#{a.line_2}#{a.line_3}#{a.city}#{a.state}#{a.postal_code}#{a.country_id}#{a.system_code}"
+    if !a.address_type.blank?
+      base += "#{a.address_type}"
+    end
+    
     Digest::MD5.hexdigest base
   end
 

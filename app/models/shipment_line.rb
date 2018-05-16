@@ -11,6 +11,7 @@
 #  fcr_number              :string(255)
 #  gross_kgs               :decimal(13, 4)
 #  id                      :integer          not null, primary key
+#  invoice_number          :string(255)
 #  line_number             :integer
 #  manufacturer_address_id :integer
 #  master_bill_of_lading   :string(255)
@@ -19,7 +20,6 @@
 #  shipment_id             :integer
 #  updated_at              :datetime         not null
 #  variant_id              :integer
-#  master_bill_of_lading   :string(255)
 #
 # Indexes
 #

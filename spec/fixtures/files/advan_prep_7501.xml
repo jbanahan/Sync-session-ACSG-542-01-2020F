@@ -1,0 +1,1147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prep7501Message>
+  <TransactionInfo>
+    <MessageSender>GTNEXUS</MessageSender>
+    <MessageRecipient>ADVANCEAUTO</MessageRecipient>
+    <MessageID>20180202191514450</MessageID>
+    <Created>2018-02-02T19:15:14.450-08:00</Created>
+    <FileName>PREP7501_20180202191514450.xml</FileName>
+  </TransactionInfo>
+  <Prep7501>
+    <Status>Complete</Status>
+    <AggregationLevel Type="BL">OERT205702H00096</AggregationLevel>
+    <ASN>
+      <ShipmentID>4512534M01</ShipmentID>
+      <ShipmentStatus>Final</ShipmentStatus>
+      <PartyInfo>
+        <Type>Provider</Type>
+        <Name>DHL International Supply Chain</Name>
+        <Address>
+          <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+          <AddressLine>Paramus</AddressLine>
+        </Address>
+        <City>
+          <CityName>Paramus</CityName>
+          <State>NJ</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>07652</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Consignee</Type>
+        <Name>Advance Stores Company Inc.</Name>
+        <Address>
+          <AddressLine>5008 Airport Rd</AddressLine>
+        </Address>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>24012</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Supplier</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <Address>
+          <AddressLine>Longkou Economic Development Zone</AddressLine>
+        </Address>
+        <City>
+          <CityName>Longkou</CityName>
+          <State>CN</State>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <PostalCode>265716</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Shipper</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <Address>
+          <AddressLine>Longkou Economic Development Zone</AddressLine>
+        </Address>
+        <City>
+          <CityName>Longkou</CityName>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <PostalCode>265716</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Notify</Type>
+        <Name>Vandegrift, Baltimore, MD</Name>
+        <Address>
+          <AddressLine>20 South Charles Street, Suite 501</AddressLine>
+        </Address>
+        <City>
+          <CityName>Baltimore</CityName>
+          <State>MD</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>21201</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Sender</Type>
+        <Name>DHL International Supply Chain</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>FreightForwarder</Type>
+        <Code>DHLISC</Code>
+        <Name>DHL International Supply Chain</Name>
+        <Address>
+          <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+        </Address>
+        <City>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>07652</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Customer</Type>
+        <Name>Advance Auto Parts</Name>
+        <Address>
+          <AddressLine>Store Support Center</AddressLine>
+          <AddressLine>5008 Airport Rd</AddressLine>
+          <AddressLine>Roanoke</AddressLine>
+        </Address>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>24012</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Carrier</Type>
+        <Code>OERT</Code>
+        <Name>Orient Express Container Co. Ltd</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>ShipmentFinalDest</Type>
+        <Code>11</Code>
+        <Name>DC 11 (Roanoke, VA)</Name>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+      </PartyInfo>
+      <Mode>Ocean</Mode>
+      <Voyage>45E</Voyage>
+      <Vessel>ZIM ROTTERDAM</Vessel>
+      <Routing>AW</Routing>
+      <OriginCity>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+      </OriginCity>
+      <PortOfLoading>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+      </PortOfLoading>
+      <PortOfDischarge>
+        <CityName>Norfolk</CityName>
+        <CityCode Qualifier="UN">USORF</CityCode>
+        <CityCode Qualifier="D">1401</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+      </PortOfDischarge>
+      <BLDestination>
+        <CityName>Roanoke</CityName>
+        <CityCode Qualifier="UN">USROA</CityCode>
+        <CityCode Qualifier="D">1234</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+      </BLDestination>
+      <EstBLDestDate>2018-03-08T12:00:00.000-08:00</EstBLDestDate>
+      <EstOnBoardDate>2018-01-28T12:00:00.000-08:00</EstOnBoardDate>
+      <EstDepartDate>2018-01-28T12:00:00.000-08:00</EstDepartDate>
+      <EstDischargePortDate>2018-03-02T12:00:00.000-08:00</EstDischargePortDate>
+      <ReferenceDates>
+        <ReferenceDateType>Docs Transmitted</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:12:13.547-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Docs Attached</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:11:32.993-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Trigger Outbound ASN</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Manifest Finalized</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:09:25.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Vendor Docs Submitted</ReferenceDateType>
+        <ReferenceDate>2018-01-22T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Departed</ReferenceDateType>
+        <ReferenceDate>2018-01-29T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <Container>
+        <LoadPlanName>4512534</LoadPlanName>
+        <ContainerNumber>ZIMU1269903</ContainerNumber>
+        <ContainerType>D20</ContainerType>
+        <ContainerTypeName>20' Standard Dry</ContainerTypeName>
+        <ContainerLoad>FCL</ContainerLoad>
+        <LoadLocation>CY</LoadLocation>
+        <SealNumber>ZGLP117168</SealNumber>
+        <ServiceType>CYP/CYP</ServiceType>
+        <ContractNumber>NONE</ContractNumber>
+        <ReferenceNumber1>PALLETIZED(23)</ReferenceNumber1>
+        <ChargeableWeight ANSICode="" Unit="None">0</ChargeableWeight>
+        <DimensionalWeight ANSICode="" Unit="None">0</DimensionalWeight>
+        <ActualWeight ANSICode="KG" Unit="Kilograms">16652.2</ActualWeight>
+        <Volume ANSICode="CR" Unit="Cubic Meters">21.02</Volume>
+        <LadingQuantity ANSICode="EA" Unit="Each">2057</LadingQuantity>
+        <LineItems>
+          <PONumber>8373111-11</PONumber>
+          <LineItemNumber>9</LineItemNumber>
+          <Quantity ANSICode="EA" Unit="Each">116</Quantity>
+          <ProductCode>11402124</ProductCode>
+          <ProductName>Painted rotor 1 EA CQPRT</ProductName>
+          <DivisionIdentifier>Advance Auto Parts</DivisionIdentifier>
+          <ShipWindow>
+            <StartDate>2018-01-04T12:00:00.000-08:00</StartDate>
+            <EndDate>2018-01-14T12:00:00.000-08:00</EndDate>
+          </ShipWindow>
+          <BLNumber>OERT205702H00096</BLNumber>
+          <InvoiceNumber>LJ180090</InvoiceNumber>
+          <ManufacturerID>201716453009</ManufacturerID>
+          <Weight ANSICode="KG" Unit="Kilograms">1084</Weight>
+          <Volume ANSICode="CR" Unit="Cubic Meters">.87</Volume>
+          <PackageCount>116</PackageCount>
+          <FinalDestination>
+            <LocationCode>11</LocationCode>
+            <Name>DC 11 (Roanoke, VA)</Name>
+            <City>
+              <CityName>Roanoke</CityName>
+              <CityCode Qualifier="UN">USROA</CityCode>
+              <State>VA</State>
+              <CountryCode>US</CountryCode>
+            </City>
+            <PostalCode>24012</PostalCode>
+          </FinalDestination>
+          <ReferenceDates>
+            <ReferenceDateType>BlDate1</ReferenceDateType>
+            <ReferenceDate>2018-01-27T12:00:00.000-08:00</ReferenceDate>
+          </ReferenceDates>
+          <ReferenceDates>
+            <ReferenceDateType>BlDate3</ReferenceDateType>
+            <ReferenceDate>2018-01-28T12:00:00.000-08:00</ReferenceDate>
+          </ReferenceDates>
+          <ReferenceNumber1>00100896581711122228^116</ReferenceNumber1>
+          <References>
+            <Type>PaymentTerms</Type>
+            <Value>Collect</Value>
+          </References>
+          <References>
+            <Type>OrderRef1</Type>
+            <Value>8373111</Value>
+          </References>
+          <References>
+            <Type>ProductRef1</Type>
+            <Value>YH145693P</Value>
+          </References>
+          <References>
+            <Type>ProductRef2</Type>
+            <Value>0</Value>
+          </References>
+          <References>
+            <Type>ProductRef3</Type>
+            <Value>8708305030</Value>
+          </References>
+          <References>
+            <Type>ProductRef4</Type>
+            <Value>11</Value>
+          </References>
+          <References>
+            <Type>ProductRef5</Type>
+            <Value>CN</Value>
+          </References>
+          <References>
+            <Type>HTS</Type>
+            <Value>8708305030</Value>
+          </References>
+          <PartyInfo>
+            <Type>Supplier</Type>
+            <Code>89658</Code>
+            <Name>Shandong Longji Machinery Co., Ltd.</Name>
+            <Address>
+              <AddressLine>Longkou Economic Development Zone</AddressLine>
+            </Address>
+            <City>
+              <CityName>Longkou</CityName>
+              <State>CN</State>
+              <CountryCode>CN</CountryCode>
+              <CountryName>China</CountryName>
+            </City>
+            <PostalCode>265716</PostalCode>
+          </PartyInfo>
+          <PartyInfo>
+            <Type>Broker</Type>
+            <Code>DHL</Code>
+            <Name>DHL Translate</Name>
+          </PartyInfo>
+          <ItemAttributes>
+            <Type>PO Date</Type>
+            <Value>20171204</Value>
+          </ItemAttributes>
+          <Charges Currency="USD" Type="Invoice">1375.76</Charges>
+          <Charges Currency="USD" Type="FirstCost">11.86</Charges>
+          <MilestoneMessage>
+            <OneReferenceMultipleMilestones>
+              <ReferenceInfo>
+                <ReferenceId reference="OERT205702H00096" type="BLNumber"/>
+                <ReferenceId reference="ZIMU1269903" type="ContainerNumber"/>
+                <ReferenceId reference="4512534M01" type="ShipmentID"/>
+                <ReferenceId reference="8373111-11" type="PONumber"/>
+                <ReferenceId reference="9" type="LineItemNumber"/>
+                <ReferenceId reference="11402124" type="ProductCode"/>
+                <ReferenceId reference="11" type="FinalDestinationCode"/>
+                <ReferenceId reference="FCL" type="ContainerLoadCode"/>
+              </ReferenceInfo>
+              <MilestoneInfo>
+                <MilestoneTypeCode>1</MilestoneTypeCode>
+                <MilestoneTypeName>S/W End Dt</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-14T12:00:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-14T20:00:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2985</MilestoneTypeCode>
+                <MilestoneTypeName>Vendor Docs Submitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-22T03:11:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-22T11:11:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <MilestoneTypeCode>26</MilestoneTypeCode>
+                <MilestoneTypeName>SO Submitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T09:12:34.457-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T17:12:34.457-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+                <Comments>SO: 201716453009.</Comments>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2976</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Created</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:09:45.490-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T18:09:45.490-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2977</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Transmitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:10:54.987-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T18:10:54.987-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2978</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Accepted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:27:53.963-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T02:27:53.963-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2983</MilestoneTypeCode>
+                <MilestoneTypeName>Manifest Finalized</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:09:25.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:09:25.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Updated</ProcessingStatus>
+                <MilestoneTypeCode>2974</MilestoneTypeCode>
+                <MilestoneTypeName>Shipment Planned by DHL</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:09:32.613-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:09:32.613-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2984</MilestoneTypeCode>
+                <MilestoneTypeName>Trigger Outbound ASN</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:11:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:11:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2986</MilestoneTypeCode>
+                <MilestoneTypeName>Docs Attached</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:11:32.993-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:11:32.993-08:00" timeZone="LT" whichTime="EventTime"/>
+                <Comments>Milestone added because document id [ORF-OERT205702H00096] of type [Doc Set] was added</Comments>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2987</MilestoneTypeCode>
+                <MilestoneTypeName>Docs Transmitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:12:13.547-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-02T08:12:13.550-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+            </OneReferenceMultipleMilestones>
+          </MilestoneMessage>
+        </LineItems>
+        <LineItems>
+          <PONumber>8373111-11</PONumber>
+          <LineItemNumber>8</LineItemNumber>
+          <Quantity ANSICode="EA" Unit="Each">80</Quantity>
+          <ProductCode>11401806</ProductCode>
+          <ProductName>Painted rotor 1 EA CQPRT</ProductName>
+          <DivisionIdentifier>Advance Auto Parts</DivisionIdentifier>
+          <ShipWindow>
+            <StartDate>2018-01-04T12:00:00.000-08:00</StartDate>
+            <EndDate>2018-01-14T12:00:00.000-08:00</EndDate>
+          </ShipWindow>
+          <BLNumber>OERT205702H00096</BLNumber>
+          <InvoiceNumber>LJ180090</InvoiceNumber>
+          <ManufacturerID>201716453009</ManufacturerID>
+          <Weight ANSICode="KG" Unit="Kilograms">648</Weight>
+          <Volume ANSICode="CR" Unit="Cubic Meters">.64</Volume>
+          <PackageCount>80</PackageCount>
+          <FinalDestination>
+            <LocationCode>11</LocationCode>
+            <Name>DC 11 (Roanoke, VA)</Name>
+            <City>
+              <CityName>Roanoke</CityName>
+              <CityCode Qualifier="UN">USROA</CityCode>
+              <State>VA</State>
+              <CountryCode>US</CountryCode>
+            </City>
+            <PostalCode>24012</PostalCode>
+          </FinalDestination>
+          <ReferenceDates>
+            <ReferenceDateType>BlDate1</ReferenceDateType>
+            <ReferenceDate>2018-01-27T12:00:00.000-08:00</ReferenceDate>
+          </ReferenceDates>
+          <ReferenceDates>
+            <ReferenceDateType>BlDate3</ReferenceDateType>
+            <ReferenceDate>2018-01-28T12:00:00.000-08:00</ReferenceDate>
+          </ReferenceDates>
+          <ReferenceNumber1>00100896581711122238^80</ReferenceNumber1>
+          <References>
+            <Type>PaymentTerms</Type>
+            <Value>Collect</Value>
+          </References>
+          <References>
+            <Type>OrderRef1</Type>
+            <Value>8373111</Value>
+          </References>
+          <References>
+            <Type>ProductRef1</Type>
+            <Value>YH145723P</Value>
+          </References>
+          <References>
+            <Type>ProductRef2</Type>
+            <Value>0</Value>
+          </References>
+          <References>
+            <Type>ProductRef3</Type>
+            <Value>8708305030</Value>
+          </References>
+          <References>
+            <Type>ProductRef4</Type>
+            <Value>11</Value>
+          </References>
+          <References>
+            <Type>ProductRef5</Type>
+            <Value>CN</Value>
+          </References>
+          <References>
+            <Type>HTS</Type>
+            <Value>8708305030</Value>
+          </References>
+          <PartyInfo>
+            <Type>Supplier</Type>
+            <Code>89658</Code>
+            <Name>Shandong Longji Machinery Co., Ltd.</Name>
+            <Address>
+              <AddressLine>Longkou Economic Development Zone</AddressLine>
+            </Address>
+            <City>
+              <CityName>Longkou</CityName>
+              <State>CN</State>
+              <CountryCode>CN</CountryCode>
+              <CountryName>China</CountryName>
+            </City>
+            <PostalCode>265716</PostalCode>
+          </PartyInfo>
+          <PartyInfo>
+            <Type>Broker</Type>
+            <Code>DHL</Code>
+            <Name>DHL Translate</Name>
+          </PartyInfo>
+          <ItemAttributes>
+            <Type>PO Date</Type>
+            <Value>20171204</Value>
+          </ItemAttributes>
+          <Charges Currency="USD" Type="Invoice">826.4</Charges>
+          <Charges Currency="USD" Type="FirstCost">10.33</Charges>
+          <MilestoneMessage>
+            <OneReferenceMultipleMilestones>
+              <ReferenceInfo>
+                <ReferenceId reference="OERT205702H00096" type="BLNumber"/>
+                <ReferenceId reference="ZIMU1269903" type="ContainerNumber"/>
+                <ReferenceId reference="4512534M01" type="ShipmentID"/>
+                <ReferenceId reference="8373111-11" type="PONumber"/>
+                <ReferenceId reference="8" type="LineItemNumber"/>
+                <ReferenceId reference="11401806" type="ProductCode"/>
+                <ReferenceId reference="11" type="FinalDestinationCode"/>
+                <ReferenceId reference="FCL" type="ContainerLoadCode"/>
+              </ReferenceInfo>
+              <MilestoneInfo>
+                <MilestoneTypeCode>1</MilestoneTypeCode>
+                <MilestoneTypeName>S/W End Dt</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-14T12:00:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-14T20:00:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2985</MilestoneTypeCode>
+                <MilestoneTypeName>Vendor Docs Submitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-22T03:11:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-22T11:11:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <MilestoneTypeCode>26</MilestoneTypeCode>
+                <MilestoneTypeName>SO Submitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T09:12:34.457-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T17:12:34.457-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+                <Comments>SO: 201716453009.</Comments>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2976</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Created</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:09:45.490-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T18:09:45.490-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2977</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Transmitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:10:54.987-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T18:10:54.987-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2978</MilestoneTypeCode>
+                <MilestoneTypeName>ISF Accepted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-01-23T10:27:53.963-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-01-23T02:27:53.963-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2983</MilestoneTypeCode>
+                <MilestoneTypeName>Manifest Finalized</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:09:25.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:09:25.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Updated</ProcessingStatus>
+                <MilestoneTypeCode>2974</MilestoneTypeCode>
+                <MilestoneTypeName>Shipment Planned by DHL</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:09:32.613-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:09:32.613-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2984</MilestoneTypeCode>
+                <MilestoneTypeName>Trigger Outbound ASN</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:11:00.000-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:11:00.000-08:00" timeZone="LT" whichTime="EventTime"/>
+                <City>
+                  <CityName>Qingdao</CityName>
+                  <CityCode Qualifier="UN">CNTAO</CityCode>
+                  <CityCode Qualifier="K">57047</CityCode>
+                  <CountryCode>CN</CountryCode>
+                </City>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2986</MilestoneTypeCode>
+                <MilestoneTypeName>Docs Attached</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:11:32.993-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-03T11:11:32.993-08:00" timeZone="LT" whichTime="EventTime"/>
+                <Comments>Milestone added because document id [ORF-OERT205702H00096] of type [Doc Set] was added</Comments>
+              </MilestoneInfo>
+              <MilestoneInfo>
+                <ProcessingStatus>Newly Posted</ProcessingStatus>
+                <MilestoneTypeCode>2987</MilestoneTypeCode>
+                <MilestoneTypeName>Docs Transmitted</MilestoneTypeName>
+                <MilestoneTime dateTime="2018-02-03T03:12:13.547-08:00" timeZone="UTC" whichTime="EventTime"/>
+                <MilestoneTime dateTime="2018-02-02T08:12:13.550-08:00" timeZone="LT" whichTime="EventTime"/>
+              </MilestoneInfo>
+            </OneReferenceMultipleMilestones>
+          </MilestoneMessage>
+        </LineItems>
+      </Container>
+    </ASN>
+    <CommercialInvoice InvoiceNumber="201716453009" SaveDate="2018-02-02T19:15:14.331-08:00" ShippingOrderNumber="201716453009">
+      <ShipFrom>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </ShipFrom>
+      <ShipDate>2018-01-14T12:00:00.000-08:00</ShipDate>
+      <TransportationMode>Ocean</TransportationMode>
+      <Item>
+        <SupplierPartnerNumber>89658</SupplierPartnerNumber>
+        <PurchaseOrderNumber>8373111-11</PurchaseOrderNumber>
+        <ShipToCode>11</ShipToCode>
+        <UserRefNumber>8</UserRefNumber>
+        <ItemNumber>11401806</ItemNumber>
+        <OriginCountry Code="CN">China</OriginCountry>
+        <PartyInfo>
+          <Type>Factory</Type>
+          <Code>None</Code>
+          <Name>SHANDONG LONGJI MACHINERY</Name>
+          <AddressLine1>CO.,LTD.</AddressLine1>
+          <AddressLine2>LONGKOU ECONOMIC DEVELOPMENT ZONE,</AddressLine2>
+          <AddressLine3>LONGKOU CITY SHANDONG, CHINA</AddressLine3>
+          <City>
+            <CityName>Longkou</CityName>
+            <CityCode Qualifier="UN">CNLKU</CityCode>
+            <CountryCode>CN</CountryCode>
+            <CountryName>China</CountryName>
+          </City>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </PartyInfo>
+        <AssortmentQty>0</AssortmentQty>
+        <ItemUOM>Each</ItemUOM>
+        <ItemDescription>Painted rotor 1 EA CQPRT</ItemDescription>
+        <TotalCartons>80</TotalCartons>
+        <Quantity>80</Quantity>
+        <QuantityUOM>Each</QuantityUOM>
+        <TotalGrossWeight>648</TotalGrossWeight>
+        <ContractTermsCountry>FOB</ContractTermsCountry>
+        <FirstCostPrice Currency="USD">10.33</FirstCostPrice>
+        <ItemTotalPrice Currency="USD">826.4</ItemTotalPrice>
+        <VendorItemNumber>YH145723P</VendorItemNumber>
+        <DivisionNumber>Advance Auto Parts</DivisionNumber>
+        <ReferenceNumber>8</ReferenceNumber>
+        <DeptNumber/>
+        <ItemAttributes>
+          <Type>PO Date</Type>
+          <Value>20171204</Value>
+        </ItemAttributes>
+        <Payment>
+          <PaymentTerms>Collect</PaymentTerms>
+          <BankName/>
+        </Payment>
+        <Classification>
+          <HTSNumber>8708305030</HTSNumber>
+          <SpecialQty>0</SpecialQty>
+          <NumberHTSUnitsPerPiece>0</NumberHTSUnitsPerPiece>
+          <ADD_Rate>0.0</ADD_Rate>
+          <CVD_Rate>0.0</CVD_Rate>
+        </Classification>
+        <PiecesPerUPC>0</PiecesPerUPC>
+        <ClassificationTotalValue>0</ClassificationTotalValue>
+        <SeasonCode>None</SeasonCode>
+        <SubseasonCode/>
+        <VisaQty>0</VisaQty>
+        <FullHTSNumber>8708305030</FullHTSNumber>
+        <CommodityDescription>Painted rotor 1 EA CQPRT</CommodityDescription>
+        <TotalCubicMeters ANSICode="CR" Unit="CBMS">.64</TotalCubicMeters>
+        <ShipTerms Code="FOB">Free on Board</ShipTerms>
+        <FactoryCountry>China</FactoryCountry>
+        <CustomsAmount Currency="USD">826.4</CustomsAmount>
+        <FinalDestination>
+          <LocationCode>11</LocationCode>
+          <Name>DC 11 (Roanoke, VA)</Name>
+          <City>
+            <CityName>Roanoke</CityName>
+            <CityCode Qualifier="UN">USROA</CityCode>
+            <State>VA</State>
+            <CountryCode>US</CountryCode>
+            <CountryName>United States</CountryName>
+          </City>
+          <PostalCode>24012</PostalCode>
+        </FinalDestination>
+        <ProdReference>
+          <ProdReferenceNumber1>YH145723P</ProdReferenceNumber1>
+          <ProdReferenceNumber2>0</ProdReferenceNumber2>
+          <ProdReferenceNumber3>8708305030</ProdReferenceNumber3>
+          <ProdReferenceNumber4>11</ProdReferenceNumber4>
+          <ProdReferenceNumber5>CN</ProdReferenceNumber5>
+          <ProdReferenceDate1>2018-01-14T12:00:00.000-08:00</ProdReferenceDate1>
+        </ProdReference>
+        <RetailCostPrice Currency="USD">10.33</RetailCostPrice>
+        <POReferences>
+          <PoReferenceDate1>2018-01-04T12:00:00.000-08:00</PoReferenceDate1>
+          <PoReferenceDate2>2018-01-14T12:00:00.000-08:00</PoReferenceDate2>
+          <PoReferenceDate3>2018-03-10T12:00:00.000-08:00</PoReferenceDate3>
+          <PoReferenceNumber1>8373111</PoReferenceNumber1>
+          <References>
+            <Type>LCTransferable</Type>
+            <Value>No</Value>
+          </References>
+          <References>
+            <Type>RequiresOriginalBL</Type>
+            <Value>No</Value>
+          </References>
+          <StringReferences>
+            <Type>StringReference1</Type>
+            <Value>Longji 120117 DC111(1)</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference2</Type>
+            <Value>If there is no binding written contract between the parties, this PO is issued</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference3</Type>
+            <Value>subject to the Terms and Conditions found at http://www.advanceautoparts.com/eng</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference4</Type>
+            <Value>lish/PO_Terms/AAP_POTerms.pdf which cannot be changed in any way  except by a</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference5</Type>
+            <Value>writing signed by an officer of Advance Stores Company, Inc., its affiliates</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference6</Type>
+            <Value>and subsidiaries.</Value>
+          </StringReferences>
+        </POReferences>
+        <POLineReferences>
+          <ProdReference>
+            <ProdReferenceNumber1>YH145723P</ProdReferenceNumber1>
+            <ProdReferenceNumber2>0</ProdReferenceNumber2>
+            <ProdReferenceNumber3>8708305030</ProdReferenceNumber3>
+            <ProdReferenceNumber4>11</ProdReferenceNumber4>
+            <ProdReferenceNumber5>CN</ProdReferenceNumber5>
+            <ProdReferenceDate1>2018-01-14T12:00:00.000-08:00</ProdReferenceDate1>
+          </ProdReference>
+        </POLineReferences>
+      </Item>
+      <Item>
+        <SupplierPartnerNumber>89658</SupplierPartnerNumber>
+        <PurchaseOrderNumber>8373111-11</PurchaseOrderNumber>
+        <ShipToCode>11</ShipToCode>
+        <UserRefNumber>9</UserRefNumber>
+        <ItemNumber>11402124</ItemNumber>
+        <OriginCountry Code="CN">China</OriginCountry>
+        <PartyInfo>
+          <Type>Factory</Type>
+          <Code>None</Code>
+          <Name>SHANDONG LONGJI MACHINERY</Name>
+          <AddressLine1>CO.,LTD.</AddressLine1>
+          <AddressLine2>LONGKOU ECONOMIC DEVELOPMENT ZONE,</AddressLine2>
+          <AddressLine3>LONGKOU CITY SHANDONG, CHINA</AddressLine3>
+          <City>
+            <CityName>Longkou</CityName>
+            <CityCode Qualifier="UN">CNLKU</CityCode>
+            <CountryCode>CN</CountryCode>
+            <CountryName>China</CountryName>
+          </City>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </PartyInfo>
+        <AssortmentQty>0</AssortmentQty>
+        <ItemUOM>Each</ItemUOM>
+        <ItemDescription>Painted rotor 1 EA CQPRT</ItemDescription>
+        <TotalCartons>116</TotalCartons>
+        <Quantity>116</Quantity>
+        <QuantityUOM>Each</QuantityUOM>
+        <TotalGrossWeight>1084</TotalGrossWeight>
+        <ContractTermsCountry>FOB</ContractTermsCountry>
+        <FirstCostPrice Currency="USD">11.86</FirstCostPrice>
+        <ItemTotalPrice Currency="USD">1375.76</ItemTotalPrice>
+        <VendorItemNumber>YH145693P</VendorItemNumber>
+        <DivisionNumber>Advance Auto Parts</DivisionNumber>
+        <ReferenceNumber>9</ReferenceNumber>
+        <DeptNumber/>
+        <ItemAttributes>
+          <Type>PO Date</Type>
+          <Value>20171204</Value>
+        </ItemAttributes>
+        <Payment>
+          <PaymentTerms>Collect</PaymentTerms>
+          <BankName/>
+        </Payment>
+        <Classification>
+          <HTSNumber>8708305030</HTSNumber>
+          <SpecialQty>0</SpecialQty>
+          <NumberHTSUnitsPerPiece>0</NumberHTSUnitsPerPiece>
+          <ADD_Rate>0.0</ADD_Rate>
+          <CVD_Rate>0.0</CVD_Rate>
+        </Classification>
+        <PiecesPerUPC>0</PiecesPerUPC>
+        <ClassificationTotalValue>0</ClassificationTotalValue>
+        <SeasonCode>None</SeasonCode>
+        <SubseasonCode/>
+        <VisaQty>0</VisaQty>
+        <FullHTSNumber>8708305030</FullHTSNumber>
+        <CommodityDescription>Painted rotor 1 EA CQPRT</CommodityDescription>
+        <TotalCubicMeters ANSICode="CR" Unit="CBMS">.87</TotalCubicMeters>
+        <ShipTerms Code="FOB">Free on Board</ShipTerms>
+        <FactoryCountry>China</FactoryCountry>
+        <CustomsAmount Currency="USD">1375.76</CustomsAmount>
+        <FinalDestination>
+          <LocationCode>11</LocationCode>
+          <Name>DC 11 (Roanoke, VA)</Name>
+          <City>
+            <CityName>Roanoke</CityName>
+            <CityCode Qualifier="UN">USROA</CityCode>
+            <State>VA</State>
+            <CountryCode>US</CountryCode>
+            <CountryName>United States</CountryName>
+          </City>
+          <PostalCode>24012</PostalCode>
+        </FinalDestination>
+        <ProdReference>
+          <ProdReferenceNumber1>YH145693P</ProdReferenceNumber1>
+          <ProdReferenceNumber2>0</ProdReferenceNumber2>
+          <ProdReferenceNumber3>8708305030</ProdReferenceNumber3>
+          <ProdReferenceNumber4>11</ProdReferenceNumber4>
+          <ProdReferenceNumber5>CN</ProdReferenceNumber5>
+          <ProdReferenceDate1>2018-01-14T12:00:00.000-08:00</ProdReferenceDate1>
+        </ProdReference>
+        <RetailCostPrice Currency="USD">11.86</RetailCostPrice>
+        <POReferences>
+          <PoReferenceDate1>2018-01-04T12:00:00.000-08:00</PoReferenceDate1>
+          <PoReferenceDate2>2018-01-14T12:00:00.000-08:00</PoReferenceDate2>
+          <PoReferenceDate3>2018-03-10T12:00:00.000-08:00</PoReferenceDate3>
+          <PoReferenceNumber1>8373111</PoReferenceNumber1>
+          <References>
+            <Type>LCTransferable</Type>
+            <Value>No</Value>
+          </References>
+          <References>
+            <Type>RequiresOriginalBL</Type>
+            <Value>No</Value>
+          </References>
+          <StringReferences>
+            <Type>StringReference1</Type>
+            <Value>Longji 120117 DC111(1)</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference2</Type>
+            <Value>If there is no binding written contract between the parties, this PO is issued</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference3</Type>
+            <Value>subject to the Terms and Conditions found at http://www.advanceautoparts.com/eng</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference4</Type>
+            <Value>lish/PO_Terms/AAP_POTerms.pdf which cannot be changed in any way  except by a</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference5</Type>
+            <Value>writing signed by an officer of Advance Stores Company, Inc., its affiliates</Value>
+          </StringReferences>
+          <StringReferences>
+            <Type>StringReference6</Type>
+            <Value>and subsidiaries.</Value>
+          </StringReferences>
+        </POReferences>
+        <POLineReferences>
+          <ProdReference>
+            <ProdReferenceNumber1>YH145693P</ProdReferenceNumber1>
+            <ProdReferenceNumber2>0</ProdReferenceNumber2>
+            <ProdReferenceNumber3>8708305030</ProdReferenceNumber3>
+            <ProdReferenceNumber4>11</ProdReferenceNumber4>
+            <ProdReferenceNumber5>CN</ProdReferenceNumber5>
+            <ProdReferenceDate1>2018-01-14T12:00:00.000-08:00</ProdReferenceDate1>
+          </ProdReference>
+        </POLineReferences>
+      </Item>
+      <InvoiceTotal>
+        <Quantity>2057</Quantity>
+        <UOM>Each</UOM>
+        <Dollars>0</Dollars>
+      </InvoiceTotal>
+      <TotalDollar Currency="USD">18189.93</TotalDollar>
+      <TextTotalDollar>EIGHTEEN THOUSAND ONE HUNDRED EIGHTY-NINE DOLLARS AND NINETY-THREE CENTS</TextTotalDollar>
+      <TotalCartons>2057</TotalCartons>
+      <PickupType>None</PickupType>
+      <PickupOrDropoffFlag>Pickup</PickupOrDropoffFlag>
+      <FactoryIsShipper>false</FactoryIsShipper>
+      <ShippingDeclaration1 Label="Shipping Order Declaration 1">false</ShippingDeclaration1>
+      <ShippingDeclaration2 Label="Shipping Order Declaration 2">false</ShippingDeclaration2>
+      <ShippingDeclaration3 Label="Shipping Order Declaration 3">false</ShippingDeclaration3>
+      <ShippingDeclaration4 Label="Shipping Order Declaration 4">false</ShippingDeclaration4>
+      <ShippingDeclaration5 Label="Shipping Order Declaration 5">false</ShippingDeclaration5>
+      <ShippingDeclaration6 Label="Shipping Order Declaration 6">false</ShippingDeclaration6>
+      <ShippingDeclaration7 Label="Shipping Order Declaration 7">false</ShippingDeclaration7>
+      <ShippingDeclaration8 Label="Shipping Order Declaration 8">false</ShippingDeclaration8>
+      <Status>Approved</Status>
+      <CargoReadyDate>2018-01-14T12:00:00.000-08:00</CargoReadyDate>
+      <OriginCity>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </OriginCity>
+      <PortOfLoading>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </PortOfLoading>
+      <PortOfDischarge>
+        <CityName>Norfolk</CityName>
+        <CityCode Qualifier="UN">USORF</CityCode>
+        <CityCode Qualifier="D">1401</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </PortOfDischarge>
+      <PlaceOfDelivery>
+        <CityName>Roanoke</CityName>
+        <CityCode Qualifier="UN">USROA</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </PlaceOfDelivery>
+      <LocalLanguage>zh_CN</LocalLanguage>
+      <LoadType>CY</LoadType>
+      <CargoType>Flat</CargoType>
+      <Haulage>None</Haulage>
+      <ShipTerms Code="FOB">Free on Board</ShipTerms>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Division>Advance Auto Parts</Division>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Department/>
+      <Volume ANSICode="CR" Unit="CBMS">21.02</Volume>
+      <Weight ANSICode="KG" Unit="KGS">16652.2</Weight>
+      <Equipment>
+        <Code>D20</Code>
+        <Type>20' Standard Dry</Type>
+        <Quantity>1</Quantity>
+      </Equipment>
+      <Vessel>ZIM ROTTERDAM</Vessel>
+      <Voyage>45E</Voyage>
+      <ETAFinalDestinationDate>2018-03-08T12:00:00.000-08:00</ETAFinalDestinationDate>
+      <ETAPortOfDischargeDate>2018-03-02T12:00:00.000-08:00</ETAPortOfDischargeDate>
+      <ETDPortOfLoadDate>2018-01-27T12:00:00.000-08:00</ETDPortOfLoadDate>
+      <ShippingOrderDate>2017-12-28T12:00:00.000-08:00</ShippingOrderDate>
+      <ETDOriginDate>2018-01-27T12:00:00.000-08:00</ETDOriginDate>
+      <ETAPlaceOfDeliveryDate>2018-03-08T12:00:00.000-08:00</ETAPlaceOfDeliveryDate>
+      <FinalDestination>
+        <LocationCode>11</LocationCode>
+        <Name>DC 11 (Roanoke, VA)</Name>
+        <City>
+          <CityName>Roanoke</CityName>
+          <CityCode Qualifier="UN">USROA</CityCode>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>24012</PostalCode>
+      </FinalDestination>
+      <PartyInfo>
+        <Type>ShipperCustomer</Type>
+        <Code>None</Code>
+        <Name>Advance Auto Parts</Name>
+        <AddressLine1>Store Support Center</AddressLine1>
+        <AddressLine2>5008 Airport Rd</AddressLine2>
+        <PostalCode>24012</PostalCode>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>US</CountryName>
+        </City>
+        <Phone>(877) 238-2623</Phone>
+        <CountryCode>US</CountryCode>
+        <CountryName>US</CountryName>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Ship To</Type>
+        <Code>11</Code>
+        <Name>ADVANCE AUTO PARTS</Name>
+        <PostalCode>24012</PostalCode>
+        <City>
+          <CityName>Roanoke</CityName>
+          <CityCode Qualifier="UN">USROA</CityCode>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Shipper</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <AddressLine1>Longkou Economic Development Zone</AddressLine1>
+        <PostalCode>265716</PostalCode>
+        <City>
+          <CityName>Longkou</CityName>
+          <CityCode Qualifier="UN">CNLKU</CityCode>
+          <State>CN</State>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Supplier</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <AddressLine1>Longkou Economic Development Zone</AddressLine1>
+        <PostalCode>265716</PostalCode>
+        <City>
+          <CityName>Longkou</CityName>
+          <CityCode Qualifier="UN">CNLKU</CityCode>
+          <State>CN</State>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <CountryCode>CN</CountryCode>
+        <CountryName>China</CountryName>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Consolidator</Type>
+        <Code>DHLISC</Code>
+        <Name>DHL International Supply Chain</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Carrier</Type>
+        <Code>OERT</Code>
+        <Name>Orient Express Container Co. Ltd</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Freight Forwarder</Type>
+        <Code>None</Code>
+        <Name>DHL International Supply Chain</Name>
+        <AddressLine1>1 Kalisa Way, Suite 112</AddressLine1>
+        <PostalCode>07652</PostalCode>
+        <City>
+          <CityName>Paramus</CityName>
+          <State>NJ</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <Phone>201-265-1985</Phone>
+        <Fax>201-265-8588</Fax>
+        <CountryCode>US</CountryCode>
+        <CountryName>United States</CountryName>
+      </PartyInfo>
+      <InvoiceDate>2018-01-14T12:00:00.000-08:00</InvoiceDate>
+      <CustomsAmount Currency="USD">18189.93</CustomsAmount>
+      <OrderPaymentTerms>
+        <PaymentTerms>Collect</PaymentTerms>
+      </OrderPaymentTerms>
+    </CommercialInvoice>
+  </Prep7501>
+</Prep7501Message>

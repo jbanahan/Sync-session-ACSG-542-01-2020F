@@ -185,4 +185,25 @@ describe Address do
       expect(address.country).to eq country
     end
   end
+
+  describe "make_hash_key" do
+    let (:a) {
+      Address.new system_code: "Code", name: "Address", line_1: "Line 1", line_2: "Line 2", line_3: "Line 3", city: "City", state: "State", postal_code: "Postal", country_id: 1, address_type: "Type"
+    }
+    subject { described_class }
+
+    it "generates an md5 hash from name/address/city/state/postal_code/country/system_code" do
+      expect(subject.make_hash_key a).to eq "be583b5452e3788d27691921332fbca2"
+    end
+
+    it "generates a different hash key if address type is removed" do
+      a.address_type = nil
+      expect(subject.make_hash_key a).to eq "46a691c170e28e29b4798c689601e85b"
+    end
+
+    it "passes expected values to hexdigest" do
+      expect(Digest::MD5).to receive(:hexdigest).with("#{a.name}#{a.line_1}#{a.line_2}#{a.line_3}#{a.city}#{a.state}#{a.postal_code}#{a.country_id}#{a.system_code}#{a.address_type}")
+      subject.make_hash_key a
+    end
+  end
 end
