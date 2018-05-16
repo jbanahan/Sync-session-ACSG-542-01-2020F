@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
 
   let (:daily_statement) {
-    DailyStatement.create! pay_type: 2, statement_number: "STATEMENT", final_received_date: Date.new(2018, 3, 22), port_code: "PORT", total_amount: BigDecimal("1.23")
+    DailyStatement.create! pay_type: 2, statement_number: "STATEMENT", final_received_date: Date.new(2018, 3, 22), port_code: "PORT", total_amount: BigDecimal("1.23"), status: "F"
   }
 
   let (:payer) {
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
   describe "run_monthly_statements" do
 
     let! (:monthly_daily_statement) {
-      ms = MonthlyStatement.create! statement_number: "MONTHLY STATEMENT"
+      ms = MonthlyStatement.create! statement_number: "MONTHLY STATEMENT", status: "F"
       daily_statement.update_attributes! pay_type: 6, monthly_statement_id: ms.id
       daily_statement
     }
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
     end
 
     it "finds and pays daily statements on a monthly statement and reports errored results" do
-      errored_daily_statement = DailyStatement.create! pay_type: 6, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018,3,22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99"), monthly_statement_id: monthly_daily_statement.monthly_statement_id
+      errored_daily_statement = DailyStatement.create! pay_type: 6, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018,3,22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99"), monthly_statement_id: monthly_daily_statement.monthly_statement_id, status: "F"
 
       expect(payer).to receive(:pay_statement).with(monthly_daily_statement).and_return nil
       expect(payer).to receive(:pay_statement).with(errored_daily_statement).and_return ["ERROR"]
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
     end
 
     it "finds and pays daily statements and reports errored results" do
-      errored_daily_statement = DailyStatement.create! pay_type: 2, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018, 3, 22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99")
+      errored_daily_statement = DailyStatement.create! pay_type: 2, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018, 3, 22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99"), status: "F"
 
       expect(payer).to receive(:pay_statement).with(daily_statement).and_return nil
       expect(payer).to receive(:pay_statement).with(errored_daily_statement).and_return ["ERROR"]

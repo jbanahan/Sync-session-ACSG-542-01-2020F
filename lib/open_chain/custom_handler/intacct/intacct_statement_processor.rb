@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       # include the daily statement entries because the payer will need these
       includes(:daily_statement_entries).
       where(DailyStatement.has_never_been_synced_where_clause()).
-      where(pay_type: pay_type).
+      where(pay_type: pay_type, status: "F").
       where("daily_statements.final_received_date IS NOT NULL")
       
     if start_date
@@ -56,6 +56,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
     if pay_type == 6
       query = query.includes([:monthly_statement]).
                 joins(:monthly_statement).
+                where(monthly_statements: {status: "F"}).
                 order("monthly_statements.statement_number ASC, daily_statements.final_received_date ASC, daily_statements.statement_number ASC")
 
     else
