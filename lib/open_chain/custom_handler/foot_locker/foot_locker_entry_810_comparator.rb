@@ -13,10 +13,19 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
       entry = snapshot.recordable
       # I thought about using release date, but we really should be billing even files that weren't released as long as they have
       # actually been filed with customs and have broker invoices
-      accept = ['FOOLO', 'FOOCA', 'TEAED'].include?(entry.customer_number) && !entry.entry_filed_date.nil? && !entry.last_billed_date.nil? && entry.last_billed_date >= Date.new(2018, 5, 7) && entry.broker_invoices.length > 0 
+      accept = ['FOOLO', 'FOOCA', 'TEAED'].include?(entry.customer_number) && has_all_entry_dates?(entry) && entry.last_billed_date >= Date.new(2018, 5, 7) && entry.broker_invoices.length > 0 
     end
 
     accept
+  end
+
+  def self.has_all_entry_dates? entry
+    [:entry_filed_date, :last_billed_date, :arrival_date, :release_date].each do |attribute|
+      val = entry.public_send(attribute)
+      return false if val.nil?
+    end
+
+    return true
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

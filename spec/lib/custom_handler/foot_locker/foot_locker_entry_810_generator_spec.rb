@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
     subject { described_class }
 
     let (:entry) {
-      e = Entry.new source_system: "Alliance", customer_number: "FOOLO", last_billed_date: Date.new(2018, 5, 7), entry_filed_date: Date.new(2018, 5, 1)
+      e = Entry.new source_system: "Alliance", customer_number: "FOOLO", last_billed_date: Date.new(2018, 5, 7), entry_filed_date: Date.new(2018, 5, 1), arrival_date: Date.new(2018, 5, 2), release_date: Date.new(2018, 5, 3)
       e.broker_invoices.build invoice_number: "123", invoice_date: Date.new(2018, 4, 1)
       e
     }
@@ -52,8 +52,16 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
         entry.last_billed_date = Date.new(2018, 5, 6)
       end
 
-      it "does not accepte entries without an entry filed date" do
+      it "does not accept entries without an entry filed date" do
         entry.entry_filed_date = nil
+      end
+
+      it "does not accept entries without a release date" do
+        entry.release_date = nil
+      end
+
+      it "does not accept entries without an arrival date" do
+        entry.arrival_date = nil
       end
     end
   end
