@@ -502,13 +502,44 @@ order by importer_id, monthly_statement_due_date desc"
     # required args: system_code (or alliance_customer_number or fenix_customer_number), iso_code, email 
     def self.run_schedulable settings={}
       iso = settings['iso_code'].upcase
-      co = find_company settings
-      gen = self.new(co.id, iso)
-      tf = gen.run
-      today = gen.now.to_date.strftime('%Y-%m-%d')
-      msg = "#{co.name} #{iso} entry summary for #{today}"
-      OpenMailer.send_simple_html(settings["email"], msg, "#{msg} is attached.", [tf]).deliver!
-      tf.close
+      imp = find_company settings
+      email_report imp, iso, settings["email"]
+    end
+
+    def self.email_report importer, iso_code, addresses, subject=nil, body=nil, user_id=nil
+      ReportEmailer.email importer, iso_code, addresses, subject, body, user_id
+    end
+
+    class ReportEmailer
+      def self.email importer, iso_code, addresses, subject=nil, body=nil, user_id=nil
+        gen = OpenChain::ActivitySummary::EntrySummaryDownload.new importer, iso_code
+        addresses, subject, body = update_args(gen, addresses, subject, body, user_id)
+        begin
+          report = gen.run
+          OpenMailer.send_simple_html(addresses, subject, body, [report]).deliver!
+        ensure
+          report.close
+        end
+      end
+      
+      def self.update_args generator, addresses, subject, body, user_id
+        today = generator.now.to_date.strftime('%Y-%m-%d')
+        default_subject = "#{generator.importer.name} #{generator.iso_code} entry summary for #{today}"
+        subject = default_subject unless subject.present?
+        body = "#{default_subject} is attached." unless body.present?
+        addresses, body = update_args_with_user(addresses, body, user_id) if user_id
+        [addresses, subject, body]
+      end
+
+      def self.update_args_with_user addresses, body, user_id
+        user = User.find user_id
+        if addresses.blank?
+          addresses = user.email 
+        else
+          body = "<p>#{user.first_name} #{user.last_name} (#{user.email}) has sent you a report.</p><br>".html_safe + body
+        end
+        [addresses, body]
+      end
     end
 
     def self.find_company settings
@@ -521,8 +552,8 @@ order by importer_id, monthly_statement_due_date desc"
       end
     end
 
-    def initialize importer_id, iso_code, time_zone=nil
-      @importer = Company.find importer_id
+    def initialize importer_or_id, iso_code, time_zone=nil
+      @importer = importer_or_id.is_a?(Company) ? importer_or_id : Company.find(importer_or_id)
       @iso_code = iso_code.upcase
       @time_zone = time_zone
       @row_num = MutableNumber.new 0
@@ -588,6 +619,7 @@ order by importer_id, monthly_statement_due_date desc"
         write_k84 sheet, summary['k84'], (self.row_num += 3)
       end
       write_breakouts sheet, summary, (self.row_num += 3)
+      write_linked_companies sheet, (self.row_num += 3)
       # SECOND COLUMN
       self.row_num = 12
       write_released_ytd sheet, summary, (self.row_num += 3)
@@ -700,6 +732,14 @@ order by importer_id, monthly_statement_due_date desc"
       XlsMaker.insert_body_row sheet, row_num, snd_col, ["Ports",nil], [], false, formats: Array.new(2, FORMATS[:bold_header])
       XlsMaker.insert_cell_value sheet, (self.row_num += 1), (snd_col + 1), "Shipments", [], format: FORMATS[:right_header]
       rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, [r['name'], r['count']] }
+    end
+
+    def write_linked_companies sheet, row_num
+      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Companies Included",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:blue_header])
+      cust_num_attrib = us? ? "alliance_customer_number" : "fenix_customer_number"
+      [importer].concat(importer.linked_companies.where("LENGTH(#{cust_num_attrib}) > 0")).each do |lc|
+        XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, ["#{lc.name} (#{lc.send(cust_num_attrib.to_sym)})"]
+      end
     end
   end
 

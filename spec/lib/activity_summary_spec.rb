@@ -711,8 +711,10 @@ describe OpenChain::ActivitySummary do
                              'ports_ytd' => [{'name'=>'LA', 'count'=> 53}]}}
     end
 
-    let(:imp)  { Factory(:company, system_code: "SYSCODE", name: "Konvenientz") }
-    let(:user) { Factory(:user, company: imp, time_zone: "Central Time (US & Canada)")}
+    let(:linked_1) { Factory(:company, alliance_customer_number: "POW", name: "Super Pow") }
+    let(:linked_2) { Factory(:company, fenix_customer_number: "WSP", name: "Walshop") }
+    let(:imp)  { Factory(:company, linked_companies: [linked_1, linked_2], system_code: "SYSCODE", name: "Konvenientz") }
+    let(:user) { Factory(:user, company: imp, time_zone: "Central Time (US & Canada)") }
 
     describe "permission?" do
       it "allows users who can view entries for the importer" do
@@ -741,7 +743,7 @@ describe OpenChain::ActivitySummary do
 
         it "returns company identified by fenix number for 'CA' iso code" do
           imp.update_attributes! system_code: nil, fenix_customer_number: "FENIX"
-          expect(described_class.find_company "iso_code" => "US", "fenix_customer_number" => "FENIX").to eq imp
+          expect(described_class.find_company "iso_code" => "CA", "fenix_customer_number" => "FENIX").to eq imp
         end
       end
     end
@@ -779,6 +781,9 @@ describe OpenChain::ActivitySummary do
         expect(sheet.row(25)[0..3]).to eq ["Lines by Chapter", nil,nil,nil]
         expect(sheet.row(26)[0..3]).to eq ["Chapter", "1 Week", "4 Weeks", "Open"]
         expect(sheet.row(27)[0..3]).to eq ["chpt", 49,50,51]
+        expect(sheet.row(30)[0..3]).to eq ["Companies Included", nil, nil, nil]
+        expect(sheet.row(31)[0..3]).to eq ["Konvenientz ()", nil, nil, nil]
+        expect(sheet.row(32)[0..3]).to eq ["Super Pow (POW)", nil, nil, nil]
         # column 2
         expect(sheet.row(15)[5..6]).to eq ["Released Year To Date", nil]
         expect(sheet.row(16)[5..6]).to eq ["Summary", nil]
@@ -833,6 +838,9 @@ describe OpenChain::ActivitySummary do
         expect(sheet.row(15)[0..2]).to eq ["Estimated K84 Statement",nil,nil]
         expect(sheet.row(16)[0..2]).to eq ["Name", "Due", "Amount"]
         expect(sheet.row(17)[0..2]).to eq ["Walshop", 57,58,]
+        expect(sheet.row(30)[0..3]).to eq ["Companies Included", nil, nil, nil]
+        expect(sheet.row(31)[0..3]).to eq ["Konvenientz ()", nil, nil, nil]
+        expect(sheet.row(32)[0..3]).to eq ["Walshop (WSP)", nil, nil, nil]
         # column 2
         expect(sheet.row(15)[6..7]).to eq ["Released Year To Date", nil]
         expect(sheet.row(16)[6..7]).to eq ["Summary", nil]
@@ -851,6 +859,60 @@ describe OpenChain::ActivitySummary do
         expect(sheet.row(31)[6..7]).to eq ["LA", 53]        
 
         file.close
+      end
+    end
+
+    describe "ReportEmailer" do
+      let(:imp) { Factory(:company, name: "ACME", alliance_customer_number: "AC") }
+      let(:gen) { described_class.new(imp.id, "US") }
+      subject { described_class::ReportEmailer }
+
+      describe "update_args" do
+        it "supplies subject and body when both are missing" do
+          Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+            expect(subject.update_args gen, nil, nil, nil, nil).to eq [nil, "ACME US entry summary for 2018-03-15", "ACME US entry summary for 2018-03-15 is attached."]
+          end
+        end
+
+        it "supplies subject if missing" do
+          Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+            expect(subject.update_args gen, nil, nil, "Hi David, this one's for you!", nil).to eq [nil, "ACME US entry summary for 2018-03-15", "Hi David, this one's for you!"]
+          end
+        end
+
+        it "supplies body if missing" do
+          Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+            expect(subject.update_args gen, nil, "AMAZING report!!", nil, nil).to eq [nil, "AMAZING report!!", "ACME US entry summary for 2018-03-15 is attached."]
+          end
+        end
+
+        it "uses supplied args" do
+          Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+            expect(subject.update_args gen, nil, "AMAZING report!!", "Hi David, this one's for you!", nil).to eq [nil, "AMAZING report!!", "Hi David, this one's for you!"]
+          end
+        end
+
+        context "with user" do
+          let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz") }
+          
+          it "adds header to body with user info" do  
+            Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+              out = subject.update_args gen, "st-hubbins@hellhole.co.uk", "AMAZING report!!", "Hi David, this one's for you!", user
+              expect(out[0]).to eq "st-hubbins@hellhole.co.uk"
+              expect(out[1]).to eq "AMAZING report!!"
+              expect(out[2]).to eq "<p>Nigel Tufnel (tufnel@stonehenge.biz) has sent you a report.</p><br>Hi David, this one&#x27;s for you!"
+            end
+          end
+
+          it "subs user's email, omits header, if no email is given" do
+            Timecop.freeze(DateTime.new(2018,3,15,15,00)) do
+              out = subject.update_args gen, "", "AMAZING report!!", "Hi me, this one's for you!", user
+              expect(out[0]).to eq "tufnel@stonehenge.biz"
+              expect(out[1]).to eq "AMAZING report!!"
+              expect(out[2]).to eq "Hi me, this one's for you!"
+            end
+          end
+        end
       end
     end
 

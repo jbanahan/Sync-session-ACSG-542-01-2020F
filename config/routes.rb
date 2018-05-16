@@ -31,6 +31,8 @@ OpenChain::Application.routes.draw do
       get "/emails/validate_email_list" => "emails#validate_email_list"
       post "/entries/importer/:importer_id/activity_summary/us/download" => 'entries#store_us_activity_summary_download'
       post "/entries/importer/:importer_id/activity_summary/ca/download" => 'entries#store_ca_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/us/email" => 'entries#email_us_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/ca/email" => 'entries#email_ca_activity_summary_download'
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
