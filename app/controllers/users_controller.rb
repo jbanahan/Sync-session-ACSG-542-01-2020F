@@ -218,9 +218,11 @@ class UsersController < ApplicationController
       if current_user.admin?
         u = User.find_by_id params[:user_id]
         if u
-          u.password_reset = u.password_expired = u.password_locked = false
+          u.password_expired = false
+          u.password_locked = false
+          u.failed_logins = 0
           u.save!
-          add_flash :notices, "User with username #{u.username} unlocked."
+          add_flash :notices, "Account unlocked."
           redirect_to edit_company_user_path u.company, u
         else
           error_redirect "User with ID #{params[:user_id]} not found."

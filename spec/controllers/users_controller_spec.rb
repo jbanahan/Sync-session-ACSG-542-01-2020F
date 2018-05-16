@@ -472,14 +472,16 @@ describe UsersController do
       user.save
 
       company = Factory.create(:company)
-      locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
+      locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company, password_expired: true, failed_logins: 10)
 
       post :unlock_user, user_id: locked_user.id
 
       expect(response).to redirect_to(edit_company_user_path(locked_user.company, locked_user))
-      expect(flash[:notices]).to include("User with username #{locked_user.username} unlocked.")
+      expect(flash[:notices]).to include("Account unlocked.")
       locked_user.reload
-      expect(locked_user.password_locked).to eq(false)
+      expect(locked_user.password_locked).to eq false
+      expect(locked_user.password_expired).to eq false
+      expect(locked_user.failed_logins).to eq 0
     end
   end
 

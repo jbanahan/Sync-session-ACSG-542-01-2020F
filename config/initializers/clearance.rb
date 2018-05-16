@@ -40,7 +40,17 @@ end
 
 class LoginAllowedGuard < Clearance::SignInGuard
   def call
-    if signed_in? && User.access_allowed?(current_user)
+    if session.signed_in? && User.access_allowed?(current_user)
+      next_guard
+    else
+      failure("")
+    end
+  end
+end
+
+class TooManyLoginFailuresGuard < Clearance::SignInGuard
+  def call
+    if session.signed_in? && !current_user.password_locked?
       next_guard
     else
       failure("")
@@ -51,7 +61,7 @@ end
 Clearance.configure do |config|
   config.mailer_sender = OpenMailer.default_params[:from]
   config.password_strategy = Sha512PasswordStrategy
-  config.sign_in_guards = [LoginAllowedGuard]
+  config.sign_in_guards = [LoginAllowedGuard, TooManyLoginFailuresGuard]
   config.httponly = true
   # We don't use SSL in dev, so if we secure the cookie, we won't be able to stay logged in
   config.secure_cookie = Rails.application.config.use_secure_cookies

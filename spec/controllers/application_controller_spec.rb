@@ -138,7 +138,9 @@ describe ApplicationController do
     end
 
     it "should redirect to password reset page if user has password reset checked" do
-      @u.update_attributes password_reset: true
+      @u.password_reset = true
+      @u.save!
+
       get :show, :id => 1
       # The reset should have used the forgot_password! method which sets a confirmation
       # token, if the redirect points the user to the same confirmation token as
@@ -147,7 +149,9 @@ describe ApplicationController do
     end
 
     it "should display a password expired message if password_expired is set" do
-      @u.update_attributes password_reset: true, password_expired: true
+      @u.password_reset = true
+      @u.password_expired = true
+      @u.save!
 
       get :show, :id => 1
       expect(response).to redirect_to edit_password_reset_path controller.current_user.confirmation_token

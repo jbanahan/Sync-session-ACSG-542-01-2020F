@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe UserSessionsController do
+  let (:sign_in_failure) {
+    "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your VFI Track password?' link below the password box to reset your password."
+  }
+
   describe 'index' do
     it "should redirect to new if user not logged in" do
       get :index
@@ -78,10 +82,11 @@ describe UserSessionsController do
       post :create, :user_session => {'username'=>@user.username, 'password'=>"password"} 
       expect(response).to be_redirect
       expect(response).to redirect_to "/user_sessions/new"
-      expect(flash[:errors]).to include "Your login was not successful."
+      expect(flash[:errors]).to include sign_in_failure
     end
 
     it 'should respond with password locked error if password is locked' do
+      # This is testing a clearance sign in guard, set up in config/initializers/clearance
       @user.failed_logins = 0
       @user.password_locked = true
       @user.save!
@@ -90,7 +95,16 @@ describe UserSessionsController do
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
       expect(response).to be_redirect
       expect(response).to redirect_to "/user_sessions/new"
-      expect(flash[:errors]).to include "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
+      expect(flash[:errors]).to include sign_in_failure
+    end
+
+    it "does not allow users with access disabled to log in" do 
+      # This is testing a clearance sign in guard, set up in config/initializers/clearance
+      expect(User).to receive(:access_allowed?).with(an_instance_of(User)).and_return false
+      post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
+      expect(response).to be_redirect
+      expect(response).to redirect_to "/user_sessions/new"
+      expect(flash[:errors]).to include sign_in_failure
     end
 
     it "should allow a user to log in with via json" do
@@ -106,7 +120,7 @@ describe UserSessionsController do
       post :create, :user_session => {'username'=>@user.username, 'password'=>'password'}, :format => "json"
     
       expect(response).to be_success
-      expect(response.body).to eq({"errors" => ["Your login was not successful."]}.to_json)
+      expect(response.body).to eq({"errors" => ["Your log in attempt was not successful"]}.to_json)
     end
   end
 

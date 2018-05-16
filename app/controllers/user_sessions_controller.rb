@@ -22,13 +22,9 @@ class UserSessionsController < ApplicationController
 
   def create
     remember_me
-
-    user = authenticate(params)
-    locked_password = locked_password?(user)
-
     # This call runs the clearance sign_in "guards" which runs business logic validations
     # to check if user is allowed to login (.ie user isn't locked, disabled etc)
-    handle_sign_in(user, locked_password: locked_password)
+    handle_sign_in(authenticate(params))
   end
 
   def create_from_omniauth
@@ -49,11 +45,10 @@ class UserSessionsController < ApplicationController
     end
   end
 
-  def handle_sign_in(user, opts={})
+  def handle_sign_in(user)
     sign_in(user) do |status|
-      # I don't know why user would be nil here but it is sometimes (concurrency issue perhaps or something in clearance maybe?), so just
-      # handle that like it was a bad login.
-      if user && !opts[:locked_password] && status.success?
+      # user is nil if the authenticate method failed (bad user creds/password)
+      if user && status.success?
         session[:user_id] = user.id
         user.on_successful_login request
         respond_to do |format|
@@ -62,17 +57,15 @@ class UserSessionsController < ApplicationController
         end
       else
         session.delete :user_id
-        if opts[:locked_password]
-          error = "Your password is currently locked because you failed to log in correctly 5 times.  Please click the Forgot your VFI Track password? link below to reset your password."
-        else
-          error = "Your login was not successful."
-        end
+        # There are several layers of login guards (see config/initializers/clearance.rb), so it's possible the user's login wasn't a success, but we did create a 
+        # cookie, etc for them...log them out so the remember token is rotated, cookies are removed, etc
+        log_out
         respond_to do |format|
           format.html {
-            add_flash :errors, error
+            add_flash :errors, "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your VFI Track password?' link below the password box to reset your password."
             redirect_to new_user_session_path
           }
-          format.json { render :json => {"errors"=>[error]} }
+          format.json { render :json => {"errors"=>["Your log in attempt was not successful"]} }
         end
       end
     end
@@ -80,18 +73,16 @@ class UserSessionsController < ApplicationController
 
   # DELETE /user_sessions/1
   def destroy
-    sign_out
-    cookies.delete(:remember_me)
     add_flash :notices, "You are logged out. Thanks for visiting."
+    log_out
     redirect_to new_user_session_path
   end
 
   private
 
-    def locked_password?(user)
-      return false if user.blank?
-
-      user.password_locked || user.failed_logins > 4
+    def log_out
+      sign_out
+      cookies.delete(:remember_me)
     end
 
     def remember_me
