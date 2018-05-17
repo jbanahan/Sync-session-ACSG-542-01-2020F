@@ -636,6 +636,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it "handles vandegrift customer activity reports" do
+      expect(master_setup).to receive(:custom_features_list).and_return ['alliance']
       p = class_double("OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser")
       expect(OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with "bucket", '12345'
@@ -645,10 +646,20 @@ describe OpenChain::IntegrationClientCommandProcessor do
   end
 
   it "handles vandegrift kewill accounting report 5001" do
+    expect(master_setup).to receive(:custom_features_list).and_return ['alliance']
     p = class_double("OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001")
     expect(OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001).to receive(:delay).and_return p
     expect(p).to receive(:process_from_s3).with "bucket", '12345'
     cmd = {'request_type'=>'remote_file','original_path'=>'/arprfsub/file.rpt','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    expect(subject.process_command(cmd)).to eq(success_hash)
+  end
+
+  it "handles Advance Prep 7501 files" do
+    expect(master_setup).to receive(:custom_features_list).and_return ['Advance 7501']
+    p = class_double("OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser")
+    expect(OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser).to receive(:delay).and_return p
+    expect(p).to receive(:process_from_s3).with "bucket", '12345'
+    cmd = {'request_type'=>'remote_file','original_path'=>'/advan_prep_7501/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
     expect(subject.process_command(cmd)).to eq(success_hash)
   end
 

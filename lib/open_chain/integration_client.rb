@@ -53,6 +53,7 @@ require 'open_chain/custom_handler/ellery/ellery_order_parser'
 require 'open_chain/custom_handler/ellery/ellery_856_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
+require 'open_chain/custom_handler/advance/advance_prep_7501_shipment_parser'
 
 module OpenChain
   class IntegrationClient
@@ -271,10 +272,12 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ll_shipment_plan") && custom_features.include?('Lumber SAP')
         OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParser.delay.process_from_s3 bucket, s3_path
-      elsif (parser_identifier == "vfi_kewill_customer_activity_report")
+      elsif (parser_identifier == "vfi_kewill_customer_activity_report") && custom_features.include?("alliance")
         OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityReportParser.delay.process_from_s3 bucket, s3_path
-      elsif (parser_identifier == "arprfsub")
+      elsif (parser_identifier == "arprfsub") && custom_features.include?("alliance")
         OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "advan_prep_7501") && custom_features.include?("Advance 7501")
+        OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)
