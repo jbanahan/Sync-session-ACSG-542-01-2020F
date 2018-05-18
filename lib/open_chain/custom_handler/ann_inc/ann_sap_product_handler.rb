@@ -9,17 +9,9 @@ module OpenChain
         extend OpenChain::IntegrationClientParser
 
         SAP_REVISED_PRODUCT_FIELDS = [:origin,:import,:related_styles,:cost]
-        def initialize
-          @cdefs = self.class.prep_custom_definitions [:po,:origin,:import,:cost,
-            :ac_date,:ordln_ac_date,:ord_ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
-            :inco_terms,:related_styles,:season,:article,:approved_long,
-            :first_sap_date,:last_sap_date,:sap_revised_date, :minimum_cost, :maximum_cost, :mp_type,
-            :ord_docs_required, :ordln_import_country,:dsp_effective_date,:dsp_type,:ord_type,:ord_cancelled
-          ]
-        end
-
+        
         def self.parse file_content, opts = {}
-          self.new.process file_content, User.find_by_username('integration'), opts
+          self.new.process file_content, User.integration, opts
         end
 
         def process file_content, run_by, opts
@@ -45,7 +37,7 @@ module OpenChain
             tmp.flush
             $!.log_me ["Error processing Ann Inc SAP file"], [tmp.path]
             tmp.unlink
-            raise $! unless Rails.env=='production'
+            raise $! unless Rails.env.production?
           end
         end
 
@@ -87,11 +79,12 @@ module OpenChain
           line.empty?
         end
 
-        def cancel_order(order_number)
+        def cancel_order(order_number, user, file)
           order = Order.where(order_number: order_number).first
           if order
-            order.find_and_set_custom_value(@cdefs[:ord_cancelled], true)
+            order.find_and_set_custom_value(cdefs[:ord_cancelled], true)
             order.save!
+            order.create_snapshot user, nil, file
           end
         end
 
@@ -99,46 +92,50 @@ module OpenChain
           master_company = Company.where(master: true).first
           style_hash.each do |style, rows|
             rows.each do |row|
-              next if not_order?(row)
+              begin
+                next if not_order?(row)
 
-              dsp_type = row[19]
-              if dsp_type.present? && dsp_type.include?('Standard')
-                dsp_type = dsp_type.gsub('Standard PO', 'Standard')
-              end
-
-              if order_being_cancelled?(row)
-                cancel_order(row[0])
-              else
-                vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type, opts
-
-                find_order(row[0], master_company, vendor) do |o|
-                  [vendor, buying_agent, selling_agent].each do |co|
-                    next if co.blank?
-                    send_new_company_email(co[:company], o) if co[:new_record] && co[:company].get_custom_value(@cdefs[:dsp_type]).value == "MP"
-                  end
-
-                  base_row = rows.first
-                  related = extract_related_styles base_row
-                  p = OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager.get_style(base_style: style, missy: related[:missy], petite: related[:petite], tall: related[:tall], short: related[:short], plus: related[:plus])
-                  o.terms_of_sale = row[13]
-                  o.agent = buying_agent[:company] if buying_agent.present?
-                  o.selling_agent = selling_agent[:company] if selling_agent.present?
-                  o.find_and_set_custom_value(@cdefs[:ord_type], row[19])
-                  ol = o.order_lines.find { |ol| ol.product.unique_identifier == p.unique_identifier }
-                  ol = o.order_lines.build product: p if ol.blank?
-                  ol.country_of_origin = row[3]
-                  ol.price_per_unit = row[5]
-                  ol.hts = row[9]
-                  ol.quantity = row[22]
-                  ol.find_and_set_custom_value(@cdefs[:ordln_import_country], row[4])
-                  ol.find_and_set_custom_value(@cdefs[:ordln_ac_date], parsed_date(row[6]))
-                  ship_window_start = parsed_date(row[6])
-                  o.ship_window_start = ship_window_start
-                  o.find_and_set_custom_value(@cdefs[:ord_docs_required], docs_required?(vendor, row, ship_window_start)) 
-                  ol.save!
-                  o.save!
-                  o.create_snapshot run_by
+                dsp_type = row[19]
+                if dsp_type.present? && dsp_type.include?('Standard')
+                  dsp_type = dsp_type.gsub('Standard PO', 'Standard')
                 end
+
+                if order_being_cancelled?(row)
+                  cancel_order(row[0], run_by, opts[:key])
+                else
+                  vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type, opts
+
+                  find_order(row[0], master_company, vendor) do |o|
+                    [vendor, buying_agent, selling_agent].each do |co|
+                      next if co.blank?
+                      send_new_company_email(co[:company], o) if co[:new_record] && co[:company].get_custom_value(cdefs[:dsp_type]).value == "MP"
+                    end
+
+                    base_row = rows.first
+                    related = extract_related_styles base_row
+                    p = OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager.get_style(base_style: style, missy: related[:missy], petite: related[:petite], tall: related[:tall], short: related[:short], plus: related[:plus])
+                    o.terms_of_sale = row[13]
+                    o.agent = buying_agent[:company] if buying_agent.present?
+                    o.selling_agent = selling_agent[:company] if selling_agent.present?
+                    o.find_and_set_custom_value(cdefs[:ord_type], row[19])
+                    ol = o.order_lines.find { |ol| ol.product.unique_identifier == p.unique_identifier }
+                    ol = o.order_lines.build product: p if ol.blank?
+                    ol.country_of_origin = row[3]
+                    ol.price_per_unit = row[5]
+                    ol.hts = row[9]
+                    ol.quantity = row[22]
+                    ol.find_and_set_custom_value(cdefs[:ordln_import_country], row[4])
+                    ol.find_and_set_custom_value(cdefs[:ordln_ac_date], parsed_date(row[6]))
+                    ship_window_start = parsed_date(row[6])
+                    o.ship_window_start = ship_window_start
+                    o.find_and_set_custom_value(cdefs[:ord_docs_required], docs_required?(vendor, row, ship_window_start)) 
+                    ol.save!
+                    o.save!
+                    o.create_snapshot run_by
+                  end
+                end
+              rescue => e
+                e.log_me ["Failed to process PO # #{row[0]} / Style #{row[1]} from Ann SAP PO file #{opts[:key]}."]
               end
             end
           end
@@ -150,8 +147,8 @@ module OpenChain
 
           # If order type is MP, then docs are required IFF Vendor's MP Type is 'All Docs'  && the Order's Ship window start is on 
           # or after Vendor's effective date
-          if vendor[:company].custom_value(@cdefs[:mp_type]) == "All Docs"
-            effective_date = vendor[:company].custom_value(@cdefs[:dsp_effective_date])
+          if vendor[:company].custom_value(cdefs[:mp_type]) == "All Docs"
+            effective_date = vendor[:company].custom_value(cdefs[:dsp_effective_date])
 
             return !effective_date.nil? && !ship_window_start.nil? && ship_window_start.to_date >= effective_date
           end
@@ -166,7 +163,14 @@ module OpenChain
         end
 
         def find_or_create_vendor system_code, name, master_company, dsp_type, opts
+          
           if system_code.present? && name.present?
+            # All Ann System Codes should be 10 digits, sometimes if a file needs to be reprocessed we might edit it
+            # in Excel, which may strip the leading zeros if we're not very careful.  That's why we're always padding to 10 digits.
+            if system_code.length < 10
+              system_code = system_code.rjust(10, '0')
+            end
+
             co = nil
             new_record = false
             Lock.acquire("Company-#{system_code}") do 
@@ -174,8 +178,8 @@ module OpenChain
               new_record = co.new_record?
 
               if new_record
-                co.find_and_set_custom_value(@cdefs[:dsp_type], dsp_type)
-                co.find_and_set_custom_value(@cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
+                co.find_and_set_custom_value(cdefs[:dsp_type], dsp_type)
+                co.find_and_set_custom_value(cdefs[:mp_type], 'Not Participating') if ['Standard', 'AP'].include?(dsp_type)
                 co.show_business_rules = true
                 co.save!
               elsif co.name != name
@@ -183,9 +187,11 @@ module OpenChain
                 co.save!
               end
 
-              master_company.linked_companies << co if new_record
+              if new_record
+                master_company.linked_companies << co
+                co.create_snapshot(User.integration, nil, opts[:key])  
+              end
 
-              co.create_snapshot(User.integration, nil, opts[:key]) if new_record
             end
             {company: co, new_record: new_record}
           else
@@ -198,9 +204,8 @@ module OpenChain
           o = nil
           Lock.acquire("ANN-#{order_number}") do
             po = Order.where(order_number: order_number).first_or_create! vendor: vendor[:company], importer: importer
-            po.customer_order_number = order_number
-
             Lock.with_lock_retry(po) do
+              po.customer_order_number = order_number
               o = yield po
             end
           end
@@ -219,7 +224,7 @@ module OpenChain
                 base_values = {} #values that could trigger the sap_revised date
                 update_sap_revised_date = false
                 SAP_REVISED_PRODUCT_FIELDS.each do |f|
-                  base_values[f] = p.get_custom_value(@cdefs[f]).value
+                  base_values[f] = p.custom_value(cdefs[f])
                 end
 
                 p.name = clean_string(base_row[2])
@@ -228,21 +233,21 @@ module OpenChain
 
 
                 # Make sure we maintain the earliest AC date across any date values sent to us for any style (related styles or not)
-                write_earliest_ac_date rows, p.get_custom_value(@cdefs[:ac_date])
+                write_earliest_ac_date rows, p.get_custom_value(cdefs[:ac_date])
 
-                p.update_custom_value! @cdefs[:last_sap_date], Time.zone.now
-                p.update_custom_value! @cdefs[:prop_hts], clean_string(base_row[9])
-                p.update_custom_value! @cdefs[:prop_long], clean_string(base_row[10])
-                p.update_custom_value! @cdefs[:imp_flag], (clean_string(base_row[12])=='X')
-                p.update_custom_value! @cdefs[:inco_terms], clean_string(base_row[13])
-                p.update_custom_value! @cdefs[:season], clean_string(base_row[17])
-                p.update_custom_value! @cdefs[:article], clean_string(base_row[18])
-                f_sap = p.get_custom_value(@cdefs[:first_sap_date])
+                p.update_custom_value! cdefs[:last_sap_date], Time.zone.now
+                p.update_custom_value! cdefs[:prop_hts], clean_string(base_row[9])
+                p.update_custom_value! cdefs[:prop_long], clean_string(base_row[10])
+                p.update_custom_value! cdefs[:imp_flag], (clean_string(base_row[12])=='X')
+                p.update_custom_value! cdefs[:inco_terms], clean_string(base_row[13])
+                p.update_custom_value! cdefs[:season], clean_string(base_row[17])
+                p.update_custom_value! cdefs[:article], clean_string(base_row[18])
+                f_sap = p.get_custom_value(cdefs[:first_sap_date])
                 if f_sap.value.nil?
                   f_sap.value = 0.days.ago
                   f_sap.save!
                 end
-                approved_long = p.get_custom_value(@cdefs[:approved_long])
+                approved_long = p.get_custom_value(cdefs[:approved_long])
                 if approved_long.value.blank?
                   approved_long.value = clean_string(base_row[10])
                   approved_long.save!
@@ -262,7 +267,7 @@ module OpenChain
                   cls = get_or_create_classification p, country
                   # Classification may be nil if the iso code isn't enabled as an import country
                   if cls
-                    oga_val = cls.get_custom_value(@cdefs[:oga_flag]).value
+                    oga_val = cls.get_custom_value(cdefs[:oga_flag]).value
 
                     unless hts.blank?
                       tr = cls.tariff_records.first
@@ -272,7 +277,7 @@ module OpenChain
                     cls.save!
 
                     new_oga_value = (clean_string(row[11])=='X')
-                    cls.update_custom_value! @cdefs[:oga_flag], new_oga_value
+                    cls.update_custom_value! cdefs[:oga_flag], new_oga_value
                     if !oga_val.nil?
                       update_sap_revised_date = true if oga_val!=new_oga_value
                     end
@@ -285,9 +290,9 @@ module OpenChain
                 set_min_max_cost_values(p, agg[:min_max_per_country]) if agg[:min_max_per_country]
 
                 SAP_REVISED_PRODUCT_FIELDS.each do |f|
-                  update_sap_revised_date = true if base_values[f] != p.get_custom_value(@cdefs[f]).value
+                  update_sap_revised_date = true if base_values[f] != p.custom_value(cdefs[f])
                 end
-                p.update_custom_value! @cdefs[:sap_revised_date], Time.zone.now if update_sap_revised_date
+                p.update_custom_value! cdefs[:sap_revised_date], Time.zone.now if update_sap_revised_date
                 p.update_attributes! last_updated_by: run_by
                 p.create_snapshot run_by
               end
@@ -302,6 +307,15 @@ module OpenChain
           end
         end
 
+        def cdefs 
+          @cdefs ||= self.class.prep_custom_definitions [:po,:origin,:import,:cost,
+            :ac_date,:ordln_ac_date,:ord_ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
+            :inco_terms,:related_styles,:season,:article,:approved_long,
+            :first_sap_date,:last_sap_date,:sap_revised_date, :minimum_cost, :maximum_cost, :mp_type,
+            :ord_docs_required, :ordln_import_country,:dsp_effective_date,:dsp_type,:ord_type,:ord_cancelled
+          ]
+        end
+
         private
         
         def clean_string x
@@ -310,13 +324,13 @@ module OpenChain
         end
         
         def hts_valid? hts_number, country
-          !country.official_tariffs.find_by_hts_code(hts_number.gsub(/[^0-9]/,'')).blank?
+          !OfficialTariff.where(hts_code: hts_number.gsub(/[^0-9]/,''), country_id: country.id).first.nil?
         end
         
         def write_aggregate_value aggregate_vals, product, symbol, reverse, delimiter
           # Append the aggregate values into the existing custom value
           vals = aggregate_vals[symbol]
-          field = product.get_custom_value(@cdefs[symbol])
+          field = product.get_custom_value(cdefs[symbol])
           if !field.value.blank?
             vals = field.value.split(delimiter) + vals
           end
@@ -426,7 +440,7 @@ module OpenChain
            
             if classification
               if min_max[:min]
-                field = classification.get_custom_value(@cdefs[:minimum_cost])
+                field = classification.get_custom_value(cdefs[:minimum_cost])
                 if field.value.nil? || field.value > min_max[:min]
                   field.value = min_max[:min]
                   field.save!
@@ -434,7 +448,7 @@ module OpenChain
               end
 
               if min_max[:max]
-                field = classification.get_custom_value(@cdefs[:maximum_cost])
+                field = classification.get_custom_value(cdefs[:maximum_cost])
                 if field.value.nil? || field.value < min_max[:max]
                   field.value = min_max[:max]
                   field.save!

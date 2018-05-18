@@ -25,12 +25,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       :season=>'Fall13',
       :article_type=>'MyType',
       :dsp_type=>'Standard PO',
-      :vendor_code=>'987654321',
+      :vendor_code=>'9876543210',
       :vendor_name=>'Widgets Inc',
       :order_quantity=>'1',
-      :seller_code => '456789123',
+      :seller_code => '4567891230',
       :seller_name => 'Seller Inc',
-      :buyer_code => '123456789',
+      :buyer_code => '1234567890',
       :buyer_name => 'Buyer Inc',
       :short=>'sstyle',
       :plus=>'pstyle'
@@ -74,620 +74,522 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     cancelled_row
   end
 
-  before :all do
-    @h = described_class.new
-    @opts = {bucket: "bucket", key: "path/to/s3/file"}
-  end
+  let (:user) { Factory(:user) }
+  let (:opts) { {bucket: "bucket", key: "path/to/s3/file"} }
+  let (:cdefs) { subject.send(:cdefs) }
+  let (:us) { Factory(:country, iso_code: "US", import_location: true)}
 
-  after :all do
-    CustomDefinition.destroy_all
-  end
+  describe "parse" do
 
-  before :each do
-    allow_any_instance_of(FieldValidatorRule).to receive :reset_model_fields
-    @master_company = Factory.create(:company, master: true)
-    @us = Factory(:country,:iso_code=>'US',:import_location=>true)
-    @good_hts = OfficialTariff.create(:hts_code=>'1234567890',:country=>@us)
-    @user = Factory(:user)
-    @cdefs = described_class.prep_custom_definitions [:po,:origin,:import,:cost,
-        :ac_date,:ordln_ac_date,:ord_ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
-        :inco_terms,:related_styles,:season,:article,:approved_long,
-        :first_sap_date,:last_sap_date,:sap_revised_date, :maximum_cost, :minimum_cost,:mp_type,
-        :ord_docs_required, :ordln_import_country, :ord_cancelled, :dsp_type, :dsp_effective_date, :ord_docs_required
-      ]
-    ModelField.reload true
-  end
+    let! (:master_company) { 
+      # It appears that sometimes there's already a master company..if so, just use it
+      Company.where(master: true).first_or_create! name: "My Master Company"
+    }
 
-  def create_mp_company
-    h = default_values
-    co = Company.new name: h[:vendor_name], system_code: h[:vendor_code]
-    co.find_and_set_custom_value @cdefs[:mp_type], 'All Docs'
-    co.save!
-    co
-  end
-
-  it "should create custom fields" do
-    read_onlys = []
-    read_onlys << CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product").first
-    read_onlys << CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Unit Costs",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Earliest AC Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Merch Dept Number",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Merch Dept Name",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Proposed HTS",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Related Styles",:data_type=>:text,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Minimum Cost",:data_type=>:decimal,:module_type=>'Classification').first
-    read_onlys << CustomDefinition.where(:label=>"Maximum Cost",:data_type=>:decimal,:module_type=>'Classification').first
-    expect(CustomDefinition.where(:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification').first).not_to be_nil
-    expect(CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product').first).not_to be_nil
-    read_onlys.each do |cd|
-      expect(cd.model_field).to be_read_only
+    before :all do
+      described_class.new.send(:cdefs)
     end
-  end
 
-  it "should create new product" do
-    data = make_row
-    @h.process data, @user, @opts
-    expect(Product.count).to eq(1)
-    p = Product.first
-    h = default_values
-    expect(p.unique_identifier).to eq(h[:style])
-    expect(p.name).to eq(h[:name])
-    expect(p.get_custom_value(@cdefs[:po]).value).to eq(h[:po])
-    expect(p.get_custom_value(@cdefs[:origin]).value).to eq(h[:origin])
-    expect(p.get_custom_value(@cdefs[:import]).value).to eq(h[:import])
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("#{h[:import]} - 0#{h[:unit_cost]}")
-    expect(p.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y")).to eq(h[:ac_date])
-    expect(p.get_custom_value(@cdefs[:dept_num]).value).to eq(h[:merch_dept_num])
-    expect(p.get_custom_value(@cdefs[:dept_name]).value).to eq(h[:merch_dept_name])
-    expect(p.get_custom_value(@cdefs[:prop_hts]).value).to eq(h[:proposed_hts])
-    expect(p.get_custom_value(@cdefs[:prop_long]).value).to eq(h[:proposed_long_description])
-    expect(p.get_custom_value(@cdefs[:imp_flag]).value).to eq( h[:import_indicator] == 'X')
-    expect(p.get_custom_value(@cdefs[:inco_terms]).value).to eq(h[:inco_terms])
-    expect(p.get_custom_value(@cdefs[:related_styles]).value).to eq("#{h[:petite]}\n#{h[:tall]}\n#{h[:short]}\n#{h[:plus]}")
-    expect(p.get_custom_value(@cdefs[:season]).value).to eq(h[:season])
-    expect(p.get_custom_value(@cdefs[:article]).value).to eq(h[:article_type])
-    expect(p.get_custom_value(@cdefs[:approved_long]).value).to eq(h[:proposed_long_description])
-    expect(p.get_custom_value(@cdefs[:first_sap_date]).value).to eq(0.days.ago.to_date)
-    expect(p.get_custom_value(@cdefs[:last_sap_date]).value).to eq(0.days.ago.to_date)
-    expect(p.get_custom_value(@cdefs[:sap_revised_date]).value).to eq(0.days.ago.to_date)
-    expect(p.classifications.size).to eq(1)
-    cls = p.classifications.find_by_country_id @us.id
-    expect(cls.get_custom_value(@cdefs[:oga_flag]).value).to eq(h[:fw]=='X')
-    expect(cls.get_custom_value(@cdefs[:maximum_cost]).value).to eq(BigDecimal.new(h[:unit_cost]))
-    expect(cls.get_custom_value(@cdefs[:minimum_cost]).value).to eq(BigDecimal.new(h[:unit_cost]))
-    expect(cls.tariff_records.size).to eq(1)
-    tr = cls.tariff_records.first
-    expect(tr.hts_1).to eq('1234567890')
-  end
+    after :all do
+      CustomDefinition.destroy_all
+    end
 
-  it "should create a company if it does not exist" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    c = Company.find_by_system_code(h[:vendor_code])
-    expect(c).to be_present
-    expect(c.vendor).to be true
-    expect(c.show_business_rules).to be true
-  end
+    context "product parsing" do
 
-  it "should snapshot a new company" do
-    h = default_values
-    expect_any_instance_of(Company).to receive(:create_snapshot)
-    @h.process make_row({seller_code: nil, buyer_code: nil}), @user, @opts
-  end
+      let! (:valid_tariff) { OfficialTariff.create!(hts_code: '1234567890', country: us) }
 
-  it "does not snapshot an existing company" do
-    h = default_values
-    # First we run through and create all the companies
-    @h.process make_row, @user, @opts
-    expect_any_instance_of(Company).to_not receive(:create_snapshot)
-    # A second run through will load the existing companies. No snapshot required.
-    @h.process make_row, @user, @opts
-  end
+      before :each do 
+        allow(subject).to receive(:generate_orders)
+      end
 
-  it "does not change the company's DSP type if the company already exists" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    c = Company.find_by_system_code(h[:vendor_code])
-    expect(c).to be_present
-    expect(c.custom_value(@cdefs[:dsp_type])).to eq "Standard"
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    c.reload
-    expect(c.custom_value(@cdefs[:dsp_type])).to eq "Standard"
-  end
+      it "should create new product" do
+        data = make_row
+        subject.process data, user, opts
+        expect(Product.count).to eq(1)
+        p = Product.first
+        h = default_values
+        expect(p.unique_identifier).to eq(h[:style])
+        expect(p.name).to eq(h[:name])
+        expect(p.custom_value(cdefs[:po])).to eq(h[:po])
+        expect(p.custom_value(cdefs[:origin])).to eq(h[:origin])
+        expect(p.custom_value(cdefs[:import])).to eq(h[:import])
+        expect(p.custom_value(cdefs[:cost])).to eq("#{h[:import]} - 0#{h[:unit_cost]}")
+        expect(p.custom_value(cdefs[:ac_date]).strftime("%m/%d/%Y")).to eq(h[:ac_date])
+        expect(p.custom_value(cdefs[:dept_num])).to eq(h[:merch_dept_num])
+        expect(p.custom_value(cdefs[:dept_name])).to eq(h[:merch_dept_name])
+        expect(p.custom_value(cdefs[:prop_hts])).to eq(h[:proposed_hts])
+        expect(p.custom_value(cdefs[:prop_long])).to eq(h[:proposed_long_description])
+        expect(p.custom_value(cdefs[:imp_flag])).to eq( h[:import_indicator] == 'X')
+        expect(p.custom_value(cdefs[:inco_terms])).to eq(h[:inco_terms])
+        expect(p.custom_value(cdefs[:related_styles])).to eq("#{h[:petite]}\n#{h[:tall]}\n#{h[:short]}\n#{h[:plus]}")
+        expect(p.custom_value(cdefs[:season])).to eq(h[:season])
+        expect(p.custom_value(cdefs[:article])).to eq(h[:article_type])
+        expect(p.custom_value(cdefs[:approved_long])).to eq(h[:proposed_long_description])
+        expect(p.custom_value(cdefs[:first_sap_date])).to eq(0.days.ago.to_date)
+        expect(p.custom_value(cdefs[:last_sap_date])).to eq(0.days.ago.to_date)
+        expect(p.custom_value(cdefs[:sap_revised_date])).to eq(0.days.ago.to_date)
+        expect(p.classifications.length).to eq(1)
+        cls = p.classifications.find {|c| c.country_id == us.id }
+        expect(cls.custom_value(cdefs[:oga_flag])).to eq(h[:fw]=='X')
+        expect(cls.custom_value(cdefs[:maximum_cost])).to eq(BigDecimal.new(h[:unit_cost]))
+        expect(cls.custom_value(cdefs[:minimum_cost])).to eq(BigDecimal.new(h[:unit_cost]))
+        expect(cls.tariff_records.size).to eq(1)
+        tr = cls.tariff_records.first
+        expect(tr.hts_1).to eq('1234567890')
+      end
 
-  it "changes the company name if it exists" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    c = Company.find_by_system_code(h[:vendor_code])
-    expect(c).to be_present
-    expect(c.name).to eql(h[:vendor_name])
-    @h.process make_row({vendor_name: 'A New Name'}), @user, @opts
-    c.reload
-    expect(c.name).to eql('A New Name')
-  end
+      it "should change sap revised date if key field changes" do
+        h = default_values
+        subject.process make_row, user, opts
+        p = Product.first
+        p.update_custom_value! cdefs[:sap_revised_date], 1.year.ago
+        p.update_custom_value! cdefs[:origin], 'somethingelse'
+        subject.process make_row, user, opts
+        p = Product.find p.id
+        expect(p.custom_value(cdefs[:sap_revised_date])).to eq(0.days.ago.to_date)
+      end
+      it "should not chage sap revised date if no key fields change" do
+        h = default_values
+        subject.process make_row, user, opts
+        p = Product.first
+        p.update_custom_value! cdefs[:sap_revised_date], 1.year.ago
+        subject.process make_row, user, opts
+        p = Product.find p.id
+        expect(p.custom_value(cdefs[:sap_revised_date])).to eq(1.year.ago.to_date)
+      end
+      
+      it "should not set hts number if not valid" do
+        data = make_row(:proposed_hts=>'655432198')
+        subject.process data, user , opts
+        expect(Product.first.classifications.first.tariff_records.first.hts_1).to be_blank
+      end
+      
+      it "should not create classification if country is not import_location?" do
+        cn = Factory(:country,:iso_code=>'CN')
+        data = make_row(:import=>'CN')
+        subject.process data, user, opts
+        expect(Product.first.classifications).to be_empty
+      end
 
-  it "should assign a newly created account to Ann" do
-    Factory.create(:company, master:true)
-    h = default_values
-    @h.process make_row, @user, @opts
-    c = Company.find_by_system_code(h[:vendor_code])
-    expect(Company.where(master: true).first.linked_companies).to include(c)
-  end
+      it "should find earliest AC Date" do
+        data = make_row(:ac_date=>'12/29/2013')
+        data << make_row(:ac_date=>'12/28/2013')
+        data << make_row(:ac_date=>'12/23/2014')
+        subject.process data, user, opts
+        expect(Product.first.custom_value(cdefs[:ac_date]).strftime("%m/%d/%Y")).to eq("12/28/2013")
+      end
+      
+      it "should aggregate unit cost by country" do
+        data = make_row(:unit_cost=>'10.11',:import=>'CA')
+        data << make_row(:unit_cost=>'12.21',:import=>'CA')
+        data << make_row(:unit_cost=>'6.14',:import=>'CA')
+        data << make_row(:unit_cost=>'6.14',:import=>'CA')
+        data << make_row(:unit_cost=>'6.14',:import=>'US')
+        subject.process data, user, opts
+        expect(Product.first.custom_value(cdefs[:cost])).to eq("US - 06.14\nCA - 12.21\nCA - 10.11\nCA - 06.14")
+      end
+      
+      it "should set hts for multiple countries" do
+        cn = Factory(:country,:iso_code=>'CN',:import_location=>true)
+        ot = cn.official_tariffs.create!(:hts_code=>'9876543210')
+        data = make_row
+        data << make_row(:import=>'CN',:proposed_hts=>ot.hts_code)
+        subject.process data, user, opts
+        p = Product.first
+        expect(p.classifications.length).to eq(2)
 
-  it "should not relink an existing company to Ann" do
-    co = Factory.create(:company, master:true)
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect{ @h.process make_row, @user, @opts }.to_not change(co.linked_companies, :count)
-  end
+        expect(p.classifications.find {|c| c.country_id == us.id }.tariff_records.first.hts_1).to eq('1234567890')
+        expect(p.classifications.find {|c| c.country_id == cn.id }.tariff_records.first.hts_1).to eq(ot.hts_code)
+      end
+      
+      it "should not override actual hts if proposed changes" do
+        p = Factory(:product,:unique_identifier=>default_values[:style])
+        p.classifications.create!(:country_id=>us.id).tariff_records.create!(:hts_1=>'1111111111')
+        subject.process make_row, user, opts
+        p.reload
+        expect(p.classifications.length).to eq(1)
+        expect(p.classifications.first.tariff_records.size).to eq(1)
+        expect(p.classifications.first.tariff_records.first.hts_1).to eq('1111111111')
+      end
+      
+      it "should not override actual long description if proposed change" do
+        p = Factory(:product,:unique_identifier=>default_values[:style])
+        p.update_custom_value! cdefs[:approved_long], 'something'
+        subject.process make_row, user, opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:approved_long])).to eq('something')
+      end
 
-  it "does not create the order if PO number is not a merch number" do
-    h = default_values
-    expect { @h.process make_row({po: '4512345678'}), @user, @opts }.to_not change(Order, :count)
-  end
+      it "should handle multiple products" do
+        h = default_values
+        data = make_row
+        data << make_row(:style=>'STY2',:ac_date=>'10/30/2015',:petite=>'p2',:tall=>'t2', :short=>'s2', :plus=>'pl2')
+        subject.process data, user, opts
+        expect(Product.count).to eq(2)
+        p1 = Product.where(unique_identifier: h[:style]).first
+        expect(p1.custom_value(cdefs[:ac_date]).strftime("%m/%d/%Y")).to eq(h[:ac_date])
+        p2 = Product.where(unique_identifier: 'STY2').first
+        expect(p2.custom_value(cdefs[:ac_date]).strftime("%m/%d/%Y")).to eq('10/30/2015')
+      end
 
-  it "sets Ann as the importer for a new order" do
-    Factory.create(:company, master: true)
-    expect(Order.count).to eql(0)
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Order.first.importer).to eql(Company.where(master: true).first)
-  end
+      it "should create snapshot" do
+        subject.process make_row, user, opts
+        p = Product.first
+        expect(p.entity_snapshots.size).to eq(1)
+        expect(p.entity_snapshots.first.user).to eq(user)
+      end
+      
+      it "should update last sap sent date but not first sap sent date" do
+        p = Factory(:product,:unique_identifier=>default_values[:style])
+        p.update_custom_value! cdefs[:first_sap_date], Date.new(2012,4,10)
+        p.update_custom_value! cdefs[:last_sap_date], Date.new(2012,4,15)
+        subject.process make_row, user, opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:first_sap_date])).to eq(Date.new(2012,4,10))
+        expect(p.custom_value(cdefs[:last_sap_date]).strftime("%y%m%d")).to eq(0.days.ago.strftime("%y%m%d"))
+      end
 
-  it "sets the selling agent as the selling_agent" do
-    Factory.create(:company, master: true)
-    expect(Order.count).to eql(0)
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Order.first.selling_agent).to eql(Company.find_by_system_code(h[:seller_code]))
-  end
+      it "should set import indicator and fw flag to false if value is not 'X'" do
+        row = make_row :fw=>"", :import_indicator=>"a"
+        subject.process row, user, opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:imp_flag])).to be_falsey
+        cls = p.classifications.find {|c| c.country_id == us.id }  
+        expect(cls.custom_value(cdefs[:oga_flag])).to be_falsey
+      end
 
-  it "does not set a selling agent if one is not given" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({seller_code: nil}), @user, @opts
-    expect(Order.first.selling_agent).to be_nil
-  end
+      it "should append aggregate value information into an existing record" do
+        p = Factory(:product, :unique_identifier=> default_values[:style])
+        p.update_custom_value! cdefs[:po], "PO1"
+        p.update_custom_value! cdefs[:origin], "Origin1"
+        p.update_custom_value! cdefs[:import], "Import1"
+        p.update_custom_value! cdefs[:cost], "Import1 - 01.23"
+        p.update_custom_value! cdefs[:dept_num], "Dept1"
+        p.update_custom_value! cdefs[:dept_name], "Name1"
 
-  it "does not set a buying agent if one is not given" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({buyer_code: nil}), @user, @opts
-    expect(Order.first.agent).to be_nil
-  end
+        row = make_row :po =>"PO2",:origin=>"Origin2",:import=>"Import2",:unit_cost=>2.0,:merch_dept_num=>"Dept2",:merch_dept_name=>"Name2"
+        subject.process row, user, opts
+        p = Product.first
 
-  it "properly sets the docs required if company is docs required and dsp effective date is before the ship window" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    vendor = Company.find_by_system_code(default_values[:vendor_code])
-    vendor.find_and_set_custom_value(@cdefs[:dsp_effective_date], Date.new(2013,1,1))
-    vendor.find_and_set_custom_value(@cdefs[:mp_type], 'All Docs')
-    vendor.save!
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.custom_value(@cdefs[:ord_docs_required])).to eq true
-  end
+        expect(p.custom_value(cdefs[:po])).to eq("PO1\nPO2")
+        expect(p.custom_value(cdefs[:origin])).to eq("Origin1\nOrigin2")
+        expect(p.custom_value(cdefs[:import])).to eq("Import1\nImport2")
+        expect(p.custom_value(cdefs[:cost])).to eq("Import2 - 02.00\nImport1 - 01.23")
+        expect(p.custom_value(cdefs[:dept_num])).to eq("Dept1\nDept2")
+        expect(p.custom_value(cdefs[:dept_name])).to eq("Name1, Name2")
+      end
 
-  it "sets docs required to false if company dsp effective date is after the ship window" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    vendor = Company.find_by_system_code(default_values[:vendor_code])
-    vendor.find_and_set_custom_value(@cdefs[:dsp_effective_date], Date.new(2014,1,1))
-    vendor.find_and_set_custom_value(@cdefs[:mp_type], 'All Docs')
-    vendor.save!
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.custom_value(@cdefs[:ord_docs_required])).to eq false
-  end
+      it "should normalize the unit cost to at least 2 decimal places and at least 4 significant digits" do
+        subject.process make_row(:import=>"Import",:unit_cost=>"0"), user , opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:cost])).to eq("Import - 00.00")
 
-  it "sets docs required to false if company dsp effective date is not set" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    vendor = Company.find_by_system_code(default_values[:vendor_code])
-    vendor.find_and_set_custom_value(@cdefs[:mp_type], 'All Docs')
-    vendor.save!
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.custom_value(@cdefs[:ord_docs_required])).to eq false
-  end
+        subject.process make_row(:import=>"Import",:unit_cost=>"1"), user , opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:cost])).to eq("Import - 01.00\nImport - 00.00")
 
-  it "sets docs required to false if MP Type is not 'All Docs'" do
-    Factory.create(:company, master: true)
-    h = default_values
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    vendor = Company.find_by_system_code(default_values[:vendor_code])
-    vendor.find_and_set_custom_value(@cdefs[:dsp_effective_date], Date.new(2013,1,1))
-    vendor.find_and_set_custom_value(@cdefs[:mp_type], 'Upon Reqest')
-    vendor.save!
-    @h.process make_row({dsp_type: 'MP'}), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.custom_value(@cdefs[:ord_docs_required])).to eq false
-  end
+        subject.process make_row(:import=>"Import",:unit_cost=>"2.0"), user , opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:cost])).to eq("Import - 02.00\nImport - 01.00\nImport - 00.00")
 
-  it "sets the selling agent as a selling_agent" do
-    Factory.create(:company, master: true)
-    expect(Order.count).to eql(0)
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Order.first.selling_agent.selling_agent).to be_truthy
-  end
+        subject.process make_row(:import=>"Import",:unit_cost=>"12.00"), user , opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:cost])).to eq("Import - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
 
-  it "sets the buying agent as the agent" do
-    Factory.create(:company, master: true)
-    expect(Order.count).to eql(0)
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Order.first.agent).to eql(Company.find_by_system_code(h[:buyer_code]))
-  end
+        subject.process make_row(:import=>"Import",:unit_cost=>"120.001"), user , opts
+        p = Product.first
+        expect(p.custom_value(cdefs[:cost])).to eq("Import - 120.001\nImport - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
+      end
 
-  it "should not send an email, to Ann, if company is created from PO and not DSP Type MP" do
-    mail = double('mail')
-    h = default_values
-    expect(OpenMailer).to_not receive(:send_simple_html)
-    @h.process make_row(dsp_type: 'AP'), @user, @opts
-  end
+      it "uses style field as the primary style if no missy style is given" do
+        subject.process make_row({:style => "P-ABC", :missy => nil, :petite => nil, :tall => "T-ABC", :short => "S-ABC", :plus => "PL-ABC"}), user, opts
+        p = Product.first
+        expect(p.unique_identifier).to eq("P-ABC")
+        expect(p.custom_value(cdefs[:related_styles]).split.sort).to eq(['PL-ABC', 'S-ABC', 'T-ABC'])
+      end
 
-  it "should send an email, to Ann, if company is created from PO and is DSP Type MP" do
-    mail = double('mail')
-    expect(mail).to receive(:deliver!).at_least(:once)
-    h = default_values
-    expect(OpenMailer).to receive(:send_simple_html).at_least(:once).and_return(mail)
-    @h.process make_row(dsp_type: 'MP'), @user, @opts
-  end
+      it "should update existing style records and use missy style as master data" do
+        p = Product.create! unique_identifier: "T-ABC"
 
-  it "does not flag the order for docs required, regardless of company MP type if MP type is not MP" do
-    co = create_mp_company
-    h = default_values
-    @h.process make_row(dsp_type: 'AP'), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_docs_required]).value).to be_falsey
-  end
+        subject.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC", :short=>"S-ABC", :plus=>"PL-ABC"}), user, opts
+        p.reload
+        expect(p.unique_identifier).to eq("M-ABC")
+        expect(p.custom_value(cdefs[:related_styles]).split.sort).to eq(['P-ABC','PL-ABC', 'S-ABC','T-ABC'])
+      end
 
-  it "does not create another company if one already exists" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Company.find_by_system_code(h[:vendor_code])).to be_present
-    expect{@h.process make_row, @user, @opts}.to change(Company, :count).by(0)
-  end
+      it "should update maximum cost if the unit_price is higher and NOT update minimum cost" do
+        subject.process make_row, user, opts
 
-  it "does not generate a new order, if one already exists" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(Order.find_by_order_number(default_values[:po])).to be_present
-    expect{@h.process make_row, @user, @opts}.to change(Order, :count).by(0)
-  end
+        unit_cost = (BigDecimal.new(default_values[:unit_cost]) + 1)
+        row = make_row unit_cost: unit_cost.to_s
+        subject.process row, user, opts
 
-  it "does not duplicate order lines" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    expect(OrderLine.count).to eql(1)
-    expect{@h.process make_row, @user, @opts}.to change(OrderLine, :count).by(0)
-  end
+        p = Product.first
+        expect(p.classifications.first.custom_value(cdefs[:maximum_cost])).to eq unit_cost
+        expect(p.classifications.first.custom_value(cdefs[:minimum_cost])).to eq BigDecimal.new(default_values[:unit_cost])
+      end
 
-  it "sets the ord_ac_date based on the new order" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    ol = o.order_lines.first
-    expect(ol.get_custom_value(@cdefs[:ordln_ac_date]).value.strftime("%m/%d/%Y")).to eq(h[:ac_date])
-  end
+      it "should NOT update maximum cost if the unit_price is lower and update minimum cost" do
+        subject.process make_row, user, opts
 
-  it "generates a new order line on the order" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.order_lines.count).to eql(1)
-    ol = OrderLine.first
-    expect(ol.country_of_origin).to eql(h[:origin])
-    expect(ol.get_custom_value(@cdefs[:ordln_import_country]).value).to eql(h[:import])
-    expect(ol.quantity.to_f).to eql(h[:order_quantity].to_f)
-    expect(ol.price_per_unit.to_f).to eql(h[:unit_cost].to_f)
-    expect(ol.hts).to eql(h[:proposed_hts])
-  end
+        unit_cost = (BigDecimal.new(default_values[:unit_cost]) - 1)
+        row = make_row unit_cost: unit_cost.to_s
+        subject.process row, user, opts
 
-  it "handles a blank vendor during order creation" do
-    h = default_values
-    @h.process make_row({vendor_name: nil}), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o).to be_present
-  end
+        p = Product.first
+        expect(p.classifications.first.custom_value(cdefs[:maximum_cost])).to eq BigDecimal.new(default_values[:unit_cost])
+        expect(p.classifications.first.custom_value(cdefs[:minimum_cost])).to eq unit_cost
+      end
 
-  it "generates a new order based on the PO Number" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.vendor).to be_present
-    expect(o).to be_present
-    expect(o.terms_of_sale).to eql(h[:inco_terms])
-    expect(o.ship_window_start).to be_present
-  end
+      it "should add a new classification to hold max/min cost for import locations" do
+        subject.process make_row, user, opts
 
-  it "sets the ac_date of the orderline" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    ol = o.order_lines.first
-    expect(ol.get_custom_value(@cdefs[:ordln_ac_date]).value.strftime("%m/%d/%Y")).to eq(h[:ac_date])
-  end
+        other_country = Factory(:country, import_location: true, iso_code: 'XX')
+        row = make_row import: "XX"
+        subject.process row, user, opts
 
-  it "does not change the vendor of the cancelled order if related styles are included" do
-    company_that_should_not_be = Factory(:company, system_code: '')
+        p = Product.first
+        c = p.classifications.find {|c| c.country_id == other_country.id}
+        expect(c.custom_value(cdefs[:maximum_cost])).to eq BigDecimal.new(default_values[:unit_cost])
+        expect(c.custom_value(cdefs[:minimum_cost])).to eq BigDecimal.new(default_values[:unit_cost])
+      end
 
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_falsey
-    @h.process make_row(cancelled_order_row_with_related_styles), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_truthy
+      it "should not add new classification to hold max/min cost for countries not marked as import locations" do
+        subject.process make_row, user, opts
 
-    expect(o.vendor).to_not eql(company_that_should_not_be)
-  end
+        other_country = Factory(:country, import_location: false, iso_code: 'XX')
+        row = make_row import: "XX"
+        subject.process row, user, opts
 
-  it "does not change the vendor of the cancelled order" do
-    company_that_should_not_be = Factory(:company, system_code: '')
+        expect(Product.first.classifications.find {|c| c.country_id == other_country.id}).to be_nil    
+      end
+    end
 
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_falsey
-    @h.process make_row(cancelled_order_row), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_truthy
+    context "order parsing" do
 
-    expect(o.vendor).to_not eql(company_that_should_not_be)
-  end
+      before :each do 
+        allow(subject).to receive(:generate_products)
+        allow(OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager).to receive(:get_style).and_return existing_product
+      end
 
-  it "cancels an order, that is not yet cancelled, if only the specified fields plus related styles are included" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_falsey
-    @h.process make_row(cancelled_order_row_with_related_styles), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_truthy
-  end
+      let (:existing_product) { Factory(:product, unique_identifier: "123456") }
+      let (:existing_vendor) { Factory(:company, name: "Existing Vendor", system_code: "9876543210") }
 
-  it "cancels an order, that is not yet cancelled, if only specified fields are included" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_falsey
-    @h.process make_row(cancelled_order_row), @user, @opts
-    o = Order.find_by_order_number(h[:po])
-    expect(o.get_custom_value(@cdefs[:ord_cancelled]).value).to be_truthy
-  end
+      it "parses order data" do
+        h = default_values
+        subject.process make_row, user, opts
 
-  it "should change sap revised date if key field changes" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    p = Product.first
-    p.update_custom_value! @cdefs[:sap_revised_date], 1.year.ago
-    p.update_custom_value! @cdefs[:origin], 'somethingelse'
-    @h.process make_row, @user, @opts
-    p = Product.find p.id
-    expect(p.get_custom_value(@cdefs[:sap_revised_date]).value).to eq(0.days.ago.to_date)
-  end
-  it "should not chage sap revised date if no key fields change" do
-    h = default_values
-    @h.process make_row, @user, @opts
-    p = Product.first
-    p.update_custom_value! @cdefs[:sap_revised_date], 1.year.ago
-    @h.process make_row, @user, @opts
-    p = Product.find p.id
-    expect(p.get_custom_value(@cdefs[:sap_revised_date]).value).to eq(1.year.ago.to_date)
-  end
-  it "should not set hts number if not valid" do
-    data = make_row(:proposed_hts=>'655432198')
-    @h.process data, @user , @opts
-    expect(Product.first.classifications.first.tariff_records.first.hts_1).to be_blank
-  end
-  it "should not create classification if country is not import_location?" do
-    cn = Factory(:country,:iso_code=>'CN')
-    data = make_row(:import=>'CN')
-    @h.process data, @user, @opts
-    expect(Product.first.classifications).to be_empty
-  end
-  it "should pass with quotes in field" do
-    @h.process(make_row(proposed_long_description: 'Ladies "batwing" top made of silk'), @user, @opts)
-    expect(Product.first.get_custom_value(@cdefs[:prop_long]).value).to eq('Ladies "batwing" top made of silk')
-  end
-  it "should find earliest AC Date" do
-    data = make_row(:ac_date=>'12/29/2013')
-    data << make_row(:ac_date=>'12/28/2013')
-    data << make_row(:ac_date=>'12/23/2014')
-    @h.process data, @user, @opts
-    expect(Product.first.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y")).to eq("12/28/2013")
-  end
-  it "should aggregate unit cost by country" do
-    data = make_row(:unit_cost=>'10.11',:import=>'CA')
-    data << make_row(:unit_cost=>'12.21',:import=>'CA')
-    data << make_row(:unit_cost=>'6.14',:import=>'CA')
-    data << make_row(:unit_cost=>'6.14',:import=>'CA')
-    data << make_row(:unit_cost=>'6.14',:import=>'US')
-    @h.process data, @user, @opts
-    expect(Product.first.get_custom_value(@cdefs[:cost]).value).to eq("US - 06.14\nCA - 12.21\nCA - 10.11\nCA - 06.14")
-  end
-  it "should set hts for multiple countries" do
-    cn = Factory(:country,:iso_code=>'CN',:import_location=>true)
-    ot = cn.official_tariffs.create!(:hts_code=>'9876543210')
-    data = make_row
-    data << make_row(:import=>'CN',:proposed_hts=>ot.hts_code)
-    @h.process data, @user, @opts
-    p = Product.first
-    expect(p.classifications.size).to eq(2)
-    expect(p.classifications.find_by_country_id(@us.id).tariff_records.first.hts_1).to eq('1234567890')
-    expect(p.classifications.find_by_country_id(cn.id).tariff_records.first.hts_1).to eq(ot.hts_code)
-  end
-  it "should not override actual hts if proposed changes" do
-    p = Factory(:product,:unique_identifier=>default_values[:style])
-    p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>'1111111111')
-    @h.process make_row, @user, @opts
-    p.reload
-    expect(p.classifications.size).to eq(1)
-    expect(p.classifications.first.tariff_records.size).to eq(1)
-    expect(p.classifications.first.tariff_records.first.hts_1).to eq('1111111111')
-  end
-  it "should not override actual long description if proposed change" do
-    p = Factory(:product,:unique_identifier=>default_values[:style])
-    p.update_custom_value! @cdefs[:approved_long], 'something'
-    @h.process make_row, @user, @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:approved_long]).value).to eq('something')
-  end
-  it "should handle multiple products" do
-    h = default_values
-    data = make_row
-    data << make_row(:style=>'STY2',:ac_date=>'10/30/2015',:petite=>'p2',:tall=>'t2', :short=>'s2', :plus=>'pl2')
-    @h.process data, @user, @opts
-    expect(Product.count).to eq(2)
-    p1 = Product.find_by_unique_identifier(h[:style])
-    expect(p1.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y")).to eq(h[:ac_date])
-    p2 = Product.find_by_unique_identifier('STY2')
-    expect(p2.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y")).to eq('10/30/2015')
-  end
-  it "should create snapshot" do
-    @h.process make_row, @user, @opts
-    p = Product.first
-    expect(p.entity_snapshots.size).to eq(1)
-    expect(p.entity_snapshots.first.user).to eq(@user)
-  end
-  it "should update last sap sent date but not first sap sent date" do
-    p = Factory(:product,:unique_identifier=>default_values[:style])
-    p.update_custom_value! @cdefs[:first_sap_date], Date.new(2012,4,10)
-    p.update_custom_value! @cdefs[:last_sap_date], Date.new(2012,4,15)
-    @h.process make_row, @user, @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:first_sap_date]).value).to eq(Date.new(2012,4,10))
-    expect(p.get_custom_value(@cdefs[:last_sap_date]).value.strftime("%y%m%d")).to eq(0.days.ago.strftime("%y%m%d"))
-  end
-  it "should set import indicator and fw flag to false if value is not 'X'" do
-    row = make_row :fw=>"", :import_indicator=>"a"
-    @h.process row, @user, @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:imp_flag]).value).to be_falsey
-    cls = p.classifications.find_by_country_id @us.id
-    expect(cls.get_custom_value(@cdefs[:oga_flag]).value).to be_falsey
-  end
-  it "should append aggregate value information into an existing record" do
-    p = Factory(:product, :unique_identifier=> default_values[:style])
-    p.update_custom_value! @cdefs[:po], "PO1"
-    p.update_custom_value! @cdefs[:origin], "Origin1"
-    p.update_custom_value! @cdefs[:import], "Import1"
-    p.update_custom_value! @cdefs[:cost], "Import1 - 01.23"
-    p.update_custom_value! @cdefs[:dept_num], "Dept1"
-    p.update_custom_value! @cdefs[:dept_name], "Name1"
+        order = Order.where(order_number: "PO123").first
+        expect(order).not_to be_nil
 
-    row = make_row :po =>"PO2",:origin=>"Origin2",:import=>"Import2",:unit_cost=>2.0,:merch_dept_num=>"Dept2",:merch_dept_name=>"Name2"
-    @h.process row, @user, @opts
-    p = Product.first
+        expect(order.importer).to eq master_company
+        expect(order.customer_order_number).to eq "PO123"
+        expect(order.terms_of_sale).to eq "FOB"
+        expect(order.custom_value(cdefs[:ord_type])).to eq "Standard PO"
+        expect(order.ship_window_start).to eq Date.new(2013, 6, 25)
+        expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
 
-    expect(p.get_custom_value(@cdefs[:po]).value).to eq("PO1\nPO2")
-    expect(p.get_custom_value(@cdefs[:origin]).value).to eq("Origin1\nOrigin2")
-    expect(p.get_custom_value(@cdefs[:import]).value).to eq("Import1\nImport2")
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import2 - 02.00\nImport1 - 01.23")
-    expect(p.get_custom_value(@cdefs[:dept_num]).value).to eq("Dept1\nDept2")
-    expect(p.get_custom_value(@cdefs[:dept_name]).value).to eq("Name1, Name2")
-  end
+        expect(order.order_lines.length).to eq 1
+        line = order.order_lines.first
+        expect(line.product).to eq existing_product
+        expect(line.country_of_origin).to eq "CN"
+        expect(line.price_per_unit).to eq BigDecimal("1.23")
+        expect(line.hts).to eq "1234567890"
+        expect(line.quantity).to eq BigDecimal("1")
+        expect(line.custom_value(cdefs[:ordln_import_country])).to eq "US"
+        expect(line.custom_value(cdefs[:ordln_ac_date])).to eq Date.new(2013, 6, 25)
 
+        vendor = order.vendor
+        expect(vendor).not_to be_nil
+        expect(vendor.system_code).to eq "9876543210"
+        expect(vendor.name).to eq "Widgets Inc"
+        expect(vendor.entity_snapshots.length).to eq 1
+        snap = vendor.entity_snapshots.first
+        expect(snap.user).to eq User.integration
+        expect(snap.context).to eq opts[:key]
+        expect(master_company.linked_companies).to include vendor
 
-  it "should normalize the unit cost to at least 2 decimal places and at least 4 significant digits" do
-    @h.process make_row(:import=>"Import",:unit_cost=>"0"), @user , @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import - 00.00")
+        agent = order.agent
+        expect(agent).not_to be_nil
+        expect(agent.system_code).to eq "1234567890"
+        expect(agent.name).to eq "Buyer Inc"
+        expect(agent.entity_snapshots.length).to eq 1
+        snap = agent.entity_snapshots.first
+        expect(snap.user).to eq User.integration
+        expect(snap.context).to eq opts[:key]
+        expect(master_company.linked_companies).to include agent
 
-    @h.process make_row(:import=>"Import",:unit_cost=>"1"), @user , @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import - 01.00\nImport - 00.00")
+        seller = order.selling_agent
+        expect(seller).not_to be_nil
+        expect(seller.system_code).to eq "4567891230"
+        expect(seller.name).to eq "Seller Inc"
+        expect(seller.entity_snapshots.length).to eq 1
+        snap = seller.entity_snapshots.first
+        expect(snap.user).to eq User.integration
+        expect(snap.context).to eq opts[:key]
+        expect(master_company.linked_companies).to include seller
 
-    @h.process make_row(:import=>"Import",:unit_cost=>"2.0"), @user , @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import - 02.00\nImport - 01.00\nImport - 00.00")
+        # Since this isn't a DSP order, there should be no notifications of parties being created
+        expect(ActionMailer::Base.deliveries.length).to eq 0
+      end
 
-    @h.process make_row(:import=>"Import",:unit_cost=>"12.00"), @user , @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
+      it "updates an order" do
+        order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
+        order_line = order.order_lines.create! product: existing_product, quantity: BigDecimal("20")
 
-    @h.process make_row(:import=>"Import",:unit_cost=>"120.001"), @user , @opts
-    p = Product.first
-    expect(p.get_custom_value(@cdefs[:cost]).value).to eq("Import - 120.001\nImport - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
-  end
+        subject.process make_row, user, opts
 
-  it "uses style field as the primary style if no missy style is given" do
-    @h.process make_row({:style => "P-ABC", :missy => nil, :petite => nil, :tall => "T-ABC", :short => "S-ABC", :plus => "PL-ABC"}), @user, @opts
-    p = Product.first
-    expect(p.unique_identifier).to eq("P-ABC")
-    expect(p.get_custom_value(@cdefs[:related_styles]).value.split.sort).to eq(['PL-ABC', 'S-ABC', 'T-ABC'])
-  end
+        order.reload
+        order_line.reload
 
-  it "should update existing style records and use missy style as master data" do
-    p = Product.create! unique_identifier: "T-ABC"
+        # Just make sure some data was added, proves the order was updated
+        expect(order.customer_order_number).to eq "PO123"
+        expect(order_line.country_of_origin).to eq "CN"
 
-    @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC", :short=>"S-ABC", :plus=>"PL-ABC"}), @user, @opts
-    p.reload
-    expect(p.unique_identifier).to eq("M-ABC")
-    expect(p.get_custom_value(@cdefs[:related_styles]).value.split.sort).to eq(['P-ABC','PL-ABC', 'S-ABC','T-ABC'])
+        # It shouldn't snapshot the vendor, because it already existed
+        expect(existing_vendor.entity_snapshots.length).to eq 0
+      end
 
-  end
+      it "does not change the company's DSP type but changes the name if the company already exists" do
+        existing_vendor
+        existing_vendor.update_custom_value! cdefs[:dsp_type], "Standard"
 
-  it "should update maximum cost if the unit_price is higher and NOT update minimum cost" do
-    @h.process make_row, @user, @opts
+        subject.process make_row({dsp_type: 'MP'}), user, opts
+        existing_vendor.reload
+        expect(existing_vendor.name).to eq "Widgets Inc"
+        expect(existing_vendor.custom_value(cdefs[:dsp_type])).to eq "Standard"
+      end
 
-    unit_cost = (BigDecimal.new(default_values[:unit_cost]) + 1)
-    row = make_row unit_cost: unit_cost.to_s
-    @h.process row, @user, @opts
+      it "changes the company name if it exists" do
+        h = default_values
+        subject.process make_row, user, opts
+        c = Company.where(system_code: h[:vendor_code]).first
+        expect(c).to be_present
+        expect(c.name).to eql(h[:vendor_name])
+        subject.process make_row({vendor_name: 'A New Name'}), user, opts
+        c.reload
+        expect(c.name).to eql('A New Name')
+      end
 
-    p = Product.first
-    expect(p.classifications.first.get_custom_value(@cdefs[:maximum_cost]).value).to eq unit_cost
-    expect(p.classifications.first.get_custom_value(@cdefs[:minimum_cost]).value).to eq BigDecimal.new(default_values[:unit_cost])
-  end
+      it "zero pads system codes" do 
+        default_values[:vendor_code] = "12345"
+        default_values[:seller_code] = "98765"
+        default_values[:buyer_code] = "56789"
 
-  it "should NOT update maximum cost if the unit_price is lower and update minimum cost" do
-    @h.process make_row, @user, @opts
+        subject.process make_row, user, opts
+        expect(Company.where(system_code: "0000012345")).not_to be_nil
+        expect(Company.where(system_code: "0000098765")).not_to be_nil
+        expect(Company.where(system_code: "0000056789")).not_to be_nil
+      end
 
-    unit_cost = (BigDecimal.new(default_values[:unit_cost]) - 1)
-    row = make_row unit_cost: unit_cost.to_s
-    @h.process row, @user, @opts
+      it "does not create the order if PO number is not a merch number" do
+        h = default_values
+        expect { subject.process make_row({po: '4512345678'}), user, opts }.to_not change(Order, :count)
+      end
 
-    p = Product.first
-    expect(p.classifications.first.get_custom_value(@cdefs[:maximum_cost]).value).to eq BigDecimal.new(default_values[:unit_cost])
-    expect(p.classifications.first.get_custom_value(@cdefs[:minimum_cost]).value).to eq unit_cost
-  end
+      it "properly sets the docs required if company is docs required and dsp effective date is before the ship window" do
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2013,1,1)
+        existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
-  it "should add a new classification to hold max/min cost for import locations" do
-    @h.process make_row, @user, @opts
+        subject.process make_row({dsp_type: 'MP'}), user, opts
 
-    other_country = Factory(:country, import_location: true, iso_code: 'XX')
-    row = make_row import: "XX"
-    @h.process row, @user, @opts
+        order = Order.where(order_number: "PO123").first
+        expect(order.custom_value(cdefs[:ord_docs_required])).to eq true
+      end
 
-    p = Product.first
-    c = p.classifications.find {|c| c.country_id == other_country.id}
-    expect(c.get_custom_value(@cdefs[:maximum_cost]).value).to eq BigDecimal.new(default_values[:unit_cost])
-    expect(c.get_custom_value(@cdefs[:minimum_cost]).value).to eq BigDecimal.new(default_values[:unit_cost])
-  end
+      it "sets docs required to false if company dsp effective date is after the ship window" do
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014,1,1)
+        existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
-  it "should not add new classification to hold max/min cost for countries not marked as import locations" do
-    @h.process make_row, @user, @opts
+        subject.process make_row({dsp_type: 'MP'}), user, opts
+        
+        order = Order.where(order_number: "PO123").first
+        expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
+      end
 
-    other_country = Factory(:country, import_location: false, iso_code: 'XX')
-    row = make_row import: "XX"
-    @h.process row, @user, @opts
+      it "sets docs required to false if company dsp effective date is not set" do
+        existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
-    expect(Product.first.classifications.find {|c| c.country_id == other_country.id}).to be_nil    
+        subject.process make_row({dsp_type: 'MP'}), user, opts
+        
+        order = Order.where(order_number: "PO123").first
+        expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
+      end
+
+      it "sets docs required to false if MP Type is not 'All Docs'" do
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014,1,1)
+        existing_vendor.update_custom_value! cdefs[:mp_type], 'Upon Reqest'
+
+        subject.process make_row({dsp_type: 'MP'}), user, opts
+        
+        order = Order.where(order_number: "PO123").first
+        expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
+      end
+
+      it "should send an email, to Ann, if company is created from PO and is DSP Type MP" do
+        subject.process make_row(dsp_type: 'MP'), user, opts
+        # One email for each party is created
+        expect(ActionMailer::Base.deliveries.length).to eq 3
+        # Just check the first party
+        mail = ActionMailer::Base.deliveries.first
+        expect(mail.to).to eq ['ann-support@vandegriftinc.com',
+                                      'Elizabeth_Hodur@anninc.com',
+                                      'Veronica_Miller@anninc.com',
+                                      'alyssa_ahmed@anninc.com']
+        expect(mail.subject).to eq "[VFI Track] New Party Widgets Inc created in system"
+      end
+
+      it "does not flag the order for docs required, regardless of company MP type if order MP type is not MP" do
+        existing_vendor.update_custom_value! cdefs[:mp_type], "MP"
+        subject.process make_row(dsp_type: 'AP'), user, opts
+        o = Order.where(order_number: "PO123").first
+        expect(o.custom_value(cdefs[:ord_docs_required])).to eq false
+      end
+
+      it "cancels an order, that is not yet cancelled, if only the specified fields plus related styles are included" do
+        order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
+        subject.process make_row(cancelled_order_row_with_related_styles), user, opts
+
+        order.reload
+        expect(order.custom_value(cdefs[:ord_cancelled])).to eq true
+        expect(order.entity_snapshots.length).to eq 1
+        snap = order.entity_snapshots.first
+        expect(snap.user).to eq user
+        expect(snap.context).to eq opts[:key]
+      end
+
+      it "cancels an order, that is not yet cancelled, if only specified fields are included" do
+        order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
+        subject.process make_row(cancelled_order_row), user, opts
+
+        order.reload
+        expect(order.custom_value(cdefs[:ord_cancelled])).to eq true
+      end
+    end
+
+    context "with master setup switches" do
+      let (:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).and_return false
+        ms
+      }
+
+      it "disables product parsing" do
+        expect(master_setup).to receive(:custom_feature?).with("Ann Skip SAP Product Parsing").and_return true
+
+        expect(subject).not_to receive(:generate_products)
+        expect(subject).to receive(:generate_orders)
+        subject.process make_row, user, opts
+      end
+
+      it "disables order parsing" do
+        expect(master_setup).to receive(:custom_feature?).with("Ann Skip SAP Order Parsing").and_return true
+
+        expect(subject).to receive(:generate_products)
+        expect(subject).not_to receive(:generate_orders)
+        subject.process make_row, user, opts
+      end
+    end
   end
 
   describe "#not_order?" do
@@ -703,38 +605,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
   describe "parse" do
     it "parses a file using integration user" do
-      user = Factory(:user, username: 'integration')
-      data = make_row
-      described_class.parse data, @opts
-
-      p = Product.first
-      expect(p).not_to be_nil
-      expect(p.unique_identifier).to eq '123456'
-      expect(p.last_updated_by).to eq user
+      expect_any_instance_of(described_class).to receive(:process).with "file_contents", User.integration, opts
+      described_class.parse "file_contents", opts
     end
   end
 
-  context "with master setup switches" do
-    let (:master_setup) {
-      ms = stub_master_setup
-      allow(ms).to receive(:custom_feature?).and_return false
-      ms
-    }
-
-    it "disables product parsing" do
-      expect(master_setup).to receive(:custom_feature?).with("Ann Skip SAP Product Parsing").and_return true
-
-      expect(subject).not_to receive(:generate_products)
-      expect(subject).to receive(:generate_orders)
-      subject.process make_row, @user, @opts
-    end
-
-    it "disables order parsing" do
-      expect(master_setup).to receive(:custom_feature?).with("Ann Skip SAP Order Parsing").and_return true
-
-      expect(subject).to receive(:generate_products)
-      expect(subject).not_to receive(:generate_orders)
-      subject.process make_row, @user, @opts
-    end
-  end
 end
