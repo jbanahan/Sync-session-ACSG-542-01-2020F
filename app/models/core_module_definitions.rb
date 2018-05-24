@@ -467,7 +467,7 @@ module CoreModuleDefinitions
     view_path_proc: Proc.new {|obj| vendor_path(obj)},
     quicksearch_lambda: lambda {|user, scope| scope.where(Company.search_where(user))},
     enabled_lambda: lambda { MasterSetup.get.vendor_management_enabled? },
-    quicksearch_fields: [:cmp_name],
+    quicksearch_fields: [:cmp_name,:cmp_sys_code],
     available_addresses_lambda: lambda {|company| company.addresses.order(:name, :city, :line_1) },
     module_chain: [Company, Plant, PlantProductGroupAssignment],
     snapshot_descriptor: SnapshotDescriptor.for(Company, {

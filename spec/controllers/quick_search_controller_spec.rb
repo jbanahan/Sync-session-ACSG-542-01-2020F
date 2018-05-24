@@ -78,9 +78,9 @@ describe QuickSearchController do
       expect(response).to be_success
       r = JSON.parse response.body
     
-      expect(r['qs_result']['vals']).to eq [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name}]
+      expect(r['qs_result']['vals']).to eq [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name, "cmp_sys_code" => vendor.system_code}]
       expect(r['qs_result']['module_type']).to eq "Company"
-      expect(r['qs_result']['fields']).to eq({"cmp_name" => "Name"})
+      expect(r['qs_result']['fields']).to eq({"cmp_name" => "Name", "cmp_sys_code" => "System Code"})
     end
 
     it "should return a result for BrokerInvoice for an importer company" do
