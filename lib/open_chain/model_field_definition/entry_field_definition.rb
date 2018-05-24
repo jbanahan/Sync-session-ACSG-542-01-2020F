@@ -361,7 +361,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         :export_lambda => lambda{ |obj| obj.fish_and_wildlife_secure_facility_date.present? },
         :qualified_field_name => "(SELECT IF(fish_and_wildlife_secure_facility_date IS NOT NULL, true, false))",
         :import_lambda => lambda{ |obj, data| "Fish & Wildlife Secure Facility ignored. (read only)"}
-      }]
+      }],
+      [228, :ent_across_declaration_accepted, :across_declaration_accepted, "ACROSS - Declaration Accepted", {data_type: :datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

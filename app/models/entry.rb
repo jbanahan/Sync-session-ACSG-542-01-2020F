@@ -2,6 +2,7 @@
 #
 # Table name: entries
 #
+#  across_declaration_accepted            :datetime
 #  across_sent_date                       :datetime
 #  ams_hold_date                          :datetime
 #  ams_hold_release_date                  :datetime

@@ -41,7 +41,8 @@ module OpenChain
       'KPIVAL' => :value_currency_request_date=,
       'KPIPART' => :part_number_request_date=,
       'KPIIOR' => :importer_request_date=,
-      "MANINFREC" => :manifest_info_received_date=
+      "MANINFREC" => :manifest_info_received_date=,
+      "ACSDECACCP" => :across_declaration_accepted=
     }
 
     SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL']
