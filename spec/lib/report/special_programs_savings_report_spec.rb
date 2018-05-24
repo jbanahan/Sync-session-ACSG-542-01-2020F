@@ -52,7 +52,17 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
       OpenChain::Report::SpecialProgramsSavingsReport.run_schedulable({'companies'=>'SPECIAL', 'email_to'=>'user@company.com', 'time_zone'=>'Pacific/Auckland'})
     end
 
+    it 'sends an email' do
+      OpenChain::Report::SpecialProgramsSavingsReport.run_schedulable({'companies'=>'SPECIAL', 'email_to'=>'user@company.com', 'time_zone'=>'Pacific/Auckland'})
+      expect(ActionMailer::Base.deliveries.size).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["user@company.com"]
+      expect(m.subject).to eq "Special Programs Savings Report"
+    end
+
     it 'uses last month as the start and end date with EST as default' do
+      mail = double('mail')
+      allow(mail).to receive(:deliver!)
       start_date = nil
       end_date = nil
 
@@ -68,7 +78,7 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
       }
 
       expect(OpenChain::Report::SpecialProgramsSavingsReport).to receive(:run_report).with(User.integration, expected_opts)
-      expect(OpenMailer).to receive(:send_simple_html)
+      expect(OpenMailer).to receive(:send_simple_html).and_return(mail)
       OpenChain::Report::SpecialProgramsSavingsReport.run_schedulable({'companies'=>'SPECIAL', 'email_to'=>'user@company.com'})
     end
   end
