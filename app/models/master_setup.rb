@@ -21,6 +21,7 @@
 #  request_host                :string(255)
 #  sales_order_enabled         :boolean          default(TRUE), not null
 #  security_filing_enabled     :boolean
+#  send_test_files_to_instance :string(255)      default("vfi-test")
 #  shipment_enabled            :boolean          default(TRUE), not null
 #  stats_api_key               :string(255)
 #  suppress_email              :boolean

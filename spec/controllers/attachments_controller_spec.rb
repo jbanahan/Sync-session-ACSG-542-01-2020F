@@ -306,4 +306,108 @@ describe AttachmentsController do
       get :download, id: 1, disposition: "whatevs"
     end
   end
+
+  describe "send_last_integration_file_to_test" do
+    let!(:prod) { Factory(:product, last_file_bucket:'the_bucket', last_file_path:'the_path') }
+    let!(:user) { Factory(:sys_admin_user) }
+
+    before do
+      sign_in_as user
+    end
+
+    it "sends file to test" do
+      allow_any_instance_of(Product).to receive(:can_view?).and_return true
+      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to include "Integration file has been queued to be sent to test."
+      expect(flash[:errors]).to be_nil
+      dj = Delayed::Job.first
+      expect(dj.handler).to include "!ruby/class 'Product'"
+      expect(dj.handler).to include "method_name: :send_integration_file_to_test"
+      expect(dj.handler).to include "the_bucket"
+      expect(dj.handler).to include "the_path"
+      expect(dj.handler).not_to include "ActiveRecord:Product"
+      expect(dj.handler).not_to include "id: #{prod.id}"
+    end
+
+    it "does nothing if object doesn't have integration file path set" do
+      prod.update_attributes! last_file_path:nil
+
+      allow_any_instance_of(Product).to receive(:can_view?).and_return true
+      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to be_nil
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if file can't be found" do
+      prod.update_attributes! last_file_path:'bad_file'
+
+      allow_any_instance_of(Product).to receive(:can_view?).and_return true
+      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "Integration file cannot be sent to test: the file could not be found.  It may have been purged."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if object doesn't support this behavior" do
+      company = Factory(:company)
+
+      allow_any_instance_of(Company).to receive(:can_view?).and_return true
+      post :send_last_integration_file_to_test, attachable_id: company.id, attachable_type: "Company"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "Integration file cannot be sent to test: invalid object type."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if user doesn't have permission to view product" do
+      allow_any_instance_of(Product).to receive(:can_view?).and_return false
+      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You do not have permission to send this integration file to test."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    # Really shouldn't happen in practice.
+    it "errors if object isn't found" do
+      allow_any_instance_of(Product).to receive(:can_view?).and_return true
+      post :send_last_integration_file_to_test, attachable_id: -555, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You do not have permission to send this integration file to test."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if missing attachable type" do
+      post :send_last_integration_file_to_test, attachable_id: prod.id
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if missing attachable id" do
+      post :send_last_integration_file_to_test, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
+      expect(Delayed::Job.count).to eq 0
+    end
+
+    it "errors if not sys admin" do
+      user_not_sys_admin = Factory(:user)
+      sign_in_as user_not_sys_admin
+
+      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
+      expect(Delayed::Job.count).to eq 0
+    end
+  end
+
 end

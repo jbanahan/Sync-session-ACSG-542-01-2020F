@@ -549,11 +549,6 @@ module ApplicationHelper
     link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-xs btn-link',:schedb=>hts_number}
   end
 
-  def secure_link obj, user
-    return "" unless secure_link_permission(user) && obj.has_last_file?
-    return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, download_last_integration_file_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s))).html_safe
-  end
-
   private
 
   # render generic field view, last parameter is lambda for actual rendering
@@ -568,14 +563,6 @@ module ApplicationHelper
     end
 
     show_field ? render_lambda.call(field_label(mf,show_prefix),  field_value(object,mf),false,mf) : ""
-  end
-
-  def secure_link_permission user
-    if MasterSetup.get.custom_feature? 'Admins View Integration Files'
-      user.admin?
-    else
-      user.sys_admin?
-    end
   end
 
   def opts_for_model_text_field model_field_uid, opts

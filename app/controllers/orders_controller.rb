@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_bulk_send_to_sap'
 class OrdersController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::BulkAction::BulkActionSupport
+  include BulkSendToTestSupport
 
   def set_page_title
     @page_title ||= 'Order'

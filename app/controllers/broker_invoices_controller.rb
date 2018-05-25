@@ -1,4 +1,6 @@
 class BrokerInvoicesController < ApplicationController
+  include BulkSendToTestSupport
+
   def root_class
     BrokerInvoice
   end

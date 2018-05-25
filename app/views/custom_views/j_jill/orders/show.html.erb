@@ -267,4 +267,4 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
     </div>
   </div>
 </div>
-<%=secure_link @order, current_user%>
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @order, :user => current_user} %>

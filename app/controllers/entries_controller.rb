@@ -8,6 +8,7 @@ class EntriesController < ApplicationController
   include EntriesHelper
   include ValidationResultsHelper
   include OpenChain::BusinessRuleValidationResultsSupport
+  include BulkSendToTestSupport
 
   def set_page_title
     @page_title = "Entry"

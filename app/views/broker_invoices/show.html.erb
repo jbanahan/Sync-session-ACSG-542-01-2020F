@@ -15,4 +15,4 @@
   <%= show_model_fields line, line_fields %>
   <hr />
 <% end %>
-
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @invoice, :user => current_user} %>

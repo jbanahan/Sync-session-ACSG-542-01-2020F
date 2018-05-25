@@ -116,6 +116,11 @@ module Helpers
       @datastore = {}
       @version_id = 0
     end
+
+    def self.exists? bucket, key, version = nil
+      key != "bad_file"
+    end
+
   end
 
   # Stub out the S3 methods

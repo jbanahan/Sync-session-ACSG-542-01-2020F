@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/shipment_download_generator'
 require 'open_chain/custom_handler/j_jill/j_jill_shipment_download_generator'
 
 class ShipmentsController < ApplicationController
+  include BulkSendToTestSupport
 
   def set_page_title
     @page_title ||= 'Shipment'

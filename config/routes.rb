@@ -317,6 +317,7 @@ OpenChain::Application.routes.draw do
     collection do
       post 'bulk_get_images'
       post 'bulk_request_entry_data'
+      post 'bulk_send_last_integration_file_to_test'
     end
 
     resources :broker_invoices, :only=>[:create] do 
@@ -345,6 +346,10 @@ OpenChain::Application.routes.draw do
   resources :broker_invoices, :only => [:index,:show] do
     member do 
       get 'sync_records'
+    end
+
+    collection do
+      post 'bulk_send_last_integration_file_to_test'
     end
   end
   resources :part_number_correlations, only: [:index, :show, :create]
@@ -433,6 +438,7 @@ OpenChain::Application.routes.draw do
 
     collection do
       get 'download_last_integration_file'
+      post 'send_last_integration_file_to_test'
     end
   end
 
@@ -768,6 +774,9 @@ OpenChain::Application.routes.draw do
       put 'generate_invoice'
       get :download
     end
+    collection do
+      post 'bulk_send_last_integration_file_to_test'
+    end
     resources :shipment_lines do
       post :create_multiple, :on => :collection
     end
@@ -790,6 +799,7 @@ OpenChain::Application.routes.draw do
       post 'bulk_update_classifications'
       post 'bulk_instant_classify'
       post 'show_bulk_instant_classify'
+      post 'bulk_send_last_integration_file_to_test'
     end
     member do
       get 'show_beta'
@@ -817,6 +827,7 @@ OpenChain::Application.routes.draw do
       post :bulk_update
       post :bulk_update_fields
       post :bulk_send_to_sap
+      post 'bulk_send_last_integration_file_to_test'
     end
 		resources :order_lines
 	end
@@ -1021,7 +1032,13 @@ OpenChain::Application.routes.draw do
   match '/ang_error' => 'error_log_entries#log_angular', via: :post
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   resources :ports, :only => [:index, :update, :create, :destroy]
-  resources :security_filings, :only=>[:index, :show]
+
+  resources :security_filings, :only=>[:index, :show] do
+    collection do
+      post 'bulk_send_last_integration_file_to_test'
+    end
+  end
+
   resources :sync_records do
     post 'resend', :on=>:member
   end

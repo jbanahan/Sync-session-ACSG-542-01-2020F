@@ -36,4 +36,4 @@
     <%end-%>
   </tbody>
 </table>
-<%=secure_link @security_filing, current_user %>
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @security_filing, :user => current_user} %>

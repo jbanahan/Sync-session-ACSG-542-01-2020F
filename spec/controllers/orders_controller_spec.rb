@@ -263,4 +263,24 @@ describe OrdersController do
     end
   end
 
+  # This is a test of BulkSendToTestSupport, a module that OrdersController includes.  Testing the module on its own
+  # was problematic.
+  describe "bulk_send_last_integration_file_to_test" do
+    it "sends files to test" do
+      expect(OpenChain::BulkAction::BulkActionRunner).to receive(:process_from_parameters).with(@u, { "some_param" => "hello", "controller"=>"orders", "action"=>"bulk_send_last_integration_file_to_test" }, OpenChain::BulkAction::BulkSendToTest, { 'module_type': 'Order', 'max_results': 100 })
+      post :bulk_send_last_integration_file_to_test, some_param:'hello'
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to include "Integration files have been queued to be sent to test."
+      expect(flash[:errors]).to be_nil
+    end
+
+    it "handles too many selections error gracefully" do
+      expect(OpenChain::BulkAction::BulkActionRunner).to receive(:process_from_parameters).and_raise(OpenChain::BulkAction::TooManyBulkObjectsError)
+      post :bulk_send_last_integration_file_to_test, some_param:'hello'
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to be_nil
+      expect(flash[:errors]).to include "You may not send more than 100 files to test at one time."
+    end
+  end
+
 end

@@ -144,13 +144,44 @@ class AttachmentsController < ApplicationController
     end
   end
 
-  private
-  def redirect_location attachable
-    params[:redirect_to].blank? ? attachable : params[:redirect_to]
+  def send_last_integration_file_to_test
+    if current_user.sys_admin? && params[:attachable_type].presence && params[:attachable_id].presence
+      obj = get_attachable params[:attachable_type], params[:attachable_id]
+      if obj && obj.can_view?(current_user)
+        if obj.class.respond_to?(:send_integration_file_to_test)
+          if obj.has_last_file?
+            # Verify the last_file_bucket / last_file_path still exists in S3.  Files are expunged from S3 after 2 years, so
+            # old files may not exist any longer.  If this happens report an error to the user.
+            if OpenChain::S3.exists? obj.last_file_bucket, obj.last_file_path
+              obj.class.delay.send_integration_file_to_test obj.last_file_bucket, obj.last_file_path
+              add_flash :notices, "Integration file has been queued to be sent to test."
+              redirect_back_or_default :back
+            else
+              error_redirect "Integration file cannot be sent to test: the file could not be found.  It may have been purged."
+            end
+          else
+            # No need to error.  Really, we shouldn't hit this since this method is accessible only if the object has
+            # S3 bucket and path set.
+            redirect_back_or_default :back
+          end
+        else
+          error_redirect "Integration file cannot be sent to test: invalid object type."
+        end
+      else
+        error_redirect "You do not have permission to send this integration file to test."
+      end
+    else
+      error_redirect "You do not have permission to send integration files to test."
+    end
   end
 
-  def get_attachable type, id
-    attachable = polymorphic_scope(type).where(id: id).first
-  end
+  private
+    def redirect_location attachable
+      params[:redirect_to].blank? ? attachable : params[:redirect_to]
+    end
+
+    def get_attachable type, id
+      attachable = polymorphic_scope(type).where(id: id).first
+    end
 
 end

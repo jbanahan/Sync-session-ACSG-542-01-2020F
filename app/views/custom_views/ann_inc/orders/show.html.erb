@@ -264,4 +264,4 @@
   <!--hidden and linked through delete on button bar-->
   <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
 </div>
-<%=secure_link @order, current_user%>
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @order, :user => current_user} %>

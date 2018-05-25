@@ -86,4 +86,4 @@
     </div>
   </div>
 </div>
-<%=secure_link @product, current_user%>
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @product, :user => current_user} %>

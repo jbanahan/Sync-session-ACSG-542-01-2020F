@@ -111,7 +111,12 @@ module CoreModuleDefinitions
     :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
     :key_model_field_uids => [:sf_transaction_number],
     :quicksearch_fields => [:sf_transaction_number,:sf_entry_numbers,:sf_entry_reference_numbers,:sf_po_numbers,:sf_master_bill_of_lading,:sf_container_numbers,:sf_house_bills_of_lading, :sf_host_system_file_number],
-    :module_chain => [SecurityFiling, SecurityFilingLine]
+    :module_chain => [SecurityFiling, SecurityFilingLine],
+    :bulk_actions_lambda => lambda {|current_user|
+      bulk_actions = {}
+      bulk_actions["Send to Test"]={:path=>'/security_filings/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
+      bulk_actions
+    }
   })
   ORDER_LINE = CoreModule.new("OrderLine","Order Line",{
       :show_field_prefix=>true,
@@ -142,9 +147,10 @@ module CoreModuleDefinitions
      ),
      :bulk_actions_lambda => lambda {|current_user|
        bulk_actions = {}
-       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json', :ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa-sticky-note'} if current_user.comment_orders?
-       bulk_actions["Update"]={:path=>'/orders/bulk_update_fields.json', :ajax_callback=>'BulkActions.handleBulkOrderUpdate',font_icon:'fa-pencil-square-o'} if current_user.edit_orders?
+       bulk_actions["Comment"]={:path=>'/comments/bulk_count.json', :ajax_callback=>'BulkActions.handleBulkComment',font_icon:'fa fa-sticky-note'} if current_user.comment_orders?
+       bulk_actions["Update"]={:path=>'/orders/bulk_update_fields.json', :ajax_callback=>'BulkActions.handleBulkOrderUpdate',font_icon:'fa fa-pencil-square-o'} if current_user.edit_orders?
        bulk_actions["Send To SAP"] = "bulk_send_to_sap_orders_path" if MasterSetup.get.custom_feature?("Bulk Send Order To SAP")
+       bulk_actions["Send to Test"]={:path=>'/orders/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
        bulk_actions
      }
     })
@@ -190,6 +196,11 @@ module CoreModuleDefinitions
     :key_model_field_uids => [:shp_ref],
     :quicksearch_fields => [:shp_ref,:shp_master_bill_of_lading,:shp_house_bill_of_lading,:shp_booking_number, :shp_importer_reference, :shp_shipped_orders, :shp_booked_orders],
     :module_chain => [Shipment, ModuleChain::SiblingModules.new(ShipmentLine, BookingLine)],
+    :bulk_actions_lambda => lambda {|current_user|
+      bulk_actions = {}
+      bulk_actions["Send to Test"]={:path=>'/shipments/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
+      bulk_actions
+    },
     snapshot_descriptor: SnapshotDescriptor.for(Shipment, {
         shipment_lines: {type: ShipmentLine},
         booking_lines: {type: BookingLine},
@@ -298,6 +309,7 @@ module CoreModuleDefinitions
          bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
          bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify',:ajax_callback=>'BulkActions.handleBulkClassify'} if current_user.edit_classifications?
          bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? && !InstantClassification.scoped.empty?
+         bulk_actions["Send to Test"]={:path=>'/products/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
          bulk_actions
        },
        :changed_at_parents_lambda=>lambda {|p| [p]},#only update self
@@ -345,7 +357,12 @@ module CoreModuleDefinitions
       :child_lambdas => {BrokerInvoiceLine => lambda {|i| i.broker_invoice_lines}},
       :child_joins => {BrokerInvoiceLine => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"},
       :quicksearch_fields => [:bi_invoice_number, {model_field_uid: :bi_brok_ref, joins: [:entry]}],
-      :module_chain => [BrokerInvoice, BrokerInvoiceLine]
+      :module_chain => [BrokerInvoice, BrokerInvoiceLine],
+      :bulk_actions_lambda => lambda {|current_user|
+        bulk_actions = {}
+        bulk_actions["Send to Test"]={:path=>'/broker_invoices/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
+        bulk_actions
+      }
   })
   COMMERCIAL_INVOICE_LACEY = CoreModule.new("CommercialInvoiceLaceyComponent","Lacey Component",{
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
@@ -386,6 +403,7 @@ module CoreModuleDefinitions
          bulk_actions = {}
          bulk_actions["Update Images"] = "bulk_get_images_entries_path" if current_user.company.master? && current_user.view_entries?
          bulk_actions["Update Entries"] = "bulk_request_entry_data_entries_path" if current_user.sys_admin?
+         bulk_actions["Send to Test"]={:path=>'/entries/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
          bulk_actions
        },
        :children => [CommercialInvoice],

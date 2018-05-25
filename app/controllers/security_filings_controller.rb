@@ -1,4 +1,6 @@
 class SecurityFilingsController < ApplicationController
+  include BulkSendToTestSupport
+
   def root_class
     SecurityFiling
   end

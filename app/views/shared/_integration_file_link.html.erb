@@ -1,0 +1,10 @@
+<% if obj.has_last_file? && ((MasterSetup.get.custom_feature? 'Admins View Integration Files' && user.admin?) || (!MasterSetup.get.custom_feature? 'Admins View Integration Files' && user.sys_admin?)) %>
+  <div>
+    <b>Integration File:</b> <%=link_to(obj.last_file_path.split("/").last, download_last_integration_file_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s))%>
+  </div>
+  <% if user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank? %>
+    <% content_for :action_bar do %>
+      <%= link_to raw("<i class='fa fa-share-square'></i>"), send_last_integration_file_to_test_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s), title:'Send to Test', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+    <%end%>
+  <%end%>
+<% end %>
