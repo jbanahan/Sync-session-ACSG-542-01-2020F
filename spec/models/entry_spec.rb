@@ -475,4 +475,22 @@ describe Entry do
     end
   end
 
+  describe "split_shipment_date=" do
+    let(:ent) { Factory(:entry, split_shipment_date: nil, split_shipment: nil) }
+    let(:dt) { DateTime.new(2018,3,15,15,0) }
+
+    it "also sets split_shipment flag to True when assigned" do
+      ent.split_shipment_date = dt
+      expect(ent.split_shipment_date).to eq dt
+      expect(ent.split_shipment).to eq true
+    end
+
+    it "also sets split_shipment flag to False when unassigned" do
+      ent.update_attributes! split_shipment_date: dt, split_shipment: true
+      ent.split_shipment_date = nil
+      expect(ent.split_shipment_date).to be_nil
+      expect(ent.split_shipment).to eq false
+    end
+  end
+
 end

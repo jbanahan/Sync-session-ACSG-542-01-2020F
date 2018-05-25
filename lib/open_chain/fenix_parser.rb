@@ -42,6 +42,7 @@ module OpenChain
       'KPIPART' => :part_number_request_date=,
       'KPIIOR' => :importer_request_date=,
       "MANINFREC" => :manifest_info_received_date=,
+      "SPLITSHPT" => :split_shipment_date=,
       "ACSDECACCP" => :across_declaration_accepted=
     }
 

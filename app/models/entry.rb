@@ -182,6 +182,7 @@
 #  special_program_indicators             :string(255)
 #  split_release_option                   :string(255)
 #  split_shipment                         :boolean
+#  split_shipment_date                    :datetime
 #  store_names                            :text
 #  sub_house_bills_of_lading              :text
 #  summary_rejected                       :boolean
@@ -431,6 +432,11 @@ class Entry < ActiveRecord::Base
 
   def total_duty_taxes_fees_amount
     [self.total_duty, self.total_taxes, self.total_fees, self.total_add, self.total_cvd].compact.sum
+  end
+
+  def split_shipment_date= date
+    super date
+    self.split_shipment = date.present?
   end
   
   private

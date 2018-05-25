@@ -100,6 +100,7 @@ describe OpenChain::FenixParser do
       'KPIPART' => [Time.new(2017,7,12,12,2), Time.new(2017,7,12,7,57)],
       'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)],
       "MANINFREC" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)],
+      "SPLITSHPT" => [Time.new(2017,7,15,12,2), Time.new(2017,7,15,7,57)],
       "ACSDECACCP" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)]
     }
     @use_new_activities = false
@@ -697,6 +698,8 @@ describe OpenChain::FenixParser do
     expect(e.part_number_request_date).to eq tz.parse(@new_activities['KPIPART'][1].to_s).in_time_zone(Time.zone)
     expect(e.importer_request_date).to eq tz.parse(@new_activities['KPIIOR'][1].to_s).in_time_zone(Time.zone)
     expect(e.manifest_info_received_date).to eq tz.parse(@new_activities['MANINFREC'][1].to_s).in_time_zone(Time.zone)
+    expect(e.split_shipment_date).to eq tz.parse(@new_activities['SPLITSHPT'][1].to_s).in_time_zone(Time.zone)
+    expect(e.split_shipment).to eq true
     expect(e.across_declaration_accepted).to eq tz.parse(@new_activities['ACSDECACCP'][1].to_s).in_time_zone(Time.zone)
   end
 
