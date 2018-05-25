@@ -388,6 +388,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(order.custom_value(cdefs[:ord_type])).to eq "Standard PO"
         expect(order.ship_window_start).to eq Date.new(2013, 6, 25)
         expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
+        snap = order.entity_snapshots.first
+        expect(snap.user).to eq user
+        expect(snap.context).to eq opts[:key]
 
         expect(order.order_lines.length).to eq 1
         line = order.order_lines.first

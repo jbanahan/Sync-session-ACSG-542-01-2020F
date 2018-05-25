@@ -1,10 +1,7 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_related_styles_manager'
-module OpenChain
-  module CustomHandler
-    module AnnInc
-      class AnnSapProductHandler
+module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandler
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
         extend OpenChain::IntegrationClientParser
 
@@ -131,7 +128,7 @@ module OpenChain
                     o.find_and_set_custom_value(cdefs[:ord_docs_required], docs_required?(vendor, row, ship_window_start)) 
                     ol.save!
                     o.save!
-                    o.create_snapshot run_by
+                    o.create_snapshot run_by, nil, opts[:key]
                   end
                 end
               rescue => e
@@ -457,8 +454,4 @@ module OpenChain
             end
           end
         end
-
-      end
-    end
-  end
-end
+end; end; end; end
