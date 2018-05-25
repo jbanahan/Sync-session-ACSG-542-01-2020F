@@ -1,9 +1,11 @@
 module EntitySnapshotSupport
+  extend ActiveSupport::Concern
 
   mattr_accessor :disable_async
 
-  def self.included(base)
-    base.instance_eval("has_many :entity_snapshots, :as => :recordable") #not doing dependent => destroy so we'll still have snapshots for deleted items
+  included do
+    #not doing dependent => destroy so we'll still have snapshots for deleted items
+    has_many :entity_snapshots, :as => :recordable, inverse_of: :recordable
   end
 
   def last_snapshot

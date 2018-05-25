@@ -35,7 +35,7 @@ class EntitySnapshot < ActiveRecord::Base
 
   cattr_accessor :snapshot_writer_impl
 
-  belongs_to :recordable, :polymorphic=>true
+  belongs_to :recordable, polymorphic: true, inverse_of: :entity_snapshots
   belongs_to :user
   belongs_to :imported_file
   belongs_to :change_record, :inverse_of => :entity_snapshot
