@@ -73,12 +73,14 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.hts).to eq "8708305030"
         expect(line.quantity).to eq 13
         expect(line.product).to eq product1
+        expect(line.price_per_unit).to eq BigDecimal("9.45")
 
         line = order.order_lines.second
         expect(line.sku).to eq "20671580"
         expect(line.hts).to eq "8708305030"
         expect(line.quantity).to eq 40
         expect(line.product).to eq product2
+        expect(line.price_per_unit).to eq BigDecimal("11.45")
 
         order = Order.where(order_number: "CQ-IND13786").first
         expect(order).not_to be_nil
@@ -92,6 +94,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.hts).to eq "8708996805"
         expect(line.quantity).to eq 1
         expect(line.product).to eq product3
+        expect(line.price_per_unit).to eq BigDecimal("24.10")
       end
     end
 

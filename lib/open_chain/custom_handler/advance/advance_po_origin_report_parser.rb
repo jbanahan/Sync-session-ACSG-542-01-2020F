@@ -199,7 +199,15 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def build_order_line row, product
-      {product: {id: product.id}, ordln_sku: text_value(row[6]), ordln_hts: text_value(row[9]), ordln_ordered_qty: decimal_value(row[10], decimal_places: 2)}
+      total_cost = decimal_value(row[12], decimal_places: 2)
+      units = decimal_value(row[10], decimal_places: 2)
+
+      unit_price = BigDecimal("0")
+      if !units.nil? && units.nonzero?
+        unit_price = (total_cost / units).round(2, BigDecimal::ROUND_HALF_UP)
+      end
+
+      {product: {id: product.id}, ordln_sku: text_value(row[6]), ordln_hts: text_value(row[9]), ordln_ordered_qty: units, ordln_ppu: unit_price}
     end
 
     def importer
