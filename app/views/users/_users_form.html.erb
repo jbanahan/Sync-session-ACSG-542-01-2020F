@@ -1,0 +1,33 @@
+<table class='detail_table'>
+  <thead>
+  <tr>
+    <th>&nbsp;</th>
+    <th>Full Name</th>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Status</th>
+    <th>Last Activity</th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <% users.each do |user| %>
+    <tr class='hover'>
+      <td><%= check_box_tag 'id[]', user.id %></td>
+      <td><%= link_to user.full_name, edit_company_user_path(user.company_id,user.id) %>
+      <td><%= user.username %></td>
+      <td><%= user.email %></td>
+      <td>
+        <% if user.disabled? %>
+          Disabled
+        <% elsif user.password_locked? %>
+          Locked
+        <% else %>
+          Active
+        <% end %>
+      </td>
+      <td><%= user.last_request_at %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>

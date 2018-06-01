@@ -46,31 +46,31 @@
 <% end -%>
 <h1><%=@company.name%> Users</h1>
 
-<%=form_tag bulk_invite_company_users_path(@company), id: "users_form" do %>
-<table class='detail_table'>
-  <thead>
-    <tr>
-      <th>&nbsp;</th>
-      <th>Full Name</th>
-      <th>Username</th>
-      <th>Email</th>
-      <th>Last Login</th>
-    </tr>
-  </thead>
 
-<tbody>
-<% @users.each do |user| %>
-  <tr class='hover'>
-    <td><%= check_box_tag 'id[]', user.id %></td>
-    <td><%= link_to user.full_name, edit_company_user_path(user.company_id,user.id) %><%unless user.active? %> <span class='exception_value'>[Locked]</span><%end%></td>
-    <td><%= user.username %></td>
-    <td><%= user.email %></td>
-    <td><%= user.last_login_at %></td>
-  </tr>
-<% end %>
-</tbody>
-</table>
-<% end %>
+
+
+
+
+<div>
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active">
+      <a href="#active-users" aria-controls="active-users" role="tab" data-toggle="tab">Active Users</a>
+    </li>
+    <li role="presentation">
+      <a href="#disabled-users" aria-controls="disabled-users" role="tab" data-toggle="tab">Disabled Users</a>
+    </li>
+  </ul>
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="active-users">
+      <%=form_tag bulk_invite_company_users_path(@company), id: "users_form" do %>
+        <%= render partial: 'users_form', locals: {users: @active_users} %>
+      <% end %>
+    </div>
+    <div role="tabpanel" class="tab-pane" id="disabled-users">
+      <%= render partial: 'users_form', locals: {users: @disabled_users} %>
+    <div>
+  </div>
+</div>
 
 <div class="modal fade" id="move_user_modal" tabindex=-1 role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
