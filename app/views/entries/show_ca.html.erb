@@ -210,7 +210,7 @@
         </tbody>
       </table>
       <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type,:bi_line_hst_percent],:lines=>bi.broker_invoice_lines}%>
-      <%=render :partial => 'shared/integration_file_link', :locals => {:obj => bi, :user => current_user} %>
+      <%=render :partial => 'shared/integration_file_link', :locals => {:obj => bi, :user => current_user, :exclude_send_button => true} %>
     <% end %>
   <%end%>
 <%end%>
