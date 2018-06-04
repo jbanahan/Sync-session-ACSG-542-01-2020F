@@ -213,6 +213,8 @@ module OpenChain
         OpenChain::CustomHandler::AnnInc::AnnOrder850Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ann_invoice") && custom_features.include?("Ann Brokerage Feeds")
         OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "footlocker_hts") && custom_features.include?("Foot Locker Parts")
+        OpenChain::CustomHandler::FootLocker::FootLockerHtsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "polo_850")
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "850") && custom_features.include?("RL 850")

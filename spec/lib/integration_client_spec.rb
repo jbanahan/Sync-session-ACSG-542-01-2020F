@@ -361,6 +361,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
     end
+    context "foot_locker" do
+      it "sends data to FootLocker HTS Parser" do
+        klass = OpenChain::CustomHandler::FootLocker::FootLockerHtsParser
+        expect(master_setup).to receive(:custom_features_list).and_return ['Foot Locker Parts']
+        expect(klass).to receive(:delay).and_return klass
+        expect(klass).to receive(:process_from_s3).with("bucket", "12345")
+        cmd = {'request_type'=>'remote_file','original_path'=>'footlocker_hts/a.csv', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect(subject.process_command(cmd)).to eq(success_hash)
+      end
+    end
     context "under_armour" do
       it "sends data to UA Article Master Parser" do
         klass = OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser
