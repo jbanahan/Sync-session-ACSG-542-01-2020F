@@ -231,13 +231,31 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
           errors << "File # #{dse.broker_reference} has no broker invoice information in VFI Track."
         elsif intacct_total.nil?
           errors << "File # #{dse.broker_reference} has no Accounts Payable Bills found in Intacct."
-        elsif invoice_total[:duty_total] != dse.total_amount
-          errors << "File # #{dse.broker_reference} shows #{number_to_currency(invoice_total[:duty_total])} billed in VFI Track but #{number_to_currency(dse.total_amount)} on the statement."
-        elsif intacct_total[:duty_total] != dse.total_amount
-          errors << "File # #{dse.broker_reference} shows #{number_to_currency(intacct_total[:duty_total])} billed in Intacct but #{number_to_currency(dse.total_amount)} on the statement."
+        else 
+          if dse.entry.try(:entry_type).to_i != 21
+            if invoice_total[:duty_total] != dse.total_amount
+              errors << "File # #{dse.broker_reference} shows #{number_to_currency(invoice_total[:duty_total])} billed in VFI Track but #{number_to_currency(dse.total_amount)} on the statement."
+            elsif intacct_total[:duty_total] != dse.total_amount
+              errors << "File # #{dse.broker_reference} shows #{number_to_currency(intacct_total[:duty_total])} billed in Intacct but #{number_to_currency(dse.total_amount)} on the statement."
+            end
+          else
+            # Warehouse Entries (type 21) do not pay Duty amounts on the Statement until they are transported out of the warehouse.
+            # The amount owed is the total_amount - duty amount.
+            whse_amount = warehouse_amount(dse)
+
+            if invoice_total[:duty_total] != whse_amount
+              errors << "File # #{dse.broker_reference} (Entry Type 21) shows #{number_to_currency(invoice_total[:duty_total])} billed in VFI Track but a total amount (minus Duty) of #{number_to_currency(whse_amount)} on the statement."
+            elsif intacct_total[:duty_total] != whse_amount
+              errors << "File # #{dse.broker_reference} (Entry Type 21) shows #{number_to_currency(intacct_total[:duty_total])} billed in Intacct but a total amount (minus Duty) of #{number_to_currency(whse_amount)} on the statement."
+            end
+          end
         end
       end
       errors
+    end
+
+    def warehouse_amount dse
+      dse.total_amount - dse.duty_amount
     end
 
     def sum_duty_per_entry invoice_data

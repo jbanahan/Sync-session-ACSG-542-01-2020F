@@ -176,6 +176,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
       expect(payment.payment_date).to eq Date.new(2018, 5, 1)
     end
 
+    it "does not error for Warehouse Entries (Type 21) where the billed amount matches the total statement amount minus duty" do
+      expect(subject).to receive(:post_payment)
+      expect_standard
+      
+      entry.entry_type = 21
+      dse = daily_statement.daily_statement_entries.first
+      dse.total_amount = 5
+      dse.duty_amount = 3.5
+      
+      expect(subject.pay_statement daily_statement).to be_blank
+    end
+
     context "error handling" do
 
       it "validates statement amount vs invoice amount" do
@@ -234,6 +246,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
         errors = subject.pay_statement daily_statement
         expect(errors).to eq ["Unable to apply credit for Intacct Bill INV_NUM_CREDIT amount of -$1.00.  No matching debit line found."]
       end
+
+      it "errors for Warehouse Entries (Type 21) where the billed amount doesn't match the total statement amount minus duty" do
+        expect_standard
+        
+        entry.entry_type = 21
+        dse = daily_statement.daily_statement_entries.first
+        dse.total_amount = 5
+        dse.duty_amount = 4
+        
+        expect(subject.pay_statement daily_statement).to include "File # BROK_REF (Entry Type 21) shows $1.50 billed in VFI Track but a total amount (minus Duty) of $1.00 on the statement."
+      end
+
     end
   end
 end
