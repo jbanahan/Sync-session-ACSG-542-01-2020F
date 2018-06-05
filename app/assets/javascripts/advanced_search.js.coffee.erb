@@ -9,7 +9,7 @@ advSearchApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
 ]
 
-advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout',($scope,$routeParams,$location,$http,chainSearchOperators,$timeout) ->
+advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout', '$q', ($scope,$routeParams,$location,$http,chainSearchOperators,$timeout,$q) ->
 
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -119,7 +119,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     )
 
   $scope.searchId = parseInt $routeParams.searchId
-  $scope.searchWrapper = {searchResult:{}}
+  $scope.searchWrapper = {searchResult:{}, canceller: {cancel: $q.defer(), cancelled: $q.defer()} , loading: false}
   pg = parseInt $routeParams.page
   pg = 1 if isNaN(pg) or pg<1
   $scope.page = pg
@@ -225,13 +225,29 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $('#email-modal').modal 'show'
     true
 
+  $scope.handleSearchOverride = (cb, args) ->
+    if $scope.searchWrapper.loading && $scope.errors.length == 0
+      canceller = $scope.searchWrapper.canceller
+      canceller.cancel.resolve()
+      canceller.cancelled.promise.then ->
+        # reset promises
+        canceller.cancel = $q.defer()
+        canceller.cancelled = $q.defer()
+        $scope.searchWrapper.loading = false
+        cb.call(this, args)
+      true
+    else
+      $scope.searchWrapper.loading = true
+      false
+
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->
+    return if $scope.handleSearchOverride($scope.saveSetup)
     $scope.toggleSetup()
     $scope.searchWrapper.searchResult = {}
     ss = $scope.searchSetup
     $scope.searchSetup = {}
-
+    
     if ss.search_criterions.length == 0
       ss.sort_criterions = []
       ss.search_schedules = []
@@ -252,7 +268,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         loadSearch $scope.searchId
 
     ).error((data) ->
-      $scope.error.push "An error occurred while saving this search."
+      $scope.errors.push "An error occurred while saving this search."
     )
 
   #create a new setup and change location to first page
@@ -369,6 +385,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       mf.descending = !mf.descending
 
   $scope.changeSearch = (newId) ->
+    return if $scope.handleSearchOverride($scope.changeSearch, newId)
     $location.path '/'+newId+'/1'
 
   #send background job to build excel
@@ -390,11 +407,6 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   # WATCHES
   #
   registrations = []
-
-  #change monitor for selected search
-  registrations.push($scope.$watch 'searchId',(newValue,oldValue, watchScope) ->
-    watchScope.changeSearch(newValue) unless isNaN(newValue) || newValue==oldValue
-  )
 
   registrations.push($scope.$watch 'searchWrapper.searchResult.page', (newValue, oldValue, watchScope) ->
     $location.path '/'+watchScope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue

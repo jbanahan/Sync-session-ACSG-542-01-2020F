@@ -419,7 +419,7 @@
         </div>
       </div>
   </div>
-  <div chain-search-result='searchWrapper.searchResult' page='page' errors='errors' src='/advanced_search/'>
+  <div chain-search-result='searchWrapper.searchResult' page='page' errors='errors' src='/advanced_search/' canceller='searchWrapper.canceller', loading='searchWrapper.loading'>
     <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
     <a class='btn btn-default navbar-btn' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
     <button class='btn btn-default navbar-btn' ng-show='searchWrapper.searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button>
@@ -432,5 +432,12 @@
         </div>
       </span>
     </span>
+  </div>
+  <div ng-show="searchWrapper.loading" ng-show="!noChrome" class='navbar navbar-default navbar-fixed-bottom'>
+    <ul class='nav navbar-nav'>
+      <li>
+        <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+      </li>
+    </ul>
   </div>
 </div>

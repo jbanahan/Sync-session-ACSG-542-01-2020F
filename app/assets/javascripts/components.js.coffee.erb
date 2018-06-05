@@ -1012,7 +1012,7 @@
       }
     }
 ]
-@components.directive 'chainSearchResult', ['$http', '$location', 'localStorageService',($http, $location, localStorageService) ->
+@components.directive 'chainSearchResult', ['$http', '$location', '$q', 'localStorageService',($http, $location, $q, localStorageService) ->
   {
     scope: {
       searchResult: "=chainSearchResult"
@@ -1022,6 +1022,8 @@
       urlPrefix: "@src"
       noChrome: "@"
       perPage: "="
+      canceller: "="
+      loading: "="
     }
     transclude: true
     templateUrl: '<%=asset_path("search_result.html")%>'
@@ -1083,6 +1085,7 @@
             readSearchSelections scope, data.id
             $http.get(scope.urlPrefix+searchId+'/total_objects.json').success((data) ->
               sr.total_objects = data.total_objects
+              scope.loading = false
             )
           else
             loadResultPage(scope, searchId, 1)
@@ -1090,9 +1093,13 @@
           if scope.errors
             if status == 404
               scope.errors.push "This search with id "+id+" could not be found."
+            else if data.status == 0 # request cancelled through 'Save' button
+              scope.canceller.cancelled.resolve()
             else
-             scope.errors.push "An error occurred while loading this search result. Please reload and try again."
-        $http.get(url).then(successHandler,errorHandler)
+              scope.errors.push "An error occurred while loading this search result. Please reload and try again."
+
+        scope.loading = true
+        $http.get(url, {timeout: scope.canceller.cancel.promise}).then(successHandler,errorHandler)
 
       onSearchLoaded = (saved, scope) ->
         # We want to clear bulkSelections in this case since the user saved the setup (which will
