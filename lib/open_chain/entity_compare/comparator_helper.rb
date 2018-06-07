@@ -117,8 +117,27 @@ module OpenChain; module EntityCompare; module ComparatorHelper
       # to do anything with them here (integer, string, boolean)
       return value
     end
-
   end
 
+  # Returns true if any of the model fields given in model_field_uids are different between 
+  # the old and new snapshot entities given.
+  def any_value_changed? old_json_entity, new_json_entity, model_field_uids
+    Array.wrap(model_field_uids).each do |uid|
+      old_value = mf(old_json_entity, uid)
+      new_value = mf(new_json_entity, uid)
 
+      return true if old_value != new_value
+    end
+
+    return false
+  end
+
+  # Shortcut for checking if any value given by the model_field_uids array changed in the snapshot's top level entity
+  # (.ie entry, shipment, order, etc).
+  def any_root_value_changed? old_bucket, old_key, old_version, new_bucket, new_key, new_version, model_field_uids
+    old_json = get_json_hash(old_bucket, old_key, old_version)
+    new_json = get_json_hash(new_bucket, new_key, new_version)
+
+    return any_value_changed?(old_json, new_json, model_field_uids)
+  end
 end; end; end

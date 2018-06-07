@@ -9,9 +9,8 @@ describe DataCrossReferencesController do
   end
 
   before :each do
-    ms = double("MasterSetup")
-    allow(MasterSetup).to receive(:get).and_return ms
-    allow(ms).to receive(:system_code).and_return "polo"
+    ms = stub_master_setup
+    allow(ms).to receive(:custom_feature?).with("Polo").and_return true
 
     @user = Factory(:admin_user)
     sign_in_as @user

@@ -137,10 +137,10 @@
       <Vessel>ZIM ROTTERDAM</Vessel>
       <Routing>AW</Routing>
       <OriginCity>
-        <CityName>Qingdao</CityName>
-        <CityCode Qualifier="UN">CNTAO</CityCode>
-        <CityCode Qualifier="K">57047</CityCode>
-        <CountryCode>CN</CountryCode>
+        <CityName>Saigon</CityName>
+        <CityCode Qualifier="UN">VNSGN</CityCode>
+        <CityCode Qualifier="K">55224s</CityCode>
+        <CountryCode>VN</CountryCode>
       </OriginCity>
       <PortOfLoading>
         <CityName>Qingdao</CityName>

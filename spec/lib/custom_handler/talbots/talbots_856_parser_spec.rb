@@ -46,7 +46,8 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
       expect(shipment.lading_port).to eq txg
       expect(shipment.entry_port).to eq nyc
       expect(shipment.inland_destination_port).to eq chi
-      expect(shipment.custom_value(cdefs[:shp_invoice_prepared])).to eq true
+      expect(shipment.custom_value(cdefs[:shp_invoice_prepared])).not_to be_nil
+      expect(shipment.custom_value(cdefs[:shp_entry_prepared_date])).not_to be_nil
 
       expect(shipment.departure_date).to eq Date.new(2017, 7, 24)
       expect(shipment.est_arrival_port_date).to eq Date.new(2017, 8, 22)
@@ -102,9 +103,6 @@ describe OpenChain::CustomHandler::Talbots::Talbots856Parser do
       expect(line).not_to be_nil
       # Just check for some data from the EDI to be present
       expect(line.quantity).to eq 124
-
-      # The sync record's sent at should be cleared so that the ci load will regenerate after a new file is received
-      expect(s.sync_records.first.sent_at).to be_nil
     end
 
     it "does not process outdated EDI" do

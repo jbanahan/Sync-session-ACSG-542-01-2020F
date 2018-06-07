@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shpln_invoice_number, :shpln_received_date, :prod_part_number, :shp_invoice_prepared])
+    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shpln_invoice_number, :shpln_received_date, :shp_invoice_prepared, :prod_part_number, :shp_entry_prepared_date])
   end
 
   def business_logic_errors
@@ -104,9 +104,9 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
       end
     end
 
-    # As soon as we get an 856, we'll want to generate the CI load for it...we also want to sent out a CI Load
-    # for every single update to the shipment (since an 856 is sent for each container, there'll be muliple docs generated)
-    shipment.find_and_set_custom_value(cdefs[:shp_invoice_prepared], true)
+    # As soon as we get an 856, we'll want to generate the CI load for it...
+    shipment.find_and_set_custom_value(cdefs[:shp_invoice_prepared], Time.zone.now)
+    shipment.find_and_set_custom_value(cdefs[:shp_entry_prepared_date], Time.zone.now)
   end
 
   def process_shipment_header shipment, header_segments

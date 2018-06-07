@@ -58,10 +58,12 @@ class DataCrossReference < ActiveRecord::Base
   # This is a generic MID cross reference, the key value can be anything, the value should be the MID and the importer id field should
   # be filled in
   MID_XREF ||= 'mid_xref'
-  SHIPMENT_CI_LOAD_CUSTOMERS ||= "shp_ci_load_cust"
+  SHIPMENT_CI_LOAD_CUSTOMERS ||= 'shp_ci_load_cust'
+  SHIPMENT_ENTRY_LOAD_CUSTOMERS ||= "shp_entry_load_cust"
   ISF_CI_LOAD_CUSTOMERS ||= "isf_ci_load_cust"
   LL_GTN_QUANTITY_UOM ||= "ll_gtn_quantity_uom"
   LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
+  CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
@@ -72,7 +74,10 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true, company: {system_code: "HENNE"}),
       xref_attributes(ASCE_MID, "Ascena MID-Vendor List", "MID-Vendors on this list are used to generate the Daily First Sale Exception report", key_label: "MID-Vendor ID", value_label: "FS Start Date", preprocessor: PREPROCESSORS[ASCE_MID]),
       xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true, company: {system_code: "HENNE"}),
-      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code")
+      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code"),
+      xref_attributes(CI_LOAD_DEFAULT_GOODS_DESCRIPTION, "Shipment Entry Load Goods Descriptions", "Enter the customer number and corresponding default Goods Description.", key_label:"Customer Number", value_label: "Goods Description"),
+      xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label:"Customer Number", show_value_column: false),
+      xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false)
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -120,15 +125,13 @@ class DataCrossReference < ActiveRecord::Base
     # At this point, anyone that can view, can also edit
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
-      (Rails.env.development? || MasterSetup.get.system_code == "polo")
-    when US_HTS_TO_CA
-      (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
-    when ASCE_MID
-      (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.sys_admin?)
+      MasterSetup.get.custom_feature? "Polo"
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS
+      MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
     when CA_HTS_TO_DESCR
-      (Rails.env.development?) || (MasterSetup.get.system_code == "www-vfitrack-net" && user.in_group?('xref-maintenance'))
+      MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')
     when UA_SITE_TO_COUNTRY
-      (Rails.env.development? || MasterSetup.get.system_code == "underarmour")
+      MasterSetup.get.custom_feature?("UnderArmour")
     else
       false
     end

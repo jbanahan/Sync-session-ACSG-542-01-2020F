@@ -284,7 +284,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       export_lambda: lambda { |o|
         p = o.product
         return nil if p.nil?
-        p.get_custom_value(custom_definition).value
+        p.custom_value(custom_definition)
       }
     })
     add_model_fields core_module, [mf]
@@ -316,7 +316,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       export_lambda: lambda { |o|
         v = o.variant
         return nil if v.nil?
-        v.get_custom_value(custom_definition).value
+        v.custom_value(custom_definition)
       }
     })
     add_model_fields core_module, [mf]

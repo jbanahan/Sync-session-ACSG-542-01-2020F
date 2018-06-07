@@ -332,11 +332,19 @@ describe DataCrossReference do
       hsh
     end
 
-    let(:preproc) {  OpenChain::DataCrossReferenceUploadPreprocessor }
-    context "polo system" do      
-      it "returns information about xref screens user has access to" do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).and_return false
+      ms
+    }
 
+    let(:preproc) {  OpenChain::DataCrossReferenceUploadPreprocessor }
+    context "polo system" do
+      before :each do 
+        allow(master_setup).to receive(:custom_feature?).with("Polo").and_return true
+      end
+
+      it "returns information about xref screens user has access to" do
         xrefs = DataCrossReference.xref_edit_hash User.new
 
         expect(xrefs.size).to eq 2
@@ -346,92 +354,99 @@ describe DataCrossReference do
     end
 
     context "vfi system" do
+      before :each do 
+        allow(master_setup).to receive(:custom_feature?).with("WWW").and_return true
+      end
+
       it "returns information about xref screens sys-admin user has access to" do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
-        
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
-        expect(xrefs.size).to eq 2
+        expect(xrefs.size).to eq 5
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['shp_entry_load_cust'])).to eq title: "Shipment Entry Load Customers", description: "Enter the customer number to enable sending Shipment data to Kewill.", identifier: "shp_entry_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['shp_ci_load_cust'])).to eq title: "Shipment CI Load Customers", description: "Enter the customer number to enable sending Shipment CI Load data to Kewill.", identifier: "shp_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
-        
         g = Factory(:group, system_code: "xref-maintenance")
         u = Factory(:user, groups: [g])
 
         xrefs = DataCrossReference.xref_edit_hash(u)
         expect(xrefs.size).to eq 1
-        xrefs['ca_hts_to_descr'].delete(:preprocessor)
-        expect(xrefs['ca_hts_to_descr']).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
+        expect(strip_preproc(xrefs['ca_hts_to_descr'])).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
       end
     end
   end
 
   describe "can_view?" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).and_return false
+      ms
+    }
+
     context "polo system" do
       before :each do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "polo"
+        allow(master_setup).to receive(:custom_feature?).with("Polo").and_return true
       end
 
       it "allows access to RL Fabrix xref for anyone" do
-        expect(DataCrossReference.can_view? 'rl_fabric', User.new).to be_truthy
+        expect(DataCrossReference.can_view? 'rl_fabric', User.new).to eq true
       end
 
       it "allows access to RL Value Fabirc xref for anyone" do
-        expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_truthy
+        expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to eq true
       end
     end
 
     context "under armour system" do
       before :each do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "underarmour"
+        allow(master_setup).to receive(:custom_feature?).with("UnderArmour").and_return true
       end
 
       it "allows access to UA sites xref for anyone" do
-        expect(DataCrossReference.can_view? 'ua_site', User.new).to be_truthy
+        expect(DataCrossReference.can_view? 'ua_site', User.new).to eq true
       end
     end
 
     context "vfi system" do
       before :each do
-        allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
+        allow(master_setup).to receive(:custom_feature?).with("WWW").and_return true
       end
 
       context "us_hts_to_ca" do
         it "allows access to US-to-CA xref for sys admins" do
-          expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to be_truthy
+          expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to eq true
         end
         
         it "prevents access for anyone else" do
-          expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to be_falsey
+          expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to eq false
         end
       end
 
       context "asce_mid" do
         it "allows access to ASCE MID xref for sys admins" do
-          expect(DataCrossReference.can_view? 'asce_mid', Factory(:sys_admin_user)).to be_truthy
+          expect(DataCrossReference.can_view? 'asce_mid', Factory(:sys_admin_user)).to eq true
         end
 
         it "prevents access for anyone else" do
-          expect(DataCrossReference.can_view? 'asce_mid', User.new).to be_falsey
+          expect(DataCrossReference.can_view? 'asce_mid', User.new).to eq false
         end
       end
 
       context "ca_hts_to_descr" do
         let(:user) { Factory(:user) }
-        before { allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net" }
 
         it "allows access for members of group 'Cross Reference Maintenance'" do
           group = Factory(:group, system_code: "xref-maintenance")
           user.groups << group
-          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to be_truthy
+          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to eq true
         end
 
         it "prevents access for anyone else" do
-          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to be_falsey
+          expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to eq false
         end
       end
 

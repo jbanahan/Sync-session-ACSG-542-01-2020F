@@ -5,9 +5,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
 
     register_change_comparators
   end
-
+  
   def self.register_change_comparators
-    # Add requires here so that other systems don't load them uneccesarily
+    # Add the requires here, so that they're not loaded on every single customer system, when there's no need for them on those
     require 'open_chain/entity_compare/comparator_registry'
     require 'open_chain/custom_handler/vandegrift/vandegrift_ace_entry_comparator'
     require 'open_chain/custom_handler/hm/hm_entry_docs_comparator'
@@ -17,11 +17,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     require 'open_chain/custom_handler/ascena/ascena_entry_billing_comparator'
     require 'open_chain/entity_compare/product_comparator/stale_tariff_comparator'
     require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
-    require 'open_chain/custom_handler/vandegrift/kewill_ci_load_shipment_comparator'
     require 'open_chain/custom_handler/talbots/talbots_landed_cost_comparator'
     require 'open_chain/custom_handler/vandegrift/kewill_ci_load_isf_comparator'
     require 'open_chain/custom_handler/vandegrift/vandegrift_entry_archive_comparator'
     require 'open_chain/custom_handler/foot_locker/foot_locker_entry_810_comparator'
+    require 'open_chain/custom_handler/vandegrift/kewill_ci_load_shipment_comparator'
+    require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_comparator'
+    require 'open_chain/custom_handler/advance/advance_entry_load_shipment_comparator'
 
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryDocsComparator
@@ -31,11 +33,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::EntityCompare::ProductComparator::StaleTariffComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator
-    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadIsfComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
+    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator
+
   end
   private_class_method :register_change_comparators
 

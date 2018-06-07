@@ -248,5 +248,7 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
     add_fields CoreModule::SHIPMENT, make_user_fields(2100, :shp_cancel_requested_by, "Cancel Requested By", CoreModule::SHIPMENT, :cancel_requested_by)
     add_fields CoreModule::SHIPMENT, make_country_arrays(2200,"shp_origin","shipments", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)
     add_fields CoreModule::SHIPMENT, make_user_fields(2300, :shp_warning_overridden_by, "Warning Overridden By", CoreModule::SHIPMENT, :warning_overridden_by)
+    add_fields CoreModule::SHIPMENT, make_country_arrays(2400,"shp_export","shipments", "country_export", association_title: "Export", country_selector: DefaultCountrySelector)
+    add_fields CoreModule::SHIPMENT, make_country_arrays(2400,"shp_import","shipments", "country_import", association_title: "Import", country_selector: DefaultCountrySelector)
   end
 end; end; end

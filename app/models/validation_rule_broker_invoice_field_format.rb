@@ -1,3 +1,5 @@
+# -*- SkipSchemaAnnotations
+
 class ValidationRuleBrokerInvoiceFieldFormat < BusinessValidationRule
   include ValidatesBrokerInvoice
   include ValidatesFieldFormat

@@ -1,5 +1,5 @@
 require 'open_chain/entity_compare/security_filing_comparator'
-require 'open_chain/custom_handler/vandegrift/kewill_generic_shipment_ci_load_generator'
+require 'open_chain/custom_handler/vandegrift/kewill_generic_isf_ci_load_generator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadIsfComparator
   extend OpenChain::EntityCompare::SecurityFilingComparator

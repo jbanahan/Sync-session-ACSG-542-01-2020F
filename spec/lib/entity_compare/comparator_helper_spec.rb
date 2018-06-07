@@ -184,4 +184,81 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.coerce_model_field_value "notafield", r).to be r
     end
   end
+
+  describe "any_value_changed?" do
+    let (:old_hash) {
+      {
+        "entity" => {
+          "model_fields" => {
+            "string" => "value",
+            "boolean" => true,
+            "date" => Date.new(2018, 4, 1)
+          }
+        }
+      }
+    }
+
+    let (:new_hash) {
+      {
+        "entity" => {
+          "model_fields" => {
+            "string" => "value2",
+            "boolean" => false,
+            "date" => Date.new(2018, 5, 1)
+          }
+        }
+      }
+    }
+
+    it "returns true if a specific value in a snapshot changed" do
+      expect(subject.any_value_changed? old_hash, new_hash, ["string"]).to eq true
+    end
+
+    it "returns false if nothing changed" do
+      expect(subject.any_value_changed? old_hash, old_hash, ["string"]).to eq false
+    end
+
+    it "returns true if only one of the given model fields changed" do
+      new_hash["entity"]["model_fields"]["string"] = "value"
+      expect(subject.any_value_changed? old_hash, new_hash, ["string", "boolean"]).to eq true
+    end
+
+    it "returns false if both values are missing from the hash" do
+      expect(subject.any_value_changed? old_hash, old_hash, ["missing"]).to eq false
+    end
+  end
+
+  describe "any_root_value_changed?" do
+    let (:old_hash) {
+      {
+        "entity" => {
+          "model_fields" => {
+            "string" => "value",
+            "boolean" => true,
+            "date" => Date.new(2018, 4, 1)
+          }
+        }
+      }
+    }
+
+    let (:new_hash) {
+      {
+        "entity" => {
+          "model_fields" => {
+            "string" => "value2",
+            "boolean" => false,
+            "date" => Date.new(2018, 5, 1)
+          }
+        }
+      }
+    }
+
+    it "detects changes in hashes using any_value_changed?" do
+      expect(subject).to receive(:get_json_hash).with("ob", "ok", "ov").and_return old_hash
+      expect(subject).to receive(:get_json_hash).with("nb", "nk", "nv").and_return new_hash
+      expect(subject).to receive(:any_value_changed?).with(old_hash, new_hash, ["value"]).and_return true
+
+      expect(subject.any_root_value_changed? "ob", "ok", "ov", "nb", "nk", "nv", ["value"]).to eq true
+    end
+  end
 end

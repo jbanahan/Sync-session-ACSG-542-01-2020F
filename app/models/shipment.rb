@@ -38,6 +38,9 @@
 #  consignee_id                     :integer
 #  consolidator_address_id          :integer
 #  container_stuffing_address_id    :integer
+#  container_unloaded_date          :datetime
+#  country_export_id                :integer
+#  country_import_id                :integer
 #  country_origin_id                :integer
 #  created_at                       :datetime         not null
 #  delay_reason_codes               :string(255)
@@ -174,6 +177,8 @@ class Shipment < ActiveRecord::Base
   belongs_to :packing_list_sent_by, class_name: "User"
   belongs_to :vgm_sent_by, class_name: "User"
   belongs_to :country_origin, class_name: "Country"
+  belongs_to :country_export, class_name: "Country"
+  belongs_to :country_import, class_name: "Country"
   belongs_to :warning_overridden_by, :class_name => "User"
 
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true

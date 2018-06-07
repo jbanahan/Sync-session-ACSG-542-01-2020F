@@ -29,6 +29,7 @@
 #  processing_errors            :text
 #  product_category             :string(255)
 #  season                       :string(255)
+#  selling_agent_id             :integer
 #  ship_from_id                 :integer
 #  ship_to_id                   :integer
 #  ship_window_end              :date

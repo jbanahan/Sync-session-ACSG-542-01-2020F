@@ -52,8 +52,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
   def generate_and_send entries 
     Array.wrap(entries).each do |entry|
       if entry.invoices.length > 0
-        doc, shipments = build_base_xml
-        generate_entry_xml(shipments, entry, add_entry_info: false)
+        doc = generate_entry_xml(entry, add_entry_info: false)
 
         Tempfile.open(["CI_Load_#{entry.file_number.to_s.gsub("/", "_")}_", ".xml"]) do |file|
           file.binmode

@@ -6,6 +6,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
   let (:advance_importer) { Factory(:importer, system_code: "ADVAN") }
   let (:carquest_importer) { Factory(:importer, system_code: "CQ") }
   let (:cn) { Factory(:country, iso_code: "CN") }
+  let (:vn) { Factory(:country, iso_code: "VN") }
   let (:us) { Factory(:country, iso_code: "US") }
   let (:lading_port) { Factory(:port, name: "Qingdao", schedule_k_code: "57047") }
   let (:unlading_port) { Factory(:port, name: "Norfolk", schedule_d_code: "1401") }
@@ -20,6 +21,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       advance_importer
       cn
       us
+      vn
       lading_port
       unlading_port
       final_dest
@@ -45,6 +47,10 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       expect(s.lading_port).to eq lading_port
       expect(s.unlading_port).to eq unlading_port
       expect(s.final_dest_port).to eq final_dest
+      expect(s.country_origin).to eq vn
+      expect(s.country_export).to eq cn
+      expect(s.country_import).to eq us
+      expect(s.custom_value(cdefs[:shp_entry_prepared_date])).not_to be_nil
 
       snap = s.entity_snapshots.first
       expect(snap.context).to eq xml_path
@@ -114,7 +120,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       l = lines.first
       expect(l.container).to eq c
       expect(l.invoice_number).to eq "LJ180090"
-      expect(l.carton_qty).to eq 80
+      expect(l.carton_qty).to eq 0
       expect(l.quantity).to eq 80
       expect(l.gross_kgs).to eq BigDecimal("648")
       expect(l.cbms).to eq BigDecimal("0.64")
@@ -173,12 +179,30 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
     it "handles Carquest" do
       carquest_importer
+
+      # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
+      product = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
+      order = Order.create! importer_id: carquest_importer.id, order_number: "CQ-8373111-11"
+      order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99
+
       consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
       consignee.text = "CARQUEST"
       
       s = subject.parse xml, user, xml_path
 
       expect(s.importer).to eq carquest_importer
+
+      line = s.shipment_lines.second
+
+      ol = line.order_lines.first
+      expect(ol.line_number).to eq 99
+      # It should update the quantity from what it was created as.  856 should be more accurate.
+      expect(ol.quantity).to eq 116
+      expect(ol.unit_of_measure).to eq "Each"
+      expect(ol.price_per_unit).to eq BigDecimal("9.99")
+      # Currency is nil because the invoice doesn't list the price
+      expect(ol.currency).to be_nil
+      expect(ol.country_of_origin).to eq "CN"
     end
 
     it "raises an error if importer cannot be located" do

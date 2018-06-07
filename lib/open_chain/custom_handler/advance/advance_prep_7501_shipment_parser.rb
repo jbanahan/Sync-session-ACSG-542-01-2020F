@@ -36,18 +36,20 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.mode = asn.text "Mode"
         shipment.voyage = asn.text "Voyage"
         shipment.vessel = asn.text "Vessel"
+        shipment.country_origin = find_country(REXML::XPath.first asn, "OriginCity")
+        shipment.country_export = find_country(REXML::XPath.first asn, "PortOfLoading")
+        shipment.country_import = find_country(REXML::XPath.first asn, "BLDestination")
+
+        raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
+
         shipment.lading_port = find_port(REXML::XPath.first asn, "PortOfLoading")
         shipment.unlading_port = find_port(REXML::XPath.first asn, "PortOfDischarge")
-        # We want to utilize the Locode first because it lists the Country Code as the first 2 chars of the code,
-        # this is helpful because we're using the final destination port to determine for CQ whether the shipment 
-        # needs to clear US or Canada customs (.ie go to Fenix or Kewill)
         shipment.final_dest_port = find_port(REXML::XPath.first(asn, "BLDestination"), lookup_type_order: [:unlocode, :schedule_k_code, :schedule_d_code])
-
-        raise "BLDestination must be present for all CQ Prep7501 Documents." if shipment.final_dest_port.nil? && shipment.importer.system_code == "CQ"
 
         shipment.est_departure_date = parse_date asn.text("EstDepartDate")
         shipment.departure_date = parse_date(asn.text("ReferenceDates[ReferenceDateType = 'Departed']/ReferenceDate"))
         shipment.est_arrival_port_date = parse_date asn.text("EstDischargePortDate")
+        shipment.find_and_set_custom_value cdefs[:shp_entry_prepared_date], Time.zone.now
       end
 
       REXML::XPath.match(xml, "/Prep7501Message/Prep7501/ASN/Container").each do |container_xml|
@@ -98,7 +100,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     line = shipment.shipment_lines.build
     line.container = container
     line.invoice_number = line_xml.text("InvoiceNumber")
-    line.carton_qty = line_xml.text("PackageCount").to_i
+    # The carton count on the XML is invalid...It's the piece count, not the actual # of cartons
+    line.carton_qty = 0
     line.quantity = parse_decimal(line_xml.text("Quantity"))
     line.gross_kgs = parse_weight(line_xml.get_elements("Weight").first)
     line.cbms = parse_volume(line_xml.get_elements("Volume").first)
@@ -106,10 +109,21 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     order_number = line_xml.text "PONumber"
     order = orders_cache[order_number]
     if order
-      line_number = line_xml.text("LineItemNumber").to_i
-      order_line = order.order_lines.find {|ol| ol.line_number == line_number }
-      # This really should never happend at all since we're making orders / products in this parser
-      raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
+      product = nil
+      if shipment.importer.system_code == "ADVAN"
+        line_number = line_xml.text("LineItemNumber").to_i
+        order_line = order.order_lines.find {|ol| ol.line_number == line_number }
+        # This really should never happend at all since we're making orders / products in this parser
+        raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
+      else
+        product_code = line_xml.text("ProductCode")
+        product = products_cache[product_code]
+
+        order_line = order.order_lines.find {|ol| ol.product_id == product.id }
+
+        # This really should never happend at all since we're making orders / products in this parser
+        raise "Failed to find Order # '#{order_number}' / Product Code #{product_code}." unless order_line
+      end
 
       line.product = order_line.product
       line.linked_order_line_id = order_line.id
@@ -141,6 +155,16 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     end
 
     port
+  end
+
+  def find_country port_xml
+    iso_code = port_xml.text "CountryCode"
+    @port ||= Hash.new do |h, k|
+      h[k] = Country.where(iso_code: k).first
+    end
+
+
+    iso_code.blank? ? nil : @port[iso_code]
   end
 
   def parse_date date
@@ -257,16 +281,28 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     product_code = line_xml.text("ProductCode")
     product = products_cache[product_code]
     Lock.db_lock(order) do
-      # Line number is supposed to be a unique line number, not 100% sure it's unique to the order.
       line_number = line_xml.text("LineItemNumber").to_i
-      line = order.order_lines.find {|l| l.line_number == line_number }
+    
+      if importer.system_code == "ADVAN"
+        # Line number is supposed to be a unique line number, not 100% sure it's unique to the order for ADVAN.  
+        line = order.order_lines.find {|l| l.line_number == line_number }
 
-      # If we happen to hit a case where the line number is shared between shipments and has different products on it
-      # then we have no option but to error here.
-      raise "A line number collision occurred for PO #{customer_order_number} / Line # #{line_number}." if line && line.product_id != product.id
+        # If we happen to hit a case where the line number is shared between shipments and has different products on it
+        # then we have no option but to error here.
+        raise "A line number collision occurred for PO #{customer_order_number} / Line # #{line_number}." if line && line.product_id != product.id
 
-      if line.nil?
-        line = order.order_lines.build product_id: product.id, line_number: line_number
+        if line.nil?
+          line = order.order_lines.build product_id: product.id, line_number: line_number
+        end
+      else
+        # All CQ orders should already be in the system via the PO Origin Report Upload (they need to load this
+        # so that we have the unit cost of the products).  This means that we'll just look for the first order line
+        # that has the same product code.
+        line = order.order_lines.find {|l| l.product_id == product.id }
+
+        if line.nil?
+          line = order.order_lines.build product_id: product.id
+        end
       end
 
       # This data is pulled from the Invoice portion of the XML..
@@ -276,14 +312,18 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       line.quantity = parse_decimal(invoice_line.text "Quantity")
       line.unit_of_measure = invoice_line.text "QuantityUOM"
 
-      total_cost = invoice_line.get_elements("ItemTotalPrice").first
-      if total_cost
-        val = parse_decimal(total_cost.text)
-        if line.quantity && val
-          line.price_per_unit = val / line.quantity
-        end
+      if importer.system_code == "ADVAN"
+        # For whatever reason, CQ invoices don't have pricing included on them.  The unit cost needs to come from 
+        # the CQ PO Origin Report (AdvancePoOriginReportParser).
+        total_cost = invoice_line.get_elements("ItemTotalPrice").first
+        if total_cost
+          val = parse_decimal(total_cost.text)
+          if line.quantity && val
+            line.price_per_unit = val / line.quantity
+          end
 
-        line.currency = total_cost.attributes["Currency"]
+          line.currency = total_cost.attributes["Currency"]
+        end
       end
 
       line.country_of_origin = invoice_line.get_elements("OriginCountry").first.try(:attributes).try(:[], "Code")
@@ -420,7 +460,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     raise "Invalid XML.  No Consignee could be found." unless consignee
 
     name = consignee.text "Name"
-    if name =~ /Carquest/i
+    if (name =~ /Carquest/i) || (name =~ /CQ/i)
       importer = Company.where(system_code: "CQ").first
     elsif name =~ /Advance/i
       importer = Company.where(system_code: "ADVAN").first
@@ -432,7 +472,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   end
 
   def cdefs
-    @cdefs = self.class.prep_custom_definitions([:prod_part_number])
+    @cdefs = self.class.prep_custom_definitions([:prod_part_number, :shp_entry_prepared_date])
   end
 
 end; end; end; end;

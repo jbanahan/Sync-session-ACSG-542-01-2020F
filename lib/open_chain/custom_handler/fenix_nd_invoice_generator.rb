@@ -13,44 +13,46 @@ module OpenChain; module CustomHandler
     # The return value from this method should be an array containing the symbol names to roll up detail lines by - all detail fields are valid to use here except quantity.
 
     PARTY_OUTPUT_FORMAT ||= [
-      {:field => :name, :length => 50},
-      {:field => :name_2, :length => 50},
-      {:field => :address_1, :length => 50},
-      {:field => :address_2, :length => 50},
-      {:field => :city, :length => 50},
-      {:field => :state, :length => 50},
-      {:field => :postal_code, :length => 50}
+      {field: :name, length: 50},
+      {field: :name_2, length: 50},
+      {field: :address_1, length: 50},
+      {field: :address_2, length: 50},
+      {field: :city, length: 50},
+      {field: :state, length: 50},
+      {field: :postal_code, length: 50}
     ]
 
     HEADER_OUTPUT_FORMAT ||= [
-      {:field => :invoice_number, :length => 25},
-      {:field => :invoice_date, :length => 10},
-      {:field => :country_origin_code, :length => 10},
-      {:field => :country_ultimate_destination, :length => 10},
-      {:field => :currency, :length => 4},
-      {:field => :number_of_cartons, :length => 15},
-      {:field => :gross_weight, :length => 15},
-      {:field => :total_units, :length => 15},
-      {:field => :total_value, :length => 15},
+      {field: :invoice_number, length: 25},
+      {field: :invoice_date, length: 10},
+      {field: :country_origin_code, length: 10},
+      {field: :country_ultimate_destination, length: 10},
+      {field: :currency, length: 4},
+      {field: :number_of_cartons, length: 15},
+      {field: :gross_weight, length: 15},
+      {field: :total_units, length: 15},
+      {field: :total_value, length: 15},
       # These subformat fields' data should be suplied by the mapping via a hash returned by the mappings of these field's names (:shipper, :consignee, :importer)
-      {:field => :shipper, :subformat => PARTY_OUTPUT_FORMAT},
-      {:field => :consignee, :subformat => PARTY_OUTPUT_FORMAT},
-      {:field => :importer, :subformat => PARTY_OUTPUT_FORMAT},
-      {:field => :po_number, :length => 50},
-      {:field => :mode_of_transportation, :length => 1},
-      {:field => :reference_identifier, :length => 50},
-      {:field => :customer_name, :length => 50}
+      {field: :shipper, subformat: PARTY_OUTPUT_FORMAT},
+      {field: :consignee, subformat: PARTY_OUTPUT_FORMAT},
+      {field: :importer, subformat: PARTY_OUTPUT_FORMAT},
+      {field: :po_number, length: 50},
+      {field: :mode_of_transportation, length: 1},
+      {field: :reference_identifier, length: 50},
+      {field: :customer_name, length: 50},
+      {field: :scac, length: 4},
+      {field: :master_bill, length: 30}
     ]
 
     DETAIL_OUTPUT_FORMAT ||= [
-      {:field => :part_number, :length => 50},
-      {:field => :country_origin_code, :length => 10},
-      {:field => :hts_code, :length => 12},
-      {:field => :tariff_description, :length => 50},
-      {:field => :quantity, :length => 15},
-      {:field => :unit_price, :length => 15},
-      {:field => :po_number, :length => 50},
-      {:field => :tariff_treatment, :length=> 10}
+      {field: :part_number, length: 50},
+      {field: :country_origin_code, length: 10},
+      {field: :hts_code, length: 12},
+      {field: :tariff_description, length: 50},
+      {field: :quantity, length: 15},
+      {field: :unit_price, length: 15},
+      {field: :po_number, length: 50},
+      {field: :tariff_treatment, :length=> 10}
     ]
 
     def generate_file id_or_invoice
@@ -94,20 +96,24 @@ module OpenChain; module CustomHandler
       end
     end
 
-    def generate_and_send id
+    def generate_and_send id, sync_record: nil
       generate_file(id) do |file|
-        ftp_file file, folder: ftp_folder
+        if sync_record
+          ftp_sync_file file, sync_record, ftp_connection_info
+        else
+          ftp_file file, ftp_connection_info
+        end
+        
       end
     end
 
-    def ftp_credentials 
-      connect_vfitrack_net nil
+    def ftp_connection_info
+      connect_vfitrack_net(ftp_folder)
     end
 
     def ftp_folder
       "to_ecs/fenix_invoices"
     end
-
 
     # This method should return a mapping of the fields utilized to send header level invoice data to a lambda, method name, or a constant object
     # lambdas will be called using instance_exec giving access to local methods and objects returned will be
@@ -143,7 +149,9 @@ module OpenChain; module CustomHandler
         # per file directory basis.  This avoids extra setup when we just want to pull a generic invoice into the system.
         :importer => {:name=>"GENERIC"},
         :reference_identifier => lambda {|i| i.commercial_invoice_lines.select {|l| !l.customer_reference.blank?}.first.try(:customer_reference)},
-        :customer_name => lambda {|i| i.importer.try(:name)}
+        :customer_name => lambda {|i| i.importer.try(:name)},
+        :scac => lambda {|i| i.master_bills_of_lading.blank? ? nil : i.master_bills_of_lading[0, 4] },
+        :master_bill => lambda {|i| i.master_bills_of_lading.blank? ? "Not Available" : i.master_bills_of_lading }
       }
     end
 
