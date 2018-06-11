@@ -178,4 +178,27 @@ describe CustomFile do
       expect(c.attached_file_name).to eq("___________________________________.jpg")
     end
   end
+
+  describe "purge" do
+    subject { described_class }
+
+    it "removes anything older than given date" do
+      custom_file = nil
+      Timecop.freeze(Time.zone.now - 1.second) { custom_file = CustomFile.create! }
+
+      subject.purge Time.zone.now
+
+      expect {custom_file.reload}.to raise_error ActiveRecord::RecordNotFound
+    end
+
+    it 'does not remove items newer than given date' do
+      custom_file = nil
+      now = Time.zone.now
+      Timecop.freeze(now + 1.second) { custom_file = CustomFile.create! }
+
+      subject.purge now
+
+      expect { custom_file.reload }.not_to raise_error
+    end
+  end
 end

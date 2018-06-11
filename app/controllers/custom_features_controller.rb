@@ -75,6 +75,13 @@ class CustomFeaturesController < ApplicationController
   LUMBER_ALLPORT_BILLING_FILE_PARSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser'
   LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
 
+  SEARCH_PARAMS = {
+    'filename' => {:field => 'attached_file_name', :label => 'Filename'},
+    'uploaded_by' => {:field => 'CONCAT(users.first_name, " ", users.last_name)', :label => 'Uploaded By'},
+    'uploaded_at' => {:field => 'custom_files.created_at', :label => 'Uploaded At'},
+    'start' => {:field => 'start_at', :label => 'Start'},
+    'finish' => {:field => 'finish_at', :label => 'Finish'}
+  }
   def set_page_title
     @page_title ||= 'Custom Feature'
   end
@@ -677,7 +684,15 @@ class CustomFeaturesController < ApplicationController
     def generic_index klass, class_name, mod_name, show_file_list = true
       action_secure(klass.can_view?(current_user),nil,{:verb=>"view",:module_name=>mod_name,:lock_check=>false}) {
         if show_file_list
-          @files = CustomFile.where(:file_type=>class_name).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+          @secured = CustomFile.where(file_type: class_name)
+          sp = SEARCH_PARAMS.clone
+          s = build_search(sp, 'filename', 'start', 'd')
+          s = s.joins("INNER JOIN users ON users.id = custom_files.uploaded_by_id")
+          if params[:f].blank?
+            s = s.order('custom_files.created_at DESC')
+          end
+          @files = s.paginate(:per_page=>20,:page=>params[:page])
+          @files
         end
       }
     end
@@ -704,5 +719,9 @@ class CustomFeaturesController < ApplicationController
         end
         redirect_to "/custom_features/#{custom_feature_path}"
       }
+    end
+
+    def secure
+      @secured
     end
 end

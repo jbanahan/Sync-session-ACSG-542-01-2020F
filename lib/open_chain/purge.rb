@@ -30,6 +30,7 @@ module OpenChain; class Purge
     ErrorLogEntry.delay.purge reference_date
     FtpSession.delay.purge reference_date
     SentEmail.delay.purge reference_date
+    CustomFile.delay.purge reference_date
     # Use "Standard" timeframes for the following
     Message.delay.purge_messages
     ReportResult.delay.purge

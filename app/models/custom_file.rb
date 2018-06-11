@@ -1,4 +1,4 @@
-# == Schema Information
+
 #
 # Table name: custom_files
 #
@@ -122,5 +122,11 @@ class CustomFile < ActiveRecord::Base
   end
   def sanitize
     Attachment.sanitize_filename self, :attached
+  end
+
+  def self.purge reference_date
+    CustomFile.where("created_at < ?", reference_date).find_each do |file|
+      file.destroy
+    end
   end
 end
