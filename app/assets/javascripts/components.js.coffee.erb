@@ -1022,8 +1022,8 @@
       urlPrefix: "@src"
       noChrome: "@"
       perPage: "="
-      canceller: "="
-      loading: "="
+      canceller: "=?"
+      loading: "=?"
     }
     transclude: true
     templateUrl: '<%=asset_path("search_result.html")%>'
@@ -1099,7 +1099,7 @@
               scope.errors.push "An error occurred while loading this search result. Please reload and try again."
 
         scope.loading = true
-        $http.get(url, {timeout: scope.canceller.cancel.promise}).then(successHandler,errorHandler)
+        $http.get(url, {timeout: scope.canceller && scope.canceller.cancel.promise}).then(successHandler,errorHandler)
 
       onSearchLoaded = (saved, scope) ->
         # We want to clear bulkSelections in this case since the user saved the setup (which will
