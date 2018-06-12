@@ -41,8 +41,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
     let (:tempfile) {
       tempfile = Tempfile.new ['temp', '.txt']
       tempfile.binmode 
-      # Add a quotation mark to make sure we're disabling the quote handling
-      tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
+      # Add a quotation mark to make sure we're disabling the quote handling, and send invalid UTF-8 data to make sure we're using 
+      # the correct encoding
+      tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |WP TRAIL TIGHT \" PANT      |0000010|000022.62|0309018| | | | | | | |     \n"
       tempfile.flush
       tempfile.rewind
       tempfile
@@ -61,7 +62,14 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', "file.txt").and_yield tempfile
       subject.parse custom_file, true
       # all we really care about is that an invoice was created, the rest is tested in the actual fenix handler
-      expect(CommercialInvoice.where(invoice_number: "0309018").first).to_not be_nil
+      inv = CommercialInvoice.where(invoice_number: "0309018").first
+      expect(inv).to_not be_nil
+
+      t = inv.commercial_invoice_lines.first.commercial_invoice_tariffs.first
+      # This is just how translating the non-breaking spaces above from Windows-1252 to UTF-8 breaks down
+      # It's more just an issue of how copy-paste from one document to another works.  In a real document
+      # this would work better and these would be spaces.
+      expect(t.tariff_description).to eq "WP TRAIL TIGHT \" PANTÂ Â Â Â Â "
     end
   end
 end
