@@ -16,7 +16,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     parser = self.new
     # Disable quoting (or set the char to the bell char which we'll never see in the file), 
     #they've disabled it themselves in the output now too
-    CSV.parse(data, col_sep: "|", quote_char: "\007") do |row|
+    CSV.parse(data, col_sep: "|", quote_char: "\007", encoding: "Windows-1252") do |row|
+      row = convert_to_utf8 row
       if "HDR" == row[0].to_s.upcase && rows.length > 0
         parser.process_and_send_invoice(rows)
         rows = []
@@ -255,5 +256,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     c
   end
 
+  def self.convert_to_utf8 row
+    row.map {|v| v.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "") }
+  end
 
 end; end; end; end

@@ -4,20 +4,17 @@ module OpenChain; module CustomHandler; module EddieBauer
   class EddieBauerFenixInvoiceHandler < OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler
 
     def prep_header_row row
-      row = convert_to_utf8(row)
       add_default_header_info row
     end
 
     def prep_line_row row
-      row = convert_to_utf8(row)
       add_default_header_info row
       add_default_line_level_info row
     end
 
     def csv_reader_options
-      # Disable quoting, using Windows-1252 since that's what the file is in.  Fenix also handles this
-      # fine, so it should be ok to pass through any 1252 only chars directly.
-      {col_sep: "|", quote_char: "\007", encoding: "Windows-1252"}
+      # Disable quoting
+      {col_sep: "|", quote_char: "\007"}
     end
 
     def has_header_line?
@@ -55,10 +52,6 @@ module OpenChain; module CustomHandler; module EddieBauer
         row << "" while row.length < 13
         row.each {|v| v.strip! if v}
         row
-      end
-
-      def convert_to_utf8 row
-        row.map {|v| v.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "") }
       end
   end
 end; end; end
