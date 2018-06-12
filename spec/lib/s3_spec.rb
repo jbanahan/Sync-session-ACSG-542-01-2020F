@@ -64,10 +64,10 @@ describe OpenChain::S3, s3: true do
   describe "bucket_exists?" do
     it "returns true if bucket exists" do
       # Just use a bucket that should never not exist..
-      expect(described_class.bucket_exists?(OpenChain::S3.integration_bucket_name)).to be_truthy
+      expect(described_class.bucket_exists?(OpenChain::S3.integration_bucket_name)).to eq true
     end
     it "returns false if bucket doesn't exist" do
-      expect(described_class.bucket_exists?("does-not-exist")).to be_falsey
+      expect(described_class.bucket_exists?("does-not-exist-#{Time.zone.now.to_i}")).to eq false
     end
   end
 
