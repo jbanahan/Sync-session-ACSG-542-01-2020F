@@ -16,7 +16,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
         sent_invoices << invoice
       end
 
-      subject.parse (file_contents + file_contents)
+      data = (file_contents + file_contents)
+      subject.parse data
+      # verify the parse is forcing the data encoding to Windows-1252
+      expect(data.encoding.name).to eq "Windows-1252"
       expect(sent_invoices.length).to eq 2
     end
   end
