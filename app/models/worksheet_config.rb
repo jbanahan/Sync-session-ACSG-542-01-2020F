@@ -29,18 +29,9 @@ class WorksheetConfig < ActiveRecord::Base
     p.data = data
     self.worksheet_config_mappings.each do |m|
       mf = ModelField.find_by_uid m.model_field_uid 
-      if mf.custom?
-        custom_data[mf] = p.value(m.row,m.column) if mf.can_edit? user
-      else
-        mf.process_import(obj,p.value(m.row,m.column), user)
-      end
+      mf.process_import(obj,p.value(m.row,m.column), user)
     end
     obj.save
-    custom_data.each do |mf,val|
-      cv = obj.get_custom_value_by_id(mf.custom_id)
-      cv.value = val
-      cv.save
-    end
   end
 end
 

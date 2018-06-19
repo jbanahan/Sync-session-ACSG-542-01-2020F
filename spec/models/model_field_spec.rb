@@ -1253,7 +1253,7 @@ describe ModelField do
       #set the value
       mf.process_import(comp,u.username,u)
       comp.save!
-      expect(comp.get_custom_value(cd).value).to eq u.id
+      expect(comp.custom_value(cd)).to eq u.id
 
       #retrieve the value
       expect(mf.process_export(comp,u)).to eq u.username
@@ -1274,7 +1274,7 @@ describe ModelField do
       expect(mf.label).to eq 'User (Name)'
 
       expect(mf).to be_read_only
-      comp.get_custom_value(cd).value = u.id
+      comp.update_custom_value! cd, u.id
       comp.save!
 
       #retrieve the value

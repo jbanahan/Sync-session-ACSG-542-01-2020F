@@ -53,10 +53,6 @@ module CustomFieldSupport
     cv
   end
 
-  def get_custom_value_by_label label
-    get_custom_value CustomDefinition.find_by_label(label)
-  end
-
   #caches custom values currently loaded into memory and locks the object
   #so no database checks will be run again
   def freeze_custom_values
@@ -91,10 +87,6 @@ module CustomFieldSupport
     cv = get_custom_value(cd)
     cv.set_value(cd, value)
     cv.save!
-  end
-
-  def get_custom_value_by_id(id)
-    get_custom_value CustomDefinition.find id
   end
 
   #when you inject a custom value, it will be the value returned by this instance's get_custom_value methods for the appropriate custom_definition for the life of the object, 

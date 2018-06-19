@@ -41,7 +41,14 @@ class ModelField
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
     @can_edit_lambda = o[:can_edit_lambda]
-    @custom_id = o[:custom_id]
+    if o[:custom_id]
+      @custom_id = o[:custom_id]
+      self.custom_definition
+    elsif o[:custom_definition]
+      @custom_id = o[:custom_definition].id
+      @custom_definition = o[:custom_definition]
+    end
+
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
     @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type].to_sym
@@ -59,7 +66,6 @@ class ModelField
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
-    self.custom_definition if @custom_id #load from cache if available
     @process_query_result_lambda = o[:process_query_result_lambda]
     @field_validator_rule = self.class.field_validator_rule uid
     @field_validator_rule = o[:field_validator_rule] ? o[:field_validator_rule] : @field_validator_rule
@@ -118,6 +124,8 @@ class ModelField
 
   def custom_definition
     return nil unless self.custom?
+    return @custom_definition if @custom_definition
+
     @custom_definition = @@custom_definition_cache[@uid] unless @custom_definition
     @custom_definition = CustomDefinition.find_by_id @custom_id unless @custom_definition
     @custom_definition
@@ -373,7 +381,7 @@ class ModelField
           if obj.is_a?(CustomValue)
             obj.value = d
           elsif self.custom?
-            obj.get_custom_value(@custom_definition).value = d
+            obj.find_and_set_custom_value(@custom_definition, d)
           else
             obj.send("#{@field_name}=".to_sym, d)
           end
@@ -412,7 +420,7 @@ class ModelField
       value = nil
       if !obj.nil?
         if @export_lambda.nil?
-          value = (self.custom? ? obj.get_custom_value(@custom_definition).value(@custom_definition) : obj.send(@field_name))
+          value = (self.custom? ? obj.custom_value(@custom_definition) : obj.send(@field_name))
         else
           value = @export_lambda.call(obj)
         end
@@ -504,7 +512,7 @@ class ModelField
     elsif(is_integer && custom_definition.is_address?)
       fields_to_add.push(*build_address_fields(custom_definition, core_module, index))
     else
-      fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+      fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_definition: custom_definition, label_override: "#{custom_definition.label}",
         qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
         definition: custom_definition.definition, default_label: "#{custom_definition.label}",
         cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid)
@@ -599,7 +607,7 @@ class ModelField
       h = MODEL_FIELDS[cm.class_name.to_sym]
       raise "No model fields configured for Core Module '#{cm.class_name}'." if h.nil?
       h.each do |k,v|
-        if !v.custom_id.nil?
+        if v.custom?
           h.delete k
           DISABLED_MODEL_FIELDS.delete v.uid
         end
@@ -770,20 +778,6 @@ class ModelField
   #get an array of model fields given core module
   def self.find_by_core_module cm
     find_by_module_type cm
-  end
-
-  def self.find_by_module_type_and_uid(type_symbol,uid_symbol)
-    find_by_module_type(type_symbol).each { |mf|
-      return mf if mf.uid == uid_symbol
-    }
-    return nil
-  end
-
-  def self.find_by_module_type_and_custom_id(type_symbol,id)
-    find_by_module_type(type_symbol).each {|mf|
-      return mf if mf.custom_id==id
-      }
-    return nil
   end
 
   def self.sort_by_label(mf_array, show_prefix = nil)

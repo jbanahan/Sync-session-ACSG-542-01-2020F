@@ -13,7 +13,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #name
     fields_to_add << ModelField.new(index, "#{uid_prefix}name", core_module, "#{uid_prefix}name", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Name)",
       qualified_field_name: "(SELECT addresses.name FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -36,7 +36,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #city
     fields_to_add << ModelField.new(index + 1, "#{uid_prefix}city", core_module, "#{uid_prefix}city", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (City)",
       qualified_field_name: "(SELECT addresses.city FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -59,7 +59,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #state
     fields_to_add << ModelField.new(index + 2, "#{uid_prefix}state", core_module, "#{uid_prefix}state", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (State)",
       qualified_field_name: "(SELECT addresses.state FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -82,7 +82,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #postal code
     fields_to_add << ModelField.new(index + 2, "#{uid_prefix}postal_code", core_module, "#{uid_prefix}postal_code", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Postal Code)",
       qualified_field_name: "(SELECT addresses.postal_code FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -105,7 +105,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #country iso code
     fields_to_add << ModelField.new(index + 3, "#{uid_prefix}iso_code", core_module, "#{uid_prefix}iso_code", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Country ISO)",
       qualified_field_name: "(SELECT countries.iso_code FROM addresses INNER JOIN countries ON addresses.country_id = countries.id WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -131,7 +131,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #add the street field, concatenating lines 1 -3
     fields_to_add << ModelField.new(index + 4, "#{uid_prefix}street", core_module, "#{uid_prefix}street", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Street)",
       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(addresses.line_1, ''), IFNULL(addresses.line_2, ''), IFNULL(addresses.line_3, '')) FROM addresses WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -155,7 +155,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
     })
 
     fields_to_add << ModelField.new(index + 5, "#{uid_prefix}full", core_module, "#{uid_prefix}full", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Full)",
       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(addresses.name, ''), '\n', IFNULL(addresses.line_1, ''), IFNULL(addresses.line_2, ''), IFNULL(addresses.line_3, ''),'\n', IFNULL(addresses.city, ''), IFNULL(addresses.state, ''), IFNULL(addresses.postal_code, ''),'\n',IFNULL(countries.iso_code,''))  FROM addresses LEFT OUTER JOIN countries ON countries.id = addresses.country_id WHERE addresses.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} and customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -181,7 +181,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
 
     #add the base field
     fld = custom_definition.model_field_uid.to_sym
-    fields_to_add << ModelField.new(index + 6,fld, core_module, fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+    fields_to_add << ModelField.new(index + 6,fld, core_module, fld,{custom_definition: custom_definition, label_override: "#{custom_definition.label}",
       qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
       definition: custom_definition.definition, default_label: "#{custom_definition.label} Unique ID", address_field: true, address_field_id: true, user_accessible: false,
       cdef_uid: (cdef_uid.blank? ? nil : cdef_uid)
@@ -194,23 +194,25 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
     fld = custom_definition.model_field_uid.to_sym
     uid_prefix = "*uf_#{custom_definition.id}_"
     fields_to_add << ModelField.new(index, "#{uid_prefix}username", core_module, "#{uid_prefix}username", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Username)",
       qualified_field_name: "(SELECT users.username FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
       import_lambda: lambda {|obj,data|
         user_id = nil
-        u = User.find_by_username data
-        user_id = u.id if u
-        obj.get_custom_value(custom_definition).value = user_id
+        if !data.blank?
+          u =User.where(username: data).first
+          user_id = u.try(:id)
+        end
+
+        obj.find_and_set_custom_value(custom_definition, user_id)
         return "#{custom_definition.label} set to #{u.nil? ? 'BLANK' : u.username}"
       },
       export_lambda: lambda {|obj|
         r = ""
-        cv = obj.get_custom_value(custom_definition)
-        user_id = cv.value
+        user_id = obj.custom_value(custom_definition)
         if user_id
-          u = User.find_by_id user_id
+          u = User.where(id: user_id).first
           r = u.username if u
         end
         return r
@@ -222,7 +224,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       cdef_uid: (custom_definition.cdef_uid.blank? ? nil : "#{custom_definition.cdef_uid}_username")
     })
     fields_to_add << ModelField.new(index, "#{uid_prefix}fullname", core_module, "#{uid_prefix}fullname", {
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "#{custom_definition.label} (Name)",
       qualified_field_name: "(SELECT CONCAT_WS(' ', IFNULL(first_name, ''), IFNULL(last_name, '')) FROM users WHERE users.id = (SELECT integer_value FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}'))",
       definition: custom_definition.definition,
@@ -231,10 +233,9 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       },
       export_lambda: lambda {|obj|
         r = ""
-        cv = obj.get_custom_value(custom_definition)
-        user_id = cv.value
+        user_id = obj.custom_value(custom_definition)
         if user_id
-          u = User.find_by_id user_id
+          u = User.where(id: user_id).first
           r = u.full_name if u
         end
         return r
@@ -247,7 +248,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
       restore_field: false,
       cdef_uid: (custom_definition.cdef_uid.blank? ? nil : "#{custom_definition.cdef_uid}_fullname")
     })
-    fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_id: custom_definition.id, label_override: "#{custom_definition.label}",
+    fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_definition: custom_definition, label_override: "#{custom_definition.label}",
       qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
       definition: custom_definition.definition, default_label: "#{custom_definition.label}",
       read_only: true,
@@ -275,7 +276,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
   def create_and_insert_product_custom_field custom_definition, core_module, index
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "Product - #{custom_definition.label.to_s}",
       qualified_field_name: "(SELECT #{custom_definition.data_column} FROM products INNER JOIN custom_values ON custom_values.customizable_id = products.id AND custom_values.customizable_type = 'Product' and custom_values.custom_definition_id = #{custom_definition.id} WHERE products.id = #{core_module.table_name}.product_id)",
       definition: custom_definition.definition,
@@ -307,7 +308,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
   def create_and_insert_variant_custom_field custom_definition, core_module, index
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
-      custom_id: custom_definition.id,
+      custom_definition: custom_definition,
       label_override: "Variant - #{custom_definition.label.to_s}",
       qualified_field_name: "(SELECT #{custom_definition.data_column} FROM variants INNER JOIN custom_values ON custom_values.customizable_id = variants.id AND custom_values.customizable_type = 'Variant' and custom_values.custom_definition_id = #{custom_definition.id} WHERE variants.id = #{core_module.table_name}.variant_id)",
       definition: custom_definition.definition,

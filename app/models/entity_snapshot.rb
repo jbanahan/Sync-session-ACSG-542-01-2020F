@@ -217,7 +217,7 @@ class EntitySnapshot < ActiveRecord::Base
         v = obj_hash['model_fields'][mf.uid.to_s]
         v = "" if v.nil?
         if mf.custom?
-          cv = CustomValue.new(:custom_definition=>CustomDefinition.find(mf.custom_id))
+          cv = CustomValue.new(custom_definition: mf.custom_definition)
           cv.value = v
           custom_values << cv
         else
@@ -347,7 +347,11 @@ class EntitySnapshot < ActiveRecord::Base
     # Diff here is an activerecord hash method which uses == to determine equality
     fields_changed = new_mf.diff(old_mf).keys
     fields_changed.each do |mf_uid|
-      r[mf_uid] = [old_mf[mf_uid],new_mf[mf_uid]]
+      # Don't show values as different if they're both blank .ie if one is nil and the other is "" don't log that as a change.
+      # This is because the diff screen itself skips over any field where they're both blank...so if we don't do this here,
+      # the screen sees there are fields in diff's model_fields_changed attribute and shows that the object changed, but
+      # then doesn't show any actual changes...so it's confusing to the user.
+      r[mf_uid] = [old_mf[mf_uid],new_mf[mf_uid]] unless old_mf[mf_uid].blank? && new_mf[mf_uid].blank?
     end
     r
   end

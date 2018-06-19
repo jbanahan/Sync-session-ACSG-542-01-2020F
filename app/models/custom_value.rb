@@ -53,15 +53,18 @@ class CustomValue < ActiveRecord::Base
   def self.batch_write! values, touch_parent = false, opts = {}
     opts = {skip_insert_nil_values: false}.merge opts
 
+    to_reload = Set.new
     CustomValue.transaction do
       inserts = []
       deletes = {}
       to_touch = []
+
       values.each do |cv|
         raise "All CustomValue objects must have a custom_definition." unless cv.custom_definition
         raise "All CustomValue objects must have a customizable that has an id." unless cv.customizable && cv.customizable.id
         cust_def_id = cv.custom_definition.id
         customizable_id = cv.customizable.id
+        to_reload << cv.customizable
         v = cv.value.nil? ? "null" : ActiveRecord::Base.sanitize(cv.value)
         deletes[cust_def_id] ||= []
         deletes[cust_def_id] << {id: customizable_id, type: cv.customizable.class.name}
@@ -88,6 +91,11 @@ class CustomValue < ActiveRecord::Base
         cm.touch_parents_changed_at c unless cm.nil?
       end
     end
+
+    # This reloads the custom values relation on the original objects, thus making sure the direct database updates we made above are reflected in
+    # the actual objects themselves - otherwise things like snaphots might miss them.
+    to_reload.each {|c| c.custom_values.reload }
+    nil
   end
 
   def self.cached_find_unique custom_definition_id, customizable

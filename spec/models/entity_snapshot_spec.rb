@@ -103,7 +103,19 @@ describe EntitySnapshot, :snapshot do
       diff = s2.diff s1
       expect(diff.model_fields_changed["ent_release_date"]).to eq [Time.zone.parse("2017-04-01 12:00"), Time.zone.parse("2017-04-01 16:00") ]
     end
+
+    it "does not identify blank string changed to/from nil as a diff" do
+      o = Factory(:order)
+      s1 = EntitySnapshot.create_from_entity o, user
+
+      o.customer_order_number = ""
+      s2 = EntitySnapshot.create_from_entity o, user
+
+      diff = s2.diff s1
+      expect(diff.model_fields_changed.size).to eq 0
+    end
   end
+  
   describe "restore" do
     before :each do 
       ModelField.reload
