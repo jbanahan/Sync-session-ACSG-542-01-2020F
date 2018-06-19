@@ -45,12 +45,12 @@ QRY
     end
   }
   # Finds (and creates if not found) the system group w/ the given system code
-  # Uses group_name only when creating the group
-  def self.use_system_group system_code, name: nil, create: true
-    group_name = name.nil? ? system_code : name
+  # Uses group name and description only when creating the group.
+  def self.use_system_group system_code, name: nil, create: true, description: nil
     g = Group.where(system_code: system_code)
     if create
-      g.first_or_create! name: (group_name.blank? ? system_code : group_name)
+      group_name = name.nil? ? system_code : name
+      g.first_or_create! name: (group_name.blank? ? system_code : group_name), description: description
     else
       g.where(system_code: system_code).first
     end

@@ -208,7 +208,7 @@ describe OpenChain::FenixParser do
     expect(ent.total_packages).to eq(@number_of_pieces.to_i)
     expect(ent.total_packages_uom).to eq("PKGS")
     expect(ent.ult_consignee_name).to eq(@consignee_name)
-
+    expect(ent.summary_line_count).to eq 25
 
     #commercial invoice header
     expect(ent.commercial_invoices.size).to eq(1)
@@ -821,13 +821,14 @@ describe OpenChain::FenixParser do
   context 'multi line' do
     before :each do
       @invoices = [
-        {:seq=>1,:inv_num => '12345'},
-        {:seq=>2,:inv_num => '5555555'}
+        {:seq=>1,:inv_num => '12345', :b3_line_number => 25},
+        {:seq=>2,:inv_num => '5555555', :b3_line_number => 26}
       ]
       @multi_line_lambda = lambda {
         data = ""
         @invoices.each_with_index do |inv, i|
           @invoice_number = inv[:inv_num]
+          @b3_line_number = inv[:b3_line_number]
           @invoice_sequence = inv[:seq]
           @detail_po = inv[:detail_po] if inv[:detail_po]
           @bill_of_lading = inv[:bol] if inv[:bol]
@@ -868,6 +869,9 @@ describe OpenChain::FenixParser do
       entries = Entry.where(:broker_reference=>@file_number)
       expect(entries.entries.size).to eq(1)
       expect(entries.first.commercial_invoices.size).to eq(2)
+      expect(entries.first.commercial_invoices.first.commercial_invoice_lines.first.customs_line_number).to eq 25
+      expect(entries.first.commercial_invoices.second.commercial_invoice_lines.first.customs_line_number).to eq 26
+      expect(entries.first.summary_line_count).to eq 26
     end
     it 'should save multiple invoice lines for the same invoice' do
       @invoices[1][:seq]=1 #make both invoices part of same sequence
@@ -878,6 +882,9 @@ describe OpenChain::FenixParser do
       expect(entries.first.commercial_invoices.first.commercial_invoice_lines.size).to eq(2)
       expect(entries.first.commercial_invoices.first.commercial_invoice_lines.first.line_number).to eq(1)
       expect(entries.first.commercial_invoices.first.commercial_invoice_lines.last.line_number).to eq(2)
+      expect(entries.first.commercial_invoices.first.commercial_invoice_lines.first.customs_line_number).to eq 25
+      expect(entries.first.commercial_invoices.first.commercial_invoice_lines.second.customs_line_number).to eq 26
+      expect(entries.first.summary_line_count).to eq 26
     end
     it 'should overwrite header PO if populated in description 2 field' do
       @invoices[0][:detail_po] = 'a'

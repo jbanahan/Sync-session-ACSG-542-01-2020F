@@ -48,11 +48,20 @@ describe Group do
   end
 
   describe "use_system_group" do
-    it "creates system group if not present" do
+    it "creates system group when not present" do
       g = Group.use_system_group "CODE", name: "Group"
       expect(g).to be_persisted
       expect(g.system_code).to eq "CODE"
       expect(g.name).to eq "Group"
+      expect(g.description).to eq nil
+    end
+
+    it "creates system group when not present and sets description" do
+      g = Group.use_system_group "CODE", name: "Group", description: "This is the group description."
+      expect(g).to be_persisted
+      expect(g.system_code).to eq "CODE"
+      expect(g.name).to eq "Group"
+      expect(g.description).to eq "This is the group description."
     end
 
     it "does not create group if told not to" do
@@ -60,10 +69,11 @@ describe Group do
     end
 
     it "uses existing group" do
-      g = Group.create! system_code: "CODE", name: "Name"
-      found = Group.use_system_group "CODE", name: "Another Name" 
+      g = Group.create! system_code: "CODE", name: "Name", description: "Old description"
+      found = Group.use_system_group "CODE", name: "Another Name" , description: "New description"
       expect(found).to eq g
       expect(found.name).to eq "Name"
+      expect(found.description).to eq "Old description"
     end
   end
 

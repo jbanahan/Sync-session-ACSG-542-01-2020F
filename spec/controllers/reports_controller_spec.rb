@@ -700,4 +700,122 @@ describe ReportsController do
 
   end
 
+  describe "Entry Year Over Year Report" do
+    let(:report_class) { OpenChain::Report::CustomerYearOverYearReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_customer_year_over_year_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users, master user" do
+        user.company.master = true
+        user.save!
+
+        us_company_1 = Factory(:company, name:'US-Z', alliance_customer_number:'12345', fenix_customer_number:'', importer:true)
+        us_company_2 = Factory(:company, name:'US-A', alliance_customer_number:'23456', importer:true)
+        ca_company_1 = Factory(:company, name:'CA-Z', alliance_customer_number:'', fenix_customer_number:'12345', importer:true)
+        ca_company_2 = Factory(:company, name:'CA-A', fenix_customer_number:'23456', importer:true)
+
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_customer_year_over_year_report
+        expect(response).to be_success
+
+        # Ensure importer instance variables, used for dropdowns, were loaded properly.
+        us_importers = subject.instance_variable_get(:@us_importers)
+        expect(us_importers.length).to eq 2
+        expect(us_importers[0].name).to eq('US-A')
+        expect(us_importers[1].name).to eq('US-Z')
+
+        ca_importers = subject.instance_variable_get(:@ca_importers)
+        expect(ca_importers.length).to eq 2
+        expect(ca_importers[0].name).to eq('CA-A')
+        expect(ca_importers[1].name).to eq('CA-Z')
+      end
+
+      it "renders for authorized users, typical user" do
+        us_company_1 = Factory(:company, name:'US-A', alliance_customer_number:'23456', fenix_customer_number:'', importer:true)
+
+        user.company.customer = true
+        user.company.linked_companies << us_company_1
+        user.save!
+
+        us_company_2 = Factory(:company, name:'US-Z', alliance_customer_number:'12345', fenix_customer_number:'', importer:true)
+        ca_company = Factory(:company, name:'CA-Z', alliance_customer_number:'', fenix_customer_number:'12345', importer:true)
+
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_customer_year_over_year_report
+        expect(response).to be_success
+
+        # Ensure importer instance variables, used for dropdowns, were loaded properly.
+        us_importers = subject.instance_variable_get(:@us_importers)
+        expect(us_importers.length).to eq 1
+        expect(us_importers[0].name).to eq('US-A')
+
+        expect(subject.instance_variable_get(:@ca_importers).length).to eq 0
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_customer_year_over_year_report, {}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for authorized users, US importer" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
+                                          :settings=>{range_field:'some_date', importer_ids:[5], year_1:'2015', year_2:'2017',
+                                                      include_cotton_fee:true, include_taxes:false, include_other_fees:false,
+                                                      mode_of_transport:['Sea']}, :friendly_settings=>[])
+        post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:['5'], importer_id_ca:['6'],
+                                          year_1:'2015', year_2: '2017', cotton_fee:'true', taxes:'false', other_fees:nil,
+                                          mode_of_transport:['Sea']}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "runs for authorized users, CA importer" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
+                                         :settings=>{range_field:'some_date', importer_ids:[6,7], year_1:'2015', year_2:'2017',
+                                                     include_cotton_fee:false, include_taxes:true, include_other_fees:true,
+                                                     mode_of_transport:['Sea']}, :friendly_settings=>[])
+        post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:['6','7'],
+                                          year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
+                                          mode_of_transport:['Sea']}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "fails if importer is not selected (US)" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:[], importer_id_ca:['6'],
+                                          year_1:'2015', year_2: '2017'}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("At least one importer must be selected.")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "fails if importer is not selected (CA)" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:nil,
+                                          year_1:'2015', year_2: '2017'}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("At least one importer must be selected.")
+        expect(flash[:notices]).to be_nil
+      end
+    end
+  end
+
 end

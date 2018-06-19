@@ -185,6 +185,7 @@
 #  split_shipment_date                    :datetime
 #  store_names                            :text
 #  sub_house_bills_of_lading              :text
+#  summary_line_count                     :integer
 #  summary_rejected                       :boolean
 #  tariff_request_date                    :datetime
 #  time_to_process                        :integer
@@ -293,13 +294,32 @@ class Entry < ActiveRecord::Base
     end
     self.reload
   end
-  # Return true if transport mode is 10 or 11
+
+  # Return true if transport mode is 10 or 11.  This is a US-specific method.
   def ocean?
     ['10','11'].include? self.transport_mode_code
   end
 
+  # Return true if transport mode is 40 or 41.  This is a US-specific method.
   def air?
     ['40', '41'].include? self.transport_mode_code
+  end
+
+  # Converts a descriptive mode label to an int array of codes, including codes for both the US and Canada (the mode
+  # codes for these countries do not overlap).  Unknown mode labels will return an empty array.  Case-insensitive.
+  def self.get_transport_mode_codes_us_ca mode_descriptor
+    transport_mode_codes = []
+    case mode_descriptor.to_s.upcase
+      when 'AIR'
+        transport_mode_codes = [40,41,1]
+      when 'SEA'
+        transport_mode_codes = [10,11,9]
+      when 'RAIL'
+        transport_mode_codes = [20,21,6]
+      when 'TRUCK'
+        transport_mode_codes = [30,31,2]
+    end
+    transport_mode_codes
   end
 
   def canadian?

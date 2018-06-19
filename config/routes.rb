@@ -732,6 +732,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_ascena_actual_vs_potential_first_sale_report" => "reports#run_ascena_actual_vs_potential_first_sale_report"
   get "/reports/show_ascena_vendor_scorecard_report" => "reports#show_ascena_vendor_scorecard_report"
   post "/reports/run_ascena_vendor_scorecard_report" => "reports#run_ascena_vendor_scorecard_report"
+  get "/reports/show_customer_year_over_year_report" => "reports#show_customer_year_over_year_report"
+  post "/reports/run_customer_year_over_year_report" => "reports#run_customer_year_over_year_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', :on => :member

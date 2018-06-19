@@ -526,6 +526,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.summary_rejected?).to eq false
       expect(entry.split_shipment?).to eq false
       expect(entry.split_release_option).to eq "1"
+      expect(entry.summary_line_count).to eq 2
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -731,6 +732,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # There's a couple different scenarios to check out in the second invoice
       ci = entry.commercial_invoices.second
       line = ci.commercial_invoice_lines.first
+      expect(line.customs_line_number).to eq 2
       expect(ci.master_bills_of_lading).to be_nil
       expect(ci.house_bills_of_lading).to be_nil
 

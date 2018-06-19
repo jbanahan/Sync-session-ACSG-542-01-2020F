@@ -597,6 +597,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         :total_invoiced_value, :total_non_dutiable_amount, :total_units, :total_cvd, :total_add, :other_fees, :broker_invoice_total
       ].each {|v| totals[v] = BigDecimal("0")}
 
+      max_line_number = 0
+
       entry.commercial_invoices.each do |ci|
         accumulations[:commercial_invoice_numbers] << ci.invoice_number
         totals[:total_invoiced_value] += ci.invoice_value_foreign unless ci.invoice_value_foreign.nil?
@@ -618,6 +620,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           totals[:total_cvd] += il.cvd_duty_amount unless il.cvd_duty_amount.nil?
           totals[:total_add] += il.add_duty_amount unless il.add_duty_amount.nil?
           totals[:other_fees] += il.other_fees unless il.other_fees.nil?
+          max_line_number = il.customs_line_number if il.customs_line_number > max_line_number
 
           il.commercial_invoice_tariffs.each do |cit|
             accumulations[:spis] << cit.spi_primary
@@ -715,6 +718,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           entry.other_fees = value if value.nonzero? || entry.other_fees.try(:nonzero?)
         end
       end
+
+      entry.summary_line_count = max_line_number
 
       entry.fda_pending_release_line_count = pending_fda_release_line_count entry
       nil

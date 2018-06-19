@@ -1,0 +1,59 @@
+<% content_for :javascript do -%>
+$(function() {
+  $('#country').change(function () {
+    if (this.value == 'CA') {
+      document.getElementById("company-ca").style.display = "block";
+      document.getElementById("company-us").style.display = "none";
+    } else {
+      document.getElementById("company-ca").style.display = "none";
+      document.getElementById("company-us").style.display = "block";
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Entry Year Over Year Report</h2><br>
+<%=form_tag reports_run_customer_year_over_year_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div style="line-height: 2.5">
+    <div>
+      <%=field_row "Country", select_tag(:country, options_for_select(['US', 'CA'].map {|m| [m, m]}, 'US'))%>
+    </div>
+    <div id="company-us">
+      <%=field_row "Importer(s)", select_tag(:importer_id_us, options_from_collection_for_select(@us_importers, 'id', :name_with_customer_number), multiple: true)%>
+    </div>
+    <div id="company-ca" style="display: none;">
+      <%=field_row "Importer(s)", select_tag(:importer_id_ca, options_from_collection_for_select(@ca_importers, 'id', :name_with_customer_number), multiple: true)%>
+    </div>
+    <div>
+      <%=field_row "Reference Date", select_tag(:range_field, options_for_select([['arrival_date', 'Arrival Date'], ['eta_date', 'ETA Date'], ['file_logged_date', 'File Logged Date'], ['fiscal_date', 'Fiscal Date'], ['release_date', 'Release Date']].map {|m| [m[1], m[0]]}))%>
+    </div>
+    <div>
+      <span>
+        <%if current_user.sys_admin?%>
+          <%=field_row "Years to Compare", select_tag(:year_1, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year - 1))%>
+        <%end%>
+      </span>
+      <span>and</span>
+      <span>
+        <%if current_user.sys_admin?%>
+          <%=field_row "", select_tag(:year_2, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year))%>
+        <%end%>
+      </span>
+    </div>
+    <div>
+      <%=field_row "Mode of Transport", select_tag(:mode_of_transport, options_for_select(['All Modes', 'Air', 'Sea', 'Rail', 'Truck'].map {|m| [m, m]}, 'All Modes'), multiple:true, size:5)%>
+    </div>
+  </div>
+  <div style="margin-top: 20px">
+    <b>Optional fields (check to include)</b><br>
+    <%=field_row "Cotton Fee", check_box_tag(:cotton_fee, 'true')%>
+    <%=field_row "Taxes", check_box_tag(:taxes, 'true')%>
+    <%=field_row "Other Fees", check_box_tag(:other_fees, 'true')%>
+  </div>
+</div>
+<%end%>
+</div>

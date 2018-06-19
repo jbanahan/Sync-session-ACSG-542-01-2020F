@@ -142,6 +142,7 @@ module OpenChain
       @total_entered_value = BigDecimal('0.00')
       @total_gst = BigDecimal('0.00')
       @total_duty = BigDecimal('0.00')
+      @max_line_number = 0
 
       if lines.first[0] == LVS_LINE_TYPE
         process_lvs_entry lines
@@ -166,7 +167,7 @@ module OpenChain
 
           process_header strip_b3_from_line(lines.first), entry
 
-          lines.each do |line| 
+          lines.each do |line|
 
             case line[0]
             when "SD"
@@ -192,6 +193,7 @@ module OpenChain
           @entry.total_duty = @total_duty
           @entry.total_gst = @total_gst
           @entry.total_duty_gst = @total_duty + @total_gst
+          @entry.summary_line_count = @max_line_number
           @entry.po_numbers = detail_pos unless detail_pos.blank?
           @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
           @entry.container_numbers = accumulated_string(:container_numbers)
@@ -431,6 +433,7 @@ module OpenChain
       inv_ln.unit_price = dec_val(line[39])
       inv_ln.customer_reference = line[103] unless line[103].blank?
       inv_ln.customs_line_number = int_val(line[92])
+      @max_line_number = inv_ln.customs_line_number if inv_ln.customs_line_number > @max_line_number
       inv_ln.subheader_number = int_val(line[93])
       accumulate_string :exp_country, exp[0]
       accumulate_string :exp_state, exp[1]

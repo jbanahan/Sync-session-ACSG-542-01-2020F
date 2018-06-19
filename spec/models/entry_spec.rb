@@ -493,4 +493,17 @@ describe Entry do
     end
   end
 
+  describe "get_transport_mode_codes_us_ca" do
+    it "converts mode descriptor to numeric codes" do
+      expect(Entry.get_transport_mode_codes_us_ca('Air')).to eq [40,41,1]
+      expect(Entry.get_transport_mode_codes_us_ca('Sea')).to eq [10,11,9]
+      expect(Entry.get_transport_mode_codes_us_ca('Rail')).to eq [20,21,6]
+      expect(Entry.get_transport_mode_codes_us_ca('Truck')).to eq [30,31,2]
+      expect(Entry.get_transport_mode_codes_us_ca('Dirigible')).to eq []
+      expect(Entry.get_transport_mode_codes_us_ca('air')).to eq [40,41,1]
+      expect(Entry.get_transport_mode_codes_us_ca('AIR')).to eq [40,41,1]
+      expect(Entry.get_transport_mode_codes_us_ca(nil)).to eq []
+    end
+  end
+
 end

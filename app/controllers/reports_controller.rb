@@ -813,16 +813,43 @@ class ReportsController < ApplicationController
     end
   end
 
-  private
-  def run_report name, klass, settings, friendly_settings
-    begin
-      ReportResult.run_report! name, current_user, klass, {:settings=>settings,:friendly_settings=>friendly_settings}
-      add_flash :notices, "Your report has been scheduled. You'll receive a system message when it finishes."
-    rescue
-      $!.log_me ["Running #{klass.to_s} report.","Params: #{params.to_s}"]
-      add_flash :errors, "There was an error running your report: #{$!.message}"
+  def show_customer_year_over_year_report
+    if OpenChain::Report::CustomerYearOverYearReport.permission? current_user
+      @us_importers = current_user.available_importers.where('length(alliance_customer_number)>0').order("name ASC")
+      @ca_importers = current_user.available_importers.where('length(fenix_customer_number)>0').order("name ASC")
+      render
+    else
+      error_redirect "You do not have permission to view this report"
     end
-    redirect_to report_results_path
   end
+
+  def run_customer_year_over_year_report
+    klass = OpenChain::Report::CustomerYearOverYearReport
+    if klass.permission? current_user
+      importer_ids = params[:country] == 'US' ? params[:importer_id_us].try(:map, &:to_i) : params[:importer_id_ca].try(:map, &:to_i)
+      if !importer_ids.nil? && importer_ids.length > 0
+        run_report "Entry Year Over Year Report", klass, {range_field: params[:range_field], importer_ids: importer_ids,
+                    year_1: params[:year_1], year_2: params[:year_2], include_cotton_fee: params[:cotton_fee] == 'true',
+                    include_taxes: params[:taxes] == 'true', include_other_fees: params[:other_fees] == 'true',
+                    mode_of_transport: params[:mode_of_transport]}, []
+      else
+        error_redirect "At least one importer must be selected."
+      end
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  private
+    def run_report name, klass, settings, friendly_settings
+      begin
+        ReportResult.run_report! name, current_user, klass, {:settings=>settings,:friendly_settings=>friendly_settings}
+        add_flash :notices, "Your report has been scheduled. You'll receive a system message when it finishes."
+      rescue
+        $!.log_me ["Running #{klass.to_s} report.","Params: #{params.to_s}"]
+        add_flash :errors, "There was an error running your report: #{$!.message}"
+      end
+      redirect_to report_results_path
+    end
 
 end
