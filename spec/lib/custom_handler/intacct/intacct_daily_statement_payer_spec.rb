@@ -188,6 +188,20 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
       expect(subject.pay_statement daily_statement).to be_blank
     end
 
+    it "skips broker invoices with duty paid direct lines on them" do
+      # The only time this situation comes up is when an invoice has been billed incorrectly w/ a Duty Paid Direct
+      # and then rebilled, so by adding a second broker invoice w/ a duty direct code (0099) we can show that it's
+      # being skipped and not counted when trying to query Intacct.
+      direct = BrokerInvoice.new(invoice_number: "INV_NUMA")
+      direct.broker_invoice_lines << BrokerInvoiceLine.new(charge_code: "0001", charge_amount: BigDecimal.new("1.50"))
+      direct.broker_invoice_lines << BrokerInvoiceLine.new(charge_code: "0099", charge_amount: BigDecimal.new("1.50"))
+      entry.broker_invoices << direct
+
+      expect_standard
+      expect(subject).to receive(:post_payment)
+      expect(subject.pay_statement daily_statement).to be_blank
+    end
+
     context "error handling" do
 
       it "validates statement amount vs invoice amount" do

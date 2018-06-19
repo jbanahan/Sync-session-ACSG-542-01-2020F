@@ -204,6 +204,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
       invoice_duty_amounts = []
 
       entry.broker_invoices.each do |bi|
+        # If the duty was marked paid direct, it means there's no duty owed.  This should only ever really happen
+        # if the broker invoice was incorrectly keyed and then corrected, as the presence of the entry/invoice on the
+        # broker statement means that VFI owes for the entry, ergo it is not Duty Paid Direct by the customer.
+        # We need to eliminate the broker invoices where this happens, since those won't be referenced in Intacct.
+        next if duty_paid_direct?(bi)
+
         # Duty Billing is the ONLY thing we care about here...so we ONLY want to pull invoices
         # that have duty lines billed on them.
         lines = bi.broker_invoice_lines.find_all {|l| duty_charge_code? l.charge_code }
@@ -284,6 +290,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
     def duty_charge_code? code
       ['0001'].include? code
+    end
+
+    def duty_paid_direct? invoice
+      invoice.broker_invoice_lines.find {|l| "0099" == l.charge_code }.present?
     end
 
     def retrieve_intacct_bill_data invoice_data
