@@ -68,10 +68,10 @@
                     <li class="list-group-item" ng-show='order[dictionary.fieldsByAttribute("label", "Docs Required",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]'>
                         Docs Completed
                         <span class='pull-right'>
-                           <div ng-show='order[dictionary.fieldsByAttribute("label", "Documents Completed By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]>0'>
-                               {{order[dictionary.fieldsByAttribute("label","Documents Completed At",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}
+                           <div ng-show='order[dictionary.field("*ord_docs_completed_by_username").uid]'>
+                               {{order[dictionary.field("*ord_docs_completed_date").uid]}}
                            </div>
-                           <div ng-show='!order[dictionary.fieldsByAttribute("label", "Documents Completed By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]>0'>
+                           <div ng-show='!order[dictionary.field("*ord_docs_completed_by_username").uid]'>
                                No
                            </div>
                         </span>

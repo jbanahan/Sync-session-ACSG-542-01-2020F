@@ -75,7 +75,6 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
 
   def skip_field? mf, user, hidden_field_override, read_only_override
     return false if hidden_field_override
-    return true if mf.user_field? #skip user fields
     return true if !mf.can_view?(user) #skip fields the user cannot view
     return true if (!read_only_override && (mf.read_only? || !mf.can_edit?(user)))
     return false #default behavior is to show field

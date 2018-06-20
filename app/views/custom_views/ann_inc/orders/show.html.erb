@@ -130,7 +130,9 @@
     <div class="col-md-6">
       <%= show_model_fields @order, [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del] %>
       <hr />
-      <%=show_custom_fields @order%>
+      <% cds = CustomDefinition.where(cdef_uid: ["ord_docs_completed_by", "ord_audit_complete_by", "ord_audit_initiated_by"]) %>
+      <% cd_array = cds.map { |cd| "*uf_#{cd.id}_fullname".to_sym } %>
+      <%=show_custom_fields @order, {skip_fields: cd_array}%>
     </div>
   </div>
   <div class="row">

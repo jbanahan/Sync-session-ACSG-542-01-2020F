@@ -115,10 +115,6 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
       allow(@model_field).to receive(:user_field?).and_return(false)
       @user = double(:user)
     end
-    it "should skip user fields" do
-      allow(@model_field).to receive(:user_field?).and_return(true)
-      expect(base_object.skip_field?(@model_field,@user,false,false)).to be_truthy
-    end
     it "should not skip if hidden override" do
       expect(base_object.skip_field?(@model_field,@user,true,false)).to be_falsey
     end
