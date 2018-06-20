@@ -161,7 +161,7 @@ module OpenChain
       private
 
         def dont_send_classification_countries
-          @dont_send_countries ||= Country.where("iso_code IN (?)",['US','CA']).pluck :id
+          @dont_send_countries ||= Country.where("iso_code IN (?)",['CA']).pluck :id
         end
 
         def cust_def label, data_type="string"

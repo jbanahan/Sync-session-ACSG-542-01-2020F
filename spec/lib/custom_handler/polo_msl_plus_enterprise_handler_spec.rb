@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(r[1][3]).to eq('1234567890'.hts_format)
       expect(r[2][3]).to eq('654321'.hts_format)
     end
-    it "should not send US, Canada" do
+    it "should not send Canada" do
       ['US','CA', 'IT'].each do |iso|
         Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code(iso),:product=>@p),:hts_1=>'654321')
       end
@@ -167,7 +167,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       expect(@p.classifications.count).to eq(4)
       @tmp = @h.generate_outbound_sync_file [@p]
       r = CSV.parse IO.read @tmp.path
-      expect(r.size).to eq(3)
+      expect(r.size).to eq(4)
       expect(r[1][1]).to eq(@c.country.iso_code)
     end
     it "should remove periods from Taiwan tariffs" do
