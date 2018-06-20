@@ -26,16 +26,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator do
 
   describe "compare" do
     let (:custom_definition) {
-      CustomDefinition.create! label: "Invoice Prepared", cdef_uid: "shp_invoice_prepared", module_type: "Shipment", data_type: "boolean"
+      CustomDefinition.create! label: "Invoice Prepared Date", cdef_uid: "shp_invoice_prepared_date", module_type: "Shipment", data_type: "datetime"
     }
 
     context "with invoice prepared date" do
       before :each do
-        shipment.update_custom_value! custom_definition, true
+        shipment.update_custom_value! custom_definition, Time.zone.now
       end
 
       it "generates and sends an invoice if the shipment is invoice prepared and does not have a sent date" do
-        shipment.update_custom_value! custom_definition, true
+        shipment.update_custom_value! custom_definition, Time.zone.now
 
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenerator).to receive(:generate_and_send).with(shipment)
 
@@ -68,13 +68,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator do
         expect(shipment.sync_records.length).to eq 0
       end
 
-      it "doesn't send if Invoice Prepared is false" do
-        shipment.update_custom_value! custom_definition, false
-        subject.compare nil, shipment.id, nil, nil, nil, nil, nil, nil
-        shipment.reload
-        expect(shipment.sync_records.length).to eq 0
-      end
-
       it "doesn't send if already synced" do
         shipment.sync_records.create! trading_partner: "CI LOAD", sent_at: Time.zone.now
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenerator).not_to receive(:generate_and_send)
@@ -87,6 +80,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCiLoadShipmentComparator do
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenerator).to receive(:generate_and_send)
 
         subject.compare nil, shipment.id, nil, nil, nil, nil, nil, nil
+      end
+
+      it "sends if invoice prepared date is updated in the snapshot" do
+        shipment.sync_records.create! trading_partner: "CI LOAD", sent_at: Time.zone.now
+        expect(subject).to receive(:any_root_value_changed?).with("ob", "op", "ov", "nb", "np", "nv", [custom_definition.model_field_uid]).and_return true
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenerator).to receive(:generate_and_send).with(shipment)
+
+        subject.compare nil, shipment.id, "ob", "op", "ov", "nb", "np", "nv"
       end
     end
   end

@@ -75,7 +75,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
 
     # As soon as we get an 856, we'll want to generate the CI load / Entry data for it...we also want to sent out a CI Load
     # for every single update to the shipment (since an 856 is sent for each container, there'll be muliple docs generated)
-    shipment.find_and_set_custom_value(cdefs[:shp_invoice_prepared], Time.zone.now)
+    shipment.find_and_set_custom_value(cdefs[:shp_invoice_prepared_date], Time.zone.now)
     shipment.find_and_set_custom_value(cdefs[:shp_entry_prepared_date], Time.zone.now)
 
     shipment
@@ -249,7 +249,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shp_entry_prepared_date, :shp_invoice_prepared, :prod_part_number])
+    @cdefs ||= self.class.prep_custom_definitions([:shpln_coo, :shp_entry_prepared_date, :shp_invoice_prepared_date, :prod_part_number])
 
     @cdefs
   end

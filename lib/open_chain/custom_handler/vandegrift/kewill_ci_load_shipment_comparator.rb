@@ -1,8 +1,10 @@
 require 'open_chain/entity_compare/shipment_comparator'
+require 'open_chain/entity_compare/comparator_helper'
 require 'open_chain/custom_handler/vandegrift/kewill_generic_shipment_ci_load_generator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShipmentComparator
   extend OpenChain::EntityCompare::ShipmentComparator
+  extend OpenChain::EntityCompare::ComparatorHelper
 
   def self.accept? snapshot
     accept = super
@@ -25,8 +27,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
       return unless shipment.canceled_date.nil?
 
       # Don't send any shipments until they're marked as being prepared
-      cd = CustomDefinition.where(cdef_uid: "shp_invoice_prepared").first
-      raise "'Invoice Prepared' custom field does not exist." unless cd
+      cd = CustomDefinition.where(cdef_uid: "shp_invoice_prepared_date").first
+      raise "'Invoice Prepared Date' custom field does not exist." unless cd
       return if cd.nil?
 
       return unless shipment.custom_value(cd)
@@ -35,7 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
         sr = shipment.sync_records.where(trading_partner: "CI LOAD").first_or_initialize
         # By checking for a sent_at rather than just the existence of a record we can use the screen
         # to resend (since it blanks sent_at)
-        if sr.sent_at.nil?
+        if send_xml?(shipment, sr, cd, old_bucket, old_path, old_version, new_bucket, new_path, new_version)
           invoice_generator(shipment.importer.alliance_customer_number).generate_and_send shipment
           sr.sent_at = Time.zone.now
           sr.confirmed_at = (sr.sent_at + 1.minute)
@@ -43,6 +45,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
         end
       end
     end
+  end
+
+  def self.send_xml? shipment, sr, custom_definition, old_bucket, old_path, old_version, new_bucket, new_path, new_version
+    # We want to send the xml if the Entry Invoiced Prepared Date was updated OR if the Sync Record's Sent At was blanked.
+    sr.sent_at.nil? || any_root_value_changed?(old_bucket, old_path, old_version, new_bucket, new_path, new_version, [custom_definition.model_field_uid])
   end
 
   def self.invoice_generator alliance_customer_number

@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       expect(line.custom_value(cdefs[:shpln_received_date])).to eq Date.new(2017,12,1)
 
       expect(shipment.custom_value(cdefs[:shp_entry_prepared_date])).not_to be_nil
-      expect(shipment.custom_value(cdefs[:shp_invoice_prepared])).not_to be_nil
+      expect(shipment.custom_value(cdefs[:shp_invoice_prepared_date])).not_to be_nil
       expect(shipment.entity_snapshots.length).to eq 1
       s = shipment.entity_snapshots.first
       expect(s.user).to eq User.integration
