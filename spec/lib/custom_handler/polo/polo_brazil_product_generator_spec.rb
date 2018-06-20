@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
   after :each do
-    File.delete @tmp if @tmp && File.exists?(@tmp)
+    @tmp.close! if @tmp  && !@tmp.closed?
   end
   describe "products_to_send" do
     before :all do
@@ -67,15 +67,22 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       CustomDefinition.scoped.destroy_all
       @custom_defs = nil
     end
+
+    def parse_csv tempfile
+      data = IO.read(tempfile.path)
+      CSV.parse(data, col_sep: "|")
+    end
+
+    let (:eu) { Factory(:country,:iso_code=>"IT") }
+
     before :each do
       # This example group takes a long time to run just due to the sheer number of custom values
       # created in here.
-      @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-      @t = Factory(:tariff_record,:hts_1=>"1234567890",:hts_2=>"0123456789",:hts_3=>"98765432")
-      ['US','IT','CA','TW'].each {|iso| Factory(:country,:iso_code=>iso)}
+      @t = Factory(:tariff_record, hts_1: "1234567890", hts_2: "0123456789", hts_3: "98765432", classification: Factory(:classification, country: eu))
+      
       @c = @t.classification
       @p = @c.product
-      allow(@h).to receive(:send_file)
+      allow(subject).to receive(:send_file)
     end
 
     it "should generate file with appropriate values" do
@@ -103,8 +110,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:cites], true
       @p.update_custom_value! custom_defs[:fish_wildlife], false
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       expect(r.length).to eq 2
 
       row = r[0]
@@ -132,81 +139,48 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       # Fabric Fields are all nil
       (9..53).each {|x| expect(row[x]).to be_nil}
       expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "true", "false"]
+
+      sr = @p.sync_records.first
+      expect(sr.trading_partner).to eq("Brazil")
+      expect(sr.sent_at).to be > 3.seconds.ago
+      expect(sr.confirmed_at).not_to be_nil
     end
 
     it "should handle multiple products" do
       tr2 = Factory(:tariff_record,:hts_1=>'123456')
-      @tmp = @h.generate_outbound_sync_file [@p,tr2.product]
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file [@p,tr2.product]
+      r = parse_csv(@tmp)
       expect(r.size).to eq(3)
       expect(r[1][0]).to eq(@p.unique_identifier)
       expect(r[2][0]).to eq(tr2.product.unique_identifier)
     end
-    it "should handle multple countries" do
-      tr2 = Factory(:tariff_record,:classification=>Factory(:classification,:product=>@p),:hts_1=>'654321')
-      @tmp = @h.generate_outbound_sync_file [@p]
-      r = CSV.parse IO.read @tmp.path
-      expect(r.size).to eq(3)
-      expect(r[1][0]).to eq(@p.unique_identifier)
-      expect(r[2][0]).to eq(@p.unique_identifier)
-      expect(r[1][1]).to eq(@c.country.iso_code)
-      expect(r[2][1]).to eq(tr2.classification.country.iso_code)
-      expect(r[1][3]).to eq('1234567890'.hts_format)
-      expect(r[2][3]).to eq('654321'.hts_format)
-    end
-    it "should not send US, Canada" do
-      ['US','CA', 'IT'].each do |iso|
-        Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code(iso),:product=>@p),:hts_1=>'654321')
-      end
+
+    it "should not send tariffs other than IT" do
+      Factory(:tariff_record,:classification=>Factory(:classification,:country=>Factory(:country, iso_code: "US"),:product=>@p),:hts_1=>'654321')
       @p.reload
-      expect(@p.classifications.count).to eq(4)
-      @tmp = @h.generate_outbound_sync_file [@p]
-      r = CSV.parse IO.read @tmp.path
-      expect(r.size).to eq(3)
+      expect(@p.classifications.count).to eq(2)
+      @tmp = subject.generate_outbound_sync_file [@p]
+      r = parse_csv(@tmp)
+      expect(r.size).to eq(2)
       expect(r[1][1]).to eq(@c.country.iso_code)
     end
-    it "should remove periods from Taiwan tariffs" do
-      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code('TW')),:hts_1=>'65432101')
-      @tmp = @h.generate_outbound_sync_file [tr.product]
-      r = CSV.parse IO.read @tmp.path
-      expect(r.size).to eq(2)
-      expect(r[1][1]).to eq('TW')
-      expect(r[1][3]).to eq('65432101')
-    end
-    it "should set MP1 flag for Taiwan tariff with flag set" do
-      Factory(:official_tariff,:country=>Country.find_by_iso_code('TW'),:hts_code=>'65432101',:import_regulations=>"ABC MP1 DEF")
-      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>Country.find_by_iso_code('TW')),:hts_1=>'65432101')
-      @tmp = @h.generate_outbound_sync_file [tr.product]
-      r = CSV.parse IO.read @tmp.path
-      expect(r.size).to eq(2)
-      expect(r[1][1]).to eq('TW')
-      expect(r[1][2]).to eq('true')
-      expect(r[1][3]).to eq('65432101')
-    end
-    it "should create new sync_records" do
-      @tmp = @h.generate_outbound_sync_file [@p]
-      @p.reload
-      expect(@p.sync_records.size).to eq(1)
-      sr = @p.sync_records.first
-      expect(sr.trading_partner).to eq("MSLE")
-      expect(sr.sent_at).to be > 3.seconds.ago
-      expect(sr.confirmed_at).to be_nil
-    end
+
     it "should update sent_at time for existing sync_records" do
-      @p.sync_records.create!(:trading_partner=>"MSLE",:sent_at=>1.day.ago)
-      @tmp = @h.generate_outbound_sync_file [@p]
+      @p.sync_records.create!(:trading_partner=>"Brazil",:sent_at=>1.day.ago)
+      @tmp = subject.generate_outbound_sync_file [@p]
       @p.reload
       expect(@p.sync_records.size).to eq(1)
       sr = @p.sync_records.first
-      expect(sr.trading_partner).to eq("MSLE")
+      expect(sr.trading_partner).to eq("Brazil")
       expect(sr.sent_at).to be > 3.seconds.ago
-      expect(sr.confirmed_at).to be_nil
+      expect(sr.confirmed_at).not_to be_nil
     end
+
     it 'should send file to ftp folder' do
       override_time = DateTime.new(2010,1,2,3,4,5)
       @tmp = Tempfile.new('x')
-      expect(@h).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
-      @h.send_and_delete_sync_file @tmp, override_time
+      expect(subject).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
+      subject.send_and_delete_sync_file @tmp, override_time
       expect(File.exists?(@tmp.path)).to be_falsey
       @tmp = nil
     end
@@ -215,8 +189,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       custom_defs = @custom_defs
       @p.update_custom_value! custom_defs[:fiber_content], "1\r\n2\n3"
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
 
       expect(r[1][55]).to eq "1 2 3"
     end
@@ -225,8 +199,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       t2 = Factory(:tariff_record, hts_1: "987654321", classification: @c, line_number: 2)
       @t.update_attributes! line_number: 3
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       expect(r[1][3]).to eq t2.hts_1.hts_format
     end
 
@@ -244,8 +218,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15.123
 
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       row = r[1]
       expect(row[9]).to eq "Fabric Type 1"
       expect(row[10]).to eq "Fabric 1"
@@ -261,8 +235,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
 
@@ -274,8 +248,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
 
@@ -287,8 +261,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
 
@@ -300,8 +274,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_type_1], "Fabric Type 1"
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
 
@@ -312,29 +286,15 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.update_custom_value! custom_defs[:fabric_percent_15], 15
       @p.update_custom_value! custom_defs[:msl_fiber_failure], true
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
       (9..53).each {|x| expect(r[1][x]).to be_nil}
     end
 
     it "sends a row with blank tariff information if no tariff records associated w/ classification " do
       @t.destroy
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
-
-      # Verify blanks in the tariff data are present
-      expect(r[1][0]).to eq @p.unique_identifier
-      expect(r[1][2]).to be_blank
-      expect(r[1][3]).to be_blank
-      expect(r[1][4]).to be_blank
-      expect(r[1][5]).to be_blank
-    end
-
-    it "sends a row with blank tariff information if no tariff records associated w/ classification for taiwan" do
-      @t.destroy
-      @c.update_attributes! country: Country.where(iso_code: "TW").first
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
 
       # Verify blanks in the tariff data are present
       expect(r[1][0]).to eq @p.unique_identifier
@@ -347,25 +307,28 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     it "sends a row with blank country information if no classifications are present" do
       @c.destroy
 
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      @tmp = subject.generate_outbound_sync_file Product.where("1=1")
+      r = parse_csv(@tmp)
 
-      # Verify blanks in the tariff data are present, and country is defaulted to CN
+      # Verify blanks in the tariff data are present, and country is defaulted to IT
       expect(r[1][0]).to eq @p.unique_identifier
-      expect(r[1][1]).to eq "CN"
+      expect(r[1][1]).to eq "IT"
       expect(r[1][2]).to be_blank
       expect(r[1][3]).to be_blank
       expect(r[1][4]).to be_blank
       expect(r[1][5]).to be_blank
     end
   end
+
   describe "send_file" do
+  
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
       expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_RL_Brazil',:remote_file_name=>fn})
       OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator.new.send_file(@tmp, fn)
     end
+  
     it 'should send file in qa_mode' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
@@ -375,6 +338,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
   end
 
   describe "send_and_delete_ack_file_from_s3" do
+  
     before :each do
       @contents = "File Contents"
       @tempfile = Tempfile.new ['file', '.txt']
