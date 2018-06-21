@@ -153,7 +153,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       c.container_number = container.container_number
       c.seal_number = container.seal_number
       c.description = container.goods_description unless container.goods_description.blank?
-      c.size = container.container_size
 
       totals = shipment_lines_totals(container)
 
@@ -164,7 +163,70 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
         c.pieces_uom = "CTNS"
       end
 
+      size_data = calculate_container_size_and_type(container)
+      c.size = size_data[:size]
+
+      # High Cube should take priority over the actual type of container (reefer, etc)
+      if size_data[:high_cube]
+        c.container_type = "HQ"
+      else
+        c.container_type = size_data[:type]
+      end
+
       c
+    end
+
+    def calculate_container_size_and_type container
+      # Assume ISO codes and calculate size (20, 40, 45, etc) based on the size code
+      # See https://en.wikipedia.org/wiki/ISO_6346#Size_and_Type_Codes for code explanations
+      size = container.container_size.to_s.upcase
+
+      # The first char of the container code should be its length
+      container_size = case size[0]
+        when "1"
+          "10"
+        when "2"
+          "20"
+        when "3"
+          "30"
+        when "4"
+          "40"
+        when "B"
+          "24"
+        when "C"
+          "24.5"
+        when "G"
+          "41"
+        when "H"
+          "43"
+        when "L"
+          "45"
+        when "M"
+          "48"
+        when "N"
+          "49"
+        else
+          nil
+        end
+
+      # The second character is the container's height, we don't care about any heights EXCEPT
+      # when the height is 9'6" (which is a High Cube) and is generally notated as such.
+      # In Kewill, we send "HQ" as the container type to denote a High Cube container
+      high_cube = ["5", "6", "E", "F"].include?(size[1])
+
+      # The 3rd and 4th chars denote the the type of container (reefer, open top, etc)
+      container_type = case size[2]
+        when "R"
+          "RE" # ISO Decription = Integral Reefer -> Kewill = Reefer
+        when "P"
+          "FR" # ISO Description = Flat or Bolster -> Kewill = Flat Rack
+        when "U"
+          "OT" # ISO Description = Open Top -> Kewill = Open Top
+        else 
+          nil
+        end
+
+      {size: container_size, high_cube: high_cube, type: container_type}
     end
 
     def customs_ship_mode shipment

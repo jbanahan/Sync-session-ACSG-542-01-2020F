@@ -15,9 +15,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
     id = CiLoadEdiIdentifier.new
     scac, bill_number = chop_bill(shipments.first.house_bill_of_lading)
     id.master_bill = bill_number
+    id.scac = scac
 
     entry.edi_identifier = id
-    entry.scac = scac
 
     entry
   end

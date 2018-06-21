@@ -63,7 +63,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       # This is midnight UTC, so the actual date should roll back a day, since it should be using the date in Eastern TZ
       s.update_custom_value! cdefs[:shp_entry_prepared_date], "2018-06-01 00:00"
 
-      container = s.containers.create! container_number: "CONTAINER", seal_number: "SEAL", container_size: "20FT"
+      # Make a high-cube so we're checking that it's set into the correct container type field
+      container = s.containers.create! container_number: "CONTAINER", seal_number: "SEAL", container_size: "26GP"
 
       shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id
       shipment_line_1.linked_order_line_id = order.order_lines.first.id
@@ -111,7 +112,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       c = d.containers.first
       expect(c.container_number).to eq "CONTAINER"
       expect(c.seal_number).to eq "SEAL"
-      expect(c.size).to eq "20FT"
+      expect(c.size).to eq "20"
+      expect(c.container_type).to eq "HQ"
       expect(c.pieces).to eq 70
       expect(c.pieces_uom).to eq "CTNS"
       expect(c.description).to eq "GOODS"
@@ -251,6 +253,39 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
       line = d.invoices.first.invoice_lines.first
       expect(line.country_of_origin).to eq "CN"
+    end
+  end
+
+  # This is kinda cheating...testing a protected method, but I'd rather not run
+  # this through the full load for each little check for is code
+  describe "calculate_container_size_and_type" do
+    [["1", "10"], ["2", "20"], ["3", "30"], ["4", "40"], ["B", "24"], ["C", "24.5"], ["G", "41"], ["H", "43"], ["L", "45"], ["M", "48"], ["N", "49"]].each do |params|
+      it "identifies #{params[1]} foot containers" do
+        c = Container.new container_size: params[0]
+        expect(subject.send(:calculate_container_size_and_type, c)[:size]).to eq params[1]
+      end
+    end
+
+    ["15", "16", "1E", "1F"].each do |height|
+      it "identifies #{height[1]} as high cube" do
+        c = Container.new container_size: height
+        expect(subject.send(:calculate_container_size_and_type, c)[:high_cube]).to eq true
+      end
+    end
+
+    [["00R", "RE", "Reefer"], ["00P", "FR", "Flat Rack"], ["00U", "OT", "Open Top"]].each do |container_type|
+      it "identifies #{container_type[0][2]} as #{container_type[2]} container" do
+        c = Container.new container_size: container_type[0]
+        expect(subject.send(:calculate_container_size_and_type, c)[:type]).to eq container_type[1]
+      end
+    end
+
+    it "returns nils for bad sizes" do
+      expect(subject.send(:calculate_container_size_and_type, Container.new)).to eq({size: nil, high_cube: false, type: nil})
+    end
+
+    it "returns full hash" do
+      expect(subject.send(:calculate_container_size_and_type, Container.new(container_size: "25R0"))).to eq({size: "20", high_cube: true, type: "RE"})
     end
   end
 end

@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       }
 
       let (:bill_of_lading) {
-        described_class::CiLoadBillsOfLading.new "CARR1234567890", "HBOL9876543210", "SUBH5678901234", "SSUB5432109876", BigDecimal(10), "BUOM"
+        described_class::CiLoadBillsOfLading.new "SCAC1234567890", "HBOL9876543210", "SUBH5678901234", "SSUB5432109876", BigDecimal(10), "BUOM"
       }
 
       let (:dates) {
@@ -50,7 +50,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         e.ultimate_consignee_code = "ULTCONS"
         e.country_of_origin = "OR"
         e.country_of_export = "EX"
-        e.scac = "SCAC"
 
         e.dates = dates
         e.containers = [container]
@@ -72,6 +71,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "vesselAirlineName").to eq "VESSEL"
         expect(s.text "voyageFlightNo").to eq "VOYAGE"
         expect(s.text "scac").to eq "SCAC"
+        expect(s.text "carrier").to eq "CARR"
         expect(s.text "mot").to eq "10"
         expect(s.text "portLading").to eq "LPORT"
         expect(s.text "portDist").to eq "PORT"
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiShipmentIdList/EdiShipmentId/subBill").to eq "5678901234"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/subSubBill").to eq "5432109876"
 
-        expect(s.text "EdiShipmentIdList/EdiShipmentId/scac").to eq "CARR"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/scac").to eq "SCAC"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/scacHouse").to eq "HBOL"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/masterBillAddl").to eq "1234567890"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/houseBillAddl").to eq "9876543210"
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiContainersList/EdiContainers/sealNo").to eq "SEAL_NO"
         expect(s.text "EdiContainersList/EdiContainers/custNo").to eq "CUST"
         expect(s.text "EdiContainersList/EdiContainers/contSize").to eq "20FT"
-        expect(s.text "EdiContainersList/EdiContainers/descr").to eq "DESC"
+        expect(s.text "EdiContainersList/EdiContainers/descContent1").to eq "DESC"
         expect(s.text "EdiContainersList/EdiContainers/pieces").to eq "30"
         expect(s.text "EdiContainersList/EdiContainers/uom").to eq "CUOM"
         expect(s.text "EdiContainersList/EdiContainers/weight").to eq "30"

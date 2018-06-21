@@ -18,8 +18,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   # The included here is done so that every generator instance that includes this module can have the structs below
   # namespaced to their own class
   included do
-    CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, :customs_ship_mode, :lading_port, :unlading_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :scac, :consignee_code, :ultimate_consignee_code, :country_of_origin, :country_of_export)
-    CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill)
+    CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, :customs_ship_mode, :lading_port, :unlading_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code, :ultimate_consignee_code, :country_of_origin, :country_of_export)
+    CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :scac)
     # code is the symbol matching to the key above in the CI_LOAD_DATE_CODES constant
     CiLoadEntryDate ||= Struct.new(:code, :date)
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
@@ -87,7 +87,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "custRef", g.string(entry.customer_reference, 35, pad_string: false))
     add_element(parent, "vesselAirlineName", g.string(entry.vessel, 20, pad_string: false))
     add_element(parent, "voyageFlightNo", g.string(entry.voyage, 10, pad_string: false))
-    add_element(parent, "scac", g.string(entry.scac, 4, pad_string: false)) unless entry.scac.blank?
+    # This is just some weirdness so that Kewill doesn't generate a secondary scac-less master bill record
+    add_element(parent, "scac", g.string(edi_identifier.scac, 4, pad_string:false)) unless edi_identifier.scac.blank?
     add_element(parent, "carrier", g.string(entry.carrier, 4, pad_string: false))
     add_element(parent, "mot", g.number(entry.customs_ship_mode, 2, decimal_places: 0, strip_decimals: true, pad_string: false))
     add_element(parent, "portLading", g.string(entry.lading_port, 5, pad_string: false))
@@ -176,7 +177,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       # Use the first bill of lading and generate an identifier from it..
       bill_of_lading = bills.first
       identifier = CiLoadEdiIdentifier.new
-      identifier.master_bill = chop_bill(bill_of_lading.master_bill.to_s.strip)[1] if !bill_of_lading.master_bill.blank?
+      if !bill_of_lading.master_bill.blank?
+        scac, bol = chop_bill(bill_of_lading.master_bill.to_s.strip)
+        identifier.scac = scac
+        identifier.master_bill = bol
+      end
+
       identifier.house_bill = chop_bill(bill_of_lading.house_bill.to_s.strip)[1] if !bill_of_lading.house_bill.blank?
       identifier.sub_bill = chop_bill(bill_of_lading.sub_bill.to_s.strip)[1] if !bill_of_lading.sub_bill.blank?
       identifier.sub_sub_bill = chop_bill(bill_of_lading.sub_sub_bill.to_s.strip)[1] if !bill_of_lading.sub_sub_bill.blank?
@@ -211,7 +217,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(c, "sealNo", g.string(container.seal_number, 15, pad_string: false))
     add_element(c, "custNo", g.string(entry.customer, 10, pad_string: false))
     add_element(c, "contSize", g.string(container.size, 7, pad_string: false))
-    add_element(c, "descr", g.string(container.description, 40, pad_string: false))
+    add_element(c, "descContent1", g.string(container.description, 40, pad_string: false))
     add_element(c, "containerType", g.string(container.container_type, 5, pad_string: false))
     # Pieces and UOM must both be present
     if container.pieces.to_i > 0
