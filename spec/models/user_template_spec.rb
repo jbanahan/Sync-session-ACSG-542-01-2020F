@@ -59,7 +59,10 @@ describe UserTemplate do
     it "should delay send notification invites" do
       ut = UserTemplate.new(template_json:'{}')
       allow(User).to receive(:delay).and_return(User)
-      expect(User).to receive(:send_invite_emails).with(an_instance_of(Fixnum))
+      expect(User).to receive(:send_invite_emails) do |user_id|
+        expect(user_id).to be_a(Numeric)
+      end
+
       u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',
         true) # <-- this last attribute is what we're testing
     end

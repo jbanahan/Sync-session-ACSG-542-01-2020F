@@ -434,7 +434,7 @@ describe FtpSender do
     describe "connect" do
       it "should use Net::SFTP to connect to a server and yield the given block" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
 
         test = nil
 
@@ -449,7 +449,7 @@ describe FtpSender do
 
       it "should allow a different port to be specified" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"], port: 1234).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).with(@server, @username, hash_including(port: 1234)).and_yield @ftp
 
         test = nil
 

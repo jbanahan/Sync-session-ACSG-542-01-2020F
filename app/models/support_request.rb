@@ -50,7 +50,7 @@ class SupportRequest < ActiveRecord::Base
     if defined?(@@config)
       return @@config
     else
-      if File.exists?("config/support_request.yml")
+      if File.exist?("config/support_request.yml")
         config = YAML.load_file("config/support_request.yml")
         if config && config.keys.size > 0
           @@config = config

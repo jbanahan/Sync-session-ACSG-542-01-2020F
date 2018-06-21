@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   after :each do
-    File.delete @tmp if @tmp && File.exists?(@tmp)
+    File.delete @tmp if @tmp && File.exist?(@tmp)
   end
   describe "products_to_send" do
     before :all do
@@ -212,7 +212,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = Tempfile.new('x')
       expect(@h).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
       @h.send_and_delete_sync_file @tmp, override_time
-      expect(File.exists?(@tmp.path)).to be_falsey
+      expect(File.exist?(@tmp.path)).to be_falsey
       @tmp = nil
     end
 

@@ -5,6 +5,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     shp_revision: {label: "Revision", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_revision"},
     shp_invoice_prepared_date: {label: "Invoice Prepared Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_invoice_prepared_date"},
     shp_entry_prepared_date: {label: "Entry Prepared Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_entry_pepared"}, 
+    shp_delivery_date: {label: "Delivery Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_delivery_date"},
     shpln_priority: {label: "Priority", data_type: :string, module_type: "ShipmentLine", cdef_uid: "shpln_priority"},
     shpln_po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_po"},
     shpln_sku: {label:'SKU',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_sku"},

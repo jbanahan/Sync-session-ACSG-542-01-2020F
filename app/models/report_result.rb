@@ -147,13 +147,13 @@ class ReportResult < ActiveRecord::Base
   def file_cleanup local_file
     return unless local_file
 
-    # There appears to be a bug with closing a File object and then calling File.exists?
+    # There appears to be a bug with closing a File object and then calling File.exist?
     # (currently raising IOError: closed stream - doesn't on different ruby versions (.ie jruby))
     # So just work around it.
     if local_file.is_a? Tempfile
       local_file.close!
     else
-      if File.exists?(local_file)
+      if File.exist?(local_file)
         local_file.close if local_file.respond_to?(:close) && !local_file.closed?
         File.delete(local_file)
       end

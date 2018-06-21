@@ -346,9 +346,9 @@ describe ReportResult do
       begin
         ReportResult.new.file_cleanup f
         expect(f.closed?).to be_truthy
-        expect(File.exists?(f.path)).to be_falsey
+        expect(File.exist?(f.path)).to be_falsey
       ensure
-        File.delete(f) if File.exists?(f.path)
+        File.delete(f) if File.exist?(f.path)
       end
     end
 
@@ -356,9 +356,9 @@ describe ReportResult do
       f = File.new "tmp/file", "w"
       begin
         ReportResult.new.file_cleanup f.path
-        expect(File.exists?(f.path)).to be_falsey
+        expect(File.exist?(f.path)).to be_falsey
       ensure
-        File.delete(f) if File.exists?(f.path)
+        File.delete(f) if File.exist?(f.path)
       end
     end
 

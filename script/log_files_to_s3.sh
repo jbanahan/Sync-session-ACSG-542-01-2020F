@@ -41,6 +41,6 @@ do
   FULL_PATH=`readlink -f $1`
   FILE_NAME=`basename $1`
   PWD=`dirname $FULL_PATH`
-  aws s3 cp $FULL_PATH s3://vfi-archived-logs/$HOSTNAME/$DATE$PWD/$FILE_NAME || send_email "S3 upload failed."
+  aws s3 cp $FULL_PATH s3://vfi-archived-logs/$DATE/$HOSTNAME$PWD/$FILE_NAME || send_email "S3 upload failed."
   shift
 done

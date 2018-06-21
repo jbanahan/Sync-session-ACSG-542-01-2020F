@@ -102,7 +102,7 @@ describe OpenChain::SftpMonthlyArchiver do
       # The following line is needed to instantiate the archived attachment
       archived_attachment
       expect(subject).to receive(:ftp_file) do |file, opts|
-        expect(File.exists?(file.path)).to be_truthy
+        expect(File.exist?(file.path)).to be_truthy
 
         Zip::File.open(file.path) do |zip_file|
           expect(zip_file.find_entry(archived_attachment.output_path)).to be_present

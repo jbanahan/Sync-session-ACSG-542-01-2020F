@@ -71,7 +71,10 @@ class MasterSetupsController < ApplicationController
         old_version = m.target_version
         m.update_attributes(:target_version=>params[:name])
         add_flash :notices, "Upgrade to version #{params[:name]} initiated."
-        OpenChain::SlackClient.new.send_message('it-dev',"#{current_user.username} has initiatied upgrade of `#{m.system_code}` from `#{old_version}` to `#{m.target_version}`.")
+        # We don't care about this in dev..
+        if !Rails.env.development?
+          OpenChain::SlackClient.new.send_message('it-dev',"#{current_user.username} has initiatied upgrade of `#{m.system_code}` from `#{old_version}` to `#{m.target_version}`.")
+        end
       end
       redirect_to edit_master_setup_path MasterSetup.get 
     }

@@ -64,6 +64,6 @@ class InstanceInformation < ActiveRecord::Base
 
   def self.tag_value tag_name
     path = tag_path(tag_name)
-    File.exists?(path) ? File.read(path).strip : ""
+    File.exist?(path) ? File.read(path).strip : ""
   end
 end

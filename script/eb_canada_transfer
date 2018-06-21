@@ -23,7 +23,7 @@ customer_numbers = ['EDDIE','EBCC']
 
 mids = {}
 # Extra MID database to utilize, if present
-if File.exists?("tmp/eddie-mids.csv")
+if File.exist?("tmp/eddie-mids.csv")
   CSV.foreach('tmp/eddie-mids.csv') do |row|
     next if row[0].blank? || row[0].strip == "C/O" || row[1].blank? || row[2].blank?
 

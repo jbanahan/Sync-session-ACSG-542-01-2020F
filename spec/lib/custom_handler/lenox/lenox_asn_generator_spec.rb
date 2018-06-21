@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         sync_records = []
 
         expect {
-          g.generate_tempfiles [@shipment] {|f1, f2, srs| sync_records = srs}
+          g.generate_tempfiles([@shipment]) {|f1, f2, srs| sync_records = srs}
         }.to change(
           SyncRecord.where(syncable_id:@shipment.id,
             trading_partner:'LENOXASN').

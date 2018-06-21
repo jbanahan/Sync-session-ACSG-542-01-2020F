@@ -31,8 +31,8 @@ class CacheWrapper
 
   def self.memcache_settings file_path: 'config/memcached.yml'
     # Load memcached settings from config/memcached.yml
-    settings = (file_path && File.exists?(file_path)) ? YAML::load(File.open(file_path))[Rails.env] : {}
-    raise "No memcache client configuration file found at '#{file_path}'." unless File.exists?(file_path)
+    settings = (file_path && File.exist?(file_path)) ? YAML::load(File.open(file_path))[Rails.env] : {}
+    raise "No memcache client configuration file found at '#{file_path}'." unless File.exist?(file_path)
 
     settings = YAML::load(File.open(file_path))[Rails.env]
     raise "No memcache client configuration found in file '#{file_path}' for Rails '#{Rails.env}' environment." if settings.blank?
@@ -66,7 +66,7 @@ class CacheWrapper
       db_host += ("-" + database_configuration["port"].to_s)
     end
     db_name = database_configuration["database"].to_s.presence || "NONAME"
-    code_version = File.exists?('config/version.txt') ? IO.read('config/version.txt').gsub(/\r?\n/, " ").strip : "NOVERSION"
+    code_version = File.exist?('config/version.txt') ? IO.read('config/version.txt').gsub(/\r?\n/, " ").strip : "NOVERSION"
     "#{db_host}-#{db_name}-#{code_version}"
   end
   private_class_method :memcache_namespace

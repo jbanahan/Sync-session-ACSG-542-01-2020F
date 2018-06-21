@@ -1,9 +1,6 @@
 # To install the script for systemd purposes, run the following command:
 # sudo cp chainio-web.service /etc/systemd/system/chainio-web.service
 #
-# Disable NGINX from starting automatically
-# sudo systemctl disable nginx
-#
 # https://wiki.ubuntu.com/SystemdForUpstartUsers
 # https://www.nginx.com/resources/wiki/start/topics/examples/systemd/
 [Unit]
@@ -12,9 +9,9 @@ After=syslog.target network.target remote-fs.target nss-lookup.target
 
 [Service]
 Type=forking
-PIDFile=/run/nginx.pid
-ExecStartPre=/usr/sbin/nginx -t
-ExecStart=/usr/sbin/nginx
+PIDFile=/opt/nginx/logs/nginx.pid
+ExecStartPre=/opt/nginx/sbin/nginx -t
+ExecStart=/opt/nginx/sbin/nginx
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s QUIT $MAINPID
 PrivateTmp=true

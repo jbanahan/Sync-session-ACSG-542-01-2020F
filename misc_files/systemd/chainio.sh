@@ -66,7 +66,9 @@ fi
   done
 )
 
-`chmod -R 755 ${TAG_FS}`
+# Properly set permissions on the TAG_FS dir to allow accessing dirs and reading files below it for everyone
+`find ${TAG_FS} -type d -print0 | xargs -0 chmod 755`
+`find ${TAG_FS} -type f -print0 | xargs -0 chmod 644`
 
 if [ -f "${TAG_FS_BASE}/Role" ]; then
   ROLE=`cat "${TAG_FS_BASE}"/Role`

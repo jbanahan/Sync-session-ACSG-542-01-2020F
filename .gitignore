@@ -16,8 +16,6 @@ spec/tmp/*
 coverage/*
 coverage.data
 .rvmrc*
-.ruby-gemset*
-.ruby-version*
 .sass-cache/
 public/assets/*
 vendor/
@@ -38,6 +36,7 @@ config/kewill_imaging_sql_proxy.yml
 config/fenix_google_drive_sqs_copy.yml
 config/vfitrack_settings.yml
 config/intacct.yml
+config/pepsi-idp-metadata.xml
 .idea
 dump.rdb
 .byebug_history

@@ -1,5 +1,4 @@
-require 'rufus/sc/rtime'
-require 'rufus/sc/cronline'
+require "fugit"
 
 module OpenChain
   #
@@ -102,20 +101,21 @@ module OpenChain
         end
 
         return next_time_local.utc
-      elsif (cron = cron_string?(interval))
-        next_run_time = cron.next_time local_base_time
+      elsif (cron = cron_string?(interval, tz))
+        next_run_time = next_rails_time(cron, local_base_time)
         # Don't support the run days checkboxes, cron already supports them in the cron expression and trying to build 
         # support for our version w/ the checkboxes is a pain
         return next_run_time ? next_run_time.utc : nil
       else
         # We can just use the previous run time and then add the interval string to it to determine the next run time
-        interval_time = parse_time_string self.interval
+        duration = parse_time_string self.interval
 
         # If no interval time is returned and no run day is set, then we don't actually want to run the job, return nil
-        return nil unless interval_time && interval_time > 0 && run_day_set?
+        return nil if duration.nil? || !run_day_set?
 
         # Now we need to see if we're allowed to run on the day that interval_time + last_run_time points to
-        next_run_time = local_base_time + interval_time
+        next_run_time = next_rails_time(duration, local_base_time)
+
         while !run_day?(next_run_time)
           # Advance a whole day forward to midnight of the next day, which would be the absolute earliest the interval 
           # might allow us to run at if we're not allowed to run today.
@@ -208,15 +208,21 @@ module OpenChain
     end
 
     private 
-      def cron_string? value
-        # Rufus cron uses granularity to the second, which is a pain in the butt if 
+      def cron_string? value, time_zone
+        # Fugit::Cron uses granularity to the second, which is a pain in the butt if 
         # you're copying / pasting cron expressions from the web since it's nonstandard. 
 	      # So, just prepend a 0 so expressions will run on the minute change.
-        return Rufus::CronLine.new ("0 " + value) rescue nil
+        Fugit::Cron.parse("0 " + value + " #{time_zone.tzinfo.name}") rescue nil
       end
 
       def parse_time_string value
-        Rufus.parse_time_string(value) rescue nil
+        Fugit::Duration.parse(value) rescue nil
+      end
+
+      def next_rails_time fugit_object, base_time
+        t = fugit_object.next_time(base_time)
+
+        t ? base_time.time_zone.parse(t.to_s) : nil
       end
   end
 end

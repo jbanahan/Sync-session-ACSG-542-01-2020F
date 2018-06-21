@@ -181,7 +181,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @tmp = Tempfile.new('x')
       expect(subject).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
       subject.send_and_delete_sync_file @tmp, override_time
-      expect(File.exists?(@tmp.path)).to be_falsey
+      expect(File.exist?(@tmp.path)).to be_falsey
       @tmp = nil
     end
 

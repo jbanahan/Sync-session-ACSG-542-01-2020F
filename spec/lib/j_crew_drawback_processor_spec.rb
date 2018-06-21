@@ -3,11 +3,14 @@ require 'spec_helper'
 describe OpenChain::JCrewDrawbackProcessor do
 
   describe "process_entries" do
+
+    let (:cdefs) { subject.send(:cdefs) }
+
     before :each do
-      @cd_po = Factory(:custom_definition,:label=>"PO Number",:module_type=>"ShipmentLine",:data_type=>"string")
-      @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")
-      @cd_size = Factory(:custom_definition,:label=>"Size",:module_type=>"ShipmentLine",:data_type=>"string")
-      @cd_color = Factory(:custom_definition,:label=>"Color",:module_type=>"ShipmentLine",:data_type=>"string")
+      @cd_po = cdefs[:shpln_po]
+      @cd_del = cdefs[:shp_delivery_date]
+      @cd_size = cdefs[:shpln_size]
+      @cd_color = cdefs[:shpln_color]
       @product = Factory(:product,unique_identifier:'JCREW-12345',name:'12345')
       @importer = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
       @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>'12345',:po_number=>'12345',:country_origin_code=>'CN')

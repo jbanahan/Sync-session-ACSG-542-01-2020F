@@ -38,7 +38,7 @@ describe "FtpFileSupport" do
     end
     
     it 'should not unlink if false is passed' do
-      expect(File).to receive(:exists?).with(tempfile.to_path).and_return true
+      expect(File).to receive(:exist?).with(tempfile.to_path).and_return true
       expect(FtpSender).to receive(:send_file)
       subject.ftp_file tempfile, {keep_local:true}
       expect(tempfile.closed?).to be_falsey
@@ -50,7 +50,7 @@ describe "FtpFileSupport" do
     end
     
     it "should return false if file does not exist" do
-      expect(File).to receive(:exists?).with(tempfile.to_path).and_return false
+      expect(File).to receive(:exist?).with(tempfile.to_path).and_return false
       expect(FtpSender).not_to receive(:send_file)
       expect(subject.ftp_file tempfile).to be_falsey
     end
@@ -92,7 +92,7 @@ describe "FtpFileSupport" do
         expect(FtpSender).to receive(:send_file).with('svr','u','p',file, subject.ftp_credentials)
         subject.ftp_file file
         expect(file.closed?).to be_truthy
-        expect(File.exists? "tmp/file.txt").to be_falsey
+        expect(File.exist? "tmp/file.txt").to be_falsey
       end
     end
   end

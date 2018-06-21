@@ -28,7 +28,6 @@ jobs:
           RAILS_ENV: test
           DB_HOST: localhost
           REDIS_HOST: 127.0.0.1
-        command: /sbin/init
 
       # We don't use utf8mb4 because real utf doesn't fit into the index
       #  https://stackoverflow.com/questions/42043205/how-to-fix-mysql-index-column-size-too-large-laravel-migrate

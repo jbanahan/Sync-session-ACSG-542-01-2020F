@@ -1,5 +1,3 @@
-require 'sucker_punch/testing/inline' #don't create new threads for sucker_punch
-
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV["RAILS_ENV"] ||= 'test'
 require File.expand_path("../../config/environment", __FILE__)
@@ -48,7 +46,6 @@ RSpec.configure do |config|
   config.before :each do |example|
     Rails.application.config.vfitrack = {}
 
-    EntitySnapshotSupport.disable_async = true
     CustomDefinition.skip_reload_trigger = true
     stub_event_publisher
     Time.zone = ActiveSupport::TimeZone["UTC"]

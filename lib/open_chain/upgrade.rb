@@ -43,11 +43,11 @@ module OpenChain
     end
 
     def self.in_progress?
-      File.exists?(upgrade_file_path)
+      File.exist?(upgrade_file_path)
     end
 
     def self.errored?
-      File.exists?(upgrade_error_file_path)
+      File.exist?(upgrade_error_file_path)
     end
 
     def self.upgrade_file_path
@@ -121,7 +121,7 @@ module OpenChain
         #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
         capture_and_log "rm #{Upgrade.upgrade_file_path}"
         # Remove the upgrade error file if it is present
-        capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
+        capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exist?(Upgrade.upgrade_error_file_path)
         
         @@upgraded = true
         upgrade_completed = true
@@ -175,8 +175,9 @@ module OpenChain
 
     # private
     def finish_upgrade_log
-      @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
+      @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
     end
+    
     def get_source
       log_me "Fetching source"
       capture_and_log 'git fetch'
@@ -187,13 +188,14 @@ module OpenChain
       log_me "Running bundle install"
       # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile
       # update get checked in sans Gemfile.lock update)
-      capture_and_log "bundle install --frozen --without=development test"
-      log_me "Bundle complete, running migrations"
+      if Rails.env.production?
+        capture_and_log "bundle install --frozen --without=development test"
+      else
+        capture_and_log "bundle install"
+      end
     end
 
     def apply_upgrade
-      log_me "Touching stop.txt"
-      capture_and_log "touch tmp/stop.txt"
       migrate
       precompile
       init_schedulable_jobs
@@ -290,7 +292,7 @@ module OpenChain
 
     def log_me txt
       @log.info txt
-      @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
+      @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
     end
 
     def execute_callback callback_hash, event, *event_params

@@ -263,12 +263,13 @@ class FtpSender
     attr_accessor :log, :remote_path
 
     def connect server, user, password, log, opts, &block
-      sftp_opts = {password: password, compression: false, paranoid: false, timeout: 10, auth_methods: ["password"]}
+      # In net-ssh 5, verify_host_key should be changed to :never
+      sftp_opts = {password: password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]}
       if opts[:port]
         sftp_opts[:port] = opts[:port]
       end
 
-      # paranoid = false - Disables host key verfication (if this is enabled, errors are thrown here if the remote host changes its host key)
+      # verify_host_key = :never - Disables host key verfication (if this is enabled, errors are thrown here if the remote host changes its host key)
       # This would happen any time we spun up new server instances internally since the IP's change.
       @session_completed = false
       Net::SFTP.start(server, user, sftp_opts) do |client|

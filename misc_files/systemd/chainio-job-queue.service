@@ -10,6 +10,6 @@ Description=Start / Monitor ChainIO Job Queue
 User=ubuntu
 Environment=TAG_FS_BASE=/etc/aws-fs/tags
 WorkingDirectory=~
-ExecStart=/etc/init.d/chainio-job-queue.sh
+ExecStart=/home/ubuntu/chainio/wwwvfitracknet/misc_files/systemd/chainio-job-queue.sh
 Restart=on-failure
 RestartSec=15

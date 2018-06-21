@@ -76,7 +76,7 @@ module OpenChain
     # ...such as disabling outbound notifications when reprocessing files or disabling other functionality that would normally
     # be on or controlled system-wide by the MasterSetup custom features
     config.vfitrack = {}
-    if File.exists?("config/vfitrack_settings.yml")
+    if File.exist?("config/vfitrack_settings.yml")
       settings = YAML::load_file("config/vfitrack_settings.yml")
       if settings.is_a?(Hash)
         config.vfitrack = settings.with_indifferent_access

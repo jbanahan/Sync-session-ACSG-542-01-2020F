@@ -1,9 +1,5 @@
 #! /bin/bash
-#
-# To install the script for systemd purposes, run the following command:
-# sudo cp chainio-job-queue.sh /etc/init.d/chainio-job-queue.sh
-# sudo chmod 644 /etc/init.d/chainio-job-queue.sh
-#
+
 # This script is not intended to be run directly by systemd. It should be run by the chainio service.
 #
 # The chainio.sh script will run it if the EC2 instance it is running 
@@ -24,12 +20,12 @@ if [ "$ROLE" != "Job Queue" ]; then
 else
   echo "$(date) - Starting chain-job-queue"
 
-  if [ -f ".rvm/scripts/rvm" ]; then
-    source ".rvm/scripts/rvm"
+  if [ -f "/home/ubuntu/.rvm/scripts/rvm" ]; then
+    source "/home/ubuntu/.rvm/scripts/rvm"
   fi
 
   export RAILS_ENV="production"
-  cd "chainio"
+  cd "/home/ubuntu/chainio"
 
   exec "wwwvfitracknet/script/dj_monitor.sh" quiet
 fi

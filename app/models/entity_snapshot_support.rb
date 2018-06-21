@@ -1,8 +1,6 @@
 module EntitySnapshotSupport
   extend ActiveSupport::Concern
 
-  mattr_accessor :disable_async
-
   included do
     #not doing dependent => destroy so we'll still have snapshots for deleted items
     has_many :entity_snapshots, :as => :recordable, inverse_of: :recordable
@@ -26,38 +24,11 @@ module EntitySnapshotSupport
 
   def create_async_snapshot user=User.current, imported_file=nil, context=nil
     # As of March 27, 2017 disabling async functionality because it was creating bad snapshots
-    # 
-    # When a user saved a snapshot in an transaction, the async job would run on a different
-    # connection before the transaction was committed, so the snapshot would not include the data
-    # that reflected the user's changes when submitted through a controller
-    AsyncSnapshotJob.perform_job self, user, imported_file, context
-    
-    # if self.disable_async
-    #   # If we've turned off async, don't run via the standard suckerpunch .async call, even if
-    #   # we use the inline testing functionality, we still seem to get the code run outside of
-    #   # an rspec transaction (leaving garbage testing snapshots around).  At this point, this
-    #   # is the only reason the disable_async is in use
-    #   AsyncSnapshotJob.perform_job self, user, imported_file, context
-    # else
-    #   AsyncSnapshotJob.new.async.perform(self,user,imported_file, context)
-    # end
-    
+    # due to the snapshot running in a separate DB transaction (.ie thread aquires new connection, thus 
+    # causing data contexts to be different and potentially skipping changes a user made)
+    # Rails has no way to do distributed transactions (from what I can tell), so this functionality
+    # is a total no-go.
+    create_snapshot user, imported_file, context
   end
 
-  class AsyncSnapshotJob
-    include SuckerPunch::Job
-
-    def perform core_object, user, imported_file, context
-      # The connection pool stuff is needed since SuckerPunch / Celluloid ends up runnign the following
-      # code in a seperate thread which will not have a sql connection established yet, so we get a new one
-      # and run in that.
-      ActiveRecord::Base.connection_pool.with_connection do
-        self.class.perform_job core_object, user, imported_file, context
-      end
-    end
-
-    def self.perform_job core_object, user, imported_file, context
-      core_object.create_snapshot user, imported_file, context
-    end
-  end
 end

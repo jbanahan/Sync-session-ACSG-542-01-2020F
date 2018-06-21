@@ -12,9 +12,9 @@ Description=Manages the startup of ChainIO server processes
 After=network-online.target
 
 [Service]
-User=ubuntu
-WorkingDirectory=~
-ExecStart=/home/ubuntu/chainio.sh
+User=root
+WorkingDirectory=/home/ubuntu/chainio/wwwvfitracknet
+ExecStart=/home/ubuntu/chainio/wwwvfitracknet/misc_files/systemd/chainio.sh
 
 # Closest equivelant to: start on runlevel [2345]
 [Install]

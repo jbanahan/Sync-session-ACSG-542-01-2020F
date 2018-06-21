@@ -929,7 +929,7 @@ module OpenChain
     def forwarding_config
       @config ||= begin 
         # The config should just be a mapping of Importer Tax Ids to FTP folders the data needs to be forwarded to.
-        if File.exists?("config/fenix_b3_forwarding.yml")
+        if File.exist?("config/fenix_b3_forwarding.yml")
           YAML.load_file "config/fenix_b3_forwarding.yml"
         else
           {}
