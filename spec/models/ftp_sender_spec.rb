@@ -434,7 +434,7 @@ describe FtpSender do
     describe "connect" do
       it "should use Net::SFTP to connect to a server and yield the given block" do
         @ftp = double("Net::SFTP")
-        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: false, verify_host_key: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
 
         test = nil
 
@@ -480,6 +480,20 @@ describe FtpSender do
 
         expect{@client.connect(@server, @username, @password, [], {}) {|client| raise Net::SSH::Disconnect, "Error Message"}}.to raise_error Net::SSH::Disconnect, "Error Message"
         expect(@client.last_response).to eq "4 Error Message"
+      end
+
+      it "uses compression for connections to connect.vfitrack.net" do
+        @server = "connect.vfitrack.net"
+        @ftp = double("Net::SFTP")
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
+        @client.connect(@server, @username, @password, [], {}) {|c| }
+      end
+
+      it "uses compression for connections to ftp2.vandegriftinc.com" do
+        @server = "ftp2.vandegriftinc.com"
+        @ftp = double("Net::SFTP")
+        expect(Net::SFTP).to receive(:start).with(@server, @username, password: @password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]).and_yield @ftp
+        @client.connect(@server, @username, @password, [], {}) {|c| }
       end
     end
 

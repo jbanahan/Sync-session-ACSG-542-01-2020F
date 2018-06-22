@@ -264,7 +264,11 @@ class FtpSender
 
     def connect server, user, password, log, opts, &block
       # In net-ssh 5, verify_host_key should be changed to :never
-      sftp_opts = {password: password, compression: true, verify_host_key: false, timeout: 10, auth_methods: ["password"]}
+
+      # Other remote servers don't appear to always support compression, so we're going to use compression just with connect.vfitrack.net or ftp2.vandegriftinc.com
+      compression = ["connect.vfitrack.net", "ftp2.vandegriftinc.com"].include?(server)
+      
+      sftp_opts = {password: password, compression: compression, verify_host_key: false, timeout: 10, auth_methods: ["password"]}
       if opts[:port]
         sftp_opts[:port] = opts[:port]
       end
