@@ -27,32 +27,36 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
   private
     def process_file custom_file, user
       errors = []
-      inbound_file_hash = condense_inbound_file_by_entry custom_file, errors
+      begin
+        inbound_file_hash = condense_inbound_file_by_entry custom_file, errors
 
-      outbound_row_number = 1
-      wb, sheet = XlsMaker.create_workbook_and_sheet "Results", ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
-      total_cost = 0
-      inbound_file_hash.values.each do |entry_row|
-        begin
-          add_row_to_sheet entry_row.entry, entry_row.total_management_fee, sheet, outbound_row_number
-          outbound_row_number += 1
-          total_cost += entry_row.total_management_fee
-        rescue => e
-          errors << "Row #{entry_row.row_number}: Failed to process line due to the following error: '#{e.message}'"
+        outbound_row_number = 1
+        wb, sheet = XlsMaker.create_workbook_and_sheet "Results", ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+        total_cost = 0
+        inbound_file_hash.values.each do |entry_row|
+          begin
+            add_row_to_sheet entry_row.entry, entry_row.total_management_fee, sheet, outbound_row_number
+            outbound_row_number += 1
+            total_cost += entry_row.total_management_fee
+          rescue => e
+            errors << "Row #{entry_row.row_number}: Failed to process line due to the following error: '#{e.message}'"
+          end
         end
+
+        # Add a totals row.  This is blank except for the Cost column.
+        if total_cost > 0
+          output_line = []
+          output_line[14] = total_cost
+          XlsMaker.add_body_row sheet, outbound_row_number, output_line
+          sheet.row(outbound_row_number).set_format(14, MONEY_FORMAT)
+        end
+
+        XlsMaker.set_column_widths sheet, [20, 20, 20, 20, 16, 15, 16, 16, 20, 20, 20, 20, 18, 15, 12, 10]
+
+        generate_email user, custom_file, wb, errors
+      rescue MalformedAllportBillingFileError => e
+        generate_malformed_file_error_email user, custom_file
       end
-
-      # Add a totals row.  This is blank except for the Cost column.
-      if total_cost > 0
-        output_line = []
-        output_line[14] = total_cost
-        XlsMaker.add_body_row sheet, outbound_row_number, output_line
-        sheet.row(outbound_row_number).set_format(14, MONEY_FORMAT)
-      end
-
-      XlsMaker.set_column_widths sheet, [20, 20, 20, 20, 16, 15, 16, 16, 20, 20, 20, 20, 18, 15, 12, 10]
-
-      generate_email user, custom_file, wb, errors
 
       nil
     end
@@ -62,15 +66,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
     def condense_inbound_file_by_entry custom_file, errors
       inbound_row_number = 1
       inbound_file_hash = {}
+      column_headings_found = false
+
       # Source file is an Excel spreadsheet.  We're dealing with it remotely, on a server equipped to deal with Excel crud.
       # Here, thanks to the handy 'foreach' method below, the parser doesn't need to be aware of the original data format.
       foreach(custom_file) do |row|
-        # Skip the first 16 lines of the file.  It's a multi-line header.
-        # Also skip blank lines.  (We can't exclude these in 'foreach' because there could be blanks in the header,
-        # and that is being excluded via line count.)
-        # Finally, skip lines that don't contain a PO number, BOL or container: this leaves out the totals row at
-        # the bottom of the document.
-        if inbound_row_number >= 17 && !blank_row?(row) && (row[0].present? || row[1].present? || row[2].present?)
+        # The first 15+ lines of the file need to be skipped.  It's a multi-line header.  Unfortunately, the number of
+        # lines in the header varies, forcing us to look for a specific text value in the first column.  If that turns
+        # out not to be consistent too...
+        if !column_headings_found && !blank_row?(row) && row[0] == "Purchase Order" && row[1] == "BL/AWB/PRO"
+          column_headings_found = true
+
+        # Once the column headings line has been found, subsequent lines can be processed.  Skip blank lines and lines
+        # that don't contain a PO number, BOL or container: this latter restriction eliminates the totals row at the
+        # bottom of the document, which should not be processed.  We can't exclude blank lines via 'foreach' because
+        # a line number is included in error messages, and stripping blanks out before the line counter is established
+        # could result in inconsistency, chaos and confusion.
+        elsif column_headings_found && !blank_row?(row) && (row[0].present? || row[1].present? || row[2].present?)
           bill_of_lading = row[1]
           container_number = row[2]
           entry = find_matching_entry bill_of_lading, container_number, inbound_row_number, errors
@@ -86,8 +98,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
             data.total_management_fee = data.total_management_fee + row[6].to_f
           end
         end
+
         inbound_row_number += 1
       end
+
+      if !column_headings_found
+        raise MalformedAllportBillingFileError.new("Column headings not found")
+      end
+
       inbound_file_hash
     end
 
@@ -182,7 +200,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
     end
 
     def generate_email user, inbound_custom_file, report_workbook, errors
-      Attachment.download_to_tempfile(inbound_custom_file.attached, original_file_name:inbound_custom_file.attached_file_name) do |inbound_file|
+      download_inbound_file_for_email_attachment(inbound_custom_file) do |inbound_file|
         Tempfile.open(["LL_Billing_Report", ".xls"]) do |outbound_file|
           Attachment.add_original_filename_method outbound_file, "Lumber_ACS_billing_report_#{Time.zone.now.strftime("%Y-%m-%d")}.xls"
           report_workbook.write outbound_file
@@ -197,6 +215,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
           OpenMailer.send_simple_html(user.email, 'Lumber ACS Billing Validation Report', body_text.html_safe, [outbound_file, inbound_file]).deliver!
         end
       end
+    end
+
+    def download_inbound_file_for_email_attachment inbound_custom_file
+      Attachment.download_to_tempfile(inbound_custom_file.attached, original_file_name:inbound_custom_file.attached_file_name) do |inbound_file|
+        yield inbound_file
+      end
+    end
+
+    def generate_malformed_file_error_email user, inbound_custom_file
+      download_inbound_file_for_email_attachment(inbound_custom_file) do |inbound_file|
+        body_text = "This file could not be processed because the column header line could not be found.  In order for that line to be found, the first two column headings must be (exactly) 'Purchase Order' and 'BL/AWB/PRO'.  Please correct and upload the file again."
+        OpenMailer.send_simple_html(user.email, 'Malformed Lumber ACS Billing File', body_text.html_safe, [inbound_file]).deliver!
+      end
+    end
+
+    class MalformedAllportBillingFileError < StandardError
+
     end
 
 end; end; end; end

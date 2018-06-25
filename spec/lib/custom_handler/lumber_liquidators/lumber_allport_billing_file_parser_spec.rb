@@ -53,6 +53,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
     before { allow_any_instance_of(MasterSetup).to receive(:request_host).and_return 'some_host' }
 
     let(:header_row) { ["A", "B", "C", "D", "E", "F", "G"] }
+    let(:column_header_row) { ["Purchase Order", "BL/AWB/PRO", "Container", "Vessel", "POL", "Service Type", "CY/CY (FCL) Management Fee"] }
     let(:blank_row) { ["", "", "", "", "", "", ""] }
     let(:row_1) { ["x", "BOL-1", "CON-1", "x", "x", "x", "50.55"] }
     let(:row_1b) { ["x", "BOL-1", "CON-2", "x", "x", "x", "20.10"] }
@@ -63,7 +64,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       base.and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).
           and_yield(header_row).and_yield(header_row).and_yield(blank_row).
           and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(blank_row).and_yield(blank_row).
-          and_yield(header_row).and_yield(blank_row).and_yield(header_row)
+          and_yield(header_row).and_yield(blank_row).and_yield(column_header_row)
     end
 
     it "parses file and generates new spreadsheet based on it" do
@@ -501,6 +502,52 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
       expect(sheet.rows.length).to eq 1
       expect(sheet.row(0)).to eq ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
+    end
+
+    it "handles abnormal length header" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      expect(file_reader).to receive(:foreach).and_yield(header_row).and_yield(header_row).and_yield(header_row).
+          and_yield(blank_row).and_yield(header_row).and_yield(column_header_row).and_yield(row_1)
+
+      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice_1 = Factory(:broker_invoice, entry:entry_1)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Lumber ACS Billing Validation Report'
+      expect(mail.body).not_to include "Errors encountered"
+      expect(mail.attachments.length).to eq(2)
+
+      attachment_1 = mail.attachments[0]
+      sheet = Spreadsheet.open(StringIO.new(attachment_1.read)).worksheets.first
+      expect(sheet.rows.length).to eq 3
+      expect(sheet.row(1)[8]).to eq 'BOL-1'
+      expect(sheet.row(1)[15].href).to include "entries/#{entry_1.id}"
+    end
+
+    it "sends error email if column headings line malformed" do
+      expect(subject).to receive(:file_reader).with(custom_file).and_return(file_reader)
+      # Somebody changed the text of the first two columns, the two values that the parser uses to try to find where the data starts.
+      bad_column_header_row = ["PO", "BOL", "Container", "Vessel", "POL", "Service Type", "CY/CY (FCL) Management Fee"]
+      expect(file_reader).to receive(:foreach).and_yield(header_row).and_yield(header_row).and_yield(header_row).
+          and_yield(blank_row).and_yield(header_row).and_yield(bad_column_header_row).and_yield(row_1)
+
+      entry_1 = Factory(:entry, master_bills_of_lading:'BOL-1', container_numbers:'CON-1,CON-2', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.now)
+      invoice_1 = Factory(:broker_invoice, entry:entry_1)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['fake@emailaddress.com']
+      expect(mail.subject).to eq 'Malformed Lumber ACS Billing File'
+      expect(mail.body).to include "This file could not be processed because the column header line could not be found.  In order for that line to be found, the first two column headings must be (exactly) 'Purchase Order' and 'BL/AWB/PRO'.  Please correct and upload the file again.".html_safe
+      expect(mail.body).not_to include "The attached report was generated based on a report uploaded to VFI Track, which is also attached to this email."
+      expect(mail.attachments.length).to eq(1)
+
+      # The original spreadsheet is the only attachment.
+      expect(mail.attachments[0].filename).to eq("test_sheet_1.xls")
     end
   end
 
