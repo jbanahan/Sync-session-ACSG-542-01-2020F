@@ -840,6 +840,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_company_year_over_year_report
+    if OpenChain::Report::CompanyYearOverYearReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_company_year_over_year_report
+    klass = OpenChain::Report::CompanyYearOverYearReport
+    if klass.permission? current_user
+      run_report "Company Year Over Year Report", klass, {year_1: params[:year_1], year_2: params[:year_2]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
     def run_report name, klass, settings, friendly_settings
       begin

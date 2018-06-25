@@ -64,6 +64,7 @@ class DataCrossReference < ActiveRecord::Base
   LL_GTN_QUANTITY_UOM ||= "ll_gtn_quantity_uom"
   LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
   CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
+  VFI_DIVISION ||= "vfi_division"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 

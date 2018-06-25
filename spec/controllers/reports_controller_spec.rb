@@ -818,4 +818,44 @@ describe ReportsController do
     end
   end
 
+  describe "Company Year Over Year Report" do
+    let(:report_class) { OpenChain::Report::CompanyYearOverYearReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_company_year_over_year_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_company_year_over_year_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_company_year_over_year_report, {}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Company Year Over Year Report", user, OpenChain::Report::CompanyYearOverYearReport,
+                                         :settings=>{year_1:'2015', year_2:'2017'}, :friendly_settings=>[])
+        post :run_company_year_over_year_report, {year_1:'2015', year_2: '2017'}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
 end

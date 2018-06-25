@@ -198,6 +198,10 @@
     <tr class='hover'><td><%=link_to "Entry Year Over Year Report", reports_show_customer_year_over_year_report_path%></td>
     <td>Compares two years of entry data.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::CompanyYearOverYearReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Company Year Over Year Report", reports_show_company_year_over_year_report_path%></td>
+    <td>Compares two years of entry data for all Vandegrift offices.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
