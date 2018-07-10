@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     let (:row) {
       # This is what a file row without FDA information will look like (description should upcase)
-      ["STYLE", "description", "TARIFF123", "CO", "BRAND"]
+      ["STYLE", "description", "1234567890", "CO", "BRAND"]
     }
     
     let (:fda_row) {
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/descr").to eq "DESCRIPTION"
       expect(parent.text "part/productLine").to eq "BRAND"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/seqNo").to eq "1"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "TARIFF123"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "1234567890"
 
       # Make sure no FDA information was written - even though blank tags would techincally be fine
       # I want to make sure the size of these files is as small as possible to allow for more data in them before
@@ -176,6 +176,59 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/abiPriorNotice").to eq "Y"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/CatFdaEsComplianceList/CatFdaEsCompliance/assembler").to eq "ASS"
     end
+
+    context "with special tariffs" do
+      let! (:special_tariff) { SpecialTariffCrossReference.create! hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO", effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day) }
+
+      it "includes special tariffs as first tariff record if present" do
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 2
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "0987654321"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
+
+      it "allows setting default country of origin to override blank country of origins" do
+        opts = {default_special_tariff_country_origin: "CO"}
+        gen = described_class.new "CUST", opts
+        # Blank the "query" result's country of origin, to make sure the default one is being used
+        row[3] = nil
+
+        gen.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 2
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "0987654321"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
+
+      it "allows disabling special tariff lookups" do
+        opts = {disable_special_tariff_lookup: true}
+        gen = described_class.new "CUST", opts
+
+        gen.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 1
+      end
+    end
+
   end
 
   describe "run_schedulable" do

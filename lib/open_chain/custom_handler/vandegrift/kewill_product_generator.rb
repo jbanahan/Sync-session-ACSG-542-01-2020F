@@ -45,6 +45,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @allow_blank_tariffs = opts[:allow_blank_tariffs].to_s.to_boolean
     @allow_multiple_tariffs = opts[:allow_multiple_tariffs].to_s.to_boolean
     @default_values = opts[:defaults].presence || {}
+    @disable_special_tariff_lookup = opts[:disable_special_tariff_lookup].to_s.to_boolean
+    @default_special_tariff_country_origin = opts[:default_special_tariff_country_origin]
   end
 
   def custom_defs
@@ -92,13 +94,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(p, "manufacturerId", row[9], 15)
     write_data(p, "productLine", row[4], 30)
     append_defaults(p, "CatCiLine")
-
-    # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
-    # here into individual classification fields.
-    hts_values = row[2].to_s.split tariff_separator
+    
     classification_list_element = add_element(p, "CatTariffClassList")
 
-    hts_values.each_with_index do |hts, index|
+    tariffs(row).each_with_index do |hts, index|
       tariff_seq = index + 1
       tariff_class = write_tariff classification_list_element, hts, tariff_seq, row
 
@@ -262,5 +261,27 @@ WHERE
 
   def tariff_separator
     "*~*"
+  end
+
+  def tariffs row
+    # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
+    # here into individual classification fields.
+    hts_values = row[2].to_s.split(tariff_separator)
+
+    special = special_tariff_number(row[3], hts_values[0])
+    if special.nil? || special.special_hts_number.blank?
+      hts_values
+    else
+      [special.special_hts_number] + hts_values
+    end
+  end
+
+  def special_tariff_number product_country_origin, hts_number
+    return nil if hts_number.blank? || @disable_special_tariff_lookup
+
+    @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash reference_date: Time.zone.now.to_date
+
+    country_origin = product_country_origin.presence || @default_special_tariff_country_origin
+    @special_tariffs[country_origin].try(:[], hts_number)
   end
 end; end; end; end
