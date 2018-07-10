@@ -217,5 +217,14 @@ describe CoreModule do
     end
   end
 
+  describe "module_abbreviation" do
+    subject { CoreModule }
+    CoreModule::CORE_MODULES.each do |cm|
+      it "returns an abbreviation for #{cm.label}" do
+        expect(subject.module_abbreviation cm).not_to be_nil
+      end
+    end
+  end
+
 end
 

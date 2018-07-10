@@ -12,55 +12,8 @@ module OpenChain; module Api; module V1; class OrderApiJsonGenerator
   end
 
   def obj_to_json_hash o
-    headers_to_render = limit_fields([
-      :ord_ord_num,
-      :ord_cust_ord_no,
-      :ord_imp_id,
-      :ord_imp_name,
-      :ord_imp_syscode,
-      :ord_mode,
-      :ord_ord_date,
-      :ord_ven_id,
-      :ord_ven_name,
-      :ord_ven_syscode,
-      :ord_window_start,
-      :ord_window_end,
-      :ord_first_exp_del,
-      :ord_fob_point,
-      :ord_currency,
-      :ord_payment_terms,
-      :ord_terms,
-      :ord_total_cost,
-      :ord_approval_status,
-      :ord_order_from_address_name,
-      :ord_order_from_address_full_address,
-      :ord_ship_to_count,
-      :ord_ship_from_id,
-      :ord_ship_from_full_address,
-      :ord_ship_from_name,
-      :ord_rule_state,
-      :ord_closed_at,
-      :ord_tppsr_db_id,
-      :ord_tppsr_name,
-      :ord_rule_state
-    ] + custom_field_keys(CoreModule::ORDER))
-    line_fields_to_render = limit_fields([
-      :ordln_line_number,
-      :ordln_puid,
-      :ordln_pname,
-      :ordln_prod_db_id,
-      :ordln_ppu,
-      :ordln_currency,
-      :ordln_ordered_qty,
-      :ordln_country_of_origin,
-      :ordln_hts,
-      :ordln_sku,
-      :ordln_unit_of_measure,
-      :ordln_total_cost,
-      :ordln_ship_to_full_address,
-      :ordln_varuid,
-      :ordln_var_db_id
-    ] + custom_field_keys(CoreModule::ORDER_LINE))
+    headers_to_render = limit_fields(field_list(CoreModule::ORDER))
+    line_fields_to_render = limit_fields(field_list(CoreModule::ORDER_LINE))
 
     if !line_fields_to_render.blank?
       o.freeze_all_custom_values_including_children

@@ -700,6 +700,83 @@ describe ReportsController do
 
   end
 
+  describe "Lumber Order Snapshot Discrepancy Report" do
+    let(:report_class) { OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_lumber_order_snapshot_discrepancy_report
+        expect(response).not_to be_success
+        expect(flash[:errors].first).to eq("You do not have permission to view this report.")
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_lumber_order_snapshot_discrepancy_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_lumber_order_snapshot_discrepancy_report, {}
+        expect(flash[:errors].first).to eq("You do not have permission to view this report.")
+      end
+
+      it "doesn't run when no date arguments and false open orders argument provided" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_lumber_order_snapshot_discrepancy_report, { open_orders_only:false }
+        expect(flash[:errors].first).to eq("You must enter a snapshot start and end date, or choose to include open orders only.")
+      end
+
+      it "doesn't run when only empty arguments provided" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_lumber_order_snapshot_discrepancy_report, { open_orders_only:"", snapshot_range_start_date:"", snapshot_range_end_date:"" }
+        expect(flash[:errors].first).to eq("You must enter a snapshot start and end date, or choose to include open orders only.")
+      end
+
+      it "runs for authorized users, all arguments provided" do
+        args = { open_orders_only:true, snapshot_range_start_date:"2018-01-01", snapshot_range_end_date:"2018-02-01" }
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Order Snapshot Discrepancy Report", user,
+            OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport, :settings=>args,
+            :friendly_settings=>["Open orders only. Snapshot Date on or after 2018-01-01. Snapshot Date before 2018-02-01."])
+        post :run_lumber_order_snapshot_discrepancy_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "runs for authorized users, missing date arguments" do
+        args = { open_orders_only:true }
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Order Snapshot Discrepancy Report", user,
+           OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport, :settings=>args,
+           :friendly_settings=>["Open orders only."])
+        post :run_lumber_order_snapshot_discrepancy_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "runs for authorized users, false open orders argument" do
+        args = { open_orders_only:false, snapshot_range_start_date:"2018-01-01", snapshot_range_end_date:"2018-02-01" }
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Order Snapshot Discrepancy Report", user,
+           OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport, :settings=>args,
+           :friendly_settings=>["Snapshot Date on or after 2018-01-01. Snapshot Date before 2018-02-01."])
+        post :run_lumber_order_snapshot_discrepancy_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
   describe "Entry Year Over Year Report" do
     let(:report_class) { OpenChain::Report::CustomerYearOverYearReport }
     let(:user) { Factory(:user) }

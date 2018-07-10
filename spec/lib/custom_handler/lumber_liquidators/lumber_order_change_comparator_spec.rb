@@ -10,6 +10,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     allow(Lock).to receive(:with_lock_retry).and_yield
   end
 
+  def order_data_instance hash, snapshot = nil
+    order_data_klass.new hash, snapshot
+  end
+
   describe '#compare' do
     it 'should do nothing if not an Order type' do
       expect(described_class).not_to receive(:run_changes)
@@ -42,8 +46,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     let (:order_id) { 1 }
     let (:order) {
       o = instance_double(Order)
+      allow(o).to receive(:id).and_return order_id
       allow(o).to receive(:reload)
-      allow(Order).to receive(:find_by_id).with(order_id).and_return o
       o
     }
     let (:old_data) { instance_double(described_class::OrderData) }
@@ -51,6 +55,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     before :each do
       # stub all business logic methods, then in each test we use should_receive for the one we're testing
+      allow(subject).to receive(:find_order).and_return order
+      allow(subject).to receive(:record_po_created_data).and_return false
       allow(subject).to receive(:set_defaults).and_return false
       allow(subject).to receive(:clear_planned_handover_date).and_return false
       allow(subject).to receive(:set_forecasted_handover_date).and_return false
@@ -64,69 +70,69 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       allow(subject).to receive(:update_change_log).and_return false
     end
     it 'should return if order does not exist' do
-      allow(Order).to receive(:find_by_id).and_return nil
+      allow(subject).to receive(:find_order).and_return nil
       expect(subject).not_to receive(:set_defaults)
-      expect(subject.execute_business_logic(1, old_data, new_data)).to be_falsey
+      expect(subject.execute_business_logic(order_id, old_data, new_data)).to be_falsey
     end
     it 'should set defaults' do
       expect(subject).to receive(:set_defaults).with(order, new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
-      subject.execute_business_logic(1, old_data, new_data)
+      subject.execute_business_logic(order_id, old_data, new_data)
     end
     it 'should clear planned handover date' do
       expect(subject).to receive(:clear_planned_handover_date).with(order,old_data,new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Clear Planned Handover"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should set forecasted handover date' do
       expect(subject).to receive(:set_forecasted_handover_date).with(order).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Forecasted Window Update"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should reset vendor approvals' do
       expect(subject).to receive(:reset_vendor_approvals).with(order,old_data,new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Vendor Approval Reset"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should reset PC / Exec PC approvals' do
       expect(subject).to receive(:reset_product_compliance_approvals).with(order,old_data,new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Compliance Approval Reset"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should set price revised dates' do
       expect(subject).to receive(:set_price_revised_dates).with(order,old_data,new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Update Price Revised Dates"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should autoflow' do
       expect(subject).to receive(:update_autoflow_approvals).with(order).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Autoflow Order Approver"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should reset PO cancellation' do
       expect(subject).to receive(:reset_po_cancellation).with(order).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: PO Cancellation Reset"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should generate new PDF if values were updated' do
       allow(subject).to receive(:set_defaults).and_return true
       expect(subject).to receive(:create_pdf).with(order,old_data,new_data)
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should not generate new PDF if no values were updated' do
       allow(subject).to receive(:set_defaults).and_return false
       expect(subject).not_to receive(:create_pdf)
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should generate xml' do
       expect(subject).to receive(:generate_ll_xml).with(order,old_data,new_data).and_return true
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
     it 'should update change log' do
       expect(subject).to receive(:update_change_log).with(order,old_data,new_data).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Change Log"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
 
     it "allows specifying exact logic rules to run" do
@@ -134,14 +140,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter"
       expect(subject).to receive(:generate_ll_xml).with(order,old_data,new_data).and_return true
 
-      subject.execute_business_logic(1,old_data,new_data, [:set_defaults, :generate_ll_xml])
+      subject.execute_business_logic(order_id,old_data,new_data, [:set_defaults, :generate_ll_xml])
     end
 
     it "appends all logic rule names that modified data to snapshot context" do
       expect(subject).to receive(:set_defaults).with(order, new_data).and_return true
       expect(subject).to receive(:update_autoflow_approvals).with(order).and_return true
       expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: Order Default Value Setter / Autoflow Order Approver"
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
 
     it "removes approvals from logic list if approval resets are disabled" do
@@ -151,7 +157,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       expect(subject).not_to receive(:reset_product_compliance_approvals)
 
 
-      subject.execute_business_logic(1,old_data,new_data)
+      subject.execute_business_logic(order_id,old_data,new_data)
+    end
+
+    it "calls created data recorder logic" do
+      expect(subject).to receive(:record_po_created_data).with(order, old_data, new_data).and_return true
+      expect(order).to receive(:create_snapshot).with User.integration, nil, "System Job: Order Change Comparator: PO Created Data Recorder"
+
+      subject.execute_business_logic(order_id,old_data,new_data)
     end
   end
 
@@ -654,7 +667,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe 'OrderData' do
     let :cdefs do
-      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type, :ordln_custom_article_description, :ordln_vendor_inland_freight_amount])
+      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type, :ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag])
     end
     let :sap_extract_date do
       Time.now.utc
@@ -680,8 +693,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       o.update_custom_value!(cdefs[:ord_type],'Type')
       ol.update_custom_value!(cdefs[:ordln_custom_article_description], 'Custom desc')
       ol.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 123.45)
+      ol.update_custom_value!(cdefs[:ordln_deleted_flag], false)
       ol2.update_custom_value!(cdefs[:ordln_custom_article_description], 'Another custom desc')
       ol2.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 678.9)
+      ol2.update_custom_value!(cdefs[:ordln_deleted_flag], true)
       expect(o).to receive(:business_rules_state).and_return('Fail')
       o.reload
       o
@@ -706,7 +721,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
             'ordln_unit_of_measure' => 'EA',
             'ordln_ppu' => '5.0',
             cdefs[:ordln_custom_article_description].model_field_uid => 'Custom desc',
-            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '123.45'
+            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '123.45',
+            cdefs[:ordln_deleted_flag].model_field_uid => false
           },
           '2' => {
             'ordln_line_number' => 2,
@@ -715,13 +731,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
             'ordln_unit_of_measure' => 'FT',
             'ordln_ppu' => '7.0',
             cdefs[:ordln_custom_article_description].model_field_uid => 'Another custom desc',
-            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '678.9'
+            cdefs[:ordln_vendor_inland_freight_amount].model_field_uid => '678.9',
+            cdefs[:ordln_deleted_flag].model_field_uid => true
           }
         }
       }
     end
     describe '#build_from_hash' do
-
       it 'should create order data from hash' do
         h = JSON.parse(CoreModule::ORDER.entity_json(base_order))
 
@@ -738,21 +754,36 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od.business_rule_state).to eq 'Fail'
         expect(od.approval_status).to eq 'Approved'
         expect(od.order_type).to eq "Type"
+        expect(od.fingerprint_hash['lines'].length).to eq 2
+        expect(od.fingerprint_hash['lines'][1][cdefs[:ordln_deleted_flag].model_field_uid]).to eq false
+        expect(od.fingerprint_hash['lines'][2][cdefs[:ordln_deleted_flag].model_field_uid]).to eq true
+      end
+
+      it 'should handle nil values for detail fingerprints when constructing hash' do
+        # These should be interpreted as false rather than nil.
+        base_order.order_lines[0].update_custom_value!(cdefs[:ordln_deleted_flag], nil)
+        base_order.order_lines[1].update_custom_value!(cdefs[:ordln_deleted_flag], nil)
+
+        h = JSON.parse(CoreModule::ORDER.entity_json(base_order))
+        od = order_data_klass.build_from_hash(h)
+
+        expect(od.fingerprint_hash['lines'][1][cdefs[:ordln_deleted_flag].model_field_uid]).to eq false
+        expect(od.fingerprint_hash['lines'][2][cdefs[:ordln_deleted_flag].model_field_uid]).to eq false
       end
     end
 
     describe '#lines_with_changed_price' do
       it "should return lines added" do
-        od = order_data_klass.new(base_fingerprint_hash)
+        od = order_data_instance(base_fingerprint_hash)
         od.price_map = {1=>5,2=>7}
-        nd = order_data_klass.new(base_fingerprint_hash)
+        nd = order_data_instance(base_fingerprint_hash)
         nd.price_map = {1=>5,2=>7,3=>2}
         expect(order_data_klass.lines_with_changed_price(od,nd)).to eq [3]
       end
       it "should return lines changed" do
-        od = order_data_klass.new(base_fingerprint_hash)
+        od = order_data_instance(base_fingerprint_hash)
         od.price_map = {1=>5,2=>7}
-        nd = order_data_klass.new(base_fingerprint_hash)
+        nd = order_data_instance(base_fingerprint_hash)
         nd.price_map = {1=>5,2=>4}
         expect(order_data_klass.lines_with_changed_price(od,nd)).to eq [2]
       end
@@ -760,7 +791,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
     describe '#has_blank_defaults?' do
       let :order_data do
-        od = order_data_klass.new(base_fingerprint_hash)
+        od = order_data_instance(base_fingerprint_hash)
         od.country_of_origin = 'CN'
         od
       end
@@ -806,25 +837,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         allow(r).to receive(:approval_status).and_return ''
         allow(r).to receive(:business_rule_state).and_return 'Pass'
         allow(r).to receive(:planned_handover_date).and_return "2017-01-02"
+        allow(r).to receive(:booking_confirmed_date).and_return "2018-01-02"
         r
       end
       let (:order) {
         order = Factory(:order, approval_status: "")
-        order.update_custom_value! handover_cdef, Date.new(2017,1,2)
+        order.update_custom_value! cdefs[:ord_planned_handover_date], Date.new(2017,1,2)
+        order.update_custom_value! cdefs[:ord_shipment_booking_confirmed_date], Date.new(2018,1,2)
         allow(order).to receive(:business_rules_state).and_return "Pass"
         order
       }
 
-      let (:handover_uid) { 
-        handover_cdef.model_field_uid
-      }
-
-      let (:handover_cdef) {
-        described_class::OrderData.prep_custom_definitions([:ord_planned_handover_date])[:ord_planned_handover_date]
+      let (:cdefs) {
+        described_class::OrderData.prep_custom_definitions([:ord_planned_handover_date, :ord_shipment_booking_confirmed_date])
       }
 
       before :each do
-        allow(described_class::OrderData).to receive(:planned_handover_date_uid).and_return handover_uid
+        # This is a workaround for the class level caching done in order data
+        allow(described_class::OrderData).to receive(:planned_handover_date_uid).and_return cdefs[:ord_planned_handover_date].model_field_uid
+        allow(described_class::OrderData).to receive(:booking_confirmed_date_uid).and_return cdefs[:ord_shipment_booking_confirmed_date].model_field_uid
       end
 
       it 'should return false if no changes' do
@@ -879,7 +910,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         od = make_data('old-data')
         expect(od).to receive(:planned_handover_date).and_return "2017-01-03"
         expect(nd).to receive(:planned_handover_date).and_return "2017-01-03"
-        order.find_and_set_custom_value handover_cdef, Date.new(2017, 1, 4)
+        order.find_and_set_custom_value cdefs[:ord_planned_handover_date], Date.new(2017, 1, 4)
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
+      end
+
+      it 'returns true if booking confirmed date changes' do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:booking_confirmed_date).and_return "2017-01-03"
+        expect(nd).to receive(:booking_confirmed_date).and_return "2017-01-03"
+        order.find_and_set_custom_value cdefs[:ord_shipment_booking_confirmed_date], Date.new(2017, 1, 4)
         expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
       
@@ -889,13 +929,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       it 'should return lines in both hashes with different key values' do
         old_fingerprint = base_fingerprint_hash.deep_dup
         old_fingerprint['lines']['3'] = {ordln_ppu: "100"}
-        old_data = order_data_klass.new(old_fingerprint)
+        old_data = order_data_instance(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
         new_fingerprint['lines']['2'] = {ordln_ppu: "1000"}
         new_fingerprint['lines']['4'] = {ordln_ppu: "90"}
-        new_data = order_data_klass.new(new_fingerprint)
+        new_data = order_data_instance(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
         new_data.variant_map = old_data.variant_map
         # don't return line 1 because it stayed the same
@@ -905,49 +945,48 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       end
       it 'should return all lines in new fingerprint if ship from address changed' do
         old_fingerprint = base_fingerprint_hash.deep_dup
-        old_data = order_data_klass.new(old_fingerprint)
+        old_data = order_data_instance(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
         new_fingerprint['lines']['4'] = {ordln_ppu: "90"}
-        new_data = order_data_klass.new(new_fingerprint)
+        new_data = order_data_instance(new_fingerprint)
         new_data.ship_from_address = 'other'
         new_data.variant_map = old_data.variant_map
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','2','4']
       end
       it 'should not return lines where the only change to the ship from address is whitespace' do
         old_fingerprint = base_fingerprint_hash.deep_dup
-        old_data = order_data_klass.new(old_fingerprint)
+        old_data = order_data_instance(old_fingerprint)
         old_data.ship_from_address = 'abcdef'
         old_data.variant_map = {1=>'10',2=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
-        new_data = order_data_klass.new(new_fingerprint)
+        new_data = order_data_instance(new_fingerprint)
         new_data.ship_from_address = " ab c\nde\r\nf"
         new_data.variant_map = old_data.variant_map.clone
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
       end
       it 'should return lines with different variants' do
         old_fingerprint = base_fingerprint_hash.deep_dup
-        old_data = order_data_klass.new(old_fingerprint)
+        old_data = order_data_instance(old_fingerprint)
         old_data.ship_from_address = 'abc'
         old_data.variant_map = {'1'=>'10','2'=>'11'}
         new_fingerprint = base_fingerprint_hash.deep_dup
-        new_data = order_data_klass.new(new_fingerprint)
+        new_data = order_data_instance(new_fingerprint)
         new_data.ship_from_address = old_data.ship_from_address
         new_data.variant_map = {'1'=>'OTHER','2'=>'11','3'=>'NEW'}
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq ['1','3']
       end
-      it "does not reset pc approval if Custom Article Description or Freight Amount changes" do
+      it "does not reset pc approval if Custom Article Description, Freight Amount or Deleted Flag changes" do
         old_fingerprint = base_fingerprint_hash.deep_dup
-        old_data = order_data_klass.new(old_fingerprint)
-        old_data.ship_from_address = 'abc'
+        old_data = order_data_instance(old_fingerprint)
         old_data.variant_map = {1=>'10',2=>'11'}
         
         new_fingerprint = base_fingerprint_hash.deep_dup
         new_fingerprint['lines']['1'][cdefs[:ordln_custom_article_description].model_field_uid] = "Changed"
         new_fingerprint['lines']['2'][cdefs[:ordln_vendor_inland_freight_amount].model_field_uid] = "987.65"
-        new_data = order_data_klass.new(new_fingerprint)
-        new_data.ship_from_address = " abc"
+        new_fingerprint['lines']['1'][cdefs[:ordln_deleted_flag].model_field_uid] = true
+        new_data = order_data_instance(new_fingerprint)
         new_data.variant_map = {1=>'10',2=>'11'}
 
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
@@ -980,13 +1019,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe "all_logic_steps" do
     it "returns all logic steps to use" do
       expect(subject.all_logic_steps).to eq [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
-                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+                    :price_revised_dates, :reset_po_cancellation, :record_created_data, :update_change_log, :generate_ll_xml]
     end
 
     it "excludes approval steps if approval resets are disabled" do
       expect(subject).to receive(:disable_approval_resets?).and_return true
       expect(subject.all_logic_steps).to eq [:set_defaults, :planned_handover, :forecasted_handover, :autoflow_approvals,
-                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+                    :price_revised_dates, :reset_po_cancellation, :record_created_data, :update_change_log, :generate_ll_xml]
     end
   end
 
@@ -998,6 +1037,38 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     it "returns true if configuration has resets disabled" do
       expect(MasterSetup).to receive(:config_true?).with(:disable_lumber_approval_resets).and_return true
       expect(subject.disable_approval_resets?).to eq true
+    end
+  end
+
+  describe "record_po_created_data" do 
+    let (:old_data) {
+      instance_double(order_data_klass)
+    }
+
+    let (:new_data) {
+      instance_double(order_data_klass)
+    }
+
+    let (:order) {
+      instance_double(Order)
+    }
+
+    it "proxies call to LumberOrderCreatedDataRecorder" do
+      old_hash = {old: "hash"}
+      new_hash = {new: "hash"}
+      expect_any_instance_of(OpenChain::CustomHandler::LumberLiquidators::LumberOrderCreatedDataRecorder).to receive(:record_data).with(order, old_hash, new_hash).and_return "value"
+      expect(old_data).to receive(:snapshot).and_return old_hash
+      expect(new_data).to receive(:snapshot).and_return new_hash
+
+      expect(subject.record_po_created_data(order, old_data, new_data)).to eq "value"
+    end
+
+    it "handles nil old data" do
+      new_hash = {new: "hash"}
+      expect_any_instance_of(OpenChain::CustomHandler::LumberLiquidators::LumberOrderCreatedDataRecorder).to receive(:record_data).with(order, nil, new_hash).and_return "value"
+      expect(new_data).to receive(:snapshot).and_return new_hash
+
+      expect(subject.record_po_created_data(order, nil, new_data)).to eq "value"
     end
   end
 

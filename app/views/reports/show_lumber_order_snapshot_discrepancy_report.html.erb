@@ -1,0 +1,39 @@
+<% content_for :javascript do -%>
+  $(function() {
+    $("#frm_run").submit(function() {
+      var r = true;
+      start_date = $("input[name='snapshot_range_start_date']").val()
+      if (start_date.length > 0 && start_date.length < 10) {
+        r = false;
+      }
+      end_date = $("input[name='snapshot_range_end_date']").val()
+      if (end_date.length > 0 && end_date.length < 10) {
+        r = false;
+      }
+      if(!r) {
+        window.alert("Invalid date values have been entered.");
+        return false;
+      }
+    });
+  });
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Lumber Liquidators Order Snapshot Discrepancy report</h2>
+<%=form_tag reports_run_lumber_order_snapshot_discrepancy_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row" style="line-height: 2.5;white-space: nowrap">
+    <div class="col-md-2"><label class="control-label" for="snapshot_range_start_date">Snapshot Date on or after</label></div>
+    <div class="col-md-2"><%=text_field_tag :snapshot_range_start_date, params[:snapshot_range_start_date], :class=>'form-control isdate'%></div>
+    <div class="col-md-2"><label class="control-label" for="snapshot_range_end_date">and before</label></div>
+    <div class="col-md-2"><%=text_field_tag :snapshot_range_end_date, params[:snapshot_range_end_date], :class=>'form-control isdate' %></div>
+  </div>
+  <div class="row" style="line-height: 2.5;white-space: nowrap">
+    <div class="col-md-2"><label class="control-label" for="open_orders_only">Open orders only?</label></div>
+    <div class="col-md-2"><%=check_box_tag :open_orders_only, params[:open_orders_only] %></div>
+  </div>
+</div>
+<%end%>
+</div>

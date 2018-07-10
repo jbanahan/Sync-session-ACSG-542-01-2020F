@@ -6,6 +6,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_order_pdf_generator
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_autoflow_order_approver'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_order_xml_generator'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_order_created_data_recorder'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderChangeComparator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
@@ -27,13 +28,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.all_logic_steps
     steps = [:set_defaults, :planned_handover, :forecasted_handover, :vendor_approvals, :compliance_approvals, :autoflow_approvals,
-                    :price_revised_dates, :reset_po_cancellation, :update_change_log, :generate_ll_xml]
+                    :price_revised_dates, :reset_po_cancellation, :record_created_data, :update_change_log, :generate_ll_xml]
     approvals_disabled = disable_approval_resets?
     steps.reject {|k| approvals_disabled && [:vendor_approvals, :compliance_approvals].include?(k)}
   end
 
   def self.execute_business_logic id, old_data, new_data, logic_steps = nil
-    ord = Order.find_by_id id
+    ord = find_order(id)
     return unless ord
     Lock.with_lock_retry(ord) do 
       logic_steps = all_logic_steps if logic_steps.blank?
@@ -76,6 +77,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         when :reset_po_cancellation
           logic_name = "PO Cancellation Reset"
           updated = reset_po_cancellation(ord)
+        when :record_created_data
+          logic_name = "PO Created Data Recorder"
+          updated = record_po_created_data(ord, old_data, new_data)
         when :update_change_log
           logic_name = "Change Log"
           updated = update_change_log(ord,old_data,new_data)
@@ -98,6 +102,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         create_snapshot(ord, User.integration, updated_by)
       end
     end
+  end
+
+  def self.find_order id
+    Order.where(id: id).first
   end
 
   def self.create_snapshot order, user, updated_list
@@ -248,6 +256,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     updated_change_log
   end
 
+  def self.record_po_created_data ord, old_data, new_data
+    OpenChain::CustomHandler::LumberLiquidators::LumberOrderCreatedDataRecorder.new.record_data(ord, old_data.try(:snapshot), new_data.snapshot)
+  end
+
   def self.append_change_log ord, new_log_entries
     return false if new_log_entries.blank?
 
@@ -316,21 +328,24 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     SAP_EXTRACT_DATE_UID ||= []
     COUNTRY_ORIGIN_UID ||= []
     ORDER_TYPE_UID ||= []
+    BOOKING_CONFIRMED_DATE_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
-    attr_reader :fingerprint, :fingerprint_hash
+    attr_reader :fingerprint, :fingerprint_hash, :snapshot
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
-      :approval_status, :business_rule_state, :country_of_origin, :order_type
+      :approval_status, :business_rule_state, :country_of_origin, :order_type, 
+      :booking_confirmed_date
 
-    def initialize fp_hash
+    def initialize fp_hash, snapshot
       @fingerprint_hash = fp_hash
       @fingerprint = fp_hash.to_json
+      @snapshot = snapshot
       @cdefs = self.class.prep_custom_definitions([:ord_country_of_origin])
     end
 
     def self.build_from_hash entity_hash
-      @cdefs = prep_custom_definitions([:ordln_custom_article_description, :ordln_vendor_inland_freight_amount])
+      @cdefs = prep_custom_definitions([:ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag, :ord_shipment_booking_confirmed_date])
       fingerprint_hash = {'lines'=>{}}
       order_hash = entity_hash['entity']['model_fields']
       [:ord_ord_num, :ord_window_start, :ord_window_end, :ord_currency, :ord_payment_terms, :ord_terms, :ord_fob_point].each do |uid|
@@ -343,9 +358,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           next unless child['entity']['core_module'] == 'OrderLine'
           child_hash = child['entity']['model_fields']
           line_fp_hash = {}
-          [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, @cdefs[:ordln_custom_article_description].model_field_uid, @cdefs[:ordln_vendor_inland_freight_amount].model_field_uid].each do |uid|
-            line_fp_hash[uid] = child_hash[uid.to_s]
+          # Make sure new fields added to the child fingerprints account for older data not having values.  If nil is
+          # not handled here, every detail could be accidentally forced into vendor review.
+          [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, @cdefs[:ordln_custom_article_description].model_field_uid, @cdefs[:ordln_vendor_inland_freight_amount].model_field_uid, @cdefs[:ordln_deleted_flag].model_field_uid].each do |uid|
+            if uid == @cdefs[:ordln_deleted_flag].model_field_uid
+              val = child_hash[uid.to_s].to_s.to_boolean
+              line_fp_hash[uid] = val.nil? ? false : val
+            else
+              line_fp_hash[uid] = child_hash[uid.to_s]
+            end
           end
+
           line_number = child_hash['ordln_line_number']
           fingerprint_hash['lines'][line_number] = line_fp_hash
           variant_map[line_number] = child_hash['ordln_varuid']
@@ -354,7 +377,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
 
       # Create return object
-      od = self.new(fingerprint_hash)
+      od = self.new(fingerprint_hash, entity_hash)
       od.ship_window_start = order_hash['ord_window_start']
       od.ship_window_end = order_hash['ord_window_end']
       od.ship_from_address = order_hash['ord_ship_from_full_address']
@@ -367,6 +390,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.sap_extract_date =  sap_extract_str ? DateTime.iso8601(sap_extract_str) : nil
       od.variant_map = variant_map
       od.price_map = price_map
+      od.booking_confirmed_date = order_hash[booking_confirmed_date_uid]
 
       return od
     end
@@ -391,13 +415,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       ORDER_TYPE_UID.first
     end
 
+    def self.booking_confirmed_date_uid
+      prep_class_cust_defs
+      BOOKING_CONFIRMED_DATE_UID.first
+    end
+
     def self.prep_class_cust_defs
       if PLANNED_HANDOVER_DATE_UID.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type])
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date])
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
         SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
         COUNTRY_ORIGIN_UID << cdefs[:ord_country_of_origin].model_field_uid
         ORDER_TYPE_UID << cdefs[:ord_type].model_field_uid
+        BOOKING_CONFIRMED_DATE_UID << cdefs[:ord_shipment_booking_confirmed_date].model_field_uid
       end
     end
 
@@ -424,7 +454,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       lines_to_check = new_hash.keys & old_hash.keys
       need_reset = lines_to_check.reject do |line_number| 
         # only the following fields should be considered as pc approval resets - [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu]
-        [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu].all? do |uid| 
+        [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu].all? do |uid|
           old_hash[line_number][uid] == new_hash[line_number][uid]
         end
       end
@@ -474,6 +504,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return true if snapshot_or_entity_value_changed?(order, planned_handover_date_uid, old_data.planned_handover_date, new_data.planned_handover_date)
       return true if snapshot_or_entity_value_changed?(order, :ord_approval_status, old_data.approval_status, new_data.approval_status)
       return true if snapshot_or_entity_value_changed?(order, :ord_rule_state, old_data.business_rule_state, new_data.business_rule_state)
+      return true if snapshot_or_entity_value_changed?(order, booking_confirmed_date_uid, old_data.booking_confirmed_date, new_data.booking_confirmed_date)
 
       return false
     end

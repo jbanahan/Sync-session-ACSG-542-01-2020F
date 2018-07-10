@@ -5,6 +5,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_h
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCustomApiResponse
 
   def self.customize_order_response order, user, order_hash, params
+    order_hash['us_country_id'] = Country.where(iso_code: "US").first.try(:id)
     order_hash['statement'] = OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.carb_statement(order)
   end
 

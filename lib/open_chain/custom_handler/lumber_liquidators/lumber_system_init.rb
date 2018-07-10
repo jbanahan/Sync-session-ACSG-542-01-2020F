@@ -24,6 +24,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSy
     require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_api_response'
     require 'open_chain/custom_handler/lumber_liquidators/lumber_password_validation_registry'
     require 'open_chain/custom_handler/lumber_liquidators/lumber_shipment_registry'
+    require 'open_chain/custom_handler/lumber_liquidators/lumber_order_booked_data_recorder_comparator'
+    require 'open_chain/custom_handler/lumber_liquidators/lumber_order_shipped_data_recorder_comparator'
+    require 'open_chain/custom_handler/lumber_liquidators/lumber_shipment_order_data_recorder_comparator'
 
     OpenChain::CustomHandler::CustomViewSelector.register_handler OpenChain::CustomHandler::LumberLiquidators::LumberViewSelector
     OpenChain::Registries::OrderAcceptanceRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance
@@ -44,7 +47,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSy
       OpenChain::CustomHandler::LumberLiquidators::LumberVgmShipmentComparator,
       OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentComparator,
       OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparator,
-      OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipmentComparator
+      OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipmentComparator,
+      OpenChain::CustomHandler::LumberLiquidators::LumberOrderBookedDataRecorderComparator,
+      OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataRecorderComparator,
+      OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRecorderComparator
     ].each {
       |c| OpenChain::EntityCompare::ComparatorRegistry.register c
     }

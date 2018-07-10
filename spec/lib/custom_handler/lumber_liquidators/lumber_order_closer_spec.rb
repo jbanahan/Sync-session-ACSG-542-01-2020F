@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
     it 'should open closed orders' do
       o = Factory(:order,order_number:'12345',closed_at:Time.now)
       keep_closed = Factory(:order,closed_at:Time.now)
-      described_class.open_closed_orders ['12345'], Factory(:user)
+      expect(described_class.open_closed_orders ['12345'], Factory(:user)).to eq 1
 
       o.reload
       expect(o.closed_at).to be_nil
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
     end
     
     it 'should close open orders not on list' do
-      described_class.close_orders ['12345'], @effective_date, Factory(:user)
+      expect(described_class.close_orders ['12345'], @effective_date, Factory(:user)).to eq 1
 
       @keep_open.reload
       expect(@keep_open.closed_at).to be_nil

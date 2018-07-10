@@ -7,6 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     let (:user) { User.new }
     let (:hash) { {id: nil} }
     let (:params) { {} }
+    let! (:us) { Factory(:country, iso_code: "US") }
 
     it "adds carb statement" do
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator).to receive(:carb_statement).with(order).and_return "carb statement"
@@ -15,6 +16,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
       subject.customize_order_response order, user, hash, params
 
       expect(hash).to include({"statement" => "carb statement"})
+      expect(hash).to include({"us_country_id" => us.id})
     end
   end
 

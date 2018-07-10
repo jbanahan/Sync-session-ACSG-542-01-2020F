@@ -5,7 +5,7 @@ describe ValidationRuleEntryHtsMatchesPo do
   describe "run_child_validation" do
     before :each do
       # Create the rule here so we also force creation of the custom def done via its constructor
-      @cust_def = CustomDefinition.create!(label: "Part Number", module_type: 'Product', data_type: :string)
+      @cust_def = subject.custom_definitions[:prod_part_number]
 
       importer = Factory(:importer)
 
@@ -21,7 +21,6 @@ describe ValidationRuleEntryHtsMatchesPo do
         )
       )
       @product = tariff_record.classification.product
-      @cust_def = CustomDefinition.where(label: "Part Number").first
       @product.update_custom_value! @cust_def, @invoice_line.part_number
 
 

@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent,
       :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description,
       :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number,
-      :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg
+      :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg, :ordln_deleted_flag
     ]
     @opts = opts
   end
@@ -80,14 +80,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
         header_ship_to = ship_to_address(base,@imp)
 
-        lines_on_shipment = o.order_lines.find {|ol| !ol.booking_lines.empty? || !ol.shipment_lines.empty?}
 
         order_lines_processed = []
-        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, lines_on_shipment).line_number.to_i}
+        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to).line_number.to_i}
+        # Look for existing order lines that are not present in the current XML and deal with them.
         o.order_lines.each {|ol|
           if !order_lines_processed.include?(ol.line_number.to_i)
-            if lines_on_shipment
-              raise OnShipmentError, "Line #{ol.line_number} can't be deleted, it's already on a shipment."
+            # If the line is on a shipment already, we can't delete it.  Instead, its quantity should be zeroed and
+            # its deleted flag flipped to true.  This represents a "soft delete."  If the order line has no shipment
+            # connection, it can simply be deleted, however.  There's no need to keep it around.
+            if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
+              ol.quantity = 0
+              ol.update_custom_value!(@cdefs[:ordln_deleted_flag], true)
             else
               ol.mark_for_destruction
             end
@@ -112,9 +116,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         validate_line_totals(o,base)
 
         setup_folders o
+        o.create_snapshot(@user, nil, @opts[:key])
         o
       end
-      order.create_snapshot(@user, nil, @opts[:key]) if order
     rescue OnShipmentError
       # mailer here
       send_on_shipment_error dom, order_number, $!.message
@@ -462,16 +466,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el, importer, header_ship_to, lines_on_shipment
+    def process_line order, line_el, importer, header_ship_to
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
       if !ol
-        if lines_on_shipment
-          raise OnShipmentError, "Cannot add line #{line_number} because other lines from this order are already on a shipment."
-        else
-          ol = order.order_lines.build(line_number:line_number,total_cost_digits:2)
-        end
+        ol = order.order_lines.build(line_number:line_number,total_cost_digits:2)
       end
 
       product = find_product(line_el)
@@ -486,7 +486,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         price_per_unit = extended_cost / qty
       end
 
-      validate_line_not_changed(ol,product,qty,uom,price_per_unit) if lines_on_shipment
+      validate_line_not_changed(ol,product,qty,uom,price_per_unit) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
 
       ol.price_per_unit = price_per_unit
       ol.product = product
@@ -528,6 +528,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], description
       ol.find_and_set_custom_value @cdefs[:ordln_gross_weight_kg], gross_weight(line_el)
+
+      # Default to false.  Although it's unlikely to actually happen, this prevents an "undeleted" line from being
+      # stuck in "deleted" status.
+      ol.find_and_set_custom_value @cdefs[:ordln_deleted_flag], false
 
       inland_freight_el = get_inland_freight_element line_el
       if inland_freight_el
@@ -575,9 +579,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     def validate_line_not_changed ol, product, qty, uom, price_per_unit
       changed = false
       changed = true if ol.product != product
-      changed = true if ol.quantity != qty
-      changed = true if ol.unit_of_measure != uom
-      changed = true if ol.price_per_unit != price_per_unit.round(2)
+      # This error message is a bit vague, but the product change condition is supposedly not even allowed by SAP.
+      # We opted to leave it alone, even after the number of checks this method did was reduced to one in 04/2018. - WBH
       raise OnShipmentError, "Order Line #{ol.line_number} already on a shipment." if changed
     end
 

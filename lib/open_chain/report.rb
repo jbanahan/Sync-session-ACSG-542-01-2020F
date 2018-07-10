@@ -5,3 +5,4 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_actualized_charges_
 require 'open_chain/custom_handler/polo/polo_jira_entry_report'
 require 'open_chain/custom_handler/ascena/ascena_duty_savings_report'
 require 'open_chain/custom_handler/ascena/ascena_vendor_scorecard_report'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_order_snapshot_discrepancy_report'

@@ -335,6 +335,111 @@ class CoreModule
     nil
   end
 
+  def self.module_abbreviation core_module
+    case core_module
+    when ORDER
+      return "ord"
+    when ORDER_LINE
+      return "ordln"
+    when COMMENT
+      return "cmt"
+    when GROUP
+      return "grp"
+    when FOLDER
+      return "fld"
+    when SECURITY_FILING_LINE
+      return "sfln"
+    when SECURITY_FILING
+      return "sf"
+    when CONTAINER
+      return "con"
+    when CARTON_SET
+      return "cs"
+    when SHIPMENT_LINE
+      return "shpln"
+    when BOOKING_LINE
+      return "bkln"
+    when SHIPMENT
+      return "shp"
+    when SALE_LINE
+      return "soln"
+    when SALE
+      return "sale"
+    when DELIVERY_LINE
+      return "delln"
+    when DELIVERY
+      return "del"
+    when PLANT_VARIANT_ASSIGNMENT
+      return "pva"
+    when VARIANT
+      return "var"
+    when TARIFF
+      return "hts"
+    when CLASSIFICATION
+      return "class"
+    when PRODUCT
+      return "prod"
+    when BROKER_INVOICE_LINE
+      return "bi_line"
+    when BROKER_INVOICE
+      return "bi"
+    when COMMERCIAL_INVOICE_LACEY
+      return "lcy"
+    when COMMERCIAL_INVOICE_TARIFF
+      return "cit"
+    when COMMERCIAL_INVOICE_LINE
+      return "cil"
+    when COMMERCIAL_INVOICE
+      return "ci"
+    when ENTRY
+      return "ent"
+    when ENTRY_COMMENT
+      return "ent_com"
+    when OFFICIAL_TARIFF
+      return "ot"
+    when PLANT_PRODUCT_GROUP_ASSIGNMENT
+      return "ppga"
+    when PLANT
+      return "plant"
+    when COMPANY
+      return "cmp"
+    when DRAWBACK_CLAIM
+      return "dc"
+    when SUMMARY_STATEMENT
+      return "sum"
+    when VFI_INVOICE
+      return "vi"
+    when VFI_INVOICE_LINE
+      return "vi_line"
+    when PRODUCT_VENDOR_ASSIGNMENT
+      return "prodven"
+    when ATTACHMENT
+      return "att"
+    when ADDRESS
+      return "add"
+    when TRADE_LANE
+      return "lane"
+    when TRADE_PREFERENCE_PROGRAM
+      return "tpp"
+    when TPP_HTS_OVERRIDE
+      return "tpphtso"
+    when PRODUCT_RATE_OVERRIDE
+      return "pro"
+    when CUSTOMS_DAILY_STATEMENT_ENTRY_FEE
+      return "dsef"
+    when CUSTOMS_DAILY_STATEMENT_ENTRY
+      return "dse"
+    when CUSTOMS_DAILY_STATEMENT
+      return "cds"
+    when CUSTOMS_MONTHLY_STATEMENT
+      return "cms"
+    when RUN_AS_SESSION
+      return "ras"
+    else
+      raise "CoreModule '#{core_module.try(:label)}' does not have a prefix set up."
+    end
+  end
+
   private
 
   def self.snapshot_lambda core_module

@@ -213,10 +213,27 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
         :export_lambda => lambda {|obj| obj.containers.map(&:container_number).sort.join("\n ") },
         :qualified_field_name => "(SELECT GROUP_CONCAT(c.container_number ORDER BY c.container_number SEPARATOR '\n ') FROM containers AS c INNER JOIN shipments s ON s.id = c.shipment_id WHERE shipments.id = c.shipment_id )"
       }],
+      [86, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}],
       [86, :shp_booking_voyage, :booking_voyage, "Booking Voyage", {data_type: :string}],
       [87, :shp_packing_list_sent_date, :packing_list_sent_date, "Packing List Sent Date", {data_type: :datetime}],
       [88, :shp_vgm_sent_date, :vgm_sent_date, "VGM Sent Date", {data_type: :datetime}],
-      [89, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}]
+      [89, :shp_warning_overridden_at, :warning_overridden_at, "Warning Overridden At", {data_type: :datetime, read_only: true}],
+      [1800, :shp_empty_out_at_origin_date, :empty_out_at_origin_date, 'Empty Out Gate at Origin', {data_type: :datetime}],
+      [1801, :shp_empty_return_date, :empty_return_date, 'Empty Return', {data_type: :datetime}],
+      [1802, :shp_container_unloaded_date, :container_unloaded_date, 'Container Unloaded', {data_type: :datetime}],
+      [1803, :shp_carrier_released_date, :carrier_released_date, 'Carrier Released', {data_type: :datetime}],
+      [1804, :shp_customs_released_carrier_date, :customs_released_carrier_date, 'Customs Released-Carrier', {data_type: :datetime}],
+      [1805, :shp_available_for_delivery_date, :available_for_delivery_date, 'Available for Delivery', {data_type: :datetime}],
+      [1806, :shp_full_ingate_date, :full_ingate_date, 'Full Ingate', {data_type: :datetime}],
+      [1807, :shp_full_out_gate_discharge_date, :full_out_gate_discharge_date, 'Full Out Gate at Port of Discharge', {data_type: :datetime}],
+      [1808, :shp_on_rail_destination_date, :on_rail_destination_date, 'On Rail-Destination', {data_type: :datetime}],
+      [1809, :shp_full_container_discharge_date, :full_container_discharge_date, 'Full Container Discharge', {data_type: :datetime}],
+      [1810, :shp_arrive_at_transship_port_date, :arrive_at_transship_port_date, 'Arrive at Transship Port', {data_type: :datetime}],
+      [1811, :shp_barge_depart_date, :barge_depart_date, 'Barge Depart', {data_type: :datetime}],
+      [1812, :shp_barge_arrive_date, :barge_arrive_date, 'Barge Arrive', {data_type: :datetime}],
+      [1813, :shp_fcr_created_final_date, :fcr_created_final_date, 'FCR Created Final', {data_type: :datetime}],
+      [1814, :shp_bol_date, :bol_date, 'BOL Date', {data_type: :datetime}],
+      [1815, :shp_last_exported_from_source, :last_exported_from_source, 'System Extract Date', {data_type: :datetime}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

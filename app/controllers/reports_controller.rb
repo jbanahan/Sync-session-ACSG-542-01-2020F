@@ -813,6 +813,45 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_lumber_order_snapshot_discrepancy_report
+    if OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
+  def run_lumber_order_snapshot_discrepancy_report
+    klass = OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport
+    if klass.permission? current_user
+      open_orders_only = params[:open_orders_only].to_s.to_boolean
+      snapshot_range_start_date = params[:snapshot_range_start_date]
+      snapshot_range_end_date = params[:snapshot_range_end_date]
+
+      if !open_orders_only && (snapshot_range_start_date.to_s.strip.empty? || snapshot_range_end_date.to_s.strip.empty?)
+        error_redirect "You must enter a snapshot start and end date, or choose to include open orders only."
+      else
+        message_chunks = []
+        report_args = { open_orders_only:open_orders_only }
+        if open_orders_only
+          message_chunks << "Open orders only."
+        end
+        if snapshot_range_start_date
+          message_chunks << "Snapshot Date on or after #{snapshot_range_start_date}."
+          report_args[:snapshot_range_start_date] = snapshot_range_start_date
+        end
+        if snapshot_range_end_date
+          message_chunks << "Snapshot Date before #{snapshot_range_end_date}."
+          report_args[:snapshot_range_end_date] = snapshot_range_end_date
+        end
+        message = message_chunks.join(" ")
+        run_report "Order Snapshot Discrepancy Report", OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport, report_args, [message]
+      end
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
   def show_customer_year_over_year_report
     if OpenChain::Report::CustomerYearOverYearReport.permission? current_user
       @us_importers = current_user.available_importers.where('length(alliance_customer_number)>0').order("name ASC")

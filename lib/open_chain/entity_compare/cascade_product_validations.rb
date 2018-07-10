@@ -1,4 +1,5 @@
 module OpenChain; module EntityCompare; class CascadeProductValidations
+  
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='Product'
 
@@ -7,15 +8,15 @@ module OpenChain; module EntityCompare; class CascadeProductValidations
     # handle this scenario
     return if p.nil?
 
-    validate_connected_orders p
-    validate_connected_shipments p
+    validate_connected_orders(p) unless MasterSetup.get.custom_feature?("Disable Cascading Product to Order Validations")
+    validate_connected_shipments(p) unless MasterSetup.get.custom_feature?("Disable Cascading Product to Shipment Validations")
   end
 
 
   def self.validate_connected_orders product
     # Do this with batched lookups, otherwise there's a possibility of 10's of thousands of orders
     # flooding in here and crashing the queue
-    Order.joins(:order_lines).where(order_lines: {product_id: product.id}).uniq.find_each do |order|
+    Order.joins(:order_lines).where(order_lines: {product_id: product.id}).where(closed_at: nil).uniq.find_each do |order|
       BusinessValidationTemplate.create_results_for_object! order
     end
   end
@@ -23,7 +24,7 @@ module OpenChain; module EntityCompare; class CascadeProductValidations
   def self.validate_connected_shipments product
     # Do this with batched lookups, otherwise there's a possibility of 10's of thousands of shipments
     # flooding in here and crashing the queue
-    Shipment.joins(:shipment_lines).where(shipment_lines: {product_id: product.id}).uniq.find_each do |shipment|
+    Shipment.joins(:shipment_lines).where(shipment_lines: {product_id: product.id}).where(canceled_date: nil).uniq.find_each do |shipment|
       BusinessValidationTemplate.create_results_for_object! shipment
     end
   end

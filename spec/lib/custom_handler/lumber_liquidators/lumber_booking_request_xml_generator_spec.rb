@@ -43,7 +43,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         order_number:'ORDNUM1',
         fob_point:'BRIOA',
         vendor:vendor,
-        importer:vendor
+        importer:vendor,
+        ship_from: ship_from
       )
       ol = OrderLine.new(
         line_number:1,
@@ -86,7 +87,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         booking_mode:'Air',
         requested_equipment:"2 20STD\n3 40HQ",
         vendor:vendor,
-        ship_from:ship_from,
         booking_requested_by:user
       )
 
@@ -236,7 +236,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     it "handles missing address content, xrefs, nil-sensitive shipment data, order FOB point" do
       shipment.update_attributes!(cargo_ready_date:nil,ship_from:nil,vendor:nil,booking_requested_by:nil,requested_equipment:nil)
 
-      order1.update_attributes!(fob_point:nil)
+      order1.update_attributes!(fob_point:nil, ship_from: nil)
       order1.order_lines.first.update_attributes!(ship_to:nil)
 
       xml = described_class.generate_xml(shipment)
@@ -266,8 +266,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     it "handles missing orders, order lines, products, country" do
-      ship_from.update_attributes!(country:nil)
-
       shipment.booking_lines.each do |booking_line|
         booking_line.update_attributes!(order_line:nil,order:nil,product:nil)
       end
@@ -289,14 +287,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
       expect(elem_item_1.text('POLineNumber')).to be_nil
 
       elem_party_arr = elem_shipping_order.elements.to_a('PartyInfo')
-      expect(elem_party_arr.size).to eq(2)
+      expect(elem_party_arr.size).to eq(1)
 
       elem_party_1 = elem_party_arr[0]
       expect(elem_party_1.text('Type')).to eq('Supplier')
-
-      elem_party_2 = elem_party_arr[1]
-      expect(elem_party_2.text('Type')).to eq('Factory')
-      expect(elem_party_2.text('CountryName')).to be_nil
     end
 
     it "handles missing booking lines" do
@@ -313,13 +307,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
       expect(elem_item_arr.size).to eq(0)
 
       elem_party_arr = elem_shipping_order.elements.to_a('PartyInfo')
-      expect(elem_party_arr.size).to eq(2)
+      expect(elem_party_arr.size).to eq(1)
 
       elem_party_1 = elem_party_arr[0]
       expect(elem_party_1.text('Type')).to eq('Supplier')
-
-      elem_party_2 = elem_party_arr[1]
-      expect(elem_party_2.text('Type')).to eq('Factory')
     end
   end
 

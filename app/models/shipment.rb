@@ -3,6 +3,11 @@
 # Table name: shipments
 #
 #  arrival_port_date                :date
+#  arrive_at_transship_port_date    :datetime
+#  available_for_delivery_date      :datetime
+#  barge_arrive_date                :datetime
+#  barge_depart_date                :datetime
+#  bol_date                         :datetime
 #  booked_quantity                  :decimal(11, 2)
 #  booking_approved_by_id           :integer
 #  booking_approved_date            :datetime
@@ -34,6 +39,7 @@
 #  cargo_on_hand_date               :date
 #  cargo_ready_date                 :date
 #  carrier_id                       :integer
+#  carrier_released_date            :datetime
 #  confirmed_on_board_origin_date   :date
 #  consignee_id                     :integer
 #  consolidator_address_id          :integer
@@ -43,6 +49,7 @@
 #  country_import_id                :integer
 #  country_origin_id                :integer
 #  created_at                       :datetime         not null
+#  customs_released_carrier_date    :datetime
 #  delay_reason_codes               :string(255)
 #  delivered_date                   :date
 #  departure_date                   :date
@@ -50,6 +57,8 @@
 #  destination_port_id              :integer
 #  do_issued_at                     :date
 #  docs_received_date               :date
+#  empty_out_at_origin_date         :datetime
+#  empty_return_date                :datetime
 #  entry_port_id                    :integer
 #  est_arrival_port_date            :date
 #  est_delivery_date                :date
@@ -58,12 +67,16 @@
 #  est_load_date                    :date
 #  eta_last_foreign_port_date       :date
 #  export_license_required          :boolean
+#  fcr_created_final_date           :datetime
 #  final_dest_port_id               :integer
 #  first_port_receipt_id            :integer
 #  fish_and_wildlife                :boolean
 #  forwarder_id                     :integer
 #  freight_terms                    :string(255)
 #  freight_total                    :decimal(11, 2)
+#  full_container_discharge_date    :datetime
+#  full_ingate_date                 :datetime
+#  full_out_gate_discharge_date     :datetime
 #  gross_weight                     :decimal(9, 2)
 #  hazmat                           :boolean
 #  house_bill_of_lading             :string(255)
@@ -88,6 +101,7 @@
 #  mode                             :string(255)
 #  number_of_packages               :integer
 #  number_of_packages_uom           :string(255)
+#  on_rail_destination_date         :datetime
 #  packing_list_sent_by_id          :integer
 #  packing_list_sent_date           :datetime
 #  pickup_at                        :date

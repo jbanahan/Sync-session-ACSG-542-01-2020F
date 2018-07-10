@@ -45,8 +45,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
           add_equipment_element elem_shipping_order, requested_equipment_arr
         end
         add_party_info_element elem_shipping_order, 'Supplier', shipment.vendor, include_address:false
-        add_party_info_element elem_shipping_order, 'Factory', shipment.ship_from, use_id_as_code: true
         if first_booking_line && first_booking_line.order_line
+          add_party_info_element elem_shipping_order, 'Factory', first_booking_line.order_line.order.ship_from, use_id_as_code: true
           add_party_info_element elem_shipping_order, 'ShipTo', first_booking_line.order_line.ship_to
         end
         if shipment.booking_requested_by

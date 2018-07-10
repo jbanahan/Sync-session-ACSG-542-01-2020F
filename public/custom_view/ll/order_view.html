@@ -74,6 +74,14 @@
               Delivery Location
               <span class="pull-right">{{order.ord_fob_point}}</span>
             </li>
+            <li class="list-group-item">
+              BOL Number
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','BOL Number',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
+            <li class="list-group-item">
+              Est Departure
+              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','ASN - Est Departure',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+            </li>
           </ul>
           <div class="panel-footer text-right" ng-if='order.permissions.can_edit'>
             <button class='btn btn-sm btn-default' title='Save' ng-click='save(order)'><i class='fa fa-save'></i></button>
@@ -181,8 +189,9 @@
           <thead>
             <tr>
               <th>Line Num</th>
+              <th>Deleted Flag</th>
               <th>Article</th>
-              <th>Variant</th>
+              <th>First HTS 1 (US)</th>
               <th ng-if='order.ord_ship_to_count > 1'>Ship To</th>
               <th>Quantity</th>
               <th>UM</th>
@@ -195,12 +204,14 @@
             <tbody ng-repeat='ol in order.order_lines track by ol.id'>
               <tr>
                 <td>{{ol.ordln_line_number}}</td>
+                <td>{{(ol[dictionary.fieldsByAttribute('label','Deleted Flag', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]) ? "Y" : "N"}}</td>
                 <td>
                   <small>{{ol.ordln_puid}}</small><br />
                   <small>{{ol[dictionary.fieldsByAttribute('label','Old Article Number',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</small><br />
                   {{ol[dictionary.fieldsByAttribute('label', 'Part Name',dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}
                 </td>
                 <td>
+                  {{ol['*fhts_1_' + order.us_country_id + '_order_lines']}}
                 </td>
                 <td ng-if='order.ord_ship_to_count > 1'>
                   <chain-address address='{{ol.ordln_ship_to_full_address}}'></chain-address>
@@ -213,19 +224,19 @@
               </tr>
               <tr style="white-space: pre-wrap;" ng-if="ol[dictionary.fieldsByAttribute('label','Custom Article Description', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]">
                 <td>&nbsp;</td>
-                <td colspan='{{order.ord_ship_to_count > 1 ? 8 : 7}}'>{{ol[dictionary.fieldsByAttribute('label','Custom Article Description', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</td>
+                <td colspan='{{order.ord_ship_to_count > 1 ? 9 : 8}}'>{{ol[dictionary.fieldsByAttribute('label','Custom Article Description', dictionary.fieldsByRecordType(dictionary.recordTypes.OrderLine))[0].uid]}}</td>
               </tr>
             </tbody>
             <tr ng-if="order[dictionary.fieldsByAttribute('label','Total Freight', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
-              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 8 : 7}}'>Freight</td>
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 9 : 8}}'>Freight</td>
               <td class='text-right numeric'>{{order[dictionary.fieldsByAttribute('label','Total Freight', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid] | currency}}</td>
             </tr>
             <tr ng-if="order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
-              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 8 : 7}}'>Total</td>
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 9 : 8}}'>Total</td>
               <td class='text-right numeric'>{{order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid] | currency}}</td>
             </tr>
             <tr ng-if="!order[dictionary.fieldsByAttribute('label','Grand Total', dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]">
-              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 8 : 7}}'>Total</td>
+              <td class='text-right' colspan='{{order.ord_ship_to_count > 1 ? 9 : 8}}'>Total</td>
               <td class='text-right numeric'>{{order.ord_total_cost | currency}}</td>
             </tr>
           </tbody>

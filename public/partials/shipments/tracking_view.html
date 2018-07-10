@@ -27,24 +27,72 @@
   <p class="form-control-static" id="shp_confirmed_on_board_origin_date">{{outerScope.shp.shp_confirmed_on_board_origin_date}}</p>
 </div>
 <div class="form-group">
+  <label for="shp_bol_date" class="control-label">{{outerScope.label('shp_bol_date')}}</label>
+  <p class="form-control-static" id="shp_bol_date">{{outerScope.shp.shp_bol_date}}</p>
+</div>
+<div class="form-group">
   <label for="shp_docs_received_date" class="control-label">{{outerScope.label('shp_docs_received_date')}}</label>
   <p class="form-control-static" id="shp_docs_received_date">{{outerScope.shp.shp_docs_received_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_empty_out_at_origin_date" class="control-label">{{outerScope.label('shp_empty_out_at_origin_date')}}</label>
+  <p class="form-control-static" id="shp_empty_out_at_origin_date">{{outerScope.shp.shp_empty_out_at_origin_date}}</p>
 </div>
 <div class="form-group">
   <label for="shp_cargo_on_hand_date" class="control-label">{{outerScope.label('shp_cargo_on_hand_date')}}</label>
   <p class="form-control-static" id="shp_cargo_on_hand_date">{{outerScope.shp.shp_cargo_on_hand_date}}</p>
 </div>
 <div class="form-group">
+  <label for="shp_fcr_created_final_date" class="control-label">{{outerScope.label('shp_fcr_created_final_date')}}</label>
+  <p class="form-control-static" id="shp_fcr_created_final_date">{{outerScope.shp.shp_fcr_created_final_date}}</p>
+</div>
+<div class="form-group">
   <label for="shp_departure_date" class="control-label">{{outerScope.label('shp_departure_date')}}</label>
   <p class="form-control-static" id="shp_departure_date">{{outerScope.shp.shp_departure_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_carrier_released_date" class="control-label">{{outerScope.label('shp_carrier_released_date')}}</label>
+  <p class="form-control-static" id="shp_carrier_released_date">{{outerScope.shp.shp_carrier_released_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_customs_released_carrier_date" class="control-label">{{outerScope.label('shp_customs_released_carrier_date')}}</label>
+  <p class="form-control-static" id="shp_customs_released_carrier_date">{{outerScope.shp.shp_customs_released_carrier_date}}</p>
 </div>
 <div class="form-group">
   <label for="shp_arrival_port_date" class="control-label">{{outerScope.label('shp_arrival_port_date')}}</label>
   <p class="form-control-static" id="shp_arrival_port_date">{{outerScope.shp.shp_arrival_port_date}}</p>
 </div>
 <div class="form-group">
+  <label for="shp_full_container_discharge_date" class="control-label">{{outerScope.label('shp_full_container_discharge_date')}}</label>
+  <p class="form-control-static" id="shp_full_container_discharge_date">{{outerScope.shp.shp_full_container_discharge_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_barge_depart_date" class="control-label">{{outerScope.label('shp_barge_depart_date')}}</label>
+  <p class="form-control-static" id="shp_barge_depart_date">{{outerScope.shp.shp_barge_depart_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_barge_arrive_date" class="control-label">{{outerScope.label('shp_barge_arrive_date')}}</label>
+  <p class="form-control-static" id="shp_barge_arrive_date">{{outerScope.shp.shp_barge_arrive_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_on_rail_destination_date" class="control-label">{{outerScope.label('shp_on_rail_destination_date')}}</label>
+  <p class="form-control-static" id="shp_on_rail_destination_date">{{outerScope.shp.shp_on_rail_destination_date}}</p>
+</div>
+<div class="form-group">
   <label for="shp_inland_port_date" class="control-label">{{outerScope.label('shp_inland_port_date')}}</label>
   <p class="form-control-static" id="shp_inland_port_date">{{outerScope.shp.shp_inland_port_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_full_ingate_date" class="control-label">{{outerScope.label('shp_full_ingate_date')}}</label>
+  <p class="form-control-static" id="shp_full_ingate_date">{{outerScope.shp.shp_full_ingate_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_full_out_gate_discharge_date" class="control-label">{{outerScope.label('shp_full_out_gate_discharge_date')}}</label>
+  <p class="form-control-static" id="shp_full_out_gate_discharge_date">{{outerScope.shp.shp_full_out_gate_discharge_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_available_for_delivery_date" class="control-label">{{outerScope.label('shp_available_for_delivery_date')}}</label>
+  <p class="form-control-static" id="shp_available_for_delivery_date">{{outerScope.shp.shp_available_for_delivery_date}}</p>
 </div>
 <div class="form-group">
   <label for="shp_do_issued_at" class="control-label">{{outerScope.label('shp_do_issued_at')}}</label>
@@ -69,6 +117,14 @@
 <div class="form-group">
   <label for="shp_in_warehouse_time" class="control-label">{{outerScope.label('shp_in_warehouse_time')}}</label>
   <p class="form-control-static" id="shp_in_warehouse_time" placeholder="YYYY-MM-DD HH:MM">{{outerScope.shp.shp_in_warehouse_time | amDateFormat: 'MM/DD/YYYY hh:mm a'}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_container_unloaded_date" class="control-label">Container Unloaded Date</label>
+  <p class="form-control-static" id="shp_container_unloaded_date">{{outerScope.shp.shp_container_unloaded_date}}</p>
+</div>
+<div class="form-group">
+  <label for="shp_empty_return_date" class="control-label">Empty Return Date</label>
+  <p class="form-control-static" id="shp_empty_return_date">{{outerScope.shp.shp_empty_return_date}}</p>
 </div>
 <div ng-show="outerScope.shp.shp_canceled_date" class="form-group">
   <label for="shp_canceled_date" class="control-label">{{outerScope.label('shp_canceled_date')}}</label>

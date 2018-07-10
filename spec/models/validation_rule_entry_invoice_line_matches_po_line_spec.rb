@@ -5,7 +5,7 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
   describe "run_child_validation" do
 
     before :each do 
-      @part_no_cd = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
+      @part_no_cd = subject.custom_definitions[:prod_part_number]
       @line = Factory(:commercial_invoice_line, po_number: "PONUMBER", part_number: "PARTNUMBER")
       @line.entry.importer = Factory(:company, importer: true)
     end

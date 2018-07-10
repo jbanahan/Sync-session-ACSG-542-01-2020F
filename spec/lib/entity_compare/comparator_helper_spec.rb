@@ -109,6 +109,17 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}, "testing")).to be_nil
     end
 
+    it "allows for symbol to be used as field name value" do
+      expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}, :test)).to eq "Child-A"
+    end
+
+    it "allows for custom definition to be used to obtain field value" do
+      cd = instance_double(CustomDefinition)
+      expect(cd).to receive(:model_field_uid).and_return "test"
+
+      expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}, cd)).to eq "Child-A"
+    end
+
     it "coerces value to model field's given datatype" do
       # All the coercions are tested elsewhere, just make sure this works if enabled.
       expect(subject.mf({"entity" => {"core_module" => "Child", "model_fields"=> {"ent_duty_due_date" => "2017-01-11"}}}, "ent_duty_due_date")).to eq Date.new(2017, 1, 11)
@@ -182,6 +193,106 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "handles missing model fields" do
       r = "1234"
       expect(subject.coerce_model_field_value "notafield", r).to be r
+    end
+  end
+
+  describe "changed_fields" do
+    let(:snapshot) {
+      {
+      "entity" => {
+        "core_module" => "Shipment",
+        "model_fields" => {
+          "shp_ref" => "7ABC2FGA",
+          "shp_booking_number" => "BOOKINGNUMBER",
+          "shp_cargo_ready_date" => "2018-04-01 12:00",
+          "shp_booking_received_date" => "2018-04-02 12:00",
+          "shp_booking_approved_date" => "2018-04-03 12:00",
+          "shp_booking_confirmed_date" => "2018-04-04 12:00",
+          "shp_booking_cutoff_date" => "2018-04-05 12:00"
+          }
+        }
+      }
+    }
+
+    let (:changed_snapshot) {
+      {
+      "entity" => {
+        "core_module" => "Shipment",
+        "model_fields" => {
+          "shp_ref" => "7ABC2FGA-X",
+          "shp_booking_number" => "BOOKINGNUMBER",
+          "shp_cargo_ready_date" => "2018-04-02 12:00",
+          "shp_booking_received_date" => "2018-04-02 12:00",
+          "shp_booking_approved_date" => "2018-04-03 12:00",
+          "shp_booking_confirmed_date" => "2018-04-04 12:00",
+          "shp_booking_cutoff_date" => "2018-04-05 12:00"
+          }
+        }
+      }
+    }
+
+    it "returns all changed values requested" do
+      fields = subject.changed_fields snapshot, changed_snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+        :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date]
+
+      expect(fields.size).to eq 2
+      expect(fields).to eq({shp_ref: "7ABC2FGA-X", shp_cargo_ready_date: Date.new(2018, 4, 2)})
+    end
+
+    it "returns blank hash if nothing changed" do
+      fields = subject.changed_fields snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+        :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date]
+      expect(fields).to eq({})
+    end
+  end
+
+  describe "any_changed_fields?" do
+    let(:snapshot) {
+      {
+      "entity" => {
+        "core_module" => "Shipment",
+        "model_fields" => {
+          "shp_ref" => "7ABC2FGA",
+          "shp_booking_number" => "BOOKINGNUMBER",
+          "shp_cargo_ready_date" => "2018-04-01 12:00",
+          "shp_booking_received_date" => "2018-04-02 12:00",
+          "shp_booking_approved_date" => "2018-04-03 12:00",
+          "shp_booking_confirmed_date" => "2018-04-04 12:00",
+          "shp_booking_cutoff_date" => "2018-04-05 12:00"
+          }
+        }
+      }
+    }
+
+    it "returns true if snapshot values changed" do
+      changed = snapshot.deep_dup
+      changed["entity"]["model_fields"]["shp_ref"] = "CHANGE"
+      expect(subject.any_changed_fields?(snapshot, changed, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+        :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date])).to eq true
+    end
+
+    it "returns false if all fields are the same" do
+      expect(subject.any_changed_fields?(snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+        :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date])).to eq false
+    end
+  end
+
+  describe "json_entity_type_and_id" do 
+    let(:snapshot) {
+      {
+        "entity" => {
+          "core_module" => "Shipment",
+          "record_id" => 1
+        }
+      }
+    }
+
+    it "extracts the core module name and record id from a snapshot hash" do
+      expect(subject.json_entity_type_and_id snapshot).to eq ["Shipment", 1]
+    end
+
+    it "handles unwrap entity hashes" do
+      expect(subject.json_entity_type_and_id snapshot["entity"]).to eq ["Shipment", 1]
     end
   end
 
@@ -261,4 +372,5 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.any_root_value_changed? "ob", "ok", "ov", "nb", "nk", "nv", ["value"]).to eq true
     end
   end
+  
 end

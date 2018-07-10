@@ -4,7 +4,7 @@ require 'rexml/document'
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   before :all do
     #This is here purely to speed up spec loading...so that the custom defs only have to get created once, since they can take a while to generate.
-    described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg]
+    described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg, :ordln_deleted_flag]
   end
 
   after :all do
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       @importer = Factory(:master_company, importer:true)
       @vendor = Factory(:company,vendor:true,system_code:'0000100131')
       @vendor_address = @vendor.addresses.create!(name:'VNAME',system_code:'123-CORP',line_1:'ln1',line_2:'l2',city:'New York',state:'NY',postal_code:'10001',country_id:@usa.id)
-      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg]
+      @cdefs = described_class.prep_custom_definitions [:ord_sap_extract,:ord_type,:ord_buyer_name,:ord_buyer_phone,:ord_planned_expected_delivery_date,:ord_ship_confirmation_date,:ord_planned_handover_date,:ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_assigned_agent, :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description, :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number, :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg, :ordln_deleted_flag]
       @product1= Factory(:product,name: 'Widgets',unique_identifier:'000000000010001547')
       cv = @product1.find_and_set_custom_value @cdefs[:prod_old_article], '123456'
       cv.save!
@@ -121,6 +121,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ol.get_custom_value(@cdefs[:ordln_inland_freight_vendor_number]).value).to eq '0000201814'
       # Vendor number (above) does not matches the @vendor's system code, resulting in this field getting a nil value.
       expect(ol.get_custom_value(@cdefs[:ordln_vendor_inland_freight_amount]).value).to be_nil
+      expect(ol.get_custom_value(@cdefs[:ordln_deleted_flag]).value).to eq false
 
       ship_to = ol.ship_to
       expect(ship_to.name).to eq "LOS ANGELES CA 9444"
@@ -188,13 +189,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         booked_order.update_attributes(order_date: Time.now)
         do_parse
         expect(Order.first.order_date.strftime('%Y%m%d')).to eq '20140805'
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow update to quantity" do
-        prep_mailer
+      it "should allow update to quantity" do
         booked_order
         @test_data.gsub!('MENGE>5602.800</MENGE','MENGE>1.800</MENGE')
         do_parse
-        expect(Order.first.order_lines.first.quantity).to eq 5602.8
+        expect(Order.first.order_lines.first.quantity).to eq 1.8
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should not allow update to product" do
         prep_mailer
@@ -203,30 +205,42 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         do_parse
         expect(Order.first.order_lines.first.product.unique_identifier).to eq '000000000010001547'
       end
-      it "should not allow update to price" do
-        prep_mailer
+      it "should allow update to price" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>50098.04</SUMME')
+
         booked_order
         @test_data.gsub!('NETWR>10365.18</NETWR','NETWR>20365.18</NETWR')
         do_parse
-        expect(Order.first.order_lines.first.price_per_unit).to eq 1.85
+        expect(Order.first.order_lines.first.price_per_unit).to eq 3.6348
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow deleting a line" do
-        prep_mailer
+      it "should soft delete a line not mentioned in the XML" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>29732.98</SUMME')
+
         booked_order
         new_dom = REXML::Document.new(@test_data)
         new_dom.root.elements.delete('IDOC/E1EDP01[1]')
         described_class.new.parse_dom(new_dom)
-        expect(Order.first.order_lines.count).to eq 3
+
+        ord_lines = Order.first.order_lines
+        expect(ord_lines.count).to eq 3
+        # Line is not removed, but it is "soft deleted": flag set, quantity zeroed.
+        expect(ord_lines.first.get_custom_value(@cdefs[:ordln_deleted_flag]).value).to eq true
+        expect(ord_lines.first.quantity).to eq 0
+
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow adding another line" do
-        prep_mailer
+      it "should allow adding another line" do
         booked_order
         new_dom = REXML::Document.new(@test_data)
         lineEl = new_dom.root.elements['IDOC/E1EDP01[1]']
         lineEl.elements['POSEX'].text = '00009'
         new_dom.root.elements['IDOC'] << lineEl
         described_class.new.parse_dom(new_dom)
-        expect(Order.first.order_lines.count).to eq 3
+        expect(Order.first.order_lines.count).to eq 4
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
     end
 
@@ -254,13 +268,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         shipped_order.update_attributes(order_date: Time.now)
         do_parse
         expect(Order.first.order_date.strftime('%Y%m%d')).to eq '20140805'
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow update to quantity" do
-        prep_mailer
+      it "should allow update to quantity" do
         shipped_order
         @test_data.gsub!('MENGE>5602.800</MENGE','MENGE>1.800</MENGE')
         do_parse
-        expect(Order.first.order_lines.first.quantity).to eq 5602.8
+        expect(Order.first.order_lines.first.quantity).to eq 1.8
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should not allow update to product" do
         prep_mailer
@@ -269,30 +284,41 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         do_parse
         expect(Order.first.order_lines.first.product.unique_identifier).to eq '000000000010001547'
       end
-      it "should not allow update to price" do
-        prep_mailer
+      it "should allow update to price" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>50098.04</SUMME')
+
         shipped_order
         @test_data.gsub!('NETWR>10365.18</NETWR','NETWR>20365.18</NETWR')
         do_parse
-        expect(Order.first.order_lines.first.price_per_unit).to eq 1.85
+        expect(Order.first.order_lines.first.price_per_unit).to eq 3.6348
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow deleting a line" do
-        prep_mailer
+      it "should soft delete a line not mentioned in the XML" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>29732.98</SUMME')
+
         shipped_order
         new_dom = REXML::Document.new(@test_data)
         new_dom.root.elements.delete('IDOC/E1EDP01[1]')
         described_class.new.parse_dom(new_dom)
-        expect(Order.first.order_lines.count).to eq 3
+
+        ord_lines = Order.first.order_lines
+        expect(ord_lines.count).to eq 3
+        # Line is not removed, but it is "soft deleted": flag set, quantity zeroed.
+        expect(ord_lines.first.get_custom_value(@cdefs[:ordln_deleted_flag]).value).to eq true
+        expect(ord_lines.first.quantity).to eq 0
+
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
-      it "should not allow adding another line" do
-        prep_mailer
+      it "should allow adding another line" do
         shipped_order
         new_dom = REXML::Document.new(@test_data)
         lineEl = new_dom.root.elements['IDOC/E1EDP01[1]']
         lineEl.elements['POSEX'].text = '00009'
         new_dom.root.elements['IDOC'] << lineEl
         described_class.new.parse_dom(new_dom)
-        expect(Order.first.order_lines.count).to eq 3
+        expect(Order.first.order_lines.count).to eq 4
       end
     end
 

@@ -1,8 +1,13 @@
 <%require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_helper'%>
 <%asn_cdefs = [
-  :ord_asn_booking_submitted,:ord_asn_booking_approved,:ord_asn_gate_in,
-  :ord_asn_fcr_created,:ord_asn_loaded_at_port,:ord_asn_departed,:ord_asn_arrived,
-  :ord_asn_discharged,:ord_asn_gate_out,:ord_asn_empty_return
+  :ord_shipment_reference, :ord_shipment_booking_requested_date, :ord_shipment_booking_number, :ord_shipment_sent_to_carrier_date, :ord_shipment_booking_confirmed_date, 
+  :ord_bill_of_lading, :ord_bol_date, :ord_shipment_cargo_ready_date, :ord_shipment_booking_cutoff_date,
+  :ord_asn_booking_submitted,:ord_asn_booking_approved,:ord_asn_empty_out_gate_at_origin,:ord_asn_est_arrival_discharge,
+  :ord_asn_est_departure,:ord_asn_gate_in,:ord_asn_empty_return,:ord_asn_delivered,:ord_asn_container_unloaded,
+  :ord_asn_carrier_released,:ord_asn_customs_released_carrier,:ord_asn_available_for_delivery,:ord_asn_full_ingate,
+  :ord_asn_gate_out,:ord_asn_on_rail_destination,:ord_asn_rail_arrived_destination,:ord_asn_arrived,:ord_asn_departed,
+  :ord_asn_discharged,:ord_asn_loaded_at_port,:ord_asn_arrive_at_transship_port,:ord_asn_depart_from_transship_port,
+  :ord_asn_barge_depart,:ord_asn_barge_arrive,:ord_asn_fcr_created
 ]%>
 <%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([
   :prodven_risk,:prodven_carb,:prodven_patent,:prod_old_article,:prod_merch_cat_desc,:prod_merch_cat,
@@ -18,7 +23,13 @@
   :ord_testing_date_planned,:ord_testing_date_completed,
   :ordln_old_art_number, :ordln_part_name, :ord_manual_send_to_sap_date, :ordln_inland_freight_vendor_number,
   :ordln_inland_freight_amount, :ordln_custom_article_description, :ord_grand_total, :ord_total_freight,
-  :ordln_gross_weight_kg]+asn_cdefs)%>
+  :ordln_gross_weight_kg,:ordln_shpln_line_number,:ordln_shpln_product,:ordln_shpln_quantity,:ordln_shpln_cartons,
+  :ordln_shpln_volume,:ordln_shpln_gross_weight,:ordln_shpln_container_number,:ordln_deleted_flag,
+  :ordln_po_create_article, :ordln_po_create_quantity, :ordln_po_create_hts, :ordln_po_create_price_per_unit, :ordln_po_create_total_price, :ordln_po_create_country_origin, 
+  :ordln_po_create_bol, :ordln_po_create_container_number, :ordln_po_create_seal_number, :ordln_po_booked_article, :ordln_po_booked_quantity, :ordln_po_booked_hts, 
+  :ordln_po_booked_price_per_unit, :ordln_po_booked_total_price, :ordln_po_booked_country_origin, :ordln_po_booked_bol, :ordln_po_booked_container_number, 
+  :ordln_po_booked_seal_number, :ordln_po_shipped_article, :ordln_po_shipped_quantity, :ordln_po_shipped_hts, :ordln_po_shipped_price_per_unit, :ordln_po_shipped_total_price, 
+  :ordln_po_shipped_country_origin, :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number, :ord_snapshot_discrepancy_comment] +asn_cdefs)%>
 <%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
 <script type='text/javascript'>
 
@@ -75,6 +86,11 @@
 
   });
 </script>
+<style type="text/css">
+  .shaded-bg {
+    background-color: #f9f9f9;
+  }
+</style>
 
 <% content_for :action_bar do %>
   <%if @order.can_edit?(current_user)%>
@@ -103,7 +119,7 @@
     </div>
   <% end %>
   <div class="row" style='margin-bottom:1em;'>
-    <div class="col-md-6">
+    <div class="col-md-4">
       <%= show_model_fields @order, [:ord_ord_num] %>
       <% if @order.vendor %>
         <%vendor_name_fld = ModelField.find_by_uid(:ord_ven_name)%>
@@ -120,10 +136,8 @@
       <%=field_bootstrap ModelField.find_by_uid(:ordln_ship_to_id).label(false), ship_to_hdr %>
       <hr />
       <%=show_custom_fields @order, {skip_fields:([:ord_planned_expected_delivery_date,:ord_inspector_assigned,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start,:ord_planned_handover_date,:ord_ship_confirmation_date,:ord_sap_extract, :ord_manual_send_to_sap_date, :ord_avail_to_prom_date,:ord_sap_vendor_handover_date,:ord_qa_hold_date,:ord_qa_hold_by,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_change_log,:ord_testing_date_completed,:ord_total_freight,:ord_grand_total]+asn_cdefs).collect{|key| cdefs[key].model_field_uid}}%>
-      <hr />
-      <%= show_model_fields @order, asn_cdefs.collect {|key| cdefs[key].model_field_uid}%>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
       <%= show_model_fields @order, [:ord_ord_date, :ord_window_start, :ord_window_end, cdefs[:ord_planned_expected_delivery_date].model_field_uid] %>
       <hr />
       <%= show_model_fields @order, [:ord_planned_handover_date,:ord_forecasted_ship_window_start,:ord_forecasted_handover_date,:ord_ship_confirmation_date].collect {|key| cdefs[key].model_field_uid} << :ord_first_exp_del%>
@@ -135,6 +149,18 @@
       <hr />
       <%= show_model_fields @order, [:ord_qa_hold_by,:ord_qa_hold_date,:ord_inspector_assigned,:ord_inspection_date_planned,:ord_inspection_date_completed,:ord_testing_date_planned,:ord_testing_date_completed].collect {|key| cdefs[key].model_field_uid}%>
     </div>
+    <div class="col-md-4">
+      <%= show_model_fields(@order, asn_cdefs.collect {|key| cdefs[key].model_field_uid }) do |mf, field_name, value, html_attributes|
+          # We need to make a link to the shipment if the field is the shipment reference
+          v = nil
+          if mf.uid.to_s == cdefs[:ord_shipment_reference].model_field_uid && !value.blank?
+            shipment = Shipment.where(reference: value).first
+            v = link_to(value, shipment_path(shipment)) if shipment
+          end
+          v
+        end
+      %>
+    </div>
   </div>
   <div class="row">
     <div class="col-md-12">
@@ -142,7 +168,9 @@
         <li role="presentation" class="active"><a href="#main" aria-controls="main" role="tab" data-toggle="tab">Main</a></li>
         <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance <i class='fa' id='pc-status-indicator'></i></a></li>
         <li role="presentation"><a href="#quality" aria-controls="quality" role="tab" data-toggle="tab">Quality <i class='fa' id='qa-status-indicator'></i></a></li>
-        <li role="presentation"><a href="#carbpatent" aria-controls="quality" role="tab" data-toggle="tab">CARB/Patent</i></a></li>
+        <li role="presentation"><a href="#carbpatent" aria-controls="quality" role="tab" data-toggle="tab">CARB/Patent</a></li>
+        <li role="presentation"><a href="#asn" aria-controls="asn" role="tab" data-toggle="tab">ASN Data</a></li>
+        <li role="presentation"><a href="#snapshot" aria-controls="snapshot" role="tab" data-toggle="tab">Snapshot</a></li>
       </ul>
 
       <!-- Tab panes -->
@@ -151,7 +179,7 @@
           <table class="table table-condensed table-bordered">
             <thead>
               <tr>
-                <%= model_field_labels([:ordln_line_number, :prod_uid, :ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_gross_weight_kg].model_field_uid, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
+                <%= model_field_labels([:ordln_line_number,  cdefs[:ordln_deleted_flag].model_field_uid, :prod_uid, "*fhts_1_#{Country.where(iso_code: "US").first.id}_order_lines", :ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_gross_weight_kg].model_field_uid, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
                 <th>&nbsp;</th>
               </tr>
             </thead>
@@ -160,11 +188,14 @@
                 <tr class='ord_det_row'>
                   <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
                   <td>
+                    <%=cdefs[:ordln_deleted_flag].model_field.process_export(line,User.current) ? 'Y' : 'N'%>
+                  </td>
+                  <td>
                     <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
                     <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
                     <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
                   </td>
-                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_gross_weight_kg].model_field_uid, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true, never_hide: true) do |mf, form_field_name, field_value, html_attributes|
+                  <%= show_model_fields(line, ["*fhts_1_#{Country.where(iso_code: "US").first.id}_order_lines", :ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_gross_weight_kg].model_field_uid, :ordln_ppu, :ordln_total_cost], table: true, editor_only: true, never_hide: true) do |mf, form_field_name, field_value, html_attributes|
                     if mf.uid.to_s == cdefs[:ordln_gross_weight_kg].model_field_uid
                       field_value.nil? ? '' : number_with_precision(field_value, precision: 3)
                     else
@@ -181,7 +212,7 @@
                   <td colspan='<%=ModelField.viewable_model_fields(User.current, [:ordln_line_number, :prod_uid, :ordln_sku, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, :ordln_currency, :ordln_total_cost]).size + 4%>' >
                     <div class="container col-md-6">
                       <%= show_model_fields line, [:ordln_country_of_origin, :ordln_hts] %>
-                      <%= show_custom_fields line, {skip_fields:([:ordln_inland_freight_vendor_number,:ordln_inland_freight_amount, :ordln_custom_article_description, :ordln_gross_weight_kg]).collect{|key| cdefs[key].model_field_uid}} %>
+                      <%= show_custom_fields line, {skip_fields:([:ordln_inland_freight_vendor_number,:ordln_inland_freight_amount, :ordln_custom_article_description, :ordln_gross_weight_kg,:ordln_deleted_flag]).collect{|key| cdefs[key].model_field_uid}} %>
                       <%= show_model_fields(line, cdefs[:ordln_custom_article_description].model_field, {}) { |mf, field_name, value, html_attributes| "<div style='white-space: pre-wrap;'>#{html_escape value}</div>".html_safe} unless line.custom_value(cdefs[:ordln_custom_article_description]).blank? %>
                       <% if ModelField.find_by_uid(:shp_ref).can_view?(User.current) %>
                       <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
@@ -319,6 +350,99 @@
                   </td>
                 </tr>
               <%end %>
+            </tbody>
+          </table>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="asn">
+          <table class="table table-condensed table-striped table-bordered">
+            <thead>
+              <tr>
+                <%= model_field_labels([:ordln_line_number, :prod_uid, cdefs[:ordln_shpln_line_number].model_field_uid,
+                          cdefs[:ordln_shpln_quantity].model_field_uid, cdefs[:ordln_shpln_cartons].model_field_uid,
+                          cdefs[:ordln_shpln_volume].model_field_uid, cdefs[:ordln_shpln_gross_weight].model_field_uid,
+                          cdefs[:ordln_shpln_container_number].model_field_uid
+                         ], table:true, heading:true) %>
+              </tr>
+            </thead>
+            <tbody>
+            <% @order.order_lines.each do |line| %>
+                <tr>
+                  <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
+                  <td>
+                    <small><%=link_to(ModelField.find_by_uid(:prod_uid).process_export(line.product, User.current), product_path(line.product)) %></small><br/>
+                    <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
+                    <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_line_number].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_quantity].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_cartons].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_volume].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_gross_weight].model_field.process_export(line,User.current)%>
+                  </td>
+                  <td>
+                    <%=cdefs[:ordln_shpln_container_number].model_field.process_export(line,User.current)%>
+                  </td>
+                </tr>
+            <%end %>
+            </tbody>
+          </table>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="snapshot">
+          <table class="table table-condensed table-bordered">
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>Order Line</th>
+                <th>Article</th>
+                <th>COO</th>
+                <th>Quantity</th>
+                <th>HTS</th>
+                <th>Price/Unit</th>
+                <th>Total Price</th>
+                <th>BOL</th>
+                <th>Container</th>
+                <th>Seal</th>
+              </tr>
+              </thead>
+            <tbody>
+            <% @order.order_lines.each_with_index do |line, idx| 
+              html_class = (idx % 2 == 1) ? "" : "shaded-bg"
+              class_text = (idx % 2 == 1) ? "" : " class=\"#{html_class}\"".html_safe
+            %>
+              <tr>
+                <th<%=class_text%>>Created</th>
+                <td class="has_numeric <%=html_class%>"><%=line.line_number%></td>
+              <% [:ordln_po_create_article, :ordln_po_create_country_origin, :ordln_po_create_quantity, :ordln_po_create_hts, :ordln_po_create_price_per_unit, 
+                  :ordln_po_create_total_price, :ordln_po_create_bol, :ordln_po_create_container_number, :ordln_po_create_seal_number].each do |cdef_uid| %>
+                <td<%=class_text%>><%=cdefs[cdef_uid].model_field.process_export(line, User.current)%></td>
+              <% end %>
+              </tr>
+              <tr>
+                <th<%=class_text%>>Booked</th>
+                <td class="has_numeric <%=html_class%>"><%=line.line_number%></td>
+              <% [:ordln_po_booked_article, :ordln_po_booked_country_origin, :ordln_po_booked_quantity, :ordln_po_booked_hts, :ordln_po_booked_price_per_unit, 
+                  :ordln_po_booked_total_price, :ordln_po_booked_bol, :ordln_po_booked_container_number, :ordln_po_booked_seal_number].each do |cdef_uid| %>
+                <td <%=class_text%>><%=cdefs[cdef_uid].model_field.process_export(line, User.current)%></td>
+              <% end %>
+              </tr>
+              <tr>
+                <th<%=class_text%>>Shipped</th>
+                <td class="has_numeric <%=html_class%>"><%=line.line_number%></td>
+              <% [:ordln_po_shipped_article, :ordln_po_shipped_country_origin, :ordln_po_shipped_quantity, :ordln_po_shipped_hts, :ordln_po_shipped_price_per_unit, 
+                  :ordln_po_shipped_total_price, :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number].each do |cdef_uid| %>
+                <td<%=class_text%>><%=cdefs[cdef_uid].model_field.process_export(line, User.current)%></td>
+              <% end %>
+              </tr>
+            <% end %>
             </tbody>
           </table>
         </div>

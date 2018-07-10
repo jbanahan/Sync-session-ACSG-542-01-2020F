@@ -41,6 +41,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentComparator)
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentComparator)
         expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipmentComparator)
+        expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderBookedDataRecorderComparator)
+        expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataRecorderComparator)
+        expect(cr).to receive(:register).with(OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRecorderComparator)
         OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit.init
       end
 

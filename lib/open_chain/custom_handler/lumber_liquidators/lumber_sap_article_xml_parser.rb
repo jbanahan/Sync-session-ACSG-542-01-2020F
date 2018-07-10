@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :class_proposed_hts, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
+    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
   def parse_dom dom, opts={}
@@ -58,9 +58,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root,'//IDOC/E1BPE1MATHEAD'),'MATL_GROUP'))
       p.find_and_set_custom_value(@cdefs[:prod_merch_cat_desc], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_EXT'),'MERCH_CAT_DESC'))
       p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'),'ATWTB'))
-      hts_parent = REXML::XPath.first(root, '//IDOC/E1BPE1MAW1RT[@SEGMENT="1"]')
-      hts = hts_parent.nil? ? "" : et(hts_parent, "COMM_CODE")
-      set_us_hts p, hts
 
       if is_new
         p.order_lines.find_each do |order_line|
@@ -94,34 +91,4 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
     end
 
-    def set_us_hts product, hts
-      usa = us
-      classification = product.classifications.find {|c| c.country_id = usa.id }
-
-      # Don't bother building a classification if HTS is blank and the classification hasn't been created yet
-      return if hts.blank? && classification.nil?
-
-      if classification.nil?
-        classification = product.classifications.build country_id: usa.id
-      end
-
-      classification.find_and_set_custom_value(@cdefs[:class_proposed_hts], hts) unless hts.blank?
-
-      # Validate that the HTS is valid...if it is, then use it, if it isn't...don't use it.  Simple.
-      if OfficialTariff.valid_hts?(usa, hts)
-        tariff_record = classification.tariff_records.to_a.sort_by {|t| t.line_number }.first
-
-        if tariff_record.nil?
-          tariff_record = classification.tariff_records.build
-        end
-
-        tariff_record.hts_1 = hts
-      end
-    end
-
-    def us
-      @us ||= Country.where(iso_code: "US").first
-      raise "No Country found for iso code 'US'." unless @us
-      @us
-    end
 end; end; end; end;

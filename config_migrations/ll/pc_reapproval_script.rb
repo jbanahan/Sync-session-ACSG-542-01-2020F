@@ -9,13 +9,13 @@ class LlPcReapprovalScript
     @integration = User.integration
   end
 
-  def run source_file, snapshot_comment
+  def run source_file, snapshot_comment, update_orders: false
     File.open("tmp/log-#{Time.now.to_i}.txt",'wb') do |f|
       orders_processed = []
       order_numbers = CSV.read(source_file).collect {|line| line.first}
       order_numbers.in_groups_of(200,false) do |ord_nums|
         Order.where("order_number in (?)",ord_nums).includes({:order_lines=>:custom_values}).each do |ord|
-          process_order ord, f, snapshot_comment
+          process_order ord, f, snapshot_comment, update_orders
           orders_processed << ord.order_number
         end
       end
@@ -24,7 +24,7 @@ class LlPcReapprovalScript
     end
   end
 
-  def process_order order, log_file, snapshot_comment
+  def process_order order, log_file, snapshot_comment, update_orders
     unapproved_lines = get_unapproved_lines(order)
     lines_approved = []
     if unapproved_lines.blank?
@@ -32,16 +32,16 @@ class LlPcReapprovalScript
       return
     end
     order.entity_snapshots.order('entity_snapshots.id desc').each do |es|
-      process_snapshot(unapproved_lines,lines_approved,es)
+      process_snapshot(unapproved_lines,lines_approved,es, update_orders)
       break if unapproved_lines.blank?
     end
     if !lines_approved.empty?
       log_file << "Order #{order.order_number} approved lines #{lines_approved.collect {|ol| ol.line_number}.join(", ")}\n"
-      order.create_snapshot @integration, nil, snapshot_comment
+      order.create_snapshot @integration, nil, snapshot_comment if update_orders
     end
   end
 
-  def process_snapshot unapproved_lines, lines_approved, es
+  def process_snapshot unapproved_lines, lines_approved, es, update_orders
     children = es.snapshot_hash['entity']['children']
     return unless children
     line_hashes = children.find_all {|child| child['entity']['core_module']=='OrderLine'}
@@ -52,7 +52,7 @@ class LlPcReapprovalScript
       if my_line_hash
         approved_date, approved_by, is_exec = get_approvals(my_line_hash)
         if approved_date # found an approval to apply
-          apply_approval(approved_date,approved_by,is_exec,ul)
+          apply_approval(approved_date,approved_by,is_exec,ul) if update_orders
           lines_approved << ul
           r_val = true
         end

@@ -57,7 +57,15 @@ module OpenChain; module EntityCompare; module ComparatorHelper
   end
 
   # Simple helper to reach into the entity hash and extract model fields
+  # If you are working w/ a CustomField, you may include the CustomDefinition for the field
+  # as the field_name
   def mf(entity_hash, field_name, coerce: true)
+    if field_name.respond_to?(:model_field_uid)
+      field_name = field_name.model_field_uid
+    else
+      field_name = field_name.to_s
+    end
+
     entity_hash = unwrap_entity(entity_hash)
 
     fields = entity_hash.try(:[], 'model_fields')
@@ -117,6 +125,30 @@ module OpenChain; module EntityCompare; module ComparatorHelper
       # to do anything with them here (integer, string, boolean)
       return value
     end
+  end
+
+  # Returns an hash of any of the fields that changed between the two hashes. Key = Field name, Value = new field value
+  # NOTE:  This method will not descend to child levels, so the fields given must represent
+  # fields from the given object hash (.ie don't pass line level fields when the hash represents a header entity)
+  def changed_fields old_hash, new_hash, fields
+    changes = {}
+    Array.wrap(fields).each do |field|
+      new_value = mf(new_hash, field)
+      if mf(old_hash, field) != new_value 
+        changes[field] = new_value
+      end
+    end
+
+    changes
+  end
+
+  def any_changed_fields? old_hash, new_hash, fields
+    changed_fields(old_hash, new_hash, fields).size > 0
+  end
+
+  def json_entity_type_and_id hash
+    entity = unwrap_entity(hash)
+    [entity["core_module"], entity["record_id"]]
   end
 
   # Returns true if any of the model fields given in model_field_uids are different between 

@@ -29,6 +29,10 @@ class CustomDefinition < ActiveRecord::Base
   validates  :label, :presence => true
   validates  :data_type, :presence => true
   validates  :module_type, :presence => true
+  # Because cdef_uid was added long after custom definitions existed, there's live custom definitions without cdef_uids, so we're going
+  # to prevent new ones from being made, but we will continue to allow old ones to be saved.  The screen now generates a default cdef_uid
+  # on creation, so all new ones will have cdef_uids
+  validates  :cdef_uid, presence: :true, on: :create
 
   has_many   :custom_values, :dependent => :destroy
   has_many   :sort_criterions, :dependent => :destroy
@@ -37,6 +41,8 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :field_validator_rules, :dependent => :destroy
   has_many   :milestone_definitions, :dependent => :destroy
 
+  # This is more here for the hundreds of test cases that don't set cdef_uids than anything
+  before_validation :set_cdef_uid, on: :create
   after_save :reset_cache
   after_destroy :reset_cache
   after_destroy :delete_field_label
@@ -146,7 +152,22 @@ class CustomDefinition < ActiveRecord::Base
     end
   end
 
+  def self.generate_cdef_uid custom_definition
+    core_module = custom_definition.core_module
+    return nil if core_module.nil?
+
+    prefix = CoreModule.module_abbreviation core_module
+    uid = custom_definition.label.to_s.gsub(/\W/, "_").gsub(/^_+/, "").gsub(/_+$/, "").underscore
+    "#{prefix}_#{uid}".squeeze("_")
+  end
+
   private
+
+    def set_cdef_uid
+      if self.cdef_uid.blank?
+        self.cdef_uid = CustomDefinition.generate_cdef_uid self
+      end
+    end
 
     def reset_field_label
       FieldLabel.set_label model_field_uid, self.label

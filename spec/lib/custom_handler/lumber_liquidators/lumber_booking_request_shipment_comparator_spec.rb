@@ -6,12 +6,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
     let (:snapshot) { EntitySnapshot.new }
 
     it "accepts shipment snapshot with booking received date and without canceled date" do
-      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,1,31), canceled_date:nil)
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,6,30), canceled_date:nil)
       expect(described_class.accept? snapshot).to eq true
     end
 
     it "does not accept shipment snapshot with canceled date" do
-      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,1,31), canceled_date:Date.new(2018,1,31))
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,6,30), canceled_date:Date.new(2018,1,31))
       expect(described_class.accept? snapshot).to eq false
     end
 
@@ -24,17 +24,18 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       snapshot.recordable = Entry.new
       expect(described_class.accept? snapshot).to eq false
     end
+
+    it "ignores snapshots with booking received dates prior to June 1, 2018" do
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,5,31), canceled_date:Date.new(2018,1,31))
+      expect(described_class.accept? snapshot).to eq false
+    end
   end
 
-  describe "compare", :snapshot do
-    it "generates a booking request when booking received date changes" do
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
+  describe "compare" do
+    it "generates a booking request when booking received date is set and booking hasn't been sent" do
+      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,6,2))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
-
-      shipment.update_attributes!(booking_received_date:Date.new(2018,1,31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
-
+      
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))
       xml_output_file = nil
@@ -45,12 +46,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
         synced = sync_arg
         ftp_info_hash = opt_arg
       }
-
       now = Time.zone.now
-      Timecop.freeze(now) do
-        subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
-      end
-
+      Timecop.freeze { subject.compare shipment.id }
+      
       shipment.reload
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
@@ -71,42 +69,32 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       expect(ftp_info_hash[:folder]).to eq('to_ecs/lumber_booking_request_test')
     end
 
-    it "does not generate a booking request when booking received date does not change" do
+    it "does not generate a booking request when the request has already been sent" do
       shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
-
+      shipment.sync_records.create! trading_partner: 'Booking Request', sent_at: Time.zone.now
       shipment.update_attributes!(booking_received_date:Date.new(2018,1,29))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).not_to receive(:generate_xml)
       expect(subject).not_to receive(:ftp_sync_file)
 
-      subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
-
-      shipment.reload
-
-      expect(shipment.sync_records.length).to eq 0
+      subject.compare shipment.id
     end
 
-    it "updates existing sync record if present" do
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
+    it "does not send an updated booking request if booking received date changes" do
+      shipment = Shipment.new(reference: '555', booking_received_date: Time.zone.now)
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_attributes!(booking_received_date:Date.new(2018,1,31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
-
-      synco = shipment.sync_records.create! trading_partner:'Booking Request', sent_at:Date.new(2018,1,29)
+      sent_at = (Time.zone.now - 1.minute)
+      synco = shipment.sync_records.create! trading_partner:'Booking Request', sent_at: sent_at
 
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
-      expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))
-      expect(subject).to receive(:ftp_sync_file).with(instance_of(Tempfile), synco, instance_of(Hash))
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).not_to receive(:generate_xml)
+      expect(subject).not_to receive(:ftp_sync_file)
 
       now = Time.zone.now
-      Timecop.freeze(now) do
-        subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
-      end
+      Timecop.freeze { subject.compare shipment.id }
 
       shipment.reload
 
@@ -114,37 +102,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       sr = shipment.sync_records.first
       expect(sr).to eq(synco)
       expect(sr.trading_partner).to eq 'Booking Request'
-      expect(sr.sent_at.to_i).to eq now.to_i
-      expect(sr.confirmed_at.to_i).to eq (now + 1.minute).to_i
+      expect(sr.sent_at.to_i).to eq sent_at.to_i
     end
 
     # Represents the extremely unlikely case where a shipment is deleted while this evaluation is underway.
     it "does not generate a booking request when the shipment can't be found" do
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
-      shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
-
-      shipment.update_attributes!(booking_received_date:Date.new(2018,1,31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
-
-      shipment.delete
-
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).not_to receive(:generate_xml)
       expect(subject).not_to receive(:ftp_sync_file)
 
-      subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
+      subject.compare -1
     end
 
     it "uses production FTP folder if instance of LL production" do
       ms = stub_master_setup
       expect(ms).to receive(:production?).and_return(true)
 
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
+      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,6,29))
       shipment.save!
-      snapshot_old = shipment.create_snapshot Factory(:user)
-
-      shipment.update_attributes!(booking_received_date:Date.new(2018,1,31))
-      snapshot_new = shipment.create_snapshot Factory(:user)
 
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))
@@ -153,7 +127,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
         ftp_info_hash = opt_arg
       }
 
-      subject.compare shipment.id, snapshot_old.bucket, snapshot_old.doc_path, snapshot_old.version, snapshot_new.bucket, snapshot_new.doc_path, snapshot_new.version
+      subject.compare shipment.id
 
       expect(ftp_info_hash[:username]).to eq('www-vfitrack-net')
       expect(ftp_info_hash[:folder]).to eq('to_ecs/lumber_booking_request')

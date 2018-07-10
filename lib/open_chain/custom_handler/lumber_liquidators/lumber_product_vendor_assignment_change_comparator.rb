@@ -35,6 +35,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     # running async so it could have been deleted in the interim
     return [] if pva.nil?
 
-    Order.where(vendor_id:pva.vendor_id).where("id IN (SELECT order_id FROM order_lines WHERE order_lines.order_id = orders.id AND order_lines.product_id = ?)",pva.product_id)
+    Order.where(vendor_id: pva.vendor_id, closed_at: nil).where("id IN (SELECT order_id FROM order_lines WHERE order_lines.order_id = orders.id AND order_lines.product_id = ?)",pva.product_id)
   end
 end; end; end; end

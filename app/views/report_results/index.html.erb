@@ -194,6 +194,10 @@
     <tr class="hover"><td><%=link_to "Special Programs Savings Report", reports_show_special_programs_savings_report_path%></td>
     <td>Special Programs Savings report.</td></tr>
   <%end%>
+  <%if OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport.permission?(current_user)%>
+    <tr class="hover"><td><%=link_to "Lumber Liquidators Order Snapshot Discrepancy Report", reports_show_lumber_order_snapshot_discrepancy_report_path%></td>
+    <td>Orders where select fields have changed between creation and shipping.</td></tr>
+  <%end%>
   <%if OpenChain::Report::CustomerYearOverYearReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Entry Year Over Year Report", reports_show_customer_year_over_year_report_path%></td>
     <td>Compares two years of entry data.</td></tr>
