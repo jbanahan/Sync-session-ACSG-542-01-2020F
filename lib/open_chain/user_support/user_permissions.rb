@@ -372,4 +372,12 @@ module OpenChain; module UserSupport; module UserPermissions
     self.statement_view? && self.company.view_statements?
   end
 
+  def edit_power_of_attorneys?
+    self.in_group?("maintain_poa") || self.admin?
+  end
+
+  def view_power_of_attorneys?
+    self.edit_power_of_attorneys?
+  end
+
 end; end; end

@@ -25,8 +25,8 @@ $(function() {
       $("#mod_lock").dialog('open');
     });
   $("#btn_unlock").click(function(){$("#mod_unlock").dialog('open');});
-  $("#btn_poas").click(function() {window.location = '<%= company_power_of_attorneys_path(@company) %>'});
   <% end %>
+  $("#btn_poas").click(function() {window.location = '<%= company_power_of_attorneys_path(@company) %>'});
 });
 <% end %>
 
@@ -55,7 +55,9 @@ $(function() {
       <button class='form_to' form_id='frm_alliance'>Products To Kewill</button>
     <% end -%>
   <%end%>
-  <button id='btn_poas'>POAs</button>
+  <% if current_user.view_power_of_attorneys? %>
+    <button id='btn_poas'>POAs</button>
+  <% end %>
   <button class='btn_link' link_to='<%=history_company_path(@company)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
 

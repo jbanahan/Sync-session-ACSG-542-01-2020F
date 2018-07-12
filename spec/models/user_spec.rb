@@ -633,6 +633,40 @@ describe User do
         end
       end
     end
+
+    context "powers of attorney" do
+      let!(:poa) { Factory(:power_of_attorney) }
+      let!(:group) { Factory(:group, system_code: "maintain_poa")}
+      let!(:user) { Factory(:user) }
+
+      describe "edit_power_of_attorneys?" do
+        it "returns true if user is a member of group" do
+          group.users << user
+          expect(user.edit_power_of_attorneys?).to eq true
+        end
+        
+        it "returns false if user isn't a member of group" do
+          expect(user.edit_power_of_attorneys?).to eq false
+        end
+
+        it "returns true if user is an admin" do
+          user.admin = true; user.save!
+          expect(user.edit_power_of_attorneys?).to eq true
+        end
+      end
+
+      describe "view_power_of_attorneys?" do
+        it "returns true if user can edit powers of attorney" do
+          expect(user).to receive(:edit_power_of_attorneys?).and_return true
+          expect(user.view_power_of_attorneys?).to eq true
+        end
+
+        it "returns false if user can't edit powers of attorney" do
+          expect(user).to receive(:edit_power_of_attorneys?).and_return false
+          expect(user.view_power_of_attorneys?).to eq false
+        end
+      end
+    end
   end
 
   context "run_with_user_settings" do
