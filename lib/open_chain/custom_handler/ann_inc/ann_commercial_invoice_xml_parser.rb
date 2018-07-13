@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
   end
 
   def self.parse data, opts = {}
-    self.new.parse(REXML::Document.new data)
+    self.new.parse(REXML::Document.new(data), opts)
   end
 
   def ann_importer
@@ -18,12 +18,12 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     @ann
   end
 
-  def parse xml
+  def parse xml, opts
     invoice_path = "/UniversalInterchange/Body/UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice"
-    REXML::XPath.each(xml, invoice_path).each { |invoice| process_invoice(invoice) }
+    REXML::XPath.each(xml, invoice_path).each { |invoice| process_invoice(invoice, opts) }
   end
 
-  def process_invoice invoice_xml
+  def process_invoice invoice_xml, opts
     check_importer invoice_xml
     inv_number = invoice_xml.text("InvoiceNumber").gsub(/\W/,"")
     inv = nil
@@ -34,6 +34,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
       inv.invoice_lines.destroy_all
       REXML::XPath.each(invoice_xml, inv_line_path) { |line_xml| process_invoice_line(inv, line_xml) }
       inv.save!
+      inv.create_snapshot User.integration, nil, opts[:key]
     end
   end
 

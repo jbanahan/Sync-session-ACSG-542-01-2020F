@@ -373,7 +373,8 @@ class User < ActiveRecord::Base
         edit_trade_preference_programs: self.edit_trade_preference_programs?,
         view_vfi_invoices: self.view_vfi_invoices?,
         edit_vfi_invoices: self.edit_vfi_invoices?,
-        view_statements: self.view_statements?
+        view_statements: self.view_statements?,
+        view_commercial_invoices: self.view_commercial_invoices?
       }
     end
 

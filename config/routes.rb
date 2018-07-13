@@ -501,6 +501,11 @@ OpenChain::Application.routes.draw do
   end
 
   resources :run_as_sessions, :only => [:index, :show]
+  resources :invoices, :only => [:index, :show] do
+    member do
+      get 'history'
+    end
+  end
 
   #custom features
   match "/custom_features" => "custom_features#index", :via => :get

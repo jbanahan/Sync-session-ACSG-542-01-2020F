@@ -573,30 +573,7 @@ describe User do
       end
     end
 
-    context "commercial invoice" do
-      context "entry enabled" do
-        before :each do
-          MasterSetup.get.update_attributes(:entry_enabled=>true)
-        end
-        it "should pass with user enabled" do
-          expect(User.new(:commercial_invoice_view=>true).view_commercial_invoices?).to be_truthy
-          expect(User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?).to be_truthy
-        end
-        it "should fail with user not enabled" do
-          expect(User.new.view_commercial_invoices?).to be_falsey
-          expect(User.new.edit_commercial_invoices?).to be_falsey
-        end
-      end
-      context "entry disabled" do
-        before :each do
-          MasterSetup.get.update_attributes(:entry_enabled=>false)
-        end
-        it "should fail with user enabled" do
-          expect(User.new(:commercial_invoice_view=>true).view_commercial_invoices?).to be_falsey
-          expect(User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?).to be_falsey
-        end
-      end
-    end
+    # Commercial Invoices fall under entry edit/view permissions.
 
     context "variant" do
       before :each do

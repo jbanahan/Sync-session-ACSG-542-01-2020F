@@ -649,7 +649,7 @@ describe ReportsController do
     before :each do
       MasterSetup.create!(system_code: 'www-vfitrack-net')
       @u = Factory(:master_user)
-      allow(@u).to receive(:view_commercial_invoices?).and_return true
+      allow(@u).to receive(:view_entries?).and_return true
       sign_in_as @u
 
       @date = Date.today

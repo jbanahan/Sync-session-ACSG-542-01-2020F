@@ -92,6 +92,7 @@ $(function() {
         <%=field_bootstrap "Vendor Management Enabled", f.check_box(:vendor_management_enabled)%>
         <%=field_bootstrap "VFI Invoice Enabled", f.check_box(:vfi_invoice_enabled)%>
         <%=field_bootstrap "Customs Statements Enabled", f.check_box(:customs_statements_enabled)%>
+        <%=field_bootstrap "Invoices Enabled", f.check_box(:invoices_enabled)%>
         <%#- We don't really ever want to disable FTP / Email in production - so don't allow it for fear of having someone accidently turn it off --%>
         <% if !MasterSetup.get.production? %>
           <%=field_bootstrap "Suppress FTP", f.check_box(:suppress_ftp) %>

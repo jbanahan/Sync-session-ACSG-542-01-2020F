@@ -3,8 +3,8 @@ require 'spec_helper'
 describe Api::V1::CommercialInvoicesController do
   before(:each) do
     MasterSetup.get.update_attributes(entry_enabled:true)
-    @u = Factory(:user,commercial_invoice_edit:true,commercial_invoice_view:true)
-    @u.company.update_attributes(importer:true,system_code:'SYS')
+    @u = Factory(:user,entry_edit: true,entry_view: true)
+    @u.company.update_attributes(importer:true,broker: true,system_code:'SYS')
     allow_api_access @u
   end
   describe 'index' do
@@ -83,7 +83,7 @@ describe Api::V1::CommercialInvoicesController do
       expect(res[0]['ci_invoice_number']).to eql '0ci'
     end
     it "should confirm that user can view commercial invoices" do
-      @u.update_attributes(commercial_invoice_view:false)
+      @u.update_attributes(entry_view:false)
       get :index
       expect(response.status).to eql 401
       j = JSON.parse response.body

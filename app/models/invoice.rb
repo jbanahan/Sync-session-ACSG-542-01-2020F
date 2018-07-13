@@ -38,6 +38,7 @@
 #
 
 class Invoice < ActiveRecord::Base
+  include CoreObjectSupport
   belongs_to :country_origin, :class_name => "Country"
   belongs_to :factory, :class_name => "Company"
   belongs_to :importer, :class_name => "Company"
@@ -45,4 +46,32 @@ class Invoice < ActiveRecord::Base
   belongs_to :vendor, :class_name => "Company"
 
   has_many :invoice_lines, :dependent => :destroy, :autosave => true
+
+  def self.search_where user
+    if user.company.master
+      return "1=1"
+    elsif user.company.importer
+      "invoices.importer_id = #{user.company_id} or invoices.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
+    elsif user.company.factory
+      "invoices.factory_id = #{user.company_id} or invoices.factory_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
+    elsif user.company.vendor
+      "invoices.vendor_id = #{user.company_id}"
+    else
+      "1=0"
+    end
+  end
+
+  def self.search_secure user, base_object
+    base_object.where search_where user
+  end
+
+  def can_view? user
+    return user.view_commercial_invoices? &&
+        (
+          user.company.master ||
+          (user.company_id == self.importer_id) ||
+          (user.company_id == self.factory_id) ||
+          (user.company_id == self.vendor_id)
+        )
+  end
 end

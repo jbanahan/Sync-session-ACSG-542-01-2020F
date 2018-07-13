@@ -13,6 +13,7 @@
 #  friendly_name               :string(255)
 #  ftp_polling_active          :boolean
 #  id                          :integer          not null, primary key
+#  invoices_enabled            :boolean
 #  last_delayed_job_error_sent :datetime         default(2001-01-01 00:00:00 UTC)
 #  logo_image                  :string(255)
 #  migration_host              :string(255)

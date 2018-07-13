@@ -630,6 +630,29 @@ module CoreModuleDefinitions
     default_search_columns: [:ras_admin_username, :ras_run_as_username, :ras_start_time, :ras_end_time]
   )
 
+  INVOICE = CoreModule.new("Invoice", "Customer Invoices",
+    unique_id_field_name: :inv_inv_num,
+    key_model_field_uids: [:inv_inv_num],
+    children: [InvoiceLine],
+    child_lambdas: {InvoiceLine => lambda {|parent| parent.invoice_lines}},
+    child_joins: {InvoiceLine => "LEFT OUTER JOIN invoice_lines ON invoices.id = invoice_lines.invoice_id"},
+    quicksearch_fields: [:inv_inv_num],
+    module_chain: [Invoice, InvoiceLine],
+    enabled_lambda: lambda { MasterSetup.get.invoices_enabled? },
+    default_search_columns: [
+        :inv_inv_num,
+        :inv_inv_date,
+        :inv_cust_ref_num,
+        :inv_inv_tot_foreign,
+        :inv_inv_tot_domestic,
+        :inv_total_discounts,
+        :inv_total_charges
+    ]
+  )
+  INVOICE_LINE = CoreModule.new("InvoiceLine", "Invoice Line",
+    unique_id_field_name: :invln_ln_number
+  )
+
   # Don't need these any longer, clear them...this should be the last line in the file
   DESCRIPTOR_REPOSITORY.clear
 end

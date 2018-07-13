@@ -49,11 +49,11 @@ module OpenChain; module UserSupport; module UserPermissions
     when CoreModule::BROKER_INVOICE_LINE
       return self.view_broker_invoices?
     when CoreModule::COMMERCIAL_INVOICE
-      return self.view_commercial_invoices?
+      return self.view_entries?
     when CoreModule::COMMERCIAL_INVOICE_LINE
-      return self.view_commercial_invoices?
+      return self.view_entries?
     when CoreModule::COMMERCIAL_INVOICE_TARIFF
-      return self.view_commercial_invoices?
+      return self.view_entries?
     when CoreModule::SECURITY_FILING
       return self.view_security_filings?
     when CoreModule::COMPANY
@@ -82,6 +82,8 @@ module OpenChain; module UserSupport; module UserPermissions
       return self.view_statements?
     when CoreModule::CUSTOMS_MONTHLY_STATEMENT
       return self.view_statements?
+    when CoreModule::INVOICE
+      return self.view_commercial_invoices?
     end
     return false
   end

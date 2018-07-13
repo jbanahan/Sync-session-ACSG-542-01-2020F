@@ -326,7 +326,7 @@ module ApplicationHelper
     elsif opts[:table]
       output << field_row(label, editor, (opts[:never_hide] || html_attributes[:never_hide]), mf)
     else
-      output << field_bootstrap(label, editor)
+      output << field_bootstrap(label, editor, (opts[:never_hide] || html_attributes[:never_hide]))
     end
 
     output

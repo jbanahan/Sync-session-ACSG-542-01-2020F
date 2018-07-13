@@ -79,20 +79,25 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
     end
 
     it "parses a commercial invoice" do
-      expect{ subject.parse(document) }.to change(Invoice, :count ).from(0).to 1
+      expect{ subject.parse(document, {}) }.to change(Invoice, :count ).from(0).to 1
       check_output
     end
 
+    it 'creates a snapshot' do
+      expect_any_instance_of(Invoice).to receive(:create_snapshot).with(User.integration, nil, 'blah')
+      subject.parse(document, {key: 'blah'})
+    end
+
     it "replaces earlier parse" do
-      subject.parse(document)
-      expect{ subject.parse(document) }.to_not change(Invoice, :count)
+      subject.parse(document, {})
+      expect{ subject.parse(document, {}) }.to_not change(Invoice, :count)
       check_output
     end
   
     it "errors if importer code other than 'ANNTAYNYC' is found" do
       importer_code = REXML::XPath.first(document, "//OrganizationAddress[AddressType='Importer']/OrganizationCode")
       importer_code.text = "ACME"
-      expect{ subject.parse(document) }.to raise_error "Unexpected importer code: ACME"
+      expect{ subject.parse(document, {}) }.to raise_error "Unexpected importer code: ACME"
     end
   end
 end
