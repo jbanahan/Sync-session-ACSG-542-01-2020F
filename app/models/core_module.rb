@@ -435,6 +435,10 @@ class CoreModule
       return "cms"
     when RUN_AS_SESSION
       return "ras"
+    when INVOICE
+      return "inv"
+    when INVOICE_LINE
+      return "invln"
     else
       raise "CoreModule '#{core_module.try(:label)}' does not have a prefix set up."
     end

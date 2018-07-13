@@ -650,7 +650,8 @@ module CoreModuleDefinitions
     ]
   )
   INVOICE_LINE = CoreModule.new("InvoiceLine", "Invoice Line",
-    unique_id_field_name: :invln_ln_number
+    unique_id_field_name: :invln_ln_number,
+    show_field_prefix: true
   )
 
   # Don't need these any longer, clear them...this should be the last line in the file
