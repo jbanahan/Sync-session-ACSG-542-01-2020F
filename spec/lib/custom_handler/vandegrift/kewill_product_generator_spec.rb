@@ -229,6 +229,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       end
     end
 
+    it "allows style truncation if instructed" do
+      opts = {allow_style_truncation: true}
+      gen = described_class.new "CUST", opts
+
+      row[0] = "12345678901234567890123456789012345678901234567890"
+
+      gen.write_row_to_xml parent, 1, row
+
+      expect(parent.text "part/id/partNo").to eq "1234567890123456789012345678901234567890"
+    end
+
   end
 
   describe "run_schedulable" do

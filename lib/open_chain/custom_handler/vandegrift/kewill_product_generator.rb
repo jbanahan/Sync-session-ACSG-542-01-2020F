@@ -47,6 +47,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @default_values = opts[:defaults].presence || {}
     @disable_special_tariff_lookup = opts[:disable_special_tariff_lookup].to_s.to_boolean
     @default_special_tariff_country_origin = opts[:default_special_tariff_country_origin]
+    @allow_style_truncation = opts[:allow_style_truncation].to_s.to_boolean
   end
 
   def custom_defs
@@ -87,7 +88,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # Guessing they're doing a check over effective date and expiration date columns in their tables
     # to determine which record to utilize for a part.
     add_element(p, "dateExpiration", "20991231") 
-    write_data(p, "styleNo", row[0], 40, error_on_trim: true)
+    write_data(p, "styleNo", row[0], 40, error_on_trim: !@allow_style_truncation)
     write_data(p, "descr", row[1].to_s.upcase, 40)
     write_data(p, "countryOrigin", row[3], 2)
     # This is blanked unless FDA Flag is true, so we're ok to always send it (see preprocess_row)
@@ -158,8 +159,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
   def add_kewill_keys parent, row, include_style: true
     write_data(parent, "custNo", @alliance_customer_number, 10, error_on_trim: true)
-    write_data(parent, "partNo", row[0], 40, error_on_trim: true)
-    write_data(parent, "styleNo", row[0], 40, error_on_trim: true) if include_style
+    write_data(parent, "partNo", row[0], 40, error_on_trim: !@allow_style_truncation)
+    write_data(parent, "styleNo", row[0], 40, error_on_trim: !@allow_style_truncation) if include_style
     write_data(parent, "dateEffective", date_format(effective_date), 8, error_on_trim: true)
   end
 
