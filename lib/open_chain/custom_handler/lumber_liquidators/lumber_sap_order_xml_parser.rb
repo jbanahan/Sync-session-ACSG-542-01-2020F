@@ -708,7 +708,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     def special_payment_terms
       {"TT00" => "T/T At Sight",
-       "LC60" => "Letter of Credit 60 Days"}
+       "LC60" => "Letter of Credit 60 Days",
+       "D001" => "T/T .5% 15 Days, Net 15",
+       "D002" => "T/T 1% 15 Days, Net 15" }
     end
 
     def fob_point base
