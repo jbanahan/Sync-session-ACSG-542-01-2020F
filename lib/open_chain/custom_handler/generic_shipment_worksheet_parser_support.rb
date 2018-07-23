@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
   # @param [Array<Array>] rows
   # @param [User] user
   def process_rows(shipment, rows, user)
-    raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
+    raise_error("You do not have permission to edit this shipment.") unless shipment.can_edit?(user)
     Lock.with_lock_retry(shipment) do
       add_header_data shipment, rows
       line_number = max_line_number(shipment)
@@ -142,7 +142,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
   def find_order_line(shipment, po, sku, error_if_not_found: false)
     ord = find_order(shipment, po, error_if_not_found: error_if_not_found)
     ol = ord.order_lines.find_by_sku(sku)
-    raise "SKU #{sku} not found in order #{po} (ID: #{ord.id})." if error_if_not_found && ol.nil?
+    raise_error("SKU #{sku} not found in order #{po} (ID: #{ord.id}).") if error_if_not_found && ol.nil?
     ol
   end
 
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
     ord = @order_cache[po]
     if ord.nil?
       ord = Order.where(customer_order_number: po, importer_id: shipment.importer_id).includes(:order_lines => [:product]).first
-      raise "Order Number #{po} not found." if error_if_not_found && ord.nil?
+      raise_error("Order Number #{po} not found.") if error_if_not_found && ord.nil?
       @order_cache[po] = ord
     end
 

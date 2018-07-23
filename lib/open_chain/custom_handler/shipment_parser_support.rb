@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
                                .where(%Q(approval_status <> "Accepted" OR approval_status IS NULL))
                                .pluck(:customer_order_number)
       if unaccepted_orders.present?
-        raise %Q(This file cannot be processed because the following orders are in an "unaccepted" state: #{unaccepted_orders.join(", ")})
+        raise_error(%Q(This file cannot be processed because the following orders are in an "unaccepted" state: #{unaccepted_orders.join(", ")}))
       end
     end
 
@@ -62,7 +62,7 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
       msg = []
       msg << "ORDERS FOUND ON MULTIPLE SHIPMENTS: ~#{assigned_to_multi_shp.to_json}" if assigned_to_multi_shp.count > 0
       msg << "ORDERS FOUND WITH MISMATCHED MODE: ~#{mode_mismatch.to_json}" if mode_mismatch.count > 0
-      raise msg.join("*") if msg.present?
+      raise_error(msg.join("*")) if msg.present?
     end
 
     def self.multi_manifests_qry order_nums, reference
@@ -95,6 +95,21 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
       out
     end
 
+    
+    def self.raise_error message
+      if InstanceInformation.webserver?
+        raise UnreportedError, message
+      else
+        raise message
+      end
+    end
+
+  end
+
+  # This is just a dumb bit of code to raise unreported errors when run on the webservers, so we don't get notifications
+  # of them (user still sees them on screen), but raise standard errors when run from a job queue (if run that way.)
+  def raise_error message
+    OrdersChecker.raise_error message
   end
 
 end; end; end;

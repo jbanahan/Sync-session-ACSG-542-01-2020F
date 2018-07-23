@@ -32,13 +32,15 @@ class InstanceInformation < ActiveRecord::Base
   def self.server_name
     # These values could be cached, but I don't think they'll be called often enough
     # to warrant that
-    tag_value("Name")
+    @@server_name ||= tag_value("Name")
+    @@server_name
   end
 
   def self.server_role
     # These values could be cached, but I don't think they'll be called often enough
     # to warrant that
-    tag_value("Role")
+    @@server_role ||= tag_value("Role")
+    @@server_role
   end
 
   def self.webserver?
@@ -63,7 +65,13 @@ class InstanceInformation < ActiveRecord::Base
   end
 
   def self.tag_value tag_name
-    path = tag_path(tag_name)
-    File.exist?(path) ? File.read(path).strip : ""
+    read_file(tag_path(tag_name))
   end
+
+  def self.read_file path
+    IO.read(path).strip
+  rescue Errno::ENOENT
+    ""
+  end
+  private_class_method :read_file
 end

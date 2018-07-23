@@ -156,6 +156,8 @@ module Api; module V1; class ApiController < ActionController::Base
         render_error error.errors, error.http_status
       elsif error.is_a?(ActiveRecord::RecordNotFound)
         render_error "Not Found", :not_found
+      elsif error.is_a?(UnreportedError)
+        render_error error.message, :internal_server_error
       else
         render_error error.message, :internal_server_error
 

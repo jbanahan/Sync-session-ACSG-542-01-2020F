@@ -55,10 +55,11 @@ module OpenChain
 
     if Rails.env.production?
       config.middleware.use(ExceptionNotification::Rack,
-        :email => {
-          :email_prefix => "[VFI Track Exception]",
-          :sender_address => %{"Exception Notifier" <bug@vandegriftinc.com>},
-          :exception_recipients => %w{bug@vandegriftinc.com}
+        ignore_if: lambda { |env, exception| exception.is_a?(UnreportedError) }, 
+        email: {
+          email_prefix: "[VFI Track Exception]",
+          sender_address: %{"Exception Notifier" <bug@vandegriftinc.com>},
+          exception_recipients: %w{bug@vandegriftinc.com}
         }
       )
     end

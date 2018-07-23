@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
   def process_rows shipment, rows, user, manufacturer_address_id=nil, enable_warnings=nil
     ActiveRecord::Base.transaction do
-      raise "You do not have permission to edit this shipment." unless shipment.can_edit?(user)
+      raise_error("You do not have permission to edit this shipment.") unless shipment.can_edit?(user)
       validate_heading rows
       # Containers should be added first...the lines parsing also updates container data
       add_containers shipment, rows if mode(rows)=='OCEAN'
@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   private
   def validate_heading rows
     if rows.size < 2 || rows[1].size < 2 || rows[1][1].blank? || !rows[1][1].to_s == 'Packing Manifest'
-      raise "INVALID FORMAT: Cell B2 must contain 'Packing Manifest'."
+      raise_error("INVALID FORMAT: Cell B2 must contain 'Packing Manifest'.")
     end
   end
 
@@ -128,11 +128,11 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     ord = @order_cache[po]
     if ord.nil?
       ord = Order.where(customer_order_number:po,importer_id:shipment.importer_id).includes(:order_lines).first
-      raise "Order Number #{po} not found." unless ord
+      raise_error("Order Number #{po} not found.") unless ord
       @order_cache[po] = ord
     end
     ol = ord.order_lines.find {|ln| ln.sku == sku}
-    raise "SKU #{sku} not found in order #{po} (ID: #{ord.id})." unless ol
+    raise_error("SKU #{sku} not found in order #{po} (ID: #{ord.id}).") unless ol
     ol
   end
 

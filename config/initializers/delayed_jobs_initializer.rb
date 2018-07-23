@@ -131,5 +131,25 @@ class ChainDelayedJobPlugin < Delayed::Plugin
   end
 end
 
+# The following sorta monkey patches support for telling delayed jobs to NOT reschedule a failed job if the error class is UnreportedError.
+# There doesn't seem to be a way to hook the lifecyle to get at the actual errors raised by a job when the Object.delay.method approach
+# is used.  Even the callbacks for the custom jobs approach seem to only allow for reporting the error and not for killing off the job.
+module OpenChain; module UnreportedErrorFailedJobHandler
+
+  def handle_failed_job job, error, *args
+    if error.is_a?(UnreportedError)
+      job.destroy
+    else
+      super
+    end
+  end
+
+end; end
+
+module Delayed; class Worker
+  prepend OpenChain::UnreportedErrorFailedJobHandler
+  
+end; end;
+
 Delayed::Worker.default_queue_name = 'default'
 Delayed::Worker.plugins << ChainDelayedJobPlugin

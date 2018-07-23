@@ -1,74 +1,52 @@
-require 'spec_helper'
-
 describe InstanceInformation do
 
-  around :each do |ex|
-    Tempfile.open("InstanceInformationTmp") do |f|
-      @tf = f
-      ex.run
-    end
+  after :each do
+    # Clear the caching information
+    InstanceInformation.class_variable_set(:@@server_role, nil)
+    InstanceInformation.class_variable_set(:@@server_name, nil)
   end
 
   describe "server_role" do
     it 'uses aws tag fs to identify server role' do
-      @tf << "Server Role"
-      @tf.flush
-      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Role").and_return "Server Role"
       expect(InstanceInformation.server_role).to eq "Server Role"
     end
   end
 
   describe "server_name" do
     it 'uses aws tag fs to identify server name' do
-      @tf << "Server Name"
-      @tf.flush
-      expect(InstanceInformation).to receive(:tag_path).with("Name").and_return @tf.path
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Name").and_return "Server Name"
       expect(InstanceInformation.server_name).to eq "Server Name"
     end
   end
 
   describe "webserver?" do
     it "identifies as webserver if role tag is Web" do
-      @tf << "Web"
-      @tf.flush
-
-      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.webserver?).to be_truthy
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Role").and_return "Web"
+      expect(InstanceInformation.webserver?).to eq true
     end
 
     it "returns false if role is not Web" do
-      @tf << "Not Web"
-      @tf.flush
-
-      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.webserver?).to be_falsey
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Role").and_return "Not Web"
+      expect(InstanceInformation.webserver?).to eq false
     end
   end
 
   describe "job_queue?" do
     it "identifies as job queue if role tag is Job Queue" do
-      @tf << "Job Queue"
-      @tf.flush
-
-      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.job_queue?).to be_truthy
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Role").and_return "Job Queue"
+      expect(InstanceInformation.job_queue?).to eq true
     end
 
     it "returns false if role is not Job Queue" do
-      @tf << "Not Job Queue"
-      @tf.flush
-
-      expect(InstanceInformation).to receive(:tag_path).with("Role").and_return @tf.path
-      expect(InstanceInformation.job_queue?).to be_falsey
+      expect(InstanceInformation).to receive(:read_file).with("/etc/aws-fs/tags/Role").and_return "Not Job Queue"
+      expect(InstanceInformation.job_queue?).to eq false
     end
   end
-
 
   describe "tag_base_dir" do
     it "uses the correct base dir" do
       expect(InstanceInformation.tag_base_dir).to eq "/etc/aws-fs/tags"
     end
   end
-
-    
 end 

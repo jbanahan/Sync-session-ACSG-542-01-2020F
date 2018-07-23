@@ -132,5 +132,17 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
     end
   end
 
+  describe "raise_error" do
+    it "raises an UnreportedError on webserver" do
+      expect(InstanceInformation).to receive(:webserver?).and_return true
+      expect { subject.raise_error "Test"}.to raise_error UnreportedError, "Test"
+    end
+
+    it "raises a StandardError not on webserver" do
+      expect(InstanceInformation).to receive(:webserver?).and_return false
+      expect { subject.raise_error "Test"}.to raise_error StandardError, "Test"
+    end
+  end
+
 
 end
