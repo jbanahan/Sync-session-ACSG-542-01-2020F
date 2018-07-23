@@ -262,7 +262,7 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       
       it "doesn't send if disabled" do
         bvru_1.update_attributes! suppress_review_fail_notice: true
-        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME", 
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Review", importer_name: "ACME", 
                                    customer_number: "cust num", description: "new descr 1", message: "new msg 1")
 
         expect(ActionMailer::Base.deliveries.pop).to eq nil

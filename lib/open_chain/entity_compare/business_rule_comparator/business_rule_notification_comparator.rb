@@ -81,7 +81,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
     case state
     when "Pass"
       {subject: rule.subject_pass, message: rule.message_pass}
-    when "Fail"
+    when "Fail", "Review"
       {subject: rule.subject_review_fail, message: rule.message_review_fail}
     when "Skipped"
       {subject: rule.subject_skipped, message: rule.message_skipped}
@@ -92,7 +92,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
     case state
     when "Pass"
       rule.suppress_pass_notice?
-    when "Fail"
+    when "Fail", "Review"
       rule.suppress_review_fail_notice?
     when "Skipped"
       rule.suppress_skipped_notice?
