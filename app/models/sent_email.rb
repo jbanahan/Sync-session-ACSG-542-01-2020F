@@ -12,6 +12,7 @@
 #  email_subject  :string(255)
 #  email_to       :string(255)
 #  id             :integer          not null, primary key
+#  suppressed     :boolean          default(FALSE)
 #  updated_at     :datetime         not null
 #
 

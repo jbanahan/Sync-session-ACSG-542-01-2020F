@@ -2,6 +2,9 @@
   <button class='btn_link' link_to='<%= sent_emails_path %>' key_map='b'>Back</button>
 <% end %>
 
+<% if @sent_email.suppressed %>
+  <p><strong>This email was suppressed.</strong></p>
+<% end %>
 <table>
   <%= field_row "From", @sent_email.email_from %>
   <%= field_row "To", @sent_email.email_to %>

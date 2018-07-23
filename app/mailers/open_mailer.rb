@@ -1,12 +1,7 @@
 class OpenMailer < ActionMailer::Base
   include AbstractController::Callbacks # This can be removed when migrating to rails 4
 
-  after_filter :log_email
-  # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
-  after_filter :possibly_suppress_email, except: :send_generic_exception
-  # In dev, we don't actually want to email errors,..we're actually going to use the logger instead to render them 
-  after_filter :redirect_to_developer, only: :send_generic_exception
-
+  after_filter :handle_sent_email #includes handling for :redirect_to_developer, :send_generic_exception
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -34,12 +29,14 @@ EOS
     pm_attachments = []
     opts = {to: explode_group_email_list(to, "TO"), subject: subject}.merge mail_options
     local_attachments = process_attachments(file_attachments, opts[:to])
+    suppressed = opts.delete :suppressed
 
     m = mail(opts) do |format|
       format.html
     end
 
     local_attachments.each {|name, content| m.attachments[name] = content}
+    set_suppressed_flag(m) if suppressed
     m
   end
 
@@ -414,7 +411,7 @@ EOS
     end
   end
 
-  def log_email
+  def log_email suppressed=false
     # Note: This method is stubbed out in testing unless you specifically tag your testing spec with "email_log: true"
     attachment_list = []
     message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
@@ -423,7 +420,7 @@ EOS
     SentEmail.create!(email_subject: message.subject, email_to: extract_email_addresses(message.to), email_cc: extract_email_addresses(message.cc),
                       email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from),
                       email_reply_to: extract_email_addresses(message.reply_to), email_date: Time.zone.now, email_body: extract_email_body(message.body),
-                      attachments: attachment_list)
+                      attachments: attachment_list, suppressed: suppressed)
 
     true
   end
@@ -444,7 +441,6 @@ EOS
     local_attachments.each {|name, content| m.attachments[name] = content}
     m
   end
-
 
   private
 
@@ -550,6 +546,28 @@ EOS
       end
     end
 
+    def handle_sent_email
+      if action_name == "send_generic_exception"
+        # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
+        log_email false
+        # In dev, we don't actually want to email errors...we're actually going to use the logger instead to render them 
+        redirect_to_developer 
+      else
+        suppress_email = message.respond_to?(:suppressed) || suppress_all_emails?
+        message.delivery_method NoOpMailer if suppress_email
+        log_email suppress_email
+      end      
+    end
+
+    def set_suppressed_flag message
+      message.define_singleton_method(:suppressed) { true } 
+    end
+
+    def suppress_all_emails?
+      # We don't want to suppress emails in test env, since the test mailer is used to capture emails for test cases to introspect
+      !test_env? && !MasterSetup.email_enabled?
+    end
+
     require 'mail/check_delivery_params'
     class NoOpMailer
       attr_accessor :settings
@@ -562,15 +580,6 @@ EOS
         # Below is what the standard mailer does
         Mail::CheckDeliveryParams.check(mail)
       end
-    end
-
-    def possibly_suppress_email
-      # We don't want to suppress emails in test env, since the test mailer is used to capture emails for test cases to introspect
-      if !test_env? && !MasterSetup.email_enabled?
-        message.delivery_method NoOpMailer
-      end
-
-      true
     end
 
     # Broken out for ease of mocking without forcing Rails.env to return bad values in test

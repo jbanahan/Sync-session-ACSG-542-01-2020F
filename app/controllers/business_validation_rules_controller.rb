@@ -99,7 +99,16 @@ class BusinessValidationRulesController < ApplicationController
         type: br.type,
         group_id: br.group_id,
         notification_type: br.notification_type,
-        notification_recipients: br.notification_recipients
+        notification_recipients: br.notification_recipients,
+        suppress_pass_notice: br.suppress_pass_notice,
+        suppress_review_fail_notice: br.suppress_review_fail_notice,
+        suppress_skipped_notice: br.suppress_skipped_notice,
+        subject_pass: br.subject_pass,
+        subject_review_fail: br.subject_review_fail,
+        subject_skipped: br.subject_skipped,
+        message_pass: br.message_pass,
+        message_review_fail: br.message_review_fail,
+        message_skipped: br.message_skipped
       }
     }
 

@@ -10,10 +10,19 @@
 #  fail_state                      :string(255)
 #  group_id                        :integer
 #  id                              :integer          not null, primary key
+#  message_pass                    :string(255)
+#  message_review_fail             :string(255)
+#  message_skipped                 :string(255)
 #  name                            :string(255)
 #  notification_recipients         :text
 #  notification_type               :string(255)
 #  rule_attributes_json            :text
+#  subject_pass                    :string(255)
+#  subject_review_fail             :string(255)
+#  subject_skipped                 :string(255)
+#  suppress_pass_notice            :boolean
+#  suppress_review_fail_notice     :boolean
+#  suppress_skipped_notice         :boolean
 #  type                            :string(255)
 #  updated_at                      :datetime         not null
 #
@@ -25,7 +34,9 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
-  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, :notification_recipients
+  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, 
+                  :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice, :subject_pass, :subject_review_fail, :subject_skipped,
+                  :message_pass, :message_review_fail, :message_skipped
 
   has_many :search_criterions, dependent: :destroy
   # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)

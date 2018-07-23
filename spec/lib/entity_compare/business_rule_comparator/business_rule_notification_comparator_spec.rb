@@ -4,8 +4,8 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
   let(:entry) { Factory(:entry, broker_reference: "brok ref", importer: co, customer_number: "cust num") }              
   let(:url) { Rails.application.routes.url_helpers.entry_url(entry.id, host: MasterSetup.get.request_host, protocol: 'http' ) }
   let(:bvre) { Factory(:business_validation_result, validatable: entry)}
-  let(:bvru_1) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz") }
-  let(:bvru_2) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz") }
+  let(:bvru_1) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
+  let(:bvru_2) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
   let!(:bvrr_1) { Factory(:business_validation_rule_result_without_callback, business_validation_rule: bvru_1, business_validation_result: bvre) }
   let!(:bvrr_2) { Factory(:business_validation_rule_result_without_callback, business_validation_rule: bvru_2, business_validation_result: bvre) }
   let!(:old_json) do
@@ -60,12 +60,10 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
     it "notifies separately for each rule with a changed status" do
       expect(described_class).to receive(:get_json_hash).with('old bucket', 'old key', 'old version').and_return old_json
       expect(described_class).to receive(:get_json_hash).with('new bucket', 'new key', 'new version').and_return new_json
-      expect(described_class).to receive(:send_email).with(id: entry.id, uid: "brok ref", notification_recipients: "tufnel@stonehenge.biz",
-                                                       :module_type=>"Entry", state: "Fail", importer_name: "ACME", customer_number: "cust num", 
-                                                       description: "new descr 1", message: "new msg 1")
-      expect(described_class).to receive(:send_email).with(id: entry.id, uid: "brok ref", notification_recipients: "tufnel@stonehenge.biz",
-                                                       :module_type=>"Entry", state: "Fail", importer_name: "ACME", customer_number: "cust num", 
-                                                       description: "new descr 2", message: "new msg 2")
+      expect(described_class).to receive(:send_email).with(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", 
+                                                           importer_name: "ACME", customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+      expect(described_class).to receive(:send_email).with(id: entry.id, rule: bvru_2, uid: "brok ref", :module_type=>"Entry", state: "Fail", 
+                                                           importer_name: "ACME", customer_number: "cust num", description: "new descr 2", message: "new msg 2")
       described_class.compare 'Entry', entry.id, 'old bucket', 'old key', 'old version', 'new bucket', 'new key', 'new version'
     end
 
@@ -78,9 +76,8 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       old_rules.delete("rule_#{bvru_2.id}".to_sym)
       expect(described_class).to receive(:get_json_hash).with('old bucket', 'old key', 'old version').and_return old_json
       expect(described_class).to receive(:get_json_hash).with('new bucket', 'new key', 'new version').and_return new_json
-      expect(described_class).to receive(:send_email).with(id: prod.id, uid: "prod uid", notification_recipients: "tufnel@stonehenge.biz",
-                                                       :module_type=>"Product", state: "Fail", importer_name: "ACME", customer_number: nil, 
-                                                       description: "new descr 1", message: "new msg 1")
+      expect(described_class).to receive(:send_email).with(id: prod.id, rule: bvru_1, uid: "prod uid", :module_type=>"Product", state: "Fail", importer_name: "ACME", 
+                                                           customer_number: nil, description: "new descr 1", message: "new msg 1")
       described_class.compare "Product", prod.id, 'old bucket', 'old key', 'old version', 'new bucket', 'new key', 'new version'
     end
 
@@ -90,9 +87,8 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       old_rules.delete("rule_#{bvru_2.id}".to_sym)
       expect(described_class).to receive(:get_json_hash).with('old bucket', 'old key', 'old version').and_return old_json
       expect(described_class).to receive(:get_json_hash).with('new bucket', 'new key', 'new version').and_return new_json
-      expect(described_class).to receive(:send_email).with(id: entry.id, uid: "brok ref", notification_recipients: "tufnel@stonehenge.biz", 
-                                                       :module_type=>"Entry", state: "Fail", importer_name: nil, customer_number: "cust num", 
-                                                       description: "new descr 1", message: "new msg 1")
+      expect(described_class).to receive(:send_email).with(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: nil, 
+                                                           customer_number: "cust num", description: "new descr 1", message: "new msg 1")
       described_class.compare "Entry", entry.id, 'old bucket', 'old key', 'old version', 'new bucket', 'new key', 'new version'
     end
   end
@@ -156,7 +152,7 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       expect(described_class.changed_rules old_r, new_r).to eq [new_rule_2]
     end
 
-    it "omists rules whose results change between 'Skipped' and 'Pass'" do
+    it "omits rules whose results change between 'Skipped' and 'Pass'" do
       old_rule_1["state"] = "Skipped"
       new_rule_1["state"] = "Pass"
       expect(described_class.changed_rules old_r, new_r).to eq [new_rule_2]
@@ -224,7 +220,8 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
     let(:rule) { {"id" => bvru_1.id, "notification_type" => "Email", "state" => "Pass", "description" => "descr", "message" => "msg"} }
     
     it "sends email if indicated" do
-      expect(described_class).to receive(:send_email).with(id: bvru_1.id, module_type: "Entry", uid: "brok ref", state: "Pass", description: "descr", message: "msg", customer_number: "cust num", importer_name: "ACME", notification_recipients: "tufnel@stonehenge.biz")
+      expect(described_class).to receive(:send_email).with(id: bvru_1.id, rule: bvru_1, module_type: "Entry", uid: "brok ref", state: "Pass", 
+                                                           description: "descr", message: "msg", customer_number: "cust num", importer_name: "ACME")
       described_class.update rule, "Entry", bvru_1.id, "brok ref", "cust num", "ACME"
     end
 
@@ -236,9 +233,9 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
   end
 
   describe "send_email" do
-    it "sends email" do
-      described_class.send_email(id: entry.id, uid: "brok ref", notification_recipients: "tufnel@stonehenge.biz", :module_type=>"Entry", state: "Fail", 
-                             importer_name: "ACME", customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+    it "sends email without customized subject/body" do
+      described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME", 
+                                 customer_number: "cust num", description: "new descr 1", message: "new msg 1")
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]
@@ -250,6 +247,70 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       expect(mail.body).to include "new msg 1"
       expect(mail.body).to include url
     end
+
+    context "Review/Fail" do
+      it "sends email with customized subject/body" do
+        bvru_1.update_attributes! subject_review_fail: "Custom fail subject", message_review_fail: "Custom fail message"
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq "Entry - brok ref - Fail: Custom fail subject"
+        expect(mail.body).to include "Custom fail message"
+        expect(mail.body).to include "Entry brok ref rule status has changed to 'Fail'"
+      end
+      
+      it "doesn't send if disabled" do
+        bvru_1.update_attributes! suppress_review_fail_notice: true
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        expect(ActionMailer::Base.deliveries.pop).to eq nil
+      end
+    end
+
+    context "Pass" do
+      it "sends email with customized subject/body" do
+        bvru_1.update_attributes! subject_pass: "Custom pass subject", message_pass: "Custom pass message"
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Pass", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq "Entry - brok ref - Pass: Custom pass subject"
+        expect(mail.body).to include "Custom pass message"
+        expect(mail.body).to include "Entry brok ref rule status has changed to 'Pass'"
+      end
+
+      it "doesn't send if disabled" do
+        bvru_1.update_attributes! suppress_pass_notice: true
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Pass", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        expect(ActionMailer::Base.deliveries.pop).to eq nil
+      end
+    end
+
+    context "Skipped" do
+      it "sends email with customized subject/body" do
+        bvru_1.update_attributes! subject_skipped: "Custom skipped subject", message_skipped: "Custom skipped message"
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Skipped", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.subject).to eq "Entry - brok ref - Skipped: Custom skipped subject"
+        expect(mail.body).to include "Custom skipped message"
+        expect(mail.body).to include "Entry brok ref rule status has changed to 'Skipped'"
+      end
+
+      it "doesn't send if disabled" do
+        bvru_1.update_attributes! suppress_skipped_notice: true
+        described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Skipped", importer_name: "ACME", 
+                                   customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+
+        expect(ActionMailer::Base.deliveries.pop).to eq nil
+      end
+    end
+
   end
 
   describe "accept?" do

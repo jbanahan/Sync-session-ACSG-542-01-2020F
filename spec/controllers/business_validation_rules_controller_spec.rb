@@ -100,12 +100,21 @@ describe BusinessValidationRulesController do
               search_criterions: [{"mfid" => "ent_cust_name",
                                    "datatype" => "string", "label" => "Customer Name",
                                    "operator" => "eq", "value" => "Monica Lewinsky"}],
-             rule_attributes_json: '{"valid":"json-4"}',
-             description: "descr",
-             fail_state: "Fail",
-             group_id: 1,
-             notification_type: "Email",
-             notification_recipients: "tufnel@stonehenge.biz"}
+              rule_attributes_json: '{"valid":"json-4"}',
+              description: "descr",
+              fail_state: "Fail",
+              group_id: 1,
+              notification_type: "Email",
+              notification_recipients: "tufnel@stonehenge.biz",
+              suppress_pass_notice: true,
+              suppress_review_fail_notice: true,
+              suppress_skipped_notice: true,
+              subject_pass: "subject - PASS",
+              subject_review_fail: "subject - FAIL",
+              subject_skipped: "subject - SKIPPED",
+              message_pass: "this rule passed",
+              message_review_fail: "this rule failed",
+              message_skipped: "this rule was skipped"}
               
       expect(JSON.parse response.body).to eq({"notice" => "Business rule updated"})
       @bvr.reload
@@ -117,6 +126,16 @@ describe BusinessValidationRulesController do
       expect(@bvr.group_id).to eq(1)
       expect(@bvr.notification_type).to eq("Email")
       expect(@bvr.notification_recipients).to eq("tufnel@stonehenge.biz")
+      expect(@bvr.suppress_pass_notice).to eq true
+      expect(@bvr.suppress_review_fail_notice).to eq true
+      expect(@bvr.suppress_skipped_notice).to eq true
+      expect(@bvr.subject_pass).to eq "subject - PASS"
+      expect(@bvr.subject_review_fail).to eq "subject - FAIL"
+      expect(@bvr.subject_skipped).to eq "subject - SKIPPED"
+      expect(@bvr.message_pass).to eq "this rule passed"
+      expect(@bvr.message_review_fail).to eq "this rule failed"
+      expect(@bvr.message_skipped).to eq "this rule was skipped"
+
       expect(@bvr.business_validation_template.id).to eq(@bvt.id)
     end
 
@@ -148,7 +167,11 @@ describe BusinessValidationRulesController do
       # since there's some handling required in these cases
       @bvt = Factory(:business_validation_template)
       @group = Factory(:group)
-      @rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", disabled: false, group_id: @group.id, rule_attributes_json: '{"test":"testing"}', notification_type: "Email", notification_recipients: "tufnel@stonehenge.biz"
+      @rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", disabled: false, group_id: @group.id, 
+                                                rule_attributes_json: '{"test":"testing"}', notification_type: "Email", notification_recipients: "tufnel@stonehenge.biz",
+                                                suppress_pass_notice: true, suppress_review_fail_notice: true, suppress_skipped_notice: true, subject_pass: "subject - PASS",
+                                                subject_review_fail: "subject - FAIL", subject_skipped: "subject - SKIPPED", message_pass: "this rule passed",
+                                                message_review_fail: "this rule failed", message_skipped: "this rule was skipped"
       @rule.search_criterions << @sc
       @rule.business_validation_template = @bvt
       @rule.save!
@@ -164,6 +187,8 @@ describe BusinessValidationRulesController do
       expect(rule).to eq({"business_validation_template_id"=>@bvt.id,
           "description"=>"DESC", "fail_state"=>"FAIL", "disabled" => false, "id"=>@rule.id, "group_id"=>@group.id, "type"=>"ValidationRuleAttachmentTypes",
           "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', "notification_type" => "Email", "notification_recipients" => "tufnel@stonehenge.biz",
+          "suppress_pass_notice"=> true, "suppress_review_fail_notice" => true, "suppress_skipped_notice" => true, "subject_pass" => "subject - PASS", "subject_review_fail" => "subject - FAIL",
+          "subject_skipped" => "subject - SKIPPED", "message_pass" => "this rule passed", "message_review_fail" => "this rule failed", "message_skipped" => "this rule was skipped",
           "search_criterions"=>[{"mfid"=>"prod_uid", "operator"=>"eq", "value"=>"x", "label" => "Unique Identifier", "datatype" => "string", "include_empty" => false}]})
     end
 

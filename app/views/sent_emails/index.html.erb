@@ -5,6 +5,7 @@
     <th><%=sortable_search_heading 'from'%></th>
     <th><%=sortable_search_heading 'subject'%></th>
     <th><%=sortable_search_heading 'date'%></th>
+    <th><%=sortable_search_heading 'suppressed'%></th>
   </thead>
 
 <% @sent_emails.each do |sent_email| %>
@@ -13,6 +14,7 @@
     <td><%= sent_email.email_from %></td>
     <td><%= sent_email.email_subject %></td>
     <td><%= sent_email.email_date %></td>
+    <td><%= check_box_tag :supp, "", sent_email.suppressed, disabled: true %></td>
   </tr>
 <% end %>
 </table>

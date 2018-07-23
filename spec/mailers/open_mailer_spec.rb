@@ -160,10 +160,50 @@ describe OpenMailer do
     end
   end
 
+  describe "suppress_all_emails?" do
+    subject { OpenMailer.send :new }
+    before :each do 
+      # dev/prod, email enabled
+      allow(subject).to receive(:test_env?).and_return false
+      allow(MasterSetup).to receive(:email_enabled?).and_return true
+    end
+
+    it "returns false if email enabled" do
+      expect(subject.send :suppress_all_emails?).to eq false
+    end
+    
+    it "returns false if test_env" do
+      allow(subject).to receive(:test_env?).and_return true
+      expect(subject.send :suppress_all_emails?).to eq false
+    end
+
+    it "returns true if not test_env and email disabled" do
+      allow(MasterSetup).to receive(:email_enabled?).and_return false
+      allow(subject).to receive(:test_env?).and_return false
+      expect(subject.send :suppress_all_emails?).to eq true
+    end
+  end
+
   describe "send_simple_html" do
-    context "with email suppression enabled" do
+    context "with individual email suppression enabled" do
+      it "swallows the email after logging it", email_log: true do
+        allow_any_instance_of(OpenMailer).to receive(:suppress_all_emails?).and_return false
+        allow(MasterSetup).to receive(:email_enabled?).and_return true
+
+        m = OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>", [], {suppressed: true})
+        # NoOpMailer is the mechanism used to swallow the emails...it's delivery method just
+        # ignores the mail and does nothing.
+        expect(m.delivery_method).to be_an_instance_of OpenMailer::NoOpMailer
+        email = SentEmail.last
+        expect(email).not_to be_nil
+        expect(email.email_subject).to eq "Test subject"
+        expect(email.suppressed).to eq true
+      end
+    end
+    
+    context "with general email suppression enabled" do
       before :each do 
-        allow_any_instance_of(OpenMailer).to receive(:test_env?).and_return false
+        allow_any_instance_of(OpenMailer).to receive(:suppress_all_emails?).and_return true
         allow(MasterSetup).to receive(:email_enabled?).and_return false
       end
 
@@ -175,6 +215,7 @@ describe OpenMailer do
         email = SentEmail.last
         expect(email).not_to be_nil
         expect(email.email_subject).to eq "Test subject"
+        expect(email.suppressed).to eq true
       end
     end
 
@@ -523,8 +564,10 @@ EMAIL
     end
   end
 
-  describe "send_generic_exception" do
-    it "should send an exception email" do
+  describe "send_generic_exception", email_log: true do
+    it "should send an exception email (even if instance configured to suppress it)" do
+      allow_any_instance_of(OpenMailer).to receive(:suppress_all_emails?).and_return true
+
       error = StandardError.new "Test"
       error.set_backtrace ["Backtrace", "Line 1", "Line 2"]
 
@@ -549,6 +592,9 @@ EMAIL
         expect(source).to include(error.backtrace.join("\n"))
 
         expect(mail.attachments[File.basename(f.path)].read).to eq "Test File"
+
+        sent_email = SentEmail.last
+        expect(sent_email.suppressed).to eq false
       end
     end
 

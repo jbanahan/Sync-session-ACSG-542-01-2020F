@@ -32,6 +32,12 @@
               <b>Override group:</b>
               <%= r.group.name if r.group %>
             </li>
+            
+            <li>
+              <b>Notification type:</b>
+              <%= r.notification_type %>
+            </li>
+
             <li>
               <b>
                 Search criteria:
@@ -45,7 +51,7 @@
               </ul>
             </li>
             <li><b>Disabled:</b>
-                <%= content_tag(:span, !!r.disabled, style: !!r.disabled ? "color: green" : "") %>
+                <%= content_tag(:span, r.disabled ? "true" : "", style: r.disabled ? "color: orange" : "") %>
               <span>
                 <li style="display:inline">
                   <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>

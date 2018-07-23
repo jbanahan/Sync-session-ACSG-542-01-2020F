@@ -37,10 +37,12 @@ businessRuleApp.controller 'BusinessRuleController', ['$scope','businessRuleServ
         $("#rule-criteria-submit-failure").hide()
         $("#notice").text(data.notice)
         $("#rule-criteria-submit-success").show()
+        window.scrollTo(0,0)
       ).error((data) ->
         $("#rule-criteria-submit-success").hide()
         $("#error").text(data.error)
         $("#rule-criteria-submit-failure").show()
+        window.scrollTo(0,0)
       )
 
   $scope.setId = (id) ->

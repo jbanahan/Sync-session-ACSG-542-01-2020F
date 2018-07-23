@@ -6,6 +6,7 @@ class SentEmailsController < ApplicationController
     'subject' => {:field => 'email_subject', :label => 'Subject'},
     'body' => {:field => 'email_body', :label => "Body"},
     'date' => {:field => 'email_date', :label => "Date"},
+    'suppressed' => {:field => 'suppressed', :label => "Suppressed"}
   }
 
   def set_page_title

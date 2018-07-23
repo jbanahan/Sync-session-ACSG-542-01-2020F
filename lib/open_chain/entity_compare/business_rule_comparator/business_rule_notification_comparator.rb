@@ -58,25 +58,46 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
   def self.update rule_json, type, id, uid, customer_number, importer_name
     if rule_json["notification_type"] == 'Email'
       rule_obj = BusinessValidationRule.find(rule_json["id"])
-      send_email(id: id, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"], 
-                 message: rule_json["message"], customer_number: customer_number, importer_name: importer_name, 
-                 notification_recipients: rule_obj.notification_recipients)
+      send_email(id: id, rule: rule_obj, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"], 
+                 message: rule_json["message"], customer_number: customer_number, importer_name: importer_name)
     end
   end
 
-  def self.send_email id:, module_type:, uid:, state:, description:, message:, customer_number:, importer_name:, notification_recipients:
-    subject = %Q(#{module_type} - #{uid} - #{state}: #{description})
+  def self.send_email id:, rule:, module_type:, uid:, state:, description:, message:, customer_number:, importer_name:
+    subject = %Q(#{module_type} - #{uid} - #{state}: #{description_override(rule, state)[:subject].presence || description})
     body = ""
     body += %Q(<p>#{customer_number}</p>) if customer_number.present?
     body += %Q(<p>#{importer_name}</p>) if importer_name.present?
-    body += %Q(<p>Rule Description: #{description}</p>)
+    body += %Q(<p>#{description_override(rule, state)[:message].presence || "Rule Description: " + description}</p>)
     body += %Q(<p>#{module_type} #{uid} rule status has changed to '#{state}' </p>)
     body += %Q(<p>#{message}</p>)
     body += %Q(<p>#{link id, module_type}</p>)
-    OpenMailer.send_simple_html(notification_recipients, subject, body.html_safe).deliver!
+    OpenMailer.send_simple_html(rule.notification_recipients, subject, body.html_safe, [], {suppressed: suppress_email?(rule, state)}).deliver!
   end
   
   private
+
+  def self.description_override rule, state
+    case state
+    when "Pass"
+      {subject: rule.subject_pass, message: rule.message_pass}
+    when "Fail"
+      {subject: rule.subject_review_fail, message: rule.message_review_fail}
+    when "Skipped"
+      {subject: rule.subject_skipped, message: rule.message_skipped}
+    end
+  end
+
+  def self.suppress_email? rule, state
+    case state
+    when "Pass"
+      rule.suppress_pass_notice?
+    when "Fail"
+      rule.suppress_review_fail_notice?
+    when "Skipped"
+      rule.suppress_skipped_notice?
+    end
+  end
   
   def self.extract_obj_info id, module_type
     mod = CoreModule.find_by_class_name module_type
