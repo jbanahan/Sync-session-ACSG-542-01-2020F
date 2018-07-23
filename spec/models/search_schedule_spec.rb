@@ -1,302 +1,204 @@
 require 'spec_helper'
 
 describe SearchSchedule do
+  
   describe "run_search" do
+
     let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001,2,3,4,5,6) }
-    before :each do
-      @temp = Tempfile.new ["search_schedule_spec", ".xls"]
-      @u = Factory(:user, :time_zone => "Hawaii", :email=>'tufnel@stonehenge.biz')
-      @setup = SearchSetup.new(:user=>@u, 
-        # use a name that needs to be sanitized -> -test.txt
-        :name => 'test/-#t!e~s)t .^t&x@t', :download_format => 'csv'
-        )
-      @report = CustomReport.new(:user => @u, name: "blah")
-      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report, :download_format=>"csv", :send_if_empty=>true)
-    end
+    let(:user) { Factory(:user, time_zone: "Hawaii", email: "tufnel@stonehenge.biz") }
+    let(:search_setup) { 
+      # use a name that needs to be sanitized -> -test.txt    
+      SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t'
+    }
+    let(:report) { CustomReport.new user: user, name: "test/t!st.txt"}
+    let(:search_schedule) { SearchSchedule.new(search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true) }
+    let(:tempfile) { Tempfile.new ["search_schedule_spec", ".xls"] }
 
     after :each do
-      @temp.close!
+      tempfile.close! unless tempfile.closed?
     end
 
-    it "should run with a search setup and no custom report" do
-      # The following methods should be tested individually in another unit test
-      # All we care about here is that they're called in the run_search method
-      @ss.custom_report = nil
-      
-      log = double
-      expect(log).to receive(:info).twice
+    context "with search schedule" do
+      before :each do 
+        search_schedule.custom_report = nil
+      end
 
-      # Use the block version here so we can also verify that User.current and Time.zone is set to the 
-      # search setup's user in the context of the write_csv call
-      expect(@ss).to receive(:write_csv) {|setup, tempfile|
-        expect(setup).to eq(@setup)
-        expect(User.current).to eq(@setup.user)
-        expect(Time.zone).to eq(ActiveSupport::TimeZone[@setup.user.time_zone])
-      }
-      allow(@ss).to receive(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', log)
-      
-      Timecop.freeze(now) { @ss.run log }
-       
-      expect(@ss.last_finish_time).not_to be_nil
-      expect(@ss.report_failure_count).to eq(0)
-    end
+      subject { search_schedule }
 
-    it "should run with a custom report and no search" do
-      @ss.search_setup = nil
-      @ss.update_attributes(:download_format => "xls")
+      it "runs a search as csv and no custom report" do
+        expect(User).to receive(:run_with_user_settings).with(user).and_call_original
 
-      allow(@report).to receive(:user) {@u}
-      # We tested a full sanitization earlier, just double check that it's still being done here too
-      allow(@report).to receive(:name) {'test/t!st.txt'}
+        # Use the block version here so we can also verify that User.current and Time.zone is set to the 
+        # search setup's user in the context of the write_csv call
+        expect_any_instance_of(SearchWriter).to receive(:write_search) do |search_writer, tempfile|
+          expect(search_writer.output_format).to eq "csv"
+          expect(search_writer.search_setup).to eq search_setup
+          expect(tempfile).to be_a(Tempfile)
 
-      # Use the block version here so we can also verify that User.current and Time.zone is set to the 
-      # custom report's user in the context of the write_csv call
-      expect(@report).to receive(:xls_file) {|user|
-        expect(user).to eq(@u)
-        expect(User.current).to eq(@u)
-        expect(Time.zone).to eq(ActiveSupport::TimeZone[@u.time_zone])
-        @temp
-      }
-      
-      log = double
-      expect(log).to receive(:info).twice
+          1
+        end
 
-      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt_20010203040506000.xls', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt_20010203040506000.xls', log)
-
-      Timecop.freeze(now) { @ss.run log }
-
-      expect(@ss.last_finish_time).not_to be_nil
-
-    end
-
-    it "should run custom report with csv format and no search" do
-      @ss.search_setup = nil
-      @ss.update_attributes(:download_format => "csv")
-
-      allow(@report).to receive(:user) {@u}
-      # We tested a full sanitization earlier, just double check that it's still being done here too
-      allow(@report).to receive(:name) {'test/t!st.txt'}
-
-      # Use the block version here so we can also verify that User.current and Time.zone is set to the 
-      # custom report's user in the context of the write_csv call
-      expect(@report).to receive(:csv_file) {|user|
-        expect(user).to eq(@u)
-        expect(User.current).to eq(@u)
-        expect(Time.zone).to eq(ActiveSupport::TimeZone[@u.time_zone])
-        @temp
-      }
-      
-      log = double
-      expect(log).to receive(:info).twice
-
-      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt_20010203040506000.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt_20010203040506000.csv', log)
-
-      Timecop.freeze(now) { @ss.run log }
-
-      expect(@ss.last_finish_time).not_to be_nil
-
-    end
-
-    it "should run with a custom report and search setup, excluding timestamp if specified" do
-      @ss.exclude_file_timestamp = true
-      log = double
-      expect(log).to receive(:info).exactly(3).times
-
-      expect(@ss).to receive(:write_csv) { |setup, tempfile|
-        expect(setup).to eq(@setup)
-        expect(User.current).to eq(@setup.user)
-        expect(Time.zone).to eq(ActiveSupport::TimeZone[@setup.user.time_zone])
-      }
-
-      allow(@ss).to receive(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
-
-      allow(@report).to receive(:user) {@u}
-      # We tested a full sanitization earlier, just double check that it's still being done here too
-      allow(@report).to receive(:name) {'test/t!st.txt'}
-      expect(@report).to receive(:csv_file) {|u|
-        expect(u).to eq(@u)
-        expect(User.current).to eq(@report.user)
-        expect(Time.zone).to eq(ActiveSupport::TimeZone[@report.user.time_zone])
-        @temp
-      }
-      
-      expect(@ss).to receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', @u, log)
-      expect(@ss).to receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
-
-      Timecop.freeze(now) { @ss.run log }
-
-      expect(@ss.last_finish_time).not_to be_nil
-    end
-
-    context "'send_if_empty' is false" do
-      before(:each) { @ss.update_attributes(send_if_empty: false) }
-      
-      it "does email/ftp user if there are search results" do
-        @ss.custom_report = nil
-        log = double
-        expect(log).to receive(:info).exactly(2).times
-
-        allow(@ss).to receive(:write_csv).and_return true
+        expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', user)
+        expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv')
         
-        expect(@ss).to receive(:send_email)
-        expect(@ss).to receive(:send_ftp)
-
-        @ss.run log
+        Timecop.freeze(now) { subject.run }
+         
+        expect(subject.last_finish_time).to eq now
+        expect(subject.report_failure_count).to eq 0
       end
 
-      it "does email/ftp user if there are custom reports" do
-        @ss.search_setup = nil
-        allow(@report).to receive(:csv_file).and_return @temp
-        log = double
-        expect(log).to receive(:info).exactly(2).times
+      it "runs a search as xls and no custom report" do
+        subject.download_format = "xls"
 
-        allow(@ss).to receive(:report_blank?).and_return false
+        expect_any_instance_of(SearchWriter).to receive(:write_search) do |search_writer, tempfile|
+          expect(search_writer.output_format).to eq "xls"
+          1
+        end
+
+        expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xls', user)
+        expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xls')
         
-        expect(@ss).to receive(:send_email)
-        expect(@ss).to receive(:send_ftp)
-
-        @ss.run log
+        Timecop.freeze(now) { subject.run }
       end
 
-      it "doesn't email/ftp user if there are no search results" do
-        @ss.custom_report = nil
-        log = double
-        expect(log).to receive(:info).exactly(2).times
+      it "runs a search as xlsx and no custom report" do
+        subject.download_format = "xlsx"
 
-        allow(@ss).to receive(:write_csv).and_return false
+        expect_any_instance_of(SearchWriter).to receive(:write_search) do |search_writer, tempfile|
+          expect(search_writer.output_format).to eq "xlsx"
+          1
+        end
+
+        expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xlsx', user)
+        expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xlsx')
         
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
-        
-        @ss.run log
+        Timecop.freeze(now) { subject.run }
       end
 
-      it "doesn't email/ftp user if there are no custom reports" do
-        @ss.search_setup = nil
-        allow(@report).to receive(:csv_file).and_return @temp
-        log = double
-        expect(log).to receive(:info).exactly(2).times
-
-        allow(@ss).to receive(:report_blank?).and_return true
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
+      it "excludes file timestamp on sent file if specified" do
+        subject.exclude_file_timestamp = true
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_return 1
+        expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', user)
+        expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv')
         
-        @ss.run log     
+        Timecop.freeze(now) { subject.run }
+      end
+
+      it "handles max results error" do
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_raise SearchExceedsMaxResultsError
+        
+        expect(subject).to receive(:send_excessive_size_failure_email).with(user, false)
+
+        subject.run
+
+        expect(subject.report_failure_count).to eq 1
+        expect(subject.last_finish_time).to be_nil
+        expect(subject.disabled?).to eq false
+      end
+
+      it "handles max results error failing more than 5 times" do
+        subject.report_failure_count = 4
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_raise SearchExceedsMaxResultsError
+        
+        expect(subject).to receive(:send_excessive_size_failure_email).with(user, true)
+
+        subject.run
+
+        expect(subject.report_failure_count).to eq 5
+        expect(subject.last_finish_time).to be_nil
+        expect(subject.disabled?).to eq true
+      end
+
+      it "log and emails unexpected errors to the user" do
+        error = StandardError.new "Testing"
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_raise error
+
+        expect(error).to receive(:log_me)
+        expect(subject).to receive(:send_error_to_user).with user, "Testing"
+                
+        subject.run
+      end
+
+      it "suppresses send if no results are generated" do
+        subject.send_if_empty = false
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_return 0
+        expect(subject).not_to receive(:send_email)
+        expect(subject).not_to receive(:send_ftp)
+
+        subject.run
+      end
+
+      it "sends blank file if instructed" do 
+        subject.send_if_empty = true
+
+        expect_any_instance_of(SearchWriter).to receive(:write_search).and_return 0
+        expect(subject).to receive(:send_email)
+        expect(subject).to receive(:send_ftp)
+
+        subject.run
       end
     end
 
-    it "sends user messages when search fails" do
-      @ss.custom_report = nil
-      expect(@ss).to receive(:write_csv).and_raise "Failed"
-      log = double("Logger")
-      allow(log).to receive(:info)
-      @ss.run log
-
-      expect(@ss.user.messages.length).to eq 1
-      m = @ss.user.messages.first
-
-      expect(m.body).to include "Search Name: #{@setup.name}"
-      expect(m.body).to include "Error Message: Failed"
-    end
-
-    context "excessive results handling" do
-      before(:each) {
-        @ss.search_setup.name = 'Green Globule'
-        @ss.custom_report = nil
-        @ss.disabled = false
-      }
-
-      it "should increment failure count when too many results exception thrown and no prior issues" do
-        @ss.report_failure_count = nil
-
-        log = double
-        expect(log).to receive(:info).once
-
-        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
-
-        @ss.run log
-
-        expect(@ss.report_failure_count).to eq(1)
-        expect(@ss.disabled).to eq(false)
-
-        mail = ActionMailer::Base.deliveries.pop
-        expect(mail.to).to eq(['tufnel@stonehenge.biz'])
-        expect(mail.subject).to eq("Scheduled Report 'Green Globule' failed")
-        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed 1 time.  On the 5th consecutive failure, VFI Track will disable the report."))
-        expect(mail.attachments.size).to eq 0
+    context "with custom report" do
+      before :each do 
+        search_schedule.search_setup = nil
       end
 
-      it "should increment failure count when too many results exception thrown and prior count below 4" do
-        @ss.report_failure_count = 3
+      subject { search_schedule }
 
-        log = double
-        expect(log).to receive(:info).once
+      it "runs a custom report with xls format and no search" do
+        search_schedule.download_format = "xls"
 
-        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
+        expect(User).to receive(:run_with_user_settings).with(user).and_call_original
+        expect(report).to receive(:xls_file).with(user).and_return tempfile
 
-        @ss.run log
+        expect(subject).to receive(:send_email).with(report.name, tempfile, 't_st.txt_20010203040506000.xls', user)
+        expect(subject).to receive(:send_ftp).with(report.name, tempfile, 't_st.txt_20010203040506000.xls')
 
-        expect(@ss.report_failure_count).to eq(4)
-        expect(@ss.disabled).to eq(false)
+        Timecop.freeze(now) { subject.run }
 
-        mail = ActionMailer::Base.deliveries.pop
-        expect(mail.subject).to eq("Scheduled Report 'Green Globule' failed")
-        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed 4 times in a row.  On the 5th consecutive failure, VFI Track will disable the report."))
+        expect(search_schedule.last_finish_time).to eq now
+        expect(subject.report_failure_count).to eq 0
+
       end
 
-      it "should increment failure count and disable search when too many results exception thrown and prior count is 4" do
-        @ss.update_attributes(:download_format => "xls")
-        @ss.report_failure_count = 4
+      it "runs a custom report with csv format and no search" do
+        search_schedule.download_format = "csv"
 
-        log = double
-        expect(log).to receive(:info).once
+        expect(report).to receive(:csv_file).with(user).and_return tempfile
 
-        expect(@ss).to receive(:write_xls).and_raise(SearchExceedsMaxResultsError)
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
+        expect(subject).to receive(:send_email).with(report.name, tempfile, 't_st.txt_20010203040506000.csv', user)
+        expect(subject).to receive(:send_ftp).with(report.name, tempfile, 't_st.txt_20010203040506000.csv')
 
-        @ss.run log
+        Timecop.freeze(now) { subject.run }
 
-        expect(@ss.report_failure_count).to eq(5)
-        expect(@ss.disabled).to eq(true)
-
-        mail = ActionMailer::Base.deliveries.pop
-        expect(mail.to).to eq(['tufnel@stonehenge.biz'])
-        expect(mail.subject).to eq("Scheduled Report 'Green Globule' was DISABLED")
-        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."))
-        expect(mail.attachments.size).to eq 0
+        expect(search_schedule.last_finish_time).to eq now
+        expect(subject.report_failure_count).to eq 0
+        expect(tempfile.closed?).to eq true
       end
 
-      it "should increment failure count and disable search when too many results exception thrown and prior count above 5" do
-        # Non-disabled status with count above 5 could happen if a user re-enables their search without actually
-        # having fixed the bad params that let it be disabled in the first place.
-        @ss.report_failure_count = 6
+      it "suppresses report if there are no results and send empty is false" do
+        search_schedule.send_if_empty = false
+        search_schedule.download_format = "csv"
 
-        log = double
-        expect(log).to receive(:info).once
+        expect(report).to receive(:csv_file).with(user).and_return tempfile
+        expect(subject).to receive(:report_blank?).with(tempfile).and_return true
+        expect(subject).not_to receive(:send_email)
+        expect(subject).not_to receive(:send_ftp)
 
-        expect(@ss).to receive(:write_csv).and_raise(SearchExceedsMaxResultsError)
-        expect(@ss).not_to receive(:send_email)
-        expect(@ss).not_to receive(:send_ftp)
-
-        @ss.run log
-
-        expect(@ss.report_failure_count).to eq(7)
-        expect(@ss.disabled).to eq(true)
-
-        mail = ActionMailer::Base.deliveries.pop
-        expect(mail.subject).to eq("Scheduled Report 'Green Globule' was DISABLED")
-        expect(mail.body).to include(ERB::Util.html_escape("Your Scheduled Report 'Green Globule' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."))
+        subject.run
       end
 
+
+      it "sends an empty report if instructed" do
+        search_schedule.send_if_empty = true
+
+        expect(report).to receive(:csv_file).with(user).and_return tempfile
+        expect(subject).to receive(:send_email)
+        expect(subject).to receive(:send_ftp)
+
+        subject.run
+      end
     end
   end
 
@@ -422,18 +324,8 @@ describe SearchSchedule do
           expect(mail.attachments.size).to eq 1
         end
       end
-      it "logs attempt to send emails if applicable" do
-        log = double("log")
-        now = Time.now
-        Timecop.freeze(now) do
-          Tempfile.open(['tempfile', '.txt']) do |file|
-            expect(log).to receive(:info).with("#{now}: Attempting to send email to tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk")
-            expect(log).to receive(:info).with("#{now}: Sent email")
-            sched.send_email "search name", file, "attachment name", user, log
-          end
-        end
-      end
     end
+
     it "sends email to account owner if any of the schedule addresses are bad" do
       stub_master_setup
       allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
@@ -449,6 +341,7 @@ describe SearchSchedule do
           expect(mail.attachments.size).to eq 0
         end
     end
+    
     it "returns immediately if the schedule doesn't have email addresses" do
       allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
       sched.update_attributes(email_addresses: nil)

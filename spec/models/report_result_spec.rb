@@ -1,11 +1,50 @@
-# encoding: utf-8
-require 'spec_helper'
-
 describe ReportResult do
-  before :each do
-    @u = Factory(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii')
-    allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
+
+  class SampleReport
+    cattr_reader :tempfiles
+
+    def self.run_report user, opts
+      @@tempfiles ||= []
+
+      tempfile = Tempfile.open(["sample_report", ".txt"])
+      tempfile << "mystring"
+      tempfile.flush
+      tempfile.rewind
+      Attachment.add_original_filename_method tempfile, "sample_report.txt"
+
+      @@tempfiles << tempfile
+
+      tempfile
+    end
   end
+
+  class SampleReportWithBlock
+    cattr_reader :tempfiles
+
+    def self.run_report user, opts
+      raise "Expected a block" unless block_given?
+
+      @@tempfiles ||= []
+
+      Tempfile.open(["sample_report", ".txt"]) do |tempfile|
+        tempfile << "mystring"
+        tempfile.flush
+        tempfile.rewind
+        Attachment.add_original_filename_method tempfile, "sample_report.txt"
+
+        @@tempfiles << tempfile
+
+        yield tempfile
+      end
+
+      nil
+    end
+  end
+
+  class TestReport; end
+
+  let (:user) { Factory(:user, :email=>'a@vandegriftinc.com', :time_zone => 'Hawaii') }
+  let! (:master_setup) { stub_master_setup }
 
   describe 'friendly settings' do
 
@@ -21,96 +60,85 @@ describe ReportResult do
   end
 
   describe "security" do
-    before :each do 
-      @r = ReportResult.new
-      @r.run_by = @u
-    end
+    subject { 
+      r = ReportResult.new
+      r.run_by = user
+      r
+    }
+
     it "allows sysadmins" do
       sys_admin = User.new
       sys_admin.sys_admin = true
-      expect(@r.can_view?(sys_admin)).to be_truthy
+      expect(subject.can_view?(sys_admin)).to eq true
     end
 
     it "allows the same user" do
-      expect(@r.can_view?(@u)).to be_truthy
+      expect(subject.can_view?(user)).to eq true
     end
 
     it "doesn't allow a different user" do
       other_user = User.new
-      expect(@r.can_view?(other_user)).to be_falsey
+      expect(subject.can_view?(other_user)).to eq false
     end
   end
 
   describe "run report", :disable_delayed_jobs do
-    class SampleReport
-      cattr_reader :tempfiles
 
-      def self.run_report user, opts
-        @@tempfiles ||= []
-
-        tempfile = Tempfile.open(["sample_report", ".txt"])
-        tempfile << "mystring"
-        tempfile.flush
-        tempfile.rewind
-        Attachment.add_original_filename_method tempfile, "sample_report.txt"
-
-        @@tempfiles << tempfile
-
-        tempfile
-      end
-    end
-
-    before :each do
-      @report_class = SampleReport
-    end
     after :each do
       Array.wrap(SampleReport.tempfiles).each {|t| t.close! unless t.closed? }
       SampleReport.tempfiles.clear if SampleReport.tempfiles
     end
+
     it "should write data on report run" do
       allow_any_instance_of(ReportResult).to receive(:execute_report)
-      ReportResult.run_report! 'nrr', @u, @report_class, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}
-      found = ReportResult.find_by_name('nrr')
-      expect(found.run_by).to eq(@u)
-      expect(found.report_class).to eq(@report_class.to_s)
+      ReportResult.run_report! 'nrr', user, SampleReport, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}
+      found = ReportResult.where(name: "nrr").first
+      expect(found.run_by).to eq(user)
+      expect(found.report_class).to eq(SampleReport.to_s)
       expect(found.run_at).to be > 10.seconds.ago
       expect(found.friendly_settings_json).to eq(['a','b'].to_json)
       expect(found.settings_json).to eq({'o1'=>'o2'}.to_json)
     end
     it "enqueues report before running" do
       allow_any_instance_of(ReportResult).to receive(:execute_report)
-      ReportResult.run_report! 'ebr', @u, @report_class
-      found = ReportResult.find_by_name('ebr')
+      ReportResult.run_report! 'ebr', user, SampleReport
+      found = ReportResult.where(name: "ebr").first
       expect(found.status).to eq("Queued")
     end
 
     it "sets report as Complete when done" do
-      ReportResult.run_report! 'fin', @u, @report_class
-      found = ReportResult.find_by_name('fin')
+      ReportResult.run_report! 'fin', user, SampleReport
+      found = ReportResult.where(name: "fin").first
       expect(found.status).to eq("Complete")
     end
     it "deletes the underlying file when report is finished" do
-      ReportResult.run_report! 'del', @u, @report_class
+      ReportResult.run_report! 'del', user, SampleReport
       expect(SampleReport.tempfiles.length).to eq 1
       expect(SampleReport.tempfiles[0]).to be_closed
     end
     it "attaches report content to ReportResult", paperclip: true, s3: true do
-      ReportResult.run_report! 'cont', @u, @report_class
-      found = ReportResult.find_by_name 'cont'
+      ReportResult.run_report! 'cont', user, SampleReport
+      found = ReportResult.where(name: "cont").first
       rc = found.report_content
       expect(rc).to eq("mystring")
     end
     it "writes user message when report is finished" do
-      ReportResult.run_report! 'msg', @u, @report_class
-      found = ReportResult.find_by_name 'msg'
-      m = @u.messages
+      ReportResult.run_report! 'msg', user, SampleReport
+      found = ReportResult.where(name: "msg").first
+      m = user.messages
       expect(m.size).to eq(1)
       expect(m.first.body).to include "/report_results/#{found.id}/download" #message body includes download link
     end
     it "delays the report with priority 100" do
       allow_any_instance_of(ReportResult).to receive(:execute_report) #don't need report to run
       expect_any_instance_of(ReportResult).to receive(:delay).with(:priority=>-1).and_return(ReportResult.new)
-      ReportResult.run_report! 'delay', @u, @report_class
+      ReportResult.run_report! 'delay', user, SampleReport
+    end
+
+    it "runs a report that yields the report tempfile rather than return it" do
+      ReportResult.run_report! 'msg', user, SampleReportWithBlock
+      expect(SampleReportWithBlock.tempfiles.length).to eq 1
+      expect(SampleReportWithBlock.tempfiles[0]).to be_closed
     end
 
     it "should run with user settings" do
@@ -122,7 +150,7 @@ describe ReportResult do
         File.open(loc,'w') {|f| f.write('mystring')}
         File.new loc
       end
-      ReportResult.run_report! 'user settings', @u, @report_class
+      ReportResult.run_report! 'user settings', user, SampleReport
     end
 
     it "detects alliance reports" do
@@ -140,7 +168,7 @@ describe ReportResult do
       rr = double("ReportResult") 
       expect(rr).to receive(:execute_sql_proxy_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
-      ReportResult.run_report! 'delay', @u, SqlProxyReport
+      ReportResult.run_report! 'delay', user, SqlProxyReport
     end
 
     it "detects non-alliance reports reponding to sql_proxy_report?" do
@@ -158,16 +186,16 @@ describe ReportResult do
       rr = double("ReportResult") 
       expect(rr).to receive(:execute_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
-      ReportResult.run_report! 'delay', @u, NonSqlProxyReport
+      ReportResult.run_report! 'delay', user, NonSqlProxyReport
     end
 
     it "emails file to user if email_to is set" do
-       ReportResult.run_report! 'user settings', @u, @report_class, 'email_to' => 'me@there.com'
-       expect(ActionMailer::Base.deliveries.length).to eq 1
-       m = ActionMailer::Base.deliveries.first
-       expect(m.to).to eq ["me@there.com"]
-       expect(m.subject).to eq "Report Complete: user settings"
-       expect(m.attachments['sample_report.txt']).not_to be_nil
+      ReportResult.run_report! 'user settings', user, SampleReport, 'email_to' => 'me@there.com'
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["me@there.com"]
+      expect(m.subject).to eq "Report Complete: user settings"
+      expect(m.attachments['sample_report.txt']).not_to be_nil
     end
 
     describe "error handling" do
@@ -178,21 +206,21 @@ describe ReportResult do
         end
 
         it "sets reports that threw exceptions as failed" do
-          ReportResult.run_report! 'fail', @u, @report_class
-          found = ReportResult.find_by_name 'fail'
+          ReportResult.run_report! 'fail', user, SampleReport
+          found = ReportResult.where(name: "fail").first
           expect(found.status).to eq("Failed")
         end
         it "writes report errors when failing" do
-          ReportResult.run_report! 'err msg', @u, @report_class
-          found = ReportResult.find_by_name 'err msg'
+          ReportResult.run_report! 'err msg', user, SampleReport
+          found = ReportResult.where(name: "err msg").first
           expect(found.run_errors).to eq('some error message')
         end
         it "writes a user message containing the word failed in the subject when report fails" do
-          ReportResult.run_report! 'um', @u, @report_class
-          m = @u.messages
+          ReportResult.run_report! 'um', user, SampleReport
+          m = user.messages
           expect(m.size).to eq(1)
           expect(m.first.subject).to include "FAILED"
-          found = ReportResult.find_by_name 'um'
+          found = ReportResult.where(name: "um").first
           expect(m.first.body).to include "/report_results/#{found.id}"
         end
       end
@@ -200,7 +228,7 @@ describe ReportResult do
       context "report handling fails" do
         it "deletes the underlying file when report completion fails" do
           expect_any_instance_of(ReportResult).to receive(:complete_report).and_raise "Error"
-          ReportResult.run_report! 'uf', @u, @report_class
+          ReportResult.run_report! 'uf', user, SampleReport
           expect(SampleReport.tempfiles.length).to eq 1
           expect(SampleReport.tempfiles[0]).to be_closed
         end
@@ -245,87 +273,79 @@ describe ReportResult do
   end
 
   describe "execute_sql_proxy_report" do
-    before :each do
-      class TestReport; end
-      @report_class = TestReport
-      @r = ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: @u.id, status: "new", report_class: @report_class.to_s
-    end
+    subject { ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: user.id, status: "new", report_class: TestReport.to_s }
 
     it "runs an alliance report" do
       expect(User).to receive(:run_with_user_settings).and_yield
-      settings = ActiveSupport::JSON.decode(@r.settings_json)
-      settings["report_result_id"] = @r.id
-      expect(@report_class).to receive(:run_report).with(@u, settings)
+      settings = ActiveSupport::JSON.decode(subject.settings_json)
+      settings["report_result_id"] = subject.id
+      expect(TestReport).to receive(:run_report).with(user, settings)
 
-      @r.execute_sql_proxy_report
+      subject.execute_sql_proxy_report
       
-      @r.reload
-      expect(@r.status).to eq "Running"
+      subject.reload
+      expect(subject.status).to eq "Running"
     end
 
     it "handles any errors raised while starting report" do
-      expect(@report_class).to receive(:run_report).and_raise "Error"
+      expect(TestReport).to receive(:run_report).and_raise "Error"
 
-      @r.execute_sql_proxy_report
+      subject.execute_sql_proxy_report
 
-      expect(@u.messages.size).to eq(1)
-      @r.reload
-      expect(@r.status).to eq "Failed"
+      expect(user.messages.size).to eq(1)
+      subject.reload
+      expect(subject.status).to eq "Failed"
     end
   end
 
   describe "continue_sql_proxy_report" do
-    before :each do
-      class TestReport; end
-      @report_class = TestReport
-      @r = ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: @u.id, status: "new", report_class: @report_class.to_s
-      @tf = Tempfile.new "ContinueAlliancReportSpec"
-      @tf << "Testing"
-    end
+    subject { ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: user.id, status: "new", report_class: TestReport.to_s }
 
+    let (:tempfile) { Tempfile.new "ContinueAlliancReportSpec" }
+    
     after :each do
-      @tf.close! unless @tf.closed?
+      tempfile.close? unless tempfile.closed?
     end
 
     it "continues a sql proxy report" do
       expect(User).to receive(:run_with_user_settings).and_yield
-      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      settings = ActiveSupport::JSON.decode(subject.settings_json)
       results = []
-      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
+      expect(TestReport).to receive(:process_sql_proxy_query_details).with(user, results, settings).and_return tempfile
 
-      @r.continue_sql_proxy_report results
+      subject.continue_sql_proxy_report results
 
-      @r.reload
-      expect(@u.messages.size).to eq(1)
-      expect(@r.status).to eq "Complete"
-      expect(@r.report_data).to_not be_nil
+      subject.reload
+      expect(user.messages.size).to eq(1)
+      expect(subject.status).to eq "Complete"
+      expect(subject.report_data).to_not be_nil
     end
 
     it "continues a sql proxy report with json results" do
       expect(User).to receive(:run_with_user_settings).and_yield
-      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      settings = ActiveSupport::JSON.decode(subject.settings_json)
       results = []
-      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
+      expect(TestReport).to receive(:process_sql_proxy_query_details).with(user, results, settings).and_return tempfile
 
-      @r.continue_sql_proxy_report results.to_json
+      subject.continue_sql_proxy_report results.to_json
 
-      @r.reload
-      expect(@u.messages.size).to eq(1)
-      expect(@r.status).to eq "Complete"
-      expect(@r.report_data).to_not be_nil
+      subject.reload
+      expect(user.messages.size).to eq(1)
+      expect(subject.status).to eq "Complete"
+      expect(subject.report_data).to_not be_nil
     end
 
     it "handles errors / cleanup if alliance report continuation fails" do
-      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      settings = ActiveSupport::JSON.decode(subject.settings_json)
       results = []
-      expect(@report_class).to receive(:process_sql_proxy_query_details).with(@u, results, settings).and_return @tf
-      expect(@r).to receive(:complete_report).with(@tf).and_raise "Error"
-      @r.continue_sql_proxy_report results
+      expect(TestReport).to receive(:process_sql_proxy_query_details).with(user, results, settings).and_return tempfile
+      expect(subject).to receive(:complete_report).with(tempfile).and_raise "Error"
+      subject.continue_sql_proxy_report results
 
-      expect(@u.messages.size).to eq(1)
-      @r.reload
-      expect(@r.status).to eq "Failed"
-      expect(@tf.closed?).to be_truthy
+      expect(user.messages.size).to eq(1)
+      subject.reload
+      expect(subject.status).to eq "Failed"
+      expect(tempfile.closed?).to be_truthy
     end
   end
 

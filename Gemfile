@@ -13,6 +13,8 @@ gem 'aws-sdk-v1', '~> 1.66'
 gem 'paperclip', '4.3.7'
 gem 'uuidtools', '2.1.4'
 gem 'spreadsheet', '1.1.5'
+gem 'axlsx', '3.0.0.pre' # TODO: Unpin when a non-pre version without the ruby-zip vuln is released
+gem 'axlsx_rails', '0.5.2'
 gem 'exception_notification', '4.0.0'
 gem 'rufus-scheduler', '3.5.0'
 # The fugit gem is what rufus now uses behind the scenes for all the date/time/cron parsing stuff
@@ -107,6 +109,10 @@ group :development,:test do
   gem 'active_record_query_trace'
   gem 'database_cleaner'
   gem 'annotate'
+  # This is here exclusively so we can validate the xlsx files we produce.  
+  # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
+  # read them.  So we need to use a different solution for reading them in test cases.
+  gem 'rubyXL', '3.3.29'
 end
 
 group :test do

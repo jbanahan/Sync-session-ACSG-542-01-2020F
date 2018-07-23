@@ -1,5 +1,5 @@
 require 'open_chain/search_query_controller_helper'
-require 'open_chain/report/xls_search'
+require 'open_chain/report/async_search'
 require 'open_chain/email_validation_support'
 
 class AdvancedSearchController < ApplicationController
@@ -16,7 +16,7 @@ class AdvancedSearchController < ApplicationController
   end
  
   def update
-    ss = SearchSetup.for_user(current_user).find_by_id(params[:id])
+    ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     base_params = params[:search_setup]
     
@@ -36,6 +36,7 @@ class AdvancedSearchController < ApplicationController
       ss.name = base_params[:name] unless base_params[:name].blank?
       ss.include_links = base_params[:include_links]
       ss.no_time = base_params[:no_time]
+      ss.download_format = (base_params[:download_format].presence || "xlsx")
       ss.search_columns.delete_all
       user = current_user
       unless base_params[:search_columns].blank?
@@ -100,7 +101,7 @@ class AdvancedSearchController < ApplicationController
         page = number_from_param params[:page], 1
         per_page = results_per_page        
 
-        ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+        ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
         raise ActionController::RoutingError.new('Not Found') unless ss
         ss.touch
         sr = ss.search_runs.first
@@ -135,28 +136,29 @@ class AdvancedSearchController < ApplicationController
   end
 
   def total_objects
-    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     render :json=>total_object_count_hash(SearchQuery.new(ss,current_user))
   end
 
   def download
-    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
+
     respond_to do |format|
       format.xls {
-        # Don't worry about checking for search criterions, since the only time this is supposed
-        # to be called when the results are limited to a single page.  
-        m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
-        sq = SearchQuery.new ss, current_user
-        # Make sure the we enforce limiting results to a single page.
-        wb, length = *m.make_from_search_query(sq, per_page: results_per_page, single_page: true)
-        send_excel_workbook wb, "#{ss.name}.xls"
+        send_search(ss, current_user, "xls")
+      }
+      format.csv {
+        send_search(ss, current_user, "csv")
+      }
+      format.xlsx {
+        send_search(ss, current_user, "xlsx")
       }
       format.json {
         errors = []
         if ss.downloadable? errors
-          ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>ss.id }
+          ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::AsyncSearch', :settings=>{ 'search_setup_id'=>ss.id }
           render :json=>{:ok=>:ok}
         else
           render json: {:errors => errors}, status: 500
@@ -166,7 +168,7 @@ class AdvancedSearchController < ApplicationController
   end
 
   def send_email
-    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     errors = []
     if ss.downloadable? errors
@@ -182,7 +184,7 @@ class AdvancedSearchController < ApplicationController
           if !email_list_valid? email_list
             render_json_error "Please ensure all email addresses are valid and separated by commas."
           else
-            OpenChain::Report::XLSSearch.delay.run_and_email_report current_user.id, ss.id, mail_fields
+            OpenChain::Report::AsyncSearch.delay.run_and_email_report current_user.id, ss.id, mail_fields
             render :json=>{:ok=>:ok}
           end
         end
@@ -202,7 +204,7 @@ class AdvancedSearchController < ApplicationController
     respond_to do |format|
       format.html {redirect_to "/advanced_search#/#{params[:id]}"}
       format.json {
-        ss = current_user.search_setups.find_by_id params[:id]
+        ss = current_user.search_setups.where(id: params[:id]).first
         raise ActionController::RoutingError.new('Not Found') unless ss
         h = {
           :id=>ss.id,
@@ -216,6 +218,7 @@ class AdvancedSearchController < ApplicationController
           :user=>{:email=>ss.user.email},
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},
+          :download_format=>(ss.download_format.presence || "xlsx"),
           :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank}},
           :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank,:descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
@@ -253,7 +256,7 @@ class AdvancedSearchController < ApplicationController
 
   def destroy
     id = params[:id]
-    ss = current_user.search_setups.find_by_id(params[:id])
+    ss = current_user.search_setups.where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     ss.destroy
     previous_search = current_user.search_setups.for_module(ss.core_module).order("updated_at DESC").limit(1).first
@@ -282,5 +285,13 @@ class AdvancedSearchController < ApplicationController
     def get_model_fields_for_setup search_setup
       chain = search_setup.core_module.default_module_chain
       chain.model_fields(current_user).values
+    end
+
+    def send_search search_setup, user, download_format
+      io = StringIO.new
+      io.set_encoding "ASCII-8BIT"
+      SearchWriter.write_search(search_setup, io, user: user, output_format: download_format, max_results: results_per_page)
+      io.rewind
+      send_data io.read, {filename: SearchSchedule.report_name(search_setup, download_format, include_timestamp: true), disposition: "attachment", type: download_format.to_sym}
     end
 end

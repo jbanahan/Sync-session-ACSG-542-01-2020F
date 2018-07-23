@@ -435,6 +435,10 @@ describe AdvancedSearchController do
     end
   end
   describe "download" do
+    let (:tempfile) { 
+      Tempfile.new ["report", "test"]
+    }
+
     before :each do
       @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
       @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
@@ -443,24 +447,40 @@ describe AdvancedSearchController do
       @p = Factory(:product,:name=>'mpn')
       allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
     end
-    it "should run file for XLS" do
-      wb = double('wb')
-      expect(wb).to receive(:write)
-      expect_any_instance_of(XlsMaker).to receive(:make_from_search_query).with(instance_of(SearchQuery), per_page: 100, single_page: true).and_return(wb)
-      get :download, :id=>@ss.id, :format=>:xls
-      expect(response).to be_success
-      expect(response.headers['Content-Type']).to eq("application/vnd.ms-excel")
-      expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"#{@ss.name}.xls\"")
+
+    after :each do 
+      tempfile.close! unless tempfile.closed?
     end
+
+    [{format: "xls", mime_type: "application/vnd.ms-excel"}, {format: "csv", mime_type: "text/csv"}, {format: "xlsx", mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}].each do |params|
+      it "downloads #{params[:format]} files" do
+        expect(SearchWriter).to receive(:write_search) do |search_setup, io, opts|
+          expect(search_setup).to eq @ss
+          expect(io).to be_a(StringIO)
+          expect(io.external_encoding.name).to eq "ASCII-8BIT"
+          expect(opts[:user]).to eq @user
+          expect(opts[:output_format]).to eq params[:format]
+          expect(opts[:max_results]).to eq 100
+          nil
+        end
+
+        expect(SearchSchedule).to receive(:report_name).with(@ss, params[:format], include_timestamp: true).and_return "report_name.#{params[:format]}"
+        get :download, :id=>@ss.id, :format=>params[:format].to_sym
+        expect(response).to be_success
+        expect(response.headers['Content-Type']).to eq(params[:mime_type])
+        expect(response.headers['Content-Disposition']).to eq("attachment; filename=\"report_name.#{params[:format]}\"")
+      end
+    end
+
     context "delayed_job", :disable_delayed_jobs do
       it "should delay running file for json" do
-        expect(ReportResult).to receive(:run_report!).with(@ss.name, @user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@ss.id })
+        expect(ReportResult).to receive(:run_report!).with(@ss.name, @user, 'OpenChain::Report::AsyncSearch', :settings=>{ 'search_setup_id'=>@ss.id })
         get :download, :id=>@ss.id, :format=>:json
         expect(response).to be_success
         expect(JSON.parse(response.body)['ok']).to eq('ok')
       end
       it "should call delay" do
-        expect(ReportResult).to receive(:run_report!).with(@ss.name,instance_of(User),'OpenChain::Report::XLSSearch',{:settings=>{'search_setup_id'=>@ss.id}})
+        expect(ReportResult).to receive(:run_report!).with(@ss.name,instance_of(User),'OpenChain::Report::AsyncSearch',{:settings=>{'search_setup_id'=>@ss.id}})
         get :download, :id=>@ss.id, :format=>:json
         expect(response).to be_success
         expect(JSON.parse(response.body)['ok']).to eq('ok')
@@ -495,28 +515,28 @@ describe AdvancedSearchController do
       body = "Goes to 11."
 
       d = double("delay")
-      expect(OpenChain::Report::XLSSearch).to receive(:delay).and_return d
+      expect(OpenChain::Report::AsyncSearch).to receive(:delay).and_return d
       expect(d).to receive(:run_and_email_report).with(@user.id, @ss.id, {'to' => recipient, 'reply_to' => sender, 'subject' => mail_subject, 'body' => body})
       post :send_email, :id=>@ss.id, :mail_fields => {:to => recipient, :reply_to => sender, :subject => mail_subject, :body => body}
       expect(JSON.parse(response.body)).to eq({'ok' => 'ok'})
     end
 
     it "errors if email missing" do
-      expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
+      expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
 
       post :send_email, :id=>@ss.id, :mail_fields=> {}
       expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
 
     it "errors if one or more emails aren't valid" do
-      expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
+      expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
 
       post :send_email, :id=>@ss.id, :mail_fields=> {'to' => 'tufnel@stonehenge.biz, st-hubbins.com'}
       expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid and separated by commas."
     end
 
     it "errors if there are more than 10 email addresses" do
-      expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
+      expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
 
       email_list = Array.new(11){|i| "address#{i}@vandegriftinc.com"}.join(', ')
       post :send_email, :id=>@ss.id, :mail_fields=> {'to' => email_list}
@@ -525,7 +545,7 @@ describe AdvancedSearchController do
 
     it "errors if search not found" do
       expect { get :send_email, :id=>1000 }.to raise_error("Not Found")
-      expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
+      expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
     end
 
     it "errors if search isn't downloadable" do
@@ -534,7 +554,7 @@ describe AdvancedSearchController do
           false
         end
       get :send_email, :id=>@ss.id
-      expect(OpenChain::Report::XLSSearch).not_to receive(:delay)
+      expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
       expect(response).to be_error
       expect(JSON.parse(response.body)['error']).to eq "This is an error"
     end

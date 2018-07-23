@@ -81,6 +81,14 @@ GEM
       json (~> 1.4)
       nokogiri (~> 1)
     aws-sigv4 (1.0.2)
+    axlsx (3.0.0.pre)
+      htmlentities (~> 4.3, >= 4.3.4)
+      mimemagic (~> 0.3)
+      nokogiri (~> 1.8, >= 1.8.2)
+      rubyzip (~> 1.2, >= 1.2.1)
+    axlsx_rails (0.5.2)
+      actionpack (>= 3.1)
+      axlsx (>= 2.0.1)
     barby (0.6.5)
     bcrypt (3.1.11)
     browser (2.5.1)
@@ -314,6 +322,9 @@ GEM
       json
       oauth (~> 0.4.5)
       rest-client (~> 1.8.0)
+    rubyXL (3.3.29)
+      nokogiri (>= 1.4.4)
+      rubyzip (>= 1.1.6)
     rubyzip (1.2.1)
     rufus-scheduler (3.5.0)
       fugit (~> 1.1, >= 1.1.1)
@@ -390,6 +401,8 @@ DEPENDENCIES
   annotate
   aws-sdk (~> 2.6)
   aws-sdk-v1 (~> 1.66)
+  axlsx (= 3.0.0.pre)
+  axlsx_rails (= 0.5.2)
   barby (~> 0.6)
   browser
   byebug
@@ -439,6 +452,7 @@ DEPENDENCIES
   rspec-rails (~> 3.5.0)
   rspec_junit_formatter (~> 0.2.3)
   ruby-trello (= 1.3.0)
+  rubyXL (= 3.3.29)
   rubyzip (~> 1.1)
   rufus-scheduler (= 3.5.0)
   sass-rails (~> 3.2.3)

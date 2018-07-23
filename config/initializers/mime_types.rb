@@ -4,3 +4,5 @@
 # Mime::Type.register "text/richtext", :rtf
 # Mime::Type.register_alias "text/html", :iphone
 #Mime::Type.register "text/csv", :csv
+
+# NOTE: axlsx_rails provided the mime type support for xlsx types

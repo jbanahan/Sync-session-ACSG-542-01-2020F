@@ -209,4 +209,84 @@ module Helpers
       "{\"fake\":#{entity.id}}"
     end
   end
+
+  # This class is NOT meant to be used in production, it's a simple class that can be used to read some data from an xlsx stream/file path
+  # for test verification
+  class XlsxTestReader
+    attr_reader :workbook
+
+    def initialize io
+      if io.is_a?(String)
+        @workbook = RubyXL::Parser.parse(io)
+      else
+        @workbook = RubyXL::Parser.parse_buffer(io)
+      end
+    end
+
+    def cell sheet, row_index, column_index
+      sheet(sheet) do |ws|
+        return ws[row_index][column_index]
+      end
+    end
+
+    def row sheet, row_index
+      sheet(sheet) do |ws|
+        return ws[row_index]
+      end
+    end
+
+    def sheet xlsx_sheet
+      if xlsx_sheet.is_a?(RubyXL::Worksheet)
+        sheet = xlsx_sheet
+      elsif xlsx_sheet.respond_to?(:name)
+        # This allows us to actually use straight XlsxBuilder::XlsxSheet objecds too
+        sheet = @workbook[xlsx_sheet.name]
+      else
+        sheet = @workbook[xlsx_sheet]
+      end
+
+      if block_given?
+        yield sheet
+      else 
+        return sheet
+      end
+      nil
+    end
+
+    def background_color sheet, row, column
+      cell = self.cell sheet, row, column
+      cell.try(:fill_color)
+    end
+
+    def number_format sheet, row, column
+      cell = self.cell(sheet, row, column)
+      return nil unless cell
+      xf = cell.send(:get_cell_xf)
+      return nil unless xf
+
+      format = self.workbook.stylesheet.number_formats.find_by_format_id xf.num_fmt_id
+      format.try(:format_code)
+    end
+
+    def width_at sheet, column
+      self.sheet(sheet) do |ws|
+        return ws.get_column_width_raw column
+      end
+    end
+
+    def raw_data sheet
+      self.sheet(sheet) do |worksheet|
+        data = []
+        worksheet.each do |row|
+          vals = []
+          row.cells.each do |cell|
+            vals << cell.try(:value)
+          end
+          data << vals
+        end
+
+        return data
+      end
+    end
+  end
 end

@@ -109,8 +109,8 @@ EOS
 
   def send_search_result_manually(to, subject, body, file_path, current_user)
     @user = current_user
-    @body_text = body
     attachment_saved = save_large_attachment(file_path, to)
+    @body_text = body
     m = mail(:to => to,
       :reply_to => @user.email,
       :subject => subject)

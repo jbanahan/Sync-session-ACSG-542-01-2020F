@@ -9,7 +9,7 @@ advSearchApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
 ]
 
-advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout', '$q', ($scope,$routeParams,$location,$http,chainSearchOperators,$timeout,$q) ->
+advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators','$timeout', '$q', '$window', ($scope,$routeParams,$location,$http,chainSearchOperators,$timeout,$q,$window) ->
 
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -399,6 +399,12 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         else
           $scope.errors.push "Report download failed.  Please contact support"
       )
+
+  $scope.foregroundDownload = () ->
+    downloadFormat = $scope.searchSetup.download_format
+    # Default to xlsx if format is blank
+    downloadFormat = "xlsx" if !downloadFormat
+    $window.location.href = "advanced_search/#{$scope.searchSetup.id}/download.#{downloadFormat}"
 
   $scope.emailTooLong = (sched) ->
     sched.email_addresses.length > 255 if sched

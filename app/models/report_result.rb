@@ -27,7 +27,8 @@
 #
 
 require 'open_chain/report'
-require 'open_chain/report/xls_search'
+require 'open_chain/report/async_search'
+
 class ReportResult < ActiveRecord::Base
   
   PURGE_WEEKS = 1 #purge all items older than this many weeks
@@ -103,12 +104,24 @@ class ReportResult < ActiveRecord::Base
       local_path = nil
       begin
         local_file = nil
+        block_utilized = false
         if self.custom_report_id.nil?
-          local_file = self.report_class.constantize.run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
+          # Allow for the implementing class to take a block, and then yield the report tempfile...if the class doesn't take 
+          # a block, then it's expected the class returns a tempfile of the report output.
+
+          # This allows for the report to use the block style tempfile handling and yield the tempfile back to us here while in the
+          # block, thus utilizing the ruby native file closing support..and not having to rely on our own.
+          local_file = self.report_class.constantize.run_report(run_by, ActiveSupport::JSON.decode(self.settings_json)) do |tempfile|
+            block_utilized = true
+            complete_report(tempfile)
+          end
         else
-          local_file = self.custom_report.run_report run_by
+          local_file = self.custom_report.run_report(run_by) do |tempfile|
+            block_utilized = true
+            complete_report(tempfile)
+          end
         end
-        complete_report local_file
+        complete_report(local_file) unless block_utilized
       rescue => err
         fail_report err
       ensure
