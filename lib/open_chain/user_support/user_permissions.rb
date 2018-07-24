@@ -168,11 +168,13 @@ module OpenChain; module UserSupport; module UserPermissions
     self.edit_drawback? &&  self.company.master?
   end
   def view_commercial_invoices?
-    self.commercial_invoice_view? && MasterSetup.get.entry_enabled?
+    self.commercial_invoice_view? && self.company.view_commercial_invoices?
   end
+  alias view_customer_invoices? view_commercial_invoices?
   def edit_commercial_invoices?
-    self.commercial_invoice_edit? && MasterSetup.get.entry_enabled?
+    self.commercial_invoice_edit? && self.company.view_commercial_invoices?
   end
+  alias edit_customer_invoices? edit_commercial_invoices?
   def view_surveys?
     self.survey_view?
   end

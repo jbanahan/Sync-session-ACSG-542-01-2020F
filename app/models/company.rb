@@ -229,11 +229,13 @@ class Company < ActiveRecord::Base
     true
   end
   def view_commercial_invoices?
-    master_setup.entry_enabled
+    master_setup.invoices_enabled?
   end
+  alias view_customer_invoices? view_commercial_invoices?
   def edit_commercial_invoices?
-    master_setup.entry_enabled
+    master_setup.invoices_enabled?
   end
+  alias edit_customer_invoices? edit_commercial_invoices?
   def view_broker_invoices?
     return master_setup.broker_invoice_enabled && (self.master? || self.importer?)
   end

@@ -44,6 +44,7 @@
 #  consignee_id                     :integer
 #  consolidator_address_id          :integer
 #  container_stuffing_address_id    :integer
+#  container_unloaded_date          :datetime
 #  country_export_id                :integer
 #  country_import_id                :integer
 #  country_origin_id                :integer

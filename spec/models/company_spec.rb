@@ -249,15 +249,20 @@ describe Company do
         expect(Company.new(:master=>false).edit_broker_invoices?).to be_falsey
       end
     end
-    context 'commercial invoices' do
-      it 'should allow if entry is enabled' do
-        expect(Company.new).to be_view_commercial_invoices
-        expect(Company.new).to be_edit_commercial_invoices
+    context 'customer invoices' do
+      it 'should allow if invoices are enabled' do
+        MasterSetup.get.update_attributes(:invoices_enabled=>true)
+        expect(Company.new.view_commercial_invoices?).to eq true
+        expect(Company.new.view_customer_invoices?).to eq true
+        expect(Company.new.edit_commercial_invoices?).to eq true
+        expect(Company.new.edit_customer_invoices?).to eq true
       end
       it 'should not allow if entry is disabled' do
-        MasterSetup.get.update_attributes(:entry_enabled=>false)
-        expect(Company.new).not_to be_view_commercial_invoices
-        expect(Company.new).not_to be_edit_commercial_invoices
+        MasterSetup.get.update_attributes(:invoices_enabled=>false)
+        expect(Company.new.view_commercial_invoices?).to eq false
+        expect(Company.new.view_customer_invoices?).to eq false
+        expect(Company.new.edit_commercial_invoices?).to eq false
+        expect(Company.new.edit_customer_invoices?).to eq false
       end
     end
     context 'projects' do
