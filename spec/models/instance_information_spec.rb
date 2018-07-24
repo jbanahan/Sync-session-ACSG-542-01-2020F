@@ -1,10 +1,13 @@
 describe InstanceInformation do
 
-  after :each do
+  def clear_vars
     # Clear the caching information
     InstanceInformation.class_variable_set(:@@server_role, nil)
     InstanceInformation.class_variable_set(:@@server_name, nil)
   end
+
+  before(:each) { clear_vars }
+  after(:each) { clear_vars }
 
   describe "server_role" do
     it 'uses aws tag fs to identify server role' do
