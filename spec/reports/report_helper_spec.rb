@@ -299,4 +299,18 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  describe "RowWrapper" do
+    it "correctly initializes, reads, assigns, unwraps" do
+      r = described_class::RowWrapper.new ["good morning", "good evening"], {foo: 0, bar: 1}
+      
+      expect(r.field_map).to eq({foo: 0, bar: 1})
+      expect(r[:bar]).to eq "good evening"
+      
+      r[:bar] = "good night"
+      
+      expect(r[:bar]).to eq "good night"
+      expect(r.to_a).to eq ["good morning", "good night"]
+    end
+  end
+
 end

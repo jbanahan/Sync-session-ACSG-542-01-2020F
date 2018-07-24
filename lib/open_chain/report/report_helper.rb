@@ -185,6 +185,28 @@ module OpenChain
         end
       end
 
+      # Allows report results to be indexed by field name. field_map is a hash of name => index
+      class RowWrapper
+        attr_reader :field_map
+
+        def initialize row, field_map
+          @row = row
+          @field_map = field_map
+        end
+
+        def to_a
+          @row
+        end
+
+        def [](name)
+          @row[field_map[name]]
+        end
+
+        def []=(name, value)
+          @row[field_map[name]] = value
+        end
+      end
+
     end
   end
 end
