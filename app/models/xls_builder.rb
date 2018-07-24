@@ -103,6 +103,7 @@ class XlsBuilder
   # Otherwise the output parameter is expected to be an IO object (or something that implements write)
   def write output
     @workbook.writer(output).write(@workbook)
+    output.flush if output.respond_to?(:flush)
     nil
   end
 
@@ -137,6 +138,12 @@ class XlsBuilder
   # Introduces a frozen pane ABOVE the given row index (zero indexed)
   # If you want to freeze the first row, pass a value of 1 as that will be the first zero-indexed row as part of the bottom panel - .ie the scrollable panel
   def freeze_horizontal_rows sheet, starting_bottom_panel_row_index
+    # This is a no-op because the spreadsheets the gem creates with frozen headers causes Excel (not OpenOffice) to
+    # fail validation, and the user must clear it...therefore we're not locking xls files.
+    
+    # I'm leaving in how to do this just in case there's a situation where we MUST write an xls
+    # file w/ frozen rows
+
     #sheet.raw_sheet.freeze!(starting_bottom_panel_row_index, 0)
     nil
   end
@@ -176,7 +183,7 @@ class XlsBuilder
     b.add_body_row sheet, ["Testing", 1, 12435.67, Time.zone.now, Time.zone.now, Date.new(2018, 6, 10)], styles: [nil, nil, :default_currency, :default_date, :default_datetime]
     b.add_body_row sheet, ["1"]
     b.add_body_row sheet, BigDecimal("1.23")
-    link = b.create_link_cell "http://www.google.com", "Google"
+    link = b.create_link_cell "http://www.google.com", link_text: "Google"
     b.add_body_row sheet, [link]
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting

@@ -179,8 +179,9 @@ describe XlsBuilder do
     }
 
     it "freezes sheet at given row" do
-      subject.freeze_horizontal_rows sheet, 1
-      expect(sheet.raw_sheet.froze_top).to eq 1
+      # no-ops due to Excel validation failures
+      expect(subject.freeze_horizontal_rows sheet, 1).to be_nil
+      expect(sheet.raw_sheet.froze_top).to eq 0
       expect(sheet.raw_sheet.froze_left).to eq 0
     end
   end

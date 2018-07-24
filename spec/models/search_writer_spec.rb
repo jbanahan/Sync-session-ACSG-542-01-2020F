@@ -90,6 +90,41 @@ describe SearchWriter do
 
         expect(s.worksheet "Results").not_to be_nil
       end
+
+      it "splits criteria tab into multiple cells if it has more than 1024 chars" do
+        value = ""
+        150.times { value << "1234567890\n"}
+        sc = search_setup.search_criterions.first
+        sc.update_attributes! value: value
+
+        s = Spreadsheet.open standard_run(skip_builder_expectations: true)
+        sheet = s.worksheet "Search Parameters"
+        expect(sheet).not_to be_nil
+        
+        # Since the value had too much data, it overflowed to the second cell so the row should
+        # have 3 cells
+        expect(sheet.row(4).to_a.length).to eq 3
+        expected_value = 
+        expect(sheet.row(4).to_a[1]).to eq "Equals #{value.each_line.to_a[0..91].join.chomp}"
+        expect(sheet.row(4).to_a[2]).to eq "#{value.each_line.to_a[92..149].join.chomp}"
+      end
+
+      it "splits criteria tab into multiple cells if it has more than 152 newlines" do
+        value = ""
+        170.times { value << "1\n"}
+        sc = search_setup.search_criterions.first
+        sc.update_attributes! value: value
+
+        s = Spreadsheet.open standard_run(skip_builder_expectations: true)
+        sheet = s.worksheet "Search Parameters"
+        expect(sheet).not_to be_nil
+        
+        # Since the value had too much data, it overflowed to the second cell so the row should
+        # have 3 cells
+        expect(sheet.row(4).to_a.length).to eq 3
+        expect(sheet.row(4).to_a[1]).to eq "Equals #{value.each_line.to_a[0..150].join.chomp}"
+        expect(sheet.row(4).to_a[2]).to eq "#{value.each_line.to_a[151..169].join.chomp}"
+      end
     end
 
     context "with xlsx output" do
@@ -118,6 +153,47 @@ describe SearchWriter do
         expect(rows[5]).to eq ["Name", "Equals name"]
 
         expect(xlsx.sheet "Results").not_to be_nil
+      end
+
+      it "splits criteria tab into multiple cells if it has more than 1024 chars" do
+        value = ""
+        150.times { value << "1234567890\n"}
+        sc = search_setup.search_criterions.first
+        sc.update_attributes! value: value
+
+        xlsx = XlsxTestReader.new standard_run(skip_builder_expectations: true)
+        sheet = xlsx.sheet "Search Parameters"
+        expect(sheet).not_to be_nil
+
+        rows = xlsx.raw_data sheet
+        
+        # Since the value had too much data, it overflowed to the second cell so the row should
+        # have 3 cells
+        expect(rows[4].length).to eq 3
+        expect(rows[4][1]).to eq "Equals #{value.each_line.to_a[0..91].join.chomp}"
+        expect(rows[4][2]).to eq "#{value.each_line.to_a[92..149].join.chomp}"
+      end
+
+      it "splits criteria tab into multiple cells if it has more than 152 newlines" do
+        value = ""
+        170.times { value << "1\n"}
+        sc = search_setup.search_criterions.first
+        sc.update_attributes! value: value
+
+        # Since the value had too much data, it overflowed to the second cell so the row should
+        # have 3 cells
+
+        xlsx = XlsxTestReader.new standard_run(skip_builder_expectations: true)
+        sheet = xlsx.sheet "Search Parameters"
+        expect(sheet).not_to be_nil
+
+        rows = xlsx.raw_data sheet
+        
+        # Since the value had too much data, it overflowed to the second cell so the row should
+        # have 3 cells
+        expect(rows[4].length).to eq 3
+        expect(rows[4][1]).to eq "Equals #{value.each_line.to_a[0..150].join.chomp}"
+        expect(rows[4][2]).to eq "#{value.each_line.to_a[151..169].join.chomp}"
       end
     end
 

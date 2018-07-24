@@ -122,12 +122,57 @@ class SearchWriter
       builder.add_body_row sheet, ["Customer", user.company.name]
 
       search_setup.search_criterions.each do |criterion|
-        builder.add_body_row(sheet, [criterion.model_field.label, "#{criterion.operator_label} #{criterion.value}"])
+        builder.add_body_row(sheet, create_criterion_row(criterion))
       end
 
       builder.apply_min_max_width_to_columns sheet
       
       nil
+    end
+
+    def create_criterion_row criterion
+      row = [criterion.model_field.label]
+      # Excel has a limit on the cell display length of 1024 chars.  There's also a hardlimit on the number of newlines at 253 (why?)
+      # and 32K chars for xlsx and something less than that for xls.
+
+      # I'd like to keep the display showing the same as what's in the formula bar, so we're going to trim the value and expand it horizontally
+      # across the row if the cell lenght is more than 1024.
+      value = "#{criterion.operator_label} #{criterion.value}"
+      newline_count = value.count("\n")
+      if value.length < 1024 && newline_count < 152
+        row << value
+      else
+        newline_count = 0
+        buffer = ""
+        cells = []
+        # The only real criterion type that should cause this much data is the one-of that's a value per line...
+        # Therefore, just split per line and start length / newline counting
+        index = 0
+        value.each_line do |line|
+          index += 1
+          if (buffer.length + line.length >= 1024) || (index % 152 == 0)
+            cells << buffer.chomp
+            buffer = ""
+            index = 1
+          end
+
+          # There's a possibility that someone keyed a single row that's more than 1024 chars...if so, just chop it at 1024
+          if line.length > 1024
+            line = line[0..1023]
+          end
+
+          buffer += line
+        end
+
+        if buffer.length > 0
+          buffer.chomp! if buffer[-1] == "\n"
+          cells << buffer
+        end
+
+        row.push *cells
+      end
+
+      row
     end
 
     def initialize_output_format search_setup, output_format_opt
