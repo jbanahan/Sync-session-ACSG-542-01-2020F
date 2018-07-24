@@ -137,7 +137,7 @@ class XlsBuilder
   # Introduces a frozen pane ABOVE the given row index (zero indexed)
   # If you want to freeze the first row, pass a value of 1 as that will be the first zero-indexed row as part of the bottom panel - .ie the scrollable panel
   def freeze_horizontal_rows sheet, starting_bottom_panel_row_index
-    sheet.raw_sheet.freeze!(starting_bottom_panel_row_index, 0)
+    #sheet.raw_sheet.freeze!(starting_bottom_panel_row_index, 0)
     nil
   end
 
