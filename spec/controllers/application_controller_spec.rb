@@ -334,4 +334,70 @@ describe ApplicationController do
       expect(response.body).to eq u.username
     end
   end
+
+  describe "log_last_request_time" do
+    # Create an anonymous rspec controller, allows testing only the
+    # filter mentioned in it
+    controller do
+      before_filter :log_last_request_time
+
+      def show
+        render :text => "Rendered"
+      end
+    end
+
+    let! (:user) { 
+      u = Factory(:user) 
+      sign_in_as(u)
+      u
+    }
+
+    before :each do 
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "sets last_request_at to current time and updates active days" do
+      now = Time.zone.parse("2018-07-20 12:30")
+
+      Timecop.freeze(now) { get :show, id: 1 }
+      
+      user.reload
+      expect(user.last_request_at).to eq now
+      expect(user.active_days).to eq 1
+    end
+
+    it "does not update the last request if it hasn't been over a minute since the previous request" do
+      now = Time.zone.parse("2018-07-20 12:30")
+      last_request = Time.zone.parse("2018-07-20 12:29:00")
+      user.update_column :last_request_at, last_request
+
+      Timecop.freeze(now) { get :show, id: 1 }
+      user.reload
+      expect(user.last_request_at).to eq last_request
+    end
+
+    it "does not update the active_days if a day has not passed since the previous request" do
+      now = Time.zone.parse("2018-07-20 23:59:59")
+      last_request = Time.zone.parse("2018-07-20 00:00:00")
+      user.update_column :last_request_at, last_request
+
+      Timecop.freeze(now) { get :show, id: 1 }
+      user.reload
+      expect(user.active_days).to eq 0
+    end
+
+    it "updates active_days if a day has passed since the previous request" do
+      # Verify that we increment the days counter based on the date changing not a duration of time passing
+      now = Time.zone.parse("2018-07-21 00:00:00")
+      # We skip requests that aren't more than a minute apart...so make sure the last request is over a minute ago
+      last_request = Time.zone.parse("2018-07-20 23:58:59")
+      user.update_column :last_request_at, last_request
+
+      Timecop.freeze(now) { get :show, id: 1 }
+      user.reload
+      expect(user.active_days).to eq 1
+    end
+  end
 end

@@ -307,9 +307,20 @@ class ApplicationController < ActionController::Base
   def log_last_request_time
     if current_user
       # Only bother updating the last request at if it's more than a minute old
-      if current_user.last_request_at.nil? || (current_user.last_request_at.to_i <  (Time.now - 1.minute).to_i)
-        # Update column doesn't run any validations or set timestamps, it just runs a query to set the column to the provided value
-        current_user.update_column :last_request_at, Time.zone.now
+      now = Time.zone.now
+      last_request = current_user.last_request_at
+      if last_request.nil? || (last_request < (now - 1.minute))
+        updates = {last_request_at: now}
+
+        # We also want to update the active_days attribute if the date from the last request and the current date don't match
+        # We're calculating this by when the actual date changes over NOT if the request has been 24 hours since the previous request
+        if last_request.nil? || last_request.to_date != now.to_date
+          updates[:active_days] = (current_user.active_days.to_i + 1)
+        end
+
+        # We want this to be as fast as possible and not set timestamps, so don't do validations, or anything else
+        # Rails 4 can use the #update_columns method to achieve this effect..rails 3 has to do it a little more funkily
+        User.where(id: current_user.id).update_all updates
       end
     end
   end

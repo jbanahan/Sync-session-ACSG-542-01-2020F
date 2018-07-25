@@ -3,6 +3,7 @@
 # Table name: users
 #
 #  User                    :string(255)
+#  active_days             :integer          default(0)
 #  admin                   :boolean
 #  api_auth_token          :string(255)
 #  api_request_counter     :integer

@@ -156,6 +156,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
                 <%= f.field_row "Debug will expire", @user.debug_expires %>
               <% end %>
               <%=field_row "Set Debug Expiration", select_tag(:debug_expiration_hours,options_for_select([["Don't Change",""],["Now","0"],["1 hour","1"],["4 hours","4"],["8 hours","8"],["24 hours","24"]]), class: "form-control") %>
+              <%=field_row "Active Day Counter", @user.active_days.to_i %>
             <% end %>
           <% end %>
         </table>
