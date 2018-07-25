@@ -11,7 +11,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
   NUMBER_FORMAT ||= XlsMaker.create_format "Number", :number_format => '#,##0', horizontal_align: :center
 
   YearOverYearData ||= Struct.new(:range_year,:range_month,:customer_number,:customer_name,:broker_reference,
-                                       :summary_line_count,:entry_type,:entered_value,:total_duty,:mpf,:hmf,:cotton_fee,
+                                       :entry_line_count,:entry_type,:entered_value,:total_duty,:mpf,:hmf,:cotton_fee,
                                        :total_taxes,:other_fees,:total_fees,:arrival_date,:release_date,
                                        :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst,
                                        :export_country_codes,:transport_mode_code,:broker_invoice_total,
@@ -84,7 +84,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         d.customer_number = result_set_row['customer_number']
         d.customer_name = result_set_row['customer_name']
         d.broker_reference = result_set_row['broker_reference']
-        d.summary_line_count = result_set_row['summary_line_count']
+        d.entry_line_count = result_set_row['entry_line_count']
         d.entry_type = result_set_row['entry_type']
         d.entered_value = result_set_row['entered_value']
         d.total_duty = result_set_row['total_duty']
@@ -138,7 +138,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     def add_row_block sheet, year, comp_year, block_pos, counter, include_cotton_fee, include_taxes, include_other_fees, year_hash
       XlsMaker.add_body_row sheet, counter += 1, make_summary_headers(comp_year ? "Variance #{year} / #{comp_year}" : year), [], false, formats: Array.new(14, BLUE_HEADER_FORMAT)
       XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Number of Entries", year_hash, year, comp_year, block_pos, :entry_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, :summary_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, :entry_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
       XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Units", year_hash, year, comp_year, block_pos, :total_units), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
       get_all_entry_type_values(year_hash).each do |entry_type|
         XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Type #{entry_type}", year_hash, year, comp_year, block_pos, :entry_type_count_hash, decimal:false, entry_type:entry_type), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
@@ -239,7 +239,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           month_data.range_year = row.range_year
           month_data.range_month = row.range_month
           month_data.entry_count = 0
-          month_data.summary_line_count = 0
+          month_data.entry_line_count = 0
           month_data.entered_value = 0.00
           month_data.total_duty = 0.00
           month_data.mpf = 0.00
@@ -259,7 +259,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           month_data.entry_type_count_hash[row.entry_type] = 0
         end
         month_data.entry_type_count_hash[row.entry_type] += 1
-        month_data.summary_line_count += row.summary_line_count
+        month_data.entry_line_count += row.entry_line_count
         month_data.entered_value += row.entered_value
         month_data.total_duty += row.total_duty
         month_data.mpf += row.mpf
@@ -290,7 +290,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
 
       counter = 0
       data_arr.each do |row|
-        XlsMaker.add_body_row sheet, counter += 1, [row.customer_number,row.customer_name,row.broker_reference,row.summary_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total], [], false, formats: Array.new(3, nil) + [NUMBER_FORMAT, nil] + Array.new(8, MONEY_FORMAT) + Array.new(5, nil) + [NUMBER_FORMAT, MONEY_FORMAT, nil, nil, MONEY_FORMAT]
+        XlsMaker.add_body_row sheet, counter += 1, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total], [], false, formats: Array.new(3, nil) + [NUMBER_FORMAT, nil] + Array.new(8, MONEY_FORMAT) + Array.new(5, nil) + [NUMBER_FORMAT, MONEY_FORMAT, nil, nil, MONEY_FORMAT]
       end
 
       XlsMaker.set_column_widths sheet, Array.new(23, 20)
@@ -304,14 +304,23 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     def make_query importer_ids, year_1, year_2, range_field, mode_of_transport_codes
       <<-SQL
       SELECT 
-        YEAR(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) as range_year_tz_converted, 
-        MONTH(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) as range_month_tz_converted, 
-        YEAR(#{range_field}) as range_year, 
-        MONTH(#{range_field}) as range_month, 
+        YEAR(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_year_tz_converted, 
+        MONTH(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_month_tz_converted, 
+        YEAR(#{range_field}) AS range_year, 
+        MONTH(#{range_field}) AS range_month, 
         customer_number, 
         customer_name, 
         broker_reference, 
-        IFNULL(summary_line_count, 0) as summary_line_count, 
+        (
+          SELECT 
+            COUNT(*) 
+          FROM 
+            commercial_invoices AS ci 
+            LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+              ci.id = cil.commercial_invoice_id 
+          WHERE 
+            ci.entry_id = entries.id
+        ) AS entry_line_count, 
         entry_type, 
         IFNULL(entered_value, 0.0) AS entered_value, 
         IFNULL(total_duty, 0.0) AS total_duty, 

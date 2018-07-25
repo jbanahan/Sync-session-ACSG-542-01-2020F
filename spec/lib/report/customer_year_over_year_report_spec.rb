@@ -37,7 +37,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
 
     after { @temp.close if @temp }
 
-    def make_entry counter, entry_type, date_range_field, date_range_field_val
+    def make_entry counter, entry_type, date_range_field, date_range_field_val, invoice_line_count:2
       entry = Factory(:entry, customer_number:'ABCD', customer_name:'Crudco', broker_reference:"brok ref #{counter}", summary_line_count:10,
               entry_type:entry_type, entered_value:55.55, total_duty:44.44, mpf:33.33, hmf:22.22, cotton_fee:11.11, total_taxes:9.99,
               other_fees:8.88, total_fees:7.77, arrival_date:make_utc_date(2018,1,1+counter), release_date:make_utc_date(2018,2,2+counter),
@@ -45,12 +45,16 @@ describe OpenChain::Report::CustomerYearOverYearReport do
               eta_date:Date.new(2018,5,5+counter), total_units:543.2, total_gst:6.66, export_country_codes:'CN',
               transport_mode_code:'S', broker_invoice_total:12.34, importer_id:importer.id)
       entry.update_attributes date_range_field => date_range_field_val
+      inv = entry.commercial_invoices.create! invoice_number:"inv-#{entry.id}"
+      for i in 1..invoice_line_count
+        inv.commercial_invoice_lines.create!
+      end
       entry
     end
 
     it "generates spreadsheet based on arrival date" do
-      ent_2016_Feb_1 = make_entry 1, '01', :arrival_date, make_utc_date(2016,2,16)
-      ent_2016_Feb_2 = make_entry 2, '01', :arrival_date, make_utc_date(2016,2,17)
+      ent_2016_Feb_1 = make_entry 1, '01', :arrival_date, make_utc_date(2016,2,16), invoice_line_count:3
+      ent_2016_Feb_2 = make_entry 2, '01', :arrival_date, make_utc_date(2016,2,17), invoice_line_count:5
       ent_2016_Mar = make_entry 3, '02', :arrival_date, make_utc_date(2016,3,3)
       ent_2016_Apr_1 = make_entry 4, '01', :arrival_date, make_utc_date(2016,4,4)
       ent_2016_Apr_2 = make_entry 5, '02', :arrival_date, make_utc_date(2016,4,16)
@@ -88,7 +92,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 53
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 0, 2, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 8]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 0, 20, 10, 30, 10, 10, 0, 0, 0, 0, 0, 0, 80]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 0, 8, 2, 6, 2, 2, 0, 0, 0, 0, 0, 0, 20]
       expect(sheet.row(3)).to eq ['Total Units', 0, 1086.4, 543.2, 1629.6, 543.2, 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4345.6]
       expect(sheet.row(4)).to eq ['Entry Type 01', 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4]
       expect(sheet.row(5)).to eq ['Entry Type 02', 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 3]
@@ -106,7 +110,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(17)).to eq []
       expect(sheet.row(18)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(19)).to eq ['Number of Entries', 2, 0, 1, 1, 2, nil, nil, nil, nil, nil, nil, nil, 6]
-      expect(sheet.row(20)).to eq ['Entry Summary Lines', 20, 0, 10, 10, 20, nil, nil, nil, nil, nil, nil, nil, 60]
+      expect(sheet.row(20)).to eq ['Entry Summary Lines', 4, 0, 2, 2, 4, nil, nil, nil, nil, nil, nil, nil, 12]
       expect(sheet.row(21)).to eq ['Total Units', 1086.4, 0, 543.2, 543.2, 1086.4, nil, nil, nil, nil, nil, nil, nil, 3259.2]
       expect(sheet.row(22)).to eq ['Entry Type 01', 2, 0, 1, 1, 2, nil, nil, nil, nil, nil, nil, nil, 6]
       expect(sheet.row(23)).to eq ['Entry Type 02', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
@@ -124,7 +128,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(35)).to eq []
       expect(sheet.row(36)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(37)).to eq ['Number of Entries', 2, -2, 0, -2, 1, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(38)).to eq ['Entry Summary Lines', 20, -20, 0, -20, 10, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(38)).to eq ['Entry Summary Lines', 4, -8, 0, -4, 2, nil, nil, nil, nil, nil, nil, nil, -6]
       expect(sheet.row(39)).to eq ['Total Units', 1086.4, -1086.4, 0, -1086.4, 543.2, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(40)).to eq ['Entry Type 01', 2, -2, 1, -1, 2, nil, nil, nil, nil, nil, nil, nil, 2]
       expect(sheet.row(41)).to eq ['Entry Type 02', 0, 0, -1, -1, 0, nil, nil, nil, nil, nil, nil, nil, -2]
@@ -148,20 +152,20 @@ describe OpenChain::Report::CustomerYearOverYearReport do
                                       'Total Taxes','Total Fees','Other Taxes & Fees','Arrival Date','Release Date',
                                       'File Logged Date','Fiscal Date','ETA Date','Total Units','Total GST',
                                       'Country Export Codes','Mode of Transport','Total Broker Invoice']
-      expect(raw_sheet.row(1)).to eq ['ABCD', 'Crudco', 'brok ref 1', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,16)), excel_date(Date.new(2018,2,3)), excel_date(Date.new(2018,3,4)), excel_date(Date.new(2018,4,5)), excel_date(Date.new(2018,5,6)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(2)).to eq ['ABCD', 'Crudco', 'brok ref 2', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,17)), excel_date(Date.new(2018,2,4)), excel_date(Date.new(2018,3,5)), excel_date(Date.new(2018,4,6)), excel_date(Date.new(2018,5,7)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(3)).to eq ['ABCD', 'Crudco', 'brok ref 3', 10, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,3,3)), excel_date(Date.new(2018,2,5)), excel_date(Date.new(2018,3,6)), excel_date(Date.new(2018,4,7)), excel_date(Date.new(2018,5,8)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(4)).to eq ['ABCD', 'Crudco', 'brok ref 4', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,4)), excel_date(Date.new(2018,2,6)), excel_date(Date.new(2018,3,7)), excel_date(Date.new(2018,4,8)), excel_date(Date.new(2018,5,9)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(5)).to eq ['ABCD', 'Crudco', 'brok ref 5', 10, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,16)), excel_date(Date.new(2018,2,7)), excel_date(Date.new(2018,3,8)), excel_date(Date.new(2018,4,9)), excel_date(Date.new(2018,5,10)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(6)).to eq ['ABCD', 'Crudco', 'brok ref 6', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,25)), excel_date(Date.new(2018,2,8)), excel_date(Date.new(2018,3,9)), excel_date(Date.new(2018,4,10)), excel_date(Date.new(2018,5,11)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(7)).to eq ['ABCD', 'Crudco', 'brok ref 7', 10, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,5,15)), excel_date(Date.new(2018,2,9)), excel_date(Date.new(2018,3,10)), excel_date(Date.new(2018,4,11)), excel_date(Date.new(2018,5,12)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(8)).to eq ['ABCD', 'Crudco', 'brok ref 8', 10, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,6,6)), excel_date(Date.new(2018,2,10)), excel_date(Date.new(2018,3,11)), excel_date(Date.new(2018,4,12)), excel_date(Date.new(2018,5,13)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(9)).to eq ['ABCD', 'Crudco', 'brok ref 9', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,1)), excel_date(Date.new(2018,2,11)), excel_date(Date.new(2018,3,12)), excel_date(Date.new(2018,4,13)), excel_date(Date.new(2018,5,14)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(10)).to eq ['ABCD', 'Crudco', 'brok ref 10', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,17)), excel_date(Date.new(2018,2,12)), excel_date(Date.new(2018,3,13)), excel_date(Date.new(2018,4,14)), excel_date(Date.new(2018,5,15)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(11)).to eq ['ABCD', 'Crudco', 'brok ref 11', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,3,2)), excel_date(Date.new(2018,2,13)), excel_date(Date.new(2018,3,14)), excel_date(Date.new(2018,4,15)), excel_date(Date.new(2018,5,16)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(12)).to eq ['ABCD', 'Crudco', 'brok ref 12', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,4,7)), excel_date(Date.new(2018,2,14)), excel_date(Date.new(2018,3,15)), excel_date(Date.new(2018,4,16)), excel_date(Date.new(2018,5,17)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(13)).to eq ['ABCD', 'Crudco', 'brok ref 13', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,21)), excel_date(Date.new(2018,2,15)), excel_date(Date.new(2018,3,16)), excel_date(Date.new(2018,4,17)), excel_date(Date.new(2018,5,18)), 543.2, 6.66, 'CN', 'S', 12.34]
-      expect(raw_sheet.row(14)).to eq ['ABCD', 'Crudco', 'brok ref 14', 10, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,22)), excel_date(Date.new(2018,2,16)), excel_date(Date.new(2018,3,17)), excel_date(Date.new(2018,4,18)), excel_date(Date.new(2018,5,19)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(1)).to eq ['ABCD', 'Crudco', 'brok ref 1', 3, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,16)), excel_date(Date.new(2018,2,3)), excel_date(Date.new(2018,3,4)), excel_date(Date.new(2018,4,5)), excel_date(Date.new(2018,5,6)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(2)).to eq ['ABCD', 'Crudco', 'brok ref 2', 5, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,17)), excel_date(Date.new(2018,2,4)), excel_date(Date.new(2018,3,5)), excel_date(Date.new(2018,4,6)), excel_date(Date.new(2018,5,7)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(3)).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,3,3)), excel_date(Date.new(2018,2,5)), excel_date(Date.new(2018,3,6)), excel_date(Date.new(2018,4,7)), excel_date(Date.new(2018,5,8)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(4)).to eq ['ABCD', 'Crudco', 'brok ref 4', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,4)), excel_date(Date.new(2018,2,6)), excel_date(Date.new(2018,3,7)), excel_date(Date.new(2018,4,8)), excel_date(Date.new(2018,5,9)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(5)).to eq ['ABCD', 'Crudco', 'brok ref 5', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,16)), excel_date(Date.new(2018,2,7)), excel_date(Date.new(2018,3,8)), excel_date(Date.new(2018,4,9)), excel_date(Date.new(2018,5,10)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(6)).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,25)), excel_date(Date.new(2018,2,8)), excel_date(Date.new(2018,3,9)), excel_date(Date.new(2018,4,10)), excel_date(Date.new(2018,5,11)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(7)).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,5,15)), excel_date(Date.new(2018,2,9)), excel_date(Date.new(2018,3,10)), excel_date(Date.new(2018,4,11)), excel_date(Date.new(2018,5,12)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(8)).to eq ['ABCD', 'Crudco', 'brok ref 8', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,6,6)), excel_date(Date.new(2018,2,10)), excel_date(Date.new(2018,3,11)), excel_date(Date.new(2018,4,12)), excel_date(Date.new(2018,5,13)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(9)).to eq ['ABCD', 'Crudco', 'brok ref 9', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,1)), excel_date(Date.new(2018,2,11)), excel_date(Date.new(2018,3,12)), excel_date(Date.new(2018,4,13)), excel_date(Date.new(2018,5,14)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(10)).to eq ['ABCD', 'Crudco', 'brok ref 10', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,17)), excel_date(Date.new(2018,2,12)), excel_date(Date.new(2018,3,13)), excel_date(Date.new(2018,4,14)), excel_date(Date.new(2018,5,15)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(11)).to eq ['ABCD', 'Crudco', 'brok ref 11', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,3,2)), excel_date(Date.new(2018,2,13)), excel_date(Date.new(2018,3,14)), excel_date(Date.new(2018,4,15)), excel_date(Date.new(2018,5,16)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(12)).to eq ['ABCD', 'Crudco', 'brok ref 12', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,4,7)), excel_date(Date.new(2018,2,14)), excel_date(Date.new(2018,3,15)), excel_date(Date.new(2018,4,16)), excel_date(Date.new(2018,5,17)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(13)).to eq ['ABCD', 'Crudco', 'brok ref 13', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,21)), excel_date(Date.new(2018,2,15)), excel_date(Date.new(2018,3,16)), excel_date(Date.new(2018,4,17)), excel_date(Date.new(2018,5,18)), 543.2, 6.66, 'CN', 'S', 12.34]
+      expect(raw_sheet.row(14)).to eq ['ABCD', 'Crudco', 'brok ref 14', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,22)), excel_date(Date.new(2018,2,16)), excel_date(Date.new(2018,3,17)), excel_date(Date.new(2018,4,18)), excel_date(Date.new(2018,5,19)), 543.2, 6.66, 'CN', 'S', 12.34]
     end
 
     def make_utc_date year, month, day
@@ -195,7 +199,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 38
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
       expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
       expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
@@ -208,7 +212,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(12)).to eq []
       expect(sheet.row(13)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(14)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(15)).to eq ['Entry Summary Lines', 10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet.row(15)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
       expect(sheet.row(16)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
       expect(sheet.row(17)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
       expect(sheet.row(18)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
@@ -221,7 +225,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(25)).to eq []
       expect(sheet.row(26)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(27)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(28)).to eq ['Entry Summary Lines', -10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(28)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet.row(29)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(30)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
       expect(sheet.row(31)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
@@ -257,7 +261,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 41
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
       expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
       expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
@@ -271,7 +275,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(13)).to eq []
       expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
       expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
       expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
       expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
@@ -285,7 +289,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(27)).to eq []
       expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
       expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
@@ -322,7 +326,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 41
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
       expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
       expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
@@ -336,7 +340,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(13)).to eq []
       expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
       expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
       expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
       expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
@@ -350,7 +354,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(27)).to eq []
       expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
       expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
@@ -387,7 +391,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 41
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
       expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
       expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
@@ -401,7 +405,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(13)).to eq []
       expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
       expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
       expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
       expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
@@ -415,7 +419,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(27)).to eq []
       expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
       expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
@@ -498,7 +502,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.rows.count).to eq 47
       expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10]
+      expect(sheet.row(2)).to eq ['Entry Summary Lines', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(3)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 543.2]
       expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
       expect(sheet.row(5)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 55.55]
@@ -530,7 +534,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet.row(31)).to eq []
       expect(sheet.row(32)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
       expect(sheet.row(33)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(34)).to eq ['Entry Summary Lines', -10, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -10]
+      expect(sheet.row(34)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet.row(35)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
       expect(sheet.row(36)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
       expect(sheet.row(37)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]

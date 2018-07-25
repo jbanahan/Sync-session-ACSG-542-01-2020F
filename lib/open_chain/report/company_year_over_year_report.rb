@@ -10,7 +10,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
   MONEY_FORMAT ||= XlsMaker.create_format "Money", :number_format => '$#,##0.00'
   NUMBER_FORMAT ||= XlsMaker.create_format "Number", :number_format => '#,##0', horizontal_align: :center
 
-  CompanyYearOverYearData ||= Struct.new(:entry_count, :line_item_count, :total_broker_invoice)
+  CompanyYearOverYearData ||= Struct.new(:entry_count, :entry_line_count, :abi_line_count, :total_broker_invoice)
 
   def self.permission? user
     user.view_entries? && MasterSetup.get.custom_feature?("Company Year Over Year Report") && user.in_group?(Group.use_system_group(COMPANY_YEAR_OVER_YEAR_REPORT_USERS, create: false))
@@ -72,7 +72,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
         if month_data.nil?
           month_data = CompanyYearOverYearData.new
           month_data.entry_count = result_set_row['entry_count']
-          month_data.line_item_count = result_set_row['summary_line_count']
+          month_data.entry_line_count = result_set_row['entry_line_count']
+          month_data.abi_line_count = result_set_row['abi_line_count']
           month_data.total_broker_invoice = result_set_row['broker_invoice_total']
           month_hash[range_month] = month_data
         end
@@ -102,7 +103,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     def add_row_block sheet, year, comp_year, block_pos, counter, year_hash, ytd_enforced
       XlsMaker.add_body_row sheet, counter += 1, make_data_headers(comp_year ? "Variance" : year), [], false, formats: Array.new(14, BLUE_HEADER_FORMAT)
       XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entries Transmitted", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :line_item_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("ABI Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :abi_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
       XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, ytd_enforced, :total_broker_invoice), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
       counter
     end
@@ -174,7 +176,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
           division_number, 
           division_name, 
           SUM(entry_count) AS entry_count, 
-          SUM(summary_line_count) AS summary_line_count, 
+          SUM(abi_line_count) AS abi_line_count, 
+          SUM(entry_line_count) AS entry_line_count, 
           SUM(broker_invoice_total) AS broker_invoice_total
         FROM 
           (
@@ -185,13 +188,32 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 division_number, 
                 div_xref.value AS division_name, 
                 COUNT(*) AS entry_count, 
-                SUM(IFNULL(summary_line_count, 0)) AS summary_line_count,
+                SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
+                SUM(line_count_tbl.entry_line_count) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
               FROM 
                 entries 
                 LEFT OUTER JOIN data_cross_references AS div_xref ON 
                   div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND 
                   div_xref.key = entries.division_number 
+                LEFT OUTER JOIN (
+                  SELECT 
+                    entries.id AS entry_id, 
+                    COUNT(*) AS entry_line_count 
+                  FROM 
+                    entries
+                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                      entries.id = ci.entry_id
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                      ci.id = cil.commercial_invoice_id
+                  WHERE 
+                    division_number IS NOT NULL AND 
+                    !(customer_number <=> 'EDDIEFTZ') AND 
+                    #{make_range_field_sql('release_date', year_1, year_2)}
+                  GROUP BY 
+                    entries.id
+                ) AS line_count_tbl ON 
+	                entries.id = line_count_tbl.entry_id
               WHERE 
                 division_number IS NOT NULL AND 
                 !(customer_number <=> 'EDDIEFTZ') AND 
@@ -208,13 +230,32 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 division_number, 
                 div_xref.value AS division_name, 
                 COUNT(*) AS entry_count, 
-                SUM(IFNULL(summary_line_count, 0)) AS summary_line_count,
+                SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
+                SUM(line_count_tbl.entry_line_count) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
               FROM 
                 entries 
                 LEFT OUTER JOIN data_cross_references AS div_xref ON 
                   div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND 
                   div_xref.key = entries.division_number 
+                LEFT OUTER JOIN (
+                  SELECT 
+                    entries.id AS entry_id, 
+                    COUNT(*) AS entry_line_count 
+                  FROM 
+                    entries
+                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                      entries.id = ci.entry_id
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                      ci.id = cil.commercial_invoice_id
+                  WHERE 
+                    division_number IS NOT NULL AND 
+                    customer_number = 'EDDIEFTZ' AND 
+                    #{make_range_field_sql('arrival_date', year_1, year_2)}
+                  GROUP BY 
+                    entries.id
+                ) AS line_count_tbl ON 
+	                entries.id = line_count_tbl.entry_id
               WHERE 
                 division_number IS NOT NULL AND 
                 customer_number = 'EDDIEFTZ' AND 
