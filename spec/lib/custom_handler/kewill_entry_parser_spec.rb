@@ -224,11 +224,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'value_appraisal_method' => "F",
                 'non_dutiable_amt' => 12345,
                 'misc_discount' => 33.44,
+                'agriculture_license_no' => "LICENSE NO",
                 'fees' => [
                   {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
                   {'customs_fee_code'=>501, 'amt_fee'=>345},
                   {'customs_fee_code'=>56, 'amt_fee'=>456},
-                  {'customs_fee_code'=>311, 'amt_fee'=>5, 'amt_fee_prorated' => 250},
+                  {'customs_fee_code'=>123, 'amt_fee'=>5, 'amt_fee_prorated' => 250},
                   {'customs_fee_code'=>100, 'amt_fee'=>1250}
                 ],
                 'penalties' => [
@@ -687,6 +688,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.unit_price).to eq BigDecimal("95.23")
       expect(line.other_fees).to eq BigDecimal("15.00")
       expect(line.miscellaneous_discount).to eq BigDecimal("33.44")
+      expect(line.agriculture_license_number).to eq "LICENSE NO"
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
@@ -1288,6 +1290,18 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.total_add).to eq 0
       expect(entry.total_non_dutiable_amount).to eq 0
       expect(entry.other_fees).to eq 0
+    end
+
+    it "handles informal MPF fee codes" do
+      fee = @e["commercial_invoices"].first["lines"].first["fees"].find {|f| f["customs_fee_code"] == 499}
+      fee["customs_fee_code"] = 311
+
+
+      entry = subject.process_entry @e
+
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      expect(line.mpf).to eq 1.23
+      expect(line.prorated_mpf).to eq 2.34
     end
 
     context "with statement updates" do

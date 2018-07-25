@@ -112,8 +112,9 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [61, :cil_miscellaneous_discount, :miscellaneous_discount, "Miscellaneous Discount", {data_type: :decimal, currency: :usd}],
       [62, :cil_freight_amount, :freight_amount, "Freight Amount", {data_type: :decimal, currency: :usd}],
       [63, :cil_other_amount, :other_amount, "Other Adjustments", {data_type: :decimal, currency: :usd}],
-      [64, :cil_cash_discount, :cash_discount, "Cash Discount", {data_tyoe: :decimal, currency: :usd}],
-      [65, :cil_add_to_make_amount, :add_to_make_amount, "Additions to Value", {data_type: :decimal, currency: :usd}]
+      [64, :cil_cash_discount, :cash_discount, "Cash Discount", {data_type: :decimal, currency: :usd}],
+      [65, :cil_add_to_make_amount, :add_to_make_amount, "Additions to Value", {data_type: :decimal, currency: :usd}],
+      [66, :cil_agriculture_license_number, :agriculture_license_number, "Agriculture License Number", {data_type: :string}]
     ]
   end
 end; end; end

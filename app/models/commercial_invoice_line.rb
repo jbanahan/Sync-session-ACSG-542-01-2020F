@@ -2,70 +2,71 @@
 #
 # Table name: commercial_invoice_lines
 #
-#  add_bond               :boolean
-#  add_case_number        :string(255)
-#  add_case_percent       :decimal(5, 2)
-#  add_case_value         :decimal(12, 2)
-#  add_duty_amount        :decimal(12, 2)
-#  add_to_make_amount     :decimal(12, 2)
-#  adjustments_amount     :decimal(12, 3)
-#  cash_discount          :decimal(12, 2)
-#  charges                :decimal(11, 2)
-#  commercial_invoice_id  :integer
-#  computed_adjustments   :decimal(13, 2)
-#  computed_net_value     :decimal(13, 2)
-#  computed_value         :decimal(13, 2)
-#  container_id           :integer
-#  contract_amount        :decimal(12, 2)
-#  cotton_fee             :decimal(11, 2)
-#  country_export_code    :string(255)
-#  country_origin_code    :string(255)
-#  created_at             :datetime         not null
-#  currency               :string(255)
-#  customer_reference     :string(255)
-#  customs_line_number    :integer
-#  cvd_bond               :boolean
-#  cvd_case_number        :string(255)
-#  cvd_case_percent       :decimal(5, 2)
-#  cvd_case_value         :decimal(12, 2)
-#  cvd_duty_amount        :decimal(12, 2)
-#  department             :string(255)
-#  drawback_qty           :decimal(11, 2)
-#  fda_hold_date          :datetime
-#  fda_release_date       :datetime
-#  fda_review_date        :datetime
-#  first_sale             :boolean
-#  freight_amount         :decimal(12, 2)
-#  hmf                    :decimal(11, 2)
-#  id                     :integer          not null, primary key
-#  line_number            :integer
-#  mid                    :string(255)
-#  miscellaneous_discount :decimal(12, 2)
-#  mpf                    :decimal(11, 2)
-#  non_dutiable_amount    :decimal(13, 2)
-#  other_amount           :decimal(12, 2)
-#  other_fees             :decimal(11, 2)
-#  part_number            :string(255)
-#  po_number              :string(255)
-#  product_line           :string(255)
-#  prorated_mpf           :decimal(11, 2)
-#  quantity               :decimal(12, 3)
-#  related_parties        :boolean
-#  state_export_code      :string(255)
-#  state_origin_code      :string(255)
-#  store_name             :string(255)
-#  subheader_number       :integer
-#  unit_of_measure        :string(255)
-#  unit_price             :decimal(12, 3)
-#  updated_at             :datetime         not null
-#  value                  :decimal(11, 2)
-#  value_appraisal_method :string(255)
-#  value_foreign          :decimal(11, 2)
-#  vendor_name            :string(255)
-#  visa_number            :string(255)
-#  visa_quantity          :decimal(12, 3)
-#  visa_uom               :string(255)
-#  volume                 :decimal(11, 2)
+#  add_bond                   :boolean
+#  add_case_number            :string(255)
+#  add_case_percent           :decimal(5, 2)
+#  add_case_value             :decimal(12, 2)
+#  add_duty_amount            :decimal(12, 2)
+#  add_to_make_amount         :decimal(12, 2)
+#  adjustments_amount         :decimal(12, 3)
+#  agriculture_license_number :string(255)
+#  cash_discount              :decimal(12, 2)
+#  charges                    :decimal(11, 2)
+#  commercial_invoice_id      :integer
+#  computed_adjustments       :decimal(13, 2)
+#  computed_net_value         :decimal(13, 2)
+#  computed_value             :decimal(13, 2)
+#  container_id               :integer
+#  contract_amount            :decimal(12, 2)
+#  cotton_fee                 :decimal(11, 2)
+#  country_export_code        :string(255)
+#  country_origin_code        :string(255)
+#  created_at                 :datetime         not null
+#  currency                   :string(255)
+#  customer_reference         :string(255)
+#  customs_line_number        :integer
+#  cvd_bond                   :boolean
+#  cvd_case_number            :string(255)
+#  cvd_case_percent           :decimal(5, 2)
+#  cvd_case_value             :decimal(12, 2)
+#  cvd_duty_amount            :decimal(12, 2)
+#  department                 :string(255)
+#  drawback_qty               :decimal(11, 2)
+#  fda_hold_date              :datetime
+#  fda_release_date           :datetime
+#  fda_review_date            :datetime
+#  first_sale                 :boolean
+#  freight_amount             :decimal(12, 2)
+#  hmf                        :decimal(11, 2)
+#  id                         :integer          not null, primary key
+#  line_number                :integer
+#  mid                        :string(255)
+#  miscellaneous_discount     :decimal(12, 2)
+#  mpf                        :decimal(11, 2)
+#  non_dutiable_amount        :decimal(13, 2)
+#  other_amount               :decimal(12, 2)
+#  other_fees                 :decimal(11, 2)
+#  part_number                :string(255)
+#  po_number                  :string(255)
+#  product_line               :string(255)
+#  prorated_mpf               :decimal(11, 2)
+#  quantity                   :decimal(12, 3)
+#  related_parties            :boolean
+#  state_export_code          :string(255)
+#  state_origin_code          :string(255)
+#  store_name                 :string(255)
+#  subheader_number           :integer
+#  unit_of_measure            :string(255)
+#  unit_price                 :decimal(12, 3)
+#  updated_at                 :datetime         not null
+#  value                      :decimal(11, 2)
+#  value_appraisal_method     :string(255)
+#  value_foreign              :decimal(11, 2)
+#  vendor_name                :string(255)
+#  visa_number                :string(255)
+#  visa_quantity              :decimal(12, 3)
+#  visa_uom                   :string(255)
+#  volume                     :decimal(11, 2)
 #
 # Indexes
 #

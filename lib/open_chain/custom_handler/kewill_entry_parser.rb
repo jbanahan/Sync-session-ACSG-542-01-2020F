@@ -926,12 +926,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.value_appraisal_method = l[:value_appraisal_method]
       line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
       line.miscellaneous_discount = parse_decimal(l[:misc_discount])
+      line.agriculture_license_number = l[:agriculture_license_no]
 
       other_fees = BigDecimal.new("0")
 
       Array.wrap(l[:fees]).each do |fee|
         case fee[:customs_fee_code].to_i
-        when 499
+        # 499 is the MPF for standard entries, 311 is the MPF for informal entries
+        # We should never receive both on a single entry.
+        when 499, 311
           line.mpf = parse_decimal fee[:amt_fee]
           line.prorated_mpf = parse_decimal fee[:amt_fee_prorated]
 
