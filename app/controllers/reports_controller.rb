@@ -34,14 +34,18 @@ class ReportsController < ApplicationController
   end
   def run_containers_released
     settings = {}
-    settings['arrival_start_date'] = params[:arrival_start_date] unless params[:arrival_start_date].blank?
-    settings['arrival_end_date'] = params[:arrival_end_date] unless params[:arrival_end_date].blank?
+    settings['arrival_date_start'] = params[:arrival_date_start]
+    settings['arrival_date_end'] = params[:arrival_date_end]
     customer_numbers = []
     params[:customer_numbers].lines {|l| customer_numbers << l.strip unless l.strip.blank?} unless params[:customer_numbers].blank?
     settings['customer_numbers'] = customer_numbers unless customer_numbers.blank?
-    fs = ["Arrival date between #{settings['arrival_start_date'].blank? ? "ANY" : settings['arrival_start_date']} and #{settings['arrival_end_date'].blank? ? "ANY" : settings['arrival_end_date']}"]
+    fs = ["Arrival date between #{settings['arrival_date_start']} and #{settings['arrival_date_end']}"]
     fs << "Only customer numbers #{customer_numbers.join(", ")}" unless customer_numbers.blank?
-    run_report "Container Release Status", OpenChain::Report::ContainersReleased, settings, fs
+    if params[:arrival_date_start] && params[:arrival_date_end]
+      run_report "Container Release Status", OpenChain::Report::ContainersReleased, settings, fs
+    else
+      error_redirect "Start and end dates are required."
+    end
   end
 
   def show_tariff_comparison

@@ -15,12 +15,18 @@ describe ReportsController do
         expect(response).to be_success
       end
       it 'should run the report' do
-        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_end_date'=>'2012-01-02','customer_numbers'=>"A\nB"}
+        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_date_end'=>'2012-01-02','customer_numbers'=>"A\nB"}
         expect(response).to redirect_to('/report_results')
         expect(ReportResult.all.size).to eq(1)
         rr = ReportResult.first
         expect(rr.name).to eq("Container Release Status")
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+      it "requires dates to run" do
+        post :run_containers_released, {'customer_numbers'=>"A\nB"}
+        expect(response).to redirect_to request.referrer
+        expect(ReportResult.all.size).to eq(0)
+        expect(flash[:errors].first).to eq "Start and end dates are required."
       end
     end
   end

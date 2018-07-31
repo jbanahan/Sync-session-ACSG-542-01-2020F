@@ -1,8 +1,8 @@
 <%content_for :javascript do%>
   $(function() {
     $('#btn_run').click(function() {
-      if($('#arrival_date_start').val() == "" && $('#arrival_date_end').val() == "") {
-        window.alert("Please choose either a start or end date for the Arrival Date range.");
+      if($('#arrival_date_start').val() == "" || $('#arrival_date_end').val() == "") {
+        window.alert("Please choose start and end dates for the Arrival Date range.");
         return;
       }
       $('#frm_run').submit();
