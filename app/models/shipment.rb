@@ -485,7 +485,7 @@ class Shipment < ActiveRecord::Base
 
   def normalized_booking_mode
     # strip hyphenated additions
-    /\w+(?=\W)*/.match(booking_mode)[0].upcase if booking_mode
+    /\w+(?=\W)*/.match(booking_mode).try(:[], 0).try(:upcase) if booking_mode.present?
   end
 
 	def can_view?(user)

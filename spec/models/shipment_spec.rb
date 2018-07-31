@@ -647,6 +647,13 @@ describe Shipment do
     it "returns nil if booking_mode blank" do
       s.update_attributes! booking_mode: nil
       expect(s.normalized_booking_mode).to be_nil
+      s.update_attributes! booking_mode: ""
+      expect(s.normalized_booking_mode).to be_nil
+    end
+
+    it "returns nil if booking_mode doesn't contain letters" do
+      s.update_attributes! booking_mode: "$@#!"
+      expect(s.normalized_booking_mode).to be_nil
     end
   end
 end
