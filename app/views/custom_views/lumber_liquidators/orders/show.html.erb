@@ -454,7 +454,17 @@
     <div class="col-md-12">
       <p><font color="red"><b><i><%= OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.carb_statement @order %></i></b></font></p>
     </div>
-</div>
+  </div>
+  
+  <% lacey =  OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.lacey_statement @order %>
+  <% if lacey %>
+    <div class="row">
+      <div class="col-md-12">
+        <p><font color="red"><b><i><%= lacey %></i></b></font></p>
+      </div>
+    </div>
+  <% end %>
+  
   <div class="row">
     <div class="col-md-6">
       <%=render :partial => 'shared/folders', :locals => {:obj => @order} %>

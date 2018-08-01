@@ -70,6 +70,26 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
     end
   end
 
+  describe "lacey_statement" do
+    let(:ord) { Factory(:order, order_date: Date.new(2018,7,30)) }
+    let(:statement) { "All U.S. Domestic and Imported products must be compliant with all applicable laws, including, without limitation and to the extent applicable, the U.S. Lacey Act (16 U.S.C. §§ 3371–3378)" }
+
+    it "returns nil if order is before 8/1/18" do
+      expect(described_class.lacey_statement ord).to be_nil
+    end
+
+    it "returns message if order is on or after 8/1/18" do
+      ord.update_attributes! order_date: Date.new(2018,8,1)
+      expect(described_class.lacey_statement ord).to eq statement
+    end
+
+    it "uses 'created_at' if order date is blank" do
+      ord.update_attributes! order_date: nil
+      expect(ord).to receive(:created_at).and_return Date.new(2018,8,2)
+      expect(described_class.lacey_statement ord).to eq statement
+    end
+  end
+
   ##########################
   # NOT TESTING #render method 
   # which should be tested manually when modifying PDF generation

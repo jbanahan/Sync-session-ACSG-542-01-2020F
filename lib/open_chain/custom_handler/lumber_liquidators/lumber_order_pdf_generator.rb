@@ -17,6 +17,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
   end
 
+  def self.lacey_statement order
+    if (order.order_date || order.created_at) >= Date.new(2018,8,1)
+      "All U.S. Domestic and Imported products must be compliant with all applicable laws, including, without limitation and to the extent applicable, the U.S. Lacey Act (16 U.S.C. §§ 3371–3378)"
+    end
+  end
+
   def self.create! order, user
     Tempfile.open(['foo', '.pdf']) do |file|
       existing_printout_count = order.attachments.where(attachment_type: "Order Printout").count
@@ -113,6 +119,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     d.formatted_text [{text: "\n", size: 8}, {text: self.class.carb_statement(order), styles: [:bold, :italic], color: "ff0000", size: 8}]
+
+    lacey = self.class.lacey_statement(order)
+    if lacey
+      d.move_down 2
+      d.formatted_text [{text: "\n", size: 8}, {text: self.class.lacey_statement(order), styles: [:bold, :italic], color: "ff0000", size: 8}]
+    end
     
     # change log
     d.start_new_page

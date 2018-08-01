@@ -9,13 +9,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     let (:params) { {} }
     let! (:us) { Factory(:country, iso_code: "US") }
 
-    it "adds carb statement" do
+    it "adds Carb and Lacey statements" do
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator).to receive(:carb_statement).with(order).and_return "carb statement"
+      expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator).to receive(:lacey_statement).with(order).and_return "lacey statement"
 
       hash = {id: nil}
       subject.customize_order_response order, user, hash, params
 
-      expect(hash).to include({"statement" => "carb statement"})
+      expect(hash).to include({"carb" => "carb statement"})
+      expect(hash).to include({"lacey" => "lacey statement"})
       expect(hash).to include({"us_country_id" => us.id})
     end
   end
