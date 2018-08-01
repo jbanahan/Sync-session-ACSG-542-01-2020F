@@ -20,7 +20,8 @@ module OpenChain; module ModelFieldDefinition; module InvoiceFieldDefinition
         [17,:inv_total_charges, :total_charges, "Total Charges", {datatype: :decimal}],
         [18,:inv_total_discounts, :total_discounts, "Total Discounts", {datatype: :decimal}],
         [19,:inv_volume, :volume, "Total Volume", {datatype: :decimal}],
-        [20,:inv_volume_uom, :volume_uom, "Total Volume UOM", {datatype: :string}]
+        [20,:inv_volume_uom, :volume_uom, "Total Volume UOM", {datatype: :string}],
+        [21,:inv_manually_generated, :manually_generated, "Manually Generated", {datatype: :boolean, read_only: true}]
     ]
     add_fields CoreModule::INVOICE, make_importer_arrays(1000,"inv","invoices")
     add_fields CoreModule::INVOICE, make_vendor_arrays(2000,"inv","invoices")

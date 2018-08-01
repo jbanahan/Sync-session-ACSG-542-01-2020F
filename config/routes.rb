@@ -636,6 +636,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/lumber_allport_billing/upload" => "custom_features#lumber_allport_billing_upload"
   get "/custom_features/lumber_allport_billing/:id/download" => "custom_features#lumber_allport_billing_download"
 
+  get "/custom_features/customer_invoice_handler" => "custom_features#customer_invoice_index"
+  post "/custom_features/customer_invoice_handler/upload" => "custom_features#customer_invoice_upload"
+  get "/custom_features/customer_invoice_handler/:id/download" => "custom_features#customer_invoice_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

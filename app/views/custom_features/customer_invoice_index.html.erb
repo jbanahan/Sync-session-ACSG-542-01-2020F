@@ -1,0 +1,8 @@
+<% content_for :upload_form do %>
+  <p><strong>Only use the Customer Invoice Template File for uploading data</strong></p>
+  <br>
+  <p><%= label_tag "Importer Name:"%>&nbsp;&nbsp;<%= select_tag :cust_num, options_for_select(@vars[:importers]), prompt: "Select one" %></p>
+  <h2>Upload</h2>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Customer Invoice Upload", custom_feature: "customer_invoice_handler"} %>

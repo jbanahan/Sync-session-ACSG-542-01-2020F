@@ -117,7 +117,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     line.fish_wildlife = customized_field_value line_xml, 'Fish &amp; Wildlife' 
     line.line_number = line_xml.text "LineNo"
     line.middleman_charge = middleman_charge line_xml
-    line.net_weight = line_xml.text("NetWeight")
+    line.net_weight = dec(line_xml.text "NetWeight")
     line.net_weight_uom = line_xml.text("NetWeightUnit/Code")
     line.part_description = line_xml.text "Description"
     line.part_number = line_xml.text "PartNo"
@@ -155,21 +155,6 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     end
 
     weight
-  end
-
-  def calculate_discount invoice_line_xml
-    discount_sum = discounts_total(invoice_line_xml)
-    middleman = middleman_charge(invoice_line_xml)
-
-    discount_sum > middleman ? discount_sum : middleman
-  end
-
-  def discounts_total invoice_line_xml
-    air_sea = dec(customized_field_value(invoice_line_xml, "Air/Sea Discount"))
-    early_payment = dec(customized_field_value(invoice_line_xml, "Early Payment Discount"))
-    trade_discount = dec(customized_field_value(invoice_line_xml, "Trade Discount"))
-
-    [air_sea, early_payment, trade_discount].sum
   end
 
   def middleman_charge invoice_line_xml

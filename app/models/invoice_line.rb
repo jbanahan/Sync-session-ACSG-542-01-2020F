@@ -46,6 +46,8 @@
 #
 
 class InvoiceLine < ActiveRecord::Base
+  include DefaultLineNumberSupport
+  
   belongs_to :invoice
   belongs_to :country_export, :class_name => "Country"
   belongs_to :country_origin, :class_name => "Country"
@@ -54,5 +56,11 @@ class InvoiceLine < ActiveRecord::Base
   belongs_to :product
   belongs_to :variant
 
-  validates :line_number, presence: true
+  before_validation :default_line_number
+
+  private
+  
+  def parent_obj #supporting method for DefaultLineNumberSupport
+    self.invoice
+  end
 end

@@ -279,4 +279,12 @@
         </div>
       </div>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::CustomerInvoiceHandler.can_view?(current_user)-%>
+    <div class='row'>
+      <div class='col-md-4 col-md-offset-4'>
+        <%=link_to "Customer Invoice Upload", '/custom_features/customer_invoice_handler', :class=>'btn btn-lg btn-default btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
+
 </div>

@@ -37,6 +37,7 @@ require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
 require 'open_chain/custom_handler/generic/isf_late_flag_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_intacct_invoice_report_handler'
 require 'open_chain/custom_handler/lands_end/le_chapter_98_parser'
+require 'open_chain/custom_handler/customer_invoice_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -74,6 +75,7 @@ class CustomFeaturesController < ApplicationController
   INTACCT_INVOICE_REPORT ||= 'OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler'
   LUMBER_ALLPORT_BILLING_FILE_PARSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser'
   LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
+  CUSTOMER_INVOICE_HANDLER ||= 'OpenChain::CustomHandler::CustomerInvoiceHandler'
 
   SEARCH_PARAMS = {
     'filename' => {:field => 'attached_file_name', :label => 'Filename'},
@@ -673,6 +675,28 @@ class CustomFeaturesController < ApplicationController
     generic_download 'Lumber ACS Billing Validation'
   end
 
+  def customer_invoice_index
+    importers = Company.where("system_code IS NOT NULL and system_code <> ''")
+                       .active_importers.order(:name)
+                       .map{|c| ["#{c.name} (#{c.system_code})", c.system_code] }
+    generic_index CUSTOMER_INVOICE_HANDLER.constantize, CUSTOMER_INVOICE_HANDLER, 'Customer Invoice (810) Upload', true, {importers: importers}
+  end
+
+  def customer_invoice_upload
+    generic_upload(CUSTOMER_INVOICE_HANDLER, 'Customer Invoice Uploader', 'customer_invoice_handler', additional_process_params: params) do |f|
+      if !f.attached_file_name.blank? && !CUSTOMER_INVOICE_HANDLER.constantize.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel or CSV file."
+      end
+      if params['cust_num'].blank?
+        add_flash :errors, "Please select an importer."
+      end
+    end
+  end
+
+  def customer_invoice_download
+    generic_download 'Customer Invoice Upload (810)'
+  end
+
   private
     def generic_download mod_name
       f = CustomFile.find params[:id]
@@ -681,7 +705,7 @@ class CustomFeaturesController < ApplicationController
       }
     end
 
-    def generic_index klass, class_name, mod_name, show_file_list = true
+    def generic_index klass, class_name, mod_name, show_file_list = true, additional_vars={}
       action_secure(klass.can_view?(current_user),nil,{:verb=>"view",:module_name=>mod_name,:lock_check=>false}) {
         if show_file_list
           @secured = CustomFile.where(file_type: class_name)
@@ -693,6 +717,7 @@ class CustomFeaturesController < ApplicationController
           end
           @files = s.paginate(:per_page=>20,:page=>params[:page])
           @files
+          @vars = additional_vars
         end
       }
     end

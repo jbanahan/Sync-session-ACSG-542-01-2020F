@@ -74,6 +74,10 @@ module OpenChain; module CustomHandler; module CsvExcelParser
     date
   end
 
+  def integer_value value
+    decimal_value(value).to_i
+  end
+
   def parse_and_validate_date date, format
     # by default, validate the date is within 2 years from today
     parsed_date = Date.strptime(date, format) rescue nil
@@ -100,6 +104,18 @@ module OpenChain; module CustomHandler; module CsvExcelParser
       v = v.round(decimal_places, BigDecimal::ROUND_HALF_UP)
     end
     v
+  end
+
+  def boolean_value value
+    if !value.nil? && value.to_s.length > 0
+      dstr = value.to_s.downcase.strip
+      if ["y", "yes","true", "1"].include?(dstr)
+        return true
+      elsif ["n", "no","false", "0"].include?(dstr)
+        return false
+      end
+    end
+    nil
   end
 
   # Convenience method for any extending classes that wish to get to a lower

@@ -141,6 +141,20 @@ describe OpenChain::CustomHandler::CsvExcelParser do
     end
   end
 
+  describe "boolean_value" do
+    it "parses boolean values from strings (removing any trailing / leading whitespace" do
+      expect(subject.boolean_value(" TRUE ")).to eq true
+      expect(subject.boolean_value("y")).to eq true
+      expect(subject.boolean_value("yes")).to eq true
+      expect(subject.boolean_value("1")).to eq true
+      
+      expect(subject.boolean_value("false")).to eq false
+      expect(subject.boolean_value("n")).to eq false
+      expect(subject.boolean_value("no")).to eq false
+      expect(subject.boolean_value("0")).to eq false
+    end
+  end
+
   describe OpenChain::CustomHandler::CsvExcelParser::LocalCsvReader do
     let(:test_file) do
       t = Tempfile.new(["test", ".csv"])

@@ -17,6 +17,7 @@
 #  invoice_number            :string(255)
 #  invoice_total_domestic    :decimal(13, 2)
 #  invoice_total_foreign     :decimal(13, 2)
+#  manually_generated        :boolean
 #  net_invoice_total         :decimal(13, 2)
 #  net_weight                :decimal(11, 2)
 #  net_weight_uom            :string(255)

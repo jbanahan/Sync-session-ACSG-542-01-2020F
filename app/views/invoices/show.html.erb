@@ -18,7 +18,7 @@
     <%= show_model_fields(@invoice, [:inv_imp_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
   </div>
   <div class="col-xs-4">
-    <%= show_model_fields(@invoice, [:inv_inv_tot_foreign, :inv_inv_tot_domestic, :inv_net_invoice_total, :inv_total_discounts, :inv_total_charges, :inv_currency, :inv_exchange_rate], {never_hide: true}) %>
+    <%= show_model_fields(@invoice, [:inv_inv_tot_foreign, :inv_inv_tot_domestic, :inv_net_invoice_total, :inv_total_discounts, :inv_total_charges, :inv_currency, :inv_exchange_rate, :inv_manually_generated], {never_hide: true}) %>
   </div>
 </div>
 <% if @invoice.invoice_lines.length > 0 %>
