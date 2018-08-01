@@ -15,7 +15,7 @@ describe OpenChain::Report::LandedCostReport do
   def check_header sheet
     # don't really care about the header names, just make sure they're there
     expect(sheet.row(0)[0]).to eq("Broker Reference")
-    expect(sheet.row(0)[18]).to eq("Total Per Unit")
+    expect(sheet.row(0)[19]).to eq("Total Per Unit")
   end
 
   def check_first_row sheet
@@ -29,25 +29,26 @@ describe OpenChain::Report::LandedCostReport do
     expect(sheet.row(1)[5]).to eq("1234.56.7890, 9876.54.3210")
     expect(sheet.row(1)[6]).to eq("CO")
     expect(sheet.row(1)[7]).to eq("PO")
-    expect(sheet.row(1)[8]).to eq(1)
-    expect(sheet.row(1)[9]).to eq(BigDecimal.new("1"))
-    expect(sheet.row(1)[10]).to eq(BigDecimal.new("2"))
-    expect(sheet.row(1)[11]).to eq(BigDecimal.new("3"))
-    expect(sheet.row(1)[12]).to eq(BigDecimal.new("4"))
-    expect(sheet.row(1)[13]).to eq(BigDecimal.new("5"))
-    expect(sheet.row(1)[14]).to eq(BigDecimal.new("6"))
-    expect(sheet.row(1)[15]).to eq(BigDecimal.new("7"))
-    expect(sheet.row(1)[16]).to eq(BigDecimal.new("8"))
-    expect(sheet.row(1)[17]).to eq(BigDecimal.new("9"))
-    expect(sheet.row(1)[18]).to eq(BigDecimal.new("10.99")) # landed cost is rounded to 2 decimal places
-  end
+    expect(sheet.row(1)[8]).to eq("1234")
+    expect(sheet.row(1)[9]).to eq(1)
+    expect(sheet.row(1)[10]).to eq(BigDecimal.new("1"))
+    expect(sheet.row(1)[11]).to eq(BigDecimal.new("2"))
+    expect(sheet.row(1)[12]).to eq(BigDecimal.new("3"))
+    expect(sheet.row(1)[13]).to eq(BigDecimal.new("4"))
+    expect(sheet.row(1)[14]).to eq(BigDecimal.new("5"))
+    expect(sheet.row(1)[15]).to eq(BigDecimal.new("6"))
+    expect(sheet.row(1)[16]).to eq(BigDecimal.new("7"))
+    expect(sheet.row(1)[17]).to eq(BigDecimal.new("8"))
+    expect(sheet.row(1)[18]).to eq(BigDecimal.new("9"))
+    expect(sheet.row(1)[19]).to eq(BigDecimal.new("10.99")) # landed cost is rounded to 2 decimal places
+   end
 
   def generator_data entry
     {:entries=>[{:broker_reference=>entry.broker_reference, :entry_number=>entry.entry_number, :release_date=>entry.release_date,
       :transport_mode_code=>entry.transport_mode_code, :customer_reference=>entry.customer_references.split("\n"),
       :commercial_invoices=>[
         {:commercial_invoice_lines=>[
-          :hts_code =>["1234567890", "9876543210"], :country_origin_code => "CO", :po_number=>"PO", :quantity => 1, :entered_value=>BigDecimal.new("1"),
+          :hts_code =>["1234567890", "9876543210"], :country_origin_code => "CO", :po_number=>"PO", :part_number=>"1234", :quantity => 1, :entered_value=>BigDecimal.new("1"),
           :brokerage=>BigDecimal.new("2"), :other=>BigDecimal.new("3"), :international_freight=>BigDecimal.new("4"),
           :hmf=>BigDecimal.new("5"), :mpf=>BigDecimal.new("6"), :cotton_fee=>BigDecimal.new("7"), :duty=>BigDecimal.new("8"),
           :landed_cost=>BigDecimal.new("9"), :per_unit=>{:landed_cost=>BigDecimal.new("10.987")}
