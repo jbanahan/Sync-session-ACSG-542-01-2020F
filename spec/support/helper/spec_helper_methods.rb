@@ -288,5 +288,14 @@ module Helpers
         return data
       end
     end
+
+    def raw_workbook_data
+      data = {}
+      @workbook.each do |sheet|
+        data[sheet.sheet_name] = raw_data(sheet)
+      end
+
+      data
+    end
   end
 end
