@@ -114,6 +114,24 @@ describe StateToggleButton do
       expect(shipment).to receive(:create_snapshot_with_async_option).with(true, user)
       state_toggle_button.toggle! shipment, user, true
     end
+
+    it "should update last_updated_by if present" do
+      # Product has a last updated by field.
+      prod = Factory(:product, unique_identifier: "12345")
+      cd_date = Factory(:custom_definition, module_type:'Product', data_type:'datetime')
+      cd_user_id = Factory(:custom_definition, module_type:'Product', data_type:'integer', is_user: true)
+      state_toggle_button_prod = Factory(:state_toggle_button, module_type:'Product', date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil)
+
+      expect(prod).to receive(:create_snapshot_with_async_option).with(false, user)
+      now = Time.zone.parse("2018-01-01 12:00")
+      Timecop.freeze(now) { state_toggle_button_prod.toggle! prod, user }
+
+      prod.reload
+      expect(prod.custom_value(cd_date)).to eq now
+      expect(prod.custom_value(cd_user_id)).to eq user.id
+      expect(prod.updated_at).to eq now
+      expect(prod.last_updated_by).to eq user
+    end
   end
 
   describe "to_be_activated?" do

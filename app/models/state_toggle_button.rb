@@ -84,6 +84,8 @@ class StateToggleButton < ActiveRecord::Base
     uf.process_import obj, user_to_write, user, bypass_read_only: true, bypass_user_check: true
     date_field.process_import obj, date_to_write, user, bypass_read_only: true, bypass_user_check: true
 
+    obj.last_updated_by = user if obj.respond_to?(:last_updated_by)
+
     obj.save!
     obj.create_snapshot_with_async_option async_snapshot, user
     nil
