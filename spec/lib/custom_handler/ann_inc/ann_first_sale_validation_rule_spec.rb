@@ -68,6 +68,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule do
       cil.update_attributes! contract_amount: 1
       expect(rule.first_sale? cil).to eq true
     end
+
+    it "returns True if contract amount is > 0" do
+      cil.update_attributes! contract_amount: 1
+      expect(rule.first_sale? cil).to eq true
+    end
   end
 
   context "first sale flag" do

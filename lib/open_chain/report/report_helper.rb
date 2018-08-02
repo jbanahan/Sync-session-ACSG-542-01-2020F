@@ -7,6 +7,7 @@ module OpenChain
       DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
       CURRENCY_FORMAT = Spreadsheet::Format.new :number_format=>'#,##0.00'
       DATE_FORMAT_MMDDYY = Spreadsheet::Format.new :number_format=>'MM/DD/YYYY'
+      PERCENTAGE_FORMAT = Spreadsheet::Format.new :number_format=>'0.00%'
 
       # Writes the results of the query including headings into the sheet starting at cell A1
       # +sheet+ - the excel spreadsheet to output the query data into

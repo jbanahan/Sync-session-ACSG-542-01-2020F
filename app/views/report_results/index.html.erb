@@ -51,7 +51,7 @@
     <td>Ascena Daily First Sale Exception report.</td></tr>
   <%end-%>
   <%if OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport.permission? current_user-%>
-    <tr class='hover'><td><%=link_to "Ascena Duty Savings Report", reports_show_ascena_duty_savings_report_path%></td>
+    <tr class='hover'><td><%=link_to "Ascena / Ann Inc. Duty Savings Report", reports_show_ascena_duty_savings_report_path%></td>
     <td>Shows duty savings for a fiscal month.</td></tr>
   <%end-%>
   <%if OpenChain::Report::AscenaEntryAuditReport.permission? current_user-%>

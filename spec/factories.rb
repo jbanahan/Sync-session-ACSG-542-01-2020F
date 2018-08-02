@@ -27,6 +27,9 @@ end
 Factory.define :vendor, parent: :company do |c|
   c.vendor true
 end
+Factory.define :factory, parent: :company do |c|
+  c.factory true
+end
 Factory.define :master_company, parent: :company do |c|
   c.master true
 end
@@ -265,6 +268,13 @@ Factory.define :commercial_invoice_line do |f|
 end
 Factory.define :commercial_invoice_tariff do |f|
   f.association :commercial_invoice_line
+end
+Factory.define :invoice do |f|
+  
+end
+Factory.define :invoice_line do |f|
+  f.association :invoice
+  f.sequence :line_number
 end
 Factory.define :broker_invoice do |f|
   f.sequence :invoice_number
