@@ -1121,6 +1121,27 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
           
           expect(filler.spi_duty_savings row, 1).to eq 0
         end
+
+        context "missing common_rate_decimal" do
+          it "tries to guess the value" do
+            ot.update_attributes! general_rate: "foobar 32.06%", common_rate_decimal: nil
+            #if OfficialTariff#set_common_rate changes this test should change (or be removed)
+            expect(ot.common_rate_decimal).to be_nil
+
+            expect(inv_field_helper).to receive(:fields).and_return(1 => {cil_total_duty: 3})          
+            expect(row).to receive(:official_tariff).and_return ot
+            expect(filler.spi_duty_savings row, 1).to eq 125.24            
+          end
+
+          it "uses 0 if guess fails" do
+            ot.update_attributes! general_rate: "foobar", common_rate_decimal: nil
+            #if OfficialTariff#set_common_rate changes this test should change (or be removed)
+            expect(ot.common_rate_decimal).to be_nil
+
+            expect(row).to receive(:official_tariff).and_return ot
+            expect(filler.spi_duty_savings row, 1).to eq 0
+          end
+        end
       end
     end
 

@@ -674,11 +674,21 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def spi_duty_savings row, cil_id
       ot = row.official_tariff
-      if row[:spi].present? && ot && ot.common_rate_decimal > 0
-        (row[:price_before_discounts] * trap_null(ot.common_rate_decimal) - trap_null(inv_field_helper.fields[cil_id][:cil_total_duty])).round(2)
-      else
-        BigDecimal("0")
+      if row[:spi].present? && ot
+        common_rate = guess_common_rate_decimal(ot)
+        if common_rate > 0
+          return (row[:price_before_discounts] * trap_null(common_rate) - trap_null(inv_field_helper.fields[cil_id][:cil_total_duty])).round(2)
+        end
       end
+      BigDecimal("0")
+    end
+
+    #  OfficialTariff#set_common_rate fails to set common_rate_decimal for any common_rate that includes more than a percentage
+    #  This will handle anything that contains a percentage
+    def guess_common_rate_decimal ot      
+      return ot.common_rate_decimal if ot.common_rate_decimal.present?
+      percent = ot.common_rate.strip.match(/\d+\.?\d*%/).try :[], 0
+      percent ? BigDecimal(percent.gsub(/%/, ''), 4)/100 : BigDecimal("0")
     end
 
     def mp_vs_epd row
