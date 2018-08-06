@@ -388,7 +388,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
     
     # If #calculate_epd, #calculate_trade_discount, or the Ann portion of #calculate_air_sea_differential changes
-    # ActualEntryTotalCalculator#combine_discounts will also need to change
+    # ActualEntryTotalCalculator#combine_ann_savings will also need to change
 
     def calculate_air_sea_differential
       if row.ascena?
@@ -481,73 +481,73 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def fill_totals
       actual_entry_totals = savings_set.find{ |s| s[:savings_type] == :line}
-      row.ascena? ? fill_ascena(actual_entry_totals) : fill_ann(actual_entry_totals)
-      nil
-    end
-
-    def fill_ascena actual_entry_totals
-      highest = savings_set.max_by{ |s| s[:calculations].try(:[], :savings) || 0 }
-      actual_entry_totals.merge!(calculations: highest[:calculations].dup)
-      nil
-    end
-
-    def fill_ann actual_entry_totals
-      highest_savings, highest_discount = type_with_highest_savings_and_discounts
-      # Use the discount with highest savings > 0 to fill the "Actual Entry Total". If there isn't one fall back to he highest discount
-      if highest_savings == :aggregate
-        actual_entry_totals.merge!(calculations: combine_discounts(savings_set.select{ |s| [:air_sea, :epd, :trade].include? s[:savings_type] }))
-      elsif highest_savings
-        actual_entry_totals.merge!(calculations: savings_set.find{ |s| s[:savings_type] == highest_savings }[:calculations].dup)
+      if row.ascena?
+        fill(actual_entry_totals, ascena_discounts(row))
       else
-        if highest_discount == :aggregate
-          # if Ann discount-calculation methods in DutySavingsCalculator change, this may need to change, too
-          actual_entry_totals.merge!(calculations: {calculated_invoice_value: row[:price_before_discounts] , calculated_duty: 0, savings: 0})
-        else
-          inv_value = savings_set.find{ |s| s[:savings_type] == highest_discount }[:calculations][:calculated_invoice_value]
-          actual_entry_totals.merge!(calculations: {calculated_invoice_value: inv_value , calculated_duty: 0, savings: 0})
+        fill(actual_entry_totals, ann_discounts(row), [:air_sea, :trade, :epd])
+      end
+      nil
+    end
+
+    # Base the total row on a member of the savings_set. Select by highest savings, and if all are zero,
+    # select by highest discount.
+    def fill actual_entry_totals, discounts, aggregate_fields=[]
+      ss = savings_set.reject{ |s| s[:savings_type] == :line }
+      substitute_aggregate(ss, discounts, aggregate_fields) if aggregate_fields.present?
+      savings_types = ss.map{ |s| s[:savings_type] }
+
+      highest_svgs = ss.max_by{ |s| s[:calculations].try(:[], :savings) || 0 }
+      if highest_svgs[:calculations][:savings] > 0
+        actual_entry_totals.merge!(calculations: highest_svgs[:calculations])
+      else
+        highest_dsct_type = discounts.select{ |k,v| savings_types.include? k }.max_by{ |d| d[1] }.first
+        invoice_value = ss.find{ |s| s[:savings_type] == highest_dsct_type }[:calculations][:calculated_invoice_value]
+        actual_entry_totals.merge!(calculations: {calculated_invoice_value: invoice_value, calculated_duty: 0, savings: 0})
+      end
+      nil
+    end
+    
+    def substitute_aggregate svgs_set, dsct_set, agg_fields
+      # svgs_set is a copy of savings_set that is missing the totals line
+      svgs_agg = []; dsct_agg = []
+      savings_set.each do |ss|
+        if agg_fields.include? ss[:savings_type]
+          svgs_val = svgs_set.find { |s| s[:savings_type] == ss[:savings_type] }
+          svgs_agg << svgs_set.delete(svgs_val)
+          dsct_val = dsct_set.delete ss[:savings_type]
+          dsct_agg << dsct_val
         end
       end
-    end
+      svgs_set << {savings_type: :aggregate, calculations: combine_ann_savings(svgs_agg)}
+      dsct_set[:aggregate] = dsct_agg.sum
 
-    def type_with_highest_savings_and_discounts 
-      discount_types = savings_set.map{ |d| d[:savings_type] }.reject{ |d| d == :line}
-      savings = ann_savings(discount_types).max_by{ |*, svgs| svgs}.try :first
-      discounts = ann_discounts(discount_types).max_by{ |*, dscts| dscts}.first
-      [savings, discounts]
-    end
-
-    def ann_savings discount_types
-      possible_savings = {first_sale: discount_types.include?(:first_sale) ? ann_individual_savings(:first_sale) : 0,
-                          spi: discount_types.include?(:spi) ? ann_individual_savings(:spi) : 0,
-                          aggregate: [:air_sea, :epd, :trade].select{ |d| discount_types.include?(d) }.map{ |d| ann_individual_savings(d) }.sum }
-
-      possible_savings.select{ |type, savings| savings > 0 }
-    end
-
-    def ann_individual_savings discount_type
-      savings_set.find{ |d| d[:savings_type] == discount_type }[:calculations][:savings]
-    end
-
-    def ann_discounts discount_types
-      agg_discounts = {air_sea: row[:air_sea_discount], 
-                       epd: row[:early_payment_discount],
-                       trade: row[:trade_discount]}
-
-      possible_discounts = {first_sale: row[:first_sale_difference], 
-                            spi: 0,
-                            aggregate: [:air_sea, :epd, :trade].select{ |d| discount_types.include?(d) }.map{ |d| agg_discounts[d] }.sum }
-
-      possible_discounts.select{ |d| discount_types.include?(d) || (possible_discounts[:aggregate] > 0 && d == :aggregate) }
+      nil
     end
 
     # if Ann discount-calculation methods in DutySavingsCalculator change, this will need to change, too
-    def combine_discounts set
+    def combine_ann_savings set
+      return {savings: 0} unless set.present?
       first_set = set.first[:calculations]
       shared_calculated_invoice_value = first_set[:calculated_invoice_value]
       shared_duty = first_set[:calculated_duty] - first_set[:savings]
       combined_savings = set.sum{ |s| s[:calculations][:savings] }
       combined_calculated_duty = shared_duty + combined_savings
       {calculated_invoice_value: shared_calculated_invoice_value, calculated_duty: combined_calculated_duty, savings: combined_savings }
+    end
+
+    def ann_discounts row
+      {first_sale: row[:first_sale_difference],
+       air_sea: row[:air_sea_discount],
+       trade: row[:trade_discount],
+       epd: row[:early_payment_discount],
+       spi: 0}
+    end
+
+    def ascena_discounts row
+      {first_sale: row[:first_sale_difference],
+       air_sea: row[:air_sea_discount],
+       other: row[:non_dutiable_amount],
+       spi: 0}
     end
   end 
 
@@ -674,11 +674,21 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def spi_duty_savings row, cil_id
       ot = row.official_tariff
-      if row[:spi].present? && ot && ot.common_rate_decimal > 0
-        (row[:price_before_discounts] * trap_null(ot.common_rate_decimal) - trap_null(inv_field_helper.fields[cil_id][:cil_total_duty])).round(2)
-      else
-        BigDecimal("0")
+      if row[:spi].present? && ot
+        common_rate = guess_common_rate_decimal(ot)
+        if common_rate > 0
+          return (row[:price_before_discounts] * trap_null(common_rate) - trap_null(inv_field_helper.fields[cil_id][:cil_total_duty])).round(2)
+        end
       end
+      BigDecimal("0")
+    end
+
+    #  OfficialTariff#set_common_rate fails to set common_rate_decimal for any common_rate that includes more than a percentage
+    #  This will handle anything that contains a percentage
+    def guess_common_rate_decimal ot      
+      return ot.common_rate_decimal if ot.common_rate_decimal.present?
+      percent = ot.common_rate.strip.match(/\d+\.?\d*%/).try :[], 0
+      percent ? BigDecimal(percent.gsub(/%/, ''), 4)/100 : BigDecimal("0")
     end
 
     def mp_vs_epd row
