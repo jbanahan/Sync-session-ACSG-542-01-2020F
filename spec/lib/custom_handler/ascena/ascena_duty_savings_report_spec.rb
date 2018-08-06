@@ -754,88 +754,99 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let!(:row) do 
       r = described_class::Wrapper.new []
       r[:air_sea_discount] = 1
-      r[:early_payment_discount] = 2
-      r[:trade_discount] = 3
       r[:first_sale_difference] = 5
       r
     end
-    let!(:savings_set) { [] }
+    let!(:savings_set) { [{savings_type: :line, savings_title: "Actual Entry Totals"}] }
     let!(:aetc) { described_class::ActualEntryTotalCalculator.new row, savings_set }
 
     describe "fill_totals" do
-      it "delegates to fill_ascena" do
-        row[:customer_number] = "ASCE"
-        savings_set << {:savings_type => :line}
-        expect(aetc).to receive(:fill_ascena).with({:savings_type => :line})
-        aetc.fill_totals
-      end
-
-      it "delegates to fill_ann" do
-        row[:customer_number] = "ATAYLOR"
-        savings_set << {:savings_type => :line}
-        expect(aetc).to receive(:fill_ann).with({:savings_type => :line})
-        aetc.fill_totals
-      end
-    end
-
-    describe "fill_ascena" do
-      let!(:input) { {savings_type: :line, savings_title: "Actual Entry Totals"} }
-
-      it "selects the discount with the highest savings and copies it into the input's 'calculations' hash" do
-        savings_set.concat [{savings_type: :spi, savings_title: "GSP", calculations: {savings: 2}},
-                            {savings_type: :trade, savings_title: "Trade Discount", calculations: {savings: 3}},
-                            {savings_type: :first_sale, savings_title: "First Sale", calculations: {savings: 1}}]
-        
-        aetc.fill_ascena input
-        expect(input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {savings: 3} })
-      end
-    end
-
-    describe "fill_ann" do
-      let!(:input) { {savings_type: :line, savings_title: "Actual Entry Totals"} }
-      before do
-        savings_set.concat [{savings_type: :first_sale, savings_title: "First Sale", calculations: {calculated_invoice_value: 9, calculated_duty: 2, savings: 5}},
-                            {savings_type: :spi, savings_title: "GSP", calculations: {calculated_invoice_value: 8, calculated_duty: 1, savings: 1}},
-                            {savings_type: :trade, savings_title: "Trade Discount", calculations: {calculated_invoice_value: 10, calculated_duty: 3, savings: 2}},
-                            {savings_type: :epd, savings_title: "EPD Discount", calculations: {calculated_invoice_value: 10, calculated_duty: 4, savings: 3}},
-                            {savings_type: :air_sea, savings_title: "Air/Sea Differential", calculations: {calculated_invoice_value: 10, calculated_duty: 5, savings: 4}}]
-      end
-
-      context "select by highest savings" do
-        it "selects the combination of air/sea, EPD, and trade discount if total savings higher than first sale or SPI" do
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 10, calculated_duty: 10, savings: 9}})
+      context "Ascena" do
+        let!(:input) { {savings_type: :line, savings_title: "Actual Entry Totals"} }
+        before do 
+          row[:customer_number] = "ASCE"
+          row[:non_dutiable_amount] = 0
+          savings_set.concat [{savings_type: :spi, savings_title: "GSP", calculations: {calculated_invoice_value: 7, calculated_duty: 4, savings: 2}},
+                              {savings_type: :other, savings_title: "Other", calculations: {calculated_invoice_value: 8, calculated_duty: 5, savings: 3}},
+                              {savings_type: :first_sale, savings_title: "First Sale", calculations: {calculated_invoice_value: 9, calculated_duty: 6, savings: 1}}]
         end
-        
-        it "selects first sale and copies it into the input's 'calculations' hash if it's the highest" do
-          savings_set[0][:calculations][:savings] = 10
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 9, calculated_duty: 2, savings: 10}})
-        end 
 
-        it "selects SPI and copies it into the input's 'calculations' hash if it's the highest (it's always 0)" do
-          savings_set[1][:calculations][:savings] = 10
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 8, calculated_duty: 1, savings: 10}})
+        it "selects the discount with the highest savings and copies it into the input's 'calculations' hash" do
+          aetc.fill_totals
+          total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+          expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 8, calculated_duty: 5, savings: 3} })
+        end
+
+        it "selects the largest discount when there are no savings" do
+          savings_set.reject{ |ss| ss[:savings_type] == :line }
+                     .each{ |ss| ss[:calculations][:savings] = ss[:calculations][:calculated_duty] = 0 }
+          row[:first_sale_difference] = 2
+          row[:non_dutiable_amount] = 1
+          aetc.fill_totals
+          total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+          expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 9, calculated_duty: 0, savings: 0} })
         end
       end
 
-      context "select by highest discount" do
+      context "Ann" do
         before do
-          row[:price_before_discounts] = 6 # used by epd/trade/air-sea as calculated invoice value
-          savings_set.each { |s| s[:calculations][:savings] = 0 }
-        end
-        
-        it "selects the combination of air/sea, EPD, and trade discount if total discount higher than first sale or SPI." do
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 6, calculated_duty: 0, savings: 0}})
-        end
-
-        it "selects first sale if it's the highest." do
-          row[:first_sale_difference] = 7
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 9, calculated_duty: 0, savings: 0}})
+          savings_set.concat [{savings_type: :first_sale, savings_title: "First Sale", calculations: {calculated_invoice_value: 9, calculated_duty: 2, savings: 5}},
+                              {savings_type: :spi, savings_title: "GSP", calculations: {calculated_invoice_value: 8, calculated_duty: 1, savings: 1}},
+                              {savings_type: :trade, savings_title: "Trade Discount", calculations: {calculated_invoice_value: 10, calculated_duty: 3, savings: 2}},
+                              {savings_type: :epd, savings_title: "EPD Discount", calculations: {calculated_invoice_value: 10, calculated_duty: 4, savings: 3}},
+                              {savings_type: :air_sea, savings_title: "Air/Sea Differential", calculations: {calculated_invoice_value: 10, calculated_duty: 5, savings: 4}}]
+          row[:customer_number] = "ATAYLOR"
+          row[:early_payment_discount] = 2
+          row[:trade_discount] = 3
         end
 
-        it "selects SPI if it's the highest. (because it's always 0, only happens when it's the only discount)" do
-          savings_set.delete_if{ |s| s[:savings_title] != "GSP" }
+        context "select by highest savings" do
+          it "selects the combination of air/sea, EPD, and trade discount if total savings higher than first sale or SPI" do
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 10, calculated_duty: 10, savings: 9}})
+          end
           
-          expect(aetc.fill_ann input).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 8, calculated_duty: 0, savings: 0}})
+          it "selects first sale and copies it into the input's 'calculations' hash if it's the highest" do
+            savings_set[1][:calculations][:savings] = 10
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 9, calculated_duty: 2, savings: 10}})
+          end 
+
+          it "selects SPI and copies it into the input's 'calculations' hash if it's the highest (it's always 0)" do
+            savings_set[2][:calculations][:savings] = 10
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 8, calculated_duty: 1, savings: 10}})
+          end
+        end
+
+        context "select by highest discount" do
+          before do
+            savings_set.reject{ |s| s[:savings_type] == :line}.each { |s| s[:calculations][:savings] = 0 }
+          end
+          
+          it "selects the combination of air/sea, EPD, and trade discount if total discount higher than first sale or SPI." do
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 10, calculated_duty: 0, savings: 0}})
+          end
+
+          it "selects first sale if it's the highest." do
+            row[:first_sale_difference] = 7
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 9, calculated_duty: 0, savings: 0}})
+          end
+
+          it "selects SPI if it's the highest. (because it's always 0, only happens when it's the only discount)" do
+            savings_set.delete_if{ |s| ![:spi, :line].include? s[:savings_type] }
+            row[:trade_discount] = row[:early_payment_discount] = row[:air_sea_discount] = row[:first_sale_difference] = 0
+            aetc.fill_totals
+            total = savings_set.find{ |ss| ss[:savings_type ] == :line }
+            expect(total).to eq({savings_type: :line, savings_title: "Actual Entry Totals", calculations: {calculated_invoice_value: 8, calculated_duty: 0, savings: 0}})
+          end
         end
       end
     end
