@@ -27,15 +27,17 @@ module OpenChain; module Report; class AsyncSearch
     raise "You cannot run another user's report.  Your id is #{run_by.id}, this report is for user #{search_setup.user_id}" unless run_by == search_setup.user
 
     filename = SearchSchedule.report_name(search_setup, search_setup.download_format, include_timestamp: true)
+    tempfile_name = Attachment.get_sanitized_filename filename
+    tempfile_params = ["#{File.basename(tempfile_name, ".*")}_", File.extname(tempfile_name)]
     if block_given?
-      Tempfile.open([search_setup.name, ".#{search_setup.download_format}"]) do |tempfile|
+      Tempfile.open(tempfile_params) do |tempfile|
         write_search tempfile, filename, search_setup, run_by  
         yield tempfile
       end
 
       return nil
     else
-      tempfile = Tempfile.open([search_setup.name, ".#{search_setup.download_format}"])
+      tempfile = Tempfile.open(tempfile_params)
       write_search tempfile, filename, search_setup, run_by
       return tempfile
     end

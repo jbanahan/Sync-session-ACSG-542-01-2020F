@@ -44,6 +44,16 @@ describe OpenChain::Report::AsyncSearch do
     it "returns nil if search_setup is nil" do
       expect(subject.run(user, nil)).to eq nil
     end
+
+    it "handles bad chars in the report name for tempfiles" do
+      expect(Tempfile).to receive(:open).with(["report_name_", ".xlsx"]).and_yield tempfile
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user)
+      expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report/name.xlsx"
+      subject.run(user, search_setup) do |t|
+        expect(t).to eq tempfile
+        expect(t.original_filename).to eq "report/name.xlsx"
+      end
+    end
   end
 
   describe "run_and_email_report" do 
