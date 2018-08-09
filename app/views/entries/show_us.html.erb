@@ -62,7 +62,7 @@ $(function() {
   }
 </style>
 <% end %>
-<% cache [current_user.company,current_user,@entry] do-%>
+<% cache ["entry-top", current_user.company,current_user,@entry] do-%>
   <div id="top"></div>
   <div class='container'>
     <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
@@ -83,9 +83,11 @@ $(function() {
       </div> 
     </div>
   <% end %>
+<% end %>
   <div class="container">
     <%= render_milestone_markers(current_user, @entry, {fields: @entry.milestone_view_data}) %>
   </div>
+<% cache ["entry-bottom", current_user.company,current_user,@entry] do-%>
   <div id='entry'></div>
   <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user, exclude_links: [:top, :entry]} %>
   <!-- Main header -->
