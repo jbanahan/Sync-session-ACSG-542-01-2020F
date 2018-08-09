@@ -21,7 +21,25 @@ module OpenChain; module ModelFieldDefinition; module InvoiceFieldDefinition
         [18,:inv_total_discounts, :total_discounts, "Total Discounts", {datatype: :decimal}],
         [19,:inv_volume, :volume, "Total Volume", {datatype: :decimal}],
         [20,:inv_volume_uom, :volume_uom, "Total Volume UOM", {datatype: :string}],
-        [21,:inv_manually_generated, :manually_generated, "Manually Generated", {datatype: :boolean, read_only: true}]
+        [21,:inv_manually_generated, :manually_generated, "Manually Generated", {datatype: :boolean, read_only: true}],
+        [22,:inv_po_numbers, :po_numbers, "PO Numbers", {
+          data_type: :text,
+          read_only: true,
+          import_lambda: lambda {|obj, val| "Invoice lines are read only."},
+          export_lambda: lambda {|obj| obj.invoice_lines.flat_map(&:po_number).compact.uniq.sort.join("\n ")},
+          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT invoice_lines.po_number ORDER BY invoice_lines.po_number SEPARATOR '\n ')
+            FROM invoice_lines
+            WHERE invoice_lines.invoice_id = invoices.id)"
+        }],
+        [23,:inv_part_numbers, :part_numbers, "Part Numbers", {
+            data_type: :text,
+            read_only: true,
+            import_lambda: lambda {|obj, val| "Invoice lines are read only."},
+            export_lambda: lambda {|obj| obj.invoice_lines.flat_map(&:part_number).compact.uniq.sort.join("\n ")},
+            qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT invoice_lines.part_number ORDER BY invoice_lines.part_number SEPARATOR '\n ')
+            FROM invoice_lines
+            WHERE invoice_lines.invoice_id = invoices.id)"
+        }]
     ]
     add_fields CoreModule::INVOICE, make_importer_arrays(1000,"inv","invoices")
     add_fields CoreModule::INVOICE, make_vendor_arrays(2000,"inv","invoices")

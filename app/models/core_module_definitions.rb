@@ -636,7 +636,7 @@ module CoreModuleDefinitions
     children: [InvoiceLine],
     child_lambdas: {InvoiceLine => lambda {|parent| parent.invoice_lines}},
     child_joins: {InvoiceLine => "LEFT OUTER JOIN invoice_lines ON invoices.id = invoice_lines.invoice_id"},
-    quicksearch_fields: [:inv_inv_num],
+    quicksearch_fields: [:inv_inv_num, :inv_po_numbers, :inv_part_numbers, :inv_cust_ref_num],
     module_chain: [Invoice, InvoiceLine],
     enabled_lambda: lambda { MasterSetup.get.invoices_enabled? },
     default_search_columns: [
