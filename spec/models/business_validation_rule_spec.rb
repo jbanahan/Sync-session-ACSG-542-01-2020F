@@ -93,4 +93,5 @@ describe BusinessValidationRule do
       expect(bvru.active?).to eq true
     end
   end
+
 end

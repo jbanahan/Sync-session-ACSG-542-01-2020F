@@ -1,4 +1,7 @@
+require 'open_chain/email_validation_support'
+
 class BusinessValidationRulesController < ApplicationController
+  include OpenChain::EmailValidationSupport
 
   def create
     admin_secure do
@@ -6,14 +9,21 @@ class BusinessValidationRulesController < ApplicationController
       @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
-      if valid_json(params[:business_validation_rule][:rule_attributes_json])
-        if @bvr.save!
-          redirect_to edit_business_validation_template_path(@bvt)
-        else
-          error_redirect "The rule could not be created."
-        end
-      else
+      unless valid_json(params[:business_validation_rule][:rule_attributes_json])
         error_redirect "Could not save due to invalid JSON. For reference, your attempted JSON was: #{params[:business_validation_rule][:rule_attributes_json]}"
+        return
+      end
+        
+      emails = params[:business_validation_rule][:notification_recipients]
+      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])        
+        error_redirect "Could not save due to invalid email."
+        return
+      end
+
+      if @bvr.save!
+        redirect_to edit_business_validation_template_path(@bvt)
+      else
+        error_redirect "The rule could not be created."
       end
     end
   end
@@ -39,16 +49,23 @@ class BusinessValidationRulesController < ApplicationController
     admin_secure{
       @bvr = BusinessValidationRule.find(params[:id])
       @bvr.search_criterions = []
-      if valid_json(params[:business_validation_rule][:rule_attributes_json])
-        if params[:business_validation_rule][:search_criterions].present?
-          params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
-        end
-        params[:business_validation_rule].delete("search_criterions")
-        @bvr.update_attributes!(params[:business_validation_rule].except("id", "business_validation_template_id", "search_criterions"))
-        render json: {notice: "Business rule updated"}
-      else
+      unless valid_json(params[:business_validation_rule][:rule_attributes_json])
         render json: {error: "Could not save due to invalid JSON."}, status: 500
+        return
       end
+
+      emails = params[:business_validation_rule][:notification_recipients]
+      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])        
+        render json: {error: "Could not save due to invalid email."}, status: 500
+        return
+      end
+      
+      if params[:business_validation_rule][:search_criterions].present?
+        params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
+      end
+      params[:business_validation_rule].delete("search_criterions")
+      @bvr.update_attributes!(params[:business_validation_rule].except("id", "business_validation_template_id", "search_criterions"))
+      render json: {notice: "Business rule updated"}
     }
   end
 

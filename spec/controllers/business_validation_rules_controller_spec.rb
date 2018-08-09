@@ -47,6 +47,20 @@ describe BusinessValidationRulesController do
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Could not save due to invalid JSON/)
     end
+
+    it "only saves for valid email (when applicable)" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :create,
+            business_validation_template_id: @bvt.id,
+            business_validation_rule: {
+              "rule_attributes_json" => '{"valid":"json-2"}',
+              "type" => "ValidationRuleManual",
+              "notification_recipients" => "tufnel@ston'ehenge.biz"
+            }
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to match(/Could not save due to invalid email/)
+    end
   end
 
   describe "edit" do
@@ -156,6 +170,20 @@ describe BusinessValidationRulesController do
        expect(response.status).to eq 500
        expect(@bvr.search_criterions.count).to be_zero
        expect(@bvr.name).to be_nil
+    end
+
+    it "errors if email is invalid (when applicable)" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :update,
+            id: @bvr.id,
+            business_validation_template_id: @bvt.id,
+            business_validation_rule: { 
+             notification_recipients: "tufnel@stone'henge.biz"
+             }
+       expect(JSON.parse response.body).to eq({"error" => "Could not save due to invalid email."})
+       expect(response.status).to eq 500
+       expect(@bvr.notification_recipients).to be_nil
     end
 
   end

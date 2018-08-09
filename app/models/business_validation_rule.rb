@@ -179,6 +179,7 @@ class BusinessValidationRule < ActiveRecord::Base
       BusinessValidationRuleResult.delay(priority: 100).destroy_batch id_group
     end
   end
+
 end
 
 # need require statements at end because they depend on the class existing
