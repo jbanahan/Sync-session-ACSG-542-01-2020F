@@ -254,11 +254,11 @@ class Entry < ActiveRecord::Base
   TRACKING_STATUS_CLOSED ||= 2 #Entry will never be sent to customs
 
   has_many :broker_invoices, dependent: :destroy, autosave: true, inverse_of: :entry
-  has_many :broker_invoice_lines, :through => :broker_invoices
-  has_many :commercial_invoices, :dependent => :destroy, :autosave => true
-  has_many :commercial_invoice_lines, :through => :commercial_invoices
-  has_many :commercial_invoice_tariffs, :through => :commercial_invoice_lines
-  has_many :entry_comments, :dependent => :destroy, :autosave => true
+  has_many :broker_invoice_lines, through: :broker_invoices
+  has_many :commercial_invoices, dependent: :destroy, inverse_of: :entry, autosave: true
+  has_many :commercial_invoice_lines, through: :commercial_invoices
+  has_many :commercial_invoice_tariffs, through: :commercial_invoice_lines
+  has_many :entry_comments, dependent: :destroy, inverse_of: :entry, autosave: true
   has_many :containers, dependent: :destroy, inverse_of: :entry, autosave: true
   has_one :daily_statement_entry, inverse_of: :entry
 
@@ -457,6 +457,34 @@ class Entry < ActiveRecord::Base
   def split_shipment_date= date
     super date
     self.split_shipment = date.present?
+  end
+
+  def milestone_view_data
+    if canadian?
+      milestones = []
+      milestones << {label: "Departed", value: direct_shipment_date, ship_mode: transport_mode_code}
+
+      case entry_type.to_s.upcase
+      when "AB", "LV", "V"
+        milestones << {label: "Released", value: release_date, text: entry_port.try(:name)}
+        milestones << {label: "Cadex Aquittal", value: cadex_accept_date}
+      when "H", "C"
+        milestones << {label: "Released", value: (release_date.presence || k84_receive_date), text: entry_port.try(:name)}
+        milestones << {label: "Cadex Aquittal", value: k84_receive_date}
+      end
+
+      milestones << {label: "K84 Due", value: (k84_due_date.nil? ? nil : (k84_due_date - 1.day))}
+
+      milestones
+    else
+      [
+        {label: "Departed", value: export_date, text: lading_port.try(:name), ship_mode: transport_mode_code}, 
+        {label: "Arrived", value: arrival_date, text: entry_port.try(:name)}, 
+        {label: "Released", value: release_date}, 
+        {label: "Duty Due", value: daily_statement_due_date},
+        {label: "Liquidated", value: liquidation_date}
+      ]
+    end
   end
   
   private

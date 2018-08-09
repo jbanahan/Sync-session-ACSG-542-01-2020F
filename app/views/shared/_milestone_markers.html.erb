@@ -1,0 +1,46 @@
+<% 
+  if milestones.size > 0 
+    milestone_labels = []
+    milestone_text = []
+    milestone_values = []
+    milestone_modes = []
+    milestone_enabled = []
+
+    milestones.each do |m|
+      milestone_labels << m[:label]
+      milestone_text << m[:text]
+      milestone_values << m[:value]
+      milestone_modes << m[:mode]
+      milestone_enabled << m[:milestone_enabled]
+    end
+%>
+<div class="traffic-light">
+  <div class="border-title"><%=title%></div>
+  <div class="traffic-row lights">
+  <% milestone_values.each_with_index do |value, index| %>
+    <div class="light <%= milestone_enabled[index] ? "light-on" : "light-off" %>"><%=value%></div>
+    <% if (index + 1) < milestone_values.size %>
+    <div class="line"><hr></div>
+    <% end %>
+  <% end %>
+  </div>
+  <div class="traffic-row titles">
+  <% milestone_labels.each_with_index do |label, index| %>
+    <div class="light"><%=label%></div>
+    <% if (index + 1) < milestone_labels.size %>
+    <div class="line"></div>
+    <% end %>
+  <% end %>
+  </div>
+  <div class="traffic-row titles">
+    <% milestone_text.each_with_index do |label, index| %>
+    <div class="light additional-info"><%=label%></div>
+    <% if (index + 1) < milestone_text.size %>
+    <div class="line"><% if !milestone_modes[index].blank? %>
+      <div class="mode-icon"><i class="fa <%=milestone_modes[index]%>"></i></div>
+      <%end%></div>
+    <% end %>
+  <% end %>
+  </div>
+</div>
+<% end %>

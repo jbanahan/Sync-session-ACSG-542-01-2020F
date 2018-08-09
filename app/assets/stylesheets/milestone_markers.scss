@@ -1,0 +1,100 @@
+$light_width: 7em;
+$light_color: #6aa84f;
+$light_border_width: 0.25em;
+$line_color: lightgray;
+$line_width: 5em;
+$line_min_width: 2em;
+
+.traffic-light {
+  display: table;
+  margin-right: auto;
+  margin-left: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border: 2px solid $line_color;
+  border-radius: 1em;
+  padding: 10px;
+  position: relative;
+
+  .mode-icon {
+    font-size: 2.5em;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -.85em;
+  }
+
+  .border-title {
+    background: white none;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -1em;
+    padding: 0 .25em 0 .25em;
+    font-weight: bold;
+    font-size: 125%;
+  }
+
+  .additional-info {
+    font-size: 75%;
+    font-weight: normal !important;
+  }
+
+  .traffic-row {
+    display: table-row;
+  }
+
+  div {
+    padding: 0;
+    margin: 0;
+  }
+
+  .light {
+    width: $light_width;
+    min-width: $light_width;
+    text-align: center;
+    display: table-cell;
+    font-weight: bold;
+  }
+  
+  .lights {
+
+    .light {
+      height: $light_width;
+      border-radius: 50%;
+      vertical-align: middle;
+    }
+
+  }
+
+  .titles {
+    border-style: hidden;
+    padding: $light_border_width;
+  }
+
+
+  .light-on {
+    background: $light_color;
+    border: $light_border_width solid $light_color;
+  }
+
+  .light-off {
+    border: $light_border_width solid $line_color;
+  }
+
+  .line {
+    border: 0;
+    vertical-align: middle;
+    width: $line_width;
+    display: table-cell;
+    min-width: $line_min_width;
+    position: relative;
+
+    hr {
+      border: 0;
+      height: $light_border_width;
+      color: lightgray; /* old IE */
+      background-color: lightgray; /* Modern Browsers */
+    }
+  }
+}

@@ -72,6 +72,13 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
     return nil if model_field_uid.nil?
     model_field_uid.is_a?(ModelField) ? model_field_uid : ModelField.find_by_uid(model_field_uid)
   end
+  alias :mf :get_model_field
+
+  def process_export model_field_uid, obj
+    get_model_field(model_field_uid).process_export obj, current_user
+  end
+  alias :mf_export :process_export
+
 
   def skip_field? mf, user, hidden_field_override, read_only_override
     return false if hidden_field_override

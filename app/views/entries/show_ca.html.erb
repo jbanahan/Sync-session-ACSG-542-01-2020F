@@ -39,6 +39,9 @@
     </div> 
   </div>
 <% end %>
+<div class="container">
+  <%= render_milestone_markers(current_user, @entry, {fields: @entry.milestone_view_data}) %>
+</div>
 <a name='ent_header'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#c_invoices'>Commercial Invoices</a>

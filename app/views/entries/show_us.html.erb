@@ -38,27 +38,8 @@ $(function() {
   });
 });
 <%end%>
-<div class='container'>
-  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
-</div>
-<% if @entry.on_hold? %>
-  <div class='container'>
-    <div class="row">
-      <div class="col-md-12">
-        <div class='panel panel-danger'>
-          <div class='panel-heading'>
-            <h3 class='panel-title'>Pending Hold</h3>
-          </div>
-          <div class='panel-body'>
-            Refer to the hold section on-screen for details.
-          </div>
-        </div>
-      </div>
-    </div> 
-  </div>
-<% end %>
-<% cache [current_user.company,current_user,@entry] do-%>
-  <style>
+<%content_for :head_tags do %>
+<style type="text/css">
   .ent_columns {
     width:99%;
   }
@@ -79,13 +60,34 @@ $(function() {
   .ci_line td {
     border-top: 1px solid #333;
   }
-  </style>
-  <%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
-  <a name='ent_header'></a>
-  <div class='quick_jump'>
-    <a href='#c_invoices'>Commercial Invoices</a>
-    <%if show_broker_invoices%> | <a href='#b_invoices'>Broker Invoices</a><%end%>
+</style>
+<% end %>
+<% cache [current_user.company,current_user,@entry] do-%>
+  <div id="top"></div>
+  <div class='container'>
+    <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
   </div>
+  <% if @entry.on_hold? %>
+    <div class='container'>
+      <div class="row">
+        <div class="col-md-12">
+          <div class='panel panel-danger'>
+            <div class='panel-heading'>
+              <h3 class='panel-title'>Pending Hold</h3>
+            </div>
+            <div class='panel-body'>
+              Refer to the hold section on-screen for details.
+            </div>
+          </div>
+        </div>
+      </div> 
+    </div>
+  <% end %>
+  <div class="container">
+    <%= render_milestone_markers(current_user, @entry, {fields: @entry.milestone_view_data}) %>
+  </div>
+  <div id='entry'></div>
+  <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user, exclude_links: [:top, :entry]} %>
   <!-- Main header -->
   <table class='ent_columns'>
     <tbody>
@@ -191,9 +193,9 @@ $(function() {
     </tbody>
   </table>
   <hr />
-  <% entry_comments = @entry.entry_comments.order("generated_at ASC").select {|c| c.can_view? current_user} -%>
+  <% entry_comments = @entry.entry_comments.select {|c| c.can_view? current_user}.sort_by {|c| c.generated_at } -%>
   <% if !entry_comments.empty? -%>
-  <h2>
+  <h2 id="notes">
     Notes
     <div class="pull-right">
       <div class="btn-group">
@@ -219,7 +221,7 @@ $(function() {
   <hr />
   <%end-%>
   <% if @entry.liquidation_data? -%>
-  <h2>Liquidation</h2>
+  <h2 id="liquidation">Liquidation</h2>
   <table class='ent_columns'>
     <tbody>
       <tr>
@@ -238,7 +240,7 @@ $(function() {
   </table>
   <hr />
   <%end-%>
-  <h2>Statement</h2>
+  <h2 id="statement">Statement</h2>
   <table class='ent_columns'>
     <tbody>
       <tr>
@@ -268,16 +270,10 @@ $(function() {
     </tbody>
   </table>
   <hr />
-  <a name='c_invoices'></a>
-  <div class='quick_jump'>
-    <a href='#ent_header'>Top</a> 
-    <% if show_broker_invoices %>
-      | <a href='#b_invoices'>Broker Invoices</a>
-    <% end %>
-  </div>
   <%ci_line_count = @entry.commercial_invoice_lines.count  %>
   <%if @entry.commercial_invoices.count >0%>
-    <h1>Commercial Invoices</h1>
+    <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user, exclude_links: :commercial_invoice} %>
+    <h1 id="c_invoices">Commercial Invoices</h1>
     <%ci_summary_fields = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value,:ci_gross_weight]%>
     <table class='detail_table'>
       <thead>
@@ -410,13 +406,9 @@ $(function() {
       </tbody>
     </table>
   <%end%>
-  <%if show_broker_invoices%>
-    <a name='b_invoices'></a>
-    <div class='quick_jump'>
-      <a href='#ent_header'>Top</a> |
-      <a href='#c_invoices'>Commercial Invoices</a>
-    </div>
-    <h1>Broker Invoices</h1>
+  <%if current_user.view_broker_invoices? && !@entry.broker_invoices.blank? %>
+    <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user, exclude_links: :broker_invoice} %>
+    <h1 id="b_invoices">Broker Invoices</h1>
     <%
       fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]
       # The need for the order by here is due to the possibility of updating invoices in the kewill parser, which will mean that
@@ -476,7 +468,7 @@ $(function() {
       <% end %>
     <%end%>
   <%end%>
-<%end-%>
   <%=render :partial => 'shared/attachments', :locals => {:attachable => @entry, :width=>"wide"} %>
-  <br />
-  <%=render :partial => 'shared/integration_file_link', :locals => {:obj => @entry, :user => current_user} %>
+  <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user} %>
+  <%= render :partial => 'shared/integration_file_link', :locals => {:obj => @entry, :user => current_user} %>
+<%end-%>

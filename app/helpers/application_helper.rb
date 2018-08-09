@@ -696,4 +696,76 @@ module ApplicationHelper
       concat("<body>".html_safe)
     end
   end
+
+  # Displays a milestone demarcation, showing which milestone has been achieved for the given object
+  # The setup can be a hash with keys of the titles to use for the displayed dates with corresponding
+  # model fields for their values.
+  # Or the setup can be an array of model fields, in which case the model field label is utilized.
+  # User permissions for all fields are validated as well, so if a given model field cannot be viewed by the user
+  # then it will not be rendered in the milestone markers.
+  def render_milestone_markers user, obj, setup, date_format: "%b<br>%d<br>%Y", reference_date: Time.zone.now
+    # First, normalize the setup hash/array so it's always a hash having label/value, removing any fields
+    # the user can't access.
+    milestones = []
+
+    title = setup[:title].presence || "At A Glance"
+
+    Array.wrap(setup[:fields]).each do |v|
+
+      label = v[:label]
+      value = v[:value]
+      if value.is_a?(Symbol)
+        mf = get_model_field(value)
+
+        if label.blank?
+          label = mf.label(false)
+        end
+
+        if mf.can_view? user
+          value = mf.process_export obj, user
+        end
+      end
+
+      # We're expecting something that responds to strftime here (Date, DateTime, etc)
+      if value && value.respond_to?(:strftime)
+        if value.respond_to?(:acts_like_time?) && value.acts_like_time?
+          milestone_enabled = value <= reference_date
+        else
+          milestone_enabled = value <= reference_date.to_date
+        end
+        
+        value = value.strftime(date_format).html_safe
+        
+      else
+        value = nil
+      end
+
+      # normalize the ship mode into the font-awesome icon name to utilize
+      # This should handle US / CA Entry and other module modes
+      mode = case v[:ship_mode].to_s.upcase
+      when "40", "41", "1"
+        "fa-plane"
+      when /AIR/
+        "fa-plane"
+      when "10", "11", "9"
+        "fa-ship"
+      when /OCEAN/
+        "fa-ship"
+      when "20", "21", "6"
+        "fa-train"
+      when /RAIL/
+        "fa-train"
+      when "30", "31", "2"
+        "fa-truck"
+      when /TRUCK/
+        "fa-truck"
+      else
+        ""
+      end
+      
+      milestones << {label: label, value: value, mode: mode, text: v[:text].to_s, milestone_enabled: milestone_enabled}
+    end
+    
+    render(partial: "/shared/milestone_markers", locals: {milestones: milestones, title: title})
+  end
 end

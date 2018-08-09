@@ -83,7 +83,11 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it 'should load an attachment into the entry with the proper content type' do
-      r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
+      now = Time.zone.parse("2018-08-01 12:00")
+      r = nil
+      Timecop.freeze(now) do 
+        r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
+      end
 
       att = r[:attachment]
       expect(att).not_to be_nil
@@ -96,6 +100,8 @@ describe OpenChain::AllianceImagingClient do
 
       expect(r[:entry]).to eq @e1
       expect(r[:entry].attachments.size).to eq(1)
+      # Make sure the entry was touched
+      expect(r[:entry].updated_at).to eq now
     end
 
     it 'should look for source_system in the message hash and use entry number to lookup for Fenix source system' do
@@ -644,6 +650,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "reads a stitch response and updates an entry's attachments with an archive packet" do
+      now = Time.zone.parse("2018-08-01 12:00")
       StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path/to/file.pdf').and_yield @t
       expect(OpenChain::S3).to receive(:delete).with('bucket', 'path/to/file.pdf')
@@ -651,13 +658,16 @@ describe OpenChain::AllianceImagingClient do
         expect(val.id).to eq @entry.id
       end
       
-      expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_truthy
+      Timecop.freeze(now) do 
+        expect(OpenChain::AllianceImagingClient.process_entry_stitch_response @resp).to be_truthy
+      end
 
       @entry.reload
       expect(@entry.attachments.size).to eq(1)
       expect(@entry.attachments.first.attachment_type).to eq Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
       expect(@entry.attachments.first.attached_file_name).to eq "#{@entry.entry_number}.pdf"
       expect(@entry.attachments.first.created_at).to eq Time.iso8601(@resp['stitch_response']['reference_info']['time'])
+      expect(@entry.updated_at).to eq now
       expect(StitchQueueItem.where(stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id).first).to be_nil
     end
 
@@ -826,15 +836,20 @@ ERR
     end
 
     it "saves attachment data to entry" do
+      now = Time.zone.parse("2018-08-01 12:00")
       expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times: 3).and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
-      r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+      r = nil
+      Timecop.freeze(now) do 
+        r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
+      end
       entry = r[:entry]
 
       expect(entry).not_to be_nil
       expect(entry.entry_number).to eq "11981001795105"
       expect(entry.source_system).to eq "Fenix"
-      expect(entry.file_logged_date).to be_within(1.minute).of Time.zone.now
+      expect(entry.file_logged_date).to eq now
+      expect(entry.updated_at).to eq now
 
       a = r[:attachment]
       expect(a).not_to be_nil

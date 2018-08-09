@@ -12,7 +12,7 @@
   <% end %>
 <%end-%>
 <% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments).find_all {|a| a.can_view?(current_user) }-%>
-  <div class='row text-center'>
+  <div id="<%="#{attachable.class.name.underscore}_attachments"%>" class='row text-center'>
     <div class='col-md-12'>
       <h3>Attachments</h3>
     </div>

@@ -1,0 +1,23 @@
+<% 
+  if !defined?(exclude_links)
+    exclude_links = []
+  else
+    exclude_links = Array.wrap(exclude_links)
+  end
+  links = []
+  links << {text: "Top", id: "top"} if !exclude_links.include?(:top)
+  links << {text: "Entry", id: "entry"} if !exclude_links.include?(:entry)
+  links << {text: "Statement", id: "statement"} if !exclude_links.include?(:statement)
+  links << {text: "Notes", id: "notes"} if !exclude_links.include?(:notes) && entry.entry_comments.length > 0 && !entry.entry_comments.find {|c| c.can_view? user }.nil?
+  links << {text: "Liquidation", id: "liquidation"} if !exclude_links.include?(:liquidation) && entry.liquidation_data?
+  links << {text: "Commercial Invoices", id: "c_invoices"} if !exclude_links.include?(:commercial_invoice)
+  links << {text: "Broker Invoices", id: "b_invoices"} if !exclude_links.include?(:broker_invoice) && user.view_broker_invoices? && entry.broker_invoices.length > 0
+  # The attachment partial builds a blank attachment, which then trips this link to render even when it shoudn't...the id > 0 check is an easier fix than changing the partial
+  links << {text: "Attachments", id: "entry_attachments"} if !exclude_links.include?(:attachment) && entry.attachments.length > 0 && !entry.attachments.find {|a| a.id.to_i > 0 && a.can_view?(user) }.nil?
+%>
+
+<div class='quick_jump'>
+  <% links.each_with_index do |link, index| %>
+    <%= "|" if index > 0 %> <a href="#<%=link[:id]%>"><%=link[:text]%></a>
+  <% end %>
+</div>
