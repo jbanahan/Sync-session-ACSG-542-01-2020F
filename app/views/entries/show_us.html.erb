@@ -195,7 +195,7 @@ $(function() {
     </tbody>
   </table>
   <hr />
-  <% entry_comments = @entry.entry_comments.select {|c| c.can_view? current_user}.sort_by {|c| c.generated_at } -%>
+  <% entry_comments = @entry.entry_comments.select {|c| c.can_view? current_user}.find_all {|c| !c.generated_at.nil? }.sort_by {|c| c.generated_at } -%>
   <% if !entry_comments.empty? -%>
   <h2 id="notes">
     Notes
