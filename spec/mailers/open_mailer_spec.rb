@@ -901,4 +901,80 @@ EMAIL
     end
   end
 
+  describe "deliver", email_log: true do 
+    # This makes sure our internal proxy class is being used as the primary delivery method for emails and that
+    # it's being set up correctly.
+    it "utilizes LoggingMailerProxy class for deliveries" do
+      mail = OpenMailer.send_simple_text("me@there.com", "Subject", "Body")
+      delivery_method = mail.delivery_method
+      expect(delivery_method).to be_a OpenMailer::LoggingMailerProxy
+      expect(delivery_method.original_delivery_method).not_to be_nil
+      expect(delivery_method.sent_email).not_to be_nil
+      expect(delivery_method.sent_email.persisted?).to eq true
+      expect(delivery_method.settings).not_to be_nil
+    end
+  end
+
+
+  describe OpenMailer::LoggingMailerProxy do
+
+    let (:mail) {
+      instance_double(Mail::Message)
+    }
+
+    let (:original_delivery_method) {
+      d = double("DeliveryMethod")
+      allow(d).to receive(:deliver!).with(mail).and_return "Delivered"
+      d
+    }
+
+    let (:sent_email) {
+      SentEmail.new 
+    }
+
+    let (:original_config) {
+      {config: "config"}
+    }
+
+    let (:settings) {
+      c = original_config.dup
+      c[:original_delivery_method] = original_delivery_method
+      c[:sent_email] = sent_email
+      c
+    }
+
+    describe "intiialize" do 
+      it "extracts settings values" do
+        p = OpenMailer::LoggingMailerProxy.new settings
+        expect(settings[:original_delivery_method]).to be_nil
+        expect(settings[:sent_email]).to be_nil
+        expect(p.original_delivery_method).to eq original_delivery_method
+        expect(p.sent_email).to eq sent_email
+        expect(p.settings).to eq original_config
+      end
+    end
+
+    describe "deliver!" do
+      subject { described_class.new settings }
+
+      it "calls through to the original delivery methods deliver! method" do
+        expect(subject.deliver! mail).to eq "Delivered"
+      end
+
+      it "logs any error messages raised against the sent_email" do
+        expect(original_delivery_method).to receive(:deliver!).and_raise "Testing Error"
+
+        expect { subject.deliver! mail }.to raise_error "Testing Error"
+        expect(sent_email).to be_persisted
+        expect(sent_email.delivery_error).to eq "Testing Error"
+      end
+
+      it "swallows Postmark::InvalidMessageError" do
+        expect(original_delivery_method).to receive(:deliver!).and_raise Postmark::InvalidMessageError, "Testing Error"
+        expect(subject.deliver! mail).to be_nil
+        expect(sent_email).to be_persisted
+        expect(sent_email.delivery_error).to eq "Testing Error"
+      end
+    end
+  end
 end

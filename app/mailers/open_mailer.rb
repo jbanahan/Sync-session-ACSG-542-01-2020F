@@ -421,8 +421,6 @@ EOS
                       email_bcc: extract_email_addresses(message.bcc), email_from: extract_email_addresses(message.from),
                       email_reply_to: extract_email_addresses(message.reply_to), email_date: Time.zone.now, email_body: extract_email_body(message.body),
                       attachments: attachment_list, suppressed: suppressed)
-
-    true
   end
 
 
@@ -554,8 +552,12 @@ EOS
         redirect_to_developer 
       else
         suppress_email = message.respond_to?(:suppressed) || suppress_all_emails?
-        message.delivery_method NoOpMailer if suppress_email
-        log_email suppress_email
+        sent_email = log_email suppress_email
+        if suppress_email
+          message.delivery_method NoOpMailer
+        else
+          message.delivery_method(LoggingMailerProxy, message.delivery_method.settings.merge({original_delivery_method: message.delivery_method, sent_email: sent_email}))
+        end
       end      
     end
 
@@ -571,6 +573,7 @@ EOS
     require 'mail/check_delivery_params'
     class NoOpMailer
       attr_accessor :settings
+
       def initialize settings
         @settings = settings
       end
@@ -579,6 +582,44 @@ EOS
         # We'll still want to check the mail for validity so that errors raised normally on an email would be 
         # Below is what the standard mailer does
         Mail::CheckDeliveryParams.check(mail)
+      end
+    end
+
+    # This class exists soley as a means of sitting between the "real" mailer and our code, so that if an error occurs when a message is delivered (.ie deliver! is called)
+    # that we log that error against the sent_email log object that was created for when the mail object was actually built.
+    #
+    # It also allows for swallowing some errors that occur, since there's no point in bubbling some of them up and potentially causing a delayed job to re-run.
+    class LoggingMailerProxy
+      attr_accessor :original_delivery_method, :sent_email, :settings
+
+      def initialize settings
+        @settings = settings
+        @original_delivery_method = settings.delete :original_delivery_method
+        @sent_email = settings.delete :sent_email
+      end
+
+      def deliver! mail
+        original_delivery_method.deliver! mail
+      rescue Exception => e
+        handle_email_error(e, mail, original_delivery_method, sent_email)
+        nil
+      end
+
+      def handle_email_error error, mail, delivery_method, sent_email
+        sent_email.update_attributes! delivery_error: error.message
+        raise error unless swallow_error?(error)
+      end
+
+      def swallow_error? error
+        # There might be more conditions we want to actually swallow email errors fore
+        # but for now, just swallow them when there's an InvalidMessageError, which occurs
+        # whenever a recipient is referenced that is inactive.  There's no use re-raising this
+        # error, since the email will never actually go through (unless user is reactivated and stays that way)
+        if error.is_a?(Postmark::InvalidMessageError)
+          return true
+        else
+          return false
+        end
       end
     end
 

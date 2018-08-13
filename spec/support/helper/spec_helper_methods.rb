@@ -138,7 +138,7 @@ module Helpers
   end
 
   def stub_email_logging
-    allow_any_instance_of(OpenMailer).to receive(:log_email).and_return true
+    allow_any_instance_of(OpenMailer).to receive(:log_email).and_return SentEmail.new
   end
 
   def unstub_s3

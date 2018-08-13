@@ -5,6 +5,13 @@
 <% if @sent_email.suppressed %>
   <p><strong>This email was suppressed.</strong></p>
 <% end %>
+
+<% if !@sent_email.delivery_error.blank? %>
+<div class="alert alert-danger" role="alert">
+  <p><b>THE FOLLOWING ERROR WAS ENCOUNTERED WHILE ATTEMPTING TO DELIVER THIS EMAIL:</b></p>
+  <p style="white-space: pre"><%=@sent_email.delivery_error%></p>
+</div>
+<% end %>
 <table>
   <%= field_row "From", @sent_email.email_from %>
   <%= field_row "To", @sent_email.email_to %>
