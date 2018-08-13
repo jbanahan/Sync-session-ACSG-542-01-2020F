@@ -2,12 +2,12 @@ module OpenChain
   class TestInstanceManager
     # call this method to prep the test instance
     # NEVER CALL THIS IN PRODUCTION, IT CLEARS SCHEDULES AND EDITS USERS
-    def self.prep_test_instance new_request_host, uuid
+    def self.prep_test_instance request_host: , uuid: , friendly_name: 
       m = self.new
-      m.update_master_setup! new_request_host, uuid
+      m.update_master_setup! request_host, uuid, friendly_name
       m.clear_schedulable_jobs!
       m.clear_scheduled_reports!
-      m.update_users! new_request_host
+      m.update_users! request_host
     end
 
     def clear_schedulable_jobs!
@@ -18,7 +18,7 @@ module OpenChain
       SearchSchedule.scoped.destroy_all
     end
 
-    def update_master_setup! req_host, uuid
+    def update_master_setup! req_host, uuid, friendly_name
       # Load the master setup from the database (NOT from memcache)
       # This is because other test instances may be running against a previous database version -
       # since this is pretty much the first step to run when deploying a new test database.
@@ -37,6 +37,7 @@ module OpenChain
       ms.suppress_email = true
       ms.custom_features = ''
       ms.stats_api_key = ""
+      ms.friendly_name = friendly_name unless friendly_name.blank?
       ms.save!
     end
 

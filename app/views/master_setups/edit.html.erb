@@ -63,6 +63,8 @@ $(function() {
       <h2 id='settings_head' style='cursor:pointer;'>Settings</h2>
       <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
         <%=field_bootstrap "System UUID", @ms.uuid%>
+        <%=field_bootstrap "Database Host", MasterSetup.database_host(machine_name_only: true) %>
+        <%=field_bootstrap "Database Name", MasterSetup.database_name %>
         <%=field_bootstrap "Version", content_tag(:div, MasterSetup.current_code_version, class:(MasterSetup.current_code_version==@ms.target_version ? '' : 'bg-danger'))%>
         <%=field_bootstrap "Target Version", @ms.target_version%>
         <%=field_bootstrap "System Code", f.text_field(:system_code,:class=>'form-control') %>

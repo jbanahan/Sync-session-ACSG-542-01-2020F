@@ -270,5 +270,33 @@ describe MasterSetup do
       expect(MasterSetup.email_enabled?).to eq true
     end
   end
+
+  let! (:database_config) {
+    {adapter: "mysql2", database: "database_name", username: "user", password: "password", host: "db.host.com", port: 3306, pool: 15, timeout: 5000, flags: 2}
+  }
+
+  describe "database_host" do 
+    before :each do 
+      allow(described_class).to receive(:db_connection_config).and_return database_config
+    end
+
+    it "returns host db config value" do
+      expect(MasterSetup.database_host).to eq "db.host.com"
+    end
+
+    it "returns only the machine name" do
+      expect(MasterSetup.database_host machine_name_only: true).to eq "db"
+    end
+  end
+
+  describe "database_name" do
+    before :each do 
+      allow(described_class).to receive(:db_connection_config).and_return database_config
+    end
+
+    it "returns database config value" do
+      expect(MasterSetup.database_name).to eq "database_name"
+    end
+  end
   
 end
