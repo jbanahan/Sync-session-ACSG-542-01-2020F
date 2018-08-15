@@ -17,8 +17,12 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
 
   def parse xml, opts
     dom = REXML::Document.new(xml)
+    root = dom.root
+    # UA tends to send us blank files for some reason...this checks that and returns if it's blank
+    return if root.nil?
+
     user = User.integration
-    dom.root.each_element("Orders") {|order| process_order order, user, opts[:bucket], opts[:key] }
+    root.each_element("Orders") {|order| process_order order, user, opts[:bucket], opts[:key] }
   end
 
   def process_order order_xml, user, bucket, file

@@ -157,13 +157,17 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     subject { described_class }
 
     it "parses XML string" do
-      described_class.parse(data, bucket: "bucket", key: "file.xml")
+      subject.parse(data, bucket: "bucket", key: "file.xml")
 
       order = Order.where(order_number: "UNDAR-4200001923").first
       expect(order).not_to be_nil
       expect(order.last_file_bucket).to eq "bucket"
       expect(order.last_file_path).to eq "file.xml"
 
+    end
+
+    it "handles blank files" do
+      expect(subject.parse("", bucket: "bucket", key: "file.xml")).to be_nil
     end
   end
 

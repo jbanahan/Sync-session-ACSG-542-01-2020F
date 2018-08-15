@@ -567,7 +567,8 @@ describe OpenChain::EdiParserSupport do
         end
 
         context "running as delayed_job" do
-          before :each do 
+          before :each do
+            expect(subject.class.respond_to?(:currently_running_as_delayed_job?)).to eq true
             allow(subject.class).to receive(:currently_running_as_delayed_job?).and_return true
           end
 

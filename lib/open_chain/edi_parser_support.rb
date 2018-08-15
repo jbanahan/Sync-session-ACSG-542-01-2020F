@@ -1,5 +1,6 @@
 module OpenChain; module EdiParserSupport
   extend ActiveSupport::Concern
+  include OpenChain::DelayedJobExtensions
 
   # If you are utilizing the standard parse implementation below, you can raise the following errors
   # and an email will be sent with the EDI data attached and the process will not be retried.

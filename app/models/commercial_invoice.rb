@@ -35,6 +35,7 @@
 # Indexes
 #
 #  index_commercial_invoices_on_entry_id        (entry_id)
+#  index_commercial_invoices_on_importer_id     (importer_id)
 #  index_commercial_invoices_on_invoice_date    (invoice_date)
 #  index_commercial_invoices_on_invoice_number  (invoice_number)
 #
