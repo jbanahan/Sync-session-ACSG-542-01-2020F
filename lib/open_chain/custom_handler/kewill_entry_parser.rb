@@ -730,7 +730,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_notes e, entry
-      entry.entry_comments.destroy_all
+      # There are sometimes thousands of comments...just do a delete here, rather than a destroy.  Entry comments don't have 
+      # descendents we need to worry about so the time savings can actually add up to multiple seconds here.
+
+      # I don't know why but `entry.entry_comments.delete_all` is generating a distinct sql delete per comment, rather 
+      # than the single "delete from entry_comments where entry_id = ?"" that the documentation says it should be doing.
+      # Possible rails bug?  Whatever it is, this is a workaround for that behavior not working.
+      EntryComment.where(entry_id: entry.id).delete_all
+      entry.entry_comments.reload
 
       customs_response_times = []
       Array.wrap(e[:notes]).each do |n|
@@ -837,7 +844,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_commercial_invoices e, entry
-      entry.commercial_invoices.destroy_all
+      # Preload everything before destroying...WAY faster for large entries
+      invoices = entry.commercial_invoices.includes(commercial_invoice_lines: 
+        [:custom_values, :piece_sets, commercial_invoice_tariffs: 
+          [:custom_values, :commercial_invoice_lacey_components]])
+
+      invoices.destroy_all
 
       Array.wrap(e[:commercial_invoices]).each do |i|
         invoice = entry.commercial_invoices.build
