@@ -17,5 +17,10 @@ describe OpenChain::DatabaseUtils do
     it "returns false for other error types" do
       expect(subject.deadlock_error? StandardError.new("test")).to eq false
     end
+
+    it "identifies a wrapped StatementInvalid error" do
+      e = ActiveRecord::StatementInvalid.new "#{deadlock.class.name}: #{deadlock.message}"
+      expect(subject.deadlock_error? e).to eq true
+    end
   end
 end
