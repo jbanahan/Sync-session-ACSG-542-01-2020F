@@ -191,7 +191,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         entry.create_snapshot user
         entry
       rescue => e
-        raise e unless Rails.env.production?
+        # Re-raise a deadlock error, there's nothing wrong with the data, so the entry should
+        # process next time through when the job queue reprocesses the file.
+        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !production?
 
         # Add the entity wrapper name back in so the data can easily just be passed back through
         # the parser for testing/problem solving
@@ -205,6 +207,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     entry
+  end
+
+  def production?
+    Rails.env.production?
   end
 
   class HoldReleaseSetter

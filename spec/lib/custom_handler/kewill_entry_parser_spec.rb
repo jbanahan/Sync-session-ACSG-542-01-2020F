@@ -1304,6 +1304,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.prorated_mpf).to eq 2.34
     end
 
+    it "reraises deadlock_errors" do
+      error = Mysql2::Error.new "error"
+      expect(subject).to receive(:preprocess).and_raise error
+      expect(OpenChain::DatabaseUtils).to receive(:deadlock_error?).with(error).and_return true
+      expect { subject.process_entry @e }.to raise_error error
+    end
+
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }
