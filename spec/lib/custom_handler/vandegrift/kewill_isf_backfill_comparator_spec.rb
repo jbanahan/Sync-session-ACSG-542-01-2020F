@@ -46,6 +46,25 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
     end
 
+    context "with EDDIEFTZ mapping" do
+      before :each do 
+        entry.update_attributes! customer_number: "EDDIEFTZ"
+      end
+
+      it "matches to EBCC ISF files" do
+        security_filing.update_attributes! broker_customer_number: "EBCC"
+        subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+        security_filing.reload
+        expect(security_filing.entry_reference_numbers).to eql('1234567890')
+      end
+
+      it "matches to EDDIE ISF files" do
+        security_filing.update_attributes! broker_customer_number: "EDDIE"
+        subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+        security_filing.reload
+        expect(security_filing.entry_reference_numbers).to eql('1234567890')
+      end
+    end
   end
 
   describe "#find_security_filings" do

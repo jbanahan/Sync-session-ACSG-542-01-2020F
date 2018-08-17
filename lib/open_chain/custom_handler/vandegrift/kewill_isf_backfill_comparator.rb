@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     return unless entry.master_bills_of_lading
     master_bills_of_lading = entry.master_bills_of_lading.split('\n')
     SecurityFiling.
-        where("master_bill_of_lading IN (?) AND broker_customer_number = ?", master_bills_of_lading, entry.customer_number).
+        where("master_bill_of_lading IN (?) AND broker_customer_number IN (?)", master_bills_of_lading, customer_number(entry)).
         where("entry_reference_numbers IS NULL OR entry_reference_numbers NOT LIKE ?", "%#{entry.broker_reference}%")
 
   end
@@ -61,5 +61,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
 
   def self.us_country?(entry)
     entry.source_system == "Alliance"
+  end
+
+  def self.customer_number entry
+    cust_no = entry.customer_number
+    mapped_account = customer_number_mapping[cust_no]
+    Array.wrap(mapped_account.presence || cust_no)
+  end
+
+  def self.customer_number_mapping
+    {"EDDIEFTZ" => ["EBCC", "EDDIE"]}
   end
 end; end; end; end
