@@ -57,20 +57,48 @@ class BusinessValidationResult < ActiveRecord::Base
 
   def self.worst_state s1, s2
     r = [s1,s2].sort do |a,b|
-      return a if a=='Fail'
-      return b if b=='Fail'
-      return a if a=='Review'
-      return b if b=='Review'
-      return a if a=='Pass'
-      return b if b=='Pass'
-      return a if a=='Skipped'
-      return b if b=='Skipped'
+      return a if fail_state?(a)
+      return b if fail_state?(b)
+      return a if review_state?(a)
+      return b if review_state?(b)
+      return a if pass_state?(a)
+      return b if pass_state?(b)
+      return a if skipped_state?(a)
+      return b if skipped_state?(b)
       return a
     end
     r.first
   end
 
   def failed?
-    self.state == "Fail"
+    self.class.fail_state? self.state
+  end
+
+  def review?
+    self.class.review_state? self.state
+  end
+
+  def pass?
+    self.class.pass_state? self.state
+  end
+
+  def skipped?
+    self.class.skipped_state? self.state
+  end
+
+  def self.fail_state? state
+    state.to_s.upcase.strip == "FAIL"
+  end
+
+  def self.review_state? state
+    state.to_s.upcase.strip == "REVIEW"
+  end
+
+  def self.pass_state? state
+    state.to_s.upcase.strip == "PASS"
+  end
+
+  def self.skipped_state? state
+    state.to_s.upcase.strip == "SKIPPED"
   end
 end

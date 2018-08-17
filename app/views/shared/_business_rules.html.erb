@@ -1,43 +1,30 @@
-<script type="text/javascript">
-  $(function() {
-    updateBusinessRules = function() {
-      var panel = $('#business_rules_panel');
-      $.get('/<%=CoreModule.find_by_object(base_object).table_name%>/<%=base_object.id%>/validation_results.json',function(resp) {
-        var msg, bvr, panelClass, colorClass, objUpdatedAt, oldestBRUpdate;
-        bvr = resp.business_validation_result;
-        msg = panelClass = '';
-        if(bvr.state == 'Fail') {
-          msg = "Business rules have failed.  Click the <i class='fa fa-medkit'></i> button to review.";
-          colorClass = 'danger';
-          $('#business_rules_link_button').css("color","red");
-        } else if (bvr.state == 'Review') {
-          msg = "Business rules are in review status.  Click the <i class='fa fa-medkit'></i> button to review.";
-          colorClass = 'warning';
-        }
-        if(msg.length > 0) {
-          panel.find('.panel-body').html(msg);
-          panel.addClass("panel-"+colorClass);
-          panel.show();
-        } else {
-          panel.hide();
-        }
-      });
-    };
-
-    updateBusinessRules();
-  });
-</script>
-<% content_for :action_bar do %>
-  <%=business_rules_button rule_state_field, validation_path%>
-<% end %>
-  <div class="row">
-    <div class="col-md-12">
-      <div class='panel' id='business_rules_panel' style='display:none;'>
-        <div class='panel-heading'>
-          <h3 class='panel-title'>Business Rules</h3>
-        </div>
-        <div class='panel-body'>
+<% if rule_state_field.can_view?(User.current) %>
+  <% rule_state = rule_state_field.process_export base_object, User.current %> 
+  <% content_for :action_bar do %>
+    <%=business_rules_button rule_state_field, validation_path, state: rule_state %>
+  <% end %>
+  <% 
+    failed_state = BusinessValidationResult.fail_state?(rule_state)
+    review_state = BusinessValidationResult.review_state?(rule_state)
+  %> 
+  <% if failed_state || review_state %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class='panel<%= failed_state ? " panel-danger" : (review_state ? " panel-warning" : "") %>'>
+          <div class='panel-heading'>
+            <h3 class='panel-title'>Business Rules</h3>
+          </div>
+          <div class='panel-body'>
+            <div>
+            <% if failed_state %>
+              Business rules have failed.  Click the <%=link_to("<i class='fa fa-medkit text-danger'></i>".html_safe, validation_path)%> button to review.
+            <% elsif review_state %>
+              Business rules are in review status.  Click the <%=link_to("<i class='fa fa-medkit text-warning'></i>".html_safe, validation_path)%> button to review.
+            <% end %>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  <% end %>
+<% end %>

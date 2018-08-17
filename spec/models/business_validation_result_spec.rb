@@ -117,4 +117,20 @@ describe BusinessValidationResult do
       expect(business_validation_result.run_validation_with_state_tracking).to eq({changed: true, rule_states: [{id: rule_result.id, changed: true, new_state: "Fail", old_state: nil}]})
     end
   end
+
+  context "state checks" do
+    ["Fail", "Review", "Pass", "Skipped"].each do |state|
+      it "validates #{state.downcase}?" do
+        method_name = state == "Fail" ? "failed" : state.downcase
+        expect(BusinessValidationResult.new(state: state).send("#{method_name}?".to_sym)).to eq true
+        expect(BusinessValidationResult.new(state: "something else").send("#{method_name}?".to_sym)).to eq false
+      end
+
+      it "validates #{state.downcase}_state?" do 
+        expect(described_class.send("#{state.downcase}_state?".to_sym, state)).to eq true
+        expect(described_class.send("#{state.downcase}_state?".to_sym, "something else")).to eq false
+      end
+    end
+  end
+  
 end

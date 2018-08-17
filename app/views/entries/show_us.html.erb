@@ -62,32 +62,31 @@ $(function() {
   }
 </style>
 <% end %>
-<% cache ["entry-top", current_user.company,current_user,@entry] do-%>
   <div id="top"></div>
   <div class='container'>
     <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
   </div>
-  <% if @entry.on_hold? %>
-    <div class='container'>
-      <div class="row">
-        <div class="col-md-12">
-          <div class='panel panel-danger'>
-            <div class='panel-heading'>
-              <h3 class='panel-title'>Pending Hold</h3>
-            </div>
-            <div class='panel-body'>
-              Refer to the hold section on-screen for details.
-            </div>
+
+<% if @entry.on_hold? %>
+  <div class='container'>
+    <div class="row">
+      <div class="col-md-12">
+        <div class='panel panel-danger'>
+          <div class='panel-heading'>
+            <h3 class='panel-title'>Pending Hold</h3>
+          </div>
+          <div class='panel-body'>
+            Refer to the hold section on-screen for details.
           </div>
         </div>
-      </div> 
-    </div>
-  <% end %>
+      </div>
+    </div> 
+  </div>
 <% end %>
   <div class="container">
     <%= render_milestone_markers(current_user, @entry, {fields: @entry.milestone_view_data}) %>
   </div>
-<% cache ["entry-bottom", current_user.company,current_user,@entry] do-%>
+<% cache ["entry", current_user.company, current_user, @entry] do-%>
   <div id='entry'></div>
   <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user, exclude_links: [:top, :entry]} %>
   <!-- Main header -->

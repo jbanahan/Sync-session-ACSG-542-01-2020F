@@ -15,10 +15,18 @@ module ApplicationHelper
 
 
   # create button to business rules page
-  def business_rules_button rule_state_field, path
+  def business_rules_button rule_state_field, path, state: nil
     if rule_state_field.can_view?(User.current)
+      icon_opts = {class: "fa fa-medkit"}
+
+      if BusinessValidationResult.fail_state?(state)
+        icon_opts[:class] += " text-danger" 
+      elsif BusinessValidationResult.review_state?(state)
+        icon_opts[:class] += " text-warning"
+      end
+
       return content_tag(:button,class: 'btn_link', id:'business_rules_link_button', link_to: path, title:'Business Rules') do
-        content_tag(:i,'',class:'fa fa-medkit')
+        content_tag(:i,'', icon_opts)
       end
     else
       return ''
