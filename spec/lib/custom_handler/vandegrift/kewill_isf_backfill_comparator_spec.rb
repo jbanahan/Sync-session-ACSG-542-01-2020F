@@ -42,6 +42,33 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       expect(security_filing.entry_numbers).to eql('1234567890')
     end
 
+    it "matches to ISF with house and master bills based soley on masterbill" do
+      entry.update_attributes! house_bills_of_lading: "HBOL0000"
+      security_filing.update_attributes! house_bills_of_lading: "HBOL12345"
+
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+      security_filing.reload
+      expect(security_filing.entry_numbers).to eql('1234567890')
+    end
+
+    it "matches to ISF with blank master bill and houses" do
+      entry.update_attributes! house_bills_of_lading: "HBOL12345"
+      security_filing.update_attributes! house_bills_of_lading: "HBOL12345", master_bill_of_lading: ""
+
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+      security_filing.reload
+      expect(security_filing.entry_numbers).to eql('1234567890')
+    end
+
+    it "does not match to ISF if master bill does not match and house bill matches" do
+      entry.update_attributes! house_bills_of_lading: "HBOL12345", master_bills_of_lading: "NOT A MATCH"
+      security_filing.update_attributes! house_bills_of_lading: "HBOL12345"
+
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+      security_filing.reload
+      expect(security_filing.entry_numbers).to be_blank
+    end
+
     context "with EDDIEFTZ mapping" do
       before :each do 
         entry.update_attributes! customer_number: "EDDIEFTZ"

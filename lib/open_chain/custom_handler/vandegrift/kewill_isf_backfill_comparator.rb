@@ -33,10 +33,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     house_bills_of_lading = split_list(entry.house_bills_of_lading)
     return [] if master_bills_of_lading.blank? && house_bills_of_lading.blank?
 
-    if master_bills_of_lading.length > 0
-      filings = filings.where("master_bill_of_lading IN (?)", master_bills_of_lading)
-    else
+    if master_bills_of_lading.length > 0 && house_bills_of_lading.length == 0
+      filings = filings.where("master_bill_of_lading IN (?)", master_bills_of_lading)  
+    elsif master_bills_of_lading.length == 0 && house_bills_of_lading.length > 0
       filings = filings.where("house_bills_of_lading IN (?)", house_bills_of_lading)
+    else
+      # We have both a master and house bills in the entry, ergo...the ISF either has to match on the master bill OR have a blank master bill and match on the house bill
+      # Master bills are never nil, just blank, so don't worry about that scenario.
+
+      # I'm not 100% sure this is correct, but it's in keeping with how this process has functioned for over a year when it was matching solely based on the master bill
+      filings = filings.where("master_bill_of_lading IN (?) OR (master_bill_of_lading = '' AND house_bills_of_lading IN (?))", master_bills_of_lading, house_bills_of_lading)
     end
     
     filings
