@@ -10,28 +10,36 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     return unless security_filings
 
     security_filings.each do |sf|
-      entry_numbers = sf.entry_numbers ? sf.entry_numbers.split("\n") : []
-      entry_reference_numbers = sf.entry_reference_numbers ? sf.entry_reference_numbers.split("\n") : []
+      entry_numbers = split_list(sf.entry_numbers)
+      entry_reference_numbers = split_list(sf.entry_reference_numbers)
       next if entry_numbers.include?(entry.entry_number) && entry_reference_numbers.include?(entry.broker_reference)
       unless entry_numbers.include?(entry.entry_number)
         entry_numbers << entry.entry_number
-        sf.entry_numbers = entry_numbers.join("\n")
+        sf.entry_numbers = entry_numbers.join("\n ")
       end
       unless entry_reference_numbers.include?(entry.broker_reference)
         entry_reference_numbers << entry.broker_reference
-        sf.entry_reference_numbers = entry_reference_numbers.join("\n")
+        sf.entry_reference_numbers = entry_reference_numbers.join("\n ")
       end
       sf.save!
     end
   end
 
   def self.find_security_filings(entry)
-    return unless entry.master_bills_of_lading
-    master_bills_of_lading = entry.master_bills_of_lading.split('\n')
-    SecurityFiling.
-        where("master_bill_of_lading IN (?) AND broker_customer_number IN (?)", master_bills_of_lading, customer_number(entry)).
-        where("entry_reference_numbers IS NULL OR entry_reference_numbers NOT LIKE ?", "%#{entry.broker_reference}%")
+    filings = SecurityFiling.where("entry_reference_numbers IS NULL OR entry_reference_numbers NOT LIKE ?", "%#{entry.broker_reference}%").
+                              where("broker_customer_number IN (?)", customer_number(entry))
 
+    master_bills_of_lading = split_list(entry.master_bills_of_lading)
+    house_bills_of_lading = split_list(entry.house_bills_of_lading)
+    return [] if master_bills_of_lading.blank? && house_bills_of_lading.blank?
+
+    if master_bills_of_lading.length > 0
+      filings = filings.where("master_bill_of_lading IN (?)", master_bills_of_lading)
+    else
+      filings = filings.where("house_bills_of_lading IN (?)", house_bills_of_lading)
+    end
+    
+    filings
   end
 
   def self.accept?(snapshot)
@@ -52,7 +60,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
   end
 
   def self.valid_entry? entry
-    ocean_transport?(entry) && us_country?(entry) && entry.customer_number.present? && entry.master_bills_of_lading.present?
+    ocean_transport?(entry) && us_country?(entry) && entry.customer_number.present? && (entry.master_bills_of_lading.present? || entry.house_bills_of_lading.present?)
   end
 
   def self.ocean_transport?(entry)
@@ -71,5 +79,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
 
   def self.customer_number_mapping
     {"EDDIEFTZ" => ["EBCC", "EDDIE"]}
+  end
+
+  def self.split_list list
+    list.to_s.split(/\n */)
   end
 end; end; end; end

@@ -11,31 +11,18 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
 
   describe "#compare" do
 
-    it "appends the security filing's entry_reference_numbers if new broker_reference is not present" do
-      security_filing.entry_reference_numbers = "0987654321"
-      security_filing.save!
+    it "appends the security filing's entry_reference_numbers and entry_number if new broker_reference is not present" do
+      security_filing.update_attributes! entry_reference_numbers: "0987654321", entry_numbers: "0987654321"
       subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
-      expect(security_filing.entry_reference_numbers).to eql("0987654321\n1234567890")
+      expect(security_filing.entry_reference_numbers).to eql("0987654321\n 1234567890")
+      expect(security_filing.entry_numbers).to eql("0987654321\n 1234567890")
     end
 
     it "sets the entry's security filing's entry_reference_numbers if not present" do
       subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
       security_filing.reload
       expect(security_filing.entry_reference_numbers).to eql('1234567890')
-    end
-
-    it "appends the security filing's entry_number if new entry_number is not present" do
-      security_filing.entry_numbers = "0987654321"
-      security_filing.save!
-      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
-      security_filing.reload
-      expect(security_filing.entry_numbers).to eql("0987654321\n1234567890")
-    end
-
-    it "sets the entry's security filing's entry_number if not present" do
-      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
-      security_filing.reload
       expect(security_filing.entry_numbers).to eql('1234567890')
     end
 
@@ -44,6 +31,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       expect(subject).not_to receive(:populate_isf_data)
 
       subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+    end
+
+    it "falls back to matching on house bill if master bill is blank" do
+      entry.update_attributes! house_bills_of_lading: "HBOL12345", master_bills_of_lading: ""
+      security_filing.update_attributes! house_bills_of_lading: "HBOL12345", master_bill_of_lading: ""
+
+      subject.compare(nil, entry.id, nil, nil, nil, nil, nil, nil)
+      security_filing.reload
+      expect(security_filing.entry_numbers).to eql('1234567890')
     end
 
     context "with EDDIEFTZ mapping" do
@@ -141,9 +137,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
       expect(subject.valid_entry? entry).to eq false
     end
 
-    it "returns false if master bill is blank" do
+    it "returns false if master bill is blank and house bill is blank" do
       entry.master_bills_of_lading = nil
       expect(subject.valid_entry? entry).to eq false
-    end    
+    end
+
+    it "returns true if master bill is blank but house bills has a value" do
+      entry.master_bills_of_lading = nil
+      entry.house_bills_of_lading = "HBOL"
+      expect(subject.valid_entry? entry).to eq true
+    end
   end
 end
