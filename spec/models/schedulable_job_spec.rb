@@ -6,7 +6,7 @@ describe SchedulableJob do
     jobs = ["OpenChain::StatClient", "OpenChain::IntegrationClient", "BusinessValidationTemplate", "SurveyResponseUpdate",
             "OfficialTariff", "OpenChain::Purge",
             "OpenChain::LoadCountriesSchedulableJob", "OpenChain::Report::MonthlyUserAuditReport",
-            "OpenChain::BusinessRulesNotifier", "OpenChain::GoogleAccountChecker"]
+            "OpenChain::BusinessRulesNotifier", "OpenChain::GoogleAccountChecker", "OpenChain::InactiveAccountChecker"]
     jobs.each do |klass|
       it "creates a default job for #{klass}" do
         SchedulableJob.create_default_jobs!
