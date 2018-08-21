@@ -126,6 +126,12 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(es)
     end
+
+    it "handles nil registry" do
+      expect(subject).to receive(:registry).and_return nil
+
+      subject.process EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
+    end
   end
 
   describe "handle_snapshot" do

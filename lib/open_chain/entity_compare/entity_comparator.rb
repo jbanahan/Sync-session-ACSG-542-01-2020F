@@ -80,12 +80,15 @@ module OpenChain; module EntityCompare; class EntityComparator
         old_version = last_processed.version
       end
 
-      
-      registry(snapshot).registered_for(snapshot).each do |comp|
-        comp.delay(delay_options).compare(rec_type, rec_id,
-          old_bucket, old_path, old_version,
-          newest_unprocessed.bucket, newest_unprocessed.doc_path, newest_unprocessed.version
-        )
+      r = registry(snapshot)
+      # There's the potential for there not to be anything registered between the time when the snapshot was queued and when it was picked up here.
+      if r
+        r.registered_for(snapshot).each do |comp|
+          comp.delay(delay_options).compare(rec_type, rec_id,
+            old_bucket, old_path, old_version,
+            newest_unprocessed.bucket, newest_unprocessed.doc_path, newest_unprocessed.version
+          )
+        end
       end
 
       all_unprocessed.update_all(compared_at:0.seconds.ago)
