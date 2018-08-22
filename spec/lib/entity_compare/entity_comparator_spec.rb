@@ -45,7 +45,17 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       #should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
+
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      expect(log.old_bucket).to be_nil
+      expect(log.old_path).to be_nil
+      expect(log.old_version).to be_nil
+      expect(log.new_bucket).to eq "b"
+      expect(log.new_path).to eq "d"
+      expect(log.new_version).to eq "v"
     end
+
     it "should handle object with multiple unprocessed snapshots and no processed snapshots" do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
@@ -58,7 +68,17 @@ describe OpenChain::EntityCompare::EntityComparator do
       #all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to be_empty
 
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      # These should all be nil, since the old snapshot was not processed either.
+      expect(log.old_bucket).to be_nil
+      expect(log.old_path).to be_nil
+      expect(log.old_version).to be_nil
+      expect(log.new_bucket).to eq "b"
+      expect(log.new_path).to eq "d"
+      expect(log.new_version).to eq "v"
     end
+
     it "should handle object with multiple unprocessed snapshots and a processed snapshot" do
       processed_es = EntitySnapshot.create!(compared_at: 2.days.ago, created_at: 2.days.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
@@ -71,7 +91,17 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       #all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to be_empty
+
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      expect(log.old_bucket).to eq "cb"
+      expect(log.old_path).to eq "cd"
+      expect(log.old_version).to eq "cv"
+      expect(log.new_bucket).to eq "b"
+      expect(log.new_path).to eq "d"
+      expect(log.new_version).to eq "v"
     end
+
     it "should noop when no unprocessed snapshots newer than the most recently processed" do
       old_es = EntitySnapshot.create!(created_at: 1.day.ago, recordable: order, user:user, bucket: 'ob', doc_path: 'od', version: 'ov')
       processed_es = EntitySnapshot.create!(compared_at: 1.hour.ago, created_at: 1.hour.ago, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
@@ -82,6 +112,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       expect(comparator.compared).to eq []
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq [old_es]
+      expect(EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first).to be_nil
     end
 
     it "should handle newest when two written at same time" do
@@ -94,7 +125,17 @@ describe OpenChain::EntityCompare::EntityComparator do
       expect(comparator.compared).to eq [['Order',order.id,nil, nil, nil,'ob2','od2','ov2']]
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq []
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      # These should all be nil, since the old snapshot was not processed either.
+      expect(log.old_bucket).to be_nil
+      expect(log.old_path).to be_nil
+      expect(log.old_version).to be_nil
+      expect(log.new_bucket).to eq "ob2"
+      expect(log.new_path).to eq "od2"
+      expect(log.new_version).to eq "ov2"
     end
+
     it "should handle newest when two processed from the same time" do
       old_time = 2.days.ago
       EntitySnapshot.create!(compared_at: old_time, created_at: old_time, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv')
@@ -103,6 +144,15 @@ describe OpenChain::EntityCompare::EntityComparator do
       to_process = EntitySnapshot.create!(created_at: Time.now, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
       subject.process(to_process)
       expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv2','ob2','od2','ov2']]
+
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      expect(log.old_bucket).to eq "cb"
+      expect(log.old_path).to eq "cd"
+      expect(log.old_version).to eq "cv2"
+      expect(log.new_bucket).to eq "ob2"
+      expect(log.new_path).to eq "od2"
+      expect(log.new_version).to eq "ov2"
     end
 
     it "skips snapshots that don't have bucket written" do
@@ -117,6 +167,15 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       #all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to include es
+
+      log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
+      expect(log).not_to be_nil
+      expect(log.old_bucket).to eq "cb"
+      expect(log.old_path).to eq "cd"
+      expect(log.old_version).to eq "cv"
+      expect(log.new_bucket).to eq "ob"
+      expect(log.new_path).to eq "od"
+      expect(log.new_version).to eq "ov"
     end
 
     it "skips snapshots where the recordable entity is missing" do
@@ -125,12 +184,15 @@ describe OpenChain::EntityCompare::EntityComparator do
       es.reload
 
       subject.process(es)
+      expect(EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first).to be_nil
     end
 
     it "handles nil registry" do
       expect(subject).to receive(:registry).and_return nil
 
       subject.process EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
+
+      expect(EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first).to be_nil
     end
   end
 

@@ -34,6 +34,7 @@ module OpenChain; class Purge
     # Use "Standard" timeframes for the following
     Message.delay.purge_messages
     ReportResult.delay.purge
+    EntityComparatorLog.delay.purge
   end
 
 end; end;

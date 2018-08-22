@@ -14,6 +14,7 @@ describe OpenChain::Purge do
 
       expect(Message).to receive(:purge_messages)
       expect(ReportResult).to receive(:purge)
+      expect(EntityComparatorLog).to receive(:purge)
 
       subject.purge_data_prior_to reference_date
     end
@@ -29,6 +30,7 @@ describe OpenChain::Purge do
 
       expect(Message).to receive(:delay).and_return obj
       expect(ReportResult).to receive(:delay).and_return obj
+      expect(EntityComparatorLog).to receive(:delay).and_return obj
 
       subject.purge_data_prior_to reference_date
     end
