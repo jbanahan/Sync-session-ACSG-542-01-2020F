@@ -48,6 +48,10 @@ describe CompaniesController do
       expect(company.entity_snapshots.count).to eq 1
     end
     it "warns user if fiscal_reference has changed" do
+      # nil -> "" shouldn't trigger warning
+      put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>''}}
+      expect(flash[:notices]).to_not include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
+      
       put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>'release_date'}}
       expect(flash[:notices]).to include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
     end

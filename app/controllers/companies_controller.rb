@@ -102,7 +102,7 @@ class CompaniesController < ApplicationController
       if @company.update_model_field_attributes(params[:company])
         @company.create_snapshot(current_user)
         add_flash :notices, "Company was updated successfully."
-        add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference != old_fiscal_ref
+        add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference.presence != old_fiscal_ref.presence
       else
         errors_to_flash @company
       end
