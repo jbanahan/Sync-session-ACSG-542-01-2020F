@@ -95,6 +95,21 @@ describe XlsBuilder do
         expect(format_at(sheet, 0, 0).name).to eq "default_currency"
       end
     end
+  
+    context "with merged cell ranges" do
+      it "applies combined styles" do
+        subject.create_style(:bold, {weight: :bold})
+        subject.add_body_row sheet, ["Nigel", nil, nil, "Tufnel"], styles: [:bold, nil, nil, nil], merged_cell_ranges: [(0..1), (2..3)]
+        custom_format_1 = {weight: :bold, horizontal_align: :merge }.hash.to_s
+        expect(format_at(sheet, 0, 0).name).to eq custom_format_1
+        expect(format_at(sheet, 0, 1).name).to eq custom_format_1
+
+        custom_format_2 = {horizontal_align: :merge}.hash.to_s
+        expect(format_at(sheet, 0, 2).name).to eq custom_format_2
+        expect(format_at(sheet, 0, 3).name).to eq custom_format_2
+      end
+    end
+
   end
 
   describe "add_header_row" do

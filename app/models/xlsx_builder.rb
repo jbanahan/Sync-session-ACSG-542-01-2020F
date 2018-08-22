@@ -46,11 +46,12 @@ class XlsxBuilder
   # Row data is expected to be an array indexed according to the data you want in each row of the sheet.
   # If there are any styles / formats you wish to associate with the columns you may pass the style names
   # in the styles variable (if styles is a single value (not an array) - the style will be applied to all columns in the row)
+  # If you wish to merge cells, pass their indexes as a range object (or an array of ranges).
   #
   # By default, date and datetimes will have default_date and default_datetime styles applied (unless overriden by styles given in the styles param)
   #
   # `
-  # xls.add_body_row(sheet, ["Header 1", "Header 2"], styles: :default_header)) # -> Add a row with the :default_header style applied to all columns
+  # xls.add_body_row(sheet, ["Header 1", "Header 2"], styles: :default_header, merged_cell_ranges: (0..1))) # -> Add a row with the :default_header style applied to all columns and merge them
   # `
   #
   # `
@@ -60,7 +61,7 @@ class XlsxBuilder
   #
   # Also, for the standard default styles (default_date, default_datetime, default_header, default_currency), you can reference them here
   # without first having to create them.  ALL OTHER styles you must first create.
-  def add_body_row sheet, row_data, styles: nil
+  def add_body_row sheet, row_data, styles: nil, merged_cell_ranges: []
     opts = {}
 
     data = prep_row_data(Array.wrap(row_data))
@@ -76,6 +77,7 @@ class XlsxBuilder
 
     raw_sheet = sheet.raw_sheet
     row = raw_sheet.add_row data[:row], opts
+    Array.wrap(merged_cell_ranges).each { |range| sheet.raw_sheet.merge_cells row.cells[range] }
 
     data[:hyperlinks].each_pair do |index, hyperlink|
       raw_sheet.add_hyperlink location: hyperlink[:location], ref: row[index]
@@ -173,18 +175,30 @@ class XlsxBuilder
     nil
   end
 
+  # source is a local file path, e.g. "/app/assets..."
+  # opts: {name: <String>, descr: <String>, opacity: <Float>}
+  def add_image sheet, source, width, height, start_at_row, start_at_col, hyperlink: nil, opts: {}
+    opts.merge!(image_src: source, noSelect: true, noMove: true, hyperlink: hyperlink)
+    sheet.raw_sheet.add_image(opts) do |image|
+      image.width = width
+      image.height = height
+      image.start_at start_at_row, start_at_col
+    end
+  end
+
   def self.demo
     load 'xlsx_builder.rb'
     b = self.new
     sheet = b.create_sheet "Testing", headers: ["Test", "Testing"]
     b.add_body_row sheet, ["Testing", 1, 12435.67, Time.zone.now, Time.zone.now, Date.new(2018, 6, 10)], styles: [nil, nil, :default_currency, :default_date, :default_datetime]
     b.add_body_row sheet, ["1"]
-    b.add_body_row sheet, BigDecimal("1.23")
-    link = b.create_link_cell "http://www.google.com", "Google"
+    b.add_body_row sheet, [BigDecimal("1.23")]
+    link = b.create_link_cell "http://www.google.com", link_text: "Google"
     b.add_body_row sheet, [link]
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
+    b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet
@@ -303,4 +317,5 @@ class XlsxBuilder
 
       formats
     end
+
 end

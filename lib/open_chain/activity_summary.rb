@@ -486,11 +486,6 @@ order by importer_id, monthly_statement_due_date desc"
     include OpenChain::Report::ReportHelper
     attr_accessor :iso_code, :importer
     
-    FORMATS = {bold: XlsMaker.create_format("Bold", weight: :bold),
-               bold_header: XlsMaker.create_format("Bold Header", weight: :bold, horizontal_align: :merge),
-               right_header: XlsMaker.create_format("Right Header", weight: :bold, horizontal_align: :right),
-               blue_header: XlsMaker.create_format("Blue Header", weight: :bold, horizontal_align: :merge, pattern_fg_color: :xls_color_41, pattern: 1)}
-
     def self.permission? user, importer_id
       Entry.can_view_importer?(Company.find(importer_id),user)
     end
@@ -539,6 +534,27 @@ order by importer_id, monthly_statement_due_date desc"
           body = "<p>#{user.first_name} #{user.last_name} (#{user.email}) has sent you a report.</p><br>".html_safe + body
         end
         [addresses, body]
+      end
+    end
+
+    # Because Axlsx (and therefore XlsxBuilder) doesn't allow random access to rows, data is written here first.
+    class DrawingBoard
+      attr_reader :rows
+      
+      def initialize
+        @rows = []
+      end
+
+      def insert_row row_number, starting_col_number, row_data, styles = [], merged_cells = []
+        row = @rows[row_number] || {data: [], styles: [], merged_cells: []}
+        ending_col_number = starting_col_number + row_data.count
+        
+        row[:data][starting_col_number...ending_col_number] = row_data
+        row[:styles][starting_col_number...ending_col_number] = styles.presence || Array.new(row_data.count, nil)
+        row[:merged_cells][starting_col_number...ending_col_number] = merged_cells.presence || Array.new(row_data.count, nil)
+        @rows[row_number] = row
+        
+        nil
       end
     end
 
@@ -599,53 +615,84 @@ order by importer_id, monthly_statement_due_date desc"
 
     def convert_to_spreadsheet summary
       imp_name = importer.name
-      wb = XlsMaker.create_workbook "#{imp_name} Summary"
-      write_xls wb, summary
-      workbook_to_tempfile wb, "temp", file_name: "#{imp_name}_entry_detail.xls"
+      wb = XlsxBuilder.new
+      assign_styles wb
+      sheet = wb.create_sheet "Summary"
+      write_xlsx wb, sheet, summary
+      xlsx_workbook_to_tempfile wb, "temp", file_name: "#{imp_name}_entry_detail.xlsx"
     end
 
-    def write_xls wb, summary
-      XlsMaker.add_vfi_color_to_workbook wb
-      sheet = wb.worksheet 0
-      write_header sheet
-      write_summary_header sheet
-      write_summary_body sheet, summary['summary']
+    def assign_styles wb
+      wb.create_style :bold, {b: true}
+      wb.create_style :right_header, {b: true, alignment: {horizontal: :right}}
+      wb.create_style :centered_header, {b: true, alignment: {horizontal: :center}}
+    end
+
+    def write_xlsx wb, sheet, summary
+      board = DrawingBoard.new
+      write_header board
+      write_summary_header board
+      write_summary_body board, summary['summary']
       # FIRST COLUMN
       self.row_num = 12
       if us?
-        write_pms sheet, summary['pms'], (self.row_num += 3) if summary['pms'].present?
-        write_unpaid_duty sheet, summary['unpaid_duty'], (self.row_num += 3) if summary['unpaid_duty'].present?
+        write_pms board, summary['pms'], (self.row_num += 3) if summary['pms'].present?
+        write_unpaid_duty board, summary['unpaid_duty'], (self.row_num += 3) if summary['unpaid_duty'].present?
       else
-        write_k84 sheet, summary['k84'], (self.row_num += 3)
+        write_k84 board, summary['k84'], (self.row_num += 3)
       end
-      write_breakouts sheet, summary, (self.row_num += 3)
-      write_linked_companies sheet, (self.row_num += 3)
+      write_breakouts board, summary, (self.row_num += 3)
+      write_linked_companies board, (self.row_num += 3)
       # SECOND COLUMN
       self.row_num = 12
-      write_released_ytd sheet, summary, (self.row_num += 3)
-      XlsMaker.set_column_widths sheet, [40, 20, 20, 20, 20, 20, 20,20]
+      write_released_ytd board, summary, (self.row_num += 3)
+      transcribe wb, sheet, board
+      wb.set_column_widths sheet, 40, 20, 20, 20, 20, 20, 20,20
+      wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 4, 2
+      nil
     end
 
-    def write_header sheet
-      XlsMaker.insert_body_row sheet, 0, 0, ["Vandegrift VFI Track Insights"] + Array.new(us? ? 6 : 7, nil), [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:blue_header])
-      XlsMaker.insert_cell_value sheet, 1, 0, "#{iso_code} Entry Activity", [], format: FORMATS[:bold]
-      XlsMaker.insert_body_row sheet,   2, 0, ["Date", now], [], false, formats: [nil, XlsMaker::DATE_TIME_FORMAT]
-      XlsMaker.insert_body_row sheet,   3, 0, ["Customer Number", importer.system_code.presence || (us? ? importer.alliance_customer_number : importer.fenix_customer_number)]
-      XlsMaker.insert_body_row sheet,   4, 0, ["View Summary in Real Time", XlsMaker.create_link_cell(activity_summary_url, "Link")]
+    def transcribe wb, sheet, board
+      board.rows.each do |row|
+        if row
+          merged_cells = Array.wrap(merged_cell_array_to_range row)
+          wb.add_body_row sheet, row[:data], {styles: row[:styles], merged_cell_ranges: merged_cells}
+        else
+          wb.add_body_row sheet, [nil]
+        end
+      end
+
+      nil
     end
 
-    def write_summary_header sheet
+    def merged_cell_array_to_range row
+      merged_cells = []
+      row[:merged_cells].each_with_index { |mc, idx| merged_cells << (mc ? idx : nil) }
+      # partition numeric sequences with nils, e.g. [1,2,3,nil,nil,4,5,6] => [[1,2,3],[4,5,6]]
+      merged_cells = merged_cells.chunk{ |mc| !mc.nil?}.select{ |mc| mc.first == true }.map(&:last)
+      merged_cells.map{ |mc| Range.new(mc.first, mc.last) }
+    end
+
+    def write_header board
+      board.insert_row 0, 0, ["Vandegrift VFI Track Insights"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
+      board.insert_row 1, 0, ["#{iso_code} Entry Activity"], [:bold]
+      board.insert_row 2, 0, ["Date", now]
+      board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? importer.alliance_customer_number : importer.fenix_customer_number)]
+      board.insert_row 4, 0, ["View Summary in Real Time", {type: :hyperlink, link_text: "Link", location: activity_summary_url}]
+    end
+
+    def write_summary_header board
       us_headers = ["# of Entries", "Duty", "Fees", "Entered Value", "Invoiced Value", "Units"]
       ca_headers = ["# of Entries", "Duty", "GST", "Duty/GST", "Entered Value", "Invoiced Value", "Units"]
-      XlsMaker.insert_body_row sheet, 7, 0, ["Summary"] + Array.new(us? ? 6 : 7, nil), [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:blue_header])
-      XlsMaker.insert_body_row sheet, 8, 1, us? ? us_headers : ca_headers, [], false, formats: Array.new(us? ? 7 : 8, FORMATS[:bold])
+      board.insert_row 7, 0, ["Summary"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
+      board.insert_row 8, 1, us? ? us_headers : ca_headers, Array.new(us? ? 7 : 8, :bold)
     end
 
-    def write_summary_body sheet, sum
-      XlsMaker.insert_body_row sheet,  9,  0, summary_fields("Released Last 7 Days", sum['1w']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet, 10,  0, summary_fields("Released Last 28 Days", sum['4w']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet, 11,  0, summary_fields("Filed / Not Released", sum['open']), [], false, formats: summary_formats
-      XlsMaker.insert_body_row sheet, 12,  0, summary_fields("Entries On Hold", sum['holds']), [], false, formats: summary_formats
+    def write_summary_body board, sum
+      board.insert_row 9,  0, summary_fields("Released Last 7 Days", sum['1w']), summary_formats
+      board.insert_row 10, 0, summary_fields("Released Last 28 Days", sum['4w']), summary_formats
+      board.insert_row 11, 0, summary_fields("Filed / Not Released", sum['open']), summary_formats
+      board.insert_row 12, 0, summary_fields("Entries On Hold", sum['holds']), summary_formats
     end
 
     def summary_fields heading, row
@@ -658,87 +705,87 @@ order by importer_id, monthly_statement_due_date desc"
 
     def summary_formats
       if us?
-        [nil, nil] + Array.new(4, CURRENCY_FORMAT) + [nil]
+        [nil, nil] + Array.new(4, :default_currency) + [nil]
       else
-        [nil, nil] + Array.new(5, CURRENCY_FORMAT) + [nil]
+        [nil, nil] + Array.new(5, :default_currency) + [nil]
       end
     end
 
-    def write_pms sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Periodic Monthly Statement",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:blue_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, ["Company", "Due", "Paid", "Amount"], [], false, formats: Array.new(4, FORMATS[:bold])
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['paid'], r['amount']], [], false, formats: [nil,nil,nil,CURRENCY_FORMAT] }
+    def write_pms board, rows, row_num
+      board.insert_row row_num, fst_col, ["Periodic Monthly Statement",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row (self.row_num += 1), fst_col, ["Company", "Due", "Paid", "Amount"], Array.new(4, :bold)
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['paid'], r['amount']], [nil,nil,nil,:default_currency] }
     end
       
-    def write_k84 sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Estimated K84 Statement",nil,nil], [], false, formats: Array.new(3, FORMATS[:blue_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, ["Name", "Due", "Amount"], [], false, formats: Array.new(3, FORMATS[:bold])
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['amount']], [], false, formats: [nil,nil,CURRENCY_FORMAT] }
+    def write_k84 board, rows, row_num
+      board.insert_row row_num, fst_col, ["Estimated K84 Statement",nil,nil], Array.new(3, :default_header), Array.new(3, true)
+      board.insert_row (self.row_num += 1), fst_col, ["Name", "Due", "Amount"], Array.new(3, :bold)
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['amount']], [nil,nil,:default_currency] }
     end
 
-    def write_unpaid_duty sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Unpaid Duty",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:blue_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"], [], false, formats: Array.new(4, FORMATS[:bold])
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, [r['customer_name'].upcase, r['total_duty'], r['total_fees'], r['total_duty_and_fees']], [], false, formats: [nil] + Array.new(3, CURRENCY_FORMAT) }
+    def write_unpaid_duty board, rows, row_num
+      board.insert_row row_num, fst_col, ["Unpaid Duty",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row (self.row_num += 1), fst_col, ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"], Array.new(4, :bold)
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['customer_name'].upcase, r['total_duty'], r['total_fees'], r['total_duty_and_fees']], [nil] + Array.new(3, :default_currency) }
     end
 
-    def write_breakouts sheet, sum, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Entry Breakouts",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:blue_header])
-      write_ent_ports sheet, sum["by_port"], (self.row_num += 1)
-      write_lines_by_chpt sheet, sum["by_hts"], (self.row_num +=2 )
+    def write_breakouts board, sum, row_num
+      board.insert_row row_num, fst_col, ["Entry Breakouts",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)      
+      write_ent_ports board, sum["by_port"], (self.row_num += 1)
+      write_lines_by_chpt board, sum["by_hts"], (self.row_num +=2 )
     end
 
-    def write_ent_ports sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Entries by Port",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:bold_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1) , fst_col, ["Port", "1 Week", "4 Weeks", "Open"], [], false, formats: Array.new(4, FORMATS[:bold])
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
+    def write_ent_ports board, rows, row_num
+      board.insert_row row_num, fst_col, ["Entries by Port",nil,nil,nil], Array.new(4, :centered_header), Array.new(4, true)
+      board.insert_row (self.row_num += 1) , fst_col, ["Port", "1 Week", "4 Weeks", "Open"], Array.new(4, :bold)
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
     end
 
-    def write_lines_by_chpt sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Lines by Chapter",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:bold_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1) , fst_col, ["Chapter", "1 Week", "4 Weeks", "Open"], [], false, formats: Array.new(4, FORMATS[:bold])
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
+    def write_lines_by_chpt board, rows, row_num
+      board.insert_row row_num, fst_col, ["Lines by Chapter",nil,nil,nil], Array.new(4, :centered_header), Array.new(4, true)
+      board.insert_row (self.row_num += 1) , fst_col, ["Chapter", "1 Week", "4 Weeks", "Open"], Array.new(4, :bold)
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
     end
 
-    def write_released_ytd sheet, sum, row_num
-      XlsMaker.insert_body_row sheet, row_num, snd_col, ["Released Year To Date",nil], [], false, formats: Array.new(2, FORMATS[:blue_header])
-      write_ytd_summary sheet, sum['summary']['ytd'], (self.row_num += 1)
-      write_ytd_top_5 sheet, sum['vendors_ytd'], (self.row_num += 2)
-      write_ytd_ports sheet, sum['ports_ytd'], (self.row_num += 2)
+    def write_released_ytd board, sum, row_num
+      board.insert_row row_num, snd_col, ["Released Year To Date",nil], Array.new(2, :default_header), Array.new(2, true)
+      write_ytd_summary board, sum['summary']['ytd'], (self.row_num += 1)
+      write_ytd_top_5 board, sum['vendors_ytd'], (self.row_num += 2)
+      write_ytd_ports board, sum['ports_ytd'], (self.row_num += 2)
     end
 
-    def write_ytd_summary sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, snd_col, ["Summary",nil], [], false, formats: Array.new(2, FORMATS[:bold_header])
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Entries", rows['count']]
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Duty", rows['duty']], [], false, formats: [nil, CURRENCY_FORMAT]
+    def write_ytd_summary board, rows, row_num
+      board.insert_row row_num, snd_col, ["Summary",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row (self.row_num += 1), snd_col, ["Entries", rows['count']]
+      board.insert_row (self.row_num += 1), snd_col, ["Duty", rows['duty']], [nil, :default_currency]
       if us?
-        XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Fees", rows['fees']], [], false, formats: [nil, CURRENCY_FORMAT] 
+        board.insert_row (self.row_num += 1), snd_col, ["Fees", rows['fees']], [nil, :default_currency] 
       else
-        XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["GST", rows['gst']], [], false, formats: [nil, CURRENCY_FORMAT] 
-        XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Duty/GST", rows['duty_gst']], [], false, formats: [nil, CURRENCY_FORMAT] 
+        board.insert_row (self.row_num += 1), snd_col, ["GST", rows['gst']], [nil, :default_currency] 
+        board.insert_row (self.row_num += 1), snd_col, ["Duty/GST", rows['duty_gst']], [nil, :default_currency] 
       end
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Entered Value", rows['entered']], [], false, formats: [nil, CURRENCY_FORMAT]
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Invoiced Value", rows['invoiced']], [], false, formats: [nil, CURRENCY_FORMAT]
-      XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, ["Units", rows['units']]
+      board.insert_row (self.row_num += 1), snd_col, ["Entered Value", rows['entered']], [nil, :default_currency]
+      board.insert_row (self.row_num += 1), snd_col, ["Invoiced Value", rows['invoiced']], [nil, :default_currency]
+      board.insert_row (self.row_num += 1), snd_col, ["Units", rows['units']]
     end
 
-    def write_ytd_top_5 sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, snd_col, ["Top 5 Vendors",nil], [], false, formats: Array.new(2, FORMATS[:bold_header])
-      XlsMaker.insert_cell_value sheet, (self.row_num += 1), (snd_col + 1), "Entered Value", [], format: FORMATS[:right_header]
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, [r['name'], r['entered']], [], false, formats: [nil, CURRENCY_FORMAT] }
+    def write_ytd_top_5 board, rows, row_num
+      board.insert_row row_num, snd_col, ["Top 5 Vendors",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row (self.row_num += 1), (snd_col + 1), ["Entered Value"], [:right_header]
+      rows.each { |r| board.insert_row (self.row_num += 1), snd_col, [r['name'], r['entered']],[nil, :default_currency] }
     end
 
-    def write_ytd_ports sheet, rows, row_num
-      XlsMaker.insert_body_row sheet, row_num, snd_col, ["Ports",nil], [], false, formats: Array.new(2, FORMATS[:bold_header])
-      XlsMaker.insert_cell_value sheet, (self.row_num += 1), (snd_col + 1), "Shipments", [], format: FORMATS[:right_header]
-      rows.each { |r| XlsMaker.insert_body_row sheet, (self.row_num += 1), snd_col, [r['name'], r['count']] }
+    def write_ytd_ports board, rows, row_num
+      board.insert_row row_num, snd_col, ["Ports",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row (self.row_num += 1), (snd_col + 1), ["Shipments"], [:right_header]
+      rows.each { |r| board.insert_row (self.row_num += 1), snd_col, [r['name'], r['count']] }
     end
 
-    def write_linked_companies sheet, row_num
-      XlsMaker.insert_body_row sheet, row_num, fst_col, ["Companies Included",nil,nil,nil], [], false, formats: Array.new(4, FORMATS[:blue_header])
+    def write_linked_companies board, row_num
+      board.insert_row row_num, fst_col, ["Companies Included",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
       cust_num_attrib = us? ? "alliance_customer_number" : "fenix_customer_number"
       [importer].concat(importer.linked_companies.where("LENGTH(#{cust_num_attrib}) > 0")).each do |lc|
-        XlsMaker.insert_body_row sheet, (self.row_num += 1), fst_col, ["#{lc.name} (#{lc.send(cust_num_attrib.to_sym)})"]
+        board.insert_row (self.row_num += 1), fst_col, ["#{lc.name} (#{lc.send(cust_num_attrib.to_sym)})"]
       end
     end
   end

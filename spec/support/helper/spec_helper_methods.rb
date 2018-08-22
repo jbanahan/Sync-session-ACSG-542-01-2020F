@@ -268,6 +268,12 @@ module Helpers
       format.try(:format_code)
     end
 
+    def merged_cell_ranges sheet
+      self.sheet(sheet) do |ws|
+        return ws.merged_cells.map{ |mc| {row: mc.ref.row_range.first, cols: mc.ref.col_range } }
+      end
+    end
+
     def width_at sheet, column
       self.sheet(sheet) do |ws|
         return ws.get_column_width_raw column

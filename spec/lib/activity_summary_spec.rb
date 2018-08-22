@@ -755,50 +755,52 @@ describe OpenChain::ActivitySummary do
         date = DateTime.new(2018,3,15)
         file = nil
         Timecop.freeze(date) { file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'US' }
-        wb = Spreadsheet.open file.path
-        sheet = wb.worksheets[0]
-          
-        expect(sheet.name).to eq "Konvenientz Summary"
-        expect(sheet.row(0)).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
-        expect(sheet.row(1)).to eq ["US Entry Activity"]
-        expect(sheet.row(2)[0..1]).to eq ["Date", DateTime.new(2018,3,14,19,00)]
-        expect(sheet.row(3)).to eq ["Customer Number", "SYSCODE"]
-        expect(sheet.row(4)).to eq ["View Summary in Real Time", "Link"]
-        expect(sheet.row(7)).to eq ["Summary",nil,nil,nil,nil,nil,nil]
-        expect(sheet.row(8)).to eq [nil, "# of Entries", "Duty", "Fees", "Entered Value", "Invoiced Value", "Units"]
-        expect(sheet.row(9)).to eq ["Released Last 7 Days", 1,2,3,4,5,6]
-        expect(sheet.row(10)).to eq ["Released Last 28 Days", 7,8,9,10,11,12]
-        expect(sheet.row(11)).to eq ["Filed / Not Released", 31,32,33,34,35,36]
-        expect(sheet.row(12)).to eq ["Entries On Hold", 25,26,27,28,29,30]
+        file.rewind
+        reader = XlsxTestReader.new(file.path).raw_workbook_data
+        sheet = reader["Summary"]
+      
+        expect(sheet[0]).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
+        expect(sheet[1]).to eq ["US Entry Activity"]
+        expect(sheet[2][0]).to eq "Date"
+        # unclear why this tolerance is needed
+        expect(sheet[2][1]).to be_within(0.00000000001).of DateTime.new(2018,3,14,19,00)
+        expect(sheet[3]).to eq ["Customer Number", "SYSCODE"]
+        expect(sheet[4]).to eq ["View Summary in Real Time", "Link"]
+        expect(sheet[7]).to eq ["Summary",nil,nil,nil,nil,nil,nil]
+        expect(sheet[8]).to eq [nil, "# of Entries", "Duty", "Fees", "Entered Value", "Invoiced Value", "Units"]
+        expect(sheet[9]).to eq ["Released Last 7 Days", 1,2,3,4,5,6]
+        expect(sheet[10]).to eq ["Released Last 28 Days", 7,8,9,10,11,12]
+        expect(sheet[11]).to eq ["Filed / Not Released", 31,32,33,34,35,36]
+        expect(sheet[12]).to eq ["Entries On Hold", 25,26,27,28,29,30]
         # column 1
-        expect(sheet.row(15)[0..3]).to eq ["Periodic Monthly Statement",nil,nil,nil]
-        expect(sheet.row(16)[0..3]).to eq ["Company", "Due", "Paid", "Amount"]
-        expect(sheet.row(17)[0..3]).to eq ["Super Pow", 43,44,45]
-        expect(sheet.row(20)[0..3]).to eq ["Entry Breakouts", nil,nil,nil]
-        expect(sheet.row(21)[0..3]).to eq ["Entries by Port", nil,nil,nil]
-        expect(sheet.row(22)[0..3]).to eq ["Port", "1 Week", "4 Weeks", "Open"]
-        expect(sheet.row(23)[0..3]).to eq ["NYC", 46,47,48]
-        expect(sheet.row(25)[0..3]).to eq ["Lines by Chapter", nil,nil,nil]
-        expect(sheet.row(26)[0..3]).to eq ["Chapter", "1 Week", "4 Weeks", "Open"]
-        expect(sheet.row(27)[0..3]).to eq ["chpt", 49,50,51]
-        expect(sheet.row(30)[0..3]).to eq ["Companies Included", nil, nil, nil]
-        expect(sheet.row(31)[0..3]).to eq ["Konvenientz ()", nil, nil, nil]
-        expect(sheet.row(32)[0..3]).to eq ["Super Pow (POW)", nil, nil, nil]
+        expect(sheet[15][0..3]).to eq ["Periodic Monthly Statement",nil,nil,nil]
+        expect(sheet[16][0..3]).to eq ["Company", "Due", "Paid", "Amount"]
+        expect(sheet[17][0..3]).to eq ["Super Pow", 43,44,45]
+        expect(sheet[20][0..3]).to eq ["Entry Breakouts", nil,nil,nil]
+        expect(sheet[21][0..3]).to eq ["Entries by Port", nil,nil,nil]
+        expect(sheet[22][0..3]).to eq ["Port", "1 Week", "4 Weeks", "Open"]
+        expect(sheet[23][0..3]).to eq ["NYC", 46,47,48]
+        expect(sheet[25][0..3]).to eq ["Lines by Chapter", nil,nil,nil]
+        expect(sheet[26][0..3]).to eq ["Chapter", "1 Week", "4 Weeks", "Open"]
+        expect(sheet[27][0..3]).to eq ["chpt", 49,50,51]
+        expect(sheet[30][0..3]).to eq ["Companies Included", nil, nil, nil]
+        expect(sheet[31][0..3]).to eq ["Konvenientz ()"]
+        expect(sheet[32][0..3]).to eq ["Super Pow (POW)"]
         # column 2
-        expect(sheet.row(15)[5..6]).to eq ["Released Year To Date", nil]
-        expect(sheet.row(16)[5..6]).to eq ["Summary", nil]
-        expect(sheet.row(17)[5..6]).to eq ["Entries", 37]
-        expect(sheet.row(18)[5..6]).to eq ["Duty", 38]
-        expect(sheet.row(19)[5..6]).to eq ["Fees", 39]
-        expect(sheet.row(20)[5..6]).to eq ["Entered Value", 40]
-        expect(sheet.row(21)[5..6]).to eq ["Invoiced Value", 41]
-        expect(sheet.row(22)[5..6]).to eq ["Units", 42]
-        expect(sheet.row(24)[5..6]).to eq ["Top 5 Vendors", nil]
-        expect(sheet.row(25)[5..6]).to eq [nil, "Entered Value"]
-        expect(sheet.row(26)[5..6]).to eq ["ACME", 52]
-        expect(sheet.row(28)[5..6]).to eq ["Ports", nil]
-        expect(sheet.row(29)[5..6]).to eq [nil, "Shipments"]
-        expect(sheet.row(30)[5..6]).to eq ["LA", 53]        
+        expect(sheet[15][5..6]).to eq ["Released Year To Date", nil]
+        expect(sheet[16][5..6]).to eq ["Summary", nil]
+        expect(sheet[17][5..6]).to eq ["Entries", 37]
+        expect(sheet[18][5..6]).to eq ["Duty", 38]
+        expect(sheet[19][5..6]).to eq ["Fees", 39]
+        expect(sheet[20][5..6]).to eq ["Entered Value", 40]
+        expect(sheet[21][5..6]).to eq ["Invoiced Value", 41]
+        expect(sheet[22][5..6]).to eq ["Units", 42]
+        expect(sheet[24][5..6]).to eq ["Top 5 Vendors", nil]
+        expect(sheet[25][5..6]).to eq [nil, "Entered Value"]
+        expect(sheet[26][5..6]).to eq ["ACME", 52]
+        expect(sheet[28][5..6]).to eq ["Ports", nil]
+        expect(sheet[29][5..6]).to eq [nil, "Shipments"]
+        expect(sheet[30][5..6]).to eq ["LA", 53]        
         
         file.close
       end
@@ -809,12 +811,13 @@ describe OpenChain::ActivitySummary do
         summary['activity_summary']['unpaid_duty'] = [{'customer_name' => 'RiteChoys', 'total_duty' => 54, 'total_fees' => 55, 'total_duty_and_fees' => 56}]
         expect(OpenChain::ActivitySummary).to receive(:generate_us_entry_summary).with(imp.id).and_return summary
         file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'US'
-        wb = Spreadsheet.open file.path
-        sheet = wb.worksheets[0]
+        file.rewind
+        reader = XlsxTestReader.new(file.path).raw_workbook_data
+        sheet = reader["Summary"]
         
-        expect(sheet.row(15)[0..3]).to eq ["Unpaid Duty",nil,nil,nil]
-        expect(sheet.row(16)[0..3]).to eq ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"]
-        expect(sheet.row(17)[0..3]).to eq ["RITECHOYS", 54,55,56]
+        expect(sheet[15][0..3]).to eq ["Unpaid Duty",nil,nil,nil]
+        expect(sheet[16][0..3]).to eq ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"]
+        expect(sheet[17][0..3]).to eq ["RITECHOYS", 54,55,56]
         
         file.close
       end
@@ -824,39 +827,39 @@ describe OpenChain::ActivitySummary do
         summary['activity_summary'].delete('pms')
         summary['activity_summary']['k84'] = [{'importer_name' => 'Walshop', 'due' => 57, 'amount' => 58}]
         expect(OpenChain::ActivitySummary).to receive(:generate_ca_entry_summary).with(imp.id).and_return summary
-        file = file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'CA'
-        wb = Spreadsheet.open file.path
-        sheet = wb.worksheets[0]
+        file = described_class.run_report user, 'importer_id' => imp.id, 'iso_code' => 'CA'
+        file.rewind
+        reader = XlsxTestReader.new(file.path).raw_workbook_data
+        sheet = reader["Summary"]
 
-        expect(sheet.row(1)).to eq ["CA Entry Activity"]
-        expect(sheet.row(8)).to eq [nil, '# of Entries', 'Duty', 'GST', 'Duty/GST', 'Entered Value', 'Invoiced Value', 'Units']
-        expect(sheet.row(9)).to eq ["Released Last 7 Days", 1,2,3.5,3.6,4,5,6]
-        expect(sheet.row(10)).to eq ["Released Last 28 Days", 7,8,9.5,9.6,10,11,12]
-        expect(sheet.row(11)).to eq ["Filed / Not Released", 31,32,33.5,33.6,34,35,36]
-        expect(sheet.row(12)).to eq ["Entries On Hold", 25,26,27.5,27.6,28,29,30]
+        expect(sheet[1]).to eq ["CA Entry Activity"]
+        expect(sheet[8]).to eq [nil, '# of Entries', 'Duty', 'GST', 'Duty/GST', 'Entered Value', 'Invoiced Value', 'Units']
+        expect(sheet[9]).to eq ["Released Last 7 Days", 1,2,3.5,3.6,4,5,6]
+        expect(sheet[10]).to eq ["Released Last 28 Days", 7,8,9.5,9.6,10,11,12]
+        expect(sheet[11]).to eq ["Filed / Not Released", 31,32,33.5,33.6,34,35,36]
+        expect(sheet[12]).to eq ["Entries On Hold", 25,26,27.5,27.6,28,29,30]
         # column 1 (where different from US)
-        expect(sheet.row(15)[0..2]).to eq ["Estimated K84 Statement",nil,nil]
-        expect(sheet.row(16)[0..2]).to eq ["Name", "Due", "Amount"]
-        expect(sheet.row(17)[0..2]).to eq ["Walshop", 57,58,]
-        expect(sheet.row(30)[0..3]).to eq ["Companies Included", nil, nil, nil]
-        expect(sheet.row(31)[0..3]).to eq ["Konvenientz ()", nil, nil, nil]
-        expect(sheet.row(32)[0..3]).to eq ["Walshop (WSP)", nil, nil, nil]
+        expect(sheet[15][0..2]).to eq ["Estimated K84 Statement",nil,nil]
+        expect(sheet[16][0..2]).to eq ["Name", "Due", "Amount"]
+        expect(sheet[17][0..2]).to eq ["Walshop", 57,58,]
+        expect(sheet[30][0..3]).to eq ["Companies Included", nil, nil, nil]
+        expect(sheet[31][0..3]).to eq ["Konvenientz ()", nil, nil, nil] # not sure why this has trailing nils
+        expect(sheet[32][0..3]).to eq ["Walshop (WSP)"] 
         # column 2
-        expect(sheet.row(15)[6..7]).to eq ["Released Year To Date", nil]
-        expect(sheet.row(16)[6..7]).to eq ["Summary", nil]
-        expect(sheet.row(17)[6..7]).to eq ["Entries", 37]
-        expect(sheet.row(18)[6..7]).to eq ["Duty", 38]
-        expect(sheet.row(19)[6..7]).to eq ["GST", 39.5]
-        expect(sheet.row(20)[6..7]).to eq ["Duty/GST", 39.6]
-        expect(sheet.row(21)[6..7]).to eq ["Entered Value", 40]
-        expect(sheet.row(22)[6..7]).to eq ["Invoiced Value", 41]
-        expect(sheet.row(23)[6..7]).to eq ["Units", 42]
-        expect(sheet.row(25)[6..7]).to eq ["Top 5 Vendors", nil]
-        expect(sheet.row(26)[6..7]).to eq [nil, "Entered Value"]
-        expect(sheet.row(27)[6..7]).to eq ["ACME", 52]
-        expect(sheet.row(29)[6..7]).to eq ["Ports", nil]
-        expect(sheet.row(30)[6..7]).to eq [nil, "Shipments"]
-        expect(sheet.row(31)[6..7]).to eq ["LA", 53]        
+        expect(sheet[16][6..7]).to eq ["Summary", nil]
+        expect(sheet[17][6..7]).to eq ["Entries", 37]
+        expect(sheet[18][6..7]).to eq ["Duty", 38]
+        expect(sheet[19][6..7]).to eq ["GST", 39.5]
+        expect(sheet[20][6..7]).to eq ["Duty/GST", 39.6]
+        expect(sheet[21][6..7]).to eq ["Entered Value", 40]
+        expect(sheet[22][6..7]).to eq ["Invoiced Value", 41]
+        expect(sheet[23][6..7]).to eq ["Units", 42]
+        expect(sheet[25][6..7]).to eq ["Top 5 Vendors", nil]
+        expect(sheet[26][6..7]).to eq [nil, "Entered Value"]
+        expect(sheet[27][6..7]).to eq ["ACME", 52]
+        expect(sheet[29][6..7]).to eq ["Ports", nil]
+        expect(sheet[30][6..7]).to eq [nil, "Shipments"]
+        expect(sheet[31][6..7]).to eq ["LA", 53]        
 
         file.close
       end
@@ -917,7 +920,7 @@ describe OpenChain::ActivitySummary do
     end
 
     describe "run_schedulable" do
-      it "creates and emails spreadsheet" do
+      it "creates and emails spreadsheet" do        
         stub_master_setup
         now = DateTime.new(2018,3,15)
         Timecop.freeze(now) { described_class.run_schedulable('system_code' => imp.system_code, 'iso_code' => 'US', 'email' => 'tufnel@stonehenge.biz') }
@@ -925,14 +928,14 @@ describe OpenChain::ActivitySummary do
         expect(mail.to).to eq ['tufnel@stonehenge.biz']
         expect(mail.subject).to eq "Konvenientz US entry summary for 2018-03-14"
         expect(mail.body.raw_source).to match(/Konvenientz US entry summary for 2018-03-14 is attached./)
-        att = mail.attachments['Konvenientz_entry_detail.xls']
+        att = mail.attachments['Konvenientz_entry_detail.xlsx']
         Tempfile.open("temp") do |t|
           t.binmode
           t << att.read
           t.flush
-          wb = Spreadsheet.open t.path
-          sheet = wb.worksheets[0]
-          expect(sheet.row(0)).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
+          reader = XlsxTestReader.new(t.path).raw_workbook_data
+          sheet = reader["Summary"]
+          expect(sheet[0]).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
         end
       end
     end

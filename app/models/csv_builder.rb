@@ -45,7 +45,7 @@ class CsvBuilder
 
   # Adds a new row to the csv as the last row in the document (or first if there are no rows).
   # Row data is expected to be an array indexed according to the data you want in each row of the sheet.
-  def add_body_row sheet, row_data, styles: nil
+  def add_body_row sheet, row_data, styles: nil, merged_cell_ranges: []
     sheet.raw_sheet << prep_row_data(Array.wrap(row_data))
     nil
   end
@@ -97,6 +97,11 @@ class CsvBuilder
     nil
   end
 
+  # No-op...csv doesn't support images - here merely to maintain api consistency between output formats
+  def add_image sheet, source, width, height, start_at_row, start_at_col, hyperlink: nil, opts: {}
+    nil
+  end
+
   # This is just a simple way create a demo document with all the functionality that the builder
   # classes provide.
   def self.demo
@@ -105,12 +110,13 @@ class CsvBuilder
     sheet = b.create_sheet "Testing", headers: ["Test", "Testing"]
     b.add_body_row sheet, ["Testing", 1, 12435.67, Time.zone.now, Time.zone.now, Date.new(2018, 6, 10)], styles: [nil, nil, :default_currency, :default_date, :default_datetime]
     b.add_body_row sheet, ["1"]
-    b.add_body_row sheet, BigDecimal("1.23")
-    link = b.create_link_cell "http://www.google.com", "Google"
+    b.add_body_row sheet, [BigDecimal("1.23")]
+    link = b.create_link_cell "http://www.google.com", link_text: "Google"
     b.add_body_row sheet, [link]
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
+    b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet

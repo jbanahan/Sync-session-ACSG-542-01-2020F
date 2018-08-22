@@ -65,6 +65,10 @@ module OpenChain
         row_number - initial_row
       end
 
+      def xlsx_workbook_to_tempfile wb, prefix, opts={}, &proc
+        write_tempfile wb, prefix, '.xlsx', opts, proc
+      end
+
       def workbook_to_tempfile wb, prefix, opts={}, &proc
         write_tempfile wb, prefix, '.xls', opts, proc
       end

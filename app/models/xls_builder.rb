@@ -51,7 +51,7 @@ class XlsBuilder
   # By default, date and datetimes will have default_date and default_date_time styles applied (unless overriden by styles given in the styles param)
   #
   # `
-  # xls.add_body_row(sheet, ["Header 1", "Header 2"], styles: :default_header)) # -> Add a row with the :default_header style applied to all columns
+  # xls.add_body_row(sheet, ["Header 1", "Header 2"], styles: :default_header), merged_cell_ranges: (0..1)) # -> Add a row with the :default_header style applied to all columns and merge the first two
   # `
   #
   # `
@@ -61,11 +61,11 @@ class XlsBuilder
   #
   # Also, for the standard default styles (default_date, default_datetime, default_header, default_currency), you can reference them here
   # without first having to create them.  ALL OTHER styles you must first create.
-  def add_body_row sheet, row_data, styles: nil
+  def add_body_row sheet, row_data, styles: nil, merged_cell_ranges: []
     opts = {}
     row_data = Array.wrap(row_data)
 
-    styles = make_style_param(row_data, styles)
+    styles = make_style_param(row_data, styles, merged_cell_ranges)
     
     data = prep_row_data(Array.wrap(row_data))
 
@@ -115,6 +115,7 @@ class XlsBuilder
   # return_exisiting - if true (defaults to false) prevents erroring if you try and create a style that already exists..returning the existing style instead.
   def create_style format_name, format_definition, prevent_override: true, return_existing: false
     @styles ||= {}
+    @style_definitions ||= {}
     existing = @styles[format_name.to_sym]
     if existing && return_existing
       return existing
@@ -123,6 +124,7 @@ class XlsBuilder
     else
       id = format_name.to_sym
       @styles[id] = create_workbook_style(format_name, format_definition)
+      @style_definitions[id] = format_definition
     end
 
     id
@@ -176,18 +178,24 @@ class XlsBuilder
     end
   end
 
+  # No-op...Spreadsheet gem doesn't support images - here merely to maintain api consistency between output formats
+  def add_image sheet, source, width, height, start_at_row, start_at_col, hyperlink: nil, opts: {}
+    nil
+  end
+
   def self.demo
     load 'xls_builder.rb'
     b = self.new
     sheet = b.create_sheet "Testing", headers: ["Test", "Testing"]
     b.add_body_row sheet, ["Testing", 1, 12435.67, Time.zone.now, Time.zone.now, Date.new(2018, 6, 10)], styles: [nil, nil, :default_currency, :default_date, :default_datetime]
     b.add_body_row sheet, ["1"]
-    b.add_body_row sheet, BigDecimal("1.23")
+    b.add_body_row sheet, [BigDecimal("1.23")]
     link = b.create_link_cell "http://www.google.com", link_text: "Google"
     b.add_body_row sheet, [link]
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
+    b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet
@@ -281,23 +289,31 @@ class XlsBuilder
       style
     end
 
-    def make_style_param row_data, styles
+    def make_style_param row_data, styles, merged_cell_ranges=[]
       # This can be a single value or it can be an array, we need to preserve that because axlsx does different things 
       # based on if it's one or the other
-      if styles.respond_to?(:map)
-        # Return an array, which means that axlsx will only style certain columns
-        styles.map {|s| find_style s }
-      else
-        # This is just a single object, but due to the need to combine default styling with this
-        # we need to map it to each column from the input row_data
-        style = find_style(styles)
-
+      if !styles.respond_to?(:map)
         # Basically, return an array using the single style defined as the value for each index
         # This makes applying the style easy, what this is essentially saying is use 
         # this style for every column
-        row_data.map {|s| style }
+        styles = row_data.map {|s| styles }
       end
 
+      styles = merge_cell_styles styles, merged_cell_ranges
+      styles.map{ |s| find_style s }
+    end
+
+    def merge_cell_styles styles, merged_cell_ranges
+      # Combine the styles in merged cells along with the :merge flag into a new style which overwrites the original
+      # Leaves styles unchanged if there aren't any merged cells.
+      Array.wrap(merged_cell_ranges).each do |mcr|
+        combined_style = { horizontal_align: :merge }
+        styles[mcr].each { |s| combined_style.merge!(@style_definitions[s]) if s }
+        style_name = combined_style.hash.to_s.to_sym
+        create_style style_name, combined_style, prevent_override: false, return_existing: true
+        styles[mcr] = Array.new mcr.count, style_name
+      end
+      styles
     end
 
     def merge_array default_formats, overide_formats

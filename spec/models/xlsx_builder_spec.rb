@@ -100,6 +100,13 @@ describe XlsxBuilder do
         expect(reader.number_format(sheet, 0, 0)).to eq "#,##0.00"
       end
     end
+
+    context "merged ranges" do
+      it "applies merged range, if specified" do
+        subject.add_body_row sheet, ["Nigel", "Tufnel", "was", "here!"], merged_cell_ranges: [(0..1),(2..3)]
+        expect(reader.merged_cell_ranges(sheet)).to eq([{row: 0, cols: (0..1)}, {row: 0, cols: (2..3)}])
+      end
+    end
   end
 
   describe "add_header_row" do
@@ -128,7 +135,7 @@ describe XlsxBuilder do
     end
 
     it "writes data to given file path" do
-      Tempfile.open(["test", ".xls"]) do |file|
+      Tempfile.open(["test", ".xlsx"]) do |file|
         subject.write file.path
 
         file.rewind
@@ -233,6 +240,33 @@ describe XlsxBuilder do
       expect(reader.width_at(sheet, 1)).to eq 5
       expect(reader.width_at(sheet, 2)).to eq 10
     end
+  end
+
+  describe "add_image" do
+    let (:sheet) {
+      sheet = subject.create_sheet "Sheet", headers: ["Header", "Header 2", "Header 3"]
+      subject.set_column_widths sheet, 100, 1, 12
+
+      sheet
+    }
+
+    it "assigns properties to image" do
+      subject.add_image sheet, "spec/fixtures/files/attorney.png", 375, 360, 1, 0, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
+      
+      anchor = sheet.raw_sheet.drawing.anchors.last
+      
+      marker = anchor.from
+      expect(marker.col).to eq 1
+      expect(marker.row).to eq 0 
+      
+      pic = anchor.object
+      expect(pic.name).to eq "Saul"
+      expect(pic.image_src).to eq "spec/fixtures/files/attorney.png"
+      expect(pic.hyperlink.href).to eq "https://en.wikipedia.org/wiki/Better_Call_Saul"
+      expect(pic.width).to eq 375
+      expect(pic.height).to eq 360
+    end
+
   end
 
 end
