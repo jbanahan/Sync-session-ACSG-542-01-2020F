@@ -738,19 +738,23 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def process_notes e, entry
       # There are sometimes thousands of comments...just do a delete here, rather than a destroy.  Entry comments don't have 
       # descendents we need to worry about so the time savings can actually add up to multiple seconds here.
+      # We're then going to use a specialized bulk import process to roll all the lines into a single SQL statement.
+      # This is an attempt to workaround deadlocks occurring from doing hundreds of insert into statements 
+      # (which is triggered by database gap locks)
 
       # I don't know why but `entry.entry_comments.delete_all` is generating a distinct sql delete per comment, rather 
       # than the single "delete from entry_comments where entry_id = ?"" that the documentation says it should be doing.
       # Possible rails bug?  Whatever it is, this is a workaround for that behavior not working.
       EntryComment.where(entry_id: entry.id).delete_all
-      entry.entry_comments.reload
 
       customs_response_times = []
+      comments = []
       Array.wrap(e[:notes]).each do |n|
         note = n[:note]
         generated_at = parse_numeric_datetime(n[:date_updated])
 
-        comment = entry.entry_comments.build body: n[:note], username: n[:modified_by], generated_at: generated_at
+        comment = EntryComment.new entry_id: entry.id, body: n[:note], username: n[:modified_by], generated_at: generated_at
+        comments << comment
         # The public private flag is set a little wonky because we do a before_save callback as a further step to determine if the 
         # comment should be public or not.  This is skipped if the flag is already set.
         if n[:confidential].to_s.upcase == "Y"
@@ -766,7 +770,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         customs_response_times << generated_at if comment.username.to_s.upcase == "CUSTOMS"
       end
 
+      if comments.length > 0
+        EntryComment.import comments
+      end
+
       entry.entry_filed_date = (customs_response_times.size > 0 ? customs_response_times.sort.first : nil)
+      entry.entry_comments.reload
 
       nil
     end

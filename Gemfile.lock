@@ -64,6 +64,8 @@ GEM
     REX12 (0.2.0)
     RedCloth (4.2.9)
     active_record_query_trace (1.5.4)
+    activerecord-import (0.25.0)
+      activerecord (>= 3.2)
     addressable (2.5.2)
       public_suffix (>= 2.0.2, < 4.0)
     annotate (2.7.2)
@@ -398,6 +400,7 @@ DEPENDENCIES
   REX12 (~> 0.2)
   RedCloth (= 4.2.9)
   active_record_query_trace
+  activerecord-import
   annotate
   aws-sdk (~> 2.6)
   aws-sdk-v1 (~> 1.66)
