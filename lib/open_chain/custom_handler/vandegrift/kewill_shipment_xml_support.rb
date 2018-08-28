@@ -347,7 +347,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "chargesAmt", g.number(line.charges, 11, decimal_places: 2, pad_string: false)) if nonzero?(line.charges)
     add_element(parent, "relatedParties", g.string((true?(line.related_parties) ? "Y" : "N"), 1, pad_string: false, exception_on_truncate: false)) unless line.related_parties.nil?
     add_element(parent, "ftzQuantity", g.number(line.ftz_quantity, 10, pad_string: false, decimal_places: 0)) if nonzero?(line.ftz_quantity)
-    add_element(parent, "descr", g.string(line.description, 70, pad_string: false)) unless line.description.blank?
+    add_element(parent, "descr", g.string(line.description, 40, pad_string: false)) unless line.description.blank?
     add_element(parent, "noContainer", g.string(line.container_number, 15, pad_string: false)) unless line.container_number.blank?
     nil
   end
