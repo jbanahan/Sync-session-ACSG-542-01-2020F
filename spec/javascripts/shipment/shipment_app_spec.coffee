@@ -22,7 +22,7 @@ describe 'ShipmentApp', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
-        spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
+        spyOn(svc,'processTradecardPackManifest').and.returnValue(r.promise)
         scope.process(shipment,attachment, 'Tradecard Manifest', true)
         r.resolve({data: {id: 1}})
         expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2, true)
@@ -31,7 +31,7 @@ describe 'ShipmentApp', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
-        spyOn(svc,'processBookingWorksheet').andReturn(r.promise)
+        spyOn(svc,'processBookingWorksheet').and.returnValue(r.promise)
         scope.process(shipment,attachment, 'Booking Worksheet', null)
         r.resolve({data: {id: 1}})
         expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, null)
@@ -40,7 +40,7 @@ describe 'ShipmentApp', ->
         attachment = {id: 2}
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
-        spyOn(svc,'processManifestWorksheet').andReturn(r.promise)
+        spyOn(svc,'processManifestWorksheet').and.returnValue(r.promise)
         scope.process(shipment,attachment, 'Manifest Worksheet', true)
         r.resolve({data: {id: 1}})
         expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, true)
@@ -86,9 +86,9 @@ describe 'ShipmentApp', ->
       it 'should delegate to service and set orders', ->
         available_orders = [{id: 1}, {id: 2}]
         booked_orders = [{id: 3}, {id: 4}]
-        spyOn(svc,'getShipment').andReturn(q.when({data: {shipment: {id: 10}}}))
-        spyOn(svc,'getAvailableOrders').andReturn(q.when({data: {available_orders: available_orders}}))
-        spyOn(svc,'getBookedOrders').andReturn(q.when({data: {booked_orders: booked_orders, lines_available:true}}))
+        spyOn(svc,'getShipment').and.returnValue(q.when({data: {shipment: {id: 10}}}))
+        spyOn(svc,'getAvailableOrders').and.returnValue(q.when({data: {available_orders: available_orders}}))
+        spyOn(svc,'getBookedOrders').and.returnValue(q.when({data: {booked_orders: booked_orders, lines_available:true}}))
 
         ctrl.loadShipment(10)
         scope.$apply()
@@ -107,8 +107,8 @@ describe 'ShipmentApp', ->
         activeOrder = {id: 99, order_lines: []}
         r = q.defer()
         s = q.defer()
-        spyOn(svc,'getOrder').andReturn(r.promise)
-        spyOn(svc,'getOrderShipmentRefs').andReturn(s.promise)
+        spyOn(svc,'getOrder').and.returnValue(r.promise)
+        spyOn(svc,'getOrderShipmentRefs').and.returnValue(s.promise)
         scope.getOrderLines(ord)
         r.resolve({data: {order: activeOrder}})
         s.resolve([])
@@ -120,8 +120,8 @@ describe 'ShipmentApp', ->
         ord = {id: 1}
         r = q.defer()
         s = q.defer()
-        spyOn(svc,'getOrder').andReturn(r.promise)
-        spyOn(svc,'getOrderShipmentRefs').andReturn(s.promise)
+        spyOn(svc,'getOrder').and.returnValue(r.promise)
+        spyOn(svc,'getOrderShipmentRefs').and.returnValue(s.promise)
         scope.getOrderLines(ord)
         r.resolve({data: {order: {id: 99, order_lines: [{ordln_ordered_qty: 10}]}}})
         s.resolve([])
@@ -131,11 +131,11 @@ describe 'ShipmentApp', ->
       it "prepares data for warning modal when additional shipments are found", ->
         ord = {id: 1}
         r = q.defer()
-        spyOn(svc,'getOrderShipmentRefs').andReturn(r.promise)
+        spyOn(svc,'getOrderShipmentRefs').and.returnValue(r.promise)
         scope.getOrderLines(ord)
         r.resolve(["REF1", "REF2"])
         scope.$apply()
-        expect(scope.activeOrder).toEqual null
+        expect(scope.activeOrder).toBeNull
         expect(scope.shipmentWarningModalData).toEqual({shipmentsForOrder: ["REF1", "REF2"], orderId: 1})
 
     describe 'resetQuantityToShip', ->
@@ -176,8 +176,8 @@ describe 'ShipmentApp', ->
           ]}
         shp = {shp_ref: 'x', id: 3}
         expected = {shp_ref: 'x', id: 3, lines: [
-          {shpln_puid: 'SKU1' ,shpln_pname: 'CHAIR', linked_order_line_id: 2, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '10'}],shpln_shipped_qty: 3}
-          {shpln_puid: 'SKU2' ,shpln_pname: 'HAT', linked_order_line_id: 4, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '20'}],shpln_shipped_qty: 7}
+          {shpln_puid: 'SKU1' ,shpln_pname: 'CHAIR', linked_order_line_id: 2, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '10'}],shpln_shipped_qty: 3, shpln_manufacturer_address_id: undefined}
+          {shpln_puid: 'SKU2' ,shpln_pname: 'HAT', linked_order_line_id: 4, order_lines: [{ord_cust_ord_no: 'def', ordln_line_number: '20'}],shpln_shipped_qty: 7, shpln_manufacturer_address_id: undefined}
           ]}
         scope.addOrderToShipment shp, ord, 'lines'
         expect(shp).toEqual expected
@@ -186,7 +186,7 @@ describe 'ShipmentApp', ->
       it 'should call add and save', ->
         r = q.defer()
         spyOn(scope,'addOrderToShipment')
-        spyOn(svc,'saveShipment').andReturn(r.promise)
+        spyOn(svc,'saveShipment').and.returnValue(r.promise)
         shp = {id: 10}
         ord = {id: 7}
         scope.addOrderAndSave(shp,ord)

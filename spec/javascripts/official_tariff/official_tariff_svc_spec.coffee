@@ -16,7 +16,7 @@ describe "OfficialTariffSvc", ->
       officialTariffSvc.getTariff('US','1234567890').then (ot) ->
         t = ot
 
-      http.flush()
+      expect(http.flush).not.toThrow()
 
       expect(t).toEqual resp.official_tariff
 
@@ -27,7 +27,7 @@ describe "OfficialTariffSvc", ->
       officialTariffSvc.getTariff('US','1234567890').then (ot) ->
         t = ot
 
-      http.flush()
+      expect(http.flush).not.toThrow()
 
       expect(t).toBeNull()
 
@@ -48,7 +48,7 @@ describe "OfficialTariffSvc", ->
       officialTariffSvc.autoClassify('1234569999').then (r) ->
         got = r
 
-      http.flush()
+      expect(http.flush).not.toThrow()
 
       expect(got).toEqual expected
 
@@ -59,5 +59,5 @@ describe "OfficialTariffSvc", ->
 
       officialTariffSvc.autoClassify('1234.56.7890')
 
-      http.flush()
+      expect(http.flush).not.toThrow()
     

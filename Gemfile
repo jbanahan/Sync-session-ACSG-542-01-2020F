@@ -105,7 +105,7 @@ group :development,:test do
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
   gem 'factory_girl', '2.5.2'
   gem 'byebug'
-  gem 'jasmine-rails', '0.4.6'
+  gem 'jasmine-rails', '0.14.7'
   gem 'rspec_junit_formatter', '~> 0.2.3' #circle-ci formatting
   # gem 'rack-mini-profiler'
   gem 'minitest'

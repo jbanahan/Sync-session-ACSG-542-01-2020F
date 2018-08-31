@@ -79,19 +79,6 @@ jobs:
           command: |-
             bundle exec rake db:create db:migrate --trace
 
-      # This is temporary solution to the problems that occur with phantomjs 2.x
-      #  https://discuss.circleci.com/t/rake-spec-passes-all-tests-then-fails-from-non-zero-exit-code/20428
-      - run: 
-          name: PhantomJS Setup
-          command: |-
-            cd /usr/local/share
-            sudo wget https://repo1.maven.org/maven2/com/github/klieber/phantomjs/1.9.0/phantomjs-1.9.0-linux-x86_64.tar.bz2
-            sudo tar xjf phantomjs-1.9.0-linux-x86_64.tar.bz2
-            sudo ln -s /usr/local/share/phantomjs-1.9.0-linux-x86_64/bin/phantomjs /usr/local/share/phantomjs
-            sudo rm /usr/local/bin/phantomjs
-            sudo ln -s /usr/local/share/phantomjs-1.9.0-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs
-            sudo ln -s /usr/local/share/phantomjs-1.9.0-linux-x86_64/bin/phantomjs /usr/bin/phantomjs
-
       # TEST_FILES is broken out into it's own variable because of random bash parsing issues which case "bundler: failed to load command: rspec"
       - run: 
           name: Rspec Unit Tests

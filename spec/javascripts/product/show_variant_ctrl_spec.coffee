@@ -16,15 +16,15 @@ describe 'ShowVariantCtrl', ->
     it 'should load product, dictionary, variant', ->
       prod = {id: 1}
       prodResp = $q.defer()
-      spyOn(productSvc,'getProduct').andReturn(prodResp.promise)
+      spyOn(productSvc,'getProduct').and.returnValue(prodResp.promise)
 
       variant = {id: 2}
       varResp = $q.defer()
-      spyOn(variantSvc,'getVariant').andReturn(varResp.promise)
+      spyOn(variantSvc,'getVariant').and.returnValue(varResp.promise)
 
       dict = new DomainDictionary()
       dictResp = $q.defer()
-      spyOn(cdSvc,'withDictionary').andReturn(dictResp.promise)
+      spyOn(cdSvc,'withDictionary').and.returnValue(dictResp.promise)
 
       scope.load(1,2)
 
@@ -44,11 +44,11 @@ describe 'ShowVariantCtrl', ->
     it 'should reload variant & product without dictionary', ->
       prod = {id: 1}
       prodResp = $q.defer()
-      spyOn(productSvc,'loadProduct').andReturn(prodResp.promise)
+      spyOn(productSvc,'loadProduct').and.returnValue(prodResp.promise)
 
       variant = {id: 2}
       varResp = $q.defer()
-      spyOn(variantSvc,'loadVariant').andReturn(varResp.promise)
+      spyOn(variantSvc,'loadVariant').and.returnValue(varResp.promise)
 
       scope.reloadVariant(1,2)
 

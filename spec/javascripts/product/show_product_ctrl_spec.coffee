@@ -17,15 +17,15 @@ describe 'ShowProductCtrl', ->
     it 'should load product, dictionary, setup_data', ->
       prod = {id: 1}
       prodResp = $q.defer()
-      spyOn(productSvc,'getProduct').andReturn(prodResp.promise)
+      spyOn(productSvc,'getProduct').and.returnValue(prodResp.promise)
       
       dict = new DomainDictionary()
       dictResp = $q.defer()
-      spyOn(cdSvc,'withDictionary').andReturn(dictResp.promise)
+      spyOn(cdSvc,'withDictionary').and.returnValue(dictResp.promise)
 
       setupData = {regions: ['x'], import_countries: {'US': {id: 1}}}
       sdResp = $q.defer()
-      spyOn(setupDataSvc,'getSetupData').andReturn(sdResp.promise)
+      spyOn(setupDataSvc,'getSetupData').and.returnValue(sdResp.promise)
 
       scope.load(1)
 
@@ -46,7 +46,7 @@ describe 'ShowProductCtrl', ->
     it 'should just reload the product without the other setup / dictionary data', ->
       prod = {id: 1}
       prodResp = $q.defer()
-      spyOn(productSvc,'loadProduct').andReturn(prodResp.promise)
+      spyOn(productSvc,'loadProduct').and.returnValue(prodResp.promise)
 
       scope.reloadProduct(1)
 
@@ -71,7 +71,7 @@ describe 'ShowProductCtrl', ->
       startProd = {id: 1}
       finishProd = {id: 1, other: 'x'}
       prodResp = $q.defer()
-      spyOn(productSvc,'saveProduct').andReturn(prodResp.promise)
+      spyOn(productSvc,'saveProduct').and.returnValue(prodResp.promise)
 
       scope.save(startProd)
 

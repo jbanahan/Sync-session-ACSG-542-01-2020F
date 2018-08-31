@@ -86,7 +86,7 @@ describe 'StateToggleButtonApp', () ->
               
         deferredLoad = q.defer()
         deferredLoad.resolve data
-        spyOn(svc, 'loadButton').andReturn deferredLoad.promise
+        spyOn(svc, 'loadButton').and.returnValue deferredLoad.promise
         $scope.loadButton(1)
         $scope.$apply()
 
@@ -102,7 +102,7 @@ describe 'StateToggleButtonApp', () ->
     describe 'updateButton', () ->
       it "calls service's updateButton", () ->        
         deferredUpdate = q.defer()
-        spyOn(svc, 'updateButton').andReturn deferredUpdate.promise
+        spyOn(svc, 'updateButton').and.returnValue deferredUpdate.promise
         $scope.updateButton(1, "criteria")
         $scope.$apply()
         expect(svc.updateButton).toHaveBeenCalledWith(1, "criteria")
@@ -117,9 +117,7 @@ describe 'StateToggleButtonApp', () ->
         expect($scope.updateButton).toHaveBeenCalledWith(1, {criteria: "criteria", stb: {}})
 
     describe 'resetField', () ->
-      it "sets specified field on $scope.stb to be null", () ->
+      it "sets specified field on $socpe.stb to be undefined", () ->
         $scope.stb = {user_custom_definition_id: 1}
         $scope.resetField('user_custom_definition_id')
-        expect($scope.user_custom_definition_id).toEqual null
-
-
+        expect($scope.user_custom_definition_id).toBeUndefined()

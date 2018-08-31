@@ -23,7 +23,7 @@ describe 'ChainDomainer', ->
       svc.withDictionary().then (d) ->
         dict = d
 
-      http.flush()
+      expect(http.flush).not.toThrow()
       scope.$apply()
 
       expect(dict.fields.prod_uid.label).toEqual 'Unique'

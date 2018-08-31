@@ -19,7 +19,7 @@ describe "ProjectApp", () ->
         http.expectGET('/projects/1.json').respond resp
         svc.load 1
         expect(svc.loadingMessage).toEqual 'Loading...'
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(svc.loadingMessage).toBeNull()
         expect(svc.project.id).toEqual 1
 
@@ -27,7 +27,7 @@ describe "ProjectApp", () ->
         resp = {error:'x'}
         http.expectGET('/projects/1.json').respond 401, resp
         svc.load 1
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(svc.project).toBeNull()
         expect(svc.errorMessage).toEqual 'x'
         expect(svc.loadingMessage).toBeNull()
@@ -39,7 +39,7 @@ describe "ProjectApp", () ->
         http.expectPUT('/projects/1.json',{project:proj}).respond resp
         svc.saveProject proj
         expect(proj.saving).toBe(true)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(svc.project.saving).toBeUndefined()
         expect(svc.project.id).toEqual 99
 
@@ -50,7 +50,7 @@ describe "ProjectApp", () ->
         http.expectPOST('/projects/1/project_updates.json',{project_update:{body:'abc'}}).respond resp
         svc.addProjectUpdate proj, 'abc'
         expect(proj.saving).toBe(true)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(proj.saving).toBeFalsy()
         expect(proj.project_updates[0]).toEqual resp.project_update
 
@@ -144,7 +144,7 @@ describe "ProjectApp", () ->
         success:(f) ->
           null
       }
-      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      spyOn(svc, 'saveDeliverable').and.returnValue(promise)
       $scope.$digest()
       el.find('#fakebutton').scope().saveDeliverable()
       expect(svc.saveDeliverable).toHaveBeenCalledWith({id:2},deliverable)
@@ -156,7 +156,7 @@ describe "ProjectApp", () ->
         success:(f) ->
           null
       }
-      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      spyOn(svc, 'saveDeliverable').and.returnValue(promise)
       spyOn($scope,'savePromiseCallback')
       $scope.$digest()
       el.find('#fakebutton').scope().saveDeliverable()
@@ -169,7 +169,7 @@ describe "ProjectApp", () ->
         success:(f) ->
           null
       }
-      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      spyOn(svc, 'saveDeliverable').and.returnValue(promise)
       $scope.$digest()
       el.find('#fakebutton').scope().saveDeliverable()
       expect(el.find('#fakebutton').scope().errors.errorMessage).toEqual('xyz')

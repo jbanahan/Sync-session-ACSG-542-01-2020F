@@ -29,7 +29,7 @@ describe 'ProductSvc', ->
         svc.getProduct(1).then (httpResp) ->
           prod = httpResp.data
 
-        http.flush()
+        expect(http.flush).not.toThrow()
 
         scope.$apply()
 
@@ -43,7 +43,7 @@ describe 'ProductSvc', ->
         svc.getProduct(1).then (httpResp) ->
           prod = httpResp.data
 
-        http.flush()
+        expect(http.flush).not.toThrow()
 
         scope.$apply()
 
@@ -58,7 +58,7 @@ describe 'ProductSvc', ->
         svc.getProduct(1).then (httpResp) ->
           prod = httpResp.data
 
-        http.flush()
+        expect(http.flush).not.toThrow()
 
         scope.$apply()
 
@@ -76,7 +76,7 @@ describe 'ProductSvc', ->
           #don't care about first response
           null
 
-        http.flush()
+        expect(http.flush).not.toThrow()
 
         prod = null
         svc.getProduct(1).then (cacheResp) ->
@@ -97,7 +97,7 @@ describe 'ProductSvc', ->
         svc.loadProduct(1).then (httpResp) ->
           prod1 = httpResp.data
 
-        http.flush()
+        expect(http.flush).not.toThrow()
         scope.$apply()
 
         expect(prod1).toEqual resp
@@ -107,7 +107,7 @@ describe 'ProductSvc', ->
         svc.loadProduct(1).then (httpResp) ->
           prod2 = httpResp.data
 
-        http.flush()
+        expect(http.flush).not.toThrow()
         scope.$apply()
 
         expect(prod2).toEqual resp
@@ -121,7 +121,7 @@ describe 'ProductSvc', ->
         prod = null
         svc.saveProduct(base).then (data) ->
           prod = data.data
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(prod).toEqual resp
 
       it 'should save new product', ->
@@ -131,7 +131,7 @@ describe 'ProductSvc', ->
         prod = null
         svc.saveProduct(base).then (data) ->
           prod = data.data
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(prod).toEqual resp
 
     describe 'autoClassify', ->
@@ -164,7 +164,7 @@ describe 'ProductSvc', ->
           then: (handler) ->
             handler(otResp)
         }
-        spyOn(officialTariffSvc,'autoClassify').andReturn(promise)
+        spyOn(officialTariffSvc,'autoClassify').and.returnValue(promise)
 
         svc.autoClassify(product, product.classifications[0].tariff_records[0])
 
@@ -198,7 +198,7 @@ describe 'ProductSvc', ->
         }
         d = q.defer()
 
-        spyOn(officialTariffSvc,'autoClassify').andReturn(d.promise)
+        spyOn(officialTariffSvc,'autoClassify').and.returnValue(d.promise)
 
         d.resolve({}) #don't care about value returned
 

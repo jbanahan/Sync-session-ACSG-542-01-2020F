@@ -17,20 +17,20 @@ describe "BusinessRuleApp", () ->
       it "should make a get request to the correct URL", () ->
         http.expectGET('/business_validation_rules/234/edit_angular').respond("OK")
         svc.editBusinessRule("234")
-        http.flush()
+        expect(http.flush).not.toThrow()
 
     describe "updateBusinessRule", () ->
       it "should make a put request to the correct URL", () ->
         http.expectPUT('/business_validation_templates/123/business_validation_rules/234').respond("OK")
         rule = {id: "234", business_validation_template_id: "123"}
         svc.updateBusinessRule(rule)
-        http.flush()
+        expect(http.flush).not.toThrow()
 
     describe "groupIndex", () ->
       it "makes a get request to the correct URL", () ->
         http.expectGET("/api/v1/groups").respond("OK")
         svc.groupIndex()
-        http.flush()
+        expect(http.flush).not.toThrow()
 
   describe "BusinessRuleController", () ->
     ctrl = scope = svc = win = null
@@ -50,7 +50,7 @@ describe "BusinessRuleApp", () ->
 
     describe "editBusinessRule", () ->
       it "should make a call to service edit", () ->
-        spyOn(svc, 'editBusinessRule').andReturn {
+        spyOn(svc, 'editBusinessRule').and.returnValue {
           success: (c) -> null
         }
         scope.editBusinessRule("5")
@@ -59,10 +59,10 @@ describe "BusinessRuleApp", () ->
       it "should set model_fields, groups, businessRule on success", () ->
         myData = {model_fields: [1, 2, 3], business_validation_rule: "business rule"}
         groupData = {groups: [{id: 1, grp_name: "foo"}, {id: 2, grp_name:"bar"}]}
-        spyOn(svc, 'editBusinessRule').andReturn {
+        spyOn(svc, 'editBusinessRule').and.returnValue {
           success: (c) -> c(myData)
         }
-        spyOn(svc, 'groupIndex').andReturn {
+        spyOn(svc, 'groupIndex').and.returnValue {
           success: (c) -> c(groupData)
         }
         scope.editBusinessRule("5")
@@ -72,7 +72,7 @@ describe "BusinessRuleApp", () ->
 
     describe 'updateBusinessRule', () ->
       it "should make a call to service update", () ->
-        spyOn(svc, 'updateBusinessRule').andReturn {
+        spyOn(svc, 'updateBusinessRule').and.returnValue {
           success: (c) -> null; @
           error: (c) -> null
         }

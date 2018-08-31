@@ -28,7 +28,7 @@ describe 'FieldValidatorSvc', ->
       svc.validate(fld,val).then (obj) ->
         respondedWith = obj
 
-      http.flush()
+      expect(http.flush).not.toThrow()
 
       scope.$apply()
 
@@ -48,7 +48,7 @@ describe 'FieldValidatorSvc', ->
       svc.validate(fld,val).then (obj) ->
         respondedWith = obj
 
-      http.flush()
+      expect(http.flush).not.toThrow()
 
       scope.$apply()
 

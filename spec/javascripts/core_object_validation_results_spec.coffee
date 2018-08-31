@@ -30,7 +30,7 @@ describe 'CoreObjectValidationResultsApp', () ->
         response = {save_response:{validatable_state:'Pass',result_state:'Fail',rule_result:returned_rr}}
         http.expectPUT('/business_validation_rule_results/99.json',{business_validation_rule_result:rr}).respond response
         svc.saveRuleResult(result,rr)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(result.state).toEqual 'Pass'
         expect(result.bv_results[0].state).toEqual 'Fail'
         expect(result.bv_results[0].rule_results[0]).toEqual {id:1} #does not change
@@ -45,7 +45,7 @@ describe 'CoreObjectValidationResultsApp', () ->
         resolvedPromise = null
         promise.success (data) ->
           resolvedPromise = data
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
     describe 'cancelOverride', () ->
@@ -53,13 +53,13 @@ describe 'CoreObjectValidationResultsApp', () ->
         rr = {id: 1}
         http.expectPUT('/business_validation_rule_results/1/cancel_override').respond {}
         svc.cancelOverride rr
-        http.flush()
+        expect(http.flush).not.toThrow()
 
     describe 'rerunValidations', () ->
       it "calls validate POST route", () ->
         http.expectPOST('/api/v1/entries/1/validate.json').respond {}
         svc.rerunValidations 'entries', 1
-        http.flush()
+        expect(http.flush).not.toThrow() 
         
   describe 'controller', () ->
     ctrl = svc = $scope = q = null
@@ -96,12 +96,12 @@ describe 'CoreObjectValidationResultsApp', () ->
       it "calls the service's cancelOverride ", () ->
         deferredOverride = q.defer()
         deferredOverride.resolve {a:'a'}
-        spyOn(svc, 'cancelOverride').andReturn deferredOverride.promise
+        spyOn(svc, 'cancelOverride').and.returnValue deferredOverride.promise
 
         deferredLoad = q.defer()
         loadResolution = {b:'b'}
         deferredLoad.resolve loadResolution
-        spyOn($scope, 'loadObject').andReturn deferredLoad.promise
+        spyOn($scope, 'loadObject').and.returnValue deferredLoad.promise
         
         svc.pluralObject = {c: 'c'}
         svc.objectId = {d: 'd'}
@@ -119,7 +119,7 @@ describe 'CoreObjectValidationResultsApp', () ->
       it "logs an error if pluralObject or objectId not found in coreObjectValidationResultsSvc", () ->
         svc.pluralObject = null
         rr = {id:100}
-        spyOn(svc, 'cancelOverride').andCallThrough()
+        spyOn(svc, 'cancelOverride').and.callThrough()
         spyOn(console, 'log')
         $scope.cancelOverride(rr)
 
@@ -130,12 +130,12 @@ describe 'CoreObjectValidationResultsApp', () ->
       it "calls the service's rerunValidations, settings and updating panel", () ->
         deferredRerun = q.defer()
         deferredRerun.resolve {a:'a'}
-        spyOn(svc, 'rerunValidations').andReturn deferredRerun.promise
+        spyOn(svc, 'rerunValidations').and.returnValue deferredRerun.promise
 
         deferredLoad = q.defer()
         loadResolution = {b:'b'}
         deferredLoad.resolve loadResolution
-        spyOn($scope, 'loadObject').andReturn deferredLoad.promise
+        spyOn($scope, 'loadObject').and.returnValue deferredLoad.promise
 
         spyOn($scope, 'setPanel')
 

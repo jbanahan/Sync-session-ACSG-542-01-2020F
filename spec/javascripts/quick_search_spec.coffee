@@ -11,11 +11,11 @@ describe 'OCQuickSearch', ->
   describe 'writeModuleResponse', ->
     it 'should find outer div and write html', ->
       cardResponses = ['A','B']
-      spyOn(OCQuickSearch,'makeCard').andCallFake ->
+      spyOn(OCQuickSearch,'makeCard').and.callFake ->
         cardResponses.pop()
 
       divWrap = jasmine.createSpyObj('div',['html'])
-      spyOn(OCQuickSearch,'findDivWrapper').andReturn(divWrap)
+      spyOn(OCQuickSearch,'findDivWrapper').and.returnValue(divWrap)
 
       fields = {a: 'b'}
       val1 = {a: 'x'}

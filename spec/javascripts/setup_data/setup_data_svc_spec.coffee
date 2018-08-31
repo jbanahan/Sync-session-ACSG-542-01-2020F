@@ -36,5 +36,3 @@ describe 'SetupDataSvc', ->
         http.flush()
 
         expect(sd).toEqual formattedResult
-
-      it 'should cache setup data', ->      

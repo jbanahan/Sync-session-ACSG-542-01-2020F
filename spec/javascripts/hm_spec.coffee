@@ -30,7 +30,7 @@ describe 'HMApp', () ->
       it 'should make request', () ->
         http.expectGET(expected_url).respond(response_obj)
         svc.getLines 99
-        http.flush()
+        expect(http.flush).not.toThrow()
 
       it 'should append line results to data', () ->
         lines = null
@@ -38,7 +38,7 @@ describe 'HMApp', () ->
         p = svc.getLines 99
         p.success (d,s,h,c) ->
           lines = d.lines
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(lines.length).toEqual 2
         expect(lines[0].po_number).toEqual '123'
         expect(lines[1].po_number).toEqual '124'
@@ -47,7 +47,7 @@ describe 'HMApp', () ->
         expected_url = '/api/v1/commercial_invoices.json?oid1=ci_updated_at&oo1=D&page=99&per_page=20&sid1=ci_imp_syscode&sid2=ci_invoice_number&sop1=eq&sop2=eq&sv1=HENNE&sv2=123'
         http.expectGET(expected_url).respond(response_obj)
         svc.getLines 99, {poNumber:'123'}
-        http.flush()
+        expect(http.flush).not.toThrow()
 
     describe 'saveLine', ->
       ln = expected_obj = null
@@ -110,19 +110,19 @@ describe 'HMApp', () ->
         http.expectPOST('/api/v1/commercial_invoices.json',expected_obj).respond(expected_obj) #not the real response value from the API
         svc.saveLine ln
         expect(ln.saving).toBeTruthy()
-        http.flush()
+        expect(http.flush).not.toThrow()
 
       it 'should create new object if line.id is not set', () ->
         http.expectPOST('/api/v1/commercial_invoices.json',expected_obj).respond(expected_obj) #not the real response value from the API
         svc.saveLine ln
-        http.flush()
+        expect(http.flush).not.toThrow()
 
       it 'should update if line.id is set', () ->
         ln.id = 100
         expected_obj.commercial_invoice.id = 100 #should have id set
         http.expectPUT('/api/v1/commercial_invoices/100.json',expected_obj).respond(expected_obj)
         svc.saveLine ln
-        http.flush()
+        expect(http.flush).not.toThrow()
 
       it "should set ci_line_id if is set", () ->
         ln.ci_line_id = 10
@@ -131,7 +131,7 @@ describe 'HMApp', () ->
         expected_obj.commercial_invoice.commercial_invoice_lines[0].id = 10
         http.expectPUT('/api/v1/commercial_invoices/100.json',expected_obj).respond(expected_obj)
         svc.saveLine ln
-        http.flush()
+        expect(http.flush).not.toThrow()
 
       it "should add line to return data on success", () ->
         returnObj = jQuery.extend(true, {}, expected_obj)
@@ -142,7 +142,7 @@ describe 'HMApp', () ->
         myLine = null
         p.success (d,s,h,c) ->
           myLine = d.line
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(myLine.id).toEqual 1
         expect(myLine.po_number).toEqual ln.po_number
         expect(myLine.quantity).toEqual ln.quantity
@@ -173,7 +173,7 @@ describe 'HMApp', () ->
             this
 
         }
-        spyOn(svc,'saveLine').andReturn(promise)
+        spyOn(svc,'saveLine').and.returnValue(promise)
 
       it 'should delegate to service', ->
         ln = {id:99}

@@ -8,7 +8,7 @@ describe 'ShipmentBookingCtrl', ->
     svc = shipmentSvc
     state = $state
     q = $q
-    spyOn(svc,'getShipment').andReturn(q.reject())
+    spyOn(svc,'getShipment').and.returnValue(q.reject())
     ctrl = $controller('ShipmentBookingCtrl', {$state: state, shipmentSvc: svc})
 
     ctrl.resetLines = () -> ctrl.lines.splice(0, ctrl.lines.length)
@@ -27,7 +27,7 @@ describe 'ShipmentBookingCtrl', ->
 
       expect(ctrl.lines).toContain(line1)
       expect(ctrl.lines).toContain(line3)
-      expect(ctrl.lines).toNotContain(line2)
+      expect(ctrl.lines).not.toContain(line2)
 
   describe 'loadAvailableOrders', ->
     it 'gets available orders from the service and makes them available', ->
@@ -35,7 +35,7 @@ describe 'ShipmentBookingCtrl', ->
       response =
         data:
           available_orders: [1,2,3,4,5]
-      spyOn(svc,'getAvailableOrders').andReturn(q.when(response))
+      spyOn(svc,'getAvailableOrders').and.returnValue(q.when(response))
 
       ctrl.loadAvailableOrders()
       rootScope.$apply()
@@ -62,7 +62,7 @@ describe 'ShipmentBookingCtrl', ->
           order:
             order_lines:[line1, line2]
 
-      spyOn(svc, 'getOrder').andReturn(q.when(response))
+      spyOn(svc, 'getOrder').and.returnValue(q.when(response))
 
       ctrl.getOrderLines(1, ctrl)
       rootScope.$apply()
@@ -82,7 +82,7 @@ describe 'ShipmentBookingCtrl', ->
       line3 = {bkln_order_line_id:4, bkln_quantity:0, bkln_carton_qty:5, _disabled:true}
       ctrl.lines = [line1, line2, line3]
 
-      spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
+      spyOn(svc, 'saveBookingLines').and.returnValue(q.when({}))
       ctrl.saveLines()
 
       expect(svc.saveBookingLines).toHaveBeenCalledWith([line1, line2], 1)
@@ -107,7 +107,7 @@ describe 'ShipmentBookingCtrl', ->
 
       ctrl.lines = [line]
 
-      spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
+      spyOn(svc, 'saveBookingLines').and.returnValue(q.when({}))
       ctrl.saveLines()
 
       expect(svc.saveBookingLines).toHaveBeenCalledWith([flat_line], 1)
@@ -129,7 +129,7 @@ describe 'ShipmentBookingCtrl', ->
 
       ctrl.lines = [line]
 
-      spyOn(svc, 'saveBookingLines').andReturn(q.when({}))
+      spyOn(svc, 'saveBookingLines').and.returnValue(q.when({}))
       ctrl.saveLines()
 
       expect(svc.saveBookingLines).toHaveBeenCalledWith([flat_line], 1)

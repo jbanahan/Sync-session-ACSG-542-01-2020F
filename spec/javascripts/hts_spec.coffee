@@ -25,13 +25,13 @@ describe "HtsApp", () ->
     describe "loadSubscribedCountries", () ->
       it "should load countries by default", () ->
         scope.loadSubscribedCountries()
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(scope.countries).toEqual countriesResponse.countries
         expect(scope.country.iso).toEqual 'US'
 
       it "should load first country's chapters", () ->
         scope.loadSubscribedCountries()
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(scope.country.iso).toEqual 'US'
         expect(scope.chapters).toEqual [1,2,3]
 
@@ -40,7 +40,7 @@ describe "HtsApp", () ->
         chapter = {num: 1, headings: []}
         country = {iso: "US"}
         scope.loadChapter(country, chapter)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(chapter.headings).toEqual [1,2,3]
 
     describe "loadHeading", () ->
@@ -49,6 +49,5 @@ describe "HtsApp", () ->
         country = {iso: "US"}
         heading = {num: 5, sub_headings: []}
         scope.loadHeading(country,chapter,heading)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(heading.sub_headings).toEqual [6, 7, 8]
-

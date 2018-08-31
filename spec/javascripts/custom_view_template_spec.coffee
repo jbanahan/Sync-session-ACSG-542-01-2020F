@@ -20,7 +20,7 @@ describe 'CustomViewTemplateApp', () ->
         resolvedPromise = null
         promise.success (data) ->
           resolvedPromise = data
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
     describe 'updateTemplate', () ->
@@ -33,7 +33,7 @@ describe 'CustomViewTemplateApp', () ->
         resolvedPromise = null
         promise.success (data) ->
           resolvedPromise = data
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
   describe 'controller', () ->
@@ -70,7 +70,7 @@ describe 'CustomViewTemplateApp', () ->
 
         deferredLoad = q.defer()
         deferredLoad.resolve data
-        spyOn(svc, 'loadTemplate').andReturn deferredLoad.promise
+        spyOn(svc, 'loadTemplate').and.returnValue deferredLoad.promise
         $scope.loadTemplate(1)
         $scope.$apply()
 
@@ -84,7 +84,7 @@ describe 'CustomViewTemplateApp', () ->
     describe 'updateTemplate', () ->
       it "calls service's updateTemplate", () ->        
         deferredUpdate = q.defer()
-        spyOn(svc, 'updateTemplate').andReturn deferredUpdate.promise
+        spyOn(svc, 'updateTemplate').and.returnValue deferredUpdate.promise
         $scope.updateTemplate(1, "criteria")
         $scope.$apply()
         expect(svc.updateTemplate).toHaveBeenCalledWith(1, "criteria")

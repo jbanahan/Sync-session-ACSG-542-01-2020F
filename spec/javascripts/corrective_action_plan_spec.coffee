@@ -18,7 +18,7 @@ describe 'CorrectiveActionPlanApp', () ->
     it "should delegate add comment", () ->
       capSvc.cap = {id:10}
       $scope.survey_response_id = 50
-      spyOn(capSvc, 'addComment').andCallFake (a,b,c,d) ->
+      spyOn(capSvc, 'addComment').and.callFake (a,b,c,d) ->
         d('x')
       $scope.comment = 'abc'
       $scope.addComment()
@@ -33,7 +33,7 @@ describe 'CorrectiveActionPlanApp', () ->
 
 
     it "should delegate remove", () ->
-      spyOn(capSvc, 'removeIssue').andCallFake(() ->
+      spyOn(capSvc, 'removeIssue').and.callFake(() ->
         null
       )
       issue = {a:'b'}
@@ -63,7 +63,7 @@ describe 'CorrectiveActionPlanApp', () ->
         http.expectPUT('/corrective_issues/10.json',{corrective_issue:d}).respond(d)
         svc.saveIssue d
         expect(d.saving).toEqual(true)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(d.saving).toEqual(false)
 
     describe 'addComment', () ->
@@ -77,7 +77,7 @@ describe 'CorrectiveActionPlanApp', () ->
 
       it "should not do anything for blank comment", () ->
         svc.addComment(' \n',d.corrective_action_plan,7)
-        #no assertions needed since the httpBackend will blow up if the post is made
+        expect(http.flush).toThrow()
 
       it "should handle error", () ->
         http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond(401,{error:'x'})
@@ -88,12 +88,13 @@ describe 'CorrectiveActionPlanApp', () ->
       it "should call success callback", () ->
         commentData = null
         x = (cdata) ->
-          commentData = cdata
-        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond({comment:{id:99}})
+          commentData = "asdf"
+        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond(comment:{id:99})
         svc.addComment('xyz',d.corrective_action_plan,7,x)
-        http.flush()
-        expect(commentData).toEqual {comment:{id:99}}
-
+        expect(svc.settings.newCommentSaving).toBe(true)
+        expect(http.flush).not.toThrow()
+        expect(svc.settings.newCommentSaving).toBe(false)
+        expect(commentData).toEqual "asdf"
 
     describe 'addIssue', () ->
       it "should make post", () ->
@@ -143,7 +144,7 @@ describe 'CorrectiveActionPlanApp', () ->
         cap.comments = [{html_body:'hb'}]
         http.expectGET(expectUrl).respond(d)
         svc.load(1,2)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(sce.trustAsHtml).toHaveBeenCalledWith('hd')
         expect(sce.trustAsHtml).toHaveBeenCalledWith('hsa')
         expect(sce.trustAsHtml).toHaveBeenCalledWith('hat')
@@ -162,7 +163,7 @@ describe 'CorrectiveActionPlanApp', () ->
         svc.setCorrectiveActionPlan d
         expect(svc.cap.corrective_issues.length).toEqual(3)
         svc.removeIssue(issue)
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(svc.cap.corrective_issues.length).toEqual(2)
         expect(svc.cap.corrective_issues[0]).toEqual other_1
         expect(svc.cap.corrective_issues[1]).toEqual other_2

@@ -2,7 +2,7 @@ describe 'getButtons', ->
   it "should get buttons", ->
     coreModulePath = 'companies'
     objId = '10'
-    spyOn(jQuery,'ajax').andReturn('hello')
+    spyOn(jQuery,'ajax').and.returnValue('hello')
     expect(ChainStateButtons.getButtons(coreModulePath,objId)).toEqual('hello')
     expected = {
       url: '/api/v1/companies/10/state_toggle_buttons.json'
@@ -21,7 +21,7 @@ describe 'toggleButton', ->
     coreModulePath = 'companies'
     objId = '10'
     buttonId = '50'
-    spyOn(jQuery,'ajax').andReturn('hello')
+    spyOn(jQuery,'ajax').and.returnValue('hello')
     expect(ChainStateButtons.toggleButton(coreModulePath,objId,buttonId)).toEqual('hello')
     expected = {
       url: '/api/v1/companies/10/toggle_state_button.json'

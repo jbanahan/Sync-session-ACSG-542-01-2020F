@@ -21,7 +21,7 @@ describe 'ChainComments', () ->
         obj = {id:2}
         moduleType = 'Shipment'
         svc.injectComments obj, moduleType
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(obj.comments).toEqual resp.comments
     
     describe 'addComment', ->
@@ -31,7 +31,7 @@ describe 'ChainComments', () ->
         ca = []
         http.expectPOST('/api/v1/comments.json',{comment:comm}).respond resp
         svc.addComment comm, ca
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(ca).toEqual [resp.comment]
 
     describe 'deleteComment', ->
@@ -41,5 +41,5 @@ describe 'ChainComments', () ->
         resp = {a:'b'} #doesn't matter what the response is
         http.expectDELETE('/api/v1/comments/3.json').respond resp
         svc.deleteComment comm, ca
-        http.flush()
+        expect(http.flush).not.toThrow()
         expect(ca).toEqual [{id:2},{id:7},{id:5}]

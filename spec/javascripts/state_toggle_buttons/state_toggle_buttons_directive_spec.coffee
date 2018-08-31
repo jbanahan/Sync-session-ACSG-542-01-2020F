@@ -35,7 +35,7 @@ describe 'stateToggleButtons', ->
         {id:1,button_text:'btxt1',button_confirmation:'bconf1',core_module_path:'orders',base_object_id:10}
         {id:2,button_text:'btxt2',button_confirmation:'bconf2',core_module_path:'orders',base_object_id:10}
       ]}
-      spyOn(stateToggleButtonSvc,'getButtons').andReturn(d.promise)
+      spyOn(stateToggleButtonSvc,'getButtons').and.returnValue(d.promise)
 
       $scope.showStateToggles()
 
@@ -46,11 +46,11 @@ describe 'stateToggleButtons', ->
 
       $scope.$apply()
 
-      expect($scope.loading).toNotEqual 'loading'
+      expect($scope.loading).toBeNull()
       expect($scope.toggleButtons).toEqual stbResp.state_toggle_buttons
 
     it 'should set loading flag when "chain:state-toggle-change:start"', ->
-      expect($scope.loading).toNotEqual 'loading'
+      expect($scope.loading).toBeUndefined()
       $rootScope.$broadcast('chain:state-toggle-change:start')
       expect($scope.loading).toEqual 'loading'
 
@@ -61,7 +61,7 @@ describe 'stateToggleButtons', ->
         {id:1,button_text:'btxt1',button_confirmation:'bconf1',core_module_path:'orders',base_object_id:10}
         {id:2,button_text:'btxt2',button_confirmation:'bconf2',core_module_path:'orders',base_object_id:10}
       ]}
-      spyOn(stateToggleButtonSvc,'getButtons').andReturn(d.promise)
+      spyOn(stateToggleButtonSvc,'getButtons').and.returnValue(d.promise)
 
       $scope.showStateToggles()
 
@@ -86,7 +86,7 @@ describe 'stateToggleButtons', ->
       StateToggleItemCtrl = $controller('StateToggleItemCtrl',{$scope: $scope, stateToggleButtonSvc: stateToggleButtonSvc})
       resp = {ok:'ok'}
       d = $q.defer()
-      spyOn(stateToggleButtonSvc,'toggleButton').andReturn(d.promise)
+      spyOn(stateToggleButtonSvc,'toggleButton').and.returnValue(d.promise)
 
       toggleStartFired = false
       toggleCompleteFired = false

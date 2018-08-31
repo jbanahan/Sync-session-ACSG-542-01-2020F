@@ -52,7 +52,7 @@ describe "SurveyResponseApp", () ->
         fields = {email_to: "john.smith@abc.com", email_subject: "Survey you need to take", email_body: "Don't forget the survey!"}
         http.expectPOST('/survey_responses/7/remind', fields).respond({ok:'ok'})
         svc.remind {id: 7}, fields
-        http.flush()
+        expect(http.flush).not.toThrow()
         
     describe 'addAnswerComment', () ->
       
@@ -231,31 +231,32 @@ describe "SurveyResponseApp", () ->
         $scope.resp.survey = {require_contact: true}
         $scope.contact_form = { $valid: false }
         $scope.submit()
-        expect(svc.submit.calls.length).toEqual(0)
+        expect(svc.submit.calls).toBeUndefined
         expect(svc.resp.error_message).toEqual 'You must complete all contact fields before submitting.'
 
       it "should not call service if all questions aren't answered", () ->
         $scope.resp.survey = {require_contact: true}
         $scope.resp.answers = []
-        $scope.resp.answers.push {id:1,answer_comments:[], question: {warning: true}}
         $scope.contact_form = { $valid: true }
+        $scope.resp.answers.push {id:1,answer_comments:[], question: {warning: true}}
         $scope.submit()
 
-        expect(svc.submit.calls.length).toEqual(0)
+        expect(svc.submit.calls).toBeUndefined
         expect(svc.resp.error_message).toEqual "You must answer all required questions. Use the 'Not Answered' filter to identify any questions that still need answers."
 
         
     it "should delegate saveAnswer", () ->
-      spyOn(svc,'saveAnswer').andCallFake (a,c) ->
+      spyOn(svc,'saveAnswer').and.callFake (a,c) ->
         c({my:'response'}) if c #execute callback
       
       ans = {id:1,choice:'x'}
       $scope.resp.answers = []
       $scope.resp.answers.push ans
       $scope.saveAnswer(ans)
+      expect(svc.saveAnswer).toHaveBeenCalledWith(ans)
 
     it "should delegate add comment", () ->
-      spyOn(svc,'addAnswerComment').andCallFake (a,c,p,e) ->
+      spyOn(svc,'addAnswerComment').and.callFake (a,c,p,e) ->
         e(answer) #execute callback
 
       svc.resp.answers = []
@@ -494,19 +495,19 @@ describe "SurveyResponseApp", () ->
         spyOn $scope, 'setSuccessPanel'
       
       it "displays confirmation if response is ok", () ->
-        spyOn(svc, 'remind').andReturn($.Deferred().resolve {ok: "ok"})
+        spyOn(svc, 'remind').and.returnValue($.Deferred().resolve {ok: "ok"})
         $scope.sendEmails "response", "fields"
         expect(svc.remind).toHaveBeenCalledWith("response","fields")
         expect($scope.setSuccessPanel).toHaveBeenCalledWith("Emails sent")
         
       it "displays an error if response includes one", () ->
-        spyOn(svc, 'remind').andReturn($.Deferred().reject())
+        spyOn(svc, 'remind').and.returnValue($.Deferred().reject())
         $scope.sendEmails "response", "fields"
         expect(svc.remind).toHaveBeenCalledWith("response","fields")
         expect($scope.setErrorPanel).toHaveBeenCalledWith("Server temporarily unavailable. Please try again later.")
       
       it "displays an error if response fails", () ->
-        spyOn(svc, 'remind').andReturn($.Deferred().resolve {error: "ERROR!"})
+        spyOn(svc, 'remind').and.returnValue($.Deferred().resolve {error: "ERROR!"})
         $scope.sendEmails "response", "fields"
         expect(svc.remind).toHaveBeenCalledWith("response","fields")
         expect($scope.setErrorPanel).toHaveBeenCalledWith("ERROR!")
