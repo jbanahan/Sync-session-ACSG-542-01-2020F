@@ -1223,6 +1223,16 @@ describe ModelField do
       mf = ModelField.find_by_uid cd
       expect(mf.label).to eq "User"
     end
+
+    it "returns constant MF associated with search column" do
+      sc = Factory(:search_column, search_setup: Factory(:search_setup, module_type: "Product"))
+      # When SearchColumn's MF is a constant, its model_field_uid refers to the temporary uid assigned by the front-end.
+      # The "real" model_field_uid is generated dynamically by SearchColumn#model_field.
+      sc.update_attributes! model_field_uid: "_const_12345", constant_field_name: "Foo"
+      mf = ModelField.find_by_uid "*const_#{sc.id}"
+      
+      expect(mf.label).to eq "Foo"
+    end
   end
 
   describe "add_fields" do

@@ -9,7 +9,7 @@ module OpenChain
       total_pages = row_count/per_page
       total_pages += 1 if row_count % per_page > 0
 
-      cols = ss.search_columns.order("rank ASC").collect {|col| mf = ModelField.find_by_uid(col.model_field_uid); mf.can_view?(user) ? mf.label : ModelField.disabled_label}
+      cols = ss.search_columns.order("rank ASC").collect {|col| mf = col.model_field; mf.can_view?(user) ? mf.label : ModelField.disabled_label}
 
       k = ss.core_module.klass
       rows = []

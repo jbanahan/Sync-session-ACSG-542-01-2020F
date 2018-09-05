@@ -19,6 +19,7 @@
 #  migration_host              :string(255)
 #  order_enabled               :boolean          default(TRUE), not null
 #  project_enabled             :boolean
+#  protest_enabled             :boolean
 #  request_host                :string(255)
 #  sales_order_enabled         :boolean          default(TRUE), not null
 #  security_filing_enabled     :boolean

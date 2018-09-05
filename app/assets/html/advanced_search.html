@@ -55,7 +55,18 @@
                 </div>
                 <div>
                   <a ng-show='columnsToAdd' class='btn btn-default' ng-click='addColumns()'>Add</a>
-                  <a class='btn btn-default' ng-click='addBlank()'>Add Blank</a>&nbsp;
+                  <a class='btn btn-default' ng-click='toggleConstantField()'>Add Custom Column</a>&nbsp;
+                  <div ng-show='displayConstantField'>
+                    <br>
+                    <form class='form-inline col-md-12'>
+                      <label class='col-md-4' for='constant-name-input'>Column name:</label>
+                      <input type="text" name="constant-field-name" ng-model='constantField.name' class="form-control col-md-8" id="constant-name-input">
+                      <br>
+                      <label class='col-md-4' for='constant-value-input'>Column value:</label>
+                      <input type="text" name="constant-field-value" ng-model='constantField.value' class="form-control col-md-8" id='constant-value-input'>
+                    </form>
+                    <a class='btn btn-default offset-md-4' ng-disabled='!constantField.name' ng-click='addConstantField()'>Save</a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -68,8 +79,10 @@
             </div>
             <div class='row'>
               <div class='col-md-12 text-center'>
-                <select class='form-control' multiple='multiple' size='10' ng-model='columnsToRemove' ng-options='s.mfid as s.label for s in searchSetup.search_columns'>
+                <select class='form-control' multiple='multiple' size='10' ng-model='columnsToRemove'>
+                  <option ng-repeat="s in searchSetup.search_columns" value={{s.mfid}} title={{s.constant_field_value}}>{{columnLabel(s)}}</option>
                 </select>
+                <small ng-show='hasConstantColumns()'>*indicates a constant field</small>
                 <br />
                 <div ng-hide='columnsToRemove'>&nbsp;</div>
                 <div ng-show='columnsToRemove'>

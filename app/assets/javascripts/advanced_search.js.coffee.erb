@@ -101,6 +101,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   resetAvailables = () ->
     $scope.availableColumns = []
     $scope.availableSorts = []
+    $scope.constantField = {}
     for mf in $scope.searchSetup.model_fields
       $scope.availableColumns.push mf unless findByMfid($scope.searchSetup.search_columns,mf.mfid)
       $scope.availableSorts.push mf unless findByMfid($scope.searchSetup.sort_criterions,mf.mfid)
@@ -349,12 +350,34 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.removeColumns = () ->
     removeSelectionFromModel($scope.searchSetup.search_columns, $scope.columnsToRemove)
 
-  #add a blank column
-  $scope.addBlank = () ->
+  # show constant-field inputs
+  $scope.toggleConstantField = () ->
+    $scope.displayConstantField = !$scope.displayConstantField
+
+  $scope.addConstantField = () ->
+    $scope.addAnyConstantField $scope.constantField.name, $scope.constantField.value
+
+  $scope.addAnyConstantField = (fieldName, fieldValue) ->
     cols = $scope.searchSetup.search_columns
     maxRank = if cols.length > 0 then cols[cols.length-1].rank else -1
-    cols.push {mfid:'_blank'+new Date().getTime(),label:'[blank]',rank:++maxRank}
+    cols.push {mfid:'_const'+new Date().getTime(),label: fieldName, constant_field_value: fieldValue, rank:++maxRank}
+    $scope.displayConstantField = false
     resetAvailables()
+
+  $scope.isConstantUid = (uid) ->
+    /^_const/.test uid
+
+  $scope.columnLabel = (searchColumn) ->
+    if $scope.isConstantUid searchColumn.mfid 
+      "*" + searchColumn.label
+    else
+      searchColumn.label
+
+  $scope.hasConstantColumns = () ->
+    if $scope.searchSetup
+      columns = $scope.searchSetup.search_columns || []
+      columns.some (col) ->
+        $scope.isConstantUid col.mfid 
 
   $scope.moveColumnsUp = () ->
     moveSelectionUp $scope.searchSetup.search_columns, $scope.columnsToRemove

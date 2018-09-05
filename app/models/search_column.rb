@@ -2,6 +2,8 @@
 #
 # Table name: search_columns
 #
+#  constant_field_name  :string(255)
+#  constant_field_value :string(255)
 #  created_at           :datetime         not null
 #  custom_definition_id :integer
 #  custom_report_id     :integer
@@ -33,4 +35,40 @@ class SearchColumn < ActiveRecord::Base
       false
     end
   end
+
+  # When SearchColumn's MF is a constant, its model_field_uid refers to the temporary uid assigned by the front-end.
+  # The real model_field_uid is generated dynamically below. Assigning an actual constant MF uid will set off 
+  # an infinite recursion (see HoldsCustomDefinition#model_field_uid= )
+
+  def model_field
+    if model_field_uid.match(/^_const/)
+      assemble_constant_field
+    else
+      super
+    end
+  end
+
+  private
+
+  def assemble_constant_field
+    cm = CoreModule.find_by_class_name(search_setup.try(:module_type) || imported_file.try(:module_type))
+    rank = ModelField.next_index_number cm
+    opts = {read_only: true, label_override: constant_field_name, export_lambda: constant_export_lambda, import_lambda: constant_import_lambda, qualified_field_name: constant_qualified_field_name}
+    mf = ModelField.new rank, "*const_#{id}", cm, nil, opts
+    mf.define_singleton_method(:blank?) { true } if constant_field_value.blank?
+    mf
+  end
+
+  def constant_export_lambda
+    lambda { |obj| self.constant_field_value }
+  end
+
+  def constant_import_lambda
+    lambda { |obj, data| "Constant Field ignored. (read only)" }
+  end
+
+  def constant_qualified_field_name
+    "(SELECT #{ActiveRecord::Base.connection.quote(constant_field_value)})"
+  end
+
 end

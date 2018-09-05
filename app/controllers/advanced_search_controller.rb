@@ -43,7 +43,10 @@ class AdvancedSearchController < ApplicationController
         base_params[:search_columns].each do |sc|
           next unless ModelField.find_by_uid(sc[:mfid]).user_accessible?
           col = ss.search_columns.build :model_field_uid=>sc[:mfid], :rank=>sc[:rank]
-          col.model_field_uid = "_blank" if col.model_field_uid.match /^_blank/
+          # Not a "real" MF uid. Actual MF uid will be generated dynamically (see SearchColumn#model_field)
+          if col.model_field_uid.match(/^_const/)
+            col.assign_attributes constant_field_name: sc[:label], constant_field_value: sc[:constant_field_value]
+          end
         end
       end
 
@@ -219,7 +222,7 @@ class AdvancedSearchController < ApplicationController
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},
           :download_format=>(ss.download_format.presence || "xlsx"),
-          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank}},
+          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank, :constant_field_value => c.constant_field_value}},
           :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank,:descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
           :search_schedules=>ss.search_schedules.collect {|s|

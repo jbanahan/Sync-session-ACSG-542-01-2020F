@@ -184,6 +184,10 @@ class ModelField
     @required
   end
 
+  def self.constant_uid? uid
+    uid.to_s.match(/^\*const_/)
+  end
+
   def xml_tag_name
     tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
     tag_name.to_s.gsub(/[\W]/,'_')
@@ -708,6 +712,8 @@ class ModelField
 
     reloaded = reload_if_stale
 
+    return find_constant(uid) if constant_uid? uid
+    
     MODEL_FIELDS.values.each do |h|
       mf = h[uid_sym]
       return mf unless mf.nil?
@@ -721,6 +727,11 @@ class ModelField
     end
 
     return blank_model_field
+  end
+
+  def self.find_constant uid
+    search_column_id = uid.to_s.split("_").last.to_i
+    SearchColumn.find(search_column_id).model_field
   end
 
   # Should the find_by_uid method double check by reloading for missing fields

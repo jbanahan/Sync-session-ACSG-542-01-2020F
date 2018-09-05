@@ -14,7 +14,7 @@
 # Indexes
 #
 #  index_fiscal_months_on_start_date_and_end_date  (start_date,end_date)
-#
+
 
 class FiscalMonth < ActiveRecord::Base
   belongs_to :company

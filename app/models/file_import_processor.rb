@@ -457,7 +457,7 @@ class FileImportProcessor
       data_map[mod] = {}
     end
     get_columns.each do |col|
-      mf = col.find_model_field
+      mf = col.model_field
       r = row[col.rank + base_column]
       r = r.value if r.respond_to? :value #get real value for Excel formulas
       r = r.strip if r.is_a? String

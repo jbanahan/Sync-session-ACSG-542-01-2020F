@@ -97,14 +97,16 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
       put :update, :id=>@ss.id, :search_setup=>{:search_columns=>[{:mfid=>'prod_uid',:label=>"UID",:rank=>2},
         {:mfid=>'prod_name',:rank=>1,:label=>'m'},
-        {:mfid=>'_blanksomeotherjunk',:rank=>3}
+        {:mfid=>'_constsomeotherjunk', :label=> 'Broker', :constant_field_value => 'Vandegrift', :rank=> 3}
       ]}
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_columns.size).to eq(3)
       expect(@ss.search_columns.find_by_rank_and_model_field_uid(1,'prod_name')).not_to be_nil
       expect(@ss.search_columns.find_by_rank_and_model_field_uid(2,'prod_uid')).not_to be_nil
-      expect(@ss.search_columns.find_by_rank_and_model_field_uid(3,'_blank')).not_to be_nil
+      constant_field = @ss.search_columns.find_by_rank_and_model_field_uid(3, '_constsomeotherjunk')
+      expect(constant_field.constant_field_name).to eq "Broker"
+      expect(constant_field.constant_field_value).to eq "Vandegrift"
     end
     it "should recreate sorts" do
       @ss.sort_criterions.create!(:model_field_uid=>:prod_uid,:rank=>1,:descending=>false)
@@ -205,6 +207,7 @@ describe AdvancedSearchController do
         :include_links=>true,:no_time=>true,:module_type=>"Product")
       @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
+      @ss.search_columns.create!(:rank=>3,:model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
@@ -227,8 +230,9 @@ describe AdvancedSearchController do
       expect(search_list.first['id']).to eq(@ss.id)
       expect(search_list.first['module']).to eq("Product")
       expect(h['search_columns']).to eq([
-        {"mfid"=>"prod_uid","label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1},
-        {"mfid"=>"prod_name","label"=>ModelField.find_by_uid(:prod_name).label,"rank"=>2}
+        {"mfid"=>"prod_uid","label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1, "constant_field_value"=>nil},
+        {"mfid"=>"prod_name","label"=>ModelField.find_by_uid(:prod_name).label,"rank"=>2, "constant_field_value"=>nil},
+        {"mfid"=>"_const","label"=>"Broker","rank"=>3, "constant_field_value"=>"Vandegrift"}
       ])
       expect(h['sort_criterions']).to eq([
         {"mfid"=>"prod_uid","descending"=>true,"label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1}
