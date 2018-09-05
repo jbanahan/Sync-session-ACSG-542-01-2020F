@@ -1,3 +1,5 @@
+require 'open_chain/random_audit_generator'
+
 # This class takes a search setup, runs the search and then outputs it 
 # in the desired format (by default, the format specified in the search_setup itself).
 class SearchWriter
@@ -13,48 +15,78 @@ class SearchWriter
   # Runs the given search setup, writing it to the io object provided.  If a block is given a tempfile
   # yielded to the caller and the Tempfile is cleaned up automatically, otherwise the tempfile is
   # returned and it is the calller's responsibility to clean up.
-  def self.write_search search_setup, io, user: nil, output_format: nil, max_results: nil
+  def self.write_search search_setup, io, user: nil, output_format: nil, max_results: nil, audit: nil
     writer = SearchWriter.new(search_setup, user: user, output_format: output_format)
-    writer.write_search io, max_results: max_results
+    writer.write_search io, max_results: max_results, audit: audit
     io.flush
 
     nil
   end
 
-  def write_search io, max_results: nil
+  def write_search io, max_results: nil, audit: nil
     builder = create_builder
-    column_model_fields = build_column_model_fields @search_setup
-    column_styles = build_column_styles @search_setup, column_model_fields
-
-    sheet = initialize_results_sheet(builder, @search_setup, column_model_fields, @user)
-
     result_count = 0
     search_query = SearchQuery.new(@search_setup, @user)
-    result_class = @search_setup.core_module.klass
 
     query_opts = {raise_max_results_error: true}
     query_opts[:per_page] = max_results if max_results.to_i > 0
 
+    results = []
     search_query.execute(query_opts) do |row_hash|
-      write_result_row builder, sheet, @search_setup, result_class, row_hash, column_styles
+      results << row_hash
       result_count += 1
     end
 
-    builder.freeze_horizontal_rows sheet, 1
-    builder.apply_min_max_width_to_columns sheet
-
-    # CSV (for obvious reasons) can't have criterions added as another tab
-    if builder.output_format != :csv
-      generate_criteria_tab builder, @search_setup, @user
-    end
+    create_sheets results, builder, @search_setup, audit, @user
 
     builder.write io
     io.flush
 
+    log_audit builder, io, @search_setup, @user.id if audit
+
     result_count
   end
 
-  private 
+  private
+
+    def log_audit builder, tempfile, ss, user_id
+      # copy existing file
+      Tempfile.open([File.basename(tempfile.path, '.*'), File.extname(tempfile.path)]) do |t|
+        tempfile.rewind
+        IO.copy_stream tempfile, t
+        t.flush
+        Attachment.add_original_filename_method(t, tempfile.original_filename)
+        RandomAudit.create! attached: t, search_setup: ss, module_type: ss.module_type, 
+                            report_name: t.original_filename, report_date: Time.zone.now, user_id: user_id
+      end
+    end
+
+    def create_sheets results, builder, search_setup, audit, user
+      if audit
+        audit_results = OpenChain::RandomAuditGenerator.run(results, audit['percent'], audit['record_type'])
+        create_sheet_from_collection audit_results, "Audit", builder, search_setup, user
+        # CSV (for obvious reasons) can't have results added as another tab
+        if builder.output_format != :csv 
+          create_sheet_from_collection results, "Results", builder, search_setup, user
+        end
+      else
+        create_sheet_from_collection results, "Results", builder, search_setup, user
+      end
+      # CSV can't have criterions added as another tab
+      if builder.output_format != :csv
+        generate_criteria_tab builder, @search_setup, audit, @user
+      end
+    end    
+
+    def create_sheet_from_collection collection, title, builder, search_setup, user
+      result_class = search_setup.core_module.klass
+      column_model_fields = build_column_model_fields search_setup
+      column_styles = build_column_styles search_setup, column_model_fields
+      sheet = initialize_sheet(title, builder, search_setup, column_model_fields, user)
+      collection.each{ |c| write_result_row builder, sheet, @search_setup, result_class, c, column_styles }
+      builder.freeze_horizontal_rows sheet, 1
+      builder.apply_min_max_width_to_columns sheet
+    end
 
     def write_result_row builder, sheet, search_setup, result_class, search_query_hash, column_styles
       row = search_query_hash[:result]
@@ -80,8 +112,8 @@ class SearchWriter
       result_row
     end
 
-    def initialize_results_sheet builder, search_setup, column_model_fields, user
-      builder.create_sheet "Results", headers: build_header_row(search_setup, column_model_fields, user)
+    def initialize_sheet title, builder, search_setup, column_model_fields, user
+      builder.create_sheet title, headers: build_header_row(search_setup, column_model_fields, user)
     end
 
     def build_header_row search_setup, column_model_fields, user
@@ -115,7 +147,7 @@ class SearchWriter
       end
     end
 
-    def generate_criteria_tab builder, search_setup, user
+    def generate_criteria_tab builder, search_setup, audit, user
       sheet = builder.create_sheet "Search Parameters", headers: ["Parameter Name", "Parameter Value"]
       builder.add_body_row sheet, ["User Name", user.full_name]
       builder.add_body_row sheet, ["Report Run Time", Time.zone.now], styles: [nil, :default_datetime]
@@ -123,6 +155,11 @@ class SearchWriter
 
       search_setup.search_criterions.each do |criterion|
         builder.add_body_row(sheet, create_criterion_row(criterion))
+      end
+
+      if audit
+        builder.add_body_row sheet, ["Audit Percentage", audit['percent']]
+        builder.add_body_row sheet, ["Dataset to Audit", audit['record_type']]
       end
 
       builder.apply_min_max_width_to_columns sheet

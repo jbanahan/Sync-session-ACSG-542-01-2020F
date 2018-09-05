@@ -494,10 +494,19 @@ OpenChain::Application.routes.draw do
 
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
-    get 'setup', :on=>:member
-    get 'download', :on=>:member
-    post 'send_email', :on=>:member
-    get 'total_objects', :on=>:member
+    member do
+      get 'setup'
+      get 'download'
+      post 'send_email'
+      get 'total_objects'
+      get 'show_audit'
+      get 'download_audit'
+      post 'audit'
+    end
+  end
+
+  resources :random_audits, :only => [] do
+    get 'download', :on => :member
   end
 
   resources :run_as_sessions, :only => [:index, :show]

@@ -5,7 +5,7 @@ module OpenChain; module Report; class AsyncSearch
   # Run the report, passing the search_setup_id
   def self.run_report run_by, settings={}, &block
     search_setup = SearchSetup.where(id: settings['search_setup_id'].to_i).first
-    run(run_by, search_setup, &block)
+    run(run_by, search_setup, settings, &block)
   end
 
   def self.run_and_email_report run_by_id, search_setup_id, mail_fields
@@ -22,7 +22,7 @@ module OpenChain; module Report; class AsyncSearch
     run_by.messages.create!(:subject=>"Report FAILED: #{search_setup.try(:name)}",:body=>"<p>Your report failed to run due to a system error: #{ERB::Util.html_escape(e.message)}</p>")
   end
 
-  def self.run run_by, search_setup
+  def self.run run_by, search_setup, settings={}
     return nil unless search_setup
     raise "You cannot run another user's report.  Your id is #{run_by.id}, this report is for user #{search_setup.user_id}" unless run_by == search_setup.user
 
@@ -31,21 +31,21 @@ module OpenChain; module Report; class AsyncSearch
     tempfile_params = ["#{File.basename(tempfile_name, ".*")}_", File.extname(tempfile_name)]
     if block_given?
       Tempfile.open(tempfile_params) do |tempfile|
-        write_search tempfile, filename, search_setup, run_by  
+        write_search tempfile, filename, search_setup, run_by, settings
         yield tempfile
       end
 
       return nil
     else
       tempfile = Tempfile.open(tempfile_params)
-      write_search tempfile, filename, search_setup, run_by
+      write_search tempfile, filename, search_setup, run_by, settings
       return tempfile
     end
   end
 
-  def self.write_search tempfile, filename, search_setup, run_by
+  def self.write_search tempfile, filename, search_setup, run_by, settings
     Attachment.add_original_filename_method(tempfile, filename)
-    SearchWriter.write_search search_setup, tempfile, user: run_by
+    SearchWriter.write_search search_setup, tempfile, user: run_by, audit: settings['audit']
     tempfile.rewind
   end
 

@@ -1,0 +1,52 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Audit</button>
+  <button class="btn_link" link_to="<%=advanced_search_path(@ss_id)%>">Back</button>
+<%end%>
+
+<div class="col-md-6">
+  <div class="container">
+    <h2>Random Audit Output Options</h2>
+    <br>
+    <%=form_tag audit_advanced_search_path, :id=>"frm_run", :class=> "form-horizontal" do -%>
+      <div class="form-group">
+        <label class="control-label col-md-2" for="audit_percent">Audit Percentage</label>
+        <div class="col-md-2">
+          <%=text_field nil, :percent, :class=> 'form-control', placeholder: "Enter 1 to 99" %>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-md-2" for="record_type">Dataset to Audit</label>
+        <div class="col-md-2">      
+          <%=select_tag :record_type, options_for_select([["Header Level", "header"], ["Line Level", "line"]]), :class => 'form-control', prompt: "Make a selection" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="col-md-12">
+  <div>
+    <h2>Audit Report History</h2>  
+    <table class="detail_table">
+      <thead>
+        <tr>
+          <th>Report Name</th>
+          <th>Report Run Date</th>
+          <th>Module</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @audits.each do |aud| %>
+          <tr>
+            <td><%= link_to aud.report_name, download_random_audit_path(aud) %></td>
+            <td><%= aud.report_date %></td>
+            <td><%= aud.module_type %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+

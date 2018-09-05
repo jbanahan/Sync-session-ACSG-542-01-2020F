@@ -18,7 +18,7 @@ describe OpenChain::Report::AsyncSearch do
   describe "run" do 
     it "uses SearchWriter to write a report and yields the tempfile created" do
       expect(Tempfile).to receive(:open).and_yield tempfile
-      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user)
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
       expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report.xlsx"
       subject.run(user, search_setup) do |t|
         expect(t).to eq tempfile
@@ -28,7 +28,7 @@ describe OpenChain::Report::AsyncSearch do
 
     it "uses SearchWriter to write a report and returns the tempfile created" do
       expect(Tempfile).to receive(:open).and_return tempfile
-      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile, user: user)
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile, user: user, audit: nil)
       expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report.xlsx"
 
       t = subject.run(user, search_setup)
@@ -47,7 +47,7 @@ describe OpenChain::Report::AsyncSearch do
 
     it "handles bad chars in the report name for tempfiles" do
       expect(Tempfile).to receive(:open).with(["report_name_", ".xlsx"]).and_yield tempfile
-      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user)
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
       expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report/name.xlsx"
       subject.run(user, search_setup) do |t|
         expect(t).to eq tempfile
@@ -62,7 +62,7 @@ describe OpenChain::Report::AsyncSearch do
 
     it "runs report and emails it" do
       expect(Tempfile).to receive(:open).and_yield tempfile
-      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user)
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
       expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report.xlsx"
 
       subject.run_and_email_report user.id, search_setup.id, {to: "me@there.com", subject: "Testing", body: "Testing"}
@@ -93,7 +93,7 @@ describe OpenChain::Report::AsyncSearch do
     let (:search_setup) { Factory(:search_setup, name: "Test", user: user, download_format: "xlsx") }
 
     it "looks up the search setup and passes it to run" do
-      expect(subject).to receive(:run).with(user, search_setup)
+      expect(subject).to receive(:run).with(user, search_setup, {"search_setup_id" => search_setup.id})
 
       subject.run_report user, {"search_setup_id" => search_setup.id}
     end
@@ -103,7 +103,7 @@ describe OpenChain::Report::AsyncSearch do
       # method and then using the rspec method chain to see what's passed to the run methdo, then verifying
       # that the given proc/block is what was passed down
       proc_block = Proc.new {}
-      expect(subject).to receive(:run).with(user, search_setup) do |*args, &block|
+      expect(subject).to receive(:run).with(user, search_setup, {"search_setup_id" => search_setup.id}) do |*args, &block|
         expect(proc_block).to be block
       end
 

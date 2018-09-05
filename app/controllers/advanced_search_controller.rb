@@ -267,6 +267,34 @@ class AdvancedSearchController < ApplicationController
     render :json=>{:id=>previous_search.id}
   end
 
+  def audit
+    ss = SearchSetup.find params[:id]
+    percent = params[:percent].to_i
+    errors = []
+    errors << "You don't have access to this search." if ss.user != current_user
+    errors << "Please enter a percentage between 1 and 99." if percent < 1 || percent > 99
+    errors << "Please select a record type." unless ["header", "line"].include? params[:record_type]
+    if ss.downloadable?(errors) && errors.empty?
+      ReportResult.run_report! "#{ss.name} (Random Audit)", current_user, 'OpenChain::Report::AsyncSearch', :settings=>{ 'search_setup_id'=>ss.id, 'audit' => {percent: percent, record_type: params[:record_type]} }
+      add_flash :notices, "Your report has been scheduled. You'll receive a system message when it finishes."
+      redirect_to request.referrer
+    else
+      error_redirect errors.join("<br>")
+    end
+  end
+
+  def show_audit
+    ss = SearchSetup.find params[:id]
+    if ss.user != current_user
+      error_redirect "You don't have access to this search."
+    else
+      @ss_id = ss.id
+      @audits = RandomAudit.where(user_id: current_user.id).order("report_date DESC")
+      # Needed to submit form
+      @include_legacy_scripts = true
+    end
+  end
+
   private
     def results_per_page
       # Only show 10 results per page for older IE versions.  This is because these browser

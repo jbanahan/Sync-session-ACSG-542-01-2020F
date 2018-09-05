@@ -569,4 +569,59 @@ describe AdvancedSearchController do
       expect(AdvancedSearchController.new.legacy_javascripts?).to be_falsey
     end
   end
+
+  context "audit" do
+    let(:ss) { Factory(:search_setup, user: @user, name: "search name") }
+    
+    describe "show_audit" do
+      
+      it "renders if called with search setup that belongs to user" do
+        ra1 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018,3,15)
+        ra2 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018,3,16)
+        ra3 = RandomAudit.create! user: Factory(:user), search_setup: ss, report_date: Date.new(2018,3,17)
+        get :show_audit, id: ss.id
+        expect(response).to render_template :show_audit
+        expect(assigns(:ss_id)).to eq ss.id
+        expect(assigns(:audits)).to eq [ra2, ra1]
+      end
+
+      it "redirects otherwise" do
+        ss.update_attributes user: Factory(:user)
+        get :show_audit, id: ss.id
+        expect(response).to be_redirect
+      end
+    end
+
+    describe "audit", :disable_delayed_jobs do
+      before { expect_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true }
+      
+      it "runs report if search setup belongs to user and necessary fields are populated" do
+        expect(ReportResult).to receive(:run_report!).with("search name (Random Audit)", @user, 'OpenChain::Report::AsyncSearch', settings: {'search_setup_id' => ss.id, 'audit' => {percent: 25, record_type: 'header'}})
+        post :audit, id: ss.id, percent: 25, record_type: "header"
+        expect(flash[:notices]).to eq ["Your report has been scheduled. You'll receive a system message when it finishes."]
+      end
+
+      it "redirects if search setup doesn't belong to user" do
+        ss.update_attributes user: Factory(:user)
+        expect(ReportResult).to_not receive(:run_report!)
+        post :audit, id: ss.id, percent: 25, record_type: "header"
+        expect(response).to be_redirect
+        expect(flash[:errors]).to eq ["You don't have access to this search."]
+      end
+
+      it "redirects if audit percentage isn't between 1 and 99" do
+        expect(ReportResult).to_not receive(:run_report!)
+        post :audit, id: ss.id, percent: 125, record_type: "header"
+        expect(response).to be_redirect
+        expect(flash[:errors]).to eq ["Please enter a percentage between 1 and 99."]
+      end
+
+      it "redirects if record type isn't specified" do
+        expect(ReportResult).to_not receive(:run_report!)
+        post :audit, id: ss.id, percent: 25, record_type: nil
+        expect(response).to be_redirect
+        expect(flash[:errors]).to eq ["Please select a record type."]
+      end
+    end
+  end
 end

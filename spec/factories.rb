@@ -554,3 +554,7 @@ end
 Factory.define :attachment_archive_setup do |f|
   f.association :company
 end
+Factory.define :random_audit do |f|
+  f.association :user
+  f.association :search_setup
+end
