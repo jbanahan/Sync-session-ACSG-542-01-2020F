@@ -38,6 +38,8 @@
 #  vfi_invoice_enabled         :boolean
 #
 
+require "open_chain/git"
+
 class MasterSetup < ActiveRecord::Base
   cattr_accessor :current
 
@@ -46,15 +48,25 @@ class MasterSetup < ActiveRecord::Base
   after_update :update_cache
   after_find :update_cache
 
-  def self.current_config_version
-    Rails.root.join("config","version.txt").read.strip
+  # Almost solely for test casing purposes  - needs to be up here
+  # because current_repository_version is referenced by a class constant
+  # and it references this method.
+  def self.production_env?
+    Rails.env.production?
+  end
+  private_class_method :production_env?
+
+  def self.current_repository_version
+    # Allow fudging the branch name as a tag name on dev machines, but not production.
+    # Production should ALWAYS be running against a tag.
+    OpenChain::Git.current_tag_name allow_branch_name: !production_env?
   end
 
   # We want to make sure the version # never updates.  The version the config file stated
   # when this code was loaded is always the version # we care to relay.  This is especially
   # important during an upgrade when the version number on disk my not exactly match what's
   # code is currently running.
-  CURRENT_VERSION ||= current_config_version
+  CURRENT_VERSION ||= current_repository_version
 
   def self.current_code_version
     CURRENT_VERSION
@@ -157,11 +169,6 @@ class MasterSetup < ActiveRecord::Base
     end
   end
 
-  # Almost solely for test casing purposes
-  def self.production_env?
-    Rails.env.production?
-  end
-  private_class_method :production_env?
 
   # checks to see if the given custom feature is in the custom features list
   def custom_feature? feature

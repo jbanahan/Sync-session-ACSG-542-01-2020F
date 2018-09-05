@@ -235,9 +235,14 @@ module OpenChain
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
+    
     def precompile
       log_me "Precompiling assets"
-      capture_and_log "rake assets:precompile"
+      command = "rake assets:precompile"
+      if !Rails.env.production?
+        command = "RAILS_ENV=#{Rails.env} #{command}"
+      end
+      capture_and_log command
       log_me "Precompile complete"
     end
 

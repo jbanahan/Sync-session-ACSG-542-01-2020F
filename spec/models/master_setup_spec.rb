@@ -25,32 +25,49 @@ describe MasterSetup do
     end
   end
 
-  context "current_config_version" do
-    before :each do
-      @tmp  = Rails.root.join("tmp")
-      @config = @tmp.join("config")
-      @config.mkdir unless @config.directory?
-    end
+  context "current_repository_version" do
+    subject { described_class }
 
-    after :each do
-      @config.rmtree
-    end
-
-    it "should read config version from $rails.root/config/version.txt" do
-      # Swap in the temp directory for Rails.root, then place a phony config file 
-      # in the relative position that master_setup is looking for it in
-      @config.join("version.txt").open("w") do |f|
-        f << "1.2.3\n"
+    context "with production setup" do
+      before :each do 
+        expect(subject).to receive(:production_env?).and_return true
       end
 
-      expect(Rails).to receive(:root).and_return @tmp
-      expect(MasterSetup.current_config_version).to eq("1.2.3")
+      it "uses git class to determine currently checked out release number" do
+        expect(OpenChain::Git).to receive(:current_tag_name).with(allow_branch_name: false).and_return "tag_name"
+        expect(subject.current_repository_version).to eq "tag_name"
+      end
     end
+
+    context "with non-production setup" do
+      before :each do 
+        expect(subject).to receive(:production_env?).and_return false
+      end
+
+      it "uses git class to determine currently checked out release number" do
+        expect(OpenChain::Git).to receive(:current_tag_name).with(allow_branch_name: true).and_return "tag_name"
+        expect(subject.current_repository_version).to eq "tag_name"
+      end
+    end
+
   end
 
   context "current_code_version" do
-    it "should read the current version from the config/version.txt file" do
-      expect(Rails.root.join("config", "version.txt").read.strip).to eq(MasterSetup.current_code_version)
+    before :each do 
+      # Set a known value into the CURRENT_VERSION constant just to make sure that's what current_code_version
+      # is utilizing
+      @existing_version = MasterSetup::CURRENT_VERSION
+      MasterSetup.send(:remove_const, 'CURRENT_VERSION')
+      MasterSetup.send(:const_set, 'CURRENT_VERSION', 'testing')
+    end
+
+    after :each do
+      MasterSetup.send(:remove_const, 'CURRENT_VERSION')
+      MasterSetup.send(:const_set, 'CURRENT_VERSION', @existing_version)
+    end
+
+    it "should read the current version using the CURRENT_VERSION class var" do
+      expect(MasterSetup.current_code_version).to eq "testing"
     end
   end
 
@@ -88,7 +105,7 @@ describe MasterSetup do
 
     it "uses locking" do
       expect(Lock).to receive(:with_lock_retry).with(an_instance_of(MasterSetup)).and_yield
-      expect(subject. get_migration_lock host: "host").to eq true
+      expect(subject.get_migration_lock host: "host").to eq true
     end
 
     it "uses hostname syscall if host is not provided" do

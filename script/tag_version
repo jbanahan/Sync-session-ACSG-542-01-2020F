@@ -8,8 +8,5 @@ TAG=$1
 
 set -e
 
-echo $TAG > config/version.txt
-git commit -a -m $TAG
 git tag $TAG
-git push origin HEAD
 git push --tags

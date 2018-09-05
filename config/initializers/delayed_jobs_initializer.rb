@@ -18,11 +18,11 @@ class ChainDelayedJobPlugin < Delayed::Plugin
 
   def self.upgrade_started? 
     # The upgrade in progress check relies on checking the existence of an upgrade_running file, however, this
-    # file is cleaned up after the upgrade is complete, so we then we're using the check for the config version
+    # file is cleaned up after the upgrade is complete, so then we're using the check for the repository release version
     # number vs. code version as the fallback to see if an upgrade was run.  This is done as a fallback since
     # the in_progress? will detect an upgrade being started before the code version check will, and the code
     # version check is here because the upgrade in_progress check will return false after the upgrade is completed.
-    OpenChain::Upgrade.in_progress? || (MasterSetup.current_code_version != MasterSetup.current_config_version)
+    OpenChain::Upgrade.in_progress? || (MasterSetup.current_code_version != MasterSetup.current_repository_version)
   end
 
   def self.number_of_running_queues
