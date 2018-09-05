@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
     SHOES_SYSTEM_CODE ||= "SHOES"
 
     def initialize
-      @cdefs = self.class.prep_custom_definitions([:prod_part_number, :ord_line_color, :ord_line_size, :ord_line_destination_code])
+      @cdefs = self.class.prep_custom_definitions([:prod_part_number, :ord_line_color, :ord_line_size, :ord_line_destination_code, :ord_destination_codes])
     end
 
     def ftp_credentials
@@ -170,6 +170,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
         end
 
         line_number = 0
+        destination_codes = Set.new
         data[:items].each do |item|
           product = products[item[:item_code]]
           line = order.order_lines.build
@@ -178,11 +179,16 @@ module OpenChain; module CustomHandler; module ShoesForCrews
           line.sku = item[:upc]
           line.quantity = BigDecimal(item[:ordered].to_s.strip)
           line.price_per_unit = BigDecimal(item[:unit_cost].to_s.strip)
-          line.find_and_set_custom_value(@cdefs[:ord_line_destination_code], item[:warehouse_code]) unless item[:warehouse_code].blank?
+          if item[:warehouse_code].present?
+            line.find_and_set_custom_value(@cdefs[:ord_line_destination_code], item[:warehouse_code])
+            destination_codes << item[:warehouse_code]
+          end
           size, color = extract_size_color_from_model_description item[:model]
           line.find_and_set_custom_value(@cdefs[:ord_line_size], size) unless size.blank?
           line.find_and_set_custom_value(@cdefs[:ord_line_color], color) unless color.blank?
         end
+
+        order.find_and_set_custom_value(@cdefs[:ord_destination_codes], destination_codes.to_a.sort.join(",")) unless destination_codes.length == 0
 
         # If we don't mark the order as accepted, they will not be able to be selected on the shipment screen.
         # As S4C doesn't have an acceptance step, we're safe to accept everything coming through here.

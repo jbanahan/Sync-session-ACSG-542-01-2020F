@@ -99,6 +99,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_destination_code: {label:'Final Destination',data_type: :string,module_type:'Order', cdef_uid: "ord_destination_code"},
     ord_factory_code: {label:'Factory Code', data_type: :string, module_type:'Order', cdef_uid: "ord_factory_code"},
     ord_customer_code: {label:"Customer Code", data_type: :string, module_type: "Order", cdef_uid: "ord_customer_code"},
+    ord_destination_codes: {label: "Destination Codes", data_type: :string, module_type: 'Order', cdef_uid: "ord_destination_codes"},
     ord_line_ex_factory_date: {label: "Planned Ex-Factory", data_type: :date, module_type: "OrderLine", cdef_uid: "ord_line_ex_factory_date"},
     ord_line_color: {label: "Color", data_type: :string, module_type: "OrderLine", cdef_uid: "ord_line_color"},
     ord_line_color_description: {label: "Color Description", data_type: :text, module_type: "OrderLine", cdef_uid: "ord_line_color_description"},

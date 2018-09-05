@@ -1,4 +1,4 @@
-module ConfigMigrations; module Burlington; class BurlingtonRulesSow1406
+module ConfigMigrations; module Www; class BurlingtonRulesSow1406
 
   def up
     add_business_validation_rules

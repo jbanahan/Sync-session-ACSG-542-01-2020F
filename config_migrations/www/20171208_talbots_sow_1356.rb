@@ -1,4 +1,4 @@
-module ConfigMigrations; module Talbots; class TalbotsSow1356
+module ConfigMigrations; module Www; class TalbotsSow1356
 
   def up
     add_business_validation_rules

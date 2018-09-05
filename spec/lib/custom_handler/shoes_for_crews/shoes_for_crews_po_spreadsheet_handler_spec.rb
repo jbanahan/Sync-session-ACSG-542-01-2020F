@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
         },
         {
           item_code: "ITEMCODE3",
-          warehouse_code: "ware",
+          warehouse_code: "bware",
           model: "Senator - Blk",
           upc: "upc",
           unit: 1.00,
@@ -316,6 +316,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(po.vendor.vendor).to be_truthy
       expect(po.importer.linked_companies).to include po.vendor
       expect(po.approval_status).to eq "Accepted"
+      expect(po.custom_value(custom_values[:ord_destination_codes])).to eq "bware,ware"
 
       expect(po.order_lines.length).to eq 3
       line = po.order_lines.first
@@ -340,11 +341,13 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(line.line_number).to eq 2
       expect(line.custom_value(custom_values[:ord_line_size])).to eq "07"
       expect(line.custom_value(custom_values[:ord_line_color])).to be_nil
+      expect(line.custom_value(custom_values[:ord_line_destination_code])).to eq "ware"
 
       line = po.order_lines[2]
       expect(line.line_number).to eq 3
       expect(line.custom_value(custom_values[:ord_line_size])).to be_nil
       expect(line.custom_value(custom_values[:ord_line_color])).to eq "Blk"
+      expect(line.custom_value(custom_values[:ord_line_destination_code])).to eq "bware"
 
       # Verify a fingerprint was set
       fingerprint = DataCrossReference.find_po_fingerprint po
