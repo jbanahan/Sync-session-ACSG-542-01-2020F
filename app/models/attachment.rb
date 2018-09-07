@@ -70,7 +70,8 @@ class Attachment < ActiveRecord::Base
       # Billing Invoice = Alliance Billing
       # Invoice = Fenix
       # Archive Packet = These will have the invoices in them as well, so they need to have access restrictions.
-      if ["BILLING INVOICE", "INVOICE", ARCHIVE_PACKET_ATTACHMENT_TYPE.upcase].include?(self.attachment_type.to_s.upcase)
+      attachment_type = self.attachment_type.to_s.upcase
+      if ["BILLING INVOICE", "INVOICE", ARCHIVE_PACKET_ATTACHMENT_TYPE.upcase].include?(attachment_type) || attachment_type =~ /BILLING INVOICE/
         view = BrokerInvoice.can_view? user, self.attachable
       else
         view = true

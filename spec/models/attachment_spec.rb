@@ -78,9 +78,9 @@ describe Attachment do
       let (:entry) {Factory(:entry, importer: user.company)}
       let (:attachment) {entry.attachments.build attached_file_name: "test.txt"}
 
-      it "limits access to Billing Invoice attachments to only those capable of viewing BrokerInvoices" do
+      it "limits access to any type that has 'Billing Invoice' in the name to only those capable of viewing BrokerInvoices" do
         a = attachment
-        a.attachment_type = "BilLIng InvoICE"
+        a.attachment_type = "This is a BilLIng InvoICE attachment"
         a.save!
         expect(BrokerInvoice).to receive(:can_view?).with(user, a.attachable).and_return false
         expect(a.attachable).to receive(:can_view?).with(user).and_return true
