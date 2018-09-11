@@ -1,0 +1,19 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=reports_path%>">Back</button>
+<%end%>
+<h2>Ascena / Ann Inc. MPF Savings Report</h2><br>
+<%=form_tag reports_run_ascena_mpf_savings_report_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="start_date">Fiscal Month:</label></div>
+    <div class="col-md-3"><%=select_tag :fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate'%></div>
+  </div>
+  <br>
+  <div class="row" style="line-height: 2.5">
+    <div class="col-md-2"><label class="control-label" for="start_date">Company:</label></div>
+    <div class="col-md-3"><%=select_tag :cust_numbers, options_for_select([["ASCENA TRADE SERVICES LLC", @cust_numbers[:ascena]], ["ANN TAYLOR INC", @cust_numbers[:ann]], ["Combine both companies", "#{@cust_numbers[:ascena]},#{@cust_numbers[:ann]}"]]), :class=>'form-control'%></div>
+  </div>
+</div>
+<%end%>
+</div>

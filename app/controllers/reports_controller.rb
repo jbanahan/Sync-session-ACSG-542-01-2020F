@@ -789,6 +789,37 @@ class ReportsController < ApplicationController
     end
   end
 
+
+  def show_ascena_mpf_savings_report
+    klass = OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport
+    if klass.permission? current_user
+      @fiscal_months = []
+      FiscalMonth.where(company_id: OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport.ascena.id).where("end_date > ?", Date.parse("01-01-2018")).order("start_date ASC").each do |fm|
+        @fiscal_months << fm.fiscal_descriptor
+      end
+
+      @cust_numbers = {ascena: klass::ASCENA_CUST_NUM, ann: klass::ANN_CUST_NUM}
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_ascena_mpf_savings_report
+    klass = OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport
+    if klass.permission? current_user
+      fm = klass.fiscal_month params
+      if fm.nil?
+        add_flash :errors, "You must select a valid fiscal month."
+        redirect_to reports_show_ascena_duty_savings_report_path
+      else
+        run_report "MPF Savings Report", klass, {'fiscal_month' => params[:fiscal_month], 'cust_numbers' => params[:cust_numbers].split(",")}, ["Fiscal Month #{params[:fiscal_month]}", params[:cust_numbers]]
+      end
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def show_ascena_duty_savings_report
     klass = OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport
     if klass.permission? current_user

@@ -115,7 +115,7 @@ class XlsxBuilder
     @styles ||= {}
     existing = @styles[format_name.to_sym]
     if existing && return_existing
-      return existing
+      return format_name
     elsif existing && prevent_override
       raise "A format named #{format_name} already exists."
     else
