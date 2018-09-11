@@ -224,6 +224,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_any_hold_date date, attribute
       hold_date_attr, release_date_attr = entry.hold_attributes.find{ |att| att[:hold] == attribute }.values_at(:hold, :release)
+      # allow blank dates for testing
+      if date.blank?
+        entry[hold_date_attr] = date
+        return
+      end
       # any hold date earlier than or equal to One USG is treated as a correction (i.e., as if it had been received first)
       if entry.one_usg_date && entry.one_usg_date >= date
         entry[release_date_attr] = entry.one_usg_date unless entry[hold_date_attr].present?
@@ -245,6 +250,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         hold_date_attr = entry.hold_attributes.find{ |att| att[:release] == attribute }[:hold]
         if entry[hold_date_attr].present?
           entry[attribute] = date
+          return if date.blank? # allow blank dates for testing
           # any release date earlier than One USG is treated as a correction (i.e., as if it had been received first)
           if entry.one_usg_date && entry.one_usg_date <= date
             updated_after_one_usg[attribute] = date
@@ -284,6 +290,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_one_usg_date date
       entry.one_usg_date = date
+      return if date.blank?  # allow blank dates for testing
       entry.active_holds.each do |h| 
         release_date_attr = h[:release][:attribute]
         entry[release_date_attr] = date

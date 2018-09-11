@@ -1403,7 +1403,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         setter.set_any_hold_date date1, attribute
         expect(ent.aphis_hold_date).to eq date1
       end
-
+      
       it "also sets corresponding release date to nil (along w/ 'updated' hashes) if hold is already populated" do
         ent.update_attributes!(aphis_hold_date: date2, aphis_hold_release_date: date2)
         setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
@@ -1434,6 +1434,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           expect(ent.aphis_hold_date).to eq date2
           expect(ent.aphis_hold_release_date).to eq date3
         end
+
+        it "sets date to nil, making no other changes (for testing)" do
+          ent.update_attributes!(aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date3)
+          setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
+          setter.set_any_hold_date nil, attribute
+          expect(ent.aphis_hold_date).to be_nil
+          expect(setter.updated_before_one_usg).to eq({ aphis_hold_release_date: date2 })
+        end
       end
     end
 
@@ -1459,9 +1467,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       end
 
       it "adds to 'updated_after_one_usg' when appropriate" do
-        ent.update_attributes!(aphis_hold_date: date1 , one_usg_date: date1)
+        ent.update_attributes!(aphis_hold_date: date1, one_usg_date: date1)
         setter.set_any_hold_release_date date2, attribute
         expect(setter.updated_after_one_usg).to eq({aphis_hold_release_date: date2})
+      end
+
+      it "sets date to nil, making no other changes (for testing)" do
+        ent.update_attributes!(aphis_hold_date: date1, one_usg_date: date1)
+        setter.set_any_hold_release_date nil, attribute
+        expect(setter.updated_after_one_usg).to be_empty
       end
     
       context "one_usg_date" do
@@ -1490,6 +1504,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           expect(ent.aphis_hold_release_date).to eq date1
           expect(setter.updated_before_one_usg[:aphis_hold_release_date]).to eq date1
           expect(setter.updated_after_one_usg[:aphis_hold_release_date]).to be_nil
+        end
+
+        it "sets date to nil, making no other changes (for testing purposes)" do
+          ent.update_attributes!(aphis_hold_date: date1, aphis_hold_release_date: date2, one_usg_date: date3)
+          setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
+          setter.set_any_hold_release_date nil, :one_usg_date
+          expect(ent.one_usg_date).to be_nil
+          expect(ent.aphis_hold_release_date).to eq date2
+          expect(setter.updated_before_one_usg).to eq({ aphis_hold_release_date: date2 })
         end
       end
     end
