@@ -456,6 +456,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       end
 
       expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return ['1']
+      expect(order_data_klass).to receive(:line_pc_unapproved?).with(od, nd).and_return false
 
       expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_truthy
 
@@ -469,12 +470,44 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       expect(order.custom_value(header_cdef)).to be_blank
 
     end
+
+    it 'should return true if no lines changed but detail-level PC approval was cleared' do
+      run_no_line_change_detail_level_approval_test 'Approve', true
+    end
+
+    it 'should return false if no lines changed and detail-level PC approval was cleared, but header has empty prior approval status' do
+      run_no_line_change_detail_level_approval_test '', false
+    end
+
+    it 'should return false if no lines changed and detail-level PC approval was cleared, but header has nil prior approval status' do
+      run_no_line_change_detail_level_approval_test nil, false
+    end
+
+    def run_no_line_change_detail_level_approval_test header_recommendation, value_change_expectation
+      header_cdef = described_class.prep_custom_definitions([:ord_pc_approval_recommendation]).values.first
+      order.update_custom_value!(header_cdef, header_recommendation)
+
+      expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return []
+      # This is only called when the header recommendation field has a value.
+      if header_recommendation.present?
+        expect(order_data_klass).to receive(:line_pc_unapproved?).with(od, nd).and_return true
+      end
+
+      expect(subject.reset_product_compliance_approvals(order,od, nd)).to eq value_change_expectation
+
+      order.reload
+      expect(order.custom_value(header_cdef)).to be_blank
+    end
+
     it 'should return false if lines changed but they were not approved' do
       expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return ['1']
       expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_falsey
     end
 
     it 'should return false if no lines changed' do
+      header_cdef = described_class.prep_custom_definitions([:ord_pc_approval_recommendation]).values.first
+      order.update_custom_value!(header_cdef,'Approve')
+
       [:ordln_pc_approved_by,:ordln_pc_approved_by_executive].each do |uid|
         line1.update_custom_value!(cdefs[uid],user.id)
       end
@@ -483,12 +516,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       end
 
       expect(order_data_klass).to receive(:lines_needing_pc_approval_reset).with(od, nd).and_return []
+      expect(order_data_klass).to receive(:line_pc_unapproved?).with(od, nd).and_return false
 
       expect(subject.reset_product_compliance_approvals(order,od, nd)).to be_falsey
 
       cdefs.values.each do |cd|
         expect(line1.custom_value(cd)).to_not be_blank
       end
+      expect(order.custom_value(header_cdef)).to_not be_blank
     end
   end
 
@@ -667,7 +702,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe 'OrderData' do
     let :cdefs do
-      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type, :ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag])
+      described_class.prep_custom_definitions([:ord_country_of_origin,:ord_sap_extract, :ord_planned_handover_date, :ord_type, :ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
     end
     let :sap_extract_date do
       Time.now.utc
@@ -693,10 +728,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       o.update_custom_value!(cdefs[:ord_type],'Type')
       ol.update_custom_value!(cdefs[:ordln_custom_article_description], 'Custom desc')
       ol.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 123.45)
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_date], Date.new(2018, 3, 3))
+      ol.update_custom_value!(cdefs[:ordln_pc_approved_date_executive], nil)
       ol.update_custom_value!(cdefs[:ordln_deleted_flag], false)
       ol2.update_custom_value!(cdefs[:ordln_custom_article_description], 'Another custom desc')
       ol2.update_custom_value!(cdefs[:ordln_vendor_inland_freight_amount], 678.9)
       ol2.update_custom_value!(cdefs[:ordln_deleted_flag], true)
+      ol2.update_custom_value!(cdefs[:ordln_pc_approved_date], nil)
+      ol2.update_custom_value!(cdefs[:ordln_pc_approved_date_executive], Date.new(2018, 3, 4))
       expect(o).to receive(:business_rules_state).and_return('Fail')
       o.reload
       o
@@ -757,6 +796,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od.fingerprint_hash['lines'].length).to eq 2
         expect(od.fingerprint_hash['lines'][1][cdefs[:ordln_deleted_flag].model_field_uid]).to eq false
         expect(od.fingerprint_hash['lines'][2][cdefs[:ordln_deleted_flag].model_field_uid]).to eq true
+        expected_has_pc_approved_date_map = {1=>[true, false],2=>[false, true]}
+        expect(od.has_pc_approved_date_map).to eq expected_has_pc_approved_date_map
       end
 
       it 'should handle nil values for detail fingerprints when constructing hash' do
@@ -990,6 +1031,34 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         new_data.variant_map = {1=>'10',2=>'11'}
 
         expect(order_data_klass.lines_needing_pc_approval_reset(old_data,new_data)).to eq []
+      end
+    end
+
+    describe "line_pc_unapproved?" do
+      let (:pc_approval_cdef) { described_class.prep_custom_definitions([:ordln_pc_approved_date]).values.first }
+      let (:old_data) { double('old_order_data') }
+      let (:new_data) { double('new_order_data') }
+
+      it "returns true if 1+ line has PC approved date field cleared" do
+        expect(old_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, false], 2 => [true, false], 3 => [true, false] }).at_least(:once)
+        expect(new_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, false], 2 => [false, false], 3 => [true, false] }).at_least(:once)
+
+        expect(order_data_klass.line_pc_unapproved?(old_data, new_data)).to be true
+      end
+
+      it "returns true if 1+ line has PC executive approved date field cleared" do
+        expect(old_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, true], 2 => [true, true], 3 => [true, true] }).at_least(:once)
+        expect(new_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, true], 2 => [true, false], 3 => [true, true] }).at_least(:once)
+
+        expect(order_data_klass.line_pc_unapproved?(old_data, new_data)).to be true
+      end
+
+      it "returns false if no lines have PC approved date field cleared" do
+        # Still contains a false approval value in the newer snapshot, but it is also false in the old one.
+        expect(old_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, false], 2 => [false, false], 3 => [true, false] }).at_least(:once)
+        expect(new_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, false], 2 => [false, false], 3 => [true, false] }).at_least(:once)
+
+        expect(order_data_klass.line_pc_unapproved?(old_data, new_data)).to be false
       end
     end
 

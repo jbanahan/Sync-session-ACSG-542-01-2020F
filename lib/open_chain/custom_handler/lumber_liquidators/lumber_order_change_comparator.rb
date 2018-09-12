@@ -218,6 +218,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         end
       end
     end
+
+    # Force header PC approval recommendation to be cleared if any line-level PC approval (defined by presence of a PC approval date) was revoked.
+    values_changed = true if ord.custom_value(header_cdef).present? && OrderData.line_pc_unapproved?(old_data, new_data)
+
     if values_changed
       ord.update_custom_value!(header_cdef,'')
     end
@@ -329,13 +333,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     COUNTRY_ORIGIN_UID ||= []
     ORDER_TYPE_UID ||= []
     BOOKING_CONFIRMED_DATE_UID ||= []
+    PC_APPROVED_DATE_UID ||= []
+    PC_APPROVED_DATE_EXEC_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
     attr_reader :fingerprint, :fingerprint_hash, :snapshot
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
       :approval_status, :business_rule_state, :country_of_origin, :order_type, 
-      :booking_confirmed_date
+      :booking_confirmed_date, :has_pc_approved_date_map
 
     def initialize fp_hash, snapshot
       @fingerprint_hash = fp_hash
@@ -353,6 +359,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
       variant_map = {}
       price_map = {}
+      has_pc_approved_date_map = {}
       if entity_hash['entity']['children']
         entity_hash['entity']['children'].each do |child|
           next unless child['entity']['core_module'] == 'OrderLine'
@@ -373,6 +380,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           fingerprint_hash['lines'][line_number] = line_fp_hash
           variant_map[line_number] = child_hash['ordln_varuid']
           price_map[line_number] = child_hash['ordln_ppu']
+          has_pc_approved_date_map[line_number] = [child_hash[pc_approved_date_uid].present?, child_hash[pc_approved_date_exec_uid].present?]
         end
       end
 
@@ -391,6 +399,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.variant_map = variant_map
       od.price_map = price_map
       od.booking_confirmed_date = order_hash[booking_confirmed_date_uid]
+      od.has_pc_approved_date_map = has_pc_approved_date_map
 
       return od
     end
@@ -420,14 +429,26 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       BOOKING_CONFIRMED_DATE_UID.first
     end
 
+    def self.pc_approved_date_uid
+      prep_class_cust_defs
+      PC_APPROVED_DATE_UID.first
+    end
+
+    def self.pc_approved_date_exec_uid
+      prep_class_cust_defs
+      PC_APPROVED_DATE_EXEC_UID.first
+    end
+
     def self.prep_class_cust_defs
       if PLANNED_HANDOVER_DATE_UID.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date])
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
         SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
         COUNTRY_ORIGIN_UID << cdefs[:ord_country_of_origin].model_field_uid
         ORDER_TYPE_UID << cdefs[:ord_type].model_field_uid
         BOOKING_CONFIRMED_DATE_UID << cdefs[:ord_shipment_booking_confirmed_date].model_field_uid
+        PC_APPROVED_DATE_UID << cdefs[:ordln_pc_approved_date].model_field_uid
+        PC_APPROVED_DATE_EXEC_UID << cdefs[:ordln_pc_approved_date_executive].model_field_uid
       end
     end
 
@@ -463,6 +484,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         need_reset << k if old_data.variant_map[k] != v
       end
       need_reset.uniq.compact
+    end
+
+    # Returns true if there was a previous version of the PO, and at least one line-level PC approval date or PC executive approval date has been cleared in the new version.
+    def self.line_pc_unapproved? old_data, new_data
+      return false unless old_data
+
+      old_data.has_pc_approved_date_map.keys.any? { |line_number| (old_data.has_pc_approved_date_map[line_number][0] && !new_data.has_pc_approved_date_map[line_number][0]) || (old_data.has_pc_approved_date_map[line_number][1] && !new_data.has_pc_approved_date_map[line_number][1]) }
     end
 
     def self.ship_from_changed? old_data, new_data

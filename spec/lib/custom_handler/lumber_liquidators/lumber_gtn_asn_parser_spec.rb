@@ -41,6 +41,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       shp = Factory(:shipment, reference:'201611221551')
       port_shanghai = Factory(:port, unlocode:'CNSHA')
       port_los_angeles = Factory(:port, unlocode:'USLAX')
+      port_pomona = Factory(:port, unlocode:'USPQC')
 
       prod = Factory(:product, unique_identifier:'PRODXYZ')
       shp_container_1 = Factory(:container, container_number:'TEMU3877030', shipment:shp)
@@ -71,6 +72,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(shp.voyage).to eq('0708-014E')
       expect(shp.lading_port).to eq(port_shanghai)
       expect(shp.unlading_port).to eq(port_los_angeles)
+      expect(shp.final_dest_port).to eq(port_pomona)
 
       expect(shp.empty_out_at_origin_date).to eq DateTime.iso8601('2015-08-08T03:20:00.000-07:00')
       expect(shp.est_arrival_port_date).to eq DateTime.iso8601('2015-08-09T04:21:00.000-07:00').to_date
@@ -244,7 +246,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       # Master bill should not be blanked out even though there is no value in the XML.
       expect(shp.master_bill_of_lading).to eq('old-BOL')
       expect(shp.voyage).to eq('0708-014E')
+      expect(shp.lading_port).to be_nil
       expect(shp.unlading_port).to be_nil
+      expect(shp.final_dest_port).to be_nil
 
       expect(shp.containers.length).to eq 2
       shp_container_1 = shp.containers[0]

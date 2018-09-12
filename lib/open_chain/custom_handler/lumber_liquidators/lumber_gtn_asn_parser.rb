@@ -273,12 +273,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       shp.barge_arrive_date = get_shipment_date elem_asn, (production ? DATE_CODE_BARGE_ARRIVE : TEST_DATE_CODE_BARGE_ARRIVE)
       shp.fcr_created_final_date = get_shipment_date elem_asn, (production ? DATE_CODE_FCR_CREATED : TEST_DATE_CODE_FCR_CREATED)
       shp.bol_date = get_shipment_date_by_xpath(elem_asn, "Container/LineItems/ReferenceDates[ReferenceDateType='BlDate1']/ReferenceDate") { |el| DateTime.iso8601(el.text) }
-
       shp.vessel_carrier_scac = REXML::XPath.first(elem_asn, "PartyInfo[Type='Carrier']/Code").try(:text)
       shp.voyage = et(elem_asn, 'Voyage')
       shp.vessel = et(elem_asn, 'Vessel')
       shp.lading_port = get_port elem_asn, 'PortOfLoading'
       shp.unlading_port = get_port elem_asn, 'PortOfDischarge'
+      shp.final_dest_port = get_port elem_asn, 'BLDestination'
 
       bill_lading = get_bill_of_lading elem_asn
       # Don't clear an existing BOL.  (Not sure how necessary the no-clearing rule is, but it was in an older version
