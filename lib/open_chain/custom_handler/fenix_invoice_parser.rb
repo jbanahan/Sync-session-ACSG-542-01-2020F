@@ -101,24 +101,16 @@ module OpenChain
 
         def find_and_process_invoice row
           broker_reference = safe_strip row[9]
+          invoice_number = FenixInvoiceParser.get_invoice_number(row)
           # We need a broker reference in the system to link to an entry, so that we can then know which 
           # customer the invoice belongs to
           if broker_reference.blank?
-            raise "Invoice # #{FenixInvoiceParser.get_invoice_number(row)} is missing a broker reference number."
+            raise "Invoice # #{invoice_number} is missing a broker reference number."
           end
 
           invoice = nil
-          Lock.acquire(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3) do 
-            invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)).first
-
-            # Fall back to using the "legacy" invoice number for the time being (at a sufficient time in the future we could probably remove this)
-            unless invoice || row[3].to_s.blank?
-              invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>row[3].to_s.strip).first
-
-              unless invoice
-                invoice = BrokerInvoice.create! :source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)
-              end
-            end
+          Lock.acquire("BrokerInvoice-#{invoice_number}") do 
+            invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>invoice_number).first_or_create!
           end
 
           if invoice

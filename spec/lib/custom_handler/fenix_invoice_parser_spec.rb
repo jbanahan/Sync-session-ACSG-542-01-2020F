@@ -16,7 +16,8 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
   end
   it "should write invoice" do
     # There's two invoices in the spec csv file, account for that
-    expect(Lock).to receive(:acquire).twice.with(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3).and_yield
+    expect(Lock).to receive(:acquire).with("BrokerInvoice-01-0000009").and_yield
+    expect(Lock).to receive(:acquire).with("BrokerInvoice-01-0039009").and_yield
     expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
     expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
 
@@ -142,20 +143,6 @@ INV
 
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-0039009', 'Fenix'
     expect(bi).not_to be_nil
-  end
-
-  it "falls back to finding legacy invoice numbers for updates" do
-    @k.parse @content
-    bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
-    bi.broker_invoice_lines.destroy_all
-    # The legacy invoince number is simply just the data as it appears in column 3, rather than
-    # the prefix-invoice#-suffix stuff
-    bi.update_attributes! invoice_number: "9"
-
-    @k.parse @content
-    bi.reload
-    expect(bi.broker_invoice_lines.size).to eq(3)
-    expect(bi.invoice_total).to eq(4574.83)
   end
 
   it "uses suffix in invoice number if value in column 4 is not 0" do
