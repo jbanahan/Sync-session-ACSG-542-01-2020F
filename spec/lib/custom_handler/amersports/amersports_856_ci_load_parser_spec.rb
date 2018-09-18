@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
 
       it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
-        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON") 
+        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON")
         # This also tests that ATOMIC is translated to Salomon
         described_class.parse data.gsub("WILSON    ", "ATOMIC    ")
         expect(entries.length).to eq 1
@@ -92,6 +92,10 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         line = entries.first.invoices.first.invoice_lines.first
 
         expect(line.part_number).to eq "TDPCH0"
+      end
+
+      it "handles invalid importer code" do
+        expect {described_class.parse data.gsub("WILSON    ", "BOGUS     ")}.to raise_error "Invalid AMERSPORTS Importer code received: 'BOGUS'."
       end
 
       it "doesn't process PRECOR files" do
@@ -132,7 +136,6 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
     end
     
-
     it "raises an error if importer is missing" do
       expect {described_class.parse data}.to raise_error "Unable to find AmerSports importer account with code 'WILSON'."
     end

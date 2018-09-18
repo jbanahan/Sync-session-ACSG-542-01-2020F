@@ -11,16 +11,19 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   include OpenChain::CustomHandler::CsvExcelParser
   include ActionView::Helpers::NumberHelper
 
-  def self.parse file, opts = {}
+  def self.parse_file file, log, opts = {}
     if opts[:forward_to_entry_system].blank?
       opts[:forward_to_entry_system] = true
     end
-    new.parse(file, forward_to_entry_system: opts[:forward_to_entry_system])
+    new.parse(file, log, forward_to_entry_system: opts[:forward_to_entry_system])
   end
 
-  def parse file_contents, forward_to_entry_system: true
+  def parse file_contents, log, forward_to_entry_system: true
     rows = foreach(file_contents, skip_blank_lines: true)
-    system = determine_system(rows.first)
+    system = determine_system(rows.first, log)
+
+    log.company = product_importer
+    log.error_and_raise "No importer record found with system code HENNE." if @product_importer.nil?
 
     # Canadian customs requires that electronically filed PARS entries must be under 999 lines (WTF, eh?).
     # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
@@ -28,7 +31,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     files = split_file(system, rows)
     totals = []
     files.each_with_index do |file, x|
-      totals << process_file(system, file, x + 1, forward_to_entry_system)
+      totals << process_file(system, file, x + 1, forward_to_entry_system, log)
     end
 
     if system == :fenix
@@ -128,10 +131,12 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     attr_accessor :invoice_number, :pars_number, :cartons, :weight, :invoice_date
   end
 
-  def process_file system, rows, file_counter, forward_to_entry_system
+  def process_file system, rows, file_counter, forward_to_entry_system, log
     # NOTE: the invoices we're creating here are NOT saved...we're just using the datastructure as a passthrough
     # for the Fenix / Kewill file transfers
-    invoice = make_invoice(system, rows.first, file_counter)
+    # Identifiers are not currently set because this parser primarily just converts inbound data to outbound data,
+    # without significant saves.  Identifiers could certainly be stored rather easily if needed.
+    invoice = make_invoice(system, rows.first, file_counter, log)
 
     # The index position of the invoice line must correlate with the index of the row from the file due to how we're pulling
     # some data from the rows for the pdf and excel sheets.
@@ -163,7 +168,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     generate_file_totals(invoice)
   end
 
-  def determine_system first_line
+  def determine_system first_line, log
     order_type = first_line[8].to_s
 
     case order_type.upcase
@@ -172,13 +177,13 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     when "ZRET"
       :kewill
     else
-      raise "Invalid Order Type value found: '#{order_type}'.  Unable to determine what system to forward shipment data to."
+      log.reject_and_raise "Invalid Order Type value found: '#{order_type}'.  Unable to determine what system to forward shipment data to."
     end
   end
 
-  def make_invoice system, line, file_counter
+  def make_invoice system, line, file_counter, log
     invoice = CommercialInvoice.new
-    invoice.importer = importer(system)
+    invoice.importer = importer(system, log)
     invoice.invoice_number = text_value(line[0])
     invoice.invoice_number += "-#{file_counter.to_s.rjust(2, "0")}" if system == :fenix
     invoice.invoice_date = line[3].blank? ? nil : Time.zone.parse(line[3])
@@ -281,14 +286,13 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
   def product_importer
     @product_importer ||= Company.importers.where(system_code: "HENNE").first
-    raise "No importer record found with system code HENNE." if @product_importer.nil?
     @product_importer
   end
 
-  def importer system
+  def importer system, log
     if system == :fenix
       @importer ||= Company.importers.where(fenix_customer_number: "887634400RM0001").first
-      raise "No Fenix importer record found with Tax ID 887634400RM0001." if @importer.nil?
+      log.error_and_raise "No Fenix importer record found with Tax ID 887634400RM0001." if @importer.nil?
       @importer
     else
       product_importer

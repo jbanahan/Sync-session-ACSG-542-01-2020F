@@ -53,6 +53,11 @@ module OpenChain
       ["www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]
     end
 
+    # Due to volume concerns, entries received by this class are not recorded in the inbound file table.
+    def self.log_file? bucket, key
+      false
+    end
+
     def self.parse_lvs_query_results result_set
       results = result_set.is_a?(String) ? ActiveSupport::JSON.decode(result_set) : result_set
 

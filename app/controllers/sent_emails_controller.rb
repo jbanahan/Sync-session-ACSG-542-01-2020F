@@ -19,7 +19,7 @@ class SentEmailsController < ApplicationController
       sp = SEARCH_PARAMS.clone
       s = build_search(sp, 'subject', 'date', 'd')
       # No field has been selected...ie it's the initial page load
-      if params[:f].blank?
+      if params[:f1].blank?
         s = s.where("created_at > ?", Time.zone.now.beginning_of_day)
         @default_display = "By default, only emails sent today are displayed when no search fields are utilized."
       end

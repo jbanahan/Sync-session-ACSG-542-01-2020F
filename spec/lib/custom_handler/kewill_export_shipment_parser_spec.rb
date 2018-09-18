@@ -1,15 +1,15 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::KewillExportShipmentParser do
 
+  let(:log) { InboundFile.new }
+
   context "ocean file" do
-    describe "parse" do
+    describe "parse_file" do
       before :each do
         @nexeo = Factory(:importer, name: "Nexeo", alliance_customer_number: "NEXEO")
       end
 
       it "parses an escape delimited file into a shipment" do
-        subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT")
+        subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log
 
         s = Shipment.where(reference: "EXPORT-1402240").first
         expect(s).not_to be_nil
@@ -55,6 +55,11 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
         expect(ol.order.customer_order_number).to eq "6966648"
 
         expect(s.entity_snapshots.size).to eq 1
+
+        expect(log.company).to eq @nexeo
+        expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "1402240"
+        expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+        expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
       end
 
       it "reuses existing products, orders, containers and clears existing shipment lines" do
@@ -66,7 +71,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
 
          shipment_line = s.shipment_lines.create! product: product
 
-         subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT")
+         subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log
 
          s.reload
 
@@ -85,7 +90,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
         final_dest = s.comments.create! subject: "Final Destination", body: "", user: user
         dis_port = s.comments.create! subject: "Discharge Port", body: "", user: user
 
-        subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT")
+        subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log
 
         s.reload
         expect(s.comments.find {|c| c.subject == "Final Destination"}).to eq final_dest
@@ -99,12 +104,19 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
         data = IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT")
         data[50] = "L"
 
-        subject.parse data
+        subject.parse_file data, log
 
         s = Shipment.where(reference: "EXPORT-1402240").first
         expect(s).not_to be_nil
         expect(s.mode).to eq "Ocean - LCL"
         expect(s.lcl).to be_truthy
+      end
+
+      it "errors if importer cannot be found" do
+        @nexeo.destroy
+
+        expect{subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log}.to raise_error "No Importer record found with Alliance customer number of NEXEO."
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "No Importer record found with Alliance customer number of NEXEO."
       end
     end
   end
@@ -117,7 +129,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
     end
 
     it "parses an escape delimited file into a shipment" do
-      subject.parse IO.read("spec/fixtures/files/Kewill Export Ocean Job.DAT")
+      subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean Job.DAT"), log
       s = Shipment.where(reference: "EXPORT-1402240").first
       expect(s).not_to be_nil
 
@@ -132,6 +144,11 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
       expect(s.est_departure_date).to eq Date.new(2015,11,2)
       expect(s.est_arrival_port_date).to eq Date.new(2015,12,13)
       expect(s.entity_snapshots.size).to eq 1
+
+      expect(log.company).to be_nil
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "1402240"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
     end
   end
   

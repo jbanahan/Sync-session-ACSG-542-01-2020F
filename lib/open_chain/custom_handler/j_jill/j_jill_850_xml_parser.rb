@@ -15,12 +15,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ["www-vfitrack-net/_jjill_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom
+  def self.parse_dom dom, log, opts={}
+    self.new(opts).parse_dom dom, log
   end
 
   def initialize opts={}
@@ -29,25 +29,27 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @jill = Company.find_by_system_code UID_PREFIX
     @user = User.integration
     @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
-    raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
 
-  def parse_dom dom
+  def parse_dom dom, log
+    log.error_and_raise "Company with system code #{UID_PREFIX} not found." unless @jill
+    log.company = @jill
     r = dom.root
     line_numbers_exist = REXML::XPath.first(dom.root, '//PO101').try(:text).try(:present?)
     extract_date = parse_extract_date r
-    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date, line_numbers_exist }
+    r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date, line_numbers_exist, log }
   end
 
   private
-  def parse_order order_root, extract_date, line_numbers_exist
+  def parse_order order_root, extract_date, line_numbers_exist, log
     @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root,'BEG/BEG01').text.to_i == 1
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
+    log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, cust_ord
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     Lock.acquire(ord_num) do
       ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
-        
+
       update_lines = true
       update_header = true
       po_assigned_to_shipment = false
@@ -77,11 +79,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.agent = agents.first if agents.size == 1
       end
 
-      parse_lines ord, order_root, line_numbers_exist if update_lines
+      parse_lines ord, order_root, line_numbers_exist, log if update_lines
         
       if update_header || update_lines
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
         ord.save!
+        log.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, Order.to_s, ord.id, value: cust_ord
         ord.update_custom_value!(@cdefs[:ord_ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
         ord.update_custom_value!(@cdefs[:ord_entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
         if ord.ship_window_end && ord.get_custom_value(@cdefs[:ord_original_gac_date]).value.blank?
@@ -188,9 +191,9 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     nil #return
   end
   
-  def parse_lines order, order_root, line_numbers_exist
+  def parse_lines order, order_root, line_numbers_exist, log
     if line_numbers_exist
-      parse_lines_with_update order, order_root
+      parse_lines_with_update order, order_root, log
     else
       # only when order isn't booked
       parse_lines_with_replace order, order_root
@@ -209,13 +212,13 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     end
   end
 
-  def parse_lines_with_update order, order_root
+  def parse_lines_with_update order, order_root, log
     old_line_nums = order.order_lines.map(&:line_number)
     new_line_nums = []
     REXML::XPath.each(order_root,'GROUP_11') do |group_el|
       po1_el = REXML::XPath.first(group_el,'PO1')
       line_number = et(po1_el, 'PO101').to_i
-      raise "Missing line number in source file" unless line_number.present?
+      log.reject_and_raise "Missing line number in source file" unless line_number.present?
       new_line_nums << line_number
       ln = order.order_lines.find{ |ordln| ordln.line_number == line_number }  
       ol = ln ? ln : order.order_lines.build(line_number: line_number)

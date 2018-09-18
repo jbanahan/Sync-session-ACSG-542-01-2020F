@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lenox::LenoxPoParser do
 
   before :each do
@@ -8,9 +6,11 @@ R                 RB05722520131105                                              
 R                 RB05722520131105                                                                                                                                                                                97 - MADELINE LUM            MADELINE_LUMA@LENOX.COM201402012014021520140215201403172014033120140331          56033                                               JAKARTA JAVA, INDONESIA              H01     HAGERSTOWN DISTRIBUTION CENTER           C/0 RECEIVING DEPARTMENT                                           16507 HUNTERS GREEN PARKWAY                                                                                               HAGERSTOWN                                 MD     21740 US                                                                                                                                                                                                                                                                                                                                                                                03                       IT               80-0326555               80-0326555                  6083984            BUTTERFLY MEADOW SUGAR W/LID            524USD              408      EACH             24             17          23016 LB           0541CBM           9190         391272OCN           BRANDS                  LENOX CORPORATION    ATTN:  IMPORT/EXPORT DEPARTMENT                                                 1414 RADCLIFFE STREET                                                                                                  BRISTOL                                 PA19007-5423 US          1160479                         PT HANKOOK                                                                                           JL RAYA CIKUPA         DESA SUKAHARJA PASAR KEMIS                                                     TANGERANG JAKARTA                                              ID                HANKOOK@LINK.NET.ID           000007                         PT HANKOOK                                                                                           JL RAYA CIKUPA         DESA SUKAHARJA PASAR KEMIS                                                     TANGERANG JAKARTA                                              ID                HANKOOK@LINK.NET.ID                                 ID  6911103750                                                                                                FOB              HDC"
     @lenox = Factory(:company,system_code:'LENOX')
   end
-  
+
+  let (:log) { InboundFile.new }
+
   it "should create PO" do
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     c_defs = described_class.prep_custom_definitions [:ord_buyer, :ord_buyer_email, :ord_destination_code, :ord_factory_code, :ord_line_note, :ord_line_destination_code, :prod_part_number, :prod_earliest_ship_date]
     expect(Order.count).to eq 1
     o = Order.first
@@ -52,11 +52,14 @@ R                 RB05722520131105                                              
     @lenox.reload
     expect(@lenox.linked_companies.first).to eq vn
 
-
+    expect(log.company).to eq @lenox
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "RB057225"
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
   end
   it "should move existing product to correct importer" do
     p = Factory(:product, unique_identifier:'LENOX-6083927')
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     pr = Order.first.order_lines.first.product
     expect(pr.id).to eq p.id
     expect(pr.importer).to eq @lenox
@@ -65,7 +68,7 @@ R                 RB05722520131105                                              
     ord = Factory(:order,order_number:'LENOX-RB057225',importer_id:@lenox.id)
     o_line = Factory(:order_line,order:ord,line_number:1) #update this one
     o_line2 = Factory(:order_line,order:ord,line_number:100) #leave this one alone
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     expect(Order.count).to eq 1
     o = Order.first
     expect(o.order_number).to eq 'LENOX-RB057225'
@@ -79,7 +82,7 @@ R                 RB05722520131105                                              
     o_line = Factory(:order_line,order:ord,line_number:1) #delete this one
     o_line2 = Factory(:order_line,order:ord,line_number:100) #leave this one alone
     @testdata[0] = 'D'
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     ord.reload
     expect(ord.order_lines.collect {|ol| ol.line_number}.sort).to eq [2,3,100]
   end
@@ -88,29 +91,29 @@ R                 RB05722520131105                                              
     o_line = Factory(:order_line,order:ord,line_number:1) #delete this one
     td = ""
     @testdata.lines.each {|ln| ln[0] = 'D'; td << ln}
-    described_class.new.process td
+    described_class.new.process td, log
     expect(Order.count).to eq 0
   end
   it "should update earliest ship date on product if earlier than existing date" do
     p = Factory(:product,unique_identifier:'LENOX-6083927',importer:@lenox)
     cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd,Date.new(2015,1,1))
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2014,2,1)
   end
   it "should not update earliest ship date on product if later than existing date" do
     p = Factory(:product,unique_identifier:'LENOX-6083927',importer:@lenox)
     cd = described_class.prep_custom_definitions([:prod_earliest_ship_date]).values.first
     p.update_custom_value!(cd,Date.new(2013,1,1))
-    described_class.new.process @testdata
+    described_class.new.process @testdata, log
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2013,1,1)
   end
 
-  describe "parse" do
+  describe "parse_file" do
     it "creates a PO" do
       # This method is just an integration point that call through to the process method..all we're testing is that
       # an order is created
-      described_class.parse @testdata
+      described_class.parse_file @testdata, log
 
       expect(Order.first.order_number).to eq 'LENOX-RB057225'
     end

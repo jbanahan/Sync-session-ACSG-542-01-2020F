@@ -123,22 +123,53 @@ module OpenChain; module ApplicationControllerLegacy
     rescue NoMethodError 
       #this is ok, you just won't get your custom fields
     end
+
+    @default_search_field = default_search
     @s_params = field_list
-    @selected_search = params[:f]
-    @s_search = field_list[params[:f]]
-    if @s_search.nil?
-      @s_search = field_list[default_search]
-      @selected_search = default_search 
+
+    @search = nil
+    (1..10).each do |param_counter|
+      sel_field = field_list[params[("f" + param_counter.to_s).to_sym]]
+      sel_cond = params[("c" + param_counter.to_s).to_sym]
+      sel_cond = 'contains' if sel_cond.nil?
+      ent_value = params[("s" + param_counter.to_s).to_sym]
+      if sel_field && ent_value
+        @search = add_search_relation (@search.nil? ? secure : @search), sel_field, sel_cond, ent_value
+      end
     end
-    @s_con = params[:c].nil? ? 'contains' : params[:c]
-    sval = params[:s]
-    sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
-    @search = add_search_relation secure, @s_search, @s_con, sval
+
+    if @search.nil?
+      @search = add_search_relation secure, field_list[default_search], 'contains', nil
+    end
+
     @s_sort = field_list[params[:sf]]
     @s_sort = field_list[default_sort] if @s_sort.nil?
     @s_order = ['a','d'].include?(params[:so]) ? params[:so] : default_sort_order
     @search = add_sort_relation @search, @s_sort, @s_order
+    @s_param_opts = []
+    @s_params.each do |k,f|
+      @s_param_opts << [f[:label],k]
+    end
     return @search
+  end
+
+  # Determines whether the browser parameters contains the field_identifier value in any
+  # of the f1..f10 parameters.  If it does, and if the corresponding s1..s10 parameter has a
+  # value, this method will return true.
+  def search_params_contains? field_identifier
+    found = false
+    (1..10).each {|i|
+      current_field = params[("f" + i.to_s).to_sym]
+      current_value = params[("s" + i.to_s).to_sym]
+
+      if !current_field.blank? && !current_value.blank?
+        if current_field == field_identifier
+          found = true
+          break
+        end
+      end
+    }
+    found
   end
 
   def add_search_relation relation, field_definition, operator, value
@@ -204,8 +235,5 @@ module OpenChain; module ApplicationControllerLegacy
     end
     sr
   end
-
-  
-
 
 end; end

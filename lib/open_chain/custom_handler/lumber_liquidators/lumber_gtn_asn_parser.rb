@@ -87,25 +87,28 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
     TEST_DATE_CODE_FCR_CREATED=>:ord_asn_fcr_created
   }.merge(COMMON_DATE_CDEF_MAP_ORDER)
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new.parse_dom dom, opts[:key]
+  def self.parse_dom dom, log, opts={}
+    self.new.parse_dom dom, log, opts[:key]
   end
 
-  def parse_dom dom, s3_key
+  def parse_dom dom, log, s3_key
     root = dom.root
-    raise "Bad root element name \"#{root.name}\". Expecting ASNMessage." unless root.name=='ASNMessage'
+    log.error_and_raise "Bad root element name \"#{root.name}\". Expecting ASNMessage." unless root.name=='ASNMessage'
     # Although the XML structure allows for multiple ASN elements, there will be only one.
     elem_asn = root.elements['ASN']
+
+    log.company = Company.where(system_code: "LUMBER").first
 
     # The 'shipping order number' value from the XML is the value we'll use to look up the shipment.  This is kind of a
     # confusing label, as it's meant to match to the shipment's reference number (i.e. main key field for the
     # shipment), not an order number.  Note that the shipping order number should be the same for
     # all line items.  One ASN file represents one shipment.
     shipping_order_number = et(REXML::XPath.first(elem_asn,'Container/LineItems'), 'ShippingOrderNumber')
+    log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shipping_order_number
     xml_timestamp = xml_created_timestamp(root)
 
     errors = []
@@ -114,18 +117,25 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
     get_shipment(shipping_order_number) do |shp|
       shipment_found = true
 
-      # Don't update the shipment if the data in it is outdated
-      return if shp.last_exported_from_source && shp.last_exported_from_source > xml_timestamp
+      log.set_identifier_module_info InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, Shipment.to_s, shp.id
 
-      update_shipment shp, elem_asn, xml_timestamp, errors
+      # Don't update the shipment if the data in it is outdated
+      if shp.last_exported_from_source && shp.last_exported_from_source > xml_timestamp
+        log.add_info_message "Shipment not updated: file contained outdated info."
+        return
+      end
+
+      update_shipment shp, elem_asn, xml_timestamp, errors, log
 
       shipment_error_count = errors.length
       order_snapshots = Set.new
-      get_orders(elem_asn, errors).each do |ord_num, ord_hash|
+      get_orders(elem_asn, errors, log).each do |ord_num, ord_hash|
         if errors.length == shipment_error_count
           if !need_to_roll_back
-            update_order ord_hash[:order], ord_hash[:element], shp
-            order_snapshots << ord_hash[:order]
+            ord = ord_hash[:order]
+            log.add_identifier(InboundFileIdentifier::TYPE_PO_NUMBER, ord.order_number, module_type:Order.to_s, module_id:ord.id)
+            update_order ord, ord_hash[:element], shp
+            order_snapshots << ord
           end
         else
           need_to_roll_back = true
@@ -147,8 +157,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
     if !shipment_found
       # We're going to still want to evaluate the order elements, since those may also result in errors that need to be reported..but we won't update anything on them
-      errors << "ASN Failed because shipment not found in database: #{shipping_order_number}."
-      get_orders(elem_asn, errors)
+      msg = "ASN Failed because shipment not found in database: #{shipping_order_number}."
+      errors << msg
+      log.add_reject_message msg
+      get_orders(elem_asn, errors, log)
     end
 
     if errors.length > 0
@@ -214,7 +226,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       DateTime.iso8601(date_str)
     end
 
-    def get_orders elem_asn, errors
+    def get_orders elem_asn, errors, log
       r = {}
       REXML::XPath.each(elem_asn,'Container/LineItems') do |el|
         order_number = et(el,'PONumber')
@@ -225,7 +237,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       orders = Order.includes(:custom_values).where('order_number IN (?)',r.keys.to_a).to_a
       if r.size != orders.size
         missing_order_numbers = r.keys.to_a - orders.map(&:order_number)
-        errors << "ASN Failed because order(s) not found in database: #{missing_order_numbers.join(', ')}."
+        msg = "ASN Failed because order(s) not found in database: #{missing_order_numbers.join(', ')}."
+        errors << msg
+        log.add_reject_message msg
       else
         orders.each {|ord| r[ord.order_number][:order] = ord}
       end
@@ -245,7 +259,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       shp
     end
 
-    def update_shipment shp, elem_asn, asn_sent_date, errors
+    def update_shipment shp, elem_asn, asn_sent_date, errors, log
       production = MasterSetup.get.production?
 
       shp.last_exported_from_source = asn_sent_date
@@ -288,9 +302,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       end
 
       elem_asn.elements.each('Container') do |elem_cont|
-        container = add_or_update_container elem_cont, shp, errors
+        container = add_or_update_container elem_cont, shp, errors, log
         elem_cont.elements.each('LineItems') do |elem_line_item|
-          add_or_update_shipment_line elem_line_item, shp, container, errors
+          add_or_update_shipment_line elem_line_item, shp, container, errors, log
         end
       end
 
@@ -335,12 +349,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       port
     end
 
-    def add_or_update_container elem_cont, shp, errors
+    def add_or_update_container elem_cont, shp, errors, log
       container_number = et(elem_cont, 'ContainerNumber')
       container = shp.containers.find {|c| c.container_number == container_number }
       if !container
         container = shp.containers.build(container_number:container_number)
-        errors << "Shipment did not contain a container #{container_number}. A container record was created."
+        msg = "Shipment did not contain a container #{container_number}. A container record was created."
+        errors << msg
+        log.add_warning_message msg
       end
       container.container_size = convert_gtn_equipment_type(et(elem_cont, 'ContainerType'))
       container.seal_number = et(elem_cont, 'SealNumber')
@@ -353,7 +369,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       DataCrossReference.where(cross_reference_type:DataCrossReference::LL_GTN_EQUIPMENT_TYPE, value:equipment_type).pluck(:key).first
     end
 
-    def add_or_update_shipment_line elem_line_item, shp, container, errors
+    def add_or_update_shipment_line elem_line_item, shp, container, errors, log
       po_number = et(elem_line_item, 'PONumber')
       # Strip off leading zeroes.
       po_line_number = et(elem_line_item, 'LineItemNumber').to_i
@@ -363,10 +379,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
           shp_line = shp.shipment_lines.find {|sl| sl.piece_sets.first.try(:order_line_id) == po_line.id }
           if !shp_line
             shp_line = shp.shipment_lines.build(shipment:shp, product:po_line.product, container:container, linked_order_line_id:po_line.id)
-            errors << "Shipment did not contain a manifest line for PO #{po_number}, line #{po_line_number}. A manifest line record was created."
+            msg = "Shipment did not contain a manifest line for PO #{po_number}, line #{po_line_number}. A manifest line record was created."
+            errors << msg
+            log.add_warning_message msg
           end
         else
-          errors << "Shipment did not contain a manifest line for PO #{po_number}, line #{po_line_number}. A manifest line record could NOT be created because no matching PO line could be found."
+          msg = "Shipment did not contain a manifest line for PO #{po_number}, line #{po_line_number}. A manifest line record could NOT be created because no matching PO line could be found."
+          errors << msg
+          log.add_warning_message msg
         end
 
         if shp_line
@@ -381,7 +401,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
           end
         end
       else
-        errors << "LineItems in this file are missing PONumber and LineItemNumber values necessary to connect to shipment lines."
+        msg = "LineItems in this file are missing PONumber and LineItemNumber values necessary to connect to shipment lines."
+        errors << msg
+        log.add_warning_message msg
       end
     end
 

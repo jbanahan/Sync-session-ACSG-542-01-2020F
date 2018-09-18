@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
     @eddie = Company.find_by_system_code 'EDDIE'
     raise "Can't find company with system code EDDIE." unless @eddie
     @ebcc = Company.find_by_system_code 'EBCC'
-    raise "Can't find company with system code EBCC" unless @ebcc
+    raise "Can't find company with system code EBCC." unless @ebcc
   end
 
   def self.process data
@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
       style = product_style(line)
       unique_identifier = "EDDIE-#{style}"
 
-      Lock.acquire("Product-#{unique_identifier}") do 
+      Lock.acquire("Product-#{unique_identifier}") do
         products[style] = Product.where(importer_id:@eddie.id, unique_identifier:unique_identifier).first_or_create!
       end
     end

@@ -5,6 +5,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
   let!(:ann) { Factory(:importer, system_code: "ATAYLOR", alliance_customer_number: "ATAYLOR") }
   let!(:country) { Factory(:country, iso_code: "CN") }
   let!(:country2) { Factory(:country, iso_code: "ID") }
+  let(:log) { InboundFile.new }
 
   before do
     # has to be mocked because the output of make_hash_key is dependent on address.country_id
@@ -76,28 +77,41 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       expect(line.unit_price).to eq 11.09
       expect(line.value_foreign).to eq 16187.27
       expect(line.value_domestic).to eq 8093.64
+
+      expect(log.company).to eq ann
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].value).to eq "435118117HK"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_type).to eq "Invoice"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_id).to eq invoice.id
     end
 
     it "parses a commercial invoice" do
-      expect{ subject.parse(document, {}) }.to change(Invoice, :count ).from(0).to 1
+      expect{ subject.parse(document, log, {}) }.to change(Invoice, :count ).from(0).to 1
       check_output
     end
 
     it 'creates a snapshot' do
       expect_any_instance_of(Invoice).to receive(:create_snapshot).with(User.integration, nil, 'blah')
-      subject.parse(document, {key: 'blah'})
+      subject.parse(document, log, {key: 'blah'})
     end
 
     it "replaces earlier parse" do
-      subject.parse(document, {})
-      expect{ subject.parse(document, {}) }.to_not change(Invoice, :count)
+      subject.parse(document, InboundFile.new, {})
+      expect{ subject.parse(document, log, {}) }.to_not change(Invoice, :count)
       check_output
     end
   
     it "errors if importer code other than 'ANNTAYNYC' is found" do
       importer_code = REXML::XPath.first(document, "//OrganizationAddress[AddressType='Importer']/OrganizationCode")
       importer_code.text = "ACME"
-      expect{ subject.parse(document, {}) }.to raise_error "Unexpected importer code: ACME"
+      expect{ subject.parse(document, log, {}) }.to raise_error "Unexpected importer code: ACME"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unexpected importer code: ACME"
+    end
+
+    it "errors if importer isn't found" do
+      ann.destroy
+
+      expect{ subject.parse(document, log, {}) }.to raise_error "No Ann Taylor importer with system code 'ATAYLOR'."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "No Ann Taylor importer with system code 'ATAYLOR'."
     end
   end
 end

@@ -6,6 +6,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     @k = OpenChain::CustomHandler::KewillIsfXmlParser
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
+  let (:log) { InboundFile.new }
   describe 'process_past_days' do
     it "should delay processing" do
       expect(@k).to receive(:delay).exactly(3).times.and_return(@k)
@@ -19,15 +20,17 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(OpenChain::S3).to receive(:integration_keys).with(d, ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
       expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
       expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      expect(@k).to receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
-      expect(@k).to receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
+      expect(@k).to receive(:parse_file).with("x", instance_of(InboundFile), {:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
+      expect(@k).to receive(:parse_file).with("y", instance_of(InboundFile), {:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
       @k.process_day d
     end
   end
-  describe "parse" do
+  describe "parse_file" do
     it 'should process from text' do
+      c = Factory(:company,:alliance_customer_number=>'EDDIE')
+
       expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
-      @k.parse IO.read(@path), bucket: "bucket", key: "key"
+      @k.parse_file IO.read(@path), log, bucket: "bucket", key: "key"
       sf = SecurityFiling.first
       expect(sf.host_system_file_number).to eq('1870446')
       expect(sf.host_system).to eq("Kewill")
@@ -40,38 +43,45 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       s = sf.entity_snapshots.first
       expect(s.user).to eq User.integration
       expect(s.context).to eq "key"
+
+      expect(log.company).to eq c
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].value).to eq "1870446"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_type).to eq "SecurityFiling"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_id).to eq sf.id
     end
     it "should not replace entry numbers" do
       sf = Factory(:security_filing,:entry_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse IO.read(@path)
+      @k.parse_file IO.read(@path), log
       sf = SecurityFiling.first
       expect(sf.entry_numbers).to eql("123456")
     end
     it "should not replace entry reference numbers" do
       sf = Factory(:security_filing,:entry_reference_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse IO.read(@path)
+      @k.parse_file IO.read(@path), log
       sf = SecurityFiling.first
       expect(sf.entry_reference_numbers).to eql("123456")
     end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse IO.read(@path)
+      @k.parse_file IO.read(@path), log
       # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
       sf = SecurityFiling.first
       expect(sf.transaction_number).to be_nil
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Security filing not updated: file contained outdated info."
     end
     it "should update existing security filing and replace lines" do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
-      @k.parse IO.read(@path)
+      @k.parse_file IO.read(@path), log
       sf.reload
       expect(sf.booking_number).to eq('BKING')
       expect(sf.security_filing_lines.size).to eq(2)
       expect(sf.security_filing_lines.collect {|ln| ln.line_number}).to eq([1,2])
     end
     it "should set amazon bucket & path" do
-      @k.parse IO.read(@path), :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
+      @k.parse_file IO.read(@path), log, :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
       sf = SecurityFiling.first
       expect(sf.last_file_bucket).to eq('bucket')
       expect(sf.last_file_path).to eq('isf_2435412_20210914_20131118145402586.1384804944.xml')
@@ -80,15 +90,25 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(Lock).to receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
       expect(Lock).to receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
-      @k.parse IO.read(@path)
+      @k.parse_file IO.read(@path), log
       expect(SecurityFiling.first).not_to be_nil
     end
     it "should raise exception if host_system_file_number is blank" do
       dom = REXML::Document.new File.new(@path)
       dom.root.elements['ISF_SEQ_NBR'].text=''
 
-      expect{@k.parse dom.to_s}.to raise_error "ISF_SEQ_NBR is required."
+      expect{@k.parse_file dom.to_s, log}.to raise_error "ISF_SEQ_NBR is required."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "ISF_SEQ_NBR is required."
     end
+
+    it "should raise exception if last event time is missing" do
+      dom = REXML::Document.new File.new(@path)
+      dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR='8' or EVENT_NBR='20' or EVENT_NBR='21']")
+
+      expect{@k.parse_file dom.to_s, log}.to raise_error "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
+    end
+
     it "parses a document with only event type 8, adding notes, but not removing existing info" do
       dom = REXML::Document.new File.new(@path)
 
@@ -103,7 +123,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         :po_numbers=>"A\nB", countries_of_origin: "C\nD", notes: notes.join("\n"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
 
-      expect{@k.parse dom.to_s}.not_to raise_error
+      expect{@k.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).to eq sf
@@ -124,7 +144,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '20']")
 
-      expect{@k.parse dom.to_s}.not_to raise_error
+      expect{@k.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).not_to be_nil

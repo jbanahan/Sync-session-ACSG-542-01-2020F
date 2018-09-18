@@ -5,8 +5,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
   let (:row_arrays) {
     CSV.parse file_contents, col_sep: "|", quote_char: "\007"
   }
+  let (:log) { InboundFile.new }
 
-  describe "parse" do
+  describe "parse_file" do
     subject { described_class }
     let! (:country) { Factory(:country, iso_code: "CA")}
 
@@ -17,10 +18,12 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       end
 
       data = (file_contents + file_contents)
-      subject.parse data
+      subject.parse_file data, log
       # verify the parse is forcing the data encoding to Windows-1252
       expect(data.encoding.name).to eq "Windows-1252"
       expect(sent_invoices.length).to eq 2
+
+      expect(log.company).to eq eddie_parts
     end
   end
 
@@ -33,7 +36,6 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       tariff = Factory(:tariff_record, hts_1: "9876543210", classification: classification)
       p      
     }
-
 
     it "parses CSV data into invoice" do
       inv = subject.process_ca_invoice_rows row_arrays
@@ -154,7 +156,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       expect(subject).to receive(:process_ca_invoice_rows).with(row_arrays).and_return invoice
       expect_any_instance_of(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate_and_send).with invoice
 
-      subject.process_and_send_invoice row_arrays
+      subject.process_and_send_invoice row_arrays, log
     end
 
     it "processes a US file using proper workflow" do
@@ -172,7 +174,15 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       expect(subject).to receive(:process_us_invoice_rows).with(row_arrays).and_return entry
       expect(subject).to receive(:generate_xls_to_google_drive).with("EDDIE CI Load/INV.xls", entry)
 
-      subject.process_and_send_invoice row_arrays
+      subject.process_and_send_invoice row_arrays, log
+    end
+
+    it "fails if an unknown country code is encountered" do
+      # Not US or CA, so fails.
+      row_arrays.first[22] = "XX"
+
+      expect{subject.process_and_send_invoice row_arrays, log}.to raise_error "Unexpected Import Country value received: 'XX'."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unexpected Import Country value received: 'XX'."
     end
   end
 end

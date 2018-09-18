@@ -14,27 +14,29 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     ["www-vfitrack-net/_lenox_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_po"]
   end
 
-  def self.parse data, opts = {}
-    LenoxPoParser.new.process data
+  def self.parse_file data, log, opts = {}
+    LenoxPoParser.new.process data, log
   end
 
-  def process data
+  def process data, log
+    log.company = @imp
+
     order_lines = []
     last_order_number = []
     data.lines.each do |ln|
       next if ln.blank?
       ls = parse_line ln
       if ls.order_number != last_order_number
-        process_order_lines order_lines unless order_lines.blank?
+        process_order_lines order_lines, log unless order_lines.blank?
         order_lines = []
       end
       order_lines << ls
       last_order_number = ls.order_number
     end
-    process_order_lines order_lines unless order_lines.blank?
+    process_order_lines order_lines, log unless order_lines.blank?
   end
   private
-  def process_order_lines lines
+  def process_order_lines lines, log
     ls = lines.first
     ord_relation = Order.where(importer_id:@imp.id,order_number:ls.order_number)
     o = ord_relation.first_or_create!
@@ -43,6 +45,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     o.mode = ls.mode
     o.vendor = get_vendor(ls)
     o.save!
+
+    log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, o.customer_order_number, module_type:Order.to_s, module_id:o.id
 
     #handle custom values after save
     o.update_custom_value! @cdefs[:ord_buyer], ls.buyer_name

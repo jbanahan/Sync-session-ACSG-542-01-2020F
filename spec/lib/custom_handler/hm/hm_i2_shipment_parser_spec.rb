@@ -10,10 +10,11 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   let! (:master_setup) {
     stub_master_setup
   }
-  let(:hm) { Factory(:importer, system_code: "HENNE") }
+  let!(:hm) { Factory(:importer, system_code: "HENNE") }
   let(:hm_fenix) {Factory(:importer, fenix_customer_number: "887634400RM0001")}
   let(:ca) { Factory(:country, iso_code: "CA")}
   let(:us) { Factory(:country, iso_code: "US")}
+  let(:log) { InboundFile.new }
   
   let (:cdefs) {
     described_class.new.cdefs
@@ -27,7 +28,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     entry
   }
 
-  describe "parse" do
+  describe "parse_file" do
     let(:ca_file) { make_csv_file("ZSTO") }
     let(:us_file) { make_csv_file("ZRET") }
     let(:product) { Factory(:product, importer: hm, unique_identifier: "HENNE-1234567", name: "Description") }
@@ -65,7 +66,6 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       }
 
       before :each do 
-        hm
         # Turn off pars notifications for now
         expect_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
       end
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           file << "testing"
           file.flush
         end
-        described_class.parse ca_file
+        described_class.parse_file ca_file, log
 
         expect(invoice).not_to be_nil
         expect(invoice.invoice_number).to eq "INV#-01"
@@ -140,6 +140,9 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(invoice_data.first.weight).to eq 4
 
         expect(data_cross_reference.reload.value).to eq "1"
+
+        expect(log.company).to eq hm
+        expect(log.identifiers.length).to eq 0
       end
 
       it "prefers the US entry's commercial invoice unit price over the product data" do
@@ -150,7 +153,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
-        described_class.parse ca_file
+        described_class.parse_file ca_file, log
 
         expect(invoice).not_to be_nil
         l = invoice.commercial_invoice_lines.first
@@ -169,7 +172,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         end
         ca_product
         set_product_custom_values ca_product, BigDecimal("1.5"), "12345", "Description"
-        described_class.parse ca_file
+        described_class.parse_file ca_file, log
 
         expect(invoice).not_to be_nil
 
@@ -192,7 +195,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
-        described_class.parse ca_file
+        described_class.parse_file ca_file, log
 
         expect(invoice).not_to be_nil
         l = invoice.commercial_invoice_lines.first
@@ -213,7 +216,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoices << inv
         end
 
-        described_class.parse ca_file
+        described_class.parse_file ca_file, log
 
         expect(invoices.length).to eq 2
         # Just validate that the invoice numbers match what we expect...then we'll validate the number of files that go out.
@@ -243,7 +246,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         allow(p).to receive(:pars_threshold).and_return 30
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
-        p.parse ca_file
+        p.parse ca_file, log
 
         expect(ActionMailer::Base.deliveries.length).to eq 3
         mail = ActionMailer::Base.deliveries.last
@@ -262,7 +265,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate) do |id|
           invoice = id
         end
-        described_class.parse file
+        described_class.parse_file file, log
 
         expect(invoice).not_to be_nil
         expect(invoice.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].parse "1900-01-01 00:00"
@@ -272,7 +275,6 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     context "with us shipment" do
 
       before :each do 
-        hm
         # The actual invoice produced by US and CA files are identical except wrt to hts handling
         us_product
         ca_product
@@ -291,7 +293,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = inv
         end
 
-        described_class.parse us_file
+        described_class.parse_file us_file, log
         expect(invoice).not_to be_nil
 
         expect(invoice.commercial_invoice_lines.length).to eq 2
@@ -305,6 +307,9 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         tar = line.commercial_invoice_tariffs.first
         expect(tar.hts_code).to eq "9876543210"
         expect(tar.tariff_description).to eq "Invoice Desc"
+
+        expect(log.company).to eq hm
+        expect(log.identifiers.length).to eq 0
       end
 
       it "falls back to matching without part number if US entry's invoice doesn't have one" do
@@ -318,7 +323,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = inv
         end
 
-        described_class.parse us_file
+        described_class.parse_file us_file, log
         expect(invoice).not_to be_nil
 
         expect(invoice.commercial_invoice_lines.length).to eq 2
@@ -348,7 +353,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = inv
         end
 
-        described_class.parse us_file
+        described_class.parse_file us_file, log
         expect(invoice).not_to be_nil
 
         expect(invoice.commercial_invoice_lines.length).to eq 2
@@ -382,7 +387,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = inv
         end
 
-        described_class.parse us_file
+        described_class.parse_file us_file, log
         expect(invoice).not_to be_nil
 
         expect(invoice.commercial_invoice_lines.length).to eq 2
@@ -399,7 +404,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       end
 
       it "sends shipping docs" do
-        described_class.parse us_file
+        described_class.parse_file us_file, log
 
         email = ActionMailer::Base.deliveries.first
         expect(email).not_to be_nil
@@ -423,15 +428,31 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           invoice = inv
         end
-        described_class.parse file
+        described_class.parse_file file, log
 
         expect(invoice).not_to be_nil
         expect(invoice.commercial_invoice_lines.first.country_origin_code).to eq "BU"
       end
     end
 
-    it "raises an error if HM record is not present" do
-      expect {described_class.parse us_file}.to raise_error "No importer record found with system code HENNE."
+    context "assorted errors" do
+      it "raises an error if HM record is not present" do
+        hm.destroy
+        expect {described_class.parse_file us_file, log}.to raise_error "No importer record found with system code HENNE."
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "No importer record found with system code HENNE."
+      end
+
+      it "raises an error if HM Fenix record is not present" do
+        hm_fenix.destroy
+
+        expect {described_class.parse_file ca_file, log}.to raise_error "No Fenix importer record found with Tax ID 887634400RM0001."
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "No Fenix importer record found with Tax ID 887634400RM0001."
+      end
+
+      it "raises an error if bogus order type encountered" do
+        expect {described_class.parse_file make_csv_file("ABCD"), log}.to raise_error "Invalid Order Type value found: 'ABCD'.  Unable to determine what system to forward shipment data to."
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Invalid Order Type value found: 'ABCD'.  Unable to determine what system to forward shipment data to."
+      end
     end
   end
 

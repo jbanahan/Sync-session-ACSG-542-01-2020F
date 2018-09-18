@@ -278,7 +278,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
         update_order(ord, header, bucket, filename, &block) 
       end
     end
-    
+
     ord
   end
 

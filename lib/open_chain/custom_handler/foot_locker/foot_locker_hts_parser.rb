@@ -11,17 +11,17 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
     ["www-vfitrack-net/footlocker_hts", "www-vfitrack-net/footlocker_hts"]
   end
 
-  def self.parse csv, opts={}
-    self.new.process_file csv, opts[:key], opts
+  def self.parse_file csv, log, opts={}
+    self.new.process_file csv, opts[:key], log, opts
   end
 
-  def process_file csv, file_name, opts={}
+  def process_file csv, file_name, log, opts={}
     user = User.integration
     foot_locker_company = Company.where("alliance_customer_number = ? ", FOOT_LOCKER_CUSTOMER_NUMBER).first
 
-    unless foot_locker_company
-      raise "Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{FOOT_LOCKER_CUSTOMER_NUMBER}'."
-    end
+    log.reject_and_raise "Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{FOOT_LOCKER_CUSTOMER_NUMBER}'." unless foot_locker_company
+
+    log.company = foot_locker_company
 
     begin
       # Let's be a bit paranoid and set our quote character since the CSV does not contain quotes.
@@ -36,12 +36,13 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
         product[:hts] = clean_up_hts_number(row[4])
         product[:coo] = row[8]
         product[:season] = row[5]
-        save_product(product, foot_locker_company, user, file_name)
+        log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, product[:article]
+        save_product(product, foot_locker_company, user, file_name, log)
       end
     end
   end
 
-  def save_product(product, company, user, file_name)
+  def save_product(product, company, user, file_name, log)
     uid = "#{FOOT_LOCKER_CUSTOMER_NUMBER}-#{product[:article]}"
     p = nil
     Lock.acquire("Product-#{uid}") do
@@ -61,15 +62,15 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
         changed = true
       end
 
-      hts_country = find_hts_country(product[:division])
-      if p.hts_for_country(hts_country) != product[:hts]
+      hts_country = find_hts_country(product[:division], log)
+      if p.hts_for_country(hts_country)[0] != product[:hts]
         p.update_hts_for_country(hts_country, product[:hts])
         changed = true
       end
 
       classification = p.classifications.find {|c| c.country_id == hts_country.id }
-      if classification.custom_value(cdefs[:class_customs_description]) != product[:customs_description]
-        p.find_and_set_custom_value(cdefs[:class_customs_description], product[:customs_description])
+      if classification && classification.custom_value(cdefs[:class_customs_description]) != product[:customs_description]
+        classification.find_and_set_custom_value(cdefs[:class_customs_description], product[:customs_description])
         changed = true
       end
 
@@ -81,7 +82,12 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
       if p.changed? || changed
         p.save!
         p.create_snapshot user, nil, file_name
+        log.add_info_message "Product saved."
+      else
+        log.add_info_message "Product not saved: no values changed."
       end
+
+      log.set_identifier_module_info InboundFileIdentifier::TYPE_ARTICLE_NUMBER, Product.to_s, p.id
     end
   end
 
@@ -89,19 +95,19 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
     @cdefs ||= self.class.prep_custom_definitions([:prod_season, :prod_part_number, :prod_country_of_origin, :class_customs_description])
   end
 
-  def find_hts_country(division)
-    division == 'CA' ? ca : us
+  def find_hts_country division, log
+    division == 'CA' ? ca(log) : us(log)
   end
 
-  def us
+  def us log
     @us_country ||= Country.where(iso_code: "US").first
-    raise "USA Country not found." if @us_country.nil?
+    log.reject_and_raise "USA Country not found." if @us_country.nil?
     @us_country
   end
 
-  def ca
+  def ca log
     @ca_country ||= Country.where(iso_code: "CA").first
-    raise "CA Country not found." if @ca_country.nil?
+    log.reject_and_raise "CA Country not found." if @ca_country.nil?
     @ca_country
   end
 

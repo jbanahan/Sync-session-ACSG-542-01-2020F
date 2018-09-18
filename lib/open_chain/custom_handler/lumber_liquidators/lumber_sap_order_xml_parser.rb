@@ -15,12 +15,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     'ORDERS05' #before June 2016
   ]  
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom
+  def self.parse_dom dom, log, opts={}
+    self.new(opts).parse_dom dom, log
   end
 
   def self.integration_folder
@@ -40,9 +40,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @opts = opts
   end
 
-  def parse_dom dom
+  def parse_dom dom, log
     root = dom.root
-    raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
+    log.error_and_raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
 
     base = REXML::XPath.first(root,'IDOC')
 
@@ -55,12 +55,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
+    log.company = @imp
+    log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number
+
     order = nil
 
     begin
       @first_expected_delivery_date = nil
       vend = find_vendor(@imp, vendor_system_code)
       order = find_order(order_number, @imp, ext_time) do |o|
+        log.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, Order.to_s, o.id
+
         o.last_file_bucket = @opts[:bucket]
         o.last_file_path = @opts[:key]
 
@@ -80,9 +85,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
         header_ship_to = ship_to_address(base,@imp)
 
-
         order_lines_processed = []
-        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to).line_number.to_i}
+        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, log).line_number.to_i}
         # Look for existing order lines that are not present in the current XML and deal with them.
         o.order_lines.each {|ol|
           if !order_lines_processed.include?(ol.line_number.to_i)
@@ -113,7 +117,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.save!
 
         o.reload
-        validate_line_totals(o,base)
+        validate_line_totals(o, base, log)
 
         setup_folders o
         o.create_snapshot(@user, nil, @opts[:key])
@@ -458,15 +462,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       return previous_extract_time.nil? || extract_time.to_i >=  previous_extract_time.to_i
     end
 
-    def validate_line_totals order, base_el
+    def validate_line_totals order, base_el, log
       expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
       return true if expected_el.nil?
       expected = BigDecimal(expected_el.text)
       actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
-      raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
+      log.reject_and_raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el, importer, header_ship_to
+    def process_line order, line_el, importer, header_ship_to, log
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
@@ -486,7 +490,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         price_per_unit = extended_cost / qty
       end
 
-      validate_line_not_changed(ol,product,qty,uom,price_per_unit) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
+      validate_line_not_changed(ol, product, log) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
 
       ol.price_per_unit = price_per_unit
       ol.product = product
@@ -576,12 +580,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       REXML::XPath.first(line_el, "E1EDP05[KSCHL='ZHF2' or KSCHL='ZLF2']")
     end
 
-    def validate_line_not_changed ol, product, qty, uom, price_per_unit
+    def validate_line_not_changed ol, product, log
       changed = false
       changed = true if ol.product != product
       # This error message is a bit vague, but the product change condition is supposedly not even allowed by SAP.
       # We opted to leave it alone, even after the number of checks this method did was reduced to one in 04/2018. - WBH
-      raise OnShipmentError, "Order Line #{ol.line_number} already on a shipment." if changed
+      log.reject_and_raise("Order Line #{ol.line_number} already on a shipment.", error_class:OnShipmentError) if changed
     end
 
     def find_product order_line_el

@@ -10,15 +10,15 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
     ["polo/_polo_850", "/home/ubuntu/ftproot/chainroot/polo/_polo_850"]
   end
 
-  def self.parse data, opts = {}
-    self.new.parse data, opts
+  def self.parse_file data, log, opts = {}
+    self.new.parse data, log, opts
   end
 
   def initialize
     @cdefs ||= self.class.prep_custom_definitions [:ord_division, :ord_line_ex_factory_date, :ord_line_ship_mode, :ord_line_board_number]
   end
 
-  def parse data, opts = {}  
+  def parse data, log, opts = {}
     dom = REXML::Document.new(data)
     # Don't bother even attempting to parse Order cancellations
     return if cancellation?(dom)
@@ -26,14 +26,15 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
     po_number = first_xpath_text dom, "/Orders/MessageInformation/MessageOrderNumber"
     if !po_number.blank?
       importer = Company.where(master: true).first
-      raise "Unable to find Master RL account.  This account should not be missing." unless importer
+      log.error_and_raise "Unable to find Master RL account.  This account should not be missing." unless importer
+      log.company = importer
 
       # Due to the way the transactional looking occurs around the PO object, it's possible that we can have multiple 
       # products with the same unique id created if we enclose the outer PO create in a transaction and do the po find/create
       # inside that transaction...so, we'll create all the products ahead of time in their own individual locks/transactions 
       # and then do the PO create.
       products = create_products(dom)
-      find_purchase_order(importer, po_number, find_source_system_datetime(dom)) do |po|
+      find_purchase_order(importer, po_number, find_source_system_datetime(dom), log) do |po|
         po.last_file_bucket = opts[:bucket]
         po.last_file_path = opts[:key]
 
@@ -47,10 +48,11 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
       first_xpath_text(dom, "/Orders/MessageInformation/OrderChangeType") == "01"
     end
 
-    def find_purchase_order importer, po_number, source_system_export_date
+    def find_purchase_order importer, po_number, source_system_export_date, log
       purchase_order = nil
       Lock.acquire(Lock::RL_PO_PARSER_LOCK, times: 3) do 
         po = Order.where(importer_id: importer.id, order_number: po_number, customer_order_number: po_number).includes(:order_lines).first_or_create!
+        log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number, module_type:Order.to_s, module_id:po.id
         
         if valid_export_date? po, source_system_export_date
           # Set the source system export date (which is really the timestamp for when we received the EDI) while

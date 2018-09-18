@@ -12,12 +12,12 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     ["www-vfitrack-net/_burlington_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_850"]
   end
 
-  def self.parse data, opts={}
+  def self.parse_file data, log, opts={}
     user = User.integration
     parser = self.new
     REX12.each_transaction(StringIO.new(data)) do |transaction|
       begin
-        parser.process_order(user, transaction.segments, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+        parser.process_order(user, transaction.segments, log, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
       rescue => e
         send_error_email(transaction, e, "Burlington 850", opts[:key])
         e.log_me ["File: #{opts[:key]}"]
@@ -25,7 +25,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     end
   end
 
-  def process_order(user, edi_segments, last_file_bucket:, last_file_path:)
+  def process_order(user, edi_segments, log, last_file_bucket:, last_file_path:)
+    imp = importer
+    log.error_and_raise "Unable to find Burlington importer account with system code of: 'BURLI'." unless imp
+    log.company = imp
+
     beg_segment = find_segment(edi_segments, "BEG")
     cancelled = (beg_segment[1].to_i == 1)
 
@@ -35,10 +39,10 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     if !cancelled
       # It's a waste of time to lookup and create products on cancelled orders, so don't
       order_line_segments = extract_loop(edi_segments, ["PO1", "CTP", "PID", "PO4", "SAC", "CUR", "SDQ", "SLN", "TC2", "N1", "N2", "N3", "N4", "PER"])
-      products = create_products(user, last_file_path, order_line_segments)
+      products = create_products(user, last_file_path, order_line_segments, log)
     end
     
-    find_or_create_order(beg_segment, last_file_bucket, last_file_path) do |order|
+    find_or_create_order(beg_segment, last_file_bucket, last_file_path, log) do |order|
       if cancelled
         process_cancelled_order(order, user, last_file_path)
       else
@@ -77,7 +81,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     end
   end
 
-  def find_or_create_order beg_segment, last_file_bucket, last_file_path
+  def find_or_create_order beg_segment, last_file_bucket, last_file_path, log
     cust_order_number = beg_segment[3]
     revision = beg_segment[4].to_i
 
@@ -85,7 +89,12 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     order = nil
     Lock.acquire("Order-#{order_number}") do 
       o = Order.where(order_number: order_number, importer_id: importer.id).first_or_create! customer_order_number: cust_order_number
-      order = o if process_file?(o, revision)
+      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, cust_order_number, module_type:Order.to_s, module_id:o.id
+      if process_file?(o, revision)
+        order = o
+      else
+        log.add_info_message "Order not updated: file contained outdated info."
+      end
     end
 
     if order
@@ -103,7 +112,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def process_order_header user, order, edi_segments
-    #A pparently, burlington closes orders and then reopens hem if they change from standard lines to prepacks.
+    #Apparently, burlington closes orders and then reopens them if they change from standard lines to prepacks.
     if order.closed?
       order.reopen_logic user
     end
@@ -290,7 +299,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     order.order_lines.build line_number: line_number
   end
 
-  def create_products user, filename, order_line_segments
+  def create_products user, filename, order_line_segments, log
     products = {}
 
     # For prepack lines we're going down to the prepack level for the style
@@ -299,13 +308,13 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
         if prepack? po1
           extract_prepack_loops(segments).each do |subline_segments|
             sln = find_segment(subline_segments, "SLN")
-            style, product = find_or_create_product(user, filename, sln, find_segments(subline_segments, "TC2"), products)
+            style, product = find_or_create_product(user, filename, sln, find_segments(subline_segments, "TC2"), products, log)
             products[style] = product if product
           end
         else
           # The way the EDI spec is formulated, the TC2 segment can only be looped under the
           # SLN segment...however, in actual documents, it's sent in the PO1 loop too...bad spec.
-          style, product = find_or_create_product(user, filename, po1, find_segments(segments, "TC2"), products)
+          style, product = find_or_create_product(user, filename, po1, find_segments(segments, "TC2"), products, log)
           products[style] = product if product
         end
       end
@@ -319,7 +328,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     extract_loop(all_line_segments, ["SLN", "TC2", "CTP", "SAC", "CUR", "N1", "N2", "N3", "N4", "PER"])
   end
 
-  def find_or_create_product user, filename, style_segment, hts_segments, cache
+  def find_or_create_product user, filename, style_segment, hts_segments, cache, log
     style = find_segment_qualified_value(style_segment, "IT")
 
     return [style, cache[style]] if cache[style]
@@ -347,9 +356,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       tariffs = []
       tariffs_destroyed = false
       if hts_values.length > 0
-        cl = product.classifications.find {|c| c.country_id == us.id }
+        cl = product.classifications.find {|c| c.country_id == us(log).id }
         if cl.nil?
-          cl = product.classifications.build country_id: us.id
+          cl = product.classifications.build country_id: us(log).id
         end
 
         hts_values.each_with_index do |hts, i|
@@ -398,15 +407,12 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
   def importer
     @importer ||= Company.importers.where(system_code: "BURLI").first
-    raise "Unable to find Burlington importer account with system code of: 'BURLI'." unless @importer
-
     @importer
   end
 
-  def us
+  def us log
     @country ||= Country.where(iso_code: "US").first
-    raise "No 'US' country configured." unless @country
-
+    log.error_and_raise "No 'US' country configured." unless @country
     @country
   end
 

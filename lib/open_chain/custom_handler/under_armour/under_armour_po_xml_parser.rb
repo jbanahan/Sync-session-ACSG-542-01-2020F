@@ -11,28 +11,31 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     ["www-vfitrack-net/_ua_po_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_po_xml"]
   end
 
-  def self.parse xml, opts = {}
-    self.new.parse xml, opts
+  def self.parse_file xml, log, opts = {}
+    self.new.parse xml, log, opts
   end
 
-  def parse xml, opts
+  def parse_file xml, log, opts
     dom = REXML::Document.new(xml)
     root = dom.root
     # UA tends to send us blank files for some reason...this checks that and returns if it's blank
     return if root.nil?
 
     user = User.integration
-    root.each_element("Orders") {|order| process_order order, user, opts[:bucket], opts[:key] }
+    root.each_element("Orders") {|order| process_order order, user, opts[:bucket], opts[:key], log }
   end
 
-  def process_order order_xml, user, bucket, file
-    raise "Invalid XML structure.  Expecting 'Orders' element but received '#{order_xml.name}'" unless order_xml.name == "Orders"
-
+  def process_order order_xml, user, bucket, file, log
     order_number = order_xml.text "Order"
     revision = order_xml.text("MessageID").to_i
 
-    product_cache = create_product_cache(order_xml, user, file)
+    log.company = importer
+    log.error_and_raise "Unable to find Under Armour 'UNDAR' importer account." unless log.company
+
+    product_cache = create_product_cache(order_xml, user, file, log)
     find_or_create_order(order_number, revision, bucket, file) do |order|
+      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number, module_type:Order.to_s, module_id:order.id
+
       # Destroy all existing lines
       order.order_lines.destroy_all
 
@@ -111,17 +114,17 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     order
   end
 
-  def create_product_cache order_xml, user, file
+  def create_product_cache order_xml, user, file, log
     variant_products, prepacks, styles = extract_product_details(order_xml)
 
     products = {}
-    styles.each {|s| products[s] = find_or_create_product(s, [], false, user, file)}
+    styles.each {|s| products[s] = find_or_create_product(s, [], false, user, file, log)}
     variant_products.each_pair do |s, skus|
-      product = find_or_create_product(s, skus, false, user, file)
+      product = find_or_create_product(s, skus, false, user, file, log)
       skus.each {|sku| products[sku] = product }
     end
 
-    prepacks.each {|s| products[s] = find_or_create_product(s, [], true, user, file)}
+    prepacks.each {|s| products[s] = find_or_create_product(s, [], true, user, file, log)}
 
     products
   end
@@ -158,8 +161,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     order_detail_xml.text("ArticleAttributes/Code[@Type = 'ArticleType']") == "11"
   end
 
-  def find_or_create_product style, skus, prepack, user, file
-    parts_imp = parts_importer
+  def find_or_create_product style, skus, prepack, user, file, log
+    parts_imp = parts_importer(log)
     unique_identifier = "#{parts_imp.system_code}-#{style}"
 
     product = nil
@@ -193,17 +196,16 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     file_revision >= order.custom_value(cdefs[:ord_revision]).to_i
   end
 
-  def importer 
+  def importer
     @importer ||= Company.importers.where(system_code: "UNDAR").first
-    raise "Unable to find Under Armour 'UNDAR' importer account." unless @importer
     @importer
   end
 
-  def parts_importer
+  def parts_importer log
     @parts_system_code ||= MasterSetup.get.custom_feature?("UAPARTS Staging") ? "UAPARTS" : "UNDAR"
 
     @parts_importer ||= Company.where(system_code: @parts_system_code, importer: true).first
-    raise "Unable to find Under Armour '#{@parts_system_code}' importer account." unless @parts_importer
+    log.error_and_raise "Unable to find Under Armour '#{@parts_system_code}' importer account." unless @parts_importer
     @parts_importer
   end
 

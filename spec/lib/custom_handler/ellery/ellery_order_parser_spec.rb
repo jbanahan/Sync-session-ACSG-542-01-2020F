@@ -16,8 +16,9 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
   let! (:ellery) { Factory(:importer, system_code: "ELLHOL") }
   let! (:us) { Factory(:country, iso_code: "US", iso_3_code: "USA") }
   let! (:china) { Factory(:country, iso_code: "CN", iso_3_code: "CHN" )}
+  let (:log) { InboundFile.new }
 
-  describe "parse" do
+  describe "parse_file" do
     subject { described_class }
 
     let (:parser) {
@@ -33,7 +34,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     end
 
     it "parses CSV data and creates an order" do
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       o = Order.where(order_number: "ELLHOL-14945").first
       expect(o).not_to be_nil
@@ -117,13 +118,18 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       snap = p.entity_snapshots.first
       expect(snap.user).to eq User.integration
       expect(snap.context).to eq "path/to/file.csv"
+
+      expect(log.company).to eq ellery
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "14945"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
     end
 
     it "updates an order" do
       existing = Factory(:order, importer: ellery, order_number: "ELLHOL-14945")
       existing_line = Factory(:order_line, order: existing)
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       existing.reload
       # Make sure the data was loaded to the existing PO
@@ -141,7 +147,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       existing_line = Factory(:order_line, order: existing)
       booking_line = Factory(:booking_line, product: existing_line.product, order_line: existing_line, order: existing)
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       existing.reload
 
@@ -158,7 +164,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       shipment_line = Factory(:shipment_line, product: existing_line.product)
       piece_set = PieceSet.create! order_line: existing_line, shipment_line: shipment_line, quantity: 100
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       existing.reload
 
@@ -173,7 +179,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       existing = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "6303922010")
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       existing.reload
 
@@ -184,7 +190,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       existing = Factory(:product, importer: ellery, unique_identifier: "ELLHOL-15828052084MAR")
       existing.update_hts_for_country(us, "1234567890")
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       existing.reload
 
@@ -193,7 +199,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
 
     it "doesn't update vendor data" do
       vendor = Factory(:vendor, system_code: "ELLHOL-BE1220", name: "Existing Vendor")
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       vendor.reload 
       expect(vendor.name).to eq "Existing Vendor"
@@ -203,19 +209,19 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
     it "doesn't update ship to data" do
       ship_to = Factory(:address, company: ellery, name: "FAYETTEVILLE DC")
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
       ship_to.reload
 
       expect(ship_to.line_1).to be_nil
     end
 
     it "doesn't update if nothing changed" do
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       o = Order.where(order_number: "ELLHOL-14945").first
       o.entity_snapshots.destroy_all
 
-      subject.parse po_csv, bucket: "bucket", key: "path/to/file.csv"
+      subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
       o.reload
       expect(o.entity_snapshots.length).to eq 0

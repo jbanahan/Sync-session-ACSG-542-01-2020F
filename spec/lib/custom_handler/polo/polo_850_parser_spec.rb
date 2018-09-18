@@ -275,13 +275,14 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
     }
     let (:master_company) { Factory(:master_company) }
     let (:cdefs) { subject.instance_variable_get(:@cdefs)}
+    let (:log) { InboundFile.new }
 
     before :each do
       master_company
     end
 
     it "processes xml into order" do
-      described_class.parse standard_xml, bucket: "bucket", key: "file.txt"
+      described_class.parse_file standard_xml, log, bucket: "bucket", key: "file.txt"
       order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
       expect(order).not_to be_nil
 
@@ -314,13 +315,18 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
       expect(p.unique_identifier).to eq "209629423004"
 
       expect(p.importer).to be_nil
+
+      expect(log.company).to eq master_company
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "4700447521"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq order.id
     end
 
     it "reuses an order" do
       order = Order.create! importer_id: master_company.id, order_number: "4700447521", customer_order_number: "4700447521"
       line = order.order_lines.create! line_number: 42, product: Factory(:product)
 
-      described_class.parse standard_xml
+      described_class.parse_file standard_xml, log
 
       order.reload
       expect(order.order_lines).not_to include line
@@ -329,7 +335,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
 
     it "re-uses a product" do
       product = Factory(:product, unique_identifier: "209629423004")
-      described_class.parse standard_xml
+      described_class.parse_file standard_xml, log
       order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
       expect(order).not_to be_nil
       expect(order.order_lines.first.product).to eq product
@@ -337,13 +343,13 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
 
     it "does not reprocess files if source export date is newer than file" do
       order = Order.create! importer_id: master_company.id, order_number: "4700447521", customer_order_number: "4700447521", last_exported_from_source: Time.zone.now
-      described_class.parse standard_xml
+      described_class.parse_file standard_xml, log
       order.reload
       expect(order.order_lines.length).to eq 0
     end
 
     it "extracts division and board number from prepack lines" do
-      described_class.parse prepack_xml
+      described_class.parse_file prepack_xml, log
       order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
       expect(order).not_to be_nil
       expect(order.custom_value(cdefs[:ord_division])).to eq "W LRL APP MISSY JEANS"
@@ -353,12 +359,18 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
     end
 
     it "strips the pack code from the style on prepack lines" do
-      described_class.parse prepack_xml
+      described_class.parse_file prepack_xml, log
       order = Order.where(importer_id: master_company.id, order_number: "4700447521").first
       expect(order).not_to be_nil
 
       expect(order.order_lines.first.product.unique_identifier).to eq "209629423004"
     end
 
+    it "fails if master company can't be found" do
+      master_company.destroy
+
+      expect{described_class.parse_file prepack_xml, log}.to raise_error "Unable to find Master RL account.  This account should not be missing."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Master RL account.  This account should not be missing."
+    end
   end
 end

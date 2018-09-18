@@ -16,13 +16,14 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     s
   }
 
+  let(:log) { InboundFile.new }
+
   describe "process_order" do
     let (:cdefs) { subject.cdefs }
 
     it "creates a PO from xml" do
       now = Time.zone.now
-      Timecop.freeze { subject.process_order xml, user, "bucket", "file.xml" }
-      
+      Timecop.freeze { subject.process_order xml, user, "bucket", "file.xml", log }
 
       order = Order.where(order_number: "UNDAR-4200001923").first
 
@@ -76,12 +77,17 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       expect(p.entity_snapshots.length).to eq 1
       expect(p.entity_snapshots.first.user).to eq user
       expect(p.entity_snapshots.first.context).to eq "file.xml"
+
+      expect(log.company).to eq ua
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq '4200001923'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq order.id
     end
 
     it "uses 'UNDAR' for products if custom feature isn't set" do
       allow(ms).to receive(:custom_feature?).with("UAPARTS Staging").and_return false
 
-      order = subject.process_order xml, user, "bucket", "file.xml"
+      order = subject.process_order xml, user, "bucket", "file.xml", log
 
       p = order.order_lines.first.product
       expect(p.importer).to eq ua
@@ -89,7 +95,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     end
 
     it "handles prepack lines" do
-      subject.process_order prepack_xml, user, "bucket", "file.xml"
+      subject.process_order prepack_xml, user, "bucket", "file.xml", log
 
       order = Order.where(order_number: "UNDAR-4200001923").first
       expect(order).not_to be_nil
@@ -117,7 +123,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
       line = Factory(:order_line, order: order)
 
-      subject.process_order xml, user, "bucket", "file.xml"
+      subject.process_order xml, user, "bucket", "file.xml", log
 
       order.reload
       # Just check something the parser sets to ensure the header data was definitely updated.
@@ -133,41 +139,40 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     it "raises an error if UA importer doesn't exist" do
       ua.destroy
 
-      expect { subject.process_order xml, user, "bucket", "file.xml" }.to raise_error "Unable to find Under Armour 'UNDAR' importer account."
+      expect { subject.process_order xml, user, "bucket", "file.xml", log }.to raise_error "Unable to find Under Armour 'UNDAR' importer account."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Under Armour 'UNDAR' importer account."
     end
 
     it "raises an error if UAPARTS importer doesn't exist" do
       ua_parts.destroy
 
-      expect { subject.process_order xml, user, "bucket", "file.xml" }.to raise_error "Unable to find Under Armour 'UAPARTS' importer account."
+      expect { subject.process_order xml, user, "bucket", "file.xml", log }.to raise_error "Unable to find Under Armour 'UAPARTS' importer account."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Under Armour 'UAPARTS' importer account."
     end
 
     it "doesn't update order if file's revision is older than the current one" do
       order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
       order.update_custom_value! cdefs[:ord_revision], 208237
 
-      subject.process_order xml, user, "bucket", "file.xml"
+      subject.process_order xml, user, "bucket", "file.xml", log
 
       order.reload
       expect(order.entity_snapshots.length).to eq 0
     end
   end
 
-  describe "parse" do
-    subject { described_class }
-
+  describe "parse_file" do
     it "parses XML string" do
-      subject.parse(data, bucket: "bucket", key: "file.xml")
+      subject.parse_file(data, log, bucket: "bucket", key: "file.xml")
 
       order = Order.where(order_number: "UNDAR-4200001923").first
       expect(order).not_to be_nil
       expect(order.last_file_bucket).to eq "bucket"
       expect(order.last_file_path).to eq "file.xml"
-
     end
 
     it "handles blank files" do
-      expect(subject.parse("", bucket: "bucket", key: "file.xml")).to be_nil
+      expect(subject.parse_file("", log, bucket: "bucket", key: "file.xml")).to be_nil
     end
   end
 

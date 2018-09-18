@@ -288,6 +288,13 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :inbound_files, :only => [:index, :show] do
+    member do
+      get 'download'
+      post 'reprocess'
+    end
+  end
+
   match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get, :as => :entries_activity_summary_us_with_importer
   match '/entries/importer/:importer_id/activity_summary/us/content' => 'entries#us_activity_summary_content', :via => :get

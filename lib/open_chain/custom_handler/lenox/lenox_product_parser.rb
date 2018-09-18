@@ -23,23 +23,25 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
     ["www-vfitrack-net/_lenox_product", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_product"]
   end
 
-  def self.parse data, opts = {}
-    LenoxProductParser.new.process data, User.find_by_username('integration')
+  def self.parse_file data, log, opts = {}
+    LenoxProductParser.new.process data, User.find_by_username('integration'), log
   end
 
-  def process data, user
+  def process data, user, log
+    log.company = @imp
     @user = user
     @hash_keys = DataCrossReference.get_all_pairs DataCrossReference::LENOX_ITEM_MASTER_HASH
     data.each_line.each do |ln|
-      process_line ln
+      process_line ln, log
     end
   end
 
-  def process_line ln
+  def process_line ln, log
     part_number = ln[4,18].strip
     return unless line_changed?(ln,part_number)
     uid = "LENOX-#{part_number}"
     p = Product.where(unique_identifier:uid,importer_id:@imp.id).first_or_create!
+    log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, part_number, module_type:Product.to_s, module_id:p.id
     p.update_attributes(
       name:ln[22,40].strip,
       updated_at:0.seconds.ago) #updated_at forces save 

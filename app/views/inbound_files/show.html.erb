@@ -1,0 +1,39 @@
+<% content_for :action_bar do %>
+  <% if (@inbound_file.s3_bucket && @inbound_file.s3_path) %>
+    <button class='btn_link' link_to='<%= download_inbound_file_path(@inbound_file) %>'>Download</button>
+    <%=button_to 'Reprocess', reprocess_inbound_file_path(@inbound_file), class: "btn navbar-btn btn-default", form_class: 'inline-button-to'%>
+  <% end %>
+  <button class='btn_link' link_to='<%= inbound_files_path %>' key_map='b'>Back</button>
+<% end %>
+
+<table>
+  <%= field_row "Parser Name", @inbound_file.parser_name %>
+  <%= field_row "File Name", link_to(@inbound_file.file_name, download_inbound_file_path(@inbound_file)) %>
+  <%= field_row "Receipt Location", @inbound_file.receipt_location %>
+  <%= field_row "Company", @inbound_file.company.try(:name) %>
+  <%= field_row "Process Start Date", @inbound_file.process_start_date %>
+  <%= field_row "Process End Date", @inbound_file.process_end_date %>
+  <%= field_row "Original Process Start Date", @inbound_file.original_process_start_date %>
+  <%= field_row "Requeue Count", @inbound_file.requeue_count %>
+  <%= field_row "File Processing Status", @inbound_file.process_status %>
+  <%= field_row "ISA Number", @inbound_file.isa_number %>
+  <%= field_row "Created At", @inbound_file.created_at %>
+  <% @inbound_file.identifiers.each do |ident| %>
+    <%= field_row ident.identifier_type, (ident.module_id && ident.module_id > 0 ? link_to(ident.value, CoreModule.find_by_class_name(ident.module_type).try(:klass).try(:relative_url, ident.module_id)) : ident.value) %>
+  <% end %>
+  <% if @inbound_file.messages.length > 0 %>
+    <tr>
+      <td style="padding-top:20px"><b>Messages</b></td>
+    </tr>
+    <tr>
+      <table>
+        <% @inbound_file.messages.each do |mess| %>
+          <tr>
+            <td style="padding-right:10px;color:gray"><%= mess.message_status %></td>
+            <td><%= mess.message %></td>
+          </tr>
+        <% end %>
+      </table>
+    </tr>
+  <% end %>
+</table>

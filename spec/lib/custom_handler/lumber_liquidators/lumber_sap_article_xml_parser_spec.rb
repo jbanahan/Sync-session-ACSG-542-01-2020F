@@ -10,15 +10,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
       @opts = {bucket: "bucket", key: "path/to/s3/file"}
     end
 
+    let(:log) { InboundFile.new }
+
     it "should fail on bad root element" do
       @test_data.gsub!(/_-LUMBERL_-VFI_ARTMAS01/,'BADROOT')
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, @opts)}.to raise_error(/root element/)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to raise_error(/root element/)
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Incorrect root element BADROOT, expecting '_-LUMBERL_-VFI_ARTMAS01'."
+    end
+
+    it "should fail if material is missing" do
+      @test_data.gsub!(/MATERIAL/,'BAD_MATERIAL_BAD')
+      dom = REXML::Document.new(@test_data)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to raise_error("XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL")
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL"
     end
 
     it "should create article" do
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, @opts)}.to change(Product,:count).from(0).to(1)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to change(Product,:count).from(0).to(1)
       p = Product.first
 
       expect(p.unique_identifier).to eq '000000000010000328'
@@ -33,17 +43,25 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
       expect(p.get_custom_value(@cdefs[:prod_merch_cat_desc]).value).to eq 'Bamboo/Cork Com'
       expect(p.get_custom_value(@cdefs[:prod_overall_thickness]).value).to eq '1/2"'
       expect(p.classifications.length).to eq 0
+
+      expect(log.company).to eq @importer
+      expect(log.identifiers.length).to eq 1
+      expect(log.identifiers[0].identifier_type).to eq InboundFileIdentifier::TYPE_ARTICLE_NUMBER
+      expect(log.identifiers[0].value).to eq '000000000010000328'
+      expect(log.identifiers[0].module_type).to eq 'Product'
+      expect(log.identifiers[0].module_id).to eq p.id
     end
 
     it "should update article" do
       dom = REXML::Document.new(@test_data)
       op = Factory(:product,unique_identifier:'000000000010000328')
-      ol = Factory(:order_line, product: op)
+      ord = Factory(:order, order_number:'TEST_ORDER')
+      ol = Factory(:order_line, product: op, order: ord)
       c = op.classifications.create! country: Factory(:country, iso_code: "US")
       c.tariff_records.create! line_number: 1, hts_1: "1234567890"
 
       op.create_snapshot(Factory(:user))
-      expect{described_class.new.parse_dom(dom, @opts)}.to_not change(Product,:count)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
       p = Product.first
       expect(p.unique_identifier).to eq '000000000010000328'
       expect(p.name).to eq '9/16 x 7 HS MAPLE WHEAT ELITE PRE-SS'
@@ -57,6 +75,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
       expect(p.get_custom_value(@cdefs[:prod_sap_extract]).value.to_i).to eq ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse('2014-12-22 10:37:06').to_i
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq "PHENAWE7-MW-SS"
       expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq p.name
+
+      expect(log.identifiers.length).to eq 2
+      expect(log.identifiers[0].identifier_type).to eq InboundFileIdentifier::TYPE_ARTICLE_NUMBER
+      expect(log.identifiers[0].value).to eq '000000000010000328'
+      expect(log.identifiers[0].module_type).to eq 'Product'
+      expect(log.identifiers[0].module_id).to eq p.id
+
+      expect(log.identifiers[1].identifier_type).to eq InboundFileIdentifier::TYPE_PO_NUMBER
+      expect(log.identifiers[1].value).to eq 'TEST_ORDER'
+      expect(log.identifiers[1].module_type).to eq 'Order'
+      expect(log.identifiers[1].module_id).to eq ord.id
     end
 
     it "should not change the article number if it already exists" do
@@ -65,19 +94,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
       ol = Factory(:order_line, product: op)
 
       op.create_snapshot(Factory(:user))
-      expect{described_class.new.parse_dom(dom, @opts)}.to_not change(Product,:count)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
 
       p = Product.first
       p.find_and_set_custom_value(@cdefs[:prod_old_article], '123456').save!
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], nil).save!
 
-      expect{described_class.new.parse_dom(dom)}.to_not change(Product,:count)
+      expect{described_class.new.parse_dom(dom, log)}.to_not change(Product,:count)
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to_not eq '123456'
     end
 
     it "should skip update if article has newer system extract date" do
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, @opts)}.to change(Product,:count).from(0).to(1)
+      expect{described_class.new.parse_dom(dom, InboundFile.new, @opts)}.to change(Product,:count).from(0).to(1)
       op = Product.first
 
       # put sap extract date in the future so we know it's always newer than the second run of the XML
@@ -87,10 +116,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
       new_test_data = @test_data.gsub(/MAPLE /,"MPL")
 
       dom = REXML::Document.new(new_test_data)
-      expect{described_class.new.parse_dom(dom, @opts)}.to_not change(Product,:count)
+      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
 
       p = Product.first
       expect(p.name).to eq '9/16 x 7 HS MAPLE WHEAT ELITE PRE-SS'
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Product not updated: file contained outdated info."
     end
   end
 end

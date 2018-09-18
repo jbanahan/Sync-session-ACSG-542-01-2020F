@@ -20,6 +20,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     order
   }
 
+  let (:log) { InboundFile.new }
+
   describe "process_shipment" do
 
     before :each do
@@ -30,7 +32,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
     it "processes 856 xml into a shipment" do
       now = Time.zone.parse "2017-02-03 12:00"
-      Timecop.freeze(now) { subject.process_shipment xml, user, "bucket", "file.xml", [] }
+      Timecop.freeze(now) { subject.process_shipment xml, user, "bucket", "file.xml", [], log }
 
       shipment = Shipment.where(reference: "UNDAR-ASN0001045").first
       expect(shipment).not_to be_nil
@@ -75,6 +77,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(line.custom_value(cdefs[:shpln_coo])).to eq "VN"
       expect(line.piece_sets.first.order_line).to eq order.order_lines.first
       expect(line.piece_sets.first.quantity).to eq BigDecimal("10")
+
+      expect(log.company).to eq ua
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq 'ASN0001045'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq shipment.id
     end
 
     it "updates a shipment" do
@@ -82,7 +89,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 
-      subject.process_shipment xml, user, "bucket", "file.xml", []
+      subject.process_shipment xml, user, "bucket", "file.xml", [], log
 
       shipment.reload
 
@@ -105,20 +112,23 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
       it "appends error if trailer is blank" do
         data.gsub!("<Trailer>MBOL1938</Trailer>", "<Trailer></Trailer>")
-        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        subject.process_shipment xml, user, "bucket", "file.xml", errors, log
         expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."
       end
 
       it "appends error if po couldn't be found" do
         order.destroy
-        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        subject.process_shipment xml, user, "bucket", "file.xml", errors, log
         expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."
       end
 
       it "appends error if order line couldn't be found" do
         order.order_lines.destroy_all
-        subject.process_shipment xml, user, "bucket", "file.xml", errors
+        subject.process_shipment xml, user, "bucket", "file.xml", errors, log
         expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."
       end
     end
 
@@ -130,7 +140,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       line = shipment.shipment_lines.create! line_number: 1, product: product
       container = shipment.containers.create! container_number: "MBOL1938"
 
-      subject.process_shipment xml, user, "bucket", "file.xml", []
+      subject.process_shipment xml, user, "bucket", "file.xml", [], log
 
       shipment.reload
 
@@ -166,12 +176,12 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     end
   end
 
-  describe "parse" do
+  describe "parse_file" do
     subject { described_class }
 
     it "parses xml string" do
       order
-      subject.parse data, bucket: "bucket", key: "file.xml"
+      subject.parse_file data, log, bucket: "bucket", key: "file.xml"
 
       expect(Shipment.where(reference: "UNDAR-ASN0001045").first).not_to be_nil
     end
@@ -180,7 +190,19 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       ua.destroy
       expect_any_instance_of(subject).to receive(:send_error_email).with(data, "file.xml", ["Unable to find Under Armour 'UNDAR' importer account."])
       expect_any_instance_of(subject).to_not receive(:process_shipment)
-      subject.parse data, bucket: "bucket", key: "file.xml"
+      subject.parse_file data, log, bucket: "bucket", key: "file.xml"
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Under Armour 'UNDAR' importer account."
+    end
+
+    it "errors when XML structure invalid" do
+      xml_data = "<UA_Delivery><CrudHeader/></UA_Delivery>"
+
+      expect_any_instance_of(subject).to receive(:send_error_email).with(xml_data, "file.xml", ["Invalid XML structure.  Missing 'Header' element."])
+      expect_any_instance_of(subject).to_not receive(:find_or_create_shipment)
+      subject.parse_file xml_data, log, bucket: "bucket", key: "file.xml"
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Invalid XML structure.  Missing 'Header' element."
     end
   end
 end

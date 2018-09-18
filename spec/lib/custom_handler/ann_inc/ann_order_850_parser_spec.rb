@@ -101,6 +101,15 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
         expect(order.entity_snapshots.first.user).to eq User.integration
       end
 
+      it "does not update an order when the file contains stale info" do
+        order = Factory(:order, order_number:"ATAYLOR-6232562", importer_id:ann_taylor.id, order_date:Date.new(2015,5,5), last_exported_from_source:ActiveSupport::TimeZone["America/New_York"].parse("201803211251"))
+
+        subject.parse standard_edi_data, bucket: "bucket", key: "file.edi"
+
+        order.reload
+        expect(order.order_date).to eq Date.new(2015,5,5)
+      end
+
       it "parses prepack orders with multiple lines" do
         subject.parse prepack_edi_data, bucket: "bucket", key: "file.edi"
 

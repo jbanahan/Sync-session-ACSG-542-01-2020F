@@ -1,0 +1,29 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th>Parser Name</th>
+    <th>File Name</th>
+    <th>Receipt Location</th>
+    <th>Company</th>
+    <th>Process Start Date</th>
+    <th>Process End Date</th>
+    <th>File Processing Status</th>
+  </thead>
+
+<% @inbound_files.each do |inf| %>
+  <tr class='hover'>
+    <td><%= link_to inf.parser_name, inf %></td>
+    <td><%= inf.s3_bucket && inf.s3_path ? link_to(inf.file_name, download_inbound_file_path(inf)) : inf.file_name %></td>
+    <td><%= inf.receipt_location %></td>
+    <td><%= inf.company.try(:name) %></td>
+    <td><%= inf.process_start_date %></td>
+    <td><%= inf.process_end_date %></td>
+    <td><%= inf.process_status %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @inbound_files %>
+
+<% if @default_display %>
+  <p style="text-align: center;"><b><%=@default_display%></b></p>
+<% end %>

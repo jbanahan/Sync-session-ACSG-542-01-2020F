@@ -129,6 +129,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     ["#{MasterSetup.get.system_code}/_kewill_entry", "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/_kewill_entry"]
   end
 
+  # Due to volume concerns, entries received by this class are not recorded in the inbound file table.
+  def self.log_file? bucket, key
+    false
+  end
+
   def self.parse json_content, opts={}
     # This is the method that's called by the controller, we'll want to save off the json data it sends
     # first before parsing it, so the data that was exported is archived.

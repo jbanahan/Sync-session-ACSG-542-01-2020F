@@ -11,6 +11,7 @@ describe OpenChain::Purge do
       expect(ErrorLogEntry).to receive(:purge).with reference_date
       expect(FtpSession).to receive(:purge).with reference_date
       expect(SentEmail).to receive(:purge).with reference_date
+      expect(InboundFile).to receive(:purge).with reference_date
 
       expect(Message).to receive(:purge_messages)
       expect(ReportResult).to receive(:purge)
@@ -27,6 +28,7 @@ describe OpenChain::Purge do
       expect(ErrorLogEntry).to receive(:delay).and_return obj
       expect(FtpSession).to receive(:delay).and_return obj
       expect(SentEmail).to receive(:delay).and_return obj
+      expect(InboundFile).to receive(:delay).and_return obj
 
       expect(Message).to receive(:delay).and_return obj
       expect(ReportResult).to receive(:delay).and_return obj

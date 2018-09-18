@@ -8,12 +8,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom
+  def self.parse_dom dom, log, opts={}
+    self.new(opts).parse_dom dom, log
   end
 
   def self.integration_folder
@@ -25,12 +25,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @user = User.integration
   end
 
-  def parse_dom dom
+  def parse_dom dom, log
     root = dom.root
-    raise "Incorrect root element #{root.name}, expecting 'CREMAS05'." unless root.name == 'CREMAS05'
+    log.error_and_raise "Incorrect root element #{root.name}, expecting 'CREMAS05'." unless root.name == 'CREMAS05'
+
+    log.company = Company.where(system_code: "LUMBER").first
+
     base = REXML::XPath.first(root,'//E1LFA1M')
     sap_code = et(base,'LIFNR')
-    raise "Missing SAP Number. All vendors must have SAP Number at XPATH //E1LFA1M/LIFNR" if sap_code.blank?
+    log.reject_and_raise "Missing SAP Number. All vendors must have SAP Number at XPATH //E1LFA1M/LIFNR" if sap_code.blank?
     name = et(base,'NAME1')
 
     c = nil
@@ -43,6 +46,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         changed.value = true
       end
 
+      log.add_identifier InboundFileIdentifier::TYPE_SAP_NUMBER, sap_code, module_type:Company.to_s, module_id:c.id
+
       master = Company.find_by_master(true)
       master.linked_companies << c unless master.linked_companies.include?(c)
     end
@@ -53,7 +58,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       set_custom_value(c, :cmp_sap_company, sap_code, changed)
 
-      update_address c, sap_code, base, changed
+      update_address c, sap_code, base, changed, log
       lock_or_unlock_vendor c, base, changed
 
       if c.changed?
@@ -87,14 +92,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
   end
 
-  def update_address company, sap_code, el, changed
+  def update_address company, sap_code, el, changed, log
     add_sys_code = "#{sap_code}-CORP"
     add = company.addresses.where(system_code:add_sys_code).first_or_initialize(name:'Corporate')
     changed.value = true unless add.persisted?
 
     country_iso = et(el,'LAND1')
     country = Country.find_by_iso_code country_iso
-    raise "Invalid country code #{country_iso}." unless country
+    log.reject_and_raise "Invalid country code #{country_iso}." unless country
 
     add.line_1 = et(el,'STRAS')
     add.city = et(el,'ORT01')

@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
   before(:all) { described_class.new.cdefs }
   after(:all) { CustomDefinition.destroy_all }
 
-  describe "parse" do
+  describe "parse_file" do
     subject { described_class }
     let! (:burlington) { Factory(:importer, system_code: "BURLI", name: "Burlington") }
     let! (:us) { Factory(:country, iso_code: "US") }
@@ -20,11 +20,12 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       c.tariff_records.create! hts_1: "9503000073"
       p
     }
+    let (:log) { InboundFile.new }
 
     it "processes standard edi, creating products and order" do
       now = Time.zone.now
       Timecop.freeze(now) do
-        subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+        subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
       end
 
       order = Order.where(order_number: "BURLI-364225101").first
@@ -75,12 +76,17 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(p.entity_snapshots.length).to eq 1
       expect(p.entity_snapshots.first.context).to eq "file.edi"
       expect(p.entity_snapshots.first.user).to eq User.integration
+
+      expect(log.company).to eq burlington
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "364225101"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq order.id
     end
 
     it "updates existing orders, deleting any line not referenced in new order" do
       ol = existing_order.order_lines.create! line_number: 2, product: existing_product
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_order.reload
       expect(existing_order).not_to be_nil
@@ -99,7 +105,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
     it "updates existing orders, deleting existing lines and replacing them" do
       ol = existing_order.order_lines.create! line_number: 1, product: existing_product
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_order.reload
       expect(existing_order).not_to be_nil
@@ -114,7 +120,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF"), product: ol.product)
       PieceSet.create!(quantity: 1, order_line: ol, shipment_line: sl)
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_order.reload
       expect(existing_order).not_to be_nil
@@ -129,7 +135,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       c = existing_product.classifications.create! country: us
       t = c.tariff_records.create! hts_1: "9403509041"
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_product.reload
       expect(existing_product.entity_snapshots.length).to eq 0
@@ -140,7 +146,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       t = c.tariff_records.create! hts_1: "9403509049", line_number: 1
       t2 = c.tariff_records.create! hts_1: "9403509048", line_number: 2
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_product.reload
       expect(existing_product.entity_snapshots.length).to eq 1
@@ -158,7 +164,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       t = c.tariff_records.create! hts_1: "9403509040", line_number: 1
       t2 = c.tariff_records.create! hts_1: "9403509041", line_number: 2
 
-      subject.parse edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file edi, log, bucket: "bucket", key: "file.edi"
 
       order = Order.where(order_number: "BURLI-364225101").first
       expect(order).not_to be_nil
@@ -176,7 +182,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       edi = prepack_edi.gsub("TC2|J|9503.00.0073", "TC2|J|9503.00.0074\nTC2|J|9503.00.0075")
       existing_prepack_product
 
-      subject.parse edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file edi, log, bucket: "bucket", key: "file.edi"
 
       order = Order.where(order_number: "BURLI-364225101").first
       expect(order).not_to be_nil
@@ -191,7 +197,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
     end
 
     it "parses edi with prepack lines" do
-      subject.parse prepack_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file prepack_edi, log, bucket: "bucket", key: "file.edi"
 
       order = Order.where(order_number: "BURLI-364225101").first
       expect(order).not_to be_nil
@@ -231,7 +237,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
     it "updates orders with existing prepack lines" do
       ol = existing_order.order_lines.create line_number: 1001, product: existing_prepack_product
 
-      subject.parse prepack_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file prepack_edi, log, bucket: "bucket", key: "file.edi"
 
       order = Order.where(order_number: "BURLI-364225101").first
       expect(order).not_to be_nil
@@ -260,7 +266,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
     it "cancels orders" do
       now = Time.zone.now
       Timecop.freeze(now) do
-        subject.parse standard_edi.sub("BEG|05|", "BEG|01|"), bucket: "bucket", key: "file.edi"
+        subject.parse_file standard_edi.sub("BEG|05|", "BEG|01|"), log, bucket: "bucket", key: "file.edi"
       end
 
       order = Order.where(order_number: "BURLI-364225101").first
@@ -286,7 +292,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       existing_order.update_attributes! closed_at: Time.zone.now, closed_by: User.integration
       ol = existing_order.order_lines.create! line_number: 2, product: existing_product
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_order.reload
       expect(existing_order).not_to be_nil
@@ -308,16 +314,32 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       end
       expect_any_instance_of(StandardError).to receive(:log_me).with ["File: file.edi"]
 
-      subject.parse standard_edi, key: "file.edi"
+      subject.parse_file standard_edi, log, key: "file.edi"
     end
 
     it "doesn't update orders with revisions numbers lower than current one" do
       existing_order.update_custom_value! cdefs[:ord_revision], 20
 
-      subject.parse standard_edi, bucket: "bucket", key: "file.edi"
+      subject.parse_file standard_edi, log, bucket: "bucket", key: "file.edi"
 
       existing_order.reload
       expect(existing_order.order_lines.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Order not updated: file contained outdated info."
+    end
+
+    it "raises error if importer isn't found" do
+      burlington.destroy
+
+      subject.parse_file standard_edi, log
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Burlington importer account with system code of: 'BURLI'."
+    end
+
+    it "raises error if US country isn't found" do
+      us.destroy
+
+      subject.parse_file standard_edi, log
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "No 'US' country configured."
     end
   end
 

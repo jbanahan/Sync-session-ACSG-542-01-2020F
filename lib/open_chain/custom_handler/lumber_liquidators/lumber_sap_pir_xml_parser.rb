@@ -7,12 +7,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new(opts).parse_dom dom, bucket: opts[:bucket], key: opts[:key]
+  def self.parse_dom dom, log, opts={}
+    self.new(opts).parse_dom dom, log, bucket: opts[:bucket], key: opts[:key]
   end
 
   def self.integration_folder
@@ -25,28 +25,35 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @opts = opts
   end
 
-  def parse_dom dom, bucket:, key:
+  def parse_dom dom, log, bucket:, key:
     root = dom.root
-    raise "Incorrect root element #{root.name}, expecting 'INFREC01'." unless root.name == 'INFREC01'
+    log.error_and_raise "Incorrect root element #{root.name}, expecting 'INFREC01'." unless root.name == 'INFREC01'
+
+    log.company = Company.where(system_code: "LUMBER").first
 
     idoc_number = REXML::XPath.first(root,'IDOC/EDI_DC40').text('DOCNUM')
+    log.isa_number = idoc_number
 
     base = REXML::XPath.first(root,'IDOC/E1EINAM')
 
+    product_uid = et(base,'MATNR')
+    log.reject_and_raise "IDOC #{idoc_number} failed, no MATR value." if product_uid.blank?
+    log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, product_uid
+
     vendor_sap_number = et(base,'LIFNR')
-    raise "IDOC #{idoc_number} failed, no LIFNR value." if vendor_sap_number.blank?
+    log.reject_and_raise "IDOC #{idoc_number} failed, no LIFNR value." if vendor_sap_number.blank?
     sc = SearchCriterion.new(model_field_uid:@cdefs[:cmp_sap_company].model_field_uid,operator:'eq',value:vendor_sap_number)
     vendor = sc.apply(Company).first
     return unless vendor
 
-    product_uid = et(base,'MATNR')
-    raise "IDOC #{idoc_number} failed, no MATR value." if product_uid.blank?
     p = nil
     Lock.acquire("Product-#{product_uid}") do 
       p = Product.where(unique_identifier:product_uid).first_or_create!
     end
-    
+
     return unless p
+
+    log.set_identifier_module_info InboundFileIdentifier::TYPE_ARTICLE_NUMBER, Product.to_s, p.id
 
     pva = nil
     pva_created = false

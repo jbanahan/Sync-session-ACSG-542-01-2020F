@@ -65,6 +65,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
   let (:test_importer) { Factory(:importer, alliance_customer_number: "TEST") }
   let (:user) { Factory(:user) }
   let (:port) { Factory(:port, schedule_d_code: "4103")}
+  let (:log) { InboundFile.new }
 
   describe "process_daily_statement" do
 
@@ -101,7 +102,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     end
 
     it "reads statement data from json and saves it" do
-      s = subject.process_daily_statement user, statement, "bucket", "path"
+      s = subject.process_daily_statement user, statement, log, "bucket", "path"
       expect(s).not_to be_nil
       s.reload
 
@@ -176,12 +177,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(f.description).to eq "Merchandise Fee"
       expect(f.preliminary_amount).to eq BigDecimal("5")
       expect(f.amount).to eq BigDecimal("5")
+
+      expect(log.company).to be_nil
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_DAILY_STATEMENT_NUMBER)[0].value).to eq "04118319AQ9"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_DAILY_STATEMENT_NUMBER)[0].module_type).to eq "DailyStatement"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_DAILY_STATEMENT_NUMBER)[0].module_id).to eq s.id
     end
 
     it "handles updates to statements" do
       existing_statement_entry_fee
 
-      s = subject.process_daily_statement user, statement, "bucket", "path"
+      s = subject.process_daily_statement user, statement, log, "bucket", "path"
       expect(s).to eq existing_statement
       expect(s.last_exported_from_source).to eq Time.zone.parse("2017-11-17 17:18:56")
 
@@ -237,7 +243,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       existing_statement_entry_fee
       existing_statement.update_attributes! status: "F"
 
-      s = subject.process_daily_statement user, statement, "bucket", "path"
+      s = subject.process_daily_statement user, statement, log, "bucket", "path"
 
       expect(s.daily_statement_entries.length).to eq 2
 
@@ -264,7 +270,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       # Only the preliminary on the fee should update
       expect(f.preliminary_amount).to eq BigDecimal("5")
       expect(f.amount).to eq BigDecimal("10000")
-
 
       #only the preliminary amounts should be updated, since the existing statement was marked as final
       expect(s.preliminary_duty_amount).to eq BigDecimal("11")
@@ -294,7 +299,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       statement["statement"]["status"] = "F"
       statement["statement"]["monthly_statement_number"] = ""
 
-      s = subject.process_daily_statement user, statement, "bucket", "path"
+      s = subject.process_daily_statement user, statement, log, "bucket", "path"
 
       expect(s.status).to eq "F"
       expect(s.received_date).to eq Date.new(2017, 12, 3)
@@ -353,13 +358,28 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     it "raises an error if the statement entry is missing broker reference" do
       statement["statement"]["details"].first["broker_reference"] = ""
 
-      expect { subject.process_daily_statement user, statement, "bucket", "path" }.to raise_error "Statement '04118319AQ9' contains a detail without a broker reference number."
+      expect { subject.process_daily_statement user, statement, log, "bucket", "path" }.to raise_error "Statement '04118319AQ9' contains a detail without a broker reference number."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Statement '04118319AQ9' contains a detail without a broker reference number."
     end
 
     it "raises an error if the statement entry fee is missing a code" do
       statement["statement"]["details"].first["fees"].first["code"] = ""
 
-      expect { subject.process_daily_statement user, statement, "bucket", "path" }.to raise_error "Statement # '04118319AQ9' / File # '2316567' has a fee line missing a code."
+      expect { subject.process_daily_statement user, statement, log, "bucket", "path" }.to raise_error "Statement # '04118319AQ9' / File # '2316567' has a fee line missing a code."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Statement # '04118319AQ9' / File # '2316567' has a fee line missing a code."
+    end
+
+    it "skips a statement with stale info" do
+      existing_statement
+      existing_statement.update_attributes! last_exported_from_source: Time.zone.parse("2018-11-17 17:18:56")
+
+      subject.process_daily_statement user, statement, log, "bucket", "path"
+
+      # Existing statement should not have been updated.
+      existing_statement.reload
+      expect(existing_statement.last_exported_from_source).to eq Time.zone.parse("2018-11-17 17:18:56")
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Daily statement '04118319AQ9' not updated: file contained outdated info."
     end
   end
 
@@ -380,7 +400,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     end
 
     it "creates a monthly statement" do
-      s = subject.process_monthly_statement user, statement, "bucket", "file.json"
+      s = subject.process_monthly_statement user, statement, log, "bucket", "file.json"
       s.reload
 
       expect(s.statement_number).to eq "0411P128031"
@@ -422,6 +442,11 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       snap = s.entity_snapshots.first
       expect(snap.user).to eq user
       expect(snap.context).to eq "file.json"
+
+      expect(log.company).to be_nil
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_MONTHLY_STATEMENT_NUMBER)[0].value).to eq "0411P128031"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_MONTHLY_STATEMENT_NUMBER)[0].module_type).to eq "MonthlyStatement"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_MONTHLY_STATEMENT_NUMBER)[0].module_id).to eq s.id
     end
 
     it "updates statement as final" do
@@ -429,7 +454,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
 
       existing = MonthlyStatement.create! statement_number: "0411P128031"
 
-      s = subject.process_monthly_statement user, statement, "bucket", "file.json"
+      s = subject.process_monthly_statement user, statement, log, "bucket", "file.json"
       s.reload
 
       expect(s).to eq existing
@@ -449,9 +474,21 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(s.last_exported_from_source).to eq Time.zone.parse("2017-11-20 21:37:04")
       expect(s.customer_number).to eq "TEST"
     end
+
+    it "skips a statement with stale info" do
+      existing = MonthlyStatement.create! statement_number: "0411P128031", last_exported_from_source: Time.zone.parse("2018-11-17 17:18:56")
+
+      subject.process_monthly_statement user, statement, log, "bucket", "file.json"
+
+      # Existing statement should not have been updated.
+      existing.reload
+      expect(existing.last_exported_from_source).to eq Time.zone.parse("2018-11-17 17:18:56")
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Monthly statement '0411P128031' not updated: file contained outdated info."
+    end
   end
 
-  describe "parse" do
+  describe "parse_file" do
     subject { described_class }
 
     let (:document) {
@@ -469,7 +506,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     }
 
     it "parses daily and monthly statements from the json file" do
-      subject.parse json, {bucket: "bucket", key: "file.json"}
+      subject.parse_file json, log, {bucket: "bucket", key: "file.json"}
 
       expect(DailyStatement.where(statement_number: "04118319AQ9").first).not_to be_nil
       expect(MonthlyStatement.where(statement_number: "0411P128031").first).not_to be_nil

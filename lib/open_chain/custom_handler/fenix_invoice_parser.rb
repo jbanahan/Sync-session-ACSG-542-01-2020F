@@ -6,26 +6,26 @@ module OpenChain
   module CustomHandler
     class FenixInvoiceParser
       extend OpenChain::IntegrationClientParser
-      def self.parse file_content, opts={}
+      def self.parse_file file_content, log, opts={}
         last_invoice_number = ''
         rows = []
         CSV.parse(file_content,:headers=>true) do |row|
           my_invoice_number = get_invoice_number row
           next unless my_invoice_number
-          
+
           if last_invoice_number!=my_invoice_number && !rows.empty?
-            process_invoice_rows rows, opts
+            process_invoice_rows rows, log, opts
             rows = []
           end
           rows << row
           last_invoice_number = my_invoice_number
         end
-        process_invoice_rows rows, opts unless rows.empty?
+        process_invoice_rows rows, log, opts unless rows.empty?
       end
 
-      def self.process_invoice_rows rows, opts
+      def self.process_invoice_rows rows, log, opts
         begin
-          self.new rows, opts
+          self.new rows, log, opts
         rescue => e
           e.log_me ["Failed to process Fenix Invoice # #{get_invoice_number(rows.first)}" + (opts[:key] ? " from file '#{opts[:key]}'" : "") + "."]
         end
@@ -58,9 +58,9 @@ module OpenChain
       end
       
       #don't call this, use the static parse method
-      def initialize rows, opts
+      def initialize rows, log, opts
         invoice = nil
-        find_and_process_invoice(rows.first) do |yielded_invoice|
+        find_and_process_invoice(rows.first, log) do |yielded_invoice|
           invoice = yielded_invoice
           make_header invoice, rows.first
 
@@ -99,13 +99,16 @@ module OpenChain
           inv.customer_number = customer_number(safe_strip(row[1]), inv.currency)
         end
 
-        def find_and_process_invoice row
+        def find_and_process_invoice row, log
+          invoice_number = FenixInvoiceParser.get_invoice_number(row)
+          log.add_identifier InboundFileIdentifier::TYPE_INVOICE_NUMBER, invoice_number
+
           broker_reference = safe_strip row[9]
           invoice_number = FenixInvoiceParser.get_invoice_number(row)
           # We need a broker reference in the system to link to an entry, so that we can then know which 
           # customer the invoice belongs to
           if broker_reference.blank?
-            raise "Invoice # #{invoice_number} is missing a broker reference number."
+            log.reject_and_raise "Invoice # #{invoice_number} is missing a broker reference number."
           end
 
           invoice = nil
@@ -114,6 +117,8 @@ module OpenChain
           end
 
           if invoice
+            log.set_identifier_module_info InboundFileIdentifier::TYPE_INVOICE_NUMBER, BrokerInvoice.to_s, invoice.id, value:invoice_number
+
             Lock.with_lock_retry(invoice) do
               yield invoice
             end

@@ -16,26 +16,30 @@ module OpenChain
         ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
       end
 
-      def self.parse data, opts={}
-        self.new.process_file data, opts[:bucket], opts[:key]
+      def self.parse_file data, log, opts={}
+        self.new.process_file data, log, opts[:bucket], opts[:key]
       end
 
       # process REXML document
-      def process_file data, s3_bucket=nil, s3_key=nil
+      def process_file data, log, s3_bucket=nil, s3_key=nil
         dom = REXML::Document.new data
         r = dom.root
         host_system_file_number = et r, 'ISF_SEQ_NBR'
-        raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
+        log.reject_and_raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
         # Raises an error if there is no last event time (except for docs w/ only event types of 8 - these are advisory docs we can skip)
-        last_event_time = last_event_time(r)
+        last_event_time = last_event_time(r, log)
 
         return unless last_event_time
 
+        log.add_identifier InboundFileIdentifier::TYPE_ISF_NUMBER, host_system_file_number
+
         # sf may be nil here if we're skipping this file (if data is out of date, for example)
-        sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_event_time
+        sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_event_time, log
         
         if sf
           Lock.with_lock_retry(sf) do
+            log.set_identifier_module_info InboundFileIdentifier::TYPE_ISF_NUMBER, SecurityFiling.to_s, sf.id
+
             # Since the data is reloaded from the db by the lock call, make sure we're
             # still not dealing w/ outdated event time data
             if parse_file? sf, last_event_time
@@ -43,9 +47,14 @@ module OpenChain
 
               sf = parse_dom dom, sf, s3_bucket, s3_key
 
+              # This isn't defined until after parsing the file.
+              log.company = sf.importer
+
               sf.save!
               sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
               sf.create_snapshot User.integration, nil, s3_key
+            else
+              log.add_info_message "Security filing not updated: file contained outdated info."
             end
           end
           sf.broadcast_event(:save)
@@ -183,7 +192,7 @@ module OpenChain
         @sf.entry_numbers = Set.new(@sf.entry_numbers.to_s.split("\n") + entry_nums).to_a.join("\n")
         @sf.entry_reference_numbers = Set.new(@sf.entry_reference_numbers.to_s.split("\n") + file_nums).to_a.join("\n")
       end
-      def last_event_time root
+      def last_event_time root, log
         r = nil
         # Events 8, 20, 21 represent system events that generate timestamps containing the current time...they're reliable means
         # for determining the moment in time when the ISF XML file was generated.
@@ -197,7 +206,7 @@ module OpenChain
           REXML::XPath.each(root, "events/EVENT_NBR") {|el| event_numbers << el.text}
           event_numbers = event_numbers.uniq.compact
 
-          raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
+          log.reject_and_raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
         end
         
         r
@@ -303,7 +312,7 @@ module OpenChain
         txt.blank? ? nil : Time.iso8601(txt)
       end
 
-      def find_security_filing host_system, host_system_file_number, last_event_time
+      def find_security_filing host_system, host_system_file_number, last_event_time, log
         # Use a DB lock so only a single ISF parser process is looking up security filings at a time
         # This way we can guarantee that we don't get duplicate records created and ensure the last event time
         # is set right away in an atomic manner as well.
@@ -319,6 +328,8 @@ module OpenChain
             end
 
             sf = local_sf
+          else
+            log.add_info_message "Security filing not updated: file contained outdated info."
           end
         end
 

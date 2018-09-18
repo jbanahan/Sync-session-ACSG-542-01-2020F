@@ -10,29 +10,34 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     ["www-vfitrack-net/_eddie_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_eddie_invoice"]
   end
 
-  def self.parse data, opts = {}
+  def self.parse_file data, log, opts = {}
     rows = []
     # These SHOULD be 1 invoice per file, but lets just allow more than that since it's easy enough to do
     parser = self.new
-    # Disable quoting (or set the char to the bell char which we'll never see in the file), 
+
+    # Not recording log identifiers for this parser because these invoices aren't actually stored in VFI Track.
+    # Logging could be easily done later on, if desired.
+    log.company = parser.parts_importer
+
+    # Disable quoting (or set the char to the bell char which we'll never see in the file),
     #they've disabled it themselves in the output now too
     data.force_encoding "Windows-1252"
     CSV.parse(data, col_sep: "|", quote_char: "\007") do |row|
       row = convert_to_utf8 row
       if "HDR" == row[0].to_s.upcase && rows.length > 0
-        parser.process_and_send_invoice(rows)
+        parser.process_and_send_invoice(rows, log)
         rows = []
       end
 
       rows << row
     end
 
-    parser.process_and_send_invoice(rows) if rows.length > 0
+    parser.process_and_send_invoice(rows, log) if rows.length > 0
     nil
   end
 
-  def process_and_send_invoice rows
-    country = import_country(rows.first)
+  def process_and_send_invoice rows, log
+    country = import_country(rows.first, log)
 
     if country == "CA"
       invoice = process_ca_invoice_rows(rows)
@@ -49,14 +54,14 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new.generate_xls_to_google_drive(drive_path, entry)
   end
 
-  def import_country row
+  def import_country row, log
     c = row[22].to_s.upcase.strip
     if c == "US" 
       return "US"
     elsif c == "CA"
       return "CA"
     else
-      raise "Unexpected Import Country value received: '#{c}'."
+      log.reject_and_raise "Unexpected Import Country value received: '#{c}'."
     end
   end
 

@@ -8,12 +8,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   extend OpenChain::IntegrationClientParser
 
-  def self.parse data, opts={}
-    parse_dom REXML::Document.new(data), opts
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, opts={}
-    self.new.parse_dom(dom, opts)
+  def self.parse_dom dom, log, opts={}
+    self.new.parse_dom(dom, log, opts)
   end
 
   def self.integration_folder
@@ -25,16 +25,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
   end
 
-  def parse_dom dom, opts={}
+  def parse_dom dom, log, opts={}
     root = dom.root
-    raise "Incorrect root element #{root.name}, expecting '_-LUMBERL_-VFI_ARTMAS01'." unless root.name == '_-LUMBERL_-VFI_ARTMAS01'
+    log.error_and_raise "Incorrect root element #{root.name}, expecting '_-LUMBERL_-VFI_ARTMAS01'." unless root.name == '_-LUMBERL_-VFI_ARTMAS01'
     prod_el = REXML::XPath.first(root,'//IDOC/E1BPE1MAKTRT')
     uid = et(prod_el,'MATERIAL')
-    raise "XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL" if uid.blank?
+    log.reject_and_raise "XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL" if uid.blank?
     name = et(prod_el,'MATL_DESC')
 
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
+
+    importer = Company.where(master: true).first
+    log.company = importer
 
     p = nil
     Lock.acquire("Product-#{uid}") do
@@ -42,14 +45,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     Lock.with_lock_retry(p) do
+      log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, uid, module_type:Product.to_s, module_id:p.id
+
       previous_extract_time = p.custom_value(@cdefs[:prod_sap_extract])
       if previous_extract_time && previous_extract_time.to_i > ext_time.to_i
+        log.add_info_message "Product not updated: file contained outdated info."
         return # don't parse since this is older than the previous extract
       end
 
       is_new = p.get_custom_value(@cdefs[:prod_sap_extract]).value.blank?
 
-      p.importer = Company.where(master: true).first
+      p.importer = importer
       p.name = name
       p.last_file_bucket = opts[:bucket]
       p.last_file_path = opts[:key]
@@ -60,6 +66,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'),'ATWTB'))
 
       if is_new
+        orders_updated = {}
         p.order_lines.find_each do |order_line|
           line_changed = false
           unless order_line.custom_value(@cdefs[:ordln_old_art_number]).present?
@@ -71,8 +78,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
             line_changed = true
           end
           order_line.order.create_snapshot(@user, nil, "System Job: SAP Article XML Parser") if line_changed
+          if line_changed && !orders_updated.key?(order_line.order_id)
+            orders_updated[order_line.order_id] = order_line.order.order_number
+          end
         end
-
+        orders_updated.each {|order_id, po_number| log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number, module_type:Order.to_s, module_id:order_id }
       end
 
       p.save!

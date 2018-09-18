@@ -14,6 +14,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   let(:doc) { REXML::Document.new(File.open "spec/fixtures/files/ua_article_master_parser.xml") }
   let(:cdefs) { subject.cdefs }
   let!(:ca) { Factory(:country, name: "Canada", iso_code: "CA") }
+  let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
 
   def include_variants doc, ids
     (["1","2","3"] - ids).each { |id| doc.elements.delete("//UPC[@id='#{id}']") }
@@ -49,7 +50,6 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     }
 
     let(:user) { User.integration }
-    let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
 
     context "with foreground processing" do
       before :each do
@@ -110,6 +110,12 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
         described_class.parse doc_string, key: "path"
       end
+
+      it "fails if importer can't be found" do
+        imp.destroy
+
+        expect{described_class.parse include_variants(doc, ["1"]), key: "path"}.to raise_error "Failed to find Under Armour Importer account with system code: UAPARTS"
+      end
     end
 
     context "with background processing" do
@@ -154,7 +160,6 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       p
     }
     let(:change_flag) { MutableBoolean.new(false) }
-    let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
 
     describe "create_or_update_product!" do
       let(:art_elem) { double "art_elem" }
@@ -407,7 +412,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
     describe "create_or_update_classi!" do
       let!(:classi) do
-        c = Factory(:classification, product: prod, country: subject.ca)
+        c = Factory(:classification, product: prod, country: ca)
         c.update_custom_value!(cdefs[:class_customs_description], "old descr")
         c
       end
@@ -432,10 +437,16 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         expect{ subject.create_or_update_classi! prod, "descr", ["1111111111"], change_flag }.to change(Classification, :count).from(0).to(1)
         expect(change_flag.value).to eq true
       end
+
+      it "fails if CA country record can't be found" do
+        ca.destroy
+
+        expect{subject.create_or_update_classi! prod, "new descr", ["1111111111"], change_flag}.to raise_error "Failed to find Canada."
+      end
     end
 
     describe "create_or_update_tariff!" do
-      let!(:classi) { Factory(:classification, product: prod, country: subject.ca)}
+      let!(:classi) { Factory(:classification, product: prod, country: ca)}
 
       context "with single HTS" do
         it "updates classification's tariff if it already exists and has been changed" do

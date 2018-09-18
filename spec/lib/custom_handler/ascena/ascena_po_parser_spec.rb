@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header_2) { ["H","11152016","PEACE",nil,"37109","1991",nil,"FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS",nil,nil,nil,"USD",nil,nil,nil,nil] }
   let(:detail_2) { ["D",nil,"2",nil,nil,"820799","451152","AB-YING YANG IRRI","618","GRAY","2","11",nil,nil,"13010848311526700486",nil,nil,"2",nil,"3.02","4.46","4.13","8.00",nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil] }
 
-  let(:importer) { Factory(:company, system_code: "ASCENA") }
+  let!(:importer) { Factory(:company, system_code: "ASCENA", importer:true) }
 
   def convert_pipe_delimited array_of_str
     array_of_str.map { |arr| arr.join("|") }.join("\n")
@@ -45,8 +45,6 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   end
 
   describe "parse", :disable_delayed_jobs do
-    let!(:importer) { Factory(:company, system_code: "ASCENA", importer: true) }
-
     before(:all) do
       @cdefs = described_class.new.send(:cdefs)
     end
@@ -375,6 +373,12 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect(mail).not_to be_nil
         expect(mail.to).to eq ["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"]
         expect(mail.subject).to eq "Ascena PO # 37109 Errors"
+      end
+
+      it "should fail when importer not found" do
+        importer.destroy
+
+        expect{subject.process_file(convert_pipe_delimited([header, detail]))}.to raise_error "No Importer company found with system code 'ASCENA'."
       end
     end
     context "check validations" do

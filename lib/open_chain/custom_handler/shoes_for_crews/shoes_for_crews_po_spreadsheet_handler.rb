@@ -19,14 +19,17 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       ftp2_vandegrift_inc 'to_ecs/Shoes_For_Crews/PO'
     end
 
-    def parse data, opts = {}
-      write_xml(data, opts) {|f| ftp_file f}
+    def parse_file data, log, opts = {}
+      write_xml(data, log, opts) {|f| ftp_file f}
     end
 
-    def write_xml data, opts = {}
+    def write_xml data, log, opts = {}
+      log.company = importer
+      log.error_and_raise "Company with system code #{SHOES_SYSTEM_CODE} not found." unless @importer
+
       po_data = parse_spreadsheet data
 
-      process_po po_data, opts[:bucket], opts[:key]
+      process_po po_data, log, opts[:bucket], opts[:key]
 
       xml_document = build_xml po_data
       Tempfile.open(["ShoesForCrewsPO", ".xml"]) do |f|
@@ -107,8 +110,8 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       doc
     end
 
-    def process_po data, bucket, key
-      status, po = *save_po(data, bucket, key)
+    def process_po data, log, bucket, key
+      status, po = *save_po(data, log, bucket, key)
 
       case status
       when "new"
@@ -129,13 +132,13 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       end
     end
 
-    def save_po data, bucket, key
+    def save_po data, log, bucket, key
       po = nil
       update_status = nil
 
       order_number = get_order_number(data)
 
-      raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_number.blank?
+      log.reject_and_raise "An order number must be present in all files.  File #{File.basename(key)} is missing an order number." if order_number.blank?
 
       # I'm not entirely sure why, but I keep getting duplicate products when I'm creating products inside the find_order transaction/lock.
       # I'm guessing it has to do w/ multiple distinct transactions running and then being merged at the same time, each distinct transaction
@@ -145,6 +148,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews
       products = find_all_products data[:items]
 
       find_order(order_number) do |existing_order, order|
+        log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number, module_type:Order.to_s, module_id:order.id
         po = order
 
         order.customer_order_number = order_number
@@ -377,7 +381,6 @@ module OpenChain; module CustomHandler; module ShoesForCrews
 
       def importer
         @importer ||= Company.importers.where(system_code: SHOES_SYSTEM_CODE).first
-        raise "Company with system code #{SHOES_SYSTEM_CODE} not found." unless @importer
         @importer
       end
 

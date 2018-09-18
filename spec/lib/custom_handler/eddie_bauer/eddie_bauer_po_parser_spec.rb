@@ -56,6 +56,18 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
         subject.parse @data
         expect(Order.find_by_order_number('EDDIE-E0442642-0011').vendor).to eq vendor
       end
+
+      it "should fail if EDDIE company can't be found" do
+        @eddie.destroy
+
+        expect{subject.parse @data}.to raise_error "Can't find company with system code EDDIE."
+      end
+
+      it "should fail if EBCC company can't be found" do
+        @ebcc.destroy
+
+        expect{subject.parse @data}.to raise_error "Can't find company with system code EBCC."
+      end
     end
 
     context "without delayed jobs disabled" do

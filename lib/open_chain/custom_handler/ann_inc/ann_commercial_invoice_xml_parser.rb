@@ -7,28 +7,32 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     ["www-vfitrack-net/_ann_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_invoice"]
   end
 
-  def self.parse data, opts = {}
-    self.new.parse(REXML::Document.new(data), opts)
+  def self.parse_file data, log, opts = {}
+    self.new.parse(REXML::Document.new(data), log, opts)
   end
 
   def ann_importer
     @ann ||= Company.importers.where(system_code: "ATAYLOR").first
-    raise "No Ann Taylor importer with system code 'ATAYLOR'." unless @ann
-
     @ann
   end
 
-  def parse xml, opts
+  def parse xml, log, opts
     invoice_path = "/UniversalInterchange/Body/UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice"
-    REXML::XPath.each(xml, invoice_path).each { |invoice| process_invoice(invoice, opts) }
+    REXML::XPath.each(xml, invoice_path).each { |invoice| process_invoice(invoice, log, opts) }
   end
 
-  def process_invoice invoice_xml, opts
-    check_importer invoice_xml
+  def process_invoice invoice_xml, log, opts
+    check_importer invoice_xml, log
     inv_number = invoice_xml.text("InvoiceNumber").gsub(/\W/,"")
+
+    importer = ann_importer
+    log.error_and_raise "No Ann Taylor importer with system code 'ATAYLOR'." unless importer
+    log.company = importer
+
     inv = nil
     Lock.acquire("Invoice-ATAYLOR-#{inv_number}") { inv = Invoice.where(importer_id: ann_importer.id, invoice_number: inv_number).first_or_create! }
     Lock.with_lock_retry(inv) do
+      log.add_identifier InboundFileIdentifier::TYPE_INVOICE_NUMBER, inv_number, module_type:Invoice.to_s, module_id: inv.id
       assign_invoice_header inv, invoice_xml
       inv_line_path = "CommercialInvoiceLineCollection/CommercialInvoiceLine"
       inv.invoice_lines.destroy_all
@@ -44,9 +48,9 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     assign_factory inv, invoice_xml
   end
 
-  def check_importer invoice_xml
+  def check_importer invoice_xml, log
     importer_code = invoice_xml.text "OrganizationAddressCollection/OrganizationAddress[AddressType='Importer']/OrganizationCode"
-    raise "Unexpected importer code: #{importer_code}" unless importer_code == "ANNTAYNYC"
+    log.reject_and_raise "Unexpected importer code: #{importer_code}" unless importer_code == "ANNTAYNYC"
   end
 
   def assign_header_fields inv, invoice_xml

@@ -16,7 +16,7 @@ describe FtpSessionsController do
     end
 
     it "executes a search" do
-      get :index, {s: "2017-01-01", f: "created_at", c: "sw"}
+      get :index, {s1: "2017-01-01", f1: "created_at", c1: "sw"}
       expect(response).to be_success
       expect(assigns(:default_display)).to be_nil
     end

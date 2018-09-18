@@ -7,12 +7,13 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
         SAP_REVISED_PRODUCT_FIELDS = [:origin,:import,:related_styles,:cost]
         
-        def self.parse file_content, opts = {}
-          self.new.process file_content, User.integration, opts
+        def self.parse_file file_content, log, opts = {}
+          self.new.process file_content, User.integration, log, opts
         end
 
-        def process file_content, run_by, opts
+        def process file_content, run_by, log, opts
           begin
+            log.company = Company.where(master: true).first
             style_hash = {}
             # \007 turns the bell character into the quote char, which essentially turns off csv
             # quoting, but also enables the file to have "s in the file without turning on ruby's
@@ -26,8 +27,8 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
               style_hash[style] << row
             end
             # The following custom feature is here pretty much solely to be able to reprocess just orders or just Products
-            generate_products(style_hash, run_by) unless MasterSetup.get.custom_feature?("Ann Skip SAP Product Parsing")
-            generate_orders(style_hash, run_by, opts) unless MasterSetup.get.custom_feature?("Ann Skip SAP Order Parsing")
+            generate_products(style_hash, run_by, log) unless MasterSetup.get.custom_feature?("Ann Skip SAP Product Parsing")
+            generate_orders(style_hash, run_by, log, opts) unless MasterSetup.get.custom_feature?("Ann Skip SAP Order Parsing")
           rescue
             tmp = Tempfile.new(['AnnFileError','.csv'])
             tmp << file_content
@@ -85,7 +86,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
           end
         end
 
-        def generate_orders(style_hash, run_by, opts)
+        def generate_orders(style_hash, run_by, log, opts)
           master_company = Company.where(master: true).first
           style_hash.each do |style, rows|
             rows.each do |row|
@@ -102,7 +103,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
                 else
                   vendor, selling_agent, buying_agent = find_vendors row, master_company, dsp_type, opts
 
-                  find_order(row[0], master_company, vendor) do |o|
+                  find_order(row[0], master_company, vendor, log) do |o|
                     [vendor, buying_agent, selling_agent].each do |co|
                       next if co.blank?
                       send_new_company_email(co[:company], o) if co[:new_record] && co[:company].get_custom_value(cdefs[:dsp_type]).value == "MP"
@@ -197,18 +198,19 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
         end
 
-        def find_order order_number, importer, vendor
+        def find_order order_number, importer, vendor, log
           o = nil
           Lock.acquire("ANN-#{order_number}") do
             po = Order.where(order_number: order_number).first_or_create! vendor: vendor[:company], importer: importer
             Lock.with_lock_retry(po) do
+              log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number, module_type:Order.to_s, module_id:po.id
               po.customer_order_number = order_number
               o = yield po
             end
           end
         end
 
-        def generate_products(style_hash, run_by)
+        def generate_products(style_hash, run_by, log)
           style_hash.each do |style,rows|
             begin
               ActiveRecord::Base.transaction do
@@ -228,6 +230,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
                 p.save!
 
+                log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, style, module_type:Product.to_s, module_id:p.id
 
                 # Make sure we maintain the earliest AC date across any date values sent to us for any style (related styles or not)
                 write_earliest_ac_date rows, p.get_custom_value(cdefs[:ac_date])

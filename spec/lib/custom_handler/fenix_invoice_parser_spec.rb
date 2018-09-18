@@ -8,8 +8,10 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @ent2 = Factory(:entry,:source_system=>'Fenix',:broker_reference=>'281350')
   end
 
+  let(:log) { InboundFile.new }
+
   it "should set s3 info if passed" do
-    @k.parse @content, {:bucket=>'bucket',:key=>'key'}
+    @k.parse_file @content, log, {:bucket=>'bucket',:key=>'key'}
     b = BrokerInvoice.first
     expect(b.last_file_bucket).to eq('bucket')
     expect(b.last_file_path).to eq('key')
@@ -21,7 +23,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
     expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
 
-    @k.parse @content
+    @k.parse_file @content, log
     expect(BrokerInvoice.count).to eq(2)
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     expect(bi.invoice_total).to eq(4574.83) #does not include GST (code 2)
@@ -30,9 +32,15 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     bi.invoice_date = Date.new(2013,1,14)
     expect(bi.invoice_number).to eq('01-0000009')
     expect(bi.customer_number).to eq("BOSSCI")
+
+    # Not currently setting company for this parser.
+    expect(log.company).to be_nil
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].value).to eq "01-0000009"
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_type).to eq "BrokerInvoice"
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_id).to eq bi.id
   end
   it "should write details" do
-    @k.parse @content
+    @k.parse_file @content, log
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     expect(bi.broker_invoice_lines.size).to eq(3)
 
@@ -53,18 +61,18 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
   end
   it "should replace invoice" do
     #going to process, then delete a line, then reprocess and line should come back
-    @k.parse @content
+    @k.parse_file @content, InboundFile.new
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     bi.broker_invoice_lines.first.destroy
     bi.update_attributes(:invoice_total=>2)
 
-    @k.parse @content
+    @k.parse_file @content, log
     bi.reload
     expect(bi.broker_invoice_lines.size).to eq(3)
     expect(bi.invoice_total).to eq(4574.83)
   end
   it "should match to entry" do
-    @k.parse @content
+    @k.parse_file @content, log
     bi = BrokerInvoice.find_by_broker_reference_and_source_system @ent.broker_reference, 'Fenix'
     expect(bi.entry).to eq(@ent)
     expect(bi.entry.broker_invoice_total).to eq(bi.invoice_total)
@@ -90,31 +98,31 @@ INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AM
 01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 20 DUTY ON B3 ,DUTY ON IMPORTS, 542.57 ,#{@ent.broker_reference},CAD, 3100 , 1 ,RG01, 2 , 542.57 ,CAD, 3100 , 1 ,11981001157739
 INV
 
-    @k.parse @content
+    @k.parse_file @content, log
     @ent.reload
     expect(@ent.broker_invoices.size).to eq(2)
     expect(@ent.broker_invoice_total).to eq(@ent.broker_invoices.inject(BigDecimal.new("0.0")){|sum, inv| sum += inv.invoice_total})
   end
 
   it "invoice total should not include codes 20 or 21" do
-    @k.parse @content
+    @k.parse_file @content, log
     expect(BrokerInvoice.find_by_broker_reference('280952').invoice_total).to eq(4574.83)
     expect(BrokerInvoice.find_by_broker_reference('281350').invoice_total.to_f).to eq(595.68)
   end
 
   it "should handle a minimal amount of information" do
-    @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
-              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},  , 1 ,,,,,,,,"
+    @k.parse_file "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},  , 1 ,,,,,,,,", log
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-000INV#', 'Fenix'
     expect(bi.broker_reference).to eq(@ent.broker_reference)
   end
 
   it "should handle errors for each invoice individually" do
     expect {
-      @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+      @k.parse_file "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
       # This line fails due to missing invoice date
       ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
-      "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
+      "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", log, {:key => "path/to/file"}
     }.to change(ErrorLogEntry,:count).by(1)
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     expect(bi).not_to be_nil
@@ -122,12 +130,18 @@ INV
 
   it "should raise an error if the broker reference is missing" do
     expect {
-      @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+      @k.parse_file "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
       # This line fails due to missing broker reference
-      "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
+      "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,", log
     }.to change(ErrorLogEntry,:count).by(1)
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     expect(bi).to be_nil
+    expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Invoice # 01-00INV#2 is missing a broker reference number."
+
+    # Identifier should have been recorded, but no module info set for it.
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].value).to eq "01-00INV#2"
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_type).to be_nil
+    expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_id).to be_nil
   end
 
   it "should skip lines that are missing invoice numbers" do
@@ -139,7 +153,7 @@ INV
 
     01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 22 ,BROKERAGE, 37 ,#{@ent2.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
-    @k.parse @content
+    @k.parse_file @content, log
 
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-0039009', 'Fenix'
     expect(bi).not_to be_nil
@@ -150,7 +164,7 @@ INV
     INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
     01/14/2013,BOSSCI, 1 , 9 , 1 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
-    @k.parse @content
+    @k.parse_file @content, log
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009-01", 'Fenix'
     expect(bi).to_not be_nil
   end
@@ -162,7 +176,7 @@ INV
     01/14/2013,GENERIC, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
     01/14/2013,GENERIC, 1 , 9 , 0 ,11981001052312, 55 WITH OTHER TEXT ,BILLING, -20,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
-    @k.parse @content
+    @k.parse_file @content, log
     expect(IntacctReceivable.count).to eq 0
   end
 
@@ -177,7 +191,7 @@ INV
     expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
     expect(OpenChain::CustomHandler::Intacct::IntacctClient).to receive(:async_send_dimension).with 'Broker File', @ent.entry_number, @ent.entry_number
 
-    @k.parse @content
+    @k.parse_file @content, log
 
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
 
@@ -213,7 +227,7 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH OTHER TEXT ,BILLING, 20 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
 
-    @k.parse @content
+    @k.parse_file @content, log
 
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
 
@@ -237,7 +251,7 @@ INV
 INV
     @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Fenix", "BOSSCI"), value: "XREF", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
 
-    @k.parse @content
+    @k.parse_file @content, log
 
     r = IntacctReceivable.where(company: "vcu").first
     expect(r.customer_number).to eq "XREF"
@@ -248,7 +262,7 @@ INV
     INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
     01/14/2013,BOSSCIU, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},USD, 4000 , 1 ,,,,,,,,
 INV
-    @k.parse @content
+    @k.parse_file @content, log
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
     expect(bi.customer_number).to eq "BOSSCI"
   end
@@ -260,7 +274,7 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 2 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
 
-    @k.parse @content
+    @k.parse_file @content, log
     bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
 
     expect(bi.broker_invoice_lines.size).to eq(2)
@@ -276,7 +290,7 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
 
-    @k.parse @content
+    @k.parse_file @content, log
 
     r = IntacctReceivable.where(company: "als").first
     expect(r).to_not be_nil
@@ -293,7 +307,7 @@ INV
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, -45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
 
-    @k.parse @content
+    @k.parse_file @content, log
 
     r = IntacctReceivable.where(company: "als").first
     expect(r).to_not be_nil
@@ -310,7 +324,7 @@ INV
     INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
-    @k.parse @content
+    @k.parse_file @content, log
     inv.reload
 
     expect(inv.customer_number).to eq "BOSSCI"
@@ -321,7 +335,7 @@ INV
     imp = Factory(:company, fiscal_reference: "ent_release_date")
     @ent.update_attributes(importer: imp, release_date: "20130105")
     fm = Factory(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013,1,1), end_date: Date.new(2015,1,31))
-    @k.parse @content
+    @k.parse_file @content, log
 
     brok_inv = @ent.broker_invoices.first
     expect(brok_inv.fiscal_date).to eq fm.start_date

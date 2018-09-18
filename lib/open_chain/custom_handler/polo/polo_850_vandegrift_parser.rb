@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Polo
       ["www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
 
-    def parse data, opts = {}
+    def parse_file data, log, opts = {}
       dom = REXML::Document.new(data)
       # Don't bother even attempting to parse Order cancellations
       return if cancellation?(dom)
@@ -39,18 +39,24 @@ module OpenChain; module CustomHandler; module Polo
       buyer_id = first_xpath_text dom, "/Orders/Parties/NameAddress/PartyID[PartyIDType = 'BY']/PartyIDValue"
       po_number = first_xpath_text dom, "/Orders/MessageInformation/MessageOrderNumber"
 
+      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number
+
       if (importer_number = RL_BUYER_MAP[buyer_id]) && !po_number.blank?
         importer = Company.where(fenix_customer_number: importer_number).first
-        raise "Unable to find Fenix Importer for importer number #{importer_number}.  This account should not be missing." unless importer
+        log.reject_and_raise "Unable to find Fenix Importer for importer number #{importer_number}.  This account should not be missing." if importer.nil?
+
+        log.company = importer
 
         find_purchase_order(importer, po_number, find_source_system_datetime(dom)) do |po|
           po.last_file_bucket = opts[:bucket]
           po.last_file_path = opts[:key]
 
+          log.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, Order.to_s, po.id
+
           parse_purchase_order dom, po
         end
       elsif importer_number.blank?
-        raise "Unknown Buyer ID #{buyer_id} found in PO Number #{po_number}.  If this is a new Buyer you must link this number to an Importer account."
+        log.reject_and_raise "Unknown Buyer ID #{buyer_id} found in PO Number #{po_number}.  If this is a new Buyer you must link this number to an Importer account."
       end
     end
 

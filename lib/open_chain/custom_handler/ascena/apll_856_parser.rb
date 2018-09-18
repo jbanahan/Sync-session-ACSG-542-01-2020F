@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     ["www-vfitrack-net/_ascena_apll_asn", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"]
   end
 
-  def self.parse data, opts={}
+  def self.parse_file data, log, opts={}
     errors = []
     isa = 'UNKNOWN'
     parser = self.new
@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       REX12.each_transaction(StringIO.new(data)) do |transaction|
         isa = isa_code(transaction)
         begin
-          parser.process_shipment(transaction.segments, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+          parser.process_shipment(transaction.segments, log, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
         rescue
           errors << $!
         end
@@ -42,15 +42,24 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     end
   end
 
-  def process_shipment shipment_segments, last_file_path: nil, last_file_bucket: nil
+  def process_shipment shipment_segments, log, last_file_path: nil, last_file_bucket: nil
+    log.company = importer
+
     shipment = nil
     ActiveRecord::Base.transaction do
       hbol = find_ref_value(shipment_segments,'BM')
       booking_number = find_ref_value(shipment_segments,'CR')
-      reference = "ASCENA-#{hbol}-#{booking_number}"
+      hbol_and_booking = "#{hbol}-#{booking_number}"
+      reference = "ASCENA-#{hbol_and_booking}"
       Lock.acquire(reference) do
         # We never update shipments...
-        return unless Shipment.where(reference: reference).empty?
+        existing_shipments = Shipment.where(reference: reference)
+        if existing_shipments.length > 0
+          log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, hbol_and_booking, module_type:Shipment.to_s, module_id:existing_shipments[0].id
+          log.add_info_message "Shipment #{hbol_and_booking} already exists and was not updated."
+          return
+        end
+
         est_arrival_port_date = get_date(shipment_segments,'056')
         est_arrival_port_date = get_date(shipment_segments,'AA2') unless est_arrival_port_date
         equipments = find_subloop(shipment_segments,'E')
@@ -74,10 +83,12 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         )
         shp.master_bill_of_lading = "#{shp.vessel_carrier_scac}#{hbol}"
         shp.save!
+        log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, hbol_and_booking, module_type:Shipment.to_s, module_id:shp.id
+        log.add_info_message "Shipment #{hbol_and_booking} created."
 
         errors = []
         equipments.each do |eq| 
-          equip_errors = process_equipment(shp,eq)
+          equip_errors = process_equipment(shp,eq, log)
           errors.push *equip_errors
         end
 
@@ -92,7 +103,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     shipment
   end
 
-  def process_equipment shp, e_segs
+  def process_equipment shp, e_segs, log
     container_scac = find_element_value(e_segs,'TD302')
     container_num = find_element_value(e_segs,'TD303')
     con = shp.containers.build(
@@ -102,19 +113,19 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     con.save!
     errors = []
     find_subloop(e_segs,'O').each do |o_segs| 
-      order_errors = process_order(shp,con,o_segs)
+      order_errors = process_order(shp,con,o_segs, log)
       errors.push *order_errors
     end
 
     errors
   end
 
-  def process_order shp, con, o_segs
+  def process_order shp, con, o_segs, log
     ord_num = find_element_value(o_segs,'PRF01')
     errors = []
     find_subloop(o_segs,'I').each do |i_segs| 
       begin
-        process_item(shp,con,ord_num,i_segs)
+        process_item(shp,con,ord_num,i_segs, log)
       rescue OrderMissingError => e
         errors << e.message
       end
@@ -127,14 +138,14 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
   end
 
-  def process_item shp, con, order_number, i_segs
+  def process_item shp, con, order_number, i_segs, log
     style = find_element_value(i_segs,'LIN03')
-    raise "Style number is required in LIN segment position 4." if style.blank?
+    log.reject_and_raise "Style number is required in LIN segment position 4." if style.blank?
     ol = OrderLine.joins(:order,:product).
       where("orders.order_number = ?","ASCENA-#{order_number}").
       where("products.unique_identifier = ?","ASCENA-#{style}").
       first
-    raise OrderMissingError, "Order Line not found for order ASCENA-#{order_number}, style ASCENA-#{style}" if ol.nil?
+    log.reject_and_raise("Order Line not found for order ASCENA-#{order_number}, style ASCENA-#{style}", error_class:OrderMissingError) if ol.nil?
     sl = shp.shipment_lines.build(
       product:ol.product,
       container: con,

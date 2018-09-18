@@ -20,18 +20,19 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
   }
 
   let!(:hm) { Factory(:company, alliance_customer_number: 'HENNE') }
+  let (:log) { InboundFile.new }
   
-  describe "parse" do
+  describe "parse_file" do
     it "delegates to #process" do
-      expect_any_instance_of(described_class).to receive(:process).with(old_i1)
-      described_class.parse old_i1
+      expect_any_instance_of(described_class).to receive(:process).with(old_i1, log)
+      described_class.parse_file old_i1, log
     end
   end
 
   describe "process" do
 
     it "parses CSV into Product objects" do
-      subject.process(old_i1)
+      subject.process(old_i1, log)
 
       p1 = Product.where(unique_identifier: "HENNE-0148762").first
       expect(p1).not_to be_nil
@@ -75,10 +76,25 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p3.custom_value(cdefs[:prod_suggested_tariff])).to eq "10221227"
       expect(p3.custom_value(cdefs[:prod_countries_of_origin])).to eq "US\n CA"
       expect(p3.entity_snapshots.count).to eq 2
+
+      expect(log.company).to eq hm
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER).length).to eq 3
+
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[0].value).to eq "0148762"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[0].module_type).to eq "Product"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[0].module_id).to eq p1.id
+
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[1].value).to eq "2001002"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[1].module_type).to eq "Product"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[1].module_id).to eq p2.id
+
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[2].value).to eq "1259873"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[2].module_type).to eq "Product"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[2].module_id).to eq p3.id
     end
 
     it "handles updated i1 format" do
-      subject.process(new_i1)
+      subject.process(new_i1, log)
 
       p1 = Product.where(unique_identifier: "HENNE-0148762").first
       expect(p1).not_to be_nil
@@ -113,8 +129,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     end
 
     it "doesn't take snapshot if product is unchanged" do
-      subject.process(old_i1)
-      subject.process(old_i1)
+      subject.process(old_i1, InboundFile.new)
+      subject.process(old_i1, log)
 
       p1 = Product.where(unique_identifier: "HENNE-0148762").first
       expect(p1.entity_snapshots.count).to eq 1
@@ -135,7 +151,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
 
       line = CSV.parse_line(old_i1.split("\n")[1], :col_sep => ";")
       line[3] = "0148762001002" #uid of first line
-      subject.update_product prod, line, cdefs, hm.id
+      subject.update_product prod, line
 
       expect(prod.unique_identifier).to eq "HENNE-0148762"
       expect(prod.name).to eq "Large Blue Hooded Sweatshirt" #don't overwrite this field if it's already populated

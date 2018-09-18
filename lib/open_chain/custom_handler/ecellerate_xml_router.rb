@@ -11,11 +11,11 @@ module OpenChain; module CustomHandler; class EcellerateXmlRouter
     ["www-vfitrack-net/_ecellerate_shipment", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ecellerate_shipment"]
   end
 
-  def self.parse data, user, opts={}
-    parse_dom REXML::Document.new(data), user
+  def self.parse_file data, log, opts={}
+    parse_dom REXML::Document.new(data), log
   end
 
-  def self.parse_dom dom, user
+  def self.parse_dom dom, log
     imp = nil
     REXML::XPath.each(dom.root,'//Parties/Party') do |p|
       if et(p,'PartyType') == 'Importer'
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; class EcellerateXmlRouter
     end
     case imp
     when 'JILSO'
-      OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser.parse_dom dom, user
+      OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser.parse_dom dom, log
     end
   end
 end; end; end

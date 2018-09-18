@@ -17,16 +17,17 @@ module OpenChain; module CustomHandler; module Polo
       ["www-vfitrack-net/_polo_tradecard_810", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810"]
     end
 
-    def parse data, opts = {}
-      parse_dom(REXML::Document.new(data), opts)
+    def parse_file data, log, opts = {}
+      parse_dom(REXML::Document.new(data), log, opts)
     end
 
     private 
 
-      def parse_dom dom, opts = {}
+      def parse_dom dom, log, opts = {}
+        log.company = Company.where(system_code:'polo').first
         dom.each_element("Invoices/Invoice") do |inv_el|
           begin
-            parse_invoice_element inv_el
+            parse_invoice_element inv_el, log
           rescue => e
             raise e unless Rails.env == 'production'
             if opts[:key]
@@ -39,10 +40,10 @@ module OpenChain; module CustomHandler; module Polo
         nil
       end
 
-      def parse_invoice_element inv_el
+      def parse_invoice_element inv_el, log
         invoice_number = inv_el.text("InvoiceNumber")
         if invoice_number
-          invoice = process_tradecard_invoice(invoice_number) do |invoice|
+          invoice = process_tradecard_invoice(invoice_number, log) do |invoice|
             invoice.invoice_date = inv_el.text("InvoiceDate")
             inv_el.each_element("InvoiceLine") do |line_el|
               line = invoice.commercial_invoice_lines.build
@@ -65,19 +66,20 @@ module OpenChain; module CustomHandler; module Polo
         end
       end
 
-      def process_tradecard_invoice invoice_number
+      def process_tradecard_invoice invoice_number, log
         invoice = nil
         Lock.acquire(Lock::TRADE_CARD_PARSER, times: 3) do 
           invoice = CommercialInvoice.where(invoice_number: invoice_number, vendor_name: "Tradecard").includes(:commercial_invoice_lines).first_or_create!
         end
-        
+
         if invoice
-          Lock.with_lock_retry(invoice) do 
+          log.add_identifier InboundFileIdentifier::TYPE_INVOICE_NUMBER, invoice_number, module_type:CommercialInvoice.to_s, module_id:invoice.id
+          Lock.with_lock_retry(invoice) do
             invoice.commercial_invoice_lines.destroy_all
             yield invoice
-          end  
+          end
         end
-        
+
         invoice
       end
 

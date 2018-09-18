@@ -9,6 +9,8 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
     REX12.each_segment(StringIO.new(base_data)).to_a[2..44]
   end
 
+  let(:log) { InboundFile.new }
+
   context 'IntegrationClientParser' do
     it "should respond to process_from_s3" do
       expect(described_class.respond_to?(:process_from_s3)).to be_truthy
@@ -17,14 +19,14 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(described_class.integration_folder).to eq ["www-vfitrack-net/_ascena_apll_asn", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_apll_asn"]
     end
   end
-  describe '#parse' do
+  describe '#parse_file' do
     it "should split shipments and process" do
       expect_any_instance_of(described_class).to receive(:process_shipment).exactly(9).times
-      described_class.parse(base_data)
+      described_class.parse_file(base_data, log)
     end
     it "should email on EDI parse error" do
       expect(REX12).to receive(:each_transaction).with(instance_of(StringIO)).and_raise REX12::ParseError.new("Parsing problem here.")
-      described_class.parse(base_data)
+      described_class.parse_file(base_data, log)
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ['edisupport@vandegriftinc.com']
       expect(mail.subject).to match(/Ascena\/APLL ASN EDI Processing Error/)
@@ -36,7 +38,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
         error_counter += 1
         raise "Some shipment problem #{error_counter}"
       end
-      described_class.parse(base_data)
+      described_class.parse_file(base_data, log)
 
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ['edisupport@vandegriftinc.com']
@@ -72,7 +74,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       ports #prep port data
       expect_any_instance_of(Shipment).to receive(:create_snapshot).with(User.integration, nil, "path")
       expect(Lock).to receive(:acquire).with(expected_reference).and_yield
-      expect {subject.process_shipment(first_shipment_array, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment,:count).from(0).to(1)
+      expect {subject.process_shipment(first_shipment_array, log, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment,:count).from(0).to(1)
       s = Shipment.first
       expect(s.reference).to eq expected_reference
       expect(s.importer).to eq ascena
@@ -109,25 +111,46 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(sl.gross_kgs).to eq 5490.2
 
       expect(ActionMailer::Base.deliveries.count).to eq 0
+
+      expect(log.company).to eq ascena
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "XM1007980-HK956641"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment XM1007980-HK956641 created."
     end
     it "should not fail on unknown LOCODE" do
       order #prep order data
-      expect {subject.process_shipment(first_shipment_array)}.to change(Shipment,:count).from(0).to(1)
+      expect {subject.process_shipment(first_shipment_array, log)}.to change(Shipment,:count).from(0).to(1)
     end
     it "should not update existing shipments" do
       ascena
-      Factory(:shipment,reference:'ASCENA-XM1007980-HK956641')
-      expect(subject.process_shipment(first_shipment_array)).to be_nil
+      s = Factory(:shipment,reference:'ASCENA-XM1007980-HK956641')
+      expect(subject.process_shipment(first_shipment_array, log)).to be_nil
+
+      expect(log.company).to eq ascena
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "XM1007980-HK956641"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment XM1007980-HK956641 already exists and was not updated."
     end
     it "should record missing order in shipment" do
-      shipment = subject.process_shipment(first_shipment_array)
+      shipment = subject.process_shipment(first_shipment_array, log)
       expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-415012"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order Line not found for order ASCENA-6225694, style ASCENA-415012"
     end
     it "should fail if style not on order" do
       order
       base_data.gsub!('415012','999999')
-      shipment = subject.process_shipment(first_shipment_array)
+      shipment = subject.process_shipment(first_shipment_array, log)
       expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-999999"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order Line not found for order ASCENA-6225694, style ASCENA-999999"
+    end
+    it "should fail if style is blank" do
+      order
+      base_data.gsub!('415012','      ')
+
+      expect{subject.process_shipment(first_shipment_array, log)}.to raise_error "Style number is required in LIN segment position 4."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Style number is required in LIN segment position 4."
     end
   end
 end

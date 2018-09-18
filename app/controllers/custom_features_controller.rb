@@ -712,7 +712,7 @@ class CustomFeaturesController < ApplicationController
           sp = SEARCH_PARAMS.clone
           s = build_search(sp, 'filename', 'start', 'd')
           s = s.joins("INNER JOIN users ON users.id = custom_files.uploaded_by_id")
-          if params[:f].blank?
+          if params[:f1].blank?
             s = s.order('custom_files.created_at DESC')
           end
           @files = s.paginate(:per_page=>20,:page=>params[:page])

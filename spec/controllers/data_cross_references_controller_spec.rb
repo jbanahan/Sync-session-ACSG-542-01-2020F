@@ -34,7 +34,7 @@ describe DataCrossReferencesController do
       xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY2", value: "ZValue"
       xref3 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "NO", value: "Value"
 
-      get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, f: "`key`", c: "contains", s: "KEY", sf: "`key`", so: "d"
+      get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, f1: "d_key", c1: "contains", s1: "KEY", sf: "d_key", so: "d"
 
       expect(response).to be_success
       xrefs = assigns(:xrefs)

@@ -153,6 +153,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     importer
   end
 
+  let (:log) { InboundFile.new }
+
   describe "parse_spreadsheet" do
 
     it "should parse spreadsheet data into a hash" do
@@ -251,7 +253,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "should write xml to tempfile" do
       d = defaults
       xml = nil
-      f = described_class.new.write_xml(create_workbook(d)) {|f| f.rewind; xml = f.read}
+      f = described_class.new.write_xml(create_workbook(d), log) {|f| f.rewind; xml = f.read}
       # ensure the tempfile is closed
       expect(f.closed?).to be_truthy
       expect(File.basename(f)).to match(/^ShoesForCrewsPO/)
@@ -262,10 +264,19 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       doc = REXML::Document.new xml
 
       expect(REXML::XPath.first(doc, "/PurchaseOrder/OrderId").text).to eq d[:order_id]
+
+      expect(log.company).to eq importer
+    end
+
+    it "fails if importer can't be found" do
+      importer.destroy
+
+      expect{described_class.new.write_xml(create_workbook(defaults), log)}.to raise_error "Company with system code SHOES not found."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Company with system code SHOES not found."
     end
   end
 
-  describe "parse" do
+  describe "parse_file" do
     it "should call write_xml w/ ftp_file block" do
       d = defaults
       p = described_class.new
@@ -275,7 +286,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
         xml = f.read
       end
 
-      p.parse create_workbook(d)
+      p.parse_file create_workbook(d), log
       expect(REXML::XPath.first( REXML::Document.new(xml), "/PurchaseOrder/OrderId").text).to eq d[:order_id]
     end
   end
@@ -301,7 +312,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "saves a new PO" do
       expect_any_instance_of(Order).to receive(:post_create_logic!)
 
-      subject.process_po data, "bucket", "key"
+      subject.process_po data, log, "bucket", "key"
       po = Order.where(order_number: "SHOES-ORDER#").first
       expect(po).not_to be_nil
       expect(po.importer).to eq importer
@@ -357,13 +368,17 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       s = po.entity_snapshots.first
       expect(s.context).to eq "key"
       expect(s.user).to eq User.integration
+
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "ORDER#"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq po.id
     end
 
     it "updates a PO" do
       order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
       expect_any_instance_of(Order).to receive(:post_update_logic!)
 
-      subject.process_po data, "bucket", "key"
+      subject.process_po data, log, "bucket", "key"
 
       order.reload
 
@@ -386,7 +401,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       expect(subject).to receive(:find_order).and_yield true, order
 
-      subject.process_po data, "bucket", "key"
+      subject.process_po data, log, "bucket", "key"
 
       order.reload
 
@@ -398,22 +413,30 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       # The easiest way to ensure we get identical fingerprints is to just use the process_po method twice
       # using the same dataset.
 
-      subject.process_po data, "bucket", "key"
+      subject.process_po data, log, "bucket", "key"
       po = Order.where(order_number: "SHOES-ORDER#").first
       expect(subject).to receive(:find_order).and_yield true, po
       expect(po).not_to receive(:post_update_logic!)
 
-      subject.process_po data, "bucket", "key2"
+      subject.process_po data, log, "bucket", "key2"
     end
 
     it "uses the alternate PO number if standard order id and order number fields are blank" do
       @overrides[:order_number] = ""
       
-      subject.process_po data, "bucket", "key"
+      subject.process_po data, log, "bucket", "key"
 
       po = Order.where(order_number: "SHOES-PO#").first
       expect(po).not_to be_nil
       expect(po.customer_order_number).to eq workbook_data[:alternate_po_number]
+    end
+
+    it "fails if there's no PO number provided" do
+      @overrides[:order_number] = ""
+      @overrides[:alternate_po_number] = ""
+
+      expect{subject.process_po data, log, "bucket", "key"}.to raise_error "An order number must be present in all files.  File key is missing an order number."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "An order number must be present in all files.  File key is missing an order number."
     end
   end
 end

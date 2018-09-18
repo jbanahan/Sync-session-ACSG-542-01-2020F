@@ -17,7 +17,7 @@ describe SentEmailsController do
     end
 
     it "executes a search" do
-      get :index, {s: "2017-01-01", f: "email_date", c: "sw"}
+      get :index, {s1: "2017-01-01", f1: "email_date", c1: "sw"}
       expect(response).to be_success
       expect(assigns(:default_display)).to be_nil
     end

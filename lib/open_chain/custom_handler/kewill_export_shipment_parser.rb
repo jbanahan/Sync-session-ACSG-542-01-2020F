@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  def parse data, opts = {}
+  def parse_file data, log, opts = {}
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
 
     # These files are CSV files that use the escape ascii code as a column separator - quote char is bell char
@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
           # For the moment, the parsing of these files is pretty simplistic so I'm not splitting out
           # the handling of the Ocean File / Ocean Job files into 2 distinct parsers.  If these get
           # any more involved then we should probably do so.
-          process_shipment_data(shipment_data, opts)
+          process_shipment_data(shipment_data, log, opts)
         end
 
         shipment_data = []
@@ -29,25 +29,25 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
       shipment_data << row
     end
 
-    process_shipment_data(shipment_data, opts)
+    process_shipment_data(shipment_data, log, opts)
 
     nil
   end
 
-  def process_shipment_data shipment_data, opts
+  def process_shipment_data shipment_data, log, opts
     if shipment_data.length > 0
       if "MFIH01" == shipment_data.first[0].to_s.upcase
-        parse_ocean_shipment_file shipment_data, opts
+        parse_ocean_shipment_file shipment_data, log, opts
       elsif "MSPH01" == shipment_data.first[0].to_s.upcase
-        parse_ocean_job_file shipment_data, opts
+        parse_ocean_job_file shipment_data, log, opts
       end
     end
   end
 
-  def parse_ocean_job_file rows, opts = {}
+  def parse_ocean_job_file rows, log, opts = {}
     return if (file_number = find_file_number(rows)).blank?
 
-    find_shipment(file_number, find_generated_date(rows)) do |s|
+    find_shipment(file_number, find_generated_date(rows), log) do |s|
       rows.each do |row|
         case row[0].to_s.upcase
         when "MSPH01"
@@ -80,10 +80,10 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     s.est_arrival_port_date = parse_date(row[6])
   end
 
-  def parse_ocean_shipment_file rows, opts = {}
+  def parse_ocean_shipment_file rows, log, opts = {}
     return if (file_number = find_file_number(rows)).blank?
 
-    find_shipment(file_number, find_generated_date(rows)) do |s|
+    find_shipment(file_number, find_generated_date(rows), log) do |s|
       s.shipment_lines.each(&:destroy)
       # I'm not entirely sure why I need reload here, but if I don't I get an error
       # below about trying to update a frozen hash when adding containers to the lines
@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
       rows.each do |row|
         case row[0].to_s.upcase
         when "MFIH01"
-          parse_MFIH01 row, s
+          parse_MFIH01 row, s, log
         when "MFIH02"
           parse_MFIH02 row, s
         when "MFIH03"
@@ -149,8 +149,9 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     s.create_snapshot user
   end
 
-  def parse_MFIH01 row, s
-    s.importer = find_importer(row[8]) unless row[8].blank?
+  def parse_MFIH01 row, s, log
+    s.importer = find_importer(row[8], log) unless row[8].blank?
+    log.company = s.importer
     if "L" == row[5].to_s.strip
       s.mode = "Ocean - LCL"
       s.lcl = true
@@ -246,7 +247,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     address
   end
 
-  def find_shipment file_number, last_exported_from_source
+  def find_shipment file_number, last_exported_from_source, log
     # Return blank unless the file_number starts with "14".
 
     # We only want to track Ocean Export for the momemnt and the first 2 digits of the file number is the division (which is 14 for Ocean Export)
@@ -265,6 +266,9 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
 
       if shipment
         Lock.with_lock_retry(shipment) do
+          log.company = shipment.importer
+          log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, file_number, module_type:Shipment.to_s, module_id:shipment.id
+
           # The reason we don't skip files that may be processed out of date has to do with the fact that the data for these files is sent
           # in two files that are generated almost at the same moment, so if we receive them slightly out of order there's a good chance that
           # one of the two files will be skipped...the primarily has to do w/ how our file_pusher does not process files in order of mtime,
@@ -279,14 +283,14 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     shipment
   end
 
-  def find_importer customer_code
+  def find_importer customer_code, log
     # This is technically the alliance customer, which we pretty much exclusively track as the importer on
     # an import shipment.
 
     # Because we're slightly shoe-horning export shipments into our clearly import biased shipment screen, I'm going
     # to track the customer as an importer for exports.
     importer = Company.importers.where(alliance_customer_number: customer_code).first
-    raise "No Importer record found with Alliance customer number of #{customer_code}." unless importer
+    log.reject_and_raise "No Importer record found with Alliance customer number of #{customer_code}." unless importer
     importer
   end
 

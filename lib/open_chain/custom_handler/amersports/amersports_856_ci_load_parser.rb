@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
     hts_code
   end
 
-  def us 
+  def us
     @us ||= Country.where(iso_code: "US").first
     raise "Unable to find US country." unless @us
     @us

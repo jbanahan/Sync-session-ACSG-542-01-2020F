@@ -13,30 +13,30 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
     ["#{MasterSetup.get.system_code}/kewill_statements", "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/kewill_statements"]
   end
 
-  def self.parse data, opts = {}
+  def self.parse_file data, log, opts = {}
     json = ActiveSupport::JSON.decode(data)
     user = User.integration
 
     parser = self.new
     Array.wrap(json["daily_statements"]).each do |statement_json|
-      parser.process_daily_statement user, statement_json, opts[:bucket], opts[:key]
+      parser.process_daily_statement user, statement_json, log, opts[:bucket], opts[:key]
     end
 
     Array.wrap(json["monthly_statements"]).each do |statement_json|
-      parser.process_monthly_statement user, statement_json, opts[:bucket], opts[:key]
+      parser.process_monthly_statement user, statement_json, log, opts[:bucket], opts[:key]
     end
 
     nil
   end
 
-  def process_daily_statement user, json, last_file_bucket, last_file_path
+  def process_daily_statement user, json, log, last_file_bucket, last_file_path
     json = json["statement"]
     return if json.nil?
 
     statement_number, last_exported_from_source = statement_no_and_extract_time(json)
 
     s = nil
-    find_and_process_daily_statement(statement_number, last_exported_from_source, last_file_bucket, last_file_path) do |statement|
+    find_and_process_daily_statement(statement_number, last_exported_from_source, log, last_file_bucket, last_file_path) do |statement|
       # Technically, we could update the daily statement entries / fees instead of destroying and rebuilding the
       # whole structure, but this is just easier for the time being.
       preliminary_data = json["status"].to_s.upcase == "P"
@@ -45,12 +45,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       broker_references = Set.new
 
       Array.wrap(json["details"]).each do |detail_json|
-        detail = parse_daily_statement_entries(statement, detail_json, preliminary_data)
+        detail = parse_daily_statement_entries(statement, detail_json, preliminary_data, log)
         broker_references << detail.broker_reference
 
         fee_codes = Set.new
         Array.wrap(detail_json["fees"]).each do |fee_json|
-          fee = parse_daily_statement_entry_fee(statement, detail, fee_json, preliminary_data)
+          fee = parse_daily_statement_entry_fee(statement, detail, fee_json, preliminary_data, log)
           fee_codes << fee.code
         end
 
@@ -79,13 +79,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
     s
   end
 
-  def process_monthly_statement user, json, last_file_bucket, last_file_path
+  def process_monthly_statement user, json, log, last_file_bucket, last_file_path
     json = json["monthly_statement"]
     return if json.nil?
 
     statement_number, last_exported_from_source = statement_no_and_extract_time(json)
     s = nil
-    find_and_process_monthly_statement(statement_number, last_exported_from_source, last_file_bucket, last_file_path) do |statement|
+    find_and_process_monthly_statement(statement_number, last_exported_from_source, log, last_file_bucket, last_file_path) do |statement|
       parse_monthly_statement(statement, json)
 
       # We need to now link the monthly statement with any daily statements that have this number
@@ -199,13 +199,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       statement
     end
 
-    def parse_daily_statement_entries statement, json, preliminary
+    def parse_daily_statement_entries statement, json, preliminary, log
       # The reference # will have leading zeros, which our entries do not have, strip them
       broker_reference = json["broker_reference"].to_s.gsub(/^0+/, "")
 
       # I don't know why broker reference would ever be missing, it's required and no data in kewill's system is
       # missing it, so raise an error if we ever come across data without this value.
-      raise "Statement '#{statement.statement_number}' contains a detail without a broker reference number." if broker_reference.blank?
+      log.reject_and_raise "Statement '#{statement.statement_number}' contains a detail without a broker reference number." if broker_reference.blank?
 
       # Because of the way we're tracking preliminary / final amounts, we want to update in place any entries, rather than destroy / rebuild entirely
       statement_entry = statement.daily_statement_entries.find {|e| e.broker_reference == broker_reference }
@@ -258,10 +258,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       statement_entry
     end
 
-    def parse_daily_statement_entry_fee statement, statement_entry, fee_json, preliminary
+    def parse_daily_statement_entry_fee statement, statement_entry, fee_json, preliminary, log
       # The code is numeric in the json, so make sure we translate it to a string before trying to find it
       code = fee_json["code"].to_s
-      raise "Statement # '#{statement.statement_number}' / File # '#{statement_entry.broker_reference}' has a fee line missing a code." if code.blank?
+      log.reject_and_raise "Statement # '#{statement.statement_number}' / File # '#{statement_entry.broker_reference}' has a fee line missing a code." if code.blank?
 
       # Because of the way we're tracking preliminary / final amounts, we want to update in place any fees, rather than destroy / rebuild entirely
       entry_fee = statement_entry.daily_statement_entry_fees.find {|f| f.code == code }
@@ -306,14 +306,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       nil
     end
 
-    def find_and_process_daily_statement statement_number, last_exported_from_source, last_file_bucket, last_file_path
+    def find_and_process_daily_statement statement_number, last_exported_from_source, log, last_file_bucket, last_file_path
       statement = nil
       Lock.acquire("DailyStatement-#{statement_number}") do 
         statement = DailyStatement.where(statement_number: statement_number).first_or_create! last_exported_from_source: last_exported_from_source
       end
 
-      Lock.db_lock(statement) do 
-        return nil unless process_statement?(statement, last_exported_from_source)
+      Lock.db_lock(statement) do
+        log.add_identifier InboundFileIdentifier::TYPE_DAILY_STATEMENT_NUMBER, statement_number, module_type:DailyStatement.to_s, module_id:statement.id
+
+        if !process_statement?(statement, last_exported_from_source)
+          log.add_info_message "Daily statement '#{statement_number}' not updated: file contained outdated info."
+          return nil
+        end
 
         statement.last_exported_from_source = last_exported_from_source
         statement.last_file_bucket = last_file_bucket
@@ -325,14 +330,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       statement
     end
 
-    def find_and_process_monthly_statement statement_number, last_exported_from_source, last_file_bucket, last_file_path
+    def find_and_process_monthly_statement statement_number, last_exported_from_source, log, last_file_bucket, last_file_path
       statement = nil
       Lock.acquire("MonthlyStatement-#{statement_number}") do 
         statement = MonthlyStatement.where(statement_number: statement_number).first_or_create! last_exported_from_source: last_exported_from_source
       end
 
-      Lock.db_lock(statement) do 
-        return nil unless process_statement?(statement, last_exported_from_source)
+      Lock.db_lock(statement) do
+        log.add_identifier InboundFileIdentifier::TYPE_MONTHLY_STATEMENT_NUMBER, statement_number, module_type:MonthlyStatement.to_s, module_id:statement.id
+
+        if !process_statement?(statement, last_exported_from_source)
+          log.add_info_message "Monthly statement '#{statement_number}' not updated: file contained outdated info."
+          return nil
+        end
 
         statement.last_exported_from_source = last_exported_from_source
         statement.last_file_bucket = last_file_bucket

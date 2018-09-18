@@ -1,23 +1,52 @@
 <div id='search_box'>
-  <form method="get" class='form-horizontal'> 
-  <select id='srch_fields' size='1' name='f'>
-    <% opts = [] 
-      @s_params.each do |k,f|
-        opts << [f[:label],k]
-      end 
-     %>
-    <%= options_for_select opts, @selected_search%>
-  </select>
-  <select id='srch_cond' size='1' name='c'>
-  </select> 
-  <input id='srch_val' type='text' name='s' value="<%=params[:s]%>"  class="focus_first"/>
+  <form method="get" class='form-horizontal'>
+  <table id='search_params'>
+    <tr>
+      <td>
+      </td>
+    </tr>
+  </table>
   <input id='srch_submit' type='submit' value='Search' class='btn' />
+  <input id='srch_add_param' type='button' value='Add Param' class='btn' onclick="addParamRow('')" />
   <%= yield(:search_form) %>
   </form> 
 </div>
 <%content_for :javascript do %>
 $(document).ready( function() {
-  $("#srch_cond").val('<%=@s_con%>');
-  toggleSearchValue();
+  <% row_counter = 0 %>
+  <% (1..10).each {|param_counter| %>
+    <% selected_field = params[("f" + param_counter.to_s).to_sym] %>
+    <% cond_val = params[("c" + param_counter.to_s).to_sym] %>
+    <% param_val = params[("s" + param_counter.to_s).to_sym] %>
+    <% if selected_field && param_val %>
+      addParamRow('<%=param_val%>');
+      document.getElementById("srch_cond<%=(row_counter + 1)%>").value = '<%=cond_val%>'
+      document.getElementById("srch_fields<%=(row_counter + 1)%>").value = '<%=selected_field%>'
+      <% row_counter += 1 %>
+    <% end %>
+  <% } %>
+  <% if row_counter == 0 %>
+    addParamRow('');
+    document.getElementById("srch_fields1").value = '<%=@default_search_field%>'
+  <% end %>
+  document.getElementById("srch_val1").focus();
 });
+
+function addParamRow(value) {
+  var table = document.getElementById("search_params");
+  var rowCount = table.getElementsByTagName("tr").length;
+  var row = table.insertRow(rowCount);
+  row.id = "search_params_row_" + rowCount;
+  var cell = row.insertCell(0);
+  cell.innerHTML = "<select id='srch_fields" + rowCount + "' size='1' name='f" + rowCount + "'><%= (options_for_select(@s_param_opts).gsub("\n", "").gsub("\"", "'").html_safe) %></select> <select id='srch_cond" + rowCount + "' size='1' name='c" + rowCount + "'></select> <input id='srch_val" + rowCount + "' type='text' name='s" + rowCount + "' value='" + value + "'/>";
+  if (rowCount > 1) {
+    cell.innerHTML += "<input id='srch_delete_param' type='button' value='X' class='btn' onclick='deleteParamRow(" + rowCount + ")' />";
+  }
+  setConditionDropdown('', $("#srch_cond" + rowCount), 'x');
+}
+
+function deleteParamRow(rowNumberToDelete) {
+  var row = document.getElementById("search_params_row_" + rowNumberToDelete);
+  row.parentNode.removeChild(row);
+}
 <%end%>

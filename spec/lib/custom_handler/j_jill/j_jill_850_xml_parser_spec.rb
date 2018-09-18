@@ -10,14 +10,15 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       @c = Factory(:company,importer:true,system_code:'JJILL')
       @us = Factory(:country,iso_code:'US')
     end
+    let(:log) { InboundFile.new }
     def run_file opts = {}
-      described_class.parse(IO.read(@path), opts)
+      described_class.parse_file(IO.read(@path), log, opts)
     end
     it "should close cancelled order" do
       dom = REXML::Document.new(IO.read(@path))
       REXML::XPath.each(dom.root,'//BEG01') {|el| el.text = '01'}
       expect_any_instance_of(Order).to receive(:close!).with(instance_of(User))
-      described_class.parse_dom dom
+      described_class.parse_dom dom, log
     end
     it "should reopen order where BEG01 not eq to '03'" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',closed_by_id:7,closed_at:Time.now)
@@ -94,7 +95,20 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(DataCrossReference.find_jjill_order_fingerprint(o)).to eq expected_fingerprint
 
       expect(EntitySnapshot.count).to eq 1
+
+      expect(log.company).to eq @c
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "1001368"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
     end
+
+    it "should fail if importer can't be found" do
+      @c.destroy
+
+      expect {run_file}.to raise_error "Company with system code JJILL not found."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Company with system code JJILL not found."
+    end
+
     context "when line numbers are found" do
       it "updates existing order lines when not booked" do
         o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
@@ -130,7 +144,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
         old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
 
-        described_class.parse_dom dom
+        described_class.parse_dom dom, log
         expect {old_ol.reload}.to raise_error ActiveRecord::RecordNotFound
         new_ol = OrderLine.where(line_number: 1).first
         expect(new_ol.quantity).to eq 299
@@ -141,7 +155,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         s = Factory(:shipment, reference: "REF")
         s.booking_lines.create!(product_id:ol.product_id,quantity:1, order_id: o.id, order_line_id: ol.id)
 
-        described_class.parse_dom dom
+        described_class.parse_dom dom, log
         ol.reload
         expect(ol.quantity).to eq 111
       end
@@ -152,14 +166,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       xml_text = IO.read(@path)
 
       # first run creates product with original_product_name
-      described_class.parse xml_text
+      described_class.parse_file xml_text, log
 
       p = Product.first
       expect(p.name).to eq original_product_name
 
       xml_text.gsub!(original_product_name,new_product_name)
 
-      described_class.parse xml_text
+      described_class.parse_file xml_text, log
 
       p.reload
       expect(p.name).to eq new_product_name
@@ -174,7 +188,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     it "should set mode to Air for 'A'" do
       dom = REXML::Document.new(IO.read(@path))
       REXML::XPath.each(dom.root,'//TD504') {|el| el.text = 'A'}
-      described_class.parse_dom dom
+      described_class.parse_dom dom, log
       expect(Order.first.mode).to eq 'Air'
     end
 

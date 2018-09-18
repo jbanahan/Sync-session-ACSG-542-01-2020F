@@ -9,17 +9,20 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     ["www-vfitrack-net/_ellery_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ellery_po"]
   end
 
-  def self.parse data, opts = {}
+  def self.parse_file data, log, opts = {}
     # This should be a standard CSV file.
     po_number = nil
     rows = []
     parser = parser_instance
+
+    log.company = parser.importer
+
     CSV.parse(data) do |row|
       local_po = row[11]
       next if local_po.blank?
 
       if local_po != po_number && rows.length > 0
-        parser.process_order rows, bucket: opts[:bucket], key: opts[:key]
+        parser.process_order rows, log, bucket: opts[:bucket], key: opts[:key]
         rows = []
         po_number = local_po
       end
@@ -28,7 +31,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
       rows << row
     end
 
-    parser.process_order(rows, bucket: opts[:bucket], key: opts[:key]) if rows.length > 0
+    parser.process_order(rows, log, bucket: opts[:bucket], key: opts[:key]) if rows.length > 0
     nil
   end
 
@@ -36,7 +39,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     self.new
   end
 
-  def process_order rows, bucket:, key:
+  def process_order rows, log, bucket:, key:
     user = User.integration
 
     first_row = rows.first
@@ -44,7 +47,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     ship_to = find_or_create_ship_to(first_row, importer)
     products = find_or_create_products(rows, importer, user, key)
 
-    find_or_create_order(first_row, importer, bucket, key) do |order, new_order|
+    find_or_create_order(first_row, importer, log, bucket, key) do |order, new_order|
       order.vendor = vendor
       order.ship_to = ship_to
       process_order_header(order, first_row)
@@ -174,7 +177,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     ]
   end
 
-  def find_or_create_order row, importer, last_file_bucket, last_file_path
+  def find_or_create_order row, importer, log, last_file_bucket, last_file_path
     po = row[11].to_s.strip
     order_number = "#{importer.system_code}-#{po}"
 
@@ -187,6 +190,8 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
         created = true
         order.save!
       end
+
+      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po, module_type:Order.to_s, module_id:order.id
     end
 
     if order

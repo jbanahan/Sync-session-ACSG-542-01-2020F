@@ -14,25 +14,25 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     ["www-vfitrack-net/_ua_856_xml", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_856_xml"]
   end
 
-  def self.parse xml, opts = {}
-    self.new.parse xml, opts
+  def self.parse_file xml, log, opts = {}
+    self.new.parse xml, log, opts
   end
 
-  def parse xml_string, opts
+  def parse xml_string, log, opts
     errors = []
     if importer
-      process_shipment(REXML::Document.new(xml_string), User.integration, opts[:bucket], opts[:key], errors)
+      process_shipment(REXML::Document.new(xml_string), User.integration, opts[:bucket], opts[:key], errors, log)
     else
-      errors << "Unable to find Under Armour 'UNDAR' importer account."
+      record_error InboundFileMessage::MESSAGE_STATUS_ERROR, "Unable to find Under Armour 'UNDAR' importer account.", errors, log
     end
     send_error_email(xml_string, File.basename(opts[:key]), errors) unless errors.empty?
   end
 
-  def process_shipment xml, user, bucket, file, errors
+  def process_shipment xml, user, bucket, file, errors, log
     ship_xml = xml.root.get_elements("Header").first
 
-    if ship_xml.name != "Header"
-      errors << "Invalid XML structure.  Expecting 'Header' element but received '#{ship_xml.name}'"
+    if ship_xml.nil?
+      record_error InboundFileMessage::MESSAGE_STATUS_ERROR, "Invalid XML structure.  Missing 'Header' element.", errors, log
       return
     end
 
@@ -41,10 +41,15 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     revision = ship_xml.text("MessageID").to_i
     s = nil
 
+    log.company = importer
+    log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shipment_number
+
     find_or_create_shipment(shipment_number, revision, bucket, file) do |shipment|
+      log.set_identifier_module_info InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, Shipment.to_s, shipment.id
+
       parse_shipment_header shipment, ship_xml
       container_number = ship_xml.text("Trailer").to_s
-      errors << "#{error_prefix(shipment)} No container number value found in 'Trailer' element." if container_number.blank?
+      record_error(InboundFileMessage::MESSAGE_STATUS_WARNING, "#{error_prefix(shipment)} No container number value found in 'Trailer' element.", errors, log) if container_number.blank?
 
       container = shipment.containers.find {|c| c.container_number == container_number }
       if container.nil?
@@ -61,7 +66,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
 
       ship_xml.each_element("Order") do |order_xml|
         order_xml.each_element("OrderDetails") do |order_line_xml|
-          parse_order_details(shipment, container, order_xml, order_line_xml, errors)
+          parse_order_details(shipment, container, order_xml, order_line_xml, errors, log)
         end
       end
 
@@ -126,11 +131,11 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     "IBD # #{shipment.booking_number} / ASN # #{shipment.importer_reference}:"
   end
 
-  def parse_order_details shipment, container, order_xml, order_line_xml, errors
+  def parse_order_details shipment, container, order_xml, order_line_xml, errors, log
     order_number = order_line_xml.text "SAPPurchOrderNum"
     order = find_order(order_number)
     if order.nil?
-      errors << "#{error_prefix(shipment)} Failed to find Order # #{order_number}."
+      record_error InboundFileMessage::MESSAGE_STATUS_REJECT, "#{error_prefix(shipment)} Failed to find Order # #{order_number}.", errors, log
       return
     end
 
@@ -140,7 +145,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     order_line = order.order_lines.find {|l| l.sku == sku}
 
     if order_line.nil?
-      errors << "#{error_prefix(shipment)} Failed to find SKU #{sku} on Order #{order_number}."
+      record_error InboundFileMessage::MESSAGE_STATUS_REJECT, "#{error_prefix(shipment)} Failed to find SKU #{sku} on Order #{order_number}.", errors, log
       return
     end
 
@@ -261,5 +266,11 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
   def cdefs
     @cd ||= self.class.prep_custom_definitions([:shp_revision, :shpln_coo])
   end
+
+  private
+    def record_error message_type, msg, errors, log
+      log.add_message message_type, msg
+      errors << msg
+    end
 
 end; end; end; end

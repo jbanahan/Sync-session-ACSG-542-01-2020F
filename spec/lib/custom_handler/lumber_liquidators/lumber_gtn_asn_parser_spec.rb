@@ -11,20 +11,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     CustomDefinition.destroy_all
   end
 
+  let(:log) { InboundFile.new }
+
   describe 'parse' do
     it 'should REXML parse and pass to parse_dom' do
       data = double('data')
       dom = double('dom')
       opts = double('opts')
       expect(REXML::Document).to receive(:new).with(data).and_return dom
-      expect(described_class).to receive(:parse_dom).with dom, opts
-      described_class.parse data, opts
+      expect(described_class).to receive(:parse_dom).with dom, log, opts
+      described_class.parse_file data, log, opts
     end
 
     it 'should fail on wrong root element' do
       test_data = "<OtherRoot><Child>Hey!</Child></OtherRoot>"
-      expect{described_class.parse(test_data)}.to raise_error('Bad root element name "OtherRoot". Expecting ASNMessage.')
+      expect{described_class.parse_file(test_data, log)}.to raise_error('Bad root element name "OtherRoot". Expecting ASNMessage.')
       expect(ActionMailer::Base.deliveries.length).to eq 0
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq 'Bad root element name "OtherRoot". Expecting ASNMessage.'
     end
   end
 
@@ -42,6 +45,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       port_shanghai = Factory(:port, unlocode:'CNSHA')
       port_los_angeles = Factory(:port, unlocode:'USLAX')
       port_pomona = Factory(:port, unlocode:'USPQC')
+      importer = Factory(:importer, system_code:'LUMBER')
 
       prod = Factory(:product, unique_identifier:'PRODXYZ')
       shp_container_1 = Factory(:container, container_number:'TEMU3877030', shipment:shp)
@@ -56,7 +60,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       DataCrossReference.create! key:'20STD', value:'D20', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
       DataCrossReference.create! key:'45STD', value:'D45', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
 
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       shp.reload
       shp_line_1.reload
@@ -182,6 +186,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(@ord_2.entity_snapshots.length).to eq 1
 
       expect(ActionMailer::Base.deliveries.length).to eq 0
+
+      expect(log.company).to eq importer
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq '201611221551'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq shp.id
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq '4500173883'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq 'Order'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq @ord.id
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[1].value).to eq '4500173884'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[1].module_type).to eq 'Order'
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[1].module_id).to eq @ord_2.id
     end
 
     # Different date codes are used for some milestones in production.
@@ -201,7 +216,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       shp_line_2 = Factory(:shipment_line, shipment:shp, product:prod, container:shp_container_2, quantity:0, line_number: 2, carton_qty:7, gross_kgs:5.6)
       shp_line_2.piece_sets.create!(order_line:ord_line_2, quantity:0)
 
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       shp.reload
 
@@ -239,7 +254,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
       # No second PO line.
 
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       shp.reload
 
@@ -273,10 +288,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(mail.subject).to eq 'Lumber GTN ASN Parser Errors: 201611221551'
       expect(mail.body).to include ERB::Util.html_escape("Errors were encountered while parsing ASN file for 201611221551.<br><br>Shipment did not contain a container TEMU3877030. A container record was created.<br>Shipment did not contain a manifest line for PO 4500173883, line 1. A manifest line record was created.<br>Shipment did not contain a container TEMU3877031. A container record was created.<br>Shipment did not contain a manifest line for PO 4500173884, line 3. A manifest line record could NOT be created because no matching PO line could be found.".html_safe)
       expect(mail.attachments.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[0].message).to eq "Shipment did not contain a container TEMU3877030. A container record was created."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[1].message).to eq "Shipment did not contain a manifest line for PO 4500173883, line 1. A manifest line record was created."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[2].message).to eq "Shipment did not contain a container TEMU3877031. A container record was created."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[3].message).to eq "Shipment did not contain a manifest line for PO 4500173884, line 3. A manifest line record could NOT be created because no matching PO line could be found."
     end
 
     it 'should fail when shipment cannot be found' do
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       # Orders should not have been updated.
       expect(@ord.custom_value(cdefs[:ord_asn_arrived])).to be_nil
@@ -288,13 +308,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(mail.subject).to eq 'Lumber GTN ASN Parser Errors: 201611221551'
       expect(mail.body).to include ERB::Util.html_escape("Errors were encountered while parsing ASN file for 201611221551.<br><br>ASN Failed because shipment not found in database: 201611221551.".html_safe)
       expect(mail.attachments.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "ASN Failed because shipment not found in database: 201611221551."
     end
 
     it 'should fail when order cannot be found' do
       shp = Factory(:shipment, reference:'201611221551')
       @ord.delete
 
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       # Shipment should not have been updated.
       shp.reload
@@ -311,6 +333,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(mail.subject).to eq 'Lumber GTN ASN Parser Errors: 201611221551'
       expect(mail.body).to include ERB::Util.html_escape("Errors were encountered while parsing ASN file for 201611221551.<br><br>ASN Failed because order(s) not found in database: 4500173883.".html_safe)
       expect(mail.attachments.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "ASN Failed because order(s) not found in database: 4500173883."
     end
 
     it 'should error when missing PO Number, but still update shipment' do
@@ -322,7 +346,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       ord_line_1 = Factory(:order_line, product:prod, order:@ord, line_number:1)
       ord_line_2 = Factory(:order_line, product:prod, order:@ord_2, line_number:3)
 
-      described_class.parse_dom REXML::Document.new(@test_data), { :key=>'s3_key_12345' }
+      described_class.parse_dom REXML::Document.new(@test_data), log, { :key=>'s3_key_12345' }
 
       shp.reload
 
@@ -338,16 +362,23 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(mail.subject).to eq 'Lumber GTN ASN Parser Errors: 201611221551'
       expect(mail.body).to include ERB::Util.html_escape("Errors were encountered while parsing ASN file for 201611221551.<br><br>Shipment did not contain a container TEMU3877030. A container record was created.<br>LineItems in this file are missing PONumber and LineItemNumber values necessary to connect to shipment lines.<br>Shipment did not contain a container TEMU3877031. A container record was created.<br>Shipment did not contain a manifest line for PO 4500173884, line 3. A manifest line record was created.".html_safe)
       expect(mail.attachments.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[0].message).to eq "Shipment did not contain a container TEMU3877030. A container record was created."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[1].message).to eq "LineItems in this file are missing PONumber and LineItemNumber values necessary to connect to shipment lines."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[2].message).to eq "Shipment did not contain a container TEMU3877031. A container record was created."
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[3].message).to eq "Shipment did not contain a manifest line for PO 4500173884, line 3. A manifest line record was created."
     end
 
     it "skips documents that are older than the previously processed file" do
       shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
 
       expect(subject).not_to receive(:update_shipment)
-      subject.parse_dom REXML::Document.new(@test_data), 's3_key_12345'
+      subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
 
       shp.reload
       expect(shp.entity_snapshots.length).to eq 0
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment not updated: file contained outdated info."
     end
   end
 

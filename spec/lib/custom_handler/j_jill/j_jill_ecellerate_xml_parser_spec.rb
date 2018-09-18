@@ -13,8 +13,10 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
       @ol1 = @ord.order_lines.create!(product_id:@prod.id,quantity:100,sku:'21378072')
       @ord.order_lines.create!(product_id:@prod.id,quantity:100,sku:'21378058')
     end
+    let (:log) { InboundFile.new }
+
     it "should create shipment" do
-      expect {described_class.parse_dom @dom, @u}.to change(Shipment,:count).from(0).to(1)
+      expect {described_class.parse_dom @dom, log}.to change(Shipment,:count).from(0).to(1)
       s = Shipment.first
       expect(s.importer).to eq @jill
       expect(s.reference).to eq "JJILL-20140618039566"
@@ -45,30 +47,56 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
       expect(l4.line_number).to eq 4
 
       expect(s.entity_snapshots.count).to eq 1
+
+      expect(log.company).to eq @jill
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "20140618039566"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
+      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
     end
     it "should update existing lines" do
-      described_class.parse_dom @dom, @u
+      described_class.parse_dom @dom, InboundFile.new
       s = Shipment.first
       expect(s.shipment_lines.inject(0) {|x,ln| x+ln.quantity }).to_not eq 4
       REXML::XPath.each(@dom.root,'//QuantityShipped') {|el| 
         el.text = 1
       }
-      described_class.parse_dom @dom, @u
+      described_class.parse_dom @dom, log
       s.reload
       expect(s.shipment_lines.count).to eq 4
       expect(s.shipment_lines.inject(0) {|x,ln| x+ln.quantity }).to eq 4
     end
+
+    it "should fail on shipment line mismatch" do
+      described_class.parse_dom @dom, InboundFile.new
+
+      sl = ShipmentLine.first
+      sl.update_attribute(:line_number, 666)
+
+      expect {described_class.parse_dom @dom, log}.to raise_error "Shipment Line with ID #{sl.id} had line number 666 instead of expected line number 1"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Shipment Line with ID #{sl.id} had line number 666 instead of expected line number 1"
+    end
+
     it "should fail on missing order line" do
       @ol1.destroy
-      expect {described_class.parse_dom @dom, @u}.to raise_error "Order 7800374 does not have SKU 21378072"
+      expect {described_class.parse_dom @dom, log}.to raise_error "Order 7800374 does not have SKU 21378072"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order 7800374 does not have SKU 21378072"
     end
+
+    it "should fail on missing order" do
+      @ord.destroy
+      expect {described_class.parse_dom @dom, log}.to raise_error "Order 7800374 not found"
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order 7800374 not found"
+    end
+
     it "should skip file that has been more recently exported" do
       #destroying the order line would cause the file to raise an exception if it wasn't skipped,
       #so completing this without an error means we're getting the expected behavior
       @ol1.destroy
       Factory(:shipment,reference:'JJILL-20140618039566',last_exported_from_source:1.minute.ago,importer_id:@jill.id)
       REXML::XPath.first(@dom.root,'//TransactionDateTime').text= '2014-07-10T12:22:01.00-05:00'
-      expect {described_class.parse_dom @dom, @u}.to_not raise_error
+      expect {described_class.parse_dom @dom, log}.to_not raise_error
+
+      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment not updated: file contained outdated info."
     end
   end
 end
