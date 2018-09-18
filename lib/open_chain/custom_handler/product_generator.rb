@@ -19,7 +19,7 @@ module OpenChain
     class ProductGenerator
       include OpenChain::FtpFileSupport
 
-      attr_reader :row_count, :custom_where
+      attr_reader :row_count, :custom_where, :synced_product_ids
 
       def initialize(opts={})
         @custom_where = opts[:where]
@@ -52,6 +52,8 @@ module OpenChain
 
       def sync
         @row_count = 0
+        reset_synced_product_ids
+
         has_fingerprint = self.respond_to? :trim_fingerprint
         synced_products = {}
         rt = Product.connection.execute query
@@ -110,16 +112,51 @@ module OpenChain
 
       def write_sync_records synced_products
         has_fingerprint = self.respond_to? :trim_fingerprint
-        synced_products.keys.in_groups_of(100,false) do |uids|
+
+        now = Time.zone.now
+        confirmed_at = auto_confirm? ? (now + 1.minute) : nil
+        code = sync_code
+
+        synced_products.keys.in_groups_of(100,false) do |product_ids|
           Product.transaction do
-            ActiveRecord::Base.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{uids.join(",")}); "
-            inserts = uids.collect do |y|
-              fp = ActiveRecord::Base.sanitize synced_products[y]
-              "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? fp : 'null'})"
+            SyncRecord.where(trading_partner: sync_code, syncable_id: product_ids).delete_all
+            records = []
+            
+            product_ids.each do |id|
+              records << SyncRecord.new(syncable_type: "Product", syncable_id: id, trading_partner: code, sent_at: now, confirmed_at: confirmed_at, fingerprint: (has_fingerprint ? synced_products[id] : nil))
             end
-            ActiveRecord::Base.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner,fingerprint)
-            VALUES #{inserts.join(",")}; "
+
+            SyncRecord.import! records
+            add_synced_product_ids product_ids
           end
+        end
+      end
+
+      def reset_synced_product_ids
+        @synced_product_ids = []
+      end
+
+      def add_synced_product_ids ids
+        @synced_product_ids ||= []
+        @synced_product_ids.push *ids
+      end
+
+      def set_ftp_session_for_synced_products ftp_session
+        return nil unless self.respond_to? :sync_code
+
+        trading_partner = sync_code
+        Array.wrap(@synced_product_ids).in_groups_of(1000, false) do |ids|
+          Product.transaction do
+            SyncRecord.where(syncable_type: "Product", syncable_id: ids, trading_partner: trading_partner).update_all(ftp_session_id: ftp_session.id)
+          end
+        end
+      end
+
+      def ftp_file file, option_overrides = {}
+        super(file, option_overrides) do |session|
+          # It's technically possible that we get back a session that hasn't been saved, in which case, there's
+          # no id value to set for the products.  So just skip it.
+          set_ftp_session_for_synced_products(session) if session.persisted?
         end
       end
 
