@@ -1,6 +1,8 @@
 require 'open_chain/report'
 
 class ReportResultsController < ApplicationController
+  include DownloadS3ObjectSupport
+
   def set_page_title
     @page_title ||= 'Report'
   end
@@ -8,7 +10,9 @@ class ReportResultsController < ApplicationController
   def download
     r = ReportResult.find(params[:id])
     action_secure(r.can_view?(current_user),r,{:verb=>"download",:module_name=>"report",:lock_check=>false}) {
-      redirect_to r.secure_url
+      data = r.report_data
+      type = Mime::Type.lookup_by_extension(File.extname(data.original_filename.to_s)[1..-1]).to_s.presence
+      download_s3_object data.options[:bucket], data.path, disposition: "attachment", content_type: type
     }
   end
   
