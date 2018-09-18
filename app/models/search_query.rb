@@ -26,8 +26,12 @@ class SearchQuery
   #
   # opts paramter takes :per_page and :page values like `will_paginate`. NOTE: Target page starts with 1 to emulate will_paginate convention
   # See to_sql for full list of options
+  #
+  # By default, the search query will be run against a read replica...To force the query to utilize the primary, pass a use_replicate option value of false.
   def execute opts={}
-    rs = ActiveRecord::Base.connection.execute to_sql opts
+    opts = {use_replica: true}.merge opts
+
+    rs = execute_query(to_sql(opts), use_replica: opts[:use_replica])
     rows = []
     
     # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
@@ -66,19 +70,20 @@ class SearchQuery
   end
   
   #get the row count for the query
-  def count
+  def count use_replica: true
     # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
-    ActiveRecord::Base.connection.execute("#{to_sql(select_core_module_keys_only:true, disable_pagination: true)} LIMIT 1000").count
+    query = "#{to_sql(select_core_module_keys_only:true, disable_pagination: true)} LIMIT 1000"
+    execute_query(query, use_replica: use_replica).count
   end
 
   #get the count of the total number of unique primary keys for the top level module 
   #
   # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
   # If you're looking for a return value of `21` you should use the `count` method
-  def unique_parent_count
+  def unique_parent_count use_replica: true
     r = "SELECT COUNT(DISTINCT #{ordered_core_modules(select_parent_key_only:true)[0].table_name}.id) " +
       build_from(disable_join_optimization: true) + build_where
-    ActiveRecord::Base.connection.execute(r).first.first
+    execute_query(r, use_replica: use_replica).first.first
   end
 
   # get the SQL query that will be executed
@@ -95,6 +100,14 @@ class SearchQuery
   end
 
   private
+  def execute_query query, use_replica: true
+    if use_replica
+      distribute_reads { return ActiveRecord::Base.connection.execute query }
+    else
+      ActiveRecord::Base.connection.execute query
+    end
+  end
+
   def build_select opts
     r = "SELECT DISTINCT "
     flds = core_module_id_select_list opts

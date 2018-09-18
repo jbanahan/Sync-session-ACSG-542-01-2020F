@@ -183,21 +183,23 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user
-    # Clearance controller defines current_user method, we need to add in run_as handling here ourselves
-    user = super
-    if user
-      # Preload the user's groups - since their almost certainly going to be used for access control
-      # at some point in the request chain (use size sincce that forces the association to load, but will essentially
-      # be a no-op if they're already loaded).
-      user.groups.size
-      if user.run_as
-        @run_as_user = user
-        user = user.run_as
-        user.groups.size
+    distribute_reads do
+      # Clearance controller defines current_user method, we need to add in run_as handling here ourselves
+      user = super
+      if user
+        # Preload the user's groups - since their almost certainly going to be used for access control
+        # at some point in the request chain (use length sincce that forces the association to load, but will essentially
+        # be a no-op if they're already loaded).
+        user.groups.length
+        if user.run_as
+          @run_as_user = user
+          user = user.run_as
+          user.groups.length
+        end
       end
-    end
 
-    user
+      user
+    end
   end
 
   # If the current user is running as someone else, returns the REAL user behind the curtain.

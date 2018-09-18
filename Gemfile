@@ -100,6 +100,9 @@ gem 'fix_microsoft_links'
 # Provides bulk SQL import statements
 gem "activerecord-import"
 
+# Distribute database reads across replicas
+gem "distribute_reads", '~> 0.2'
+
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'

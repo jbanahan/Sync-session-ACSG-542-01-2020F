@@ -54,14 +54,16 @@ class QuickSearchController < ApplicationController
         r[:extra_fields][mf.uid] = mf.label
       end
 
-      if primary_search_clause
-        results = build_relations(cm, current_user, [primary_search_clause], primary_additional_core_modules).limit(10)
-        parse_query_results results, r, cm, current_user, uids, extra_uids
-      end
+      distribute_reads do 
+        if primary_search_clause
+          results = build_relations(cm, current_user, [primary_search_clause], primary_additional_core_modules).limit(10)
+          parse_query_results results, r, cm, current_user, uids, extra_uids
+        end
 
-      if r[:vals].length < 10 && or_clause_array.length > 0
-        results = build_relations(cm, current_user, [or_clause_array], secondary_additional_core_modules, r[:vals]).limit(10 - r[:vals].length)
-        parse_query_results results, r, cm, current_user, uids, extra_uids
+        if r[:vals].length < 10 && or_clause_array.length > 0
+          results = build_relations(cm, current_user, [or_clause_array], secondary_additional_core_modules, r[:vals]).limit(10 - r[:vals].length)
+          parse_query_results results, r, cm, current_user, uids, extra_uids
+        end
       end
       
     end

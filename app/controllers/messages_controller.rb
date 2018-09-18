@@ -73,10 +73,12 @@ class MessagesController < ApplicationController
   end
 
   def message_count
-    if params[:user_id]
-      render :json => Message.unread_message_count(params[:user_id]) 
-    else
-      error_redirect "User ID is required."
+    distribute_reads do 
+      if params[:user_id]
+        render :json => Message.unread_message_count(params[:user_id]) 
+      else
+        error_redirect "User ID is required."
+      end
     end
   end
 

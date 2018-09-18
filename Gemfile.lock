@@ -133,6 +133,8 @@ GEM
       activerecord (>= 3.0, < 5.3)
       delayed_job (>= 3.0, < 5)
     diff-lcs (1.3)
+    distribute_reads (0.2.3)
+      makara
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
     email_validator (1.6.0)
@@ -206,6 +208,8 @@ GEM
     mail (2.5.5)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
+    makara (0.4.0)
+      activerecord (>= 3.0.0)
     memoist (0.16.0)
     mime-types (1.25.1)
     mimemagic (0.3.0)
@@ -424,6 +428,7 @@ DEPENDENCIES
   database_cleaner
   delayed_job (= 4.1.5)
   delayed_job_active_record (= 4.1.3)
+  distribute_reads (~> 0.2)
   email_validator (~> 1.6.0)
   exception_notification (= 4.0.0)
   execjs (= 2.7.0)

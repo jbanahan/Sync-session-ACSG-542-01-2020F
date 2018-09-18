@@ -284,6 +284,16 @@ describe SearchQuery do
         expect(r[1][:result][2]).to eq(c[5].country.iso_code)
       end
     end
+
+    it "distributes reads by default" do
+      expect(@sq).to receive(:distribute_reads).and_yield
+      @sq.execute
+    end
+
+    it "does not distribute reads if instructed" do
+      expect(@sq).not_to receive(:distribute_reads)
+      @sq.execute use_replica: false
+    end
   end
 
   describe "count" do
@@ -297,6 +307,16 @@ describe SearchQuery do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>11)
       expect(@sq.count).to eq(2)
     end
+
+    it "distributes reads by default" do
+      expect(@sq).to receive(:distribute_reads).and_yield
+      @sq.count
+    end
+
+    it "does not distribute reads if instructed" do
+      expect(@sq).not_to receive(:distribute_reads)
+      @sq.count use_replica: false
+    end
   end
   describe "result_keys" do
     it "should return unique key list for multi level query" do
@@ -306,6 +326,16 @@ describe SearchQuery do
       keys = @sq.result_keys
       expect(keys).to eq([@p2.id,@p1.id])
     end
+
+    it "distributes reads by default" do
+      expect(@sq).to receive(:distribute_reads).and_yield
+      @sq.result_keys
+    end
+
+    it "does not distribute reads if instructed" do
+      expect(@sq).not_to receive(:distribute_reads)
+      @sq.result_keys use_replica: false
+    end
   end
   describe "unique_parent_count" do
     it "should return parent count when there are details" do
@@ -313,6 +343,16 @@ describe SearchQuery do
       2.times {|i| Factory(:classification,:product=>@p1)}
       expect(@sq.count).to eq(3) #confirming we're setup properly
       expect(@sq.unique_parent_count).to eq(2) #the real test
+    end
+
+    it "distributes reads by default" do
+      expect(@sq).to receive(:distribute_reads).and_yield
+      @sq.unique_parent_count
+    end
+
+    it "does not distribute reads if instructed" do
+      expect(@sq).not_to receive(:distribute_reads)
+      @sq.unique_parent_count use_replica: false
     end
   end
 end
