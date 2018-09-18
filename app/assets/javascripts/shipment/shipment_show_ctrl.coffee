@@ -174,7 +174,15 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     data[attr_name] = [line]
     $scope.saveShipment data
 
-  saveShipmentLine = (shipment,line) -> saveLine(shipment.id, line, 'lines')
+  ###*
+  # shpln_container_id and shpln_container_number must be purged from the request to allow a different container
+  # to be selected.  If that's not done, the selected container value (shpln_container_uid) is ignored.
+  ###
+  saveShipmentLine = (shipment,line) ->
+    delete line.shpln_container_id
+    delete line.shpln_container_number
+    saveLine(shipment.id, line, 'lines')
+
   saveBookingLine = (shipment,line) -> saveLine(shipment.id, line, 'booking_lines')
 
   $scope.saveShipmentLine = (shipment,line) ->
@@ -197,7 +205,7 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       saveBookingLine(shipment,line).then ->
         $scope.loadBookingLines($scope.shp)
 
-  $scope.deleteAllBookingLines = (shipment) -> 
+  $scope.deleteAllBookingLines = (shipment) ->
     if window.confirm("Are you sure you want to delete all booking lines from this shipment?")
       for line in shipment.booking_lines
         line._destroy = 'true'
