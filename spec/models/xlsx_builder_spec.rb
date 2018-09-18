@@ -107,6 +107,13 @@ describe XlsxBuilder do
         expect(reader.merged_cell_ranges(sheet)).to eq([{row: 0, cols: (0..1)}, {row: 0, cols: (2..3)}])
       end
     end
+
+    it "forces strings that might use numeric constant 'e' as strings" do
+      vals = ["1e2", "624e1", "e", "1e", "1e12345"]
+      subject.add_body_row sheet, vals
+
+      expect(reader.raw_data(sheet)).to eq [vals]
+    end
   end
 
   describe "add_header_row" do

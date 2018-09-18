@@ -117,6 +117,9 @@ class CsvBuilder
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
     b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
+    # This tests that string values with e are always handled as strings, not numerics
+    # The e testing isn't really applicable to csv, but I want to keep the demos the same
+    b.add_body_row sheet, ["63002E34", "E1", "6e3", "e"]
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet

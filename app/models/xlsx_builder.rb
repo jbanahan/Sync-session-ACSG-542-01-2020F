@@ -198,6 +198,8 @@ class XlsxBuilder
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
+    # This tests that string values with e are always handled as strings, not numerics
+    b.add_body_row sheet, ["63002E34", "E1", "6e3", "e"]
     b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
@@ -217,7 +219,8 @@ class XlsxBuilder
       default_styles = []
       row = []
       row_data.each_with_index do |data, index|
-        if data.is_a?(String) && data =~ /\A[0-9]*(\.[0-9]+)?\z/
+        # For some reason, Excel will identify a string like 1234e12 as 1234 e^12...dumb.  Handle that and tell axlsx to type it as a string instead.
+        if data.is_a?(String) && (data =~ /\A[0-9]*(\.[0-9]+)?\z/ || data =~ /\A[0-9]+e[0-9]+\z/i)
           types[index] = :string
         elsif data.is_a?(Hash) && data[:type] == :hyperlink
           hyperlinks[index] = data

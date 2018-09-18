@@ -195,6 +195,9 @@ class XlsBuilder
     b.add_body_row sheet, [nil, "Now is the time for all good men to come to the aid of their country...this is a really long message."]
     # This tests the min width setting
     b.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil, "Y"]
+    # This tests that string values with e are always handled as strings, not numerics
+    # The spreadsheet gem handles this internally, unlike axlsx (where we have to deal with it)
+    b.add_body_row sheet, ["63002E34", "E1", "6e3", "e"]
     b.add_image sheet, "spec/fixtures/files/attorney.png", 150, 144, 4, 2, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
