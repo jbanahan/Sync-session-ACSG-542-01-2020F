@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
   end
 
   def self.parse_file xml, log, opts = {}
-    self.new.parse xml, log, opts
+    self.new.parse_file xml, log, opts
   end
 
   def parse_file xml, log, opts
