@@ -531,6 +531,14 @@ module OpenChain; module EdiParserSupport
     end
 
     def parse raw_data, opts={}
+      # For the time being, we can't really handle serializing log objects for Edi Parsers, it results in a serialization error
+      # ..so we're going to strip them from the opts
+      # TODO: Figure out how to get log objects to EDI Parsers
+
+      # I'm removing the log, so the inbound file is actually recorded, rather than skipped.  It's just that the actual
+      # parsers themselves will not have access to the log file.
+      opts.delete :log
+
       # What we want to do is only delay processing if there's more than one transaction.  Part of the reasoning
       # for this is that sometimes we get really large EDI transactions in a file and the system has trouble serializing those transactions.
       # Those files have never come multiple transactions to a file, so we can avoid the serialization issue just by processing them without

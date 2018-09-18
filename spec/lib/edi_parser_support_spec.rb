@@ -526,6 +526,16 @@ describe OpenChain::EdiParserSupport do
 
       subject.class.parse(edi_data, key: "value", no_delay: true)
     end
+
+    it "removes log from opts before processing" do
+      allow(subject.class).to receive(:delay).and_return subject.class
+
+      expect(subject.class).to receive(:process_transaction).exactly(2).times do |transaction, opts|
+        expect(opts[:log]).to be_nil
+      end
+
+      subject.class.parse(edi_data, key: "value", log: InboundFile.new )
+    end
   end
 
   describe "process_transaction" do
