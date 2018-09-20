@@ -1,3 +1,5 @@
+require 'base64'
+require 'digest'
 require 'dalli-elasticache'
 require 'open_chain/test_extensions'
 require 'open_chain/cache_wrapper'
@@ -50,11 +52,16 @@ class CacheWrapper
       server = Array.wrap(settings.delete "server")
     end
 
-    settings["namespace"] = memcache_namespace
+    settings["namespace"] = namespace_hash(memcache_namespace)
     settings["compress"] = true
     settings = settings.symbolize_keys
 
     [server, settings]
+  end
+
+  # This method just exists as some sort of means (if needed) to validate if this instance is using a given namespace hash.
+  def self.namespace_hash_matches? hash
+    Digest::SHA256.hexdigest(memcache_namespace).start_with?(Base64.decode64(hash))
   end
 
   def self.memcache_namespace
@@ -71,6 +78,15 @@ class CacheWrapper
     "#{db_host}-#{db_name}-#{code_version}"
   end
   private_class_method :memcache_namespace
+
+  def self.namespace_hash namespace
+    # I'm using this hash as a way to retain the descriptive and uniqueness of the db-host/port/code_version from the namespace, but
+    # then squash the size considerably while still maintaining virtually all the uniqueness of it.
+    sha = Digest::SHA256.hexdigest(namespace)
+    # We can squeeze this a little more by base64 encoding it too, stripping any trailing newlines and ===
+    Base64.encode64(sha[0, 16]).gsub(/=*\n/, "")
+  end
+  private_class_method :namespace_hash
 
   def self.ensure_memcache_access
     client = get_production_client
