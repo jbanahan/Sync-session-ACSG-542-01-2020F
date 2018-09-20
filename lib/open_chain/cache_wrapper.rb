@@ -1,6 +1,8 @@
 require 'dalli-elasticache'
 require 'open_chain/test_extensions'
 require 'open_chain/cache_wrapper'
+require 'open_chain/database_utils'
+require 'open_chain/git'
 
 class CacheWrapper
 
@@ -60,13 +62,12 @@ class CacheWrapper
     # name and code version as part of our namespace calculation
 
     # We'll just use the first hostname from the database config as the database name
-    database_configuration = Rails.configuration.database_configuration[Rails.env].presence || {}
-    db_host = database_configuration["host"].to_s.split(".")[0].presence || "NOHOST"
-    if database_configuration["port"]
-      db_host += ("-" + database_configuration["port"].to_s)
-    end
-    db_name = database_configuration["database"].to_s.presence || "NONAME"
-    code_version = File.exist?('config/version.txt') ? IO.read('config/version.txt').gsub(/\r?\n/, " ").strip : "NOVERSION"
+    db_config = OpenChain::DatabaseUtils.primary_database_configuration
+    db_host = "#{db_config[:host]}-#{db_config[:port]}"
+    db_name = db_config[:database]
+    code_version = OpenChain::Git.current_tag_name(allow_branch_name: true)
+
+    raise "Invalid memcache namespace configuration DB Host #{db_host} / DB Name #{db_name} / Version #{code_version}" if db_host.blank? || db_name.blank? || code_version.blank?
     "#{db_host}-#{db_name}-#{code_version}"
   end
   private_class_method :memcache_namespace

@@ -40,6 +40,7 @@
 #
 
 require "open_chain/git"
+require 'open_chain/database_utils'
 
 class MasterSetup < ActiveRecord::Base
   cattr_accessor :current
@@ -206,7 +207,7 @@ class MasterSetup < ActiveRecord::Base
   # Returns the database host from the config file.  If machine_name_only is specified, only returns the
   # first address segment in the URL (.ie machine.segment.domain.com -> machine)
   def self.database_host machine_name_only: false
-    host = db_connection_config[:host].to_s
+    host = OpenChain::DatabaseUtils.primary_database_configuration[:host].to_s
 
     trim_to = -1
     if machine_name_only
@@ -222,14 +223,8 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.database_name
-    db_connection_config[:database].to_s
+    OpenChain::DatabaseUtils.primary_database_configuration[:database].to_s
   end
-
-  def self.db_connection_config
-    ActiveRecord::Base.connection_config
-  end
-  private_class_method :db_connection_config
-
 
   def production?
     self.custom_feature?('Production')

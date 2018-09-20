@@ -294,7 +294,7 @@ describe MasterSetup do
 
   describe "database_host" do 
     before :each do 
-      allow(described_class).to receive(:db_connection_config).and_return database_config
+      allow(OpenChain::DatabaseUtils).to receive(:primary_database_configuration).and_return database_config
     end
 
     it "returns host db config value" do
@@ -308,7 +308,7 @@ describe MasterSetup do
 
   describe "database_name" do
     before :each do 
-      allow(described_class).to receive(:db_connection_config).and_return database_config
+      allow(OpenChain::DatabaseUtils).to receive(:primary_database_configuration).and_return database_config
     end
 
     it "returns database config value" do
