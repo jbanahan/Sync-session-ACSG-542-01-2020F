@@ -95,10 +95,13 @@ gem 'email_validator', '~> 1.6.0'
 gem 'REX12', '~> 0.2'
 
 # Fix for links not working in the Microsoft Suite
-gem 'fix_microsoft_links'
+gem 'fix_microsoft_links', '~> 0.1'
 
 # Provides bulk SQL import statements
-gem "activerecord-import"
+gem "activerecord-import", '~> 0.25'
+
+# Seemlessly retries deadlocks / lock waits
+gem 'transaction_retry', '~> 1.0'
 
 # Distribute database reads across replicas
 gem "distribute_reads", '~> 0.2'
