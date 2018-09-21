@@ -56,4 +56,64 @@ describe SpecialTariffCrossReference do
       expect(result.size).to eq 0
     end
   end
+
+  describe "parse" do
+    subject { described_class }
+
+    let (:data_row) {
+      ["1234567890", "0987654321", "CO", "2018-09-21", "2018-09-22"]
+    }
+
+    let (:csv) {
+      data_row.to_csv
+    }
+
+    let (:io) {
+      StringIO.new csv
+    }
+
+    it "loads tariff data" do
+      expect { subject.parse io }.to change { SpecialTariffCrossReference.count }.from(0).to(1)
+
+      ref = SpecialTariffCrossReference.first
+      expect(ref.hts_number).to eq "1234567890"
+      expect(ref.special_hts_number).to eq "0987654321"
+      expect(ref.country_origin_iso).to eq "CO"
+      expect(ref.effective_date_start).to eq Date.new(2018, 9, 21)
+      expect(ref.effective_date_end).to eq Date.new(2018, 9, 22)
+    end
+
+    it "updates an existing record" do
+      ref = SpecialTariffCrossReference.create! hts_number: "1234567890", country_origin_iso: "CO", effective_date_start: Date.new(2018, 9, 21)
+      subject.parse io
+
+      ref.reload
+
+      expect(ref.hts_number).to eq "1234567890"
+      expect(ref.special_hts_number).to eq "0987654321"
+      expect(ref.country_origin_iso).to eq "CO"
+      expect(ref.effective_date_start).to eq Date.new(2018, 9, 21)
+      expect(ref.effective_date_end).to eq Date.new(2018, 9, 22)
+    end
+
+    it "skips lines with missing hts" do
+      data_row[0] = ""
+      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+    end
+
+    it "skips lines with invalid hts" do
+      data_row[0] = "invalid"
+      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+    end
+
+    it "skips lines with missing special hts" do
+      data_row[1] = ""
+      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+    end
+
+    it "skips lines with invalid special hts" do
+      data_row[1] = "invalid"
+      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+    end
+  end
 end

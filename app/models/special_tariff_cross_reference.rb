@@ -41,6 +41,30 @@ class SpecialTariffCrossReference < ActiveRecord::Base
     results
   end
 
+  # This is primarily meant to be run from the console to load csv tariff files formatted like
+  # hts, special hts, country of origin iso, start date, end date
+  def self.parse io, opts = {}
+    CSV.parse(io, (opts[:csv_opts].presence || {})) do |row|
+      hts_number = row[0].to_s.gsub(".", "")
+      special_hts_number = row[1].to_s.gsub(".", "")
+      next unless valid_hts_number?(hts_number) && valid_hts_number?(special_hts_number)
+
+      coo = row[2].to_s.strip.presence || nil
+      effective_date_start = Time.zone.parse(row[3]).to_date
+      effective_date_end = Time.zone.parse(row[4]).to_date rescue nil
+
+      ref = SpecialTariffCrossReference.where(hts_number: hts_number, country_origin_iso: coo, effective_date_start: effective_date_start).first_or_initialize
+      ref.special_hts_number = special_hts_number
+      ref.effective_date_end = effective_date_end
+      ref.save!
+    end
+  end
+
+  def self.valid_hts_number? hts
+    !hts.blank? && (hts.to_s =~ /\A\d+\z/)
+  end
+  private_class_method :valid_hts_number?
+
   class SpecialTariffHash
     extend Forwardable
 
