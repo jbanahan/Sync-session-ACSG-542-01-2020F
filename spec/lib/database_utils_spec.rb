@@ -22,6 +22,16 @@ describe OpenChain::DatabaseUtils do
       e = ActiveRecord::StatementInvalid.new "#{deadlock.class.name}: #{deadlock.message}"
       expect(subject.deadlock_error? e).to eq true
     end
+
+    it "unwraps exception cause and examines that error instead" do
+      e = ActiveRecord::StatementInvalid.new "Derrr..something broke"
+      allow(e).to receive(:cause).and_return deadlock
+      expect(subject.deadlock_error? e).to eq true
+    end
+
+    it "identifies ActiveRecord::TransactionIsolationConflict as a deadlock" do
+      expect(subject.deadlock_error? ActiveRecord::TransactionIsolationConflict.new("Error")).to eq true
+    end
   end
 
   describe "primary_database_configuration" do

@@ -1305,9 +1305,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "reraises deadlock_errors" do
-      error = Mysql2::Error.new "error"
+      error = ActiveRecord::TransactionIsolationConflict.new "Deadlock, Shmedlock"
       expect(subject).to receive(:preprocess).and_raise error
-      expect(OpenChain::DatabaseUtils).to receive(:deadlock_error?).with(error).and_return true
       expect { subject.process_entry @e }.to raise_error error
     end
 

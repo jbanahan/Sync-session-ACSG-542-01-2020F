@@ -1,9 +1,16 @@
 module OpenChain; class DatabaseUtils
 
   def self.deadlock_error? error
-    # Stupid ActiveRecord wraps basically every database exception sent as part of a query in a StatementInvalid error,
-    # Which means we have to tease the underlying exception out of the error message.  REALLY wish they'd provide a way 
-    # to get at the underlying error from the database driver.
+    # We can return immediately if we got this error, it's the transaction_isolation gems
+    # indicator for a deadlock
+    return true if error.is_a?(ActiveRecord::TransactionIsolationConflict)
+
+    # Stupid ActiveRecord returns basically every single error from your database as a StatementInvalid error, 
+    # you can get at the underlying error through the Exception#cause method.  Extract that if there is one.
+    if error.is_a?(ActiveRecord::StatementInvalid)
+      error = error.cause unless error.cause.nil?
+    end
+
     if error.is_a?(ActiveRecord::StatementInvalid)
       case error.message
       when /Mysql2::Error/
