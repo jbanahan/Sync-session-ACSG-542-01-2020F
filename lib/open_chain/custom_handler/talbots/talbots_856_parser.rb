@@ -5,7 +5,7 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::EdiParserSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_talbots_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_talbots_856"]

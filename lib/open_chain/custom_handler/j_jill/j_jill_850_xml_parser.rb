@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::JJill::JJillSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
   SHIP_VIA_CODES ||= {'2'=>'Air Collect','3'=>'Boat','4'=>'Air Prepaid','5'=>'Air Sea Diff'}

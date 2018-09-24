@@ -6,20 +6,26 @@ require 'open_chain/ftp_file_support'
 # and sends all those files back to an ftp folder - where the other SFC PO handler will 
 # eventually process them.
 module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrewsPoZipHandler
-  extend OpenChain::IntegrationClientParser
-  extend OpenChain::FtpFileSupport
+  include OpenChain::IntegrationClientParser
+  include OpenChain::FtpFileSupport
 
-  def self.process_from_s3 bucket, key, opts = {}
-    OpenChain::S3.download_to_tempfile(bucket, key) do |tempfile|
-      process_file tempfile
-    end
+  def self.retrieve_file_data bucket, key, opts = {}
+    io = StringIO.new
+    io.binmode
+    OpenChain::S3.get_data(bucket, key, io)
+    io.rewind
+    Zip::InputStream.open(io)
   end
 
-  def self.process_file file
-    Zip::File.open(file.path) do |zip|
-      zip.each do |zip_entry|
-        filename = File.basename(zip_entry.name)
-        next unless File.extname(zip_entry.name).to_s.upcase == ".XLS"
+  def self.parse_file zip_stream, log, opts = {}
+    self.new.parse_file zip_stream, log, opts
+  end
+
+  def parse_file zip_stream, log, opts = {}
+    while(zip_entry = zip_stream.get_next_entry)
+      filename = File.basename(zip_entry.name)
+      if File.extname(zip_entry.name).to_s.upcase == ".XLS"
+        log.add_info_message("Extracted file #{filename}")
 
         Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |t|
           t.binmode
@@ -28,14 +34,10 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
 
           t.rewind
           Attachment.add_original_filename_method(t, filename)
-          send_file(t)
+          ftp_file t, connect_vfitrack_net("_shoes_po")
         end
       end
     end
-  end
-
-  def self.send_file file
-    ftp_file file, connect_vfitrack_net("_shoes_po")
   end
 
 end; end; end; end

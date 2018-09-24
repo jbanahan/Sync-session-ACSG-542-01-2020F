@@ -1,7 +1,7 @@
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewillAccountingReport5001
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/arprfsub", "www-vfitrack-net/arprfsub"]

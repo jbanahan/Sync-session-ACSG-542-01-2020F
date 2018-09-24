@@ -4,7 +4,7 @@ require 'open_chain/edi_parser_support'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Burlington; class Burlington856Parser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::EdiParserSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::DelayedJobExtensions

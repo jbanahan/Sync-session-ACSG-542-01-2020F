@@ -6,12 +6,12 @@ module OpenChain
     class AckFileHandler
       include IntegrationClientParser
 
-      def parse file_contents, opts = {}
+      def self.parse file_contents, opts = {}
         raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
         
 
-        process_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
+        self.new.process_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
       end
       
       def process_ack_file file_content, file_name, sync_code, username, opts={}

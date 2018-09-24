@@ -223,9 +223,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should send data to Ack Handler if SAP enabled and path containers _from_sap and file starts with zym_ack" do
         expect(master_setup).to receive(:custom_features_list).and_return ['Ann SAP']
 
-        p = double("parser")
-        expect_any_instance_of(OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler).to receive(:delay).and_return p
-        expect(p).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'ANN-ZYM'}
+        expect(OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler).to receive(:delay).and_return OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler
+        expect(OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'ANN-ZYM'}
         cmd = {'request_type'=>'remote_file','original_path'=>'/_from_sap/zym_ack.a.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
@@ -253,10 +252,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(master_setup).to receive(:custom_features_list).and_return ['Eddie Bauer Feeds']
       end
       it "should send ack files to ack parser for _eb_ftz_ack" do
-        expect_any_instance_of(OpenChain::CustomHandler::AckFileHandler).to receive(:delay) do |instance|
-          expect(instance).to receive(:process_from_s3).with "bucket", '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
-          instance
-        end
+        expect(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return OpenChain::CustomHandler::AckFileHandler
+        expect(OpenChain::CustomHandler::AckFileHandler).to receive(:process_from_s3).with "bucket", '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
         cmd = {'request_type'=>'remote_file','original_path'=>'/_eb_ftz_ack/file.txt','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
@@ -354,9 +351,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should handle ack files" do
         expect(master_setup).to receive(:custom_features_list).and_return ['MSL+']
 
-        p = double("parser")
-        expect_any_instance_of(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return p
-        expect(p).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'MSLE',:username => ['dlombardi','mgrapp','gtung']}
+        expect(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return OpenChain::CustomHandler::AckFileHandler
+        expect(OpenChain::CustomHandler::AckFileHandler).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'MSLE',:username => ['dlombardi','mgrapp','gtung']}
         cmd = {'request_type'=>'remote_file','original_path'=>'/_from_msl/a-ack.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
@@ -383,9 +379,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
     it 'should process CSM Acknowledgements' do
       expect(master_setup).to receive(:custom_features_list).and_return ['CSM Sync']
-      p = double("parser")
-      expect_any_instance_of(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345', {sync_code: 'csm_product', username: ['rbjork', 'aditaran']}
+      expect(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return OpenChain::CustomHandler::AckFileHandler
+      expect(OpenChain::CustomHandler::AckFileHandler).to receive(:process_from_s3).with "bucket", '12345', {sync_code: 'csm_product', username: ['rbjork', 'aditaran']}
       cmd = {'request_type'=>'remote_file','original_path'=>'_from_csm/ACK-file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
@@ -460,41 +455,36 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
     it "should send to VF 850 Parser" do
-      p = double("parser")
-      expect_any_instance_of(OpenChain::CustomHandler::Polo::Polo850VandegriftParser).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      expect(OpenChain::CustomHandler::Polo::Polo850VandegriftParser).to receive(:delay).and_return OpenChain::CustomHandler::Polo::Polo850VandegriftParser
+      expect(OpenChain::CustomHandler::Polo::Polo850VandegriftParser).to receive(:process_from_s3).with "bucket", '12345'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_polo_850/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it "should send efocus ack files to ack handler" do
       expect(master_setup).to receive(:custom_features_list).and_return ['e-Focus Products']
-      p = double("parser")
-      expect_any_instance_of(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, :username => ['rbjork']}
+      expect(OpenChain::CustomHandler::AckFileHandler).to receive(:delay).and_return OpenChain::CustomHandler::AckFileHandler
+      expect(OpenChain::CustomHandler::AckFileHandler).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, :username => ['rbjork']}
       cmd = {'request_type'=>'remote_file','original_path'=>'/_efocus_ack/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it "should send Shoes For Crews PO files to handler" do
-      p = double("parser")
-      expect_any_instance_of(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler).to receive(:delay).and_return OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler
+      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler).to receive(:process_from_s3).with "bucket", '12345'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_shoes_po/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
     it "sends Shoes For Crews zip files to handler" do
-      p = double("parser")
-      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler).to receive(:delay).and_return OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler
+      expect(OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler).to receive(:process_from_s3).with "bucket", '12345'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_shoes_for_crews_po_zip/file.zip','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it "should send Tradecard 810 files to handler" do
-      p = double("parser")
-      expect_any_instance_of(OpenChain::CustomHandler::Polo::PoloTradecard810Parser).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser).to receive(:delay).and_return OpenChain::CustomHandler::Polo::PoloTradecard810Parser
+      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser).to receive(:process_from_s3).with "bucket", '12345'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_polo_tradecard_810/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
@@ -513,18 +503,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     it "handles Siemens .dat.pgp files" do
-      p = double("OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler")
-      expect_any_instance_of(OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345', original_filename: 'file.dat.pgp'
+      expect(OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler).to receive(:delay).and_return OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler
+      expect(OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler).to receive(:process_from_s3).with "bucket", '12345', original_filename: 'file.dat.pgp'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_siemens_decrypt/file.dat.pgp','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it 'handles kewill export files' do
       expect(master_setup).to receive(:custom_features_list).and_return ['Kewill Exports']
-      p = double("OpenChain::CustomHandler::KewillExportShipmentParser")
-      expect_any_instance_of(OpenChain::CustomHandler::KewillExportShipmentParser).to receive(:delay).and_return p
-      expect(p).to receive(:process_from_s3).with "bucket", '12345'
+      expect(OpenChain::CustomHandler::KewillExportShipmentParser).to receive(:delay).and_return OpenChain::CustomHandler::KewillExportShipmentParser
+      expect(OpenChain::CustomHandler::KewillExportShipmentParser).to receive(:process_from_s3).with "bucket", '12345'
       cmd = {'request_type'=>'remote_file','original_path'=>'/_kewill_exports/file.dat','s3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end

@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/under_armour/under_armour_business_logic'
 
 module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoXmlParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::UnderArmour::UnderArmourBusinessLogic
 

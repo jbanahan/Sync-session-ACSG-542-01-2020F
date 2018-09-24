@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_eddie_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_eddie_po"]

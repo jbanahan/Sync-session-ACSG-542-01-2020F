@@ -3,7 +3,7 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/edi_parser_support'
 
 module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::EdiParserSupport
 
   def self.integration_folder

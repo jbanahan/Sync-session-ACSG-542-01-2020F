@@ -2,7 +2,7 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/kewill_sql_proxy_client'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillStatementParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     # This parser is usable across multiple deployment instances so make sure the integration folder we're storing

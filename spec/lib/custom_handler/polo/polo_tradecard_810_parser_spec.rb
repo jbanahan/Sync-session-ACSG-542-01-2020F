@@ -1,9 +1,8 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Polo::PoloTradecard810Parser do
 
-  before :each do 
-    @xml = <<-XML
+  subject { described_class }
+  let (:xml) { 
+    xml = <<-XML
 <?xml version="1.0"?>
 <Invoices>
   <Invoice>
@@ -24,18 +23,18 @@ describe OpenChain::CustomHandler::Polo::PoloTradecard810Parser do
   </Invoice>
 </Invoices>
 XML
-  end
+  }
 
   describe "integration_folder" do
     it "uses the correct integration_folder" do
-      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.integration_folder).to eq ["www-vfitrack-net/_polo_tradecard_810", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810"]
+      expect(subject.integration_folder).to eq ["www-vfitrack-net/_polo_tradecard_810", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810"]
     end
   end
 
   describe "process_from_s3" do
     it "retrieves S3 data and parses it" do
-      expect(OpenChain::S3).to receive(:get_data).with('abc', '123').and_return @xml
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.process_from_s3 'abc', '123'
+      expect(OpenChain::S3).to receive(:get_data).with('abc', '123').and_return xml
+      subject.process_from_s3 'abc', '123'
 
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
@@ -49,7 +48,7 @@ XML
     it "parses tradecard 810 xml" do
       importer = Factory(:importer, system_code: "polo")
 
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse_file @xml, log
+      subject.parse_file xml, log
 
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
@@ -81,7 +80,7 @@ XML
       line = Factory(:commercial_invoice_line, :commercial_invoice => Factory(:commercial_invoice, :vendor_name=>"Tradecard", :invoice_number=>"9586/13"))
       existing_inv = line.commercial_invoice
 
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse_file @xml, log
+      subject.parse_file xml, log
 
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
@@ -91,18 +90,18 @@ XML
     end
 
     it "handles invalid dates without errors" do
-      @xml.gsub!("<InvoiceDate>20131216</InvoiceDate>", "<InvoiceDate>ABCD</InvoiceDate>")
+      xml.gsub!("<InvoiceDate>20131216</InvoiceDate>", "<InvoiceDate>ABCD</InvoiceDate>")
 
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse_file @xml, log
+      subject.parse_file xml, log
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
       expect(inv.invoice_date).to be_nil
     end
 
     it "handles invalid quantities with errors" do
-      @xml.gsub!("<Quantity>8</Quantity>", "<Quantity>ABC</Quantity>")
+      xml.gsub!("<Quantity>8</Quantity>", "<Quantity>ABC</Quantity>")
 
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse_file @xml, log
+      subject.parse_file xml, log
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
       expect(inv.commercial_invoice_lines.first.quantity).to eq BigDecimal.new("0")
@@ -113,7 +112,7 @@ XML
       cds = OpenChain::CustomHandler::Polo::PoloTradecard810Parser.prep_custom_definitions([:ord_invoiced, :ord_invoicing_system])
       o.update_custom_value! cds[:ord_invoicing_system], "Tradecard"
 
-      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse_file @xml, log
+      subject.parse_file xml, log
       expect(o.get_custom_value(cds[:ord_invoiced]).value).to be_truthy
     end
   end

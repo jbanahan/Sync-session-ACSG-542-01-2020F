@@ -2,12 +2,24 @@ require 'open_chain/ftp_file_support'
 require 'open_chain/s3'
 
 module OpenChain; module CustomHandler; module GpgDecryptPassthroughSupport
-  include OpenChain::IntegrationClientParser
   include OpenChain::FtpFileSupport
+  extend ActiveSupport::Concern
 
-  def process_from_s3 bucket, remote_path, original_filename: nil
-    filename = original_filename.presence || File.basename(remote_path)
-    OpenChain::S3.download_to_tempfile(bucket, remote_path, original_filename: filename) do |infile|
+  module ClassMethods
+    def parse_file data, log, opts = {}
+      self.new.parse_file(data, log, opts)
+    end
+  end
+
+  def parse_file data, log, opts = {}
+    bucket = opts[:bucket]
+    key = opts[:key]
+
+    log.error_and_raise "All invocations of this parser must include :bucket and :key options." if bucket.blank? || key.blank?
+
+    filename = opts[:original_filename].presence || File.basename(key)
+
+    OpenChain::S3.download_to_tempfile(bucket, key, original_filename: filename) do |infile|
       decrypt_file_to_tempfile(infile) do |decrypted|
         ftp_file(decrypted)
       end

@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generato
 
 module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerCommercialInvoiceParser
   include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_eddie_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_eddie_invoice"]

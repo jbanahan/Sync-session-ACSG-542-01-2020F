@@ -1,20 +1,27 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFileParser do
 
   describe "process_from_s3" do
+    subject { described_class }
+
     it "uses s3 to download file" do
-      file = instance_double(Tempfile)
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path').and_yield file
-      expect_any_instance_of(described_class).to receive(:process_file).with file, 'bucket', 'path', 1
-      described_class.process_from_s3 'bucket', 'path'
+      tempfile = instance_double(Tempfile)
+      expect(subject).to receive(:retrieve_file_data).with('bucket', 'path', {}).and_return tempfile
+      expect_any_instance_of(described_class).to receive(:process_file).with tempfile, "bucket", "path", 1
+      # This make sure the post processing is invoked too
+      expect(tempfile).to receive(:closed?).and_return false
+      expect(tempfile).to receive(:close!)
+
+      subject.process_from_s3 'bucket', 'path'
     end
 
     it "handles a reprocess, where attempt count passed in options" do
-      file = instance_double(Tempfile)
+      tempfile = instance_double(Tempfile)
       attempt_count = rand(95)
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path').and_yield file
-      expect_any_instance_of(described_class).to receive(:process_file).with file, 'bucket', 'path', attempt_count
+      expect(subject).to receive(:retrieve_file_data).with('bucket', 'path', {attempt_count: attempt_count}).and_return tempfile
+      expect_any_instance_of(described_class).to receive(:process_file).with tempfile, "bucket", "path", attempt_count
+      expect(tempfile).to receive(:closed?).and_return false
+      expect(tempfile).to receive(:close!)
+
       described_class.process_from_s3 'bucket', 'path', {attempt_count:attempt_count}
     end
   end
@@ -22,6 +29,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
   describe "process_file" do
     let (:zip_path) { "spec/fixtures/files/V2OOLU2100046990.zip"}
     let (:file) { File.open(zip_path, "rb")}
+    let (:inbound_file) { InboundFile.new }
+
+    before :each do 
+      allow(subject).to receive(:inbound_file).and_return inbound_file
+    end
 
     it "processes file with matching shipment" do
       shp = Factory(:shipment, master_bill_of_lading:'OU812', reference: '555')
@@ -31,6 +43,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
       expect(shp.attachments.length).to eq(1)
       expect(shp.attachments[0].attached_file_name).to eq('V2OU812.pdf')
       expect(shp.attachments[0].attachment_type).to eq('ODS-Forwarder Ocean Document Set')
+      expect(inbound_file).to have_identifier(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, "555")
     end
 
     it "processes file with matching shipment and existing ODS attachment with newer version" do
@@ -124,6 +137,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
       expect(mail.body).to include ERB::Util.html_escape("The attached zip file for master bill 'OOLU2100046991', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution.")
       expect(mail.attachments.length).to eq(1)
       expect(mail.attachments[0].filename).to eq('V3OOLU2100046991.zip')
+      # This test may fail if the error message for an invalid zip changes, but that's probably not going to happen
+      expect(inbound_file).to have_reject_message("Zip end of central directory signature not found")
     end
 
   end

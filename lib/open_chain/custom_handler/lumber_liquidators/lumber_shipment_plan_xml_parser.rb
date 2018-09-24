@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/xml_helper'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberShipmentPlanXmlParser
   include OpenChain::CustomHandler::XmlHelper
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.parse_file data, opts={}
     parse_dom REXML::Document.new(data), log, opts

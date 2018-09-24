@@ -193,19 +193,19 @@ module OpenChain
         OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "from_msl") && custom_features.include?('MSL+')
         if original_filename.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
+          OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
         else
           OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, s3_path, original_filename
         end
       elsif (parser_identifier == "csm_sync") && custom_features.include?('CSM Sync')
         OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "from_csm") && original_filename.upcase.start_with?("ACK") && custom_features.include?('CSM Sync')
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
       elsif (parser_identifier == "efocus_ack") && custom_features.include?("e-Focus Products")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
       elsif (parser_identifier == "from_sap") && custom_features.include?('Ann SAP')
         if original_filename.match /^zym_ack/
-          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, s3_path, sync_code: 'ANN-ZYM'
+          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'ANN-ZYM'
         else
           OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.delay.process_from_s3 bucket, s3_path
         end
@@ -216,17 +216,17 @@ module OpenChain
       elsif (parser_identifier == "footlocker_hts") && custom_features.include?("Foot Locker Parts")
         OpenChain::CustomHandler::FootLocker::FootLockerHtsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "polo_850")
-        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, s3_path
+        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "850") && custom_features.include?("RL 850")
         OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "shoes_for_crews_po_zip")
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "shoes_po")
-        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, s3_path
+        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "eddie_po") && custom_features.include?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "eb_ftz_ack") && custom_features.include?("Eddie Bauer Feeds")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, s3_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
       elsif (parser_identifier == "eddie_invoice") && custom_features.include?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lenox_product") && custom_features.include?('Lenox')
@@ -234,7 +234,7 @@ module OpenChain
       elsif (parser_identifier == "lenox_po") && custom_features.include?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "polo_tradecard_810")
-        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, s3_path
+        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "jjill_850") && custom_features.include?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ecellerate_shipment")
@@ -249,9 +249,9 @@ module OpenChain
         #prevent errors; don't do anything else
       elsif (parser_identifier == "siemens_decrypt") && original_filename.to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
-        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.new.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+        OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "kewill_exports") && custom_features.include?('Kewill Exports')
-        OpenChain::CustomHandler::KewillExportShipmentParser.new.delay.process_from_s3 bucket, s3_path
+        OpenChain::CustomHandler::KewillExportShipmentParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ua_po_xml") && custom_features.include?('Under Armour Feeds')
         OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ua_856_xml") && custom_features.include?('Under Armour Feeds')

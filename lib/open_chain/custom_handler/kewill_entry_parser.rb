@@ -4,7 +4,7 @@ require 'open_chain/alliance_imaging_client'
 require 'open_chain/fiscal_month_assigner'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   # If no hash value is present, the symbol value component represents the name of the 
   # date attribute that will be set, the datatype is assumed to be a datetime.

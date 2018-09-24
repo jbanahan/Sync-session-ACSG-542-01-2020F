@@ -4,22 +4,25 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
   subject do 
     Class.new do 
       include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
-    end.new
+    end
   end
 
-  describe "process_from_s3" do
+  describe "parse_file" do
 
-    before :each do
-      @gpg_helper = double("OpenChain::GPG")
-      allow(subject).to receive(:gpg_helper).and_return @gpg_helper
-    end
+    let (:log) { InboundFile.new }
+    let (:gpg_helper) { 
+      gpg = instance_double("OpenChain::GPG")
+      allow_any_instance_of(subject).to receive(:gpg_helper).and_return gpg
+      gpg
+    }
 
     it "downloads from S3, decrypts file, and yields it" do
       tempfile = double("Tempfile")
       allow(tempfile).to receive(:original_filename).and_return "file.txt.pgp"
       expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path/to/file.txt.pgp", original_filename: "file.txt.pgp").and_yield tempfile
 
-      expect(@gpg_helper).to receive(:decrypt_file) do |source, dest, passphrase|
+      expect(gpg_helper).to receive(:decrypt_file) do |source, dest, passphrase|
+        expect(dest).to be_a Tempfile
         expect(source).to eq tempfile
         # passphrase is nil unless overridden
         expect(passphrase).to be_nil
@@ -33,22 +36,49 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
 
       ftp_data = nil
       ftp_filename = nil
-      expect(subject).to receive(:ftp_file) do |f|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |inst, f|
         ftp_data = f.read
         ftp_filename = f.original_filename
       end
 
-      subject.process_from_s3 "bucket", "path/to/file.txt.pgp"
+      subject.parse_file(nil, log, {bucket: "bucket", key: "path/to/file.txt.pgp"})
       expect(ftp_data).to eq "Testing"
       expect(ftp_filename).to eq "file.txt"
+    end
+
+    it "uses original_filename if given for decrypted filename" do
+      tempfile = double("Tempfile")
+      allow(tempfile).to receive(:original_filename).and_return "file.txt.pgp"
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path/to/file.txt.pgp", original_filename: "given_file.txt.pgp").and_yield tempfile
+
+
+      expect(gpg_helper).to receive(:decrypt_file)
+      expect_any_instance_of(subject).to receive(:ftp_file)
+
+      subject.parse_file(nil, log, {bucket: "bucket", key: "path/to/file.txt.pgp", original_filename: "given_file.txt.pgp"})
+    end
+
+    it "errors if bucket is not provided" do
+      expect { subject.parse_file nil, log, {key: "test"} }.to raise_error LoggedParserFatalError, "All invocations of this parser must include :bucket and :key options."
+    end
+
+    it "errors if key is not provided" do
+      expect { subject.parse_file nil, log, {bucket: "test"} }.to raise_error LoggedParserFatalError, "All invocations of this parser must include :bucket and :key options."
     end
   end
 
   describe "decrypt_file_to_tempfile" do
-    before :each do
-      @gpg_helper = OpenChain::GPG.new 'spec/fixtures/files/vfitrack-passphraseless.gpg.key', 'spec/fixtures/files/vfitrack-passphraseless.gpg.private.key'
-      allow(subject).to receive(:gpg_helper).and_return @gpg_helper
-    end
+    subject { 
+      Class.new do 
+        include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
+      end.new
+    }
+
+    let! (:gpg_helper) { 
+      gpg = OpenChain::GPG.new 'spec/fixtures/files/vfitrack-passphraseless.gpg.key', 'spec/fixtures/files/vfitrack-passphraseless.gpg.private.key'
+      allow(subject).to receive(:gpg_helper).and_return gpg
+      gpg
+    }
 
     it "decrypts file" do
       file = File.open('spec/fixtures/files/passphraseless-encrypted.gpg', "rb")
@@ -76,8 +106,8 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
     end
 
     it "allows for overriding gpg_passphrase method to provide passphrase for encryption" do
-      @gpg_helper = OpenChain::GPG.new 'spec/fixtures/files/vfitrack.gpg.key', 'spec/fixtures/files/vfitrack.gpg.private.key'
-      allow(subject).to receive(:gpg_helper).and_return @gpg_helper
+      gpg = OpenChain::GPG.new 'spec/fixtures/files/vfitrack.gpg.key', 'spec/fixtures/files/vfitrack.gpg.private.key'
+      expect(subject).to receive(:gpg_helper).and_return gpg
       allow(subject).to receive(:gpg_passphrase).and_return 'passphrase'
 
       file = File.open('spec/fixtures/files/passphrase-encrypted.gpg', "rb")

@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 module OpenChain; module CustomHandler; module Hm; class HmI1Interface
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def initialize
      @cust = Company.where(alliance_customer_number: 'HENNE').first

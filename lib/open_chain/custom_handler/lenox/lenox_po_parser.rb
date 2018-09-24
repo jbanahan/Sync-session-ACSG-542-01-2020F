@@ -2,7 +2,7 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def initialize

@@ -1,8 +1,10 @@
 require 'rexml/document'
+require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/generic/generic_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Generic; class LaceySimplifiedOrderXmlParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::Generic::GenericCustomDefinitionSupport
 

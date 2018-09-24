@@ -3,17 +3,19 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
     ["www-vfitrack-net/_lands_end_products", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
   end
 
-  def self.process_from_s3 bucket, key, opts = {}
-    xl_client = OpenChain::XLClient.new key, bucket: bucket
-    parser = self.new xl_client
-    parser.process_file
+  def self.retrieve_file_data bucket, key, opts = {}
+    OpenChain::XLClient.new key, bucket: bucket
+  end
+
+  def self.parse_file file, log, opts
+    self.new(file).process_file
   end
 
   def initialize xl_client, system_code = "LERETURNS"

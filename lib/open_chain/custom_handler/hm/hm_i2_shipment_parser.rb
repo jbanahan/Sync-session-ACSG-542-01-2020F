@@ -6,7 +6,7 @@ require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generato
 require 'open_chain/custom_handler/fenix_nd_invoice_generator'
 
 module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::CsvExcelParser
   include ActionView::Helpers::NumberHelper

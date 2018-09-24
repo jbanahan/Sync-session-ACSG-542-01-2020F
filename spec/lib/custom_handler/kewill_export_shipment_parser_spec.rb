@@ -152,4 +152,13 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
     end
   end
   
+  describe "parse_file" do
+    subject { described_class }
+
+    it "instantiates an instance of the parser and passes through params" do
+      expect_any_instance_of(subject).to receive(:parse_file).with("data", "log", "opts")
+
+      subject.parse_file "data", "log", "opts"
+    end
+  end
 end

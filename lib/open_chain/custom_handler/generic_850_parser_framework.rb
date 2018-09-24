@@ -78,12 +78,9 @@ require 'open_chain/edi_parser_support'
 # and caches custom definitions, relying on this cdef_uids method for the list of custom definitions needed for the parser.
 #
 # ==============================================================================================
-# METHODS WHICH WHEN IMPLEMENTED CAN ENABLE OR DISABLE FUNCTIONALITY
-# 
-
 
 module OpenChain; module CustomHandler; class Generic850ParserFramework
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::EdiParserSupport
 
   def initialize configuration = {}

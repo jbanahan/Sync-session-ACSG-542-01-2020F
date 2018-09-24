@@ -2,7 +2,7 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vandegrift/kewill_commercial_invoice_generator'
 
 module OpenChain; module CustomHandler; module AmerSports; class AmerSports856CiLoadParser < OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_amersports_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_amersports_856"]

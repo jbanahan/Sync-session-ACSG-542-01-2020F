@@ -1,8 +1,10 @@
 describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
+  subject { described_class }
+
   describe "integration_folder" do
     it "should use the correct folder" do
-      expect(described_class.new.integration_folder).to eq ["www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
+      expect(subject.integration_folder).to eq ["www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
   end
 
@@ -11,7 +13,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
     context "standard_line_type" do
       before :each do
-        @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]
+        @cdefs = subject.new.cdefs
         @po_type = ""
         @po_number = "PO"
         @message_date = "2014-01-01"
@@ -99,7 +101,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       end
 
       it "should extract po and division code and create a Data Cross Reference Record" do
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         r = DataCrossReference.first
         expect(r.cross_reference_type).to eq DataCrossReference::RL_PO_TO_BRAND
@@ -110,14 +112,14 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       it "should update existing cross reference records" do
         DataCrossReference.create! cross_reference_type: DataCrossReference::RL_PO_TO_BRAND, key: @po_number, value: "some_other_value"
 
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         r = DataCrossReference.first
         expect(r.value).to eq @po_lines.first[:merchandise_division_numeric]
       end
 
       it "saves XML information as an Order" do
-        described_class.new.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
+        subject.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order).not_to be_nil
@@ -171,7 +173,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
           updated_ex_factory: '2014-03-01'
         }
 
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         order.reload
         expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
@@ -192,7 +194,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       it "uses primary ex factory if that's the only ex-factory value present" do
         @po_lines.first[:updated_ex_factory] = "notadate"
 
-        described_class.new.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
+        subject.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order).not_to be_nil
@@ -204,7 +206,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @buyer_id = "0200011987"
         @importer = Factory(:company, fenix_customer_number: "866806458RM0001")
 
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order).not_to be_nil
@@ -214,7 +216,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @buyer_id = "0200016789"
         @importer = Factory(:company, fenix_customer_number: "806167003RM0002")
 
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order).not_to be_nil
@@ -222,7 +224,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
       it "handles TradeCard First Sale invoicing system values" do
         @ref_value = 'TCF'
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
         expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
@@ -230,14 +232,14 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
       it "raises an error for unknown buyer ids" do
         @buyer_id = "unknown"
-        expect{described_class.new.parse_file(@xml_lambda.call, log)}.to raise_error "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
+        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
         expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
       end
 
       it "raises an error if Importer cannot be found" do
         @importer.destroy
 
-        expect{described_class.new.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
+        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
         expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
       end
     end
@@ -288,7 +290,7 @@ XML
       end
 
       it "should extract po and division code from subline and create a Data Cross Reference Record" do
-        described_class.new.parse_file @xml_lambda.call, log
+        subject.parse_file @xml_lambda.call, log
 
         r = DataCrossReference.first
         expect(r.cross_reference_type).to eq DataCrossReference::RL_PO_TO_BRAND

@@ -9,37 +9,41 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler do
     file.close
   end
 
-  describe "process_from_s3" do
-    it "uses s3 to download file" do
-      file = instance_double(Tempfile)
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path").and_yield file
-      expect(subject).to receive(:process_file).with file
-      subject.process_from_s3 "bucket", "path"
+  describe "retrieve_file_data" do
+    it "uses s3 to download file and returns a zip stream" do
+      expect(OpenChain::S3).to receive(:get_data) do |bucket, key, io|
+        expect(bucket).to eq "bucket"
+        expect(key).to eq "path"
+
+        io.write file.read
+        nil
+      end
+      
+      zip = subject.retrieve_file_data("bucket", "path")
+      expect(zip).to be_a Zip::InputStream
+      expect(zip.get_next_entry).not_to be_nil
     end
   end
 
-  describe "process_file" do
-    it "unzips and extracts all xls files and calls send_file with them" do
-      file_data = nil
-      file_name = nil
-      expect(subject).to receive(:send_file) do |file|
-        file_name = file.original_filename
-        file_data = Spreadsheet.open(file)
+  describe "parse_file" do
+    let! (:log) { InboundFile.new }
+    let (:zip) { Zip::InputStream.open(file) }
+
+    it "extracts and ftps all .xls files in zip" do
+      spreadsheet = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file, info|
+        expect(info[:folder]).to eq "_shoes_po"
+        expect(info[:username]).to eq "www-vfitrack-net"
+        expect(file.original_filename).to eq "12164.xls"
+
+        spreadsheet = Spreadsheet.open(file)
+        nil
       end
 
-      subject.process_file file
-
-      expect(file_name).to eq "12164.xls"
+      subject.parse_file zip, log
       # If we can read that there's worksheets in the file, that's good enough for the test
-      expect(file_data.worksheets.length).to eq 1
-    end
-  end
-
-  describe "send_file" do
-    it "sends the file to the right location" do
-      fake_file = instance_double(Tempfile)
-      expect(subject).to receive(:ftp_file).with(fake_file, hash_including(folder: "_shoes_po"))
-      subject.send_file fake_file
+      expect(spreadsheet.worksheets.length).to eq 1
+      expect(log).to have_info_message "Extracted file 12164.xls"
     end
   end
 end

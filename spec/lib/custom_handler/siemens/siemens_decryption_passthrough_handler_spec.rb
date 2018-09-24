@@ -16,43 +16,34 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
   end
 
   describe "process_from_s3" do
+    subject { described_class }
+
     it "figures out the vendor filetype and calls super" do
       # Just expect this method as a way to know the super version of process_from_s3 was invoked
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with "bucket", "VENDOR.txt", instance_of(Hash)
-
-      subject.process_from_s3 "bucket", "VENDOR.txt"
-      expect(subject.filetype).to eq :vendor
-    end
-
-    it "passes original_filename to super" do
-      # Just expect this method as a way to know the super version of process_from_s3 was invoked
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with "bucket", "s3/path/to/file.txt", original_filename: 'VENDOR.txt'
-      subject.process_from_s3 "bucket", "s3/path/to/file.txt", original_filename: 'VENDOR.txt'
-      expect(subject.filetype).to eq :vendor
+      expect(subject).to receive(:handle_processing).with("bucket", "VENDOR.txt", {original_filename: "VENDOR.txt"})
+      subject.process_from_s3 "bucket", "VENDOR.txt", {original_filename: "VENDOR.txt"}
     end
 
     it "figures out the product filetype and calls super" do
       # Just expect this method as a way to know the super version of process_from_s3 was invoked
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with "bucket", "CAXPR.txt", instance_of(Hash)
-
-      subject.process_from_s3 "bucket", "CAXPR.txt"
-      expect(subject.filetype).to eq :product
+      expect(subject).to receive(:handle_processing).with("bucket", "CAXPR.txt", {original_filename: "CAXPR.txt"})
+      subject.process_from_s3 "bucket", "CAXPR.txt", {original_filename: "CAXPR.txt"}
     end
 
     it "returns quickly if unidentified filetype is used" do
-      expect(OpenChain::S3).not_to receive(:download_to_tempfile)
+      expect(subject).not_to receive(:handle_processing)
 
       expect(subject.process_from_s3 "bucket", "file.txt").to be_nil
-      expect(subject.filetype).to be_nil
     end
   end
 
-  describe "ftp_credentials" do 
+  describe "ftp_credentials" do
+    before :each do
+      expect(subject).to receive(:inbound_file).and_return log
+    end
+
     context "with vendor files" do
-      before :each do
-        expect(OpenChain::S3).to receive(:download_to_tempfile)
-        subject.process_from_s3 'bucket', 'VENDOR.txt'
-      end
+      let (:log) { InboundFile.new file_name: "VENDOR.txt" }
 
       it "uses correct credentials for vendor files" do
         expect(subject).to receive(:fenixapp_vfitrack_net).with("Incoming/Vendors/SIEMENS/Incoming")
@@ -60,22 +51,22 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
       end
     end
 
-    context "with product files" do
-      before :each do
-        expect(OpenChain::S3).to receive(:download_to_tempfile)
-        subject.process_from_s3 'bucket', 'CAXPR.txt'
-      end
+    context "with vendor files" do
+      let (:log) { InboundFile.new file_name: "CAXPR.txt" }
 
       it "uses correct credentials for product files" do
         expect(subject).to receive(:fenixapp_vfitrack_net).with("Incoming/Parts/SIEMENS/Incoming")
         subject.ftp_credentials
       end
     end
-    
-    it "raises an error on unidentified parts" do
-      # the file type is not identified till after process from s3 is run...so by defaul it's blank
-      # and will raise
-      expect {subject.ftp_credentials}.to raise_error "Unexpected Siemens filetype of '' found."
+
+    context "with invalid filetype" do
+      let (:log) { InboundFile.new file_name: "whatever.txt" }
+
+      it "raises an error on unidentified parts" do
+        expect {subject.ftp_credentials}.to raise_error LoggedParserFatalError, "Unexpected Siemens filetype of '' found."
+        expect(log.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_ERROR
+      end
     end
   end
 end

@@ -5,7 +5,7 @@ require 'set'
 module OpenChain
   module CustomHandler
     class KewillIsfXmlParser
-      extend OpenChain::IntegrationClientParser
+      include OpenChain::IntegrationClientParser
 
       SYSTEM_NAME = "Kewill"
       NO_NOTES_EVENTS = [10,19,20,21]

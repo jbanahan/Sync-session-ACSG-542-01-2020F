@@ -5,6 +5,10 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
+  def self.parse_file data, log, opts = {}
+    self.new.parse_file data, log, opts
+  end
+
   def parse_file data, log, opts = {}
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
 

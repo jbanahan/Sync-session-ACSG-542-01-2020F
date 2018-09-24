@@ -1,7 +1,7 @@
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoiceXmlParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_ann_invoice", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ann_invoice"]

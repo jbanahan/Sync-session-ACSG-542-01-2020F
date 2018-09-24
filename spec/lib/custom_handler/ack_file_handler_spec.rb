@@ -73,23 +73,22 @@ describe OpenChain::CustomHandler::AckFileHandler do
   end
 
   describe "parse" do
-    before :each do
-      @p = Factory(:product)
-      @u = Factory(:user, email: "example@example.com", username: "testuser")
-    end
+    subject { described_class }
+    let (:product) { Factory(:product) }
+    let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
 
     it "should parse a file" do
-      @p.sync_records.create!(:trading_partner=>'XYZ')
-      described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", :sync_code=>"XYZ", email_address: "example@example.com"}
-      @p.reload
-      expect(@p.sync_records.size).to eq(1)
-      sr = @p.sync_records.first
+      product.sync_records.create!(:trading_partner=>'XYZ')
+      subject.parse "h,h,h\n#{product.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", :sync_code=>"XYZ", email_address: "example@example.com"}
+      product.reload
+      expect(product.sync_records.size).to eq(1)
+      sr = product.sync_records.first
       expect(sr.confirmation_file_name).to eq('file.csv')
     end
 
     it "should send an email to the user provided if there's an error while processing the file" do
       user = Factory(:user, email: "me@there.com")
-      described_class.new.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
 
       expect(OpenMailer.deliveries.last.to.first).to eq(user.email)
       expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
@@ -98,18 +97,18 @@ describe OpenChain::CustomHandler::AckFileHandler do
     it "should send an email to multiple users if there's an error while processing the file" do
       me = Factory(:user, email: "me@there.com")
       you = Factory(:user, email: "you@there.com")
-      described_class.new.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: [me.username, you.username]})
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: [me.username, you.username]})
 
       expect((OpenMailer.deliveries.last.to - [me.email, you.email]).size).to eq(0)
       expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
     end
 
     it "should error if key is missing" do
-      expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:sync_code=>"XYZ", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have an s3 :key hash key."
+      expect{subject.parse "h,h,h\n#{product.unique_identifier},201306191706,OK", {:sync_code=>"XYZ", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have an s3 :key hash key."
     end
 
     it "should error if sync_code is missing" do
-      expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have a :sync_code hash key."
+      expect{subject.parse "h,h,h\n#{product.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have a :sync_code hash key."
     end
 
   end

@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
     it "should parse spreadsheet data into a hash" do
       d = defaults
-      s = described_class.new.parse_spreadsheet create_workbook(d)
+      s = subject.parse_spreadsheet create_workbook(d)
 
       expect(s[:order_id]).to eq d[:order_id]
       expect(s[:order_number]).to eq d[:order_number]
@@ -215,9 +215,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
   describe "build_xml" do
 
     it "should build xml" do
-      p = described_class.new
-      s = p.parse_spreadsheet create_workbook(defaults)
-      x = p.build_xml s
+      s = subject.parse_spreadsheet create_workbook(defaults)
+      x = subject.build_xml s
 
       expect(x.root.name).to eq "PurchaseOrder"
       expect(REXML::XPath.first(x, "/PurchaseOrder/OrderId").text).to eq s[:order_id]
@@ -253,7 +252,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "should write xml to tempfile" do
       d = defaults
       xml = nil
-      f = described_class.new.write_xml(create_workbook(d), log) {|f| f.rewind; xml = f.read}
+      f = subject.write_xml(create_workbook(d), log) {|f| f.rewind; xml = f.read}
       # ensure the tempfile is closed
       expect(f.closed?).to be_truthy
       expect(File.basename(f)).to match(/^ShoesForCrewsPO/)
@@ -271,7 +270,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "fails if importer can't be found" do
       importer.destroy
 
-      expect{described_class.new.write_xml(create_workbook(defaults), log)}.to raise_error "Company with system code SHOES not found."
+      expect{subject.write_xml(create_workbook(defaults), log)}.to raise_error "Company with system code SHOES not found."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Company with system code SHOES not found."
     end
   end
@@ -279,7 +278,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
   describe "parse_file" do
     it "should call write_xml w/ ftp_file block" do
       d = defaults
-      p = described_class.new
+      p = subject
       xml = nil
       expect(p).to receive(:ftp_file) do |f|
         f.rewind
@@ -293,7 +292,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
   describe "ftp_credentials" do
     it "should use the ftp2 server credentials" do
-      p = described_class.new
+      p = subject
       expect(p).to receive(:ftp2_vandegrift_inc).with 'to_ecs/Shoes_For_Crews/PO'
       p.ftp_credentials
     end
@@ -437,6 +436,16 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       expect{subject.process_po data, log, "bucket", "key"}.to raise_error "An order number must be present in all files.  File key is missing an order number."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "An order number must be present in all files.  File key is missing an order number."
+    end
+  end
+
+  describe "parse_file" do
+    subject { described_class }
+
+    it "instantiates an instance of the parser and passes through params" do
+      expect_any_instance_of(subject).to receive(:parse_file).with("data", "log", "opts")
+
+      subject.parse_file "data", "log", "opts"
     end
   end
 end

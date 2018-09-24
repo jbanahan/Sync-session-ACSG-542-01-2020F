@@ -6,7 +6,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGtnAsnParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   DATE_CODE_EMPTY_OUT_GATE_AT_ORIGIN = '25992'
   DATE_CODE_EST_ARRIVAL_DISCHARGE = '316'

@@ -12,7 +12,7 @@
 
 <% @inbound_files.each do |inf| %>
   <tr class='hover'>
-    <td><%= link_to inf.parser_name, inf %></td>
+    <td><%= link_to inf.parser_name.to_s.demodulize, inf %></td>
     <td><%= inf.s3_bucket && inf.s3_path ? link_to(inf.file_name, download_inbound_file_path(inf)) : inf.file_name %></td>
     <td><%= inf.receipt_location %></td>
     <td><%= inf.company.try(:name) %></td>

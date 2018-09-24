@@ -9,7 +9,7 @@
 #
 
 class InboundFileMessage < ActiveRecord::Base
-  belongs_to :inbound_file
+  belongs_to :inbound_file, inverse_of: :messages
 
   MESSAGE_STATUS_INFO = "Info"
   MESSAGE_STATUS_WARNING = "Warning"

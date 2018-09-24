@@ -5,7 +5,7 @@ require 'open_chain/custom_handler/j_jill/j_jill_ecellerate_xml_parser'
 
 module OpenChain; module CustomHandler; class EcellerateXmlRouter
   extend OpenChain::CustomHandler::XmlHelper
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["www-vfitrack-net/_ecellerate_shipment", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ecellerate_shipment"]

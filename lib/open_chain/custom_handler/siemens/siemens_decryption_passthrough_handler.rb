@@ -4,26 +4,30 @@ require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionPassthroughHandler
   include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
+  include OpenChain::IntegrationClientParser
 
   attr_reader :filetype
 
-  def process_from_s3 bucket, remote_path, original_filename: nil
-    # Siemens tosses some other types of files we don't care about in this folder...just skip them.
-    filetype = get_filetype(remote_path, original_filename)
-    return nil unless filetype
-    
-    @filetype = filetype
-    super
+  def self.process_from_s3 bucket, remote_path, opts = {}
+    filetype = get_filetype(remote_path, opts[:original_filename])
+    if !filetype.nil?
+      return super
+    else 
+      return nil
+    end
   end
 
   def ftp_credentials
-    case @filetype
+    # We can use the filename from the inbound log to determine the file type
+    log = inbound_file
+    filetype = self.class.get_filetype(log.file_name)
+    case filetype
     when :product
       fenixapp_vfitrack_net("Incoming/Parts/SIEMENS/Incoming")
     when :vendor
       fenixapp_vfitrack_net("Incoming/Vendors/SIEMENS/Incoming")
     else
-      raise "Unexpected Siemens filetype of '#{@filetype}' found."
+      log.error_and_raise "Unexpected Siemens filetype of '#{filetype}' found."
     end
   end
 
@@ -37,7 +41,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
   end
 
   private 
-    def get_filetype remote_path, original_filename = nil
+    def self.get_filetype remote_path, original_filename = nil
       filename = File.basename(original_filename.presence || remote_path).to_s.upcase
 
       if filename.starts_with?("CAXPR")

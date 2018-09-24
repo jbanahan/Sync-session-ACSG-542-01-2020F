@@ -6,7 +6,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapOrderXmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   class OnShipmentError < StandardError; end
 

@@ -5,17 +5,24 @@ require 'combine_pdf'
 # master bill in the zip file's name to shipment's master bill.  Handles cases where the shipment doesn't
 # yet exist.
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberShipmentAttachmentFileParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["ll/shipment_docs", "/home/ubuntu/ftproot/chainroot/ll/shipment_docs"]
   end
 
-  def self.process_from_s3 s3_bucket, s3_key, opts = {}
-    OpenChain::S3.download_to_tempfile(s3_bucket, s3_key) do |tempfile|
-      attempt_count = opts[:attempt_count].presence || 1
-      self.new.process_file tempfile, s3_bucket, s3_key, attempt_count
-    end
+  def self.parse_file zip_stream, log, opts = {}
+    attempts = opts[:attempt_count].presence || 1
+    self.new.process_file zip_stream, log.s3_bucket, log.s3_path, attempts
+  end
+
+  def self.retrieve_file_data bucket, key, opts = {}
+    OpenChain::S3.download_to_tempfile(bucket, key)
+  end
+
+  def self.post_process_data data
+    # This is just to clean up the tempfile
+    data.close! unless data.nil? || data.closed?
   end
 
   def process_file zip_file, s3_bucket, s3_key, attempt_count
@@ -28,6 +35,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
     if zip_content_pdf.present?
       shp = Shipment.where(master_bill_of_lading: master_bill).first
       if shp.present?
+        inbound_file.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shp.reference
         process_zip_file_pdf zip_content_pdf, shp, original_zip_file_name, s3_key
       else
         # If no matching shipment is found, queue the file to be reprocessed an hour later, hoping the shipment has
@@ -57,8 +65,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
             end
           end
         end
-      rescue Zip::Error
+      rescue Zip::Error => e
         # Do nothing.  Nil gets returned, which results in an error email.
+        inbound_file.add_reject_message e.message
       end
       zip_content_pdf
     end

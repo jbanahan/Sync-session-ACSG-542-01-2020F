@@ -24,8 +24,8 @@
 #
 
 class InboundFile < ActiveRecord::Base
-  has_many :identifiers, :dependent=>:destroy, :class_name=>'InboundFileIdentifier'
-  has_many :messages, :dependent=>:destroy, :class_name=>'InboundFileMessage'
+  has_many :identifiers, dependent: :destroy, class_name: 'InboundFileIdentifier', autosave: true, inverse_of: :inbound_file
+  has_many :messages, dependent: :destroy, class_name: 'InboundFileMessage', autosave: true, inverse_of: :inbound_file
   belongs_to :company
 
   PROCESS_STATUS_PENDING = "Pending"

@@ -4,7 +4,7 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/mutable_boolean'
 
 module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMasterParser
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder

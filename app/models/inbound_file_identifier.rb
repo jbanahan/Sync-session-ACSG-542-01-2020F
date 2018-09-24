@@ -11,7 +11,7 @@
 #
 
 class InboundFileIdentifier < ActiveRecord::Base
-  belongs_to :inbound_file
+  belongs_to :inbound_file, inverse_of: :identifiers
 
   TYPE_ARTICLE_NUMBER = "Article Number"
   TYPE_PO_NUMBER = "PO Number"

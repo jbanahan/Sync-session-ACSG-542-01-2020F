@@ -2,8 +2,8 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
 
 module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsParser
-  include VfitrackCustomDefinitionSupport
-  extend OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::IntegrationClientParser
 
   FOOT_LOCKER_CUSTOMER_NUMBER ||= "FOOLO"
 
