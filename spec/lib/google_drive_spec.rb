@@ -145,11 +145,12 @@ describe OpenChain::GoogleDrive do
         test_folder = File.basename(existing_drive_folder)
         # The at leasts here are due to the after hooks
         expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
-        expect(cache).to receive(:[]).at_least(1).times.with(test_folder).and_return nil
-        expect(cache).to receive(:[]=).with(test_folder, existing_drive_folder_id)
-
+        
         file = subject.upload_file remote_path, local_file_path
         expect(file[:id]).not_to be_nil
+        file_ids << file[:id]
+
+        expect(cache[existing_drive_folder[0..-2]]).to eq file[:parents].first
       end
     end
 
@@ -180,11 +181,12 @@ describe OpenChain::GoogleDrive do
         cache = {}
         # The at leasts here are due to the after hooks
         expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
-        expect(cache).to receive(:[]).at_least(1).times.with("#{existing_team_drive_id}:#{File.basename existing_team_drive_folder}").and_return nil
-        expect(cache).to receive(:[]=).with("#{existing_team_drive_id}:#{File.basename existing_team_drive_folder}", existing_team_drive_folder_id)
-
+        
         file = subject.upload_file remote_path, local_file_path
         expect(file[:id]).not_to be_nil
+
+        file_ids << file[:id]
+        expect(cache[existing_team_drive_folder_parent_id + ":" + existing_drive_folder[0..-2]]).to eq file[:parents].first
       end
     end
   end
