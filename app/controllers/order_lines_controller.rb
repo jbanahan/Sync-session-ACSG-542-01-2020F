@@ -17,7 +17,11 @@ class OrderLinesController < LinesController
   end
 
   def set_products_variable parent_obj
-    @products = parent_obj.vendor.products_as_vendor
+    if parent_obj.vendor
+      @products = parent_obj.vendor.products_as_vendor
+    end
+
+    @products = [find_line.product] if @products.blank?
   end
 
   def set_parent_variable obj
