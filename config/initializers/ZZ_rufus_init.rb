@@ -6,7 +6,13 @@ require 'open_chain/upgrade'
 module OpenChain; class WebScheduler
 
   def self.upgrades_allowed?
-    !MasterSetup.get.custom_feature?("Prevent Upgrades")
+    if MasterSetup.config_true?(:prevent_upgrades)
+      return false
+    elsif MasterSetup.get.custom_feature?("Prevent Upgrades") 
+      return false
+    else
+      return true
+    end
   end
 
   def self.execute_scheduler
