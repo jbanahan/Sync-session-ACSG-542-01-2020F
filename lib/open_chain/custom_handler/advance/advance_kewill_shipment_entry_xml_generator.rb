@@ -38,10 +38,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
     # with it.  If so, then we need to multiply the commercial quantity by the set quantity 
     # to get the actual piece count.
     if !inv_line.nil?
-      units = shipment_line.product.try(:custom_value, cdefs[:prod_units_per_set]).to_i
-      if units > 0
-        inv_line.pieces = shipment_line.quantity * units
-      end
+      # Clear out the hts, by leaving it blank Kewill will look up the part data from the parts library and will
+      # build out the full tariff line from that information.  If we put teh tariff number in there, it expects we'll
+      # send quantity information and such.
+      inv_line.hts = nil
     end
     
     inv_line

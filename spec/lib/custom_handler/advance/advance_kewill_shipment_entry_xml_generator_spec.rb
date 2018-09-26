@@ -73,6 +73,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
       # Make sure the invoice's pieces are the expected value (without sets)
       expect(line.pieces).to eq 30
       expect(line.country_of_export).to eq "US"
+      expect(line.hts).to be_nil
     end
 
     it "generates CQ data, using CQSOU for customer number" do
@@ -84,16 +85,6 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
       expect(data.customer).to eq "CQSOU"
       expect(data.consignee_code).to eq "CQSOU"
       expect(data.ultimate_consignee_code).to eq "CQSOU"
-    end
-
-    it "uses Units Per set to calculate piece counts" do
-      product.update_custom_value! cdefs[:prod_units_per_set], 2
-
-      data = subject.generate_kewill_shipment_data shipment
-
-      line = data.invoices.first.invoice_lines.first
-      # Make sure the invoice's pieces are the expected value (multiplied by the set multiplier)
-      expect(line.pieces).to eq 60
     end
 
   end
