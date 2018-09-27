@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-01 Exceptions.xls"]).not_to be_nil
 
         mail = ActionMailer::Base.deliveries.second
-        expect(mail.to).to eq ["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"]
+        expect(mail.to).to eq ["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"]
         expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"]
         expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
         expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
@@ -251,7 +251,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(ActionMailer::Base.deliveries.length).to eq 3
         mail = ActionMailer::Base.deliveries.last
 
-        expect(mail.to).to eq ["terri.bandy@purolator.com", "mdevitt@purolator.com", "Jessica.Webber@purolator.com"]
+        expect(mail.to).to eq ["terri.bandy@purolator.com", "Jessica.Webber@purolator.com"]
         expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"]
         expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
         expect(mail.subject).to eq "More PARS Numbers Required"

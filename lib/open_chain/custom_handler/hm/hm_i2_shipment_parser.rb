@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       # Check PARS totals...
       pars_count = DataCrossReference.unused_pars_count
       if pars_count < pars_threshold
-        OpenMailer.send_simple_html(["terri.bandy@purolator.com", "mdevitt@purolator.com", "Jessica.Webber@purolator.com"], "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], cc: ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"], reply_to: "hm_support@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(["terri.bandy@purolator.com", "Jessica.Webber@purolator.com"], "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], cc: ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"], reply_to: "hm_support@vandegriftinc.com").deliver!
       end
     end
 
@@ -580,7 +580,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
-      OpenMailer.send_simple_html(["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com", "Mike.Devitt@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
     end
   end
 
