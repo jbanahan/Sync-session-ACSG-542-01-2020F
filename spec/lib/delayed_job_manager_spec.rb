@@ -31,7 +31,8 @@ describe DelayedJobManager do
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
 
-      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog").and_yield
+      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog", yield_in_transaction: false).and_yield
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_queue_depth).with(2)
       expect(subject.monitor_backlog max_messages: 1).to eq true
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
@@ -44,7 +45,7 @@ describe DelayedJobManager do
     it "does not report items younger than threshold" do
       "word".delay({run_at: 15.minutes.ago, queue: "default"}).size
       "word".delay({run_at: 15.minutes.ago, queue: "default"}).size
-
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_queue_depth).with(0)
       expect(subject.monitor_backlog max_messages: 1, max_age_minutes: 30).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
@@ -53,7 +54,8 @@ describe DelayedJobManager do
       cache.set("DelayedJobManager:next_backlog_warning", Time.zone.now + 15.minutes)
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
-
+      # Even if we don't email, we still should be putting metrics into CloudWatch
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_queue_depth).with(2)
       expect(subject.monitor_backlog max_messages: 1).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
@@ -61,7 +63,7 @@ describe DelayedJobManager do
     it "only checks the default queue" do
       "word".delay({run_at: 16.minutes.ago, queue: "notdefault"}).size
       "word".delay({run_at: 16.minutes.ago, queue: "notdefault"}).size
-
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_queue_depth).with(0)
       expect(subject.monitor_backlog max_messages: 1).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
@@ -78,8 +80,8 @@ describe DelayedJobManager do
 
     it "reports delayed jobs with errors" do
       errored_job
-      expect(Lock).to receive(:acquire).with("Report Delayed Job Error").and_yield
-
+      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false).and_yield
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(1)
       expect(DelayedJobManager.report_delayed_job_error).to eq true
       email = ActionMailer::Base.deliveries.last
       expect(email).not_to be_nil
@@ -90,6 +92,7 @@ describe DelayedJobManager do
     end
 
     it "does not send an error if no jobs are found" do
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(0)
       expect(DelayedJobManager.report_delayed_job_error ).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
@@ -97,7 +100,7 @@ describe DelayedJobManager do
     it "does not send an error if errors were reported less than reporting age time ago" do
       cache.set("DelayedJobManager:next_report_delayed_job_error", Time.zone.now + 15.minutes)
       errored_job
-
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(1)
       expect(DelayedJobManager.report_delayed_job_error).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
@@ -109,7 +112,7 @@ describe DelayedJobManager do
       end while m.length <= 500
       errored_job.last_error = m
       errored_job.save!
-
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(1)
       expect(DelayedJobManager.report_delayed_job_error).to eq true
       email = ActionMailer::Base.deliveries.last
       expect(email.body.raw_source).to include "Job Error: " + m.slice(0, 500)
@@ -124,7 +127,7 @@ describe DelayedJobManager do
       job_2.created_at = Time.zone.parse("2018-01-01 12:00")
       job_2.updated_at = Time.zone.parse("2018-01-01 12:00")
       job_2.save!
-
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(2)
       expect(DelayedJobManager.report_delayed_job_error max_error_count: 1).to eq true
       email = ActionMailer::Base.deliveries.last
       expect(email.body.raw_source).to include "Job Error: Error!"
