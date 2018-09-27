@@ -36,7 +36,7 @@
   <% end %>
 
   <%= render :partial => 'shared/search_box' %>
-
+  <h4 class="text-center"><%=@xrefs.total_entries %> <%=@xref_info[:key_label].pluralize(@xrefs.total_entries)%> found.</h4>
   <div class="container">
     <table class="table table-striped table-hover">
       <thead>
@@ -84,7 +84,13 @@
         </div>
         <div class="modal-body">
           <%= form_tag "/data_cross_references/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
-            <p>Spreadsheet should contain a header row, with <%=@xref_info[:key_label]%> in column A <%= @xref_info[:show_value_column] ? "and #{@xref_info[:value_label]} in column B" : ""%></p>
+            <p>
+            <% if @xref_info[:upload_instructions].blank? %>
+              Spreadsheet should contain a header row, with <%=@xref_info[:key_label]%> in column A <%= @xref_info[:show_value_column] ? "and #{@xref_info[:value_label]} in column B" : ""%>
+            <% else %>
+              <%= @xref_info[:upload_instructions] %>
+            <% end %>
+            </p>
             <div class="form-group">
               <label for="attached" class='col-md-1 control-label'>File:</label>
               <div class="col-md-4">

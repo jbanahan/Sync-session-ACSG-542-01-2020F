@@ -1,6 +1,6 @@
 <%content_for :action_bar do -%>
 <%- if local_assigns.has_key?(:show_delete) && show_delete %>
-<%= button_to "Delete", {action: :destroy, id: xref.id}, method: :delete, confirm: "Are you sure you want to delete this cross reference?", class:'btn btn-default', form_class:'inline-button-to'%>
+<%= button_to "Delete", {action: :destroy, id: xref.id}, method: :delete, confirm: "Are you sure you want to delete this cross reference?", class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
 <%end%>
 <button class='btn_link' link_to='<%=data_cross_references_path(cross_reference_type: xref.cross_reference_type)%>' key_map='c'>Cancel</button>
 <button class='form_to' form_id='xref_form' key_map='s'>Save</button>

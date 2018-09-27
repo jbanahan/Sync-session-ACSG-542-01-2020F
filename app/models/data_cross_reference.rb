@@ -78,7 +78,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code"),
       xref_attributes(CI_LOAD_DEFAULT_GOODS_DESCRIPTION, "Shipment Entry Load Goods Descriptions", "Enter the customer number and corresponding default Goods Description.", key_label:"Customer Number", value_label: "Goods Description"),
       xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label:"Customer Number", show_value_column: false),
-      xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false)
+      xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
+      xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true)
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -114,12 +115,17 @@ class DataCrossReference < ActiveRecord::Base
   def self.preprocess_and_add_xref! xref_type, new_key, new_value, company_id=nil
     xref_hsh = xref_edit_hash(nil)[xref_type]
     k, v = xref_hsh[:preprocessor].call(new_key, new_value).values_at(:key, :value)
-    if k.nil? || (v.nil? && xref_hsh[:show_value_column]) 
-      false
-    else
-      add_xref! xref_type, k, v, company_id
-      true
+
+    if k.blank?
+      # There's never a time where the key can be blank
+      return false
+    elsif xref_hsh[:show_value_column] && v.blank?
+      # If the value is blank, check to see if the setup allows blanks..if not, reject
+      return false unless xref_hsh[:allow_blank_value] == true
     end
+
+    add_xref! xref_type, k, v, company_id
+    true
   end
 
   def self.can_view? cross_reference_type, user
@@ -133,6 +139,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')
     when UA_SITE_TO_COUNTRY
       MasterSetup.get.custom_feature?("UnderArmour")
+    when HM_PARS_NUMBER
+      MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?("pars-maintenance"))
     else
       false
     end
@@ -294,14 +302,18 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_and_mark_next_unused_hm_pars_number
     Lock.acquire("HM-Pars-Number") do 
-      pars = DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER, value: nil).order(:id).first
+      pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order(:id).first
       pars.update_attributes!(value: "1") if pars
       pars.try(:key)
     end
   end
 
   def self.unused_pars_count
-    DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER).where("`value` IS NULL OR `value` = ''").count
+    add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).count
+  end
+
+  def self.add_pars_clause scoped
+    scoped.where("`value` IS NULL OR `value` = ''")
   end
 
   def self.add_hm_pars_number pars_number

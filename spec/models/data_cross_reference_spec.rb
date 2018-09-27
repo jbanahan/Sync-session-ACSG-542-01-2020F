@@ -259,6 +259,7 @@ describe DataCrossReference do
           show_value_column: true, 
           identifier: "xref_type", 
           require_company: false, 
+          preprocessor: lambda {|k, v| {key: k, value: v} }
         }
       }
     end
@@ -304,6 +305,17 @@ describe DataCrossReference do
       expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
       described_class.destroy_all
       expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq true
+      expect(described_class.count).to eq 1
+      xref = described_class.first
+      expect(xref.key).to eq "key"
+      expect(xref.value).to be_nil
+    end
+
+    it "returns true and updates if value is not required" do
+      xref_hsh["xref_type"][:allow_blank_value] = true
+      expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
+      described_class.destroy_all
+      expect(described_class.preprocess_and_add_xref! "xref_type", "key", nil).to eq true
       expect(described_class.count).to eq 1
       xref = described_class.first
       expect(xref.key).to eq "key"
@@ -361,12 +373,13 @@ describe DataCrossReference do
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
-        expect(xrefs.size).to eq 5
+        expect(xrefs.size).to eq 6
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_entry_load_cust'])).to eq title: "Shipment Entry Load Customers", description: "Enter the customer number to enable sending Shipment data to Kewill.", identifier: "shp_entry_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_cust'])).to eq title: "Shipment CI Load Customers", description: "Enter the customer number to enable sending Shipment CI Load data to Kewill.", identifier: "shp_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['hm_pars'])).to eq title: "H&M PARS Numbers", description: "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", identifier: "hm_pars", key_label: "PARS Number", value_label: "PARS Used?", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
