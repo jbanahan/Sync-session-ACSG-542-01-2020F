@@ -5,10 +5,10 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
   let (:file_contents) {
     # Taken from an actual file..
     [
-      ["DC#", "PO No", "Warehouse#", "Warehouse Name", "Vendor ID", "Vendor Name", "Sku#", "MFG NO", "Description", "HTS#", "ORD Qty", "SHIP Qty", "Cost", "Loading Port", "Issue Date", "DC Due Date", "Lot Tracking Status", "CRD", "Load Date", "ETA DEST", "ETA DC Date", "Carrier", "B/L#", "Seal#", "Vehicle Name", "Voyage/Trip", "Container", "Container Size", "Ship Mode", "X-DOCK", "Invoice Number", "Freight Forwarder", "AP/AR NO", "bl_file_name", "TT PO"],
-      ["MON", "MON4951", "89850", "Crossroads", "", "", "20671583", "YH145726", "Brake Rotor", "8708305030", 13, "", 122.85, "Shanghai, PRC", "2016-01-20", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011343"],
-      ["MON", "MON4951", "89850", "Crossroads", "", "", "20671580", "YH145729", "Brake Rotor", "8708305030", 40, "", 458, "Shanghai, PRC", "2016-01-20", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011343"],
-      ["IND", "IND13786", "89850", "Crossroads", "", "", "10419518", "NCV36576", "CV Axle", "8708996805", "1", "", 24.1, "Shanghai, PRC", "2016-01-21", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011453"]
+      ["DC#", "PO No", "Warehouse#", "Warehouse Name", "Vendor ID", "Vendor Name", "Sku#", "MFG NO", "Description", "HTS#", "ORD Qty", "SHIP Qty", "Cost", "Loading Port", "Issue Date", "DC Due Date", "Lot Tracking Status", "CRD", "Load Date", "ETA DEST", "ETA DC Date", "Carrier", "B/L#", "Seal#", "Vehicle Name", "Voyage/Trip", "Container", "Container Size", "Ship Mode", "X-DOCK", "Invoice Number", "Freight Forwarder", "AP/AR NO", "bl_file_name", "TT PO", "COO", "FULL CQ SKU"],
+      ["MON", "MON4951", "89850", "Crossroads", "", "", "20671583", "YH145726", "Brake Rotor", "8708305030", 13, "", 122.85, "Shanghai, PRC", "2016-01-20", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011343", "CN", "PART1"],
+      ["MON", "MON4951", "89850", "Crossroads", "", "", "20671580", "YH145729", "Brake Rotor", "8708305030", 40, "", 458, "Shanghai, PRC", "2016-01-20", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011343", "CN", "PART2"],
+      ["IND", "IND13786", "89850", "Crossroads", "", "", "10419518", "NCV36576", "CV Axle", "8708996805", "1", "", 24.1, "Shanghai, PRC", "2016-01-21", "2016-01-22", "1", "2016-01-22", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "RCQ1-16011453", "CN", "PART3"]
     ]
   }
   let (:cq) { Factory(:importer, system_code: "CQ") }
@@ -26,19 +26,19 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     }
 
     let (:product1) {
-      prod = Factory(:product, importer: cq)
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART1")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
       prod
     }
 
     let (:product2) {
-      prod = Factory(:product, importer: cq)
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART2")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "20671580"
       prod
     }
 
     let (:product3) {
-      prod = Factory(:product, importer: cq)
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART3")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "10419518"
       prod
     }
@@ -74,6 +74,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.quantity).to eq 13
         expect(line.product).to eq product1
         expect(line.price_per_unit).to eq BigDecimal("9.45")
+        expect(line.country_of_origin).to eq "CN"
 
         line = order.order_lines.second
         expect(line.sku).to eq "20671580"
@@ -81,6 +82,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.quantity).to eq 40
         expect(line.product).to eq product2
         expect(line.price_per_unit).to eq BigDecimal("11.45")
+        expect(line.country_of_origin).to eq "CN"
 
         order = Order.where(order_number: "CQ-IND13786").first
         expect(order).not_to be_nil
@@ -95,6 +97,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.quantity).to eq 1
         expect(line.product).to eq product3
         expect(line.price_per_unit).to eq BigDecimal("24.10")
+        expect(line.country_of_origin).to eq "CN"
       end
     end
 
@@ -128,26 +131,23 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         mail = ActionMailer::Base.deliveries.first
         expect(mail.to).to eq [user.email]
         expect(mail.subject).to eq "CQ Origin PO Report Result"
-        expect(mail.body.raw_source).to include "Attached are the product lines that were missing from VFI Track.  Please fill out the file - Missing Products.xls file with all the necessary information and load the data into VFI Track, then reprocess the attached file - Orders.xls PO file to load the POs that were missing products into the system."
-        expect(mail.attachments["file - Missing Products.xls"]).not_to be_nil
-        expect(mail.attachments["file - Orders.xls"]).not_to be_nil
+        expect(mail.body.raw_source).to include "Attached are the product lines that were missing from VFI Track.  Please fill out the file - Missing Products.xlsx file with all the necessary information and load the data into VFI Track, then reprocess the attached file - Orders.xlsx PO file to load the POs that were missing products into the system."
+        expect(mail.attachments["file - Missing Products.xlsx"]).not_to be_nil
+        expect(mail.attachments["file - Orders.xlsx"]).not_to be_nil
 
         # Make sure the missing products file is as expected (just make sure the sku number got placed correctly)
-        wb = Spreadsheet.open(StringIO.new(mail.attachments["file - Missing Products.xls"].read))
-        sheet = wb.worksheet 0
-        expect(sheet.row(1)[0]).to eq "20671580"
+        reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Missing Products.xlsx"].read)
+        sheet = reader.sheet "Missing Products"
+        expect(reader.raw_data(sheet)[1]).to eq ["20671580", nil, nil, "PART2"]
 
-        wb = Spreadsheet.open(StringIO.new(mail.attachments["file - Orders.xls"].read))
-        sheet = wb.worksheet 0
-        # Don't care how many trailing blank columns there are
-        expect(sheet.row(1).to_a[0..34]).to eq file_contents[1].map {|v| v.blank? ? nil : v}[0..34]
-        expect(sheet.row(2).to_a[0..34]).to eq file_contents[2].map {|v| v.blank? ? nil : v}[0..34]
 
+        reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Orders.xlsx"].read)
+        sheet = reader.sheet "Orders Missing Products"
+        data = reader.raw_data(sheet)
+        expect(data[1]).to eq file_contents[1][0..36]
+        expect(data[2]).to eq file_contents[2][0..36]
         # Make sure the second row is highlighted because the product was missing
-        expect(sheet.row(2).formats[0].pattern_fg_color).to eq :yellow
-        expect(sheet.row(2).formats[0].pattern).to eq 1
-
-        expect(sheet.row(3)).to be_blank
+        expect(reader.background_color(sheet, 2, 1)).to eq "FFFFFF00"
       end
 
       it "adds only a single line to product file, even when product is missing multiple times" do
@@ -156,13 +156,14 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         subject.process user
 
         mail = ActionMailer::Base.deliveries.first
-        expect(mail.attachments["file - Missing Products.xls"]).not_to be_nil
+        expect(mail.attachments["file - Missing Products.xlsx"]).not_to be_nil
 
         # Make sure the missing products file is as expected (just make sure the sku number got placed correctly)
-        wb = Spreadsheet.open(StringIO.new(mail.attachments["file - Missing Products.xls"].read))
-        sheet = wb.worksheet 0
-        expect(sheet.row(1)[0]).to eq "20671580"
-        expect(sheet.row(2)).to be_blank
+        reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Missing Products.xlsx"].read)
+        sheet = reader.sheet "Missing Products"
+        data = reader.raw_data(sheet)
+        expect(data[1][0]).to eq "20671580"
+        expect(data[2]).to be_nil
       end
     end
   end

@@ -73,12 +73,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         base_file_name = File.basename(custom_file.attached_file_name)
         name = File.basename(base_file_name, ".*")
 
-        Tempfile.open([name, ".xls"]) do |missing_products|
-          Attachment.add_original_filename_method missing_products, "#{name} - Missing Products.xls"
+        Tempfile.open([name, ".xlsx"]) do |missing_products|
+          Attachment.add_original_filename_method missing_products, "#{name} - Missing Products.xlsx"
           missing_products_spreadsheet.write missing_products
 
           Tempfile.open(["#{name}_orders", ".xls"]) do |orders|
-            Attachment.add_original_filename_method orders, "#{name} - Orders.xls"
+            Attachment.add_original_filename_method orders, "#{name} - Orders.xlsx"
             orders_spreadsheet.write orders
 
             body = "Attached are the product lines that were missing from VFI Track.  Please fill out the #{missing_products.original_filename} file with all the necessary information and load the data into VFI Track, then reprocess the attached #{orders.original_filename} PO file to load the POs that were missing products into the system."
@@ -107,8 +107,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
           next
         end
 
-        #skip any line that is missing a PO Number or SKU-Number
-        next if row[1].blank? || row[6].blank?
+        #skip any line that is missing a PO Number or FULL CQ SKU
+        next if row[1].blank? || part_number(row).blank?
 
         ord_num = order_number(row)
         row[1] = ord_num
@@ -125,7 +125,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         current_order_lines << row
 
         # Find the product for this line.
-        product = find_product text_value(row[6]).strip
+        product = find_product row
         if product
           order_number = text_value(row[1]).strip
           order = orders[order_number]
@@ -134,13 +134,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
             orders[order_number] = order
           end
           order[:order_lines_attributes] << build_order_line(row, product)
-          row[row.size + 1] = false
+          row[row.size] = false
         else
           current_order_missing_product = true
           missing_product_count += 1
           # Add an indicator to the row, which we'll strip off later to show that this particular line
           # is missing a product (we want to highlight these rows in the file we send back out)
-          row[row.size + 1] = true
+          row[row.size] = true
         end
       end
 
@@ -154,35 +154,48 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     def create_spreadsheets orders_missing_products, header_row
       missing_products = Set.new
       orders_missing_products.each do |row|
-        missing_products << text_value(row[6]) if missing_product?(row) && !text_value(row[6]).blank?
+        missing_products << [sku_number(row), part_number(row)] if missing_product?(row) && !part_number(row).blank?
       end
 
-      product_wb, sheet = XlsMaker.create_workbook_and_sheet 'Missing Products', ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description", 
+      [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row)]
+    end
+
+    def create_missing_products_workbook missing_products
+      builder = missing_products_builder
+      sheet = builder.create_sheet "Missing Products", headers: ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description", 
         "Merchandise Department Description", "Merchandise Class Description", "Merchandise Sub-Class Description", "Item Description", "US HTS Code", "US Duty", 
         "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Comments"]
+      builder.freeze_horizontal_rows sheet, 1
 
-      missing_products.to_a.each_with_index do |part_number, i|
-        XlsMaker.add_body_row sheet, (i+1), [part_number, nil, nil, nil]
+      missing_products.to_a.each do |numbers|
+        builder.add_body_row sheet, [numbers[0], nil, nil, numbers[1]]
       end
 
-      order_wb, sheet = XlsMaker.create_workbook_and_sheet "Orders Missing Products", header_row
-      missing_product_format = Spreadsheet::Format.new pattern_fg_color: :yellow, pattern: 1
-      missing_product_format_dates = Spreadsheet::Format.new pattern_fg_color: :yellow, pattern: 1, number_format: 'YYYY-MM-DD'
-      date_indexes = [14, 15, 17, 18, 19]
-      orders_missing_products.each_with_index do |row, i|
+      builder
+    end
+
+    def create_orders_missing_products_workbook  orders_missing_products, header_row
+      builder = orders_missing_products_builder
+      sheet = builder.create_sheet "Orders Missing Products",  headers: header_row
+      builder.freeze_horizontal_rows sheet, 1
+
+      # "FFFF00" = Yellow
+      missing_product_format = builder.create_style :missing_product, {bg_color: "FFFF00"}
+      missing_product_date_format = builder.create_style :missing_product_date, {bg_color: "FFFF00", format_code: "YYYY-MM-DD"}
+
+      styles = []
+      header_row.length.times { styles << missing_product_format }
+      [14, 15, 17, 18, 19].each {|x| styles[x] = missing_product_date_format }
+
+      orders_missing_products.each do |row|
         if missing_product?(row)
-          XlsMaker.add_body_row sheet, (i+1), row[0..-2], [], false, format: missing_product_format
-          # When we set the format of the row, we then change the format for dates (to numeric)
-          # I don't know a way to "merge" formats intelligently, so I'm just going to update the format for
-          # the date columns to use the date format w/ yellow background
-          row = sheet.row(i+1)
-          date_indexes.each {|idx| row.set_format idx, missing_product_format_dates}
+          builder.add_body_row sheet, row[0..-2], styles: styles
         else
-          XlsMaker.add_body_row sheet, (i+1), row[0..-2], [], true
+          builder.add_body_row sheet, row[0..-2]
         end
       end
 
-      [product_wb, order_wb]
+      builder
     end
 
     def missing_product? row
@@ -190,8 +203,14 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       row[-1] === true
     end
 
-    def find_product sku
-      Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: @cdefs[:prod_sku_number].id, string_value: sku}).first
+    def find_product row
+      part = part_number(row)
+      return nil if part.blank?
+      product = Product.where(importer_id: importer, unique_identifier: "#{importer.system_code}-#{part}").first
+      # make sure the sku number is also present since it's required for sending on Canada invoices
+      return nil if product && product.custom_value(@cdefs[:prod_sku_number]).blank?
+
+      product
     end
 
     def build_order_header row
@@ -207,7 +226,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         unit_price = (total_cost / units).round(2, BigDecimal::ROUND_HALF_UP)
       end
 
-      {product: {id: product.id}, ordln_sku: text_value(row[6]), ordln_hts: text_value(row[9]), ordln_ordered_qty: units, ordln_ppu: unit_price}
+      {product: {id: product.id}, ordln_sku: text_value(row[6]), ordln_hts: text_value(row[9]), ordln_ordered_qty: units, ordln_ppu: unit_price, ordln_country_of_origin: text_value(row[35])}
     end
 
     def importer
@@ -219,6 +238,22 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
 
     def order_number row
       text_value(row[1]).strip
+    end
+
+    def part_number row
+      text_value(row[36]).strip
+    end
+
+    def sku_number row
+      text_value(row[6]).strip
+    end
+
+    def missing_products_builder
+      @missing_products_builder ||= XlsxBuilder.new
+    end
+
+    def orders_missing_products_builder
+      @orders_missing_products_builder ||= XlsxBuilder.new
     end
 
 end; end; end; end
