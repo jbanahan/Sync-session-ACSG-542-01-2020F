@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PieceSet do
   describe 'validations' do
     before :each do
@@ -83,6 +81,11 @@ describe PieceSet do
       expect {PieceSet.merge_duplicates!(ps2)}.to_not change(PieceSet,:count)
       expect(PieceSet.all.collect {|p| p.quantity}).to eql([1,1])
     end
+
+    it "no-ops if the piece set is not linked to anything" do
+      expect(PieceSet).not_to receive(:where)
+      expect(PieceSet.merge_duplicates! PieceSet.new).to be_nil
+    end
   end
 
   describe "identifiers" do
@@ -112,6 +115,67 @@ describe PieceSet do
       allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
       ids = @ps.identifiers @user
       expect(ids).to be_blank
+    end
+  end
+
+  describe "foreign_key_values" do
+    subject { 
+      ps = PieceSet.new 
+      ps.order_line_id = 1
+      ps.sales_order_line_id = 1
+      ps.shipment_line_id = 1
+      ps.delivery_line_id = 1
+      ps.commercial_invoice_line_id = 1
+      ps.drawback_import_line_id = 1
+      ps.security_filing_line_id = 1
+      ps.booking_line_id = 1
+
+      ps
+    }
+  
+    it "returns values of all foreign key columns used for piece set linkages" do
+      expect(subject.foreign_key_values).to eq({
+        order_line_id: 1, sales_order_line_id: 1, shipment_line_id: 1, delivery_line_id: 1, commercial_invoice_line_id: 1, 
+        drawback_import_line_id: 1, security_filing_line_id: 1, booking_line_id: 1
+      })
+    end
+  end
+
+  describe "foreign_key_count" do
+
+    subject { 
+      ps = PieceSet.new 
+      ps.order_line_id = 1
+      ps.sales_order_line_id = 1
+      ps.shipment_line_id = 1
+      ps.delivery_line_id = 1
+      ps.commercial_invoice_line_id = 1
+      ps.drawback_import_line_id = 1
+      ps.security_filing_line_id = 1
+      ps.booking_line_id = 1
+      ps.milestone_plan_id = 1
+
+      ps
+    }
+
+    it "returns the number of foreign keys associated with the piece set" do
+      expect(subject.foreign_key_count).to eq 8
+    end
+
+    it "returns zero if no foreign keys" do
+      expect(PieceSet.new.foreign_key_count).to eq 0
+    end
+  end
+
+  describe "linked_to_anything?" do
+    it "returns true if there are any foreign keys" do
+      p = PieceSet.new
+      p.order_line_id = 1
+      expect(p.linked_to_anything?).to eq true
+    end
+
+    it "returns false if there aren't any foreign keys" do
+      expect(PieceSet.new.linked_to_anything?).to eq false
     end
   end
 

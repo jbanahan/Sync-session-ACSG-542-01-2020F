@@ -4,7 +4,7 @@ module LinesSupport
 
   #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   included do
-    has_many :piece_sets, autosave: true
+    has_many :piece_sets, autosave: true, inverse_of: self.table_name.singularize.to_sym
     has_many :order_lines, :through => :piece_sets
     has_many :sales_order_lines, :through => :piece_sets
     has_many :shipment_lines, :through => :piece_sets
@@ -26,10 +26,12 @@ module LinesSupport
     attr_accessor :linked_order_line_id
     attr_accessor :linked_shipment_line_id
     attr_accessor :linked_sales_order_line_id
-    attr_accessor :linked_delivery_line_id
+    attr_accessor :linked_drawback_import_line_id
     attr_accessor :linked_drawback_line_id
     attr_accessor :linked_commercial_invoice_line_id
     attr_accessor :linked_security_filing_line_id
+    attr_accessor :linked_delivery_line_id
+
     after_save :process_links
     after_destroy :merge_piece_sets
   end
@@ -53,9 +55,13 @@ module LinesSupport
   def process_links
     {:order_line_id=>@linked_order_line_id,:shipment_line_id=>@linked_shipment_line_id,
     :sales_order_line_id=>@linked_sales_order_line_id,:delivery_line_id=>@linked_delivery_line_id,
-    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_line_id,
+    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_import_line_id,
     :security_filing_line_id=>@linked_security_filing_line_id}.each do |s,i|
       process_link s,i
+      # Clear out the linked id since the process_link generates a piece set for it, therefore there's
+      # no need for that value any longer..and it could potentially get re-used and cause problems if the
+      # line object is saved more than once.
+      self.public_send("linked_#{s}=", nil)
     end
   end
 
@@ -79,10 +85,15 @@ module LinesSupport
 
   #clean up piece sets after destroy
   def merge_piece_sets
-    my_id = self.id
+    foreign_key = self.class.reflections[:piece_sets].foreign_key
     self.piece_sets.each do |ps|
-      ps.update_attributes(self.class.reflections[:piece_sets].foreign_key=>nil)
-      PieceSet.merge_duplicates! ps
+      # We can delete the current piece set if it does not have any links to anything other than the current object's id
+      if ps.foreign_key_count == 1 && !ps.attributes[foreign_key].nil?
+        ps.destroy
+      else
+        ps.update_column foreign_key, nil
+        PieceSet.merge_duplicates!(ps)
+      end
     end
   end
 
@@ -101,7 +112,7 @@ module LinesSupport
   private
   def process_link field_symbol, id
     unless id.nil?
-      ps = self.piece_sets.where(field_symbol=>id).first
+      ps = self.piece_sets.find {|ps| !(ps.marked_for_destruction? || ps.destroyed?) && ps.public_send(field_symbol) == id }
       if ps.nil? #if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
         holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0)+ifnull(piece_sets.drawback_import_line_id,0)+ifnull(piece_sets.commercial_invoice_line_id,0))=?",id).first
         if holding_piece_set

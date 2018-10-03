@@ -219,13 +219,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
     end
 
     it "handles missing vendor and container" do
-      shipment.vendor = nil
-      shipment.containers.clear
+      shipment.update_attributes! vendor_id: nil
       shipment.shipment_lines.each do |shipment_line|
-        shipment_line.container = nil
+        shipment_line.update_attributes! container_id: nil
       end
-      shipment.save!
-
+      shipment.reload
+      shipment.containers.destroy_all
       csv = CSV.parse(described_class.generate_csv(shipment))
 
       expect(csv[1][0]).to eq('Original')

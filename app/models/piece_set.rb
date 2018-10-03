@@ -28,16 +28,18 @@
 #
 
 class PieceSet < ActiveRecord::Base
-#PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
-  belongs_to :order_line
-  belongs_to :sales_order_line
-  belongs_to :shipment_line
-  belongs_to :delivery_line
+  #PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
+
   belongs_to :milestone_plan
-  belongs_to :commercial_invoice_line
-  belongs_to :drawback_import_line
-  belongs_to :security_filing_line
-  belongs_to :booking_line
+
+  belongs_to :order_line, inverse_of: :piece_sets
+  belongs_to :sales_order_line, inverse_of: :piece_sets
+  belongs_to :shipment_line, inverse_of: :piece_sets
+  belongs_to :delivery_line, inverse_of: :piece_sets
+  belongs_to :commercial_invoice_line, inverse_of: :piece_sets
+  belongs_to :drawback_import_line, inverse_of: :piece_sets
+  belongs_to :security_filing_line, inverse_of: :piece_sets
+  belongs_to :booking_line, inverse_of: :piece_sets
 
   has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
@@ -45,8 +47,29 @@ class PieceSet < ActiveRecord::Base
   validates_numericality_of :quantity, :greater_than_or_equal_to => 0
   validate :validate_product_integrity
 
+  def linked_to_anything?
+    # This just determines if the piece set is linked to anything
+    foreign_key_count > 0
+  end
+
+  def foreign_key_count
+    foreign_key_values.values.select {|v| !v.nil? }.length
+  end
+
+  def foreign_key_values
+    {
+      order_line_id: self.order_line_id, sales_order_line_id: self.sales_order_line_id, shipment_line_id: self.shipment_line_id, delivery_line_id: self.delivery_line_id,
+      commercial_invoice_line_id: self.commercial_invoice_line_id, drawback_import_line_id: self.drawback_import_line_id, security_filing_line_id: self.security_filing_line_id,
+      booking_line_id: self.booking_line_id
+    }
+  end
+
   #merge all piece sets together that have the same linked keys and set the quantity to the sum of all records
   def self.merge_duplicates! base
+    # If the base piece set passed in has no links to anything any longer, then this whole method is a no-op
+    # and we can avoid doing a potentially large query.
+    return if !base.linked_to_anything?
+
     all = PieceSet.where(
       order_line_id:base.order_line_id,
       sales_order_line_id:base.sales_order_line_id,
@@ -56,8 +79,9 @@ class PieceSet < ActiveRecord::Base
       drawback_import_line_id:base.drawback_import_line_id,
       security_filing_line_id:base.security_filing_line_id,
       booking_line_id:base.booking_line_id
-      )
-    return if all.size < 2
+      ).all
+
+    return if all.length < 2
     first = all.first
     PieceSet.transaction do
       all.each do |ps|
@@ -72,17 +96,7 @@ class PieceSet < ActiveRecord::Base
 
   #destroy this piece set if it only has one foriegn key
   def destroy_if_one_key
-    keys = [:order_line_id,
-      :sales_order_line_id,
-      :shipment_line_id,
-      :delivery_line_id,
-      :commercial_invoice_line_id,
-      :drawback_import_line_id,
-      :security_filing_line_id,
-      :booking_line_id
-    ]
-    key_count = keys.inject(0) {|i,m| i + (!self.attributes[m.to_s].blank? ? 1 : 0)}
-    if key_count <= 1
+    if foreign_key_count() <= 1
       return self.destroy
     else
       return false
@@ -124,19 +138,28 @@ class PieceSet < ActiveRecord::Base
   end
 
   private
-  def validate_product_integrity
-    #all linked objects must have the same product
-    base_product = nil
-    [self.order_line,self.shipment_line,self.sales_order_line,self.delivery_line,self.drawback_import_line].each do |line|
-      if !line.nil?
-        if base_product.nil?
-          base_product = line.product_id
-        elsif !line.product_id.nil? && base_product!=line.product_id
-          self.errors[:base] << "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
-          return false
+    def validate_product_integrity
+      #all linked objects must have the same product
+      base_product = nil
+
+      # What we're doing here is not even attempting to load the relations unless there's an id.
+      # This saves potentially several queries for every single of the line associated with this
+      # piece set.
+      foreign_key_values.each_pair do |key_name, value|
+        if value && value.to_i != 0
+          # This is just using the foreign key name (.ie order_line_id) to determine the line association to query to get the line
+          line = self.public_send(key_name[0..-4])
+          if line && line.respond_to?(:product_id)
+            base_product = line.product_id if base_product.nil?
+
+            if base_product != line.product_id
+              self.errors[:base] << "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
+              return false
+            end
+          end
         end
       end
+
+      return true
     end
-    return true
-  end
 end
