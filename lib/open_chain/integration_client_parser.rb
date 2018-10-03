@@ -157,7 +157,7 @@ module OpenChain; module IntegrationClientParser
 
         abbrev_key = get_s3_key_without_timestamp key
         log.file_name = File.basename(abbrev_key)
-        log.receipt_location = File.dirname(abbrev_key)
+        log.receipt_location = original_receipt_location(abbrev_key)
         log.requeue_count = 0
 
         # Look for an existing log.  This can happen, in certain cases, for documents being auto-reprocessed due to
@@ -189,6 +189,23 @@ module OpenChain; module IntegrationClientParser
         # 'force_inbound_file_logging' option allows for short-term logging of inbound file records for parsers that
         # may have the function disabled normally.
         log.save! if (log_file?(log.s3_bucket, log.s3_path) || opts[:force_inbound_file_logging])
+      end
+
+      def original_receipt_location s3_key
+        # Receipt location should be the system folder / parser name.  It shouldn't include dates, etc.
+        # In essence, it's the ftp path of the file - which allows us to use it for rerpocessing later.
+        # The s3 key looks like this: 2018-10/02/www-vfitrack-net/kewill_statements
+        # The YYYY-MM/DD value is added to make the files easy to retrieve from the archive and is simply prepended
+        # to the actual path of the file on the ftp system.  So to get the original path, all we need to do is strip the
+        # YYYY-MM/DD if it's there.
+        
+        # The easiest way to do this is to just deconstruct the path and strip the filename leading YYYY-MM/DD elements
+        location = s3_key.to_s
+        if location =~ /^\d{4}-\d{2}([\/\\])\d{2}[\/\\]/
+          return Pathname.new(location).each_filename.to_a[2..-2].join($1)
+        end
+
+        location
       end
   end
 

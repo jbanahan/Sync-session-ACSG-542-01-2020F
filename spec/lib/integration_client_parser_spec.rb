@@ -38,7 +38,7 @@ describe OpenChain::IntegrationClientParser do
 
   describe "process_from_s3" do
     let(:s3_bucket) { "the_bucket" }
-    let(:s3_path) { "the_directory/the_file_name.1510174475.txt" }
+    let(:s3_path) { "2018-09/10/the_system/the_directory/the_file_name.1510174475.txt" }
 
     context "with parser that implements parse_file" do
       subject { 
@@ -82,12 +82,22 @@ describe OpenChain::IntegrationClientParser do
         expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_WARNING)
         expect(log.parser_name).to eq("the_package_name::the_parser_name")
         expect(log.file_name).to eq("the_file_name.txt")
-        expect(log.receipt_location).to eq("the_directory")
+        expect(log.receipt_location).to eq("the_system/the_directory")
 
         expect(log.messages.length).to eq 2
         expect(log).to have_info_message "This is an info message"
         expect(log).to have_warning_message "No running by the pool"
         expect(log).to have_identifier "Order Number", "555666"
+      end
+
+      it "does not adjust the receipt location if the path doesn't match our standard archive prefixing" do
+        data = "datafile"
+        expect(OpenChain::S3).to receive(:get_data).and_return data
+        subject.process_from_s3(s3_bucket, "some/path/to/file.txt", { base_opt:"abc" })
+
+        log = InboundFile.where(s3_bucket:s3_bucket, s3_path:"some/path/to/file.txt").first
+        expect(log).to_not be_nil
+        expect(log.receipt_location).to eq("some/path/to/file.txt")
       end
 
       it "reprocesses a file from S3" do
