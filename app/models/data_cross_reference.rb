@@ -302,7 +302,7 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_and_mark_next_unused_hm_pars_number
     Lock.acquire("HM-Pars-Number") do 
-      pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order(:id).first
+      pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order("`key`, id").first
       pars.update_attributes!(value: "1") if pars
       pars.try(:key)
     end
