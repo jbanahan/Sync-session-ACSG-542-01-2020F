@@ -1060,6 +1060,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
         expect(order_data_klass.line_pc_unapproved?(old_data, new_data)).to be false
       end
+
+      it "shows line as unapproved if the line was previously approved and was removed" do
+        expect(old_data).to receive(:has_pc_approved_date_map).and_return({ 1 => [true, false], 2 => [false, false], 3 => [true, false] }).at_least(:once)
+        expect(new_data).to receive(:has_pc_approved_date_map).and_return({ 2 => [false, false], 3 => [true, false] }).at_least(:once)
+
+        expect(order_data_klass.line_pc_unapproved?(old_data, new_data)).to be true
+      end
     end
 
     describe '#vendor_visible_fields_changed?' do

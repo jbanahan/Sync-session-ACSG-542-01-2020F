@@ -490,7 +490,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def self.line_pc_unapproved? old_data, new_data
       return false unless old_data
 
-      old_data.has_pc_approved_date_map.keys.any? { |line_number| (old_data.has_pc_approved_date_map[line_number][0] && !new_data.has_pc_approved_date_map[line_number][0]) || (old_data.has_pc_approved_date_map[line_number][1] && !new_data.has_pc_approved_date_map[line_number][1]) }
+      # What we're looking for is if any line's PC Approval or PC Approval Exec flipped from Approved to Not Approved
+      old_data.has_pc_approved_date_map.each_pair do |line_number, old_approvals| 
+        new_approvals = new_data.has_pc_approved_date_map[line_number]
+
+        # This is the case where the line was deleted and was previously approved.
+        return true if old_approvals.any? && new_approvals.nil?
+
+        # if the line no longer has approvals, then show that a line was unapproved.
+        return true if (old_approvals[0] && !new_approvals[0]) || (old_approvals[1] && !new_approvals[1])
+      end
+
+      false
     end
 
     def self.ship_from_changed? old_data, new_data
