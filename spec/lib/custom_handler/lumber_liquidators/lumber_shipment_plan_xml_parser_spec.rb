@@ -3,10 +3,10 @@ require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParser do
   
-  describe "parse_dom" do
+  let (:test_data) { IO.read('spec/fixtures/files/ll_shipment_plan.xml') }
+  let (:log) { InboundFile.new }
 
-    let (:test_data) { IO.read('spec/fixtures/files/ll_shipment_plan.xml') }
-    let (:log) { InboundFile.new }
+  describe "parse_dom" do  
   
     it "should fail on bad root element" do
       test_data.gsub!(/ShipmentPlanMessage/,'BADROOT')
@@ -73,6 +73,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParse
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "2010371040"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq shipment.id
+    end
+  end
+
+  describe "parse_file" do
+    subject { described_class }
+
+    it "forwards call to parse_dom" do
+      opts = {test: "testing"}
+      expect_any_instance_of(subject).to receive(:parse_dom).with(instance_of(REXML::Document), log, opts)
+
+      subject.parse_file test_data, log, opts
     end
   end
 

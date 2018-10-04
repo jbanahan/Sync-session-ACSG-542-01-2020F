@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::IntegrationClientParser
 
-  def self.parse_file data, opts={}
+  def self.parse_file data, log, opts={}
     parse_dom REXML::Document.new(data), log, opts
   end
 
