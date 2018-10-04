@@ -14,13 +14,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberKe
     opts = {"alliance_customer_number" => "LUMBER", "strip_leading_zeros" => true, "use_unique_identifier" => true}.merge opts
     super(opts)
   end
-  
+
+  def custom_defs
+    @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin]
+    @cdefs
+  end
+
   def query
     qry = <<-QRY
 SELECT products.id,
 products.unique_identifier,
 products.name,
-tariff_records.hts_1
+tariff_records.hts_1, 
+#{cd_s custom_defs[:prod_country_of_origin].id} 
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id

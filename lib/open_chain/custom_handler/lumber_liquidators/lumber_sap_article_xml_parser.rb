@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def initialize
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness]
+    @cdefs = self.class.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_sap_extract, :prod_old_article, :prod_merch_cat, :prod_merch_cat_desc, :prod_overall_thickness, :prod_country_of_origin]
   end
 
   def parse_dom dom, log, opts={}
@@ -64,6 +64,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root,'//IDOC/E1BPE1MATHEAD'),'MATL_GROUP'))
       p.find_and_set_custom_value(@cdefs[:prod_merch_cat_desc], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_EXT'),'MERCH_CAT_DESC'))
       p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'),'ATWTB'))
+      p.find_and_set_custom_value(@cdefs[:prod_country_of_origin], et(REXML::XPath.first(root,'//IDOC/E1BPE1MAW1RT'),'COUNTRYORI_ISO'))
 
       if is_new
         orders_updated = {}

@@ -97,6 +97,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prod_merch_cat: {label: "Merch Category", data_type: :string, module_type: 'Product', read_only: true, cdef_uid: "prod_merch_cat"},
     prod_merch_cat_desc: {label: "Merch Category Description", data_type: :string, module_type: 'Product', read_only: true, cdef_uid: "prod_merch_cat_desc"},
     prod_sap_extract: {label:'SAP Extract Date', data_type: :datetime, module_type: 'Product', cdef_uid: "prod_sap_extract"},
+    prod_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Product', cdef_uid: "prod_country_of_origin"},
     class_proposed_hts: {label: "Proposed HTS", data_type: :string, module_type: "Classification", cdef_uid: "class_proposed_hts"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification", cdef_uid: "class_customs_description"},
     prodven_carb: {label:'CARB Statement',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_carb"},

@@ -7,10 +7,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
 
     let (:us) { Factory(:country, iso_code: "US")}
     let (:importer) { Factory(:importer, alliance_customer_number: "LUMBER")}
+    let (:cdefs) { described_class.prep_custom_definitions [:prod_country_of_origin] }
     let! (:product) {
       p = Factory(:product, importer: importer, unique_identifier: "0000000123", name: "Description")
       c = p.classifications.create! country: us
       c.tariff_records.create! hts_1: "12345678"
+      p.update_custom_value!(cdefs[:prod_country_of_origin], "CO")
 
       p
     }
@@ -35,6 +37,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
       expect(parent.text "descr").to eq "DESCRIPTION"
       expect(parent.text "CatTariffClassList/CatTariffClass/seqNo").to eq "1"
       expect(parent.text "CatTariffClassList/CatTariffClass/tariffNo").to eq "12345678"
+      expect(parent.text "countryOrigin").to eq "CO"
     end
 
     it "does not sync previously synced products" do
