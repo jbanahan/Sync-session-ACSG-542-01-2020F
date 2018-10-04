@@ -2,25 +2,26 @@
 #
 # Table name: containers
 #
-#  container_number      :string(255)
-#  container_pickup_date :date
-#  container_return_date :date
-#  container_size        :string(255)
-#  created_at            :datetime         not null
-#  entry_id              :integer
-#  fcl_lcl               :string(255)
-#  goods_description     :string(255)
-#  id                    :integer          not null, primary key
-#  port_of_loading_id    :integer
-#  port_of_delivery_id   :integer
-#  quantity              :integer
-#  seal_number           :string(255)
-#  shipment_id           :integer
-#  size_description      :string(255)
-#  teus                  :integer
-#  uom                   :string(255)
-#  updated_at            :datetime         not null
-#  weight                :integer
+#  container_number          :string(255)
+#  container_pickup_date     :date
+#  container_return_date     :date
+#  container_size            :string(255)
+#  created_at                :datetime         not null
+#  entry_id                  :integer
+#  fcl_lcl                   :string(255)
+#  goods_description         :string(255)
+#  id                        :integer          not null, primary key
+#  last_exported_from_source :datetime
+#  port_of_delivery_id       :integer
+#  port_of_loading_id        :integer
+#  quantity                  :integer
+#  seal_number               :string(255)
+#  shipment_id               :integer
+#  size_description          :string(255)
+#  teus                      :integer
+#  uom                       :string(255)
+#  updated_at                :datetime         not null
+#  weight                    :integer
 #
 # Indexes
 #

@@ -369,16 +369,35 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[3].message).to eq "Shipment did not contain a manifest line for PO 4500173884, line 3. A manifest line record was created."
     end
 
-    it "skips documents that are older than the previously processed file" do
+    it "skips updating shipment level information if xml is older than shipments last exported from source date, but still updates containers if container is not outdated" do
       shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
 
       expect(subject).not_to receive(:update_shipment)
       subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
 
       shp.reload
-      expect(shp.entity_snapshots.length).to eq 0
+      # The container should be there and there should be a snapshot
+      expect(shp.entity_snapshots.length).to eq 1
+      expect(shp.containers.find { |c| c.container_number == "TEMU3877030"}).not_to be_nil
+      
+      # The orders should also be updated
+      expect(@ord.entity_snapshots.length).to eq 1
+    end
 
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment not updated: file contained outdated info."
+    it "skips updating shipment / container level information if xml is older than shipment and container receipt dates" do
+      shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
+      Factory(:container, shipment: shp, container_number: "TEMU3877030", last_exported_from_source: "2019-01-01 12:00")
+      Factory(:container, shipment: shp, container_number: "TEMU3877031", last_exported_from_source: "2019-01-01 12:00")
+      
+      subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
+
+      shp.reload
+      # The container should be there and there should be a snapshot
+      expect(shp.entity_snapshots.length).to eq 0
+      
+      # The orders should also be updated
+      expect(@ord.entity_snapshots.length).to eq 0
+      expect(@ord_2.entity_snapshots.length).to eq 0
     end
   end
 

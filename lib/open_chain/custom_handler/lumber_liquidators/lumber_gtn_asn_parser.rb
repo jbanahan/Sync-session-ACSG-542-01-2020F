@@ -120,16 +120,24 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       log.set_identifier_module_info InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, Shipment.to_s, shp.id
 
       # Don't update the shipment if the data in it is outdated
-      if shp.last_exported_from_source && shp.last_exported_from_source > xml_timestamp
-        log.add_info_message "Shipment not updated: file contained outdated info."
-        return
+      shipment_updated = false
+      if shp.last_exported_from_source.nil? || shp.last_exported_from_source < xml_timestamp
+        update_shipment shp, elem_asn, xml_timestamp, errors, log
+        shipment_updated = true
       end
 
-      update_shipment shp, elem_asn, xml_timestamp, errors, log
-
+      # We have to handle the containers in this funky manner, because of the way they're sent to use by GT Nexus.
+      # Each container comes in a different XML file, so it's possible that while the file data for the overall file is outdated,
+      # the container information itself is not.  Because the xml file we're parsing may have come out of order from GT Nexus, 
+      # like if there's 5 containers on the shipment and we get one into VFI Track that's got a generation time older than a previous
+      # container xml for the same shipment. We'll still only use the newest xml for the shipment data (thus skipping the outdated one
+      # for the shipment header), but we also then need to fill in the data for the container since we may not have gotten it yet.
+      # Ergo, we're tracking last exported from source at the container AND the shipment levels.
+      container_elements = update_containers shp, xml_timestamp, elem_asn, errors, log
+      
       shipment_error_count = errors.length
       order_snapshots = Set.new
-      get_orders(elem_asn, errors, log).each do |ord_num, ord_hash|
+      get_orders(container_elements, errors, log).each do |ord_num, ord_hash|
         if errors.length == shipment_error_count
           if !need_to_roll_back
             ord = ord_hash[:order]
@@ -149,9 +157,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
         raise ActiveRecord::Rollback
       else
         # Aggregate all the snapshots here, this is because a snapshot writes data to s3, which we don't want out there if the update is getting rolled back
-        user = User.integration
-        shp.create_snapshot user, nil, s3_key
-        order_snapshots.each {|ord| ord.create_snapshot user, nil, s3_key}
+        if shipment_updated || container_elements.length > 0
+          shp.save!
+          user = User.integration
+          shp.create_snapshot user, nil, s3_key
+          order_snapshots.each {|ord| ord.create_snapshot user, nil, s3_key}
+        end
       end
     end
 
@@ -160,7 +171,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       msg = "ASN Failed because shipment not found in database: #{shipping_order_number}."
       errors << msg
       log.add_reject_message msg
-      get_orders(elem_asn, errors, log)
+      get_orders(REXML::XPath.each(elem_asn, "Container"), errors, log)
     end
 
     if errors.length > 0
@@ -226,14 +237,18 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       DateTime.iso8601(date_str)
     end
 
-    def get_orders elem_asn, errors, log
+    def get_orders elem_containers, errors, log
       r = {}
-      REXML::XPath.each(elem_asn,'Container/LineItems') do |el|
-        order_number = et(el,'PONumber')
-        if !order_number.blank?
-          r[order_number] = {element:el}
+
+      elem_containers.each do |elem_container|
+        REXML::XPath.each(elem_container, "LineItems") do |el|
+          order_number = et(el,'PONumber')
+          if !order_number.blank?
+            r[order_number] = {element:el}
+          end
         end
       end
+
       orders = Order.includes(:custom_values).where('order_number IN (?)',r.keys.to_a).to_a
       if r.size != orders.size
         missing_order_numbers = r.keys.to_a - orders.map(&:order_number)
@@ -301,15 +316,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
         shp.master_bill_of_lading = bill_lading
       end
 
+      shp
+    end
+
+    def update_containers shp, xml_timestamp, elem_asn, errors, log
+      container_elements = []
+
       elem_asn.elements.each('Container') do |elem_cont|
-        container = add_or_update_container elem_cont, shp, errors, log
-        elem_cont.elements.each('LineItems') do |elem_line_item|
-          add_or_update_shipment_line elem_line_item, shp, container, errors, log
+        container = add_or_update_container elem_cont, shp, xml_timestamp, errors, log
+        if container
+          container_elements << elem_cont
+          elem_cont.elements.each('LineItems') do |elem_line_item|
+            add_or_update_shipment_line elem_line_item, shp, container, errors, log
+          end
         end
       end
 
-      shp.save!
-      shp
+      container_elements
     end
 
     # Bill of Lading should be the same for all line items.  One ASN file represents one shipment.
@@ -349,18 +372,26 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       port
     end
 
-    def add_or_update_container elem_cont, shp, errors, log
+    def add_or_update_container elem_cont, shp, xml_timestamp, errors, log
       container_number = et(elem_cont, 'ContainerNumber')
       container = shp.containers.find {|c| c.container_number == container_number }
-      if !container
+      if container.nil?
         container = shp.containers.build(container_number:container_number)
         msg = "Shipment did not contain a container #{container_number}. A container record was created."
         errors << msg
         log.add_warning_message msg
+      else
+        if container.last_exported_from_source && container.last_exported_from_source > xml_timestamp
+          log.add_warning_message "Container #{container_number} not updated. Outdated file found."
+          return nil
+        end
       end
+
       container.container_size = convert_gtn_equipment_type(et(elem_cont, 'ContainerType'))
       container.seal_number = et(elem_cont, 'SealNumber')
       container.weight = et(elem_cont, 'ActualWeight')
+      container.last_exported_from_source = xml_timestamp
+
       container
     end
 
