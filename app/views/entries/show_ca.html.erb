@@ -1,6 +1,6 @@
 <%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
 <%content_for :action_bar do -%>
-  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>" title='Download'><i class='fa fa-download'></i></button>
+  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>" title='Download'><i class='fa fa-download'></i></button>
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>' title='Sync Records'><i class='fa fa-exchange'></i></button>
   <%if current_user.sys_admin?-%>    
     <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Purge' %>
@@ -161,7 +161,7 @@
     <hr />
   <%end%>
 <%else%>
-  <h3>More than 200 commercial invoice lines exist.  Please <a href="<%=entry_path(@entry, format: :xls)%>">download</a> the entry data or use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
+  <h3>More than 200 commercial invoice lines exist.  Please <a href="<%=entry_path(@entry, format: :xlsx)%>">download</a> the entry data or use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
 <%end%>
 <%if show_broker_invoices%>
   <a name='b_invoices'></a>

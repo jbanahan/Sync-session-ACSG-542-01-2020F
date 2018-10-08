@@ -92,6 +92,9 @@ class EntriesController < ApplicationController
         format.xls {
           send_excel_workbook render_xls(e, current_user), "#{e.broker_reference}.xls"
         }
+        format.xlsx {
+          send_excel_workbook render_xlsx(e, current_user), "#{e.broker_reference}.xlsx"
+        }
       end 
     }
   end
