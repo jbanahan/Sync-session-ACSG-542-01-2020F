@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     # to a new one.
     Lock.with_lock_retry(entry) do
       unsent_invoices(entry, broker_invoice_snapshots).each_pair do |invoice_number, invoice_data|
-        generate_and_send_invoice(entry_snapshot_json, invoice_data)
+        generate_and_send_invoice(entry_snapshot_json, invoice_data, entry)
       end
     end
 
@@ -47,12 +47,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
   private 
   
-    def generate_and_send_invoice entry_snapshot, invoice_data
+    def generate_and_send_invoice entry_snapshot, invoice_data, entry
       broker_invoice_snapshot = invoice_data[:snapshot]
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
       duty_file, brokerage_file = generate_data(entry_snapshot, broker_invoice_snapshot, invoice_data[:sync_types])
 
-      broker_invoice = find_entity_object(broker_invoice_snapshot)
+      broker_invoice = entry.broker_invoices.find {|i| i.invoice_number == invoice_number }
       return unless broker_invoice
 
       invoice_data[:sync_types].each do |sync_type|
@@ -161,18 +161,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       else
         # Don't round this value, we'll truncate the actual calculated values.
         proration_factor = (charge_amount / po_numbers.length)
-
-        # If there are more PO's than charge dollars (super tiny corner case), then we don't 
-        # have to turn the factor into a fraction...tne proration factor is the actual charge amount
-        # already. - > $3 / 4 PO's -> .75 per PO. $20 / 40 PO's -> .50 per PO
-        fractional = po_numbers.length > charge_amount
-        proration_factor = proration_factor / 100 unless fractional
-
         
         total_remaining = BigDecimal(charge_amount)
 
         po_numbers.each do |po|
-          prorated_value = (fractional ? proration_factor : (charge_amount * proration_factor)).round(2, BigDecimal::ROUND_DOWN)
+          prorated_value = proration_factor.round(2, BigDecimal::ROUND_DOWN)
           prorations[po] = prorated_value
           total_remaining -= prorated_value
         end
@@ -187,6 +180,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
             break if total_remaining == 0
           end
         end while total_remaining > 0
+
+        
+        if !valid_charge_amount?(prorations, charge_amount)
+          raise "Invalid Ascena proration calculation for Invoice # '#{invoice_number}'. Should have billed $#{charge_amount}, actually billed $#{prorations.values.sum}."
+        end
       end
 
       lines = []
@@ -206,6 +204,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       end
 
       lines
+    end
+
+    # Broken out solely so the method can be override / mocked for test casing
+    def valid_charge_amount? prorations, charge_amount
+      # This is bad...it means our proration calculation algorithm is straight up wrong and we over/under billed.
+        # This shouldn't happen, but if it does we want to catch it before it goes out to the customer.
+      prorations.values.sum == charge_amount
     end
 
     def invoice_line_duty_fields entry_snapshot, broker_invoice_snapshot, next_line_number, po_org_codes

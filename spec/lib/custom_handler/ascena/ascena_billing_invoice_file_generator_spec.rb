@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
     }
 
     let (:broker_invoice_line_brokerage) {
-      Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0007", charge_description: "Brokerage") 
+      Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage") 
     }
 
     let (:entry) {
@@ -107,10 +107,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       expect(lines.length).to eq 4
 
-      expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "100.0", "USD", "For Customs Entry # ENTRYNO"]
-      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "33.34", "Brokerage", "PO 1", "7218"]
-      expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "77519", "33.33", "Brokerage", "PO 2", "221"]
-      expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "77519", "33.33", "Brokerage", "PO 3", "151"]
+      expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "200.0", "USD", "For Customs Entry # ENTRYNO"]
+      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "66.67", "Brokerage", "PO 1", "7218"]
+      expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "77519", "66.67", "Brokerage", "PO 2", "221"]
+      expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "77519", "66.66", "Brokerage", "PO 3", "151"]
     end
 
     it "handles small brokerage prorations" do
@@ -147,8 +147,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       expect(lines.length).to eq 2
 
-      expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "100.0", "USD", "For Customs Entry # ENTRYNO"]
-      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "100.0", "Brokerage", "PO 1", "7218"]
+      expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "200.0", "USD", "For Customs Entry # ENTRYNO"]
+      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "200.0", "Brokerage", "PO 1", "7218"]
     end
 
     it "generates brokerage and duty files if needed" do
@@ -207,6 +207,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       expect(subject).not_to receive(:ftp_file)
       subject.generate_and_send broker_invoice_with_duty_snapshot
+    end
+
+    it "errors if proration amount is invalid" do
+      expect(subject).to receive(:valid_charge_amount?).and_return false
+
+      # the message looks wrong since it says the two amounts are the same,
+      # just because I can't really force the actual proration amount to be bad.  
+      # Instead, I'm just overriding the validation method to fail, so it raises an error.
+      expect { subject.generate_and_send broker_invoice_with_brokerage_snapshot }.to raise_error "Invalid Ascena proration calculation for Invoice # 'INVOICENUMBER'. Should have billed $200.0, actually billed $200.0."
     end
 
     context "with duty credits" do
