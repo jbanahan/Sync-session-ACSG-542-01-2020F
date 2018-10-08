@@ -20,33 +20,53 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     self.new.run_year_over_year_report settings
   end
 
+  def self.run_schedulable settings={}
+    raise "Email address is required." if settings['email'].blank?
+    self.new.run_year_over_year_report settings
+  end
+
   def run_year_over_year_report settings
-    # Default to previous year if year_1 value is not provided.
-    year_1 = settings['year_1'].to_i
-    if year_1 == 0
-      year_1 = Date.today.year - 1
-    end
+    year_1, year_2 = get_years settings
 
-    # Default to current year if year_2 value is not provided.
-    year_2 = settings['year_2'].to_i
-    if year_2 == 0
-      year_2 = Date.today.year
+    workbook = nil
+    distribute_reads do
+      workbook = generate_report year_1, year_2
     end
-
-    # Swap the years if the first year is greater than the second.  Always have the later year occur second in the report output.
-    if year_1 > year_2
-      temp_year = year_1
-      year_1 = year_2
-      year_2 = temp_year
-    end
-
-    workbook = generate_report year_1, year_2
 
     file_name = "Company_YoY_[#{year_1}_#{year_2}].xls"
-    workbook_to_tempfile(workbook, "YoY Report", file_name: "#{file_name}")
+    if settings['email'].present?
+      workbook_to_tempfile workbook, "YoY Report", file_name: "#{file_name}" do |temp|
+        OpenMailer.send_simple_html(settings['email'], "Company YoY Report #{year_1} vs. #{year_2}", "The VFI year-over-year report is attached, comparing #{year_1} and #{year_2}.", temp).deliver!
+      end
+    else
+      workbook_to_tempfile(workbook, "YoY Report", file_name: "#{file_name}")
+    end
   end
 
   private
+    # Pull year values from the settings, or default if none are provided.
+    def get_years settings
+      # Default to previous year if year_1 value is not provided.
+      year_1 = settings['year_1'].to_i
+      if year_1 == 0
+        year_1 = Date.today.year - 1
+      end
+
+      # Default to current year if year_2 value is not provided.
+      year_2 = settings['year_2'].to_i
+      if year_2 == 0
+        year_2 = Date.today.year
+      end
+
+      # Swap the years if the first year is greater than the second.  Always have the later year occur second in the report output.
+      if year_1 > year_2
+        temp_year = year_1
+        year_1 = year_2
+        year_2 = temp_year
+      end
+      [year_1, year_2]
+    end
+
     def generate_report year_1, year_2
       wb = XlsMaker.new_workbook
 
@@ -189,7 +209,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 div_xref.value AS division_name, 
                 COUNT(*) AS entry_count, 
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
-                SUM(line_count_tbl.entry_line_count) AS entry_line_count,
+                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
               FROM 
                 entries 
@@ -231,7 +251,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 div_xref.value AS division_name, 
                 COUNT(*) AS entry_count, 
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
-                SUM(line_count_tbl.entry_line_count) AS entry_line_count,
+                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
               FROM 
                 entries 
@@ -265,6 +285,43 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 div_xref.value, 
                 YEAR(convert_tz(arrival_date, "UTC", "#{get_time_zone}")), 
                 MONTH(convert_tz(arrival_date, "UTC", "#{get_time_zone}"))
+            ) UNION (
+              SELECT 
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_year, 
+                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_month, 
+                'CA' AS division_number, 
+                'Toronto' AS division_name, 
+                COUNT(*) AS entry_count, 
+                SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
+                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
+                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
+              FROM 
+                entries 
+                LEFT OUTER JOIN (
+                  SELECT 
+                    entries.id AS entry_id, 
+                    COUNT(*) AS entry_line_count 
+                  FROM 
+                    entries
+                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                      entries.id = ci.entry_id
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                      ci.id = cil.commercial_invoice_id
+                  WHERE 
+                    division_number IS NOT NULL AND 
+                    !(customer_number <=> 'EDDIEFTZ') AND 
+                    #{make_range_field_sql('release_date', year_1, year_2)}
+                  GROUP BY 
+                    entries.id
+                ) AS line_count_tbl ON 
+	                entries.id = line_count_tbl.entry_id
+              WHERE 
+                division_number IS NULL AND 
+                entry_number LIKE '1198%' AND 
+                #{make_range_field_sql('release_date', year_1, year_2)}
+              GROUP BY 
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")), 
+                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}"))
             )
           ) AS tbl
         GROUP BY

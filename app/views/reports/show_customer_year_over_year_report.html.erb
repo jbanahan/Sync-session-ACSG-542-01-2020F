@@ -19,41 +19,53 @@ $(function() {
 <%=form_tag reports_run_customer_year_over_year_report_path, :id=>'frm_run' do -%>
 <div class="container">
   <div style="line-height: 2.5">
-    <div>
-      <%=field_row "Country", select_tag(:country, options_for_select(['US', 'CA'].map {|m| [m, m]}, 'US'))%>
-    </div>
-    <div id="company-us">
-      <%=field_row "Importer(s)", select_tag(:importer_id_us, options_from_collection_for_select(@us_importers, 'id', :name_with_customer_number), multiple: true)%>
-    </div>
-    <div id="company-ca" style="display: none;">
-      <%=field_row "Importer(s)", select_tag(:importer_id_ca, options_from_collection_for_select(@ca_importers, 'id', :name_with_customer_number), multiple: true)%>
-    </div>
+    <%if current_user.sys_admin?%>
+      <div style="line-height: 1.2">
+        <span style="vertical-align: top"><%=field_row "Customer Number (one per line)", text_area_tag(:importer_customer_numbers, nil, rows:3) %></span>
+      </div>
+    <%else%>
+      <div>
+        <%=field_row "Country", select_tag(:country, options_for_select(['US', 'CA'].map {|m| [m, m]}, 'US'))%>
+      </div>
+      <div id="company-us">
+        <%=field_row "Importer(s)", select_tag(:importer_id_us, options_from_collection_for_select(@us_importers, 'id', :name_with_customer_number), multiple: true)%>
+      </div>
+      <div id="company-ca" style="display: none;">
+        <%=field_row "Importer(s)", select_tag(:importer_id_ca, options_from_collection_for_select(@ca_importers, 'id', :name_with_customer_number), multiple: true)%>
+      </div>
+    <%end%>
     <div>
       <%=field_row "Reference Date", select_tag(:range_field, options_for_select([['arrival_date', 'Arrival Date'], ['eta_date', 'ETA Date'], ['file_logged_date', 'File Logged Date'], ['fiscal_date', 'Fiscal Date'], ['release_date', 'Release Date']].map {|m| [m[1], m[0]]}))%>
     </div>
-    <div>
-      <span>
-        <%if current_user.sys_admin?%>
+    <%if current_user.sys_admin?%>
+      <div>
+        <span>
           <%=field_row "Years to Compare", select_tag(:year_1, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year - 1))%>
-        <%end%>
-      </span>
-      <span>and</span>
-      <span>
-        <%if current_user.sys_admin?%>
+        </span>
+        <span>and</span>
+        <span>
           <%=field_row "", select_tag(:year_2, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year))%>
-        <%end%>
-      </span>
+        </span>
+      </div>
+    <%end%>
+    <div style="line-height: 1.2">
+      <span style="vertical-align: top"><%=field_row "Entry Types (one per line)", text_area_tag(:entry_types, nil, rows:3) %></span>
     </div>
     <div>
-      <%=field_row "Mode of Transport", select_tag(:mode_of_transport, options_for_select(['All Modes', 'Air', 'Sea', 'Rail', 'Truck'].map {|m| [m, m]}, 'All Modes'), multiple:true, size:5)%>
+      <span style="vertical-align: top"><%=field_row "Mode of Transport", select_tag(:mode_of_transport, options_for_select(['All Modes', 'Air', 'Sea', 'Rail', 'Truck'].map {|m| [m, m]}, 'All Modes'), multiple:true, size:5)%></span>
+    </div>
+    <div>
+      <%=field_row "Group by Mode of Transport?", check_box_tag(:group_by_mode_of_transport, 'true')%>
     </div>
   </div>
   <div style="margin-top: 20px">
     <b>Optional fields (check to include)</b><br>
-    <%=field_row "Cotton Fee", check_box_tag(:cotton_fee, 'true')%>
-    <%=field_row "Taxes", check_box_tag(:taxes, 'true')%>
-    <%=field_row "Other Fees", check_box_tag(:other_fees, 'true')%>
+    <span style="margin-right:10px"><%=field_row "Cotton Fee", check_box_tag(:cotton_fee, 'true')%></span>
+    <span style="margin-right:10px"><%=field_row "Taxes", check_box_tag(:taxes, 'true')%></span>
+    <span style="margin-right:10px"><%=field_row "Other Fees", check_box_tag(:other_fees, 'true')%></span>
+    <%=field_row "ISF Fees", check_box_tag(:isf_fees, 'true')%><br>
+    <%=field_row "Port Breakdown for Current Month", check_box_tag(:port_breakdown, 'true')%>
   </div>
 </div>
-<%end%>
 </div>
+<%end%>

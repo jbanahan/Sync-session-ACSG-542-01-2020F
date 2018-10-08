@@ -854,32 +854,42 @@ describe ReportsController do
       end
 
       it "runs for authorized users, US importer" do
+        expect(user).to receive(:sys_admin?).and_return false
+
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
                                           :settings=>{range_field:'some_date', importer_ids:[5], year_1:'2015', year_2:'2017',
                                                       include_cotton_fee:true, include_taxes:false, include_other_fees:false,
-                                                      mode_of_transport:['Sea']}, :friendly_settings=>[])
+                                                      mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:true,
+                                                      include_port_breakdown:false, group_by_mode_of_transport:true}, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:['5'], importer_id_ca:['6'],
                                           year_1:'2015', year_2: '2017', cotton_fee:'true', taxes:'false', other_fees:nil,
-                                          mode_of_transport:['Sea']}
+                                          mode_of_transport:['Sea'], entry_types:"01\r\n\r\n02\r\n", isf_fees:'true',
+                                          port_breakdown:'false', group_by_mode_of_transport:'true'}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end
 
       it "runs for authorized users, CA importer" do
+        expect(user).to receive(:sys_admin?).and_return false
+
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
                                          :settings=>{range_field:'some_date', importer_ids:[6,7], year_1:'2015', year_2:'2017',
                                                      include_cotton_fee:false, include_taxes:true, include_other_fees:true,
-                                                     mode_of_transport:['Sea']}, :friendly_settings=>[])
+                                                     mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
+                                                     include_port_breakdown:true, group_by_mode_of_transport:false}, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:['6','7'],
                                           year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
-                                          mode_of_transport:['Sea']}
+                                          mode_of_transport:['Sea'], entry_types:"01\r\n02", isf_fees:'false',
+                                          port_breakdown:'true', group_by_mode_of_transport:'false'}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end
 
       it "fails if importer is not selected (US)" do
+        expect(user).to receive(:sys_admin?).and_return false
+
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).not_to receive(:run_report!)
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:[], importer_id_ca:['6'],
@@ -890,10 +900,49 @@ describe ReportsController do
       end
 
       it "fails if importer is not selected (CA)" do
+        expect(user).to receive(:sys_admin?).and_return false
+
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).not_to receive(:run_report!)
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:nil,
                                           year_1:'2015', year_2: '2017'}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("At least one importer must be selected.")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for admin users" do
+        expect(user).to receive(:sys_admin?).and_return true
+
+        importer_1 = Factory(:company, system_code:'SYS01')
+        importer_2 = Factory(:company, system_code:'SYS02')
+        # No match should be made for this even though there is a blank line in the input.
+        importer_3 = Factory(:company, system_code:'')
+
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
+                                                           :settings=>{range_field:'some_date', importer_ids:[importer_1.id,importer_2.id], year_1:'2015', year_2:'2017',
+                                                                       include_cotton_fee:false, include_taxes:true, include_other_fees:true,
+                                                                       mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
+                                                                       include_port_breakdown:true, group_by_mode_of_transport:false}, :friendly_settings=>[])
+        post :run_customer_year_over_year_report, {range_field:'some_date', importer_customer_numbers:" SYS01  \r\n\r\ninvalid_code\r\nSYS02\r\n",
+                                                   year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
+                                                   mode_of_transport:['Sea'], entry_types:"01\r\n02", isf_fees:'false',
+                                                   port_breakdown:'true', group_by_mode_of_transport:'false'}
+        expect(response).to be_redirect
+        expect(flash[:errors]).to be_nil
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+
+      it "fails for admin users when no importer customer codes are provided" do
+        expect(user).to receive(:sys_admin?).and_return true
+
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_customer_year_over_year_report, {range_field:'some_date', importer_customer_numbers:'   ',
+                                                   year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
+                                                   mode_of_transport:['Sea'], entry_types:['01','02'], isf_fees:'false',
+                                                   port_breakdown:'true', group_by_mode_of_transport:'false'}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq("At least one importer must be selected.")
         expect(flash[:notices]).to be_nil

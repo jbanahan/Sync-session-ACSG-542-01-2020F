@@ -5,18 +5,16 @@
 <h2>Company Year Over Year Report</h2><br>
 <%=form_tag reports_run_company_year_over_year_report_path, :id=>'frm_run' do -%>
   <div class="container">
+    <%if current_user.sys_admin?%>
       <div>
-      <span>
-        <%if current_user.sys_admin?%>
+        <span>
           <%=field_row "Years to Compare", select_tag(:year_1, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year - 1))%>
-        <%end%>
-      </span>
-      <span>and</span>
-      <span>
-        <%if current_user.sys_admin?%>
+        </span>
+        <span>and</span>
+        <span>
           <%=field_row "", select_tag(:year_2, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year))%>
-        <%end%>
-      </span>
-    </div>
+        </span>
+      </div>
+    <%end%>
+  </div>
 <%end%>
-</div>

@@ -37,9 +37,9 @@ describe OpenChain::Report::CompanyYearOverYearReport do
 
     after { @temp.close if @temp }
 
-    def make_entry division, date_range_field, date_range_field_val, customer_number:'ANYCUST', invoice_line_count:2
+    def make_entry division, date_range_field, date_range_field_val, customer_number:'ANYCUST', invoice_line_count:2, entry_number:'123doesntmatter'
       entry = Factory(:entry, importer_id:importer.id, division_number:division, summary_line_count:10,
-                      broker_invoice_total:12.34, customer_number:customer_number)
+                      broker_invoice_total:12.34, customer_number:customer_number, entry_number:entry_number)
       entry.update_attributes date_range_field => date_range_field_val
       inv = entry.commercial_invoices.create! invoice_number:"inv-#{entry.id}"
       for i in 1..invoice_line_count
@@ -84,13 +84,17 @@ describe OpenChain::Report::CompanyYearOverYearReport do
       eddie_ent_2016_May = make_entry '0002', :arrival_date, make_utc_date(2016,5,13), customer_number:'EDDIEFTZ'
       eddie_ent_2017_Apr = make_entry '0002', :arrival_date, make_utc_date(2017,4,11), customer_number:'EDDIEFTZ'
 
+      # Toronto entries don't have a division number set.  Division is determined based on entry number prefix.
+      toronto_ent_2016_May = make_entry nil, :release_date, make_utc_date(2016,5,13), entry_number:'1198555222'
+      toronto_ent_2017_Apr = make_entry nil, :release_date, make_utc_date(2017,4,11), entry_number:'1198555223'
+
       Timecop.freeze(make_eastern_date(2017,6,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017'})
       end
       expect(@temp.original_filename).to eq 'Company_YoY_[2016_2017].xls'
 
       wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 3
+      expect(wb.worksheets.length).to eq 4
 
       sheet_a = wb.worksheets[0]
       expect(sheet_a.name).to eq "0001 - Division A"
@@ -154,6 +158,27 @@ describe OpenChain::Report::CompanyYearOverYearReport do
       expect(sheet_c.row(14)).to eq ['Entry Summary Lines', 0, 0, 0, 0, -2, nil, nil, nil, nil, nil, nil, nil, -2]
       expect(sheet_c.row(15)).to eq ['ABI Lines', 0, 0, 0, 0, -10, nil, nil, nil, nil, nil, nil, nil, -10]
       expect(sheet_c.row(16)).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 0.0, -12.34, nil, nil, nil, nil, nil, nil, nil, -12.34]
+
+      sheet_d = wb.worksheets[3]
+      expect(sheet_d.name).to eq "CA - Toronto"
+      expect(sheet_d.rows.count).to eq 17
+      expect(sheet_d.row(0)).to eq [2016,'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Grand Total (YTD)']
+      expect(sheet_d.row(1)).to eq ['Entries Transmitted', 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      expect(sheet_d.row(2)).to eq ['Entry Summary Lines', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      expect(sheet_d.row(3)).to eq ['ABI Lines', 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 10]
+      expect(sheet_d.row(4)).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 0.0, 12.34, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.34]
+      expect(sheet_d.row(5)).to eq []
+      expect(sheet_d.row(6)).to eq [2017,'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Grand Total (YTD)']
+      expect(sheet_d.row(7)).to eq ['Entries Transmitted', 0, 0, 0, 1, 0, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet_d.row(8)).to eq ['Entry Summary Lines', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet_d.row(9)).to eq ['ABI Lines', 0, 0, 0, 10, 0, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet_d.row(10)).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 12.34, 0.0, nil, nil, nil, nil, nil, nil, nil, 12.34]
+      expect(sheet_d.row(11)).to eq []
+      expect(sheet_d.row(12)).to eq ['Variance','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Grand Total (YTD)']
+      expect(sheet_d.row(13)).to eq ['Entries Transmitted', 0, 0, 0, 1, -1, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet_d.row(14)).to eq ['Entry Summary Lines', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet_d.row(15)).to eq ['ABI Lines', 0, 0, 0, 10, -10, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet_d.row(16)).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 12.34, -12.34, nil, nil, nil, nil, nil, nil, nil, 0.0]
     end
 
     def make_utc_date year, month, day
@@ -325,6 +350,51 @@ describe OpenChain::Report::CompanyYearOverYearReport do
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
       expect(sheet.row(1)).to eq ['Entries Transmitted', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    end
+
+    it "sends email if email address provided" do
+      ent_2017_Jan = make_entry '0001', :release_date, make_utc_date(2017,1,16)
+
+      Timecop.freeze(make_eastern_date(2018,5,28)) do
+        described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'email' => ['a@b.com','b@c.dom']})
+      end
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ['a@b.com','b@c.dom']
+      expect(mail.subject).to eq "Company YoY Report 2017 vs. 2018"
+      expect(mail.body).to include "The VFI year-over-year report is attached, comparing 2017 and 2018."
+      expect(mail.attachments.count).to eq 1
+
+      Tempfile.open('attachment') do |t|
+        t.binmode
+        t << mail.attachments.first.read
+        t.flush
+        wb = Spreadsheet.open t.path
+        sheet = wb.worksheet(0)
+        expect(sheet.rows.count).to eq 17
+        expect(sheet.row(0)).to eq [2017,'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Grand Total (YTD)']
+      end
+    end
+  end
+
+  describe "run_schedulable" do
+    it "calls run report method" do
+      expect(described_class).to receive(:new).and_return subject
+      expect(subject).to receive(:run_year_over_year_report).and_return "success"
+
+      expect(described_class.run_schedulable({'email' => 'a@b.com'})).to eq("success")
+    end
+
+    it "raises an exception if blank email param is provided" do
+      expect(described_class).not_to receive(:new)
+
+      expect { described_class.run_schedulable({'email' => ' '}) }.to raise_error("Email address is required.")
+    end
+
+    it "raises an exception if no email param is provided" do
+      expect(described_class).not_to receive(:new)
+
+      expect { described_class.run_schedulable({}) }.to raise_error("Email address is required.")
     end
   end
 

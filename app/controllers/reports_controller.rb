@@ -903,18 +903,50 @@ class ReportsController < ApplicationController
   def run_customer_year_over_year_report
     klass = OpenChain::Report::CustomerYearOverYearReport
     if klass.permission? current_user
-      importer_ids = params[:country] == 'US' ? params[:importer_id_us].try(:map, &:to_i) : params[:importer_id_ca].try(:map, &:to_i)
+      importer_ids = get_customer_year_over_year_report_importer_ids
       if !importer_ids.nil? && importer_ids.length > 0
         run_report "Entry Year Over Year Report", klass, {range_field: params[:range_field], importer_ids: importer_ids,
                     year_1: params[:year_1], year_2: params[:year_2], include_cotton_fee: params[:cotton_fee] == 'true',
                     include_taxes: params[:taxes] == 'true', include_other_fees: params[:other_fees] == 'true',
-                    mode_of_transport: params[:mode_of_transport]}, []
+                    mode_of_transport: params[:mode_of_transport], entry_types: get_customer_year_over_year_report_entry_types,
+                    include_isf_fees: params[:isf_fees] == 'true', include_port_breakdown: params[:port_breakdown] == 'true',
+                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true' }, []
       else
         error_redirect "At least one importer must be selected."
       end
     else
       error_redirect "You do not have permission to view this report"
     end
+  end
+
+  def get_customer_year_over_year_report_importer_ids
+    importer_ids = []
+    if current_user.sys_admin?
+      customer_codes = params[:importer_customer_numbers]
+      if customer_codes
+        customer_codes.chomp.split(/[\r\n]+/).each do |cust_code|
+          # Ignore blank customer codes.
+          if cust_code.present?
+            c = Company.where(system_code:cust_code.strip).first
+            importer_ids << c.id unless c.nil?
+          end
+        end
+      end
+    else
+      importer_ids = params[:country] == 'US' ? params[:importer_id_us].try(:map, &:to_i) : params[:importer_id_ca].try(:map, &:to_i)
+    end
+    importer_ids
+  end
+
+  def get_customer_year_over_year_report_entry_types
+    entry_types = []
+    entry_types_str = params[:entry_types]
+    if entry_types_str
+      entry_types_str.chomp.split(/[\r\n]+/).each do |e_type|
+        entry_types << e_type if e_type.present?
+      end
+    end
+    entry_types
   end
 
   def show_company_year_over_year_report
