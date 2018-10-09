@@ -171,7 +171,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         end
 
         # Now distribute the remaining amounts after the rounded proration across the po's one cent at a time.
-        begin
+        while total_remaining > 0
           one_cent = BigDecimal("0.01")
           po_numbers.each do |po|
             total_remaining -= one_cent
@@ -179,8 +179,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
             break if total_remaining == 0
           end
-        end while total_remaining > 0
-
+        end
         
         if !valid_charge_amount?(prorations, charge_amount)
           raise "Invalid Ascena proration calculation for Invoice # '#{invoice_number}'. Should have billed $#{charge_amount}, actually billed $#{prorations.values.sum}."
