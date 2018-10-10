@@ -394,12 +394,12 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
     it "extracts data from an n1 segment into a hash" do
       # This test exists due to the way we're overriding this method and proxyig calls to the super 
       # implementation of this method...just want to make sure it stays working and consistent
-      expect(Lock).to receive(:acquire).with("Company-Test-0080", yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Company-Test-Toast-0080", yield_in_transaction: false).and_yield
 
-      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}
+      company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, system_code_prefix: "Toast"
       expect(company.persisted?).to eq true
       expect(importer.linked_companies).to include company
-      expect(company.system_code).to eq "Test-0080"
+      expect(company.system_code).to eq "Test-Toast-0080"
       expect(company.factory).to eq true
       expect(company.name).to eq "The Talbots Inc"
       expect(company.name_2).to eq "TALBOTS IMPORT,LLC FOR THE ACCOUNT OF,THE TALBOTS INC"

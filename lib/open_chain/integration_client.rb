@@ -54,6 +54,7 @@ require 'open_chain/custom_handler/ellery/ellery_856_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
 require 'open_chain/custom_handler/advance/advance_prep_7501_shipment_parser'
+require 'open_chain/custom_handler/lt/lt_850_parser'
 
 module OpenChain
   class IntegrationClient
@@ -243,6 +244,8 @@ module OpenChain
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lands_end_canada_plus") && custom_features.include?('Lands End Canada Plus')
         OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "lt_850") && custom_features.include?('LT')
+        OpenChain::CustomHandler::Lt::Lt850Parser.delay.process_from_s3 bucket, s3_path
       elsif (original_directory.include?("to_chain/"))
         ImportedFile.delay.process_integration_imported_file bucket, s3_path, original_path
       elsif (parser_identifier == "test_from_msl") && custom_features.include?('MSL+')

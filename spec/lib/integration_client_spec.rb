@@ -186,6 +186,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
     end
+    context "LT" do
+      it "handles orders" do
+        expect(master_setup).to receive(:custom_features_list).and_return ['LT']
+        p = class_double("OpenChain::CustomHandler::Lt::Lt850Parser")
+        expect(OpenChain::CustomHandler::Lt::Lt850Parser).to receive(:delay).and_return p
+        expect(p).to receive(:process_from_s3).with "bucket", '12345'
+        cmd = {'request_type'=>'remote_file','original_path'=>'/lt_850/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect(subject.process_command(cmd)).to eq(success_hash)
+      end
+    end
     context "jjill" do
       it "should send data to J Jill 850 parser" do
         expect(master_setup).to receive(:custom_features_list).and_return ['JJill']

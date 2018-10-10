@@ -208,8 +208,9 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     process_prepack_line(order, po1, sln, all_subline_segments, product)
   end
 
-  def find_or_create_company_from_n1_data data, company_type_hash: , other_attributes: {}
+  def find_or_create_company_from_n1_data data, company_type_hash: , system_code_prefix: nil, other_attributes: {}
     prefix = prefix_identifiers_with_system_codes? ? importer.system_code : nil
+    prefix = prefix.to_s + "-#{system_code_prefix}" if system_code_prefix
     super(data, company_type_hash: company_type_hash, link_to_company: importer, system_code_prefix: prefix, other_attributes: other_attributes)
   end
 
