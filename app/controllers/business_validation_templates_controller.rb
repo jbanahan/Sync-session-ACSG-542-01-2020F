@@ -26,6 +26,7 @@ class BusinessValidationTemplatesController < ApplicationController
       @new_criterion = SearchCriterion.new
       @new_rule = BusinessValidationRule.new
       @groups = Group.all
+      @mailing_lists = MailingList.mailing_lists_for_user(current_user)
     }
   end
 

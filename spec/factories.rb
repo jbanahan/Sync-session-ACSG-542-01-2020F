@@ -426,6 +426,13 @@ Factory.define :group do |f|
   f.name "Group Name"
 end
 
+Factory.define :mailing_list do |f|
+  f.sequence(:system_code) { |c| "code#{c}"}
+  f.name "Mailing List Name"
+  f.association :user
+  f.association :company
+end
+
 Factory.define :state_toggle_button do |f|
 
 end

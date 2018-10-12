@@ -212,7 +212,7 @@ describe BusinessValidationRulesController do
       r = JSON.parse(response.body)
       expect(r["model_fields"].length).to eq(CoreModule::ENTRY.default_module_chain.model_fields(u).values.size)
       rule = r["business_validation_rule"]
-      expect(rule).to eq({"business_validation_template_id"=>@bvt.id,
+      expect(rule).to eq({"mailing_lists"=>[],"business_validation_template_id"=>@bvt.id, "mailing_list_id"=>nil,
           "description"=>"DESC", "fail_state"=>"FAIL", "disabled" => false, "id"=>@rule.id, "group_id"=>@group.id, "type"=>"ValidationRuleAttachmentTypes",
           "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', "notification_type" => "Email", "notification_recipients" => "tufnel@stonehenge.biz",
           "suppress_pass_notice"=> true, "suppress_review_fail_notice" => true, "suppress_skipped_notice" => true, "subject_pass" => "subject - PASS", "subject_review_fail" => "subject - FAIL",

@@ -11,6 +11,13 @@
             <label for='email-to'>To</label>
             <textarea class='form-control' id="email-to" placeholder="Separate addresses with commas (or leave blank to send to yourself)." autofocus=true rows=4></textarea>
           </div>
+          <% mailing_lists = MailingList.mailing_lists_for_user(current_user) %>
+          <% if mailing_lists.present? %>
+            <div class="form-group">
+              <label for="email-mailing-list">Distribution List</label>
+              <%= select_tag 'email-mailing-list', options_from_collection_for_select(mailing_lists, 'id', 'name'), { include_blank: true, class: "form-control"} %>
+            </div>
+          <% end %>
           <div class='form-group'>
             <label for='email-subject'>Subject</label>
             <input id='email-subject' type='text' class='form-control'/>

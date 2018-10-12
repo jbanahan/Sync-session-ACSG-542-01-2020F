@@ -241,7 +241,7 @@ describe AdvancedSearchController do
         {"mfid"=>"prod_name","operator"=>"eq","label"=>ModelField.find_by_uid(:prod_name).label,"value"=>"123","datatype"=>"string","include_empty"=>false}
       ])
       expect(h['search_schedules']).to eq([
-        {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
+        {"mailing_list_id"=>nil,"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
           "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2}
       ])
@@ -272,7 +272,7 @@ describe AdvancedSearchController do
       h = JSON.parse response.body
       expect(h['allow_ftp']).to be_truthy
       expect(h['search_schedules']).to eq([
-        {"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
+        {"mailing_list_id"=>nil,"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,"disabled"=>false,"report_failure_count"=>2,
           "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", 
           "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
@@ -510,6 +510,20 @@ describe AdvancedSearchController do
       @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
         :module_type=>"Product")
       allow_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true
+    end
+
+    it "handles mailing lists" do
+      sender = "tufnel@stonehenge.biz"
+      recipient = "st-hubbins@hellhole.co.uk, smalls@sharksandwich.net"
+      mail_subject = "amp"
+      body = "Goes to 11."
+      mailing_list = "1"
+
+      d = double("delay")
+      expect(OpenChain::Report::AsyncSearch).to receive(:delay).and_return d
+      expect(d).to receive(:run_and_email_report).with(@user.id, @ss.id, {'to' => recipient, 'reply_to' => sender, 'subject' => mail_subject, 'body' => body, 'mailing_list' => mailing_list})
+      post :send_email, :id=>@ss.id, :mail_fields => {:to => recipient, :reply_to => sender, :subject => mail_subject, :body => body, :mailing_list => mailing_list }
+      expect(JSON.parse(response.body)).to eq({'ok' => 'ok'})
     end
 
     it "runs report as a delayed job" do

@@ -17,6 +17,7 @@
 #  id                     :integer          not null, primary key
 #  last_finish_time       :datetime
 #  last_start_time        :datetime
+#  mailing_list_id        :integer
 #  protocol               :string(255)
 #  report_failure_count   :integer          default(0)
 #  run_friday             :boolean
@@ -48,6 +49,7 @@ class SearchSchedule < ActiveRecord::Base
 
   belongs_to :search_setup
   belongs_to :custom_report
+  belongs_to :mailing_list
 
   def user
     if self.search_setup
@@ -117,6 +119,13 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   def send_email name, temp_file,attachment_name, user
+    if self.mailing_list.present?
+      if self.email_addresses.blank?
+        self.email_addresses << "#{mailing_list.split_emails.join(', ')}"
+      else
+        self.email_addresses << ", #{mailing_list.split_emails.join(', ')}"
+      end
+    end
     unless self.email_addresses.blank?
       if email_list_valid? self.email_addresses
         OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!

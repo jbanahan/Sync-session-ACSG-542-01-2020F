@@ -1,0 +1,35 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#btn_save").click(function() {$("#frm_mailing_list").submit();});
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id="btn_save">Save</button>
+<% end %>
+
+<div class="container">
+  <div class="row">
+    <%= form_for([@company, @mailing_list], html: {id: 'frm_mailing_list'}) do |f| %>
+      <div class="col-md-6">
+        <% if @mailing_list.new_record? %>
+          <%= f.hidden_field :company_id, value: current_user.company.id %>
+          <%= f.hidden_field :user_id, value: current_user.id %>
+          <div class="form-group">
+            <label>System Code</label>
+            <%= f.text_field :system_code, class: 'form-control', placeholder: 'System Code' %>
+          </div>
+        <% end %>
+        <div class="form-group">
+          <label>Email Distribution List Name</label>
+          <%= f.text_field :name, class: 'form-control', placeholder: 'Email Distribution List Name' %>
+        </div>
+        <div class="form-group">
+          <label>Email Addresses</label>
+          <span>(Seperate email addresses with commas.)</span>
+          <%= f.text_area :email_addresses, class: 'form-control', placeholder: 'Email Addresses' %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

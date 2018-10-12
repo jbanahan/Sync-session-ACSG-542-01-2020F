@@ -56,9 +56,23 @@ describe OpenChain::Report::AsyncSearch do
     end
   end
 
-  describe "run_and_email_report" do 
-    let (:user) { Factory(:user) }
+  describe "run_and_email_report" do
+    let (:company) { Factory(:company) }
+    let (:user) { Factory(:user, company: company) }
     let (:search_setup) { Factory(:search_setup, name: "Test", user: user, download_format: "xlsx") }
+
+    it "runs report and emails it to a mailing list" do
+      mailing_list = Factory(:mailing_list, user: user, company: company, email_addresses: 'report@report.com')
+
+      expect(Tempfile).to receive(:open).and_yield tempfile
+      expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
+      expect(SearchSchedule).to receive(:report_name).with(search_setup, "xlsx", include_timestamp: true).and_return "report.xlsx"
+
+      subject.run_and_email_report user.id, search_setup.id, {to: "me@there.com", subject: "Testing", body: "Testing", mailing_list: mailing_list.id.to_s}
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["me@there.com", "report@report.com"]
+    end
 
     it "runs report and emails it" do
       expect(Tempfile).to receive(:open).and_yield tempfile

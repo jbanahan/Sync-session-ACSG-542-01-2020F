@@ -21,7 +21,6 @@
 
 <div id='ng-app' ng-app='BusinessRuleApp'>
   <div ng-controller='BusinessRuleController' ng-init="setId(<%= @bvr.id %>)">
-
     <div class="container">
       <br>
       <div class="col-md-12">
@@ -97,7 +96,17 @@
             <br><br>
           </div>
         </div>
-        <div class="col-md-12">
+        <div class="container">
+          <div class="row form-group">
+            <div class="col-md-12">
+              <div class="row form-group" ng-show="businessRule.mailing_lists.length">
+                <div class="col-md-2" style="font-weight:bold;">Distribution List</div>
+                <div class="col-md-4">
+                  <select ng-options="mailing_list.id as mailing_list.label for mailing_list in businessRule.mailing_lists" class="form-control" ng-model="businessRule.mailing_list_id"></select>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="row form-group">
             <div class="col-md-2" style="font-weight:bold;">Notification recipients</div>
             <div class="col-md-4"><textarea class="form-control" ng-model="businessRule.notification_recipients" rows="3" placeholder="Separate addresses with commas"></textarea></div>

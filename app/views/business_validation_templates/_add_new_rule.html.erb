@@ -1,15 +1,19 @@
 <% content_for :javascript do %>
   $(function() {
     var notificationRecipients = $('#rule-notification-recipients-field');
+    var mailingLists = $('#mailing_list');
     if ($('#rule-notification-type-field option:selected').is(':empty')) {
       notificationRecipients.prop("disabled", true);
+      mailingLists.hide();
     }
     $('#rule-notification-type-field').change(function() {
       if ($('#rule-notification-type-field option:selected').is(':empty')) {
         notificationRecipients.prop("disabled", true);
-      } 
+        mailingLists.hide();
+      }
       else {
         notificationRecipients.prop("disabled", false);
+        mailingLists.show();
       }
     })
   })
@@ -51,6 +55,13 @@
   <div class="form-group">
     <%= f.label :notification_type %>
     <%= f.select :notification_type, options_for_select(["Email"]), { include_blank: true }, {class: "form-control", id: "rule-notification-type-field"} %>
+  </div>
+
+  <div class="form-group" id="mailing_list">
+    <% if @mailing_lists.present? %>
+      <%= f.label :mailing_list_id, "Distribution Lists" %>
+      <%= f.select :mailing_list_id, options_from_collection_for_select(@mailing_lists, 'id', 'name'), { include_blank: true }, {class: "form-control"} %>
+    <% end %>
   </div>
 
   <div class="form-group">

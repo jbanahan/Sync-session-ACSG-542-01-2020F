@@ -64,7 +64,7 @@ class BusinessValidationRulesController < ApplicationController
         params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
       end
       params[:business_validation_rule].delete("search_criterions")
-      @bvr.update_attributes!(params[:business_validation_rule].except("id", "business_validation_template_id", "search_criterions"))
+      @bvr.update_attributes!(params[:business_validation_rule].except("id", "mailing_lists", "business_validation_template_id", "search_criterions"))
       render json: {notice: "Business rule updated"}
     }
   end
@@ -106,7 +106,9 @@ class BusinessValidationRulesController < ApplicationController
     # attribute name instead of 'business_validation_rule'
     br_json = {business_validation_rule:
       {
+        mailing_lists: MailingList.mailing_lists_for_user(current_user).collect { |ml| {id: ml.id, label: ml.name} },
         business_validation_template_id: br.business_validation_template_id,
+        mailing_list_id: br.mailing_list_id,
         description: br.description,
         fail_state: br.fail_state,
         id: br.id,

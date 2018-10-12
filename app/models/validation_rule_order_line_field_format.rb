@@ -10,6 +10,7 @@
 #  fail_state                      :string(255)
 #  group_id                        :integer
 #  id                              :integer          not null, primary key
+#  mailing_list_id                 :integer
 #  message_pass                    :string(255)
 #  message_review_fail             :string(255)
 #  message_skipped                 :string(255)

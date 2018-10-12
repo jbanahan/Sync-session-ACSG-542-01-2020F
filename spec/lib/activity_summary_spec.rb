@@ -868,6 +868,8 @@ describe OpenChain::ActivitySummary do
     describe "ReportEmailer" do
       let(:imp) { Factory(:company, name: "ACME", alliance_customer_number: "AC") }
       let(:gen) { described_class.new(imp.id, "US") }
+      let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz", company: imp) }
+      let(:mailing_list) { Factory(:mailing_list, user: user, company: imp, email_addresses: 'mailinglist@domain.com')}
       subject { described_class::ReportEmailer }
 
       describe "update_args" do
@@ -920,6 +922,17 @@ describe OpenChain::ActivitySummary do
     end
 
     describe "run_schedulable" do
+      it "creates and emails spreadsheet to a mailing list" do
+        company = Factory(:company)
+        user = Factory(:user, company: company)
+        mailing_list = Factory(:mailing_list, name: 'Test', user: user, company: user.company, email_addresses: 'mailinglist@domain.com')
+        stub_master_setup
+        now = DateTime.new(2018,3,15)
+        Timecop.freeze(now) { described_class.run_schedulable('system_code' => imp.system_code, 'iso_code' => 'US', 'email' => 'tufnel@stonehenge.biz', 'mailing_list'=>mailing_list.id) }
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq ['tufnel@stonehenge.biz', 'mailinglist@domain.com']
+      end
+
       it "creates and emails spreadsheet" do        
         stub_master_setup
         now = DateTime.new(2018,3,15)

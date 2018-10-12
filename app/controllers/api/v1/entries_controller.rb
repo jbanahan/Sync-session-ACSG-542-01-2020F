@@ -36,7 +36,7 @@ module Api; module V1; class EntriesController < Api::V1::ApiCoreModuleControlle
       begin
         email_blank_or_valid = params[:addresses].blank? || email_list_valid?(params[:addresses])
         if email_blank_or_valid
-          klass.delay.email_report importer_id, iso_code, params[:addresses], params[:subject], params[:body], current_user.id
+          klass.delay.email_report importer_id, iso_code, params[:addresses], params[:subject], params[:body], current_user.id, params[:mailing_list]
         end
       rescue => e
         e.log_me ["Running/emailing #{klass.to_s} report. Params: {params.to_s}"]

@@ -47,7 +47,7 @@ describe Api::V1::EntriesController do
     it "runs and emails report to authorized user" do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
-      expect(downloader).to receive(:email_report).with(imp_id, "US", "tufnel@stonehenge.biz", "subject", "body", u.id)
+      expect(downloader).to receive(:email_report).with(imp_id, "US", "tufnel@stonehenge.biz", "subject", "body", u.id, nil)
       post :email_us_activity_summary_download, importer_id: imp_id, addresses: "tufnel@stonehenge.biz", subject: "subject", body: "body"
       expect(response.body).to eq({ok: "ok"}.to_json)
     end
@@ -71,7 +71,7 @@ describe Api::V1::EntriesController do
     it "allows blank emails" do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
-      expect(downloader).to receive(:email_report).with(imp_id, "US", "", "subject", "body", u.id)
+      expect(downloader).to receive(:email_report).with(imp_id, "US", "", "subject", "body", u.id, nil)
       post :email_us_activity_summary_download, importer_id: imp_id, addresses: "", subject: "subject", body: "body"
       expect(response.body).to eq({ok: "ok"}.to_json)
     end
@@ -80,7 +80,7 @@ describe Api::V1::EntriesController do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
       expect_any_instance_of(StandardError).to receive(:log_me)
-      expect(downloader).to receive(:email_report).with(imp_id, "US", "tufnel@stonehenge.biz", "subject", "body", u.id).and_raise "ERROR!"
+      expect(downloader).to receive(:email_report).with(imp_id, "US", "tufnel@stonehenge.biz", "subject", "body", u.id, nil).and_raise "ERROR!"
       post :email_us_activity_summary_download, importer_id: imp_id, addresses: "tufnel@stonehenge.biz", subject: "subject", body: "body"
       expect(response.body).to eq({errors: ["There was an error running your report: ERROR!"]}.to_json)
     end

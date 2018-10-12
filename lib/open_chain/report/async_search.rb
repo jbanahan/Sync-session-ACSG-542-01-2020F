@@ -14,7 +14,12 @@ module OpenChain; module Report; class AsyncSearch
     return unless run_by && search_setup
 
     run(run_by, search_setup) do |tempfile|
-      OpenMailer.send_search_result_manually(mail_fields[:to], mail_fields[:subject], mail_fields[:body], tempfile, run_by).deliver!
+      to = []
+      to << mail_fields[:to] unless mail_fields[:to].blank?
+      mailing_list = MailingList.where(id: mail_fields[:mailing_list]).first unless mail_fields[:mailing_list].nil?
+      to << mailing_list unless mailing_list.nil?
+
+      OpenMailer.send_search_result_manually(to, mail_fields[:subject], mail_fields[:body], tempfile, run_by).deliver!
     end
 
   rescue => e

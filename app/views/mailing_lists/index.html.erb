@@ -1,0 +1,63 @@
+<% content_for :javascript do %>
+  $(function() {
+    $( "#btn_delete_selected" ).hide();
+    $( "#btn_new" )
+      .click(function() {
+      window.location = '<%=new_company_mailing_list_path(@company)%>';
+    });
+    $( "#btn_delete_selected" ).click(
+      function() {
+        if (confirm("Are you sure you want to delete the selected Distribution Lists?") == true) {
+          $('form').submit();
+        }
+      });
+
+    if ($('input:checkbox').length > 0) {
+      $('input:checkbox').change(
+        function() {
+          if ($('input:checkbox:checked').length === 0) {
+            $( "#btn_delete_selected" ).hide();
+          } else {
+            $( "#btn_delete_selected" ).show();
+          }
+        });
+    }
+  });
+<% end %>
+<% content_for :action_bar do -%>
+  <button id='btn_new'>New</button>
+  <button id='btn_delete_selected'>Delete</button>
+<% end %>
+
+<h1><%=@company.name%> Distribution Lists</h1>
+<div>
+  <%=form_tag bulk_delete_company_mailing_lists_path(@company), id: "mailing_lists_form", method: :delete do %>
+    <table class='detail_table'>
+      <thead>
+      <tr>
+        <th></th>
+        <th>System Code</th>
+        <th>Distribution List Name</th>
+        <th>Created By</th>
+        <th>Creation Date</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+        <% @mailing_lists.each do |list| %>
+        <tr>
+          <td><%= check_box_tag("delete[#{list.id}]", 1) %></td>
+          <td><%= link_to list.system_code, edit_company_mailing_list_path(@company, list.id) %></td>
+          <td><%= list.name %></td>
+          <td><%= list.user.username %></td>
+          <td><%= list.created_at %></td>
+          <td>
+            <% if list.non_vfi_addresses? %>
+              <i title="Some users included in this distribution list do not have VFI Track User accounts." class="fa fa-exclamation-triangle text-warning"></i>
+            <% end %>
+          </td>
+      <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

@@ -10,6 +10,7 @@
 #  fail_state                      :string(255)
 #  group_id                        :integer
 #  id                              :integer          not null, primary key
+#  mailing_list_id                 :integer
 #  message_pass                    :string(255)
 #  message_review_fail             :string(255)
 #  message_skipped                 :string(255)
@@ -34,9 +35,10 @@
 class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
+  belongs_to :mailing_list
   attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, 
                   :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice, :subject_pass, :subject_review_fail, :subject_skipped,
-                  :message_pass, :message_review_fail, :message_skipped
+                  :message_pass, :message_review_fail, :message_skipped, :mailing_list_id
 
   has_many :search_criterions, dependent: :destroy
   # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)
@@ -123,6 +125,20 @@ class BusinessValidationRule < ActiveRecord::Base
                  ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
                  ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"}
               }
+
+  def recipients_and_mailing_lists
+    emails = self.notification_recipients
+
+    if mailing_list.present?
+      formatted_emails = mailing_list.split_emails.join(', ')
+      if emails.present?
+        emails << ", #{formatted_emails}"
+      else
+       emails = formatted_emails
+      end
+    end
+    emails
+  end
 
   def self.subclasses_array
     r = SUBCLASSES.collect {|k,v|

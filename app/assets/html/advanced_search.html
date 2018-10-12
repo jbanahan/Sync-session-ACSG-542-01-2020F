@@ -216,6 +216,11 @@
                       <input id='sched-disabled' type='checkbox' ng-model='scheduleToEdit.disabled'/>
                     </div>
                   </div>
+
+                  <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
+                    <label class="control-label" for="sched-mailing-lists">Distribution List</label>
+                    <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="sched-mailing-lists" ng-model="scheduleToEdit.mailing_list_id"></select>
+                  </div>
                   <div class='control-group'>
                     <label class='control-label' for='sched-email-addresses'>Email</label>
                     <div class='controls'>
@@ -420,6 +425,10 @@
               <div class='form-group'>
                 <label for='email-to'>To</label>
                 <textarea class='form-control' id="email-to" ng-model= 'mailFields.to' placeholder="Enter up to 10 email addresses..." autofocus=true rows=4></textarea>
+              </div>
+              <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
+                <label class="control-label" for="sched-mailing-lists">Distribution List</label>
+                <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="email-list" ng-model="mailFields.mailing_list"></select>
               </div>
               <div class='form-group'>
                 <label for='email-subject'>Subject</label>

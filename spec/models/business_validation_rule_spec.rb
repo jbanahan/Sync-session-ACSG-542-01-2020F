@@ -1,6 +1,38 @@
 require 'spec_helper'
 
 describe BusinessValidationRule do
+  describe "recipients_and_mailing_lists" do
+    let(:bvt) { Factory(:business_validation_template)}
+    let(:bvru) do  Factory(:business_validation_rule,
+                           business_validation_template: bvt)
+    end
+
+    it 'defaults to returning notification_recipients' do
+      bvru.notification_recipients = 'abc@domain.com, def@domain.com'
+      bvru.save!
+      bvru.reload
+      expect(bvru.recipients_and_mailing_lists).to eql('abc@domain.com, def@domain.com')
+    end
+
+    it 'returns the mailing list emails if no notification_recipients are present' do
+      mailing_list = Factory(:mailing_list, user: Factory(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
+      bvru.notification_recipients = ""
+      bvru.mailing_list = mailing_list
+      bvru.save!
+      bvru.reload
+      expect(bvru.recipients_and_mailing_lists).to eql("fgh@domain.com, ghi@domain.com")
+    end
+
+    it 'appends mailing_list recipients to notification_recipients if a mailing_list is present and notification_recipients exist' do
+      mailing_list = Factory(:mailing_list, user: Factory(:user), name: 'mailing list', email_addresses: "fgh@domain.com, ghi@domain.com")
+      bvru.notification_recipients = 'abc@domain.com, def@domain.com'
+      bvru.mailing_list = mailing_list
+      bvru.save!
+      bvru.reload
+      expect(bvru.recipients_and_mailing_lists).to eql("abc@domain.com, def@domain.com, fgh@domain.com, ghi@domain.com")
+    end
+  end
+
   describe "enabled?" do
     it "should not return !enabled in subclasses_array" do
       expect(described_class.subclasses_array.find {|a| a[1]=='PoloValidationRuleEntryInvoiceLineMatchesPoLine'}).to be_nil

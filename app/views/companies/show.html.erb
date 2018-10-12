@@ -54,6 +54,9 @@ $(function() {
     <% if MasterSetup.get.custom_feature?('Kewill Product Push') && !@company.alliance_customer_number.blank? && @company.importer_products.first-%>
       <button class='form_to' form_id='frm_alliance'>Products To Kewill</button>
     <% end -%>
+    <% if MasterSetup.get.custom_feature?('Mailing Lists') %>
+      <button class='btn_link' link_to='<%= company_mailing_lists_path(@company) %>'>Email Distribution Lists</button>
+    <% end %>
   <%end%>
   <% if current_user.view_power_of_attorneys? %>
     <button id='btn_poas'>POAs</button>

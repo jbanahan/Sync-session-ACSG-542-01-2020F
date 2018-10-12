@@ -27,7 +27,7 @@ EOS
   def send_simple_html to, subject, body, file_attachments = [], mail_options = {}
     @body_content = body
     pm_attachments = []
-    opts = {to: explode_group_email_list(to, "TO"), subject: subject}.merge mail_options
+    opts = {to: explode_group_and_mailing_lists(to, "TO"), subject: subject}.merge mail_options
     local_attachments = process_attachments(file_attachments, opts[:to])
     suppressed = opts.delete :suppressed
 
@@ -98,7 +98,7 @@ EOS
   def send_search_result(to, search_name, attachment_name, file_path, user)
     @user = user
     attachment_saved = save_large_attachment(file_path, to)
-    m = mail(:to => to,
+    m = mail(:to => explode_group_and_mailing_lists(to, "TO"),
       :subject => "[VFI Track] #{search_name} Result",
       :from => 'do-not-reply@vfitrack.net')
     unless attachment_saved
@@ -111,7 +111,7 @@ EOS
     @user = current_user
     attachment_saved = save_large_attachment(file_path, to)
     @body_text = body
-    m = mail(:to => to,
+    m = mail(:to => explode_group_and_mailing_lists(to, "TO"),
       :reply_to => @user.email,
       :subject => subject)
     unless attachment_saved
@@ -275,7 +275,7 @@ EOS
     email_subject = survey.email_subject + (@subtitle.blank? ? "" : " - #{@subtitle}")
     to = [survey_response.user.try(:email)]
     to << survey_response.group
-    to = explode_group_email_list to.compact, "TO"
+    to = explode_group_and_mailing_lists to.compact, "TO"
     mail(:to=>to,:subject=>email_subject) do |format|
       format.html
     end
@@ -310,7 +310,7 @@ EOS
 
     to = [survey_response.user.try(:email)]
     to << survey_response.group
-    to = explode_group_email_list to.compact, "TO"
+    to = explode_group_and_mailing_lists to.compact, "TO"
     mail(:to=>to, :subject=>"#{survey_response.survey.name} - Updated") do |format|
       format.html
     end
@@ -645,13 +645,18 @@ EOS
       end
     end
 
-    def explode_group_email_list list, list_type
+    def explode_group_and_mailing_lists list, list_type
       new_list = []
       group_codes = []
+      mailing_list_codes = []
       Array.wrap(list).each do |email_address|
         if email_address.is_a? Group
           group_codes << email_address.system_code
           emails = email_address.user_emails
+          new_list.push(*emails) if emails.length > 0
+        elsif email_address.is_a? MailingList
+          mailing_list_codes << email_address.system_code
+          emails = email_address.split_emails
           new_list.push(*emails) if emails.length > 0
         else
           new_list << email_address

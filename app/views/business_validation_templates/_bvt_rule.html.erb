@@ -43,6 +43,12 @@
               <b>Notification type:</b>
               <%= r.notification_type %>
             </li>
+            <% if r.mailing_list.present? %>
+              <li>
+                <b>Distribution list:</b>
+                <%= r.mailing_list.name %>
+              </li>
+            <% end %>
 
             <li>
               <b>

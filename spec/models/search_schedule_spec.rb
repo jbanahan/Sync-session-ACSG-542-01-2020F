@@ -312,8 +312,21 @@ describe SearchSchedule do
   describe "send_email" do
     let!(:sched) { Factory(:search_schedule, email_addresses: "tufnel@stonehenge.biz, st-hubbins@hellhole.co.uk") }
     let!(:user) { sched.search_setup.user }
+    let!(:mailing_list) { Factory(:mailing_list, name: 'blah', user: user, email_addresses: 'mailinglist@domain.com')}
 
     context "when addresses are valid" do
+      it "handles sending to mailing lists" do
+        sched.mailing_list = mailing_list
+        sched.save!
+        sched.reload
+        allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
+        Tempfile.open(['tempfile', '.txt']) do |file|
+          sched.send_email "search name", file, "attachment name", user
+          mail = ActionMailer::Base.deliveries.pop
+          expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk', 'mailinglist@domain.com'])
+          expect(mail.subject).to eq('[VFI Track] search name Result')
+        end
+      end
       it "sends email to schedule recipients" do
         allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
         Tempfile.open(['tempfile', '.txt']) do |file|

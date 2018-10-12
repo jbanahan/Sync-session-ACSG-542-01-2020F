@@ -923,6 +923,11 @@ OpenChain::Application.routes.draw do
       get 'validation_results'
       get 'history'
     end
+    resources :mailing_lists do
+      collection do
+        delete 'bulk_delete'
+      end
+    end
 		resources :addresses
 		resources :divisions
     resources :power_of_attorneys, :only => [:index, :new, :create, :destroy] do

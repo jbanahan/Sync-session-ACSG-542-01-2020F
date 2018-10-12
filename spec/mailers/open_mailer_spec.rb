@@ -228,6 +228,19 @@ describe OpenMailer do
       expect(m.cc).to eq ["test@test.com"]
     end
 
+    it "explodes mailing lists into component email addresses" do
+      mailing_list = Factory(:mailing_list, system_code: "MAILING LIST")
+      user1 = Factory(:user, email: "me@there.com")
+      user2 = Factory(:user, email: "you@there.com")
+
+      mailing_list.email_addresses = [user1.email, user2.email].join(", ").to_str
+      OpenMailer.send_simple_html(mailing_list, "Subject","").deliver!
+
+      m = OpenMailer.deliveries.last
+      expect(m.to.first).to eq user1.email
+      expect(m.to.second).to eq user2.email
+    end
+
     it "explodes groups into component email addresses" do
       group = Factory(:group, system_code: "GROUP")
       user1 = Factory(:user, email: "me@there.com")

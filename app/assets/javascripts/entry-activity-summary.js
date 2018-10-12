@@ -53,7 +53,8 @@ function entryActivitySummary() {
   function emailFields() {
     return { "addresses": $('#email-to').val(), 
              "subject": $('#email-subject').val(), 
-             "body": $('#email-body').val() };
+             "body": $('#email-body').val(),
+             "mailing_list": $("#email-mailing-list").val() };
   }
   function clearModalFields() {
     $('#email-to').val("");

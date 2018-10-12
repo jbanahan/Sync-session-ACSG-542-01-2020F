@@ -19,7 +19,7 @@ class AdvancedSearchController < ApplicationController
     ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     base_params = params[:search_setup]
-    
+
     if base_params[:search_criterions].blank?
       if base_params[:sort_criterions].presence || base_params[:search_schedules].presence
         render_json_error "Must have a search criterion to include sorts or schedules!"
@@ -71,7 +71,8 @@ class AdvancedSearchController < ApplicationController
             :run_saturday=>sc[:run_saturday],
             :run_sunday=>sc[:run_sunday],
             :disabled=>sc[:disabled],
-            :report_failure_count=>sc[:report_failure_count]
+            :report_failure_count=>sc[:report_failure_count],
+            :mailing_list=>current_user.company.mailing_lists.where(id: sc[:mailing_list_id]).first
           if ss.can_ftp?
             sched.ftp_server = sc[:ftp_server]
             sched.ftp_username = sc[:ftp_username]
@@ -215,6 +216,7 @@ class AdvancedSearchController < ApplicationController
           :title=>page_title(ss.core_module.try(:label)),
           :name=>ss.name,
           :include_links=>ss.include_links?,
+          :mailing_lists=>MailingList.mailing_lists_for_user(current_user).collect { |ml| {id: ml.id, label: ml.name} },
           :no_time=>ss.no_time?,
           :allow_ftp=>ss.can_ftp?,
           :allow_template=>current_user.admin?,
@@ -226,7 +228,7 @@ class AdvancedSearchController < ApplicationController
           :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank,:descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
           :search_schedules=>ss.search_schedules.collect {|s|
-            f = {:email_addresses=>s.email_addresses, :send_if_empty=>s.send_if_empty, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
+            f = {:mailing_list_id=>s.mailing_list_id, :email_addresses=>s.email_addresses, :send_if_empty=>s.send_if_empty, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
             :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format, :exclude_file_timestamp=>s.exclude_file_timestamp, :disabled=>s.disabled?, :report_failure_count=>s.report_failure_count }
 
             if ss.can_ftp?

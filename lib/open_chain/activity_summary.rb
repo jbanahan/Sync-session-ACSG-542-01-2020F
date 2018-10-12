@@ -498,20 +498,24 @@ order by importer_id, monthly_statement_due_date desc"
     def self.run_schedulable settings={}
       iso = settings['iso_code'].upcase
       imp = find_company settings
-      email_report imp, iso, settings["email"]
+      email_report imp, iso, settings["email"], nil, nil, nil, settings["mailing_list"]
     end
 
-    def self.email_report importer, iso_code, addresses, subject=nil, body=nil, user_id=nil
-      ReportEmailer.email importer, iso_code, addresses, subject, body, user_id
+    def self.email_report importer, iso_code, addresses, subject=nil, body=nil, user_id=nil, mailing_list=nil
+      ReportEmailer.email importer, iso_code, addresses, subject, body, user_id, mailing_list
     end
 
     class ReportEmailer
-      def self.email importer, iso_code, addresses, subject=nil, body=nil, user_id=nil
+      def self.email importer, iso_code, addresses, subject=nil, body=nil, user_id=nil, mailing_list=nil
         gen = OpenChain::ActivitySummary::EntrySummaryDownload.new importer, iso_code
         addresses, subject, body = update_args(gen, addresses, subject, body, user_id)
         begin
           report = gen.run
-          OpenMailer.send_simple_html(addresses, subject, body, [report]).deliver!
+          to = []
+          to << addresses unless addresses.blank?
+          mailing_list = MailingList.where(id: mailing_list).first unless mailing_list.nil?
+          to << mailing_list unless mailing_list.nil?
+          OpenMailer.send_simple_html(to, subject, body, [report]).deliver!
         ensure
           report.close
         end
