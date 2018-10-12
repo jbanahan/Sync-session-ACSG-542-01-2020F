@@ -43,45 +43,41 @@ module CoreObjectSupport
     CoreModule.find_by_object self
   end
 
-  def business_rules_state
+  def business_rules_state_for_user user
+    if user.view_all_business_validation_results?
+      business_rules_state
+    elsif user.view_business_validation_results?
+      business_rules_state include_private: false
+    else
+      nil
+    end
+  end
+
+  def business_rules_state include_private:true
     r = nil
-    self.business_validation_results.each do |bvr|
+    results = self.business_validation_results.send(include_private ? :all : :public)
+    results.each do |bvr|
       r = BusinessValidationResult.worst_state r, bvr.state
     end
     r
   end
 
-  def failed_business_rules
+  def business_rules state, include_private:true
     self.business_validation_results.
+      joins(:business_validation_template).
       joins(business_validation_rule_results: [:business_validation_rule]).
-      where(business_validation_rule_results: {state: "Fail"}).
+      where(business_validation_rule_results: {state: state}).
+      where(include_private || {business_validation_templates: {private: [nil, false]}}).
       uniq.
       order("business_validation_rules.name").
       pluck("business_validation_rules.name")
   end
 
-  def review_business_rules
-    self.business_validation_results.
-      joins(business_validation_rule_results: [:business_validation_rule]).
-      where(business_validation_rule_results: {state: "Review"}).
-      uniq.
-      order("business_validation_rules.name").
-      pluck("business_validation_rules.name")
-  end
-
-  def failed_business_rule_templates
+  def business_rule_templates state, include_private:true
     self.business_validation_results.
       joins(:business_validation_template).
-      where(business_validation_results: {state: "Fail"}).
-      uniq.
-      order("business_validation_templates.name").
-      pluck("business_validation_templates.name")
-  end
-
-  def review_business_rule_templates
-    self.business_validation_results.
-      joins(:business_validation_template).
-      where(business_validation_results: {state: "Review"}).
+      where(business_validation_results: {state: state}).
+      where(include_private || {business_validation_templates: {private: [nil, false]}}).
       uniq.
       order("business_validation_templates.name").
       pluck("business_validation_templates.name")

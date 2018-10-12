@@ -10,18 +10,6 @@ describe CoreObjectSupport do
       expect(Product.find_by_custom_value(cd,'def')).to be_nil
     end
   end
-  describe "business_rules_state" do
-    it "should set worst state from business_validation_results" do
-      ent = Factory(:entry)
-      bv1 = Factory(:business_validation_result,state:'Pass')
-      bv2 = Factory(:business_validation_result,state:'Fail')
-      [bv1,bv2].each do |b|
-        b.validatable = ent
-        b.save!
-      end
-      expect(ent.business_rules_state).to eq 'Fail'
-    end
-  end
   describe "process_linked_attachments" do
 
     let! (:order_rule) { LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num') }
@@ -245,66 +233,150 @@ describe CoreObjectSupport do
     end
   end
 
-  describe "failed_business_rules" do
-    it "lists all failed business rules for an object" do
-      entry = Factory(:entry)
-      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
-      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
-      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "A Test")).business_validation_result
-      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test")).business_validation_result
+  context "business rules" do
+    let(:template) { Factory(:business_validation_template, private: false) }
+    let(:priv_template) { Factory(:business_validation_template, private: true) }
+    let(:entry) { Factory(:entry) }
 
-      expect(entry.failed_business_rules).to eq ["A Test", "Test"]
+    describe "business_rules_state" do
+      before do
+        entry.business_validation_results << Factory(:business_validation_result, state: "Fail", business_validation_template: priv_template)
+        entry.business_validation_results << Factory(:business_validation_result, state: "Review", business_validation_template: template)
+        entry.business_validation_results << Factory(:business_validation_result, state: "Pass", business_validation_template: template)
+      end
+      
+      it "should set worst state from business_validation_results" do
+        ent = Factory(:entry)
+        bv1 = Factory(:business_validation_result,state:'Pass')
+        bv2 = Factory(:business_validation_result,state:'Fail')
+        [bv1,bv2].each do |b|
+          b.validatable = ent
+          b.save!
+        end
+        expect(ent.business_rules_state).to eq 'Fail'
+      end
+
+      it "returns 'worst' state of all rule results" do
+        expect(entry.business_rules_state).to eq "Fail"
+      end
+
+      it "returns 'worst' state of all rule results except private ones" do
+        expect(entry.business_rules_state(include_private: false)).to eq "Review"
+      end
+    end
+
+    describe "business_rules_state_for_user" do
+      let(:u) { Factory(:user, company: Factory(:company, show_business_rules: true)) }
+      
+      before do
+        entry.business_validation_results << Factory(:business_validation_result, state: "Fail", business_validation_template: priv_template)
+        entry.business_validation_results << Factory(:business_validation_result, state: "Review", business_validation_template: template)
+        entry.business_validation_results << Factory(:business_validation_result, state: "Pass", business_validation_template: template)
+      end
+
+      it "returns 'worst' state of all rule results for user with full privileges" do
+        expect(u).to receive(:view_all_business_validation_results?).and_return true
+        expect(entry.business_rules_state_for_user(u)).to eq "Fail"
+      end
+
+      it "returns 'worst' state of all rule results except private ones for user without full privileges" do
+        expect(u).to receive(:view_all_business_validation_results?).and_return false
+        expect(entry.business_rules_state_for_user(u)).to eq "Review"
+      end
+    end
+
+    describe "business_rules" do
+      def prep_results state
+        entry.business_validation_results << Factory(:business_validation_rule_result, state: state, business_validation_rule: Factory(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
+        entry.business_validation_results << Factory(:business_validation_rule_result, state: state, business_validation_rule: Factory(:business_validation_rule, name: "Test", business_validation_template: priv_template)).business_validation_result
+        entry.business_validation_results << Factory(:business_validation_rule_result, state: state, business_validation_rule: Factory(:business_validation_rule, name: "A Test", business_validation_template: template)).business_validation_result
+        entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test", business_validation_template: template)).business_validation_result
+      end
+      
+      context "failed" do
+        before { prep_results "Fail" }
+
+        it "lists all failed business rules for an object" do
+          expect(entry.business_rules("Fail")).to eq ["A Test", "Test"]
+        end
+        
+        it "lists non-private failed business rules for an object" do
+          expect(entry.business_rules("Fail", include_private: false)).to eq ["A Test"]
+        end
+      end
+
+      context "review" do
+        before { prep_results "Review" }
+
+        it "lists all 'review' business rules for an object" do
+          expect(entry.business_rules("Review")).to eq ["A Test", "Test"]
+        end
+        
+        it "lists non-private 'review' business rules for an object" do
+          expect(entry.business_rules("Review", include_private: false)).to eq ["A Test"]
+        end
+      end
+    end
+
+    describe "business_rule_templates" do
+      def prep_results state
+        Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 2", private: false), state: state)
+        Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 3", private: false,), state: "Pass")
+        Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 1", private: true), state: state)
+      end
+
+      context "failed" do
+        before { prep_results "Fail" }
+
+        it "lists the templates of all failed business rules for an object" do
+          expect(entry.business_rule_templates("Fail")).to eq ["bvt 1", "bvt 2"]
+        end
+        
+        it "lists the templates of all non-private failed business rules for an object" do
+          expect(entry.business_rule_templates("Fail", include_private: false)).to eq ["bvt 2"]
+        end
+      end
+
+      context "review" do
+        before { prep_results "Review" }
+
+        it "lists the templates of all 'review' business rules for an object" do
+          expect(entry.business_rule_templates("Review")).to eq ["bvt 1", "bvt 2"]
+        end
+        
+        it "lists the templates of all non-private 'review' business rules for an object" do
+          expect(entry.business_rule_templates("Review", include_private: false)).to eq ["bvt 2"]
+        end
+      end
+    end
+
+    describe "can_run_validations?" do
+      before :each do
+        @u = Factory(:user)
+        allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
+        @ent = Factory(:entry)
+
+        @bvrr_1 = Factory(:business_validation_rule_result)
+        bvr_1 = @bvrr_1.business_validation_result
+        bvr_1.validatable = @ent; bvr_1.save!
+
+        @bvrr_2 = Factory(:business_validation_rule_result)
+        bvr_2 = @bvrr_2.business_validation_result
+        bvr_2.validatable = @ent; bvr_2.save!
+      end
+
+      it "returns true if user has permission to edit all rule results associated with object" do
+        expect(@ent.can_run_validations? @u).to eq true
+      end
+
+      it "returns false if there are any rule results user doesn't have permission to edit" do
+        bvru_1 = @bvrr_1.business_validation_rule
+        bvru_1.group = Factory(:group); bvru_1.save!
+        expect(@ent.can_run_validations? @u).to eq false
+      end
     end
   end
-
-  describe "failed_business_rule_templates" do
-    it "lists the templates of all failed business rules for an object" do
-      entry = Factory(:entry)
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 2"), state: "Fail")
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 3"), state: "Pass")
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 1"), state: "Fail")
-
-      expect(entry.failed_business_rule_templates).to eq ["bvt 1", "bvt 2"]
-    end
-  end
-
-  describe "review_business_rule_templates" do
-    it "lists the templates of all 'review' business rules for an object" do
-      entry = Factory(:entry)
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 2"), state: "Review")
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 3"), state: "Pass")
-      Factory(:business_validation_result, validatable: entry, business_validation_template: Factory(:business_validation_template, module_type: "Entry", name: "bvt 1"), state: "Review")
-
-      expect(entry.review_business_rule_templates).to eq ["bvt 1", "bvt 2"]
-    end
-  end
-
-  describe "can_run_validations?" do
-    before :each do
-      @u = Factory(:user)
-      allow(@u).to receive(:edit_business_validation_rule_results?).and_return true
-      @ent = Factory(:entry)
-
-      @bvrr_1 = Factory(:business_validation_rule_result)
-      bvr_1 = @bvrr_1.business_validation_result
-      bvr_1.validatable = @ent; bvr_1.save!
-
-      @bvrr_2 = Factory(:business_validation_rule_result)
-      bvr_2 = @bvrr_2.business_validation_result
-      bvr_2.validatable = @ent; bvr_2.save!
-    end
-
-    it "returns true if user has permission to edit all rule results associated with object" do
-      expect(@ent.can_run_validations? @u).to eq true
-    end
-
-    it "returns false if there are any rule results user doesn't have permission to edit" do
-      bvru_1 = @bvrr_1.business_validation_rule
-      bvru_1.group = Factory(:group); bvru_1.save!
-      expect(@ent.can_run_validations? @u).to eq false
-    end
-  end
-
+  
   describe "split_newline_values" do
     let(:ent) { Factory(:entry) }
 

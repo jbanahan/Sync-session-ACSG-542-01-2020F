@@ -261,13 +261,9 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
     it "returns a hash of the business rule results associated with an object if the user has permission to view ALL of them" do
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       allow_any_instance_of(BusinessValidationRule).to receive(:active?).and_return true
+      allow(@u).to receive(:view_business_validation_results?).and_return true
       r = subject.results_to_hsh @u, @obj
       expect(r.to_json).to eq @target.to_json #to_json resolves millisecond discrepancy
-    end
-
-    it "returns nil if the business rule results have rule that user does not have permission to view" do
-      r = subject.results_to_hsh @u, @obj
-      expect(r).to be_nil
     end
   end
 end

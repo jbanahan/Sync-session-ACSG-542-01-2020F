@@ -1,26 +1,46 @@
 require 'spec_helper'
 
 describe BusinessValidationResult do
+  let(:bvr) { Factory(:business_validation_result) }
+  
   describe "can_view" do
     it "should allow users who can view results" do
       u = Factory(:master_user)
       u.company.update_attributes(show_business_rules:true)
-      expect(described_class.new.can_view?(u)).to eq true
+      expect(bvr.can_view?(u)).to eq true
     end
     it "should not allow who can't view results" do
       u = Factory(:user)
-      expect(described_class.new.can_view?(u)).to eq false
+      expect(bvr.can_view?(u)).to eq false
+    end
+
+    context "private results" do
+      before do
+        bvr.business_validation_template.update_attributes! private: true
+      end
+
+      it "allows users with viewing rights" do
+        u = Factory(:master_user)
+        u.company.update_attributes(show_business_rules:true)
+        expect(bvr.can_view?(u)).to eq true
+      end
+
+      it "blocks users without viewing rights" do
+        u = Factory(:user)
+        u.company.update_attributes(show_business_rules:true)
+        expect(bvr.can_view?(u)).to eq false
+      end
     end
   end
   describe "can_edit" do
     it "should allow users from master company" do
       u = Factory(:master_user)
       u.company.update_attributes(show_business_rules:true)
-      expect(described_class.new.can_edit?(u)).to eq true
+      expect(bvr.can_edit?(u)).to eq true
     end
     it "should not allow users not from master company" do
       u = Factory(:user)
-      expect(described_class.new.can_edit?(u)).to eq false
+      expect(bvr.can_edit?(u)).to eq false
     end
   end
   describe "run_validation" do
@@ -36,7 +56,6 @@ describe BusinessValidationResult do
       rr3.state = 'Review'
       rr4.state = 'Skipped'
 
-      bvr = described_class.new
       bvr.validatable = o
 
       [rr1,rr2,rr3,rr4].each do |x|
@@ -55,7 +74,6 @@ describe BusinessValidationResult do
       rr1.state = 'Pass'
       rr2.state = 'Pass'
 
-      bvr = described_class.new
       bvr.validatable = o
 
       [rr1,rr2].each do |x|
@@ -72,7 +90,7 @@ describe BusinessValidationResult do
 
       rr1.state = 'Pass'
 
-      bvr = described_class.new(state:'Pass')
+      bvr.update_attributes! state:'Pass'
       bvr.validatable = o
 
       [rr1].each do |x|

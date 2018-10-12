@@ -1,5 +1,5 @@
 <%
-  rule_state_field = ModelField.find_by_uid(:dc_rule_state)
+  rule_state = @claim.business_rules_state_for_user(current_user)
   include_process_actions = !@claim.attachments.empty? &&
   (@claim.drawback_claim_audits.count == 0 || @claim.drawback_export_histories.count == 0)
 
@@ -24,7 +24,7 @@
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
 <div class='container'>
-<%=render partial: '/shared/business_rules', locals:{base_object:@claim,rule_state_field:ModelField.find_by_uid(:dc_rule_state),validation_path:validation_results_drawback_claim_path(@claim)}%>
+<%=render partial: '/shared/business_rules', locals:{base_object:@claim,rule_state:rule_state,validation_path:validation_results_drawback_claim_path(@claim)}%>
 </div>
 <table class='ent_columns'>
   <tr>

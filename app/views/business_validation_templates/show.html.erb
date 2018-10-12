@@ -9,7 +9,11 @@
       <h1>Template: <%=@bv_template.name%>
         <% if @bv_template.disabled? %>
           &nbsp;[disabled]
-        <% end %></h1>
+        <% end %>
+        <% if @bv_template.private? %>
+          &nbsp;[private]
+        <% end %>
+        </h1>
     </div>
   </div>
   <div class="row">
@@ -33,10 +37,12 @@
     </div>
     <%@bv_template.business_validation_rules.reject(&:delete_pending?).each do |bvr|%>
     <div class='col-md-12 rule-container'>
-      <h3><%=bvr.name%> (<%=BusinessValidationRule::SUBCLASSES[bvr.type.to_sym][:label]%>)</h3>
+      <h3><%=bvr.name%> <%= bvr.disabled? ? "[disabled]" : ""%></h3>
+      <div><strong>Type: </strong><%=BusinessValidationRule::SUBCLASSES[bvr.type.to_sym][:label]%></div>
       <div><strong>Description: </strong><%=bvr.description%></div>
       <div><strong>Status If Failed: </strong><%=bvr.fail_state.blank? ? 'Fail' : bvr.fail_state%></div>
       <div><strong>Override Group: </strong><%= bvr.group.name if bvr.group %></div>
+      <div><strong>Notification Type: </strong><%= bvr.notification_type %></div>
       <h4>Criteria</h4>
       <ul>
         <%bvr.search_criterions.each do |sc|%>

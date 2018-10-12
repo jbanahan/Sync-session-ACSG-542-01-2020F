@@ -199,8 +199,8 @@ describe BusinessValidationTemplatesController do
       temp = r["business_template"]["business_validation_template"]
       temp.delete("updated_at")
       temp.delete("created_at")
-      expect(temp).to eq({"delete_pending"=>nil, "disabled"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
-          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]})
+      expect(temp).to eq({"delete_pending"=>nil, "disabled"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", "name"=>nil, "private"=>nil,
+                          "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]})
     end
   end
 

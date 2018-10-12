@@ -233,7 +233,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     # Some extra rules that are just easier to do in code than in the query.
     send = false
     # Can't send if the entry has any failing business rules
-    if entry.failed_business_rules.length == 0
+    if entry.business_rules("Fail").length == 0
 
       entry.broker_invoices.each do |inv|
         # We can send if we find any invoice having an Ocean Freight (0004) charge 

@@ -95,11 +95,23 @@ module OpenChain; module UserSupport; module UserPermissions
   def edit_business_validation_results?
     self.view_business_validation_results?
   end
+  def view_all_business_validation_results?
+    self.view_business_validation_results? && self.company.master?
+  end
+  def edit_all_business_validation_results?
+    self.view_all_business_validation_results?
+  end
   def view_business_validation_rule_results?
     self.view_business_validation_results?
   end
   def edit_business_validation_rule_results?
     self.view_business_validation_results?
+  end
+  def view_all_business_validation_rule_results?
+    self.view_all_business_validation_results?
+  end
+  def edit_all_business_validation_rule_results?
+    self.view_all_business_validation_results?
   end
   def view_official_tariffs?
     self.view_products? || self.company.master?

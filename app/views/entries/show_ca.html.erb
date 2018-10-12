@@ -1,4 +1,4 @@
-<%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
+<%rule_state = @entry.business_rules_state_for_user(current_user)%>
 <%content_for :action_bar do -%>
   <button class="btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>" title='Download'><i class='fa fa-download'></i></button>
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>' title='Sync Records'><i class='fa fa-exchange'></i></button>
@@ -21,7 +21,7 @@
 </style>
 <%show_broker_invoices = current_user.view_broker_invoices?%>
 <div class='container'>
-  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:rule_state_field, validation_path: validation_results_entry_path(@entry)}%>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state:rule_state, validation_path: validation_results_entry_path(@entry)}%>
 </div>
 <% if @entry.on_hold? %>
   <div class='container'>

@@ -225,6 +225,13 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
       described_class.update rule, "Entry", bvru_1.id, "brok ref", "cust num", "ACME"
     end
 
+    it "uses rule name if description is missing" do
+      rule.merge!("description" => "", "name" => "name")
+      expect(described_class).to receive(:send_email).with(id: bvru_1.id, rule: bvru_1, module_type: "Entry", uid: "brok ref", state: "Pass", 
+                                                           description: "name", message: "msg", customer_number: "cust num", importer_name: "ACME")
+      described_class.update rule, "Entry", bvru_1.id, "brok ref", "cust num", "ACME"
+    end
+
     it "doesn't send email if not indicated" do
       rule["notification_type"] = "Telepathy"
       expect(described_class).to_not receive(:send_email)

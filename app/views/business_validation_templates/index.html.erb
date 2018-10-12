@@ -11,7 +11,7 @@
     <div class="row">
       <div class='col-md-12'>
         <h2 style="display: inline;">
-          <%=link_to "#{template.name}#{template.disabled ? ' [disabled]' : ''}", template%>
+          <%=link_to "#{template.name}#{template.disabled? ? ' [disabled]' : ''}#{template.private? ? ' [private]' : ''}", template%>
         </h2>
         <div><%=template.description%></div>
         <h3>Criteria</h3>

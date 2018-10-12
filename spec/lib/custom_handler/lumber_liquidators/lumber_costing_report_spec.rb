@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
 
     it "does not generate data if validation rules have failures" do
       rule = BusinessValidationRule.create! name: "Rule"
-      result = entry.business_validation_results.create! state: "Fail"
+      result = Factory(:business_validation_result, validatable: entry, state: "Fail")
       bvrr = rule.business_validation_rule_results.create! state: "Fail"
       bvrr.business_validation_result = result
       bvrr.save!

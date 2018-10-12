@@ -64,7 +64,7 @@ $(function() {
 <% end %>
   <div id="top"></div>
   <div class='container'>
-    <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state_field:ModelField.find_by_uid(:ent_rule_state), validation_path: validation_results_entry_path(@entry)}%>
+    <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state:@entry.business_rules_state_for_user(current_user), validation_path: validation_results_entry_path(@entry)}%>
   </div>
 
 <% if @entry.on_hold? %>

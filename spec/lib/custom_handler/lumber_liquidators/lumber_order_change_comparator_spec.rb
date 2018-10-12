@@ -736,7 +736,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       ol2.update_custom_value!(cdefs[:ordln_deleted_flag], true)
       ol2.update_custom_value!(cdefs[:ordln_pc_approved_date], nil)
       ol2.update_custom_value!(cdefs[:ordln_pc_approved_date_executive], Date.new(2018, 3, 4))
-      expect(o).to receive(:business_rules_state).and_return('Fail')
+      expect(o).to receive(:business_rules_state).twice.and_return('Fail')
       o.reload
       o
     end

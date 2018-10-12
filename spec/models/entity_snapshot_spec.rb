@@ -359,7 +359,7 @@ describe EntitySnapshot, :snapshot do
       
       it "runs business validations" do
         EntitySnapshot.create_from_entity entry, user
-        expect(entry.failed_business_rules.length).to eq 1
+        expect(entry.business_rules("Fail").length).to eq 1
       end
     end
 

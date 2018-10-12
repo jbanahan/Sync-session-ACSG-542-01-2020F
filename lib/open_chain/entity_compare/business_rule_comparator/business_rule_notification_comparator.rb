@@ -58,7 +58,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
   def self.update rule_json, type, id, uid, customer_number, importer_name
     if rule_json["notification_type"] == 'Email'
       rule_obj = BusinessValidationRule.find(rule_json["id"])
-      send_email(id: id, rule: rule_obj, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"], 
+      send_email(id: id, rule: rule_obj, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"].presence || rule_json["name"], 
                  message: rule_json["message"], customer_number: customer_number, importer_name: importer_name)
     end
   end

@@ -15,8 +15,8 @@ module ApplicationHelper
 
 
   # create button to business rules page
-  def business_rules_button rule_state_field, path, state: nil
-    if rule_state_field.can_view?(User.current)
+  def business_rules_button rule_state, path, state: nil
+    if rule_state
       icon_opts = {class: "fa fa-medkit"}
 
       if BusinessValidationResult.fail_state?(state)

@@ -30,7 +30,7 @@
   :ordln_po_booked_price_per_unit, :ordln_po_booked_total_price, :ordln_po_booked_country_origin, :ordln_po_booked_bol, :ordln_po_booked_container_number, 
   :ordln_po_booked_seal_number, :ordln_po_shipped_article, :ordln_po_shipped_quantity, :ordln_po_shipped_hts, :ordln_po_shipped_price_per_unit, :ordln_po_shipped_total_price, 
   :ordln_po_shipped_country_origin, :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number, :ord_snapshot_discrepancy_comment] +asn_cdefs)%>
-<%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
+<%rule_state = @order.business_rules_state_for_user(current_user)%>
 <script type='text/javascript'>
 
   $("window").ready(function() {
@@ -103,7 +103,7 @@
   <%end%>
 <% end %>
 <div class="container">
-  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field,validation_path:validation_results_order_path(@order)}%>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state:rule_state,validation_path:validation_results_order_path(@order)}%>
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">

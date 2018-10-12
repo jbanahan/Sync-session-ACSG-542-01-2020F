@@ -20,13 +20,22 @@ class BusinessValidationResult < ActiveRecord::Base
   belongs_to :business_validation_template
   belongs_to :validatable, polymorphic: true
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_result, autosave: true
+  scope :public, joins(:business_validation_template).where(business_validation_templates: {private: [nil, false]})
 
   def can_view? user
-    user.view_business_validation_results?
+    if self.business_validation_template.private?
+      user.view_all_business_validation_results?
+    else
+      user.view_business_validation_results?
+    end
   end
 
   def can_edit? user
-    user.edit_business_validation_results?
+    if self.business_validation_template.private?
+      user.edit_all_business_validation_results?
+    else
+      user.edit_business_validation_results?
+    end
   end
 
   def run_validation

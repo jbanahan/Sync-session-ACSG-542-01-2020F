@@ -26,14 +26,14 @@ module OpenChain; module BusinessRuleValidationResultsSupport
     core_module ||= CoreModule.find_by_object(obj)
     r = {
           object_number:core_module.unique_id_field.process_export(obj,run_by),
-          state:obj.business_rules_state,
+          state:obj.business_rules_state_for_user(run_by),
           object_updated_at:obj.updated_at,
           single_object: obj.class.to_s,
           can_run_validations: obj.can_run_validations?(run_by),
           bv_results:[]
         }
     obj.business_validation_results.each do |bvr|
-      return nil unless bvr.can_view?(run_by)
+      next unless bvr.can_view?(run_by)
       h = {
             id:bvr.id,
             state:bvr.state,

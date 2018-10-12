@@ -8,8 +8,14 @@
   <% @rules.each do |r| %>
     <div class="row">
       <div class="col-md-12">
-        <li><%= r.name %>
+        <li><%= r.name %> <%= r.disabled? ? "[disabled]" : "" %>
           <ul>
+            <li>
+              <b>
+                Type:
+              </b> 
+              <%= r.type %>
+            </li>
             <li>
               <b>
                 Description:
@@ -50,17 +56,12 @@
                 <% end %>
               </ul>
             </li>
-            <li><b>Disabled:</b>
-                <%= content_tag(:span, r.disabled ? "true" : "", style: r.disabled ? "color: orange" : "") %>
-              <span>
-                <li style="display:inline">
-                  <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
-                </li>
-                &nbsp;
-                <li style="display:inline">
-                  <%= link_to "Edit", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
-                </li>
-              </span>
+            <li style="display:inline">
+              <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
+            </li>
+            &nbsp;
+            <li style="display:inline">
+              <%= link_to "Edit", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
             </li>
           </ul>
         </li>

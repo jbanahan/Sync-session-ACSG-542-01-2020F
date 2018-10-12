@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
       BusinessValidationTemplate.create_results_for_object! entry
 
       entry.reload
-      return unless entry.failed_business_rules.blank?
+      return unless entry.business_rules("Fail").blank?
 
       user = User.integration
       products = []

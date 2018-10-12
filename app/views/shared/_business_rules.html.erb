@@ -1,7 +1,6 @@
-<% if rule_state_field.can_view?(User.current) %>
-  <% rule_state = rule_state_field.process_export base_object, User.current %> 
+<% if rule_state %>
   <% content_for :action_bar do %>
-    <%=business_rules_button rule_state_field, validation_path, state: rule_state %>
+    <%=business_rules_button rule_state, validation_path, state: rule_state %>
   <% end %>
   <% 
     failed_state = BusinessValidationResult.fail_state?(rule_state)

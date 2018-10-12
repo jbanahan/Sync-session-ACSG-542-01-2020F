@@ -1112,7 +1112,7 @@ describe ModelField do
       end
 
       it "lists failed business rule names on export" do
-        c = Factory(:company,show_business_rules:true)
+        c = Factory(:master_company,show_business_rules:true)
         expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, Factory(:user,company:c))).to eq "A Test\n Test"
       end
 

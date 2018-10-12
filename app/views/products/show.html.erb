@@ -41,7 +41,7 @@
       </p>
     </div>
   </div>
-  <%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state_field:ModelField.find_by_uid(:prod_rule_state), validation_path: validation_results_product_path(@product)}%>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@product,rule_state:@product.business_rules_state_for_user(current_user), validation_path: validation_results_product_path(@product)}%>
   <div class='row'>
     <div class='col-md-6' id='prod_attr'>
       <h3 class='text-center'>Attributes</h3>

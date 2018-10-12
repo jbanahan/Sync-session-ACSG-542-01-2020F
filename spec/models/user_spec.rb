@@ -295,6 +295,22 @@ describe User do
         expect(u.view_business_validation_results?).to be_falsey
         expect(u.edit_business_validation_results?).to be_falsey
       end
+
+      context "private rules" do
+        it "allows master users" do
+          u = Factory(:master_user)
+          u.company.update_attributes(show_business_rules:true)
+          expect(u.view_all_business_validation_results?).to be_truthy
+          expect(u.edit_all_business_validation_results?).to be_truthy
+        end
+
+        it "doesn't allow importer users even if company has business-rules viewing allowed" do
+          u = Factory(:importer_user)
+          u.company.update_attributes(show_business_rules:true)
+          expect(u.view_all_business_validation_results?).to be_falsey
+          expect(u.edit_all_business_validation_results?).to be_falsey
+        end   
+      end
     end
     context "business_validation_rule_results" do
       it "should allow master users" do
@@ -314,6 +330,23 @@ describe User do
 
         expect(u.view_business_validation_rule_results?).to be_truthy
         expect(u.edit_business_validation_rule_results?).to be_truthy
+      end
+      
+      context "private rules" do
+        it "allows master users" do
+          u = Factory(:master_user)
+          u.company.update_attributes(show_business_rules:true)
+          expect(u.view_all_business_validation_rule_results?).to be_truthy
+          expect(u.edit_all_business_validation_rule_results?).to be_truthy
+        end
+
+        it "doesn't allow importer users even if company has business-rules viewing allowed" do
+          u = Factory(:importer_user)
+          u.company.update_attributes! show_business_rules: true
+
+          expect(u.view_all_business_validation_rule_results?).to be_falsey
+          expect(u.edit_all_business_validation_rule_results?).to be_falsey
+        end
       end
     end
     context "projects" do

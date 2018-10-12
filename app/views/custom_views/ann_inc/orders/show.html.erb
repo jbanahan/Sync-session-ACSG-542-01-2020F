@@ -1,4 +1,4 @@
-<%rule_state_field = ModelField.find_by_uid(:ord_rule_state)%>
+<%rule_state = @order.business_rules_state_for_user(current_user)%>
 <% content_for :javascript do %>
   $("window").ready(function() {
     $("[data-toggle='popover']").popover({html:true});
@@ -96,7 +96,7 @@
 <% end %>
 
 <div class="container">
-  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state_field:rule_state_field,validation_path:validation_results_order_path(@order)}%>
+  <%=render partial: '/shared/business_rules', locals:{base_object:@order,rule_state:rule_state,validation_path:validation_results_order_path(@order)}%>
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">

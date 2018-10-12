@@ -9,6 +9,7 @@
 #  id             :integer          not null, primary key
 #  module_type    :string(255)      not null
 #  name           :string(255)
+#  private        :boolean
 #  updated_at     :datetime         not null
 #
 
@@ -23,7 +24,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_ent
 require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name, :delete_pending, :disabled
+  attr_accessible :description, :module_type, :name, :delete_pending, :disabled, :private
   validates :module_type, presence: true
 
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
