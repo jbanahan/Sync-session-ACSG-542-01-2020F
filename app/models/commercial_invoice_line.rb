@@ -50,6 +50,8 @@
 #  po_number                  :string(255)
 #  product_line               :string(255)
 #  prorated_mpf               :decimal(11, 2)
+#  psc_date                   :datetime
+#  psc_reason_code            :string(255)
 #  quantity                   :decimal(12, 3)
 #  related_parties            :boolean
 #  state_export_code          :string(255)

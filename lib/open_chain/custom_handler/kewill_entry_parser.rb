@@ -178,6 +178,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         #Process containers before commercial invoices since invoice lines can link to containers
         process_containers e, entry
         process_commercial_invoices e, entry
+        process_post_summary_corrections e, entry
         process_broker_invoices e, entry
         process_fda_dates e, entry
         
@@ -1055,6 +1056,17 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.quota_category = t[:category_no]
       tariff.tariff_description = t[:tariff_desc]
       tariff.tariff_description = t[:tariff_desc_additional] unless t[:tariff_desc_additional].blank?
+    end
+
+    def process_post_summary_corrections e, entry
+      Array.wrap(e[:post_summary_corrections]).each do |psc|
+        Array.wrap(psc[:lines]).each do |psc_l|
+          ci = entry.commercial_invoices.find { |ci| ci.invoice_number == psc_l[:ci_no] }
+          cil = ci.commercial_invoice_lines.find { |cil| cil.line_number == psc_l[:ci_line_no] / 10 }
+          cil.psc_date = parse_numeric_datetime psc[:sent_date]
+          cil.psc_reason_code = psc_l[:reason_code]
+        end
+      end
     end
 
     def set_lacey_data l, lacey

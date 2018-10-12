@@ -385,6 +385,18 @@ describe OpenChain::CustomHandler::KewillEntryParser do
             "master_bills":[],
             "house_bills":[]
           }
+        ],
+        'post_summary_corrections' => [
+          { 'lines' => [ 
+                         {
+                          'ci_no' => 'INV1',
+                          'ci_line_no' => 10,
+                          'reason_code' => 'L04'
+                         }
+
+             ],
+            'sent_date' => 201803151200 
+          }
         ]
       }
     end
@@ -688,6 +700,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.unit_price).to eq BigDecimal("95.23")
       expect(line.other_fees).to eq BigDecimal("15.00")
       expect(line.miscellaneous_discount).to eq BigDecimal("33.44")
+      expect(line.psc_reason_code).to eq "L04"
+      expect(line.psc_date).to eq tz.parse "201803151200"
       expect(line.agriculture_license_number).to eq "LICENSE NO"
 
       tariff = line.commercial_invoice_tariffs.first
@@ -1263,6 +1277,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       @e['containers'] = []
       @e['broker_invoices'] = []
       @e['commercial_invoices'] = []
+      @e['post_summary_corrections'] = []
       entry = subject.process_entry @e
 
       expect(entry.customer_references).to eq ""
