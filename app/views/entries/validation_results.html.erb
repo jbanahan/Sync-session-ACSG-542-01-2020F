@@ -1,6 +1,6 @@
 <%content_for :javascript do%>
   $('document').ready(function() {
-    $('div[ng-controller]').scope().loadObject('entries', <%=@validation_object.id%>);
+    angular.element('div[ng-controller]').scope().loadObject('entries', <%=@validation_object.id%>);
   });
 <%end%>
 <%content_for :action_bar do%>

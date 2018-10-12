@@ -30,8 +30,10 @@ module ValidatesEntityChildren
       break if defined?(@validation_stopped) && @validation_stopped == true
 
       if matches_all_criteria?(child, sc_hash)
-        child_message = run_child_validation(child)
-        validation_messages << child_message unless child_message.blank?
+        child_messages = run_child_validation(child)
+        if !child_messages.blank?
+          validation_messages.push(*child_messages)  
+        end
       end
     end
 

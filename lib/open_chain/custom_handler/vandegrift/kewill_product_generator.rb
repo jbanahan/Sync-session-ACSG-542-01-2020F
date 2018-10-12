@@ -267,22 +267,25 @@ WHERE
   def tariffs row
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
     # here into individual classification fields.
-    hts_values = row[2].to_s.split(tariff_separator)
+    product_tariffs = row[2].to_s.split(tariff_separator)
 
-    special = special_tariff_number(row[3], hts_values[0])
-    if special.nil? || special.special_hts_number.blank?
-      hts_values
-    else
-      [special.special_hts_number] + hts_values
-    end
+    hts_values = []
+    hts_values.push *special_tariff_numbers(row[3], product_tariffs[0])
+    hts_values.push *product_tariffs
+
+    hts_values
   end
 
-  def special_tariff_number product_country_origin, hts_number
-    return nil if hts_number.blank? || @disable_special_tariff_lookup
+  def special_tariff_numbers product_country_origin, hts_number
+    return [] if hts_number.blank? || @disable_special_tariff_lookup
 
-    @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash reference_date: Time.zone.now.to_date
+    country_origin = (product_country_origin.presence || @default_special_tariff_country_origin).to_s
 
-    country_origin = product_country_origin.presence || @default_special_tariff_country_origin
-    @special_tariffs[country_origin].try(:[], hts_number)
+    special_tariff_hash.tariffs_for(country_origin, hts_number).map(&:special_hts_number)
   end
+
+  def special_tariff_hash
+    @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash "US", true, reference_date: Time.zone.now.to_date
+  end
+
 end; end; end; end

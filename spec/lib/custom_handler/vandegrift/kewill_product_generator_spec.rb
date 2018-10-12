@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     context "with special tariffs" do
-      let! (:special_tariff) { SpecialTariffCrossReference.create! hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO", effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day) }
+      let! (:special_tariff) { SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO", effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day) }
 
       it "includes special tariffs as first tariff record if present" do
         subject.write_row_to_xml parent, 1, row
@@ -226,6 +226,28 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         tariffs = []
         parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
         expect(tariffs.length).to eq 1
+      end
+
+       it "includes special tariffs with countries and without countries" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), priority: -1
+
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 3
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "9999999999"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "0987654321"
+
+        t = tariffs.third
+        expect(t.text "seqNo").to eq "3"
+        expect(t.text "tariffNo").to eq "1234567890"
       end
     end
 

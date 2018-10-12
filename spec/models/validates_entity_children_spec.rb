@@ -37,6 +37,12 @@ describe ValidatesEntityChildren do
       expect(@v.run_validation(@entry)).to eq "Error 1\nError 2"
     end
 
+    it "allows multiple errors returned for a validation object" do
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return ["Error 1", "Error 2"]
+      expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.second).and_return "Error 3"
+      expect(@v.run_validation(@entry)).to eq "Error 1\nError 2\nError 3"
+    end
+
     it "skip lines that don't match child level search criteria" do
       @v.search_criterions.build model_field_uid:'cil_po_number',operator:'eq',value:'ABC'
       expect(@v).to receive(:run_child_validation).with(@entry.commercial_invoice_lines.first).and_return "Error 1"

@@ -119,7 +119,9 @@ class BusinessValidationRule < ActiveRecord::Base
                  {
                     label: 'Ann First Sale Validations',
                     enabled_lambda: lambda {MasterSetup.get.custom_feature? "Ann"}
-                 }
+                 },
+                 ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
+                 ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"}
               }
 
   def self.subclasses_array
