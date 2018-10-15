@@ -656,7 +656,7 @@ class SearchCriterion < ActiveRecord::Base
 
   def number_value data_type, value
     sval = (value.blank? || !is_a_number(value) ) ? "0" : value
-    data_type==:integer ? sval.to_i : sval.to_f
+    data_type==:integer ? sval.to_i : BigDecimal(sval.to_s)
   end
 
   def is_a_number val
