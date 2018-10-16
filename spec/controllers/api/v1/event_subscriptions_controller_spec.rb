@@ -38,6 +38,13 @@ describe Api::V1::EventSubscriptionsController do
       post :create, user_id: @u.id
       expect(response).to be_success
     end
+    it "should snapshot the user" do
+      expect_any_instance_of(User).to receive(:create_snapshot)
+      allow_api_access @u
+      post :create, user_id: @u.id, event_subscriptions: @payload
+      expect(response).to be_success
+    end
+
     it "should allow create if user can_edit? user" do
       allow_api_access @u
       post :create, user_id: @u.id, event_subscriptions: @payload

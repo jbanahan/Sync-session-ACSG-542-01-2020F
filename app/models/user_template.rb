@@ -33,7 +33,7 @@ class UserTemplate < ActiveRecord::Base
 dtemp
   attr_accessible :name, :template_json
 
-  def create_user! company, first_name, last_name, username, email, time_zone, notify_user
+  def create_user! company, first_name, last_name, username, email, time_zone, notify_user, current_user
     ActiveRecord::Base.transaction do 
       default_template = JSON.parse(UserTemplate::DEFAULT_TEMPLATE_JSON)
       template_hash = default_template.merge(JSON.parse(self.template_json))
@@ -70,6 +70,7 @@ dtemp
 
 
       u.save!
+      u.create_snapshot(current_user)
 
       if template_hash['groups']
         template_hash['groups'].each do |grp_code|

@@ -17,6 +17,7 @@
   });
 <% end %>
 <% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=history_invoice_path(@user)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
   <%if @user.can_edit?(current_user) && !@user.company.locked?%>
     <button id='btn_edit'>Edit</button>
     <br/>

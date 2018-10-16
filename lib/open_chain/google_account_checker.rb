@@ -22,6 +22,7 @@ module OpenChain
         if !google_users.include? email
           user.disabled = true
           user.save!
+          user.create_snapshot(User.integration, nil, "Google Account Suspended")
 
           suspended_users << user
         end

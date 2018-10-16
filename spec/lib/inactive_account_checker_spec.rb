@@ -25,6 +25,11 @@ describe OpenChain::InactiveAccountChecker do
         expect(@inactive_user.locked?).to be_truthy
       end
 
+      it 'snapshots inactive users' do
+        expect_any_instance_of(User).to receive(:create_snapshot)
+        subject.run
+      end
+
       it 'does not touch system users' do
         subject.run
         @system_user.reload

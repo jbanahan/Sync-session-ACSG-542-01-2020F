@@ -33,6 +33,14 @@ describe OpenChain::GoogleAccountChecker do
       expect(user.disabled?).to eq false
     end
 
+    it "snapshots disabled accounts" do
+      expect_any_instance_of(User).to receive(:create_snapshot)
+      user_list.clear
+      subject.run
+      user.reload
+      expect(user.disabled?).to eq true
+    end
+
     it "disables accounts that are missing from the google response" do
       user_list.clear
       subject.run

@@ -887,6 +887,9 @@ OpenChain::Application.routes.draw do
 
   resources :users, :only => [:index] do
     resources :scheduled_reports, :only=>[:index]
+    member do
+      get 'history'
+    end
   end
 
   resources :scheduled_reports, :only => [] do

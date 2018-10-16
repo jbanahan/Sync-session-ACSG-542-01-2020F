@@ -19,6 +19,7 @@ module Api; module V1; class EventSubscriptionsController < Api::V1::ApiControll
         end
       end
       u.save!
+      u.create_snapshot(current_user)
     end
     render_subscriptions u
   end

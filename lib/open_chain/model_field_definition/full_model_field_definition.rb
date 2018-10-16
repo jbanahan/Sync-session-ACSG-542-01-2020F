@@ -54,6 +54,8 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::RunAsSessionFieldDefinition
   include OpenChain::ModelFieldDefinition::InvoiceFieldDefinition
   include OpenChain::ModelFieldDefinition::InvoiceLineFieldDefinition
+  include OpenChain::ModelFieldDefinition::UserFieldDefinition
+  include OpenChain::ModelFieldDefinition::EventSubscriptionDefinition
 
   def add_field_definitions
     add_address_fields
@@ -107,5 +109,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_run_as_session_fields
     add_invoice_fields
     add_invoice_line_fields
+    add_user_fields
+    add_event_subscription_fields
   end
 end; end; end

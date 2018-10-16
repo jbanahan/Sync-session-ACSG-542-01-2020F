@@ -131,6 +131,7 @@ class User < ActiveRecord::Base
   include Clearance::User
   include OpenChain::UserSupport::UserPermissions
   include OpenChain::UserSupport::Groups
+  include CoreObjectSupport
 
   cattr_accessor :current
 
@@ -402,7 +403,7 @@ class User < ActiveRecord::Base
     OpenChain::Registries::PasswordValidationRegistry.valid_password? user, password
   end
 
-  def update_user_password password, password_confirmation
+  def update_user_password password, password_confirmation, snapshot=true
     # Fail if the password is blank, under no circumstance do we want to accidently set someone's password
     # to a blank string.
     valid = false
@@ -426,6 +427,7 @@ class User < ActiveRecord::Base
       self.forgot_password = false
       self.failed_logins = 0
       self.save!
+      self.create_snapshot(User.integration, nil, 'Password changed') if snapshot
 
       self.user_password_histories.create!(hashed_password: self.encrypted_password, password_salt: self.password_salt)
     end

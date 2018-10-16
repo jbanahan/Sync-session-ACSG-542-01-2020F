@@ -5,6 +5,7 @@ describe UserTemplate do
     before :each do
       @c = Factory(:company)
       @g = Group.use_system_group('SYSG')
+      @current_user = Factory(:user)
     end
     it "should create user with default template merge" do
       expect(User).not_to receive(:delay)
@@ -22,7 +23,7 @@ describe UserTemplate do
       u = ut.create_user!(@c,'joe','smith','jsmith',
         'jsmith@example.com',
         'Eastern Time (US & Canada)',
-        false)
+        false, @current_user)
       expect(u.username).to eq 'jsmith'
       expect(u.first_name).to eq 'joe'
       expect(u.last_name).to eq 'smith'
@@ -53,7 +54,7 @@ describe UserTemplate do
     end 
     it 'should default username to email if nil' do
       ut = UserTemplate.new(template_json:'{}')
-      u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',false)
+      u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',false, @current_user)
       expect(u.username).to eq 'jsmith@example.com'
     end
     it "should delay send notification invites" do
@@ -64,7 +65,7 @@ describe UserTemplate do
       end
 
       u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',
-        true) # <-- this last attribute is what we're testing
+        true, @current_user) # <-- this last attribute is what we're testing
     end
   end
 end

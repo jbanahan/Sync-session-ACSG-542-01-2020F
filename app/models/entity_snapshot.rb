@@ -286,35 +286,29 @@ class EntitySnapshot < ActiveRecord::Base
     cm = CoreModule.find_by_class_name d.core_module
     d.model_fields_changed = model_field_diff(old_json,new_json)
 
-    new_children = new_json.nil? ? [] : new_json['entity']['children']
-    old_children = old_json.nil? ? [] : old_json['entity']['children']
+    new_children = Array.wrap(new_json.try(:[], 'entity').try(:[], 'children'))
+    old_children = Array.wrap(old_json.try(:[], 'entity').try(:[], 'children'))
 
-    entities_in_new = []
-    if new_children
-      new_children.each do |nc|
-        entities_in_new << "#{nc['entity']['record_id']}-#{nc['entity']['core_module']}"
-        cm.key_model_field_uids.each do |uid|
-          entities_in_new << "#{uid}-#{nc['entity']['model_fields'][uid.to_s]}"
-        end
-        oc = old_children.nil? ? nil : find_matching_child(old_children, nc)
-        if oc
-          d.children_in_both << diff_json(oc, nc)
-        else
-          d.children_added << diff_json(nil, nc)
-        end
+    new_children.each do |nc|
+      oc = old_children.nil? ? nil : find_matching_child(old_children, nc)
+      # If the new child was also found in the old child list, that means it wasn't added or deleted
+      if oc
+        d.children_in_both << diff_json(oc, nc)
+      else
+        # Since the child wasn't found in the old children, then it must be new
+        d.children_added << diff_json(nil, nc)
       end
     end
 
-    if old_children
-      old_children.each do |oc|
-        found = entities_in_new.include?("#{oc['entity']['record_id']}-#{oc['entity']['core_module']}")
-        cm.key_model_field_uids.each do |uid|
-          break if found
-          found = entities_in_new.include?("#{uid}-#{oc['entity']['model_fields'][uid.to_s]}")
-        end
-        d.children_deleted << diff_json(oc,nil) if !found
+    # Now identify which potential child objects got deleted between the old and new snapshot
+    old_children.each do |oc|
+      new_child = find_matching_child(new_children, oc)
+      # If the old child wasn't found in the list of new children, then we have a case where the child object was deleted
+      if new_child.nil?
+        d.children_deleted << diff_json(oc,nil)
       end
     end
+
     d
   end
 

@@ -1,5 +1,5 @@
 <%content_for :action_bar do %>
-  <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
+  <button class='btn_link' link_to='<%=@back_url || url_for(@base_object)%>' key_map='b'>Back</button>
   <button id='btn_xpnd'>Show All</button>
   <button id='btn_clpse'>Hide All</button>
 <%end%>

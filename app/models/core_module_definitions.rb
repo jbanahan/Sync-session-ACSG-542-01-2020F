@@ -630,6 +630,25 @@ module CoreModuleDefinitions
     default_search_columns: [:ras_admin_username, :ras_run_as_username, :ras_start_time, :ras_end_time]
   )
 
+  USER = CoreModule.new("User", "User",
+    unique_id_field_name: :usr_username,
+    key_model_field_uids: [:usr_username],
+    children: [Group, EventSubscription],
+    child_lambdas: {Group => lambda {|u| u.groups}, EventSubscription => lambda { |u| u.event_subscriptions}},
+    child_joins: {Group => "LEFT OUTER JOIN user_group_memberships ON users.id = user_group_memberships.user_id
+                            LEFT OUTER JOIN groups ON user_group_memberships.group_id = groups.id",
+                  EventSubscription => "LEFT OUTER JOIN event_subscriptions ON user.id = users.id"},
+  snapshot_descriptor: SnapshotDescriptor.for(User, {
+      groups: { type: Group },
+      event_subscriptions: { type: EventSubscription}
+  })
+  )
+
+  EVENT_SUBSCRIPTION = CoreModule.new("EventSubscription", "Event Subscriptions",
+    unique_id_field_name: :evnts_event_type,
+    key_model_field_uids: [:evnts_event_type]
+  )
+
   INVOICE = CoreModule.new("Invoice", "Customer Invoices",
     unique_id_field_name: :inv_inv_num,
     key_model_field_uids: [:inv_inv_num],
@@ -649,6 +668,7 @@ module CoreModuleDefinitions
         :inv_total_charges
     ]
   )
+
   INVOICE_LINE = CoreModule.new("InvoiceLine", "Invoice Line",
     unique_id_field_name: :invln_ln_number,
     show_field_prefix: true

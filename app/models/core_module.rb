@@ -58,7 +58,7 @@ class CoreModule
     @object_from_piece_set_lambda = o[:object_from_piece_set_lambda]
     @enabled_lambda = o[:enabled_lambda]
     @business_logic_validations = o[:business_logic_validations]
-    @key_model_field_uids = o[:key_model_field_uids]
+    @key_model_field_uids = (o[:key_model_field_uids].presence || Array.wrap(o[:unique_id_field_name]))
     if o[:edit_path_proc].nil?
       # The result handles cases where the path doesn't exist.  This code was largely hoisted from search_query_controller_helper
       # which did basically the same thing...so we don't care if we get objects that don't have edit paths.
@@ -439,6 +439,10 @@ class CoreModule
       return "inv"
     when INVOICE_LINE
       return "invln"
+    when USER
+      return "usr"
+    when EVENT_SUBSCRIPTION
+      return "evnts"
     else
       raise "CoreModule '#{core_module.try(:label)}' does not have a prefix set up."
     end
@@ -546,7 +550,7 @@ class CoreModule
           ModuleChain::SiblingModules.new(*mods)
         else
           child_cm = cm_object_map[child_class.name]
-          raise "#{cm.name} is using an invalid child CoreModule class of #{child_class.name} in its #{descriptor}." if child_cm.nil?
+          raise "#{cm.label} is using an invalid child CoreModule class of #{child_class.name} in its #{descriptor}." if child_cm.nil?
           child_cm
         end
       end

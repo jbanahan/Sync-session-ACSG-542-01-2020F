@@ -1,6 +1,14 @@
 class UsersController < ApplicationController
   skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
   skip_before_filter :require_user, only: [:disable_run_as]
+    def root_class
+      User
+    end
+    def history
+      @user = User.find(params[:id])
+      @back_url = edit_company_user_url(@user.company, @user)
+      super
+    end
     # GET /users
     def set_page_title
       @page_title ||= 'User'
@@ -80,7 +88,7 @@ class UsersController < ApplicationController
         valid = false
         begin
           User.transaction do
-            valid = @user.save && @user.update_user_password(password, password_confirmation)
+            valid = @user.save && @user.update_user_password(password, password_confirmation, false)
             if valid
               search_setups = params[:assigned_search_setup_ids]
               if search_setups && @user.id
@@ -97,7 +105,9 @@ class UsersController < ApplicationController
                   cr.simple_give_to! @user
                 end
               end
-            else 
+
+              @user.create_snapshot(current_user)
+            else
               # Rollback is swallowed by the transaction block
               raise ActiveRecord::Rollback, "Bad user create."
             end
@@ -136,7 +146,7 @@ class UsersController < ApplicationController
         username = params[:email] if username.blank?
         user_template.create_user! company, params[:first_name], 
           params[:last_name], username, params[:email], params[:time_zone],
-          params[:notify_user]
+          params[:notify_user], current_user
         add_flash :notices, 'User created.'
         redirect_to company_users_path(company)
       end
@@ -160,12 +170,13 @@ class UsersController < ApplicationController
           password_conf = params[:user].delete(:password_confirmation)
 
           # Don't do password update if password is blank
-          update_password = password.blank? ? true : @user.update_user_password(password, password_conf)
+          update_password = password.blank? ? true : @user.update_user_password(password, password_conf, false)
 
           valid =  update_password && @user.update_attributes(params[:user])
           
           # Ensure that change to group assignments is reflected in time stamp
           @user.touch
+          @user.create_snapshot(current_user)
           
           # Rollback is swallowed by the transaction block
           raise ActiveRecord::Rollback, "Bad user create." unless valid
@@ -223,6 +234,7 @@ class UsersController < ApplicationController
           u.password_locked = false
           u.failed_logins = 0
           u.save!
+          u.create_snapshot(current_user, nil, "User Unlocked")
           add_flash :notices, "Account unlocked."
           redirect_to edit_company_user_path u.company, u
         else
@@ -316,6 +328,7 @@ class UsersController < ApplicationController
             # as well.
             u.password = res['password']
             u.save!
+            u.create_snapshot(current_user)
             count += 1
           end
         end
@@ -424,7 +437,11 @@ class UsersController < ApplicationController
     action_secure(@user.can_edit?(current_user),@user,{:lock_check=>false,:module_name=>"user",:verb=>"change"}) {
       msg_word = @user.disabled ? "enabled" : "disabled"
       @user.disabled = !@user.disabled
-      add_flash :notices, "#{@user.fullName} was #{msg_word}." if @user.save
+      if @user.save
+        add_flash :notices, "#{@user.fullName} was #{msg_word}."
+        snapshot_context = @user.disabled ? "User Disabled" : "User Enabled"
+        @user.create_snapshot(current_user, nil, snapshot_context)
+      end
       errors_to_flash @user
       redirect_to company_user_path(@user.company,@user) 
     }

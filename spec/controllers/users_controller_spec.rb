@@ -126,7 +126,7 @@ describe UsersController do
       expect_any_instance_of(UserTemplate).to receive(:create_user!).with(
         u.company,
         'Joe', 'Smith', 'jsmith@sample.com', 'jsmith@sample.com', 
-        'Eastern Time (US & Canada)', 'true'
+        'Eastern Time (US & Canada)', 'true', u
       )
       post :create_from_template, {
         company_id: u.company_id, 

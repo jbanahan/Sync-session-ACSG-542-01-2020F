@@ -63,6 +63,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   });
 <%end%>
 <%content_for :action_bar do %>
+<% if @user.id %>
+  <button class='btn_link' link_to='<%=history_user_path(@user)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
+<% end %>
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
   <% if current_user.admin? %>
