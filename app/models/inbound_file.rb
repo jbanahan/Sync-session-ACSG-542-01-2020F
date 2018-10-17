@@ -145,6 +145,8 @@ class InboundFile < ActiveRecord::Base
 
   # Throws an exception if module_type is not nil and the value is not one of the CoreModules.
   def add_identifier identifier_type, value, module_type:nil, module_id:nil
+    identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
+
     validate_identifier_module_type module_type
     # Prevents a dupe from being added.
     if get_identifiers(identifier_type, value:value).length == 0
@@ -160,6 +162,8 @@ class InboundFile < ActiveRecord::Base
   # not been previously added to the identifiers array.  If identifier value is specified, sets only the identifier that
   # matches specifically by both type and value.
   def set_identifier_module_info identifier_type, module_type, module_id, value:nil
+    identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
+    
     validate_identifier_module_type module_type
     get_identifiers(identifier_type, value:value).each do |ident|
       ident.module_type = module_type.to_s
@@ -171,6 +175,8 @@ class InboundFile < ActiveRecord::Base
   # Returns the identifiers matching the provided type, or empty array if no match.  Value can be provided optionally
   # to further restrict the results returned to just one specific identifier (hopefully).
   def get_identifiers identifier_type, value:nil
+    identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
+    
     identifiers.select { |id| id.identifier_type == identifier_type && (!value || id.value == value) }
   end
 

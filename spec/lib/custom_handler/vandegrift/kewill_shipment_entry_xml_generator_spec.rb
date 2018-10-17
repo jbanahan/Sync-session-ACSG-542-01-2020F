@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     let (:shipment) {
       s = Shipment.create! reference: "REF", master_bill_of_lading: "CARR123456", house_bill_of_lading: "HBOL", vessel: "VESSEL", voyage: "VOYAGE", vessel_carrier_scac: "CARR", mode: "Ocean", 
         est_arrival_port_date: Date.new(2018, 4, 1), departure_date: Date.new(2018, 3, 1), est_departure_date: Date.new(2018, 3, 3), importer_id: importer.id,
-        country_origin: cn, country_export: us
+        country_origin: cn, country_export: us, description_of_goods: "GOODS DESCRIPTION"
 
       # This is midnight UTC, so the actual date should roll back a day, since it should be using the date in Eastern TZ
       s.update_custom_value! cdefs[:shp_entry_prepared_date], "2018-06-01 00:00"
@@ -86,7 +86,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     }
 
     it "generates entry data" do
-      goods_description
       d = subject.generate_kewill_shipment_data shipment
 
       expect(d.customer).to eq "CUST"
@@ -97,7 +96,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(d.pieces).to eq 70
       expect(d.pieces_uom).to eq "CTNS"
       expect(d.weight_kg).to eq 50
-      expect(d.goods_description).to eq "GOODS"
+      expect(d.goods_description).to eq "GOODS DESCRIPTION"
       expect(d.country_of_origin).to eq "CN"
       expect(d.country_of_export).to eq "US"
 
@@ -116,7 +115,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(c.container_type).to eq "HQ"
       expect(c.pieces).to eq 70
       expect(c.pieces_uom).to eq "CTNS"
-      expect(c.description).to eq "GOODS"
+      expect(c.description).to eq "GOODS DESCRIPTION"
 
       date = d.dates.find {|d| d.code == :est_arrival_date}
       expect(date).not_to be_nil
@@ -253,6 +252,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
       line = d.invoices.first.invoice_lines.first
       expect(line.country_of_origin).to eq "CN"
+    end
+
+    it "uses default goods description if shipment's description is blank" do
+      goods_description
+      shipment.update_attributes! description_of_goods: nil
+
+      d = subject.generate_kewill_shipment_data shipment
+      expect(d.goods_description).to eq "GOODS"
     end
   end
 

@@ -241,6 +241,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
     end
 
     def goods_description ci_load_entry, shipments
+      # See if any of the shipments have a goods description, if so, use it..otherwise fall back to the default
+      description = shipments.find {|s| !s.description_of_goods.blank? }.try(:description_of_goods)
+      return description if !description.blank?
+
       return nil if ci_load_entry.customer.blank?
 
       DataCrossReference.where(key: ci_load_entry.customer).pluck(:value).first

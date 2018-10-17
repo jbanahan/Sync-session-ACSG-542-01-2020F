@@ -111,13 +111,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
   let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
 
   context 'request type: remote_file', :disable_delayed_jobs do
-    context "ecellerate" do
-      it "should send data to eCellerate router" do
-        expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with "bucket", '12345'
-        cmd = {'request_type'=>'remote_file','original_path'=>'/_ecellerate_shipment/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
-        expect(subject.process_command(cmd)).to eq(success_hash)
-      end
-    end
     context "ascena" do
       it "sends data to Ascena PO parser" do
         klass = OpenChain::CustomHandler::Ascena::AscenaPoParser
@@ -143,13 +136,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(k).to receive(:delay).and_return(k)
         expect(k).to receive(:process_from_s3).with "bucket", '12345'
         cmd = {'request_type'=>'remote_file','original_path'=>'/baillie/_po_xml/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
-        expect(subject.process_command(cmd)).to eq(success_hash)
-      end
-    end
-    context "ecellerate" do
-      it "should send data to eCellerate router" do
-        expect(OpenChain::CustomHandler::EcellerateXmlRouter).to receive(:process_from_s3).with "bucket", '12345'
-        cmd = {'request_type'=>'remote_file','original_path'=>'/_ecellerate_shipment/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
     end
@@ -668,6 +654,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
     expect(OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser).to receive(:delay).and_return p
     expect(p).to receive(:process_from_s3).with "bucket", '12345'
     cmd = {'request_type'=>'remote_file','original_path'=>'/advan_prep_7501/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    expect(subject.process_command(cmd)).to eq(success_hash)
+  end
+
+  it "handles eCellerate shipment xml files" do
+    expect(master_setup).to receive(:custom_features_list).and_return ['eCellerate']
+    p = class_double("OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser")
+    expect(OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser).to receive(:delay).and_return p
+    expect(p).to receive(:process_from_s3).with "bucket", '12345'
+    cmd = {'request_type'=>'remote_file','original_path'=>'/ecellerate_shipment/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
     expect(subject.process_command(cmd)).to eq(success_hash)
   end
 

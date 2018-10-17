@@ -8,7 +8,6 @@ require 'open_chain/custom_handler/ann_inc/ann_order_850_parser'
 require 'open_chain/custom_handler/ann_inc/ann_commercial_invoice_xml_parser'
 require 'open_chain/custom_handler/ascena/apll_856_parser'
 require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
-require 'open_chain/custom_handler/ecellerate_xml_router'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_commercial_invoice_parser'
@@ -55,6 +54,7 @@ require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activit
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
 require 'open_chain/custom_handler/advance/advance_prep_7501_shipment_parser'
 require 'open_chain/custom_handler/lt/lt_850_parser'
+require 'open_chain/custom_handler/descartes/descartes_basic_shipment_xml_parser'
 
 module OpenChain
   class IntegrationClient
@@ -238,8 +238,6 @@ module OpenChain
         OpenChain::CustomHandler::Polo::PoloTradecard810Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "jjill_850") && custom_features.include?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, s3_path
-      elsif (parser_identifier == "ecellerate_shipment")
-        OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lands_end_parts") && custom_features.include?('Lands End Parts')
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lands_end_canada_plus") && custom_features.include?('Lands End Canada Plus')
@@ -283,6 +281,8 @@ module OpenChain
         OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "advan_prep_7501") && custom_features.include?("Advance 7501")
         OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ecellerate_shipment") && custom_features.include?("eCellerate")
+        OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

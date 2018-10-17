@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ShipNotice>
+  <TransactionId>20180802723027</TransactionId>
+  <TransactionDateTime>2018-08-07T14:59:13.00-05:00</TransactionDateTime>
+  <TransactionSetPurpose>Add</TransactionSetPurpose>
+  <DocumentDate>2018-08-06T00:00:00.00-05:00</DocumentDate>
+  <ShipmentType>HOUSE</ShipmentType>
+  <CameFrom>Shipment</CameFrom>
+  <BookingNumber>ABC123</BookingNumber>
+  <MasterBillNumber>ONEYSZPU61865401</MasterBillNumber>
+  <HouseBillNumber>LMDLSZ18080052</HouseBillNumber>
+  <PaymentMethod/>
+  <TransportationMethod>Ocean</TransportationMethod>
+  <CarrierCode>ONEY</CarrierCode>
+  <VesselName>MADRID BRIDGE</VesselName>
+  <VoyageFlightNumber>002E</VoyageFlightNumber>
+  <DepartureDateTime>2018-08-08T12:00:00.00-05:00</DepartureDateTime>
+  <ConfirmedDepartureDate>2018-08-09T12:00:00.00-05:00</ConfirmedDepartureDate>
+  <ArrivalDateTime>2018-09-06T12:00:00.00-05:00</ArrivalDateTime>
+  <VesselName2/>
+  <VoyageFlightNumber2/>
+  <DepartureDateTime2/>
+  <RelatedParties>N</RelatedParties>
+  <InbondCode>70</InbondCode>
+  <ETA/>
+  <ConfirmedOnBoard/>
+  <DestinationWarehouse/>
+  <IncoLocation/>
+  <IncoTerms/>
+  <BLDescriptions>
+    <BLDescription>
+      <QuantityShipped>31320</QuantityShipped>
+      <UnitOfMeasure>PCS</UnitOfMeasure>
+      <NumberOfCartons>492</NumberOfCartons>
+      <TypeOfCartons>CTN</TypeOfCartons>
+      <Description>DESCRIPTION OF GOODS</Description>
+      <MarksAndNumbers>SEGU5873980</MarksAndNumbers>
+      <GrossWeight>4920</GrossWeight>
+      <WeightUnit>KGS</WeightUnit>
+      <Volume>61.71</Volume>
+      <VolumeUnit>CBM</VolumeUnit>
+    </BLDescription>
+  </BLDescriptions>
+  <Parties>
+    <Party>
+      <PartyType>Broker</PartyType>
+      <PartyCode/>
+      <Name>VANDEGRIFT FORWARDING COMPANY INC</Name>
+      <Address1>ONE EVERTRUST PLAZA,</Address1>
+      <Address2>ONE EVERTRUST PLAZA, JERSEY CITY,</Address2>
+      <CityName>NJ 07302-3051, USA</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode/>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Consignee</PartyType>
+      <PartyCode>INTIN</PartyCode>
+      <Name>INTERNATIONAL INTIMATES INC</Name>
+      <Address1>31 WEST  34TH STREET, 9TH FLOOR</Address1>
+      <Address2/>
+      <CityName>NEW YORK</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode>10001</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Export Forwarder</PartyType>
+      <PartyCode>KORMANSZN</PartyCode>
+      <Name>KORMAN SHIPPING CO.,LTD - SHENZHEN</Name>
+      <Address1>ROOM 1801-1804,BLOCK A,CITY SQUARE</Address1>
+      <Address2>OFFICE BLDG.,NO.4025, JIABIN ROAD</Address2>
+      <CityName>SHENZHEN</CityName>
+      <StateOrProvinceCode/>
+      <PostalCode/>
+      <CountryCode>CN</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Import Forwarder</PartyType>
+      <PartyCode>VLC</PartyCode>
+      <Name>VANDEGRIFT LOGISTICS COMPANY</Name>
+      <Address1>ONE EVERTRUST PLAZA,</Address1>
+      <Address2>JERSEY CITY, NJ 07302-3051, USA</Address2>
+      <CityName>NEW YORK</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode/>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Importer</PartyType>
+      <PartyCode>INTIN</PartyCode>
+      <Name>INTERNATIONAL INTIMATES INC</Name>
+      <Address1>31 WEST  34TH STREET, 9TH FLOOR</Address1>
+      <Address2/>
+      <CityName>NEW YORK</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode>10001</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Supplier</PartyType>
+      <PartyCode>SXU</PartyCode>
+      <Name>SHANTOU XIRONG UNDERWEAR INDUSTRY</Name>
+      <Address1>XIKOU INDUSTRIAL ESTALE CHENDIAN</Address1>
+      <Address2>CHAONAN SHANTOU</Address2>
+      <CityName>SHANTOU</CityName>
+      <StateOrProvinceCode/>
+      <PostalCode/>
+      <CountryCode>CN</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Notify Party</PartyType>
+      <PartyCode>INTIN</PartyCode>
+      <Name>INTERNATIONAL INTIMATES INC</Name>
+      <Address1>31 WEST  34TH STREET, 9TH FLOOR</Address1>
+      <Address2/>
+      <CityName>NEW YORK</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode>10001</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Shipper</PartyType>
+      <PartyCode>SXU</PartyCode>
+      <Name>SHANTOU XIRONG UNDERWEAR INDUSTRY</Name>
+      <Address1>XIKOU INDUSTRIAL ESTALE</Address1>
+      <Address2>CHENDIANCHAONAN,</Address2>
+      <CityName>SHANTOU</CityName>
+      <StateOrProvinceCode/>
+      <PostalCode/>
+      <CountryCode>CN</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>ShipTo</PartyType>
+      <PartyCode>INTIN</PartyCode>
+      <Name>INTERNATIONAL INTIMATES INC</Name>
+      <Address1>31 WEST  34TH STREET, 9TH FLOOR</Address1>
+      <Address2/>
+      <CityName>NEW YORK</CityName>
+      <StateOrProvinceCode>NY</StateOrProvinceCode>
+      <PostalCode>10001</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+  </Parties>
+  <Locations>
+    <Location>
+      <LocationType>PlaceOfReceipt</LocationType>
+      <LocationIdQualifier/>
+      <LocationId/>
+      <LocationName>SHANTOU</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode/>
+    </Location>
+    <Location>
+      <LocationType>PortOfEntry</LocationType>
+      <LocationIdQualifier>D</LocationIdQualifier>
+      <LocationId>1001</LocationId>
+      <LocationName>NEW YORK, NY</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>US</CountryCode>
+    </Location>
+    <Location>
+      <LocationType>PortOfLoad</LocationType>
+      <LocationIdQualifier>F</LocationIdQualifier>
+      <LocationId>57078</LocationId>
+      <LocationName>YANTIAN, CHINA M</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>CN</CountryCode>
+    </Location>
+    <Location>
+      <LocationType>PortOfDischarge</LocationType>
+      <LocationIdQualifier>D</LocationIdQualifier>
+      <LocationId>1002</LocationId>
+      <LocationName>NEW YORK, NY</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>US</CountryCode>
+    </Location>
+    <Location>
+      <LocationType>PlaceOfDelivery</LocationType>
+      <LocationIdQualifier>D</LocationIdQualifier>
+      <LocationId>1003</LocationId>
+      <LocationName>NEW YORK, NY</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>US</CountryCode>
+    </Location>
+  </Locations>
+  <Containers>
+    <Container>
+      <EquipmentInitial>SEGU</EquipmentInitial>
+      <EquipmentNumber>5873980</EquipmentNumber>
+      <SealNumber1>CNAA34101</SealNumber1>
+      <SealNumber2/>
+      <SealNumber3/>
+      <EquipmentTypeCode>9400</EquipmentTypeCode>
+      <DescriptionCode>CN</DescriptionCode>
+      <LoadEmptyStatusCode>L</LoadEmptyStatusCode>
+      <TypeOfServiceCode/>
+      <InBondArrivalDate/>
+      <InBondArrivalNumber/>
+      <HoldFlag>N</HoldFlag>
+      <PermitToTransferNumber/>
+      <StatusFlag>RE</StatusFlag>
+      <StatusDate>8/3/2018</StatusDate>
+      <GrossWeight>4920</GrossWeight>
+      <WeightUnits>KGS</WeightUnits>
+      <ChargeableWeight/>
+      <ChargeableWeightUnits>KGS</ChargeableWeightUnits>
+      <Volume>61.71</Volume>
+      <VolumeUnit>CBM</VolumeUnit>
+      <QuantityShipped>492</QuantityShipped>
+      <UnitOfMeasure>CTN</UnitOfMeasure>
+      <Items>
+        <Item>
+          <CommercialInvoiceNumber/>
+          <PurchaseOrderNumber>XIR0287</PurchaseOrderNumber>
+          <PurchaseOrderLineNumber/>
+          <PartNumber>B56571XH2</PartNumber>
+          <PartDescription>BRA</PartDescription>
+          <QuantityShipped>20520</QuantityShipped>
+          <UnitOfMeasure>PCS</UnitOfMeasure>
+          <QuantityUnits>342</QuantityUnits>
+          <QuantityUnitsOfMeasure>CTN</QuantityUnitsOfMeasure>
+          <GrossWeight>3420</GrossWeight>
+          <NetWeight>0</NetWeight>
+          <WeightUnit/>
+          <Volume>44.4</Volume>
+          <VolumeUnit>CBM</VolumeUnit>
+          <PerCartonOrLine>L</PerCartonOrLine>
+          <ECCN/>
+          <LicenseType/>
+          <LicenseNumber/>
+          <HazardousMaterials>N</HazardousMaterials>
+          <CountryOfExport>CN</CountryOfExport>
+          <UnitPrice>0</UnitPrice>
+          <LineItemValueUSD>0</LineItemValueUSD>
+          <CIDate/>
+          <DimensionsUnit>IN</DimensionsUnit>
+          <Length>0</Length>
+          <Height>0</Height>
+          <Width>0</Width>
+          <CartonNo/>
+        </Item>
+        <Item>
+          <CommercialInvoiceNumber/>
+          <PurchaseOrderNumber>XIR0292</PurchaseOrderNumber>
+          <PurchaseOrderLineNumber/>
+          <PartNumber>B26277X</PartNumber>
+          <PartDescription>BRA</PartDescription>
+          <QuantityShipped>10800</QuantityShipped>
+          <UnitOfMeasure>PCS</UnitOfMeasure>
+          <QuantityUnits>150</QuantityUnits>
+          <QuantityUnitsOfMeasure>CTN</QuantityUnitsOfMeasure>
+          <GrossWeight>1500</GrossWeight>
+          <NetWeight>0</NetWeight>
+          <WeightUnit>KG</WeightUnit>
+          <Volume>17.31</Volume>
+          <VolumeUnit>CBM</VolumeUnit>
+          <PerCartonOrLine>L</PerCartonOrLine>
+          <ECCN/>
+          <LicenseType/>
+          <LicenseNumber/>
+          <HazardousMaterials>N</HazardousMaterials>
+          <CountryOfExport>CN</CountryOfExport>
+          <UnitPrice>0</UnitPrice>
+          <LineItemValueUSD>0</LineItemValueUSD>
+          <CIDate/>
+          <DimensionsUnit>IN</DimensionsUnit>
+          <Length>0</Length>
+          <Height>0</Height>
+          <Width>0</Width>
+          <CartonNo/>
+        </Item>
+      </Items>
+    </Container>
+  </Containers>
+</ShipNotice>

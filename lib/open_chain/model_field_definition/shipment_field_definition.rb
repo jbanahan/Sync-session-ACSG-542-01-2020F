@@ -233,7 +233,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [1812, :shp_barge_arrive_date, :barge_arrive_date, 'Barge Arrive', {data_type: :datetime}],
       [1813, :shp_fcr_created_final_date, :fcr_created_final_date, 'FCR Created Final', {data_type: :datetime}],
       [1814, :shp_bol_date, :bol_date, 'BOL Date', {data_type: :datetime}],
-      [1815, :shp_last_exported_from_source, :last_exported_from_source, 'System Extract Date', {data_type: :datetime}]
+      [1815, :shp_last_exported_from_source, :last_exported_from_source, 'System Extract Date', {data_type: :datetime}],
+      [1816, :shp_description_of_goods, :description_of_goods, "Description Of Goods", {data_type: :string}]
     ]
     add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

@@ -227,6 +227,12 @@ describe InboundFile do
       expect(inf.identifiers[2].module_id).to be_nil
     end
 
+    it "handles symbolized identifier types" do
+      subject.add_identifier :po_number, "123"
+
+      expect(subject.identifiers[0].identifier_type).to eq InboundFileIdentifier::TYPE_PO_NUMBER
+    end
+
     it "handles bogus module type" do
       inf = InboundFile.new
       begin
@@ -319,6 +325,10 @@ describe InboundFile do
       expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value:"DEF456").length).to eq 1
       expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value:"555222").length).to eq 0
       expect(inf.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER, value:"555222").length).to eq 1
+    end
+
+    it "handles symbolized identifier types" do
+      expect(inf.get_identifiers(:po_number).length).to eq 2
     end
   end
 

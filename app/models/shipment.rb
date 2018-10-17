@@ -54,6 +54,7 @@
 #  delivered_date                   :date
 #  departure_date                   :date
 #  departure_last_foreign_port_date :date
+#  description_of_goods             :string(255)
 #  destination_port_id              :integer
 #  do_issued_at                     :date
 #  docs_received_date               :date
@@ -476,11 +477,11 @@ class Shipment < ActiveRecord::Base
 	end
 
   def ocean?
-    ['OCEAN - LCL', 'OCEAN - FCL'].include? self.mode.to_s.upcase
+    !(self.mode.to_s =~ /OCEAN/i).nil?
   end
 
   def air?
-    'AIR' == self.mode.to_s.upcase
+    !(self.mode.to_s =~ /AIR/i).nil?
   end
 
   def normalized_booking_mode

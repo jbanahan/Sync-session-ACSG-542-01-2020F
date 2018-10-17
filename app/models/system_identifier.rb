@@ -1,0 +1,28 @@
+# == Schema Information
+#
+# Table name: system_identifiers
+#
+#  code       :string(255)      not null
+#  company_id :integer
+#  created_at :datetime         not null
+#  id         :integer          not null, primary key
+#  system     :string(255)      not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_system_identifiers_on_company_id_and_system  (company_id,system)
+#  index_system_identifiers_on_system_and_code        (system,code) UNIQUE
+#
+
+# This class exists as a means of having multiple identifiers for external feeds
+# as a way to uniquely identify a single company entity.
+# 
+# For instance, we may get 315 data for an importer.  The 315 may reference that 
+# importer using "Code A", while another feed like an 856 from another carrier might
+# reference that importer using "Code B"
+class SystemIdentifier < ActiveRecord::Base
+  belongs_to :company, inverse_of: :system_identifiers
+
+  validates_presence_of :system, :code
+end
