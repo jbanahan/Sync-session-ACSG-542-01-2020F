@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet).not_to be_nil
       expect(sheet.rows.length).to eq 1
-      expect(sheet.row(0)).to eq ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
+      expect(sheet.row(0)).to eq ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
     end
 
     it "reports nothing if entry matches isf by master bill" do
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
+      expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
     end
 
     it "reports if entry matches to an isf, but the isf doesn't have any lines" do
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
+      expect(sheet.row(1)).to eq [nil, "MBOL", "HBOL, HBOL2", "REF", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "N", "N", "N", "N", "N", "Unabled to find an ISF with a Broker Reference of 'REF' OR a Master Bill of 'MBOL' OR a House Bill in 'HBOL, HBOL2'."]
     end
 
     it "reports if entry does not match to country origin" do
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "ISF", "1234.56.7890", "1234.56.7890", "Y", "Y", "Y", "N", "Y", "The ISF line with PO # 'PO' and Part 'PART' did not match to Country 'CO'."]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "ISF", "1234.56.7890", nil, nil, "1234.56.7890", "Y", "Y", "Y", "N", "Y", "The ISF line with PO # 'PO' and Part 'PART' did not match to Country 'CO'."]
     end
 
     it "reports if entry does not match to PO" do
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", nil, "PART", nil, "CO", nil, "1234.56.7890", nil, "Y", "N", "N", "N", "N", "Unable to find PO # 'PO' on ISF 'TRANS'."]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", nil, "PART", nil, "CO", nil, "1234.56.7890", nil, nil, nil, "Y", "N", "N", "N", "N", "Unable to find PO # 'PO' on ISF 'TRANS'."]
     end
 
     it "reports if entry does not match to Part" do
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", nil, "CO", nil, "1234.56.7890", nil, "Y", "Y", "N", "N", "N", "Unable to find an ISF line with PO # 'PO' and Part # 'PART' on ISF 'TRANS'."]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", nil, "CO", nil, "1234.56.7890", nil, nil, nil, "Y", "Y", "N", "N", "N", "Unable to find an ISF line with PO # 'PO' and Part # 'PART' on ISF 'TRANS'."]
     end
 
     it "reports if entry does not match to HTS" do
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "CO", "1234.56.7890", "1234.57.8906", "Y", "Y", "Y", "Y", "N", "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS # '1234.56.7890'."]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "CO", "1234.56.7890", nil, nil, "1234.57.8906", "Y", "Y", "Y", "Y", "N", "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS # '1234.56.7890'."]
     end
 
     it "reports HTS and Country of Origin mismatches in exception notes" do
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 2
 
-      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "ISF", "1234.56.7890", "1234.57.8906", "Y", "Y", "Y", "N", "N", "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS # '1234.56.7890' and did not match to Country 'CO'."]
+      expect(sheet.row(1)).to eq ["TRANS", "MBOL", "HBOL1", "REF", "BRAND", "PO", "PO", "PART", "PART", "CO", "ISF", "1234.56.7890", nil, nil, "1234.57.8906", "Y", "Y", "Y", "N", "N", "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS # '1234.56.7890' and did not match to Country 'CO'."]
     end
 
     it "does not report if hts matches first 6 digits, but doesn't match the rest of the digits" do
@@ -162,6 +162,37 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       wb = XlsMaker.open_workbook file
       sheet = wb.worksheet "Entry / ISF Match"
       expect(sheet.rows.length).to eq 1
+    end
+
+    it "handles matching across multiple tariff lines" do
+      # Make the last tariff number match the isf
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      line.commercial_invoice_tariffs.first.update_attributes! hts_code: "9876543210"
+      line.commercial_invoice_tariffs.create! hts_code: "5678901234"
+      line.commercial_invoice_tariffs.create! hts_code: "1234567890"
+
+      file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
+      wb = XlsMaker.open_workbook file
+      sheet = wb.worksheet "Entry / ISF Match"
+      expect(sheet).not_to be_nil
+      expect(sheet.rows.length).to eq 1
+    end
+
+    it "reports all unmatched tariffs" do
+      # Make the none of the tariffs match
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      line.commercial_invoice_tariffs.first.update_attributes! hts_code: "9876543210"
+      line.commercial_invoice_tariffs.create! hts_code: "5678901234"
+      line.commercial_invoice_tariffs.create! hts_code: "1111111111"
+
+      file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
+      wb = XlsMaker.open_workbook file
+      sheet = wb.worksheet "Entry / ISF Match"
+      expect(sheet).not_to be_nil
+      expect(sheet.rows.length).to eq 2
+
+      expect(sheet.row(1)[11..13]).to eq ["9876.54.3210", "5678.90.1234", "1111.11.1111"]
+      expect(sheet.row(1).last).to eq "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS #s '9876.54.3210', '5678.90.1234', '1111.11.1111'."
     end
   end
 

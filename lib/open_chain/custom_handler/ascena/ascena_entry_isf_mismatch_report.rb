@@ -53,12 +53,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
       else
         entry.commercial_invoices.each do |invoice|
           invoice.commercial_invoice_lines.each do |line|
-            line.commercial_invoice_tariffs.each do |tariff|
-              match = matches(line, tariff, isfs)
+            tariffs = line.commercial_invoice_tariffs.to_a
+            match = matches(line, tariffs, isfs)
 
-              if !match.matches?
-                add_exception_row sheet, (row_number += 1), column_widths, entry, line, tariff, match.isf, match
-              end
+            if !match.matches?
+              add_exception_row sheet, (row_number += 1), column_widths, entry, line, tariffs, match.isf, match
             end
           end
         end
@@ -69,10 +68,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   end
 
   def report_headers 
-    ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
+    ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
   end
 
-  def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_line, isf, isf_match
+  def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_lines, isf, isf_match
     row = []
     row << field(isf.try(:transaction_number), "")
     row << field(isf.try(:master_bill_of_lading), entry.split_master_bills_of_lading.join(", "))
@@ -85,7 +84,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << isf_match.try(:style)
     row << invoice_line.try(:country_origin_code)
     row << isf_match.try(:coo)
-    row << tariff_line.try(:hts_code).to_s.hts_format
+    row << tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
+    row << tariff_lines.try(:[], 1).try(:hts_code).to_s.hts_format
+    row << tariff_lines.try(:[], 2).try(:hts_code).to_s.hts_format
     row << isf_match.try(:hts).to_s.hts_format
     row << (isf.present? ? "Y" : "N")
     row << (isf_match.try(:po_match) ? "Y" : "N")
@@ -93,7 +94,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << (isf_match.try(:coo_match) ? "Y" : "N")
     row << (isf_match.try(:hts_match) ? "Y" : "N")
     
-    row << exception_notes(entry, invoice_line, tariff_line, isf, isf_match)
+    row << exception_notes(entry, invoice_line, tariff_lines, isf, isf_match)
 
     XlsMaker.add_body_row sheet, row_number, row, column_widths
   end
@@ -102,7 +103,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     isf_value.presence || entry_value
   end
 
-  def exception_notes entry, invoice_line, tariff_line, isf, isf_match
+  def exception_notes entry, invoice_line, tariff_lines, isf, isf_match
     if isf.nil?
       message = "Unabled to find an ISF with a Broker Reference of '#{entry.broker_reference}' OR a Master Bill of '#{entry.master_bills_of_lading}'"
       house_bills = entry.split_house_bills_of_lading.join(", ")
@@ -120,7 +121,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
         message = "The ISF line with PO # '#{invoice_line.po_number}' and Part '#{invoice_line.part_number}'"
         suffix = ""
         if !isf_match.hts_match
-          suffix << " did not match to HTS # '#{tariff_line.hts_code.to_s.hts_format}'"
+          suffix << " did not match to HTS #{"#".pluralize(tariff_lines.length)} #{tariff_lines.map {|t| "'#{t.hts_code.to_s.hts_format}'"}.join(", ")}"
         end
 
         if !isf_match.coo_match
@@ -135,7 +136,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     end
   end
 
-  def matches line, tariff, isfs
+  def matches line, tariffs, isfs
     # basically, we're looking for a single line that as close as possible matches the invoice line / tariff...so what
     # we'll do is evaluate all the lines to see how well each of the criteria matches...and if we find a line that 
     # matches them all, we'll say it matches...if we don't fine one, then we'll return the best match
@@ -146,7 +147,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
         isf.security_filing_lines.each do |isf_line|
           match = IsfMatch.new isf, isf_line
 
-          match.hts_match = match.hts[0..5] == tariff.hts_code.to_s.strip[0..5]
+          match.hts_match = !tariffs.find { |t| match.hts[0..5] == t.hts_code.to_s.strip[0..5]}.nil?
           match.coo_match = match.coo.upcase == line.country_origin_code.to_s.strip.upcase
           match.po_match = match.po.upcase == line.po_number.to_s.strip.upcase
           match.style_match = match.style.upcase == line.part_number.to_s.strip.upcase
