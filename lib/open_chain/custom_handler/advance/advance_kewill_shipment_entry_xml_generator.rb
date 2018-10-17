@@ -43,6 +43,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
       # send quantity information and such.
       inv_line.hts = nil
     end
+    inv_line.pieces_uom = "NO"
+    inv_line.unit_price_uom = "PCS"
     
     inv_line
   end

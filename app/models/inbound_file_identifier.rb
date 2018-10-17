@@ -16,6 +16,8 @@ class InboundFileIdentifier < ActiveRecord::Base
   TYPE_ARTICLE_NUMBER = "Article Number"
   TYPE_PO_NUMBER = "PO Number"
   TYPE_SHIPMENT_NUMBER = "Shipment Reference Number"
+  TYPE_HOUSE_BILL = "House Bill Of Lading"
+  TYPE_MASTER_BILL = "Master Bill Of Lading"
   TYPE_INVOICE_NUMBER = "Invoice Number"
   TYPE_SAP_NUMBER = "SAP Number"
   TYPE_ISF_NUMBER = "ISF Host System File Number"

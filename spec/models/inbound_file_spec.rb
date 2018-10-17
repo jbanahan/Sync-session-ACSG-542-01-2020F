@@ -338,4 +338,60 @@ describe InboundFile do
     end
   end
 
+  describe "failed?" do
+
+    it "returns false by default" do
+      expect(subject.failed?).to eq false
+    end
+
+    context "with overall status set" do 
+      it "returns true if overall status is error" do
+        subject.process_status = InboundFile::PROCESS_STATUS_ERROR
+        expect(subject.failed?).to eq true
+      end
+
+      it "returns true if overall status is reject" do
+        subject.process_status = InboundFile::PROCESS_STATUS_REJECT
+        expect(subject.failed?).to eq true
+      end
+
+      it "returns false if overall status is warning" do
+        subject.process_status = InboundFile::PROCESS_STATUS_WARNING
+        expect(subject.failed?).to eq false
+      end
+
+      it "returns false if overall status is success" do
+        subject.process_status = InboundFile::PROCESS_STATUS_SUCCESS
+        expect(subject.failed?).to eq false
+      end
+
+      it "returns false if overall status is pending" do
+        subject.process_status = InboundFile::PROCESS_STATUS_PENDING
+        expect(subject.failed?).to eq false
+      end
+    end
+
+    context "with pending status" do
+      it "returns true if error message is present" do
+        subject.add_error_message "E"
+        expect(subject.failed?).to eq true
+      end
+
+      it "returns true if reject message is present" do
+        subject.add_reject_message "E"
+        expect(subject.failed?).to eq true
+      end
+
+      it "returns false if warning message is present" do
+        subject.add_warning_message "E"
+        expect(subject.failed?).to eq false
+      end
+
+      it "returns false if info message is present" do
+        subject.add_info_message "E"
+        expect(subject.failed?).to eq false
+      end
+    end
+  end
+
 end

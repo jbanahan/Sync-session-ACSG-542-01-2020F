@@ -74,6 +74,8 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
       expect(line.pieces).to eq 30
       expect(line.country_of_export).to eq "US"
       expect(line.hts).to be_nil
+      expect(line.pieces_uom).to eq "NO"
+      expect(line.unit_price_uom).to eq "PCS"
     end
 
     it "generates CQ data, using CQSOU for customer number" do

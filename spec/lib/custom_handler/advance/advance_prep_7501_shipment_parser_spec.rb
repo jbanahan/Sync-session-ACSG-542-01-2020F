@@ -27,10 +27,11 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       unlading_port
       final_dest
       final_dest_d
+      allow(subject).to receive(:inbound_file).and_return log
     end
 
     it "creates parties, parts, orders, shipment" do
-      s = subject.parse xml, user, xml_path, log
+      s = subject.parse xml, user, xml_path
 
       expect(s).not_to be_nil
       expect(s).to be_persisted
@@ -158,13 +159,9 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       expect(snap.user).to eq user
 
       expect(log.company).to eq advance_importer
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "OERT205702H00096"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
-
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "8373111-11"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
+      expect(log).to have_identifier :shipment_number, "ADVAN-OERT205702H00096", "Shipment", s.id
+      expect(log).to have_identifier :po_number, "8373111-11", "Order", o.id
+      expect(log).to have_identifier :house_bill, "OERT205702H00096"
     end
 
     it "updates an existing shipment" do
@@ -173,7 +170,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       shipment = shipment_line.shipment
       container = shipment.containers.create! container_number: "1234"
 
-      s = subject.parse xml, user, xml_path, log
+      s = subject.parse xml, user, xml_path
       expect(s).to eq shipment
 
       # The easiest way to check that the shipment_line and container were deleted
@@ -184,45 +181,86 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     it "skips updating shipments when the xml is outdated" do
       shipment = Factory(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
 
-      expect(subject.parse xml, user, xml_path, log).to be_nil
+      expect(subject.parse xml, user, xml_path).to be_nil
     end
 
-    it "handles Carquest" do
-      carquest_importer
+    context "with Carquest importer" do
+      let(:product) { 
+        Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
+      }
 
-      # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
-      product = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
-      order = Order.create! importer_id: carquest_importer.id, order_number: "CQ-8373111-11"
-      order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99
+      let (:product_2) {
+        Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11401806"
+      }
 
-      consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
-      consignee.text = "CARQUEST"
-      
-      s = subject.parse xml, user, xml_path, log
+      let! (:order) {
+        order = Order.create! importer_id: carquest_importer.id, order_number: "CQ-8373111-11", customer_order_number: "8373111-11"
+        order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99
+        order_line_2 = order.order_lines.create! line_number: 10, product_id: product_2.id, quantity: 25, price_per_unit: 19.99
+        order
+      }
 
-      expect(s.importer).to eq carquest_importer
+      before :each do 
+        # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
+        consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
+        consignee.text = "CARQUEST"
+        carquest_importer  
+      end
 
-      line = s.shipment_lines.second
+      it "handles Carquest" do
+        s = subject.parse xml, user, xml_path
 
-      ol = line.order_lines.first
-      expect(ol.line_number).to eq 99
-      # It should update the quantity from what it was created as.  856 should be more accurate.
-      expect(ol.quantity).to eq 116
-      expect(ol.unit_of_measure).to eq "Each"
-      expect(ol.price_per_unit).to eq BigDecimal("9.99")
-      # Currency is nil because the invoice doesn't list the price
-      expect(ol.currency).to be_nil
-      expect(ol.country_of_origin).to eq "CN"
+        expect(s.importer).to eq carquest_importer
 
-      expect(log.company).to eq carquest_importer
+        line = s.shipment_lines.second
+
+        ol = line.order_lines.first
+        expect(ol.line_number).to eq 99
+        # It should update the quantity from what it was created as.  856 should be more accurate.
+        expect(ol.quantity).to eq 116
+        expect(ol.unit_of_measure).to eq "Each"
+        expect(ol.price_per_unit).to eq BigDecimal("9.99")
+        # Currency is nil because the invoice doesn't list the price
+        expect(ol.currency).to be_nil
+        expect(ol.country_of_origin).to eq "CN"
+
+        expect(log.company).to eq carquest_importer
+      end
+
+      it "raises an error if order can't be found" do
+        order.destroy
+
+        expect { subject.parse xml, user, xml_path }.to raise_error "Failed to fully process file due to error. Once the errors are fixed, the file can be reprocessed."
+
+        # The shipment should actually have been created, header data populated and also container data (only shipment lines should be missing)
+        s = Shipment.where(house_bill_of_lading: "OERT205702H00096").first
+        expect(s).not_to be_nil
+        # Vessel is filled in as part of the header parsing, if it's there we can reasonably assume the rest of the header data is too
+        expect(s.vessel).to eq "ZIM ROTTERDAM"
+        expect(s.containers.length).to eq 1
+
+        # Since this was rejected, it should not have an entry prepared date
+        expect(s.custom_value(cdefs[:shp_entry_prepared_date])).to be_nil
+
+        expect(log).to have_reject_message "PO # 8373111-11 is missing."
+        expect(log).to have_identifier :po_number, "8373111-11"
+        expect(log).to have_identifier :shipment_number, "CQ-OERT205702H00096", "Shipment", s.id
+      end
+
+      it "raises an error if order line can't be found" do
+        order.order_lines.last.destroy
+
+        expect { subject.parse xml, user, xml_path }.to raise_error "Failed to fully process file due to error. Once the errors are fixed, the file can be reprocessed."
+        expect(log).to have_reject_message "PO # 8373111-11 is missing part number 11402124."
+      end
     end
 
     it "raises an error if importer cannot be located" do
       consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
       consignee.text = "Spaceballs: The Importer"
 
-      expect { subject.parse xml, user, xml_path, log }.to raise_error "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
+      expect { subject.parse xml, user, xml_path }.to raise_error "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
+      expect(log).to have_reject_message "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
     end
   end
 
@@ -230,7 +268,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     subject { described_class }
 
     it "initializes a new instance and calls parse on it" do
-      expect_any_instance_of(described_class).to receive(:parse).with(instance_of(REXML::Document), User.integration, "s3_path", log)
+      expect_any_instance_of(described_class).to receive(:parse).with(instance_of(REXML::Document), User.integration, "s3_path")
       subject.parse_file(IO.read(xml_path), log, {key: "s3_path"})
     end
   end

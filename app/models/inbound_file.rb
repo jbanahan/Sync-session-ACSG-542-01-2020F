@@ -70,6 +70,18 @@ class InboundFile < ActiveRecord::Base
     process_status
   end
 
+  # Returns true if log errored or was rejected
+  def failed?
+    status = nil
+    if !self.process_status.blank? && self.process_status != PROCESS_STATUS_PENDING
+      status = self.process_status
+    else
+      status = get_process_status_from_messages
+    end
+
+    [PROCESS_STATUS_REJECT, PROCESS_STATUS_ERROR].include? status
+  end
+
   def add_info_message message
     add_message InboundFileMessage::MESSAGE_STATUS_INFO, message
   end
@@ -136,7 +148,7 @@ class InboundFile < ActiveRecord::Base
     validate_identifier_module_type module_type
     # Prevents a dupe from being added.
     if get_identifiers(identifier_type, value:value).length == 0
-      identifiers.build(identifier_type:identifier_type, value:value, module_type:module_type, module_id:module_id)
+      identifiers.build(identifier_type:identifier_type, value:value, module_type:(module_type.nil? ? nil : module_type.to_s), module_id:module_id)
     end
     nil
   end
@@ -150,7 +162,7 @@ class InboundFile < ActiveRecord::Base
   def set_identifier_module_info identifier_type, module_type, module_id, value:nil
     validate_identifier_module_type module_type
     get_identifiers(identifier_type, value:value).each do |ident|
-      ident.module_type = module_type
+      ident.module_type = module_type.to_s
       ident.module_id = module_id
     end
     nil
@@ -170,7 +182,7 @@ class InboundFile < ActiveRecord::Base
 
   private
     def validate_identifier_module_type module_type
-      if module_type && !CoreModule.find_by_class_name(module_type)
+      if module_type && CoreModule.find_by_class_name(module_type.to_s).nil?
         raise ArgumentError.new("Invalid module type: #{module_type}")
       end
     end

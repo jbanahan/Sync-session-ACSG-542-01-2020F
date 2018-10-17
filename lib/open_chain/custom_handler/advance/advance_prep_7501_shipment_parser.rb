@@ -6,23 +6,23 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.parse_file io, log, opts = {}
-    self.new.parse(REXML::Document.new(io), User.integration, opts[:key], log)
+    self.new.parse(REXML::Document.new(io), User.integration, opts[:key])
     nil
   end
 
-  def parse xml, user, file, log
-    importer = find_importer(xml, log)
-    log.company = importer
+  def parse xml, user, file
+    importer = find_importer(xml)
+    inbound_file.company = importer
     parties = parse_parties(importer, xml)
     products_cache = parse_parts(importer, xml, user, file)
-    orders_cache = parse_orders(importer, xml, parties, products_cache, user, file, log)
+    orders_cache = parse_orders(importer, xml, parties, products_cache, user, file)
 
-    parse_shipment(importer, xml, parties, orders_cache, products_cache, user, file, log)
+    parse_shipment(importer, xml, parties, orders_cache, products_cache, user, file)
   end
 
-  def parse_shipment importer, xml, parties, orders_cache, products_cache, user, file, log
+  def parse_shipment importer, xml, parties, orders_cache, products_cache, user, file
     s = nil
-    find_or_create_shipment(importer, xml, log) do |shipment|
+    find_or_create_shipment(importer, xml) do |shipment|
       # The 7501 is a complete picture of the shipment as we handle it, so just destroy and re-add all the lines and containers
       shipment.containers.destroy_all
       shipment.shipment_lines.destroy_all
@@ -31,6 +31,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       shipment.consignee = parties[:consignee]
       shipment.ship_to = parties[:ship_to]
       shipment.house_bill_of_lading = xml.text "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']"
+      inbound_file.add_identifier :house_bill, shipment.house_bill_of_lading
 
       asn = REXML::XPath.first xml, "/Prep7501Message/Prep7501/ASN"
       if !asn.nil?
@@ -41,7 +42,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.country_export = find_country(REXML::XPath.first asn, "PortOfLoading")
         shipment.country_import = find_country(REXML::XPath.first asn, "BLDestination")
 
-        log.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
+        inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
 
         shipment.lading_port = find_port(REXML::XPath.first asn, "PortOfLoading")
         shipment.unlading_port = find_port(REXML::XPath.first asn, "PortOfDischarge")
@@ -50,25 +51,40 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.est_departure_date = parse_date asn.text("EstDepartDate")
         shipment.departure_date = parse_date(asn.text("ReferenceDates[ReferenceDateType = 'Departed']/ReferenceDate"))
         shipment.est_arrival_port_date = parse_date asn.text("EstDischargePortDate")
-        shipment.find_and_set_custom_value cdefs[:shp_entry_prepared_date], Time.zone.now
       end
 
       REXML::XPath.match(xml, "/Prep7501Message/Prep7501/ASN/Container").each do |container_xml|
         container = parse_container(shipment, container_xml)
 
-        # The data in the XML seems to come in an entirely random order.  It doesn't match the order of the
-        # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501 
-        # doesn't match the order of the commercial invoice - it's totally random).
-        # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
-        # doing that.
-        sorted_line_items(container_xml).each do |item_xml|
-          parse_shipment_line(shipment, container, item_xml, orders_cache, products_cache, log)
+        # Don't make lines if there were any errors...at this point any errors are going to have to do with missing Order / Product data..
+        # So we can't make order lines...ergo, don't attempt to
+        if !inbound_file.failed?
+          # The data in the XML seems to come in an entirely random order.  It doesn't match the order of the
+          # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501 
+          # doesn't match the order of the commercial invoice - it's totally random).
+          # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
+          # doing that.
+          sorted_line_items(container_xml).each do |item_xml|
+            parse_shipment_line(shipment, container, item_xml, orders_cache, products_cache)
+          end
         end
+      end
+
+      # If the shipment was fully processed, we can mark it to be sent to the entry system
+      if !inbound_file.failed?
+        shipment.find_and_set_custom_value cdefs[:shp_entry_prepared_date], Time.zone.now
       end
 
       shipment.save!
       shipment.create_snapshot user, nil, file
       s = shipment
+    end
+
+    # Put this outside the find_or_create because it should not roll back the save..we want to actually
+    # save as much of the shipment that got generated as possible.  In general, this is going to mean
+    # that the shipment lines aren't saved.
+    if inbound_file.failed?
+      inbound_file.reject_and_raise "Failed to fully process file due to error. Once the errors are fixed, the file can be reprocessed."
     end
 
     s
@@ -97,7 +113,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     container
   end
 
-  def parse_shipment_line shipment, container, line_xml, orders_cache, products_cache, log
+  def parse_shipment_line shipment, container, line_xml, orders_cache, products_cache
     line = shipment.shipment_lines.build
     line.container = container
     line.invoice_number = line_xml.text("InvoiceNumber")
@@ -115,7 +131,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         line_number = line_xml.text("LineItemNumber").to_i
         order_line = order.order_lines.find {|ol| ol.line_number == line_number }
         # This really should never happend at all since we're making orders / products in this parser
-        log.reject_and_raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
+        inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
       else
         product_code = line_xml.text("ProductCode")
         product = products_cache[product_code]
@@ -123,14 +139,14 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         order_line = order.order_lines.find {|ol| ol.product_id == product.id }
 
         # This really should never happend at all since we're making orders / products in this parser
-        log.reject_and_raise "Failed to find Order # '#{order_number}' / Product Code #{product_code}." unless order_line
+        inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Product Code #{product_code}." unless order_line
       end
 
       line.product = order_line.product
       line.linked_order_line_id = order_line.id
     else
       # This really should never happend at all since we're making orders / products in this parser
-      log.reject_and_raise "Failed to find Order #'#{order_number}'."
+      inbound_file.reject_and_raise "Failed to find Order #'#{order_number}'."
     end
 
     line
@@ -211,24 +227,24 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     end
   end
 
-  def find_or_create_shipment importer, xml, log
+  def find_or_create_shipment importer, xml
     # We don't actually get a master bill for these, so we'll use the house bill as the reference
     house_bill = xml.text "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']"
-    log.reject_and_raise "No Bill of Lading present." if house_bill.blank?
+    inbound_file.reject_and_raise "No Bill of Lading present." if house_bill.blank?
 
     last_exported_from_source = parse_datetime(xml.text "/Prep7501Message/TransactionInfo/Created")
 
     reference = "#{importer.system_code}-#{house_bill}"
-    log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, house_bill
+    inbound_file.add_identifier :shipment_number, reference
     shipment = nil
     Lock.acquire(reference) do 
       s = Shipment.where(importer_id: importer.id, reference: reference).first_or_create! last_exported_from_source: last_exported_from_source
-      log.set_identifier_module_info(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, Shipment.to_s, s.id) if s
+      inbound_file.set_identifier_module_info(:shipment_number, Shipment, s.id) if s
 
       if process_shipment?(s, last_exported_from_source)
         shipment = s
       else
-        log.add_info_message "Shipment not updated: file contained outdated info."
+        inbound_file.add_info_message "Shipment not updated: file contained outdated info."
       end
     end
 
@@ -247,11 +263,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     shipment.last_exported_from_source.nil? || shipment.last_exported_from_source <= last_exported_from_source
   end
 
-  def parse_orders importer, xml, parties, products_cache, user, file, log
+  def parse_orders importer, xml, parties, products_cache, user, file
     orders_cache = {}
     snapshots = Set.new
     asn_line_items(xml) do |line_xml|
-      order, snapshot = find_or_create_order(importer, line_xml, xml, orders_cache, products_cache, log)
+      order, snapshot = find_or_create_order(importer, line_xml, xml, orders_cache, products_cache)
       snapshots << order if order && snapshot
     end
 
@@ -265,7 +281,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     orders_cache
   end
 
-  def find_or_create_order importer, line_xml, xml, orders_cache, products_cache, log
+  def find_or_create_order importer, line_xml, xml, orders_cache, products_cache
     customer_order_number = line_xml.text "PONumber"
     return nil if customer_order_number.blank?
 
@@ -277,10 +293,18 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       Lock.acquire("Order-#{order_number}") do
         order = Order.where(importer_id: importer.id, order_number: order_number).first_or_initialize customer_order_number: customer_order_number
         if !order.persisted?
-          snapshot_order = true
-          order.save!
+          # All CQ orders should be present in the system, they are loaded via the Origin Report custom feature screen (what CQ calls the Tip Top report)
+          # We should not create orders here...we can error if the order is not found
+          if importer.system_code == 'CQ'
+            inbound_file.add_identifier :po_number, customer_order_number
+            inbound_file.add_reject_message "PO # #{customer_order_number} is missing."
+            return nil
+          else
+            snapshot_order = true
+            order.save!
+          end
         end
-        log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, customer_order_number, module_type:Order.to_s, module_id:order.id
+        inbound_file.add_identifier :po_number, customer_order_number, module_type:Order, module_id:order.id
       end
     end
 
@@ -295,7 +319,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
         # If we happen to hit a case where the line number is shared between shipments and has different products on it
         # then we have no option but to error here.
-        log.reject_and_raise "A line number collision occurred for PO #{customer_order_number} / Line # #{line_number}." if line && line.product_id != product.id
+        inbound_file.reject_and_raise "A line number collision occurred for PO #{customer_order_number} / Line # #{line_number}." if line && line.product_id != product.id
 
         if line.nil?
           line = order.order_lines.build product_id: product.id, line_number: line_number
@@ -307,14 +331,18 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         line = order.order_lines.find {|l| l.product_id == product.id }
 
         if line.nil?
-          line = order.order_lines.build product_id: product.id
+          inbound_file.add_reject_message "PO # #{customer_order_number} is missing part number #{product_code}."
+          return nil
         end
       end
 
       # This data is pulled from the Invoice portion of the XML..
       invoice_line = REXML::XPath.first xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']"
-      log.reject_and_raise "Unabled to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}" if line.nil?
-
+      if line.nil?
+        inbound_file.add_reject_message "Unabled to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
+        return nil
+      end
+      
       line.quantity = parse_decimal(invoice_line.text "Quantity")
       line.unit_of_measure = invoice_line.text "QuantityUOM"
 
@@ -457,13 +485,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     company
   end
 
-  def find_importer xml, log
+  def find_importer xml
     # We determine the importer account by first determining if we have an Advanced or CQ file or not, by looking at the Consignee.
     # If the importer is Carquest, the existing ECS system the routes it to Canada or US based on the CountryCode associated with the BLDestination.
     # We're storing the port code associated with that account as the final destination.  Our comparator that will trigger the CI Load / Fenix 810 will
     # use the UN/Locodes country portion to determine if a Canada or US document should be generated.
     consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']"
-    log.reject_and_raise "Invalid XML.  No Consignee could be found." unless consignee
+    inbound_file.reject_and_raise "Invalid XML.  No Consignee could be found." unless consignee
 
     name = consignee.text "Name"
     if (name =~ /Carquest/i) || (name =~ /CQ/i)
@@ -472,7 +500,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       importer = Company.where(system_code: "ADVAN").first
     end
 
-    log.reject_and_raise "Failed to find Importer account for Consignee name '#{name}'." unless importer
+    inbound_file.reject_and_raise "Failed to find Importer account for Consignee name '#{name}'." unless importer
 
     importer
   end
