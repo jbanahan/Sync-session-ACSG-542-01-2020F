@@ -17,6 +17,11 @@ class ValidationRuleEntrySpecialTariffsNotClaimed < BusinessValidationRule
     tariffs_used = invoice_line.commercial_invoice_tariffs.map &:hts_code
     
     tariffs_used.each do |hts_number|
+      # Skip any lines that are part of the exclusion set
+      next if tariff_exceptions.include?(hts_number)
+      # Skip any lines that are NOT part of the inclusion set (if it's being used)
+      next if tariff_inclusions.size > 0 && !tariff_inclusions.include?(hts_number)
+
       special_tariffs = special_tariffs_hash.tariffs_for invoice_line.country_origin_code, hts_number
 
       if special_tariffs.length > 0

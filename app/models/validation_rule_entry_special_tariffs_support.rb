@@ -20,4 +20,16 @@ module ValidationRuleEntrySpecialTariffsSupport
     
     SpecialTariffCrossReference.find_special_tariff_hash entry.import_country.try(:iso_code), false, reference_date: reference_date, country_origin_iso: countries, special_tariff_types: special_tariff_types, use_special_number_as_key: use_special_hts_number
   end
+
+  def tariff_exceptions 
+    @hts_exceptions ||= begin
+      TariffNumberSet.new Array.wrap(rule_attributes["skip_hts_numbers"])
+    end
+  end
+
+  def tariff_inclusions
+    @hts_inclusions ||= begin
+      TariffNumberSet.new Array.wrap(rule_attributes["only_hts_numbers"])
+    end
+  end
 end

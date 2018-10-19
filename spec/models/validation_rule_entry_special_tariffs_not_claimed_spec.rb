@@ -40,5 +40,27 @@ describe ValidationRuleEntrySpecialTariffsNotClaimed do
 
       expect(subject.run_validation entry).to be_nil
     end
+
+    it "does not error if the special tariff is not part of the specified program" do
+      subject.rule_attributes_json = {special_tariff_types: ["BLAH"]}.to_json
+      expect(subject.run_validation entry).to be_nil
+    end
+
+    it "does not error if the tariff number is set up to be skipped" do
+      subject.rule_attributes_json = {skip_hts_numbers: ["1234567980"]}.to_json
+
+      expect(subject.run_validation entry).to be_nil
+    end
+
+    it "does not error if the tariff number is not part of the inclusion setup" do
+      subject.rule_attributes_json = {only_hts_numbers: ["66"]}.to_json
+
+      expect(subject.run_validation entry).to be_nil
+    end
+
+    it "does error if the tariff number IS part of the inclusion" do
+      subject.rule_attributes_json = {only_hts_numbers: ["12"]}.to_json
+      expect(subject.run_validation entry).not_to be_blank
+    end
   end
 end

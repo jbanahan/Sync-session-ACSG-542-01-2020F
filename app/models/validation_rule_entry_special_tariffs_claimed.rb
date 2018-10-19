@@ -22,7 +22,8 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
       # and make sure one of those was also used here.
       special_tariffs = special_tariffs_hash.tariffs_for invoice_line.country_origin_code, hts_number
 
-      if special_tariffs.length > 0
+      # If we have exclusions, we should apply them to the special tariffs here and see if there are still any left (which are really the "standard")
+      if filter_tariffs(special_tariffs).length > 0
         errors << "Invoice # #{invoice.invoice_number} / Line # #{invoice_line.line_number} / HTS # #{hts_number.hts_format} is a #{special_tariffs[0].special_tariff_type} HTS #."
       end
     end
@@ -32,6 +33,26 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
     end
     
     errors
+  end
+
+  def filter_tariffs special_tariffs
+    filter_tariff_inclusions(filter_tariff_exclusions(special_tariffs))
+  end
+
+  def filter_tariff_exclusions special_tariffs
+    if tariff_exceptions.size == 0
+      return special_tariffs
+    else
+      special_tariffs.find_all { |t| !tariff_exceptions.include? t.hts_number }
+    end
+  end
+  
+  def filter_tariff_inclusions special_tariffs
+    if tariff_inclusions.size == 0
+      return special_tariffs
+    else
+      special_tariffs.find_all { |t| tariff_inclusions.include? t.hts_number }
+    end
   end
   
 end
