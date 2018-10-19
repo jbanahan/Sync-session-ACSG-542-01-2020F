@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
   let (:standard_data) { IO.read 'spec/fixtures/files/talbots.edi' }
   let (:prepack_data) { IO.read 'spec/fixtures/files/talbots_prepack.edi'}
@@ -274,6 +276,25 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
     it "returns true if variant size updated" do
       product.variants.first.update_custom_value! cdefs[:var_size], "Small"
       expect(subject.update_standard_product product.reload, edi_segments, po1_segment, []).to eq true
+    end
+  end
+
+  describe "find_message_value" do
+    subject { described_class.new }
+    
+    it "returns first message with specified identifier" do
+      segs = create_edi_segments("MSG*THEME Season")
+      expect(subject.find_message_value segs, "THEME").to eq "Season"
+    end
+    
+    it "finds first occurrence" do
+      segs = create_edi_segments("MSG*SCREAM Boo!\nMSG*THEME Season\nMSG*THEME Reason")
+      expect(subject.find_message_value segs, "THEME").to eq "Season"
+    end
+
+    it "returns nil if message is missing" do
+      segs = create_edi_segments("MSG*THEME")
+      expect(subject.find_message_value segs, "THEME").to be_nil
     end
   end
 end

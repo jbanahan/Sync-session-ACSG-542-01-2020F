@@ -215,7 +215,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
     find_segments(edi_segments, "MSG").each do |msg|
       message = value(msg, 1)
       if message.starts_with?(message_identifier)
-        return message[(message_identifier.length + 1)..-1].strip
+        return message[(message_identifier.length)..-1].strip.presence
       end
     end
     nil

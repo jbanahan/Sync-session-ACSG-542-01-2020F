@@ -35,6 +35,16 @@ module Helpers
     Spreadsheet.open(StringIO.new(attachment.read))
   end
 
+  def create_edi_segments str, separator: "*", newline: "\n"
+    segments = []
+    str.split(newline).each_with_index do |seg_string, i|
+      elements = []
+      seg_string.split(separator).each_with_index { |elem_string, j| elements << REX12::Element.new(elem_string, j) }
+      segments << REX12::Segment.new(elements, i)
+    end
+    segments
+  end
+
   class MockS3
     class AwsErrors < StandardError; end
     class NoSuchKeyError < AwsErrors; end 
