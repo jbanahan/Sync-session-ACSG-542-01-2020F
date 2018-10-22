@@ -56,17 +56,15 @@ module OpenChain; module EntityCompare; class EntityComparator
     # same object while this one is (in fact, nothing else should be able to be updating the record across the system either)
     # The db lock also opens a transaction, so we're safe from that vantage point too.
     Lock.db_lock(rec) do
-      relation = snapshot_relation(rec, snapshot)
-
-      #get all unprocessed items, oldest to newest
-      all_unprocessed = relation.where(compared_at:nil).where("bucket IS NOT NULL AND doc_path IS NOT NULL").order(:created_at,:id)
-
-      newest_unprocessed = all_unprocessed.last
+      snapshots = retrieve_snapshots(snapshot, rec) 
+      #get all unprocessed items, newest to oldest
+      all_unprocessed = snapshots[:unprocessed]
+      newest_unprocessed = all_unprocessed.first
 
       # do nothing if everything is processed
       return unless newest_unprocessed
 
-      last_processed = relation.where('compared_at IS NOT NULL').where("bucket IS NOT NULL AND doc_path IS NOT NULL").order('compared_at desc, id desc').limit(1).first
+      last_processed = snapshots[:last_processed]
 
       if last_processed
         # do nothing if newest unprocessed is older than last processed
@@ -92,9 +90,34 @@ module OpenChain; module EntityCompare; class EntityComparator
           )
         end
       end
-
-      all_unprocessed.update_all(compared_at:0.seconds.ago)
+      snapshot.class.where(id: all_unprocessed.map {|s| s.id}, compared_at: nil).update_all(compared_at: Time.zone.now)
     end
+  end
+
+  def self.retrieve_snapshots snapshot, parent_object
+    # What we're trying to do here is use as few database operations as possible here.  To do that, we're sacrificing memory by loading
+    # all the snapshots for an object.
+    # This is also an attempt to work around phantom reads by isolating the reads to a single SQL query
+    # Phantom reads could and did occur when querying for the unprocessed snapshots and last processed snapshot in multiple queries
+    all_snapshots = snapshot_relation(parent_object, snapshot).order(:created_at, :id).to_a
+
+    all_unprocessed = []
+    last_processed = nil
+    # Iterate over the snapshots in reverse order, once we hit one that has been processed with can quit the loop
+    all_snapshots.reverse_each do |snap|
+      # Ignore anything where the bucket or path is blank...this can occur if a snapshot could not be written to the bucket
+      # Eventually, the snapshot will get written.
+      next if snap.bucket.blank? || snap.doc_path.blank?
+
+      if snap.compared_at.nil?
+        all_unprocessed << snap
+      else
+        last_processed = snap
+        break
+      end
+    end
+
+    {unprocessed: all_unprocessed, last_processed: last_processed}
   end
 
   def self.create_log snapshot, last_processed, newest_unprocessed
