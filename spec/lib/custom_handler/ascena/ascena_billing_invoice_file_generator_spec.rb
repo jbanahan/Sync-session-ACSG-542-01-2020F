@@ -113,6 +113,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "77519", "66.66", "Brokerage", "PO 3", "151"]
     end
 
+    it "sends brokerage file with negative amounts" do
+      broker_invoice_line_brokerage.update_attributes! charge_amount: BigDecimal("-200")
+      data = nil
+      expect(subject).to receive(:ftp_file) do |file, opts|
+        data = file.read
+      end
+
+      subject.generate_and_send broker_invoice_with_brokerage_snapshot
+
+      lines = CSV.parse data, col_sep: "|"
+
+      expect(lines.length).to eq 4
+
+      expect(lines[0]).to eq ["H", "INVOICENUMBER", "CREDIT", "01/13/2017", "77519", "-200.0", "USD", "For Customs Entry # ENTRYNO"]
+      expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "-66.67", "Brokerage", "PO 1", "7218"]
+      expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "77519", "-66.67", "Brokerage", "PO 2", "221"]
+      expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "77519", "-66.66", "Brokerage", "PO 3", "151"]
+    end
+
     it "handles small brokerage prorations" do
       broker_invoice_line_brokerage.update_attributes! charge_amount: BigDecimal("1")
       data = nil

@@ -160,9 +160,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         prorations[po_numbers.first] = charge_amount
       else
         # Don't round this value, we'll truncate the actual calculated values.
-        proration_factor = (charge_amount / po_numbers.length)
+        proration_factor = (charge_amount / po_numbers.length).abs
+        # It's easier to handle prorations with the calculations all being positive values..then just flipping the sign
+        # after everything has been calculated out at the end (rather than having to figure out if we need to add/subtract for
+        # each calculation based on the charge being a debit/credit)
+        negative_charge = charge_amount < 0
         
-        total_remaining = BigDecimal(charge_amount)
+        total_remaining = BigDecimal(charge_amount).abs
 
         po_numbers.each do |po|
           prorated_value = proration_factor.round(2, BigDecimal::ROUND_DOWN)
@@ -178,6 +182,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
             prorations[po] += one_cent
 
             break if total_remaining == 0
+          end
+        end
+
+        if negative_charge
+          prorations.each_pair do |k, v|
+            prorations[k] = v * -1
           end
         end
         
