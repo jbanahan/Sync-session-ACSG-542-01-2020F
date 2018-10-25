@@ -265,4 +265,15 @@ class MasterSetup < ActiveRecord::Base
     Rails.application.config.vfitrack
   end
   private_class_method :config
+
+
+  def self.upgrades_allowed?
+    if self.config_true?(:prevent_upgrades)
+      return false
+    elsif self.get.custom_feature?("Prevent Upgrades") 
+      return false
+    else
+      return true
+    end
+  end
 end

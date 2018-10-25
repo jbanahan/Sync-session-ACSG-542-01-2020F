@@ -32,6 +32,10 @@ class ChainDelayedJobPlugin < Delayed::Plugin
     `lsof -t #{File.join(Rails.root, 'log', 'delayed_job.log')}`.chomp.split("\n").size
   end
 
+  def self.do_upgrade?
+    Rails.env.production? && MasterSetup.upgrades_allowed? && MasterSetup.need_upgrade?
+  end
+
   def self.job_wrapper job
     Thread.current.thread_variable_set("delayed_job", true)
     Thread.current.thread_variable_set("delayed_job_attempts", job.attempts)
@@ -63,7 +67,7 @@ class ChainDelayedJobPlugin < Delayed::Plugin
       # to date version of the code stay running.  If we kill off outdated queues, the monitor script will then
       # restart the job queues.
       upgrade_job = is_upgrade_delayed_job?(job)
-      if Rails.env.production? && MasterSetup.need_upgrade? && !upgrade_job
+      if do_upgrade? && !upgrade_job
         
         # We can actually save off this job just by rescheduling it, that way after the upgrade is complete it will
         # run with any updated code.  The job attempts reset is to prevent the reschedule from running too many times and

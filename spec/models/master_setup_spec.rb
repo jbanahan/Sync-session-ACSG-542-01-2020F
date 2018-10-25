@@ -316,4 +316,30 @@ describe MasterSetup do
     end
   end
   
+  describe "upgrades_allowed?" do
+    let! (:ms) { stub_master_setup }
+    let (:config) { {} }
+    before :each do 
+      allow(MasterSetup).to receive(:config).and_return(config)
+    end
+
+    it "returns true by default" do
+      expect(MasterSetup.upgrades_allowed?).to eq true
+    end
+
+    it "returns false if 'Prevent Upgrades' custom feature is enabled" do
+      expect(ms).to receive(:custom_feature?).with("Prevent Upgrades").and_return true
+      expect(MasterSetup.upgrades_allowed?).to eq false
+    end
+
+    it "returns false if 'prevent_upgrades' is true in config" do 
+      config[:prevent_upgrades] = true
+      expect(MasterSetup.upgrades_allowed?).to eq false
+    end
+
+    it "returns true if 'prevent_upgrades' is false in config" do 
+      config[:prevent_upgrades] = false
+      expect(MasterSetup.upgrades_allowed?).to eq true
+    end
+  end
 end

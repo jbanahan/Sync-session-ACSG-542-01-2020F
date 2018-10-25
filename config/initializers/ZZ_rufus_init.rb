@@ -5,21 +5,11 @@ require 'open_chain/upgrade'
 
 module OpenChain; class WebScheduler
 
-  def self.upgrades_allowed?
-    if MasterSetup.config_true?(:prevent_upgrades)
-      return false
-    elsif MasterSetup.get.custom_feature?("Prevent Upgrades") 
-      return false
-    else
-      return true
-    end
-  end
-
   def self.execute_scheduler
     #check for upgrades for the web servers (allow overlapping is supposed to only allow a single instance of this job to run on this scheduler)
     upgrade_job_options = {tags: "Upgrade", allow_overlapping: false}
     scheduler.every '30s', upgrade_job_options do
-      if OpenChain::WebScheduler.upgrades_allowed?
+      if MasterSetup.upgrades_allowed?
         upgrade_running = lambda do
           # Unschedule all job except the upgrade ones - this doesn't stop jobs in progress, just effectively
           # stops the scheduler from running re-running them after this moment in time
@@ -40,7 +30,7 @@ module OpenChain; class WebScheduler
 
     # Check for upgrade to delayed job server
     scheduler.every '30s', upgrade_job_options do
-      if OpenChain::WebScheduler.upgrades_allowed?
+      if MasterSetup.upgrades_allowed?
         # Make sure the upgrades are set to be the "highest" priority so they jump to the 
         # front of the queue.  The lower the value, the higher priority the job gets in delayed_job
         # Only queue an upgrade if one's not already queued
