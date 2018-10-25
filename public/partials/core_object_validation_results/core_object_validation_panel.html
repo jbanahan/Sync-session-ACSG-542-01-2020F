@@ -1,7 +1,5 @@
-<div ng-hide='result.bv_results.length==0' class="panel" ng-class="stateToBootstrap('panel',result)">
-    <div class="panel-heading">
-      <h3 class="panel-title">Business Rules</h3>
-    </div>
+<div ng-hide='result.bv_results.length==0' class="card" ng-class="stateToBootstrap('card',result)">
+    <div class="card-header">Business Rules</div>
     <chain-loading-wrapper loading-flag='{{loading}}'>
     </chain-loading-wrapper>
     <ul ng-hide='loading=="loading"' ng-repeat='r in result.bv_results track by r.id' class='list-group'>
@@ -9,9 +7,9 @@
       <li class='list-group-item' ng-repeat='rr in r.rule_results track by rr.id'>
         <state-icon state='rr.state'></state-icon>
         {{rr.rule.name}}
-        <span class='pull-right'>
+        <span class='float-right'>
           <i class='fa fa-user' ng-show='rr.overridden_at' title='Overriden by {{rr.overridden_by.full_name}}'></i>
-          <button ng-click='editRuleResult(rr)' class='btn btn-default btn-xs' title='Edit Rule'><i class='fa fa-edit'></i></button>
+          <button ng-click='editRuleResult(rr)' class='btn btn-secondary btn-sm' title='Edit Rule'><i class='fa fa-edit'></i></button>
         </span>
       </li>
     </ul>
@@ -36,7 +34,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" ng-click='saveResult(resultToEdit)'>Save</button>
       </div>
     </div>

@@ -3,17 +3,17 @@
   <%pms[:mode]='simple'-%>
   <button title='Simple Mode' class='btn_link' link_to='<%=entry_path(@entry,pms)%>'><i class='fa fa-search-minus'></i></button>
   <%if current_user.company.master?-%>
-    <%= link_to raw("<i class='fa fa-file-image-o'></i>"), get_images_entry_path(@entry), title:'Update Images', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
-    <%= link_to raw("<i class='fa fa-refresh'></i>"), request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Update Entry' %>
+    <%= link_to raw("<i class='fa fa-file-image-o'></i>"), get_images_entry_path(@entry), title:'Update Images', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+    <%= link_to raw("<i class='fa fa-refresh'></i>"), request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Update Entry' %>
   <%end-%>
   <%if current_user.sys_admin?-%>    
-    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
+    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
   <%end-%>
   <%if current_user.company.master?-%>
-    <%= link_to raw("<i class='fa fa-truck'></i>"), generate_delivery_order_entry_path(@entry), title:'Generate Delivery Order', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+    <%= link_to raw("<i class='fa fa-truck'></i>"), generate_delivery_order_entry_path(@entry), title:'Generate Delivery Order', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
   <% end-%>
-  <button title='Download' id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>"><i class='fa fa-download'></i></button>
-  <button class="btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
+  <button title='Download' id="ent_download" class="btn btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>"><i class='fa fa-download'></i></button>
+  <button class="btn btn_link" title='Sync Records' link_to='<%=sync_records_entry_path(@entry)%>'><i class='fa fa-exchange'></i></button>
 <%end-%>
 <%content_for :javascript do %>
 $(function() {
@@ -66,16 +66,13 @@ $(function() {
   <div class='container'>
     <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state:@entry.business_rules_state_for_user(current_user), validation_path: validation_results_entry_path(@entry)}%>
   </div>
-
 <% if @entry.on_hold? %>
   <div class='container'>
     <div class="row">
       <div class="col-md-12">
-        <div class='panel panel-danger'>
-          <div class='panel-heading'>
-            <h3 class='panel-title'>Pending Hold</h3>
-          </div>
-          <div class='panel-body'>
+        <div class='card alert-danger'>
+          <div class='card-header'>Pending Hold</div>
+          <div class='card-body bg-white'>
             Refer to the hold section on-screen for details.
           </div>
         </div>
@@ -176,7 +173,7 @@ $(function() {
       <tr>
         <td style="width:33%;">
           <table>
-            <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country.try(:iso_code)}'>#{editor} <span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
+            <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
             <%= show_model_fields @entry, [:ent_lading_port_name, :ent_unlading_port_name, :ent_destination_state,:ent_type,:ent_mfids,:ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom], table: true %>
           </table>
         </td>
@@ -198,9 +195,9 @@ $(function() {
   <% if !entry_comments.empty? -%>
   <h2 id="notes">
     Notes
-    <div class="pull-right">
+    <div class="float-right">
       <div class="btn-group">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           Filter <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
@@ -212,7 +209,7 @@ $(function() {
       </div>
     </div>
   </h2>
-  <table class='table table-condensed'>
+  <table class='table table-condensed table-sm'>
     <%entry_comments.each do |c|
       if c.can_view? current_user -%>
         <tr class='hover' data-comment-type='<%=c.comment_type%>'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
@@ -328,7 +325,7 @@ $(function() {
         </tbody>
       </table>
       <%fields = ModelField.viewable_model_fields(current_user, [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_total_fees, :cil_contract_amount])%>
-      <table class='table table-condensed table-bordered'>
+      <table class='table table-condensed table-sm table-bordered'>
         <thead>
           <tr>
             <%= model_field_labels fields, table: true, heading: true %>
@@ -355,7 +352,7 @@ $(function() {
             <% end %>
             <% if !line.cvd_case_number.blank? %>
               <tr>
-                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:0.5em;'>
+                <td colspan='<%=fields.length%>'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_cvd_case_number, :cil_cvd_bond, :cil_cvd_case_value, :cil_cvd_duty_amount, :cil_cvd_case_percent],
                       :lines=>[line]}%>
                 </td>

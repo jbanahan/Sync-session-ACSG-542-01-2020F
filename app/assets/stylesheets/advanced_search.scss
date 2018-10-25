@@ -7,12 +7,13 @@ div.schedule-display {
 #search-setup-actions {
   margin-top: 1em;
 }
-table.search_result_table tbody td {
+table.table-condensed tbody tr td, th {
+  padding: 0.2em !important;
   vertical-align: middle !important;
 }
-table.search_result_table tbody td.min_width {
+table.table-condensed tbody td.min_width {
   width: 30px !important;
 }
-table.search_result_table tbody td.action_cell a {
+table.table-condensed tbody td.action_cell a {
   padding: 0px 3px;
 }

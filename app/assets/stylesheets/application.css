@@ -9,6 +9,7 @@
  * compiled file, but it's generally better to create a new file per style scope.
  *
  *= require_directory .
+ *= require jquery-ui
  *= require_directory ./every_page
  *= stub vendor_portal
  *= stub trade_lanes

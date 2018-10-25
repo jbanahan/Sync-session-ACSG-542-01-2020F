@@ -11,8 +11,8 @@
       </div>
     </dd>
   </dl>
-  <a class='btn' ng-click='sendEmailCurrent()'>Send</a> 
-  <a class='btn' ng-click='disableEmailCurrent()'>Cancel</a>
+  <a class='btn btn-secondary' ng-click='sendEmailCurrent()'>Send</a> 
+  <a class='btn btn-secondary' ng-click='disableEmailCurrent()'>Cancel</a>
 </div>
 <div chain-action-bar-item id='imported-file-action-buttons'>
 </div>
@@ -47,9 +47,9 @@
         </div>
         Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
         </select>
-        <a ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</a>
+        <a ng-show='criterionToAdd' class='btn btn-secondary' ng-click='addCriterion(criterionToAdd)'>Add</a>
         <br />
-        <a class='btn btn-default' ng-click='updateSearchCriterions()'>Save</a>
+        <a class='btn btn-secondary' ng-click='updateSearchCriterions()'>Save</a>
       </div>
     </div>
   </div>
@@ -57,13 +57,13 @@
   <hr />
   <div ng-show='importedFile.last_processed.length>0'>
     <div chain-search-result='searchResult' page='page' src='/imported_files_results/'>
-      <button class='btn btn-default' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</button>
-      <button class='btn btn-default' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent || !importedFile.show_email_button'>Email Current</button>
+      <button class='btn btn-secondary' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</button>
+      <button class='btn btn-secondary' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent || !importedFile.show_email_button'>Email Current</button>
       <span ng-show='showEmailCurrent'>
-        <button class='btn btn-default' ng-click='sendEmailCurrent()'>Send</button>
-        <button class='btn btn-default' ng-click='disableEmailCurrent()'>Cancel</button>
+        <button class='btn btn-secondary' ng-click='sendEmailCurrent()'>Send</button>
+        <button class='btn btn-secondary' ng-click='disableEmailCurrent()'>Cancel</button>
       </span>
-      <button class='btn btn-default' ng-show='importedFile.file_import_result.id > 0' ng-click='showLog(importedFile.file_import_result.id);'>Log</button>
+      <button class='btn btn-secondary' ng-show='importedFile.file_import_result.id > 0' ng-click='showLog(importedFile.file_import_result.id);'>Log</button>
     </div>
   </div>
   <div ng-show='showPreviewBox'>
@@ -80,7 +80,7 @@
         </li>
       </ul>
       <span chain-action-bar-item>
-        <button class="btn btn-default" ng-click='process()' ng-show='previewResults.length > 0 && showPreviewBox'>Process File</a>
+        <button class="btn btn-secondary" ng-click='process()' ng-show='previewResults.length > 0 && showPreviewBox'>Process File</a>
       </span>
     </div>
   </div>

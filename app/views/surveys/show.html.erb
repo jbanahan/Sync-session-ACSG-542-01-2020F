@@ -60,16 +60,16 @@
     <% end %>
     <% if @survey.can_edit?(current_user)%>
       <button id='btn_cpy'>Copy Survey</button>
-      <%= button_to "Archive Survey", {action: :archive, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
+      <%= button_to "Archive Survey", {action: :archive, id: @survey.id}, method: :put, class:'btn navbar-btn btn-secondary', form_class:'inline-button-to'%>
     <% end %>
   <% elsif @survey.can_edit?(current_user) %>
-      <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn navbar-btn btn-default', form_class:'inline-button-to'%>
+      <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn navbar-btn btn-secondary', form_class:'inline-button-to'%>
   <% end %>
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
     <% if @show_archived %>
-      <%= link_to "Hide Archived Responses", survey_path(@survey, show_archived_responses: "false"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+      <%= link_to "Hide Archived Responses", survey_path(@survey, show_archived_responses: "false"), class:'btn navbar-btn btn-secondary', form_class:'inline-button-to' %>
     <% else %>
-      <%= link_to "Show Archived Responses", survey_path(@survey, show_archived_responses: "true"), class:'btn navbar-btn btn-default', form_class:'inline-button-to' %>
+      <%= link_to "Show Archived Responses", survey_path(@survey, show_archived_responses: "true"), class:'btn navbar-btn btn-secondary', form_class:'inline-button-to' %>
     <% end %>
   <% end %>
 <%end%>

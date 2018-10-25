@@ -1,9 +1,9 @@
 <%-content_for :action_bar do-%>
-  <button class="btn_link btn btn-default" link_to="<%=business_validation_template_path(@bvr.business_validation_template) %>">Back</button>
+  <button class="btn_link btn btn-secondary" link_to="<%=business_validation_template_path(@bvr.business_validation_template) %>">Back</button>
 <%-end-%>
 
 <div class="row" id="rule-criteria-submit-success" style="display:none;">
-  <div class="col-md-6 col-md-offset-3 ">
+  <div class="col-md-6 offset-md-3">
     <div class="alert alert-info">
       <p><b>Notice: </b><span id="notice"></span></p>
     </div>
@@ -11,7 +11,7 @@
 </div>
 
 <div class="row" id="rule-criteria-submit-failure" style="display:none;">
-  <div class="col-md-6 col-md-offset-3 ">
+  <div class="col-md-6 offset-md-3">
     <div class="alert alert-danger">
       <p><b>Notice: </b><span id="error"></span></p>
     </div>
@@ -89,7 +89,7 @@
 
       <div id="email" ng-hide="!businessRule.notification_type">
         <div class="row">
-          <div class="col-md-6 col-md-offset-3">
+          <div class="col-md-6 offset-md-3">
             <h3>
               Email Composition
             </h3>
@@ -185,7 +185,7 @@
       </div>
       
       <div class="row">
-        <div class="col-md-6 col-md-offset-3">
+        <div class="col-md-6 offset-md-3">
           <h3>
             Search Criterions
           </h3>
@@ -203,10 +203,9 @@
     </div>
       
     <div chain-action-bar>
-      <button class="btn btn-default" ng-click="backButton()">Back</button>
-      <button class="btn btn-default" ng-click="updateBusinessRule()">Save</button>
+      <button class="btn btn-secondary" ng-click="backButton()">Back</button>
+      <button class="btn btn-success" ng-click="updateBusinessRule()">Save</button>
     </div>
-
 
   </div>
 </div>

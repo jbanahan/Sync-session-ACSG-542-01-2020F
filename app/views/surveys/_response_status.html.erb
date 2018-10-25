@@ -21,12 +21,12 @@
         <td><% if sr.user %>User:<%else%>Group:<%end%> <%=sr.responder_name%><br>
           <%- if defined?(show_archive_control) && show_archive_control && sr.survey.can_edit?(current_user)-%>
             <%=form_for sr, url: archive_survey_response_path(sr), html: {style: "display: inline;"} do |f|%>
-              <button type="submit" class="btn btn-xs btn-default">Archive</button>
+              <button type="submit" class="btn btn-sm">Archive</button>
             <%- end -%>
           <%- end -%>
           <%- if defined?(show_restore_control) && show_restore_control && sr.survey.can_edit?(current_user)-%>
             <%=form_for sr, url: restore_survey_response_path(sr), html: {style: "display: inline;"}  do |f|%>
-              <button type="submit" class="btn btn-xs btn-default">Restore</button>
+              <button type="submit" class="btn btn-sm">Restore</button>
             <%- end -%>
           <%- end -%>
         </td>

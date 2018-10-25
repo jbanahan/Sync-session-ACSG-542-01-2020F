@@ -47,12 +47,12 @@ $(function() {
   <%@change_records.each do |r|%>
     <tr>
       <td>
-        <button class='btn btn-xs btn-default toggle_record <%if r.failed?%>failed_rec<%end%>' cr_id='<%=r.id%>'>Messages</button> 
-        <%if r.entity_snapshot%><%=link_to "Changes", r.entity_snapshot, class: "btn btn-xs btn-default snapshot"%><%end%>
+        <button class='btn btn-sm toggle_record <%if r.failed?%>failed_rec<%end%>' cr_id='<%=r.id%>'>Messages</button> 
+        <%if r.entity_snapshot%><%=link_to "Changes", r.entity_snapshot, class: "btn btn-sm snapshot"%><%end%>
       </td>
       <td><%=r.record_sequence_number%></td>
       <td><% if r.recordable %>
-            <button class='btn_link btn btn-xs btn-default' link_to='<%=polymorphic_path(r.recordable)%>'><%=CoreModule.find_by_object(r.recordable).unique_id_field.process_export(r.recordable,current_user)%></button>
+            <button class='btn_link btn btn-sm' link_to='<%=polymorphic_path(r.recordable)%>'><%=CoreModule.find_by_object(r.recordable).unique_id_field.process_export(r.recordable,current_user)%></button>
           <% else %>
             &nbsp;
           <% end %>

@@ -1,28 +1,26 @@
-<div class="panel {{panelClass}}">
-  <div class="panel-heading">
-    <h3 class="panel-title">
-      {{panelTitle}}
-      <button class='btn btn-xs btn-primary chain-edit-btn pull-right' ng-show='editIf'><i class='fa fa-edit'></i></button>
-    </h3>
+<div class="card {{panelClass}} mb-3">
+  <div class="card-header vandegrift-header">
+    {{panelTitle}}
+    <button class='btn btn-primary btn-sm chain-edit-btn float-right' ng-show='editIf'><i class='fa fa-edit'></i></button>
   </div>
-  <div class="panel-body" ng-include='viewTemplate'></div>
-  <div class='panel-footer text-right' ng-show='editIf'>
-    <button class='btn btn-xs btn-default chain-edit-btn'><i class='fa fa-edit'></i></button>
+  <div class="card-body" ng-include='viewTemplate'></div>
+  <div class='card-footer text-right' ng-show='editIf'>
+    <button class='btn btn-sm btn-outline-secondary chain-edit-btn'><i class='fa fa-edit'></i></button>
   </div>
 </div>
 <div ng-show='editIf'>
-  <div chain-view-edit-modal='true' class="modal fade panel-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div chain-view-edit-modal='true' class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog {{modalClass}}">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <h4 class="modal-title">Edit {{panelTitle}}</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
           <div ng-include='editTemplate'></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <button type="button" class="btn btn-primary chain-save-btn">Save Changes</button>
         </div>
       </div>

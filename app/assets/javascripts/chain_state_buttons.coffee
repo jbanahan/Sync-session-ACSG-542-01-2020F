@@ -38,11 +38,11 @@ root.ChainStateButtons = {
     $(outer).find('[data-state-toggle-id]').remove()
     for btn in buttons
       confAttr = if btn.button_confirmation then "data-confirmation='"+btn.button_confirmation+"'" else ""
-      outer.append("<button class='btn btn-default navbar-btn' data-core-module-path='"+btn.core_module_path+"' data-object-id='"+btn.base_object_id+"' data-state-toggle-id='"+btn.id+"' "+confAttr+">"+btn.button_text+"</button>")
+      outer.append("<button class='btn btn-secondary navbar-btn' data-core-module-path='"+btn.core_module_path+"' data-object-id='"+btn.base_object_id+"' data-state-toggle-id='"+btn.id+"' "+confAttr+">"+btn.button_text+"</button>")
 
   loadButtons: (coreModulePath,objId) ->
     outer = $('#nav-action-bar .btn-group')
-    outer.append("<button class='btn btn-default navbar-btn' title='Loading more buttons' id='ChainStateButtonInit'><i class='fa fa-circle-o-notch fa-spin'></i></button>")
+    outer.append("<button class='btn btn-secondary navbar-btn' title='Loading more buttons' id='ChainStateButtonInit'><i class='fa fa-circle-o-notch fa-spin'></i></button>")
     ChainStateButtons.getButtons(coreModulePath,objId).done (data) ->
       $('#ChainStateButtonInit').remove()
       if data.state_toggle_buttons

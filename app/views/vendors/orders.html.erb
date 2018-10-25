@@ -1,10 +1,10 @@
 <div class='container-fluid'>
   <div class='row'>
-    <div class="col-xs-8">
+    <div class="col-md-8">
       <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#order-rows' data-infinite-table-param='q' placeholder='Filter by name'/>
     </div>
-    <div class="col-xs-4">
-      <button data-infinite-table-reset='#order-rows' class='btn btn-sm btn-default'>
+    <div class="col-md-4">
+      <button data-infinite-table-reset='#order-rows' class='btn btn-sm btn-secondary'>
         Filter
       </button>
     </div>
@@ -22,5 +22,5 @@
         <%=render :partial=>'order_rows', locals:{orders:@orders}%>
     </tbody>
   </table>
-  <div><button data-infinite-table-target='#order-rows' class='btn btn-link btn-lg btn-block'>Load More</button></div>
+  <div><button data-infinite-table-target='#order-rows' class='btn btn-secondary btn-link btn-lg btn-block'>Load More</button></div>
 </div>

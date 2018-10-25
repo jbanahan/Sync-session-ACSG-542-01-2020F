@@ -107,11 +107,9 @@
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">
-        <div class="panel panel-warning">
-            <div class="panel-heading">
-              <h3 class="panel-title">Order Closed</h3>
-            </div>
-            <div class="panel-body">
+        <div class="card alert-warning">
+            <div class="card-header">Order Closed</div>
+            <div class="card-body">
               Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
             </div>
         </div>
@@ -176,7 +174,7 @@
       <!-- Tab panes -->
       <div class="tab-content">
         <div role="tabpanel" class="tab-pane active" id="main">
-          <table class="table table-condensed table-bordered">
+          <table class="table table-sm table-condensed table-bordered">
             <thead>
               <tr>
                 <%= model_field_labels([:ordln_line_number,  cdefs[:ordln_deleted_flag].model_field_uid, :prod_uid, "*fhts_1_#{Country.where(iso_code: "US").first.id}_order_lines", :ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_gross_weight_kg].model_field_uid, :ordln_ppu, :ordln_total_cost], table:true, heading:true) %>
@@ -232,7 +230,7 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="compliance">
-          <table class="table table-condensed table-striped table-bordered">
+          <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
                 <%= model_field_labels([:ordln_line_number, :prod_uid,
@@ -273,7 +271,7 @@
                     <% end %>
                   </td>
                   <td>
-                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-default btn-xs')%>
+                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-sm')%>
                   </td>
                 </tr>
               <%end %>
@@ -281,7 +279,7 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="quality">
-          <table class="table table-condensed table-striped table-bordered">
+          <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
                 <%= model_field_labels([:ordln_line_number, :prod_uid, cdefs[:prod_merch_cat].model_field_uid, :ordln_ordered_qty, :ordln_unit_of_measure,
@@ -312,7 +310,7 @@
                     <small><%=qa_approved_date%></small>
                   </td>
                   <td>
-                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-default btn-xs')%>
+                    <%=state_toggle_buttons(line,User.current,button_class:'btn btn-sm')%>
                   </td>
                 </tr>
               <%end %>
@@ -320,7 +318,7 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="carbpatent">
-          <table class="table table-condensed table-striped table-bordered">
+          <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
                 <%= model_field_labels([:ordln_line_number, :prod_uid,
@@ -354,7 +352,7 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="asn">
-          <table class="table table-condensed table-striped table-bordered">
+          <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
                 <%= model_field_labels([:ordln_line_number, :prod_uid, cdefs[:ordln_shpln_line_number].model_field_uid,
@@ -397,7 +395,7 @@
           </table>
         </div>
         <div role="tabpanel" class="tab-pane" id="snapshot">
-          <table class="table table-condensed table-bordered">
+          <table class="table table-condensed table-sm table-bordered">
             <thead>
               <tr>
                 <th>&nbsp;</th>

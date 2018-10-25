@@ -49,17 +49,6 @@ root.Chain =
       {val:o.val(),label:o.html()}
     callback a
 
-  showNavTour: () ->
-    itms = [
-     {selector:'#btn-left-toggle',placement:'bottom',content:"Navigate through the system using the menu here."},
-     {selector:'.search-query:visible',placement:'bottom',content:"Search for items.  Use the '/' key to jump here."},
-     {selector:'.navbar-fixed-bottom:visible button:first',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
-    ]
-    ox = () ->
-      Chain.hideMessage('wh4')
-
-    bootstro.start '', {items:itms, onExit: ox}
-
   toggleNotificationCenter: () ->
     if $("#notification-center").is(':visible')
       Chain.hideNotificationCenter()
@@ -120,13 +109,13 @@ root.Chain =
   addPagination: (target,baseUrl,currentPage,totalPages) ->
     t = $(target)
     h = ''
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page=1">&lt;&lt;</a>' unless currentPage==1
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage-1)+'">&lt;</a>' unless currentPage==1
-    h += '<select class="pagechanger btn btn-default">'
+    h += '<a class="btn" href="'+baseUrl+'?page=1">&lt;&lt;</a>' unless currentPage==1
+    h += '<a class="btn" href="'+baseUrl+'?page='+(currentPage-1)+'">&lt;</a>' unless currentPage==1
+    h += '<select class="pagechanger btn">'
     h += '<option value="'+n+'"'+(if n==currentPage then ' selected="selected"' else '')+'>'+n+'</option>' for n in [1..totalPages]
     h += '</select>'
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage+1)+'">&gt;</a>' unless currentPage==totalPages
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+totalPages+'">&gt;&gt;</a>' unless currentPage==totalPages
+    h += '<a class="btn" href="'+baseUrl+'?page='+(currentPage+1)+'">&gt;</a>' unless currentPage==totalPages
+    h += '<a class="btn" href="'+baseUrl+'?page='+totalPages+'">&gt;&gt;</a>' unless currentPage==totalPages
     t.html h
     $('select.pagechanger').on 'change', () ->
       window.location = baseUrl+'?page='+$(this).val()
@@ -237,7 +226,7 @@ root.Chain =
       for hts in country_result['hts']
         h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
         h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
-        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-xs btn-default' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-sm' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
         h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
         h += "</div>"
       target.html(h)
@@ -295,7 +284,7 @@ root.Chain =
         r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
       if c.tariff_records[0]?.id
         r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
-      r += "&nbsp;<a href='#' class='btn btn-sm btn-default' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
+      r += "&nbsp;<a href='#' class='btn btn-sm' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
       if c.country.iso_code=='US'
@@ -431,7 +420,7 @@ root.Chain =
       $('#notification-center').on 'click', '.show-time-btn', (evt) ->
         t = $(this)
         if(t.html()==t.attr('title'))
-          t.html("<span class='glyphicon glyphicon-time'></span>")
+          t.html("<span class='fa fa-clock-o'></span>")
         else
           t.html(t.attr('title'))
 
@@ -443,7 +432,7 @@ root.Chain =
         t = event.target
         id = $(t).attr('message-id')
         panel = $('#message-panel-'+id)
-        panel.find('.message-read-icon').removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down')
+        panel.find('.message-read-icon').removeClass('fa-chevron-right').addClass('fa-chevron-down')
         if panel.hasClass('unread')
           panel.addClass('read').removeClass('unread')
           $.get '/messages/'+id+'/read', ->
@@ -452,7 +441,7 @@ root.Chain =
       $('#notification-center').on 'hide.bs.collapse', '.panel-collapse', (event) ->
         t = event.target
         id = $(t).attr('message-id')
-        $('#message-panel-'+id+' .message-read-icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right')
+        $('#message-panel-'+id+' .message-read-icon').removeClass('fa-chevron-down').addClass('fa-chevron-right')
 
       $('#notification-center').on 'click', '.notification-mark-all-read', (event) ->
         $.ajax {
@@ -464,7 +453,7 @@ root.Chain =
         }
 
       $('#notification-center').on 'chain:notification-load', '[notification-center-pane="messages"]', () ->
-        $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-xs').addClass('btn-primary')
+        $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-sm').addClass('btn-primary')
 
     pollingUrl : ->
       @url
@@ -718,7 +707,7 @@ $(document).ready () ->
       url:'/users/email_new_message.json'
       success: (data) ->
         h = ''
-        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        h = "<span class='fa fa-check'></span>" if data.msg_state
         $('.message-wrap .email-message-check-wrap').html(h)
     }
   $(document).on 'click', '.task-email-toggle', (evt) ->
@@ -727,7 +716,7 @@ $(document).ready () ->
       url:'/users/task_email.json'
       success: (data) ->
         h = ''
-        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        h = "<span class='fa fa-check'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
 

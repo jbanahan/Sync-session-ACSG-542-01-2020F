@@ -2,7 +2,7 @@
   <div ng-controller='BusinessTemplateController' ng-init="setId(<%= @bvt.id %>)">
 
     <div class="row" id="template-criteria-submit-success" style="display:none;">
-      <div class="col-md-6 col-md-offset-3 ">
+      <div class="col-md-6 offset-md-3">
         <div class="alert alert-info">
           <p><b>Notice:</b> Criteria updated successfully.</p>
         </div>
@@ -10,7 +10,7 @@
     </div>
 
     <div class="row" id="template-criteria-submit-failure" style="display:none;">
-      <div class="col-md-6 col-md-offset-3 ">
+      <div class="col-md-6 offset-md-3">
         <div class="alert alert-danger">
           <p><b>Notice:</b> Criteria could not be saved.</p>
         </div>
@@ -18,23 +18,21 @@
     </div>
 
     <div class="row">
-      <div class="col-md-6 col-md-offset-3 text-center">
+      <div class="col-md-6 offset-md-3 text-center">
         <h2>"{{businessTemplate.name}}" Criteria</h2>
         <br>
       </div>
     </div>
 
     <div class="row">
-      <div class="col-md-6 col-md-offset-3">
+      <div class="col-md-6 offset-md-3">
         <div chain-search-criteria bound-item="businessTemplate" model-fields="model_fields">
       </div>
     </div>
 
     <div chain-action-bar>
-      <button class="btn btn-default" ng-click="backButton()">Back</button>
-      <button class="btn btn-default" ng-click="updateBusinessTemplate()">Save</button>
+      <button class="btn btn-secondary" ng-click="backButton()">Back</button>
+      <button class="btn btn-secondary" ng-click="updateBusinessTemplate()">Save</button>
     </div>
-
-
   </div>
 </div>

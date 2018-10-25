@@ -49,16 +49,24 @@ root.Chain =
       {val:o.val(),label:o.html()}
     callback a
 
-  showNavTour: () ->
-    itms = [
-     {selector:'#btn-left-toggle',placement:'bottom',content:"Navigate through the system using the menu here."},
-     {selector:'.search-query:visible',placement:'bottom',content:"Search for items.  Use the '/' key to jump here."},
-     {selector:'.navbar-fixed-bottom:visible button:first',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
-    ]
-    ox = () ->
-      Chain.hideMessage('wh4')
+  getMessageCount : (url) ->
+    $.getJSON url, (data) ->
+      if data > 0
+        $('.message_envelope').each () ->
+          $(this).html(''+data).addClass('messages')
+      else
+        $('.message_envelope').each () ->
+          $(this).html('').removeClass('messages')
 
-    bootstro.start '', {items:itms, onExit: ox}
+  # If pollingSeconds is <=0, no ongoing polling is done.
+  initialize : (user_id, pollingSeconds) ->
+    @url = '/messages/message_count?user_id='+user_id
+
+    $(document).ready () =>
+      @initNotificationCenter()
+      @getMessageCount(@url)
+      if pollingSeconds > 0
+        @startPolling(pollingSeconds)
 
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
@@ -84,13 +92,13 @@ root.Chain =
   addPagination: (target,baseUrl,currentPage,totalPages) ->
     t = $(target)
     h = ''
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page=1">&lt;&lt;</a>' unless currentPage==1
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage-1)+'">&lt;</a>' unless currentPage==1
-    h += '<select class="pagechanger btn btn-default">'
+    h += '<a class="btn btn-secondary" href="'+baseUrl+'?page=1" role="button">&lt;&lt;</a>' unless currentPage==1
+    h += '<a class="btn btn-secondary" href="'+baseUrl+'?page='+(currentPage-1)+'" role="button">&lt;</a>' unless currentPage==1
+    h += '<select class="pagechanger btn btn-secondary">'
     h += '<option value="'+n+'"'+(if n==currentPage then ' selected="selected"' else '')+'>'+n+'</option>' for n in [1..totalPages]
     h += '</select>'
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage+1)+'">&gt;</a>' unless currentPage==totalPages
-    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+totalPages+'">&gt;&gt;</a>' unless currentPage==totalPages
+    h += '<a class="btn btn-secondary" href="'+baseUrl+'?page='+(currentPage+1)+'" role="button">&gt;</a>' unless currentPage==totalPages
+    h += '<a class="btn btn-secondary" href="'+baseUrl+'?page='+totalPages+'" role="button">&gt;&gt;</a>' unless currentPage==totalPages
     t.html h
     $('select.pagechanger').on 'change', () ->
       window.location = baseUrl+'?page='+$(this).val()
@@ -112,11 +120,11 @@ root.Chain =
       messages.forEach (msg) -> inner += "<li>" + msg + "</li>"
       inner += "</ul>"
     if type == "success"
-      outer = "<div class='panel panel-success'><div class='panel-heading'><h3 class='panel-title'>Success!</h3></div><div class='panel-body'>#{inner}</div></div>"
+      outer = "<div class='alert alert-success alert-dismissible fade show role='alert'><h4 class='alert-heading'>Success!</h4><hr><i class='fa fa-thumbs-up fa-2x'></i>&nbsp; #{inner} <button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></div>"
     else if type == "error"
-      outer = "<div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>#{inner}</div></div>"
+      outer = "<div class='alert alert-danger alert-dismissible fade show' role='alert'><h4 class='alert-heading'>Error</h4><hr><i class='fa fa-warning fa-2x'></i>&nbsp; #{inner} <button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></div>"
     else
-      outer = "<div class='panel panel-info'><div class='panel-heading'><h3 class='panel-title'>&nbsp;</h3></div><div class='panel-body'>#{inner}</div></div>"
+      outer = "<div class='alert alert-info alert-dismissible fade show' role='alert'><i class='fa fa-question-circle fa-2x'></i>&nbsp; #{inner} <button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></div>"
     if needs_container
       outer = "<div class='container'>#{outer}</div>"
     outer
@@ -206,7 +214,7 @@ root.Chain =
       for hts in country_result['hts']
         h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
         h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
-        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-xs btn-default' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-secondary btn-sm' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
         h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
         h += "</div>"
       target.html(h)
@@ -264,7 +272,7 @@ root.Chain =
         r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
       if c.tariff_records[0]?.id
         r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
-      r += "&nbsp;<a href='#' class='btn btn-sm btn-default' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
+      r += "&nbsp;<a href='#' class='btn btn-sm btn-secondary' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
       if c.country.iso_code=='US'
@@ -440,7 +448,6 @@ root.Chain =
         c.html(h)
     )
 
-
 $(document).ready () ->
   # This includes this header in literally every jQuery ajax call.
   # Note, this header is included twice, since jquery.form also 'helpfully' reads the crsf token and injects it as well
@@ -510,9 +517,9 @@ $(document).ready () ->
     tgt = $(e.target)
     btn = $('button[data-infinite-table-reset="'+tgt.attr('data-infinite-table-filter')+'"]')
     if tgt.val().length > 0
-      btn.removeClass('btn-default').addClass('btn-primary')
+      btn.removeClass('btn-secondary').addClass('btn-primary')
     else
-      btn.addClass('btn-default').removeClass('btn-primary')
+      btn.addClass('btn-secondary').removeClass('btn-primary')
     if(e.keyCode == 13)
       targetTableSelector = $(e.target).attr('data-infinite-table-filter')
       Chain.processInfiniteSelectReset(targetTableSelector)
@@ -523,7 +530,7 @@ $(document).ready () ->
       url:'/users/email_new_message.json'
       success: (data) ->
         h = ''
-        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        h = "<span class='fa fa-check-circle-o'></span>" if data.msg_state
         $('.message-wrap .email-message-check-wrap').html(h)
     }
   $(document).on 'click', '.task-email-toggle', (evt) ->
@@ -532,6 +539,6 @@ $(document).ready () ->
       url:'/users/task_email.json'
       success: (data) ->
         h = ''
-        h = "<span class='glyphicon glyphicon-ok'></span>" if data.msg_state
+        h = "<span class='fa fa-check-circle-o'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }

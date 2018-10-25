@@ -71,13 +71,13 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% if current_user.admin? %>
     <button id='btn_run_as'>Run As</button>
     <% if @user.locked? %>
-      <%= button_to 'Unlock User', unlock_user_path(@user.id), data: {}, method: :post, class: 'btn navbar-btn btn-default',  form_class:'inline-button-to' -%>
+      <%= button_to 'Unlock User', unlock_user_path(@user.id), data: {}, method: :post, class: 'btn navbar-btn',  form_class:'inline-button-to' -%>
     <% end %>
   <% end %>
   <% if @user.id -%>
     <button id="btn_reports">Reports</button>
-    <button class="btn_link btn btn-default" link_to="<%=event_subscriptions_company_user_path(@user.company,@user)%>">Subscriptions</button>
-    <button class="btn_link btn btn-default" link_to="<%=new_company_user_path(@user.company, copy: @user.id)%>">Copy</button>
+    <button class="btn_link btn" link_to="<%=event_subscriptions_company_user_path(@user.company,@user)%>">Subscriptions</button>
+    <button class="btn_link btn" link_to="<%=new_company_user_path(@user.company, copy: @user.id)%>">Copy</button>
 
   <% end -%>
 
@@ -86,7 +86,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 <div class="container">
   <div class="row">
     <%= form_for([@company, @user], html: {id: 'frm_user'}) do |f| %>
-      <div class="col-md-6">
+      <div class="col-12">
         <%= f.hidden_field :company_id %>
         <div class="form-group">
           <label>Username</label>
@@ -181,8 +181,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
             <div style="display: table; margin-top: 2.5em; width: 100%;">
               <div style="display: table-cell; text-align: center;">
                 <div style="display: inline-block;">
-                  <button class="form-control btn btn-default" id="btn_assign_groups"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
-                  <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_groups"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" id="btn_assign_groups"><span class="fa fa-chevron-right" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" style="margin-top: 1em;" id="btn_remove_groups"><span class="fa fa-chevron-left" aria-hidden="true"></span></button>
                 </div>
               </div>
             </div>
@@ -209,8 +209,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
             <div style="display: table; margin-top: 2.5em; width: 100%;">
               <div style="display: table-cell; text-align: center;">
                 <div style="display: inline-block;">
-                  <button class="form-control btn btn-default" id="btn_assign_search_setups"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
-                  <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_search_setups"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" id="btn_assign_search_setups"><span class="fa fa-chevron-right" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" style="margin-top: 1em;" id="btn_remove_search_setups"><span class="fa fa-chevron-left" aria-hidden="true"></span></button>
                 </div>
               </div>
             </div>
@@ -237,8 +237,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
             <div style="display: table; margin-top: 2.5em; width: 100%;">
               <div style="display: table-cell; text-align: center;">
                 <div style="display: inline-block;">
-                  <button class="form-control btn btn-default" id="btn_assign_custom_reports"><span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
-                  <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove_custom_reports"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" id="btn_assign_custom_reports"><span class="fa fa-chevron-right" aria-hidden="true"></span></button>
+                  <button class="form-control btn btn-secondary" style="margin-top: 1em;" id="btn_remove_custom_reports"><span class="fa fa-chevron-left" aria-hidden="true"></span></button>
                 </div>
               </div>
             </div>

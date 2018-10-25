@@ -5,7 +5,7 @@
         <div id='address_map'></div>
         <%@company.addresses.each do |ad|%>
           <div class='address-selector' google-maps-src='<%=ad.google_maps_url%>' google-maps-target='#address_map'>
-            <strong><%=ad.name%></strong> <span class='text-danger glyphicon glyphicon-map-marker'></span><br />
+            <strong><%=ad.name%></strong> <span class='text-danger fa fa-map-marker'></span><br />
             <%unless ad.line_1.blank?%><%=ad.line_1%><br /><%end%>
             <%unless ad.line_2.blank?%><%=ad.line_2%><br /><%end%>
             <%unless ad.line_3.blank?%><%=ad.line_3%><br /><%end%>
@@ -13,7 +13,7 @@
             <%=ad.country.try(:name).try(:titleize)%>
           </div>
           <div class='text-right'>
-            <%=button_to 'Delete', company_address_path(@company,ad), method: :delete, confirm: 'Are you sure?', class: 'btn btn-xs btn-danger'%>
+            <%=button_to 'Delete', company_address_path(@company,ad), method: :delete, confirm: 'Are you sure?', class: 'btn btn-sm btn-danger'%>
           </div>
         <%end%>
     </div>

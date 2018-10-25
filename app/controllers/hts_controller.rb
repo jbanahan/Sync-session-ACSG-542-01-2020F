@@ -4,7 +4,7 @@ class HtsController < ApplicationController
 
 
   def index
-
+    @no_action_bar = true #implements it's own in the hts index.html.erb
   end
 
   def permission

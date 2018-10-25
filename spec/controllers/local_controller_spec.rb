@@ -8,7 +8,7 @@ TestLocalController = Class.new(LocalController) do
 
   def show
     # Just use a really simple page, all we care about for the test is that something renders to a string
-    render layout: "standalone", template: "hts/index"
+    render layout: "standalone", template: "hts/index", locals: {master_setup: MasterSetup.new}
   end
 
 end

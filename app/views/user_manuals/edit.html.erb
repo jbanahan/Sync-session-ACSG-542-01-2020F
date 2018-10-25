@@ -16,9 +16,9 @@ $(function() {
 });
 <%end%>
 <%content_for :action_bar do %>
-  <button class='btn' id='submit-form'><i class='fa fa-floppy-o'></i></button>
-  <button class='btn' id='download-manual'><i class='fa fa-download'></i></button>
-  <button class='btn' id='delete-manual'><i class='fa fa-trash'></i></button>
+  <button class='btn btn-secondary' id='submit-form'><i class='fa fa-floppy-o'></i></button>
+  <button class='btn btn-secondary' id='download-manual'><i class='fa fa-download'></i></button>
+  <button class='btn btn-secondary' id='delete-manual'><i class='fa fa-trash'></i></button>
 <%end%>
 <%=form_for @user_manual, html: {id: 'edit_um'} do |f|%>
   <div class="container">

@@ -11,14 +11,14 @@
       <button data-toggle='modal' data-target='#process_actions_modal'>Process Reports</button>
     <%end%>
     <%if @claim.drawback_claim_audits.count > 0 %>
-      <%=button_to 'Clear Claim Audits', clear_claim_audits_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-default', data: { confirm: "Are you sure?" }%>
+      <%=button_to 'Clear Claim Audits', clear_claim_audits_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-secondary', data: { confirm: "Are you sure?" }%>
     <%end%>
     <%if @claim.drawback_export_histories.count > 0 %>
-      <%=button_to 'Clear Export Histories', clear_export_histories_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-default', data: { confirm: "Are you sure?" }%>
+      <%=button_to 'Clear Export Histories', clear_export_histories_drawback_claim_path(@claim), :method=>:delete, :form_class=>"inline-button-to", :class=>'btn btn-secondary', data: { confirm: "Are you sure?" }%>
     <%end%>
   <%end-%>
   <%if @claim.drawback_claim_audits.count > 0 && @claim.drawback_export_histories.count > 0%>
-    <%= button_to "Audit Report", audit_report_drawback_claim_path(@claim), class: "btn navbar-btn btn-default", form_class: 'inline-button-to' %>
+    <%= button_to "Audit Report", audit_report_drawback_claim_path(@claim), class: "btn navbar-btn btn-secondary", form_class: 'inline-button-to' %>
   <%end%>
 <%end%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
@@ -81,8 +81,8 @@
       <%=form_for @claim, url: process_report_drawback_claim_path(@claim), method:'POST', html:{id:'frm_process_action', claim:@claim.id.to_s} do%>
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title" id="process_actions_modal_label">Process Reports</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <div class='form-group'>
@@ -104,7 +104,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             <input type='submit' class='btn btn-primary' value='Process' />
           </div>
         </div>

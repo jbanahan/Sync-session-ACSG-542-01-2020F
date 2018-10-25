@@ -42,13 +42,11 @@
       <%= render "shared/nav_panel" %>
     <% end %>
     <%= render "shared/flash_notice" %>
-    <div id='main-content'>
+    <div id='main-content' class="container-fluid">
       <%=yield%>
     </div>
-
-
     <%unless @no_action_bar-%>
-      <div class='navbar navbar-default navbar-fixed-bottom'>
+      <div id="action_bar" class='navbar fixed-bottom'>
         <ul class='nav navbar-nav'>
           <li id='nav-action-bar'>
             <div class='btn-group'>

@@ -4,8 +4,8 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             <h4 class="modal-title">Issue Codes</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           </div>
           <div class="modal-body">
             <dl class="dl-horizontal">
@@ -22,7 +22,7 @@
             </dl>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -48,14 +48,12 @@
     </div>
     <div class="row" ng-hide='poLine || !missingPO'>
       <div class="col-md-12">
-        <div class="panel panel-warning">
-            <div class="panel-heading">
-              <h3 class="panel-title">Order Not Found</h3>
-            </div>
-            <div class="panel-body">
+        <div class="card alert-warning">
+            <div class="card-header">Order Not Found</div>
+            <div class="card-body bg-white">
               Order {{missingPO}} was not found.  Would you like to create it?
             </div>
-            <div class='panel-footer'>
+            <div class='card-footer'>
               <button ng-click='createPO()' class='btn btn-warning'>Create</button>
             </div>
         </div>
@@ -157,7 +155,7 @@
             <input id="docs_ok_date" type="date" ng-model="poLine.docs_ok_date" class='form-control'>
           </div>
           <div class='form-group'>
-            <label for="issue_codes">Issue Codes <button class='btn btn-xs btn-default' data-toggle='modal' data-target='#issue_codes'>?</button></label>
+            <label for="issue_codes">Issue Codes <button class='btn btn-sm' data-toggle='modal' data-target='#issue_codes'>?</button></label>
             <input type="text" id="issue_codes" ng-model='poLine.issue_codes' class='form-control' />
           </div>
           <div class='form-group'>
@@ -183,7 +181,7 @@
       <div class="col-md-12">
         <form class="form-inline">
           <input ng-model='searchValue'  class='form-control'/>
-          <button ng-click='getLines()' class='btn btn-default'>Search</button>
+          <button ng-click='getLines()' class='btn btn-secondary'>Search</button>
         </form>
       </div>
     </div>
@@ -210,7 +208,7 @@
           </thead>
           <tbody>
             <tr ng-repeat='line in recentLines'>
-              <td><a class='btn btn-sm btn-default' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
+              <td><a class='btn btn-sm' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
               <td>{{line.coast}}</td>
               <td>{{line.hts_code}}</td>
               <td>{{line.cartons}}</td>
@@ -227,7 +225,7 @@
       </div>
     </div>
     <div chain-action-bar>
-      <button class='btn btn-default'>Send Log</button>
+      <button class='btn btn-secondary'>Send Log</button>
     </div>
   </div>
 </div>

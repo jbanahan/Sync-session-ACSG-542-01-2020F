@@ -1,7 +1,7 @@
 <%-content_for :action_bar do-%>
-  <button class="btn_link btn btn-default" link_to="<%=business_validation_templates_path%>">Back</button>
-  <%= button_to "Edit", edit_business_validation_template_path(@bv_template), class: "btn btn-default navbar-btn", form_class:'inline-button-to', method: :get %>
-  <%= button_to "Delete", @bv_template, method: :delete, class: "btn btn-default navbar-btn", prompt:"Are you sure you want to delete this?", form_class:'inline-button-to'%>
+  <button class="btn_link btn btn-secondary" link_to="<%=business_validation_templates_path%>">Back</button>
+  <%= button_to "Edit", edit_business_validation_template_path(@bv_template), class: "btn btn-secondary navbar-btn", form_class:'inline-button-to', method: :get %>
+  <%= button_to "Delete", @bv_template, method: :delete, class: "btn btn-secondary navbar-btn", prompt:"Are you sure you want to delete this?", form_class:'inline-button-to'%>
 <%-end-%>
 <div class="container">
   <div class="row">

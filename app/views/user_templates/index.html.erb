@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12">
-      <h1 class="text_center">User Templates</h1>
+      <h2 class="text-center">User Templates</h2>
     </div>
   </div>
   <div class="row" id='index-table-row'>
@@ -21,13 +21,15 @@
             <tr>
               <td><%=ut.name%>
               <td>
-                <button class='template-show btn btn-sm btn-default' data-template-id='<%=ut.id%>' title='View'><i class='fa fa-search-plus'></i></button>
-                <button class='template-hide btn btn-sm btn-default' style='display:none;' data-template-id='<%=ut.id%>' title='Hide'><i class='fa fa-search-minus'></i></button>
+                <button class='template-show btn btn-sm btn-secondary' data-template-id='<%=ut.id%>' title='View'><i class='fa fa-search-plus'></i></button>
+                <button class='template-hide btn btn-sm btn-secondary' style='display:none;' data-template-id='<%=ut.id%>' title='Hide'><i class='fa fa-search-minus'></i></button>
 <pre class='template-json' style='display:none;' data-template-id='<%=ut.id%>'>
 <%=ut.template_json%>
 </pre>
               </td>
-              <td><a href='<%=edit_user_template_path(ut)%>' class='btn btn-sm btn-default' title='Edit'><i class='fa fa-pencil'></i></button></td>
+              <td>
+                <a href='<%=edit_user_template_path(ut)%>' class='btn btn-sm btn-secondary' role='button' title='Edit'><i class='fa fa-pencil'></i></a>
+              </td>
             </tr>
           <%end%>
           <tr>
@@ -40,21 +42,19 @@
     </div>
   </div>
   <div class="row" id='new-template-row' style='display:none'>
-    <div class="col-md-8 col-md-offset-2">
+    <div class="col-md-8 offset-md-2">
       <%=form_for UserTemplate.new(template_json:UserTemplate::DEFAULT_TEMPLATE_JSON), id:'create-form' do |f| %>
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Create New User Template</h3>
-          </div>
-          <div class="panel-body">
+        <div class="card">
+          <div class="card-header">Create New User Template</div>
+          <div class="card-body">
             <%=f.label :name%>
             <%=f.text_field :name, class:'form-control'%>
             <%=f.label :template_json, 'JSON'%>
             <%=f.text_area :template_json, class:'form-control'%>
           </div>
-          <div class="panel-footer text-right">
-            <button type='button' class='btn btn-default cancel-form'>Cancel</button>
-            <%=f.submit 'Create', class:'btn btn-primary' %>
+          <div class="card-footer text-right">
+            <button class='btn btn-secondary cancel-form'>Cancel</button>
+            <%=f.submit 'Create', class:'btn btn-primary', role:'button' %>
           </div>
         </div>
       <%end%>

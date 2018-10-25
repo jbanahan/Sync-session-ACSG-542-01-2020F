@@ -10,463 +10,481 @@
       </div>
     </div>
     <div id='search_setup_controls' ng-show='showSetup' class='container'>
-      <div class='well'>
-        <div class='row text-center'>
-          <div class='col-md-12'>
-            <h2>Setup</h2>
-            <input id='search-setup-name-box' type='text' ng-model='searchSetup.name' class='form-control input-lg' />
-          </div>
-        </div>
-        <div class='row' style='margin-top:20px;'>
-          <div class='col-md-3 col-md-offset-3'>
-            <div class="form-group">
-              <label for="download_format">Download File Format</label>
-              <select id="download_format" class="form-control" ng-model='searchSetup.download_format'>
-                <option value="xlsx">Excel - xlsx</option>
-                <option value="csv">CSV</option>
-                <option value="xls">Excel - xls (Old)</option>
-              </select>
+      <div class='card'>
+        <div class="card-body bg-light">
+          <div class='row text-center'>
+            <div class='col-md-12'>
+              <h2>Setup</h2>
+              <input id='search-setup-name-box' type='text' ng-model='searchSetup.name' class='form-control input-lg' />
             </div>
           </div>
-          <div class='col-md-3'>
-            <div><label for="include_links"><input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download</label></div>
-            <div><label for="no_time"><input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time</label></div>
-          </div>
-        </div>
-        <!--column setup-->
-        <div class='row'>
-          <div class='col-md-12 text-center'>
-            <h3>Columns</h3>
-          </div>
-        </div>
-        <div class='row'>
-          <div class='col-md-6'>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <h5>Available</h5>
-              </div>
-            </div>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <select class='form-control' multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
+          <div class='row' style='margin-top:20px;'>
+            <div class='col-md-3 offset-md-3'>
+              <div class="form-group">
+                <label for="download_format">Download File Format</label>
+                <select id="download_format" class="form-control" ng-model='searchSetup.download_format'>
+                  <option value="xlsx">Excel - xlsx</option>
+                  <option value="csv">CSV</option>
+                  <option value="xls">Excel - xls (Old)</option>
                 </select>
-                <div>
-                  <input class='form-control' type='text' ng-model='columnFilter' placeholder='Search columns...' />
-                </div>
-                <div>
-                  <a ng-show='columnsToAdd' class='btn btn-default' ng-click='addColumns()'>Add</a>
-                  <a class='btn btn-default' ng-click='toggleConstantField()'>Add Custom Column</a>&nbsp;
-                  <div ng-show='displayConstantField'>
-                    <br>
-                    <form class='form-inline col-md-12'>
-                      <label class='col-md-4' for='constant-name-input'>Column name:</label>
-                      <input type="text" name="constant-field-name" ng-model='constantField.name' class="form-control col-md-8" id="constant-name-input">
-                      <br>
-                      <label class='col-md-4' for='constant-value-input'>Column value:</label>
-                      <input type="text" name="constant-field-value" ng-model='constantField.value' class="form-control col-md-8" id='constant-value-input'>
-                    </form>
-                    <a class='btn btn-default offset-md-4' ng-disabled='!constantField.name' ng-click='addConstantField()'>Save</a>
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
-          <div class='col-md-6'>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <h5>Included</h5>
-              </div>
-            </div>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <select class='form-control' multiple='multiple' size='10' ng-model='columnsToRemove'>
-                  <option ng-repeat="s in searchSetup.search_columns" value={{s.mfid}} title={{s.constant_field_value}}>{{columnLabel(s)}}</option>
-                </select>
-                <small ng-show='hasConstantColumns()'>*indicates a constant field</small>
-                <br />
-                <div ng-hide='columnsToRemove'>&nbsp;</div>
-                <div ng-show='columnsToRemove'>
-                  <a class='btn btn-default' ng-click='removeColumns()'>Remove</a>
-                  <a class='btn btn-default' ng-click='moveColumnsUp()'>Up</a>
-                  <a class='btn btn-default' ng-click='moveColumnsDown()'>Down</a>
-                </div>
-              </div>
+            <div class='col-md-3'>
+              <div><label for="include_links"><input id="include_links" type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download</label></div>
+              <div><label for="no_time"><input id="no_time" type='checkbox' ng-model='searchSetup.no_time'/> Hide Time</label></div>
             </div>
           </div>
-        </div>
-        <!--sort setup-->
-        <div class='row'>
-          <div class='col-md-12 text-center'>
-            <h3>Sorts</h3>
-          </div>
-        </div>
-        <div class='row'>
-          <div class='col-md-6'>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <h5>Available</h5>
-              </div>
-            </div>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <select class='form-control' id='availableSorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
-                </select>
-                <div>
-                  <input class='form-control' type="text" ng-model="sortFilter" placeholder="Search sorts...">
-                </div>
-                <div>
-                  <div ng-hide='searchSetup.search_criterions.length && sortsToAdd'>&nbsp;</div>
-                  <div ng-show='searchSetup.search_criterions.length && sortsToAdd'>
-                    <a class='btn btn-default' ng-click='addSorts()'>Add</a>
-                  </div>
-                </div>
-              </div>
+          <!--column setup-->
+          <div class='row'>
+            <div class='col-md-12 text-center'>
+              <h3>Columns</h3>
             </div>
           </div>
-          <div class='col-md-6'>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <h5>Included</h5>
-              </div>
-            </div>
-            <div class='row'>
-              <div class='col-md-12 text-center'>
-                <div ng-show='searchSetup.search_criterions.length'>
-                  <select class='form-control' multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
-                  </select>
-                </div>
-                <div ng-hide='searchSetup.search_criterions.length'>
-                  <select class='form-control' multiple='multiple' size='10' disabled='true'>
-                    <option>Before adding a sort, you must add at least one parameter.</option>
-                  </select>
-                </div>
-                <br />
-                <div ng-hide='sortsToRemove'>&nbsp;</div>
-                <div ng-show='sortsToRemove'>
-                  <a class='btn btn-default' ng-click='removeSorts()'>Remove</a>
-                  <a class='btn btn-default' ng-click='moveSortsUp()'>Up</a>
-                  <a class='btn btn-default' ng-click='moveSortsDown()'>Down</a>
-                  <a class='btn btn-default' ng-click='toggleSort()'>Change Order</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Parameter setup-->
-        <div class='row'>
-          <div class='col-md-12 text-center'>
-            <h3>Parameters</h3>
-          </div>
-        </div>
-        <div ng-repeat='crit in searchSetup.search_criterions'>
-          <div chain-search-criterion='crit' model-fields="searchSetup.model_fields"></div>
-        </div>
-        <div class='row'>
-          <div class='col-md-12 form-inline'>
-            Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
-            </select>
-            <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
-          </div>
-        </div>
-        <!-- Schedule Setup -->
-        <div class='row'>
-          <div class='col-md-12 text-center'>
-            <h3>Schedules</h3>
-          </div>
-        </div>
-        <div class='row'>
-          <div ng-hide = 'searchSetup.search_criterions.length'>
-            <div class="row text-center">Before adding a schedule, you must add at least one parameter.</div>
-          </div>
-          <div ng-show = 'searchSetup.search_criterions.length'>
-            <div ng-hide='scheduleToEdit'>
-              <ul class='thumbnails'>
-                <li class='col-md-6' ng-repeat='sched in searchSetup.search_schedules'>
-                  <div class='thumbnail schedule-display'>
-                    <p>
-                      <strong>To:</strong> {{sched.email_addresses}}
-                    </p>
-                    <p>
-                      <strong>At:</strong> {{scheduleTimingText(sched)}}
-                    </p>
-                    <p>
-                      <strong>As:</strong> {{sched.download_format}}
-                    </p>
-                    <p>
-                      <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
-                    </p>
-                    <div class='text-center'>
-                      <button class='btn btn-default' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-default' ng-click='removeSchedule(sched)'>Remove</button>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-              <div class='row text-center'>
-                <div class='col-md-12'>
-                  <a class='btn btn-default' ng-click='addSchedule()'>Add Schedule</a>
-                </div>
-              </div>
-            </div>
-            <div class='form-horizontal' ng-show='scheduleToEdit'>
+          <div class='row'>
+            <div id="available_columns" class='col-md-6'>
               <div class='row'>
-                <div class='col-md-6'>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-disabled'>Disabled?</label>
-                    <div class='controls'>
-                      <input id='sched-disabled' type='checkbox' ng-model='scheduleToEdit.disabled'/>
-                    </div>
-                  </div>
-
-                  <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
-                    <label class="control-label" for="sched-mailing-lists">Distribution List</label>
-                    <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="sched-mailing-lists" ng-model="scheduleToEdit.mailing_list_id"></select>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-email-addresses'>Email</label>
-                    <div class='controls'>
-                      <textarea class='form-control' id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
-                      <div class='text-danger' ng-show="emailTooLong(scheduleToEdit)">Must be no more than 255 characters</div>
-                      <br />
-                      <small class='muted'>
-                        Separate addresses with commas.
-                      </small>
-                      <div id='invalid-email-flag' class='text-danger' style="display: none;"><p>Schedule contains an invalid email</p></div>
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-send-if-empty'>Send if Empty?</label>
-                    <div class='controls'>
-                      <input id='sched-send-if-empty' type='checkbox' ng-model='scheduleToEdit.send_if_empty'/>
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-format'>Export Format</label>
-                    <div class='controls'>
-                      <select class='form-control' id='sched-format' ng-model='scheduleToEdit.download_format'>
-                        <option value="xlsx">Excel - xlsx</option>
-                        <option value="csv">CSV</option>
-                        <option value="xls">Excel - xls</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-time'>Time</label>
-                    <div class='controls'>
-                      <select class='form-control' id='sched-time' ng-model='scheduleToEdit.run_hour'>
-                        <option value='0'>midnight</option>
-                        <option value='1'>1:00am</option>
-                        <option value='2'>2:00am</option>
-                        <option value='3'>3:00am</option>
-                        <option value='4'>4:00am</option>
-                        <option value='5'>5:00am</option>
-                        <option value='6'>6:00am</option>
-                        <option value='7'>7:00am</option>
-                        <option value='8'>8:00am</option>
-                        <option value='9'>9:00am</option>
-                        <option value='10'>10:00am</option>
-                        <option value='11'>11:00am</option>
-                        <option value='12'>noon</option>
-                        <option value='13'>1:00pm</option>
-                        <option value='14'>2:00pm</option>
-                        <option value='15'>3:00pm</option>
-                        <option value='16'>4:00pm</option>
-                        <option value='17'>5:00pm</option>
-                        <option value='18'>6:00pm</option>
-                        <option value='19'>7:00pm</option>
-                        <option value='20'>8:00pm</option>
-                        <option value='21'>9:00pm</option>
-                        <option value='22'>10:00pm</option>
-                        <option value='23'>11:00pm</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class='control-group'>
-                    <label class='control-label' for='sched-dom'>Day of Month</label>
-                    <div class='controls'>
-                      <select class='form-control' id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
-                        <option></option>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                        <option>4</option>
-                        <option>5</option>
-                        <option>6</option>
-                        <option>7</option>
-                        <option>8</option>
-                        <option>9</option>
-                        <option>10</option>
-                        <option>11</option>
-                        <option>12</option>
-                        <option>13</option>
-                        <option>14</option>
-                        <option>15</option>
-                        <option>16</option>
-                        <option>17</option>
-                        <option>18</option>
-                        <option>19</option>
-                        <option>20</option>
-                        <option>21</option>
-                        <option>22</option>
-                        <option>23</option>
-                        <option>24</option>
-                        <option>25</option>
-                        <option>26</option>
-                        <option>27</option>
-                        <option>28</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
-                    <div class='controls'>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday</label>
-                      <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday</label>
-                    </div>
-                  </div>
-                </div>
-                <div class='col-md-6'>
-                  <fieldset ng-show='searchSetup.allow_ftp'>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
-                      <div class='controls'>
-                        <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-timestamp'>Exclude File Timestamp?</label>
-                      <div class='controls'>
-                        <input id='sched-f-timestamp' type='checkbox' ng-model='scheduleToEdit.exclude_file_timestamp'/>
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
-                      <div class='controls'>
-                        <input id='sched-f-server' class='form-control' type='text' ng-model='scheduleToEdit.ftp_server'/>
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-user'>{{scheduleProtocol(scheduleToEdit)}} User</label>
-                      <div class='controls'>
-                        <input id='sched-f-user' class='form-control' type='text' ng-model='scheduleToEdit.ftp_username' />
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-pass'>{{scheduleProtocol(scheduleToEdit)}} Password</label>
-                      <div class='controls'>
-                        <input id='sched-f-pass' class='form-control' type='text' ng-model='scheduleToEdit.ftp_password' />
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class='control-label' for='sched-f-folder'>{{scheduleProtocol(scheduleToEdit)}} Folder</label>
-                      <div class='controls'>
-                        <input id='sched-f-folder' class='form-control' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
-                      </div>
-                    </div>
-                    <div class='control-group'>
-                      <label class="control-label" for="sched-f-port">{{scheduleProtocol(scheduleToEdit)}} Port</label>
-                      <div class='controls'>
-                        <input id='sched-f-port' class='form-control' type='text' ng-model='scheduleToEdit.ftp_port' />
-                      </div>
-                    </div>
-                  </fieldset>
+                <div class='col-md-12 text-center'>
+                  <h5>Available</h5>
                 </div>
               </div>
-              <div class='control-group'>
-                <div class='controls'>
-                  <button class='btn btn-primary' ng-click='closeSchedule(scheduleToEdit)' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <select class='form-control' id='availableColumns' multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
+                  </select>
+                  <div>
+                    <input class='form-control' type="text" ng-model="columnFilter" placeholder="Search columns...">
+                  </div>
+                  <div>
+                    <a ng-show='columnsToAdd' class='btn btn-outline-dark' ng-click='addColumns()'>Add</a>
+                    <a class='btn btn-outline-dark' ng-click='toggleConstantField()'>Add Custom Column</a>&nbsp;
+                    <div ng-show='displayConstantField'>
+                      <br>
+                      <form class='form-inline col-md-12'>
+                        <label class='col-md-4' for='constant-name-input'>Column name:</label>
+                        <input type="text" name="constant-field-name" ng-model='constantField.name' class="form-control col-md-8" id="constant-name-input">
+                        <br>
+                        <label class='col-md-4' for='constant-value-input'>Column value:</label>
+                        <input type="text" name="constant-field-value" ng-model='constantField.value' class="form-control col-md-8" id='constant-value-input'>
+                      </form>
+                      <a class='btn btn-outline-dark offset-md-4' ng-disabled='!constantField.name' ng-click='addConstantField()'>Save</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="columns_included" class='col-md-6'>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <h5>Included</h5>
+                </div>
+              </div>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <select id="columns_included_selection" class='form-control' multiple='multiple' size='10' ng-model='columnsToRemove'>
+                    <option ng-repeat="s in searchSetup.search_columns" value={{s.mfid}} title={{s.constant_field_value}}>{{columnLabel(s)}}</option>
+                  </select>
+                  <small ng-show='hasConstantColumns()'>*indicates a constant field</small>
+                  <br />
+                  <div ng-hide='columnsToRemove'>&nbsp;</div>
+                  <div ng-show='columnsToRemove'>
+                    <a id="btn_remove_column" class='btn btn-outline-dark'  ng-click='removeColumns()'>Remove</a>
+                    <a class='btn btn-outline-dark' ng-click='moveColumnsUp()'>Up</a>
+                    <a class='btn btn-outline-dark' ng-click='moveColumnsDown()'>Down</a>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <hr />
-        <div id='search-setup-actions' class='row text-center'>
-          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true || scheduleToEdit'>
-            <button class='btn btn-lg btn-success' ng-click='saveSetup()'>Save</button>
-            <button class='btn btn-lg btn-default' ng-click='newSetup()'>New</button>
-            <button class='btn btn-lg btn-default' ng-click='copyPrompt=true'>Copy</button>
-            <button class='btn btn-lg btn-default' ng-click='givePrompt=true'>Give</button>
-            <button class='btn btn-lg btn-default' ng-show='searchSetup.allow_template' ng-click='makeTemplate(searchSetup)'>Make Template</button>
-            <button class='btn btn-lg btn-danger' ng-click='deletePrompt=true'>Delete</button>
+          <!--sort setup-->
+          <div class='row'>
+            <div class='col-md-12 text-center'>
+              <h3>Sorts</h3>
+            </div>
           </div>
-          <div class='col-md-12 form-horizontal' ng-show='givePrompt==true'>
-            Select User
-            <div style='display:inline;' chain-user-list='giveUserId'></div>
-            <a class='btn btn-primary' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
-            <a class='btn btn-default' ng-click='givePrompt=false'>Cancel</a>
+          <div class='row'>
+            <div class='col-md-6'>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <h5>Available</h5>
+                </div>
+              </div>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <select class='form-control' id='available_sorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
+                  </select>
+                  <div>
+                    <input class='form-control' type="text" ng-model="sortFilter" placeholder="Search sorts...">
+                  </div>
+                  <div>
+                    <div ng-hide='searchSetup.search_criterions.length && sortsToAdd'>&nbsp;</div>
+                    <div ng-show='searchSetup.search_criterions.length && sortsToAdd'>
+                      <a class='btn btn-outline-dark' ng-click='addSorts()'>Add</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class='col-md-6'>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <h5>Included</h5>
+                </div>
+              </div>
+              <div class='row'>
+                <div class='col-md-12 text-center'>
+                  <div ng-show='searchSetup.search_criterions.length'>
+                    <select class='form-control' multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
+                    </select>
+                  </div>
+                  <div ng-hide='searchSetup.search_criterions.length'>
+                    <select class='form-control' multiple='multiple' size='10' disabled='true'>
+                      <option>Before adding a sort, you must add at least one parameter.</option>
+                    </select>
+                  </div>
+                  <br />
+                  <div ng-hide='sortsToRemove'>&nbsp;</div>
+                  <div ng-show='sortsToRemove'>
+                    <a class='btn btn-outline-dark' ng-click='removeSorts()'>Remove</a>
+                    <a class='btn btn-outline-dark' ng-click='moveSortsUp()'>Up</a>
+                    <a class='btn btn-outline-dark' ng-click='moveSortsDown()'>Down</a>
+                    <a class='btn btn-outline-dark' ng-click='toggleSort()'>Change Order</a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class='col-md-12 form-horizontal' ng-show='deletePrompt==true'>
-            Really Delete?
-            <a class='btn btn-danger' ng-click='deleteSetup()'>Yes</a>
-            <a class='btn btn-default' ng-click='deletePrompt=false'>No</a>
+          <!-- Parameter setup-->
+          <div class='row'>
+            <div class='col-md-12 text-center'>
+              <h3>Parameters</h3>
+            </div>
           </div>
-          <div class='col-md-12 form-horizontal' ng-show="copyPrompt==true">
-            Copy As <input type="text" ng-model="copyReportName" class="input-xxlarge" placeholder="Enter copy name...">
-            <a class='btn btn-lg btn-primary' ng-click='copy(copyReportName)'>Copy</a>
-            <a class='btn btn-lg' ng-click='copyPrompt=false; copyReportName=""'>Cancel</a>
+          <div ng-repeat='crit in searchSetup.search_criterions'>
+            <div chain-search-criterion='crit' model-fields="searchSetup.model_fields"></div>
+          </div>
+          <div class='row'>
+            <div class='col-md-12 form-inline'>
+              Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
+              </select>
+              <button id="add_parameter_btn" ng-show='criterionToAdd' class='btn btn-outline-dark' ng-click='addCriterion(criterionToAdd)'>Add</button>
+            </div>
+          </div>
+          <!-- Schedule Setup -->
+          <div class='row'>
+            <div class='col-md-12 text-center'>
+              <h3>Schedules</h3>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-md-12 text-center'>
+              <div ng-hide = 'searchSetup.search_criterions.length'>
+                <p>Before adding a schedule, you must add at least one parameter.</p>
+              </div>
+            </div>
+            <div class="col-md-12" ng-show = 'searchSetup.search_criterions.length'>
+              <div ng-hide='scheduleToEdit'>
+                <div class='card-columns'>
+                  <div class="card" ng-repeat='sched in searchSetup.search_schedules'>
+                    <div class='card-body schedule-display'>
+                      <p class="card-text">
+                        <strong>To:</strong> {{sched.email_addresses}}
+                      </p>
+                      <p class="card-text">
+                        <strong>At:</strong> {{scheduleTimingText(sched)}}
+                      </p>
+                      <p class="card-text">
+                        <strong>As:</strong> {{sched.download_format}}
+                      </p>
+                      <p class="card-text">
+                        <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
+                      </p>
+                      <div  class="card-text text-center">
+                        <button class='btn btn-outline-dark' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-outline-dark' ng-click='removeSchedule(sched)'>Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class='row text-center'>
+                  <div class='col-md-12'>
+                    <button id="btn_schedule" class='btn btn-primary' ng-click='addSchedule()'>Add Schedule</button>
+                  </div>
+                </div>
+              </div>
+              <div class='form-horizontal col-md-12' ng-show='scheduleToEdit'>
+                <div class='row'>
+                  <div class='col-md-6'>
+                    <div class='control-group'>
+                      <div class='controls'>
+                        <label class='control-label' for='sched-disabled'>Disabled?</label>
+                        <input id='sched-disabled' type='checkbox' ng-model='scheduleToEdit.disabled'/>
+                      </div>
+                    </div>
+                    <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
+                      <label class="control-label" for="sched-mailing-lists">Distribution List</label>
+                      <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="sched-mailing-lists" ng-model="scheduleToEdit.mailing_list_id"></select>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-email-addresses'>Email</label>
+                      <div class='controls'>
+                        <textarea class='form-control' id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
+                        <div class='text-danger' ng-show="emailTooLong(scheduleToEdit)">Must be no more than 255 characters</div>
+                        <br />
+                        <small class='muted'>
+                          Separate addresses with commas.
+                        </small>
+                        <div id='invalid-email-flag' class='text-danger' style="display: none;"><p>Schedule contains an invalid email</p></div>
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <div class='controls'>
+                        <label class='control-label' for='sched-send-if-empty'>Send if Empty?</label>
+                        <input id='sched-send-if-empty' type='checkbox' ng-model='scheduleToEdit.send_if_empty'/>
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class='control-label' for='sched-format'>Export Format</label>
+                      <div class='controls'>
+                        <select class='form-control' id='sched-format' ng-model='scheduleToEdit.download_format'>
+                          <option value="xlsx">Excel - xlsx</option>
+                          <option value="csv">CSV</option>
+                          <option value="xls">Excel - xls</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div id="schedule_section">
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-time'>Time</label>
+                        <div class='controls'>
+                          <select class='form-control' id='sched-time' ng-model='scheduleToEdit.run_hour'>
+                            <option value='0'>midnight</option>
+                            <option value='1'>1:00am</option>
+                            <option value='2'>2:00am</option>
+                            <option value='3'>3:00am</option>
+                            <option value='4'>4:00am</option>
+                            <option value='5'>5:00am</option>
+                            <option value='6'>6:00am</option>
+                            <option value='7'>7:00am</option>
+                            <option value='8'>8:00am</option>
+                            <option value='9'>9:00am</option>
+                            <option value='10'>10:00am</option>
+                            <option value='11'>11:00am</option>
+                            <option value='12'>noon</option>
+                            <option value='13'>1:00pm</option>
+                            <option value='14'>2:00pm</option>
+                            <option value='15'>3:00pm</option>
+                            <option value='16'>4:00pm</option>
+                            <option value='17'>5:00pm</option>
+                            <option value='18'>6:00pm</option>
+                            <option value='19'>7:00pm</option>
+                            <option value='20'>8:00pm</option>
+                            <option value='21'>9:00pm</option>
+                            <option value='22'>10:00pm</option>
+                            <option value='23'>11:00pm</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-dom'>Day of Month</label>
+                        <div class='controls'>
+                          <select class='form-control' id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
+                            <option></option>
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                            <option>21</option>
+                            <option>22</option>
+                            <option>23</option>
+                            <option>24</option>
+                            <option>25</option>
+                            <option>26</option>
+                            <option>27</option>
+                            <option>28</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
+                        <label>Weekday Selection</label>
+                        <div class='controls'>
+                          <input id="chk_monday" type='checkbox' ng-model='scheduleToEdit.run_monday'/>
+                          <label for="chk_monday">Mon</label>
+                          <input id="chk_tuesday" type='checkbox' ng-model='scheduleToEdit.run_tuesday'/>
+                          <label for="chk_tuesday">Tues</label>
+                          <input id="chk_wednesday" type='checkbox' ng-model='scheduleToEdit.run_wednesday'/>
+                          <label for="chk_wednesday">Wed</label>
+                          <input id="chk_thursday" type='checkbox' ng-model='scheduleToEdit.run_thursday'/>
+                          <label for="chk_thursday">Thur</label>
+                          <input id="chk_friday" type='checkbox' ng-model='scheduleToEdit.run_friday'/>
+                          <label for="chk_friday">Fri</label>
+                          <input id="chk_saturday" type='checkbox' ng-model='scheduleToEdit.run_saturday'/>
+                          <label for="chk_saturday">Sat</label>
+                          <input id="chk_sunday" type='checkbox' ng-model='scheduleToEdit.run_sunday'/>
+                          <label for="chk_sunday">Sun</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class='col-md-6'>
+                    <fieldset ng-show='searchSetup.allow_ftp'>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
+                        <div class='controls'>
+                          <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-timestamp'>Exclude File Timestamp?</label>
+                        <div class='controls'>
+                          <input id='sched-f-timestamp' type='checkbox' ng-model='scheduleToEdit.exclude_file_timestamp'/>
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
+                        <div class='controls'>
+                          <input id='sched-f-server' class='form-control' type='text' ng-model='scheduleToEdit.ftp_server'/>
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-user'>{{scheduleProtocol(scheduleToEdit)}} User</label>
+                        <div class='controls'>
+                          <input id='sched-f-user' class='form-control' type='text' ng-model='scheduleToEdit.ftp_username' />
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-pass'>{{scheduleProtocol(scheduleToEdit)}} Password</label>
+                        <div class='controls'>
+                          <input id='sched-f-pass' class='form-control' type='text' ng-model='scheduleToEdit.ftp_password' />
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class='control-label' for='sched-f-folder'>{{scheduleProtocol(scheduleToEdit)}} Folder</label>
+                        <div class='controls'>
+                          <input id='sched-f-folder' class='form-control' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
+                        </div>
+                      </div>
+                      <div class='control-group'>
+                        <label class="control-label" for="sched-f-port">{{scheduleProtocol(scheduleToEdit)}} Port</label>
+                        <div class='controls'>
+                          <input id='sched-f-port' class='form-control' type='text' ng-model='scheduleToEdit.ftp_port' />
+                        </div>
+                      </div>
+                    </fieldset>
+                  </div>
+                </div>
+                <div class='control-group'>
+                  <div class='controls float-right'>
+                    <button id="btn_schedule_done" class='btn btn-primary' ng-click='closeSchedule(scheduleToEdit)' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div id='search-setup-actions' class='row'>
+            <div class="col-md-12 text-center">
+              <div ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true || scheduleToEdit'>
+                <button id="btn_save_search" class='btn btn-lg btn-success' ng-click='saveSetup()'>Save</button>
+                <button id="btn_new_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='newSetup()'>New</button>
+                <button id="btn_copy_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='copyPrompt=true'>Copy</button>
+                <button id="btn_give_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='givePrompt=true'>Give</button>
+                <button id="btn_make_template_search" class='btn btn-outline-secondary btn-lg m-1' ng-show='searchSetup.allow_template' ng-click='makeTemplate(searchSetup)'>Make Template</button>
+                <button class='btn btn-lg btn-danger' ng-click='deletePrompt=true'>Delete</button>
+              </div>
+            </div>
+            <div class='col-md-12 form-horizontal' ng-show='givePrompt==true'>
+              Select User
+              <div style='display:inline;' chain-user-list='giveUserId'></div>
+              <a class='btn btn-primary' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
+              <a class='btn' ng-click='givePrompt=false'>Cancel</a>
+            </div>
+            <div class='col-md-12 form-horizontal' ng-show='deletePrompt==true'>
+              Really Delete?
+              <a class='btn btn-danger' ng-click='deleteSetup()'>Yes</a>
+              <a class='btn' ng-click='deletePrompt=false'>No</a>
+            </div>
+            <div class='col-md-12 form-horizontal' ng-show="copyPrompt==true">
+              Copy As <input type="text" ng-model="copyReportName" class="input-xxlarge" placeholder="Enter copy name...">
+              <a class='btn btn-primary' ng-click='copy(copyReportName)'>Copy</a>
+              <a class='btn btn-outline-dark' ng-click='copyPrompt=false; copyReportName=""'>Cancel</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div class="modal" id="email-modal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title">Email Search Results</h4>
-          </div>
-          <div class="modal-body" id="email-modal-container">
-            <form>
-              <div class='form-group'>
-                <label for='email-to'>To</label>
-                <textarea class='form-control' id="email-to" ng-model= 'mailFields.to' placeholder="Enter up to 10 email addresses..." autofocus=true rows=4></textarea>
-              </div>
-              <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
-                <label class="control-label" for="sched-mailing-lists">Distribution List</label>
-                <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="email-list" ng-model="mailFields.mailing_list"></select>
-              </div>
-              <div class='form-group'>
-                <label for='email-subject'>Subject</label>
-                <input id='email-subject' type='text' class='form-control' ng-model= 'mailFields.subject' />
-              </div>
-              <div class="form-group">
-                <label for="comment">Body</label>
-                <textarea class="form-control" rows="5" id="email-body" ng-model = 'mailFields.body'></textarea>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-default" ng-click="sendEmail(mailFields)">Send</button>
-          </div>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Email Search Results</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        <div class="modal-body" id="email-modal-container">
+          <form>
+            <div class='form-group'>
+              <label for='email-to'>To</label>
+              <textarea class='form-control' id="email-to" ng-model= 'mailFields.to' placeholder="Enter up to 10 email addresses..." autofocus=true rows=4></textarea>
+            </div>
+            <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
+              <label class="control-label" for="sched-mailing-lists">Distribution List</label>
+              <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="email-list" ng-model="mailFields.mailing_list"></select>
+            </div>
+            <div class='form-group'>
+              <label for='email-subject'>Subject</label>
+              <input id='email-subject' type='text' class='form-control' ng-model= 'mailFields.subject' />
+            </div>
+            <div class="form-group">
+              <label for="comment">Body</label>
+              <textarea class="form-control" rows="5" id="email-body" ng-model = 'mailFields.body'></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" ng-click="sendEmail(mailFields)">Send</button>
         </div>
       </div>
+    </div>
   </div>
   <div chain-search-result='searchWrapper.searchResult' page='page' errors='errors' src='/advanced_search/' canceller='searchWrapper.canceller', loading='searchWrapper.loading'>
-    <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
-    <a class='btn btn-default navbar-btn' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
-    <button class='btn btn-default navbar-btn' ng-show='searchWrapper.searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button>
-    <button class='btn btn-default navbar-btn' ng-show='searchWrapper.searchResult.total_pages<=1' ng-click='foregroundDownload()' title='Download'><i class='fa fa-download'></i></button>
-    <a class='btn btn-default navbar-btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new' title='Upload'><i class='fa fa-upload'></i></a>
+    <button id="btn_search_setup" class='btn navbar-btn btn-secondary' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+    <a id="btn_email_modal" class='btn navbar-btn btn-secondary' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
+    <btn-download>
+      <button class='btn btn-secondary navbar-btn' ng-show='searchWrapper.searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button>
+      <button class='btn btn-secondary navbar-btn' ng-show='searchWrapper.searchResult.total_pages<=1' ng-click='foregroundDownload()' title='Download'><i class='fa fa-download'></i></button>
+    </btn-download>
+    <a class='btn btn-secondary navbar-btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new' title='Upload'><i class='fa fa-upload'></i></a>
     <span ng-show='searchSetup.uploadable_error_messages.length > 0'>
-      <span chain-message-box title='Upload' as-button='true' extra-class="'btn-default navbar-btn'" button-icon-class='fa fa-upload'>
+      <span chain-message-box title='Upload' as-button='true' extra-class="'btn btn-secondary navbar-btn'" button-icon-class='fa fa-upload'>
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>
           {{s}}
         </div>
       </span>
     </span>
-    <a class='btn btn-default navbar-btn' href="/advanced_search/{{searchSetup.id}}/show_audit" title='Random Audit'><i class='fa fa-magic'></i></a>
+    <button class="btn btn-secondary navbar-btn" ng-click='showTour()' title="Take the advanced search tour">Tour</button>
+    <a class='btn btn-secondary navbar-btn' href="/advanced_search/{{searchSetup.id}}/show_audit" title='Random Audit'><i class='fa fa-magic'></i></a>
   </div>
-  <div ng-show="searchWrapper.loading" ng-show="!noChrome" class='navbar navbar-default navbar-fixed-bottom'>
-    <ul class='nav navbar-nav'>
+  <nav ng-show="searchWrapper.loading" ng-show="!noChrome" class='action_bar navbar fixed-bottom' style="max-height: 3.5em">
+    <ul class='navbar-nav'>
       <li>
-        <button class='btn btn-default navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+        <button class='btn btn-secondary navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
       </li>
     </ul>
-  </div>
+  </nav>
 </div>

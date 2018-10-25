@@ -7,11 +7,9 @@
   </div>
   <div ng-hide='shipment.custom.valid_delivery_location' class="row">
     <div class="col-md-12">
-      <div class="panel panel-danger">
-        <div class="panel-heading">
-          <h3 class="panel-title">Booking Error</h3>
-        </div>
-        <div class="panel-body">
+      <div class="card alert-danger">
+        <div class="card-header">Booking Error</div>
+        <div class="card-body bg-white">
           Booking cannot proceed. Booking Delivery Location does not match the PO Delivery Location.  Contact Lumber Liquidators to have the PO updated.
         </div>
       </div>
@@ -19,10 +17,8 @@
   </div>
   <div class="row">
     <div class="col-md-4">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Booking Header</h3>
-        </div>
+      <div class="card">
+        <div class="card-header">Booking Header</div>
         <div>
           <ul class="list-group">
             <li class="list-group-item" ng-repeat="fld in ['shp_fwd_name', 'shp_ship_from_id']">
@@ -63,10 +59,8 @@
       </div>
     </div>
     <div class="col-md-4">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Booking Confirmation</h3>
-        </div>
+      <div class="card">
+        <div class="card-header">Booking Confirmation</div>
         <ul class="list-group" ng-if="shipment.shp_booking_confirmed_date">
           <li class="list-group-item" ng-repeat="fld in ['shp_booking_number', 'shp_booking_confirmed_date', 'shp_booking_cutoff_date', 'shp_booking_est_departure_date', 'shp_booking_est_arrival_date', 'shp_booking_carrier', 'shp_booking_vessel', 'shp_booking_voyage', 'shp_importer_reference']">
             <chain-field-label field="dictionary.field(fld)"></chain-field-label>
@@ -78,23 +72,21 @@
       </div>
     </div>
     <div class="col-md-4">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Actions</h3>
-        </div>
+      <div class="card">
+        <div class="card-header">Actions</div>
         <div>
           <ul class="list-group">
             <li class="list-group-item" ng-if="shipment['shp_mode'] == '' || shipment['shp_shipment_type'] == '' || shipment['shp_cargo_ready_date'] == '' || shipment['shp_first_port_receipt_id'] == '' || shipment['shp_requested_equipment'] == ''">
               <p>Please complete all fields in the Booking section and click save before requesting your booking.</p>
             </li>
             <li class="list-group-item">
-              <button ng-disabled="!shipment.permissions.can_edit_booking" class="btn btn-sm btn-default btn-block" ng-click='save(shipment)'>Save</button>
+              <button ng-disabled="!shipment.permissions.can_edit_booking" class="btn btn-sm btn-secondary btn-block" ng-click='save(shipment)'>Save</button>
             </li>
             <li class="list-group-item">
-              <button ng-disabled="!shipment.permissions.can_request_booking" class="btn btn-sm btn-default btn-block" ng-click='requestBooking(shipment)'>Request Booking</button>
+              <button ng-disabled="!shipment.permissions.can_request_booking" class="btn btn-sm btn-secondary btn-block" ng-click='requestBooking(shipment)'>Request Booking</button>
             </li>
             <li class="list-group-item">
-              <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-default btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
+              <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-secondary btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_send_isf') != null">
               <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_isf')" disabled="!shipment.custom.can_send_isf"></chain-simple-state-toggle-button>
@@ -117,10 +109,8 @@
           </ul>
         </div>
       </div>
-      <div class="panel panel-primary" ng-if='shipment.shp_booking_received_date'>
-        <div class="panel-heading">
-          <h3 class="panel-title">Booking Activity</h3>
-        </div>
+      <div class="card" ng-if='shipment.shp_booking_received_date'>
+        <div class="card-header">Booking Activity</div>
         <div>
           <ul class="list-group">
             <li class="list-group-item list-group-item-danger" ng-if="shipment.shp_canceled_date">
@@ -146,14 +136,14 @@
             </li>
             <li class="list-group-item" ng-if="shipment.shp_booking_request_count">
               <chain-field-label field="dictionary.field('shp_booking_request_count')"></chain-field-label>
-              <div class="pull-right">
+              <div class="float-right">
                 <chain-field-value model="shipment" field="dictionary.field('shp_booking_request_count')"></chain-field-value>
               </div>
               <div class="clearfix"></div>
             </li>
             <li class="list-group-item" ng-if="shipment[dictionary.field('*shp_booking_unlocked_date').uid]">
               <chain-field-label field="dictionary.field('*shp_booking_unlocked_date')"></chain-field-label>
-              <div class="pull-right">
+              <div class="float-right">
                 <chain-field-value model="shipment" field="dictionary.field('*shp_booking_unlocked_date')"></chain-field-value>
               </div>
               <div class="clearfix"></div>
@@ -207,8 +197,8 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <div class="panel panel-primary">
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-body">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a data-target="#booking-tab" aria-controls="booking-tab" role="tab" data-toggle="tab">Booking</a></li>
             <li role="presentation"><a data-target="#container-tab" aria-controls="container-tab" role="tab" data-toggle="tab">Containers</a></li>
@@ -281,7 +271,7 @@
               <div ng-if="shipment.permissions.can_add_remove_booking_lines && shipment.permissions.can_edit_booking" class="row">
                 <div class="col-md-12">
                   <div class="text-center">
-                    <button class="btn btn-sm btn-default" ng-click='save(shipment)' alt='Save'>Save</button>
+                    <button class="btn btn-sm btn-secondary" ng-click='save(shipment)' alt='Save'>Save</button>
                   </div>
                 </div>
               </div>
@@ -331,9 +321,9 @@
                     </td>
                   -->
                     <td ng-if="shipment.permissions.can_add_remove_shipment_lines">
-                      <button class="btn btn-sm btn-default btn-danger" ng-if="canDeleteContainer(container)" ng-click='deleteContainer(container)'><i class="fa fa-trash"></i></button>
+                      <button class="btn btn-sm btn-secondary btn-danger" ng-if="canDeleteContainer(container)" ng-click='deleteContainer(container)'><i class="fa fa-trash"></i></button>
                       <span style="display: inline-block; width: 2em;">&nbsp;</span>
-                      <button class="btn btn-sm btn-default" ng-click='editContainer(container)' alt='Edit Container'><i class="fa fa-edit"></i></button>
+                      <button class="btn btn-sm btn-secondary" ng-click='editContainer(container)' alt='Edit Container'><i class="fa fa-edit"></i></button>
                     </td>
                   </tr>
                 </tbody>
@@ -360,10 +350,8 @@
             <div role="tabpanel" class="tab-pane" id="isf-tab">
               <div class="row" style="margin-top: 1em;">
                 <div class="col-md-6">
-                  <div class="panel panel-primary">
-                    <div class="panel-heading">
-                      <h3 class="panel-title">ISF Fields</h3>
-                    </div>
+                  <div class="card">
+                    <div class="card-header">ISF Fields</div>
                     <div>
                       <ul class="list-group">
                         <li class="list-group-item" ng-repeat="fld in ['shp_est_departure_date', 'shp_vessel', 'shp_voyage']">
@@ -394,10 +382,8 @@
                       </ul>
                     </div>
                   </div>
-                  <div class="panel panel-primary">
-                    <div class="panel-heading">
-                      <h3 class="panel-title">ISF Lines</h3>
-                    </div>
+                  <div class="card">
+                    <div class="card-header">ISF Lines</div>
                     <div>
                       <table class="table">
                         <thead>
@@ -420,10 +406,8 @@
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="panel panel-primary">
-                    <div class="panel-heading">
-                      <h3 class="panel-title">ISF Addresses</h3>
-                    </div>
+                  <div class="card">
+                    <div class="card-header">ISF Addresses</div>
                     <div>
                       <ul class="list-group">
                         <li class="list-group-item" ng-repeat="fld in ['shp_ship_from_id', 'shp_seller_address_id', 'shp_container_stuffing_address_id', 'shp_consolidator_address_id', 'shp_ship_to_address_id']">
@@ -443,19 +427,19 @@
               <div ng-if="shipment.permissions.can_add_remove_shipment_lines" class="row">
                 <div class="col-md-12">
                   <div class="text-center">
-                    <button class="btn btn-sm btn-default" ng-click='save(shipment)' alt='Save'>Save</button>
+                    <button class="btn btn-sm btn-secondary" ng-click='save(shipment)' alt='Save'>Save</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="panel-footer text-right">
-          <button class='btn btn-default' ng-if='shipment.lines.length > 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='clearManifest(shipment)'>Clear Manifest</button>
+        <div class="card-footer text-right">
+          <button class='btn btn-secondary' ng-if='shipment.lines.length > 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='clearManifest(shipment)'>Clear Manifest</button>
           <span ng-if="shipment.lines.length == 0 && shipment.permissions.can_add_remove_shipment_lines">
             <chain-vp-manifest-booking-lines shipment="shipment" dictionary="dictionary" line-edit-fields="['shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs']" required-edit-fields="['shpln_carton_qty', 'shpln_cbms', 'shpln_gross_kgs']"></chain-vp-manifest-booking-lines>
           </span>
-          <button class='btn btn-default' ng-if='shipment.lines.length == 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='addContainer()'>Add Container</button>
+          <button class='btn btn-secondary' ng-if='shipment.lines.length == 0 && shipment.permissions.can_add_remove_shipment_lines' ng-click='addContainer()'>Add Container</button>
         </div>
       </div>
     </div>

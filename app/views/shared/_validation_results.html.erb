@@ -2,9 +2,10 @@
   <div id='validation_result_wrapper' class="container" ng-controller='coreObjectValidationResultsCtrl'>
     <div class="row" style="margin-bottom:20px;">
       <div class='col-md-12'>
+        <div id="validation_status_wrapper"></div>
         <h1 class='page_title' ng-class='svc.stateToBootstrap("text",result.state)'>
           {{result.single_object}}: {{result.object_number}}&nbsp;
-          <span class='label label-info' title="Rerun Validations" ng-show='result.can_run_validations' ng-click='rerunValidations()' style="padding-top: 2px; padding-bottom: 3px; padding-left: 4px; padding-right: 4px; font-size: 45%; vertical-align: 40% "><i class="fa fa-refresh"></i></span>
+          <span class='label label-info' title="Rerun Validations" ng-show='result.can_run_validations' ng-click='rerunValidations()' style="padding-top: 2px; padding-bottom: 3px; padding-left: 4px; padding-right: 4px; font-size: 45%; vertical-align: 40% "><i class="fa fa-refresh fa-lg"></i></span>
         </h1>
       </div>
     </div>
@@ -12,13 +13,11 @@
     <div class="row">
       <div class="col-md-6">
         <div ng-repeat='bvr in result.bv_results'>
-          <div class="panel" ng-class='svc.stateToBootstrap("panel",bvr.state)'>
-            <div class="panel-heading">
-              <h3 class='panel-title'>
-                {{bvr.template.name}} - {{bvr.state}}
-              </h3>
+          <div class="card" ng-class='svc.stateToBootstrap("alert",bvr.state)'>
+            <div class="card-header">
+              {{bvr.template.name}} - {{bvr.state}}
             </div>
-            <div class="panel-body">
+            <div class="card-body bg-white">
               <div ng-repeat="rr in bvr.rule_results">
                 <span ng-class='svc.stateToBootstrap("text",rr.state)'>
                   <state-icon state='rr.state'></state-icon>
@@ -32,17 +31,15 @@
         </div>
       </div>
       <div class="col-md-6">
-        <div ng-show='ruleResultToEdit' class='panel' ng-class='svc.stateToBootstrap("panel",ruleResultToEdit.state)'>
-          <div class="panel-heading">
-            <h3 class='panel-title'>
-              <span>
-                <state-icon state='ruleResultToEdit.state'></state-icon>
-                {{ruleResultToEdit.rule.name}}
-              </span>
-              <span class='label label-info pull-right' ng-show='ruleResultToEdit.overridden_at' style="padding-bottom: 0.2em; padding-top: 0.2em;">Overridden&nbsp;&nbsp;</span>
-            </h3>
+        <div ng-show='ruleResultToEdit' class='card' ng-class='svc.stateToBootstrap("card",ruleResultToEdit.state)'>
+          <div class="card-header">
+            <span>
+              <state-icon state='ruleResultToEdit.state'></state-icon>
+              {{ruleResultToEdit.rule.name}}
+            </span>
+            <span class='label label-info float-right' ng-show='ruleResultToEdit.overridden_at' style="padding-bottom: 0.2em; padding-top: 0.2em;">Overridden&nbsp;&nbsp;</span>
           </div>
-          <div class='panel-body'>
+          <div class='card-body'>
             <div ng-show="ruleResultToEdit.rule.description">
               <strong>Rule Description</strong><br/>
               {{ruleResultToEdit.rule.description}}
@@ -72,14 +69,14 @@
                   <span class='small text-muted'>
                     <br>Overridden by {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
                   </span>
-                  <span class='pull-right label label-info' style='font-size: 100%' ng-show="ruleResultToEdit.editable" ng-click="cancelOverride(ruleResultToEdit)">
+                  <span class='float-right label label-info' style='font-size: 100%' ng-show="ruleResultToEdit.editable" ng-click="cancelOverride(ruleResultToEdit)">
                     <i class="fa fa-trash"></i>
                   </span>
                 </span>
               </div>
             </div>
           </div>
-          <div class='panel-footer text-right' ng-show='ruleResultToEdit.editable && ruleResultChanged'>
+          <div class='card-footer text-right' ng-show='ruleResultToEdit.editable && ruleResultChanged'>
             <button ng-click='saveRuleResult(ruleResultToEdit)' class='btn btn-primary'>Save</button>
           </div>
         </div>

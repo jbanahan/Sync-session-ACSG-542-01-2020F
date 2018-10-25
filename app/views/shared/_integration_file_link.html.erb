@@ -4,7 +4,7 @@
   </div>
   <% if user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank? && (!defined?(exclude_send_button) || !exclude_send_button) %>
     <% content_for :action_bar do %>
-      <%= link_to raw("<i class='fa fa-share-square'></i>"), send_last_integration_file_to_test_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s), title:'Send to Test', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+      <%= link_to raw("<i class='fa fa-share-square'></i>"), send_last_integration_file_to_test_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s), title:'Send to Test', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
     <%end%>
   <%end%>
 <% end %>

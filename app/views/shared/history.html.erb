@@ -5,14 +5,26 @@
 <%end%>
 <%content_for :javascript do %>
   $(function() {
+    $('#accordion').on('show.bs.collapse', function(event){
+      t = event.target
+      id = ($(t).attr('snapshot-id'));
+      panel = $('#heading'+id);
+      panel.find('.history-dropdown').removeClass('fa-chevron-right').addClass('fa-chevron-down');
+    });
+    $('#accordion').on('hide.bs.collapse', function(event){
+      t = event.target
+      id = ($(t).attr('snapshot-id'));
+      panel = $('#heading'+id);
+      panel.find('.history-dropdown').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+    });
     $("form.frm_restore").submit(function() {
       return window.confirm("Restoring will overwrite the current values with the values from this history entry.\n\n Are you sure you want to continue?");
     });
     $("#btn_xpnd").click(function() {
-      $('#accordion .panel-collapse').collapse('show');
+      $('#accordion .card-collapse').collapse('show');
     });
     $("#btn_clpse").click(function() {
-      $('#accordion .panel-collapse').collapse('hide');
+      $('#accordion .card-collapse').collapse('hide');
     });
   });
 <%end%>
@@ -31,30 +43,29 @@
   <%end-%>
   <div class="row">
     <div class="col-md-12">
-      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+      <div id="accordion" aria-multiselectable="true">
         <%-@snapshots.each do |s|-%>
           <% d = s.diff_vs_previous %>
-          <div class="panel panel-default">
-            <div class="panel-heading" role="tab" id='heading<%+s.id%>'>
-              <h4 class="panel-title">
-                <p>
-                  <a data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
-                    <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
-                  </a>
-                  <% if current_user.sys_admin? %>
-                    <small><a href="<%=download_entity_snapshot_path(s)%>" target="_blank"><i class="fa fa-cloud-download" aria-hidden="true"></i></a></small>
-                  <% end %>
-                </p>
-                <%if !s.context.blank?%>
-                  <% if current_user.sys_admin? && s.s3_integration_file_context? %>
-                    <p><small><a href="<%=download_integration_file_entity_snapshot_path(s)%>" target="_blank"><%=s.context%></a></small></p>
-                  <% else %>
-                    <p><small><%=s.context%></small></p>
-                  <% end %>
-                <%end%>
-              </h4>
+          <div class="card">
+            <div class="card-header" id='heading<%=s.id%>'>
+              <p>
+                <i class="history-dropdown fa fa-chevron-right"></i>
+                <a data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
+                  <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
+                </a>
+                <% if current_user.sys_admin? %>
+                  <small><a href="<%=download_entity_snapshot_path(s)%>" target="_blank"><i class="fa fa-cloud-download fa-lg" aria-hidden="true"></i></a></small>
+                <% end %>
+              </p>
+              <%if !s.context.blank?%>
+                <% if current_user.sys_admin? && s.s3_integration_file_context? %>
+                  <p><small><a href="<%=download_integration_file_entity_snapshot_path(s)%>" target="_blank"><%=s.context%></a></small></p>
+                <% else %>
+                  <p><small><%=s.context%></small></p>
+                <% end %>
+              <%end%>
             </div>
-            <div id="collapse<%=s.id%>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading<%=s.id%>">
+            <div id="collapse<%=s.id%>" class="collapse" aria-labelledby="heading<%=s.id%>" snapshot-id="<%=s.id%>">
               <%if s.imported_file_id%>
                 <div style='float:right'>(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>)</div>
               <%end%>

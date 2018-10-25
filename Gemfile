@@ -29,6 +29,7 @@ gem 'dalli-elasticache', '~> 0.2'
 gem 'postmark-rails', '0.5.2'
 gem 'rubyzip', '~> 1.1'
 gem 'jquery-rails', '~> 3.1.3'
+gem 'jquery-ui-rails', '~> 5.0.5'
 gem 'newrelic_rpm', '~> 5.2.0'
 
 #text processing/encoding stuff

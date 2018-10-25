@@ -238,10 +238,10 @@ class ApplicationController < ActionController::Base
   end
 
   def sortable_search_heading(f_short)
-    glyphicon = (params[:so]=='a' ? "glyphicon-chevron-up" : "glyphicon-chevron-down")
+    fa = (params[:so]=='a' ? "fa-chevron-up" : "fa-chevron-down")
     visible = (params[:sf] == f_short) ? "visible" : "hidden"
 
-    arrow = "<span class=\"glyphicon #{glyphicon}\" style=\"visibility: #{visible}; margin-right: .5em;\"></span>"
+    arrow = "<span class=\"fa #{fa}\" style=\"visibility: #{visible}; margin-right: .5em;\"></span>"
     link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a')))
     (arrow + link).html_safe
   end

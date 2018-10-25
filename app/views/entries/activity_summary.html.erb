@@ -1,39 +1,39 @@
 <style>
   h3.activity-title {
     color: white;
-    background-color: #000066;
-    padding-bottom: 5px;
-    padding-top: 5px;
+    background-color: #40aef2;
+    padding-bottom: 4px;
+    padding-top: 4px;
     margin:0;
   }
   h4.activity-title {
     color: black;
     background-color: #ccc;
-    padding-bottom: 5px;
-    padding-top: 5px;
+    padding-bottom: 4px;
+    padding-top: 4px;
     margin:0;
   }
   div.activty-pane {
-    padding-bottom: 20px;
-    padding-top: 20px;
+    padding-bottom: 18px;
+    padding-top: 18px;
   }
   td.numeric {
-    text-align: right;
     font-family: Consolas, ‘Andale Mono WT’, ‘Andale Mono’, ‘Lucida Console’, ‘Lucida Sans Typewriter’, ‘DejaVu Sans Mono’, ‘Bitstream Vera Sans Mono’, ‘Liberation Mono’, ‘Nimbus Mono L’, Monaco, ‘Courier New’, Courier, monospace;
   }
   table.tablesorter thead th:hover {
     cursor: pointer;
   }
 </style>
-<div id='activity-container'>
-  <div class="container">
-    <div class="panel panel-primary">
-      <div class="panel-heading">
-        <h3 class='panel-title'>
-          Content Loading
-        </h3>
+<div id='activity-container' class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">Content Loading</div>
+        <div class="card-body text-center"><i class="fa fa-hourglass-o" aria-hidden="true"></i> Your real time dashboard is being generated. This may take a moment.</div>
       </div>
-      <div class="panel-body">Your real time dashboard is being generated.</div>
+    </div>
+    <div class="col-12">
+      <div class='loader'>loading</div>
     </div>
   </div>
 </div>

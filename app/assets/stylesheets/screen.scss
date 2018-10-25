@@ -1,5 +1,9 @@
+$vandegrift-blue: #62bcf3;
+$vandegrift-dark-blue: #2e3653;
+$vandegrift-gold: #f0ba43;
+$vandegrift-gray: #c5cbce;
 body {
-  padding-bottom: 70px; //padding to accomodate sticky footer nav bar
+  padding-bottom: 3.5em; //padding to accomodate sticky footer nav bar
 }
 img {
   border-style: none;
@@ -31,7 +35,7 @@ div.clear {
 .bad_data {
   background-color: #F2BDBD;
 }
-.unread .panel-title {
+.unread h5 {
     font-weight: bolder;
 }
 .read {
@@ -70,7 +74,7 @@ div.clear {
     vertical-align: top;
 }
 .detail_table th, .date_grid td:hover, .drag_table th {
-    background-color: #348;
+    background-color: $vandegrift-blue;
     color: #FFFFFF;
     text-align: left;
 }
@@ -86,6 +90,7 @@ div.clear {
   background-color: rgb(241, 241, 241);
   color: #000;
 }
+.card-header a,
 .detail_table a {
   color: #707070;
 }
@@ -176,7 +181,7 @@ select {
 input[type="checkbox"] {
   padding: 0px;
 }
-a {
+td div span a {
     color: #707070;
 }
 .hover a:hover {
@@ -251,9 +256,11 @@ p {
   font-style: normal;
   text-decoration: underline;
   color: #575757;
+  padding: 5px;
 }
 .pagination a {
   text-decoration: none;
+  padding: 5px;
 }
 .pagination .disabled {
   display: none;
@@ -536,11 +543,4 @@ div.field, div.actions {
 #error_explanation ul li {
   font-size: 12px;
   list-style: square;
-}
-
-
-// blank glyphicon to match the width of gylphicon-ok-circle
-.glyphicon-blank-circle:before {
-    content: "\e089";
-    color: transparent !important;
 }

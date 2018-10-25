@@ -1,4 +1,4 @@
-<table class='table table-striped table-condensed'>
+<table class='table table-striped table-condensed table-sm'>
   <thead>
     <tr>
       <th>&nbsp;</th><th>System</th><th>Record Sent</th><th>Confirmation Received</th><th>Confirmation File Name</th><th>Failure Message</th>
@@ -8,7 +8,7 @@
     <% base_object.sync_records.each do |sr|-%>
     <tr class='<%=sr.problem? ? 'danger' : sr.sent_at.nil? ? 'warning' : 'success' %>'>
       <td><%=form_for sr, :url=>resend_sync_record_path(sr), :method=>:post do |f| %>
-          <%=sr.sent_at.nil? ? "Awaiting Sync" : "<button class='btn btn-xs'>Resend</button>".html_safe%>
+          <%=sr.sent_at.nil? ? "Awaiting Sync" : "<button class='btn btn-sm'>Resend</button>".html_safe%>
           <% end %>
       </td>
       <td><%=sr.trading_partner%></td>

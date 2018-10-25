@@ -26,7 +26,7 @@ root.OCQuickSearch =
         if val && val.length > 0
           htmlVal = getHtmlVal(val,searchTerm)
           if fieldCounter == 0
-            html += "<div class='panel-heading'><h3 class='panel-title'><a href='"+obj['view_url']+"'>"+val+"</a></h3></div><table class='table table-hover'>"
+            html += "<div class='card-header'><a href='"+obj['view_url']+"'>"+val+"</a></div><table class='table table-hover'>"
           html += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+htmlVal+"</td></tr>"
           fieldCounter++
       html
@@ -65,9 +65,9 @@ root.OCQuickSearch =
 
       return highlighted.str
 
-    h = "<div class='panel panel-primary qs-card'>"
+    h = "<div class='card qs-card'>"
     h += showSearchFields(fields, obj, searchTerm)
     h += showExtraFields(extraFields, extraVals, obj)
     h += "</table>"
-    h += "<div class='panel-footer text-right'><a href='"+obj['view_url']+"' class='btn btn-sm btn-default'><i class='fa fa-link'></i></a></div>"
+    h += "<div class='card-footer text-right'><a href='"+obj['view_url']+"' class='btn btn-sm'><i class='fa fa-link'></i></a></div>"
     h += "</div>"

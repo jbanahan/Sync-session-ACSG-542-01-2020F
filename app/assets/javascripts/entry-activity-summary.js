@@ -1,5 +1,5 @@
 function entryActivitySummary() {
-  $('#nav-action-bar > .btn-group').append('<button title="Download" id="ent_download" class="btn_link btn navbar-btn btn-default"><i class="fa fa-download"></i></button>');
+  $('#nav-action-bar > .btn-group').append('<button title="Download" id="ent_download" class="btn_link btn navbar-btn btn-secondary"><i class="fa fa-download"></i></button>');
   $('#ent_download').click(function() {
     $.ajax('/api/v1/'+window.location.pathname+'/download',{
       type:'POST',
@@ -8,13 +8,13 @@ function entryActivitySummary() {
         "Content-Type": "application/json"
       },
       success: function() { 
-        $('.panel-success, .panel-danger, .panel-info').remove();
+        $('.alert-success, .alert-danger, .alert-info').remove();
         var p = Chain.makeAlertPanel("Your report has been scheduled. You'll receive a system message when it finishes.");
         $('#main-container').prepend(p);
         window.scrollTo(0,0);
       },
       error: function(response) {
-        $('.panel-success, .panel-danger, .panel-info').remove();
+        $('.alert-success, .alert-danger, .alert-info').remove();
         var msg = response.responseJSON ? response.responseJSON.errors.join(" ") : "A server error occurred. Please wait and try again.";
         var p = Chain.makeErrorPanel(msg);
         $('#main-container').prepend(p);
@@ -22,7 +22,7 @@ function entryActivitySummary() {
       }
     });
   });
-  $('#nav-action-bar > .btn-group').append('<button title="Email" id="ent_email" class="btn_link btn navbar-btn btn-default"><i class="fa fa-envelope"></i></button>');
+  $('#nav-action-bar > .btn-group').append('<button title="Email" id="ent_email" class="btn_link btn navbar-btn btn-secondary"><i class="fa fa-envelope"></i></button>');
   $('#ent_email').click(function() { $('#email-modal').modal('show'); });
   $('#send_email').click(function() {
     $.ajax('/api/v1/'+window.location.pathname+'/email',{
@@ -33,7 +33,7 @@ function entryActivitySummary() {
       },
       data: JSON.stringify(emailFields()),
       success: function() { 
-        $('.panel-success, .panel-danger, .panel-info').remove();
+        $('.alert-success, .alert-danger, .alert-info').remove();
         clearModalFields();
         $('#email-modal').modal('hide');
         var p = Chain.makeAlertPanel("Your report will be emailed shortly.");
@@ -41,7 +41,7 @@ function entryActivitySummary() {
         window.scrollTo(0,0);
       },
       error: function(response) {
-        $('.panel-success, .panel-danger, .panel-info').remove();
+        $('.alert-success, .alert-danger, .alert-info').remove();
         $('#email-modal').modal('hide');
         var msg = response.responseJSON ? response.responseJSON.errors.join(" ") : "A server error occurred. Please wait and try again.";
         var p = Chain.makeErrorPanel(msg);

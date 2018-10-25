@@ -15,7 +15,6 @@ describe 'stateToggleButtons', ->
 
   afterEach ->
     $('#state-toggle-buttons-modal').remove()
-
   
   describe 'directive HTML',  ->
     it 'Replaces the element with the appropriate content', ->
@@ -77,7 +76,6 @@ describe 'stateToggleButtons', ->
       expect($('#state-toggle-buttons-modal').is(':visible')).toBeFalsy()
       expect($scope.loading).toBeNull()
       expect($scope.toggleButtons).toBeNull()
-
 
 
   describe 'StateToggleItem', ->

@@ -3,7 +3,7 @@
 <% end %>
 <%content_for :action_bar do -%>
   <%- if local_assigns.has_key?(:show_delete) && show_delete %>
-  <%= button_to "Delete", {action: :destroy, id: fm.id}, method: :delete, confirm: "Are you sure you want to delete this fiscal month?", class:'btn btn-default', form_class:'inline-button-to'%>
+  <%= button_to "Delete", {action: :destroy, id: fm.id}, method: :delete, confirm: "Are you sure you want to delete this fiscal month?", class:'btn btn-secondary', form_class:'inline-button-to'%>
   <%end%>
   <button class='btn_link' link_to='<%= company_fiscal_months_path(company) %>' key_map='c'>Cancel</button>
   <button class='form_to' form_id='fiscal_month_form' key_map='s'>Save</button>

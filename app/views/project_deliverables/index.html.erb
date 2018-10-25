@@ -1,5 +1,5 @@
 <%content_for :action_bar do%>
-  <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button>
+  <button class='btn btn-secondary btn_link' link_to='<%=projects_path%>'>Projects</button>
 <%end%>
 <div ng-app='ProjectApp'>
   <div class="container" ng-controller='ProjectDeliverablesController'>
@@ -20,11 +20,11 @@
     </div>
     <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
-    <div class='panel panel-default' ng-repeat='(top,projects) in deliverables'>
-      <div class="panel-heading">
+    <div class='card' ng-repeat='(top,projects) in deliverables'>
+      <div class="card-header">
         <div class="row">
           <div class="col-md-10">
-            <h3 class='panel-title'>
+            <h3>
               {{top}}
             </h3>
           </div>
@@ -35,11 +35,11 @@
           </div>
         </div>
       </div>
-      <div class='panel-body'>
+      <div class='card-body'>
         <div ng-repeat='(mid,dels) in projects'>
           <h4>{{mid}}</h4>
           <div class="row" ng-repeat='d in dels | deliverableSort'>
-            <div class="col-xs-12">
+            <div class="col-12">
               <div style='margin-left:10px;' chain-project-deliverable='d' project='d.project' save-promise-callback='handleSaveDeliverable'></div>
             </div>
           </div>

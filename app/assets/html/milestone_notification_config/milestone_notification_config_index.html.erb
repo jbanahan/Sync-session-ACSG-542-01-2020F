@@ -26,7 +26,7 @@
       </thead>
       <tbody>
         <tr ng-repeat="config in milestoneConfigs">
-          <td><button type="button" class="btn btn-default" ng-click="showConfig(config.milestone_notification_config)">Edit</button></td>
+          <td><button type="button" class="btn btn-secondary" ng-click="showConfig(config.milestone_notification_config)">Edit</button></td>
           <td>{{config.milestone_notification_config.customer_number}}</td>
           <td>{{config.milestone_notification_config.enabled ? "Yes" : "No"}}</td>
           <td>{{config.milestone_notification_config.testing ? "Testing" : "Production"}}</td>
@@ -44,6 +44,6 @@
     </table>
 </chain-loading-wrapper>
 <div chain-action-bar>
-  <button class="btn btn-default btn_link" link_to="<%=Rails.application.routes.url_helpers.settings_path%>">Back</button> 
-  <button class='btn btn-default' ng-click='newConfig()'>New</button>
+  <button class="btn btn-secondary btn_link" link_to="<%=Rails.application.routes.url_helpers.settings_path%>">Back</button> 
+  <button class='btn btn-secondary' ng-click='newConfig()'>New</button>
 </div>

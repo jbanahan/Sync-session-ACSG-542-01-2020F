@@ -2,16 +2,16 @@
   <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
   <% if @order.can_close?(current_user)%>
     <% if @order.closed? %>
-      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary'%>
     <% else %>
-      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary'%>
     <% end %>
   <% end %>
   <% if @order.can_accept?(current_user)%>
     <% if @order.approval_status=='Accepted' %>
-      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary'%>
     <% elsif @order.can_be_accepted? %>
-      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary'%>
     <% end %>
   <% end %>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
@@ -68,11 +68,9 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">
-        <div class="panel panel-warning">
-            <div class="panel-heading">
-              <h3 class="panel-title">Order Closed</h3>
-            </div>
-            <div class="panel-body">
+        <div class="card alert-warning">
+            <div class="card-header">Order Closed</div>
+            <div class="card-body bg-white">
               Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
             </div>
         </div>
@@ -99,7 +97,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class="header-table table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed table-sm ord-header">
         <tr>
           <td>
             <label>PO #</label>
@@ -123,7 +121,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
           </td>
         </tr>
       </table>
-      <table class="header-table table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed table-sm ord-header">
         <tr>
           <td>
             <label>Created</label>
@@ -151,7 +149,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
           </td>
         </tr>
       </table>
-      <table class="header-table table-bordered table-condensed ord-header">
+      <table class="header-table table-bordered table-condensed table-sm ord-header">
         <tr>
           <td>
             <label>Delivery Warehouse</label>
@@ -183,7 +181,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table id='detail-table' class="table table-condensed table-striped table-bordered">
+      <table id='detail-table' class="table table-condensed table-sm table-striped table-bordered">
         <thead>
           <th>Itm #</th>
           <th>Vend Style</th>
@@ -197,8 +195,8 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
           <th>Description</th>
           <th>HTS</th>
           <th class='no-print'>
-            <button id='show-all-detail' class='btn btn-xs btn-default' onclick="$('.order-detail-line').show();$('#show-all-detail').hide();$('#hide-all-detail').show();">Show All</button>
-            <button id='hide-all-detail' class='btn btn-xs btn-default' onclick="$('.order-detail-line').hide();$('#show-all-detail').show();$('#hide-all-detail').hide();" style='display:none;'>Hide All</button>
+            <button id='show-all-detail' class='btn btn-sm' onclick="$('.order-detail-line').show();$('#show-all-detail').hide();$('#hide-all-detail').show();">Show All</button>
+            <button id='hide-all-detail' class='btn btn-sm' onclick="$('.order-detail-line').hide();$('#show-all-detail').show();$('#hide-all-detail').hide();" style='display:none;'>Hide All</button>
           </th>
         </thead>
 
@@ -224,7 +222,7 @@ cdefs = my_k.prep_custom_definitions [:ord_line_color,:ord_line_size,:ord_entry_
               <td><%=line.product ? line.product.name : nil%></td>
               <td><%=field_value line, :ordln_hts%></td>
               <td class='no-print'>
-                <button class='btn btn-xs btn-default' onclick="$('#det_<%=line.id%>').toggle();">Detail</button>
+                <button class='btn btn-sm' onclick="$('#det_<%=line.id%>').toggle();">Detail</button>
               </td>
             </tr>
             <tr style='display:none;' class='order-detail-line' id='det_<%=line.id%>'>

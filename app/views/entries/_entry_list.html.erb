@@ -1,8 +1,8 @@
 <%-pg_entries = entries.paginate(page:params[:page],per_page:30)-%>
 <div class='container'>
   <div class='row'>
-    <div class='col-md-8 col-md-offset-2'>
-      <div class='panel panel-default text-center'>
+    <div class='col-md-8 offset-md-2'>
+      <div class='card text-center'>
         <%=page_entries_info pg_entries%>
       </div>
     </div>
@@ -21,7 +21,7 @@
   <tbody>
     <%-pg_entries.each do |ent|-%>
     <tr>
-      <td><%=link_to 'View', ent, :class=>'btn btn-xs btn-default'%></td>
+      <td><%=link_to 'View', ent, :class=>'btn btn-sm'%></td>
       <%-fields_to_use.each do |f|-%>
         <td><%=ModelField.find_by_uid(f).process_export(ent,current_user)%></td>
       <%-end-%>
@@ -31,7 +31,7 @@
 </table>
 <script type='text/javascript'> <%# needs to be javascript so it executes inside of cache, can't use content_for%>
   $(document).ready(function() {
-    $('#nav-action-bar').append("<inline><a class='btn btn-default navbar-btn' href='/entries/importer/<%=params[:importer_id]%>/country/<%=params[:iso_code]%>/release_range/<%=params[:release_range]%>/download' title='Download'><i class='fa fa-download'></i></a><form class='navbar-form pull-right btn-group' id='browsenav'></form></inline>")
+    $('#nav-action-bar').append("<inline><a class='btn navbar-btn' href='/entries/importer/<%=params[:importer_id]%>/country/<%=params[:iso_code]%>/release_range/<%=params[:release_range]%>/download' title='Download'><i class='fa fa-download'></i></a><form class='navbar-form float-right btn-group' id='browsenav'></form></inline>")
     Chain.addPagination('#browsenav','<%=request.original_fullpath.split("?").first%>',<%=params[:page]%>,<%=pg_entries.total_pages%>);
   });
 </script>

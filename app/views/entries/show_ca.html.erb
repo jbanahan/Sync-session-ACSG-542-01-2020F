@@ -3,7 +3,7 @@
   <button class="btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>" title='Download'><i class='fa fa-download'></i></button>
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>' title='Sync Records'><i class='fa fa-exchange'></i></button>
   <%if current_user.sys_admin?-%>    
-    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Purge' %>
+    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Purge' %>
   <%end-%>
 <% end -%>
 <style>
@@ -27,11 +27,9 @@
   <div class='container'>
     <div class="row">
       <div class="col-md-12">
-        <div class='panel panel-danger'>
-          <div class='panel-heading'>
-            <h3 class='panel-title'>Pending Hold</h3>
-          </div>
-          <div class='panel-body'>
+        <div class='card alert-danger'>
+          <div class='card-header'>Pending Hold</div>
+          <div class='card-body bg-white'>
             Entry is currently on hold by CBSA
           </div>
         </div>
@@ -65,7 +63,7 @@
       </td>
       <td style="width:34%;">
         <table>
-          <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country.try(:iso_code)}'>#{editor} <span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
+          <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country.try(:iso_code)}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
           <%= show_model_fields @entry, [:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name], table: true %>
         </table>
       </td>
@@ -131,7 +129,7 @@
       </tbody>
     </table>
     <%fields = ModelField.viewable_model_fields(current_user, [:cil_part_number,:cil_po_number,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_adjustments_amount,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code])%>
-    <table class='table table-condensed table-bordered'>
+    <table class='table table-condensed table-sm table-bordered'>
       <thead>
         <tr>
           <%= model_field_labels fields, table: true, heading: true %>

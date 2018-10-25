@@ -550,11 +550,11 @@ module ApplicationHelper
   end
 
   def tariff_more_info hts_number, country_id
-    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_tariff_popup btn btn-xs btn-link',:hts=>hts_number,:country=>country_id}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_tariff_popup btn btn-sm btn-link',:hts=>hts_number,:country=>country_id}
   end
 
   def schedule_b_more_info hts_number
-    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-xs btn-link',:schedb=>hts_number}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-sm btn-link',:schedb=>hts_number}
   end
 
   private
@@ -675,7 +675,7 @@ module ApplicationHelper
     tags.join("\n").html_safe
   end
 
-  def state_toggle_buttons obj, user, button_class: 'btn btn-default'
+  def state_toggle_buttons obj, user, button_class: 'btn btn-secondary'
     buttons = StateToggleButton.for_core_object_user(obj,user).collect do |b|
       path = CoreModule.find_by_object(obj).class_name.tableize
       show_activate = b.to_be_activated?(obj)

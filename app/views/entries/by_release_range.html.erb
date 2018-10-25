@@ -6,7 +6,7 @@ params[:page] ||= '1'
   <%# do pagination here so it's inside the cache wrapper%>
   <div class="container">
     <div class="row">
-      <div class="col-md-8 col-md-offset-2 text-center">
+      <div class="col-md-8 offset-md-2 text-center">
           <select id='rangeselect' class='form-control form-lg'>
             <%=options_for_select @range_descriptions%>
           </select>

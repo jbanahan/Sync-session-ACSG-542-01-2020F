@@ -1,3 +1,7 @@
+$vandegrift-blue: #62bcf3;
+$vandegrift-blue-shade: #40aef2;
+$vandegrift-gold: #F0BA43;
+
 .google-maps-wrap iframe {
   border: none;
   width: 100%;
@@ -15,5 +19,5 @@
   background-color: #eef;
 }
 .address-selector.google-maps-active {
-  border-left: 1px solid #348;
+  border-left: 1px solid $vandegrift-blue;
 }

@@ -7,11 +7,11 @@
   <button class="btn_link" link_to="<%=instant_classifications_path%>" key_map="c">Cancel</button>
 <%end%>
 <%=form_for @instant_classification, :html=>{:id=>:frm_ic} do |f|%>
-  <h1>Instant Classification</h1>
+  <h2>Instant Classification</h2>
   <table>
     <%=field_row "Name", f.text_field(:name)%>
   </table>
-  <h2>Parameters</h2>
+  <h3>Parameters</h3>
   <div id='params_cont'>
 
   </div>

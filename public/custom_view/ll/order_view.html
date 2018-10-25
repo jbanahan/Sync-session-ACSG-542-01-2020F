@@ -12,21 +12,21 @@
   </div>
   <div class="row">
     <div class="col-md-5">
-      <div class="panel panel-primary">
-          <div class="panel-heading">
+      <div class="card">
+          <div class="card-header">
           </div>
           <ul class='list-group'>
             <li class='list-group-item'>
-              Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
+              Issue Date <span class='float-right'>{{order.ord_ord_date}}</span>
             </li>
             <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start==order.ord_window_end'>
-              Delivery Date <span class='pull-right'>{{order.ord_window_start}}</span>
+              Delivery Date <span class='float-right'>{{order.ord_window_start}}</span>
             </li>
             <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start!=order.ord_window_end'>
-              Contractual Ship Window Start <span class='pull-right'>{{order.ord_window_start}}</span>
+              Contractual Ship Window Start <span class='float-right'>{{order.ord_window_start}}</span>
             </li>
             <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
-              Contractual Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
+              Contractual Ship Window End <span class='float-right'>{{order.ord_window_end}}</span>
             </li>
             <li class='list-group-item'>
               Production Start Date - Planned
@@ -36,71 +36,69 @@
             </li>
             <li class='list-group-item'>
               Forecasted Ship Window Start
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window Start',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window Start',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class='list-group-item'>
               Forecasted Ship Window End
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window End',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','Forecasted Ship Window End',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class='list-group-item'>
               Compliance Docs Posted Date
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted Date',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted Date',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class='list-group-item'>
               Compliance Docs Posted By
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted By (Name)',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','Compliance Docs Posted By (Name)',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class="list-group-item">
               Vendor No.
-              <span class="pull-right">{{order.ord_ven_syscode}}</span>
+              <span class="float-right">{{order.ord_ven_syscode}}</span>
             </li>
             <li class="list-group-item">
               Vendor Name
-              <span class="pull-right">{{order.ord_ven_name}}</span>
+              <span class="float-right">{{order.ord_ven_name}}</span>
             </li>
             <li class="list-group-item">
               Currency
-              <span class="pull-right">{{order.ord_currency}}</span>
+              <span class="float-right">{{order.ord_currency}}</span>
             </li>
             <li class="list-group-item">
               Terms of Payment
-              <span class="pull-right">{{order.ord_payment_terms}}</span>
+              <span class="float-right">{{order.ord_payment_terms}}</span>
             </li>
             <li class="list-group-item">
               Terms of Delivery
-              <span class="pull-right">{{order.ord_terms}}</span>
+              <span class="float-right">{{order.ord_terms}}</span>
             </li>
             <li class="list-group-item">
               Delivery Location
-              <span class="pull-right">{{order.ord_fob_point}}</span>
+              <span class="float-right">{{order.ord_fob_point}}</span>
             </li>
             <li class="list-group-item">
               BOL Number
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','BOL Number',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','BOL Number',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
             <li class="list-group-item">
               Est Departure
-              <span class="pull-right">{{order[dictionary.fieldsByAttribute('label','ASN - Est Departure',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
+              <span class="float-right">{{order[dictionary.fieldsByAttribute('label','ASN - Est Departure',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}</span>
             </li>
           </ul>
-          <div class="panel-footer text-right" ng-if='order.permissions.can_edit'>
-            <button class='btn btn-sm btn-default' title='Save' ng-click='save(order)'><i class='fa fa-save'></i></button>
+          <div class="card-footer text-right" ng-if='order.permissions.can_edit'>
+            <button class='btn btn-sm btn-secondary' title='Save' ng-click='save(order)'><i class='fa fa-save'></i></button>
           </div>
       </div>
-      <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Order Status</h3>
-          </div>
+      <div class="card">
+          <div class="card-header">Order Status</div>
           <ul class='list-group'>
             <li class='list-group-item'>
               Business Rules
-              <span class='pull-right'>
+              <span class='float-right'>
                 <chain-business-rules-basic-modal core-object='order' module-type='Order'></chain-business-rules-basic-modal>
               </span>
             </li>
             <li class='list-group-item'>
               Vendor Approval
-              <span class='pull-right {{order.ord_approval_status=="Accepted" ? "text-success" : ""}}'>
+              <span class='float-right {{order.ord_approval_status=="Accepted" ? "text-success" : ""}}'>
                 {{order.ord_approval_status}}
                 <a class='label label-default' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
                   Not Ready
@@ -110,7 +108,7 @@
             </li>
             <li class='list-group-item'>
               Ship From Selection
-              <span class='pull-right'>
+              <span class='float-right'>
                 <i class='fa fa-check-square text-success' ng-show='order.ord_ship_from_id>0'></i>
                 <i class="fa fa-clock-o" ng-show='!order.ord_ship_from_id && (!order.permissions.can_edit || order.vendor_id != me.company_id)'></i>
                 <a ui-sref='selectShipFrom({id:order.id})' ng-show='order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_id'>
@@ -131,36 +129,30 @@
       </div>
     </div>
     <div class="col-md-7">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Vendor Order Address</h3>
-        </div>
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-header">Vendor Order Address</div>
+        <div class="card-body">
           <chain-address address='{{order.ord_order_from_address_full_address}}'></chain-address>
         </div>
       </div>
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Vendor Ship From</h3>
-        </div>
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-header">Vendor Ship From</div>
+        <div class="card-body">
           <div class="text-warning" ng-show='order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_full_address.length>0'>
               Please select a ship from address using the Change button below.
           </div>
           <chain-address address='{{order.ord_ship_from_full_address}}'></chain-address>
         </div>
-        <div class="panel-footer text-right" ng-if='order.permissions.can_edit && order.vendor_id == me.company_id'>
+        <div class="card-footer text-right" ng-if='order.permissions.can_edit && order.vendor_id == me.company_id'>
           <a class='btn btn-primary' ng-if='order.ord_ship_from_id' id='show_change_modal'>
             Change
           </a>
           <a ng-if='!order.ord_ship_from_id' ui-sref='selectShipFrom({id:order.id})' class='btn btn-primary'>Change</a>
         </div>
       </div>
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Billing Address</h3>
-        </div>
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-header">Billing Address</div>
+        <div class="card-body">
           <address>
             <strong>Lumber Liquidators Services, LLC</strong><br />
             ATTN: Accounts Payable<br />
@@ -169,14 +161,12 @@
           </address>
         </div>
       </div>
-      <div class="panel panel-primary" >
-        <div class="panel-heading">
-          <h3 class="panel-title">Ship To Address</h3>
-        </div>
-        <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="panel-body">
+      <div class="card" >
+        <div class="card-header">Ship To Address</div>
+        <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="card-body">
           <chain-address address="{{order.order_lines[0].ordln_ship_to_full_address}}"></chain-address>
         </div>
-        <div ng-if='order.ord_ship_to_count > 1' class='panel-body'>
+        <div ng-if='order.ord_ship_to_count > 1' class='card-body'>
           <strong>Multi-Stop</strong>
         </div>
       </div>
@@ -184,7 +174,7 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <div class="panel panel-primary">
+      <div class="card">
         <table class="table table-bordered table-striped">
           <thead>
             <tr>
@@ -262,11 +252,9 @@
       <chain-comments-panel parent="order" module-type="Order"></chain-comments-panel>
     </div>
     <div class="col-md-6">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Change Log</h3>
-        </div>
-        <div class="panel-body">
+      <div class="card">
+        <div class="card-header">Change Log</div>
+        <div class="card-body">
 <pre>
 {{order[dictionary.fieldsByAttribute('cdef_uid', 'ord_change_log',dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]}}
 </pre>
@@ -277,8 +265,8 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <div class="panel panel-default">
-          <div class="panel-body">
+      <div class="card">
+          <div class="card-body">
             The Purchase Order is subject to and incorporates by reference the Purchase Order Terms and Conditions located
             at <a href='http://www.llvendors.com'>www.llvendors.com</a>. By accepting this Purchase Order, Seller agrees to be bound
             by the Purchase Order Terms and Conditions. The Terms and Conditions may not be modified, altered, amended or edited in any
@@ -292,14 +280,14 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title" id="">Pending Updates</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">
         This order is does not have all data elements completed and cannot be accepted.
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -308,14 +296,14 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title text-danger" id="">Warning: Order Reset</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">
         If you change the Ship From address, this order will need to be reapproved by Lumber Liquidators before you can ship it.
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button id='ship-from-confirm' type="button" class="btn btn-primary">Change</button>
         <button style='display:none' id='ship-from-confirm-real'  ui-sref='selectShipFrom({id:order.id})'></button>
         <script type="text/javascript">

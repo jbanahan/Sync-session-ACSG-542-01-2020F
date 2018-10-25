@@ -77,7 +77,7 @@ $(function() {
         <tr class='hover'>
           <% line.set_line_number if line.line_number.nil? %>
           <% if @sales_order.can_edit?(current_user) && !@sales_order.locked? %>
-            <td><button class='btn_link btn btn-default btn-xs' link_to='<%=edit_sales_order_sales_order_line_path(@sales_order,line)%>'>edit</button></td>
+            <td><button class='btn_link btn btn-sm' link_to='<%=edit_sales_order_sales_order_line_path(@sales_order,line)%>'>edit</button></td>
           <% end %>
           <%= show_model_fields line, :soln_line_number, table: true, editor_only: true %>  
           <% if ModelField.find_by_uid(:prod_name).can_view?(current_user) && line.product.try(:can_view?, current_user) %>

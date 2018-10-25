@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="row">
-    <button class="btn btn-default" id="ll-load-more">Load More</button>
+    <button class="btn btn-secondary" id="ll-load-more">Load More</button>
     <%if risk_def.model_field.can_edit?(current_user)%>
       <button class="btn btn-primary" data-toggle="modal" data-target="#ll-risk-edit" disabled="disabled" id='ll-risk-modal-activate'>
         Edit Risk
@@ -39,8 +39,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Add Products</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">
         <textarea id='ll-products-to-add' class='form-control' placeholder='One article # per line.'></textarea>
@@ -53,7 +53,7 @@
         </select>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id='ll-add-products'>Add</button>
       </div>
     </div>
@@ -63,8 +63,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Edit Risk</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body">
         <div class="alert alert-info">You have <span id='ll-risk-checked-count'>0</span> products selected.</div>
@@ -76,7 +76,7 @@
         </select>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" id='ll-risk-save'>Save</button>
       </div>
     </div>
@@ -168,7 +168,7 @@
   function LLProductVariantAssignmentLoad() {
     $('#ll-product-panel-row').html("<div class='loader'>loading</div>");
     LLProductVariantAssignmentGetPage(1,function(rowHtml) {
-      html = "<div><table class='table table-condensed table-striped'>";
+      html = "<div><table class='table table-condensed table-striped table-sm'>";
       html += "<thead><tr><th><input type='checkbox' id='ll-product-select-all' /></th><th></th><th>Article #</th><th>Name</th><th>Merch Cat</th><th>Risk</th></tr></thead>";
       html += "<tbody id='ll-product-panel-body' data-page='1'>";
       html += rowHtml;

@@ -5,7 +5,7 @@
 %>
 <%-content_for :action_bar do-%>
   <button id='btn_save'>Save</button>
-  <button class="btn_link btn btn-default" link_to="<%=edit_company_user_path(@user.company, @user)%>">Back</button>
+  <button class="btn_link btn btn-secondary" link_to="<%=edit_company_user_path(@user.company, @user)%>">Back</button>
 <%-end-%>
 <div class="container">
   <div class="row" id='success_alert' style='display:none;'>

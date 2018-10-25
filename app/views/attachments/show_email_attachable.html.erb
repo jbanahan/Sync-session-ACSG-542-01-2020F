@@ -2,13 +2,13 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-4 col-md-offset-4">
+    <div class="col-md-4 offset-md-4">
       <h3 align="center">Send attachments</h3>
     </div>
   </div>
   <form role="form">
     <div class="row">
-      <div class="col-md-4 col-md-offset-4">
+      <div class="col-md-4 offset-md-4">
         <div class="form-group">
           <label>Send to:</label>
           <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 comma-separated email addresses..." autofocus=true rows=4><%=current_user.email%></textarea>
@@ -32,14 +32,14 @@
 
     <% if number_of_attachments > 0 %>
       <div class="row">
-        <div class="col-md-4 col-md-offset-4">
+        <div class="col-md-4 offset-md-4">
           <h4 align="center">Choose attachments</h4>
         </div>
       </div>
 
       <% if number_of_attachments > 1 %> <!-- Not necessary if you only have one item -->
         <div class="row">
-          <div class="col-md-4 col-md-offset-4" align="center">
+          <div class="col-md-4 offset-md-4" align="center">
             <button type="button" class="btn btn-success" id="select_all_button" style="width: 110px; margin-right: 5px;">Select all</button>
             <button type="button" class="btn btn-danger" id="select_none_button" style="width: 110px; margin-left: 5px;">Select none</button>
           </div>
@@ -47,7 +47,7 @@
       <% end %>
     <% end %>
 
-    <div class="col-md-4 col-md-offset-4">                
+    <div class="col-md-4 offset-md-4">                
       <% @attachments_array.each do |single_attachment| %>
         <div class="row">
           <div class="checkbox att-checkbox">
@@ -74,13 +74,13 @@
     </div>
     
     <div class="row">
-      <div class="col-md-5 col-md-offset-4"
+      <div class="col-md-5 offset-md-4"
         <br><br><p>Total Size of Selected Attachments (limit 10 MB):&nbsp;&nbsp;&nbsp;<span id="total-file-size"></span></p>
       </div>
     </div>
 
     <div class="row">
-      <div class="col-md-4 col-md-offset-4" align="center">
+      <div class="col-md-4 offset-md-4" align="center">
         <button type="button" class="btn btn-primary btn-lg" id="submit_attachment_email" style="margin-top: 20px; width: 150px;">Submit</button>
       </div>
     </div>

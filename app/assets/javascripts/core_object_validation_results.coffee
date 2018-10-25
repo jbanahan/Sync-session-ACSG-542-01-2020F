@@ -85,9 +85,8 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
         $scope.setPanel "Business Rules have been reevaluated.", "info"
 
   $scope.setPanel = (message, type) ->
-    panel = Chain.makePanel(message, type, true)
-    $('.panel-' + type).remove()
-    $('#validation_result_wrapper').prepend(panel)
+    panel = Chain.makePanel(message, type)
+    $('#validation_status_wrapper').html(panel)
     true
 ]
 

@@ -136,7 +136,7 @@ function sendComment() {
     <%=field_row "Email To", text_field_tag(:to,nil, :class=>'comment_input') %>
     </table>
     </br>
-    <div class="alert alert-info col-xs-12" id="add-notice" style="display:none;">
+    <div class="alert alert-info col-12" id="add-notice" style="display:none;">
       Your comment is being sent.
     </div>
   <%end%>
@@ -145,7 +145,7 @@ function sendComment() {
     <input type='hidden' id='send_comment_id' value='' />
     To: <input type='text' name='to' id='send_comment_to' /><br />
     <p>Separate addresses with commas (a@b.com, d@b.com)</p>
-    <div class="alert alert-info col-xs-12" id="send-notice" style="display:none;">
+    <div class="alert alert-info col-12" id="send-notice" style="display:none;">
       Your comment is being sent.
     </div>
 </div>

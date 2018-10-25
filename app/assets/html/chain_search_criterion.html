@@ -11,10 +11,11 @@
   </div>
   <div class='col-md-3'>
     <div>
-      <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
+      <input id="chk_crit_include" type='checkbox' ng-model='crit.include_empty'/>
+      <label for="chk_crit_include">Include Empty</label>
     </div>
     <div>
-      <button ng-click='remove(crit)' class='btn btn-default'>Remove</button>
+      <button ng-click='remove(crit)' class='btn btn-secondary'>Remove</button>
     </div>
   </div>
 </div>

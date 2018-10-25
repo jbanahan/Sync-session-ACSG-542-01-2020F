@@ -85,7 +85,7 @@ $(function() {
       <div class="col-md-2"><%=text_field_tag :start_release_date,"", :class=>'form-control isdate'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-3 col-md-offset-1"><label class="control-label" for="end_release_date">and before: </label></div>
+      <div class="col-md-3 offset-md-1"><label class="control-label" for="end_release_date">and before: </label></div>
       <div class="col-md-2"><%=text_field_tag :end_release_date, "", :class=>'form-control isdate' %></div>
     </div>
   </div>
@@ -97,7 +97,7 @@ $(function() {
       <div class="col-md-2"><%=text_field_tag :start_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-3 col-md-offset-1"><label class="control-label">and before: </label></div>
+      <div class="col-md-3 offset-md-1"><label class="control-label">and before: </label></div>
       <div class="col-md-2"><%=text_field_tag :end_fiscal_year_month,"", :class=>'form-control', :placeholder=> 'YYYY-MM'%></div>
     </div>
   </div>
@@ -105,11 +105,11 @@ $(function() {
   <br>
   <div class="run-as-company">
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-3 col-md-offset-1"><label class="control-label">Company:</label></div>
+      <div class="col-md-3 offset-md-1"><label class="control-label">Company:</label></div>
       <div class="col-md-2"><%=select_tag(:run_as_company, "<option value='' selected='selected'>Select One</option><option value='ASCENA'>ASCENA TRADE SERVICES LLC</option><option value='ATAYLOR'>ANNTAYLOR INC.</option>".html_safe)%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-3 col-md-offset-1" style="width:100%">If Report is run for ANNTAYLOR INC., only First Release Date parameters are available.</div>
+      <div class="col-md-3 offset-md-1" style="width:100%">If Report is run for ANNTAYLOR INC., only First Release Date parameters are available.</div>
     </div>
   </div>
 </div>

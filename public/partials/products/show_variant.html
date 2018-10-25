@@ -22,15 +22,15 @@
       <div class="col-md-6">
         <chain-view-edit edit-if='false' view-template='/partials/products/variant_attr_view.html'
           panel-title='Variant Attributes' panel-class='panel-primary'></chain-view-edit>
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Plant Assignments</h3>
+        <div class="card">
+            <div class="card-header">Plant Assignments</div>
+            <div class="card-body">
+              <ul class='list-group'>
+                <li class='list-group-item' ng-repeat='pva in variant.plant_variant_assignments track by pva.id'>
+                  <a ng-href='/vendors/{{pva.pva_company_id}}'>{{pva.pva_plant_name}}</a>
+                </li>
+              </ul>
             </div>
-            <ul class='list-group'>
-              <li class='list-group-item' ng-repeat='pva in variant.plant_variant_assignments track by pva.id'>
-                <a ng-href='/vendors/{{pva.pva_company_id}}'>{{pva.pva_plant_name}}</a>
-              </li>
-            </ul>
         </div>
       </div>
     </div>

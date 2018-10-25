@@ -89,6 +89,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def index
+    @no_action_bar = true # Not in use so free up some space
     render :layout=>'one_col'
   end
 

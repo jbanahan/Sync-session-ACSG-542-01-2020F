@@ -69,7 +69,7 @@
     <button id='btn_edit'>Edit Header</button>
     <% end %>
     <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? -%>
-      <button class='btn' id='btn_delete_shell'>Delete</button>
+      <button class='btn btn-secondary' id='btn_delete_shell'>Delete</button>
     <% end -%>
     <% if @line.nil? && @order.can_edit?(current_user)%>
       <button id='btn_add_line'>Add Product</button>
@@ -78,16 +78,16 @@
   <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
   <% if @order.can_close?(current_user) && !current_user.in_any_group?(['ANN_USERS', 'ANN_VENDORS'])%>
     <% if @order.closed? %>
-      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary navbar-btn'%>
     <% else %>
-      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary navbar-btn'%>
     <% end %>
   <% end %>
   <% if @order.can_accept?(current_user) && !current_user.in_any_group?(['ANN_USERS', 'ANN_VENDORS'])%>
     <% if @order.approval_status=='Accepted' %>
-      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary navbar-btn'%>
     <% elsif @order.can_be_accepted? %>
-      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default navbar-btn'%>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-secondary navbar-btn'%>
     <% end %>
   <% end %>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
@@ -100,11 +100,9 @@
   <% if @order.closed? %>
     <div class="row">
       <div class="col-md-12">
-        <div class="panel panel-warning">
-            <div class="panel-heading">
-              <h3 class="panel-title">Order Closed</h3>
-            </div>
-            <div class="panel-body">
+        <div class="card alert-warning">
+            <div class="card-header">Order Closed</div>
+            <div class="card-body">
               Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
             </div>
         </div>
@@ -152,7 +150,7 @@
         <tr class='hover ord_det_row'>
           <td>
             <%if @order.can_edit?(current_user) && !@order.locked?%>
-              <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
+              <button class='btn_link btn btn-sm' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
             <%end%>
           </td>
           <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true, attributes: {class: (line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}")}) %>

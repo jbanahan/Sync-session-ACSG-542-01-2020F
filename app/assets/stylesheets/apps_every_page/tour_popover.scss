@@ -1,0 +1,39 @@
+$vandegrift-blue: #62bcf3;
+$vandegrift-gold: #F0BA43;
+$vandegrift-gray: #c5cbce;
+.popover-header {
+  background-color: $vandegrift-gold;
+}
+#tour_nxt_btn {
+  background-color: $vandegrift-blue;
+  color: white;
+}
+.popover.bs-popover-left .arrow::after {
+  border-left-color: $vandegrift-gold;
+}
+.popover.bs-popover-right .arrow::after {
+  border-right-color: $vandegrift-gold;
+}
+.popover.bs-popover-top .arrow::after {
+  border-top-color: $vandegrift-gold;
+}
+.popover.bs-popover-bottom .arrow::after {
+  border-bottom-color: $vandegrift-gold;
+}
+.popover-body img {
+  width: 100%;
+}
+.popover[class*="tour-"].orphan {
+  left: 50% !important;
+  top: 40% !important;
+  margin-top: 0;
+  position: absolute;
+  transform: translate(-50%, -50%) !important;
+  &.popover_large_image {
+    max-width: 100%;
+    width: 85%;
+    left: 10% !important;
+    top: 10% !important;
+    transform: translate(-5%, -5%) !important;
+  }
+}

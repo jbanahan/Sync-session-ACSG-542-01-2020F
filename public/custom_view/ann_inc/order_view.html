@@ -12,62 +12,60 @@
     </div>
     <div class="row">
         <div class="col-md-5">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
+            <div class="card">
+                <div class="card-header">
                 </div>
                 <ul class='list-group'>
                     <li class='list-group-item'>
-                        Issue Date <span class='pull-right'>{{order.ord_ord_date}}</span>
+                        Issue Date <span class='float-right'>{{order.ord_ord_date}}</span>
                     </li>
                     <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start==order.ord_window_end'>
-                        Delivery Date <span class='pull-right'>{{order.ord_window_start}}</span>
+                        Delivery Date <span class='float-right'>{{order.ord_window_start}}</span>
                     </li>
                     <li class='list-group-item' ng-if='order.ord_window_start && order.ord_window_start!=order.ord_window_end'>
-                        Ship Window Start <span class='pull-right'>{{order.ord_window_start}}</span>
+                        Ship Window Start <span class='float-right'>{{order.ord_window_start}}</span>
                     </li>
                     <li class='list-group-item' ng-if='order.ord_window_end && order.ord_window_start!=order.ord_window_end'>
-                        Ship Window End <span class='pull-right'>{{order.ord_window_end}}</span>
+                        Ship Window End <span class='float-right'>{{order.ord_window_end}}</span>
                     </li>
                     <li class="list-group-item">
                         Vendor No.
-                        <span class="pull-right">{{order.ord_ven_syscode}}</span>
+                        <span class="float-right">{{order.ord_ven_syscode}}</span>
                     </li>
                     <li class="list-group-item">
                         Vendor Name
-                        <span class="pull-right">{{order.ord_ven_name}}</span>
+                        <span class="float-right">{{order.ord_ven_name}}</span>
                     </li>
                     <li class="list-group-item">
                         Currency
-                        <span class="pull-right">{{order.ord_currency}}</span>
+                        <span class="float-right">{{order.ord_currency}}</span>
                     </li>
                     <li class="list-group-item">
                         Terms of Payment
-                        <span class="pull-right">{{order.ord_payment_terms}}</span>
+                        <span class="float-right">{{order.ord_payment_terms}}</span>
                     </li>
                     <li class="list-group-item">
                         Terms of Delivery
-                        <span class="pull-right">{{order.ord_terms}}</span>
+                        <span class="float-right">{{order.ord_terms}}</span>
                     </li>
                     <li class="list-group-item">
                         Delivery Location
-                        <span class="pull-right">{{order.ord_fob_point}}</span>
+                        <span class="float-right">{{order.ord_fob_point}}</span>
                     </li>
                 </ul>
             </div>
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Order Status</h3>
-                </div>
+            <div class="card">
+                <div class="card-header">Order Status</div>
                 <ul class='list-group'>
                     <li class='list-group-item'>
                         Business Rules
-                        <span class='pull-right'>
+                        <span class='float-right'>
                             <chain-business-rules-basic-modal core-object='order' module-type='Order'></chain-business-rules-basic-modal>
                         </span>
                     </li>
                     <li class="list-group-item" ng-show='order[dictionary.fieldsByAttribute("label", "Docs Required",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]'>
                         Docs Completed
-                        <span class='pull-right'>
+                        <span class='float-right'>
                            <div ng-show='order[dictionary.field("*ord_docs_completed_by_username").uid]'>
                                {{order[dictionary.field("*ord_docs_completed_date").uid]}}
                            </div>
@@ -78,14 +76,14 @@
                     </li>
                     <li class='list-group-item'>
                         Audit Initiated
-                        <span class='pull-right'>
+                        <span class='float-right'>
                             <i class='fa fa-check-square text-success' ng-show='order[dictionary.fieldsByAttribute("label","Audit Initiated By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]>0'></i>
                             <i class="fa fa-square-o" ng-show='!order[dictionary.fieldsByAttribute("label","Audit Initiated By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]'></i>
                         </span>
                     </li>
                     <li class='list-group-item'>
                         Audit Completed
-                        <span class='pull-right'>
+                        <span class='float-right'>
                             <i class='fa fa-check-square text-success' ng-show='order[dictionary.fieldsByAttribute("label","Audit Completed By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]>0'></i>
                             <i class="fa fa-square-o" ng-show='!order[dictionary.fieldsByAttribute("label","Audit Completed By",dictionary.fieldsByRecordType(dictionary.recordTypes.Order))[0].uid]'></i>
                         </span>
@@ -97,48 +95,41 @@
             </div>
         </div>
         <div class="col-md-7">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Vendor Order Address</h3>
-                </div>
-                <div class="panel-body">
+            <div class="card">
+                <div class="card-header">Vendor Order Address</div>
+                <div class="card-body">
                     <chain-address address='{{order.ord_order_from_address_full_address}}'></chain-address>
                 </div>
             </div>
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Ship From Address</h3>
-                </div>
-                <div class="panel-body">
+            <div class="card">
+                <div class="card-header">Ship From Address</div>
+                <div class="card-body">
                     <div class="text-warning" ng-show='order.permissions.can_edit && order.vendor_id == me.company_id && !order.ord_ship_from_full_address.length>0'>
                         Please select a ship from address using the Change button below.
                     </div>
                     <chain-address address='{{order.ord_ship_from_full_address}}'></chain-address>
                 </div>
-                <div class="panel-footer text-right" ng-if='order.permissions.can_edit && order.vendor_id == me.company_id'>
+                <div class="card-footer text-right" ng-if='order.permissions.can_edit && order.vendor_id == me.company_id'>
                     <a ui-sref='selectShipFrom({id:order.id})' class='btn btn-primary'>Change</a>
                 </div>
             </div>
-            <div class="panel panel-primary" >
-                <div class="panel-heading">
-                    <h3 class="panel-title">Ship To Address</h3>
-                </div>
-                <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="panel-body">
+            <div class="card" >
+                <div class="card-header">Ship To Address</div>
+                <div ng-if='order.order_lines.length > 0 && order.ord_ship_to_count==1' class="card-body">
                     <chain-address address="{{order.order_lines[0].ordln_ship_to_full_address}}"></chain-address>
                 </div>
-                <div ng-if='order.ord_ship_to_count > 1' class='panel-body'>
+                <div ng-if='order.ord_ship_to_count > 1' class='card-body'>
                     <strong>Multi-Stop</strong>
                 </div>
             </div>
-            <div class="panel panel-primary" ng-if='order.available_tpp_survey_responses.length > 0'>
-                <div class="panel-heading">
-                    <h3 class="panel-title">Trade Preference Program Certification</h3>
+            <div class="card" ng-if='order.available_tpp_survey_responses.length > 0'>
+                <div class="card-header">Trade Preference Program Certification</h3>
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     {{order.ord_tppsr_name}}
                     <div ng-if='!order.ord_tppsr_db_id' class="alert alert-info">No trade preference program selected.</div>
                 </div>
-                <div class="panel-footer text-right">
+                <div class="card-footer text-right">
                     <button class='btn btn-primary' ui-sref="selectTppSurveyResponse({id:order.id})">Change</button>
                 </div>
             </div>
@@ -146,7 +137,7 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            <div class="panel panel-primary">
+            <div class="card">
                 <table class="table table-bordered table-striped">
                     <thead>
                     <tr>
@@ -196,8 +187,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="">Pending Updates</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             </div>
             <div class="modal-body">
                 This order is does not have all data elements completed and cannot be accepted.

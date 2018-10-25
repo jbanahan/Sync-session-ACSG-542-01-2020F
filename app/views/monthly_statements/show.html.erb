@@ -1,6 +1,6 @@
 <%content_for :action_bar do -%>
   <%if current_user.company.master?-%>
-    <%= link_to raw("<i class='fa fa-refresh'></i>"), reload_monthly_statement_path(@statement), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Reload Statement' %>
+    <%= link_to raw("<i class='fa fa-refresh'></i>"), reload_monthly_statement_path(@statement), class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Reload Statement' %>
   <% end -%>
 <% end-%>
 <div class="container-fluid">

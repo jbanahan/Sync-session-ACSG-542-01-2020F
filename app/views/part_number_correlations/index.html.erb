@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-md-8 col-md-offset-2 text-center">
+  <div class="col-md-8 offset-md-2 text-center">
     <h2>
       Part Number Correlation
     </h2>
@@ -8,7 +8,7 @@
 
 <%= form_for PartNumberCorrelation.new, html: {id: "part_number_correlation_form", multipart: true} do |f| %>
   <div class="row">
-    <div class="col-md-6 col-md-offset-3">
+    <div class="col-md-6 offset-md-3">
       <div class="form-group">
         <label>Starting row number</label>
         <%= f.text_field :starting_row, placeholder: "Enter starting row number", class: "form-control" %>
@@ -49,7 +49,7 @@
 <hr></hr>
 
 <div class="row">
-  <div class="col-md-8 col-md-offset-2 text-center">
+  <div class="col-md-8 offset-md-2 text-center">
     <h2>
       Recent Results
     </h2>
@@ -57,7 +57,7 @@
 </div>
 
 <div class="row" style="margin-bottom: 10px;">
-  <div class="col-md-2 col-md-offset-2 text-center">
+  <div class="col-md-2 offset-md-2 text-center">
     <b>
       File name
     </b>
@@ -80,7 +80,7 @@
 </div>
 
 <div class="row">
-  <div class="col-md-2 col-md-offset-2" id="new_file_name">
+  <div class="col-md-2 offset-md-2" id="new_file_name">
     Waiting for file...
   </div>
   <div class="col-md-2" id="new_download_link">
@@ -96,7 +96,7 @@
 
 <% current_user.part_number_correlations.find(:all, order: "created_at DESC")[0..19].each do |pnc| %>
   <div class="row">
-    <div class="col-md-2 col-md-offset-2">
+    <div class="col-md-2 offset-md-2">
       <%= pnc.attachment.attached_file_name %>
     </div>
     <div class="col-md-2">

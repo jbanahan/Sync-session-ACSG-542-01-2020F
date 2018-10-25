@@ -1,3 +1,6 @@
+$vandegrift-blue: #62bcf3;
+$vandegrift-gold: #F0BA43;
+$vandegrift-gray: #c5cbce;
 @media print {
   a[href]:after {
     content: none;
@@ -11,15 +14,40 @@
     display: none !important
   }
 }
-@media screen and (max-width: 991px) {
-  .navbar-fixed-bottom {
-    position: relative !important;
-    z-index: inherit !important;
-    margin-top: 10px;
-    border-bottom: 1px solid #334488;
+.vandegrift-danger {
+  background-color: #f2dede;
+  color: mistyrose;
+}
+.vandegrift-header,
+.progress-bar {
+  color: white;
+  background-color: $vandegrift-blue;
+}
+.highlight_gold {
+  color: $vandegrift-gold;
+}
+.action_bar,
+#action_bar {
+  border-top: 1px solid;
+  background: #f8f8f8;
+  .workflow-nav-icon {
+    color: $vandegrift-blue;
+    font-weight: 200;
   }
-  body {
-    padding-bottom: 0px !important;
+  .workflow-nav-icon {
+    margin: 0px 10px;
+  }
+  .workflow-nav-icon-has-tasks {
+    color: red;
+  }
+  .btn {
+    background: white;
+    border-color: gray;
+    color: #212529;
+  }
+  .btn:hover {
+    background: $vandegrift-gold;
+    color: white;
   }
 }
 a.action_link {
@@ -52,6 +80,9 @@ a.action_link {
 .strike {
   text-decoration: line-through;
 }
+.dropdown-item.active, .dropdown-item:active {
+  background-color: $vandegrift-gold;
+}
 input.decimal {
   text-align: right;
 }
@@ -59,19 +90,12 @@ input.decimal {
   text-align: right;
   padding-right: 1em;
 }
-#main-content {
-  margin: 0 20px;
-}
-.navbar-fixed-bottom {
-  padding-left: 5px;
-}
 div.section_box {
   border-radius: 10px;
   border: 1px solid black;
   box-shadow: 5px 5px 10px #333;
   margin-top: 10px;
   .section_head {
-    font-size: 120%;
     background-color: black;
     color: white;
     text-align: center;
@@ -119,4 +143,22 @@ dl.field_list {
 }
 div.chainActionBarWrap {
   display: inline;
+}
+.btn-primary {
+  background-color: #40aef2;
+  border-color: #FFFFFF;
+}
+.btn-primary:hover {
+  background-color: #108ad5;
+  border-color: #2aa3ef;
+}
+.btn-warning {
+  color: #FFFFFF;
+  background-color: #F0BA43;
+  border-color: #eeb02b;
+}
+.btn-warning:hover {
+  color: #FFFFFF;
+  background-color: #eca713;
+  border-color: #d49711;
 }

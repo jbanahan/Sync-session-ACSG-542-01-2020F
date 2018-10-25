@@ -5,6 +5,7 @@ class DashboardWidgetsController < ApplicationController
   end
 
   def index
+    @no_action_bar = true #implements it's own in the dashboard index.html.erb
     @widgets = current_user.dashboard_widgets
   end
 

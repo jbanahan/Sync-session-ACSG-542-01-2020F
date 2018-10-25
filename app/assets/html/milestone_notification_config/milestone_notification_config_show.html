@@ -49,13 +49,13 @@
             <tr ng-repeat="field in config.setup_json.fingerprint_fields track by $index">
               <td><select ng-model="config.setup_json.fingerprint_fields[$index]" class="form-control" ng-options="mf.mfid as mf.label for mf in modelFieldList" /></td>
               <td><button type="button" class="btn btn-danger" ng-click="removeFingerprintField(field)">
-                  <span class="glyphicon glyphicon-trash"></span>
+                  <span class="fa fa-trash"></span>
                 </button></td>
             </tr>
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="2" class="text-center"><button type="button" class="btn btn-default" ng-click="addFingerprintField()">Add Field</button></td>
+              <td colspan="2" class="text-center"><button type="button" class="btn btn-secondary" ng-click="addFingerprintField()">Add Field</button></td>
             </tr>
           </tfoot>
         </table>
@@ -77,7 +77,7 @@
             <tr ng-repeat="event in config.setup_json.milestone_fields">
               <td>
                 <button type="button" class="btn btn-danger" ng-click="removeEvent(event)">
-                  <span class="glyphicon glyphicon-trash"></span>
+                  <span class="fa fa-trash"></span>
                 </button>
               </td>
               <td>
@@ -93,7 +93,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="4" class="text-center"><button type="button" class="btn btn-default" ng-click="newEvent()">New Event</button></td>
+              <td colspan="4" class="text-center"><button type="button" class="btn btn-secondary" ng-click="newEvent()">New Event</button></td>
             </tr>
           </tfoot>
         </table>
@@ -102,7 +102,7 @@
   </div>
 </chain-loading-wrapper>
 <div chain-action-bar>
-  <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
-  <button class="btn btn-default" ng-show="config.id > 0" ng-click="copyConfig()">Copy</button>
-  <button class="btn btn-default" ng-click="saveConfig()">Save</button>
+  <button type="button" class="btn btn-secondary" ng-click="cancel()">Cancel</button>
+  <button class="btn btn-secondary" ng-show="config.id > 0" ng-click="copyConfig()">Copy</button>
+  <button class="btn btn-secondary" ng-click="saveConfig()">Save</button>
 </div>

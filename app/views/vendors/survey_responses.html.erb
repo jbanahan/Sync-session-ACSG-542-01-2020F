@@ -4,7 +4,7 @@
       <div class='form-inline'>
         <div class="form-group">
           <input type='text' class='form-control' id='name-filter' data-infinite-table-filter='#survey-responses' data-infinite-table-param='q' placeholder='Filter by name'/>
-          <button data-infinite-table-reset='#survey-responses' class='btn btn-sm btn-default'>
+          <button data-infinite-table-reset='#survey-responses' class='btn btn-sm btn-secondary'>
             Filter
           </button>
         </div>
@@ -12,7 +12,7 @@
     </div>
     <div class="col-xs-4 text-right">
       <%if current_user.edit_surveys?%>
-        <button class='btn btn-success' id='btn_add_survey' title='Add Survey'><span class='glyphicon glyphicon-plus'></span></button>
+        <button class='btn btn-success' id='btn_add_survey' title='Add Survey'><span class='fa fa-plus'></span></button>
       <% end %>      
     </div>
   </div>
@@ -68,7 +68,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button id='add_survey_cancel' class='btn btn-default'>Cancel</button>
+            <button id='add_survey_cancel' class='btn btn-secondary'>Cancel</button>
             <input type='submit' value='Assign' class='btn btn-primary' />
           </div>
         </div><!-- /.modal-content -->

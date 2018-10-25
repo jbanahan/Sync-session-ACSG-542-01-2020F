@@ -1,8 +1,8 @@
 <div class='text-right'>
-  <button class='btn btn-xs btn-default' ng-show='!detailMode' ng-click='detailMode=true'><i class='fa fa-eye'></i></button>
-  <button class='btn btn-xs btn-default' ng-show='detailMode' ng-click='detailMode=false'><i class='fa fa-eye-slash'></i></button>
+  <button class='btn btn-sm' ng-show='!detailMode' ng-click='detailMode=true'><i class='fa fa-eye'></i></button>
+  <button class='btn btn-sm' ng-show='detailMode' ng-click='detailMode=false'><i class='fa fa-eye-slash'></i></button>
 </div>
-<table ng-if='detailMode' class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
+<table ng-if='detailMode' class='table table-condensed table-striped table-sm' ng-repeat='reg in outerScope.regions track by reg.id'>
   <thead>
     <tr>
       <th colspan="3"><strong>{{reg.name}}</strong></td>
@@ -44,7 +44,7 @@
     </tr>
   </tbody>
 </table>
-<table ng-if='!detailMode' class='table table-condensed table-striped' ng-repeat='reg in outerScope.regions track by reg.id'>
+<table ng-if='!detailMode' class='table table-condensed table-striped table-sm' ng-repeat='reg in outerScope.regions track by reg.id'>
   <thead>
     <tr>
       <th colspan="3"><strong>{{reg.name}}</strong></td>
@@ -68,7 +68,7 @@
   </tbody>
 </table>
 
-<table class='table table-condensed table-striped' ng-if='outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product).length>0'>
+<table class='table table-condensed table-striped table-sm' ng-if='outerScope.classificationsWithoutRegion(outerScope.regions,outerScope.product).length>0'>
   <thead>
     <tr>
       <th colspan="3">&nbsp;</th>

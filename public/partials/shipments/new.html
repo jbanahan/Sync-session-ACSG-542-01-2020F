@@ -2,11 +2,9 @@
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">New Shipment</h3>
-          </div>
-          <div class="panel-body">
+        <div class="card">
+          <div class="card-header vandegrift-header">New Shipment</div>
+          <div class="card-body">
             <div class="form-group">
               <label for="shp_ref">Reference</label>
               <input type="text" class="form-control" ng-model="shp.shp_ref">
@@ -20,7 +18,9 @@
       </div>
     </div>
   </div>
-  <div chain-action-bar>
-    <button ng-disabled='!shp.shp_ref.length > 0 || !shp.shp_imp_syscode.length > 0' class='btn btn-default' ng-click='save(shp)'>Save</button>
-  </div>
+  <footer class='footer'> 
+    <div id="action_bar" class='navbar fixed-bottom'> 
+      <button ng-disabled='!shp.shp_ref.length > 0 || !shp.shp_imp_syscode.length > 0' class='btn btn-secondary' ng-click='save(shp)'>Save</button>
+    </div> 
+  </footer> 
 </chain-loading-wrapper>

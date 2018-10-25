@@ -1,40 +1,57 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
-    $("#btn_tour").click(function() {
-      Chain.showNavTour();
+    $("#btn_dash_tour").click(function() {
+      DashTour.showTour();
     });
   });
 });
 <%end-%>
-<%content_for :action_bar do -%>
-  <span id='nav-help-anchor'>&nbsp;</span>
-  <%unless current_user.search_setups.empty? -%>
-    <button class='btn_link' link_to='<%=edit_dashboard_widgets_path%>' title='Setup'><i class='fa fa-cogs'></i></button>
-  <%end-%>
-<%end-%>
 <div id='ng-app' ng-app='DashboardApp'>
   <div chain-messages errors='errors' notices='notices'></div>
+  <h1 id="dash-title" class='text-center'>Dashboard</h1>
   <%if @widgets.blank? -%>
-    <div class='container'>
-      <div class='row'>
-        <div class='col-md-12 jumbotron'>
-          <h1>Welcome!</h1>
-          <% if current_user.search_setups.empty? -%>
-            <p>This is your personal dashboard. Once you've setup some searches, you'll be able to add them here.</p>
-          <% elsif @widgets.empty? -%>
-            <p>Click the setup link at the bottom of the page to add some of your searches to your dashboard.</p>
-          <% end -%>
-          <p>
-            <button id='btn_tour' class='btn btn-lg btn-primary'>Click for a quick tour</button>
-          </p>
-        </div>
+    <div class='row'>
+      <div class="col-md-1"></div>
+      <div class="col-md-10 col-sm-12">
+        <a id="btn-modify" class="btn btn-primary" href="<%=edit_dashboard_widgets_path%>" title="Setup">Modify Dashboard</a>
       </div>
+      <div class="col-md-1"></div>
+    </div>
+    <div class="row">
+      <div class="col-md-1"></div>
+      <div class='col-md-10 col-sm-12'>
+        <div class="card top-buffer">
+          <div class="card-header pb-1">
+            <a id="news-header" href="https://www.vandegriftinc.com/news" target="_blank"><h4>Recent News from Vandegrift</h4></a>
+          </div>
+        </div>
+        <dashboard-news id="news-box" class="table">
+          <div class='loader'>loading</div>
+        </dashboard-news>
+      </div>
+      <div class="col-md-1"></div>
     </div>
   <%else-%>
-    <h1 class='text-center'>Dashboard</h1>
+    <div class='row'>
+      <div class="col-md-12">
+        <a id="btn-modify" class="btn btn-primary" href="<%=edit_dashboard_widgets_path%>" title="Setup">Modify Dashboard</a>
+      </div>
+    </div>
     <%@widgets.each do |w| -%>
       <dashboard-widget class='widget_box' widget-id='<%=w.search_setup_id%>'></dashboard-widget>
     <%end -%>
   <%end -%>
 </div>
+<footer class='footer'>
+  <div id="action_bar" class='navbar navbar-light fixed-bottom py-0 m-0'>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <button id="btn_dash_tour" class="btn btn-secondary">Dashboard Tour</button>
+      </li>
+    </ul>
+    <form class='navbar-form float-right'>
+      <%= image_tag(master_setup.logo_image.blank? ? "vfi_track_logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
+    </form>
+  </div>
+</footer>

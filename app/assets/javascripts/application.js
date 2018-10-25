@@ -11,9 +11,9 @@
 // GO AFTER THE REQUIRES BELOW.
 //= require jquery
 //= require jquery_ujs
-//= require jquery-ui-1.10.4.custom.min.js
 //= require json3
-//= require bootstrap
+//= require bootstrap.bundle
+//= require jquery-ui
 //= require angular
 //= require_directory ./every_page
 //= require_directory ./domainer

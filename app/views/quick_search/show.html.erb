@@ -8,8 +8,8 @@ $(function() {
     activateTarget = btn.attr('data-qs-activate');
 
 
-    $("[data-qs-activate]").addClass('btn-default').removeClass('btn-primary');
-    btn.addClass('btn-primary').removeClass('btn-default');
+    $("[data-qs-activate]").addClass('btn-secondary').removeClass('btn-primary');
+    btn.addClass('btn-primary').removeClass('btn-secondary');
 
     if(activateTarget=="all") {
       defaultModule = "all";
@@ -61,7 +61,7 @@ $(function() {
       <div class="btn-group">
         <button type="button" class="btn btn-primary" data-qs-activate='all'>All</button>
         <%@available_modules.each do |cm|%>
-          <button type="button" class="btn btn-default" data-qs-activate='qs-<%=cm.class_name%>'><%=cm.label%></button>
+          <button type="button" class="btn btn-secondary" data-qs-activate='qs-<%=cm.class_name%>'><%=cm.label%></button>
         <%end%>
       </div>
     </div>

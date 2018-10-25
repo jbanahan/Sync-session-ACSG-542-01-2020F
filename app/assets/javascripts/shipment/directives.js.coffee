@@ -103,15 +103,15 @@ shipmentApp.directive 'addressExpander', ->
       return true
     scope.notEmptyString = (thing) -> thing && thing.length > 0
     scope.formattedTitle = attrs.title.replace(/\s/g, '_')
-  template: '<div class="panel panel-default">
-    <div class="panel-heading" role="tab" id="header-{{formattedTitle}}" ng-click="rotateChevron($event)" data-toggle="collapse" data-parent="#address-accordion" href="#collapse-{{formattedTitle}}" aria-expanded="false" aria-controls="collapseOne">
+  template: '<div class="card">
+    <div class="card-header" role="tab" id="header-{{formattedTitle}}" ng-click="rotateChevron($event)" data-toggle="collapse" data-parent="#address-accordion" href="#collapse-{{formattedTitle}}" aria-expanded="false" aria-controls="collapseOne">
         <span ng-style="{color: notEmptyString(addressName) ? \'#a6a6a6\' : \'inherit\' }">{{title}}</span>
-        <h4 class="panel-title">
-            {{addressName}} <i ng-if="notEmptyString(fullAddress)" class="fa fa-chevron-down pull-right"></i>
+        <h4 class="card-title">
+            {{addressName}} <i ng-if="notEmptyString(fullAddress)" class="fa fa-chevron-down float-right"></i>
         </h4>
     </div>
-    <div ng-if="notEmptyString(fullAddress)" id="collapse-{{formattedTitle}}" role="tabpanel" class="panel-collapse collapse" aria-labelledby="header-{{formattedTitle}}">
-        <div class="panel-body">
+    <div ng-if="notEmptyString(fullAddress)" id="collapse-{{formattedTitle}}" role="tabpanel" class="card-collapse collapse" aria-labelledby="header-{{formattedTitle}}">
+        <div class="card-body">
             {{fullAddress}}
         </div>
     </div>

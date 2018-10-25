@@ -9,7 +9,7 @@
       ev.preventDefault();
       addNewSearchCriterion();
     });
-    $('#<%=wrapper%>').html("<table id='sp_table'></table><a href='#' id='sp_add'>Add</a>");
+    $('#<%=wrapper%>').html("<table id='sp_table'></table><a href='#' id='sp_add' class='btn btn-primary' role='button'>Add</a>");
     <% sc_counter = 0 %>
     <% current_search.search_criterions.each do |sc| %>
       <% 

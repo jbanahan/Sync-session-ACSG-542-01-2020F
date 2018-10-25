@@ -1,11 +1,9 @@
-<div ng-if='product.variants || product.permissions.can_manage_variants' class="panel panel-primary">
-    <div class="panel-heading">
-      <h3 class="panel-title">Variants</h3>
-    </div>
-    <div class='panel-body variant-section' ng-repeat='v in product.variants track by v.id'>
+<div ng-if='product.variants || product.permissions.can_manage_variants' class="card">
+    <div class="card-header">Variants</div>
+    <div class='card-body variant-section' ng-repeat='v in product.variants track by v.id'>
       <div>
         <button ng-click='showVariant(v)' class='btn btn-link btn-sm'>{{v.var_identifier}}</button>
-        <button class='btn btn-xs btn-default pull-right' ng-click='v.showDetail = !v.showDetail'><i class='fa' ng-class='{"fa-eye":!v.showDetail,"fa-eye-slash":v.showDetail}'></i></button>
+        <button class='btn btn-sm float-right' ng-click='v.showDetail = !v.showDetail'><i class='fa' ng-class='{"fa-eye":!v.showDetail,"fa-eye-slash":v.showDetail}'></i></button>
       </div>
       <div ng-show='v.showDetail'>
         <div ng-repeat='fld in dictionary.fieldsByRecordType(dictionary.recordTypes.Variant) track by fld.uid'>

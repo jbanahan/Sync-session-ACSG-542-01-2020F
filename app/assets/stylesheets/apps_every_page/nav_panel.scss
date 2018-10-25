@@ -1,0 +1,51 @@
+$vandegrift-blue: #62bcf3;
+$vandegrift-blue-shade: #40aef2;
+$vandegrift-gold: #F0BA43;
+$vandegrift-gold-shade: #eca713;
+
+#chain-nav-panel .fa,
+#chain-nav-panel li a span,
+.navbar-dark {
+  border: none;
+  color: white;
+  &:hover {
+    color: $vandegrift-gold-shade;
+  }
+}
+#chain-nav-panel .dropdown-item:hover {
+  color: white;
+  background-color: $vandegrift-gold;
+}
+.btn-warning {
+  color: #FFFFFF;
+  background-color: #f0ba43;
+  border-color: #eeb02b;
+}
+.btn-warning:hover {
+  color: #FFFFFF;
+  background-color: #eca713;
+  border-color: #d49711;
+}
+.topnav {
+  background-color: $vandegrift-blue;
+}
+#notification_bell .fa.fa-bell-o.fa-lg.message_envelope.messages {
+  color:red;
+  &:hover {
+    color: $vandegrift-gold-shade;
+  }
+}
+.topnav .popover-content {
+  color: black;
+}
+
+@media screen and (min-width: 600px) {
+  .nav-small-screen {
+    display: none;
+  }
+}
+@media screen and (max-width: 600px) {
+  .nav-large-screen {
+    display: none;
+  }
+}

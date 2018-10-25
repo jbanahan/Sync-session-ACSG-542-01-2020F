@@ -113,7 +113,7 @@
       </form>
     </div>
     <div class='row'>
-      <div class='col-md-8 col-md-offset-2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
+      <div class='col-md-8 offset-md-2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
         Showing {{arrangedAnswers.length}} of {{resp.answers.length}} questions.
       </div>
     </div>
@@ -122,7 +122,7 @@
         <div class='col-md-12'>
           <legend class='text-info' style="padding-bottom: 3px;">
             Question #{{answer.sort_number}} <span ng-show='answer.saving' class='label label-info'>Saving...</span>
-            <div class="pull-right last-updated"><span class="label" style="font-size: 60%" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}' title="{{answer.updated_at | amDateFormat:'YYYY-MM-DD h:mm a'}}">Updated <span am-time-ago='answer.updated_at'></span></span></div>
+            <div class="float-right last-updated"><span class="label" style="font-size: 60%" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}' title="{{answer.updated_at | amDateFormat:'YYYY-MM-DD h:mm a'}}">Updated <span am-time-ago='answer.updated_at'></span></span></div>
           </legend>
         </div>
       </div>
@@ -179,7 +179,7 @@
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
           <div ng-hide='answer.error_message'>
-            <div class='pull-right' ng-show='resp.can_make_private_comment'>
+            <div class='float-right' ng-show='resp.can_make_private_comment'>
               <input type='checkbox' ng-model='answer.new_comment_private' /> private
             </div>
             <div>
@@ -211,8 +211,8 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             <h4 class="modal-title">Send Reminder</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           </div>
           <div class="modal-body" id="remind-modal-container">
             <form>
@@ -227,29 +227,29 @@
               <div class="form-group">
                 <label for="comment">Body</label>
                 <textarea class="form-control" rows="5" id="remind-body" ng-model = 'messageFields.email_body'></textarea>
-                <small class="pull-right">A link to the survey will be added to the message body.</small>
+                <small class="float-right">A link to the survey will be added to the message body.</small>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-default" ng-click="sendEmails(resp, messageFields)">Send</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-secondary" ng-click="sendEmails(resp, messageFields)">Send</button>
           </div>
         </div>
       </div>
     </div>
     <div chain-action-bar>
-      <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
+      <button class='btn btn-secondary' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
       <%-if @sr.survey.can_edit?(current_user)-%>
-        <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
-        <button class='btn btn-default' ng-show="!resp.archived" ng-click='showRemindModal(reminderDefaults)'>Send Reminder Email</button>
-        <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
+        <button class='btn btn-secondary' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
+        <button class='btn btn-secondary' ng-show="!resp.archived" ng-click='showRemindModal(reminderDefaults)'>Send Reminder Email</button>
+        <button class='btn_link btn btn-secondary' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
       <%-end-%>
       <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
-        <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-default', :form_class=>'inline-button-to', :class=>'btn btn-default'%>
+        <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-secondary', :form_class=>'inline-button-to', :class=>'btn btn-secondary'%>
       <%-end-%>
       <%-if @sr.submitted_date && @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
-        <button class='btn_link btn <%= @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active] ? 'btn-danger' : 'btn-default'%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
+        <button class='btn_link btn <%= @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active] ? 'btn-danger' : 'btn-secondary'%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
       <%-end-%>
     </div>    
   </div>

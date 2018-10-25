@@ -5,9 +5,9 @@
   $scope.showStateToggles = ->
     modalEl = $('#state-toggle-buttons-modal')
     if modalEl.length == 0
-      modalText = $compile('<div class="modal" id="state-toggle-buttons-modal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title">Toggles</h4></div><div class="modal-body">
+      modalText = $compile('<div class="modal" id="state-toggle-buttons-modal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">Toggles</h4><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button></div><div class="modal-body">
         <chain-loading-wrapper loading-flag="{{loading}}"><div ng-repeat="b in toggleButtons track by b.id"><state-toggle-item button-data="b"></state-toggle-item></div></chain-loading-wrapper>
-        </div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div></div></div>')($scope)
+        </div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button></div></div></div></div>')($scope)
       $('body').append(modalText) #appending to body so it doesn't get stuck in any containers
       modalEl = $('#state-toggle-buttons-modal')
 
@@ -49,7 +49,7 @@
       'objectId': '@'
     }
     replace: true
-    template: "<button class='btn btn-default' ng-click='showStateToggles()'><i class='fa fa-th-list'></i></button>"
+    template: "<button class='btn btn-secondary' ng-click='showStateToggles()'><i class='fa fa-th-list'></i></button>"
     controller: 'StateToggleButtonsCtrl'
   }
 
@@ -59,6 +59,6 @@
     scope: {
       buttonData: '='
     }
-    template: "<button class='btn btn-default btn-block' ng-click='toggleItem()'>{{buttonData.button_text}}</button>"
+    template: "<button class='btn btn-secondary btn-block' ng-click='toggleItem()'>{{buttonData.button_text}}</button>"
     controller: 'StateToggleItemCtrl'
   }

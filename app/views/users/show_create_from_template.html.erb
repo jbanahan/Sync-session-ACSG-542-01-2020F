@@ -2,11 +2,9 @@
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Create User From Template</h3>
-            </div>
-            <div class="panel-body">
+        <div class="card">
+            <div class="card-header">Create User From Template</div>
+            <div class="card-body">
               <div class="form-group">
                 <label for="user_template_id">Template</label>
                 <select name='user_template_id' class='form-control' required>
@@ -40,8 +38,8 @@
                 <label for='notify_user'>Email Invite To User</label>
               </div>              
             </div>
-            <div class="panel-footer text-right">
-              <a href='<%=company_users_path(@company_id)%>' class='btn btn-default'>Cancel</a>
+            <div class="card-footer text-right">
+              <a href='<%=company_users_path(@company_id)%>' class='btn btn-secondary'>Cancel</a>
               <input type='submit' value='Create' class='btn btn-success'>
             </div>
         </div>

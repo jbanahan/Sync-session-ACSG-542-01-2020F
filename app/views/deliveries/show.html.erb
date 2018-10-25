@@ -72,7 +72,7 @@
     <tr class='hover shp_line'>
       <td>
         <%if @delivery.can_edit?(current_user) && !@delivery.locked?%>
-          <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_delivery_delivery_line_path(@delivery,line)%>'>edit</button>
+          <button class='btn_link btn btn-sm' link_to='<%=edit_delivery_delivery_line_path(@delivery,line)%>'>edit</button>
         <%end%>
       </td>
       <%= show_model_fields line, :delln_line_number, table: true, editor_only: true %>

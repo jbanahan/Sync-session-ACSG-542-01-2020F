@@ -4,7 +4,7 @@
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
     <div class="container" ng-show='svc.project'>
       <div class="row" ng-show='svc.project.red_messages && svc.project.red_messages.length > 0'>
-        <div class="col-md-8 col-md-offset-2">
+        <div class="col-md-8 offset-md-2">
           <div class="alert alert-danger">
             <p ng-repeat='m in svc.project.red_messages'>
               {{m}}
@@ -14,7 +14,7 @@
       </div>
       <form class='form-horizontal' role='form'>
         <div ng-show='svc.project.closed_at'>
-          <chain-panel panel-title='Closed' panel-type='panel-info' panel-message='"Project is closed."'></chain-panel>
+          <chain-panel panel-title='Closed' panel-type='alert-info' panel-message='"Project is closed."'></chain-panel>
         </div>
         <div class='row'>
           <div class='col-md-12'>
@@ -53,12 +53,12 @@
                   </a>
                 </span> &nbsp; 
               </span>
-              <button class='btn btn-xs btn-success' ng-click='projectSetAdd=true'>Add Project Set</button>
+              <button class='btn btn-sm btn-success' ng-click='projectSetAdd=true'>Add Project Set</button>
             </div>
             <div ng-show='projectSetAdd'>
               <input ng-model='projectSetToAdd' type='text' />
-              <button class='btn btn-xs btn-primary' ng-click='addProjectSet()' ng-show='projectSetToAdd && projectSetToAdd.length > 0'>Add</button>
-              <button class='btn btn-xs btn-default' ng-click='projectSetAdd=undefined'>Cancel</button>
+              <button class='btn btn-sm btn-primary' ng-click='addProjectSet()' ng-show='projectSetToAdd && projectSetToAdd.length > 0'>Add</button>
+              <button class='btn btn-sm' ng-click='projectSetAdd=undefined'>Cancel</button>
             </div>
           </div>
         </div>
@@ -68,7 +68,7 @@
             <input ng-blur='saveProject()' class='form-control' placeholder="Enter hyperlink address to Google Drive folder for this project's documents" type="url" ng-model='svc.project.drive_folder' id='inpDriveFolder' />
           </div>
           <div class='col-sm-1'>
-            <a ng-href='{{svc.project.drive_folder}}' target='_blank' ng-show='svc.project.drive_folder.length > 0'><span class="glyphicon glyphicon-link"></span></a>
+            <a ng-href='{{svc.project.drive_folder}}' target='_blank' ng-show='svc.project.drive_folder.length > 0'><span class="fa fa-link"></span></a>
           </div>
         </div>
       </form>
@@ -79,11 +79,11 @@
             <textarea id="" name="" cols="30" rows="10" ng-model="addUpdateBody" class='form-control' placeholder='Enter new update'></textarea>
             <button ng-click="addProjectUpdate()" ng-show="addUpdateBody.length>0" class='btn btn-primary'>Add Update</button>
           </div>
-          <div ng-repeat="u in svc.project.project_updates" class='panel panel-default'>
-            <div class='panel-heading'>
+          <div ng-repeat="u in svc.project.project_updates" class='card'>
+            <div class='card-header'>
               <span>{{u.created_by_name}} - {{u.updated_at}}</span>
             </div>
-            <div class='panel-body'>
+            <div class='card-body'>
               <div><span ng-show='u.saving' class='label label-info'>Saving</span>&nbsp;</div>
               <div ng-hide='u.edit'>
                 <chain-textile-view ng-model='u.body'></chain-textile-view>
@@ -92,10 +92,10 @@
                 <chain-textile-edit ng-model='u.body'></chain-textile-edit>
               </div>
             </div>
-            <div class='panel-footer'>
-              <button class='btn btn-sm btn-default' ng-click='u.edit=true' ng-show='userId==u.created_by_id && !u.edit'>Edit</button>
+            <div class='card-footer'>
+              <button class='btn btn-sm btn-secondary' ng-click='u.edit=true' ng-show='userId==u.created_by_id && !u.edit'>Edit</button>
               <button class='btn btn-sm btn-success' ng-click='editProjectUpdate(u)' ng-show='u.edit'>Save</button>
-              <button class='btn btn-sm btn-default' ng-click='u.edit=false' ng-show='u.edit'>Cancel</button>
+              <button class='btn btn-sm btn-secondary' ng-click='u.edit=false' ng-show='u.edit'>Cancel</button>
             </div>
           </div>
         </div>
@@ -109,11 +109,11 @@
       </div>
     </div>
     <div chain-action-bar>
-      <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button> 
-      <button class='btn btn-default' ng-click='toggleClose()' ng-show='svc.project'>{{svc.project && svc.project.closed_at | ifTrue : 'Re-open' : 'Close'}} Project</button>
-      <button class='btn btn-default' ng-click='toggleOnHold()' ng-show='svc.project && !svc.project.closed_at'>{{svc.project && svc.project.on_hold | ifTrue: 'Lift Hold' : 'Place on Hold'}}</button>
-      <button class='btn btn-default btn_link' ng-hide='hidePrevious || !enableNextPrev' ng-click='previousProject()'>Previous</button>
-      <button class='btn btn-default btn_link' ng-hide='hideNext || !enableNextPrev' ng-click='nextProject()'>Next</button>
+      <button class='btn btn-secondary btn_link' link_to='<%=projects_path%>'>Projects</button> 
+      <button class='btn btn-secondary' ng-click='toggleClose()' ng-show='svc.project'>{{svc.project && svc.project.closed_at | ifTrue : 'Re-open' : 'Close'}} Project</button>
+      <button class='btn btn-secondary' ng-click='toggleOnHold()' ng-show='svc.project && !svc.project.closed_at'>{{svc.project && svc.project.on_hold | ifTrue: 'Lift Hold' : 'Place on Hold'}}</button>
+      <button class='btn btn-secondary btn_link' ng-hide='hidePrevious || !enableNextPrev' ng-click='previousProject()'>Previous</button>
+      <button class='btn btn-secondary btn_link' ng-hide='hideNext || !enableNextPrev' ng-click='nextProject()'>Next</button>
     </div>
   </div>
 </div>

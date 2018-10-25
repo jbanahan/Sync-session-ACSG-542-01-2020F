@@ -1,6 +1,6 @@
 <% content_for :action_bar do %>
-  <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>All Projects</button>
-  <button class='btn btn-default' id='toggle-closed-projects'>Show Closed Projects</button>
+  <button class='btn btn-secondary btn_link' link_to='<%=projects_path%>'>All Projects</button>
+  <button class='btn btn-secondary' id='toggle-closed-projects'>Show Closed Projects</button>
 <% end %>
 
 <div class="row">
@@ -25,7 +25,7 @@
     <%-@projects.each do |p|-%>
       <%-cache ['proj_set_index_row', p, 0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
         <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at ? 'closed-project' : ''%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>' data-project-id='<%=p.id%>'>
-          <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
+          <td><%=link_to 'View', p, :class=>'btn btn-sm'%></td>
           <td><%=p.name%>
             <%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%>
             <%=p.on_hold? ? '<span class="label label-warning">on hold</span> '.html_safe : '' %>

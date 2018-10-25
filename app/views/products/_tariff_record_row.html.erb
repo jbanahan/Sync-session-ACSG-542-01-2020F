@@ -4,9 +4,9 @@
   <% f.object.view_sequence = tariff_view_sequence %>
   <%= show_model_fields(f, :hts_view_sequence, hidden: true) %>
 <div class='tr_close'>
-  <a href='#' class='auto_class btn btn-xs btn-default'>Auto-Classify</a>  
+  <a href='#' class='auto_class btn btn-sm'>Auto-Classify</a>  
   <%= f.hidden_field :_destroy, "class" => "tf_destroy"%>
-  <%=link_to "Delete", '#', :class=>'tf_remove btn btn-xs btn-danger'%>
+  <%=link_to "Delete", '#', :class=>'tf_remove btn btn-sm btn-danger'%>
 </div>
   <table>
     <%= show_model_fields(f, :hts_line_number, table:true) %>

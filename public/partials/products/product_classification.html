@@ -21,7 +21,7 @@
         <div ng-repeat="ctry in importCountries track by ctry.iso_code">
           <div class='classification-selector-box' ng-click='activateClassification(ctry,product)' style="background-image:url('/images/flags/{{ctry.iso_code.toLowerCase()}}.png')" title='{{ctry.name}}'>
             <i class="fa fa-check classification-passed" ng-show='productSvc.classificationByISO(ctry.iso_code,product).tariff_records[0].hts_hts_1.length>1'></i>
-            <span ng-show='ctry.iso_code==activeClassification.class_cntry_iso' class='pull-right'><i class="fa fa-asterisk"></i></span>
+            <span ng-show='ctry.iso_code==activeClassification.class_cntry_iso' class='float-right'><i class="fa fa-asterisk"></i></span>
           </div>
         </div>
       </div>
@@ -38,11 +38,9 @@
           </div>
           <div class="row">
             <div class="col-md-6">
-              <div class="panel panel-default">
-                  <div class="panel-heading">
-                    <h3 class="panel-title">Attributes</h3>
-                  </div>
-                  <div class="panel-body">
+              <div class="card">
+                  <div class="card-header">Attributes</div>
+                  <div class="card-body">
                     <div class="form-group" ng-repeat='fld in dictionary | productClassificationEditFields | chainSkipReadOnlyFields track by fld.uid'>
                       <label class="control-label">{{fld.label}}</label>
                       <chain-field-input model='activeClassification' field='fld' input-class='form-control'></chain-field-input>
@@ -51,11 +49,9 @@
               </div>
             </div>
             <div class="col-md-6">
-              <div class="panel" ng-class="{'panel-default': !tr._destroy, 'panel-danger': tr._destroy}" ng-repeat="tr in activeClassification.tariff_records track by tr.hts_line_number">
-                <div class="panel-heading">
-                  <h3 class='panel-title'>Component {{tr.hts_line_number}}</h3>
-                </div>
-                <div class="panel-body component-body">
+              <div class="card" ng-class="{'card-default': !tr._destroy, 'card-danger': tr._destroy}" ng-repeat="tr in activeClassification.tariff_records track by tr.hts_line_number">
+                <div class="card-header">Component {{tr.hts_line_number}}</div>
+                <div class="card-body component-body">
                   <div class="alert alert-danger" ng-show='tr._destroy'>
                       Will be deleted on save.
                   </div>
@@ -85,13 +81,13 @@
                     <chain-field-input model='tr' field='fld' input-class='form-control'></chain-field-input>
                   </div>
                 </div>
-                <div class="panel-footer text-right">
-                  <button class='btn btn-xs btn-default' ng-click='autoClassify(product,tr)' ng-show="canAutoClassify(tr)" title='Auto-Classify'><i class='fa fa-magic'></i></button>
-                  <button class='btn btn-xs btn-danger' ng-show="!tr._destroy" ng-click="tr._destroy = true"><i class='fa fa-trash'></i></button>
-                  <button class='btn btn-xs btn-default' ng-show="tr._destroy" ng-click="tr._destroy = null"><i class='fa fa-undo'></i></button>
+                <div class="card-footer text-right">
+                  <button class='btn btn-secondary btn-sm' ng-click='autoClassify(product,tr)' ng-show="canAutoClassify(tr)" title='Auto-Classify'><i class='fa fa-magic'></i></button>
+                  <button class='btn btn-sm btn-danger' ng-show="!tr._destroy" ng-click="tr._destroy = true"><i class='fa fa-trash'></i></button>
+                  <button class='btn btn-sm' ng-show="tr._destroy" ng-click="tr._destroy = null"><i class='fa fa-undo'></i></button>
                 </div>
               </div>
-              <button class='btn btn-block btn-default text-center' ng-click='addTariff(activeClassification)' title='Add Component'><i class='fa fa-plus'></i></button>
+              <button class='btn btn-block btn-secondary text-center' ng-click='addTariff(activeClassification)' title='Add Component'><i class='fa fa-plus'></i></button>
             </div>
           </div>
         </div>

@@ -6,11 +6,11 @@
       </div>
     </div>
     <div class="row">
-      <div ng-hide="activeOrder" class="col-xs-2 col-xs-offset-5" style="text-align: center; margin-top:24px;">
-        <p><button ng-show="!!linesAvailable" ng-click="importBooking()" class="btn btn-md btn-default" style="width:100%">Import Booking</button></p>
+      <div ng-hide="activeOrder" class="col-xs-2 offset-xs-5" style="text-align: center; margin-top:24px;">
+        <p><button ng-show="!!linesAvailable" ng-click="importBooking()" class="btn btn-md" style="width:100%">Import Booking</button></p>
         <p ng-show="bookedOrders.length > 0">Booked Orders</p>
         <div class="btn-group-vertical" style="width:100%" data-toggle="buttons">
-          <label class="btn btn-md btn-default"
+          <label class="btn btn-md"
                  ng-repeat="ord in bookedOrders"
                  ng-class="{active:ord.id==activeOrder.id}"
                  ng-click="getOrder(ord)"><input type="radio">{{ord.ord_cust_ord_no}}</label>
@@ -41,7 +41,7 @@
                 <th>SKU</th>
                 <th>
                   <div class='btn-group'>
-                    <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
+                    <button type='button' class='btn btn-sm dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
                     <ul class='dropdown-menu' role='menu'>
                       <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
                       <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
@@ -77,8 +77,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
         <h4 class="modal-title" id="prorateModalLabel">Prorate Quantities</h4>
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
       </div>
       <div class="modal-body">
         <form class='form-horizontal'>
@@ -93,7 +93,7 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='prorate(activeOrder,proration)' ng-disabled='!proration.amount || !proration.sign'>Go</button>
       </div>
     </div>
@@ -106,7 +106,7 @@
         <p>PO Number {{activeOrder.ord_cust_ord_no}} already exists on Shipment(s) {{shipmentWarningModalData.shipmentsForOrder.join(", ")}} – Continue?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="clearField()">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" ng-click="clearField()">Close</button>
         <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='getOrder(shipmentWarningModalData.orderId)'>Add to Shipment</button>
       </div>
     </div>
@@ -114,6 +114,6 @@
 </div>
 <add-address-modal shipment-id="shp.id"></add-address-modal>
 <div chain-action-bar>
-  <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
-  <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+  <button class='btn btn-success' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
+  <button class='btn btn-secondary' ng-click='cancel()'>Cancel</button>
 </div>

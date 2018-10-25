@@ -1,10 +1,10 @@
-<button class='btn-link btn-xs' ng-click='showDetail()'>{{hts}}</button>
+<button class='btn-link btn-sm' ng-click='showDetail()'>{{hts}}</button>
 <div class="modal fade">
   <div class="modal-dialog" ng-if='modalActivated'>
     <div class="modal-content">
       <div class="modal-header text-left">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">{{iso}}: {{hts}}</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
       </div>
       <div class="modal-body text-left">
         <div class="alert alert-danger" ng-show='errorMessage'>
@@ -20,9 +20,9 @@
         </chain-loading-wrapper>
       </div>
       <div class="modal-footer">
-        <a ng-show='officialTariff.ot_taric_url' class='btn btn-default' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>TARIC</a>
-        <a ng-show='officialTariff.ot_binding_ruling_url' class='btn btn-default' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>Binding Rulings</a>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <a ng-show='officialTariff.ot_taric_url' class='btn btn-secondary' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>TARIC</a>
+        <a ng-show='officialTariff.ot_binding_ruling_url' class='btn btn-secondary' href='{{officialTariff.ot_binding_ruling_url}}' target='_new'>Binding Rulings</a>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

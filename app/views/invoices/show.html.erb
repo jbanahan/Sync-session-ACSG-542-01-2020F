@@ -1,23 +1,23 @@
 <% content_for :action_bar do %>
   <button class='btn_link' link_to='<%=history_invoice_path(@invoice)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
 <% end %>
-<h1>Customer Invoice</h1>
 <div class="row">
-  <div class="col-xs-4">
+  <div class="col-12"><h1>Customer Invoice</h1></div>
+  <div class="col-md-4">
     <%= show_model_fields(@invoice, [:inv_inv_num, :inv_inv_date, :inv_cust_ref_num, :inv_origin_cntry_name, :inv_ship_mode, :inv_desc_of_goods], {never_hide: true}) %>
     <div class="row bootstrap-hover">
-      <div class="col-xs-4" style="font-weight: bold;">
+      <div class="col-md-4" style="font-weight: bold;">
         <%= model_field_labels([:inv_gross_weight]) %>
       </div>
-      <div class="col-xs-8">
+      <div class="col-md-8">
         <%= show_model_fields(@invoice, [:inv_gross_weight, :inv_gross_weight_uom], {editor_only: true}) %>
       </div>
     </div>
   </div>
-  <div class="col-xs-4">
+  <div class="col-md-4">
     <%= show_model_fields(@invoice, [:inv_imp_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
   </div>
-  <div class="col-xs-4">
+  <div class="col-md-4">
     <%= show_model_fields(@invoice, [:inv_inv_tot_foreign, :inv_inv_tot_domestic, :inv_net_invoice_total, :inv_total_discounts, :inv_total_charges, :inv_currency, :inv_exchange_rate, :inv_manually_generated], {never_hide: true}) %>
   </div>
 </div>
@@ -30,74 +30,79 @@
           <h4><%= model_field_labels([:invln_po_number]) %>
             - <%= show_model_fields(line, [:invln_po_number], {editor_only: true}) %></h4>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-xs-3">
+        <div class="col-md-3">
           <%= show_model_fields(line, [:invln_ln_number], {never_hide: true}) %>
         </div>
       </div>
       <div class="row">
-        <div class="col-xs-6" style="padding: 0px; margin: 0px;">
-          <div class="col-xs-6">
-            <%= show_model_fields(line, [:invln_part_number, :invln_quantity], {never_hide: true}) %>
-            <div class="row bootstrap-hover">
-              <div class="col-xs-4" style="font-weight: bold;">
-                <%= model_field_labels([:invln_gross_weight]) %>
+        <div class="col-md-6">
+          <div class="row">
+            <div class="col-md-6">
+              <%= show_model_fields(line, [:invln_part_number, :invln_quantity], {never_hide: true}) %>
+              <div class="row bootstrap-hover">
+                <div class="col-md-4" style="font-weight: bold;">
+                  <%= model_field_labels([:invln_gross_weight]) %>
+                </div>
+                <div class="col-md-8">
+                  <%= show_model_fields(line, [:invln_gross_weight, :invln_gross_weight_uom], {editor_only: true}) %>
+                </div>
               </div>
-              <div class="col-xs-8">
-                <%= show_model_fields(line, [:invln_gross_weight, :invln_gross_weight_uom], {editor_only: true}) %>
+            </div>
+            <div class="col-md-6">
+              <div class="row bootstrap-hover">
+                <div class="col-md-4" style="font-weight: bold;">
+                  <%= model_field_labels([:invln_volume]) %>
+                </div>
+                <div class="col-md-8">
+                  <%= show_model_fields(line, [:invln_volume, :invln_volume_uom], {editor_only: true}) %>
+                </div>
+              </div>
+              <%= show_model_fields(line, [:invln_unit_price, ], never_hide: true) %>
+              <div class="row bootstrap-hover">
+                <div class="col-md-4" style="font-weight: bold;">
+                  <%= model_field_labels([:invln_net_weight]) %>
+                </div>
+                <div class="col-md-8">
+                  <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
+                </div>
               </div>
             </div>
           </div>
-          <div class="col-xs-6">
-            <div class="row bootstrap-hover">
-              <div class="col-xs-4" style="font-weight: bold;">
-                <%= model_field_labels([:invln_volume]) %>
-              </div>
-              <div class="col-xs-8">
-                <%= show_model_fields(line, [:invln_volume, :invln_volume_uom], {editor_only: true}) %>
-              </div>
+          <div class="row bootstrap-hover">
+            <div class="col-md-2" style="font-weight: bold;">
+              <%= model_field_labels([:invln_part_description]) %>
             </div>
-            <%= show_model_fields(line, [:invln_unit_price, ], never_hide: true) %>
-            <div class="row bootstrap-hover">
-              <div class="col-xs-4" style="font-weight: bold;">
-                <%= model_field_labels([:invln_net_weight]) %>
-              </div>
-              <div class="col-xs-8">
-                <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
-              </div>
+            <div class="col-md-8">
+              <%= show_model_fields(line, [:invln_part_description], {never_hide: true, editor_only: true}) %>
             </div>
-          </div>
-          <div class="col-xs-12">
-            <%= show_model_fields(line, [:invln_part_description], {never_hide: true}) %>
           </div>
         </div>
-        <div class="col-xs-3">
+        <div class="col-md-3">
           <%= show_model_fields(line, [:invln_hts_number, :invln_value_foreign, :invln_export_cntry_name, :invln_origin_cntry_name, :invln_mid], {never_hide: true}) %>
         </div>
-        <div class="col-xs-3">
+        <div class="col-md-3">
           <%= show_model_fields(line, [:invln_department, :invln_value_domestic, :invln_first_sale, :invln_fw], {never_hide: true}) %>
         </div>
       </div>
       <div class="row">
-        <div class="col-xs-12">
+        <div class="col-md-12">
           <div class="container-fluid" style="border: 1px solid black;">
             <div class="row">
-              <div class="col-xs-12" style="background-color: lightgrey;">
+              <div class="col-md-12" style="background-color: lightgrey;">
                 <h4>Discounts</h4>
               </div>
             </div>
             <div class="row">
-              <div class="col-xs-3">
+              <div class="col-md-3">
                 <%= show_model_fields(line, [:invln_air_sea_disc], {never_hide: true}) %>
               </div>
-              <div class="col-xs-3">
+              <div class="col-md-3">
                 <%= show_model_fields(line, [:invln_trade_discount], {never_hide: true}) %>
               </div>
-              <div class="col-xs-3">
+              <div class="col-md-3">
                 <%= show_model_fields(line, [:invln_early_pay_disc], {never_hide: true}) %>
               </div>
-              <div class="col-xs-3">
+              <div class="col-md-3">
                 <%= show_model_fields(line, [:invln_middle_charge], {never_hide: true}) %>
               </div>
             </div>

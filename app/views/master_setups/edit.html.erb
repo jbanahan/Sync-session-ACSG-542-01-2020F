@@ -11,7 +11,11 @@ $(function() {
     "Cancel":function() {$("#mod_upgrade").dialog('close');}
   }});
   $("#btn_upgrade").click(function(evt) {
-    $("#mod_upgrade").dialog('open');
+    $("#mod_upgrade").dialog({
+      title: "Set System Version",
+      width: 400
+    });
+    $("#mod_upgrade").dialog("open");
   });
   $('#usr_head').click(function(evt) {
     $('#usr_tbl').toggle();
@@ -43,15 +47,15 @@ $(function() {
 <button id='btn_upgrade'>Upgrade</button>
 <button id='btn_cancel'>Cancel</button>
 <% if @ms.migration_host.present? %>
-  <%=button_to "Release Migration Lock", release_migration_lock_master_setups_path, method: :post, class:'btn btn-default navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to release the migration lock?'-%>
+  <%=button_to "Release Migration Lock", release_migration_lock_master_setups_path, method: :post, class:'btn navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to release the migration lock?'-%>
 <% end %>
 <%end%>
-<div class='container'>
+<div class='container-fluid'>
   <div class='row'>
-    <div class='col-md-5'>
+    <div class='col-md-4'>
       <%actv_usrs = User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC")%>
       <h2 id='usr_head' style='cursor:pointer;'>Active Users (<%=actv_usrs.count%>)</h2>
-      <table id='usr_tbl' class='table table-condensed'>
+      <table id='usr_tbl' class='table table-condensed table-sm'>
         <thead><tr><th>User</th><th>Company</th><th>Last Action</th></tr></thead>
         <tbody>
           <%actv_usrs.each do |u|%>
@@ -65,7 +69,7 @@ $(function() {
         <%=field_bootstrap "System UUID", @ms.uuid%>
         <%=field_bootstrap "Database Host", MasterSetup.database_host(machine_name_only: true) %>
         <%=field_bootstrap "Database Name", MasterSetup.database_name %>
-        <%=field_bootstrap "Version", content_tag(:div, MasterSetup.current_code_version, class:(MasterSetup.current_code_version==@ms.target_version ? '' : 'bg-danger'))%>
+        <%=field_bootstrap "Version", content_tag(:div, MasterSetup.current_code_version, class:(MasterSetup.current_code_version==@ms.target_version ? '' : 'alert-danger'))%>
         <%=field_bootstrap "Target Version", @ms.target_version%>
         <%=field_bootstrap "System Code", f.text_field(:system_code,:class=>'form-control') %>
         <%=field_bootstrap "Friendly System Name", f.text_field(:friendly_name,:class=>'form-control') %>
@@ -102,9 +106,9 @@ $(function() {
         <% end %>
       <%end%>
     </div>
-    <div class='col-md-7'>
+    <div class='col-md-8'>
       <h2 id='inst_head' style='cursor:pointer;'>Instances</h2>
-      <table id='inst_tbl' class='table table-condensed'>
+      <table id='inst_tbl' class='table table-condensed table-sm'>
         <thead>
           <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
         </thead>
@@ -140,7 +144,7 @@ $(function() {
         total_queued = Delayed::Job.count - errored.length - running.length
       %>
       <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{total_queued} queued #{"job".pluralize(total_queued)}" %></p>
-      <table id='dj_tbl' class='table table-condensed'>
+      <table id='dj_tbl' class='table table-condensed table-sm'>
         <thead>
           <tr><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
         </thead>
@@ -158,7 +162,7 @@ $(function() {
               <%-unless dj.last_error.blank?
                 # Limit the error and handler sizes to only 1K characters...otherwise this can actually cause the master setups page to load REALLY slow if we have long errors/handlers in a bunch of fields
               -%>
-                <pre style='height:150px;overflow:auto;resize:both;'><%=dj.last_error.to_s.length <= 1000 ? dj.last_error : (dj.last_error.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY- SEE DATABASE FOR FULL LAST ERROR VALUE]")%></pre>
+                <pre class="pre-scrollable" style='height:150px;max-width:500px;overflow:scroll;resize:both;background-color: #f7f7f9;'><%=dj.last_error.to_s.length <= 1000 ? dj.last_error : (dj.last_error.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY- SEE DATABASE FOR FULL LAST ERROR VALUE]")%></pre>
               <%-end-%>
             </td>
             <td><%=dj.run_at%></td>
@@ -166,7 +170,7 @@ $(function() {
             <td><%=dj.failed_at%></td>
             <td><%=dj.locked_by%></td>
             <td>
-              <pre style='height:150px;overflow:auto;resize:both;'><%=dj.handler.to_s.length <= 1000 ? dj.handler : (dj.handler.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY - SEE DATABASE FOR FULL HANDLER VALUE]")%></pre>
+              <pre class="pre-scrollable" style='height:150px;max-width:500px;overflow:scroll;resize:both;background-color: #f7f7f9;'><%=dj.handler.to_s.length <= 1000 ? dj.handler : (dj.handler.to_s[0..1000] + "\n[TRUNCATED FOR DISPLAY - SEE DATABASE FOR FULL HANDLER VALUE]")%></pre>
             </td>
           </tr>
         <% end %>
@@ -177,10 +181,10 @@ $(function() {
 </div>
 
 
-<div id='mod_upgrade' style='display:none;'>
+<div id='mod_upgrade'>
   <%=form_tag '/master_setups/upgrade', :id=>:frm_upgrade do |f| %>
     <table>
-      <%=field_bootstrap "Version", text_field_tag(:name) %>
+      <%=field_bootstrap "Version:", text_field_tag(:name) %>
     </table>
   <%end%>
 </div>
@@ -211,9 +215,9 @@ $(function() {
           <p id='message' class='text-center'></p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-          <%= link_to "Just This One", "#", :method => :delete, :class=>'btn btn-default', :id=>'btn-just-one' %>
-          <%= link_to "Clear All", "#", :method => :delete, :class=>'btn btn-default', :id=>'btn-clear-all' %>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <%= link_to "Just This One", "#", :method => :delete, :class=>'btn btn-secondary', :id=>'btn-just-one' %>
+          <%= link_to "Clear All", "#", :method => :delete, :class=>'btn btn-secondary', :id=>'btn-clear-all' %>
         </div>
       </div>
     </div>
