@@ -23,7 +23,7 @@ jobs:
     # To see the list of pre-built images that CircleCI provides for most common languages see
     # https://circleci.com/docs/2.0/circleci-images/
     docker:
-      - image: circleci/ruby:2.2.9-browsers
+      - image: circleci/ruby:2.5.1-browsers
         environment:
           RAILS_ENV: test
           DB_HOST: localhost
@@ -78,6 +78,11 @@ jobs:
           name: Create / Migrate Database
           command: |-
             bundle exec rake db:create db:migrate --trace
+            
+      # GPG version 1 is needed because version 2 no longer really allows for passing the password to encrypt on the command line.
+      - run:
+          name: Install gpg version 1
+          command: sudo apt-get install gnupg1
 
       # TEST_FILES is broken out into it's own variable because of random bash parsing issues which case "bundler: failed to load command: rspec"
       - run: 

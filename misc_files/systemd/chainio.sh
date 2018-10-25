@@ -60,7 +60,7 @@ fi
     # There's probably some clever shell/sed thing we can do to turn that into a name value pair and then create files/contents 
     # directly from a single command, but this works fine too
     # Multiple sed passes strips all trailing space
-    TAG_NAME=`echo "$TAG" | sed -r 's/^\|\s+([^\|]*)\s+\|.*/\1/' | sed -r 's/(\s+)$//'`
+    TAG_NAME=`echo "$TAG" | sed -r 's/^\|\s+([^\|]*)\s*\|.*/\1/' | sed -r 's/(\s+)$//'`
     TAG_VALUE=`echo "$TAG" | sed -r 's/^\|[^|]+\|\s+([^|]*)\s+\|$/\1/' | sed -r 's/(\s+)$//'`
     `echo "$TAG_VALUE" > "${TAG_FS_BASE}/${TAG_NAME}"`
   done
