@@ -291,6 +291,7 @@ module CoreModuleDefinitions
        :key_attribute_field_uid => :class_cntry_id
    })
   PRODUCT = CoreModule.new("Product","Product",{
+       :restorable => true,
        :statusable=>true,
        :file_formatable=>true,
        :worksheetable=>true,

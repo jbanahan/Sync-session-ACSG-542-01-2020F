@@ -21,7 +21,8 @@ class CoreModule
       :quicksearch_fields, # List of field / field definitions for quicksearching
       :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
       :module_chain, #default module chain for searches
-      :snapshot_descriptor
+      :snapshot_descriptor,
+      :restorable # If true, the restore button will appear on the history partial, allowing the user to restore the object to the state it was at the time of that snapshot
 
   def initialize(class_name,label,opts={})
     o = {:worksheetable => false, 
@@ -37,7 +38,8 @@ class CoreModule
           :show_field_prefix => false,
           :object_from_piece_set_lambda => lambda {|ps| nil},
           :enabled_lambda => lambda { true },
-          :key_model_field_uids => []
+          :key_model_field_uids => [],
+          :restorable => false
         }.merge(opts)
     @class_name = class_name
     @label = label
@@ -89,6 +91,7 @@ class CoreModule
     @logical_key_lambda = o[:logical_key_lambda]
     @module_chain = o[:module_chain]
     @snapshot_descriptor = o[:snapshot_descriptor]
+    @restorable = o[:restorable]
   end
 
   def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init
@@ -172,6 +175,10 @@ class CoreModule
   #can be used as the base for an import/export file format
   def file_formatable?
     @file_formatable
+  end
+
+  def restorable?
+    @restorable == true
   end
 
   def new_object

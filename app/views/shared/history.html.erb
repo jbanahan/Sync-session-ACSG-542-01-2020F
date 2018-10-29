@@ -4,27 +4,23 @@
   <button id='btn_clpse'>Hide All</button>
 <%end%>
 <%content_for :javascript do %>
-  $(function() {
-    $('#accordion').on('show.bs.collapse', function(event){
-      t = event.target
-      id = ($(t).attr('snapshot-id'));
-      panel = $('#heading'+id);
+ $(function() {
+    $('#history-table').on('show.bs.collapse', function(event){
+      panel = $('#heading'+event.target.dataset.snapshot);
       panel.find('.history-dropdown').removeClass('fa-chevron-right').addClass('fa-chevron-down');
     });
-    $('#accordion').on('hide.bs.collapse', function(event){
-      t = event.target
-      id = ($(t).attr('snapshot-id'));
-      panel = $('#heading'+id);
+    $('#history-table').on('hide.bs.collapse', function(event){
+      panel = $('#heading'+event.target.dataset.snapshot);
       panel.find('.history-dropdown').removeClass('fa-chevron-down').addClass('fa-chevron-right');
     });
     $("form.frm_restore").submit(function() {
       return window.confirm("Restoring will overwrite the current values with the values from this history entry.\n\n Are you sure you want to continue?");
     });
     $("#btn_xpnd").click(function() {
-      $('#accordion .card-collapse').collapse('show');
+      $('#history-table .collapse:not(".show")').collapse('show');
     });
     $("#btn_clpse").click(function() {
-      $('#accordion .card-collapse').collapse('hide');
+      $('#history-table .collapse.show').collapse('hide');
     });
   });
 <%end%>
@@ -43,14 +39,14 @@
   <%end-%>
   <div class="row">
     <div class="col-md-12">
-      <div id="accordion" aria-multiselectable="true">
+      <div aria-multiselectable="true" id="history-table">
         <%-@snapshots.each do |s|-%>
           <% d = s.diff_vs_previous %>
           <div class="card">
             <div class="card-header" id='heading<%=s.id%>'>
               <p>
                 <i class="history-dropdown fa fa-chevron-right"></i>
-                <a data-toggle='collapse' data-parent='accordion' href='#collapse<%=s.id%>'>
+                <a data-toggle='collapse' href='#collapse<%=s.id%>'>
                   <%=s.created_at%>: <%=s.user.try(:full_name)%> <%="(#{s.user.company.name})"%>
                 </a>
                 <% if current_user.sys_admin? %>
@@ -65,21 +61,23 @@
                 <% end %>
               <%end%>
             </div>
-            <div id="collapse<%=s.id%>" class="collapse" aria-labelledby="heading<%=s.id%>" snapshot-id="<%=s.id%>">
-              <%if s.imported_file_id%>
-                <div style='float:right'>(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>)</div>
-              <%end%>
-              <%if s.bulk_process_log_id%>
-                <div style='float:right'>(Created By <%= link_to s.bulk_process_log.bulk_type, s.bulk_process_log  %>)</div>
-              <%end  %>
-              <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d, :am_root=>true}%>
-              <% if @base_object.respond_to?(:can_edit?) && @base_object.can_edit?(current_user)-%>
-                <div class='history_actions text-right'>
-                  <%=form_for s, :url=>restore_entity_snapshot_path(s), :method=>:post, :html=>{:class=>'frm_restore'} do |f|%>
-                    <%=f.submit "Restore", :class=>'btn btn-danger btn-sm'%>
-                  <%end%>
-                </div>
-              <% end -%>
+            <div id="collapse<%=s.id%>" class="collapse" aria-labelledby="heading<%=s.id%>" data-snapshot="<%=s.id%>">
+              <div class="card card-body">
+                <%if s.imported_file_id%>
+                  <p class="text-right">(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>)</p>
+                <%end%>
+                <%if s.bulk_process_log_id%>
+                  <p class="text-right">(Created By <%= link_to s.bulk_process_log.bulk_type, s.bulk_process_log  %>)</p>
+                <%end  %>
+                <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d, :am_root=>true}%>
+                <% if @base_object.respond_to?(:can_edit?) && @base_object.can_edit?(current_user) && CoreModule.find_by_object(@base_object).restorable? -%>
+                  <div class='history_actions text-right'>
+                    <%=form_for s, :url=>restore_entity_snapshot_path(s), :method=>:post, :html=>{:class=>'frm_restore'} do |f|%>
+                      <%=f.submit "Restore", :class=>'btn btn-danger btn-sm'%>
+                    <%end%>
+                  </div>
+                <% end -%>
+              </div>
             </div>
           </div>
         <%-end-%>
