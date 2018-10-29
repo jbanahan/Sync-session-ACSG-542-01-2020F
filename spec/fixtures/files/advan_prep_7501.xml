@@ -668,12 +668,12 @@
           <AddressLine3>LONGKOU CITY SHANDONG, CHINA</AddressLine3>
           <City>
             <CityName>Longkou</CityName>
-            <CityCode Qualifier="UN">CNLKU</CityCode>
-            <CountryCode>CN</CountryCode>
-            <CountryName>China</CountryName>
+            <CityCode Qualifier="UN">VNLKU</CityCode>
+            <CountryCode>VN</CountryCode>
+            <CountryName>Vietnam</CountryName>
           </City>
-          <CountryCode>CN</CountryCode>
-          <CountryName>China</CountryName>
+          <CountryCode>VN</CountryCode>
+          <CountryName>Vietnam</CountryName>
         </PartyInfo>
         <AssortmentQty>0</AssortmentQty>
         <ItemUOM>Each</ItemUOM>

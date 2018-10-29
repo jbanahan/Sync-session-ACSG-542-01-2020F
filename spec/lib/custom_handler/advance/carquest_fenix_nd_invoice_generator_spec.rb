@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
 
   let (:product) {
     p = Factory(:product, name: "Description")
-    p.update_custom_value! cdefs[:prod_sku_number], "SKU"
+    p.update_custom_value! cdefs[:prod_part_number], "PART"
     p.update_hts_for_country(ca, "1234567890")
 
     p
@@ -67,12 +67,13 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
       expect(st.addresses.first).to eq ship_to
 
       expect(i.master_bills_of_lading).to eq "SCAC123456"
+      expect(i.currency).to eq "USD"
       expect(i.country_origin_code).to eq "CN"
 
       expect(i.commercial_invoice_lines.length).to eq 1
       l = i.commercial_invoice_lines.first
 
-      expect(l.part_number).to eq "SKU"
+      expect(l.part_number).to eq "PART"
       expect(l.po_number).to eq "Cust Order"
       expect(l.quantity).to eq 10
       expect(l.unit_price).to eq 5
@@ -84,7 +85,7 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
     end
   end
 
-  describe "generate_invocie_and_send" do
+  describe "generate_invoice_and_send" do
 
     def verify_company_fields l, i, c
       ranges = [(i..i+49), (i+50..i+99), (i+100..i+149), (i+150..i+199), (i+200..i+249), (i+250..i+299), (i+300..i+349), (i+350..i+399)]
@@ -116,11 +117,18 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
       expect(file_contents).not_to be_nil
       contents = file_contents.split("\r\n").first
 
-      # Just validate the importer data is present, its the only field we're overriding
+      # Just validate the importer data is present
       c = Company.new name: ship_to.name
       c.addresses << ship_to
 
       verify_company_fields(contents, 820, c)
     end
   end
+
+  describe "ftp_folder" do
+    it "uses correct folder" do
+      expect(subject.ftp_folder).to eq "to_ecs/fenix_invoices/CQ"
+    end
+  end
+
 end

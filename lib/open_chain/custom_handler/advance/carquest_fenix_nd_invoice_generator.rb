@@ -39,6 +39,7 @@ module OpenChain; module CustomHandler; module Advance; class CarquestFenixNdInv
     inv.vendor = convert_address_to_company(shipment.ship_from)
     # Not a typo, I mean to pull the house to the master here.
     inv.master_bills_of_lading = first_line.shipment.house_bill_of_lading
+    inv.currency = "USD"
 
     shipment_lines.each do |shipment_line|
       inv.commercial_invoice_lines << build_invoice_line(shipment_line)
@@ -53,7 +54,7 @@ module OpenChain; module CustomHandler; module Advance; class CarquestFenixNdInv
     line = CommercialInvoiceLine.new
 
     order_line = shipment_line.order_lines.first
-    line.part_number = order_line.product.custom_value(cdefs[:prod_sku_number])
+    line.part_number = order_line.product.custom_value(cdefs[:prod_part_number])
     line.po_number = order_line.order.customer_order_number
     line.quantity = shipment_line.quantity
     line.unit_price = order_line.price_per_unit
@@ -96,7 +97,11 @@ module OpenChain; module CustomHandler; module Advance; class CarquestFenixNdInv
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:prod_sku_number])
+    @cdefs ||= self.class.prep_custom_definitions([:prod_part_number])
+  end
+
+  def ftp_folder
+    "to_ecs/fenix_invoices/CQ"
   end
 
 end; end; end; end

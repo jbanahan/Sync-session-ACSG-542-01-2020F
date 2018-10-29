@@ -361,6 +361,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       end
 
       line.country_of_origin = invoice_line.get_elements("OriginCountry").first.try(:attributes).try(:[], "Code")
+      
+      # Pull the country of origin from the invoice line Factory PartyInfo if it's not found in an OriginCountry element
+      if line.country_of_origin.blank?
+        line.country_of_origin = REXML::XPath.first(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode").try(:text)
+      end
+
       if !line.persisted? || line.changed?
         line.save!
         snapshot_order = true

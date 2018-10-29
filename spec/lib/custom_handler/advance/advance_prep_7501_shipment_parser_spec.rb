@@ -1,7 +1,8 @@
 describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
   let (:xml_path) { "spec/fixtures/files/advan_prep_7501.xml"}
-  let (:xml) { REXML::Document.new IO.read(xml_path) }
+  let (:xml_data) { IO.read(xml_path) }
+  let (:xml) { REXML::Document.new xml_data }
   let (:user) { Factory(:user) }
   let (:advance_importer) { Factory(:importer, system_code: "ADVAN") }
   let (:carquest_importer) { Factory(:importer, system_code: "CQ") }
@@ -182,6 +183,17 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       shipment = Factory(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
 
       expect(subject.parse xml, user, xml_path).to be_nil
+    end
+
+    it "falls back to finding country of origin using Factory PartyInfo" do
+      # By removing the OriginCountry, the code should fall back to pulling the
+      # country of origin from the Factory PartyInfo.
+      xml_data.gsub! '<OriginCountry Code="CN">China</OriginCountry>', ''
+
+      s = subject.parse xml, user, xml_path
+      expect(s.shipment_lines.length).to eq 2
+      ol = s.shipment_lines.first.piece_sets.first.order_line
+      expect(ol.country_of_origin).to eq "VN"
     end
 
     context "with Carquest importer" do
