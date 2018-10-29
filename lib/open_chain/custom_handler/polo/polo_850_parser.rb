@@ -3,8 +3,8 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Polo; class Polo850Parser
-  extend IntegrationClientParser
-  include PoloCustomDefinitionSupport
+  include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
   def self.integration_folder
     ["polo/_polo_850", "/home/ubuntu/ftproot/chainroot/polo/_polo_850"]
