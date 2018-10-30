@@ -4,6 +4,9 @@
 ul.nav-tabs a[data-target] {
   cursor: pointer; }
 
+.list-group-item, .list-group-item:hover {
+  z-index: auto; }
+
 .card-header {
   border-color: #62bcf3 !important;
   color: white;
