@@ -27,26 +27,24 @@
   <% else %>
       <% attachments.each_with_index do |att, attachment_counter| %>
         <% if attachment_counter%3 == 0 %>
-          <div class="row">
+          <div class="row attachment-table" style="margin-bottom: 1em;">
         <% end %>
           <div class='col-sm-6 col-md-4'>
             <div class='thumbnail text-center'>
-              <div class='attachment_delete' class='text-right'>
-                <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
+              <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
+                <div class='attachment_delete' class='text-right'>
                   <%del_path = local_assigns.has_key?(:redirect_to) ? attachment_path(:id=>att.id,:redirect_to=>redirect_to) : att%>
-                  <div class="float-right">  
-                    <%=link_to(image_tag("x.png",:size=>"16x16"), del_path, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
+                  <div class="float-right delete">
                     <% if att.is_private? %>
                       <i class="fa fa-eye-slash" title="private"></i>
                     <% end %>
+                    <%=link_to(image_tag("x.png",:size=>"16x16"), del_path, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
                   </div>
-                <%else%>
-                  <%=image_tag('spacer.gif',:size=>'16x16')%>
-                <%end%>
-              </div>
+                </div>
+              <%end%>
               <%=attachment_icon att%>
               <div class='caption' style="word-wrap:break-word">
-                <%unless att.attachment_type.blank?%><h4><%=att.attachment_type%></h4><%end%>
+                <%unless att.attachment_type.blank?%><h5><%=att.attachment_type%></h5><%end%>
                 <p>
                   <%=att.attached_file_name%>
                 </p>
@@ -63,7 +61,7 @@
   <div class="row">
     <div class="col-md-12 text-center">
       <a href="/attachments/email_attachable/<%= attachable.class %>/<%= attachable.id %>">
-        <button class="btn btn-secondary" id="email_attachments_button">Email attachments</button>
+        <button class="btn btn-secondary" id="email_attachments_button">Email <%="Attachment".pluralize(attachments.length)%></button>
       </a>
     </div>
   </div>

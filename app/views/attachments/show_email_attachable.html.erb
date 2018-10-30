@@ -1,91 +1,76 @@
 <% number_of_attachments = @attachments_array.length %>
 
+
+<form role="form">
 <div class="container">
   <div class="row">
-    <div class="col-md-4 offset-md-4">
+    <div class="col-md-12">
       <h3 align="center">Send attachments</h3>
     </div>
   </div>
-  <form role="form">
-    <div class="row">
-      <div class="col-md-4 offset-md-4">
-        <div class="form-group">
-          <label>Send to:</label>
-          <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 comma-separated email addresses..." autofocus=true rows=4><%=current_user.email%></textarea>
-        </div>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="form-group">
+        <label for="send_to_address">Send to:</label>
+        <textarea class='form-control' id="send_to_address" placeholder="Enter up to 10 comma-separated email addresses..." autofocus=true rows=4><%=current_user.email%></textarea>
+      </div>
 
-        <div class="form-group">
-          <label>Subject:</label>
-          <% if @attachable.class.to_s == "Entry" %>
-            <input type="text" class="form-control" id="email_subject" placeholder="Enter subject..." value="Attachments for Entry <%=@attachable.entry_number%>">
-          <% else %>
-            <input type="text" class="form-control" id="email_subject" placeholder="Enter subject...">
-          <% end %>
-        </div>
+      <div class="form-group">
+        <label for="email_subject">Subject:</label>
+        <% if @attachable.class.to_s == "Entry" %>
+          <input type="text" class="form-control" id="email_subject" placeholder="Enter subject..." value="Attachments for Entry <%=@attachable.entry_number%>">
+        <% else %>
+          <input type="text" class="form-control" id="email_subject" placeholder="Enter subject...">
+        <% end %>
+      </div>
 
-        <div class="form-group">
-          <label>Body:</label>
-          <textarea class="form-control" rows="4" id="email_body" placeholder="Enter body..."></textarea>
-        </div>
+      <div class="form-group">
+        <label for="email_body">Body:</label>
+        <textarea class="form-control" rows="4" id="email_body" placeholder="Enter body..."></textarea>
       </div>
     </div>
 
-    <% if number_of_attachments > 0 %>
-      <div class="row">
-        <div class="col-md-4 offset-md-4">
-          <h4 align="center">Choose attachments</h4>
-        </div>
-      </div>
+    <div class="col-md-8">
+      <h4 align="center">Choose <%="Attachment".pluralize(number_of_attachments)%></h4>
 
       <% if number_of_attachments > 1 %> <!-- Not necessary if you only have one item -->
         <div class="row">
-          <div class="col-md-4 offset-md-4" align="center">
-            <button type="button" class="btn btn-success" id="select_all_button" style="width: 110px; margin-right: 5px;">Select all</button>
-            <button type="button" class="btn btn-danger" id="select_none_button" style="width: 110px; margin-left: 5px;">Select none</button>
+          <div class="col-md-12">
+            <div class="text-center">
+              <button type="button" class="btn btn-success" id="select_all_button">Select All</button>
+              <button type="button" class="btn btn-danger" id="select_none_button">Select None</button>
+            </div>
           </div>
         </div>
       <% end %>
-    <% end %>
-
-    <div class="col-md-4 offset-md-4">                
+      <div style="margin-top: 1em;"></div>
       <% @attachments_array.each do |single_attachment| %>
         <div class="row">
-          <div class="checkbox att-checkbox">
-            <div class="col-md-8">
-              <% if number_of_attachments == 1 %>
-                <!-- If there's only one, it has to be attached, so attach it by default -->
-                <input type="checkbox" value="" checked=true>
-              <% else %>
-                <input type="checkbox" value="">
-              <% end %>
-              <div style="word-wrap: break-word;"><%= single_attachment.attached_file_name %></div>
-              <%unless single_attachment.attachment_type.blank?%>
-                (<%=single_attachment.attachment_type%>)
-              <%end%>
-              <div style="display: none" class="attachment_id_container">
-                <%= single_attachment.id %>
-              </div>
-            </div>
-            <div class="col-md-4" data-file-size="<%=single_attachment.attached_file_size%>"><%=number_to_human_size(single_attachment.attached_file_size)%>
-            </div>
-          </div>                
+          <div class="offset-md-3 att-checkbox" data-attachment-id="<%=single_attachment.id%>" data-file-size="<%=single_attachment.attached_file_size%>">
+            <!-- If there's only one, it has to be attached, so attach it by default -->
+            <input type="checkbox" class="form-check-input" value="" <%=number_of_attachments == 1 ? "checked=true" : ""%>>
+            <label class="form-check-label" for="checkbox-<%=single_attachment.id%>">
+              <%= single_attachment.attached_file_name %> 
+              <%= single_attachment.attachment_type.blank? ? "" : "(#{single_attachment.attachment_type})" %>
+              <%= number_to_human_size(single_attachment.attached_file_size) %>
+            </label>
+          </div>
         </div>
       <% end %>
-    </div>
-    
-    <div class="row">
-      <div class="col-md-5 offset-md-4"
-        <br><br><p>Total Size of Selected Attachments (limit 10 MB):&nbsp;&nbsp;&nbsp;<span id="total-file-size"></span></p>
+      <div class="row">
+        <div class="col-md-12">
+         <div class="text-center" style="margin-top: 2em;">Total Size of Selected Attachments (limit 10 MB):&nbsp;&nbsp;&nbsp;<span id="total-file-size"></span></div>
+        </div>
       </div>
     </div>
-
-    <div class="row">
-      <div class="col-md-4 offset-md-4" align="center">
-        <button type="button" class="btn btn-primary btn-lg" id="submit_attachment_email" style="margin-top: 20px; width: 150px;">Submit</button>
-      </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4 offset-md-4" align="center">
+      <button type="button" class="btn btn-primary btn-lg" id="submit_attachment_email" style="margin-top: 20px; width: 150px;">Submit</button>
     </div>
-
+  </div>
 </div>
+</form>
 
 <% content_for :javascript do -%>
 
@@ -102,7 +87,7 @@
 
     function updateTotalSize() {
       var selectedAttachments = $('.att-checkbox').filter(function(i) { return $(this).find('input').is(':checked'); });
-      var attachmentSizes = selectedAttachments.map(function() { return $(this).find("[data-file-size]").data().fileSize; });
+      var attachmentSizes = selectedAttachments.map(function() { return $(this).data().fileSize; });
       var total = jQuery.makeArray(attachmentSizes).reduce(function(acc, nxt) { return acc += nxt; }, 0);
       var totalTag = $('#total-file-size')
       
@@ -141,11 +126,9 @@
         to_address = $("#send_to_address").val();
         email_subject = $("#email_subject").val();
         email_body = $("#email_body").val();
-        ids_to_include = []
-
-        for (i = 0; i < $("input:checked").length; i++){
-          ids_to_include.push(parseInt($($("input:checked")[i]).parent().find(".attachment_id_container").text().trim()));
-        }
+        var selectedAttachments = $('.att-checkbox').filter(function(i) { return $(this).find('input').is(':checked'); });
+        var attachmentIds = selectedAttachments.map(function() { return $(this).data().attachmentId; })
+        ids_to_include = jQuery.makeArray(attachmentIds)
 
         Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){

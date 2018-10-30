@@ -37,7 +37,7 @@
           <!--column setup-->
           <div class='row'>
             <div class='col-md-12 text-center'>
-              <h3>Columns</h3>
+              <h3 style="margin: 0;">Columns</h3>
             </div>
           </div>
           <div class='row'>
@@ -51,12 +51,12 @@
                 <div class='col-md-12 text-center'>
                   <select class='form-control' id='availableColumns' multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
                   </select>
-                  <div>
+                  <div style="margin-top: 3px;">
                     <input class='form-control' type="text" ng-model="columnFilter" placeholder="Search columns...">
                   </div>
-                  <div>
-                    <a ng-show='columnsToAdd' class='btn btn-outline-dark' ng-click='addColumns()'>Add</a>
-                    <a class='btn btn-outline-dark' ng-click='toggleConstantField()'>Add Custom Column</a>&nbsp;
+                  <div style="margin-top: 3px;">
+                    <button ng-show='columnsToAdd' class='btn btn-secondary' ng-click='addColumns()'>Add</button>
+                    <button class='btn btn-secondary' ng-click='toggleConstantField()'>Add Custom Column</button>&nbsp;
                     <div ng-show='displayConstantField'>
                       <br>
                       <form class='form-inline col-md-12'>
@@ -66,7 +66,7 @@
                         <label class='col-md-4' for='constant-value-input'>Column value:</label>
                         <input type="text" name="constant-field-value" ng-model='constantField.value' class="form-control col-md-8" id='constant-value-input'>
                       </form>
-                      <a class='btn btn-outline-dark offset-md-4' ng-disabled='!constantField.name' ng-click='addConstantField()'>Save</a>
+                      <button class='btn btn-secondary offset-md-4' ng-disabled='!constantField.name' ng-click='addConstantField()'>Save</button>
                     </div>
                   </div>
                 </div>
@@ -87,9 +87,9 @@
                   <br />
                   <div ng-hide='columnsToRemove'>&nbsp;</div>
                   <div ng-show='columnsToRemove'>
-                    <a id="btn_remove_column" class='btn btn-outline-dark'  ng-click='removeColumns()'>Remove</a>
-                    <a class='btn btn-outline-dark' ng-click='moveColumnsUp()'>Up</a>
-                    <a class='btn btn-outline-dark' ng-click='moveColumnsDown()'>Down</a>
+                    <button id="btn_remove_column" class='btn btn-secondary'  ng-click='removeColumns()'>Remove</button>
+                    <button class='btn btn-secondary' ng-click='moveColumnsUp()'>Up</button>
+                    <button class='btn btn-secondary' ng-click='moveColumnsDown()'>Down</button>
                   </div>
                 </div>
               </div>
@@ -98,7 +98,7 @@
           <!--sort setup-->
           <div class='row'>
             <div class='col-md-12 text-center'>
-              <h3>Sorts</h3>
+              <h3 style="margin: 0;">Sorts</h3>
             </div>
           </div>
           <div class='row'>
@@ -112,13 +112,13 @@
                 <div class='col-md-12 text-center'>
                   <select class='form-control' id='available_sorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
                   </select>
-                  <div>
+                  <div style="margin-top: 3px;">
                     <input class='form-control' type="text" ng-model="sortFilter" placeholder="Search sorts...">
                   </div>
-                  <div>
+                  <div style="margin-top: 3px;">
                     <div ng-hide='searchSetup.search_criterions.length && sortsToAdd'>&nbsp;</div>
                     <div ng-show='searchSetup.search_criterions.length && sortsToAdd'>
-                      <a class='btn btn-outline-dark' ng-click='addSorts()'>Add</a>
+                      <button class='btn btn-secondary' ng-click='addSorts()'>Add</button>
                     </div>
                   </div>
                 </div>
@@ -144,10 +144,10 @@
                   <br />
                   <div ng-hide='sortsToRemove'>&nbsp;</div>
                   <div ng-show='sortsToRemove'>
-                    <a class='btn btn-outline-dark' ng-click='removeSorts()'>Remove</a>
-                    <a class='btn btn-outline-dark' ng-click='moveSortsUp()'>Up</a>
-                    <a class='btn btn-outline-dark' ng-click='moveSortsDown()'>Down</a>
-                    <a class='btn btn-outline-dark' ng-click='toggleSort()'>Change Order</a>
+                    <button class='btn btn-secondary' ng-click='removeSorts()'>Remove</button>
+                    <button class='btn btn-secondary' ng-click='moveSortsUp()'>Up</button>
+                    <button class='btn btn-secondary' ng-click='moveSortsDown()'>Down</button>
+                    <button class='btn btn-secondary' ng-click='toggleSort()'>Change Order</button>
                   </div>
                 </div>
               </div>
@@ -156,7 +156,7 @@
           <!-- Parameter setup-->
           <div class='row'>
             <div class='col-md-12 text-center'>
-              <h3>Parameters</h3>
+              <h3 style="margin: 0;">Parameters</h3>
             </div>
           </div>
           <div ng-repeat='crit in searchSetup.search_criterions'>
@@ -166,13 +166,13 @@
             <div class='col-md-12 form-inline'>
               Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
               </select>
-              <button id="add_parameter_btn" ng-show='criterionToAdd' class='btn btn-outline-dark' ng-click='addCriterion(criterionToAdd)'>Add</button>
+              <button id="add_parameter_btn" ng-show='criterionToAdd' class='btn btn-secondary' ng-click='addCriterion(criterionToAdd)' style="margin-left: 5px;">Add</button>
             </div>
           </div>
           <!-- Schedule Setup -->
           <div class='row'>
             <div class='col-md-12 text-center'>
-              <h3>Schedules</h3>
+              <h3 style="margin: 0;">Schedules</h3>
             </div>
           </div>
           <div class='row'>
@@ -199,14 +199,14 @@
                         <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
                       </p>
                       <div  class="card-text text-center">
-                        <button class='btn btn-outline-dark' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-outline-dark' ng-click='removeSchedule(sched)'>Remove</button>
+                        <button class='btn btn-secondary' ng-click='editSchedule(sched)'>Edit</button> <button class='btn btn-secondary' ng-click='removeSchedule(sched)'>Remove</button>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class='row text-center'>
                   <div class='col-md-12'>
-                    <button id="btn_schedule" class='btn btn-primary' ng-click='addSchedule()'>Add Schedule</button>
+                    <button id="btn_schedule" class='btn btn-secondary' ng-click='addSchedule()'>Add Schedule</button>
                   </div>
                 </div>
               </div>
@@ -389,7 +389,7 @@
                 </div>
                 <div class='control-group'>
                   <div class='controls float-right'>
-                    <button id="btn_schedule_done" class='btn btn-primary' ng-click='closeSchedule(scheduleToEdit)' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
+                    <button id="btn_schedule_done" class='btn btn-secondary' ng-click='closeSchedule(scheduleToEdit)' ng-disabled='emailTooLong(scheduleToEdit)'>Done</button>
                   </div>
                 </div>
               </div>

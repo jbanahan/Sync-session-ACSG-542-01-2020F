@@ -1,6 +1,9 @@
 /* Attachment Box */
 .attachment_delete {
-  text-align: right
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  line-height: 0px;
 }
 .attachment_delete img {
   margin: 0px;
@@ -13,4 +16,11 @@
 }
 #mod_attach {
   display: none;
+}
+
+.attachment-table {
+  .thumbnail {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
 }
