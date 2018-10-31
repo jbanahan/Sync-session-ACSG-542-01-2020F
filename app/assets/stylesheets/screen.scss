@@ -1,7 +1,5 @@
-$vandegrift-blue: #62bcf3;
-$vandegrift-dark-blue: #2e3653;
-$vandegrift-gold: #f0ba43;
-$vandegrift-gray: #c5cbce;
+@import "vfi_colors";
+
 body {
   padding-bottom: 3.5em; //padding to accomodate sticky footer nav bar
 }
@@ -74,7 +72,7 @@ div.clear {
     vertical-align: top;
 }
 .detail_table th, .date_grid td:hover, .drag_table th {
-    background-color: $vandegrift-blue;
+    background-color: $vfi-primary;
     color: #FFFFFF;
     text-align: left;
 }

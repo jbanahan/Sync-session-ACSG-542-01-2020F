@@ -1,24 +1,23 @@
-$vandegrift-blue: #62bcf3;
-$vandegrift-gold: #F0BA43;
-$vandegrift-gray: #c5cbce;
+@import "../vfi_colors";
+
 .popover-header {
-  background-color: $vandegrift-gold;
+  background-color: $vfi-secondary;
 }
 #tour_nxt_btn {
-  background-color: $vandegrift-blue;
-  color: white;
+  background-color: $vfi-primary;
+  color: $vfi-primary-text;
 }
 .popover.bs-popover-left .arrow::after {
-  border-left-color: $vandegrift-gold;
+  border-left-color: $vfi-secondary;
 }
 .popover.bs-popover-right .arrow::after {
-  border-right-color: $vandegrift-gold;
+  border-right-color: $vfi-secondary;
 }
 .popover.bs-popover-top .arrow::after {
-  border-top-color: $vandegrift-gold;
+  border-top-color: $vfi-secondary;
 }
 .popover.bs-popover-bottom .arrow::after {
-  border-bottom-color: $vandegrift-gold;
+  border-bottom-color: $vfi-secondary;
 }
 .popover-body img {
   width: 100%;

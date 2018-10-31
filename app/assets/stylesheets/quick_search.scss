@@ -1,8 +1,44 @@
+@import "vfi_colors";
+
 .qs-card {
-  .card-footer {
-    padding: 5px;
-  }
+  margin-bottom: 1em;
+
   .qs-td-label {
     width: 25%;
   }
+
+  .card-header {
+    background-color: $vfi-primary;
+    color: $vfi-primary-text;
+    padding: .50rem 1.25rem;
+
+    a {
+      color: $vfi-primary-text;
+      font-size: 115%;
+      text-decoration: underline;
+    }
+
+    a:hover {
+      color: lightgray;
+    }
+  }
+
+  table {
+    margin-bottom: 0;  
+  }
+
+  .qs-td-value, .qs-td-label {
+    padding: .5em;
+  }
+}
+
+#button-bar {
+  .btn-primary:focus, .btn-primary.focus {
+    box-shadow: none;
+  }
+}
+
+tr.divider td {
+  border-top: 1px solid black !important;
+  font-style: italic;
 }

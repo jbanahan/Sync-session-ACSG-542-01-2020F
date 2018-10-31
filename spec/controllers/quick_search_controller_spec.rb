@@ -11,7 +11,7 @@ describe QuickSearchController do
 
   context "show" do 
     it "should put appropriate modules into @available_modules" do
-      expect_any_instance_of(described_class).to receive(:with_core_module_fields).with(@u).and_yield(CoreModule::ENTRY, []).and_yield(CoreModule::PRODUCT, [])
+      expect_any_instance_of(described_class).to receive(:core_modules_with_quicksearch_fields).with(@u).and_return([CoreModule::ENTRY, CoreModule::PRODUCT])
 
       get :show, v: 'Test'
 

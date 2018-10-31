@@ -17,17 +17,48 @@ root.OCQuickSearch =
   findDivWrapper: (moduleType) ->
     $('#modwrap_'+moduleType)
 
+  
   makeCard: (fields, obj, extraFields, extraVals, searchTerm) ->
+
+    cardHeader = () ->
+      "<div class='card qs-card'>"
+
+    cardFooter = () ->
+      "</div>"
+
+    resultRow = (label, value) ->
+      "<tr><td class='qs-td-label' scope='row'><strong>"+label+":</strong></td><td>"+value+"</td></tr>"
+
+    headerRow = (url, value) ->
+      "<div class='card-header'><div class='float-left'><a href='"+url+"'>"+value+"</a></div><div class='float-right'><a href='"+url+"'><i class='fa fa-link'></i></a></div></div>"
+
+    dividerRow = () ->
+      "<tr class='divider'><td><small>More Info</small></td><td></td></tr>"
+
+    resultsHeader = () ->
+      "<table class='table table-hover'>"
+
+    resultsFooter = () ->
+      "</table>"
+
+    cardContent = (obj, fields, extraFields, extraVals, searchTerm) ->
+      html = showSearchFields(fields, obj, searchTerm)
+      if html != ''
+        html += showExtraFields(extraFields, extraVals, obj)
+        html += resultsFooter()
+
+      html
+
     showSearchFields = (fields, obj, searchTerm) ->   
       fieldCounter = 0
       html = ""
       for id, lbl of fields
         val = obj[id]
         if val && val.length > 0
-          htmlVal = getHtmlVal(val,searchTerm)
           if fieldCounter == 0
-            html += "<div class='card-header'><a href='"+obj['view_url']+"'>"+val+"</a></div><table class='table table-hover'>"
-          html += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+htmlVal+"</td></tr>"
+            html += headerRow(obj['view_url'], val)
+            html += resultsHeader()
+          html += resultRow(lbl, getHtmlVal(val,searchTerm))
           fieldCounter++
       html
     
@@ -39,11 +70,11 @@ root.OCQuickSearch =
       html = ""
       extraValsForObj = extraVals[obj.id]
       if hasExtraVals extraValsForObj
-        html = '<tr class="divider"><td><small>More Info</small></td><td></td></tr>'
+        html = dividerRow()
         for id, lbl of extraFields
           val = extraValsForObj[id]
           if !!val
-            html += "<tr><td class='qs-td-label'><strong>"+lbl+":</strong></td><td>"+val+"</td></tr>"
+            html += resultRow(lbl, val)
       html
       
     getHtmlVal = (val, searchTerm) ->
@@ -65,9 +96,6 @@ root.OCQuickSearch =
 
       return highlighted.str
 
-    h = "<div class='card qs-card'>"
-    h += showSearchFields(fields, obj, searchTerm)
-    h += showExtraFields(extraFields, extraVals, obj)
-    h += "</table>"
-    h += "<div class='card-footer text-right'><a href='"+obj['view_url']+"' class='btn btn-sm'><i class='fa fa-link'></i></a></div>"
-    h += "</div>"
+    h = cardHeader()
+    h += cardContent(obj, fields, extraFields, extraVals, searchTerm)
+    h += cardFooter()

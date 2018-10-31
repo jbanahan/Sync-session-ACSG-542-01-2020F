@@ -1,20 +1,17 @@
-$vandegrift-blue: #62bcf3;
-$vandegrift-blue-shade: #40aef2;
-$vandegrift-gold: #F0BA43;
-$vandegrift-gold-shade: #eca713;
+@import "../vfi_colors";
 
 #chain-nav-panel .fa,
 #chain-nav-panel li a span,
 .navbar-dark {
   border: none;
-  color: white;
+  color: $vfi-primary-text;
   &:hover {
-    color: $vandegrift-gold-shade;
+    color: $vfi-secondary-shade;
   }
 }
 #chain-nav-panel .dropdown-item:hover {
   color: white;
-  background-color: $vandegrift-gold;
+  background-color: $vfi-secondary;
 }
 .btn-warning {
   color: #FFFFFF;
@@ -27,12 +24,12 @@ $vandegrift-gold-shade: #eca713;
   border-color: #d49711;
 }
 .topnav {
-  background-color: $vandegrift-blue;
+  background-color: $vfi-primary;
 }
 #notification_bell .fa.fa-bell-o.fa-lg.message_envelope.messages {
   color:red;
   &:hover {
-    color: $vandegrift-gold-shade;
+    color: $vfi-secondary-shade;
   }
 }
 .topnav .popover-content {

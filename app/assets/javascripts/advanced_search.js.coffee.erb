@@ -526,50 +526,55 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $('#email-modal').modal 'show'
     true
 
-  $scope.handleSearchOverride = (cb, args) ->
-    if $scope.searchWrapper.loading && $scope.errors.length == 0
-      canceller = $scope.searchWrapper.canceller
+  $scope.handleSearchOverride = (scope, callback) ->
+    if scope.searchWrapper.loading && scope.errors.length == 0
+      canceller = scope.searchWrapper.canceller
       canceller.cancel.resolve()
       canceller.cancelled.promise.then ->
         # reset promises
         canceller.cancel = $q.defer()
         canceller.cancelled = $q.defer()
-        $scope.searchWrapper.loading = false
-        cb.call(this, args)
-      true
+        callback()
     else
-      $scope.searchWrapper.loading = true
-      false
+      scope.searchWrapper.loading = true
+      callback()
+    null
 
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->
-    return if $scope.handleSearchOverride($scope.saveSetup)
-    $scope.toggleSetup()
-    $scope.searchWrapper.searchResult = {}
-    ss = $scope.searchSetup
-    $scope.searchSetup = {}
-    
-    if ss.search_criterions.length == 0
-      ss.sort_criterions = []
-      ss.search_schedules = []
-    
-    ss.search_schedules = (sched for sched in ss.search_schedules when !$scope.emailTooLong(sched))
+    $scope.handleSearchOverride($scope, () ->
+      $scope.toggleSetup()
+      $scope.searchWrapper.searchResult = {}
+      ss = $scope.searchSetup
+      $scope.searchSetup = {}
+      
+      if ss.search_criterions.length == 0
+        ss.sort_criterions = []
+        ss.search_schedules = []
+      
+      ss.search_schedules = (sched for sched in ss.search_schedules when !$scope.emailTooLong(sched))
 
-    $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
-      # Unless we're already on the first page, change to it.
-      if $scope.page != 1
-        $location.path '/'+ss.id+'/1'
-      else
-        # The searchResult.saved attribute lets the components watcher know that
-        # the user saved the scope (.ie this isn't an initial load)
-        $scope.searchWrapper.searchResult = {
-          id: ss.id
-          saved: true
-        }
-        loadSearch $scope.searchId
+      $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
+        # Unless we're already on the first page, change to it.
+        if $scope.page != 1
+          $location.path '/'+ss.id+'/1'
+        else
+          # The searchResult.saved attribute lets the components watcher know that
+          # the user saved the scope (.ie this isn't an initial load)
+          $scope.searchWrapper.searchResult = {
+            id: ss.id
+            saved: true
+          }
+          loadSearch $scope.searchId
 
-    ).error((data) ->
-      $scope.errors.push "An error occurred while saving this search."
+      ).error((data) ->
+        $scope.errors.push "An error occurred while saving this search."
+      )
+    )
+
+  $scope.changeSearch = (newId) ->
+    $scope.handleSearchOverride($scope, () ->
+      $location.path('/'+newId+'/1')
     )
 
   #create a new setup and change location to first page
@@ -705,10 +710,6 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     for s in $scope.sortsToRemove
       mf = findByMfid $scope.searchSetup.sort_criterions, s
       mf.descending = !mf.descending
-
-  $scope.changeSearch = (newId) ->
-    return if $scope.handleSearchOverride($scope.changeSearch, newId)
-    $location.path '/'+newId+'/1'
 
   #send background job to build excel
   $scope.backgroundDownload = () ->

@@ -6,10 +6,7 @@ class QuickSearchController < ApplicationController
       return
     end
     @value = params[:v].strip
-    @available_modules = []
-    with_core_module_fields(current_user) do |cm, fields|
-      @available_modules << cm
-    end
+    @available_modules = core_modules_with_quicksearch_fields(current_user)
   end
 
   def by_module
@@ -150,5 +147,16 @@ class QuickSearchController < ApplicationController
         next if fields.nil?
         yield cm, fields, extra_fields
       end
+    end
+
+    def core_modules_with_quicksearch_fields user
+      ordered_core_modules = [CoreModule::PRODUCT, CoreModule::ORDER, CoreModule::SHIPMENT, CoreModule::SECURITY_FILING, CoreModule::ENTRY,
+                              CoreModule::BROKER_INVOICE, CoreModule::CUSTOMS_MONTHLY_STATEMENT, CoreModule::CUSTOMS_DAILY_STATEMENT, 
+                              CoreModule::INVOICE, CoreModule::OFFICIAL_TARIFF]
+      all_core_modules = CoreModule.all
+
+      leftover_core_modules = (all_core_modules - ordered_core_modules).sort_by {|m| m.label.upcase }
+
+      (ordered_core_modules + leftover_core_modules).keep_if { |cm| cm.enabled? && cm.view?(user) && cm.quicksearch_fields.present? }
     end
 end
