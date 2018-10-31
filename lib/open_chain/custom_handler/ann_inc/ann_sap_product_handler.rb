@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
   def order_being_cancelled?(row)
     line = row.dup
-    [0, 1, 2, 14, 15, 16, 22].each do |i|
+    [0, 1, 2, 14, 15, 16, 22, 27, 28].each do |i|
       line[i] = nil
     end
     line.compact!
@@ -114,6 +114,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
               related = extract_related_styles base_row
               p = OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager.get_style(base_style: style, missy: related[:missy], petite: related[:petite], tall: related[:tall], short: related[:short], plus: related[:plus])
               o.terms_of_sale = row[13]
+              o.vendor = vendor[:company] unless vendor[:company] == o.vendor
               o.agent = buying_agent[:company] if buying_agent.present?
               o.selling_agent = selling_agent[:company] if selling_agent.present?
               o.find_and_set_custom_value(cdefs[:ord_type], row[19])

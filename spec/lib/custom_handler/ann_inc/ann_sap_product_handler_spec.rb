@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     cancelled_row = {}
 
     h.each do |field, value|
-      if [:po, :style, :name, :missy, :petite, :tall, :order_quantity].include?(field)
+      if [:po, :style, :name, :missy, :petite, :tall, :order_quantity, :short, :plus].include?(field)
         cancelled_row[field] = value
       else
         cancelled_row[field] = nil
@@ -446,6 +446,24 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq order.id
       end
 
+      it "changes the vendor on an order if the vendor changes" do
+        # I'm using system_code here for simplicity sake.
+        new_vendor = Factory(:company, system_code: '0111111111')
+
+        order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
+
+        subject.process make_row, user, log, opts
+
+        order.reload
+        expect(order.vendor.system_code).to eql(existing_vendor.system_code)
+
+        subject.process make_row({vendor_code: '0111111111'}), user, log, opts
+
+        order.reload
+        expect(order.vendor.system_code).to eql(new_vendor.system_code)
+        expect(order.vendor.system_code).to_not eql(existing_vendor.system_code)
+      end
+
       it "updates an order" do
         order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
         order_line = order.order_lines.create! product: existing_product, quantity: BigDecimal("20")
@@ -574,7 +592,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
       it "cancels an order, that is not yet cancelled, if only specified fields are included" do
         order = Factory(:order, order_number: "PO123", vendor: existing_vendor)
-        subject.process make_row(cancelled_order_row), user, log, opts
+        subject.process make_row(cancelled_order_row_with_related_styles), user, log, opts
 
         order.reload
         expect(order.custom_value(cdefs[:ord_cancelled])).to eq true
