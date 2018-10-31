@@ -5,11 +5,6 @@ module OpenChain; module Report; class CompanyYearOverYearReport
 
   COMPANY_YEAR_OVER_YEAR_REPORT_USERS ||= 'company_yoy_report'
 
-  BOLD_FORMAT ||= XlsMaker.create_format "Bolded", weight: :bold
-  BLUE_HEADER_FORMAT ||= XlsMaker.create_format "Blue Header", weight: :bold, horizontal_align: :merge, pattern_fg_color: :xls_color_41, pattern: 1
-  MONEY_FORMAT ||= XlsMaker.create_format "Money", :number_format => '$#,##0.00'
-  NUMBER_FORMAT ||= XlsMaker.create_format "Number", :number_format => '#,##0', horizontal_align: :center
-
   CompanyYearOverYearData ||= Struct.new(:entry_count, :entry_line_count, :abi_line_count, :total_broker_invoice)
 
   def self.permission? user
@@ -33,7 +28,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
       workbook = generate_report year_1, year_2
     end
 
-    file_name = "Company_YoY_[#{year_1}_#{year_2}].xls"
+    file_name = "Company_YoY_[#{year_1}_#{year_2}].xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "YoY Report", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "Company YoY Report #{year_1} vs. #{year_2}", "The VFI year-over-year report is attached, comparing #{year_1} and #{year_2}.", temp).deliver!
@@ -68,7 +63,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     end
 
     def generate_report year_1, year_2
-      wb = XlsMaker.new_workbook
+      wb = XlsxBuilder.new
+      assign_styles wb
 
       result_set = ActiveRecord::Base.connection.exec_query make_query(year_1, year_2)
       division_hash = {}
@@ -100,33 +96,38 @@ module OpenChain; module Report; class CompanyYearOverYearReport
       end
 
       division_hash.each_key do |division|
-        sheet = XlsMaker.create_sheet wb, "#{division}", []
+        sheet = wb.create_sheet "#{division}"
         year_hash = division_hash[division]
 
         # YTD-limiting of totals is enforced if we're working with the current year.
         ytd_enforced = year_2 == ActiveSupport::TimeZone[get_time_zone].now.year
 
-        counter = -1
-        counter = add_row_block sheet, year_1, nil, 1, counter, year_hash, ytd_enforced
-        counter += 1 # blank row
-        counter = add_row_block sheet, year_2, nil, 2, counter, year_hash, ytd_enforced
-        counter += 1 # blank row
+        add_row_block wb, sheet, year_1, nil, 1, year_hash, ytd_enforced
+        wb.add_body_row sheet, [] # blank row
+        add_row_block wb, sheet, year_2, nil, 2, year_hash, ytd_enforced
+        wb.add_body_row sheet, [] # blank row
         # Compare the two years.
-        counter = add_row_block sheet, year_1, year_2, 3, counter, year_hash, ytd_enforced
+        add_row_block wb, sheet, year_1, year_2, 3, year_hash, ytd_enforced
 
-        XlsMaker.set_column_widths sheet, ([20] + Array.new(12, 14) + [17])
+        wb.set_column_widths sheet, *([20] + Array.new(12, 14) + [17])
       end
 
       wb
     end
 
-    def add_row_block sheet, year, comp_year, block_pos, counter, year_hash, ytd_enforced
-      XlsMaker.add_body_row sheet, counter += 1, make_data_headers(comp_year ? "Variance" : year), [], false, formats: Array.new(14, BLUE_HEADER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entries Transmitted", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("ABI Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :abi_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, ytd_enforced, :total_broker_invoice), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      counter
+    def assign_styles wb
+      wb.create_style :bold, {b: true}
+      wb.create_style(:currency, {format_code: "$#,##0.00"})
+      wb.create_style(:number, {format_code: "#,##0"})
+    end
+
+    def add_row_block wb, sheet, year, comp_year, block_pos, year_hash, ytd_enforced
+      wb.add_body_row sheet, make_data_headers(comp_year ? "Variance" : year), styles: Array.new(14, :default_header)
+      wb.add_body_row sheet, get_category_row_for_year_month("Entries Transmitted", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("ABI Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :abi_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, ytd_enforced, :total_broker_invoice), styles: [:bold] + Array.new(13, :currency)
+      nil
     end
 
     def get_category_row_for_year_month category_name, year_hash, year, comp_year, block_pos, ytd_enforced, method_name, decimal:true

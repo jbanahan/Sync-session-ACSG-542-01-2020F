@@ -59,8 +59,8 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "generates spreadsheet based on arrival date" do
-      port_a = Factory(:port, unlocode:'PORTA', name:'Port A')
-      port_b = Factory(:port, unlocode:'PORTB', name:'Port B')
+      port_a = Factory(:port, schedule_d_code:'5678', name:'Port A')
+      port_b = Factory(:port, cbsa_port:'6789', name:'Port B')
 
       ent_2016_Feb_1 = make_entry 1, '01', :arrival_date, make_utc_date(2016,2,16), invoice_line_count:3, broker_invoice_isf_charge_count:2, transport_mode_code:'10'
       ent_2016_Feb_2 = make_entry 2, '01', :arrival_date, make_utc_date(2016,2,17), invoice_line_count:5, broker_invoice_isf_charge_count:1, transport_mode_code:'9'
@@ -75,143 +75,148 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       ent_2017_Jan_2 = make_entry 10, '01', :arrival_date, make_utc_date(2017,1,17), transport_mode_code:'11'
       ent_2017_Mar = make_entry 11, '01', :arrival_date, make_utc_date(2017,3,2), broker_invoice_isf_charge_count:2, transport_mode_code:'40'
       ent_2017_Apr = make_entry 12, '01', :arrival_date, make_utc_date(2017,4,7), transport_mode_code:'20'
-      ent_2017_May_1 = make_entry 13, '01', :arrival_date, make_utc_date(2017,5,21), transport_mode_code:'21'
-      ent_2017_May_2 = make_entry 14, '01', :arrival_date, make_utc_date(2017,5,22), transport_mode_code:'10'
+      ent_2017_May_1 = make_entry 13, '01', :arrival_date, make_utc_date(2017,5,21), transport_mode_code:'21', broker_invoice_isf_charge_count:3, entry_port_code:'6789'
+      ent_2017_May_2 = make_entry 14, '01', :arrival_date, make_utc_date(2017,5,22), transport_mode_code:'10', broker_invoice_isf_charge_count:1, entry_port_code:'5678'
+      ent_2017_May_3 = make_entry 15, '02', :arrival_date, make_utc_date(2017,5,27), broker_invoice_isf_charge_count:1, entry_port_code:'6789'
+      ent_2017_May_4 = make_entry 16, '02', :arrival_date, make_utc_date(2017,5,28), broker_invoice_isf_charge_count:1, entry_port_code:nil
+      ent_2017_May_5 = make_entry 17, '01', :arrival_date, make_utc_date(2017,5,29), broker_invoice_isf_charge_count:1, entry_port_code:'6789'
+      ent_2017_May_6 = make_entry 18, '01', :arrival_date, make_utc_date(2017,5,30), broker_invoice_isf_charge_count:1, entry_port_code:'No Match'
 
       # These should be excluded because they are outside our date ranges.
-      ent_2015_Dec = make_entry 15, '01', :arrival_date, make_utc_date(2015,12,13)
-      ent_2018_Feb = make_entry 16, '01', :arrival_date, make_utc_date(2018,2,8)
+      ent_2015_Dec = make_entry 19, '01', :arrival_date, make_utc_date(2015,12,13)
+      ent_2018_Feb = make_entry 20, '01', :arrival_date, make_utc_date(2018,2,8)
 
       # This should be excluded because it belongs to a different importer.
-      ent_2016_Feb_different_importer = make_entry 17, '01', :arrival_date, make_utc_date(2016,2,11)
+      ent_2016_Feb_different_importer = make_entry 21, '01', :arrival_date, make_utc_date(2016,2,11)
       importer_2 = Factory(:company, name:'Crudco Bitter Rival')
       ent_2016_Feb_different_importer.update_attributes :importer_id => importer_2.id
 
-      # These should be excluded from the main tabs, but included on the port breakdown tab.
-      ent_2017_Jun_1 = make_entry 18, '01', :arrival_date, make_utc_date(2017,6,6), broker_invoice_isf_charge_count:3, entry_port_code:'PORTB'
-      ent_2017_Jun_2 = make_entry 19, '02', :arrival_date, make_utc_date(2017,6,7), broker_invoice_isf_charge_count:1, entry_port_code:'PORTA'
-      ent_2017_Jun_3 = make_entry 20, '02', :arrival_date, make_utc_date(2017,6,27), broker_invoice_isf_charge_count:1, entry_port_code:'PORTB'
-      ent_2017_Jun_4 = make_entry 21, '01', :arrival_date, make_utc_date(2017,6,28), broker_invoice_isf_charge_count:1, entry_port_code:nil
-      ent_2017_Jun_5 = make_entry 22, '01', :arrival_date, make_utc_date(2017,6,29), broker_invoice_isf_charge_count:1, entry_port_code:'PORTB'
-      ent_2017_Jun_6 = make_entry 23, '01', :arrival_date, make_utc_date(2017,6,30), broker_invoice_isf_charge_count:1, entry_port_code:'No Match'
-
       Timecop.freeze(make_eastern_date(2017,6,28)) do
-        @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'arrival_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => true, 'include_taxes' => true, 'include_other_fees' => true, 'include_isf_fees' => true, 'include_port_breakdown' => true, 'group_by_mode_of_transport' => true})
+        @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'arrival_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => true, 'include_taxes' => true, 'include_other_fees' => true, 'include_isf_fees' => true, 'include_port_breakdown' => true, 'group_by_mode_of_transport' => true, 'include_line_graphs' => true})
       end
-      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_arrival_date_[2016_2017].xls'
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_arrival_date_[2016_2017].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 3
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 3
 
-      sheet = wb.worksheets[0]
       # Tab name should have been truncated.  Company name is too long to fit.
-      expect(sheet.name).to eq "Crudco Consumables an - REPORT"
-      expect(sheet.rows.count).to eq 71
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 0, 2, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 8]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 0, 8, 2, 6, 2, 2, 0, 0, 0, 0, 0, 0, 20]
-      expect(sheet.row(3)).to eq ['Total Units', 0, 1086.4, 543.2, 1629.6, 543.2, 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4345.6]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(5)).to eq ['Entry Type 02', 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 3]
-      expect(sheet.row(6)).to eq ['Entry Type 13', 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
-      expect(sheet.row(7)).to eq ['Ship Mode Air', 0, 0, 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(8)).to eq ['Ship Mode Rail', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-      expect(sheet.row(9)).to eq ['Ship Mode Sea', 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(10)).to eq ['Ship Mode Truck', 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-      expect(sheet.row(11)).to eq ['Ship Mode N/A', 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
-      expect(sheet.row(12)).to eq ['Total Entered Value', 0.0, 111.1, 55.55, 166.65, 55.55, 55.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 444.4]
-      expect(sheet.row(13)).to eq ['Total Duty', 0.0, 88.88, 44.44, 133.32, 44.44, 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 355.52]
-      expect(sheet.row(14)).to eq ['MPF', 0.0, 66.66, 33.33, 99.99, 33.33, 33.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 266.64]
-      expect(sheet.row(15)).to eq ['HMF', 0.0, 44.44, 22.22, 66.66, 22.22, 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 177.76]
-      expect(sheet.row(16)).to eq ['Cotton Fee', 0.0, 22.22, 11.11, 33.33, 11.11, 11.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
-      expect(sheet.row(17)).to eq ['Total Taxes', 0.0, 19.98, 9.99, 29.97, 9.99, 9.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 79.92]
-      expect(sheet.row(18)).to eq ['Other Fees', 0, 17.76, 8.88, 26.64, 8.88, 8.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 71.04]
-      expect(sheet.row(19)).to eq ['Total Fees', 0.0, 15.54, 7.77, 23.31, 7.77, 7.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 62.16]
-      expect(sheet.row(20)).to eq ['Total Duty & Fees', 0.0, 104.42, 52.21, 156.63, 52.21, 52.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 417.68]
-      expect(sheet.row(21)).to eq ['Total Broker Invoice', 0.0, 24.68, 12.34, 37.02, 12.34, 12.34, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 98.72]
-      expect(sheet.row(22)).to eq ['ISF Fees', 0.0, 3.33, 1.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.44]
-      expect(sheet.row(23)).to eq []
-      expect(sheet.row(24)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(25)).to eq ['Number of Entries', 2, 0, 1, 1, 2, nil, nil, nil, nil, nil, nil, nil, 6]
-      expect(sheet.row(26)).to eq ['Entry Summary Lines', 4, 0, 2, 2, 4, nil, nil, nil, nil, nil, nil, nil, 12]
-      expect(sheet.row(27)).to eq ['Total Units', 1086.4, 0, 543.2, 543.2, 1086.4, nil, nil, nil, nil, nil, nil, nil, 3259.2]
-      expect(sheet.row(28)).to eq ['Entry Type 01', 2, 0, 1, 1, 2, nil, nil, nil, nil, nil, nil, nil, 6]
-      expect(sheet.row(29)).to eq ['Entry Type 02', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(30)).to eq ['Entry Type 13', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(31)).to eq ['Ship Mode Air', 0, 0, 1, 0, 0, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(32)).to eq ['Ship Mode Rail', 0, 0, 0, 1, 1, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(33)).to eq ['Ship Mode Sea', 2, 0, 0, 0, 1, nil, nil, nil, nil, nil, nil, nil, 3]
-      expect(sheet.row(34)).to eq ['Ship Mode Truck', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(35)).to eq ['Ship Mode N/A', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(36)).to eq ['Total Entered Value', 111.1, 0.0, 55.55, 55.55, 111.1, nil, nil, nil, nil, nil, nil, nil, 333.3]
-      expect(sheet.row(37)).to eq ['Total Duty', 88.88, 0.0, 44.44, 44.44, 88.88, nil, nil, nil, nil, nil, nil, nil, 266.64]
-      expect(sheet.row(38)).to eq ['MPF', 66.66, 0.0, 33.33, 33.33, 66.66, nil, nil, nil, nil, nil, nil, nil, 199.98]
-      expect(sheet.row(39)).to eq ['HMF', 44.44, 0.0, 22.22, 22.22, 44.44, nil, nil, nil, nil, nil, nil, nil, 133.32]
-      expect(sheet.row(40)).to eq ['Cotton Fee', 22.22, 0.0, 11.11, 11.11, 22.22, nil, nil, nil, nil, nil, nil, nil, 66.66]
-      expect(sheet.row(41)).to eq ['Total Taxes', 19.98, 0.0, 9.99, 9.99, 19.98, nil, nil, nil, nil, nil, nil, nil, 59.94]
-      expect(sheet.row(42)).to eq ['Other Fees', 17.76, 0, 8.88, 8.88, 17.76, nil, nil, nil, nil, nil, nil, nil, 53.28]
-      expect(sheet.row(43)).to eq ['Total Fees', 15.54, 0.0, 7.77, 7.77, 15.54, nil, nil, nil, nil, nil, nil, nil, 46.62]
-      expect(sheet.row(44)).to eq ['Total Duty & Fees', 104.42, 0.0, 52.21, 52.21, 104.42, nil, nil, nil, nil, nil, nil, nil, 313.26]
-      expect(sheet.row(45)).to eq ['Total Broker Invoice', 24.68, 0.0, 12.34, 12.34, 24.68, nil, nil, nil, nil, nil, nil, nil, 74.04]
-      expect(sheet.row(46)).to eq ['ISF Fees', 0.0, 0.0, 2.22, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, 2.22]
-      expect(sheet.row(47)).to eq []
-      expect(sheet.row(48)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(49)).to eq ['Number of Entries', 2, -2, 0, -2, 1, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(50)).to eq ['Entry Summary Lines', 4, -8, 0, -4, 2, nil, nil, nil, nil, nil, nil, nil, -6]
-      expect(sheet.row(51)).to eq ['Total Units', 1086.4, -1086.4, 0, -1086.4, 543.2, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(52)).to eq ['Entry Type 01', 2, -2, 1, -1, 2, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(53)).to eq ['Entry Type 02', 0, 0, -1, -1, 0, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(54)).to eq ['Entry Type 13', 0, 0, 0, 0, -1, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(55)).to eq ['Ship Mode Air', 0, 0, 0, -2, 0, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(56)).to eq ['Ship Mode Rail', 0, 0, 0, 1, 1, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(57)).to eq ['Ship Mode Sea', 2, -2, 0, 0, 1, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(58)).to eq ['Ship Mode Truck', 0, 0, 0, -1, 0, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(59)).to eq ['Ship Mode N/A', 0, 0, 0, 0, -1, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(60)).to eq ['Total Entered Value', 111.1, -111.1, 0.0, -111.1, 55.55, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(61)).to eq ['Total Duty', 88.88, -88.88, 0.0, -88.88, 44.44, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(62)).to eq ['MPF', 66.66, -66.66, 0.0, -66.66, 33.33, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(63)).to eq ['HMF', 44.44, -44.44, 0.0, -44.44, 22.22, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(64)).to eq ['Cotton Fee', 22.22, -22.22, 0.0, -22.22, 11.11, nil, nil, nil, nil, nil, nil, nil, -11.11]
-      expect(sheet.row(65)).to eq ['Total Taxes', 19.98, -19.98, 0.0, -19.98, 9.99, nil, nil, nil, nil, nil, nil, nil, -9.99]
-      expect(sheet.row(66)).to eq ['Other Fees', 17.76, -17.76, 0, -17.76, 8.88, nil, nil, nil, nil, nil, nil, nil, -8.88]
-      expect(sheet.row(67)).to eq ['Total Fees', 15.54, -15.54, 0.0, -15.54, 7.77, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(68)).to eq ['Total Duty & Fees', 104.42, -104.42, 0.0, -104.42, 52.21, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(69)).to eq ['Total Broker Invoice', 24.68, -24.68, 0.0, -24.68, 12.34, nil, nil, nil, nil, nil, nil, nil, -12.34]
-      expect(sheet.row(70)).to eq ['ISF Fees', 0.0, -3.33, 1.11, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, -2.22]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet).to_not be_nil
+      expect(sheet.length).to eq 75
+      expect(sheet[0]).to eq []
+      expect(sheet[1]).to eq []
+      expect(sheet[2]).to eq []
+      expect(sheet[3]).to eq []
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 0, 2, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 8]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 0, 8, 2, 6, 2, 2, 0, 0, 0, 0, 0, 0, 20]
+      expect(sheet[7]).to eq ['Total Units', 0, 1086.4, 543.2, 1629.6, 543.2, 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4345.6]
+      expect(sheet[8]).to eq ['Entry Type 01', 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[9]).to eq ['Entry Type 02', 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 3]
+      expect(sheet[10]).to eq ['Entry Type 13', 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      expect(sheet[11]).to eq ['Ship Mode Air', 0, 0, 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[12]).to eq ['Ship Mode Rail', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      expect(sheet[13]).to eq ['Ship Mode Sea', 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[14]).to eq ['Ship Mode Truck', 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      expect(sheet[15]).to eq ['Ship Mode N/A', 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      expect(sheet[16]).to eq ['Total Entered Value', 0.0, 111.1, 55.55, 166.65, 55.55, 55.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 444.4]
+      expect(sheet[17]).to eq ['Total Duty', 0.0, 88.88, 44.44, 133.32, 44.44, 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 355.52]
+      expect(sheet[18]).to eq ['MPF', 0.0, 66.66, 33.33, 99.99, 33.33, 33.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 266.64]
+      expect(sheet[19]).to eq ['HMF', 0.0, 44.44, 22.22, 66.66, 22.22, 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 177.76]
+      expect(sheet[20]).to eq ['Cotton Fee', 0.0, 22.22, 11.11, 33.33, 11.11, 11.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[21]).to eq ['Total Taxes', 0.0, 19.98, 9.99, 29.97, 9.99, 9.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 79.92]
+      expect(sheet[22]).to eq ['Other Fees', 0, 17.76, 8.88, 26.64, 8.88, 8.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 71.04]
+      expect(sheet[23]).to eq ['Total Fees', 0.0, 15.54, 7.77, 23.31, 7.77, 7.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 62.16]
+      expect(sheet[24]).to eq ['Total Duty & Fees', 0.0, 104.42, 52.21, 156.63, 52.21, 52.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 417.68]
+      expect(sheet[25]).to eq ['Total Broker Invoice', 0.0, 24.68, 12.34, 37.02, 12.34, 12.34, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 98.72]
+      expect(sheet[26]).to eq ['ISF Fees', 0.0, 3.33, 1.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.44]
+      expect(sheet[27]).to eq []
+      expect(sheet[28]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[29]).to eq ['Number of Entries', 2, 0, 1, 1, 6, nil, nil, nil, nil, nil, nil, nil, 10]
+      expect(sheet[30]).to eq ['Entry Summary Lines', 4, 0, 2, 2, 12, nil, nil, nil, nil, nil, nil, nil, 20]
+      expect(sheet[31]).to eq ['Total Units', 1086.4, 0.0, 543.2, 543.2, 3259.2, nil, nil, nil, nil, nil, nil, nil, 5432.0]
+      expect(sheet[32]).to eq ['Entry Type 01', 2, 0, 1, 1, 4, nil, nil, nil, nil, nil, nil, nil, 8]
+      expect(sheet[33]).to eq ['Entry Type 02', 0, 0, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[34]).to eq ['Entry Type 13', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[35]).to eq ['Ship Mode Air', 0, 0, 1, 0, 0, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[36]).to eq ['Ship Mode Rail', 0, 0, 0, 1, 1, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[37]).to eq ['Ship Mode Sea', 2, 0, 0, 0, 5, nil, nil, nil, nil, nil, nil, nil, 7]
+      expect(sheet[38]).to eq ['Ship Mode Truck', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[39]).to eq ['Ship Mode N/A', 0, 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[40]).to eq ['Total Entered Value', 111.1, 0.0, 55.55, 55.55, 333.3, nil, nil, nil, nil, nil, nil, nil, 555.5]
+      expect(sheet[41]).to eq ['Total Duty', 88.88, 0.0, 44.44, 44.44, 266.64, nil, nil, nil, nil, nil, nil, nil, 444.4]
+      expect(sheet[42]).to eq ['MPF', 66.66, 0.0, 33.33, 33.33, 199.98, nil, nil, nil, nil, nil, nil, nil, 333.3]
+      expect(sheet[43]).to eq ['HMF', 44.44, 0.0, 22.22, 22.22, 133.32, nil, nil, nil, nil, nil, nil, nil, 222.2]
+      expect(sheet[44]).to eq ['Cotton Fee', 22.22, 0.0, 11.11, 11.11, 66.66, nil, nil, nil, nil, nil, nil, nil, 111.1]
+      expect(sheet[45]).to eq ['Total Taxes', 19.98, 0.0, 9.99, 9.99, 59.94, nil, nil, nil, nil, nil, nil, nil, 99.9]
+      expect(sheet[46]).to eq ['Other Fees', 17.76, 0.0, 8.88, 8.88, 53.28, nil, nil, nil, nil, nil, nil, nil, 88.8]
+      expect(sheet[47]).to eq ['Total Fees', 15.54, 0.0, 7.77, 7.77, 46.62, nil, nil, nil, nil, nil, nil, nil, 77.7]
+      expect(sheet[48]).to eq ['Total Duty & Fees', 104.42, 0.0, 52.21, 52.21, 313.26, nil, nil, nil, nil, nil, nil, nil, 522.1]
+      expect(sheet[49]).to eq ['Total Broker Invoice', 24.68, 0.0, 12.34, 12.34, 74.04, nil, nil, nil, nil, nil, nil, nil, 123.4]
+      expect(sheet[50]).to eq ['ISF Fees', 0.0, 0.0, 2.22, 0.0, 8.88, nil, nil, nil, nil, nil, nil, nil, 11.1]
+      expect(sheet[51]).to eq []
+      expect(sheet[52]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[53]).to eq ['Number of Entries', 2, -2, 0, -2, 5, nil, nil, nil, nil, nil, nil, nil, 3]
+      expect(sheet[54]).to eq ['Entry Summary Lines', 4, -8, 0, -4, 10, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[55]).to eq ['Total Units', 1086.4, -1086.4, 0.0, -1086.4, 2716.0, nil, nil, nil, nil, nil, nil, nil, 1629.6]
+      expect(sheet[56]).to eq ['Entry Type 01', 2, -2, 1, -1, 4, nil, nil, nil, nil, nil, nil, nil, 4]
+      expect(sheet[57]).to eq ['Entry Type 02', 0, 0, -1, -1, 2, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[58]).to eq ['Entry Type 13', 0, 0, 0, 0, -1, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[59]).to eq ['Ship Mode Air', 0, 0, 0, -2, 0, nil, nil, nil, nil, nil, nil, nil, -2]
+      expect(sheet[60]).to eq ['Ship Mode Rail', 0, 0, 0, 1, 1, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[61]).to eq ['Ship Mode Sea', 2, -2, 0, 0, 5, nil, nil, nil, nil, nil, nil, nil, 5]
+      expect(sheet[62]).to eq ['Ship Mode Truck', 0, 0, 0, -1, 0, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[63]).to eq ['Ship Mode N/A', 0, 0, 0, 0, -1, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[64]).to eq ['Total Entered Value', 111.1, -111.1, 0.0, -111.1, 277.75, nil, nil, nil, nil, nil, nil, nil, 166.65]
+      expect(sheet[65]).to eq ['Total Duty', 88.88, -88.88, 0.0, -88.88, 222.2, nil, nil, nil, nil, nil, nil, nil, 133.32]
+      expect(sheet[66]).to eq ['MPF', 66.66, -66.66, 0.0, -66.66, 166.65, nil, nil, nil, nil, nil, nil, nil, 99.99]
+      expect(sheet[67]).to eq ['HMF', 44.44, -44.44, 0.0, -44.44, 111.1, nil, nil, nil, nil, nil, nil, nil, 66.66]
+      expect(sheet[68]).to eq ['Cotton Fee', 22.22, -22.22, 0.0, -22.22, 55.55, nil, nil, nil, nil, nil, nil, nil, 33.33]
+      expect(sheet[69]).to eq ['Total Taxes', 19.98, -19.98, 0.0, -19.98, 49.95, nil, nil, nil, nil, nil, nil, nil, 29.97]
+      expect(sheet[70]).to eq ['Other Fees', 17.76, -17.76, 0.0, -17.76, 44.4, nil, nil, nil, nil, nil, nil, nil, 26.64]
+      expect(sheet[71]).to eq ['Total Fees', 15.54, -15.54, 0.0, -15.54, 38.85, nil, nil, nil, nil, nil, nil, nil, 23.31]
+      expect(sheet[72]).to eq ['Total Duty & Fees', 104.42, -104.42, 0.0, -104.42, 261.05, nil, nil, nil, nil, nil, nil, nil, 156.63]
+      expect(sheet[73]).to eq ['Total Broker Invoice', 24.68, -24.68, 0.0, -24.68, 61.7, nil, nil, nil, nil, nil, nil, nil, 37.02]
+      expect(sheet[74]).to eq ['ISF Fees', 0.0, -3.33, 1.11, 0.0, 8.88, nil, nil, nil, nil, nil, nil, nil, 6.66]
 
-      raw_sheet = wb.worksheets[1]
-      expect(raw_sheet.name).to eq "Data"
-      expect(raw_sheet.rows.count).to eq 15
-      expect(raw_sheet.row(0)).to eq ['Customer Number','Customer Name','Broker Reference','Entry Summary Line Count',
+      raw_sheet = reader["Data"]
+      expect(raw_sheet).to_not be_nil
+      expect(raw_sheet.length).to eq 19
+      expect(raw_sheet[0]).to eq ['Customer Number','Customer Name','Broker Reference','Entry Summary Line Count',
                                       'Entry Type','Total Entered Value','Total Duty','MPF','HMF','Cotton Fee',
                                       'Total Taxes','Total Fees','Other Taxes & Fees','Arrival Date','Release Date',
                                       'File Logged Date','Fiscal Date','ETA Date','Total Units','Total GST',
                                       'Country Export Codes','Mode of Transport','Total Broker Invoice','ISF Fees']
-      expect(raw_sheet.row(1)).to eq ['ABCD', 'Crudco', 'brok ref 1', 3, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,16)), excel_date(Date.new(2018,2,3)), excel_date(Date.new(2018,3,4)), excel_date(Date.new(2018,4,5)), excel_date(Date.new(2018,5,6)), 543.2, 6.66, 'CN', '10', 12.34, 2.22]
-      expect(raw_sheet.row(2)).to eq ['ABCD', 'Crudco', 'brok ref 2', 5, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,2,17)), excel_date(Date.new(2018,2,4)), excel_date(Date.new(2018,3,5)), excel_date(Date.new(2018,4,6)), excel_date(Date.new(2018,5,7)), 543.2, 6.66, 'CN', '9', 12.34, 1.11]
-      expect(raw_sheet.row(3)).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,3,3)), excel_date(Date.new(2018,2,5)), excel_date(Date.new(2018,3,6)), excel_date(Date.new(2018,4,7)), excel_date(Date.new(2018,5,8)), 543.2, 6.66, 'CN', '40', 12.34, 1.11]
-      expect(raw_sheet.row(4)).to eq ['ABCD', 'Crudco', 'brok ref 4', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,4)), excel_date(Date.new(2018,2,6)), excel_date(Date.new(2018,3,7)), excel_date(Date.new(2018,4,8)), excel_date(Date.new(2018,5,9)), 543.2, 6.66, 'CN', '41', 12.34, 0.00]
-      expect(raw_sheet.row(5)).to eq ['ABCD', 'Crudco', 'brok ref 5', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,16)), excel_date(Date.new(2018,2,7)), excel_date(Date.new(2018,3,8)), excel_date(Date.new(2018,4,9)), excel_date(Date.new(2018,5,10)), 543.2, 6.66, 'CN', '40', 12.34, 0.00]
-      expect(raw_sheet.row(6)).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,4,25)), excel_date(Date.new(2018,2,8)), excel_date(Date.new(2018,3,9)), excel_date(Date.new(2018,4,10)), excel_date(Date.new(2018,5,11)), 543.2, 6.66, 'CN', '30', 12.34, 0.00]
-      expect(raw_sheet.row(7)).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,5,15)), excel_date(Date.new(2018,2,9)), excel_date(Date.new(2018,3,10)), excel_date(Date.new(2018,4,11)), excel_date(Date.new(2018,5,12)), 543.2, 6.66, 'CN', '666', 12.34, 0.00]
-      expect(raw_sheet.row(8)).to eq ['ABCD', 'Crudco', 'brok ref 8', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2016,6,6)), excel_date(Date.new(2018,2,10)), excel_date(Date.new(2018,3,11)), excel_date(Date.new(2018,4,12)), excel_date(Date.new(2018,5,13)), 543.2, 6.66, 'CN', '40', 12.34, 0.00]
-      expect(raw_sheet.row(9)).to eq ['ABCD', 'Crudco', 'brok ref 9', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,1)), excel_date(Date.new(2018,2,11)), excel_date(Date.new(2018,3,12)), excel_date(Date.new(2018,4,13)), excel_date(Date.new(2018,5,14)), 543.2, 6.66, 'CN', '10', 12.34, 0.00]
-      expect(raw_sheet.row(10)).to eq ['ABCD', 'Crudco', 'brok ref 10', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,1,17)), excel_date(Date.new(2018,2,12)), excel_date(Date.new(2018,3,13)), excel_date(Date.new(2018,4,14)), excel_date(Date.new(2018,5,15)), 543.2, 6.66, 'CN', '11', 12.34, 0.00]
-      expect(raw_sheet.row(11)).to eq ['ABCD', 'Crudco', 'brok ref 11', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,3,2)), excel_date(Date.new(2018,2,13)), excel_date(Date.new(2018,3,14)), excel_date(Date.new(2018,4,15)), excel_date(Date.new(2018,5,16)), 543.2, 6.66, 'CN', '40', 12.34, 2.22]
-      expect(raw_sheet.row(12)).to eq ['ABCD', 'Crudco', 'brok ref 12', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,4,7)), excel_date(Date.new(2018,2,14)), excel_date(Date.new(2018,3,15)), excel_date(Date.new(2018,4,16)), excel_date(Date.new(2018,5,17)), 543.2, 6.66, 'CN', '20', 12.34, 0.00]
-      expect(raw_sheet.row(13)).to eq ['ABCD', 'Crudco', 'brok ref 13', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,21)), excel_date(Date.new(2018,2,15)), excel_date(Date.new(2018,3,16)), excel_date(Date.new(2018,4,17)), excel_date(Date.new(2018,5,18)), 543.2, 6.66, 'CN', '21', 12.34, 0.00]
-      expect(raw_sheet.row(14)).to eq ['ABCD', 'Crudco', 'brok ref 14', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, excel_date(Date.new(2017,5,22)), excel_date(Date.new(2018,2,16)), excel_date(Date.new(2018,3,17)), excel_date(Date.new(2018,4,18)), excel_date(Date.new(2018,5,19)), 543.2, 6.66, 'CN', '10', 12.34, 0.00]
+      expect(raw_sheet[1]).to eq ['ABCD', 'Crudco', 'brok ref 1', 3, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,16), Date.new(2018,2,3), Date.new(2018,3,4), Date.new(2018,4,5), Date.new(2018,5,6), 543.2, 6.66, 'CN', '10', 12.34, 2.22]
+      expect(raw_sheet[2]).to eq ['ABCD', 'Crudco', 'brok ref 2', 5, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,17), Date.new(2018,2,4), Date.new(2018,3,5), Date.new(2018,4,6), Date.new(2018,5,7), 543.2, 6.66, 'CN', '9', 12.34, 1.11]
+      expect(raw_sheet[3]).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,3,3), Date.new(2018,2,5), Date.new(2018,3,6), Date.new(2018,4,7), Date.new(2018,5,8), 543.2, 6.66, 'CN', '40', 12.34, 1.11]
+      expect(raw_sheet[4]).to eq ['ABCD', 'Crudco', 'brok ref 4', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,4), Date.new(2018,2,6), Date.new(2018,3,7), Date.new(2018,4,8), Date.new(2018,5,9), 543.2, 6.66, 'CN', '41', 12.34, 0.00]
+      expect(raw_sheet[5]).to eq ['ABCD', 'Crudco', 'brok ref 5', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,16), Date.new(2018,2,7), Date.new(2018,3,8), Date.new(2018,4,9), Date.new(2018,5,10), 543.2, 6.66, 'CN', '40', 12.34, 0.00]
+      expect(raw_sheet[6]).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,25), Date.new(2018,2,8), Date.new(2018,3,9), Date.new(2018,4,10), Date.new(2018,5,11), 543.2, 6.66, 'CN', '30', 12.34, 0.00]
+      expect(raw_sheet[7]).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,5,15), Date.new(2018,2,9), Date.new(2018,3,10), Date.new(2018,4,11), Date.new(2018,5,12), 543.2, 6.66, 'CN', '666', 12.34, 0.00]
+      expect(raw_sheet[8]).to eq ['ABCD', 'Crudco', 'brok ref 8', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,6,6), Date.new(2018,2,10), Date.new(2018,3,11), Date.new(2018,4,12), Date.new(2018,5,13), 543.2, 6.66, 'CN', '40', 12.34, 0.00]
+      expect(raw_sheet[9]).to eq ['ABCD', 'Crudco', 'brok ref 9', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,1), Date.new(2018,2,11), Date.new(2018,3,12), Date.new(2018,4,13), Date.new(2018,5,14), 543.2, 6.66, 'CN', '10', 12.34, 0.00]
+      expect(raw_sheet[10]).to eq ['ABCD', 'Crudco', 'brok ref 10', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,17), Date.new(2018,2,12), Date.new(2018,3,13), Date.new(2018,4,14), Date.new(2018,5,15), 543.2, 6.66, 'CN', '11', 12.34, 0.00]
+      expect(raw_sheet[11]).to eq ['ABCD', 'Crudco', 'brok ref 11', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,3,2), Date.new(2018,2,13), Date.new(2018,3,14), Date.new(2018,4,15), Date.new(2018,5,16), 543.2, 6.66, 'CN', '40', 12.34, 2.22]
+      expect(raw_sheet[12]).to eq ['ABCD', 'Crudco', 'brok ref 12', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,4,7), Date.new(2018,2,14), Date.new(2018,3,15), Date.new(2018,4,16), Date.new(2018,5,17), 543.2, 6.66, 'CN', '20', 12.34, 0.00]
+      expect(raw_sheet[13]).to eq ['ABCD', 'Crudco', 'brok ref 13', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,21), Date.new(2018,2,15), Date.new(2018,3,16), Date.new(2018,4,17), Date.new(2018,5,18), 543.2, 6.66, 'CN', '21', 12.34, 3.33]
+      expect(raw_sheet[14]).to eq ['ABCD', 'Crudco', 'brok ref 14', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,22), Date.new(2018,2,16), Date.new(2018,3,17), Date.new(2018,4,18), Date.new(2018,5,19), 543.2, 6.66, 'CN', '10', 12.34, 1.11]
+      expect(raw_sheet[15]).to eq ['ABCD', 'Crudco', 'brok ref 15', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,27), Date.new(2018,2,17), Date.new(2018,3,18), Date.new(2018,4,19), Date.new(2018,5,20), 543.2, 6.66, 'CN', '10', 12.34, 1.11]
+      expect(raw_sheet[16]).to eq ['ABCD', 'Crudco', 'brok ref 16', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,28), Date.new(2018,2,18), Date.new(2018,3,19), Date.new(2018,4,20), Date.new(2018,5,21), 543.2, 6.66, 'CN', '10', 12.34, 1.11]
+      expect(raw_sheet[17]).to eq ['ABCD', 'Crudco', 'brok ref 17', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,29), Date.new(2018,2,19), Date.new(2018,3,20), Date.new(2018,4,21), Date.new(2018,5,22), 543.2, 6.66, 'CN', '10', 12.34, 1.11]
+      expect(raw_sheet[18]).to eq ['ABCD', 'Crudco', 'brok ref 18', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,30), Date.new(2018,2,20), Date.new(2018,3,21), Date.new(2018,4,22), Date.new(2018,5,23), 543.2, 6.66, 'CN', '10', 12.34, 1.11]
 
-      port_sheet = wb.worksheets[2]
-      expect(port_sheet.name).to eq "Port Breakdown"
-      expect(port_sheet.rows.count).to eq 5
-      expect(port_sheet.row(0)).to eq ['June 2017 Port Breakdown','Number of Entries','Entry Summary Lines','Total Units',
-                                      'Entry Type 01','Entry Type 02','Total Entered Value','Total Duty','MPF','HMF','Cotton Fee',
-                                      'Total Taxes','Other Taxes & Fees','Total Fees','Total Broker Invoice','ISF Fees']
-      expect(port_sheet.row(1)).to eq ['Port A', 1, 2, 543.2, 0, 1, 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, 12.34, 1.11]
-      expect(port_sheet.row(2)).to eq ['Port B', 3, 6, 1629.6, 2, 1, 166.65, 133.32, 99.99, 66.66, 33.33, 29.97, 26.64, 23.31, 37.02, 5.55]
-      expect(port_sheet.row(3)).to eq ['N/A', 2, 4, 1086.4, 2, 0, 111.1, 88.88, 66.66, 44.44, 22.22, 19.98, 17.76, 15.54, 24.68, 2.22]
-      expect(port_sheet.row(4)).to eq ['Grand Totals', 6, 12, 3259.2, 4, 2, 333.3, 266.64, 199.98, 133.32, 66.66, 59.94, 53.28, 46.62, 74.04, 8.88]
+      port_sheet = reader["Port Breakdown"]
+      expect(port_sheet).to_not be_nil
+      expect(port_sheet.length).to eq 5
+      expect(port_sheet[0]).to eq ['June 2017 Port Breakdown','Entry Port Code','Number of Entries','Entry Summary Lines',
+                                      'Total Units','Entry Type 01','Entry Type 02','Total Entered Value','Total Duty',
+                                      'MPF','HMF','Cotton Fee','Total Taxes','Other Taxes & Fees','Total Fees',
+                                      'Total Broker Invoice','ISF Fees']
+      expect(port_sheet[1]).to eq ['Port A', '5678', 1, 2, 543.2, 1, 0, 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, 12.34, 1.11]
+      expect(port_sheet[2]).to eq ['Port B', '6789', 3, 6, 1629.6, 2, 1, 166.65, 133.32, 99.99, 66.66, 33.33, 29.97, 26.64, 23.31, 37.02, 5.55]
+      expect(port_sheet[3]).to eq ['N/A', 'N/A', 2, 4, 1086.4, 1, 1, 111.1, 88.88, 66.66, 44.44, 22.22, 19.98, 17.76, 15.54, 24.68, 2.22]
+      expect(port_sheet[4]).to eq ['Grand Totals', nil, 6, 12, 3259.2, 4, 2, 333.3, 266.64, 199.98, 133.32, 66.66, 59.94, 53.28, 46.62, 74.04, 8.88]
     end
 
     def make_utc_date year, month, day
@@ -225,80 +230,77 @@ describe OpenChain::Report::CustomerYearOverYearReport do
     end
 
     it "generates spreadsheet based on ETA date" do
-      port_a = Factory(:port, unlocode:'PORTA', name:'Port A')
+      port_a = Factory(:port, schedule_d_code:'5678', name:'Port A')
 
       ent_2016_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2016,1,16)
       ent_2016_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2016,1,17)
       ent_2017_Jan = make_entry 3, '01', :eta_date, make_utc_date(2017,1,17)
+      ent_2017_Apr_1 = make_entry 6, '01', :eta_date, make_utc_date(2017,4,6), broker_invoice_isf_charge_count:1, entry_port_code:'5678'
+      ent_2017_Apr_2 = make_entry 7, '01', :eta_date, make_utc_date(2017,4,7), broker_invoice_isf_charge_count:1, entry_port_code:'5678'
 
       # These should be excluded because they are outside our date ranges.
       ent_2015_Dec = make_entry 4, '01', :eta_date, make_utc_date(2015,12,13)
       ent_2018_Feb = make_entry 5, '01', :eta_date, make_utc_date(2018,2,8)
 
-      # These should be excluded from the main tabs, but included on the port breakdown tab.
-      ent_2017_May_1 = make_entry 6, '01', :eta_date, make_utc_date(2017,5,6), broker_invoice_isf_charge_count:1, entry_port_code:'PORTA'
-      ent_2017_May_2 = make_entry 7, '01', :eta_date, make_utc_date(2017,5,7), broker_invoice_isf_charge_count:1, entry_port_code:'PORTA'
-
       Timecop.freeze(make_eastern_date(2017,5,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'include_isf_fees' => false, 'include_port_breakdown' => true})
       end
-      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_eta_date_[2016_2017].xls'
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_eta_date_[2016_2017].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 3
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 3
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 38
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
-      expect(sheet.row(6)).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
-      expect(sheet.row(7)).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
-      expect(sheet.row(8)).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
-      expect(sheet.row(9)).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
-      expect(sheet.row(10)).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
-      expect(sheet.row(11)).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
-      expect(sheet.row(12)).to eq []
-      expect(sheet.row(13)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(14)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(15)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(16)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
-      expect(sheet.row(17)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(18)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
-      expect(sheet.row(19)).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
-      expect(sheet.row(20)).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
-      expect(sheet.row(21)).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
-      expect(sheet.row(22)).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
-      expect(sheet.row(23)).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
-      expect(sheet.row(24)).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
-      expect(sheet.row(25)).to eq []
-      expect(sheet.row(26)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(27)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(28)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(29)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(30)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(31)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(32)).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(33)).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(34)).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(35)).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(36)).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(37)).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 42
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[7]).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
+      expect(sheet[10]).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[11]).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
+      expect(sheet[12]).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
+      expect(sheet[13]).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
+      expect(sheet[14]).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
+      expect(sheet[15]).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
+      expect(sheet[16]).to eq []
+      expect(sheet[17]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[18]).to eq ['Number of Entries', 1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 3]
+      expect(sheet[19]).to eq ['Entry Summary Lines', 2, 0, 0, 4, nil, nil, nil, nil, nil, nil, nil, nil, 6]
+      expect(sheet[20]).to eq ['Total Units', 543.2, 0.0, 0.0, 1086.4, nil, nil, nil, nil, nil, nil, nil, nil, 1629.6]
+      expect(sheet[21]).to eq ['Entry Type 01', 1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 3]
+      expect(sheet[22]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 111.1, nil, nil, nil, nil, nil, nil, nil, nil, 166.65]
+      expect(sheet[23]).to eq ['Total Duty', 44.44, 0.0, 0.0, 88.88, nil, nil, nil, nil, nil, nil, nil, nil, 133.32]
+      expect(sheet[24]).to eq ['MPF', 33.33, 0.0, 0.0, 66.66, nil, nil, nil, nil, nil, nil, nil, nil, 99.99]
+      expect(sheet[25]).to eq ['HMF', 22.22, 0.0, 0.0, 44.44, nil, nil, nil, nil, nil, nil, nil, nil, 66.66]
+      expect(sheet[26]).to eq ['Total Fees', 7.77, 0.0, 0.0, 15.54, nil, nil, nil, nil, nil, nil, nil, nil, 23.31]
+      expect(sheet[27]).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 104.42, nil, nil, nil, nil, nil, nil, nil, nil, 156.63]
+      expect(sheet[28]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 24.68, nil, nil, nil, nil, nil, nil, nil, nil, 37.02]
+      expect(sheet[29]).to eq []
+      expect(sheet[30]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[31]).to eq ['Number of Entries', -1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[32]).to eq ['Entry Summary Lines', -2, 0, 0, 4, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[33]).to eq ['Total Units', -543.2, 0.0, 0.0, 1086.4, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
+      expect(sheet[34]).to eq ['Entry Type 01', -1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[35]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 111.1, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
+      expect(sheet[36]).to eq ['Total Duty', -44.44, 0.0, 0.0, 88.88, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
+      expect(sheet[37]).to eq ['MPF', -33.33, 0.0, 0.0, 66.66, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
+      expect(sheet[38]).to eq ['HMF', -22.22, 0.0, 0.0, 44.44, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
+      expect(sheet[39]).to eq ['Total Fees', -7.77, 0.0, 0.0, 15.54, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
+      expect(sheet[40]).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 104.42, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
+      expect(sheet[41]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 24.68, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
 
-      raw_sheet = wb.worksheets[1]
-      expect(raw_sheet.rows.count).to eq 4
+      raw_sheet = reader["Data"]
+      expect(raw_sheet.length).to eq 6
 
-      port_sheet = wb.worksheets[2]
-      expect(port_sheet.name).to eq "Port Breakdown"
-      expect(port_sheet.rows.count).to eq 3
-      expect(port_sheet.row(0)).to eq ['May 2017 Port Breakdown','Number of Entries','Entry Summary Lines','Total Units',
-                                       'Entry Type 01','Total Entered Value','Total Duty','MPF','HMF',
+      port_sheet = reader["Port Breakdown"]
+      expect(port_sheet.length).to eq 3
+      expect(port_sheet[0]).to eq ['May 2017 Port Breakdown','Entry Port Code','Number of Entries','Entry Summary Lines',
+                                       'Total Units','Entry Type 01','Total Entered Value','Total Duty','MPF','HMF',
                                        'Total Fees','Total Broker Invoice']
-      expect(port_sheet.row(1)).to eq ["Port A", 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
-      expect(port_sheet.row(2)).to eq ['Grand Totals', 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
+      expect(port_sheet[1]).to eq ["Port A", "5678", 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
+      expect(port_sheet[2]).to eq ['Grand Totals', nil, 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
     end
 
     it "generates spreadsheet based on file logged date" do
@@ -313,57 +315,57 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       Timecop.freeze(make_eastern_date(2017,5,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'file_logged_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => true, 'include_taxes' => false, 'include_other_fees' => false})
       end
-      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_file_logged_date_[2016_2017].xls'
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_file_logged_date_[2016_2017].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 41
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
-      expect(sheet.row(6)).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
-      expect(sheet.row(7)).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
-      expect(sheet.row(8)).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
-      expect(sheet.row(9)).to eq ['Cotton Fee', 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 22.22]
-      expect(sheet.row(10)).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
-      expect(sheet.row(11)).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
-      expect(sheet.row(12)).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
-      expect(sheet.row(13)).to eq []
-      expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
-      expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
-      expect(sheet.row(20)).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
-      expect(sheet.row(21)).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
-      expect(sheet.row(22)).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
-      expect(sheet.row(23)).to eq ['Cotton Fee', 11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 11.11]
-      expect(sheet.row(24)).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
-      expect(sheet.row(25)).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
-      expect(sheet.row(26)).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
-      expect(sheet.row(27)).to eq []
-      expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(34)).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(35)).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(36)).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(37)).to eq ['Cotton Fee', -11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -11.11]
-      expect(sheet.row(38)).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(39)).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(40)).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 45
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[7]).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
+      expect(sheet[10]).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[11]).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
+      expect(sheet[12]).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
+      expect(sheet[13]).to eq ['Cotton Fee', 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 22.22]
+      expect(sheet[14]).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
+      expect(sheet[15]).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
+      expect(sheet[16]).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
+      expect(sheet[17]).to eq []
+      expect(sheet[18]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[19]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[20]).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[21]).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
+      expect(sheet[22]).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[23]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
+      expect(sheet[24]).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
+      expect(sheet[25]).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
+      expect(sheet[26]).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
+      expect(sheet[27]).to eq ['Cotton Fee', 11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 11.11]
+      expect(sheet[28]).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
+      expect(sheet[29]).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
+      expect(sheet[30]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
+      expect(sheet[31]).to eq []
+      expect(sheet[32]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[33]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[34]).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      expect(sheet[35]).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
+      expect(sheet[36]).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[37]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
+      expect(sheet[38]).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
+      expect(sheet[39]).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
+      expect(sheet[40]).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
+      expect(sheet[41]).to eq ['Cotton Fee', -11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -11.11]
+      expect(sheet[42]).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
+      expect(sheet[43]).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
+      expect(sheet[44]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
 
-      raw_sheet = wb.worksheets[1]
-      expect(raw_sheet.rows.count).to eq 4
+      raw_sheet = reader["Data"]
+      expect(raw_sheet.length).to eq 4
     end
 
     it "generates spreadsheet based on fiscal date" do
@@ -378,57 +380,57 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       Timecop.freeze(make_eastern_date(2017,5,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'fiscal_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => true, 'include_other_fees' => false})
       end
-      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_fiscal_date_[2016_2017].xls'
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_fiscal_date_[2016_2017].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 41
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
-      expect(sheet.row(6)).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
-      expect(sheet.row(7)).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
-      expect(sheet.row(8)).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
-      expect(sheet.row(9)).to eq ['Total Taxes', 19.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19.98]
-      expect(sheet.row(10)).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
-      expect(sheet.row(11)).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
-      expect(sheet.row(12)).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
-      expect(sheet.row(13)).to eq []
-      expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
-      expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
-      expect(sheet.row(20)).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
-      expect(sheet.row(21)).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
-      expect(sheet.row(22)).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
-      expect(sheet.row(23)).to eq ['Total Taxes', 9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 9.99]
-      expect(sheet.row(24)).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
-      expect(sheet.row(25)).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
-      expect(sheet.row(26)).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
-      expect(sheet.row(27)).to eq []
-      expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(34)).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(35)).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(36)).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(37)).to eq ['Total Taxes', -9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -9.99]
-      expect(sheet.row(38)).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(39)).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(40)).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 45
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[7]).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
+      expect(sheet[10]).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[11]).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
+      expect(sheet[12]).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
+      expect(sheet[13]).to eq ['Total Taxes', 19.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 19.98]
+      expect(sheet[14]).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
+      expect(sheet[15]).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
+      expect(sheet[16]).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
+      expect(sheet[17]).to eq []
+      expect(sheet[18]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[19]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[20]).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[21]).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
+      expect(sheet[22]).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[23]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
+      expect(sheet[24]).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
+      expect(sheet[25]).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
+      expect(sheet[26]).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
+      expect(sheet[27]).to eq ['Total Taxes', 9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 9.99]
+      expect(sheet[28]).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
+      expect(sheet[29]).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
+      expect(sheet[30]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
+      expect(sheet[31]).to eq []
+      expect(sheet[32]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[33]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[34]).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      expect(sheet[35]).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
+      expect(sheet[36]).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[37]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
+      expect(sheet[38]).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
+      expect(sheet[39]).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
+      expect(sheet[40]).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
+      expect(sheet[41]).to eq ['Total Taxes', -9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -9.99]
+      expect(sheet[42]).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
+      expect(sheet[43]).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
+      expect(sheet[44]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
 
-      raw_sheet = wb.worksheets[1]
-      expect(raw_sheet.rows.count).to eq 4
+      raw_sheet = reader["Data"]
+      expect(raw_sheet.length).to eq 4
     end
 
     it "generates spreadsheet based on release date" do
@@ -443,57 +445,57 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       Timecop.freeze(make_eastern_date(2017,5,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'release_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => true})
       end
-      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_release_date_[2016_2017].xls'
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_release_date_[2016_2017].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 41
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
-      expect(sheet.row(3)).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(5)).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
-      expect(sheet.row(6)).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
-      expect(sheet.row(7)).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
-      expect(sheet.row(8)).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
-      expect(sheet.row(9)).to eq ['Other Fees', 17.76, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.76]
-      expect(sheet.row(10)).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
-      expect(sheet.row(11)).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
-      expect(sheet.row(12)).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
-      expect(sheet.row(13)).to eq []
-      expect(sheet.row(14)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(15)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(16)).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
-      expect(sheet.row(17)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
-      expect(sheet.row(18)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(19)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
-      expect(sheet.row(20)).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
-      expect(sheet.row(21)).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
-      expect(sheet.row(22)).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
-      expect(sheet.row(23)).to eq ['Other Fees', 8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 8.88]
-      expect(sheet.row(24)).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
-      expect(sheet.row(25)).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
-      expect(sheet.row(26)).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
-      expect(sheet.row(27)).to eq []
-      expect(sheet.row(28)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(29)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(30)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(31)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(32)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(33)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(34)).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(35)).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(36)).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(37)).to eq ['Other Fees', -8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -8.88]
-      expect(sheet.row(38)).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(39)).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(40)).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 45
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[7]).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
+      expect(sheet[10]).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[11]).to eq ['MPF', 66.66, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 66.66]
+      expect(sheet[12]).to eq ['HMF', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
+      expect(sheet[13]).to eq ['Other Fees', 17.76, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.76]
+      expect(sheet[14]).to eq ['Total Fees', 15.54, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.54]
+      expect(sheet[15]).to eq ['Total Duty & Fees', 104.42, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 104.42]
+      expect(sheet[16]).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
+      expect(sheet[17]).to eq []
+      expect(sheet[18]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[19]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[20]).to eq ['Entry Summary Lines', 2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[21]).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
+      expect(sheet[22]).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[23]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
+      expect(sheet[24]).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
+      expect(sheet[25]).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 33.33]
+      expect(sheet[26]).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 22.22]
+      expect(sheet[27]).to eq ['Other Fees', 8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 8.88]
+      expect(sheet[28]).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 7.77]
+      expect(sheet[29]).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 52.21]
+      expect(sheet[30]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
+      expect(sheet[31]).to eq []
+      expect(sheet[32]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[33]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[34]).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      expect(sheet[35]).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
+      expect(sheet[36]).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[37]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
+      expect(sheet[38]).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
+      expect(sheet[39]).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
+      expect(sheet[40]).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
+      expect(sheet[41]).to eq ['Other Fees', -8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -8.88]
+      expect(sheet[42]).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
+      expect(sheet[43]).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
+      expect(sheet[44]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
 
-      raw_sheet = wb.worksheets[1]
-      expect(raw_sheet.rows.count).to eq 4
+      raw_sheet = reader["Data"]
+      expect(raw_sheet.length).to eq 4
     end
 
     it "ensures years are in chronological order" do
@@ -506,17 +508,17 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2018', 'year_2' => '2017', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 38
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(13)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(14)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(26)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(27)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 42
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[17]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[18]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[30]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[31]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
     end
 
     it "defaults years when not provided" do
@@ -532,17 +534,17 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 38
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(13)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(14)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(26)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(27)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 42
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[17]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[18]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[30]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[31]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
     end
 
     it "appropriate handles null number values" do
@@ -556,58 +558,58 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'arrival_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => true, 'include_taxes' => true, 'include_other_fees' => true})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 47
-      expect(sheet.row(0)).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(2)).to eq ['Entry Summary Lines', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(3)).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 543.2]
-      expect(sheet.row(4)).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(5)).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 55.55]
-      expect(sheet.row(6)).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
-      expect(sheet.row(7)).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 33.33]
-      expect(sheet.row(8)).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 22.22]
-      expect(sheet.row(9)).to eq ['Cotton Fee', 11.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 11.11]
-      expect(sheet.row(10)).to eq ['Total Taxes', 9.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.99]
-      expect(sheet.row(11)).to eq ['Other Fees', 8.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.88]
-      expect(sheet.row(12)).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.77]
-      expect(sheet.row(13)).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 52.21]
-      expect(sheet.row(14)).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.34]
-      expect(sheet.row(15)).to eq []
-      expect(sheet.row(16)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(17)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(18)).to eq ['Entry Summary Lines', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(19)).to eq ['Total Units', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(20)).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(21)).to eq ['Total Entered Value', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(22)).to eq ['Total Duty', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(23)).to eq ['MPF', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(24)).to eq ['HMF', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(25)).to eq ['Cotton Fee', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(26)).to eq ['Total Taxes', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(27)).to eq ['Other Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(28)).to eq ['Total Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(29)).to eq ['Total Duty & Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(30)).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
-      expect(sheet.row(31)).to eq []
-      expect(sheet.row(32)).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(33)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(34)).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
-      expect(sheet.row(35)).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
-      expect(sheet.row(36)).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
-      expect(sheet.row(37)).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
-      expect(sheet.row(38)).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
-      expect(sheet.row(39)).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
-      expect(sheet.row(40)).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
-      expect(sheet.row(41)).to eq ['Cotton Fee', -11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -11.11]
-      expect(sheet.row(42)).to eq ['Total Taxes', -9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -9.99]
-      expect(sheet.row(43)).to eq ['Other Fees', -8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -8.88]
-      expect(sheet.row(44)).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
-      expect(sheet.row(45)).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
-      expect(sheet.row(46)).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 51
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[7]).to eq ['Total Units', 543.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 543.2]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 55.55]
+      expect(sheet[10]).to eq ['Total Duty', 44.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 44.44]
+      expect(sheet[11]).to eq ['MPF', 33.33, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 33.33]
+      expect(sheet[12]).to eq ['HMF', 22.22, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 22.22]
+      expect(sheet[13]).to eq ['Cotton Fee', 11.11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 11.11]
+      expect(sheet[14]).to eq ['Total Taxes', 9.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.99]
+      expect(sheet[15]).to eq ['Other Fees', 8.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.88]
+      expect(sheet[16]).to eq ['Total Fees', 7.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.77]
+      expect(sheet[17]).to eq ['Total Duty & Fees', 52.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 52.21]
+      expect(sheet[18]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.34]
+      expect(sheet[19]).to eq []
+      expect(sheet[20]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[21]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[22]).to eq ['Entry Summary Lines', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[23]).to eq ['Total Units', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[24]).to eq ['Entry Type 01', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[25]).to eq ['Total Entered Value', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[26]).to eq ['Total Duty', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[27]).to eq ['MPF', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[28]).to eq ['HMF', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[29]).to eq ['Cotton Fee', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[30]).to eq ['Total Taxes', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[31]).to eq ['Other Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[32]).to eq ['Total Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[33]).to eq ['Total Duty & Fees', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[34]).to eq ['Total Broker Invoice', 0.0, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, 0.0]
+      expect(sheet[35]).to eq []
+      expect(sheet[36]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[37]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[38]).to eq ['Entry Summary Lines', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      expect(sheet[39]).to eq ['Total Units', -543.2, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -543.2]
+      expect(sheet[40]).to eq ['Entry Type 01', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      expect(sheet[41]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -55.55]
+      expect(sheet[42]).to eq ['Total Duty', -44.44, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -44.44]
+      expect(sheet[43]).to eq ['MPF', -33.33, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -33.33]
+      expect(sheet[44]).to eq ['HMF', -22.22, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -22.22]
+      expect(sheet[45]).to eq ['Cotton Fee', -11.11, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -11.11]
+      expect(sheet[46]).to eq ['Total Taxes', -9.99, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -9.99]
+      expect(sheet[47]).to eq ['Other Fees', -8.88, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -8.88]
+      expect(sheet[48]).to eq ['Total Fees', -7.77, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -7.77]
+      expect(sheet[49]).to eq ['Total Duty & Fees', -52.21, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -52.21]
+      expect(sheet[50]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 0.0, nil, nil, nil, nil, nil, nil, nil, nil, -12.34]
     end
 
     it "filters by transport mode when provided" do
@@ -621,17 +623,17 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'mode_of_transport' => ['Air','Sea']})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 38
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(13)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(14)).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(26)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(27)).to eq ['Number of Entries', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 42
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[17]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[18]).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[30]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[31]).to eq ['Number of Entries', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
     end
 
     it "filters by entry type when provided" do
@@ -645,17 +647,16 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'entry_types' => ['01','02']})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
-
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 41
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(14)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(15)).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
-      expect(sheet.row(28)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(29)).to eq ['Number of Entries', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 45
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[18]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[19]).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[32]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[33]).to eq ['Number of Entries', -2, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -2]
     end
 
     it "ignores transport mode and entry type params when default All Modes/blank values are selected" do
@@ -667,17 +668,16 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'entry_types' => '', 'mode_of_transport' => ['All Modes']})
       end
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
-
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 44
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(15)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(16)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(30)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(31)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 48
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[19]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[20]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[34]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[35]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
     end
 
     it "handles multiple importer selection" do
@@ -692,18 +692,19 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       Timecop.freeze(make_eastern_date(2018,5,28)) do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'eta_date', 'importer_ids' => [importer.id, importer_2.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
+      expect(@temp.original_filename).to eq 'Entry_YoY_MULTI_eta_date_[2017_2018].xlsx'
 
-      wb = Spreadsheet.open @temp.path
-      expect(wb.worksheets.length).to eq 2
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
 
-      sheet = wb.worksheets[0]
-      expect(sheet.rows.count).to eq 38
-      expect(sheet.row(0)).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(1)).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-      expect(sheet.row(13)).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(14)).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
-      expect(sheet.row(26)).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
-      expect(sheet.row(27)).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
+      sheet = reader["MULTI COMPANY - REPORT"]
+      expect(sheet.length).to eq 42
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[17]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[18]).to eq ['Number of Entries', 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[30]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[31]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
     end
 
     it "handles UTC time value that falls into another month when converted to eastern, release" do
@@ -714,9 +715,9 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'release_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      sheet = wb.worksheets[0]
-      expect(sheet.row(1)).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet[5]).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     end
 
     it "handles UTC time value that falls off the report when converted to eastern, release" do
@@ -727,9 +728,9 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'release_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      sheet = wb.worksheets[0]
-      expect(sheet.row(1)).to eq ['Number of Entries', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet[5]).to eq ['Number of Entries', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     end
 
     it "handles UTC time value that falls into another month when converted to eastern, arrival" do
@@ -740,9 +741,9 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'arrival_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      sheet = wb.worksheets[0]
-      expect(sheet.row(1)).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet[5]).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     end
 
     it "handles UTC time value that falls into another month when converted to eastern, file logged" do
@@ -753,9 +754,9 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => 'file_logged_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false})
       end
 
-      wb = Spreadsheet.open @temp.path
-      sheet = wb.worksheets[0]
-      expect(sheet.row(1)).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet[5]).to eq ['Number of Entries', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     end
 
     it "sends email if email address provided" do
@@ -775,10 +776,10 @@ describe OpenChain::Report::CustomerYearOverYearReport do
         t.binmode
         t << mail.attachments.first.read
         t.flush
-        wb = Spreadsheet.open t.path
-        sheet = wb.worksheet(0)
-        expect(sheet.rows.count).to eq 38
-        expect(sheet.row(0)).to eq [2017, "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "Grand Totals"]
+        reader = XlsxTestReader.new(t.path).raw_workbook_data
+        sheet = reader["Crudco Consumables an - REPORT"]
+        expect(sheet.length).to eq 42
+        expect(sheet[4]).to eq [2017, "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "Grand Totals"]
       end
     end
   end

@@ -5,17 +5,13 @@ module OpenChain; module Report; class CustomerYearOverYearReport
 
   ENTRY_YEAR_OVER_YEAR_REPORT_USERS ||= 'entry_yoy_report'
 
-  BOLD_FORMAT ||= XlsMaker.create_format "Bolded", weight: :bold
-  BLUE_HEADER_FORMAT ||= XlsMaker.create_format "Blue Header", weight: :bold, horizontal_align: :merge, pattern_fg_color: :xls_color_41, pattern: 1
-  MONEY_FORMAT ||= XlsMaker.create_format "Money", :number_format => '$#,##0.00'
-  NUMBER_FORMAT ||= XlsMaker.create_format "Number", :number_format => '#,##0', horizontal_align: :center
-
   YearOverYearData ||= Struct.new(:range_year,:range_month,:customer_number,:customer_name,:broker_reference,
                                        :entry_line_count,:entry_type,:entered_value,:total_duty,:mpf,:hmf,:cotton_fee,
                                        :total_taxes,:other_fees,:total_fees,:arrival_date,:release_date,
                                        :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst,
                                        :export_country_codes,:transport_mode_code,:broker_invoice_total,
-                                       :entry_type_count_hash,:entry_count,:isf_fees,:mode_of_transportation_count_hash) do
+                                       :entry_type_count_hash,:entry_count,:isf_fees,:mode_of_transportation_count_hash,
+                                       :entry_port_code) do
     def initialize
       self.entry_count ||= 0
       self.entry_line_count ||= 0
@@ -62,11 +58,11 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     range_field = settings['range_field']
     workbook = nil
     distribute_reads do
-      workbook = generate_report importer_ids, year_1, year_2, range_field, settings['include_cotton_fee'], settings['include_taxes'], settings['include_other_fees'], settings['include_isf_fees'], mode_of_transport_codes, settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types']
+      workbook = generate_report importer_ids, year_1, year_2, range_field, settings['include_cotton_fee'], settings['include_taxes'], settings['include_other_fees'], settings['include_isf_fees'], mode_of_transport_codes, settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs']
     end
 
     system_code = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:system_code).to_s : 'MULTI'
-    file_name = "Entry_YoY_#{system_code}_#{range_field}_[#{year_1}_#{year_2}].xls"
+    file_name = "Entry_YoY_#{system_code}_#{range_field}_[#{year_1}_#{year_2}].xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "YoY Report", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "#{system_code} YoY Report #{year_1} vs. #{year_2}", "A year-over-year report is attached, comparing #{year_1} and #{year_2}.", temp).deliver!
@@ -106,8 +102,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       mode_of_transport_codes
     end
 
-    def generate_report importer_ids, year_1, year_2, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, include_port_breakdown, group_by_mode_of_transport, entry_types
-      wb = XlsMaker.new_workbook
+    def generate_report importer_ids, year_1, year_2, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs
+      wb = XlsxBuilder.new
+      assign_styles wb
 
       raw_data = []
       result_set = ActiveRecord::Base.connection.exec_query make_query(importer_ids, year_1, year_2, range_field, mode_of_transport_codes, entry_types)
@@ -147,7 +144,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         raw_data << d
       end
 
-      generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, raw_data, group_by_mode_of_transport
+      generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, raw_data, group_by_mode_of_transport, include_line_graphs
       generate_data_sheet wb, raw_data
 
       if include_port_breakdown
@@ -157,59 +154,82 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       wb
     end
 
+    def assign_styles wb
+      wb.create_style :bold, {b: true}
+      wb.create_style(:currency, {format_code: "$#,##0.00"})
+      wb.create_style(:number, {format_code: "#,##0"})
+    end
+
     # This sheet contains data summarized by month and year.
-    def generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, data_arr, group_by_mode_of_transport
+    def generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, data_arr, group_by_mode_of_transport, include_line_graphs
       company_name = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:name) : "MULTI COMPANY"
       # Handling long company names: some versions of Excel allow only 30 characters for tab names, so, because of the
       # 9-char suffix tacked on, company names are truncated at 21 characters.
-      sheet = XlsMaker.create_sheet wb, "#{company_name.to_s[0..20]} - REPORT", []
+      sheet = wb.create_sheet "#{company_name.to_s[0..20]} - REPORT"
 
       year_hash = condense_data_by_year_and_month data_arr
 
-      counter = -1
-      counter = add_row_block sheet, year_1, nil, 1, counter, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
-      counter += 1 # blank row
-      counter = add_row_block sheet, year_2, nil, 2, counter, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
-      counter += 1 # blank row
-      # Compare the two years.
-      counter = add_row_block sheet, year_1, year_2, 3, counter, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      # Four blank rows must be added to the top of the report to accomodate the logo image.
+      for i in 0..3
+        wb.add_body_row sheet, [] # blank row
+      end
+      wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 0, 0
 
-      XlsMaker.set_column_widths sheet, ([20] + Array.new(12, 14) + [15])
+      counter = 6 # 4 blank rows at top plus 2 blanks in between the year blocks and the comparison block.
+      counter += add_row_block wb, sheet, year_1, nil, 1, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      wb.add_body_row sheet, [] # blank row
+      counter += add_row_block wb, sheet, year_2, nil, 2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      wb.add_body_row sheet, [] # blank row
+      # Compare the two years.
+      counter += add_row_block wb, sheet, year_1, year_2, 3, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+
+      wb.set_column_widths sheet, *([20] + Array.new(12, 14) + [15])
+
+      if include_line_graphs
+        add_charts sheet, counter, year_1, year_2, year_hash
+      end
 
       sheet
     end
 
-    def add_row_block sheet, year, comp_year, block_pos, counter, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
-      XlsMaker.add_body_row sheet, counter += 1, make_summary_headers(comp_year ? "Variance #{year} / #{comp_year}" : year), [], false, formats: Array.new(14, BLUE_HEADER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Number of Entries", year_hash, year, comp_year, block_pos, :entry_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, :entry_line_count, decimal:false), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Units", year_hash, year, comp_year, block_pos, :total_units), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+    def add_row_block wb, sheet, year, comp_year, block_pos, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      counter = 11
+      wb.add_body_row sheet, make_summary_headers(comp_year ? "Variance #{year} / #{comp_year}" : year), styles: Array.new(14, :default_header)
+      wb.add_body_row sheet, get_category_row_for_year_month("Number of Entries", year_hash, year, comp_year, block_pos, :entry_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, :entry_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Units", year_hash, year, comp_year, block_pos, :total_units), styles: [:bold] + Array.new(13, :number)
       get_all_entry_type_values(year_hash).each do |entry_type|
-        XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Entry Type #{entry_type}", year_hash, year, comp_year, block_pos, :entry_type_count_hash, decimal:false, hash_key:entry_type), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+        wb.add_body_row sheet, get_category_row_for_year_month("Entry Type #{entry_type}", year_hash, year, comp_year, block_pos, :entry_type_count_hash, decimal:false, hash_key:entry_type), styles: [:bold] + Array.new(13, :number)
+        counter += 1
       end
       if group_by_mode_of_transport
         get_all_mode_of_transportation_values(year_hash).each do |mot|
-          XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Ship Mode #{mot}", year_hash, year, comp_year, block_pos, :mode_of_transportation_count_hash, decimal:false, hash_key:mot), [], false, formats: [BOLD_FORMAT] + Array.new(13, NUMBER_FORMAT)
+          wb.add_body_row sheet, get_category_row_for_year_month("Ship Mode #{mot}", year_hash, year, comp_year, block_pos, :mode_of_transportation_count_hash, decimal:false, hash_key:mot), styles: [:bold] + Array.new(13, :number)
+          counter += 1
         end
       end
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Entered Value", year_hash, year, comp_year, block_pos, :entered_value), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Duty", year_hash, year, comp_year, block_pos, :total_duty), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("MPF", year_hash, year, comp_year, block_pos, :mpf), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("HMF", year_hash, year, comp_year, block_pos, :hmf), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Entered Value", year_hash, year, comp_year, block_pos, :entered_value), styles: [:bold] + Array.new(13, :currency)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Duty", year_hash, year, comp_year, block_pos, :total_duty), styles: [:bold] + Array.new(13, :currency)
+      wb.add_body_row sheet, get_category_row_for_year_month("MPF", year_hash, year, comp_year, block_pos, :mpf), styles: [:bold] + Array.new(13, :currency)
+      wb.add_body_row sheet, get_category_row_for_year_month("HMF", year_hash, year, comp_year, block_pos, :hmf), styles: [:bold] + Array.new(13, :currency)
       if include_cotton_fee
-        XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Cotton Fee", year_hash, year, comp_year, block_pos, :cotton_fee), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+        wb.add_body_row sheet, get_category_row_for_year_month("Cotton Fee", year_hash, year, comp_year, block_pos, :cotton_fee), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
       end
       if include_taxes
-        XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Taxes", year_hash, year, comp_year, block_pos, :total_taxes), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+        wb.add_body_row sheet, get_category_row_for_year_month("Total Taxes", year_hash, year, comp_year, block_pos, :total_taxes), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
       end
       if include_other_fees
-        XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Other Fees", year_hash, year, comp_year, block_pos, :other_fees), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+        wb.add_body_row sheet, get_category_row_for_year_month("Other Fees", year_hash, year, comp_year, block_pos, :other_fees), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
       end
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Fees", year_hash, year, comp_year, block_pos, :total_fees), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Duty & Fees", year_hash, year, comp_year, block_pos, :total_duty_and_fees), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
-      XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, :broker_invoice_total), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Fees", year_hash, year, comp_year, block_pos, :total_fees), styles: [:bold] + Array.new(13, :currency)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Duty & Fees", year_hash, year, comp_year, block_pos, :total_duty_and_fees), styles: [:bold] + Array.new(13, :currency)
+      wb.add_body_row sheet, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, :broker_invoice_total), styles: [:bold] + Array.new(13, :currency)
       if include_isf_fees
-        XlsMaker.add_body_row sheet, counter += 1, get_category_row_for_year_month("ISF Fees", year_hash, year, comp_year, block_pos, :isf_fees), [], false, formats: [BOLD_FORMAT] + Array.new(13, MONEY_FORMAT)
+        wb.add_body_row sheet, get_category_row_for_year_month("ISF Fees", year_hash, year, comp_year, block_pos, :isf_fees), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
       end
       counter
     end
@@ -244,8 +264,11 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       ss
     end
 
-    def get_category_row_for_year_month category_name, year_hash, year, comp_year, block_pos, method_name, decimal:true, hash_key:nil
-      row = [category_name]
+    def get_category_row_for_year_month category_name, year_hash, year, comp_year, block_pos, method_name, decimal:true, hash_key:nil, include_total_val:true
+      row = []
+      if category_name
+        row << category_name
+      end
       total_val = decimal ? 0.00 : 0
       for month in 1..12
         # Don't include values in columns for the current or future months if working with the current year,
@@ -271,7 +294,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           row << nil
         end
       end
-      row << total_val
+      if include_total_val
+        row << total_val
+      end
       row
     end
 
@@ -356,18 +381,17 @@ module OpenChain; module Report; class CustomerYearOverYearReport
 
     # There is no need to condense the overall data on this tab.
     def generate_data_sheet wb, data_arr
-      sheet = XlsMaker.create_sheet wb, "Data", ["Customer Number","Customer Name","Broker Reference","Entry Summary Line Count",
+      sheet = wb.create_sheet "Data", headers: ["Customer Number","Customer Name","Broker Reference","Entry Summary Line Count",
                                          "Entry Type","Total Entered Value","Total Duty","MPF","HMF","Cotton Fee",
                                          "Total Taxes","Total Fees","Other Taxes & Fees","Arrival Date","Release Date",
                                          "File Logged Date","Fiscal Date","ETA Date","Total Units","Total GST",
                                          "Country Export Codes","Mode of Transport","Total Broker Invoice","ISF Fees"]
 
-      counter = 0
       data_arr.each do |row|
-        XlsMaker.add_body_row sheet, counter += 1, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total,row.isf_fees], [], false, formats: Array.new(3, nil) + [NUMBER_FORMAT, nil] + Array.new(8, MONEY_FORMAT) + Array.new(5, nil) + [NUMBER_FORMAT, MONEY_FORMAT, nil, nil, MONEY_FORMAT, MONEY_FORMAT]
+        wb.add_body_row sheet, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total,row.isf_fees], styles: Array.new(3, nil) + [:number, nil] + Array.new(8, :currency) + Array.new(5, nil) + [:number, :currency, nil, nil, :currency]
       end
 
-      XlsMaker.set_column_widths sheet, Array.new(23, 20)
+      wb.set_column_widths sheet, *Array.new(23, 20)
 
       sheet
     end
@@ -488,11 +512,12 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         d = port_hash[entry_port_name]
         if d.nil?
           d = YearOverYearData.new
+          d.entry_port_code = entry_port_name ? result_set_row['entry_port_code'] : "N/A"
           port_hash[entry_port_name] = d
         end
 
         entry_count = result_set_row['entry_count']
-        d.entry_type_count_hash[result_set_row['entry_type']] = entry_count
+        d.entry_type_count_hash[result_set_row['entry_type']] = d.entry_type_count_hash[result_set_row['entry_type']].to_i + entry_count
         d.entry_count += entry_count
         d.entry_line_count += result_set_row['entry_line_count']
         d.entered_value += result_set_row['entered_value']
@@ -514,23 +539,22 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       end
 
       column_headings = make_port_breakdown_column_headings entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-      sheet = XlsMaker.create_sheet wb, "Port Breakdown", column_headings
+      sheet = wb.create_sheet "Port Breakdown", headers: column_headings
 
       # Row for every port.
-      counter = 0
       port_hash.each_key do |entry_port_name|
         next unless entry_port_name
 
         d = port_hash[entry_port_name]
         row = make_port_breakdown_row d, entry_port_name, entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-        XlsMaker.add_body_row sheet, counter += 1, row, [], false, formats: get_port_breakdown_row_formats(entry_types, column_headings)
+        wb.add_body_row sheet, row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
       end
 
       # Single 'N/A' row for any entries that don't have an entry port assigned, or a bogus entry port.
       d = port_hash[nil]
       if d
         row = make_port_breakdown_row d, 'N/A', entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-        XlsMaker.add_body_row sheet, counter += 1, row, [], false, formats: get_port_breakdown_row_formats(entry_types, column_headings)
+        wb.add_body_row sheet, row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
       end
 
       # Totals row.
@@ -559,15 +583,15 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         end
       end
       totals_row = make_port_breakdown_row totals, 'Grand Totals', entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-      XlsMaker.add_body_row sheet, counter += 1, totals_row, [], false, formats: get_port_breakdown_row_formats(entry_types, column_headings)
+      wb.add_body_row sheet, totals_row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
 
-      XlsMaker.set_column_widths sheet, [30] + Array.new(column_headings.length - 1, 20)
+      wb.set_column_widths sheet, *([30] + Array.new(column_headings.length - 1, 20))
 
       sheet
     end
 
     def make_port_breakdown_column_headings entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-      column_headings = ["#{Date.today.strftime("%B %Y")} Port Breakdown","Number of Entries","Entry Summary Lines","Total Units"]
+      column_headings = ["#{Date.today.strftime("%B %Y")} Port Breakdown","Entry Port Code","Number of Entries","Entry Summary Lines","Total Units"]
 
       entry_types.each do |entry_type|
         next unless entry_type
@@ -592,7 +616,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     def make_port_breakdown_row d, entry_port_name, entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
-      row_arr = [entry_port_name, d.entry_count, d.entry_line_count, d.total_units]
+      row_arr = [entry_port_name, d.entry_port_code, d.entry_count, d.entry_line_count, d.total_units]
       entry_types.each do |entry_type|
         entry_type_count = d.entry_type_count_hash[entry_type]
         row_arr << (entry_type_count.presence || 0)
@@ -615,14 +639,17 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     def get_port_breakdown_row_formats entry_types, column_headings
-      [nil] + Array.new(3 + entry_types.length, NUMBER_FORMAT) + Array.new(column_headings.length - 4 - entry_types.length, MONEY_FORMAT)
+      [nil] + Array.new(4 + entry_types.length, :number) + Array.new(column_headings.length - 5 - entry_types.length, :currency)
     end
 
-    # Params applied to this query are the same as the "main" query.
+    # Params applied to this query are the same as the "main" query.  This tab runs over the current reporting month,
+    # however, which is the previous month: different date range than the other tabs, but date is still calculated
+    # from the same date field as the other query.
     def make_port_breakdown_query importer_ids, range_field, mode_of_transport_codes, entry_types
       <<-SQL
         SELECT 
           entry_port_name, 
+          entry_port_code, 
           entry_type, 
           COUNT(*) AS entry_count, 
           SUM(entry_line_count) AS entry_line_count, 
@@ -641,6 +668,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           (
             SELECT 
               entry_port.name AS entry_port_name, 
+              entry_port_code, 
               entry_type, 
               (
                 SELECT 
@@ -676,21 +704,45 @@ module OpenChain; module Report; class CustomerYearOverYearReport
             FROM 
               entries 
               LEFT OUTER JOIN ports AS entry_port ON 
-                entries.entry_port_code = entry_port.unlocode 
+                (
+                  entries.entry_port_code = entry_port.schedule_d_code OR 
+                  entries.entry_port_code = entry_port.cbsa_port
+                )
             WHERE 
               importer_id IN (#{importer_ids.join(',')}) AND 
               #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + mode_of_transport_codes.join(',') + ") AND " : ""}
               #{entry_types && entry_types.length > 0 ? "entry_type IN ('" + entry_types.join("','") + "') AND " : ""}
-              #{range_field} >= '#{format_first_day_of_current_month(range_field)}' AND 
-              #{range_field} < '#{format_first_day_of_month(range_field, 1)}'
+              #{range_field} >= '#{format_first_day_of_month(range_field, -1)}' AND 
+              #{range_field} < '#{format_first_day_of_current_month(range_field)}'
           ) AS tbl 
         GROUP BY 
           entry_port_name, 
+          entry_port_code, 
           entry_type
         ORDER BY
           entry_port_name, 
           entry_type
       SQL
+    end
+
+    def add_charts sheet, counter, year_1, year_2, year_hash
+      chart_builder = XlsxChartBuilder.new
+      month_headings = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+      chart_builder.create_line_chart sheet, "Entries Transmitted", "A#{counter + 2}", "F#{counter + 17}", x_axis_labels:month_headings do |chart|
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_1, nil, 1, :entry_count, decimal:false, include_total_val:false), year_1.to_s, "0000FF"
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_2, nil, 2, :entry_count, decimal:false, include_total_val:false), year_2.to_s, "FF0000"
+      end
+
+      chart_builder.create_line_chart sheet, "Line Item Count", "G#{counter + 2}", "L#{counter + 17}", x_axis_labels:month_headings do |chart|
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_1, nil, 1, :entry_line_count, decimal:false, include_total_val:false), year_1.to_s, "0000FF"
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_2, nil, 2, :entry_line_count, decimal:false, include_total_val:false), year_2.to_s, "FF0000"
+      end
+
+      chart_builder.create_line_chart sheet, "Total Broker Invoice", "M#{counter + 2}", "S#{counter + 17}", x_axis_labels:month_headings do |chart|
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_1, nil, 1, :broker_invoice_total, decimal:false, include_total_val:false), year_1.to_s, "0000FF"
+        chart.add_data get_category_row_for_year_month(nil, year_hash, year_2, nil, 2, :broker_invoice_total, decimal:false, include_total_val:false), year_2.to_s, "FF0000"
+      end
     end
 
 end; end; end

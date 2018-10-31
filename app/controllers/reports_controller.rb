@@ -910,7 +910,8 @@ class ReportsController < ApplicationController
                     include_taxes: params[:taxes] == 'true', include_other_fees: params[:other_fees] == 'true',
                     mode_of_transport: params[:mode_of_transport], entry_types: get_customer_year_over_year_report_entry_types,
                     include_isf_fees: params[:isf_fees] == 'true', include_port_breakdown: params[:port_breakdown] == 'true',
-                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true' }, []
+                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true',
+                    include_line_graphs: params[:line_graphs] == 'true' }, []
       else
         error_redirect "At least one importer must be selected."
       end
@@ -927,7 +928,7 @@ class ReportsController < ApplicationController
         customer_codes.chomp.split(/[\r\n]+/).each do |cust_code|
           # Ignore blank customer codes.
           if cust_code.present?
-            c = Company.where(system_code:cust_code.strip).first
+            c = Company.where("alliance_customer_number = ? OR fenix_customer_number = ?", cust_code.strip, cust_code.strip).first
             importer_ids << c.id unless c.nil?
           end
         end
