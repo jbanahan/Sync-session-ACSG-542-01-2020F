@@ -496,6 +496,8 @@ OpenChain::Application.routes.draw do
   match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#show_email_attachable", via: :get
   match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
 
+  match "/comparepdf" => "comparepdf#compare", via: :get
+
   match "/project_deliverables/:user_id/notify_now" => "project_deliverables#notify_now", via: :get
   match "/glossary/:core_module" => "model_fields#glossary", via: :get
 

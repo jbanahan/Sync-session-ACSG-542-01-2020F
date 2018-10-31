@@ -99,6 +99,27 @@ module CoreObjectSupport
     self.attachments.where("LENGTH(RTRIM(IFNULL(attachment_type, ''))) > 0").order(:attachment_type).uniq.pluck(:attachment_type)
   end
 
+  # method for selecting a type of attachment such as "application/pdf"
+  def options_for_attachments_select content_types
+    content_types = Array.wrap(content_types)
+
+    attachments = []
+
+    self.attachments.each do |a|
+      if content_types.blank? || content_types.include?(a.attached_content_type)
+        attachments << [a.attachment_type + " - " + a.attached_file_name, a.id]
+      end
+    end
+
+    if attachments.blank?
+      return_attachments = [["No appopriate attachments exist.", "nil"]]
+    else
+      return_attachments = [["Select an option", "nil"]] + attachments
+    end
+
+    return_attachments
+  end
+
   def all_attachments
     r = []
     r += self.attachments.to_a

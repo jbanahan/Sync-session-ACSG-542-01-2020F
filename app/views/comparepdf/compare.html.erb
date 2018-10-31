@@ -1,0 +1,60 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-4 offset-md-4">
+      <h3 align="center">Document Comparison</h3>
+    </div>
+  </div>            
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header text-center">
+          <h4>[<%= @att1.attachment_type %>] <%= @att1.attached_file_name %></h4>
+        </div>
+        <div class="card-body">
+          <div id="file1-canvas" style="height: 700px;"></div>
+        </div>
+      </div>
+    </div> 
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header text-center">
+          <h4>[<%= @att2.attachment_type %>] <%= @att2.attached_file_name %></h4>
+        </div>
+        <div class="card-body">
+          <div id="file2-canvas" style="height: 700px;"></div>
+        </div>
+      </div>
+    </div>            
+  </div>
+</div>
+<footer class='footer'>
+  <div id="action_bar" class='navbar navbar-light fixed-bottom py-0 m-0'>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <button id="closebtn" type="button" class="btn btn-secondary-outline">Close</button>
+      </li>
+    </ul>
+    <form class='navbar-form float-right'>
+      <%= image_tag(master_setup.logo_image.blank? ? "vfi_track_logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
+    </form>
+  </div>
+</footer>
+<%content_for :head_tags do %>
+  <%=javascript_include_tag 'pdfobject' %>
+<%end %>
+<%content_for :javascript do -%>
+  $(function() {
+    $('#closebtn').click(function() {
+      window.close();
+    });
+
+    PDFObject.embed(
+      "<%= @att1.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>", 
+      '#file1-canvas', {PDFJS_URL: "https://vfitrack-pdf-viewer.s3.amazonaws.com/pdfjs-2.0.930/web/viewer.html"}
+    );
+    PDFObject.embed(
+      "<%= @att2.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>", 
+      '#file2-canvas', {PDFJS_URL: "https://vfitrack-pdf-viewer.s3.amazonaws.com/pdfjs-2.0.930/web/viewer.html"}
+    );
+  });
+<%end -%>

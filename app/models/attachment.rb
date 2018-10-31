@@ -64,6 +64,10 @@ class Attachment < ActiveRecord::Base
     end
   end
 
+  def is_pdf?
+    self.attached_content_type.ends_with?('pdf')
+  end
+
   def can_view_attachment_type? user
     view = false
     if self.attachable.is_a?(Entry)
@@ -82,7 +86,7 @@ class Attachment < ActiveRecord::Base
 
     view
   end
-  
+
   #unique name suitable for putting on archive disks
   def unique_file_name
     # Prepend the Document Type (if it exists)

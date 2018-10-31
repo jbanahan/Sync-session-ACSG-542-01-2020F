@@ -163,6 +163,22 @@ describe CoreObjectSupport do
     end
   end
 
+  describe "options_for_attachments_select" do
+    it "Returns an array of items used to create a select dropdown list starting with nil valued option" do
+      p = Factory(:order)
+      att1 = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A",:attached_content_type=>"application/pdf")
+      att2 = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"B",:attached_content_type=>"image/png")
+      expect(p.options_for_attachments_select "application/pdf").to eq [["Select an option", "nil"], [att1.attachment_type + " - " + att1.attached_file_name,att1.id]]
+    end
+
+    it "Does not return an array of items if none are appropriate" do
+      p = Factory(:order)
+      att1 = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A",:attached_content_type=>"image/jpeg")
+      att2 = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"B",:attached_content_type=>"image/png")
+      expect(p.options_for_attachments_select "application/pdf").to eq [["No appopriate attachments exist.", "nil"]]
+    end
+  end
+
   context "TestCoreObject" do
     before :each do
       class TestCoreObject < ActiveRecord::Base
