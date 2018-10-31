@@ -87,8 +87,8 @@ gem 'test-unit'
 # Slack.com integration
 gem 'slack-ruby-client', '~> 0.10'
 
-# Trello.com integration
-gem 'ruby-trello', '1.3.0'
+# Used for Freshservice API access.
+gem 'rest-client', '~> 2.0'
 
 gem 'email_validator', '~> 1.6.0'
 

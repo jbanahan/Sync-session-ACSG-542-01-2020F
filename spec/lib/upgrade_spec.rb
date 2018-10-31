@@ -70,31 +70,36 @@ describe OpenChain::Upgrade do
   end
 
   context "freshservice callbacks" do
-    let(:callbacks) { subject.freshservice_callbacks }
+    let(:freshservice) { instance_double(OpenChain::FreshserviceClient) }
+
+    before :each do 
+      allow(subject).to receive(:freshservice_client).and_return freshservice
+    end
 
     describe "fs_running lambda" do
       it "passes #create_change! call to error logger" do
-        hostname = `hostname`.strip
-        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:create_change!).with("www", "2.0", hostname)
+        expect(freshservice).to receive(:create_change!).with("www", "2.0", `hostname`.strip)
         expect(subject).to receive(:err_logger).and_yield
-        callbacks[:fs_running].call "www", "2.0"
+        subject.freshservice_callbacks[:fs_running].call "www", "2.0"
       end
     end
 
     describe "fs_finished lambda" do
       it "passes #add_note_with_log! call to error logger" do
         upgrade_log = double "upgrade log"
-        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:add_note_with_log!).with(upgrade_log)
+        expect(freshservice).to receive(:change_id).and_return 1
+        expect(freshservice).to receive(:add_note_with_log!).with(upgrade_log)
         expect(subject).to receive(:err_logger).and_yield
-        callbacks[:fs_finished].call upgrade_log
+        subject.freshservice_callbacks[:fs_finished].call upgrade_log
       end
     end
 
     describe "fs_error" do
       it "passes #add_note! call to error logger" do
-        expect_any_instance_of(OpenChain::FreshserviceClient).to receive(:add_note!).with("ERROR!")
+        expect(freshservice).to receive(:change_id).and_return 1
+        expect(freshservice).to receive(:add_note!).with("ERROR!")
         expect(subject).to receive(:err_logger).and_yield
-        callbacks[:fs_error].call "ERROR!"
+        subject.freshservice_callbacks[:fs_error].call "ERROR!"
       end
     end
 

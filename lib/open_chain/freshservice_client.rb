@@ -23,20 +23,13 @@ module OpenChain; class FreshserviceClient
     if request_complete
      raise "FreshserviceClient failed: This change request has already been sent!"
     end
-    
-    retry_count = 0
-    begin
-      response = RestClient::Request.execute({user: token, 
-                                              password: "password", 
-                                              method: "POST", 
-                                              headers: {content_type: "text/json"}, 
-                                              url: change_url, 
-                                              payload: change_request(instance, new_version, server_name)})
-    rescue => e
-      retry if (retry_count += 1) < 4
-      log e
+
+    response = execute_request(change_url, change_request(instance, new_version, server_name))
+    if !response.blank?
+      @change_id = JSON.parse(response)["item"]["itil_change"]["display_id"]
     end
-    @change_id = JSON.parse(response)["item"]["itil_change"]["display_id"]
+
+    @change_id
   end
 
   def add_note! message
@@ -47,20 +40,11 @@ module OpenChain; class FreshserviceClient
     end
     
     return if request_complete
-    
-    retry_count = 0
-    begin
-      RestClient::Request.execute({user: token, 
-                                   password: "password", 
-                                   method: "POST", 
-                                   headers: {content_type: "text/json"}, 
-                                   url: note_url, 
-                                   payload: note_request(message)})
-      @request_complete = true
-    rescue => e
-      retry if (retry_count += 1) < 4
-      log e
-    end
+
+    response = execute_request(note_url, note_request(message))
+    @request_complete = true unless response.nil?
+
+    nil
   end
 
   def add_note_with_log! upgrade_log
@@ -76,7 +60,24 @@ module OpenChain; class FreshserviceClient
     end
   end
 
-  private 
+  private
+
+  def execute_request url, payload
+    retry_count = 0
+    begin
+      response = RestClient::Request.execute({user: token, 
+                                              password: "password", 
+                                              method: :post, 
+                                              headers: {content_type: :json}, 
+                                              url: url, 
+                                              payload: payload.to_json})
+    rescue => e
+      retry if (retry_count += 1) < 4
+      log e
+    end
+
+    response.nil? ? nil : response.body
+  end
 
   def stringify_log upgrade_log
     "From version: #{upgrade_log.from_version}\nTo version: #{upgrade_log.to_version}\nStarted: #{upgrade_log.started_at}\nFinished: #{upgrade_log.finished_at}\n\n#{upgrade_log.log}"

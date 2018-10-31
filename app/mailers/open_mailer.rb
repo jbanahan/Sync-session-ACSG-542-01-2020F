@@ -63,13 +63,13 @@ EOS
     mail(:to => "support@vandegriftinc.com", :subject => "Registration Request (#{@system_code})")
   end
 
-  def send_feedback(current_user,params,request)
-    @user = current_user
-    @params = params
-    @request = request
-    mail(:to => 'chainio-feedback@vandegriftinc.com',
-         :subject => "[VFI Track] [User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
-         :reply_to => current_user.email
+  def send_feedback(user, message, current_page)
+    @user = user
+    @message = message
+    @current_page = current_page
+    mail(:to => 'support@vandegriftinc.com',
+         :subject => "[VFI Track] [User Feedback] #{user.company.name} - #{user.full_name}",
+         :reply_to => user.email
         )
   end
 

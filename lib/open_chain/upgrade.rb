@@ -146,23 +146,28 @@ module OpenChain
     end
 
     def freshservice_callbacks
-      fs_client = OpenChain::FreshserviceClient.new
-      
+      fs_client = freshservice_client
       fs_running = lambda do |instance, new_version|
         err_logger { 
-          host_name = Rails.application.config.hostname
-          fs_client.create_change! instance, new_version, host_name
+          fs_client.create_change! instance, new_version, Rails.application.config.hostname
         }
       end
 
+      # If the change_id is blank below, it means the API call for create_change! failed, so 
+      # there's no change record to associate notes with.  Therefore, skip the notes calls.
       fs_finished = lambda do |upgrade_log|
-        err_logger { fs_client.add_note_with_log! upgrade_log }
+        err_logger { fs_client.add_note_with_log!(upgrade_log) unless fs_client.change_id.blank? }
       end
 
       fs_error = lambda do |err_msg|
-        err_logger { fs_client.add_note! err_msg  }
+        err_logger { fs_client.add_note!(err_msg) unless fs_client.change_id.blank?  }
       end
+
       {fs_running: fs_running, fs_finished: fs_finished, fs_error: fs_error}
+    end
+
+    def freshservice_client
+      OpenChain::FreshserviceClient.new
     end
 
     def err_logger
