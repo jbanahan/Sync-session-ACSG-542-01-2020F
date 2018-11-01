@@ -29,14 +29,14 @@
   <div class='row'>
     <div class='col-md-12'>
       <h2 class='text-center'>Uploads</h2>
-      <ul class='nav nav-tabs' id='uploadTabs'>
-        <%if MasterSetup.get.custom_feature?('Crocs Drawback')%><li><a href='#crocs' data-toggle='tab'>Crocs</a></li><%end%>
-        <%if MasterSetup.get.custom_feature?('J Crew Drawback')%><li><a href='#j_crew' data-toggle='tab'>J Crew</a></li><%end%>
-        <%if MasterSetup.get.custom_feature?('LE Drawback')%><li><a href='#lands_end' data-toggle='tab'>Lands End</a></li><%end%>
-        <%if MasterSetup.get.custom_feature?('UA Drawback')%><li><a href='#under_armour' data-toggle='tab'>Under Armour</a></li><%end%>
+      <ul class='nav nav-tabs' id='uploadTabs' role='tablist'>
+        <%if MasterSetup.get.custom_feature?('Crocs Drawback')%><li class="nav-item"><a id="crocs-tab" class="nav-link" href='#crocs' data-toggle='tab'>Crocs</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('J Crew Drawback')%><li class="nav-item"><a id="j-crew-tab" class="nav-link" href='#j_crew' data-toggle='tab'>J Crew</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('LE Drawback')%><li class="nav-item"><a id="lands-end-tab" class="nav-link" href='#lands_end' data-toggle='tab'>Lands End</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('UA Drawback')%><li class="nav-item"><a id="under-armour-tab" class="nav-link" href='#under_armour' data-toggle='tab'>Under Armour</a></li><%end%>
       </ul>
       <div class='tab-content'>
-        <div class='tab-pane' id='crocs'>
+        <div class='tab-pane' id='crocs' role="tabpanel" aria-labelledby="crocs-tab">
           <div >
             <h3>Receiving File</h3>
             <p><em>.xlsx file from Crocs IT department</em></p>
@@ -49,7 +49,7 @@
           </div>
         </div>
         <%if MasterSetup.get.custom_feature?("LE Drawback")-%>
-        <div class='tab-pane' id='lands_end'>
+        <div class='tab-pane' id='lands_end' role="tabpanel" aria-labelledby="lands-end-tab">
           <div >
             <h3>Lands End B3 Export Files</h3>
             <p><em>.txt file</em></p>
@@ -80,7 +80,7 @@
         </div>
         <%end-%>
         <%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
-        <div class='tab-pane' id='j_crew'>
+        <div class='tab-pane' id='j_crew' role="tabpanel" aria-labelledby="j-crew-tab">
           <div >
             <h3>Imports File V2 (From Frank Genus - created after Jan 1 2016)</h3>
             <p><em>You must convert file from xlsx to .csv file.</em></p>
@@ -129,7 +129,7 @@
         </div>
         <%end-%>
         <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
-        <div class='tab-pane' id='under_armour'>
+        <div class='tab-pane' id='under_armour' role="tabpanel" aria-labelledby="under-armour-tab">
           <div >
             <h3>DH Inbound Files (last 10)</h3>
             <p><em>.xlsx file</em></p>

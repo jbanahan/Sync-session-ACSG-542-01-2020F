@@ -162,18 +162,18 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#main" aria-controls="main" role="tab" data-toggle="tab">Main</a></li>
-        <li role="presentation"><a href="#compliance" aria-controls="compliance" role="tab" data-toggle="tab">Compliance <i class='fa' id='pc-status-indicator'></i></a></li>
-        <li role="presentation"><a href="#quality" aria-controls="quality" role="tab" data-toggle="tab">Quality <i class='fa' id='qa-status-indicator'></i></a></li>
-        <li role="presentation"><a href="#carbpatent" aria-controls="quality" role="tab" data-toggle="tab">CARB/Patent</a></li>
-        <li role="presentation"><a href="#asn" aria-controls="asn" role="tab" data-toggle="tab">ASN Data</a></li>
-        <li role="presentation"><a href="#snapshot" aria-controls="snapshot" role="tab" data-toggle="tab">Snapshot</a></li>
+      <ul class="nav nav-tabs">
+        <li class="nav-item active"><a id="main-tab" class="nav-link active" href="#main" data-toggle="tab" role="tab">Main</a></li>
+        <li class="nav-item"><a id="compliance-tab" class="nav-link" href="#compliance" data-toggle="tab" role="tab">Compliance <i class='fa' id='pc-status-indicator'></i></a></li>
+        <li class="nav-item"><a id="quality-tab" class="nav-link" href="#quality" data-toggle="tab" role="tab">Quality <i class='fa' id='qa-status-indicator'></i></a></li>
+        <li class="nav-item"><a id="carbpatent-tab" class="nav-link" href="#carbpatent" data-toggle="tab" role="tab">CARB/Patent</a></li>
+        <li class="nav-item"><a id="asn-tab" class="nav-link" href="#asn" data-toggle="tab" role="tab">ASN Data</a></li>
+        <li class="nav-item"><a id="snapshot-tab" class="nav-link" href="#snapshot" data-toggle="tab" role="tab">Snapshot</a></li>
       </ul>
 
       <!-- Tab panes -->
       <div class="tab-content">
-        <div role="tabpanel" class="tab-pane active" id="main">
+        <div role="tabpanel" class="tab-pane active" id="main" aria-labelledby="main-tab">
           <table class="table table-sm table-condensed table-bordered">
             <thead>
               <tr>
@@ -229,7 +229,7 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="compliance">
+        <div role="tabpanel" class="tab-pane" id="compliance" aria-labelledby="compliance-tab">
           <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
@@ -278,7 +278,7 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="quality">
+        <div role="tabpanel" class="tab-pane" id="quality" aria-labelledby="quality-tab">
           <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
@@ -317,7 +317,7 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="carbpatent">
+        <div role="tabpanel" class="tab-pane" id="carbpatent" aria-labelledby="carbpatent-tab">
           <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
@@ -351,7 +351,7 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="asn">
+        <div role="tabpanel" class="tab-pane" id="asn" aria-labelledby="asn-tab">
           <table class="table table-condensed table-sm table-striped table-bordered">
             <thead>
               <tr>
@@ -394,7 +394,7 @@
             </tbody>
           </table>
         </div>
-        <div role="tabpanel" class="tab-pane" id="snapshot">
+        <div role="tabpanel" class="tab-pane" id="snapshot" aria-labelledby="snapshot-tab">
           <table class="table table-condensed table-sm table-bordered">
             <thead>
               <tr>
