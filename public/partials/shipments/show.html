@@ -184,102 +184,13 @@
                           </td>
                           <td ng-show='shp.permissions.can_edit' class='text-right'>
                             <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                            <button class='btn btn-sm' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
-                            <button class='btn btn-sm' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
+                            <button class='btn btn-sm btn-outline-dark' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
+                            <button class='btn btn-sm btn-outline-dark' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                </div>
-                <div class="modal fade panel-modal" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h4 class="modal-title">Edit Line</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                      </div>
-                      <div class="modal-body">
-                        <div class="form-group">
-                          <label for="shpln_shipped_qty">Quantity</label>
-                          <input type="number" class='form-control' id='shpln_shipped_qty' ng-model="lineToEdit.shpln_shipped_qty">
-                        </div>
-                        <div class="form-group">
-                          <label for="shpln_carton_qty">Cartons</label>
-                          <input type="number" class='form-control' id='shpln_carton_qty' ng-model="lineToEdit.shpln_carton_qty">
-                        </div>
-                        <div class="form-group">
-                          <label for="shpln_cbms">CBMs</label>
-                          <input type="number" class='form-control' id='shpln_cbms' ng-model="lineToEdit.shpln_cbms">
-                        </div>
-                        <div class="form-group">
-                          <label for="shpln_gross_kgs">Gross KGS</label>
-                          <input type="number" class='form-control' id='shpln_gross_kgs' ng-model="lineToEdit.shpln_gross_kgs">
-                        </div>
-                        <div class="form-group">
-                          <label for="shpln_container_uid">Container</label>
-                          <select ng-model='lineToEdit.shpln_container_uid' id='shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
-                            <option></option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" ng-click='saveShipmentLine(shp,lineToEdit)' data-dismiss="modal">Save changes</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-12" ng-show='shp.lines.length >= 0'>
-                  <div class="card" ng-show='shp.lines.length == 0'>
-                    <div class="card-body">This shipment doesn't have any lines.</div>
-                  </div>
-                  <table class='table table-striped' ng-show='shp.lines.length > 0'>
-                    <thead>
-                      <tr>
-                        <th>Line #</th>
-                        <th>Product</th>
-                        <th>Order Number - Line</th>
-                        <th>Quantity</th>
-                        <th>Cartons</th>
-                        <th>Volume (CBMS)</th>
-                        <th>Gross Weight (KGS)</th>
-                        <th>Container</th>
-                        <th ng-show='shp.permissions.can_edit'></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
-                        <td>{{ln.shpln_line_number}}</td>
-                        <td>{{ln.shpln_puid}}</td>
-                        <td>
-                          <div ng-repeat='ol in ln.order_lines'>
-                            <a href='/orders/{{ol.order_id}}'>{{shipmentLineOrderNumber(ol)}} - {{ol.ordln_line_number}}</a>
-                          </div>
-                        </td>
-                        <td>
-                          {{ln.shpln_shipped_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_carton_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_cbms}}
-                        </td>
-                        <td>
-                          {{ln.shpln_gross_kgs}}
-                        </td>
-                        <td>
-                          {{ln.shpln_container_number}}
-                        </td>
-                        <td ng-show='shp.permissions.can_edit' class='text-right'>
-                          <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                          <button class='btn btn-sm btn-outline-dark' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
-                          <button class='btn btn-sm btn-outline-dark' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
               </div>
               <div class="modal fade" id='mod_edit_line' tabindex="-1" role="dialog" aria-hidden="true">
@@ -308,7 +219,7 @@
                       </div>
                       <div class="form-group">
                         <label for="shpln_container_uid">Container</label>
-                        <select ng-model='lineToEdit.shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
+                        <select ng-model='lineToEdit.shpln_container_uid' id='shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
                           <option></option>
                         </select>
                       </div>
@@ -333,7 +244,7 @@
                       <address-book-autocomplete ng-show="edit" id="modal_mfg_edit" initial-value="partyLine.shpln_manufacturer_address_name" address-id-attribute="partyLine.shpln_manufacturer_address_id"></address-book-autocomplete>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn float-left" ng-click="edit = !edit" ><i class="fa fa-{{edit ? 'unlock-alt' : 'lock'}}"></i></button>
+                      <button type="button" class="btn btn-primary float-left" ng-click="edit = !edit" ><i class="fa fa-{{edit ? 'unlock-alt' : 'lock'}}"></i></button>
                       <button type="button" class="btn btn-primary" ng-click='edit = false; saveShipmentLine(shp,partyLine)' ng-show="edit" data-dismiss="modal">Save</button>
                       <button type="button" class="btn btn-secondary" ng-click="edit = false;" data-dismiss="modal">Close</button>
                     </div>
