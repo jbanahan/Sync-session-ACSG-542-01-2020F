@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     workbook = XlsMaker.new_workbook
 
     mode = shipment.mode.presence || shipment.booking_mode.presence
-    if mode && mode != "Air"
+    if mode.to_s.upcase != "AIR" && shipment.containers.length > 0
       shipment.containers.each do |container|
         sheet = new_sheet(workbook, container)
         add_headers(sheet, shipment, user, container)
