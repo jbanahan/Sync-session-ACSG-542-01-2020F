@@ -40,7 +40,7 @@ class Attachment < ActiveRecord::Base
   before_destroy :record_filename, prepend: true 
   
   belongs_to :uploaded_by, :class_name => "User"
-  belongs_to :attachable, :polymorphic => true
+  belongs_to :attachable, polymorphic: true, touch: true
 
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachment_archives, :through=>:attachment_archives_attachments

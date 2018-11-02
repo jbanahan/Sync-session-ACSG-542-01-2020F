@@ -32,11 +32,12 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
     edit_object(params, current_user) do |obj|
       attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
       if attachment
-        deleted = false
-        Attachment.transaction do
-          attachment.destroy
+        # Once the attachment is destroyed the filename is cleared (this is a paperclip thing)
+        filename = attachment.attached_file_name
+        deleted = attachment.destroy
+        if deleted
           attachment.rebuild_archive_packet
-          deleted = true
+          obj.create_async_snapshot current_user, nil, "Attachment Removed: #{filename}" if obj.respond_to?(:create_async_snapshot)
         end
 
         render_ok
@@ -116,7 +117,9 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
     def edit_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
       if obj && obj.can_attach?(user)
-        yield obj
+        Lock.db_lock(obj) do 
+          yield obj
+        end
       else
         render_forbidden
         nil

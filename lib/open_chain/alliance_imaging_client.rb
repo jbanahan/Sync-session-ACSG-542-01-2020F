@@ -220,9 +220,6 @@ class OpenChain::AllianceImagingClient
           att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
         end
 
-        # Touch the entry so the updated_at updates and thus changes its cache key, which we want so that this new attachment
-        # will appear on the page.
-        entry.touch
         entry.create_snapshot user, nil, "Imaging"
         attachment = att
       end
@@ -298,9 +295,6 @@ class OpenChain::AllianceImagingClient
           attachment = att
         end
 
-        # Touch the entry so the updated_at updates and thus changes its cache key, which we want so that this new attachment
-        # will appear on the page.
-        entry.touch
         entry.create_snapshot user, nil, "Imaging"
 
       end
@@ -432,7 +426,6 @@ class OpenChain::AllianceImagingClient
 
         # Clear out any other archive packets already associated with this entry
         entity.attachments.where("NOT attachments.id = ?", attachment.id).where(:attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE).destroy_all
-        entity.touch
         entity.create_snapshot User.integration, nil, "Archive Packet"
       end
 

@@ -12,7 +12,7 @@ module CoreObjectSupport
     attr_accessor :dont_process_linked_attachments
 
     has_many :comments, as: :commentable, dependent: :destroy
-    has_many :attachments, as: :attachable, dependent: :destroy
+    has_many :attachments, as: :attachable, dependent: :destroy, inverse_of: :attachable
     has_many :attachment_process_jobs, as: :attachable, dependent: :destroy, class_name: AttachmentProcessJob
     has_many :linked_attachments, as: :attachable, dependent: :destroy
     has_many :linkable_attachments, through: :linked_attachments

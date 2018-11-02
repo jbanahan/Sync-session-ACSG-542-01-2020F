@@ -19,14 +19,24 @@ describe Api::V1::AttachmentsController do
 
     describe "destroy" do
       it "deletes an attachment" do
+        updated_at = product.updated_at
         expect_any_instance_of(Product).to receive(:can_attach?).with(user).and_return true
         expect_any_instance_of(Attachment).to receive(:rebuild_archive_packet)
-        delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        now = Time.zone.parse("2018-11-02 12:00")
+        Timecop.freeze(now) do 
+          delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id
+        end
         expect(response).to be_success
         expect(JSON.parse(response.body)).to eq({"ok" => "ok"})
 
         product.reload
         expect(product.attachments.length).to eq 0
+        # Make sure the updated at get set to "now"
+        expect(product.updated_at).to eq now
+        expect(product.entity_snapshots.length).to eq 1
+        snap = product.entity_snapshots.first
+        expect(snap.user).to eq user
+        expect(snap.context).to eq "Attachment Removed: file.txt"
       end
 
       it "errors if user cannot delete attachment" do

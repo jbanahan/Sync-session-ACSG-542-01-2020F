@@ -31,6 +31,7 @@ describe AttachmentsController do
 
     context "with http request" do
       it "creates an attachment" do
+        expect(Lock).to receive(:db_lock).with(instance_of(Product)).and_yield
         post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
         expect(response).to redirect_to prod
         prod.reload
@@ -78,6 +79,7 @@ describe AttachmentsController do
 
     context "with JSON request" do
       it "creates an attachment" do
+        expect(Lock).to receive(:db_lock).with(instance_of(Product)).and_yield
         post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format => :json
         prod.reload
         expect(prod.attachments.length).to eq 1

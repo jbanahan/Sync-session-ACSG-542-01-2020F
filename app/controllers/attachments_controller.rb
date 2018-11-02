@@ -19,14 +19,16 @@ class AttachmentsController < ApplicationController
       attachable = att.attachable
       saved = false
       if attachable.can_attach?(current_user)
-        att.uploaded_by = current_user
-        if att.save!
-          saved = true
-          attachable.log_update(current_user) if attachable.respond_to?(:log_update)
-          attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)
-          attachable.create_async_snapshot current_user, nil, "Attachment Added: #{att.attached_file_name}" if attachable.respond_to?(:create_async_snapshot)
-        else
-          errors_to_flash att
+        Lock.db_lock(attachable) do
+          att.uploaded_by = current_user
+          if att.save!
+            saved = true
+            attachable.log_update(current_user) if attachable.respond_to?(:log_update)
+            attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)
+            attachable.create_async_snapshot current_user, nil, "Attachment Added: #{att.attached_file_name}" if attachable.respond_to?(:create_async_snapshot)
+          else
+            errors_to_flash att
+          end
         end
       else
         add_flash :errors, "You do not have permission to attach items to this object."
@@ -51,9 +53,14 @@ class AttachmentsController < ApplicationController
     attachable = att.attachable
     if attachable.can_attach?(current_user)
       deleted = false
-      Attachment.transaction do
+      Lock.db_lock(attachable) do
+        # Once the attachment is destroyed the filename is cleared (this is a paperclip thing)
+        filename = att.attached_file_name
         deleted = att.destroy
-        att.rebuild_archive_packet if deleted
+        if deleted
+          att.rebuild_archive_packet
+          attachable.create_async_snapshot current_user, nil, "Attachment Removed: #{filename}" if attachable.respond_to?(:create_async_snapshot)
+        end
       end
       errors_to_flash att
     else
