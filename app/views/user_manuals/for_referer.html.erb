@@ -1,8 +1,8 @@
 <div class='container-fluid'>
   <div class="row">
-    <div class="col-10 offset-xs-1">
+    <div class="col-10 offset-1">
       <%if @manuals.blank?%>
-        <div class="alert alert-info">There aren't any user manuals configured for this page.</div>
+        <div class="alert alert-info text-center">There aren't any user manuals configured for this page.</div>
       <%else%>
         <%UserManual.to_category_hash(@manuals).each do |cat,ma|%>
         <div>

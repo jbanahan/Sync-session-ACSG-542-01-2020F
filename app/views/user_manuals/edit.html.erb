@@ -46,6 +46,10 @@ $(function() {
           <%=f.text_area :groups, class: 'form-control', rows: 5%>
           <em class='small'>One per line</em>
         </div>
+        <div class="form-group">
+          <%=f.check_box :master_company_only%>
+          <%=f.label :master_company_only, 'Master Company Only (Limit access to only users with Master Company Accounts.)'%>
+        </div>
       </div>
     </div>
   </div>

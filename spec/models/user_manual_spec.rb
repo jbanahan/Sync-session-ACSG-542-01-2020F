@@ -1,32 +1,30 @@
 require 'spec_helper'
 
 describe UserManual do
+  let (:company) { Factory(:company,:master=>true) }
+  let (:user) { Factory(:user, company: company)}
+
   describe '#for_user_and_page' do
     it "should find for user and page" do
       um1 = Factory(:user_manual,page_url_regex:'vendor_portal')
       Factory(:user_manual,page_url_regex:'dont_find')
 
-      u = Factory(:user)
-
-      expect(UserManual.for_user_and_page(u,'https://www.vfitrack.net/vendor_portal#something')).to eq [um1]
+      expect(UserManual.for_user_and_page(user,'https://www.vfitrack.net/vendor_portal#something')).to eq [um1]
     end
     it "should not find if user not in groups" do
       Factory(:user_manual,page_url_regex:'vendor_portal',groups:"A\nB")
-      u = Factory(:user)
 
-      expect(UserManual.for_user_and_page(u,'https://www.vfitrack.net/vendor_portal#something')).to eq []
+      expect(UserManual.for_user_and_page(user,'https://www.vfitrack.net/vendor_portal#something')).to eq []
     end
     it "should not find if NOT user can_view?" do
       Factory(:user_manual,page_url_regex:'vendor_portal')
-      u = Factory(:user)
       expect_any_instance_of(UserManual).to receive(:can_view?).and_return false
-      expect(UserManual.for_user_and_page(u,'https://www.vfitrack.net/vendor_portal')).to eq []
+      expect(UserManual.for_user_and_page(user,'https://www.vfitrack.net/vendor_portal')).to eq []
     end
     it "should find if page_url_regex is blank" do
       um1 = Factory(:user_manual)
-      u = Factory(:user)
 
-      expect(UserManual.for_user_and_page(u,'https://www.vfitrack.net/vendor_portal#something')).to eq [um1]
+      expect(UserManual.for_user_and_page(user,'https://www.vfitrack.net/vendor_portal#something')).to eq [um1]
     end
   end
   describe '#can_view?' do
@@ -34,20 +32,27 @@ describe UserManual do
       um = Factory(:user_manual,page_url_regex:'vendor_portal',groups:"A\nB")
       
       g = Factory(:group,system_code:'B')
-      u = Factory(:user)
-      u.groups << g
+      user.groups << g
 
-      expect(um.can_view?(u)).to be_truthy
+      expect(um.can_view?(user)).to be_truthy
     end
     it "should be true if groups are blank" do
       um = Factory(:user_manual,page_url_regex:'vendor_portal')
-      u = Factory(:user)
-      expect(um.can_view?(u)).to be_truthy
+      expect(um.can_view?(user)).to be_truthy
+    end
+    it "should be true if user is in master company and user manual is master only" do
+      um = Factory(:user_manual,page_url_regex:'vendor_portal',master_company_only: true)
+
+      expect(um.can_view?(user)).to be_truthy
     end
     it "should be false if user not in group" do
       um = Factory(:user_manual,page_url_regex:'vendor_portal',groups:"A\nB")
-      u = Factory(:user)
-      expect(um.can_view?(u)).to be_falsey
+      expect(um.can_view?(user)).to be_falsey
+    end
+    it "should be false if user not in master company and user manual is master only" do
+      um = Factory(:user_manual,page_url_regex:'vendor_portal',master_company_only: true)
+      user.company.update_attributes(:master=>false)
+      expect(um.can_view?(user)).to be_falsey
     end
   end
   describe '#to_category_hash' do

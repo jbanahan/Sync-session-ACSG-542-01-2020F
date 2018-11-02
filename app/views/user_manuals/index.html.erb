@@ -17,6 +17,7 @@ $(function() {
           <tr>
             <th>Category</th>
             <th>Name</th>
+            <th class="text-center">Master Company Only</th>
             <th>Wistia Code</th>
             <th>URL Regex</th>
             <th>Groups</th>
@@ -34,14 +35,17 @@ $(function() {
                   <%=um.name%>
                 </a>
               </td>
+              <td class="text-center">
+                <%= check_box_tag 'master_comp', um.master_company_only, um.master_company_only, disabled: true %>
+              </td>
               <td>
                 <%= um.wistia_code%>
               </td>
               <td><%=um.page_url_regex%></td>
               <td>
-<pre>
-<%=um.groups%>
-</pre>
+                <pre>
+                  <%=um.groups%>
+                </pre>
               </td>
               <td>
                 <a href='<%=edit_user_manual_path(um)%>'>Edit</a>
@@ -86,6 +90,16 @@ $(function() {
             <%=f.label :groups, 'Group System Codes'%>
             <%=f.text_area :groups, class: 'form-control', rows: 5%>
             <em class='small'>One per line</em>
+          </div>
+          <div class="form-group">
+            <div class="row">
+              <div class="col-1">
+                <%=f.check_box :master_company_only%>
+              </div>
+              <div class="col-11">
+                <%=f.label :master_company_only, 'Master Company Only (Limit access to only users with Master Company Accounts.)'%>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
