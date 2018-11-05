@@ -22,24 +22,27 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
   describe "process" do
     let (:custom_defintions) {
-      subject.class.prep_custom_definitions [:prod_sku_number]
+      subject.send(:cdefs)
     }
 
     let (:product1) {
-      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART1")
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
+      prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1"
       prod
     }
 
     let (:product2) {
-      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART2")
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-2")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "20671580"
+      prod.update_custom_value! custom_defintions[:prod_part_number], "PART-2"
       prod
     }
 
     let (:product3) {
-      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART3")
+      prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-3")
       prod.update_custom_value! custom_defintions[:prod_sku_number], "10419518"
+      prod.update_custom_value! custom_defintions[:prod_part_number], "PART-3"
       prod
     }
 
@@ -99,6 +102,26 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(line.price_per_unit).to eq BigDecimal("24.10")
         expect(line.country_of_origin).to eq "CN"
       end
+
+      it "falls back to part number matching if multiple parts are found by sku number" do
+        # Create another part that has the same sku number, but won't have the part number from the origin file
+        prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1X")
+        prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
+        prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
+
+        expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1)
+        subject.process user 
+
+        order = Order.where(order_number: "CQ-MON4951").first
+        expect(order).not_to be_nil
+        expect(order.order_lines.length).to eq 1
+        expect(order.order_lines.first.product).to eq product1
+
+         expect(user.messages.length).to eq 1
+        m = user.messages.first
+        expect(m.subject).to eq "CQ Origin Report Complete"
+        expect(m.body).to eq "The report has been processed without error."
+      end
     end
 
     context "missing product 2" do
@@ -138,7 +161,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         # Make sure the missing products file is as expected (just make sure the sku number got placed correctly)
         reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Missing Products.xlsx"].read)
         sheet = reader.sheet "Missing Products"
-        expect(reader.raw_data(sheet)[1]).to eq ["20671580", nil, nil, "PART2"]
+        expect(reader.raw_data(sheet)[1]).to eq ["20671580", nil, nil, nil]
 
 
         reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Orders.xlsx"].read)

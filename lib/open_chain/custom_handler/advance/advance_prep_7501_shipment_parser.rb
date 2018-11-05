@@ -30,7 +30,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       shipment.ship_from = parties[:ship_from]
       shipment.consignee = parties[:consignee]
       shipment.ship_to = parties[:ship_to]
-      shipment.house_bill_of_lading = xml.text "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']"
+      # For whatever reason, we get whitespace (non-breaking spaces, other non-printing chars) at the end of the BOL from time to time, strip it
+      # otherwise there is problems sending the data to Kewill
+      shipment.house_bill_of_lading = xml.text("/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']").to_s.gsub(/[[:space:]]/, "")
       inbound_file.add_identifier :house_bill, shipment.house_bill_of_lading
 
       asn = REXML::XPath.first xml, "/Prep7501Message/Prep7501/ASN"

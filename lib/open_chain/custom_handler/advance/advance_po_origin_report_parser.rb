@@ -21,7 +21,6 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
   end
 
   def process user 
-    @cdefs = self.class.prep_custom_definitions [:prod_sku_number]
     result = process_file user, @custom_file
     subject = "CQ Origin Report Complete"
     body = "The report has been processed without error."
@@ -107,8 +106,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
           next
         end
 
-        #skip any line that is missing a PO Number or FULL CQ SKU
-        next if row[1].blank? || part_number(row).blank?
+        #skip any line that is missing a PO Number or SKU-Number
+        next if order_number(row).blank? || sku_number(row).blank?
 
         ord_num = order_number(row)
         row[1] = ord_num
@@ -154,7 +153,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     def create_spreadsheets orders_missing_products, header_row
       missing_products = Set.new
       orders_missing_products.each do |row|
-        missing_products << [sku_number(row), part_number(row)] if missing_product?(row) && !part_number(row).blank?
+        missing_products << sku_number(row) if missing_product?(row)
       end
 
       [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row)]
@@ -167,8 +166,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Comments"]
       builder.freeze_horizontal_rows sheet, 1
 
-      missing_products.to_a.each do |numbers|
-        builder.add_body_row sheet, [numbers[0], nil, nil, numbers[1]]
+      missing_products.to_a.each do |number|
+        builder.add_body_row sheet, [number, nil, nil, nil]
       end
 
       builder
@@ -204,13 +203,32 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def find_product row
-      part = part_number(row)
-      return nil if part.blank?
-      product = Product.where(importer_id: importer, unique_identifier: "#{importer.system_code}-#{part}").first
-      # make sure the sku number is also present since it's required for sending on Canada invoices
-      return nil if product && product.custom_value(@cdefs[:prod_sku_number]).blank?
+      sku = sku_number(row)
+      return nil if sku.blank?
 
-      product
+      # SKU can potentially match to multiple products (sku is unique to the part, but the part number includes a factory designator).  We need to 
+      # find the unique part based on the part number from the CQ file (you'd think we could look up the part based on the part number, but the origin report
+      # is missing hyphens and other punctuation from the part number, so a lookup on that isn't really feasible).
+      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: sku}).all
+
+      found = nil
+      if products.length < 2
+        found = products[0]
+      else
+        # Strip any non-alphanumeric chars from the product's part number and see if part number from the file matches on of the ones we found.
+        part = part_number(row).to_s.gsub(/[^[[:alnum:]]]/, "")
+        if !part.blank?
+          # Strip any non-word chars from the product's part number and see if part number from the file matches on of the ones we found.
+          products.each do |product|
+            if product.custom_value(cdefs[:prod_part_number]).to_s.gsub(/[^[[:alnum:]]]/, "") == part
+              found = product
+              break
+            end
+          end
+        end
+      end
+
+      found
     end
 
     def build_order_header row
@@ -254,6 +272,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
 
     def orders_missing_products_builder
       @orders_missing_products_builder ||= XlsxBuilder.new
+    end
+
+    def cdefs
+      @cdefs ||= self.class.prep_custom_definitions [:prod_sku_number, :prod_part_number]
     end
 
 end; end; end; end
