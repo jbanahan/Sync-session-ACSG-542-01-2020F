@@ -211,19 +211,17 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       # is missing hyphens and other punctuation from the part number, so a lookup on that isn't really feasible).
       products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: sku}).all
 
+      return nil if products.length == 0
+
       found = nil
-      if products.length < 2
-        found = products[0]
-      else
-        # Strip any non-alphanumeric chars from the product's part number and see if part number from the file matches on of the ones we found.
-        part = part_number(row).to_s.gsub(/[^[[:alnum:]]]/, "")
-        if !part.blank?
-          # Strip any non-word chars from the product's part number and see if part number from the file matches on of the ones we found.
-          products.each do |product|
-            if product.custom_value(cdefs[:prod_part_number]).to_s.gsub(/[^[[:alnum:]]]/, "") == part
-              found = product
-              break
-            end
+      # Strip any non-alphanumeric chars from the product's part number and see if part number from the file matches on of the ones we found.
+      part = part_number(row).to_s.gsub(/[^[[:alnum:]]]/, "")
+      if !part.blank?
+        # Strip any non-word chars from the product's part number and see if part number from the file matches on of the ones we found.
+        products.each do |product|
+          if product.custom_value(cdefs[:prod_part_number]).to_s.gsub(/[^[[:alnum:]]]/, "") == part
+            found = product
+            break
           end
         end
       end
