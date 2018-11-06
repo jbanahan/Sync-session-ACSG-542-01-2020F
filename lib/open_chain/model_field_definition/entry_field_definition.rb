@@ -364,7 +364,19 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       }],
       [228, :ent_split_shipment_date, :split_shipment_date, "Split Shipment Date", {:data_type => :datetime}],
       [229, :ent_across_declaration_accepted, :across_declaration_accepted, "ACROSS - Declaration Accepted", {data_type: :datetime}],
-      [230, :ent_summary_line_count, :summary_line_count, "Entry Summary Line Count", {data_type: :integer}]
+      [230, :ent_summary_line_count, :summary_line_count, "Entry Summary Line Count", {data_type: :integer}],
+      [231, :ent_post_summary_exists, :post_summary_exists, "Post Summary Correction", {
+        data_type: :boolean,
+        read_only: true,
+        :import_lambda=>lambda {|obj,data| "Post Summary Corrections Date Exists ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.any?{ |cil| cil.psc_date? }},
+        :qualified_field_name=>"(SELECT COUNT(*)
+           FROM commercial_invoice_lines cil
+            INNER JOIN commercial_invoices ci ON ci.id = cil.commercial_invoice_id
+           WHERE entries.id = ci.entry_id AND cil.psc_date IS NOT NULL
+           LIMIT 1)"
+        }
+      ]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
