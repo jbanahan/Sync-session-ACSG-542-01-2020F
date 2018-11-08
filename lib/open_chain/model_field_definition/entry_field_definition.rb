@@ -370,11 +370,11 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
         read_only: true,
         :import_lambda=>lambda {|obj,data| "Post Summary Corrections Date Exists ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.any?{ |cil| cil.psc_date? }},
-        :qualified_field_name=>"(SELECT COUNT(*)
-           FROM commercial_invoice_lines cil
-            INNER JOIN commercial_invoices ci ON ci.id = cil.commercial_invoice_id
-           WHERE entries.id = ci.entry_id AND cil.psc_date IS NOT NULL
-           LIMIT 1)"
+        :qualified_field_name=>"(SELECT CASE WHEN (
+          SELECT COUNT(*) FROM commercial_invoice_lines cil 
+            JOIN commercial_invoices ci ON ci.id = cil.commercial_invoice_id
+          WHERE entries.id = ci.entry_id AND cil.psc_date IS NOT NULL) 
+          THEN 1 ELSE 0 END)"
         }
       ]
     ]
