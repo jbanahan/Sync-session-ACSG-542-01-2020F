@@ -141,6 +141,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         d.transport_mode_code = result_set_row['transport_mode_code']
         d.broker_invoice_total = result_set_row['broker_invoice_total']
         d.isf_fees = result_set_row['isf_fees']
+        d.entry_port_code = result_set_row['entry_port_code']
         raw_data << d
       end
 
@@ -385,13 +386,13 @@ module OpenChain; module Report; class CustomerYearOverYearReport
                                          "Entry Type","Total Entered Value","Total Duty","MPF","HMF","Cotton Fee",
                                          "Total Taxes","Total Fees","Other Taxes & Fees","Arrival Date","Release Date",
                                          "File Logged Date","Fiscal Date","ETA Date","Total Units","Total GST",
-                                         "Country Export Codes","Mode of Transport","Total Broker Invoice","ISF Fees"]
+                                         "Country Export Codes","Mode of Transport","Total Broker Invoice","ISF Fees","Port of Entry Code"]
 
       data_arr.each do |row|
-        wb.add_body_row sheet, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total,row.isf_fees], styles: Array.new(3, nil) + [:number, nil] + Array.new(8, :currency) + Array.new(5, nil) + [:number, :currency, nil, nil, :currency]
+        wb.add_body_row sheet, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total,row.isf_fees, row.entry_port_code], styles: Array.new(3, nil) + [:number, nil] + Array.new(8, :currency) + Array.new(5, nil) + [:number, :currency, nil, nil, :currency, nil]
       end
 
-      wb.set_column_widths sheet, *Array.new(23, 20)
+      wb.set_column_widths sheet, *Array.new(24, 20)
 
       sheet
     end
@@ -448,7 +449,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           WHERE 
             bi.entry_id = entries.id AND 
             bil.charge_code = '0191'
-        ) AS isf_fees 
+        ) AS isf_fees, 
+        entry_port_code  
       FROM 
         entries 
       WHERE 
@@ -705,8 +707,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
               entries 
               LEFT OUTER JOIN ports AS entry_port ON 
                 (
-                  entries.entry_port_code = entry_port.schedule_d_code OR 
-                  entries.entry_port_code = entry_port.cbsa_port
+                 (entries.entry_port_code = entry_port.schedule_d_code AND entries.import_country_id = #{Country.where(iso_code:'US').first.try(:id).to_i})
+                 OR 
+                 (entries.entry_port_code = entry_port.cbsa_port AND entries.import_country_id = #{Country.where(iso_code:'CA').first.try(:id).to_i})
                 )
             WHERE 
               importer_id IN (#{importer_ids.join(',')}) AND 
@@ -718,7 +721,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         GROUP BY 
           entry_port_name, 
           entry_port_code, 
-          entry_type
+          entry_type 
         ORDER BY
           entry_port_name, 
           entry_type
