@@ -79,7 +79,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
     sheet = wb.create_worksheet :name=>"Savings Report"
     table_from_query sheet, sql, conversions
     sheet.row(sheet.rows.count + 1).replace(['Grand Totals', nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-                                         grand_total_hash[:invoice_tariff_duty], nil, nil, grand_total_hash[:duty_without_spi], grand_total_hash[:savings]])
+                                         grand_total_hash[:invoice_tariff_duty], nil, nil, grand_total_hash[:duty_without_spi], grand_total_hash[:savings] < 0 ? 0 : grand_total_hash[:savings]])
     format = Spreadsheet::Format.new :vertical_align => :justify
     msg = "Common Rate and Duty without SPI is estimated based on the country’s current tariff schedule and may not reflect the historical Common Rate from the date the entry was cleared. For Common Rates with a compound calculation (such as 4% plus $0.05 per KG), only the percentage is used for the estimated Duty without SPI and Savings calculations."
     current_row = sheet.rows.count + 1
