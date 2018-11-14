@@ -49,7 +49,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
           cit.spi_primary AS 'SPI (Primary)',
           ot.common_rate_decimal AS 'Common Rate',
           IFNULL(ROUND((ot.common_rate_decimal * IFNULL(cit.entered_value_7501, cit.entered_value)), 2), 0) AS 'Duty without SPI',
-          IFNULL(ROUND(ot.common_rate_decimal * IFNULL(cit.entered_value_7501, cit.entered_value), 2) - cit.duty_amount, 0) AS 'Savings'
+          GREATEST((IFNULL(ROUND(ot.common_rate_decimal * IFNULL(cit.entered_value_7501, cit.entered_value), 2) - cit.duty_amount, 0)), 0) AS 'Savings'
       FROM
           entries e
               INNER JOIN
