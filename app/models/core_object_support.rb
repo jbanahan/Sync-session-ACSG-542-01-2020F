@@ -96,7 +96,11 @@ module CoreObjectSupport
   end
 
   def attachment_types
-    self.attachments.where("LENGTH(RTRIM(IFNULL(attachment_type, ''))) > 0").order(:attachment_type).uniq.pluck(:attachment_type)
+    self.attachments.map {|a| a.attachment_type.presence || nil }.compact.uniq.sort
+  end
+
+  def attachment_filenames
+    self.attachments.map {|a| a.attached_file_name.presence || nil }.compact.uniq.sort
   end
 
   # method for selecting a type of attachment such as "application/pdf"

@@ -17,9 +17,9 @@ module OpenChain; module ModelFieldGenerator; module AttachmentGenerator
       qualified_field_name: "(SELECT COUNT(*) FROM attachments where attachments.attachable_id = #{core_module.table_name}.id AND attachments.attachable_type = '#{core_module.class_name}')",
       export_lambda: lambda {|obj| obj.attachments.size}
     }]
-    r << [rank += 1,"#{uid_prefix}_attachment_filenames".to_sym,:attachment_types,"Attachment Filenames",{
+    r << [rank += 1,"#{uid_prefix}_attachment_filenames".to_sym,:attachment_filenames,"Attachment Filenames",{
       data_type: :string,
-      export_lambda: lambda {|obj| obj.attachment_types.join("\n ") },
+      export_lambda: lambda {|obj| obj.attachment_filenames.join("\n ") },
       qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT a_files.attached_file_name ORDER BY a_files.attached_file_name SEPARATOR '\n ')
         FROM attachments a_files
         WHERE a_files.attachable_id = #{core_module.table_name}.id AND a_files.attachable_type = '#{core_module.class_name}' AND LENGTH(RTRIM(IFNULL(a_files.attached_file_name, ''))) > 0)",
