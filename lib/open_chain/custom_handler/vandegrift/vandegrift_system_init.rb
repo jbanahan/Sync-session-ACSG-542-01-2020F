@@ -9,7 +9,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
   def self.register_change_comparators
     # Add the requires here, so that they're not loaded on every single customer system, when there's no need for them on those
     require 'open_chain/entity_compare/comparator_registry'
-    require 'open_chain/custom_handler/vandegrift/vandegrift_ace_entry_comparator'
     require 'open_chain/custom_handler/hm/hm_entry_docs_comparator'
     require 'open_chain/custom_handler/hm/hm_entry_parts_comparator'
     require 'open_chain/billing_comparators/product_comparator'
@@ -26,7 +25,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_comparator'
     require 'open_chain/custom_handler/advance/advance_entry_load_shipment_comparator'
 
-    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::VandegriftAceEntryComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryDocsComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryPartsComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::BillingComparators::ProductComparator
