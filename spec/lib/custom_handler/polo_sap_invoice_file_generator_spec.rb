@@ -3,6 +3,26 @@ require 'spreadsheet'
 
 describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
+  let (:user) {
+    Factory(:user)
+  }
+
+  let (:importer) {
+    Factory(:importer, fenix_customer_number: "806167003RM0001")
+  }
+
+  let! (:rl_canada_list) { 
+    MailingList.create! system_code: "sap_billing", name: "SAP Billing", email_addresses: "rl_canada@rl.com", user: user, company: importer
+  }
+
+  let! (:club_monaco_list) { 
+    MailingList.create! system_code: "sap_billing_2", name: "SAP Billing", email_addresses: "club_monaco@rl.com", user: user, company: importer
+  }
+
+  let! (:factory_stores_list) { 
+    MailingList.create! system_code: "sap_billing_3", name: "SAP Billing", email_addresses: "factory_stores@rl.com", user: user, company: importer
+  }
+
   before :each do
     @gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
     @api_client = double("ProductApiClient")
@@ -10,7 +30,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     allow(@api_client).to receive(:find_by_uid).and_return({'product'=>{'classifications' => []}})
     stub_xml_files @gen
 
-    @importer = Factory(:importer, fenix_customer_number: "806167003RM0001")
+    @importer = importer
     @entry = Factory(:entry, :total_duty_gst => BigDecimal.new("10.99"), :entry_number => '123456789', :total_duty=> BigDecimal.new("5.99"), :total_gst => BigDecimal.new("5.00"), :importer_tax_id => 'BLAHBLAHBLAH', importer: @importer)
     @commercial_invoice = Factory(:commercial_invoice, :invoice_number => "INV#", :entry => @entry)
     @cil =  Factory(:commercial_invoice_line, :commercial_invoice => @commercial_invoice, :part_number => 'ABCDEFG', :po_number=>"1234-1", :quantity=> BigDecimal.new("10"))
@@ -89,7 +109,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["rl_canada@rl.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -267,7 +287,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq (@cil.quantity + inv_line_2.quantity).to_s
       end
 
-      it "should use entry quantity and email Joanne Pauta with non-conformant line report for missing products" do
+      it "should use entry quantity and email RL with non-conformant line report for missing products" do
         gen = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new
         api_client = double("ApiClient")
         expect(gen).to receive(:api_client).and_return api_client
@@ -291,7 +311,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["rl_canada@rl.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -331,7 +351,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).not_to be_nil
-        expect(mail.to).to eq(["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"])
+        expect(mail.to).to eq(["rl_canada@rl.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -435,7 +455,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job = ExportJob.all.first
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).to_not be_nil
-        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq(["club_monaco@rl.com"])
         expect(mail.subject).to eq("[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}")
         expect(mail.body.raw_source).to include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -686,7 +706,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices :factory_stores, Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
-        expect(mail.to).to eq ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["factory_stores@rl.com"]
         sheet = get_workbook_sheet mail.attachments.first
         # Just check the columns that should be different than the other documents
         # .ie most of the account codes

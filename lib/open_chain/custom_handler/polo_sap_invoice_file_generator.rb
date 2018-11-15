@@ -13,17 +13,15 @@ module OpenChain
 
       # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
       RL_INVOICE_CONFIGS ||= {
-        :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
-          email_to: ["terri.scalea@ralphlauren.com", "brian.fenelli@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"],
+        :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), email_to: ["sap_billing"],
           unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         }, 
-        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"],
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["sap_billing_2"],
           unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         },
-        :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016,3,25),
-          email_to: ["jude.belas@ralphlauren.com", "terri.scalea@ralphlauren.com", "Liz.Wade@RalphLauren.com", "saudah.ahmed@ralphlauren.com", "raul.salvador@ralphlauren.com", "Estefani.Beco@RalphLauren.com", "accounting-ca@vandegriftinc.com"],
+        :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016,3,25), email_to: ["sap_billing_3"],
           unallocated_profit_center: "20299699", company_code: "1540", filename_prefix: "PFS", brokerage_gl_account: "50960180", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", nvoice_total_profit_center: nil,
           deployed_brand_gl_account: "", non_deployed_brand_gl_account: "", duty_gl_account: "", business_area: "1115"
         }
@@ -125,7 +123,7 @@ module OpenChain
 
                 unless files[:email].blank?
                   conf = RL_INVOICE_CONFIGS[rl_company]
-                  OpenMailer.send_simple_html(conf[:email_to], "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files[:email]).deliver!
+                  OpenMailer.send_simple_html(mailing_list(conf[:email_to]), "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files[:email]).deliver!
                 end
               end
             ensure
@@ -145,7 +143,11 @@ module OpenChain
             end
           end
         end
-      end 
+      end
+
+      def mailing_list system_code
+        MailingList.where(system_code: system_code).first
+      end
 
       def previously_invoiced? entry
         # We need to keep track of which entries we've seen this particular
