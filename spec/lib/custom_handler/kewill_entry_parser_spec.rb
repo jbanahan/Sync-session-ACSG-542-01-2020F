@@ -709,7 +709,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(tariff.duty_amount).to eq 10.00
       expect(tariff.entered_value).to eq BigDecimal.new("99.60")
       expect(tariff.entered_value_7501).to eq 100
-      expect(tariff.duty_rate).to eq BigDecimal.new("0.1")
+      expect(tariff.duty_rate).to eq BigDecimal.new("0.033")
       expect(tariff.spi_primary).to eq "JO"
       expect(tariff.spi_secondary).to eq "EY"
       expect(tariff.classification_qty_1).to eq 1

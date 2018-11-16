@@ -895,6 +895,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
               set_lacey_data l, lacey
             end
           end
+
+          calculate_duty_rates(line)
         end
       end
 
@@ -1043,7 +1045,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.entered_value_7501 = tariff.entered_value.round
       # Add the computed rounded entered value to the invoice-level field.
       invoice_header.entered_value_7501 = invoice_header.entered_value_7501.to_i + tariff.entered_value_7501
-      tariff.duty_rate = tariff.entered_value > 0 ? tariff.duty_amount / tariff.entered_value : 0
       tariff.spi_primary = t[:spi_primary]
       tariff.spi_secondary = t[:spi_secondary]
       tariff.classification_qty_1 = parse_decimal t[:qty_1]
@@ -1056,6 +1057,20 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.quota_category = t[:category_no]
       tariff.tariff_description = t[:tariff_desc]
       tariff.tariff_description = t[:tariff_desc_additional] unless t[:tariff_desc_additional].blank?
+    end
+
+    def calculate_duty_rates invoice_line
+      # When there are multiple tariff lines, only the first tariff line carries the entered value...therefore, we cannot calculate the 
+      # duty rate for each line solely off its entered value, since for tariff lines 2+ it will always be zero and therefore show a rate of zero,
+      # even if there is duty listed.  
+      # We must sum the entered value from the tariff line and then calculate the duty rate for each line based off that sum'ed value.
+      total_entered_value = invoice_line.total_entered_value
+
+      invoice_line.commercial_invoice_tariffs.each do |t|
+        t.duty_rate = total_entered_value > 0 ? ((t.duty_amount.presence || 0) / total_entered_value).round(3) : 0
+      end
+
+      nil
     end
 
     def process_post_summary_corrections e, entry
