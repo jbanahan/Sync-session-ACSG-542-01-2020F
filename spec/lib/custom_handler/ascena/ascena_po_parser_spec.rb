@@ -87,11 +87,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.vendor.system_code).to eq "000256"
       expect(o.vendor.name).to eq "LF PRODUCTS PTE. LTD"
       expect(o.vendor.vendor?).to eq true
+      expect(o.vendor.system_identifiers.first).not_to be_nil
+      expect(o.importer.linked_companies).to include o.vendor
       expect(o.custom_value(cdefs[:ord_assigned_agent])).to eq "Smith"
       expect(o.factory.system_code).to eq "001423"
       expect(o.factory.mid).to eq "IDSELKAU0105BEK"
       expect(o.factory.name).to eq "JIASHAN JSL CASE & BAG CO., LTD"
       expect(o.factory.factory?).to eq true
+      expect(o.factory.system_identifiers.first).not_to be_nil
+      expect(o.importer.linked_companies).to include o.factory
       expect(o.custom_value(cdefs[:ord_selling_agent])).to eq "000022"
       expect(o.custom_value(cdefs[:ord_buyer])).to eq "YCHOI"
       expect(o.terms_of_sale).to eq "FCA"
@@ -270,7 +274,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     it "doesn't create parties if already present" do
       factory = Factory(:company, system_code: "001423")
+      factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       vendor = Factory(:company, system_code: "000256")
+      vendor_id = vendor.system_identifiers.create! system: "Ascena PO", code: "000256"
       expect{described_class.parse(convert_pipe_delimited [header, detail])}.to_not change(Company,:count)
       expect(Order.first.factory.id).to eq factory.id
       expect(Order.first.vendor.id).to eq vendor.id
@@ -306,6 +312,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     it "does not update factory names to blank if name is missing" do
       factory = Factory(:company, system_code: "001423", name: "Factory")
+      factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[19] = nil
 
       described_class.parse(convert_pipe_delimited [header, detail])
@@ -317,7 +324,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     it "updates factory MID if existing mid is blank" do
       factory = Factory(:company, system_code: "001423", name: "Factory")
-
+      factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       described_class.parse(convert_pipe_delimited [header, detail])
       factory.reload
 
@@ -326,6 +333,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     it "does not blank an existing factory MID" do
       factory = Factory(:company, system_code: "001423", name: "Factory", mid: "EXISTING")
+      factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[18] = ""
 
       described_class.parse(convert_pipe_delimited [header, detail])
