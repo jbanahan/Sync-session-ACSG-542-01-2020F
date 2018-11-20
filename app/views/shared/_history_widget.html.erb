@@ -32,7 +32,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Added <%=cm.label%>: <%=cm.unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
@@ -42,7 +42,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Deleted <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
@@ -52,7 +52,7 @@
       <%r = ca.recordable%>
       <% if !ca.blank? %>
         <h3>Changed <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca, :am_root=>false} %>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
