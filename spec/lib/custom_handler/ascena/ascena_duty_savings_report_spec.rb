@@ -1324,10 +1324,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let!(:cit_ann) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_ann, hts_code: "hts code", duty_rate: 1.3, tariff_description: "tar descr ann", duty_amount: 3, entered_value: 5, spi_primary: "spi ann") }
     let!(:vend_ann) { Factory(:vendor, name: "ann vend") }
     let!(:fact_ann) { Factory(:factory, name: "ann fact") }
-    let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann", vendor: vend_ann, factory: fact_ann) }
+    let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann") }
     let!(:il) { Factory(:invoice_line, invoice: i, po_number: "po ann", part_number: "part ann", part_description: "part descr", air_sea_discount: 4, early_pay_discount: 2, trade_discount: 6, middleman_charge: 8)}
     let!(:ord_ann) do 
-      order = Factory(:order, order_number: "ANNTAYLOR-po ann", vendor: vend_ann, factory: vend_ann)
+      order = Factory(:order, order_number: "ANNTAYLOR-po ann", vendor: vend_ann, factory: fact_ann)
       order.update_custom_value! cdefs[:ord_type], "ord type ann"
       order
     end
