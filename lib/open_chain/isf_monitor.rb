@@ -16,22 +16,43 @@ module OpenChain
     end
 
     def run(hostname, username, password, directory, minutes_to_check, timezone)
+      data = find_backed_up_files(hostname, username, password, directory, minutes_to_check, timezone)
+
+      if !data.blank?
+        to = MailingList.where(system_code: "ISF Monitor").first.presence || "support@vandegriftinc.com"
+        subject = "ISF Processing Stuck"
+        OpenMailer::send_simple_html(to, subject, email_body(data)).deliver!
+      end
+    end
+
+    def email_body data
+      body = "<p>Kewill EDI ISF processing is delayed. The oldest file in the folder is from #{data[:oldest_file_date].strftime("%m/%d/%Y %H:%M %Z")} and there are #{data[:file_count]} files in the folder.</p>"
+      body += "<p>Use the following Freshservice solution to troubleshoot this problem: <a href='https://vandegrift.freshservice.com/solution/articles/4000017674-isf-processing-stuck-warnings'>ISF Processing Stuck Warnings</a></p>"
+      body += "<p>Below is a listing of all unprocessed files currently in the folder:<br><pre>"
+      Array.wrap(data[:directory_list]).each do |row|
+        body += (row.to_s + "\n")
+      end
+      body += "</pre></p>"
+
+      body.html_safe
+    end
+
+    def find_backed_up_files hostname, username, password, directory, minutes_to_check, timezone
       ftp = ftp_connection(hostname)
       ftp_login(ftp, username, password)
       ftp_chdir(ftp, directory)
       contents = ftp.nlst
-      debug_info = ftp.list.join('<br>')
+      debug_info = ftp.list
 
-      return unless contents.present?
+      return nil unless contents.present?
 
       file_dates = process_ftp_contents(ftp, contents, timezone)
       oldest_est_date = utc_to_est_date(file_dates[0])
 
       if is_backed_up?(file_dates[0], minutes_to_check)
-        to = ['isf@vandegriftinc.com', 'mzeitlin@vandegriftinc.com', 'agriffin@vandegriftinc.com', 'bglick@vandegriftinc.com', 'support@vandegriftinc.com']
-        subject = "ISF PROCESSING STUCK"
-        body = "Kewill EDI ISF processing is suck. The oldest file in the folder is from #{oldest_est_date} and there are #{contents.length} files in the folder. Please use this solution to troubleshoot: https://vandegrift.freshservice.com/solution/articles/4000017674-isf-processing-stuck-warnings<p>The files stuck are: #{debug_info}.</p>".html_safe
-        OpenMailer::send_simple_html(to, subject, body).deliver
+        return {oldest_file_date: oldest_est_date, file_count: contents.length, directory_list: debug_info}
+      else
+        return nil
       end
     end
 
@@ -68,9 +89,13 @@ module OpenChain
     end
 
     def ftp_connection(hostname)
-      ftp = Net::FTP.new(hostname)
+      ftp = ftp_client(hostname)
       ftp.passive = true
       ftp
+    end
+
+    def ftp_client(hostname)
+      Net::FTP.new(hostname)
     end
 
     def ftp_login(ftp, username, password)
