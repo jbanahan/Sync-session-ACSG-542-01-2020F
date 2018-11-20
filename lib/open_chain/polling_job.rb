@@ -16,8 +16,9 @@ module OpenChain; module PollingJob
   # are offset back in time by the given number of seconds.  This is useful
   # for cases where you wish to poll a service but adjust the start/end times
   # back a couple seconds / minutes.
-  def poll polling_offset: nil
-    key = KeyJsonItem.polling_job(polling_job_name).first_or_create! json_data: "{}"
+  def poll polling_offset: nil, job_name: nil
+    job_name = job_name.presence || polling_job_name()
+    key = KeyJsonItem.polling_job(job_name).first_or_create! json_data: "{}"
     data = key.data
     last_run = data['last_run']
     
@@ -60,9 +61,18 @@ module OpenChain; module PollingJob
   end
 
   def null_start_time
-    # By default, the first polling job is basically going to end up as a no-op
-    # since the blank start time will use now and the end time will be now.
-    Time.zone.now.iso8601
+    # Basically, what we're doing here is saying...if this job has never run, and we're running in a schedulable job
+    # then use the date when the job was created at as the start time.
+
+    # Otherwise, just use the current time
+    job = SchedulableJob.current
+    start_time = nil
+    if job
+      start_time = job.created_at
+    end
+
+    start_time = Time.zone.now if start_time.nil?
+    start_time.iso8601
   end
 
 end; end;

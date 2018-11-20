@@ -18,9 +18,14 @@ class SchedulableJobsController < ApplicationController
   def update
     sys_admin_secure do
       sj = SchedulableJob.find params[:id]
-      sj.update_attributes(params[:schedulable_job])
-      add_flash :notices, 'Saved'
-      redirect_to schedulable_jobs_path
+      if sj.update_attributes(params[:schedulable_job])
+        add_flash :notices, "Saved #{sj.run_class_name}"
+        redirect_to schedulable_jobs_path
+      else
+        errors_to_flash sj
+        @sj = sj
+        render "edit"
+      end
     end
   end
 
@@ -32,9 +37,9 @@ class SchedulableJobsController < ApplicationController
 
   def create
     sys_admin_secure do
-      @sj = SchedulableJob.new(params[:schedulable_job])
-      if @sj.save
-        add_flash :notices, "Created"
+      sj = SchedulableJob.new(params[:schedulable_job])
+      if sj.save
+        add_flash :notices, "Created job with run class #{sj.run_class_name}"
       else
         add_flash :errors, "Job could not be created due to invalid parameters."
       end
@@ -44,8 +49,9 @@ class SchedulableJobsController < ApplicationController
 
   def destroy
     sys_admin_secure do
-      SchedulableJob.find(params[:id]).destroy
-      add_flash :notices, 'Deleted'
+      sj = SchedulableJob.find(params[:id])
+      sj.destroy
+      add_flash :notices, "Deleted #{sj.run_class_name}"
       redirect_to schedulable_jobs_path
     end
   end
@@ -53,6 +59,7 @@ class SchedulableJobsController < ApplicationController
   def run
     sys_admin_secure do
       sj = SchedulableJob.find(params[:id])
+      class_name = sj.run_class_name
       if !sj.queue_priority.nil?
         sj = sj.delay(priority: sj.queue_priority)
       else
@@ -60,7 +67,7 @@ class SchedulableJobsController < ApplicationController
       end
 
       sj.run_if_needed force_run: true
-      add_flash :notices, "#{sj.run_class_name} is running."
+      add_flash :notices, "#{class_name} is running."
       
       redirect_to schedulable_jobs_path
     end

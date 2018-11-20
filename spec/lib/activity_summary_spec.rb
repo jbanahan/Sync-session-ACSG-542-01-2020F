@@ -762,8 +762,8 @@ describe OpenChain::ActivitySummary do
         expect(sheet[0]).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
         expect(sheet[1]).to eq ["US Entry Activity"]
         expect(sheet[2][0]).to eq "Date"
-        # unclear why this tolerance is needed
-        expect(sheet[2][1]).to be_within(0.00000000001).of DateTime.new(2018,3,14,19,00)
+        # Tolerance is needed due to the way the excel lib can be inexact with times
+        expect(sheet[2][1]).to be_within(1.minute).of DateTime.new(2018,3,14,19,00)
         expect(sheet[3]).to eq ["Customer Number", "SYSCODE"]
         expect(sheet[4]).to eq ["View Summary in Real Time", "Link"]
         expect(sheet[7]).to eq ["Summary",nil,nil,nil,nil,nil,nil]

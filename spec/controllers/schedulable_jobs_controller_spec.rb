@@ -39,23 +39,35 @@ describe SchedulableJobsController do
     end
   end
   describe "update" do
-    before :each do
-      @sj = Factory(:schedulable_job,opts:'abc')
-    end
+    let (:schedulable_job) { Factory(:schedulable_job,opts:'{"abc": 123}') }
+
     it "should only allow sys_admins" do
       sign_in_as Factory(:user)
-      put :update, id: @sj.id, schedulable_job:{opts:'12345'}
+      put :update, id: schedulable_job.id, schedulable_job:{opts:'12345'}
       expect(response).to be_redirect
       expect(flash[:errors].first).to match /Only system admins/
-      @sj.reload
-      expect(@sj.opts).to eq('abc')
+      schedulable_job.reload
+      expect(schedulable_job.opts).to eq('{"abc": 123}')
     end
-    it "should update job" do
-      sign_in_as Factory(:sys_admin_user)
-      put :update, id: @sj.id, schedulable_job:{opts:'12345'}
-      expect(response).to redirect_to schedulable_jobs_path
-      @sj.reload
-      expect(@sj.opts).to eq('12345')
+
+    context "with sys admin login" do 
+
+      before :each do 
+        sign_in_as Factory(:sys_admin_user)
+      end
+
+      it "should update job" do
+        put :update, id: schedulable_job.id, schedulable_job:{opts:'{"abc": 987}'}
+        expect(response).to redirect_to schedulable_jobs_path
+        schedulable_job.reload
+        expect(schedulable_job.opts).to eq('{"abc": 987}')
+      end
+
+      it "fails to update if ops are an invalid json string" do
+        put :update, id: schedulable_job.id, schedulable_job:{opts:'invalid'}
+        expect(assigns(:sj)).to eq schedulable_job
+        expect(flash[:errors]).to include "Options 784: unexpected token at 'invalid'"
+      end
     end
   end
   
@@ -76,16 +88,16 @@ describe SchedulableJobsController do
   describe "create" do
     it "should only allow sys_admins" do
       sign_in_as Factory(:user)
-      post :create, schedulable_job:{opts:'12345'}
+      post :create, schedulable_job:{opts:'{"opt":12345}'}
       expect(response).to be_redirect
       expect(flash[:errors].first).to match /Only system admins/
       expect(SchedulableJob.all).to be_empty
     end
     it "shoud make job" do
       sign_in_as Factory(:sys_admin_user)
-      post :create, schedulable_job:{opts:'12345'}
+      post :create, schedulable_job:{opts:'{"opt":12345}'}
       expect(response).to redirect_to schedulable_jobs_path
-      expect(SchedulableJob.first.opts).to eq('12345')
+      expect(SchedulableJob.first.opts).to eq('{"opt":12345}')
     end
   end
 

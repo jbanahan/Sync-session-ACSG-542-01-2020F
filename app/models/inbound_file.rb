@@ -186,6 +186,10 @@ class InboundFile < ActiveRecord::Base
     end
   end
 
+  def self.excel_url object_id
+    XlsMaker.excel_url "/#{self.table_name}/#{object_id}"
+  end
+
   private
     def validate_identifier_module_type module_type
       if module_type && CoreModule.find_by_class_name(module_type.to_s).nil?

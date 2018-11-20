@@ -35,6 +35,8 @@ class SchedulableJob < ActiveRecord::Base
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
     :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped, :queue_priority
 
+  validate :valid_opts
+
   def self.create_default_jobs!
     base_opts = {run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true}
     # Any "standard" schedulable job should be added here
@@ -78,10 +80,15 @@ class SchedulableJob < ActiveRecord::Base
       raise "No 'run_schedulable' method exists on '#{self.run_class}' class." unless k.respond_to?(:run_schedulable)
 
       method = k.method(:run_schedulable)
-      if method.parameters.length == 0
-        k.run_schedulable
-      else
-        k.run_schedulable run_opts
+      Thread.current.thread_variable_set("scheduled_job", self)
+      begin
+        if method.parameters.length == 0
+          k.run_schedulable
+        else
+          k.run_schedulable run_opts
+        end
+      ensure
+        Thread.current.thread_variable_set("scheduled_job", nil)
       end
 
       OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
@@ -96,6 +103,14 @@ class SchedulableJob < ActiveRecord::Base
             #{e.message}".html_safe).deliver!
       end
     end
+  end
+
+  def self.current
+    Thread.current.thread_variable_get("scheduled_job")
+  end
+
+  def self.running_as_scheduled_job?
+    self.current.present?
   end
 
   def time_zone
@@ -159,8 +174,16 @@ class SchedulableJob < ActiveRecord::Base
   end
 
   private
-  def opts_hash
-    return {} if self.opts.blank?
-    JSON.parse self.opts
-  end
+    def opts_hash
+      return {} if self.opts.blank?
+      JSON.parse self.opts
+    end
+
+    def valid_opts
+      begin
+        opts_hash
+      rescue => e
+        errors.add(:options, e.message)
+      end
+    end
 end

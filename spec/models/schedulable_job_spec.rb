@@ -89,6 +89,31 @@ describe SchedulableJob do
 
       expect(ErrorLogEntry.last.additional_messages).to eq ["Scheduled job for TestSchedulable with options #{opts} has failed"]
     end
+
+    it "sets current schedulable job and clears it after run" do
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable")
+      expect(SchedulableJob.current).to be_nil
+      allow(TestSchedulable).to receive(:run_schedulable) do
+        expect(SchedulableJob.current).to eq sj
+        expect(SchedulableJob.running_as_scheduled_job?).to eq true
+      end
+
+      sj.run
+      expect(SchedulableJob.current).to be_nil
+      expect(SchedulableJob.running_as_scheduled_job?).to eq false
+    end
+
+    it "sets current schedulable job and clears it after run, even if error is raised" do
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable")
+      expect(SchedulableJob.current).to be_nil
+      allow(TestSchedulable).to receive(:run_schedulable) do
+        expect(SchedulableJob.current).to eq sj
+        raise "Error"
+      end
+
+      sj.run
+      expect(SchedulableJob.current).to be_nil
+    end
   end
 
   describe "time_zone" do

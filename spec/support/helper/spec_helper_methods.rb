@@ -296,7 +296,15 @@ module Helpers
         worksheet.each do |row|
           vals = []
           row.cells.each do |cell|
-            vals << cell.try(:value)
+            v = cell.try(:value)
+            if v.is_a?(DateTime)
+              # DateTimes suck - Also note that since the DateTime has no timzone (nor does Excel carry any
+              # semblance of one), the TimeWithZone you get back is going to reflect the raw time in the 
+              # default timezone (not necessarily the offset you might expect)
+              v = Time.zone.parse(v.iso8601)
+            end
+
+            vals << v
           end
           data << vals
         end

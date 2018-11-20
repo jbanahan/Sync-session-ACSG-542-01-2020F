@@ -108,4 +108,24 @@ describe OpenChain::PollingJob do
     end
   end
 
+  describe "null_start_time" do
+    let(:job) { 
+      j = SchedulableJob.new 
+      j.created_at = Time.zone.now 
+      j
+    }
+
+    it "uses the schedulablejob that's running's created at date" do
+      allow(SchedulableJob).to receive(:current).and_return job
+
+      expect(subject.null_start_time).to eq job.created_at.iso8601
+    end
+
+    it "falls back to the current time" do
+      allow(SchedulableJob).to receive(:current).and_return nil
+      now = Time.zone.now
+      Timecop.freeze(now) { expect(subject.null_start_time).to eq now.iso8601}
+    end
+  end
+
 end
