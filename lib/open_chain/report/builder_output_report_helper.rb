@@ -3,15 +3,6 @@ require 'open_chain/report/base_report_helper'
 module OpenChain; module Report; module BuilderOutputReportHelper
   include OpenChain::Report::BaseReportHelper
 
-  # Override this method if you want to utilize any query data conversions
-  # Returning a hash allows you define per column data translations.  Define a lambda
-  # that receives 2 parameters, the full result set row array and the raw column value and the return value of the lambda
-  # will be output into the excel cell.  Define the hash key as either the string/symbolized column name or as the
-  # integer column number (the name key takes priority in case of collisions).
-  def data_conversions
-    {}
-  end
-
   # Return the zero indexed starting column number to use when outputting query columns to a builder.
   # This allows you to return something like a id in the query as the first column, but then not actually output it to the file.
   def query_column_offset
