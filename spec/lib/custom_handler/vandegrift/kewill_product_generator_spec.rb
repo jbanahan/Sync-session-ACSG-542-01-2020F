@@ -249,6 +249,78 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(t.text "seqNo").to eq "3"
         expect(t.text "tariffNo").to eq "1234567890"
       end
+
+      it "reorders special tariffs to be before standard ones" do
+        special_tariff.destroy
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        # The change to the row here, represents the product having the special tariff as the second tariff row
+        # The code will then re-order it to be before the standard tariff number.
+        row[2] = "#{row[2]}*~*9999999999"
+
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 2
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "9999999999"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
+
+      it "reorders special tariffs to be before standard ones, but after added tariffs" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        # The change to the row here, represents the product having the special tariff as the second tariff row
+        # The code will then re-order it to be before the standard tariff number.
+        row[2] = "#{row[2]}*~*9999999999"
+
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 3
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "0987654321"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "9999999999"
+
+        t = tariffs.third
+        expect(t.text "seqNo").to eq "3"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
+
+      it "removes any duplicate tariffs caused by adding special tariffs" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        # The change to the row here, represents the product having the special tariff as the second tariff row
+        # The code will then re-order it to be before the standard tariff number.
+        row[2] = "#{row[2]}*~*9999999999*~*0987654321"
+
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 3
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "0987654321"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "9999999999"
+
+        t = tariffs.third
+        expect(t.text "seqNo").to eq "3"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
     end
 
     it "allows style truncation if instructed" do
@@ -265,6 +337,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
   end
 
   describe "run_schedulable" do
+    before :all do 
+      described_class.new(nil).custom_defs
+    end
+
+    after :all do 
+      CustomDefinition.destroy_all
+    end
+
     subject { described_class }
     let (:product) { create_product "Style" }
     let (:us) { Factory(:country, iso_code: "US") }

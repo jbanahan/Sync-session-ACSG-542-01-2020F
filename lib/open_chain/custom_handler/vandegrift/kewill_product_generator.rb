@@ -268,12 +268,37 @@ WHERE
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
     # here into individual classification fields.
     product_tariffs = row[2].to_s.split(tariff_separator)
-
     hts_values = []
-    hts_values.push *special_tariff_numbers(row[3], product_tariffs[0])
-    hts_values.push *product_tariffs
+    additional_tarrifs = []
+    product_tariffs.each do |t|
+      additional_tarrifs.push *special_tariff_numbers(row[3], t)
+    end
 
-    hts_values
+    # Now we need to see if any of the tariffs on the product record are "special" ones already.
+    # For example, customers are feeding us MTB tariffs, which are special ones we can't include automatically in the feed (in the case
+    # of MTB, there's not a 1-1 mapping between the standard HTS and MTB code)
+    keyed_special_tariffs = []
+    standard_tariffs = []
+    product_tariffs.each do |t|
+      priority = keyed_special_tariff_priority(row[3], t)
+      if priority.nil?
+        standard_tariffs << t
+      else
+        keyed_special_tariffs << {priority: priority, tariff: t}
+      end
+    end
+
+    # Keyed special tariffs should always come before the "standard" tariff...i'm not 100% sure this is a hard/fast rule but 
+    # for now we'll treat it like it is.  If that's not always the case what we COULD do is base the priority around positive numbers appearing
+    # before the standard tariff and negatives after it.
+    # For now, the higher the priority, the closer to the front of the special list
+    sorted_keyed_special_tariffs = keyed_special_tariffs.sort_by {|t| t[:priority] }.map {|t| t[:tariff] }.reverse
+
+    hts_values.push *additional_tarrifs
+    hts_values.push *sorted_keyed_special_tariffs
+    hts_values.push *standard_tariffs
+
+    hts_values.uniq
   end
 
   def special_tariff_numbers product_country_origin, hts_number
@@ -287,5 +312,23 @@ WHERE
   def special_tariff_hash
     @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash "US", true, reference_date: Time.zone.now.to_date
   end
+
+  def keyed_special_tariff_priority product_country_origin, hts_number
+    tariff = special_tariff_numbers_hash.tariffs_for(product_country_origin, hts_number)&.first
+    priority = nil
+    if tariff
+      priority = tariff.priority.to_i
+    end
+
+    priority
+  end
+
+  def special_tariff_numbers_hash
+    # Because these are tariffs that aren't automatically included, into the feed we pass false below to get ALL the special tariff numbers.
+    # We also want to key the hash by the special number, not the standard number.
+    @special_tariff_numbers_hash ||= SpecialTariffCrossReference.find_special_tariff_hash("US", false, reference_date: Time.zone.now.to_date, use_special_number_as_key: true)
+  end
+
+  
 
 end; end; end; end
