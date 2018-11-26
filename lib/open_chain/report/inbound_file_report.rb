@@ -1,4 +1,5 @@
 require 'open_chain/report/builder_output_report_helper'
+require 'open_chain/polling_job'
 
 module OpenChain; module Report; class InboundFileReport
   include OpenChain::Report::BuilderOutputReportHelper
