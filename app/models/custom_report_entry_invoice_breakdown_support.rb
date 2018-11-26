@@ -39,7 +39,9 @@ module CustomReportEntryInvoiceBreakdownSupport
         charge_totals[cd] = val
       end
       if self.include_links?
-        write_hyperlink row_cursor, col_cursor, bi.entry.view_url,"Web View"
+        if bi.entry.present?
+          write_hyperlink row_cursor, col_cursor, bi.entry.view_url,"Web View"
+        end
         col_cursor += 1
       end
       search_cols.each do |col| 
