@@ -30,34 +30,41 @@
 <% end %>
 
 <h1><%=@company.name%> Distribution Lists</h1>
-<div>
-  <%=form_tag bulk_delete_company_mailing_lists_path(@company), id: "mailing_lists_form", method: :delete do %>
-    <table class='detail_table'>
-      <thead>
+<%=form_tag bulk_delete_company_mailing_lists_path(@company), id: "mailing_lists_form", method: :delete do %>
+  <table class='detail_table'>
+    <thead>
+    <tr>
+      <th></th>
+      <th>Distribution List Name</th>
+      <th>Created By</th>
+      <th>Creation Date</th>
+      <th>Has Non-VFI Track User Emails?</th>
+    <% if current_user.sys_admin? %>
+      <th>Sys Admin Only?</th>
+    <% end %>
+    </tr>
+    </thead>
+    <tbody>
+      <% @mailing_lists.each do |list| %>
       <tr>
-        <th></th>
-        <th>System Code</th>
-        <th>Distribution List Name</th>
-        <th>Created By</th>
-        <th>Creation Date</th>
-        <th></th>
+        <td><%= check_box_tag("delete[#{list.id}]", 1) %></td>
+        <td><%= link_to list.name, edit_company_mailing_list_path(@company, list.id) %></td>
+        <td><%= list.user.full_name %></td>
+        <td><%= list.created_at %></td>
+        <td>
+          <% if list.non_vfi_addresses? %>
+            <i title="Some users included in this distribution list do not have VFI Track User accounts." class="fa fa-exclamation-triangle text-warning"></i>
+          <% end %>
+        </td>
+        <% if current_user.sys_admin? %>
+        <td>
+          <% if list.hidden? %>
+          <i title="Only visible to system administrators." class="fa fa-exclamation-triangle text-warning"></i>
+          <% end %>
+        </td>
+        <% end %>
       </tr>
-      </thead>
-      <tbody>
-        <% @mailing_lists.each do |list| %>
-        <tr>
-          <td><%= check_box_tag("delete[#{list.id}]", 1) %></td>
-          <td><%= link_to list.system_code, edit_company_mailing_list_path(@company, list.id) %></td>
-          <td><%= list.name %></td>
-          <td><%= list.user.username %></td>
-          <td><%= list.created_at %></td>
-          <td>
-            <% if list.non_vfi_addresses? %>
-              <i title="Some users included in this distribution list do not have VFI Track User accounts." class="fa fa-exclamation-triangle text-warning"></i>
-            <% end %>
-          </td>
       <% end %>
-      </tbody>
-    </table>
-  <% end %>
-</div>
+    </tbody>
+  </table>
+<% end %>

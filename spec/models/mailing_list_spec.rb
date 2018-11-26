@@ -1,19 +1,25 @@
-require 'spec_helper'
-
 describe MailingList do
-  describe '.mailing_lists_for_user' do
-    it 'finds mailing lists for a user' do
-      company = Factory(:company)
-      user = Factory(:user, company: company)
-      mailing_list = Factory(:mailing_list, name: 'blah', user: user, email_addresses: 'test@domain.com')
-      company.mailing_lists << mailing_list
-      company.save!
+  describe 'mailing_lists_for_user' do
+    let (:company) { Factory(:company) }
+    let (:user) { Factory(:user, company: company) }
+    let! (:mailing_list) { Factory(:mailing_list, name: 'blah', user: user, email_addresses: 'test@domain.com', company: company) }
 
-      expect(MailingList.mailing_lists_for_user(user)).to include(mailing_list)
+    it 'finds mailing lists for a user' do
+      expect(MailingList.mailing_lists_for_user(user)).to eq [mailing_list]
+    end
+
+    it "does not return hidden mailing lists to non-sys admins" do
+      mailing_list.update_attributes! hidden: true
+      expect(MailingList.mailing_lists_for_user(user)).to be_blank
+    end
+
+    it "returns hidden mailing lists sys admins" do
+      mailing_list.update_attributes! hidden: true
+      expect(MailingList.mailing_lists_for_user(Factory(:sys_admin_user, company: company))).to include mailing_list
     end
   end
 
-  describe '#split_emails' do
+  describe 'split_emails' do
     it 'splits the emails into an array' do
       mailing_list = MailingList.new
       mailing_list.email_addresses = "abc@domain.com, cde@domain.com"
@@ -21,7 +27,7 @@ describe MailingList do
     end
   end
 
-  describe "#validate_email_addresses" do
+  describe "validate_email_addresses" do
     it 'sets non_vfi_addresses to true if a non_vfi_address is present' do
       vfi_user = Factory(:user)
       mailing_list = Factory(:mailing_list, name: 'blah', email_addresses: "#{vfi_user.email}, unknown@domain.com")
@@ -61,7 +67,7 @@ describe MailingList do
     end
   end
 
-  describe '#extract_invalid_emails' do
+  describe 'extract_invalid_emails' do
     it 'should be true if an email is in an invalid format.' do
       mailing_list = MailingList.new
       mailing_list.email_addresses = "abc@domain.com, cde@domain"

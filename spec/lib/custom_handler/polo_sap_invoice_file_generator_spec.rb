@@ -16,11 +16,11 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   }
 
   let! (:club_monaco_list) { 
-    MailingList.create! system_code: "sap_billing_2", name: "SAP Billing", email_addresses: "club_monaco@rl.com", user: user, company: importer
+    MailingList.create! system_code: "sap_billing_2", name: "SAP Billing 2", email_addresses: "club_monaco@rl.com", user: user, company: importer
   }
 
   let! (:factory_stores_list) { 
-    MailingList.create! system_code: "sap_billing_3", name: "SAP Billing", email_addresses: "factory_stores@rl.com", user: user, company: importer
+    MailingList.create! system_code: "sap_billing_3", name: "SAP Billing 3", email_addresses: "factory_stores@rl.com", user: user, company: importer
   }
 
   before :each do

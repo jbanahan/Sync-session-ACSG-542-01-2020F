@@ -58,6 +58,13 @@ class MailingListsController < ApplicationController
 
   def save_mailing_list(mailing_list, params)
     mailing_list.assign_attributes(params[:mailing_list])
+    # There's no point in making the user create a system code on their own..just create a code internally to use based on the name and company.
+    # NOTE: We're already validating that the list name can't be duplicated in the same company, so this below code should work all the time without
+    # raising an error (since it's validated).
+    if mailing_list.system_code.blank?
+      mailing_list.system_code = "#{mailing_list.name.to_s.parameterize.underscore}_#{mailing_list.company_id}"
+    end
+
     if mailing_list.save
       true
     else

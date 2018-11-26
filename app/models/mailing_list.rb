@@ -5,6 +5,7 @@
 #  company_id        :integer
 #  created_at        :datetime         not null
 #  email_addresses   :text
+#  hidden            :boolean          default(FALSE)
 #  id                :integer          not null, primary key
 #  name              :string(255)
 #  non_vfi_addresses :boolean
@@ -25,13 +26,23 @@ class MailingList < ActiveRecord::Base
   belongs_to :user
 
   validates :system_code, presence: true
+  validates_uniqueness_of :system_code
+  validates_uniqueness_of :name, scope: :company_id
   validates :user, presence: true
   validates :company, presence: true
   validates :name, presence: true
   before_save :validate_email_addresses
 
   def self.mailing_lists_for_user(user)
-    user.company.mailing_lists
+    lists = MailingList.where(company_id: user.company.id)
+    if !user.sys_admin?
+      lists = lists.where(hidden: false)
+    end
+    lists.all
+  end
+
+  def public?
+    !self.hidden?
   end
 
   def split_emails
