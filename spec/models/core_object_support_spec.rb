@@ -177,6 +177,12 @@ describe CoreObjectSupport do
       att2 = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"B",:attached_content_type=>"image/png")
       expect(p.options_for_attachments_select "application/pdf").to eq [["No appopriate attachments exist.", "nil"]]
     end
+
+    it "handles missing attachment_types" do
+      p = Factory(:order)
+      att1 = p.attachments.create!(:attached_file_name=>"A",:attached_content_type=>"image/jpeg")
+      expect(p.options_for_attachments_select "image/jpeg").to eq [["Select an option", "nil"], [att1.attached_file_name,att1.id]]
+    end
   end
 
   context "TestCoreObject" do

@@ -111,7 +111,8 @@ module CoreObjectSupport
 
     self.attachments.each do |a|
       if content_types.blank? || content_types.include?(a.attached_content_type)
-        attachments << [a.attachment_type + " - " + a.attached_file_name, a.id]
+        descriptor = a.attachment_type.blank? ? a.attached_file_name : "#{a.attachment_type} - #{a.attached_file_name}"
+        attachments << [descriptor, a.id]
       end
     end
 
