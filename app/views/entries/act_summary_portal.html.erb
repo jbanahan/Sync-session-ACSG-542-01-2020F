@@ -12,7 +12,7 @@
         <h1><%= @iso == 'us' ? 'US' : 'Canada' %> Entry Activity</h1>
         <select id='impselect' class='form-control'>
           <option value="" selected disabled></option>
-          <%=options_from_collection_for_select @importers, 'id', 'name', :prompt => true%>
+          <%= options_for_select @importers.map{ |imp| [ "#{imp.name} (#{imp.send(@iso == 'us' ? :alliance_customer_number : :fenix_customer_number )})", imp.id]} %>
         </select>
       </div>
     </div>
