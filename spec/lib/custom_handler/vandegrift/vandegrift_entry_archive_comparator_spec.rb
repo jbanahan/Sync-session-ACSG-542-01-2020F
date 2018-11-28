@@ -6,8 +6,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
   
   describe "accept?" do
     let!(:snap) { Factory(:entity_snapshot, recordable: e) }
-    let!(:bi) { Factory(:broker_invoice, entry: e, invoice_date: Date.new(2018,1,10)) }
-    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018,1,1), send_in_real_time: true) }
+    let!(:bi) { Factory(:broker_invoice, entry: e, invoice_date: Date.new(2018,1,1)) }
+    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018,1,1), end_date: Date.new(2018,1,1), send_in_real_time: true) }
 
     it "returns true for entries with 'real time' flag enabled" do
       expect(described_class.accept? snap).to eq true
@@ -23,8 +23,18 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
       expect(described_class.accept? snap).to eq false
     end
 
-    it "returns false if there are no broker invoices after the the archive setup's start date" do
-      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2017,12,1)
+    it "returns true if at least one broker invoice is after the archive setup's start_date and there is no end_date" do
+      aas.update_attributes end_date: nil
+      expect(described_class.accept? snap).to eq true
+    end
+
+    it "returns false if all broker invoices are earlier the the archive setup's start/end range" do
+      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2017,12,31)
+      expect(described_class.accept? snap).to eq false
+    end
+
+    it "returns false if all broker invoices are after the the archive setup's start/end range" do
+      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2018,1,2)
       expect(described_class.accept? snap).to eq false
     end
   end

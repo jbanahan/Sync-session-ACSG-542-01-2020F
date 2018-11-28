@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
       e = snapshot.recordable
       archive_setup = AttachmentArchiveSetup.where(company_id: e.importer_id).first
       if archive_setup.try(:send_in_real_time?)
-        accept = e.broker_invoices.any?{ |bi| bi.invoice_date >= archive_setup.start_date }
+        accept = e.broker_invoices.any?{ |bi| bi.invoice_date >= archive_setup.start_date && (archive_setup.end_date.nil? || bi.invoice_date <= archive_setup.end_date) }
       end
     end
     accept

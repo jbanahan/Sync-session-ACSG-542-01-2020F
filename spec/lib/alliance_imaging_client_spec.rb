@@ -708,10 +708,16 @@ ERR
       @broker_invoice = Factory(:broker_invoice, entry: @entry, invoice_date: '2014-01-01')
       @attachment = @entry.attachments.create! attached_file_name: "test.pdf", attachment_type: "A"
       @archive_packet = @entry.attachments.create! attached_file_name: "test2.pdf", attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, created_at: (@attachment.updated_at - 1.day)
-      @archive_setup = AttachmentArchiveSetup.create! company_id: @entry.importer_id, combine_attachments: true, start_date: '2014-01-01'
+      @archive_setup = AttachmentArchiveSetup.create! company_id: @entry.importer_id, combine_attachments: true, start_date: '2014-01-01', end_date: '2014-01-01'
     end
 
     it "sends stitch requests when an attachment is updated after the archive packet" do
+      expect(OpenChain::AllianceImagingClient).to receive(:send_entry_stitch_request).with @entry.id
+      expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
+    end
+
+    it "sends stitch requests when an attachment is updated after the archive packet and no end_date is specified" do
+      @archive_setup.update_attributes! end_date: nil
       expect(OpenChain::AllianceImagingClient).to receive(:send_entry_stitch_request).with @entry.id
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
@@ -730,6 +736,12 @@ ERR
 
     it "does not send stitch requests when the archive packet is up to date" do
       @attachment.update_attributes! updated_at: @archive_packet.created_at - 1.day
+      expect(OpenChain::AllianceImagingClient).not_to receive(:send_entry_stitch_request).with @entry.id
+      expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
+    end
+
+    it "does not send stitch requests when the invoice is past archive packet's end_date" do
+      @broker_invoice.update_attributes! invoice_date: "2014-01-02"
       expect(OpenChain::AllianceImagingClient).not_to receive(:send_entry_stitch_request).with @entry.id
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
