@@ -52,6 +52,6 @@ module OpenChain; module Report; class BouncedEmailReport
     beginning_of_yesterday = yesterday.beginning_of_day
     end_of_yesterday = yesterday.end_of_day
 
-    [beginning_of_yesterday.in_time_zone('UTC'), end_of_yesterday.in_time_zone('UTC')]
+    [beginning_of_yesterday, end_of_yesterday]
   end
 end; end; end
