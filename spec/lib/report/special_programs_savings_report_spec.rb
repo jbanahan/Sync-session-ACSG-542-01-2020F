@@ -140,7 +140,7 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
       expect(sheet.row(1)).to eq([@entry.customer_number, @entry.broker_reference, @entry.entry_number, excel_date(@entry.release_date.to_date), @country.iso_code,
                                   @invoices[0].invoice_number, @invoice_lines[0].po_number, @invoice_lines[0].country_origin_code,
                                   @invoice_lines[0].part_number, @invoice_tariffs[0].hts_code, @invoice_tariffs[0].tariff_description,
-                                  @invoice_tariffs[0].entered_value.round.to_f, @invoice_tariffs[0].duty_rate.to_f, @invoice_tariffs[0].duty_amount.to_f,
+                                  @invoice_tariffs[0].entered_value.to_f, @invoice_tariffs[0].duty_rate.to_f, @invoice_tariffs[0].duty_amount.to_f,
                                   @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, duty_without_spi.round(2).to_f, savings.round(2).to_f])
     end
 
