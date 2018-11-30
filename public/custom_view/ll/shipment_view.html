@@ -7,11 +7,10 @@
   </div>
   <div ng-hide='shipment.custom.valid_delivery_location' class="row">
     <div class="col-md-12">
-      <div class="card alert-danger">
-        <div class="card-header">Booking Error</div>
-        <div class="card-body bg-white">
-          Booking cannot proceed. Booking Delivery Location does not match the PO Delivery Location.  Contact Lumber Liquidators to have the PO updated.
-        </div>
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Booking Error</h4>
+        <hr>
+        <p>Booking cannot proceed. Booking Delivery Location does not match the PO Delivery Location.  Contact Lumber Liquidators to have the PO updated.</p>
       </div>
     </div>
   </div>
@@ -200,10 +199,10 @@
       <div class="card">
         <div class="card-body">
           <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a data-target="#booking-tab" aria-controls="booking-tab" role="tab" data-toggle="tab">Booking</a></li>
-            <li role="presentation"><a data-target="#container-tab" aria-controls="container-tab" role="tab" data-toggle="tab">Containers</a></li>
-            <li role="presentation" ng-if="shipment.lines.length > 0"><a data-target="#manifest-tab" aria-controls="manifest-tab" role="tab" data-toggle="tab">Manifest</a></li>
-            <li role="presentation" ng-if="shipment.lines.length > 0"><a data-target="#isf-tab" aria-controls="isf-tab" role="tab" data-toggle="tab">ISF</a></li>
+            <li role="presentation" class="nav-item active"><a class="nav-link active" data-target="#booking-tab" aria-controls="booking-tab" role="tab" data-toggle="tab">Booking</a></li>
+            <li role="presentation" class="nav-item"><a class="nav-link" data-target="#container-tab" aria-controls="container-tab" role="tab" data-toggle="tab">Containers</a></li>
+            <li role="presentation" class="nav-item" ng-if="shipment.lines.length > 0"><a class="nav-link" data-target="#manifest-tab" aria-controls="manifest-tab" role="tab" data-toggle="tab">Manifest</a></li>
+            <li role="presentation" class="nav-item" ng-if="shipment.lines.length > 0"><a class="nav-link" data-target="#isf-tab" aria-controls="isf-tab" role="tab" data-toggle="tab">ISF</a></li>
           </ul>
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="booking-tab">
