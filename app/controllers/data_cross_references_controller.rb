@@ -8,6 +8,11 @@ class DataCrossReferencesController < ApplicationController
       @xref_info = xref_hash xref_type, current_user
       xrefs = build_search search_params(xref_type), 'd_key', 'd_key'
       @xrefs = xrefs.paginate(:per_page=>50,:page=>params[:page])
+      @companies = if @xref_info[:require_company] == true && @xref_info[:company].present?
+                     Company.where(system_code: @xref_info[:company][:system_code])
+                   elsif @xref_info[:require_company] == true && @xref_info[:company].blank?
+                      get_importers_for(current_user)
+                   end
     end
   end
 
@@ -91,8 +96,8 @@ class DataCrossReferencesController < ApplicationController
     end
   end
 
-  def get_importers
-    Company.uniq.where(importer: true).joins(:importer_products).order("companies.name")
+  def get_importers_for(user)
+    Company.search_secure(user, Company.importers.where("system_code IS NOT NULL AND system_code <> ''")).order('companies.name')
   end
 
   private
@@ -108,7 +113,7 @@ class DataCrossReferencesController < ApplicationController
         return
       end
       cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: user, attached: file)
-      CustomFile.delay.process(cf.id, current_user.id, cross_reference_type: xref_type)
+      CustomFile.delay.process(cf.id, current_user.id, cross_reference_type: xref_type, company_id: params[:company])
       add_flash(:notices, "Your file is being processed.  You'll receive a VFI Track message when it completes.")
     end
   end
@@ -122,7 +127,7 @@ class DataCrossReferencesController < ApplicationController
     action_secure(xref.can_view?(current_user), xref, {:verb => "edit", :lock_check => false, :module_name=>"cross reference"}) do
       @xref_info = xref_hash xref.cross_reference_type, current_user
       @xref = xref
-      @importers = get_importers
+      @importers = get_importers_for(current_user)
     end
   end
 

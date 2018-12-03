@@ -92,15 +92,19 @@
             <% end %>
             </p>
             <div class="form-group">
+              <label for="company" class="col-md-1 control-label">Company:</label>
+              <div class="col-md-4">
+                <%= select_tag("company", options_from_collection_for_select(@companies, :system_code, :name), include_blank: false) %>
+              </div>
+            </div>
+            <div class="form-group">
               <label for="attached" class='col-md-1 control-label'>File:</label>
               <div class="col-md-4">
                 <%= file_field_tag :attached, :style => "width: 500px !important;"%>
                 <%= hidden_field_tag :cross_reference_type, @xref_info[:identifier] %>
               </div>
             </div>
-            <div class="form-group">
-            </div>
-          <% end %>                    
+          <% end %>
         </div>
         <div class="modal-footer">
             <div class="col-md-1 offset-md-1">

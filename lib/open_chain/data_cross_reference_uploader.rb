@@ -14,7 +14,8 @@ module OpenChain; class DataCrossReferenceUploader
       validate_file @custom_file
       xref_type = parameters[:cross_reference_type]
       xref_hsh = DataCrossReference.xref_edit_hash(user)[xref_type]
-      process_rows @custom_file, xref_hsh, xref_type, recoverable_errors
+      company = parameters[:company_id].present? ? Company.where(system_code: parameters[:company_id]).first : nil
+      process_rows @custom_file, xref_hsh, xref_type, recoverable_errors, company
     rescue => e
       user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
     end
@@ -42,9 +43,8 @@ module OpenChain; class DataCrossReferenceUploader
     !valid ? "Only XLS, XLSX, and CSV files are accepted." : nil 
   end
   
-  def process_rows custom_file, xref_hsh, xref_type, errors
-    co = DataCrossReference.company_for_xref xref_hsh
-    foreach(custom_file, skip_blank_lines:true) do |row, row_number| 
+  def process_rows custom_file, xref_hsh, xref_type, errors, co=nil
+    foreach(custom_file, skip_blank_lines:true) do |row, row_number|
       next if row_number == 0
       process_row(row, row_number, co.try(:id), xref_hsh, xref_type, errors)
     end

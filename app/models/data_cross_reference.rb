@@ -70,6 +70,7 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
+      xref_attributes(MID_XREF, "Manufacturer ID", "Manufacturer IDs used to validate entries", key_label: "MID", show_value_column: false, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with MID Code in column A"),
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
       xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true, company: {system_code: "HENNE"}),
@@ -133,7 +134,7 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
-    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, MID_XREF
       MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
     when CA_HTS_TO_DESCR
       MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')

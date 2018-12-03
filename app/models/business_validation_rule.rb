@@ -123,7 +123,8 @@ class BusinessValidationRule < ActiveRecord::Base
                     enabled_lambda: lambda {MasterSetup.get.custom_feature? "Ann"}
                  },
                  ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
-                 ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"}
+                 ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"},
+                 ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"}
               }
 
   def recipients_and_mailing_lists

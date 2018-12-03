@@ -53,7 +53,7 @@ describe DataCrossReferencesController do
 
   describe "edit" do
     it "shows edit page" do
-      Factory(:importer, importer_products: [Factory(:product)])
+      Factory(:importer, importer_products: [Factory(:product)], system_code: 'IMPORTER')
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
 
       get :edit, id: xref.id
@@ -75,7 +75,7 @@ describe DataCrossReferencesController do
 
   describe "new" do
     it "shows new page" do
-      Factory(:importer, importer_products: [Factory(:product)])
+      Factory(:importer, importer_products: [Factory(:product)], system_code: 'IMPORTER')
 
       get :new, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to be_success
@@ -221,7 +221,7 @@ describe DataCrossReferencesController do
       cf = double "custom file"
       allow(cf).to receive(:id).and_return 1
       expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::DataCrossReferenceUploader', uploaded_by: @user, attached: file).and_return cf
-      expect(CustomFile).to receive(:process).with(1, @user.id, cross_reference_type: 'cross_ref_type')
+      expect(CustomFile).to receive(:process).with(1, @user.id, cross_reference_type: 'cross_ref_type', company_id: nil)
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
@@ -265,16 +265,16 @@ describe DataCrossReferencesController do
       co_1 = Factory(:company)
       prod_1 = Factory(:product, importer: co_1)
       
-      co_2 = Factory(:importer, name: "Substandard Ltd.")
+      co_2 = Factory(:importer, name: "Substandard Ltd.", system_code: 'SUBST')
       prod_2 = Factory(:product, importer: co_2)
       
-      co_3 = Factory(:importer, name: "ACME")
+      co_3 = Factory(:importer, name: "ACME", system_code: 'ACME')
       prod_3 = Factory(:product, importer: co_3)
       prod_4 = Factory(:product, importer: co_3)
 
       co_4 = Factory(:importer, name: "Nothing-to-See")
       
-      results = described_class.new.get_importers
+      results = described_class.new.get_importers_for(@user)
       expect(results.count).to eq 2
       expect(results[0]).to eq co_3
       expect(results[1]).to eq co_2
