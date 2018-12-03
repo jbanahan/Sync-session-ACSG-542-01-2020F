@@ -207,15 +207,14 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
       let! (:order) {
         order = Order.create! importer_id: carquest_importer.id, order_number: "CQ-8373111-11", customer_order_number: "8373111-11"
-        order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99
-        order_line_2 = order.order_lines.create! line_number: 10, product_id: product_2.id, quantity: 25, price_per_unit: 19.99
+        order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99, country_of_origin: "HK"
+        order_line_2 = order.order_lines.create! line_number: 10, product_id: product_2.id, quantity: 25, price_per_unit: 19.99, country_of_origin: "HK"
         order
       }
 
       before :each do 
         # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
-        consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
-        consignee.text = "CARQUEST"
+        xml_data.gsub! "<Name>Advance Stores Company Inc.</Name>", "<Name>CARQUEST</Name>"
         carquest_importer  
       end
 
@@ -264,6 +263,18 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
         expect { subject.parse xml, user, xml_path }.to raise_error "Failed to fully process file due to error. Once the errors are fixed, the file can be reprocessed."
         expect(log).to have_reject_message "PO # 8373111-11 is missing part number 11402124."
+      end
+
+      it "does not blank country of origin on order if blank in 7501" do
+        xml_data.gsub! '<OriginCountry Code="CN">China</OriginCountry>', ''
+        xml_data.gsub! "<OriginCountry Code='CN'>China</OriginCountry>", ''
+        xml_data.gsub! "<CountryCode>VN</CountryCode>", ''
+        xml_data.gsub! "<CountryCode>CN</CountryCode>", ''
+
+        s = subject.parse xml, user, xml_path
+        expect(s.shipment_lines.length).to eq 2
+        ol = s.shipment_lines.first.piece_sets.first.order_line
+        expect(ol.country_of_origin).to eq "HK"
       end
     end
 

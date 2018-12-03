@@ -362,12 +362,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         end
       end
 
-      line.country_of_origin = invoice_line.get_elements("OriginCountry").first.try(:attributes).try(:[], "Code")
-      
+      coo = invoice_line.get_elements("OriginCountry").first.try(:attributes).try(:[], "Code")
       # Pull the country of origin from the invoice line Factory PartyInfo if it's not found in an OriginCountry element
-      if line.country_of_origin.blank?
-        line.country_of_origin = REXML::XPath.first(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode").try(:text)
-      end
+      coo = REXML::XPath.first(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode").try(:text) if coo.blank?
+
+      # Don't overwrite an existing country of origin if the prep 7501's might be blank
+      line.country_of_origin = coo unless coo.blank?
 
       if !line.persisted? || line.changed?
         line.save!
