@@ -687,7 +687,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     #  This will handle anything that contains a percentage
     def guess_common_rate_decimal ot      
       return ot.common_rate_decimal if ot.common_rate_decimal.present?
-      percent = ot.common_rate.strip.match(/\d+\.?\d*%/).try :[], 0
+      percent = ot.common_rate.to_s.strip.match(/\d+\.?\d*%/).try :[], 0
       percent ? BigDecimal(percent.gsub(/%/, ''), 4)/100 : BigDecimal("0")
     end
 
@@ -844,8 +844,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         SELECT e.broker_reference,
                e.customer_name,
                "" AS "First Sale",
-               ord_vendors.name,
-               ord_factories.name,
+               IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_vendors.name, ord_vendors.name),
+               IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_factories.name, ord_factories.name),
                IF(cil.related_parties, "Y", "N"),
                e.transport_mode_code,
                e.fiscal_month,
@@ -920,7 +920,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         INNER JOIN commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
         LEFT OUTER JOIN invoices i ON i.invoice_number = ci.invoice_number AND i.importer_id = e.importer_id
         LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
-        LEFT OUTER JOIN orders o ON o.order_number =  CONCAT("#{cust_number == ASCENA_CUST_NUM ? 'ASCENA' : 'ANNTAYLOR'}-", cil.po_number)
+        LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
+        LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
+        LEFT OUTER JOIN orders o ON o.order_number =  CONCAT("#{cust_number == ASCENA_CUST_NUM ? 'ASCENA' : 'ATAYLOR'}-", cil.po_number)
         LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
         LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}

@@ -1322,12 +1322,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let!(:ci_ann) { Factory(:commercial_invoice, entry: e_ann, invoice_number: "inv num ann") }
     let!(:cil_ann) { Factory(:commercial_invoice_line, commercial_invoice: ci_ann, contract_amount: 6, related_parties: true, customs_line_number: 1, part_number: "part ann", po_number: "po ann", product_line: "brand ann", country_origin_code: "AM", country_export_code: "country export ann", unit_price: 3, quantity: 4, unit_of_measure: "uom ann", value: 1, non_dutiable_amount: 4, miscellaneous_discount: 2, other_amount: -1) }
     let!(:cit_ann) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_ann, hts_code: "hts code", duty_rate: 1.3, tariff_description: "tar descr ann", duty_amount: 3, entered_value: 5, spi_primary: "spi ann") }
-    let!(:vend_ann) { Factory(:vendor, name: "ann vend") }
-    let!(:fact_ann) { Factory(:factory, name: "ann fact") }
-    let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann") }
+    let!(:vend_ann_810) { Factory(:vendor, name: "ann vend 810") }
+    let!(:fact_ann_810) { Factory(:factory, name: "ann fact 810") }
+    let!(:vend_ann_ord) { Factory(:vendor, name: "ann vend ord") }
+    let!(:fact_ann_ord) { Factory(:factory, name: "ann fact ord") }
+    let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann", vendor: vend_ann_810, factory: fact_ann_810) }
     let!(:il) { Factory(:invoice_line, invoice: i, po_number: "po ann", part_number: "part ann", part_description: "part descr", air_sea_discount: 4, early_pay_discount: 2, trade_discount: 6, middleman_charge: 8)}
     let!(:ord_ann) do 
-      order = Factory(:order, order_number: "ANNTAYLOR-po ann", vendor: vend_ann, factory: fact_ann)
+      order = Factory(:order, order_number: "ATAYLOR-po ann", vendor: vend_ann_ord, factory: fact_ann_ord)
       order.update_custom_value! cdefs[:ord_type], "ord type ann"
       order
     end
@@ -1401,12 +1403,12 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       expect(r[:cil_id]).to eq cil_asce.id
     end
 
-    def test_ann_results r
+    def test_ann_results r, with_po=true
       expect(r[:broker_reference]).to eq "ann broker ref"
       expect(r[:customer_name]).to eq "Ann"
       expect(r[:first_sale]).to eq "Y"
-      expect(r[:vendor]).to eq "ann vend"
-      expect(r[:factory]).to eq "ann fact"
+      expect(r[:vendor]).to eq(with_po ? "ann vend ord" : "ann vend 810")
+      expect(r[:factory]).to eq(with_po ? "ann fact ord" : "ann fact 810")
       expect(r[:related_parties]).to eq "Y"
       expect(r[:transport_mode_code]).to eq "40"
       expect(r[:fiscal_month]).to eq 2
@@ -1478,11 +1480,19 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       test_asce_results r
     end
 
-    it "produces expected results for Ann" do
+    it "produces expected results for Ann with matching order" do
       result = nil
       result = Timecop.freeze(DateTime.new 2018, 3, 16) { result = subject.run(["ATAYLOR"], "2018-03-15", "2018-03-17") }
       r = result.first
       test_ann_results r
+    end
+
+    it "produces expected results for Ann without matching order" do
+      ord_ann.destroy
+      result = nil
+      result = Timecop.freeze(DateTime.new 2018, 3, 16) { result = subject.run(["ATAYLOR"], "2018-03-15", "2018-03-17") }
+      r = result.first
+      test_ann_results r, false
     end
 
     it "produces expected combined results" do
