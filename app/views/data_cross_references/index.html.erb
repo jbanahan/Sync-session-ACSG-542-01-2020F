@@ -91,12 +91,14 @@
               <%= @xref_info[:upload_instructions] %>
             <% end %>
             </p>
+            <% if @xref_info[:require_company] %>
             <div class="form-group">
               <label for="company" class="col-md-1 control-label">Company:</label>
               <div class="col-md-4">
                 <%= select_tag("company", options_from_collection_for_select(@companies, :system_code, :name), include_blank: false) %>
               </div>
             </div>
+            <% end %>
             <div class="form-group">
               <label for="attached" class='col-md-1 control-label'>File:</label>
               <div class="col-md-4">

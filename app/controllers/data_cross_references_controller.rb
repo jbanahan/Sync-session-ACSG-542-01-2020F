@@ -12,6 +12,8 @@ class DataCrossReferencesController < ApplicationController
                      Company.where(system_code: @xref_info[:company][:system_code])
                    elsif @xref_info[:require_company] == true && @xref_info[:company].blank?
                       get_importers_for(current_user)
+                   else
+                      []
                    end
     end
   end
