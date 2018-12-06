@@ -14,6 +14,10 @@ module OpenChain; module CustomHandler; class CiLoadHandler
     MasterSetup.get.custom_feature?("alliance") && user.company.master?
   end
 
+  def self.valid_file? file_name
+    [".csv", ".xls", ".xlsx"].include? File.extname(file_name.to_s.downcase)
+  end
+
   def can_view? user
     self.class.can_view? user
   end

@@ -100,7 +100,7 @@ describe DelayedJobManager do
     it "does not send an error if errors were reported less than reporting age time ago" do
       cache.set("DelayedJobManager:next_report_delayed_job_error", Time.zone.now + 15.minutes)
       errored_job
-      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(1)
+      expect(OpenChain::CloudWatch).not_to receive(:send_delayed_job_error_count)
       expect(DelayedJobManager.report_delayed_job_error).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end

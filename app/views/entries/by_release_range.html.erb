@@ -1,5 +1,7 @@
 <%
-newest_entry = @entries.order('updated_at DESC').first
+
+newest_entry = nil
+distribute_reads { newest_entry = @entries.order('updated_at DESC').first }
 params[:page] ||= '1'
 %>
 <%-cache ['entries_by_release_range',newest_entry,params[:release_range],params[:page]] do-%>

@@ -1,8 +1,11 @@
-<%-pg_entries = entries.paginate(page:params[:page],per_page:30)-%>
+<%-
+pg_entries = nil
+distribute_reads { pg_entries = entries.paginate(page:params[:page],per_page:30).to_a }
+-%>
 <div class='container'>
   <div class='row'>
     <div class='col-md-8 offset-md-2'>
-      <div class='card text-center'>
+      <div class='text-center'>
         <%=page_entries_info pg_entries%>
       </div>
     </div>

@@ -23,18 +23,26 @@ class EntriesController < ApplicationController
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
   def ca_activity_summary
-    importers = Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number)
-    activity_summary_select importers, 'ca'
+    distribute_reads do 
+      importers = Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number)
+      activity_summary_select importers, 'ca'
+    end
   end
   def ca_activity_summary_content
-    activity_summary_content
+    distribute_reads do
+      activity_summary_content
+    end
   end
   def us_activity_summary
-    importers = Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number)
-    activity_summary_select importers, 'us'
+    distribute_reads do 
+      importers = Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number)
+      activity_summary_select importers, 'us'
+    end
   end
   def us_activity_summary_content
-    activity_summary_content
+    distribute_reads do 
+      activity_summary_content
+    end
   end
   def by_entry_port
     @imp = Company.find params[:importer_id]
@@ -51,7 +59,7 @@ class EntriesController < ApplicationController
 
       begin
         generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
-        @entries = generator.create_by_release_range_query @imp.id, params[:release_range]
+        @entries = generator.create_by_release_range_query(@imp.id, params[:release_range])
         @date_uid = (params[:release_range] == "holds") ? :ent_hold_date : generator.release_date_mf.uid
       rescue ArgumentError => e
         error_redirect e.message
@@ -61,8 +69,12 @@ class EntriesController < ApplicationController
   def by_release_range_download
     imp = Company.find params[:importer_id]
     action_secure(current_user.view_entries? && Entry.can_view_importer?(imp,current_user),nil,{lock_check:false,verb:'download',module_name:'file'}) {
-      generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
-      xls = generator.create_by_release_range_download params[:importer_id], params[:release_range]
+      xls = nil
+      distribute_reads do 
+        generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
+        xls = generator.create_by_release_range_download params[:importer_id], params[:release_range]
+      end
+
       send_file xls.path, filename: xls.original_filename, type: :xls, disposition: "attachment"
     }
   end
@@ -131,15 +143,17 @@ class EntriesController < ApplicationController
   # business intelligence view
   def bi_three_month
     if current_user.view_entries? 
-      @filter_companies = companies_for_bi_filter
-      @selected_search = "/entries/bi/three_month?country=#{params[:country]=="CA" ? "CA" : "US"}"
-      date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
-      country_iso = params[:country]=="CA" ? "CA" : "US"
-      where_clause = "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
-      where_clause << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})" 
-      where_clause << "and #{build_bi_company_filter_clause params[:cids]}"
-      qry = "SELECT entries.entry_port_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Entries\", sum(entries.entered_value) as \"Entered Value\", sum(entries.total_duty) as \"Total Duty\" FROM entries "+where_clause+" group by DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), entries.entry_port_code;"
-      @total_entries = Entry.connection.execute qry
+      distribute_reads do 
+        @filter_companies = companies_for_bi_filter
+        @selected_search = "/entries/bi/three_month?country=#{params[:country]=="CA" ? "CA" : "US"}"
+        date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
+        country_iso = params[:country]=="CA" ? "CA" : "US"
+        where_clause = "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
+        where_clause << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})" 
+        where_clause << "and #{build_bi_company_filter_clause params[:cids]}"
+        qry = "SELECT entries.entry_port_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Entries\", sum(entries.entered_value) as \"Entered Value\", sum(entries.total_duty) as \"Total Duty\" FROM entries "+where_clause+" group by DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), entries.entry_port_code;"
+        @total_entries = Entry.connection.execute qry
+      end
       render :layout=>'one_col' 
     else
       error_redirect "You do not have permission to view entries."
@@ -147,16 +161,18 @@ class EntriesController < ApplicationController
   end
   def bi_three_month_hts
     if current_user.view_entries? 
-      @filter_companies = companies_for_bi_filter
-      @selected_search = "/entries/bi/three_month_hts?country=#{params[:country]=="CA" ? "CA" : "US"}"
-      date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
-      country_iso = params[:country]=="CA" ? "CA" : "US"
-      qry = "select commercial_invoice_tariffs.hts_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Lines\", sum(commercial_invoice_tariffs.entered_value), sum(commercial_invoice_tariffs.duty_amount) from entries inner join commercial_invoices on entries.id = commercial_invoices.entry_id inner join commercial_invoice_lines on commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id inner join commercial_invoice_tariffs on commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id "
-      qry << "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
-      qry << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})" 
-      qry << "and #{build_bi_company_filter_clause params[:cids]}"
-      qry << " GROUP BY DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), commercial_invoice_tariffs.hts_code"
-      @total_entries = Entry.connection.execute qry
+      distribute_reads do 
+        @filter_companies = companies_for_bi_filter
+        @selected_search = "/entries/bi/three_month_hts?country=#{params[:country]=="CA" ? "CA" : "US"}"
+        date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
+        country_iso = params[:country]=="CA" ? "CA" : "US"
+        qry = "select commercial_invoice_tariffs.hts_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Lines\", sum(commercial_invoice_tariffs.entered_value), sum(commercial_invoice_tariffs.duty_amount) from entries inner join commercial_invoices on entries.id = commercial_invoices.entry_id inner join commercial_invoice_lines on commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id inner join commercial_invoice_tariffs on commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id "
+        qry << "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
+        qry << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})" 
+        qry << "and #{build_bi_company_filter_clause params[:cids]}"
+        qry << " GROUP BY DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), commercial_invoice_tariffs.hts_code"
+        @total_entries = Entry.connection.execute qry
+      end
       render :layout=>'one_col' 
     else
       error_redirect "You do not have permission to view entries."

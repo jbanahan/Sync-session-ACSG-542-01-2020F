@@ -1,4 +1,3 @@
-require 'spec_helper'
 require Rails.root.join('spec/fixtures/files/standard_booking_form')
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 

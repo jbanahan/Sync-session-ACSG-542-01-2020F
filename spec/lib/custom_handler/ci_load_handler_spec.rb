@@ -549,4 +549,24 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       expect(subject.file_parser(CustomFile.new attached_file_name: "other.csv")).to be_a OpenChain::CustomHandler::CiLoadHandler::StandardCiLoadParser
     end
   end
+
+  describe "valid_file?" do
+    subject { described_class }
+
+    it "allows csv files" do
+      expect(subject.valid_file? "test.csv").to eq true
+    end
+
+    it "allows xls files" do
+      expect(subject.valid_file? "test.xls").to eq true
+    end
+
+    it "allows xlsx files" do
+      expect(subject.valid_file? "test.xlsx").to eq true
+    end
+
+    it "disallows other files" do
+      expect(subject.valid_file? "test.xlsm").to eq false
+    end
+  end
 end

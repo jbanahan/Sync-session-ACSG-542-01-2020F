@@ -450,7 +450,11 @@ class CustomFeaturesController < ApplicationController
   end
 
   def ci_load_upload
-    generic_upload CI_UPLOAD, "CI Load Upload", "ci_load"
+    generic_upload(CI_UPLOAD, "CI Load Upload", "ci_load") do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::CiLoadHandler.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel (xls or xlsx) file or csv file."
+      end
+    end
   end
 
   def ci_load_download

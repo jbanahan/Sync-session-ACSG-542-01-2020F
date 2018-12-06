@@ -15,6 +15,8 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
   module OrdersChecker
     
     def self.flag_unaccepted order_nums
+      return unless Array.wrap(order_nums).length > 0
+
       unaccepted_orders = Order.where(order_number: order_nums)
                                .where(%Q(approval_status <> "Accepted" OR approval_status IS NULL))
                                .pluck(:customer_order_number)
@@ -24,6 +26,8 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
     end
 
     def self.warn_for_bookings order_nums, shipment
+      return unless Array.wrap(order_nums).length > 0
+
       assigned_to_multi_shp = orders_on_multi_bookings order_nums, shipment.reference
       mode_mismatch = orders_with_mismatched_transport_mode order_nums, shipment
       if assigned_to_multi_shp.present? || mode_mismatch.present?
@@ -32,6 +36,8 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
     end
 
     def self.warn_for_manifest order_nums, shipment
+      return unless Array.wrap(order_nums).length > 0
+      
       assigned_to_multi_shp = orders_on_multi_manifests order_nums, shipment.reference
       mode_mismatch = orders_with_mismatched_transport_mode order_nums, shipment
       if assigned_to_multi_shp.present? || mode_mismatch.present?

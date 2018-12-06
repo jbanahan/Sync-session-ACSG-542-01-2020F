@@ -102,7 +102,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def review_orders user, shipment, enable_warnings
-    ord_nums = @order_cache.values.map(&:order_number)
+    ord_nums = order_cache.values.map(&:order_number)
     flag_unaccepted ord_nums
     if enable_warnings
       warn_for_manifest(ord_nums, shipment)
@@ -124,16 +124,19 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def find_order_line shipment, po, sku
-    @order_cache ||= Hash.new
-    ord = @order_cache[po]
+    ord = order_cache[po]
     if ord.nil?
       ord = Order.where(customer_order_number:po,importer_id:shipment.importer_id).includes(:order_lines).first
       raise_error("Order Number #{po} not found.") unless ord
-      @order_cache[po] = ord
+      order_cache[po] = ord
     end
     ol = ord.order_lines.find {|ln| ln.sku == sku}
     raise_error("SKU #{sku} not found in order #{po} (ID: #{ord.id}).") unless ol
     ol
+  end
+
+  def order_cache
+    @order_cache ||= {}
   end
 
   def find_or_build_carton_set shipment, row
