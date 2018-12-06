@@ -8,7 +8,7 @@ class AttachmentArchivesController < ApplicationController
         archive_setup = c.attachment_archive_setup
         if archive_setup
           if archive_setup.entry_attachments_available?
-            r = archive_setup.create_entry_archive! next_archive_name(c), params[:max_bytes].to_i
+            r = archive_setup.create_entry_archive! AttachmentArchiveSetup.next_archive_name(c), params[:max_bytes].to_i
           else
             errors << "No files are available to be archived."
           end
@@ -58,10 +58,5 @@ class AttachmentArchivesController < ApplicationController
   end
 
   private
-  def next_archive_name company
-    num = 1
-    arch = company.attachment_archives.order("created_at DESC").first
-    num = arch.name.split("-").last.to_i + 1 if arch
-    return "#{company.name.gsub(/\W/,'')}-#{num}"
-  end
+  
 end
