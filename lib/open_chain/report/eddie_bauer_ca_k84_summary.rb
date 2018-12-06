@@ -1,36 +1,37 @@
-require 'open_chain/report/report_helper'
+require 'open_chain/report/builder_output_report_helper'
 module OpenChain
   module Report
     class EddieBauerCaK84Summary
-      include OpenChain::Report::ReportHelper
+      include OpenChain::Report::BuilderOutputReportHelper
 
       def self.permission? user
-        MasterSetup.get.system_code=='www-vfitrack-net' && user.company.master? && user.view_entries?
+        MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.company.master? && user.view_entries?
       end
 
       def run(user, settings)
-        wb = XlsMaker.create_workbook "CA K84 Summary - Eddie Bauer"
-        XlsMaker.create_sheet wb, "CA K84 Detail - Eddie Bauer"
-        XlsMaker.create_sheet wb, "CA K84 Summary - EB Supply"
-        XlsMaker.create_sheet wb, "CA K84 Detail - EB Supply"
-        XlsMaker.create_sheet wb, "CA K84 Summary - Eddie LLC"
-        XlsMaker.create_sheet wb, "CA K84 Detail - Eddie LLC"
-        XlsMaker.create_sheet wb, "CA K84 Summary - Eddie eCommerce"
-        XlsMaker.create_sheet wb, "CA K84 Detail - Eddie eCommerce"
+        wb = XlsxBuilder.new
+        eddiebrs = wb.create_sheet "CA K84 Summary - Eddie Bauer"
+        eddiebrd = wb.create_sheet "CA K84 Detail - Eddie Bauer"
+        ebsupplys = wb.create_sheet "CA K84 Summary - EB Supply"
+        ebsupplyd = wb.create_sheet "CA K84 Detail - EB Supply"
+        eddies = wb.create_sheet "CA K84 Summary - Eddie LLC"
+        eddied = wb.create_sheet "CA K84 Detail - Eddie LLC"
+        ebecomms = wb.create_sheet "CA K84 Summary - Eddie eComm"
+        ebecommd = wb.create_sheet "CA K84 Detail - Eddie eCommerce"
         
-        fill_sheets(user, wb, settings['date'], 0, 1, "EDDIEBR")
-        fill_sheets(user, wb, settings['date'], 2, 3, "EBSUPPLY")
-        fill_sheets(user, wb, settings['date'], 4, 5, "EDDIE")
-        fill_sheets(user, wb, settings['date'], 6, 7, "EBECOMM")
+        fill_sheets(user, wb, settings['date'], eddiebrs, eddiebrd, "EDDIEBR")
+        fill_sheets(user, wb, settings['date'], ebsupplys, ebsupplyd, "EBSUPPLY")
+        fill_sheets(user, wb, settings['date'], eddies, eddied, "EDDIE")
+        fill_sheets(user, wb, settings['date'], ebecomms, ebecommd, "EBECOMM")
         
-        workbook_to_tempfile wb, 'EddieBauerCaK84-'
+        write_builder_to_tempfile wb, "EddieBauerCaK84-"
       end
 
-      def fill_sheets(user, workbook, date, summary_sheet_no, detail_sheet_no, customer_number)
-        table_from_query workbook.worksheet(summary_sheet_no), po_query(user, customer_number, date), 
-          {2 => currency_format_lambda, 3 => currency_format_lambda, 4 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda} 
-        table_from_query workbook.worksheet(detail_sheet_no), detail_query(user, customer_number, date), 
-          {5 => currency_format_lambda, 6 => currency_format_lambda, 7 => currency_format_lambda, 8 => currency_format_lambda, 9 => currency_format_lambda, 11 => weblink_translation_lambda(CoreModule::ENTRY)}
+      def fill_sheets(user, workbook, date, summary_sheet, detail_sheet, customer_number)
+        write_query_to_builder workbook, summary_sheet, po_query(user, customer_number, date), 
+          data_conversions: {"Duty" => currency_format_lambda, "Fees" => currency_format_lambda, "SIMA and Excise" => currency_format_lambda, "Total Duty/Fee" => currency_format_lambda, "Entered Value" => currency_format_lambda, "Avg Duty 18%" => currency_format_lambda, "+/- Duty" => currency_format_lambda} 
+        write_query_to_builder workbook, detail_sheet, detail_query(user, customer_number, date), 
+          data_conversions: {"Invoice Tariff - Entered Value" => currency_format_lambda, "Invoice Tariff - Duty" => currency_format_lambda, "Invoice Tariff - Fees" => currency_format_lambda, "Invoice Tariff - SIMA" => currency_format_lambda, "Invoice Tariff - Excise" => currency_format_lambda, "Due Crown" => currency_format_lambda, "Web Links" => weblink_translation_lambda(workbook, Entry)}
       end
 
       def currency_format_lambda
@@ -42,8 +43,9 @@ module OpenChain
           SELECT (CASE SUBSTR(cil.po_number, 1, 1) WHEN "E" THEN "NON-MERCH" ELSE "MERCH" END) AS Business,
                  cil.po_number AS "Invoice Line - PO number",
                  SUM(cit.duty_amount) AS Duty,
-                 SUM(cit.gst_amount + cit.sima_amount) AS Fees,
-                 SUM(cit.duty_amount + cit.gst_amount + cit.sima_amount) AS "Total Duty/Fee",
+                 SUM(cit.gst_amount) AS Fees,
+                 SUM(cit.sima_amount + cit.excise_amount) AS "SIMA and Excise",
+                 SUM(cit.duty_amount + cit.gst_amount + cit.sima_amount + cit.excise_amount) AS "Total Duty/Fee",
                  e.release_date AS "Date Cleared",
                  e.master_bills_of_lading AS "BOL #",
                  SUM(cit.entered_value) AS "Entered Value",
@@ -70,8 +72,10 @@ module OpenChain
                  (CASE SUBSTR(cil.po_number, 1, 1) WHEN "E" THEN "NON-MERCH" ELSE "MERCH" END) AS Business,
                  SUM(cit.entered_value) AS "Invoice Tariff - Entered Value",
                  SUM(cit.duty_amount) AS "Invoice Tariff - Duty",
-                 SUM(cit.gst_amount + cit.sima_amount) AS "Invoice Tariff - Fees",
-                 SUM(cit.gst_amount + cit.sima_amount + cit.duty_amount) AS "Due Crown",
+                 SUM(cit.gst_amount) AS "Invoice Tariff - Fees",
+                 SUM(cit.sima_amount) AS "Invoice Tariff - SIMA",
+                 SUM(cit.excise_amount) AS "Invoice Tariff - Excise",
+                 SUM(cit.gst_amount + cit.sima_amount + cit.duty_amount + cit.excise_amount) AS "Due Crown",
                  SUM(cit.duty_amount) / SUM(cit.entered_value) AS "Calculated Duty %",
                  cil.line_number AS "Invoice Line - Line Number",
                  e.id AS "Web Links"

@@ -653,7 +653,8 @@ describe ReportsController do
 
   describe "Eddie Bauer CA K84 Summary" do
     before :each do
-      MasterSetup.create!(system_code: 'www-vfitrack-net')
+      @ms = stub_master_setup
+      allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
       @u = Factory(:master_user)
       allow(@u).to receive(:view_entries?).and_return true
       sign_in_as @u

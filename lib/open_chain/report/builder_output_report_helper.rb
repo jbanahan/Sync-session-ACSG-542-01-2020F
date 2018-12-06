@@ -36,20 +36,39 @@ module OpenChain; module Report; module BuilderOutputReportHelper
   def generate_results_to_tempfile query, output_format, sheet_name, report_filename_base, data_conversions: {}, &block
     b = builder(output_format)
     sheet = b.create_sheet sheet_name
-    write_query_results_to_tempfile(b, sheet, query, "#{report_filename_base}.#{file_extension(b)}", data_conversions: data_conversions, &block)
+    write_query_results_to_tempfile(b, sheet, query, report_filename_base, data_conversions: data_conversions, &block)
   end
 
-  def write_query_results_to_tempfile builder, sheet, query, report_filename, data_conversions: {}
+  def write_query_results_to_tempfile builder, sheet, query, report_filename_base, data_conversions: {}, &block
     write_query_to_builder builder, sheet, query, data_conversions: data_conversions
-    Tempfile.open(["#{self.class.name.demodulize}", builder.output_format.to_s]) do |temp|
-      builder.write temp
-      temp.flush
-      temp.rewind
+    write_builder_to_tempfile(builder, report_filename_base, &block)
+  end
 
-      Attachment.add_original_filename_method(temp, report_filename)
+  def write_builder_to_tempfile builder, report_filename_base
+    report_filename = "#{report_filename_base}.#{file_extension(builder)}"
 
-      yield temp 
+    tempfile_params = ["#{self.class.name.demodulize}", builder.output_format.to_s]
+    if block_given?
+      Tempfile.open(tempfile_params) do |temp|
+        setup_tempfile_setup(temp, builder, report_filename)
+
+        yield temp
+      end
+    else
+      temp = Tempfile.open(tempfile_params)
+      setup_tempfile_setup(temp, builder, report_filename)
+      return temp
     end
+    nil
+  end
+
+  def setup_tempfile_setup temp, builder, report_filename
+    builder.write temp
+    temp.flush
+    temp.rewind
+
+    Attachment.add_original_filename_method(temp, report_filename)
+    nil
   end
 
   def write_query_to_builder builder, sheet, query, data_conversions: {}
