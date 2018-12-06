@@ -340,8 +340,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
       # This data is pulled from the Invoice portion of the XML..
       invoice_line = REXML::XPath.first xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']"
-      if line.nil?
-        inbound_file.add_reject_message "Unabled to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
+      if invoice_line.nil?
+        inbound_file.add_reject_message "Unable to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
         return nil
       end
       
