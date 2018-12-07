@@ -7,8 +7,7 @@ class ValidationRuleEntryMidMatchesMidList < BusinessValidationRule
     importer = Company.where(system_code: importer_system_code).first
     raise "Invalid importer system code" unless importer.present?
 
-    mfid_xrefs = Set.new(DataCrossReference.where(company_id: importer.id, cross_reference_type: 'mid_xref').pluck :key)
-      .map { |mfid| mfid.strip }
+    mfid_xrefs = Set.new(DataCrossReference.hash_for_type(DataCrossReference::ENTRY_MID_VALIDATIONS, company_id: importer.id).keys.map &:strip)
 
     if mfid_xrefs.size > 0
       msgs = []

@@ -3,11 +3,19 @@ require 'spec_helper'
 describe DataCrossReference do
 
   context "hash_for_type" do
+    subject { described_class }
+
     it "should find all for reference" do
       csv = "k,v\nk2,v2"
-      described_class.load_cross_references csv, 'xref_type'
-      described_class.create!(key:'ak',value:'av',cross_reference_type:'xrt')
-      expect(described_class.hash_for_type('xref_type')).to eq({'k'=>'v','k2'=>'v2'})
+      subject.load_cross_references csv, 'xref_type'
+      subject.create!(key:'ak',value:'av',cross_reference_type:'xrt')
+      expect(subject.hash_for_type('xref_type')).to eq({'k'=>'v','k2'=>'v2'})
+    end
+
+    it "finds xrefs only for given company" do
+      subject.load_cross_references "k,v", 'xref_type', 1
+      subject.load_cross_references "k,v", 'xref_type', 2
+      expect(subject.hash_for_type('xref_type')).to eq({'k'=>'v'})
     end
   end
 
@@ -380,7 +388,7 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['shp_entry_load_cust'])).to eq title: "Shipment Entry Load Customers", description: "Enter the customer number to enable sending Shipment data to Kewill.", identifier: "shp_entry_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_cust'])).to eq title: "Shipment CI Load Customers", description: "Enter the customer number to enable sending Shipment CI Load data to Kewill.", identifier: "shp_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['hm_pars'])).to eq title: "H&M PARS Numbers", description: "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", identifier: "hm_pars", key_label: "PARS Number", value_label: "PARS Used?", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true
-        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "Manufacturer ID", description: "Manufacturer IDs used to validate entries", identifier: "mid_xref", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: true, upload_instructions: 'Spreadsheet should contain a header row, with MID Code in column A', allow_blank_value: false
+        expect(strip_preproc(xrefs['entry_mids'])).to eq title: "Manufacturer ID", description: "Manufacturer IDs used to validate entries", identifier: "entry_mids", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: true, upload_instructions: 'Spreadsheet should contain a header row, with MID Code in column A', allow_blank_value: false
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
