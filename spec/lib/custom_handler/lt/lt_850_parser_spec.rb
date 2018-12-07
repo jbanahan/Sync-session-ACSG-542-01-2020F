@@ -78,6 +78,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol1.line_number).to eq 28
       p1 = ol1.product
       expect(p1.unique_identifier).to eq "LOLLYT-ABKLSC"
+      expect(p1.custom_value(cdefs[:prod_part_number])).to eq "ABKLSC"
       expect(p1.name).to eq "BOYS L/S KNIT TEE CLOSEOUTS"
       expect(ol1.quantity).to eq 672
       expect(ol1.unit_of_measure).to eq "EA 1"
@@ -94,6 +95,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol2.line_number).to eq 3001
       p2 = ol2.product
       expect(p2.unique_identifier).to eq "LOLLYT-ABSETS"
+      expect(p2.custom_value(cdefs[:prod_part_number])).to eq "ABSETS"
       expect(p2.name).to eq "BOYS SETS CLOSEOUTS"
       expect(ol2.quantity).to eq 552
       expect(ol2.unit_of_measure).to eq "EA 2"

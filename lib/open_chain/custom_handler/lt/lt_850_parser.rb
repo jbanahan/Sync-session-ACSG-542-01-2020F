@@ -115,8 +115,8 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
   end
 
   def cdef_uids
-    [:ord_type, :ord_country_of_origin, :ord_assigned_agent, :ord_line_color, 
-     :ord_line_color_description, :ord_line_season, :ord_line_size, :ord_line_size_description]
+    [:ord_type, :ord_country_of_origin, :ord_assigned_agent, :ord_line_color, :ord_line_color_description, 
+     :ord_line_season, :ord_line_size, :ord_line_size_description, :prod_part_number]
   end
 
   ##########
