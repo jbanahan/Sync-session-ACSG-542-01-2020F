@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       missing_products_spreadsheet = nil
       orders_spreadsheet = nil
       if result.orders_missing_products.size > 0
-        missing_products_spreadsheet, orders_spreadsheet = create_spreadsheets result.orders_missing_products, result.header_row
+        missing_products_spreadsheet, orders_spreadsheet, orders_only_errors_spreadsheet = create_spreadsheets result.orders_missing_products, result.header_row
       end
 
       if missing_products_spreadsheet
@@ -80,8 +80,15 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
             Attachment.add_original_filename_method orders, "#{name} - Orders.xlsx"
             orders_spreadsheet.write orders
 
-            body = "Attached are the product lines that were missing from VFI Track.  Please fill out the #{missing_products.original_filename} file with all the necessary information and load the data into VFI Track, then reprocess the attached #{orders.original_filename} PO file to load the POs that were missing products into the system."
-            OpenMailer.send_simple_html(user.email, "CQ Origin PO Report Result", body, [missing_products, orders]).deliver!
+            Tempfile.open(["#{name}_orders_errors", ".xls"]) do |orders_only_errors|
+
+              Attachment.add_original_filename_method orders_only_errors, "#{name} - Order Errors.xlsx"
+              orders_only_errors_spreadsheet.write orders_only_errors
+
+              body = "Attached are the product lines that were missing from VFI Track.  Please fill out the #{missing_products.original_filename} file with all the necessary information and load the data into VFI Track, then reprocess the attached #{orders.original_filename} PO file to load the POs that were missing products into the system."
+              OpenMailer.send_simple_html(user.email, "CQ Origin PO Report Result", body, [missing_products, orders, orders_only_errors]).deliver!
+            end
+            
           end
         end
       end
@@ -156,7 +163,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         missing_products << sku_number(row) if missing_product?(row)
       end
 
-      [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row)]
+      [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row, false), create_orders_missing_products_workbook(orders_missing_products, header_row, true)]
     end
 
     def create_missing_products_workbook missing_products
@@ -173,8 +180,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       builder
     end
 
-    def create_orders_missing_products_workbook  orders_missing_products, header_row
-      builder = orders_missing_products_builder
+    def create_orders_missing_products_workbook  orders_missing_products, header_row, only_errors
+      builder = only_errors ? order_missing_products_only_errors_builder : orders_missing_products_builder
+
       sheet = builder.create_sheet "Orders Missing Products",  headers: header_row
       builder.freeze_horizontal_rows sheet, 1
 
@@ -187,6 +195,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       [14, 15, 17, 18, 19].each {|x| styles[x] = missing_product_date_format }
 
       orders_missing_products.each do |row|
+        next if only_errors && !missing_product?(row)
+
         if missing_product?(row)
           builder.add_body_row sheet, row[0..-2], styles: styles
         else
@@ -270,6 +280,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
 
     def orders_missing_products_builder
       @orders_missing_products_builder ||= XlsxBuilder.new
+    end
+
+    def order_missing_products_only_errors_builder
+      @order_missing_products_only_errors_builder ||= XlsxBuilder.new
     end
 
     def cdefs

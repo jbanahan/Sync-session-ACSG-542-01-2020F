@@ -171,6 +171,14 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
         expect(data[2]).to eq file_contents[2][0..36]
         # Make sure the second row is highlighted because the product was missing
         expect(reader.background_color(sheet, 2, 1)).to eq "FFFFFF00"
+
+        reader = XlsxTestReader.new StringIO.new(mail.attachments["file - Order Errors.xlsx"].read)
+        sheet = reader.sheet "Orders Missing Products"
+        data = reader.raw_data(sheet)
+        expect(data.length).to eq 2
+        expect(data[1]).to eq file_contents[2][0..36]
+        # Make sure the second row is highlighted because the product was missing
+        expect(reader.background_color(sheet, 1, 1)).to eq "FFFFFF00"
       end
 
       it "adds only a single line to product file, even when product is missing multiple times" do
