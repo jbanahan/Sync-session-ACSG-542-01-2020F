@@ -5,6 +5,7 @@
 #  bucket          :string(255)
 #  compared_at     :datetime
 #  created_at      :datetime         not null
+#  deleted         :boolean
 #  doc_path        :string(255)
 #  id              :integer          not null, primary key
 #  recordable_id   :integer          not null
@@ -24,6 +25,7 @@ class BusinessRuleSnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
   belongs_to :recordable, polymorphic: true
+  after_destroy :delete_from_s3
 
   # Returns the data about when the rules associated with the entity transitioned from one state to another
   def self.rule_comparisons entity

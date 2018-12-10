@@ -8,6 +8,7 @@
 #  compared_at         :datetime
 #  context             :string(255)
 #  created_at          :datetime         not null
+#  deleted             :boolean
 #  doc_path            :string(255)
 #  id                  :integer          not null, primary key
 #  imported_file_id    :integer
@@ -43,6 +44,8 @@ class EntitySnapshot < ActiveRecord::Base
 
   validates :recordable, :presence => true
   validates :user, :presence => true
+
+  after_destroy :delete_from_s3
 
   class DefaultSnapshotWriterImpl
     def self.entity_json entity
@@ -190,7 +193,6 @@ class EntitySnapshot < ActiveRecord::Base
     self.doc_path = data[:key]
     self.version = data[:version]
   end
-
 
   ##################################
   # End S3 handling stuff

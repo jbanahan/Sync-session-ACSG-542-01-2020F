@@ -49,14 +49,32 @@ class MasterSetup < ActiveRecord::Base
   after_update :update_cache
   after_find :update_cache
 
-  # Almost solely for test casing purposes  - needs to be up here
-  # because current_repository_version is referenced by a class constant
-  # and it references this method.
+  # Returns true if Rails.env indicates production
   def self.production_env?
-    Rails.env.production?
+    rails_env.production?
   end
-  private_class_method :production_env?
 
+  # Returns true if Rails.env indicates test
+  def self.test_env?
+    rails_env.test?
+  end
+
+  # Returns true if Rails.env indicates development
+  def self.development_env?
+    rails_env.development?
+  end
+
+  # This method exists as a straight forward way to mock out 
+  # the rails environment setting for test cases where functionality
+  # may rely on which Rails.env it's running in.  You code can 
+  # call MasterSetup.rails_env (or see the simple abstraction methods above)
+  # and then you can easily set an expectation
+  # on MasterSetup.rails_env to change the environment without affecting
+  # the actual rails environment for the rest of unit test ecosystem.
+  def self.rails_env
+    Rails.env
+  end
+  
   def self.current_repository_version
     # Allow fudging the branch name as a tag name on dev machines, but not production.
     # Production should ALWAYS be running against a tag.
@@ -145,7 +163,7 @@ class MasterSetup < ActiveRecord::Base
           u.sys_admin = true
           u.admin = true
           u.save
-          OpenMailer.send_new_system_init(pass).deliver if Rails.env=="production"
+          OpenMailer.send_new_system_init(pass).deliver if production_env?
         end
       end
     end

@@ -342,4 +342,64 @@ describe MasterSetup do
       expect(MasterSetup.upgrades_allowed?).to eq true
     end
   end
+
+  describe "production_env?" do 
+    let (:production) { ActiveSupport::StringInquirer.new "production" }
+    let (:test) { ActiveSupport::StringInquirer.new "test" }
+
+    subject { described_class }
+
+    it "returns true if using production rails environment" do
+      expect(subject).to receive(:rails_env).and_return production
+      expect(subject.production_env?).to eq true
+    end
+
+    it "returns false if not production rails environment" do
+      expect(subject).to receive(:rails_env).and_return test
+      expect(subject.production_env?).to eq false
+    end
+  end
+
+  describe "test_env?" do 
+    let (:production) { ActiveSupport::StringInquirer.new "production" }
+    let (:test) { ActiveSupport::StringInquirer.new "test" }
+
+    subject { described_class }
+
+    it "returns true if using test rails environment" do
+      expect(subject).to receive(:rails_env).and_return test
+      expect(subject.test_env?).to eq true
+    end
+
+    it "returns false if not test rails environment" do
+      expect(subject).to receive(:rails_env).and_return production
+      expect(subject.test_env?).to eq false
+    end
+  end
+
+  describe "test_env?" do 
+    let (:production) { ActiveSupport::StringInquirer.new "production" }
+    let (:dev) { ActiveSupport::StringInquirer.new "development" }
+
+    subject { described_class }
+
+    it "returns true if using dev rails environment" do
+      expect(subject).to receive(:rails_env).and_return dev
+      expect(subject.development_env?).to eq true
+    end
+
+    it "returns false if not dev rails environment" do
+      expect(subject).to receive(:rails_env).and_return production
+      expect(subject.development_env?).to eq false
+    end
+  end
+
+  describe "rails_env" do
+    subject { described_class }
+
+    it 'returns Rails.env' do
+      # force equality comparison based on the actual object id to ensure the right value is getting used
+      expect(subject.rails_env.object_id).to eq Rails.env.object_id
+    end
+  end
 end

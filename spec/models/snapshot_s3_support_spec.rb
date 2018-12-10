@@ -125,4 +125,38 @@ describe SnapshotS3Support do
       expect(subject.s3_path(entity, path_prefix: "path/prefix")).to eq "path/prefix/entry/100.json"
     end
   end
+
+  describe "copy_to_deleted_bucket" do
+    let (:testing_system_code) { "testing-system-code" }
+    let! (:master_setup) { 
+      ms = stub_master_setup 
+      allow(ms).to receive(:system_code).and_return testing_system_code
+      ms
+    }
+    let (:source_bucket) { "test-bucket" }
+    let (:source_path) { "path/to/doc.txt" }
+    let (:env) { "test-environment"}
+
+    subject { Class.new { include SnapshotS3Support }.new }
+
+    before :each do 
+      allow(subject).to receive(:bucket).and_return source_bucket
+      allow(MasterSetup).to receive(:rails_env).and_return env
+    end
+    
+    it "calls OpenChain::S3.copy_object with correct information" do
+      allow(subject).to receive(:doc_path).and_return source_path
+      allow(subject).to receive(:version).and_return "version"
+
+      expect(OpenChain::S3).to receive(:copy_object).with(source_bucket, source_path, "test-environment.deleted-snapshots.vfitrack.net", "#{testing_system_code}/#{source_path}", from_version: "version")
+      expect(subject.copy_to_deleted_bucket).to eq true
+    end
+
+    it "no-ops if doc_path is blank" do
+      allow(subject).to receive(:doc_path).and_return nil
+      expect(OpenChain::S3).not_to receive(:copy_object)
+      expect(subject.copy_to_deleted_bucket).to eq false
+    end
+
+  end
 end

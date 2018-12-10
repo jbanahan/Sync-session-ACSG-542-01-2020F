@@ -562,4 +562,16 @@ describe OpenChain::S3, s3: true do
       expect(OpenChain::S3.metadata "meta", bucket, key).to eq "Value"
     end
   end
+
+  describe "copy_object" do
+    before :each do
+      upload_tempfile key: key
+    end
+
+    it "copies the given source path to a new object" do
+      OpenChain::S3.copy_object bucket, key, bucket, "copy/#{key}"
+
+      expect(OpenChain::S3.get_data bucket, "copy/#{key}").to eq tempfile_content
+    end
+  end
 end

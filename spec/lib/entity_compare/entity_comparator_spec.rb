@@ -180,7 +180,7 @@ describe OpenChain::EntityCompare::EntityComparator do
 
     it "skips snapshots where the recordable entity is missing" do
       es = EntitySnapshot.create!(recordable: order, user:user, bucket: 'b', doc_path: 'd', version: 'v')
-      order.destroy
+      order.delete
       es.reload
 
       subject.process(es)

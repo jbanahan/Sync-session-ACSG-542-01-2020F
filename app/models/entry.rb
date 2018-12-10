@@ -392,7 +392,7 @@ class Entry < ActiveRecord::Base
   end
 
   def purge! date_purged: Time.zone.now
-    ActiveRecord::Base.transaction do
+    Lock.db_lock(self) do
       EntryPurge.create!(broker_reference: broker_reference,
                          country_iso: self.import_country.try(:iso_code),
                          source_system: source_system,

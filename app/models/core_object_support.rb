@@ -17,7 +17,6 @@ module CoreObjectSupport
     has_many :linked_attachments, as: :attachable, dependent: :destroy
     has_many :linkable_attachments, through: :linked_attachments
     has_many :change_records, as: :recordable
-    has_many :business_rule_snapshots, as: :recordable
     has_many :sync_records, as: :syncable, dependent: :destroy, autosave: true, inverse_of: :syncable
     has_many :business_validation_results, as: :validatable, dependent: :destroy
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object

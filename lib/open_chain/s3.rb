@@ -36,6 +36,12 @@ module OpenChain; class S3
     return Client.s3_upload_io bucket, key, data, write_options
   end
 
+  def self.copy_object from_bucket, from_key, to_bucket, to_key, from_version: nil
+    Client.copy_object from_bucket, from_key, to_bucket, to_key, from_version: from_version
+    # If the call above completes without raising an error, then it was successful
+    true
+  end
+
   # Uploads the given local_file to a temp location in S3 
   def self.with_s3_tempfile local_file, bucket: 'chainio-temp', tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
     upload_response = nil
@@ -188,7 +194,7 @@ module OpenChain; class S3
     true
   end
 
-  def self.bucket_name environment = Rails.env
+  def self.bucket_name environment = MasterSetup.rails_env
     BUCKETS[environment.to_sym]      
   end
 
@@ -298,6 +304,14 @@ module OpenChain; class S3
         response = s3_client.put_object write_options.merge(bucket: bucket, key: key, body: data)
         return UploadResult.from_put_object_response(bucket, key, response)
       end
+    end
+
+    def self.copy_object from_bucket, from_path, to_bucket, to_path, from_version: nil
+      copy_source = "#{from_bucket}/#{Seahorse::Util.uri_path_escape(from_path)}"
+      copy_source += "?versionId=#{Seahorse::Util.uri_escape(from_version)}" unless from_version.blank?
+      
+      s3_client.copy_object({bucket: to_bucket, copy_source: copy_source, key: to_path})
+      true
     end
 
     # Find out if a bucket exists in the S3 environment

@@ -278,4 +278,44 @@ describe BusinessRuleSnapshot do
       })
     end
   end
+
+  describe "delete_from_s3" do
+    subject { BusinessRuleSnapshot.new bucket: "bucket", doc_path: "key", version: "version" }
+
+    before :each do 
+      allow(subject.class).to receive(:bucket_name).and_return "bucket"
+    end
+
+    it "deletes a snapshot from s3" do
+      expect(OpenChain::S3).to receive(:delete).with("bucket", "key", "version")
+      subject.delete_from_s3
+    end
+
+    it "no-ops if bucket is blank" do
+      subject.bucket = ""
+      expect(OpenChain::S3).not_to receive(:delete)
+      subject.delete_from_s3
+    end
+
+    it "no-ops if doc_path is blank" do
+      subject.doc_path = ""
+      expect(OpenChain::S3).not_to receive(:delete)
+      subject.delete_from_s3
+    end
+
+    it "calls delete_from_s3 in destroy callback" do
+      subject.recordable = Factory(:entry)
+      subject.save!
+
+      expect(subject).to receive(:delete_from_s3)
+      subject.destroy
+    end
+
+    it "does not delete from s3 if bucket doesn't match system's bucket" do
+      expect(subject.class).to receive(:bucket_name).and_return "notmybucket"
+      expect(OpenChain::S3).not_to receive(:delete)
+
+      subject.delete_from_s3
+    end
+  end
 end

@@ -3,12 +3,51 @@ require 'open_chain/s3'
 module SnapshotS3Support
   extend ActiveSupport::Concern
 
+  def copy_to_deleted_bucket
+    path = self.class.deleted_path(self)
+    return false if path.blank?
+
+    OpenChain::S3.copy_object self.bucket, self.doc_path, path[:bucket], path[:key], from_version: self.version
+    return true
+  end
+
+  def delete_from_s3
+    return if self.bucket.blank? || self.doc_path.blank?
+
+    # We don't want to actually delete from s3 if the bucket isn't the same as this system's bucket.
+    # The only time this should really occur is if we generate a test system from a production system's database snapshot
+    # When that happens though, we absolutely DO NOT want to delete the actual snapshot from the production source location.
+    # (It's fine to delete the database record though from the test system)
+    if self.bucket == self.class.bucket_name
+      # the s3 delete call will raise an error if it failed to do so
+      OpenChain::S3.delete self.bucket, self.doc_path, self.version
+    end
+    nil
+  end
+
   module ClassMethods
     #bucket name for storing entity snapshots
-    def bucket_name env=Rails.env
+    def bucket_name env = MasterSetup.rails_env
+      # NOTE: DO NOT CHANGE the bucket naming style for live systems without making sure the delete_from_s3 
+      # accounts for the potential for multiple bucket naming styles.
       r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
       raise "Bucket name too long: #{r}" if r.length > 63
       return r
+    end
+
+    def deleted_bucket_name env = MasterSetup.rails_env
+      r = "#{env}.deleted-snapshots.vfitrack.net"
+    end
+
+    def deleted_path snapshot
+      return nil if snapshot.doc_path.blank?
+
+      {bucket: deleted_bucket_name, key: "#{MasterSetup.get.system_code}/#{snapshot.doc_path}"}
+    end
+
+    def deleted_snapshot_exists? snapshot
+      path = deleted_path(snapshot)
+      OpenChain::S3.exist? path[:bucket], path[:key]
     end
 
     #find or create the bucket for this system's EntitySnapshots

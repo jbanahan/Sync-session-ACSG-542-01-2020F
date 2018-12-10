@@ -49,6 +49,17 @@ module Helpers
     class AwsErrors < StandardError; end
     class NoSuchKeyError < AwsErrors; end 
 
+    class UploadResult
+
+      attr_reader :bucket, :key, :version
+
+      def initialize bucket, key, version
+        @bucket = bucket
+        @key = key
+        @version = version
+      end
+    end
+
     def self.parse_full_s3_path path
       # We're expecting the path to be like "/bucket/path/to/file.pdf"
       # The first path segment of the file is the bucket, everything after that is the path to the actual file
@@ -99,17 +110,6 @@ module Helpers
       UploadResult.new bucket_name, path, @version_id.to_s
     end
 
-    class UploadResult
-
-      attr_reader :bucket, :key, :version
-
-      def initialize bucket, key, version
-        @bucket = bucket
-        @key = key
-        @version = version
-      end
-    end
-
     def self.get_versioned_data bucket, path, version, io = nil
       local_data = @datastore[key(bucket, path, version)]
 
@@ -134,6 +134,11 @@ module Helpers
 
     def self.exists? bucket, key, version = nil
       key != "bad_file"
+    end
+
+    def self.delete bucket, path, version = nil
+      @datastore.delete key(bucket, path, version)
+      true
     end
 
   end
