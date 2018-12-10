@@ -318,19 +318,8 @@ describe EntitySnapshot, :snapshot do
       ent = Factory(:entry)
       u = Factory(:user)
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
-
-      expect(described_class).to receive(:s3_path).and_return(expected_path)
-      expect(described_class).to receive(:bucket_name).and_return(expected_bucket)
-
-      s3_obj = double("OpenChain::S3::UploadResult")
-      allow(s3_obj).to receive(:key).and_return expected_path
-      allow(s3_obj).to receive(:bucket).and_return expected_bucket
-      allow(s3_obj).to receive(:version).and_return expected_version
+      expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
       
-      expect(OpenChain::S3).to receive(:upload_data).
-        with(expected_bucket,expected_path,expected_json).
-        and_return(s3_obj)
-
       es = EntitySnapshot.create_from_entity(ent,u)
       expect(es.bucket).to eq expected_bucket
       expect(es.doc_path).to eq expected_path
@@ -393,13 +382,7 @@ describe EntitySnapshot, :snapshot do
     }
 
     it "retrieves versioned data for snapshot" do
-      expect(OpenChain::S3).to receive(:get_versioned_data) do |bucket, path, version, io|
-        expect(bucket).to eq "bucket"
-        expect(path).to eq "test/doc-1.json"
-        expect(version).to eq "1"
-
-        io.write "Testing"
-      end
+      expect(OpenChain::S3).to receive(:get_versioned_data).with("bucket", "test/doc-1.json", "1").and_return "Testing"
 
       expect(EntitySnapshot.retrieve_snapshot_data_from_s3 snapshot).to eq "Testing"
     end

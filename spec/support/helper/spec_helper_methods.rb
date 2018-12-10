@@ -77,7 +77,7 @@ module Helpers
       "http://#{bucket}.s3.com/#{path}?expires_in=#{expires_in.to_i}"
     end
     
-    def self.upload_data bucket_name, path, data
+    def self.upload_data bucket_name, path, data, options = {}
       # Handle a couple different valid data objects
       local_data = nil
       if data.respond_to?(:read)
@@ -89,6 +89,11 @@ module Helpers
       end
 
       @version_id += 1
+      # Just transparently unzip the data if it's zipped before storing it.
+      if options[:content_encoding] == "gzip"
+        local_data = ActiveSupport::Gzip.decompress local_data
+      end
+      
       @datastore[key(bucket_name, path, @version_id)] = local_data
 
       UploadResult.new bucket_name, path, @version_id.to_s

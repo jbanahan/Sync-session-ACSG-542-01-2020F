@@ -18,10 +18,11 @@ module SnapshotS3Support
       OpenChain::S3.create_bucket!(bucket, versioning: true)
     end
 
-    # write_to_s3 and s3_path is sort of a public API for snapshot-like objects to use so they're stored in the same bucke and manner as "real"
-    # snapshots.
+    # write_to_s3 and s3_path is sort of a public API for snapshot-like objects to use so they're stored in the correct snaphsot layout.
     def write_to_s3 snapshot_json, recordable, path_prefix: nil
-      upload_response = OpenChain::S3.upload_data(bucket_name, s3_path(recordable, path_prefix: path_prefix), snapshot_json)
+      zipped_json = ActiveSupport::Gzip.compress snapshot_json
+
+      upload_response = OpenChain::S3.upload_data(bucket_name, s3_path(recordable, path_prefix: path_prefix), zipped_json, content_encoding: "gzip", content_type: "application/json")
 
       # Technically, version can be nil if uploading to an unversioned bucket..
       # If that happens though, then the bucket we're trying to use is set up wrong.
@@ -49,10 +50,7 @@ module SnapshotS3Support
     end
 
     def retrieve_snapshot_data_from_s3 snapshot
-      data = StringIO.new
-      OpenChain::S3.get_versioned_data snapshot.bucket, snapshot.doc_path, snapshot.version, data
-      data.rewind
-      data.read
+      OpenChain::S3.get_versioned_data snapshot.bucket, snapshot.doc_path, snapshot.version
     end
   end
 end

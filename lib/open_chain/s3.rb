@@ -69,18 +69,42 @@ module OpenChain; class S3
 
   # Same functionality as get_data but with specified object version
   def self.get_versioned_data bucket, key, version, io = nil
-    Client.get_versioned_data bucket, key, version: version, io: io
+    object_data = Client.get_versioned_data bucket, key, version: version, io: io
+    if io.nil?
+      return uncompress_s3_data_if_needed(object_data)
+    else
+      return object_data  
+    end
   end
 
   # Retrieves the data specified by the bucket/key descriptor.
   # If the IO parameter is defined, the object is expected to be an IO-like object
   # (answering to write, flush and rewind) and all data is streamed directly to 
   # this object and nothing is returned.
+  # When an IO object is passed, this method returns a metatdata object containing 
+  # data about the s3 object (headers, etc)
   #
   # If no io object is provided, the full file content is returned.
+  # If the data is compressed, it will be transaparently decompressed (only if no IO is passed)
+  # 
   def self.get_data bucket, key, io = nil
-    Client.get_versioned_data bucket, key, io: io
+    object_data = Client.get_versioned_data bucket, key, io: io
+    if io.nil?
+      return uncompress_s3_data_if_needed(object_data)
+    else
+      return object_data  
+    end
   end
+
+  def self.uncompress_s3_data_if_needed object_data
+    body = object_data.body
+    if object_data.content_encoding.to_s.downcase == "gzip"
+      body = ActiveSupport::Gzip.decompress(body)
+    end
+
+    body
+  end
+  private_class_method :uncompress_s3_data_if_needed
 
   def self.url_for bucket, key, expires_in=1.minute, options = {}
     version = options.delete :version
@@ -219,6 +243,31 @@ module OpenChain; class S3
     end
   end
 
+  class S3ObjectData
+    attr_reader :bucket, :key, :version, :content_encoding, :content_disposition, :content_length, :content_type, :last_modified, :etag, :metadata, :body
+    
+    def initialize bucket, key, version, response, body
+      @bucket = bucket
+      @key = key
+      @version = version
+      @body = body
+
+      if response
+        @content_encoding = response.content_encoding
+        @content_disposition = response.content_disposition
+        @content_length = response.content_length
+        @content_type = response.content_type
+        @last_modified = response.last_modified
+        @etag = response.etag
+        @metadata = {}
+        response.metadata.keys.each do |k|
+          @metadata[k] = response.metadata[k]
+        end
+      end
+    end
+
+  end
+
   class AwsErrors < StandardError; end
 
   class NoSuchKeyError < AwsErrors
@@ -287,16 +336,16 @@ module OpenChain; class S3
 
       s3_action_with_retries(retry_lambda: retry_lambda) do
         if io
-          s3_client.get_object(opts) {|chunk| io.write chunk }
+          response = s3_client.get_object(opts) {|chunk| io.write chunk }
 
           # Flush the data and reset the read/write pointer to the beginning of the IO object 
           # so the caller can then actually read from the file.
           io.flush
           io.rewind
-          nil
+          return S3ObjectData.new(bucket, key, version, response, nil)
         else
           response = s3_client.get_object opts
-          response.body.read
+          return S3ObjectData.new(bucket, key, version, response, response.body.read)
         end
       end
     rescue Aws::S3::Errors::NoSuchKey, Aws::S3::Errors::NoSuchVersion => e

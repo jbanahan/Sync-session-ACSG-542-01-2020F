@@ -57,7 +57,15 @@ describe SnapshotS3Support do
     }
 
     it "writes snapshot data to S3" do
-      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return s3_obj
+      # Using block form because sometimes the gzip binary data can differ between the expectation and the actual implemetation (time-based?)
+      # So just roundtrip the compression to make sure the passed data is valid
+      expect(OpenChain::S3).to receive(:upload_data) do |bucket, key, content, opts|
+        expect(bucket).to eq "test.syscode.snapshots.vfitrack.net"
+        expect(key).to eq "entry/100.json"
+        expect(ActiveSupport::Gzip.decompress(content)).to eq "json"
+        expect(opts).to eq({content_encoding:"gzip", content_type: "application/json"})
+        s3_obj 
+      end
 
       values = subject.write_to_s3 "json", entity
       expect(values[:bucket]).to eq "stubbed-bucket"
@@ -66,7 +74,15 @@ describe SnapshotS3Support do
     end
 
     it "allows passing in path prefix" do
-      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "prefix/entry/100.json", "json").and_return s3_obj
+      # Using block form because sometimes the gzip binary data can differ between the expectation and the actual implemetation (time-based?)
+      # So just roundtrip the compression to make sure the passed data is valid
+      expect(OpenChain::S3).to receive(:upload_data) do |bucket, key, content, opts|
+        expect(bucket).to eq "test.syscode.snapshots.vfitrack.net"
+        expect(key).to eq "prefix/entry/100.json"
+        expect(ActiveSupport::Gzip.decompress(content)).to eq "json"
+        expect(opts).to eq({content_encoding:"gzip", content_type: "application/json"})
+        s3_obj 
+      end
       values = subject.write_to_s3 "json", entity, path_prefix: 'prefix'
     end
 
@@ -76,7 +92,7 @@ describe SnapshotS3Support do
       allow(s3_obj).to receive(:bucket).and_return "stubbed-bucket"
       allow(s3_obj).to receive(:version).and_return nil
 
-      expect(OpenChain::S3).to receive(:upload_data).with("test.syscode.snapshots.vfitrack.net", "entry/100.json", "json").and_return s3_obj
+      expect(OpenChain::S3).to receive(:upload_data).and_return s3_obj
 
       expect { subject.write_to_s3 "json", entity }.to raise_error "Cannot upload snapshots to unversioned bucket.  You must enable versioning on bucket 'stubbed-bucket'."
     end

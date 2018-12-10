@@ -12,17 +12,18 @@ describe OpenChain::S3, s3: true do
     OpenChain::S3.bucket_name 'test' 
   end
 
-  def upload_tempfile options = {}
-    if options[:key]
-      upload_key = options[:key]
+  def upload_tempfile options: {}, content: nil, key: nil
+    if key
+      upload_key = key
     elsif uploaded_files.length > 0
       upload_key = "s3_io_#{Time.now.to_f}.txt"
     else
-      upload_key = key
+      upload_key = key()
     end
 
     file = Tempfile.new([File.basename(upload_key), ".txt"])
-    file << tempfile_content
+    file.binmode
+    file << (content.nil? ? tempfile_content : content)
     file.flush
 
     f = OpenChain::S3.upload_file bucket, upload_key, file, options
@@ -100,7 +101,7 @@ describe OpenChain::S3, s3: true do
   describe "get_data" do
     context "with actual s3 data" do
       before(:each) do
-        upload_tempfile
+        upload_tempfile(options: {content_type: "text/plain", content_encoding: "none", content_disposition: "inline", metadata: {"key1" => "value1", "key2" => "value2"}})
       end
 
       it 'retrieves data from s3' do
@@ -109,8 +110,35 @@ describe OpenChain::S3, s3: true do
 
       it 'should stream data file to IO object' do
         io = StringIO.new
-        expect(OpenChain::S3.get_data(bucket, key, io)).to be_nil
+        data = OpenChain::S3.get_data(bucket, key, io)
         expect(io.read).to eq(tempfile_content)
+        expect(data.bucket).to eq bucket
+        expect(data.key).to eq key
+        # Content length can vary slightly based on headers and such
+        expect(data.content_length).to be_within(5).of(18)
+        expect(data.last_modified).to be_within(1.minute).of(Time.now)
+        expect(data.etag.length).to be > 0
+        expect(data.content_type).to eq "text/plain"
+        expect(data.content_encoding).to eq "none"
+        expect(data.content_disposition).to eq "inline"
+        expect(data.metadata).to eq({"key1" => "value1", "key2" => "value2"})
+      end
+    end
+
+    context "with compressed data loaded to s3" do
+      before(:each) do
+        upload_tempfile(options: {content_encoding: "gzip"}, content: ActiveSupport::Gzip.compress(tempfile_content))
+      end
+
+      it 'transparently decompresses data if no IO object is used and content is compressed' do
+        expect(OpenChain::S3.get_data(bucket, key)).to eq tempfile_content
+      end
+
+      it "passes compressed data to underlying stream" do
+        io = StringIO.new
+        data = OpenChain::S3.get_data(bucket, key, io)
+        expect(ActiveSupport::Gzip.decompress(io.read)).to eq(tempfile_content)
+        expect(data.content_encoding).to eq "gzip"
       end
     end
 
@@ -526,7 +554,7 @@ describe OpenChain::S3, s3: true do
 
   describe "metadata" do
     before :each do
-      upload_tempfile metadata: {"Meta" => "Value"}
+      upload_tempfile options: {metadata: {"Meta" => "Value"}}
     end
 
     it "retrieves metadata value from s3 object" do
