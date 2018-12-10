@@ -144,10 +144,10 @@
           <chain-address address='{{order.ord_ship_from_full_address}}'></chain-address>
         </div>
         <div class="card-footer text-right" ng-if='order.permissions.can_edit && order.vendor_id == me.company_id'>
-          <a class='btn btn-primary' ng-if='order.ord_ship_from_id' id='show_change_modal'>
+          <a class='btn btn-primary' ng-if='order.ord_ship_from_id' id='show_change_modal' href="javscript:void(0);">
             Change
           </a>
-          <a ng-if='!order.ord_ship_from_id' ui-sref='selectShipFrom({id:order.id})' class='btn btn-primary'>Change</a>
+          <a ng-if='!order.ord_ship_from_id' ui-sref='selectShipFrom({id:order.id})' class='btn btn-primary' href="javscript:void(0);">Change</a>
         </div>
       </div>
       <div class="card">

@@ -776,4 +776,17 @@ module ApplicationHelper
     
     render(partial: "/shared/milestone_markers", locals: {milestones: milestones, title: title})
   end
+
+  def vendor_portal_direct_link obj
+    route = case(obj)
+    when Order
+      "orders/#{obj.id}"
+    when Shipment
+      "shipments/#{obj.id}"
+    else
+      raise "Unexpected module type #{obj.class}."
+    end
+
+    "/vendor_portal#/#{route}"
+  end
 end

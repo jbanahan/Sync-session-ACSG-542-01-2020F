@@ -97,7 +97,7 @@
     <button class='btn_link' link_to='<%=edit_order_path(@order)%>' title='Edit'><i class='fa fa-pencil'></i></button>
   <%end%>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h' title='History'><i class='fa fa-history'></i></button>
-  <button class='btn_link' link_to='/vendor_portal#!/orders/<%=@order.id%>' title='Vendor Portal'><i class='fa fa-industry'></i></a>
+  <button class='btn_link' link_to='<%=vendor_portal_direct_link(@order)%>' title='Vendor Portal'><i class='fa fa-industry'></i></a>
   <%if MasterSetup.get.custom_feature?("Bulk Send Order To SAP")%>
     <button class='btn_link' link_to='<%=send_to_sap_order_path(@order)%>' title='Send To SAP'>Send To SAP</button>
   <%end%>
