@@ -66,25 +66,11 @@ describe EntitySnapshotSupport do
 
       expect(entity_snapshot).to exist_in_db
       entity_snapshot.reload
-      expect(entity_snapshot.deleted).to eq true
+      expect(entity_snapshot.doc_path).to be_nil
+      expect(entity_snapshot.bucket).to be_nil
+      expect(entity_snapshot.version).to be_nil
     end
-
-    it "does not attempt to move snapshots that have already been marked deleted" do
-      entity_snapshot.update_attributes! deleted: true
-      expect_any_instance_of(EntitySnapshot).not_to receive(:copy_to_deleted_bucket)
-
-      expect_any_instance_of(BusinessRuleSnapshot).to receive(:copy_to_deleted_bucket) do |instance|
-        expect(instance).to eq business_rule_snapshot
-        true
-      end
-
-      expect(subject.class.destroy_snapshots subject.id, "Order").to eq true
-
-      # make sure the rules are destroyed
-      expect(entity_snapshot).not_to exist_in_db
-      expect(business_rule_snapshot).not_to exist_in_db
-    end
-
+    
     it "does not attempt to move snapshots that don't have doc_paths" do
       entity_snapshot.update_attributes! doc_path: nil
       business_rule_snapshot.update_attributes! doc_path: nil

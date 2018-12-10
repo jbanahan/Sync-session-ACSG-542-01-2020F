@@ -62,21 +62,24 @@ module EntitySnapshotSupport
       all_snapshots = (entity_snapshots + rule_snapshots)
       return unless all_snapshots.length > 0
 
-      snapshots_to_copy = all_snapshots.select { |s| !s.deleted? }
+      # Snapshots we've already deleted will have blank doc paths (also really old snapshot where json was stored directly in the db).
+      # We don't need to copy any of these to the deleted bucket.
+      snapshots_to_copy = all_snapshots.select { |s| !s.doc_path.blank? }
 
       snapshots_to_copy.each do |snapshot|
-        # Some really old snapshots were stored in the database, not on s3, thus won't have doc_paths.  So we don't have to copy these.
-        if snapshot.doc_path.blank?
-          copied = true
-        else
-          copied = snapshot.copy_to_deleted_bucket
-        end
-        
+        copied = snapshot.copy_to_deleted_bucket
+
         if copied
           # This might look weird but we're relying on the delayed jobs retry to make sure all snapshots are copied across.
           # So, if anything in here raises (like if s3 has an issue), the job will try again, and if we mark this particular 
-          # snapshot as being copied, then it won't get copied again on the retry.
-          snapshot.update_column :deleted, true
+          # snapshot as being copied (by blanking all the paths), then it won't get copied again on the retry.
+          # This is a good spot for update_columns when we go to Rails 4 to avoid updating the timestamps for no reason
+          snapshot.doc_path = nil
+          snapshot.bucket = nil
+          snapshot.version = nil
+          # have to save without validation otherwise this blows up due to the recordable being nil'ed out by its having
+          # been deleted (which is what triggers this code to run)
+          snapshot.save(validate: false)
         else
           raise "Failed to copy #{snapshot.class} #{snapshot.id} to deleted bucket." unless copied
         end
