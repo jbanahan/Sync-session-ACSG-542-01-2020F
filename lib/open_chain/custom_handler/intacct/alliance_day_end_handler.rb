@@ -4,7 +4,6 @@ require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 require 'open_chain/custom_handler/intacct/intacct_data_pusher'
 require 'open_chain/kewill_sql_proxy_client'
-require 'spreadsheet'
 
 module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHandler
   include ActionView::Helpers::NumberHelper
@@ -130,7 +129,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       check_info = parser.extract_check_info io
     end
 
+    # This method checks the internal state of the data extracted from the report..making sure the numbers given to us by 
+    # Alliance are internally consistent (.ie the totals for bank match what was given for the bank, the number of checks
+    # matches totals, etc)
     errors = parser.validate_check_info check_info
+
+    # This method clears out any checks that are represented on the same file multiple times (users may have printed the check multiple times on accident)
+    # It then does some additional validations to ensure the same check wasn't used for different files.  If so, that needs to be fixed manually.
+    errors.push *parser.validate_and_remove_duplicate_check_references(check_info)
     
     [errors, check_info]
   end
@@ -151,13 +157,13 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def send_parser_errors check_filename, check_errors, invoice_filename, invoice_errors, email_to, date
-    wb = generate_errors_xls check_errors, invoice_errors
+    wb = generate_errors_report check_errors, invoice_errors
     filename = "Day End Errors #{date.strftime("%Y-%m-%d")}"
-    Tempfile.open([filename, '.xls']) do |f|
+    Tempfile.open([filename, '.xlsx']) do |f|
       wb.write f
       f.rewind
       Attachment.add_original_filename_method f
-      f.original_filename = (filename + ".xls")
+      f.original_filename = (filename + ".xlsx")
       body = "Errors were encountered while attempting to read the Alliance Day end files.<br>"
       if check_errors && check_errors.length > 0
         body += "Found #{check_errors.length} #{"error".pluralize(check_errors.length)} in the Check Register File #{check_filename}.<br>"
@@ -260,7 +266,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
   def handle_check_errors users, errors
     subject = "Error creating Intacct-Alliance check(s)"
-    body = "<p>The following checks have already been sent to Intacct and need to be manually removed from the Check Register report.  Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
+    body = "<p>The following checks have already been sent to Intacct and need to be manually removed from the Check Register report. The banks subtotals and report totals must also be manually recalculated and adjusted in the report to account for the removed checks. Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
     errors.each { |err| body += "<li>#{CGI.escapeHTML err}</li>" }
     body += "</ul></p>"
     OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver!
@@ -268,21 +274,21 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
   private
 
-    def generate_errors_xls check_errors, invoice_errors
-      wb = Spreadsheet::Workbook.new
+    def generate_errors_report check_errors, invoice_errors
+      builder = XlsxBuilder.new
       if check_errors
         widths = []
-        sheet = XlsMaker.create_sheet wb, "Check Register Errors", ["Error"]
-        check_errors.each_with_index {|e, x| XlsMaker.add_body_row(sheet, (x+1), [e], widths)}
+        sheet = builder.create_sheet "Check Register Errors", headers: ["Error"]
+        check_errors.each_with_index {|e, x| builder.add_body_row(sheet, [e])}
       end
 
       if invoice_errors
         widths = []
-        sheet = XlsMaker.create_sheet wb, "Invoice Errors", ["Error"]
-        invoice_errors.each_with_index {|e, x| XlsMaker.add_body_row(sheet, (x+1), [e], widths)}
+        sheet = builder.create_sheet "Invoice Errors", headers: ["Error"]
+        invoice_errors.each_with_index {|e, x| builder.add_body_row(sheet, [e])}
       end
 
-      wb
+      builder
     end
 
     def email_unfinished_exports users, exports

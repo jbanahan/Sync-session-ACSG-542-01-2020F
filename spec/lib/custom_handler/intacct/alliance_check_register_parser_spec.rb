@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser do
      *****  Grand Total  *****                           Record Count:    108          109,275.95
 
 FILE
-      check_info = described_class.new.extract_check_info StringIO.new(file)
+      check_info = subject.extract_check_info StringIO.new(file)
 
       expect(check_info[:total_check_count]).to eq 108
       expect(check_info[:total_check_amount]).to eq BigDecimal.new("109275.95")
@@ -69,7 +69,7 @@ FILE
     it "raises an error when file is not of the expected format" do
       # Just change the date format as if it had been updated...this should force a failure
       file = "\n\n\nAPMRGREG-D0-06/22/14\n\n\n"
-      expect{check_info = described_class.new.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
+      expect{check_info = subject.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
     end
   end
 
@@ -90,16 +90,16 @@ FILE
         }
       }
 
-      errors = described_class.new.validate_check_info check_info
+      errors = subject.validate_check_info check_info
       expect(errors.size).to eq 0
     end
 
     it "raises an error if total count is missing" do
-      expect{described_class.new.validate_check_info({})}.to raise_error "No Check Register Record Count found."
+      expect{subject.validate_check_info({})}.to raise_error "No Check Register Record Count found."
     end
 
     it "raises an error if total check amount is missing" do
-      expect{described_class.new.validate_check_info({total_check_count: 1})}.to raise_error "No Check Register Grand Total amount found."
+      expect{subject.validate_check_info({total_check_count: 1})}.to raise_error "No Check Register Grand Total amount found."
     end
 
     it "returns errors when check info is not internally consistent" do
@@ -118,7 +118,7 @@ FILE
         }
       }
 
-      errors = described_class.new.validate_check_info check_info
+      errors = subject.validate_check_info check_info
       expect(errors.size).to eq 4
       expect(errors).to include "Expected 4 checks for Bank 02.  Found 2 checks."
       expect(errors).to include "Expected Check Total Amount of $200.00 for Bank 02.  Found $100.00."
@@ -138,47 +138,53 @@ FILE
      *****  Grand Total  *****                           Record Count:    1              2,295.00-
 
 FILE
-      check_info = described_class.new.extract_check_info StringIO.new(file)
-      errors = described_class.new.validate_check_info check_info
+      check_info = subject.extract_check_info StringIO.new(file)
+      errors = subject.validate_check_info check_info
       expect(errors.size).to eq 0
     end
   end
 
   describe "create_and_request_check" do
-    before :each do
-      @check_info = {
+    let (:sql_proxy_client) {
+      c = instance_double(OpenChain::KewillSqlProxyClient)
+      allow(c).to receive(:delay).and_return c
+      c
+    }
+
+    let (:check_info) {
+      {
         check_number: "987", vendor_number: "VEND", invoice_number: "123", invoice_suffix: "", customer_number: "CUST",
-        vendor_reference: "VEND_REF", check_amount: BigDecimal.new("100.00"), check_date: Date.new(2014, 11, 1), bank_number: "1"
+        vendor_reference: "VEND_REF", check_amount: BigDecimal.new("100.00"), check_date: Date.new(2014, 11, 1), bank_number: "1",
+        file_number: "123"
       }
-      @sql_proxy_client = double("OpenChain::KewillSqlProxyClient")
-      allow(@sql_proxy_client).to receive(:delay).and_return @sql_proxy_client
-    end
+    }
+
     it "creates a check and export object" do
-      bank_name = DataCrossReference.create! key: @check_info[:bank_number], value: "BANK NAME", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
+      bank_name = DataCrossReference.create! key: check_info[:bank_number], value: "BANK NAME", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
       xref = DataCrossReference.create! key: "BANK NAME", value: "1234", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
 
-      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
-      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
+      expect(sql_proxy_client).to receive(:request_check_details).with check_info[:invoice_number], check_info[:check_number], check_info[:check_date], check_info[:bank_number], check_info[:check_amount].to_s
+      check, errors = subject.create_and_request_check check_info, sql_proxy_client
       expect(errors.length).to eq 0
 
       expect(check).to be_persisted
-      expect(check.file_number).to eq @check_info[:invoice_number]
+      expect(check.file_number).to eq check_info[:invoice_number]
       expect(check.suffix).to be_nil
-      expect(check.check_number).to eq @check_info[:check_number]
-      expect(check.check_date).to eq @check_info[:check_date]
-      expect(check.bank_number).to eq @check_info[:bank_number]
-      expect(check.customer_number).to eq @check_info[:customer_number]
-      expect(check.bill_number).to eq @check_info[:invoice_number]
-      expect(check.vendor_number).to eq @check_info[:vendor_number]
-      expect(check.vendor_reference).to eq @check_info[:vendor_reference]
-      expect(check.amount).to eq @check_info[:check_amount]
+      expect(check.check_number).to eq check_info[:check_number]
+      expect(check.check_date).to eq check_info[:check_date]
+      expect(check.bank_number).to eq check_info[:bank_number]
+      expect(check.customer_number).to eq check_info[:customer_number]
+      expect(check.bill_number).to eq check_info[:invoice_number]
+      expect(check.vendor_number).to eq check_info[:vendor_number]
+      expect(check.vendor_reference).to eq check_info[:vendor_reference]
+      expect(check.amount).to eq check_info[:check_amount]
       expect(check.gl_account).to eq "2021"
       expect(check.bank_cash_gl_account).to eq xref.value
 
       export = check.intacct_alliance_export
       expect(export).to be_persisted
 
-      expect(export.customer_number).to eq @check_info[:customer_number]
+      expect(export.customer_number).to eq check_info[:customer_number]
       expect(export.data_requested_date.to_date).to eq Time.zone.now.to_date
       expect(export.data_received_date).to be_nil
       expect(export.ap_total).to eq check.amount
@@ -187,12 +193,12 @@ FILE
     end
 
     it "updates existing check / export objects" do
-      @check_info[:invoice_suffix] = "A"
-      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
-      existing_export = IntacctAllianceExport.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: @check_info[:check_amount], intacct_checks: [existing_check]
+      check_info[:invoice_suffix] = "A"
+      existing_check = IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount], voided: false
+      existing_export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, data_received_date: Time.zone.now, ap_total: check_info[:check_amount], intacct_checks: [existing_check]
 
-      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
-      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
+      expect(sql_proxy_client).to receive(:request_check_details).with check_info[:invoice_number], check_info[:check_number], check_info[:check_date], check_info[:bank_number], check_info[:check_amount].to_s
+      check, errors = subject.create_and_request_check check_info, sql_proxy_client
       expect(errors.length).to eq 0
 
       expect(check).to eq existing_check
@@ -201,25 +207,25 @@ FILE
     end
 
     it "errors if check has already been sent to intacct" do
-      @check_info[:invoice_suffix] = "A"
-      IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", amount: @check_info[:check_amount], voided: false
-      check, errors = described_class.new.create_and_request_check @check_info, nil
+      check_info[:invoice_suffix] = "A"
+      IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], intacct_upload_date: Time.zone.now, intacct_key: "Key", amount: check_info[:check_amount], voided: false
+      check, errors = subject.create_and_request_check check_info, nil
       expect(check).to be_nil
       expect(errors.length).to eq 1
-      expect(errors).to include "Check # #{@check_info[:check_number]} for $#{sprintf('%.2f', @check_info[:check_amount])}"
+      expect(errors).to include "Bank # 1 / Check # 987 for $100.00"
     end
 
     it "creates a single check when multiple rows reference the same check number with different file number" do
       # This is testing that an error condition is handled correctly by re-using the same check object (and not creating two distinct ones)
-      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
+      existing_check = IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount], voided: false
       
-      @check_info[:invoice_number] = "987654"
-      @check_info[:suffix] = "A"
-      @check_info[:check_amount] = BigDecimal.new("200")
+      check_info[:invoice_number] = "987654"
+      check_info[:suffix] = "A"
+      check_info[:check_amount] = BigDecimal.new("200")
 
 
-      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
-      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
+      expect(sql_proxy_client).to receive(:request_check_details).with check_info[:invoice_number], check_info[:check_number], check_info[:check_date], check_info[:bank_number], check_info[:check_amount].to_s
+      check, errors = subject.create_and_request_check check_info, sql_proxy_client
       expect(errors.length).to eq 0
 
       expect(check).to eq existing_check
@@ -231,19 +237,30 @@ FILE
      it "creates a single check when multiple rows reference the same info except vendor reference" do
       # This is another error case..the only information that differed across lines in the registry for these
       # were the vendor reference.  This should still only create a single reference.
-      existing_check = IntacctCheck.create! file_number: @check_info[:invoice_number], suffix: @check_info[:invoice_suffix], check_number: @check_info[:check_number], check_date: @check_info[:check_date], bank_number: @check_info[:bank_number], amount: @check_info[:check_amount], voided: false
+      existing_check = IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount], voided: false
       
-      @check_info[:vendor_reference] = "DIFFERENT REFERENCE"
+      check_info[:vendor_reference] = "DIFFERENT REFERENCE"
 
 
-      expect(@sql_proxy_client).to receive(:request_check_details).with @check_info[:invoice_number], @check_info[:check_number], @check_info[:check_date], @check_info[:bank_number], @check_info[:check_amount].to_s
-      check, errors = described_class.new.create_and_request_check @check_info, @sql_proxy_client
+      expect(sql_proxy_client).to receive(:request_check_details).with check_info[:invoice_number], check_info[:check_number], check_info[:check_date], check_info[:bank_number], check_info[:check_amount].to_s
+      check, errors = subject.create_and_request_check check_info, sql_proxy_client
       expect(errors.length).to eq 0
 
       expect(check).to eq existing_check
       expect(check.intacct_alliance_export).not_to be_nil
       expect(check.vendor_reference).to eq "DIFFERENT REFERENCE"
-     end
+    end
+
+    it "no-ops if same check has been previously sent to intacct" do
+      # Note that the check is created with a different check date than the report data..
+      existing_check = IntacctCheck.create!(bank_number: check_info[:bank_number], check_number: check_info[:check_number], amount: check_info[:check_amount], voided: false,
+                                            file_number: check_info[:file_number], suffix: nil, customer_number: check_info[:customer_number], 
+                                            vendor_number: check_info[:vendor_number], check_date: Time.zone.now.to_date, intacct_upload_date: Time.zone.now)
+
+      check, errors = subject.create_and_request_check check_info, sql_proxy_client
+      expect(errors.length).to eq 0
+      expect(check).to be_nil
+    end
   end
 
   describe "process_from_s3" do
@@ -349,5 +366,66 @@ FILE
       saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
       expect(saved).not_to be_nil
     end
+  end
+
+  describe "validate_and_remove_duplicate_check_references" do
+    let (:check_data) {
+      {
+        bank_number: "1", check_number: "12345", check_date: Date.new(2018, 12, 12), 
+        check_amount: BigDecimal("100"), customer_number: "CUST", invoice_number: "INV", invoice_suffix: "A", vendor_number: "VEN"
+      }
+    }
+
+    let (:check_info) {
+      {
+        checks: {
+          "1" => {
+            checks: [
+              check_data
+            ]
+          }  
+        }
+      }
+    }
+
+    it "validates data and repopulates the totals for the bank when duplicate check references are found" do
+      # add a duplicate check data, make sure it gets removed and the totals are recalculated to only have data for the single check
+      check_info[:checks]["1"][:checks] << check_data
+
+      errors = subject.validate_and_remove_duplicate_check_references check_info
+      expect(errors).to be_blank
+      data = check_info[:checks]["1"]
+
+      expect(data[:checks].length).to eq 1
+      expect(data[:check_total]).to eq BigDecimal("100")
+      expect(data[:check_count]).to eq 1
+    end
+
+    [:check_date, :check_amount, :customer_number, :invoice_number, :invoice_suffix, :vendor_number].each do |key|
+      # This is checking that if any of the above values don't match we catch the duplicate bank/check as an error
+      it "errors if there are two checks with the same bank / check number with different #{key}" do
+        bad_check = check_data.dup
+        bad_check[key] = key.to_s
+        check_info[:checks]["1"][:checks] << bad_check
+
+        errors = subject.validate_and_remove_duplicate_check_references check_info
+        expect(errors).to include "Multiple different checks found for Bank # 1 / Check # 12345."
+      end
+    end
+
+    it "does not error or remove as a duplicate if there's a voided version of the check" do
+      voided_check = check_data.dup
+      voided_check[:check_amount] = voided_check[:check_amount] * -1
+      check_info[:checks]["1"][:checks] << voided_check
+
+      errors = subject.validate_and_remove_duplicate_check_references check_info
+      expect(errors).to be_blank
+      data = check_info[:checks]["1"]
+
+      expect(data[:checks].length).to eq 2
+      expect(data[:check_total]).to eq 0
+      expect(data[:check_count]).to eq 2
+    end
+    
   end
 end

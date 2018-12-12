@@ -253,9 +253,10 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       info = {checks: []}
       expect(parser).to receive(:extract_check_info).with(io).and_return info
       expect(parser).to receive(:validate_check_info).with(info).and_return ["Errors"]
+      expect(parser).to receive(:validate_and_remove_duplicate_check_references).with(info).and_return ["More Errors"]
 
       errors, inv_info = described_class.new(nil, nil).read_check_register cf, parser
-      expect(errors).to eq ["Errors"]
+      expect(errors).to eq ["Errors", "More Errors"]
       expect(inv_info).to eq info
     end
   end
@@ -271,17 +272,21 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(mail.body.raw_source).to include "Errors were encountered while attempting to read the Alliance Day end files.<br>"
       expect(mail.body.raw_source).to include 'Found 2 errors in the Check Register File check_name.<br'
       expect(mail.body.raw_source).to include 'Found 2 errors in the Invoice File invoice_name.<br>'
-      attachment = mail.attachments["Day End Errors 2014-11-01.xls"]
-      wb = Spreadsheet.open(StringIO.new(attachment.read))
-      sheet = wb.worksheet "Check Register Errors"
-      expect(sheet.row(0)).to eq ["Error"]
-      expect(sheet.row(1)).to eq ["E1"]
-      expect(sheet.row(2)).to eq ["E2"]
+      attachment = mail.attachments["Day End Errors 2014-11-01.xlsx"]
 
-      sheet = wb.worksheet "Invoice Errors"
-      expect(sheet.row(0)).to eq ["Error"]
-      expect(sheet.row(1)).to eq ["IE"]
-      expect(sheet.row(2)).to eq ["IE2"]
+      xlsx = XlsxTestReader.new StringIO.new(attachment.read)
+
+      errors = xlsx.raw_data "Check Register Errors"
+
+      expect(errors[0]).to eq ["Error"]
+      expect(errors[1]).to eq ["E1"]
+      expect(errors[2]).to eq ["E2"]
+
+      errors = xlsx.raw_data "Invoice Errors"
+
+      expect(errors[0]).to eq ["Error"]
+      expect(errors[1]).to eq ["IE"]
+      expect(errors[2]).to eq ["IE2"]
     end
   end
 

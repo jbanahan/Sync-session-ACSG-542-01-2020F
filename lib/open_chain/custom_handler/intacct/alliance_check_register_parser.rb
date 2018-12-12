@@ -140,33 +140,96 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
     return errors
   end
 
+  # The Alliance check report can very easily include checks that were printed several times for the same exact number.
+  # This can happen if the end users screw up the check queue.  When that happens the check report lists the same check data
+  # several times and sums each print as a unique check.  That's why we leave it in for the initial data integrity check done
+  # in validate_check_info.  When then want to strip all those duplicates back out
+  #
+  # We then check the data to make sure that there's not duplicate checks issued for different distinct files otherwise we error
+  # right away.
+  def validate_and_remove_duplicate_check_references check_info
+    errors = Set.new
+
+    check_info[:checks].each_pair do |bank_number, bank_checks_data|
+      checks = {}
+      duplicate_checks = Set.new
+
+      check_count = 0
+      check_total = BigDecimal("0")
+      bank_checks_data[:checks].each do |check|
+        key = check_key(check)
+        next unless checks[key].blank?
+
+        # This is checking to see if there's any checks on the same register that are for different amounts or different files, etc..
+        dupe_key = duplicate_check_key(check)
+        if duplicate_checks.include?(dupe_key)
+          errors << "Multiple different checks found for Bank # #{check[:bank_number]} / Check # #{check[:check_number]}."
+        else
+          checks[key] = check
+          check_count += 1
+          check_total += check[:check_amount]
+          duplicate_checks << dupe_key
+        end        
+      end
+
+      bank_checks_data[:checks] = checks.values
+      bank_checks_data[:check_total] = check_total
+      bank_checks_data[:check_count] = check_count
+    end
+
+    errors.to_a
+  end
+
+  def check_key check_info
+    [:bank_number, :check_number, :check_date, :check_amount, :customer_number, :invoice_number, :invoice_suffix, :vendor_number].map {|k| check_info[k]}
+  end
+
+  def duplicate_check_key check_info
+    # the + is to include the void / not-void status of the check (negative amounts are check voids)
+    [:bank_number, :check_number].map {|k| check_info[k]} + [check_info[:check_amount].to_f < 0]
+  end
+
   def create_and_request_check check_info, sql_proxy_client
     errors = []
     check = nil
     export = nil
     suffix = check_info[:invoice_suffix].blank? ? nil : check_info[:invoice_suffix].strip
-    Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
+    Lock.acquire("IntacctCheck-#{check_info[:bank_number]}-#{check_info[:check_number]}") do
 
-      # There's error cases where the check number appears on multiple lines...this happens when the check print queue is screwed up and isn't resolved
-      # correctly by the users.  This results in check numbers being physically printed twice - for different files or the same file twice.  In this case, the check
-      # registry will have BOTH check lines in it and will sum So, if we only log one of the check numbers listed (by only using the check number/bank/check_date/check_type) 
-      # then when the amounts are totalled at the end of the day end processed against the registry amount, the amounts will be (correctly) off and kick out an
-      # error on the exception report forcing the user to validate the amounts.  This is what we want.
-      check = IntacctCheck.where(check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], voided: (check_info[:check_amount].to_f) < 0.0).first_or_create!
-      if check.intacct_upload_date.nil? && check.intacct_key.nil?
-        export = check.intacct_alliance_export
-        if export.nil?
-          export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], 
-                                                  ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, intacct_checks: [check]
-        end
-      else
-        check = nil
+      voided_check = (check_info[:check_amount].to_f < 0.0)
+
+      # See if the check has previously been issued on another day and pushed to Intacct already.  If it has, just skip it.
+      # This can happen a couple different ways...
+      # 1) Check is voided multiple times
+      # 2) Check is printed multiple times on accident (sometimes the first check of the day is the last check from the previous day)
+      previous_check = IntacctCheck.where(bank_number: check_info[:bank_number], check_number: check_info[:check_number], amount: check_info[:check_amount], voided: voided_check,
+                                          file_number: check_info[:invoice_number], suffix: suffix, customer_number: check_info[:customer_number], 
+                                          vendor_number: check_info[:vendor_number]).
+                                    where("intacct_upload_date IS NOT NULL").first
+
+      return [nil, []] unless previous_check.nil?
+
+      # Check if we have multiple checks based solely on the check number, bank and void status...If we do and the check was already loaded to Intacct then that's
+      # an error.  It means someone has re-used the same check number for multiple distinct payments.
+      check = IntacctCheck.where(bank_number: check_info[:bank_number], check_number: check_info[:check_number], voided: voided_check).
+                        where("intacct_upload_date IS NOT NULL").first
+      if check
+        return [nil, [duplicate_check_error(check_info)]]
+      end
+
+      check = IntacctCheck.where(bank_number: check_info[:bank_number], check_number: check_info[:check_number], voided: voided_check).first_or_create! if check.nil?
+      # Export could already exist if we're having to reload this check if something else errored during the upload process...so we can just re-use the same export object
+      export = check.intacct_alliance_export
+      if export.nil?
+        export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], 
+                                                ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, intacct_checks: [check]
       end
     end
 
     if check
       Lock.with_lock_retry(check) do
         Lock.with_lock_retry(export) do
+          check.check_date = check_info[:check_date]
           check.amount = check_info[:check_amount]
           check.file_number = check_info[:invoice_number]
           check.suffix = suffix
@@ -197,8 +260,6 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # Instead it ends up in the delayed_job process as a float, which ends up being inexact when attempting to do any sort of multiplication
       # Just do the amount change to Alliance format here instead
       sql_proxy_client.delay(priority: -1).request_check_details check.file_number, check.check_number, check.check_date, check.bank_number, check.amount.to_s
-    else
-      errors << "Check # #{check_info[:check_number]} for $#{sprintf('%.2f', check_info[:check_amount])}"
     end
 
     [check, errors]
@@ -206,6 +267,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
 
   private
+
+    def duplicate_check_error check_info
+      "Bank # #{check_info[:bank_number]} / Check # #{check_info[:check_number]} for $#{sprintf('%.2f', check_info[:check_amount])}"
+    end
 
     def parse_number value
       # Strip commas and dollar signs
