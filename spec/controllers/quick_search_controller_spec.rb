@@ -37,7 +37,9 @@ describe QuickSearchController do
           'fields'=>{},
           'vals'=>[{'id'=>ent.id}],
           'extra_fields'=>{},
-          'extra_vals'=>{ent.id.to_s => {}}
+          'extra_vals'=>{ent.id.to_s => {}},
+          'attachments'=>{ent.id.to_s => []},
+          'business_validation_results'=>{}
         }
       }
       CoreModule::ENTRY.quicksearch_fields.each do |uid|

@@ -8,7 +8,7 @@ root.OCQuickSearch =
     html = ''
     if qs.vals.length == 10
       html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown. For more results, please run a <a href='/#{jsonData.qs_result.adv_search_path}'>full search</a>.</div>"
-    html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.search_term) for obj, idx in qs.vals
+    html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.attachments,qs.business_validation_results,qs.search_term) for obj, idx in qs.vals
 
     html = '<div class="text-muted">No results found for this search.</div>' if html == ''
 
@@ -18,13 +18,73 @@ root.OCQuickSearch =
     $('#modwrap_'+moduleType)
 
   
-  makeCard: (fields, obj, extraFields, extraVals, searchTerm) ->
+  makeCard: (fields, obj, extraFields, extraVals, attachments, businessValidations, searchTerm) ->
 
     cardHeader = () ->
       "<div class='card qs-card'>"
 
     cardFooter = () ->
       "</div>"
+
+    attachmentIcon = (a) ->
+      iconsAvailable = {
+        doc:'fa-file-word-o',docx:'fa-file-word-o',docm:'fa-file-word-o',
+        odt:'fa-file-word-o',xls:'fa-table',xlsx:'fa-table',csv:'fa-table',
+        xlsm:'fa-table',ods:'fa-table',ppt:'fa-file-powerpoint-o',
+        pptx:'fa-file-powerpoint-o',pptm:'fa-file-powerpoint-o',
+        odp:'fa-file-powerpoint-o',pdf:'fa-file-pdf-o'}
+
+      icon = 'fa-file-text'
+      if a.content_type.includes('image')
+        icon = 'fa-picture-o'
+
+      if a.name.split('.').pop().toLowerCase() of iconsAvailable == true
+        icon = iconsAvailable[a.name.split('.').pop().toLowerCase()]
+
+      icon
+
+    businessValidationBuilder = (b) ->
+      bus = document.createElement("A")
+      icon = document.createElement("I")
+
+      bus.setAttribute('class', 'btn-link')
+      bus.setAttribute('href', b.validation_link)
+      status = document.createTextNode(b.state)
+      space = document.createTextNode(" ")
+
+      if b.state == 'Fail'
+        icon.setAttribute('class', 'fa fa-medkit text-danger fa-lg')
+      else if b.state == 'Review'
+        icon.setAttribute('class', 'fa fa-medkit text-warning fa-lg')
+      else if b.state == 'Pass'
+        icon.setAttribute('class', 'fa fa-medkit text-success fa-lg')
+      else
+        icon.setAttribute('class', 'fa fa-medkit text-secondary fa-lg')
+
+      bus.appendChild(icon)
+      bus.appendChild(space)
+      bus.appendChild(status)
+
+      bus.outerHTML
+
+    attachmentBuilder = (a) ->
+      label = document.createTextNode(a.type + ' - ' + a.name)
+      if (a.type + ' - ' + a.name).length > 13
+        smlabel = document.createTextNode((' ' + a.type + ' - ' + a.name).substring(0, 11) + '...' )
+      else
+        smlabel = ' ' + label.textContent
+
+      att = document.createElement('a')
+      att.setAttribute('href', a.download_link)
+      att.setAttribute('title', label.textContent)
+      att.setAttribute('class', 'btn btn-outline-dark mr-1 mt-1')
+      att.setAttribute('target', '_blank')
+      
+      icon = document.createElement('i')
+      icon.setAttribute('class', 'fa '+attachmentIcon(a)+' fa-lg')
+      att.appendChild(icon)
+      att.appendChild(smlabel)
+      att.outerHTML
 
     resultRow = (label, value) ->
       "<tr><td class='qs-td-label' scope='row'><strong>"+label+":</strong></td><td>"+value+"</td></tr>"
@@ -41,10 +101,10 @@ root.OCQuickSearch =
     resultsFooter = () ->
       "</table>"
 
-    cardContent = (obj, fields, extraFields, extraVals, searchTerm) ->
+    cardContent = (obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm) ->
       html = showSearchFields(fields, obj, searchTerm)
       if html != ''
-        html += showExtraFields(extraFields, extraVals, obj)
+        html += showExtraFields(extraFields, extraVals, attachments, businessValidations, obj)
         html += resultsFooter()
 
       html
@@ -62,19 +122,34 @@ root.OCQuickSearch =
           fieldCounter++
       html
     
-    showExtraFields = (extraFields, extraVals, obj) ->
+    showExtraFields = (extraFields, extraVals, attachments, businessValidations, obj) ->
       hasExtraVals = (ev) ->
         for k,v of ev
             return true if !!v
         false
       html = ""
+      if hasExtraVals attachments[obj.id] or hasExtraVals extraValsForObj or hasExtraVals businessValidations[obj.id]
+        html = dividerRow()
+
+      attValsForObj = attachments[obj.id]
+      if hasExtraVals attValsForObj
+        i = 0
+        attlist = ""
+        while i < attValsForObj.length
+          attlist += attachmentBuilder(attValsForObj[i])
+          i++
+        html += resultRow("Attachments", attlist)
+
+      busValsForObj = businessValidations[obj.id]
+      if hasExtraVals busValsForObj
+        html += resultRow("Business Rule State", businessValidationBuilder(busValsForObj))
+
       extraValsForObj = extraVals[obj.id]
       if hasExtraVals extraValsForObj
-        html = dividerRow()
-        for id, lbl of extraFields
+        for id, label of extraFields
           val = extraValsForObj[id]
           if !!val
-            html += resultRow(lbl, val)
+            html += resultRow(label, val)
       html
       
     getHtmlVal = (val, searchTerm) ->
@@ -97,5 +172,5 @@ root.OCQuickSearch =
       return highlighted.str
 
     h = cardHeader()
-    h += cardContent(obj, fields, extraFields, extraVals, searchTerm)
+    h += cardContent(obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm)
     h += cardFooter()

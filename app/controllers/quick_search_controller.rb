@@ -15,7 +15,7 @@ class QuickSearchController < ApplicationController
     return error_redirect("Parameter v is required.") if params[:v].blank?
     r = {module_type: cm.class_name, 
          adv_search_path: "#{cm.class_name.pluralize.underscore}/?force_search=true",
-         fields:{}, vals:[], extra_fields: {}, extra_vals: {}, 
+         fields:{}, vals:[], extra_fields: {}, extra_vals: {},  attachments: {}, business_validation_results: {},
          search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
     with_fields_to_use(cm,current_user) do |field_defs, extra_field_defs|
 
@@ -94,6 +94,14 @@ class QuickSearchController < ApplicationController
       return nil
     end
 
+    def get_worst_business_state business_validations
+      r = nil
+      business_validations.each do |bvr|
+        r = BusinessValidationResult.worst_state r, bvr.state
+      end
+      business_validations.find{|x| x[:state] == r}
+    end
+
     def parse_query_results results, r, core_module, user, uids, extra_uids
       results.each do |obj|
         obj_hash = {
@@ -105,6 +113,26 @@ class QuickSearchController < ApplicationController
         extra_uids.each {|extra_uid| extra_obj_hash[extra_uid] = ModelField.find_by_uid(extra_uid).process_export(obj,user)}
         r[:vals] << obj_hash
         r[:extra_vals][obj.id] = extra_obj_hash
+
+        if obj.respond_to? :attachments
+          r[:attachments][obj.id] = obj.attachments.select{|a| a.can_view?(user) }.map {|a| 
+            att_returned = Attachment.attachment_json a
+            att_returned[:download_link] = download_attachment_path a
+            att_returned[:content_type] = a.attached_content_type
+            att_returned
+          }
+        end
+
+        if obj.respond_to? :business_validation_results
+          viewable_rules = obj.business_validation_results.select{ |r| r.can_view?(user)}
+          if viewable_rules.length > 0
+            worst_viewable_rule = get_worst_business_state viewable_rules
+            validation = BusinessValidationResult.business_validation_json worst_viewable_rule
+            method_name = "validation_results_#{obj.class.name.underscore}_path"
+            validation[:validation_link] = self.send(method_name, obj) if self.respond_to?(method_name)
+            r[:business_validation_results][obj.id] = validation
+          end
+        end
       end
       r
     end

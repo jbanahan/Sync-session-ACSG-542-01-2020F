@@ -22,6 +22,8 @@ describe 'OCQuickSearch', ->
       val2 = {c: 'd'}
       extraField = {h: 'i'}
       extraVal = {'1': {f: 'g'}}
+      att = {a: 's'}
+      business_validation = {b: 'f'}
       resp = {
         qs_result: {
           module_type:'Entry'
@@ -29,12 +31,14 @@ describe 'OCQuickSearch', ->
           vals: [val1,val2]
           extra_fields: extraField
           extra_vals: extraVal
+          attachments: att
+          business_validation_results: business_validation
           search_term:'zz'
         }
       }
 
       OCQuickSearch.writeModuleResponse(resp)
 
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val1, extraField, extraVal,'zz')
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val2, extraField, extraVal, 'zz')
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val1, extraField, extraVal, att, business_validation, 'zz')
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val2, extraField, extraVal, att, business_validation, 'zz')
       expect(divWrap.html).toHaveBeenCalledWith('BA')

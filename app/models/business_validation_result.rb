@@ -38,6 +38,15 @@ class BusinessValidationResult < ActiveRecord::Base
     end
   end
 
+  def self.business_validation_json bus
+    json = {
+      id: bus.id,
+      state: bus.state,
+      type: bus.validatable_type
+    }
+    json
+  end
+
   def run_validation
     run_validation_internal[:changed]
   end
