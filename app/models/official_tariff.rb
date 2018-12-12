@@ -143,6 +143,7 @@ class OfficialTariff < ActiveRecord::Base
     end
     nil
   end
+
   #return tariff for hts_code & country_id
   def self.find_cached_by_hts_code_and_country_id hts_code, country_id
     # t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
@@ -186,47 +187,70 @@ class OfficialTariff < ActiveRecord::Base
   def self.search_secure user, base
     base.where(search_where(user))
   end
+
   def can_view? u
     u.view_official_tariffs?
   end
+
   def self.search_where user
     user.view_official_tariffs? ? "1=1" : "1=0"
   end
+
+  # Returns the first (reading left to right) instance of a percentage found within a text rate value.  For example,
+  # "This HTS rate contains two percentage values: 10.5% and 25%." would return 10.5 (as a BigDecimal).  If the value is not "Free",
+  # and the string doesn't contain a number followed by a percent sign, nil is returned.  If the express_as_decimal flag is
+  # provided as true (default is false), that 10.5 in our previous example would be returned as .105 (i.e. the
+  # numeric value divided by 100).
+  # 
+  def self.numeric_rate_value text_rate_value, express_as_decimal:false
+    numeric_component = text_rate_value.to_s.match(/(?<percent>\d*[.]?\d*)%/).try(:[], :percent)
+    # See if the rate is actually free
+    if numeric_component.nil? && text_rate_value.to_s.strip.match(/^Free$/i)
+      return BigDecimal("0")
+    end
+
+    bd = BigDecimal(numeric_component) rescue nil
+    if bd && express_as_decimal
+      bd = bd / BigDecimal(100)
+    end
+    bd
+  end
+
   private
-  def update_cache
-    CACHE.set "OfficialTariff:ct:#{self.hts_code.strip}:#{self.country_id}", self
-  end
+    def update_cache
+      CACHE.set "OfficialTariff:ct:#{self.hts_code.strip}:#{self.country_id}", self
+    end
 
-  def six_digit_hts
-    self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
-  end
+    def six_digit_hts
+      self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
+    end
 
-  def set_common_rate
-    if self.country_id
-      country = Country.find_cached_by_id self.country_id
-      if ['CA','CN','PA'].include? country.iso_code
-        self.common_rate = self.most_favored_nation_rate
-      elsif country.european_union?
-        self.common_rate = self.erga_omnes_rate
-      else
-        self.common_rate = self.general_rate
-      end
-      if !self.common_rate.blank?
-        if self.common_rate.gsub(/\%/,'').strip.match(/^\d+\.?\d*$/)
-          self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
-        elsif self.common_rate.match(/^Free$/)
-          self.common_rate_decimal = 0
+    def set_common_rate
+      if self.country_id
+        country = Country.find_cached_by_id self.country_id
+        if ['CA','CN','PA'].include? country.iso_code
+          self.common_rate = self.most_favored_nation_rate
+        elsif country.european_union?
+          self.common_rate = self.erga_omnes_rate
+        else
+          self.common_rate = self.general_rate
+        end
+        if !self.common_rate.blank?
+          if self.common_rate.gsub(/\%/,'').strip.match(/^\d+\.?\d*$/)
+            self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
+          elsif self.common_rate.match(/^Free$/)
+            self.common_rate_decimal = 0
+          end
         end
       end
     end
-  end
 
-  def set_special_rate_key
-    if !self.special_rates.blank?
-      self.special_rate_key = Digest::MD5.hexdigest(self.special_rates)
-    else
-      self.special_rate_key = nil
+    def set_special_rate_key
+      if !self.special_rates.blank?
+        self.special_rate_key = Digest::MD5.hexdigest(self.special_rates)
+      else
+        self.special_rate_key = nil
+      end
     end
-  end
 
 end

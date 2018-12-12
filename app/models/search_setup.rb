@@ -225,7 +225,11 @@ class SearchSetup < ActiveRecord::Base
   end
 
   def max_results user
-    user.try(:sys_admin) ? 100000 : 25000
+    self.class.max_results(user)
+  end
+
+  def self.max_results user
+    user.try(:sys_admin?) ? 100000 : 25000
   end
 
   private 

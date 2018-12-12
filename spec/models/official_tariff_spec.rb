@@ -183,4 +183,21 @@ describe OfficialTariff do
       expect(OfficialTariff.valid_hts? country.id, "1234567890").to be_truthy
     end
   end
+
+  describe "numeric_rate_value" do
+    subject { described_class }
+
+    it "extracts numeric percentage rate from text description" do
+      expect(subject.numeric_rate_value("This HTS rate contains two percentage values: 10.5% and 25%")).to eq BigDecimal("10.5")
+      expect(subject.numeric_rate_value("This HTS rate contains two percentage values: 10.5% and 25%", express_as_decimal:true)).to eq BigDecimal(".105")
+      expect(subject.numeric_rate_value("contains no decimals")).to be_nil
+      expect(subject.numeric_rate_value("contains no decimals", express_as_decimal:true)).to be_nil
+      expect(subject.numeric_rate_value(nil)).to be_nil
+    end
+
+    it "returns Free rates as 0" do
+      expect(subject.numeric_rate_value "free").to eq BigDecimal('0')
+    end
+  end
+
 end

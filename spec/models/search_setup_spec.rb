@@ -190,4 +190,28 @@ describe SearchSetup do
       @s.last_accessed.to_i == now.to_i
     end
   end
+
+  describe "max_results" do
+    let (:user) { User.new }
+
+    it "returns 25K results by default" do
+      expect(subject.max_results user).to eq 25_000
+    end
+
+    it "returns 100K results for sys admins" do
+      expect(user).to receive(:sys_admin?).and_return true
+      expect(subject.max_results user).to eq 100_000
+    end
+
+    context "with class level method" do
+      it "returns 25K results by default" do
+        expect(subject.max_results user).to eq 25_000
+      end
+
+      it "returns 100K results for sys admins" do
+        expect(user).to receive(:sys_admin?).and_return true
+        expect(subject.max_results user).to eq 100_000
+      end
+    end
+  end
 end

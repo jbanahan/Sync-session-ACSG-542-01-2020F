@@ -55,11 +55,12 @@ describe ReportResultsController do
         allow(CustomReportEntryInvoiceBreakdown).to receive(:can_view?).with(@base_user).and_return(true)
         allow(CustomReportBillingAllocationByValue).to receive(:can_view?).with(@base_user).and_return(true)
         allow(CustomReportBillingStatementByPo).to receive(:can_view?).with(@base_user).and_return(true)
+        allow(CustomReportEntryTariffBreakdown).to receive(:can_view?).with(@base_user).and_return(true)
 
         get :index
         expect(response).to be_success
         custom_reports = assigns(:customizable_reports)
-        expect(custom_reports.size).to eq(3)
+        expect(custom_reports.size).to eq(4)
       end
     end
 

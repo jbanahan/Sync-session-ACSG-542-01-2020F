@@ -22,7 +22,7 @@ class ReportResultsController < ApplicationController
     [
       CustomReportEntryInvoiceBreakdown, CustomReportTieredEntryInvoiceBreakdown, CustomReportBillingAllocationByValue, 
       CustomReportBillingStatementByPo, CustomReportEntryBilling, CustomReportContainerListing, CustomReportEntryBillingBreakdownByPo, 
-      CustomReportAnnSapChanges, CustomReportIsfStatus
+      CustomReportAnnSapChanges, CustomReportIsfStatus, CustomReportEntryTariffBreakdown
     ].each do |rpt|
       @customizable_reports << rpt if rpt.can_view?(current_user)
     end
