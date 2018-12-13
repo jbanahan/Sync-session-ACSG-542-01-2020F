@@ -35,7 +35,7 @@ root.OCQuickSearch =
         odp:'fa-file-powerpoint-o',pdf:'fa-file-pdf-o'}
 
       icon = 'fa-file-text'
-      if a.content_type.includes('image')
+      if RegExp("image").test(a.content_type)
         icon = 'fa-picture-o'
 
       if a.name.split('.').pop().toLowerCase() of iconsAvailable == true
