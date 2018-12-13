@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
     write_entry_header(savings_hash, total_sheet, workbook)
     write_remaining_entry_rows(savings_hash, total_sheet, workbook) if savings_hash[:master_bill_list].length > 0
     write_totals_row(savings_hash, total_sheet, workbook)
- end
+  end
 
   def write_entry_header(hsh, sheet, workbook)
     mbill_data = hsh[:master_bill_list].shift
@@ -137,7 +137,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   def write_totals_row(hsh, sheet, workbook)
     ascena_total_row = workbook.create_style(:ascena_total_row, {fg_color: "000000", bg_color: "c6d9f0", b: true, format_code: "#,##0.00"}, prevent_override: false, return_existing: true)
     workbook.add_body_row sheet, ["", "", "", "#{hsh[:entry_number]} Total", "", "", hsh[:totals][:sum_payable], hsh[:totals][:sum_mpf], hsh[:totals][:original_per_bl], hsh[:totals][:savings]],
-                         styles: [ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row]
+                          styles: [ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row, ascena_total_row]
   end
 
   def generate_initial_hash(entry)
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
 
   def gather_invoice_data(entry, savings_hash, raw_data_array)
     entry_date = entry.release_date
-    max_original_per_bl = if entry_date <= Date.parse("01-10-2018")
+    max_original_per_bl = if entry_date.present? && entry_date <= Date.parse("01-10-2018")
                             BigDecimal.new("497.99")
                           else
                             BigDecimal.new("508.70")
@@ -225,7 +225,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
 
   def minimum_mpf_calculation(totals, entry)
     entry_date = entry.first_it_date || entry.release_date
-    sum_mpf = if entry_date <= Date.parse("01-10-2018")
+    sum_mpf = if entry_date.present? && entry_date <= Date.parse("01-10-2018")
                 BigDecimal.new("25.67")
               else
                 BigDecimal.new("26.22")
@@ -244,9 +244,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   end
 
   def calculate_entry_totals(savings_hash, entry)
-    savings_hash[:totals][:sum_payable] = savings_hash[:master_bill_list].values.inject(0) { |sum, mb| sum + mb[:sum_payable]}
-    savings_hash[:totals][:sum_mpf] = savings_hash[:master_bill_list].values.inject(0) { |sum, mb| sum + mb[:sum_mpf]}
-    savings_hash[:totals][:original_per_bl] = savings_hash[:master_bill_list].values.inject(0) { |sum, mb| sum + mb[:original_per_bl]}
+    savings_hash[:totals][:sum_payable] = savings_hash[:master_bill_list].values.inject(0) {|sum, mb| sum + mb[:sum_payable]}
+    savings_hash[:totals][:sum_mpf] = savings_hash[:master_bill_list].values.inject(0) {|sum, mb| sum + mb[:sum_mpf]}
+    savings_hash[:totals][:original_per_bl] = savings_hash[:master_bill_list].values.inject(0) {|sum, mb| sum + mb[:original_per_bl]}
     minimum_mpf_calculation(savings_hash[:totals], entry)
     savings_hash[:totals][:savings] = savings_hash[:totals][:original_per_bl] - savings_hash[:totals][:sum_payable]
   end
@@ -262,15 +262,14 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
     ascena_header = wb.create_style(:ascena_header, {fg_color: 'ffffff', bg_color: '2121c9'}, return_existing: true)
     wb.add_body_row totals, ["", "", "", "", "", "", "Values", "", "Original Per B/L", "MPF"], styles: ascena_header
     wb.add_body_row totals, ["Trans", "Entry Port Description", "Job Number", "Entry No.", "Mbill Count",
-                                      "Carrier B/L Number", "Sum of Payable MPF","Sum of MPF", "Sum of MPF", "Savings"], styles: ascena_header
+                             "Carrier B/L Number", "Sum of Payable MPF", "Sum of MPF", "Sum of MPF", "Savings"], styles: ascena_header
     wb.add_body_row data, ["Brn", "Importer Code", "Importer", "Importer No.", "Job Number", "Entry No.",
-                                    "Entry Type", "C/E Name", "C/O Name", "Export Date", "Lading Port Desc", "Arrival Port Desc",
-                                    "Entry Port Desc", "Import Date", "Arrival Date", "Trans", "Vessel", "Voyage Flight",
-                                    "Containers Count", "Intensive Date", "Customs Hold Date", "Agriculture Hold Date",
-                                    "FDA Hold Date", "FDA Release Date", "First Release Date", "Release Date",
-                                    "P.O. Number", "Carrier B/L Number", "Mbill Count", "Master Bills", "Invoice Number",
-                                    "Manufacturer Code", "7501 Line Number", "Line Entered Value", "Duty", "Payable MPF",
-                                    "MPF", "Invoice Quantity", "Invoice UQ"]
+                           "Entry Type", "C/E Name", "C/O Name", "Export Date", "Lading Port Desc", "Arrival Port Desc",
+                           "Entry Port Desc", "Import Date", "Arrival Date", "Trans", "Vessel", "Voyage Flight",
+                           "Containers Count", "Intensive Date", "Customs Hold Date", "Agriculture Hold Date",
+                           "FDA Hold Date", "FDA Release Date", "First Release Date", "Release Date",
+                           "P.O. Number", "Carrier B/L Number", "Mbill Count", "Master Bills", "Invoice Number",
+                           "Manufacturer Code", "7501 Line Number", "Line Entered Value", "Duty", "Payable MPF",
+                           "MPF", "Invoice Quantity", "Invoice UQ"]
   end
-
 end; end; end; end
