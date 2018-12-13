@@ -114,12 +114,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         end
 
         #skip any line that is missing a PO Number or SKU-Number
-        next if order_number(row).blank? || sku_number(row).blank?
+        next if order_number(row).blank? || cq_part_number(row).blank?
 
-        ord_num = order_number(row)
-        row[1] = ord_num
-
-        if current_order_lines.length > 0 && order_number(current_order_lines[0]) != ord_num
+        if current_order_lines.length > 0 && order_number(current_order_lines[0]) != order_number(row)
           if current_order_missing_product
             orders_missing_products.push *current_order_lines
           end
@@ -133,7 +130,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         # Find the product for this line.
         product = find_product row
         if product
-          order_number = text_value(row[1]).strip
+          order_number = order_number(row)
           order = orders[order_number]
           if order.nil?
             order = build_order_header row
@@ -160,7 +157,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     def create_spreadsheets orders_missing_products, header_row
       missing_products = Set.new
       orders_missing_products.each do |row|
-        missing_products << sku_number(row) if missing_product?(row)
+        missing_products << [sku_number(row), cq_part_number(row)] if missing_product?(row)
       end
 
       [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row, false), create_orders_missing_products_workbook(orders_missing_products, header_row, true)]
@@ -173,8 +170,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Comments"]
       builder.freeze_horizontal_rows sheet, 1
 
-      missing_products.to_a.each do |number|
-        builder.add_body_row sheet, [number, nil, nil, nil]
+      missing_products.to_a.each do |numbers|
+        builder.add_body_row sheet, [numbers[0], numbers[1], nil, nil]
       end
 
       builder
@@ -213,13 +210,17 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def find_product row
-      sku = sku_number(row)
-      return nil if sku.blank?
+      cq_part = cq_part_number(row)
+      return nil if cq_part.blank?
 
-      # SKU can potentially match to multiple products (sku is unique to the part, but the part number includes a factory designator).  We need to 
-      # find the unique part based on the part number from the CQ file (you'd think we could look up the part based on the part number, but the origin report
-      # is missing hyphens and other punctuation from the part number, so a lookup on that isn't really feasible).
-      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: sku}).all
+      # CQ Part # can potentially match to multiple products (CQ Part # is unique to the part itself, but the full value we call part number 
+      # includes a prefix of the factory designator - and that full sku is what's on the Prep 7501).  We need to 
+      # find the unique part based on the CQ part number from the file (you'd think we could look up the part based on the 
+      # FULLCQSKU , but the origin report is missing hyphens and other punctuation from the part number, 
+      # so a lookup on that isn't really feasible).  Also, because of the missing punctuation, we can't use the 
+      # FullCQSKU from the file to create the Product, since it's possible that this value isn't going to match what's on the
+      # Prep7501.
+      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_short_description].id, string_value: cq_part}).all
 
       return nil if products.length == 0
 
@@ -240,7 +241,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def build_order_header row
-      {ord_ord_num: "#{importer.system_code}-#{text_value(row[1]).strip}", ord_cust_ord_no: text_value(row[1]), ord_imp_id: importer.id, ord_ord_date: date_value(row[14]), order_lines_attributes: []}
+      {ord_ord_num: "#{importer.system_code}-#{order_number(row)}", ord_cust_ord_no: order_number(row), ord_imp_id: importer.id, ord_ord_date: date_value(row[14]), order_lines_attributes: []}
     end
 
     def build_order_line row, product
@@ -252,7 +253,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         unit_price = (total_cost / units).round(2, BigDecimal::ROUND_HALF_UP)
       end
 
-      {product: {id: product.id}, ordln_sku: text_value(row[6]), ordln_hts: text_value(row[9]), ordln_ordered_qty: units, ordln_ppu: unit_price, ordln_country_of_origin: text_value(row[35])}
+      {product: {id: product.id}, ordln_sku: sku_number(row), ordln_hts: text_value(row[9]), ordln_ordered_qty: units, ordln_ppu: unit_price, ordln_country_of_origin: text_value(row[35])}
     end
 
     def importer
@@ -274,6 +275,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       text_value(row[6]).strip
     end
 
+    def cq_part_number row
+      # This is part number, but in order for CQ to make a unique number, they prepend a factory
+      # code to the front of this value.  Which we don't necessarily get.
+      text_value(row[7]).strip
+    end
+
     def missing_products_builder
       @missing_products_builder ||= XlsxBuilder.new
     end
@@ -287,7 +294,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def cdefs
-      @cdefs ||= self.class.prep_custom_definitions [:prod_sku_number, :prod_part_number]
+      @cdefs ||= self.class.prep_custom_definitions [:prod_short_description, :prod_part_number]
     end
 
 end; end; end; end
