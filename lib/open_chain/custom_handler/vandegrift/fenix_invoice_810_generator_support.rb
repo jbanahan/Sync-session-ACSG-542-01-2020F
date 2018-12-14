@@ -1,3 +1,4 @@
+require 'open_chain/ftp_file_support'
 require 'open_chain/fixed_width_layout_based_generator'
 
 module OpenChain; module CustomHandler; module Vandegrift; module FenixInvoice810GeneratorSupport
