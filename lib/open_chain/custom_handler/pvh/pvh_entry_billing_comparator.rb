@@ -8,11 +8,13 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
   extend OpenChain::EntityCompare::ComparatorHelper
 
   def self.accept? snapshot
+    accept = super
+    return false unless accept
+
     # This is here SOLELY for the production acceptance testing phase...it can be removed once we go 100% live
     return false unless snapshot&.recordable&.house_bills_of_lading.to_s.upcase.include?("BILLINGTEST")
 
-    accept = super
-    accept && ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(snapshot&.recordable&.customer_number) && 
+    ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(snapshot&.recordable&.customer_number) && 
           # The final file logged date check once we're 100% live can be determined later
           snapshot&.recordable&.file_logged_date && snapshot&.recordable&.file_logged_date > Date.new(2018, 12, 1)
   end
