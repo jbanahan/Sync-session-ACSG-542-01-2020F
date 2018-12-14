@@ -7,6 +7,7 @@
 #  cbsa_port          :string(255)
 #  cbsa_sublocation   :string(255)
 #  created_at         :datetime         not null
+#  iata_code          :string(255)
 #  id                 :integer          not null, primary key
 #  name               :string(255)
 #  schedule_d_code    :string(255)
@@ -18,6 +19,7 @@
 #
 #  index_ports_on_cbsa_port         (cbsa_port)
 #  index_ports_on_cbsa_sublocation  (cbsa_sublocation)
+#  index_ports_on_iata_code         (iata_code)
 #  index_ports_on_name              (name)
 #  index_ports_on_schedule_d_code   (schedule_d_code)
 #  index_ports_on_schedule_k_code   (schedule_k_code)
@@ -31,6 +33,7 @@ class Port < ActiveRecord::Base
   validates :cbsa_port, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
   validates :cbsa_sublocation, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
   validates :unlocode, :format => {:with=>/^[A-Z0-9]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
+  validates :iata_code, :format => {:with=>/^[A-Z0-9]{3}$/, :message=>"IATA Code must be 3 upper case letters", :if=>:iata_code?}
 
 
   # Find the country who's port of entry this represents (or nil)
@@ -113,14 +116,17 @@ class Port < ActiveRecord::Base
   def self.load_unlocode data, overwrite=false
     Port.transaction do
       CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
-        next unless row[2].present? && row[6] =~ /(1|4)/
+        next unless row[2].present? && (row[6] =~ /(1|4)/ || row[9].present?)
+
         code = row[1] + row[2]
         name = row[3].encode("UTF-8") rescue row[4].encode("UTF-8")
+        iata_code = row[9].presence || nil
+
         p = Port.where(unlocode: code).first
         if p 
-          p.update_attributes! name: name if overwrite
+          p.update_attributes!(name: name, iata_code: iata_code) if overwrite
         else
-          Port.create! name: name, unlocode: code
+          Port.create!(name: name, unlocode: code, iata_code: iata_code)
         end
       end
     end

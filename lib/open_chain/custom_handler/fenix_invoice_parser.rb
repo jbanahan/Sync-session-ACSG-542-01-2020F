@@ -81,6 +81,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
         ent.broker_invoice_total = total_broker_invoice_value
         OpenChain::FiscalMonthAssigner.assign ent
         ent.save!
+        ent.create_snapshot User.integration, nil, log.s3_path
       else
         invoice.save!
       end
@@ -100,7 +101,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
 
     def find_and_process_invoice row, log
       invoice_number = FenixInvoiceParser.get_invoice_number(row)
-      log.add_identifier InboundFileIdentifier::TYPE_INVOICE_NUMBER, invoice_number
+      log.add_identifier :invoice_number, invoice_number
 
       broker_reference = safe_strip row[9]
       invoice_number = FenixInvoiceParser.get_invoice_number(row)
@@ -116,9 +117,9 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       end
 
       if invoice
-        log.set_identifier_module_info InboundFileIdentifier::TYPE_INVOICE_NUMBER, BrokerInvoice.to_s, invoice.id, value:invoice_number
+        log.set_identifier_module_info :invoice_number, BrokerInvoice, invoice.id, value:invoice_number
 
-        Lock.with_lock_retry(invoice) do
+        Lock.db_lock(invoice) do
           yield invoice
         end
       end
@@ -156,7 +157,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       company =  DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
       
       r = IntacctReceivable.where(company: company, invoice_number: invoice.invoice_number).first_or_create!
-      Lock.with_lock_retry(r) do
+      Lock.db_lock(r) do
         # If the data has already been uploaded to Intacct, then there's nothing we can do to update it (at least for now)
         return unless r.intacct_upload_date.nil?
 

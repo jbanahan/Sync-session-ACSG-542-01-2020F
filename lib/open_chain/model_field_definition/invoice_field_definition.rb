@@ -45,6 +45,7 @@ module OpenChain; module ModelFieldDefinition; module InvoiceFieldDefinition
     add_fields CoreModule::INVOICE, make_vendor_arrays(2000,"inv","invoices")
     add_fields CoreModule::INVOICE, make_factory_arrays(3000,'inv','invoices')
     add_fields CoreModule::INVOICE, make_country_arrays(4000,"inv_origin","invoices", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)
+    add_fields CoreModule::INVOICE, make_consignee_arrays(5000, "inv", "invoices")
     
   end
 end; end; end

@@ -23,11 +23,19 @@ module OpenChain; class Git
       tag = $1
     elsif allow_branch_name && stdout =~ /On branch (.*)/i
       tag = $1
+    elsif !production? && stdout =~ /rebase in progress/i
+      # It's almost imperative to run unit tests when rebasing, so allow it only in test/dev
+      tag = "rebase"
     end
 
     raise "Failed to discover current git tag name." if tag.blank?
 
     tag
   end
+
+  def self.production?
+    Rails.env.production?
+  end
+  private_class_method :production?
 
 end; end;

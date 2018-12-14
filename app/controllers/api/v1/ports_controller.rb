@@ -5,7 +5,7 @@ module Api; module V1; class PortsController < Api::V1::ApiController
     if !params[:n].blank?
       p = Port.order(:name)
       like_val = "%#{params[:n]}%"
-      p = p.where('name like ? OR schedule_d_code LIKE ? OR schedule_k_code LIKE ? OR unlocode LIKE ? OR cbsa_port LIKE ?', like_val, like_val, like_val, like_val, like_val)
+      p = p.where('name like ? OR schedule_d_code LIKE ? OR schedule_k_code LIKE ? OR unlocode LIKE ? OR cbsa_port LIKE ? OR iata_code LIKE ?', like_val, like_val, like_val, like_val, like_val, like_val)
       p = p.where(active_origin: true) if params[:type] == 'origin'
       p = p.where(active_destination: true) if params[:type] == 'destination'
       p = p.paginate(per_page:10,page:params[:page])
@@ -29,6 +29,10 @@ module Api; module V1; class PortsController < Api::V1::ApiController
 
       if code.blank?
         code = port.cbsa_port
+      end
+
+      if code.blank?
+        code = port.iata_code
       end
 
       (code.blank? ? "" : "(#{code}) ") + port.name

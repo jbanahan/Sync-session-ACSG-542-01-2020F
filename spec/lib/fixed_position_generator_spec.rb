@@ -255,4 +255,52 @@ describe OpenChain::FixedPositionGenerator do
       expect(f.date(d)).to eq '20141231'
     end
   end
+
+  describe "datetime" do
+    it "should handle nil" do
+      expect(subject.datetime(nil)).to eq ''.ljust(8)
+    end
+    
+    it "should use default date format" do
+      expect(subject.datetime(Date.new(2014,1,31))).to eq '20140131'
+    end
+    
+    it "should use constructor date format" do
+      expect(described_class.new(date_format:'%Y').datetime(Date.new(2014,1,31))).to eq '2014'
+    end
+
+    it "should use override date format" do
+      expect(subject.datetime(Date.new(2014,1,31), date_format: '%Y')).to eq '2014'
+    end
+
+    it "converts datetimes to specified timezone" do
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      expect(subject.datetime(d, timezone: ActiveSupport::TimeZone["Hawaii"])).to eq '20141231'
+    end
+
+    it "converts datetimes to default Time.zone if no parameter or class opt specified" do
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      Time.use_zone("Hawaii") do
+        expect(subject.datetime(d)).to eq '20141231'
+      end
+    end
+
+    it "converts datetimes to timezone specified in class opts" do
+      f = described_class.new output_timezone: "Hawaii"
+      d = ActiveSupport::TimeZone["UTC"].parse("2015-01-01")
+      expect(f.datetime(d)).to eq '20141231'
+    end
+
+    it "pads date if max_length given" do
+      expect(subject.datetime(Date.new(2014,1,31), max_length: 10)).to eq '  20140131'
+    end
+
+    it "pads with pad_char date if given" do
+      expect(subject.datetime(Date.new(2014,1,31), max_length: 10, pad_char: "0")).to eq '0020140131'
+    end
+
+    it "uses alternate justification if given" do
+      expect(subject.datetime(Date.new(2014,1,31), max_length: 10, justification: :left)).to eq '20140131  '
+    end
+  end
 end

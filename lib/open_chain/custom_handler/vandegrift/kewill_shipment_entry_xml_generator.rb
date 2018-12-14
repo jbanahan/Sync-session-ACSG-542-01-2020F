@@ -296,6 +296,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       inv_line.pieces = shipment_line.quantity
       inv_line.container_number = shipment_line.container.try(:container_number)
       inv_line.cartons = shipment_line.carton_qty
+      inv_line.mid = shipment_line.mid
 
       product = shipment_line.product
       if product
@@ -310,6 +311,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
         inv_line.unit_price = order_line.price_per_unit
         inv_line.unit_price_uom = "PCS"
         inv_line.po_number = order_line.order.try(:customer_order_number)
+        inv_line.hts = order_line.hts if inv_line.hts.blank?
       end
 
       if inv_line.country_of_origin.blank?

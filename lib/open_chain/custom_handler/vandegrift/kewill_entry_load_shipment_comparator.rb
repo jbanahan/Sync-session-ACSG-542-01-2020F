@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   end
 
   def compare shipment, old_bucket, old_path, old_version, new_bucket, new_path, new_version
-    # Don't send any shipments until they're marked as being prepared
+    # Don't send any shipments until they're marked as being prepared (spelling error is, unfortunately, required)
     cd = CustomDefinition.where(cdef_uid: "shp_entry_pepared").first
     raise "'Entry Prepared Date' custom field does not exist." unless cd
     return if cd.nil?

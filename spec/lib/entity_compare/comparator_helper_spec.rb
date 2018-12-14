@@ -94,6 +94,16 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(result[2]).to eq({"core_module" => "Child", "model_fields"=> {"test" => "Child-C"}})
       expect(result[3]).to eq({"core_module" => "Child", "model_fields"=> {"test" => "Child-D"}})
     end
+
+    it "yields results if block given" do
+      results = []
+      subject.json_child_entities(json, "Pet") do |result|
+        results << result
+      end
+
+      expect(results.length).to eq 1
+      expect(results[0]).to eq( {"core_module" => "Pet", "model_fields"=> {"test" => "Pet-C"}} )
+    end
   end
 
   describe "mf" do
@@ -370,6 +380,40 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject).to receive(:any_value_changed?).with(old_hash, new_hash, ["value"]).and_return true
 
       expect(subject.any_root_value_changed? "ob", "ok", "ov", "nb", "nk", "nv", ["value"]).to eq true
+    end
+  end
+
+  describe "find_entity_object_by_snapshot_values" do
+    let(:snapshot) {
+      {
+      "entity" => {
+        "core_module" => "Shipment",
+        "model_fields" => {
+          "shp_ref" => "7ABC2FGA",
+          "shp_booking_number" => "BOOKINGNUMBER",
+          "shp_cargo_ready_date" => "2018-04-01 12:00",
+          "shp_booking_received_date" => "2018-04-02 12:00",
+          "shp_booking_approved_date" => "2018-04-03 12:00",
+          "shp_booking_confirmed_date" => "2018-04-04 12:00",
+          "shp_booking_cutoff_date" => "2018-04-05 12:00"
+          }
+        }
+      }
+    }
+
+    it "uses data present in snapshot to construct query to find object" do
+      s = Shipment.create! reference: "7ABC2FGA", booking_number: "BOOKINGNUMBER"
+
+      expect(subject.find_entity_object_by_snapshot_values(snapshot, reference: :shp_ref, booking_number: :shp_booking_number)).to eq s
+    end
+
+    it "returns nil if no fields are passed" do
+      expect(subject.find_entity_object_by_snapshot_values(snapshot)).to be_nil
+    end
+
+    it "returns nil if no object is found" do
+      Shipment.create! reference: "7ABC2FGA", booking_number: "ANOTHERBOOKINGNUMBER"      
+      expect(subject.find_entity_object_by_snapshot_values(snapshot, reference: :shp_ref, booking_number: :shp_booking_number)).to be_nil
     end
   end
   

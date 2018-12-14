@@ -336,9 +336,9 @@ class Shipment < ActiveRecord::Base
   def can_cancel? user
     OpenChain::Registries::ShipmentRegistry.can_cancel?(self, user)
   end
-  def cancel_shipment! user, async_snapshot = false
+  def cancel_shipment! user, async_snapshot: false, canceled_date: Time.zone.now, snapshot_context: nil
     Shipment.transaction do
-      self.canceled_date = 0.seconds.ago
+      self.canceled_date = canceled_date
       self.canceled_by = user
       OpenChain::Registries::ShipmentRegistry.cancel_shipment_hook(self, user)
       self.save!
@@ -355,10 +355,11 @@ class Shipment < ActiveRecord::Base
       end
     end
     OpenChain::EventPublisher.publish :shipment_cancel, self
-    self.create_snapshot_with_async_option async_snapshot, user
+    self.create_snapshot_with_async_option async_snapshot, user, nil, snapshot_context
   end
+
   def async_cancel_shipment! user
-    self.cancel_shipment! user, true
+    self.cancel_shipment! user, async_snapshot: true
   end
   def can_uncancel? user
     OpenChain::Registries::ShipmentRegistry.can_uncancel?(self, user)

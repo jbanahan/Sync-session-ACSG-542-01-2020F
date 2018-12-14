@@ -166,7 +166,7 @@ module CoreObjectSupport
   # Splits a string into an array based on newline characters it contains within it.  Strips leading whitespace from
   # most internal values, but not trailing whitespace, nor is leading whitespace removed from the first value found.
   def split_newline_values string_containing_newlines
-    string_containing_newlines.blank? ? [] : string_containing_newlines.split(/\r?\n */)
+    self.class.split_newline_values string_containing_newlines
   end
 
   module ClassMethods
@@ -217,6 +217,10 @@ module CoreObjectSupport
     def relative_url object_id
       raise "Cannot generate view_url because object id not set." unless object_id
       "/#{self.table_name}/#{object_id}"
+    end
+
+    def split_newline_values string_containing_newlines
+      string_containing_newlines.blank? ? [] : string_containing_newlines.split(/\r?\n */)
     end
   end
 end

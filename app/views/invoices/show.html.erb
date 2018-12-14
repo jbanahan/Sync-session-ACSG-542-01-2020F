@@ -15,7 +15,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <%= show_model_fields(@invoice, [:inv_imp_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
+    <%= show_model_fields(@invoice, [:inv_imp_name, :inv_consignee_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
   </div>
   <div class="col-md-4">
     <%= show_model_fields(@invoice, [:inv_inv_tot_foreign, :inv_inv_tot_domestic, :inv_net_invoice_total, :inv_total_discounts, :inv_total_charges, :inv_currency, :inv_exchange_rate, :inv_manually_generated], {never_hide: true}) %>
@@ -57,14 +57,13 @@
                   <%= show_model_fields(line, [:invln_volume, :invln_volume_uom], {editor_only: true}) %>
                 </div>
               </div>
-              <%= show_model_fields(line, [:invln_unit_price, ], never_hide: true) %>
-              <div class="row bootstrap-hover">
-                <div class="col-md-4" style="font-weight: bold;">
-                  <%= model_field_labels([:invln_net_weight]) %>
-                </div>
-                <div class="col-md-8">
-                  <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
-                </div>
+            <%= show_model_fields(line, [:invln_unit_price, :invln_cartons], never_hide: true) %>
+            <div class="row bootstrap-hover">
+              <div class="col-md-4" style="font-weight: bold;">
+                <%= model_field_labels([:invln_net_weight]) %>
+              </div>
+              <div class="col-md-8">
+                <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
               </div>
             </div>
           </div>
@@ -112,3 +111,6 @@
     </div>
   <% end %>
 <% end %>
+<p>
+<%=render :partial => 'shared/integration_file_link', :locals => {:obj => @invoice, :user => current_user} %>
+</p>

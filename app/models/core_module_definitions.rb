@@ -672,6 +672,7 @@ module CoreModuleDefinitions
 
   INVOICE_LINE = CoreModule.new("InvoiceLine", "Invoice Line",
     unique_id_field_name: :invln_ln_number,
+    key_model_field_uids: [:invln_ln_number],
     show_field_prefix: true
   )
 

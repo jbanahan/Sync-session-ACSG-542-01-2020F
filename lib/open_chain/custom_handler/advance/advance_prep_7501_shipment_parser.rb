@@ -1,9 +1,11 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_parser_support'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501ShipmentParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::CustomHandler::GtNexus::GenericGtnAsnParserSupport
 
   def self.parse_file io, log, opts = {}
     self.new.parse(REXML::Document.new(io), User.integration, opts[:key])
@@ -40,9 +42,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.mode = asn.text "Mode"
         shipment.voyage = asn.text "Voyage"
         shipment.vessel = asn.text "Vessel"
-        shipment.country_origin = find_country(REXML::XPath.first asn, "OriginCity")
-        shipment.country_export = find_country(REXML::XPath.first asn, "PortOfLoading")
-        shipment.country_import = find_country(REXML::XPath.first asn, "BLDestination")
+        shipment.country_origin = find_port_country(REXML::XPath.first asn, "OriginCity")
+        shipment.country_export = find_port_country(REXML::XPath.first asn, "PortOfLoading")
+        shipment.country_import = find_port_country(REXML::XPath.first asn, "BLDestination")
 
         inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
 
@@ -51,8 +53,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.final_dest_port = find_port(REXML::XPath.first(asn, "BLDestination"), lookup_type_order: [:unlocode, :schedule_k_code, :schedule_d_code])
 
         shipment.est_departure_date = parse_date asn.text("EstDepartDate")
-        shipment.departure_date = parse_date(asn.text("ReferenceDates[ReferenceDateType = 'Departed']/ReferenceDate"))
         shipment.est_arrival_port_date = parse_date asn.text("EstDischargePortDate")
+        shipment.departure_date = parse_reference_date asn, "Departed", datatype: :date
       end
 
       REXML::XPath.match(xml, "/Prep7501Message/Prep7501/ASN/Container").each do |container_xml|
@@ -152,81 +154,6 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     end
 
     line
-  end
-
-  def find_port port_xml, lookup_type_order: [:schedule_d_code, :schedule_k_code, :unlocode]
-    # The port may have Locode, Schedule D or K codes..look for D, then K, then fall back to locode
-    port = nil
-    Array.wrap(lookup_type_order).each do |lookup_type|
-      case(lookup_type)
-      when :schedule_d_code
-        code = port_xml.text "CityCode[@Qualifier='D']"
-      when :schedule_k_code
-        code = port_xml.text "CityCode[@Qualifier='K']"
-      when :unlocode
-        code = port_xml.text "CityCode[@Qualifier='UN']"
-      end
-
-      if !code.blank?
-        port = Port.where(lookup_type => code).first
-        break if port
-      end
-    end
-
-    port
-  end
-
-  def find_country port_xml
-    iso_code = port_xml.text "CountryCode"
-    @port ||= Hash.new do |h, k|
-      h[k] = Country.where(iso_code: k).first
-    end
-
-
-    iso_code.blank? ? nil : @port[iso_code]
-  end
-
-  def parse_date date
-    d = parse_datetime(date)
-    d.nil? ? nil : d.to_date
-  end
-
-  def parse_datetime date
-    return nil if date.nil?
-
-    Time.zone.parse(date)
-  end
-
-  def parse_decimal v
-    return nil if v.nil?
-
-    BigDecimal(v)
-  end
-
-  def parse_weight xml
-    val = parse_decimal(xml.try(:text))
-    return nil unless val
-    
-    code = xml.attributes["ANSICode"]
-    # I'm assuming LB and KG are the only values that are going to get sent here.
-    if code == "KG"
-      return val
-    else
-      return BigDecimal("0.453592") * val
-    end
-  end
-
-  def parse_volume xml
-    val = parse_decimal(xml.try(:text))
-    return nil unless val
-
-    code = xml.attributes["ANSICode"]
-    # I'm assuming CR (cubic Meters) and Cubic Feet are the only values that are going to get sent here.
-    if code == "CR"
-      return val
-    else
-      return BigDecimal("0.0283168") * val
-    end
   end
 
   def find_or_create_shipment importer, xml

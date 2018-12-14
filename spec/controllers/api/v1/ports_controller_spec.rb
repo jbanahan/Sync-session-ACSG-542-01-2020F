@@ -70,5 +70,15 @@ describe Api::V1::PortsController do
       expect(j.size).to eq 1
       expect(j.first['name']).to eq "(#{p.cbsa_port}) XabX"
     end
+
+    it "searches on iata code" do
+      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "", iata_code: "IAT")
+
+      get :autocomplete, n: 'T'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      expect(j.size).to eq 1
+      expect(j.first['name']).to eq "(IAT) XabX"
+    end
   end
 end

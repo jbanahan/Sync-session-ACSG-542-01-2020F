@@ -89,4 +89,27 @@ describe OrderLine do
       expect(l.booked_qty).to eq 10
     end
   end
+
+  describe "can_be_deleted?" do
+    it "allows deletion if line is not booked or shipped" do
+      expect(subject).to receive(:booked?).and_return false
+      expect(subject).to receive(:shipping?).and_return false
+
+      expect(subject.can_be_deleted?).to eq true
+    end
+
+    it "does not allow deletion if line is booked" do
+      expect(subject).to receive(:booked?).and_return true
+      allow(subject).to receive(:shipping?).and_return false
+
+      expect(subject.can_be_deleted?).to eq false
+    end
+
+    it "does not allow deletion if line is shipped" do
+      allow(subject).to receive(:booked?).and_return false
+      expect(subject).to receive(:shipping?).and_return true
+
+      expect(subject.can_be_deleted?).to eq false
+    end    
+  end
 end

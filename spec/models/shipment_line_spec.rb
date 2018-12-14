@@ -40,4 +40,34 @@ describe ShipmentLine do
       expect(new_ps.shipment_line_id).to be_nil
     end
   end
+
+  describe "order_line" do
+    let (:order_line) { Factory(:order_line) }
+
+    let (:shipment_line) {
+      s = Factory(:shipment_line, product: order_line.product, linked_order_line_id: order_line.id)
+    }
+
+    it "finds and caches order line lookup" do
+      expect(shipment_line.order_line).to eq order_line
+
+      # The easiest way to show that the lookup is cached is by deleting order line and then calling the method again
+      # and seeing if it still returns order line
+      order_line.destroy
+      expect(shipment_line.order_line).to eq order_line
+    end
+
+    it "resets cache after update" do
+      line_number = order_line.line_number
+      expect(shipment_line.order_line).to eq order_line
+      # If we update the order line under the covers, the cached version shouldn't change
+      order_line.update_attributes! line_number: (line_number + 100)
+      expect(shipment_line.order_line.line_number).to eq line_number
+
+      # A save will invalidate the cache and the next call to order_line will reload it
+      shipment_line.save!
+      expect(shipment_line.order_line.line_number).to eq (line_number + 100)
+    end
+  end
 end
+ 

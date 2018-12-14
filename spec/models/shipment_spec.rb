@@ -99,27 +99,29 @@ describe Shipment do
   end
 
   describe "cancel_shipment!" do
+    let (:user) { Factory(:user) }
+    let (:shipment) { Factory(:shipment) }
+
     it "should set cancel fields" do
-      u = Factory(:user)
-      s = Factory(:shipment)
-      expect(s).to receive(:create_snapshot_with_async_option).with false, u
-      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel,s)
-      expect(OpenChain::Registries::ShipmentRegistry).to receive(:cancel_shipment_hook).with(s, u)
-      s.cancel_shipment! u
-      s.reload
-      expect(s.canceled_date).to_not be_nil
-      expect(s.canceled_by).to eq u
+      expect(shipment).to receive(:create_snapshot_with_async_option).with false, user, nil, nil
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel, shipment)
+      expect(OpenChain::Registries::ShipmentRegistry).to receive(:cancel_shipment_hook).with(shipment, user)
+      now = Time.zone.parse("2018-09-10 12:00")
+      Timecop.freeze(now) { shipment.cancel_shipment! user }
+      
+      shipment.reload
+      expect(shipment.canceled_date).to eq now
+      expect(shipment.canceled_by).to eq user
     end
+
     it "should set canceled_order_line_id for linked orders and remove shipment_line_id from piece_sets" do
-      u = Factory(:user)
-      s = Factory(:shipment)
-      expect(s).to receive(:create_snapshot_with_async_option).with false, u
-      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel,s)
-      expect(OpenChain::Registries::ShipmentRegistry).to receive(:cancel_shipment_hook).with(s, u)
+      expect(shipment).to receive(:create_snapshot_with_async_option)
+      expect(OpenChain::EventPublisher).to receive(:publish).with(:shipment_cancel, shipment)
+      expect(OpenChain::Registries::ShipmentRegistry).to receive(:cancel_shipment_hook).with(shipment, user)
       p = Factory(:product)
       ol = Factory(:order_line,product:p,quantity:100)
-      sl1 = s.shipment_lines.build(quantity:5)
-      sl2 = s.shipment_lines.build(quantity:10)
+      sl1 = shipment.shipment_lines.build(quantity:5)
+      sl2 = shipment.shipment_lines.build(quantity:10)
       [sl1,sl2].each do |sl|
         sl.product = p
         sl.linked_order_line_id = ol.id
@@ -127,11 +129,20 @@ describe Shipment do
       end
       #merge the two piece sets but don't delete so we don't have to check if they're linked
       #to other things
-      expect{s.cancel_shipment!(u)}.to change(PieceSet,:count).from(2).to(0)
+      expect{shipment.cancel_shipment!(user)}.to change(PieceSet,:count).from(2).to(0)
       [sl1,sl2].each do |sl|
         sl.reload
         expect(sl.canceled_order_line).to eq ol
       end
+    end
+
+    it "allows passing snapshot context and canceled date" do
+      expect(shipment).to receive(:create_snapshot_with_async_option).with true, user, nil, "context"
+      shipment.cancel_shipment! user, async_snapshot: true, canceled_date: Time.zone.parse("2018-09-10 12:00"), snapshot_context: "context"
+
+      shipment.reload
+      expect(shipment.canceled_date).to eq Time.zone.parse("2018-09-10 12:00")
+      expect(shipment.canceled_by).to eq user
     end
   end
 

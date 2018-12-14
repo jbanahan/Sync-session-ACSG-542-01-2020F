@@ -381,7 +381,7 @@ describe DataCrossReference do
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
-        expect(xrefs.size).to eq 7
+        expect(xrefs.size).to eq 8
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
@@ -389,6 +389,7 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['shp_ci_load_cust'])).to eq title: "Shipment CI Load Customers", description: "Enter the customer number to enable sending Shipment CI Load data to Kewill.", identifier: "shp_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['hm_pars'])).to eq title: "H&M PARS Numbers", description: "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", identifier: "hm_pars", key_label: "PARS Number", value_label: "PARS Used?", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true
         expect(strip_preproc(xrefs['entry_mids'])).to eq title: "Manufacturer ID", description: "Manufacturer IDs used to validate entries", identifier: "entry_mids", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: true, upload_instructions: 'Spreadsheet should contain a header row, with MID Code in column A', allow_blank_value: false
+        expect(strip_preproc(xrefs['inv_ci_load_cust'])).to eq title: "Invoice CI Load Customers", description: "Enter the customer number to enable sending Invoice CI Load data to Kewill.", identifier: "inv_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do

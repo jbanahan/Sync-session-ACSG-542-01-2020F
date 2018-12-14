@@ -38,7 +38,7 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
 
           port.nil? ? '' : port.search_friendly_port_code(trim_cbsa: false).to_s
         },
-        qualified_field_name: "(SELECT IFNULL(schedule_d_code, IFNULL(schedule_k_code, IFNULL(unlocode, IFNULL(cbsa_port, null)))) FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)",
+        qualified_field_name: "(SELECT IFNULL(schedule_d_code, IFNULL(schedule_k_code, IFNULL(unlocode, IFNULL(cbsa_port, IFNULL(iata_code, null))))) FROM ports WHERE #{table_name}.#{join_field}_id = ports.id)",
         data_type: :string,
         read_only: true,
         history_ignore: true

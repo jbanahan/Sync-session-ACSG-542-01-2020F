@@ -1,0 +1,1940 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ASNMessage>
+  <TransactionInfo>
+    <MessageSender>GTNEXUS</MessageSender>
+    <MessageRecipient>WARNACO</MessageRecipient>
+    <MessageID>20180823061956060</MessageID>
+    <Created>2018-08-23T06:19:56.060-07:00</Created>
+    <FileName>ASN_20180823061956060.xml</FileName>
+  </TransactionInfo>
+  <ASN>
+    <ASNMessageID>1</ASNMessageID>
+    <PurposeCode>Replace</PurposeCode>
+    <Trigger>Updates to Outlook ETA</Trigger>
+    <TriggerDetail>
+      <Type>OutboundFileGenerationCount</Type>
+      <Value>8</Value>
+    </TriggerDetail>
+    <ShipmentID>5093094M01</ShipmentID>
+    <ShipmentStatus>Final</ShipmentStatus>
+    <PartyInfo>
+      <Type>Provider</Type>
+      <Name>DHL International Supply Chain</Name>
+      <Address>
+        <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+        <AddressLine>Paramus</AddressLine>
+      </Address>
+      <City>
+        <CityName>Paramus</CityName>
+        <State>NJ</State>
+        <CountryCode>US</CountryCode>
+      </City>
+      <PostalCode>07652</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>FreightForwarder</Type>
+      <Code>EXPDHL</Code>
+      <Name>Seagate Logistics - Air</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Consignee</Type>
+      <Code>CNTC</Code>
+      <Name>PVH CANADA, INC.</Name>
+      <Address>
+        <AddressLine>555 Richmond Street</AddressLine>
+      </Address>
+      <City>
+        <CityName>Toronto</CityName>
+        <State>ON</State>
+        <CountryCode>CA</CountryCode>
+        <CountryName>Canada</CountryName>
+      </City>
+      <PostalCode>M5V 3B1</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Customer</Type>
+      <Name>PVH Corp.</Name>
+      <Address>
+        <AddressLine>1001 Frontier Road</AddressLine>
+        <AddressLine>Bridgewater</AddressLine>
+      </Address>
+      <City>
+        <CityName>Bridgewater</CityName>
+        <State>NJ</State>
+        <CountryCode>US</CountryCode>
+      </City>
+      <PostalCode>08807</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Shipper</Type>
+      <Code>23894</Code>
+      <Name>EASTMAN EXPORTS GLOBAL-</Name>
+      <Address>
+        <AddressLine>5/591 SRI LAKSHMI NAGAR</AddressLine>
+        <AddressLine>PITCHAMPALAYAM PUDUR, TIRUPUR</AddressLine>
+      </Address>
+      <City>
+        <CityName>Tiruppur</CityName>
+        <CountryCode>IN</CountryCode>
+        <CountryName>India</CountryName>
+      </City>
+      <PostalCode>641603</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Supplier</Type>
+      <Code>23894</Code>
+      <Name>EASTMAN EXPORTS GLOBAL-</Name>
+      <Address>
+        <AddressLine>5/591 SRI LAKSHMI NAGAR</AddressLine>
+        <AddressLine>PITCHAMPALAYAM PUDUR, TIRUPUR</AddressLine>
+      </Address>
+      <City>
+        <CityName>Tiruppur</CityName>
+        <CountryCode>IN</CountryCode>
+        <CountryName>India</CountryName>
+      </City>
+      <PostalCode>641603</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Notify</Type>
+      <Name>Vandegrift Canada ULC</Name>
+      <Address>
+        <AddressLine>63 Galaxy Blvd. Untis 1 &amp; 2</AddressLine>
+        <AddressLine>Toronto, ON. M9W-5R7</AddressLine>
+      </Address>
+      <City>
+        <CityName>Toronto</CityName>
+        <State>ON</State>
+        <CountryCode>CA</CountryCode>
+        <CountryName>Canada</CountryName>
+      </City>
+      <PostalCode>M9W-5R7</PostalCode>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Sender</Type>
+      <Name>DHL International Supply Chain</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>Carrier</Type>
+      <Code>SGTA</Code>
+      <Name>Seagate Logistics - Air</Name>
+    </PartyInfo>
+    <PartyInfo>
+      <Type>ShipmentFinalDest</Type>
+      <Code>55</Code>
+      <Name>PVH Canada, Inc. 55</Name>
+      <City>
+        <CityName>Montreal</CityName>
+        <State>QC</State>
+        <CountryCode>CA</CountryCode>
+        <CountryName>Canada</CountryName>
+      </City>
+    </PartyInfo>
+    <Mode>Ocean</Mode>
+    <Voyage>EK0543</Voyage>
+    <Vessel>EK0543</Vessel>
+    <OriginCity>
+      <CityName>Chennai</CityName>
+      <CityCode Qualifier="UN">INMAA</CityCode>
+      <CityCode Qualifier="K">53357</CityCode>
+      <CountryCode>IN</CountryCode>
+    </OriginCity>
+    <PortOfLoading>
+      <CityName>Chennai</CityName>
+      <CityCode Qualifier="IA">MAA</CityCode>
+      <CountryCode>IN</CountryCode>
+    </PortOfLoading>
+    <PortOfDischarge>
+      <CityName>Montréal - Dorval</CityName>
+      <CityCode Qualifier="IA">YUL</CityCode>
+      <State>QC</State>
+      <CountryCode>CA</CountryCode>
+    </PortOfDischarge>
+    <BLDestination>
+      <CityName>Montreal-Dorval Apt</CityName>
+      <CityCode Qualifier="UN">CAYUL</CityCode>
+      <State>QC</State>
+      <CountryCode>CA</CountryCode>
+    </BLDestination>
+    <EstBLDestDate ReportedLocalTimeZone="GMT" TimeZone="UTC">2018-08-17T12:00:00.000-07:00</EstBLDestDate>
+    <EstOnBoardDate TimeZone="UTC">2018-08-12T12:00:00.000-07:00</EstOnBoardDate>
+    <EstDepartDate ReportedLocalTimeZone="GMT" TimeZone="UTC">2018-08-12T12:00:00.000-07:00</EstDepartDate>
+    <EstDischargePortDate ReportedLocalTimeZone="GMT" TimeZone="UTC">2018-08-17T12:00:00.000-07:00</EstDischargePortDate>
+    <ReferenceDates>
+      <ReferenceDateType>B3 Approved</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-16T12:26:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Customs Clrd-Broker</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-21T05:00:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Delivered to DC</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-23T12:46:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Depart Airport</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-12T15:51:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Doc Set Attached</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-14T10:51:20.623-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Arrive Airport</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-17T19:18:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Customs Team Status</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-20T14:12:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Delivery Order Issued/Sent</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-21T19:32:47.813-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Entry Process Started</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-14T19:47:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>B3 Attached</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-15T15:07:51.390-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Shipped (ASN)</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-15T02:03:46.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Docs Received</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-14T05:00:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Rcvd from Prior Carrier</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-22T12:46:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Documents Complete</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-21T18:36:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Broker Docs Reviewed</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-14T18:48:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>ETA BL Destination</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-18T00:56:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <ReferenceDates>
+      <ReferenceDateType>Customs Entry Filed</ReferenceDateType>
+      <ReferenceDate TimeZone="UTC">2018-08-21T05:00:00.000-07:00</ReferenceDate>
+    </ReferenceDates>
+    <Container>
+      <LoadPlanName>5093094</LoadPlanName>
+      <ContainerNumber>SGIND25321</ContainerNumber>
+      <ContainerType>ANYA</ContainerType>
+      <ContainerTypeName>Air Any Type</ContainerTypeName>
+      <ContainerLoad>LCL</ContainerLoad>
+      <LoadLocation>CFS</LoadLocation>
+      <SealNumber>SEAL</SealNumber>
+      <ServiceType>A/A</ServiceType>
+      <ChargeableWeight ANSICode="" Unit="None">0.0</ChargeableWeight>
+      <DimensionalWeight ANSICode="" Unit="None">0.0</DimensionalWeight>
+      <ActualWeight ANSICode="KG" Unit="Kilograms">1264.0</ActualWeight>
+      <Volume ANSICode="CR" Unit="Cubic Meters">5.446</Volume>
+      <LadingQuantity ANSICode="EA" Unit="Each">5506.0</LadingQuantity>
+      <LineItems>
+        <LoadSequence>3</LoadSequence>
+        <PONumber>RTTC216384</PONumber>
+        <LineItemNumber>001</LineItemNumber>
+        <Quantity ANSICode="EA" Unit="Each">324.0</Quantity>
+        <ProductCode>7696164</ProductCode>
+        <ProductName>W CROSSED TH TEE TEE-410-</ProductName>
+        <DivisionIdentifier>Tommy Outlet Canada</DivisionIdentifier>
+        <ShipWindow>
+          <StartDate>2018-08-11T12:00:00.000-07:00</StartDate>
+          <EndDate>2018-08-12T12:00:00.000-07:00</EndDate>
+        </ShipWindow>
+        <BLNumber>SGIND25321</BLNumber>
+        <MasterBLNumber>01449867322</MasterBLNumber>
+        <ProNumber>01449867322</ProNumber>
+        <InvoiceNumber>EEGC/7469/1819</InvoiceNumber>
+        <ManufacturerID>63479868585</ManufacturerID>
+        <Weight ANSICode="KG" Unit="Kilograms">44.388</Weight>
+        <Volume ANSICode="CR" Unit="Cubic Meters">0.319</Volume>
+        <MasterPackQuantity ANSICode="EA" Unit="Each">1.0</MasterPackQuantity>
+        <PackageCount>27</PackageCount>
+        <FinalDestination>
+          <LocationCode>55</LocationCode>
+          <Name>PVH Canada, Inc. 55</Name>
+          <Address>
+            <AddressLine>7445 Cote-de Liesse</AddressLine>
+          </Address>
+          <City>
+            <CityName>Montreal</CityName>
+            <CityCode Qualifier="UN">CAMTR</CityCode>
+            <CityCode Qualifier="K">01822</CityCode>
+            <State>QC</State>
+            <CountryCode>CA</CountryCode>
+          </City>
+          <PostalCode>H4T 1G2</PostalCode>
+        </FinalDestination>
+        <ReasonCodeTypes>
+          <ReasonCode>
+            <Type>Air Payment Terms</Type>
+            <Code>CC</Code>
+            <Description>Collect</Description>
+          </ReasonCode>
+        </ReasonCodeTypes>
+        <ReferenceDates>
+          <ReferenceDateType>BlDate3</ReferenceDateType>
+          <ReferenceDate ReportedLocalTimeZone="GMT" TimeZone="UTC">2018-08-12T12:00:00.000-07:00</ReferenceDate>
+        </ReferenceDates>
+        <ReferenceNumber3>11981003299175</ReferenceNumber3>
+        <References>
+          <Type>OrderRef1</Type>
+          <Value>LF (INDIA) PRIVATE LTD</Value>
+        </References>
+        <References>
+          <Type>OrderRef2</Type>
+          <Value>PKG   ;          ;  ;</Value>
+        </References>
+        <References>
+          <Type>OrderRef3</Type>
+          <Value>CASE PACK</Value>
+        </References>
+        <References>
+          <Type>ProductRef1</Type>
+          <Value>001</Value>
+        </References>
+        <References>
+          <Type>ProductRef2</Type>
+          <Value>900</Value>
+        </References>
+        <References>
+          <Type>ProductRef3</Type>
+          <Value>PPK</Value>
+        </References>
+        <References>
+          <Type>ProductRef4</Type>
+          <Value>AIR</Value>
+        </References>
+        <References>
+          <Type>ProductRef5</Type>
+          <Value>7695775-112-00:12</Value>
+        </References>
+        <References>
+          <Type>HTS</Type>
+          <Value>6109100022</Value>
+        </References>
+        <PartyInfo>
+          <Type>Supplier</Type>
+          <Code>23894</Code>
+          <Name>EASTMAN EXPORTS GLOBAL-</Name>
+          <Address>
+            <AddressLine>5/591 SRI LAKSHMI NAGAR</AddressLine>
+            <AddressLine>PITCHAMPALAYAM PUDUR, TIRUPUR</AddressLine>
+          </Address>
+          <City>
+            <CityName>Tiruppur</CityName>
+            <CountryCode>IN</CountryCode>
+            <CountryName>India</CountryName>
+          </City>
+          <PostalCode>641603</PostalCode>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Department</Type>
+          <Code>TC</Code>
+          <Name>TC</Name>
+        </PartyInfo>
+        <ItemAttributes>
+          <Type>RetailCostPrice</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryPostalCode</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCountryCode</Type>
+          <Value>CA</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FirstCostPrice</Type>
+          <Value>70.08</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>QuotaCat</Type>
+          <Value>888</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NeedByDate</Type>
+          <Value>2018-08-10</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToPostalCode</Type>
+          <Value>M5V 3B1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCode</Type>
+          <Value>BTTC</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>LineNumber</Type>
+          <Value>001</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCode</Type>
+          <Value>23894509</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToAddressLine2</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToAddressLine1</Type>
+          <Value>555 Richmond Street</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>SupplierName</Type>
+          <Value>EASTMAN EXPORTS GLOBAL-</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NumberHTSUnitsPerPiece</Type>
+          <Value>1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCityName</Type>
+          <Value>Toronto</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>MIDNumber</Type>
+          <Value>INRODAPP2TIR</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PacksPerCarton</Type>
+          <Value>1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ProdReferenceNumber1</Type>
+          <Value>001</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToState</Type>
+          <Value>ON</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ProdReferenceNumber2</Type>
+          <Value>900</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>Dimension</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>UPCCode</Type>
+          <Value>421806800159</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>isUnified</Type>
+          <Value>true</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>TotalPerCarton</Type>
+          <Value>12</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToName</Type>
+          <Value>PVH Canada, Inc.</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ACDate</Type>
+          <Value>20180812</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>DescBuyerColor</Type>
+          <Value>BRIGHT WHITE</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ExtLineAmount</Type>
+          <Value>1892.16</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryName</Type>
+          <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ShipmentTermsCode</Type>
+          <Value>FOB</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryAddressLine2</Type>
+          <Value>EETTIVEERAMPALAYAM</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryAddressLine1</Type>
+          <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCountryCode</Type>
+          <Value>IN</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>CustomsHTSText</Type>
+          <Value>WOMENS KNIT T-SHIRT</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NumberHTSUnitsPerPieceUOM</Type>
+          <Value>EA</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FiberContent</Type>
+          <Value>52% COTTON 48% MODAL</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCityName</Type>
+          <Value>TIRUPPUR</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BoxEndCode</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryState</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PaymentTerms</Type>
+          <Value>N4 - Net 45</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>IdEANUCC8</Type>
+          <Value>421806800159</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PackMethod</Type>
+          <Value>FLAT</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>MainQPI</Type>
+          <Value>12</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ValuePercentage</Type>
+          <Value>1.00</Value>
+        </ItemAttributes>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017429</UPC>
+          <Quantity ANSICode="EA" Unit="EA">54.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">2.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>L/G</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>5</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>L/G</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017382</UPC>
+          <Quantity ANSICode="EA" Unit="EA">27.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">1.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XXS</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>1</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>XXS</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017399</UPC>
+          <Quantity ANSICode="EA" Unit="EA">54.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">2.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XS</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>2</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>XS</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017405</UPC>
+          <Quantity ANSICode="EA" Unit="EA">81.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">3.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>S/P</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>3</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>S/P</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017436</UPC>
+          <Quantity ANSICode="EA" Unit="EA">27.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">1.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XL</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>6</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>XL</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017412</UPC>
+          <Quantity ANSICode="EA" Unit="EA">81.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">3.0</InnerPackQuantity>
+          <References>
+            <Type>Color</Type>
+            <Value>112</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>M/M</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>4</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>112</Description>
+            </Color>
+            <Size>
+              <Description>M/M</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Charges Currency="USD" Type="Invoice">1892.16</Charges>
+        <Charges Currency="USD" Type="FirstCost">5.84</Charges>
+        <MilestoneMessage>
+          <OneReferenceMultipleMilestones>
+            <ReferenceInfo>
+              <ReferenceId reference="SGIND25321" type="BLNumber"/>
+              <ReferenceId reference="01449867322" type="ProNumber"/>
+              <ReferenceId reference="SGIND25321" type="ContainerNumber"/>
+              <ReferenceId reference="5093094M01" type="ShipmentID"/>
+              <ReferenceId reference="RTTC216384" type="PONumber"/>
+              <ReferenceId reference="001" type="LineItemNumber"/>
+              <ReferenceId reference="7696164" type="ProductCode"/>
+              <ReferenceId reference="55" type="FinalDestinationCode"/>
+              <ReferenceId reference="LCL" type="ContainerLoadCode"/>
+            </ReferenceInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>26</MilestoneTypeCode>
+              <MilestoneTypeName>Booked w/Srvc Prvdr</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-07-26T13:54:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-07-26T19:24:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>SEAGATE - CC</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>22734</MilestoneTypeCode>
+              <MilestoneTypeName>Cargo Ready Date</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-07-31T13:56:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-07-31T19:26:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>27</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Rcvd at Origin</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-09T13:10:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-09T18:40:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>COMPLETE DOCUMENT SET RECEIVED</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>3</MilestoneTypeCode>
+              <MilestoneTypeName>Cargo Received</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-09T14:07:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-09T19:37:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>28</MilestoneTypeCode>
+              <MilestoneTypeName>Vendor ASN Issued</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-10T23:20:28.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-10T23:20:28.000-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21432</MilestoneTypeCode>
+              <MilestoneTypeName>SO Created</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-11T06:09:26.763-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-10T23:09:26.763-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>SO: 63479868585.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1</MilestoneTypeCode>
+              <MilestoneTypeName>AC Date</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-12T12:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-12T17:30:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Tiruppur</CityName>
+                <CityCode Qualifier="UN">INTUP</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>19297</MilestoneTypeCode>
+              <MilestoneTypeName>Depart Airport</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-12T15:51:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-12T21:21:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T11:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>COMPLETE SHIPMENT DEPARTED ON FLIGHT#
+EK0543  08/12   MAA-DXB</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25123</MilestoneTypeCode>
+              <MilestoneTypeName>Pre-Alert/Docs Sent</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-13T13:54:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-13T19:24:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1646</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Received</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-14T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1908</MilestoneTypeCode>
+              <MilestoneTypeName>SO Submitted</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T06:50:32.713-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T14:50:32.713-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>SO: 63479868585.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1851</MilestoneTypeCode>
+              <MilestoneTypeName>Doc Set Attached</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T10:51:20.623-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T03:51:20.623-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T22:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <Comments>Milestone added because document id [VDS_SGIND25321_EEGC74691819_13082018.pdf] of type [Document Set] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21528</MilestoneTypeCode>
+              <MilestoneTypeName>Broker Docs Reviewed</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T18:48:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T13:48:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Toronto</CityName>
+                <CityCode Qualifier="UN">CATOR</CityCode>
+                <CityCode Qualifier="K">01535</CityCode>
+                <State>ON</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>ENTRY#11981003299175</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21075</MilestoneTypeCode>
+              <MilestoneTypeName>Entry Process Started</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T19:47:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T14:47:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>42</MilestoneTypeCode>
+              <MilestoneTypeName>Manifest Create Date</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Added by the System upon attachment of a Shipment-only Milestone Model</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7</MilestoneTypeCode>
+              <MilestoneTypeName>Shipped (ASN)</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T07:33:46.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T11:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21523</MilestoneTypeCode>
+              <MilestoneTypeName>B3 Attached</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T15:07:51.390-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T11:07:51.390-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Milestone added because document id [11981003299175_B3_VFI.pdf] of type [B3] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20489</MilestoneTypeCode>
+              <MilestoneTypeName>PO Accepted</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T23:19:21.480-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T16:19:21.480-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>PO Accepted.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20007</MilestoneTypeCode>
+              <MilestoneTypeName>B3 Approved</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-16T12:26:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-16T07:26:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>19298</MilestoneTypeCode>
+              <MilestoneTypeName>Arrive Airport</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-17T19:18:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T14:18:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T15:51:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>New York</CityName>
+                <CityCode Qualifier="UN">USNYC</CityCode>
+                <CityCode Qualifier="D">1001</CityCode>
+                <State>NY</State>
+                <CountryCode>US</CountryCode>
+              </City>
+              <Comments>ARRIVED</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>22522</MilestoneTypeCode>
+              <MilestoneTypeName>ETA BL Destination</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-18T00:56:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T19:56:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-19T23:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>ESTIMATED FLIGHT PLAN:
+EK0543    08/12  MAA-DXB
+EK0011    08/13  DXB-LGW
+EK4192T  08/14  LGW-LHR
+AC865      08/17  LHR-YUL</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25391</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Team Status</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-20T14:12:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-20T09:12:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Toronto</CityName>
+                <CityCode Qualifier="UN">CATOR</CityCode>
+                <CityCode Qualifier="K">01535</CityCode>
+                <State>ON</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>AWAITING MANIFEST FROM FORWARDER</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1648</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Entry Filed</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-21T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-18T19:17:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Entry Released</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-21T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T16:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20491</MilestoneTypeCode>
+              <MilestoneTypeName>PO Last Updated</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-21T08:42:24.277-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T01:42:24.277-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Purchase Order RTTC216384has been Updated.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>19689</MilestoneTypeCode>
+              <MilestoneTypeName>Documents Complete</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-21T18:36:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T13:36:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>1663</MilestoneTypeCode>
+              <MilestoneTypeName>Delivery Order Issued/Sent</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-21T19:32:47.813-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T15:32:47.813-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Milestone added because document id [11981003299175_DO_VFI.pdf] of type [Delivery Order] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>31</MilestoneTypeCode>
+              <MilestoneTypeName>Received at Crossdock</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-22T12:46:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-22T07:46:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-26T04:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>22710</MilestoneTypeCode>
+              <MilestoneTypeName>Delivered to DC</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-23T12:46:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-23T07:46:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-28T04:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21</MilestoneTypeCode>
+              <MilestoneTypeName>Outlook ETA</MilestoneTypeName>
+              <MilestoneTime dateTime="2018-08-25T12:45:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <Comments>Outlook ETA for milestone 'Received DC'</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21</MilestoneTypeCode>
+              <MilestoneTypeName>Received DC</MilestoneTypeName>
+              <MilestoneTime dateTime="2018-08-25T12:45:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+            </MilestoneInfo>
+          </OneReferenceMultipleMilestones>
+        </MilestoneMessage>
+        <ShippingOrderNumber>63479868585</ShippingOrderNumber>
+        <RequiredDeliveryDate ReportedLocalTimeZone="EST" TimeZone="UTC">2018-08-07T19:00:00.000-07:00</RequiredDeliveryDate>
+      </LineItems>
+      <LineItems>
+        <LoadSequence>4</LoadSequence>
+        <PONumber>RTTC216384</PONumber>
+        <LineItemNumber>002</LineItemNumber>
+        <Quantity ANSICode="EA" Unit="Each">276.0</Quantity>
+        <ProductCode>7696164</ProductCode>
+        <ProductName>W CROSSED TH TEE TEE-410-</ProductName>
+        <DivisionIdentifier>Tommy Outlet Canada</DivisionIdentifier>
+        <ShipWindow>
+          <StartDate>2018-08-11T12:00:00.000-07:00</StartDate>
+          <EndDate>2018-08-12T12:00:00.000-07:00</EndDate>
+        </ShipWindow>
+        <BLNumber>SGIND25321</BLNumber>
+        <MasterBLNumber>01449867322</MasterBLNumber>
+        <ProNumber>01449867322</ProNumber>
+        <InvoiceNumber>EEGC/7469/1819</InvoiceNumber>
+        <ManufacturerID>63479868585</ManufacturerID>
+        <Weight ANSICode="KG" Unit="Kilograms">37.812</Weight>
+        <Volume ANSICode="CR" Unit="Cubic Meters">0.271</Volume>
+        <MasterPackQuantity ANSICode="EA" Unit="Each">12.0</MasterPackQuantity>
+        <PackageCount>23</PackageCount>
+        <FinalDestination>
+          <LocationCode>55</LocationCode>
+          <Name>PVH Canada, Inc. 55</Name>
+          <Address>
+            <AddressLine>7445 Cote-de Liesse</AddressLine>
+          </Address>
+          <City>
+            <CityName>Montreal</CityName>
+            <CityCode Qualifier="UN">CAMTR</CityCode>
+            <CityCode Qualifier="K">01822</CityCode>
+            <State>QC</State>
+            <CountryCode>CA</CountryCode>
+          </City>
+          <PostalCode>H4T 1G2</PostalCode>
+        </FinalDestination>
+        <ReasonCodeTypes>
+          <ReasonCode>
+            <Type>Air Payment Terms</Type>
+            <Code>CC</Code>
+            <Description>Collect</Description>
+          </ReasonCode>
+        </ReasonCodeTypes>
+        <ReferenceDates>
+          <ReferenceDateType>BlDate3</ReferenceDateType>
+          <ReferenceDate ReportedLocalTimeZone="GMT" TimeZone="UTC">2018-08-12T12:00:00.000-07:00</ReferenceDate>
+        </ReferenceDates>
+        <ReferenceNumber3>11981003299175</ReferenceNumber3>
+        <References>
+          <Type>OrderRef1</Type>
+          <Value>LF (INDIA) PRIVATE LTD</Value>
+        </References>
+        <References>
+          <Type>OrderRef2</Type>
+          <Value>PKG   ;          ;  ;</Value>
+        </References>
+        <References>
+          <Type>OrderRef3</Type>
+          <Value>CASE PACK</Value>
+        </References>
+        <References>
+          <Type>ProductRef1</Type>
+          <Value>004</Value>
+        </References>
+        <References>
+          <Type>ProductRef2</Type>
+          <Value>901</Value>
+        </References>
+        <References>
+          <Type>ProductRef3</Type>
+          <Value>PPK</Value>
+        </References>
+        <References>
+          <Type>ProductRef4</Type>
+          <Value>AIR</Value>
+        </References>
+        <References>
+          <Type>ProductRef5</Type>
+          <Value>7695775-410-00:12</Value>
+        </References>
+        <References>
+          <Type>HTS</Type>
+          <Value>6109100022</Value>
+        </References>
+        <PartyInfo>
+          <Type>Supplier</Type>
+          <Code>23894</Code>
+          <Name>EASTMAN EXPORTS GLOBAL-</Name>
+          <Address>
+            <AddressLine>5/591 SRI LAKSHMI NAGAR</AddressLine>
+            <AddressLine>PITCHAMPALAYAM PUDUR, TIRUPUR</AddressLine>
+          </Address>
+          <City>
+            <CityName>Tiruppur</CityName>
+            <CountryCode>IN</CountryCode>
+            <CountryName>India</CountryName>
+          </City>
+          <PostalCode>641603</PostalCode>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Department</Type>
+          <Code>TC</Code>
+          <Name>TC</Name>
+        </PartyInfo>
+        <ItemAttributes>
+          <Type>RetailCostPrice</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryPostalCode</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCountryCode</Type>
+          <Value>CA</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FirstCostPrice</Type>
+          <Value>70.08</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>QuotaCat</Type>
+          <Value>888</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NeedByDate</Type>
+          <Value>2018-08-10</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToPostalCode</Type>
+          <Value>M5V 3B1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCode</Type>
+          <Value>BTTC</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>LineNumber</Type>
+          <Value>004</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCode</Type>
+          <Value>23894509</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToAddressLine2</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToAddressLine1</Type>
+          <Value>555 Richmond Street</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>SupplierName</Type>
+          <Value>EASTMAN EXPORTS GLOBAL-</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NumberHTSUnitsPerPiece</Type>
+          <Value>1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToCityName</Type>
+          <Value>Toronto</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>MIDNumber</Type>
+          <Value>INRODAPP2TIR</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PacksPerCarton</Type>
+          <Value>1</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ProdReferenceNumber1</Type>
+          <Value>004</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToState</Type>
+          <Value>ON</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ProdReferenceNumber2</Type>
+          <Value>901</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>Dimension</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>UPCCode</Type>
+          <Value>421807100104</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>isUnified</Type>
+          <Value>true</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>TotalPerCarton</Type>
+          <Value>12</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BillToName</Type>
+          <Value>PVH Canada, Inc.</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ACDate</Type>
+          <Value>20180812</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>DescBuyerColor</Type>
+          <Value>MASTERS NAVY</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ExtLineAmount</Type>
+          <Value>1681.92</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryName</Type>
+          <Value>RODAMINE APPAREL INDUSTRIES (P) LTD</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ShipmentTermsCode</Type>
+          <Value>FOB</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryAddressLine2</Type>
+          <Value>EETTIVEERAMPALAYAM</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryAddressLine1</Type>
+          <Value>SHED NO H1 &amp; H2|NETHAJI APPAREL PARK</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCountryCode</Type>
+          <Value>IN</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>CustomsHTSText</Type>
+          <Value>WOMENS KNIT T-SHIRT</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>NumberHTSUnitsPerPieceUOM</Type>
+          <Value>EA</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FiberContent</Type>
+          <Value>52% COTTON 48% MODAL</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryCityName</Type>
+          <Value>TIRUPPUR</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>BoxEndCode</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>FactoryState</Type>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PaymentTerms</Type>
+          <Value>N4 - Net 45</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>IdEANUCC8</Type>
+          <Value>421807100104</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>PackMethod</Type>
+          <Value>FLAT</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>MainQPI</Type>
+          <Value>12</Value>
+        </ItemAttributes>
+        <ItemAttributes>
+          <Type>ValuePercentage</Type>
+          <Value>1.00</Value>
+        </ItemAttributes>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017504</UPC>
+          <Quantity ANSICode="EA" Unit="EA">23.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">1.0</InnerPackQuantity>
+          <CartonCount>2</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">3.151</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.023</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XL</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>6</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>XL</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017474</UPC>
+          <Quantity ANSICode="EA" Unit="EA">69.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">3.0</InnerPackQuantity>
+          <CartonCount>6</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">9.453</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.068</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>S/P</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>3</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>S/P</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017481</UPC>
+          <Quantity ANSICode="EA" Unit="EA">69.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">3.0</InnerPackQuantity>
+          <CartonCount>6</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">9.453</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.068</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>M/M</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>4</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>M/M</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017498</UPC>
+          <Quantity ANSICode="EA" Unit="EA">46.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">2.0</InnerPackQuantity>
+          <CartonCount>4</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">6.302</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.045</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>L/G</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>5</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>L/G</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017450</UPC>
+          <Quantity ANSICode="EA" Unit="EA">23.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">1.0</InnerPackQuantity>
+          <CartonCount>2</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">3.151</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.023</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XXS</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>1</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>XXS</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Assortment>
+          <Sku>7695775</Sku>
+          <UPC>638950017467</UPC>
+          <Quantity ANSICode="EA" Unit="EA">46.0</Quantity>
+          <InnerPackQuantity ANSICode="EA" Unit="EA">2.0</InnerPackQuantity>
+          <CartonCount>3</CartonCount>
+          <TotalWeight ANSICode="KG" Unit="Kilograms">6.302</TotalWeight>
+          <TotalVolume ANSICode="CR" Unit="CR">0.044</TotalVolume>
+          <References>
+            <Type>Color</Type>
+            <Value>410</Value>
+          </References>
+          <References>
+            <Type>Size</Type>
+            <Value>XS</Value>
+          </References>
+          <References>
+            <Type>UserDefChar4</Type>
+            <Value>2</Value>
+          </References>
+          <ExtendedProductDescription>
+            <Color>
+              <Description>410</Description>
+            </Color>
+            <Size>
+              <Description>XS</Description>
+            </Size>
+          </ExtendedProductDescription>
+        </Assortment>
+        <Charges Currency="USD" Type="Invoice">1611.84</Charges>
+        <Charges Currency="USD" Type="FirstCost">5.84</Charges>
+        <MilestoneMessage>
+          <OneReferenceMultipleMilestones>
+            <ReferenceInfo>
+              <ReferenceId reference="SGIND25321" type="BLNumber"/>
+              <ReferenceId reference="01449867322" type="ProNumber"/>
+              <ReferenceId reference="SGIND25321" type="ContainerNumber"/>
+              <ReferenceId reference="5093094M01" type="ShipmentID"/>
+              <ReferenceId reference="RTTC216384" type="PONumber"/>
+              <ReferenceId reference="004" type="LineItemNumber"/>
+              <ReferenceId reference="7696164" type="ProductCode"/>
+              <ReferenceId reference="55" type="FinalDestinationCode"/>
+              <ReferenceId reference="LCL" type="ContainerLoadCode"/>
+            </ReferenceInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20489</MilestoneTypeCode>
+              <MilestoneTypeName>PO Accepted</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-07-25T09:24:00.573-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-07-25T02:24:00.573-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>PO Accepted.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>26</MilestoneTypeCode>
+              <MilestoneTypeName>Booked w/Srvc Prvdr</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-07-26T13:54:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-07-26T19:24:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>SEAGATE - CC</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>22734</MilestoneTypeCode>
+              <MilestoneTypeName>Cargo Ready Date</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-07-31T13:56:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-07-31T19:26:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>27</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Rcvd at Origin</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-09T13:10:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-09T18:40:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>COMPLETE DOCUMENT SET RECEIVED</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>3</MilestoneTypeCode>
+              <MilestoneTypeName>Cargo Received</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-09T14:07:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-09T19:37:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>28</MilestoneTypeCode>
+              <MilestoneTypeName>Vendor ASN Issued</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-10T23:20:28.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-10T23:20:28.000-07:00" timeZone="LT" whichTime="EventTime"/>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20491</MilestoneTypeCode>
+              <MilestoneTypeName>PO Last Updated</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-11T03:32:29.613-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-10T20:32:29.613-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Purchase Order RTTC216384has been Updated.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21432</MilestoneTypeCode>
+              <MilestoneTypeName>SO Created</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-11T06:09:26.763-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-10T23:09:26.763-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>SO: 63479868585.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1</MilestoneTypeCode>
+              <MilestoneTypeName>AC Date</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-12T12:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-12T17:30:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Tiruppur</CityName>
+                <CityCode Qualifier="UN">INTUP</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>19297</MilestoneTypeCode>
+              <MilestoneTypeName>Depart Airport</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-12T15:51:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-12T21:21:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T11:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>COMPLETE SHIPMENT DEPARTED ON FLIGHT#
+EK0543  08/12   MAA-DXB</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25123</MilestoneTypeCode>
+              <MilestoneTypeName>Pre-Alert/Docs Sent</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-13T13:54:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-13T19:24:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1646</MilestoneTypeCode>
+              <MilestoneTypeName>Docs Received</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-14T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1908</MilestoneTypeCode>
+              <MilestoneTypeName>SO Submitted</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T06:50:32.713-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T14:50:32.713-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+              <Comments>SO: 63479868585.</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1851</MilestoneTypeCode>
+              <MilestoneTypeName>Doc Set Attached</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T10:51:20.623-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T03:51:20.623-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T22:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <Comments>Milestone added because document id [VDS_SGIND25321_EEGC74691819_13082018.pdf] of type [Document Set] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21528</MilestoneTypeCode>
+              <MilestoneTypeName>Broker Docs Reviewed</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T18:48:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T13:48:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Toronto</CityName>
+                <CityCode Qualifier="UN">CATOR</CityCode>
+                <CityCode Qualifier="K">01535</CityCode>
+                <State>ON</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>ENTRY#11981003299175</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21075</MilestoneTypeCode>
+              <MilestoneTypeName>Entry Process Started</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-14T19:47:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-14T14:47:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>42</MilestoneTypeCode>
+              <MilestoneTypeName>Manifest Create Date</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Added by the System upon attachment of a Shipment-only Milestone Model</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>7</MilestoneTypeCode>
+              <MilestoneTypeName>Shipped (ASN)</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T02:03:46.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T07:33:46.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T11:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Chennai</CityName>
+                <CityCode Qualifier="UN">INMAA</CityCode>
+                <CityCode Qualifier="K">53357</CityCode>
+                <CountryCode>IN</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21523</MilestoneTypeCode>
+              <MilestoneTypeName>B3 Attached</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-15T15:07:51.390-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-15T11:07:51.390-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Milestone added because document id [11981003299175_B3_VFI.pdf] of type [B3] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>20007</MilestoneTypeCode>
+              <MilestoneTypeName>B3 Approved</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-16T12:26:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-16T07:26:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>19298</MilestoneTypeCode>
+              <MilestoneTypeName>Arrive Airport</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-17T19:18:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T14:18:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T15:51:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>New York</CityName>
+                <CityCode Qualifier="UN">USNYC</CityCode>
+                <CityCode Qualifier="D">1001</CityCode>
+                <State>NY</State>
+                <CountryCode>US</CountryCode>
+              </City>
+              <Comments>ARRIVED</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>22522</MilestoneTypeCode>
+              <MilestoneTypeName>ETA BL Destination</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-18T00:56:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-17T19:56:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-19T23:44:03.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>ESTIMATED FLIGHT PLAN:
+EK0543    08/12  MAA-DXB
+EK0011    08/13  DXB-LGW
+EK4192T  08/14  LGW-LHR
+AC865      08/17  LHR-YUL</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25391</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Team Status</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-20T14:12:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-20T09:12:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Toronto</CityName>
+                <CityCode Qualifier="UN">CATOR</CityCode>
+                <CityCode Qualifier="K">01535</CityCode>
+                <State>ON</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>AWAITING MANIFEST FROM FORWARDER</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>1648</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Entry Filed</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-21T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-18T19:17:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>25</MilestoneTypeCode>
+              <MilestoneTypeName>Customs Entry Released</MilestoneTypeName>
+              <MilestoneSource>Integration</MilestoneSource>
+              <MilestoneReasonCode>NS</MilestoneReasonCode>
+              <MilestoneTime dateTime="2018-08-21T05:00:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T00:00:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T16:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Dorval</CityName>
+                <CityCode Qualifier="UN">CADOR</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+              <Comments>SCAC: 8459
+ENTRY NUMBER =11981003299175; Broker File #=3299175; Master BL/AWB/PRO=01449867322; House BL/AWB=SGIND25321; Bill of Lading #=SGIND25321; Carrier SCAC=8459</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>19689</MilestoneTypeCode>
+              <MilestoneTypeName>Documents Complete</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-21T18:36:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T13:36:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <City>
+                <CityName>Bridgewater</CityName>
+                <CityCode Qualifier="UN">USBQF</CityCode>
+                <State>NJ</State>
+                <CountryCode>US</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>1663</MilestoneTypeCode>
+              <MilestoneTypeName>Delivery Order Issued/Sent</MilestoneTypeName>
+              <MilestoneSource>System</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-21T19:32:47.813-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-21T15:32:47.813-07:00" timeZone="LT" whichTime="EventTime"/>
+              <Comments>Milestone added because document id [11981003299175_DO_VFI.pdf] of type [Delivery Order] was added</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>31</MilestoneTypeCode>
+              <MilestoneTypeName>Received at Crossdock</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-22T12:46:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-22T07:46:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-26T04:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <ProcessingStatus>Newly Posted</ProcessingStatus>
+              <MilestoneTypeCode>22710</MilestoneTypeCode>
+              <MilestoneTypeName>Delivered to DC</MilestoneTypeName>
+              <MilestoneSource>UI</MilestoneSource>
+              <MilestoneTime dateTime="2018-08-23T12:46:00.000-07:00" timeZone="UTC" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-23T07:46:00.000-07:00" timeZone="LT" whichTime="EventTime"/>
+              <MilestoneTime dateTime="2018-08-28T04:59:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <City>
+                <CityName>Montreal</CityName>
+                <CityCode Qualifier="UN">CAMTR</CityCode>
+                <CityCode Qualifier="K">01822</CityCode>
+                <State>QC</State>
+                <CountryCode>CA</CountryCode>
+              </City>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21</MilestoneTypeCode>
+              <MilestoneTypeName>Outlook ETA</MilestoneTypeName>
+              <MilestoneTime dateTime="2018-08-25T12:45:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+              <Comments>Outlook ETA for milestone 'Received DC'</Comments>
+            </MilestoneInfo>
+            <MilestoneInfo>
+              <MilestoneTypeCode>21</MilestoneTypeCode>
+              <MilestoneTypeName>Received DC</MilestoneTypeName>
+              <MilestoneTime dateTime="2018-08-25T12:45:46.000-07:00" timeZone="UTC" whichTime="OutlookTime"/>
+            </MilestoneInfo>
+          </OneReferenceMultipleMilestones>
+        </MilestoneMessage>
+        <ShippingOrderNumber>63479868585</ShippingOrderNumber>
+        <RequiredDeliveryDate ReportedLocalTimeZone="EST" TimeZone="UTC">2018-08-07T19:00:00.000-07:00</RequiredDeliveryDate>
+      </LineItems>
+      <ShipperRefNum>5093094</ShipperRefNum>
+    </Container>
+  </ASN>
+</ASNMessage>

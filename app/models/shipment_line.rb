@@ -15,6 +15,7 @@
 #  line_number             :integer
 #  manufacturer_address_id :integer
 #  master_bill_of_lading   :string(255)
+#  mid                     :string(255)
 #  product_id              :integer
 #  quantity                :decimal(13, 4)
 #  shipment_id             :integer
@@ -42,6 +43,7 @@ class ShipmentLine < ActiveRecord::Base
   belongs_to :canceled_order_line, class_name: 'OrderLine'
   belongs_to :manufacturer_address, class_name: 'Address'
   belongs_to :variant
+  after_save :clear_order_line
 
   validates_uniqueness_of :line_number, :scope => :shipment_id
   validates_with OpenChain::Validator::VariantLineIntegrityValidator
@@ -75,6 +77,10 @@ class ShipmentLine < ActiveRecord::Base
     Classification.joins(:country).where(product_id: product_id, countries: {iso_code: 'US'}).joins(:tariff_records).order('tariff_records.line_number ASC').limit(1).pluck(:hts_1).first
   end
 
+  def order_line
+    @var_order_line ||= self.order_lines.first
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
@@ -82,6 +88,10 @@ class ShipmentLine < ActiveRecord::Base
 
   def parent_id_where #supporting method for LinesSupport
     return :shipment_id => self.shipment.id
+  end
+
+  def clear_order_line
+    remove_instance_variable(:@var_order_line) if instance_variable_defined?(:@var_order_line)
   end
 
 end

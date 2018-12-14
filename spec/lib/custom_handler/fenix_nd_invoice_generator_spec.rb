@@ -74,10 +74,10 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(h[36..45]).to eq(invoice.country_origin_code.ljust(10))
       expect(h[46..55]).to eq("CA        ")
       expect(h[56..59]).to eq(invoice.currency.ljust(4))
-      expect(h[60..74]).to eq(invoice.total_quantity.to_s.ljust(15))
-      expect(h[75..89]).to eq(invoice.gross_weight.to_s.ljust(15))
-      expect(h[90..104]).to eq(invoice.commercial_invoice_lines.inject(0.0) {|sum, l| sum + l.quantity}.to_s.ljust(15))
-      expect(h[105..119]).to eq(invoice.invoice_value.to_s.ljust(15))
+      expect(h[60..74]).to eq("10.00".ljust(15))
+      expect(h[75..89]).to eq("100".ljust(15))
+      expect(h[90..104]).to eq("101.00".ljust(15))
+      expect(h[105..119]).to eq("100.10".ljust(15))
       verify_company_fields h, 120, invoice.vendor
       verify_company_fields h, 470, invoice.consignee
       # Importer data (which is just listed as "GENERIC" in the general case)
@@ -89,21 +89,34 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(h[1321, 4]).to eq "SCAC"
       expect(h[1325, 30]).to eq "SCAC1234567890                "
 
+      l = invoice.commercial_invoice_lines.first
+      t = l.commercial_invoice_tariffs.first
+      o = contents[1]
 
-      invoice.commercial_invoice_lines.each_with_index do |l, x|
-        t = l.commercial_invoice_tariffs.first
+      expect(o[0]).to eq("D")
+      expect(o[1..50]).to eq(l.part_number.ljust(50))
+      expect(o[51..60]).to eq(l.country_origin_code.ljust(10))
+      expect(o[61..72]).to eq(t.hts_code.ljust(12))
+      expect(o[73..122]).to eq(t.tariff_description.ljust(50))
+      expect(o[123..137]).to eq("100.00".ljust(15))
+      expect(o[138..152]).to eq("1.00".ljust(15))
+      expect(o[153..202]).to eq(l.po_number.to_s.ljust(50))
+      expect(o[203..212]).to eq(t.tariff_provision.ljust(10))
 
-        o = contents[x+1]
-        expect(o[0]).to eq("D")
-        expect(o[1..50]).to eq(l.part_number.ljust(50))
-        expect(o[51..60]).to eq(l.country_origin_code.ljust(10))
-        expect(o[61..72]).to eq(t.hts_code.ljust(12))
-        expect(o[73..122]).to eq(t.tariff_description.ljust(50))
-        expect(o[123..137]).to eq(l.quantity.to_s.ljust(15))
-        expect(o[138..152]).to eq(l.unit_price.to_s.ljust(15))
-        expect(o[153..202]).to eq(l.po_number.to_s.ljust(50))
-        expect(o[203..212]).to eq(t.tariff_provision.ljust(10))
-      end
+      l = invoice.commercial_invoice_lines.second
+      t = l.commercial_invoice_tariffs.first
+      o = contents[2]
+
+      expect(o[0]).to eq("D")
+      expect(o[1..50]).to eq(l.part_number.ljust(50))
+      expect(o[51..60]).to eq(l.country_origin_code.ljust(10))
+      expect(o[61..72]).to eq(t.hts_code.ljust(12))
+      expect(o[73..122]).to eq(t.tariff_description.ljust(50))
+      expect(o[123..137]).to eq("1.00".ljust(15))
+      expect(o[138..152]).to eq("0.10".ljust(15))
+      expect(o[153..202]).to eq(l.po_number.to_s.ljust(50))
+      expect(o[203..212]).to eq(t.tariff_provision.ljust(10))
+
     end
 
     it "does not fail with invoices containing slashes in the name" do
@@ -126,11 +139,11 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
       expect(h[1..25]).to eq("VFI-#{invoice.id}".ljust(25))
       # Num Cartons
-      expect(h[60..74]).to eq(BigDecimal.new("0").to_s.ljust(15))
+      expect(h[60..74]).to eq("0.00".ljust(15))
       # Gross Weight
       expect(h[75..89]).to eq("0".ljust(15))
       # It should be poulating the invoice value from the detail level here
-      expect(h[105..119]).to eq(BigDecimal.new("100.1").to_s.ljust(15))
+      expect(h[105..119]).to eq("100.10".ljust(15))
       expect(h[120..169]).to eq("GENERIC".ljust(50))
       expect(h[470..519]).to eq("GENERIC".ljust(50))
       expect(h[820..869]).to eq("GENERIC".ljust(50))
@@ -149,9 +162,9 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       h = contents[0]
 
       # Invoice value 
-      expect(h[105..119]).to eq("0.0".ljust(15))
+      expect(h[105..119]).to eq("0.00".ljust(15))
       # Units
-      expect(h[90..104]).to eq("0.0".ljust(15))
+      expect(h[90..104]).to eq("0.00".ljust(15))
     end
 
     it "should not populate invoice value if any lines are missing unit price" do
@@ -163,7 +176,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       h = contents[0]
 
       # Invoice value 
-      expect(h[105..119]).to eq("0.0".ljust(15))
+      expect(h[105..119]).to eq("0.00".ljust(15))
     end
 
     it "should handle nils in all default field values" do
@@ -178,43 +191,6 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
       contents = generate
       expect(contents.length).to eq(3)
-    end
-
-    it "should handle lambdas and constants in mappings" do
-      map = subject.invoice_header_map
-      # leave the subject context off the method call here to ensure the 
-      # lambda is executed within the context of the generator
-
-      # Verify the correct parameters were fed to the lambdas too
-      l_inv = nil
-      map[:invoice_number] = lambda {|h| l_inv = h; ftp_folder}
-      map[:invoice_date] = "20130101"
-
-      detail_map = subject.invoice_detail_map
-      dl_inv = []
-      dl_line = []
-      dl_tar = []
-
-      call_count = 0;
-      detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; ftp_folder + (call_count+=1).to_s}
-
-      expect(subject).to receive(:invoice_header_map).and_return map
-      expect(subject).to receive(:invoice_detail_map).and_return detail_map
-
-      contents = generate
-      expect(contents.length).to eq(3)
-
-      expect(contents[0][1..25]).to eq(subject.ftp_folder.ljust(25))
-      expect(contents[0][26..35]).to eq("20130101".ljust(10))
-      expect(contents[1][1..50]).to eq("#{subject.ftp_folder}1".ljust(50))
-      expect(contents[2][1..50]).to eq("#{subject.ftp_folder}2".ljust(50))
-
-      expect(l_inv).to eq(invoice)
-      expect(dl_inv[0]).to eq(invoice)
-      expect(dl_line[0]).to eq(invoice.commercial_invoice_lines.first)
-      expect(dl_tar[0]).to eq(invoice.commercial_invoice_lines.first.commercial_invoice_tariffs.first)
-      expect(dl_line[1]).to eq(invoice.commercial_invoice_lines.second)
-      expect(dl_tar[1]).to eq(invoice.commercial_invoice_lines.second.commercial_invoice_tariffs.first)
     end
 
     it "should error if more than 999 lines are on the invoice" do

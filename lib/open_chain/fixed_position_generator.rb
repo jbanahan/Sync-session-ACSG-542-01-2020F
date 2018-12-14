@@ -49,11 +49,7 @@ module OpenChain; class FixedPositionGenerator
     # class has enough value in truncation detection and encoding output that it can be used in other 
     # output scenarios (like validating xml lengths into a system we know max lengths for .ie Kewill)
     if pad_string
-      if justification == :right
-        v = v.rjust(max_length, opts_val(pad_char, :pad_char))
-      else
-        v = v.ljust(max_length, opts_val(pad_char, :pad_char))
-      end
+      v = pad(v, max_length, justification, pad_char, :pad_char)
     end
 
     v
@@ -109,12 +105,7 @@ module OpenChain; class FixedPositionGenerator
     end
 
     if pad_string
-      p_char = opts_val(pad_char, :numeric_pad_char)
-      if justification == :left
-        r = s.ljust(width, p_char)
-      else
-        r = s.rjust(width, p_char)
-      end
+      r = pad(s, width, justification, pad_char, :numeric_pad_char)
     else
       r = s
     end
@@ -124,19 +115,29 @@ module OpenChain; class FixedPositionGenerator
   end
 
   def date d, format_override=nil, timezone_override = nil
-    f = format_override.blank? ? @opts[:date_format] : format_override
+    datetime(d, date_format: format_override, timezone: timezone_override)
+  end
+
+  def datetime d, date_format: nil, timezone: nil, max_length: nil, justification: :right, pad_char: nil
+    format = opts_val(date_format, :date_format)
+    
     v = nil
     if d.nil?
-      v = ''.ljust(Time.now.strftime(f).length, @opts[:blank_date_fill_char])
+      v = ''.ljust(Time.now.strftime(format).length, opts_val(pad_char, :blank_date_fill_char))
     else
       if d.respond_to?(:in_time_zone)
         # Use the override, if given, fall back to opts if there, else fall back to Time.zone setting
-        tz = timezone_override ? timezone_override : (@opts[:output_timezone] ? @opts[:output_timezone] : Time.zone )
+        tz = opts_val(timezone, :output_timezone).presence || Time.zone
         d = d.in_time_zone tz if tz
       end
 
-      v = d.strftime(f)
+      v = d.strftime(format)
     end
+
+    if max_length.to_i > 0
+      v = pad(v, max_length, justification, pad_char, :blank_date_fill_char)
+    end
+
     v
   end
 
@@ -164,6 +165,14 @@ module OpenChain; class FixedPositionGenerator
       s.encode encoding, replace: replace, invalid: :replace, undef: :replace
     else
       s
+    end
+  end
+
+  def pad value, max_length, justification, pad_char, pad_char_type
+    if justification == :right
+      return value.rjust(max_length, opts_val(pad_char, pad_char_type))
+    else
+      return value.ljust(max_length, opts_val(pad_char, pad_char_type))
     end
   end
 end; end

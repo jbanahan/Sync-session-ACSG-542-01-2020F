@@ -45,15 +45,22 @@ module OpenChain; module EntityCompare; module ComparatorHelper
       children << child['entity'] if child['entity']['core_module'] == entity_chain.first
     end
 
+    found = []
     if entity_chain.length == 1
-      return children
+      found = children
     else
       entity_children = []
       children.each do |child|
         entity_children.push *json_child_entities(child, *entity_chain[1..-1])
       end
-      return entity_children.flatten
+      found = entity_children.flatten
     end
+
+    if block_given? 
+      found.each {|f| yield f }
+    end
+
+    found
   end
 
   # Simple helper to reach into the entity hash and extract model fields
@@ -94,6 +101,22 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     obj = nil
     if cm
       obj = cm.klass.where(id: entity['record_id']).first
+    end
+
+    obj
+  end
+
+  def find_entity_object_by_snapshot_values(snapshot, fields_hash = {})
+    entity = unwrap_entity(snapshot)
+    cm = CoreModule.find_by_class_name(entity['core_module'])
+    obj = nil
+    if cm && fields_hash.size > 0
+      relation = cm.klass
+      fields_hash.each_pair do |entity_attribute, mf_uid|
+        relation = relation.where(entity_attribute => mf(entity, mf_uid))
+      end
+
+      obj = relation.first
     end
 
     obj
@@ -149,6 +172,10 @@ module OpenChain; module EntityCompare; module ComparatorHelper
   def json_entity_type_and_id hash
     entity = unwrap_entity(hash)
     [entity["core_module"], entity["record_id"]]
+  end
+
+  def record_id hash
+    unwrap_entity(hash)["record_id"]
   end
 
   # Returns true if any of the model fields given in model_field_uids are different between 

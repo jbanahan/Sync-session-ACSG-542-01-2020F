@@ -66,12 +66,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       # Make a high-cube so we're checking that it's set into the correct container type field
       container = s.containers.create! container_number: "CONTAINER", seal_number: "SEAL", container_size: "26GP"
 
-      shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id
+      shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id, mid: "MID1"
       shipment_line_1.linked_order_line_id = order.order_lines.first.id
       shipment_line_1.product_id = order.order_lines.first.product.id
       shipment_line_1.save!
 
-      shipment_line_2 = s.shipment_lines.build gross_kgs: BigDecimal("40"), carton_qty: 50, invoice_number: "INV", quantity: 60, container_id: container.id
+      shipment_line_2 = s.shipment_lines.build gross_kgs: BigDecimal("40"), carton_qty: 50, invoice_number: "INV", quantity: 60, container_id: container.id, mid: "MID2"
       shipment_line_2.linked_order_line_id = order.order_lines.first.id
       shipment_line_2.product_id = order.order_lines.first.product.id
       shipment_line_2.save!
@@ -148,7 +148,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(line.unit_price_uom).to eq "PCS"
       expect(line.po_number).to eq "ORDER"
       expect(line.foreign_value).to eq 300 
-      expect(line.country_of_origin)
+      expect(line.country_of_origin).to eq "VN"
+      expect(line.mid).to eq "MID1"
 
       line = inv.invoice_lines.second
       expect(line.gross_weight).to eq 40
@@ -163,6 +164,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(line.unit_price_uom).to eq "PCS"
       expect(line.po_number).to eq "ORDER"
       expect(line.foreign_value).to eq 600 
+      expect(line.mid).to eq "MID2"
     end
 
     it "handles shipments without invoice numbers" do
@@ -260,6 +262,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
       d = subject.generate_kewill_shipment_data shipment
       expect(d.goods_description).to eq "GOODS"
+    end
+
+    it "falls back to order line for hts if product's is blank" do
+      order.order_lines.first.update_attributes! hts: "9999999999"
+      product.classifications.destroy_all
+
+      d = subject.generate_kewill_shipment_data shipment
+
+      line = d.invoices.first.invoice_lines.first
+      expect(line.hts).to eq "9999999999"
     end
   end
 

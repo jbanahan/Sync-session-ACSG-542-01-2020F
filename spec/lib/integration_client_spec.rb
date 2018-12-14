@@ -674,6 +674,24 @@ describe OpenChain::IntegrationClientCommandProcessor do
     expect(subject.process_command(cmd)).to eq(success_hash)
   end
 
+  it "handles PVH GTN Order files" do
+    expect(master_setup).to receive(:custom_features_list).and_return ['PVH Feeds']
+    p = class_double("OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser")
+    expect(OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser).to receive(:delay).and_return p
+    expect(p).to receive(:process_from_s3).with "bucket", '12345'
+    cmd = {'request_type'=>'remote_file','original_path'=>'/pvh_gtn_order_xml/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    expect(subject.process_command(cmd)).to eq(success_hash)
+  end
+
+  it "handles PVH GTN Invoice files" do
+    expect(master_setup).to receive(:custom_features_list).and_return ['PVH Feeds']
+    p = class_double("OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser")
+    expect(OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser).to receive(:delay).and_return p
+    expect(p).to receive(:process_from_s3).with "bucket", '12345'
+    cmd = {'request_type'=>'remote_file','original_path'=>'/pvh_gtn_invoice_xml/file.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    expect(subject.process_command(cmd)).to eq(success_hash)
+  end
+
   it 'should return error if bad request type' do
     cmd = {'something_bad'=>'crap'}
     expect(subject.process_command(cmd)).to eq({'response_type'=>'error','message'=>"Unknown command: #{cmd}"})

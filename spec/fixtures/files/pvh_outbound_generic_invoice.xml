@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<GenericInvoiceMessage>
+  <TransactionInfo>
+    <Sender>
+      <Code>VANDE</Code>
+    </Sender>
+    <Receiver>
+      <Code>PVH</Code>
+    </Receiver>
+    <File>
+      <ReceivedTime>
+        <Date>2018-11-06</Date>
+        <Time>12:11:00</Time>
+      </ReceivedTime>
+      <OriginalFile>
+        <FileType>XML</FileType>
+        <FileName>GI_VANDE_PVH_12345_LINE_1541524260.xml</FileName>
+        <MessageType>GENINV</MessageType>
+        <MessageId>1541524260</MessageId>
+        <ControlNumber>1541524260</ControlNumber>
+        <HeaderControlNumber>1541524260</HeaderControlNumber>
+      </OriginalFile>
+      <XMLFile>
+        <FileName>GI_VANDE_PVH_12345_LINE_1541524260.xml</FileName>
+        <CreateTime>
+          <Date>2018-11-06</Date>
+          <Time>12:11:00</Time>
+        </CreateTime>
+      </XMLFile>
+    </File>
+  </TransactionInfo>
+  <GenericInvoices>
+    <GenericInvoice Type="Broker Invoice">
+      <Purpose>Create</Purpose>
+      <InvoiceHeader>
+        <InvoiceNumber>12345-LINE</InvoiceNumber>
+        <InvoiceDateTime>2018-11-06T12:00:00</InvoiceDateTime>
+        <InvoiceDetails>
+          <InvoiceLineItem Level="Manifest Line Item">
+            <ItemNumber>000</ItemNumber>
+            <OrderNumber>USPVHCORP</OrderNumber>
+            <ChargeField>
+              <Level>Manifest Line Item</Level>
+              <Type>
+                <Code>E063</Code>
+              </Type>
+              <ChargeDate>
+                <Date>2018-11-02</Date>
+                <Time>12:00:00</Time>
+                <TimeZone>EST</TimeZone>
+              </ChargeDate>
+              <Value>100.0</Value>
+              <Currency>0.0</Currency>
+            </ChargeField>
+          </InvoiceLineItem>
+          <InvoiceLineItem Level="Manifest Line Item">
+            <ItemNumber>000</ItemNumber>
+            <OrderNumber>USPVHCORP</OrderNumber>
+            <ChargeField>
+              <Level>Manifest Line Item</Level>
+              <Type>
+                <Code>E063</Code>
+              </Type>
+              <ChargeDate>
+                <Date>2018-11-02</Date>
+                <Time>12:00:00</Time>
+                <TimeZone>EST</TimeZone>
+              </ChargeDate>
+              <Value>200.0</Value>
+              <Currency>0.0</Currency>
+            </ChargeField>
+          </InvoiceLineItem>
+        </InvoiceDetails>
+      </InvoiceHeader>
+    </GenericInvoice>
+  </GenericInvoices>
+</GenericInvoiceMessage>

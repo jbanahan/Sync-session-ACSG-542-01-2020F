@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
     generate_and_send [entry]
   end
 
-  def generate_and_send entries 
+  def generate_and_send entries, sync_record: nil 
     Array.wrap(entries).each do |entry|
       if entry.invoices.length > 0
         doc = generate_entry_xml(entry, add_entry_info: false)
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
           write_xml doc, file
           file.rewind
 
-          ftp_file file
+          ftp_sync_file file, sync_record
         end
       end
     end

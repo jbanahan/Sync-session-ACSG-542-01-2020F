@@ -5,7 +5,8 @@ class PortsController < ApplicationController
     'p_d_code'=>{:field=>'schedule_d_code',:label=>'Schedule D Code'},
     'p_cp_code'=>{:field=>'cbsa_port',:label=>'CBSA Port'},
     'p_cs_code'=>{:field=>'cbsa_sublocation',:label=>'CBSA Sublocation'},
-    'p_un_code'=>{:field=>'unlocode',:label=>'UN/LOCODE'}
+    'p_un_code'=>{:field=>'unlocode',:label=>'UN/LOCODE'},
+    'p_iata'=>{field: "iata_code", label: "IATA Code"}
   }
   def set_page_title
     @page_title = 'Tools'

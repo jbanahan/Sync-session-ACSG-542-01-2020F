@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module Advance; class CarquestFenixNdInv
   # This is an override of the default to provide actual CQ information in the file, instead of "generic"
   def invoice_header_map
     super.merge( {
-      importer: lambda {|i| convert_company_to_hash(i.importer) }
+      importer: lambda {|i| i.importer }
     } )
   end
 

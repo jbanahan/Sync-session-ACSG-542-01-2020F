@@ -433,5 +433,14 @@ describe CoreObjectSupport do
       expect(res).to_not be_nil
       expect(res.length).to eq(0)
     end
+
+    it "works at class level" do
+      res = Entry.split_newline_values(" a
+                b \n  c  ")
+      expect(res.length).to eq(3)
+      expect(res[0]).to eq(' a')
+      expect(res[1]).to eq('b ')
+      expect(res[2]).to eq('c  ')
+    end
   end
 end

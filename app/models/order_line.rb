@@ -93,6 +93,11 @@ class OrderLine < ActiveRecord::Base
     self.booking_lines.length > 0
   end
 
+  # This is basically just a check to see if the line has been booking or appears on a shipment
+  def can_be_deleted?
+    !booked? && !shipping?
+  end
+
   def booked_qty
     qty = BigDecimal("0")
     self.booking_lines.each {|l| qty += l.quantity unless l.quantity.nil? }

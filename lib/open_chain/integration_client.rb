@@ -56,6 +56,8 @@ require 'open_chain/custom_handler/advance/advance_prep_7501_shipment_parser'
 require 'open_chain/custom_handler/lt/lt_850_parser'
 require 'open_chain/custom_handler/descartes/descartes_basic_shipment_xml_parser'
 require 'open_chain/custom_handler/lt/lt_856_parser'
+require 'open_chain/custom_handler/pvh/pvh_gtn_order_xml_parser'
+require 'open_chain/custom_handler/pvh/pvh_gtn_invoice_xml_parser'
 
 module OpenChain
   class IntegrationClient
@@ -286,6 +288,10 @@ module OpenChain
         OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ecellerate_shipment") && custom_features.include?("eCellerate")
         OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "pvh_gtn_order_xml") && custom_features.include?("PVH Feeds")
+        OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "pvh_gtn_invoice_xml") && custom_features.include?("PVH Feeds")
+        OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

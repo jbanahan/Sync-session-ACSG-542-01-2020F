@@ -20,8 +20,8 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     # There's two invoices in the spec csv file, account for that
     expect(Lock).to receive(:acquire).with("BrokerInvoice-01-0000009").and_yield
     expect(Lock).to receive(:acquire).with("BrokerInvoice-01-0039009").and_yield
-    expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
-    expect(Lock).to receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
+    expect(Lock).to receive(:db_lock).twice.with(instance_of(BrokerInvoice)).and_yield
+    expect(Lock).to receive(:db_lock).twice.with(instance_of(IntacctReceivable)).and_yield
 
     @k.parse_file @content, log
     expect(BrokerInvoice.count).to eq(2)
@@ -32,12 +32,14 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     bi.invoice_date = Date.new(2013,1,14)
     expect(bi.invoice_number).to eq('01-0000009')
     expect(bi.customer_number).to eq("BOSSCI")
+    expect(bi.entry.entity_snapshots.length).to eq 1
 
     # Not currently setting company for this parser.
     expect(log.company).to be_nil
     expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].value).to eq "01-0000009"
     expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_type).to eq "BrokerInvoice"
     expect(log.get_identifiers(InboundFileIdentifier::TYPE_INVOICE_NUMBER)[0].module_id).to eq bi.id
+
   end
   it "should write details" do
     @k.parse_file @content, log

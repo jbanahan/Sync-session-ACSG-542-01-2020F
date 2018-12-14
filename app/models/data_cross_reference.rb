@@ -61,6 +61,7 @@ class DataCrossReference < ActiveRecord::Base
   ENTRY_MID_VALIDATIONS ||= 'entry_mids'
   SHIPMENT_CI_LOAD_CUSTOMERS ||= 'shp_ci_load_cust'
   SHIPMENT_ENTRY_LOAD_CUSTOMERS ||= "shp_entry_load_cust"
+  INVOICE_CI_LOAD_CUSTOMERS ||= 'inv_ci_load_cust'
   ISF_CI_LOAD_CUSTOMERS ||= "isf_ci_load_cust"
   LL_GTN_QUANTITY_UOM ||= "ll_gtn_quantity_uom"
   LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
@@ -81,7 +82,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(CI_LOAD_DEFAULT_GOODS_DESCRIPTION, "Shipment Entry Load Goods Descriptions", "Enter the customer number and corresponding default Goods Description.", key_label:"Customer Number", value_label: "Goods Description"),
       xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label:"Customer Number", show_value_column: false),
       xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
-      xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true)
+      xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
+      xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false)
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -135,7 +137,7 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
-    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS
       MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
     when CA_HTS_TO_DESCR
       MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')

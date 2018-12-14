@@ -29,7 +29,17 @@ module OpenChain; module ModelFieldDefinition; module InvoiceLineFieldDefinition
       [22,:invln_value_domestic, :value_domestic, "Value - Domestic", {datatype: :decimal}],
       [23,:invln_value_foreign, :value_foreign, "Value - Foreign", {datatype: :decimal}],
       [24,:invln_volume, :volume, "Volume", {datatype: :decimal}],
-      [25,:invln_volume_uom, :volume_uom, "Volume UOM", {datatype: :decimal}]
+      [25,:invln_volume_uom, :volume_uom, "Volume UOM", {datatype: :decimal}],
+      [26,:invln_po_line_number, :po_line_number, "PO Line Number", {datatype: :string}],
+      [27,:invln_master_bill_of_lading, :master_bill_of_lading, "Master Bill Of Lading", {datatype: :string}],
+      [28,:invln_carrier_code, :carrier_code, "Carrier Code", {datatype: :string}],
+      [29,:invln_cartons, :cartons, "Cartons", {datatype: :integer}],
+      [30,:invln_customs_quantity, :customs_quantity, "Customs Quantity", {datatype: :decimal}],
+      [31,:invln_customs_quantity_uom, :customs_quantity_uom, "Customs Quantity UOM", {datatype: :string}],
+      [32,:invln_container_number, :container_number, "Container Number", {datatype: :string}],
+      [33,:invln_related_parties, :related_parties, "Related Parties?", {datatype: :boolean}],
+      [34,:invln_spi, :spi, "Special Program", {datatype: :string}],
+      [35,:invln_spi2, :spi, "Secondary Special Program", {datatype: :string}]
     ]
 
     add_fields CoreModule::INVOICE_LINE, make_country_arrays(1000,"invln_origin","invoice_lines", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)

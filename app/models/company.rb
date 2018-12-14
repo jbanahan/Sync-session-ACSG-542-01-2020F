@@ -44,6 +44,7 @@
 #  index_companies_on_factory                     (factory)
 #  index_companies_on_fenix_customer_number       (fenix_customer_number)
 #  index_companies_on_master                      (master)
+#  index_companies_on_system_code                 (system_code)
 #  index_companies_on_vendor                      (vendor)
 #
 

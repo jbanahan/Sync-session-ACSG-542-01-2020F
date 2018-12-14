@@ -12,6 +12,7 @@
       $("#upd_cp").val($(this).attr('cp'));
       $("#upd_cs").val($(this).attr('cs'));
       $("#upd_u").val($(this).attr('u'));
+      $("#upd_iata").val($(this).attr('iata'));
       $("#upd_ao").prop('checked',$(this).attr('ao')==='true')
       $("#upd_ad").prop('checked',$(this).attr('ad')==='true')
       $("#mod_update_port").dialog('open');
@@ -31,6 +32,7 @@
       <th>Schedule D</th>
       <th>CBSA Port / Sublocation</th>
       <th>UN/LOCODE</th>
+      <th>IATA Code</th>
       <th>
         Active Origin
       </th>
@@ -48,6 +50,7 @@
       <td><%=p.schedule_d_code%></td>
       <td><%=p.cbsa_port%> / <%=p.cbsa_sublocation%></td>
       <td><%=p.unlocode%></td>
+      <td><%=p.iata_code%></td>
       <td>
         <%=p.active_origin? ? 'Y' : 'N' %>
       </td>
@@ -55,7 +58,7 @@
         <%=p.active_destination? ? 'Y' : 'N' %>
       </td>
       <td>
-        <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>' ao='<%=p.active_origin%>' ad='<%=p.active_destination%>'>Update</a> |
+        <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>' iata='<%=p.iata_code%>' ao='<%=p.active_origin%>' ad='<%=p.active_destination%>'>Update</a> |
         <%=link_to 'Delete', port_path(p), :confirm => 'Are you sure?', :method=>:delete%>
       </td>
     </tr>
@@ -73,6 +76,7 @@
       <%=field_row 'CBSA Port', f.text_field(:cbsa_port)%>
       <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation)%>
       <%=field_row 'UN/LOCODE', f.text_field(:unlocode)%>
+      <%=field_row 'IATA Code', f.text_field(:unlocode)%>
       <%=field_row 'Origin Port', f.check_box(:active_origin)%>
       <%=field_row 'Destination Port', f.check_box(:active_destination)%>
     </table>
@@ -88,6 +92,7 @@
       <%=field_row 'CBSA Port', f.text_field(:cbsa_port,:id=>'upd_cp')%>
       <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation,:id=>'upd_cs')%>
       <%=field_row 'UN/LOCODE', f.text_field(:unlocode,:id=>'upd_u')%>
+      <%=field_row 'IATA Code', f.text_field(:iata_code,:id=>'upd_iata')%>
       <%=field_row 'Origin Port', f.check_box(:active_origin,:id=>'upd_ao')%>
       <%=field_row 'Destination Port', f.check_box(:active_destination,:id=>'upd_ad')%>
     </table>

@@ -2,6 +2,7 @@
 #
 # Table name: invoices
 #
+#  consignee_id              :integer
 #  country_origin_id         :integer
 #  created_at                :datetime         not null
 #  currency                  :string(255)
@@ -17,6 +18,9 @@
 #  invoice_number            :string(255)
 #  invoice_total_domestic    :decimal(13, 2)
 #  invoice_total_foreign     :decimal(13, 2)
+#  last_exported_from_source :datetime
+#  last_file_bucket          :string(255)
+#  last_file_path            :string(255)
 #  manually_generated        :boolean
 #  net_invoice_total         :decimal(13, 2)
 #  net_weight                :decimal(11, 2)
@@ -40,13 +44,16 @@
 
 class Invoice < ActiveRecord::Base
   include CoreObjectSupport
-  belongs_to :country_origin, :class_name => "Country"
-  belongs_to :factory, :class_name => "Company"
-  belongs_to :importer, :class_name => "Company"
-  belongs_to :ship_to, :class_name => "Address"
-  belongs_to :vendor, :class_name => "Company"
+  include IntegrationParserSupport
+  
+  belongs_to :country_origin, class_name: "Country"
+  belongs_to :factory, class_name: "Company"
+  belongs_to :importer, class_name: "Company"
+  belongs_to :ship_to, class_name: "Address"
+  belongs_to :vendor, class_name: "Company"
+  belongs_to :consignee, class_name: "Company"
 
-  has_many :invoice_lines, :dependent => :destroy, :autosave => true
+  has_many :invoice_lines, dependent: :destroy, autosave: true, inverse_of: :invoice
 
   def self.search_where user
     if user.company.master
@@ -74,5 +81,34 @@ class Invoice < ActiveRecord::Base
           (user.company_id == self.factory_id) ||
           (user.company_id == self.vendor_id)
         )
+  end
+
+  def calculate_and_set_invoice_totals
+    discounts = BigDecimal("0")
+    charges = BigDecimal("0")
+    value_foreign = BigDecimal("0")
+    value_domestic = BigDecimal("0")
+
+    self.invoice_lines.each do |line|
+      discounts += line.calculate_total_discounts
+      charges += line.calculate_total_charges
+      value_foreign += line.value_foreign unless line.value_foreign.nil?
+      value_domestic += line.value_domestic unless line.value_domestic.nil?
+    end
+
+    self.invoice_total_foreign = value_foreign
+    self.invoice_total_domestic = value_domestic
+    self.total_charges = charges
+    self.total_discounts = discounts
+
+    # I'm not sure we can actually set the net_invoice_total in a generic fashion.
+    # I THINK this might just be total value foreign minus the discounts.
+    # .ie the Net Total is the amount the importer will actually pay the invoicer.
+
+    # But that's based solely on my knowledge of how Ann Taylor calculates invoices,
+    # and I'm not sure that actually fits across the board.  So I'm leaving the 
+    # net_invoice_total blank
+
+    nil
   end
 end

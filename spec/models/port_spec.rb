@@ -109,37 +109,51 @@ describe Port do
     end
 
     context "UNLOC codes" do
-      let!(:data) do 
+      let (:rows) {
         [["*", "CA", "", ".CANADA", "*","*","*","*","*","*","*"],
-         ["*", "CA", "MON", "Montréal", "Montreal", "*", "---4----", "*","*","*","*"],
+         ["*", "CA", "MON", "Montréal", "Montreal", "*", "---4----", "*","*","YUL","*"],
          ["*", "CA", "VAN", "Vancouver", "Vancouver", "*", "1-------", "*","*","*","*"],
          ["*", "CA", "TOR", "Toronto", "Toronto", "*", "1-------", "*","*","*","*"],
-         ["*", "CA", "STJ", "St. John's", "St. John's", "*", "--3----", "*","*","*","*"]].map{ |r| r.join(",") }.join("\n").encode("Windows-1252")
+         ["*", "CA", "STJ", "St. John's", "St. John's", "*", "--3----", "*","*","*","*"],
+         ["*", "CA", "JON", "Jonquière", "Jonquiere", "*", "--3----", "*","*","XJQ","*"]]
+      }
+
+      let (:data) do 
+        rows.map{ |r| r.map {|v| v.gsub("*", "")}.to_csv }.join("\n").encode("Windows-1252")
       end
 
-      it "loads UNLOC codes, skipping those that already exist" do
+      it "loads UNLOC codes, not updating those that already exist, and creating non-1/4 ports that have IATA codes" do
         Factory(:port, name: "Toronto, haha", unlocode: "CATOR")
         Port.load_unlocode data
-        expect(Port.count).to eq 3
-        expect(Port.where(unlocode: "CAMON").first.name).to eq "Montréal"
-        expect(Port.where(unlocode: "CAVAN").first.name).to eq "Vancouver"
+        expect(Port.count).to eq 4
+        mon = Port.where(unlocode: "CAMON").first
+        expect(mon.name).to eq "Montréal"
+        expect(mon.iata_code).to eq "YUL"
+        van = Port.where(unlocode: "CAVAN").first
+        expect(van.name).to eq "Vancouver"
+        expect(van.iata_code).to be_nil
         expect(Port.where(unlocode: "CATOR").first.name).to eq "Toronto, haha"
+        jon = Port.where(unlocode: "CAJON").first
+        expect(jon.name).to eq "Jonquière"
+        expect(jon.iata_code).to eq "XJQ"
       end
 
       it "overwrites existing codes when indicated" do
-        Factory(:port, name: "Toronto, haha", unlocode: "CATOR")
+        Factory(:port, name: "Montreal, haha", unlocode: "CAMON")
         Port.load_unlocode data, true
-        expect(Port.count).to eq 3
-        expect(Port.where(unlocode: "CAMON").first.name).to eq "Montréal"
+        expect(Port.count).to eq 4
+        mon = Port.where(unlocode: "CAMON").first
+        expect(mon.name).to eq "Montréal"
+        expect(mon.iata_code).to eq "YUL"
         expect(Port.where(unlocode: "CAVAN").first.name).to eq "Vancouver"
         expect(Port.where(unlocode: "CATOR").first.name).to eq "Toronto"
       end
 
       it "assigns name from column E if column D doesn't convert to UTF-8" do
-        r = ["*", "CA", "WIN", "Winnip\x81g", "Winnipeg", "*", "---4----", "*","*","*","*"].join(",").force_encoding("Windows-1252")
-        data << "\n"<< r
-        Port.load_unlocode data
-        expect(Port.count).to eq 4
+        bad_row = ["*", "CA", "WIN", "Winnip\x81g", "Winnipeg", "*", "---4----", "*","*","*","*"].map { |v| v.gsub("*", "").force_encoding("Windows-1252")}.to_csv
+        
+        Port.load_unlocode bad_row
+        expect(Port.count).to eq 1
         expect(Port.where(unlocode: "CAWIN").first.name).to eq "Winnipeg"
       end
     end

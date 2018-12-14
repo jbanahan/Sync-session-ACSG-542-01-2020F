@@ -57,7 +57,7 @@ module OpenChain; module ModelFieldDefinition; module BrokerInvoiceFieldDefiniti
       make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
       make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decimal,lambda {|entry| entry.mpf}),
       make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
-      [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}],
+      [50,:bi_currency,:currency,"Currency",{:data_type=>:string}],
       make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:string,lambda {|entry| entry.importer_tax_id}),
       make_broker_invoice_entry_field(52,:bi_destination_state,:destination_state,"Destination State",:string,lambda {|entry| entry.destination_state}),
       make_broker_invoice_entry_field(53,:bi_container_sizes,:container_sizes,"Container Sizes",:string,lambda {|entry| entry.container_sizes}),
