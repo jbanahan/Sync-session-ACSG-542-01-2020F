@@ -163,7 +163,7 @@ class CustomReportEntryTariffBreakdown < CustomReport
       row_content << total_duty
 
       if tariff_mtb
-        savings = (non_nil_big_decimal(est_underlying_classification_duty) - non_nil_big_decimal(total_duty))
+        savings = (non_nil_big_decimal(est_underlying_classification_duty) - non_nil_big_decimal(duty_mtb))
         row_content << (savings > 0 ? savings : BigDecimal("0"))
       else
         row_content << BigDecimal("0")

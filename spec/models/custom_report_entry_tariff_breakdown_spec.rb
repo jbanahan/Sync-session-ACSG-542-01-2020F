@@ -42,13 +42,15 @@ describe CustomReportEntryTariffBreakdown do
       ent_a = Factory(:entry, broker_reference:"ABC")
       invoice_1 = Factory(:commercial_invoice, entry:ent_a, invoice_number:"DEF")
       line_1_1 = Factory(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 1, part_number:"X")
-      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9902123456", entered_value:100, duty_amount:1)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9903123456", entered_value:100, duty_amount:25)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"9902123456", duty_amount:1)
       Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_1, hts_code:"1234567890", duty_amount: 0)
 
       line_1_2 = Factory(:commercial_invoice_line, commercial_invoice:invoice_1, line_number: 2, part_number:"Y")
       Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"9903123456", entered_value:100, duty_amount:25)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567890", duty_amount: 10)
-      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567891", duty_amount: 15)
+      # Non-special tariff lines won't have duty amounts...special ones will
+      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567890", duty_amount: 0)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line:line_1_2, hts_code:"1234567891", duty_amount: 0)
 
       invoice_2 = Factory(:commercial_invoice, entry:ent_a, invoice_number:"GHI")
       line_2 = Factory(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 1, part_number:"Z")
@@ -72,9 +74,9 @@ describe CustomReportEntryTariffBreakdown do
                              "MTB Classification Duty", "301 Classification", "301 Classification Rate",
                              "301 Classification Duty", "Tariff Entered Value", "Total Duty Paid", "MTB Savings"]
       # This row corresponds to line_1_1
-      expect(rows[1]).to eq ["ABC", "DEF", "X", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "", "", "", BigDecimal("10"), "9902.12.3456", BigDecimal("0.01"), BigDecimal("1"), "", "", "", BigDecimal("100"), BigDecimal("1"), BigDecimal("9")]  
+      expect(rows[1]).to eq ["ABC", "DEF", "X", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "", "", "", BigDecimal("10"), "9902.12.3456", BigDecimal("0.01"), BigDecimal("1"), "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("26"), BigDecimal("9")]  
       # This row corresponds to line_1_2
-      expect(rows[2]).to eq ["ABC", "DEF", "Y", "1234.56.7890", BigDecimal("0.10"), BigDecimal("10"), "1234.56.7891", BigDecimal("0.15"), BigDecimal("15"), BigDecimal("25"), "", "", "", "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("50"), 0]
+      expect(rows[2]).to eq ["ABC", "DEF", "Y", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "1234.56.7891", BigDecimal("0.15"), BigDecimal("0"), BigDecimal("25"), "", "", "", "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("25"), 0]
       # This row corresponds to line_2
       expect(rows[3]).to eq ["ABC", "GHI", "Z", "1234.56.7890", BigDecimal("0.10"), BigDecimal("20"), "", "", "", BigDecimal("20"), "", "", "", "", "", "", BigDecimal("200"), BigDecimal("20"), BigDecimal("0")]
       # This row corresponds to line_b
