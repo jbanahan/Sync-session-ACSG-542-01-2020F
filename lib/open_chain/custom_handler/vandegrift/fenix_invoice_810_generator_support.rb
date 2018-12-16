@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module FenixInvoice81
       fields: [
         {field: :record_type, length: 1},
         {field: :invoice_number, length: 25},
-        {field: :invoice_date, length: 10, data_type: :date, format: {justification: :left}},
+        {field: :invoice_date, length: 10, datatype: :date, format: {justification: :left}},
         {field: :country_origin_code, length: 10},
         {field: :country_ultimate_destination, length: 10},
         {field: :currency, length: 4},

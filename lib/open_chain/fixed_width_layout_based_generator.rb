@@ -72,6 +72,7 @@ module OpenChain; module FixedWidthLayoutBasedGenerator
 
   def output_date value, length, format_hash
     format_hash = {max_length: length}.merge format_hash
+    #This is not a typo...we're intentionally calling the datetime method directly
     return generator.datetime(value, **format_hash)
   end
 

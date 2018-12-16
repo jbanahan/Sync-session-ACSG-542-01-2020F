@@ -21,7 +21,8 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
   }
 
   let! (:invoice) {
-    Factory(:commercial_invoice, :invoice_number=>"Inv. Number", :invoice_date=>Date.new(2013, 7, 20), :country_origin_code => "US",
+    # Use a full datetime so that we're sure it's getting trim'ed back to just a date in the output
+    Factory(:commercial_invoice, :invoice_number=>"Inv. Number", :invoice_date=>Time.zone.parse("2018-12-15 12:00"), :country_origin_code => "US",
                       :currency => "CAD", :total_quantity => 10, :total_quantity_uom => "CTNS", :gross_weight => 100, :invoice_value=>100.10,
                       :importer => importer, :vendor => vendor, :consignee => consignee, master_bills_of_lading: "SCAC1234567890")    
   }
