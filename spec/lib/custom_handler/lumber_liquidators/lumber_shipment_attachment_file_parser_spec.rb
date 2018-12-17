@@ -109,6 +109,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     end
 
     it "processes file containing no PDF" do
+      user = Factory(:user, first_name:"Nigel", last_name:"Tufnel", company:Factory(:company, name:"ACME"))
+      Factory(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
+
       unzipped_zip = instance_double(Zip::File)
       expect(Zip::File).to receive(:open).with(zip_path).and_yield(unzipped_zip)
       txt_file = instance_double(Zip::Entry)
@@ -118,21 +121,37 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
       subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['support@vandegriftinc.com']
+      expect(mail.to).to eq ['a@b.com','c@d.com','e@f.com']
       expect(mail.subject).to eq 'Allport ODS docs not in zip file'
       expect(mail.body).to include ERB::Util.html_escape("The attached zip file for master bill 'OOLU2100046990', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution.")
       expect(mail.attachments.length).to eq(1)
       expect(mail.attachments[0].filename).to eq('V2OOLU2100046990.zip')
+      expect(mail.reply_to).to eq ['ll-support@vandegriftinc.com']
+    end
+
+    it "raises exception when mailing list not set up" do
+      unzipped_zip = instance_double(Zip::File)
+      expect(Zip::File).to receive(:open).with(zip_path).and_yield(unzipped_zip)
+      txt_file = instance_double(Zip::Entry)
+      expect(unzipped_zip).to receive(:each).and_yield(txt_file)
+      expect(txt_file).to receive(:name).and_return('some_file.txt')
+
+      expect { subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1 }.to raise_error("Allport ODS Notifications mailing list not configured.")
+
+      expect(ActionMailer::Base.deliveries.size).to eq 0
     end
 
     it "processes invalid zip file" do
+      user = Factory(:user, first_name:"Nigel", last_name:"Tufnel", company:Factory(:company, name:"ACME"))
+      Factory(:mailing_list, name:'Testing', system_code:'ODSNotifications', user:user, email_addresses:"a@b.com,c@d.com, e@f.com")
+
       # This is an invalid zip: it's a PDF renamed as a zip.
       file = File.open('spec/fixtures/files/V3OOLU2100046991.zip', 'rb')
 
       subject.process_file file, 'A', 'V2OOLU2100046991.12345.zip', 1
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['support@vandegriftinc.com']
+      expect(mail.to).to eq ['a@b.com','c@d.com','e@f.com']
       expect(mail.subject).to eq 'Allport ODS docs not in zip file'
       expect(mail.body).to include ERB::Util.html_escape("The attached zip file for master bill 'OOLU2100046991', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution.")
       expect(mail.attachments.length).to eq(1)

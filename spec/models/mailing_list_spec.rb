@@ -22,8 +22,8 @@ describe MailingList do
   describe 'split_emails' do
     it 'splits the emails into an array' do
       mailing_list = MailingList.new
-      mailing_list.email_addresses = "abc@domain.com, cde@domain.com"
-      expect(mailing_list.split_emails).to eql(['abc@domain.com', 'cde@domain.com'])
+      mailing_list.email_addresses = "abc@domain.com,  cde@domain.com,efg@domain.com, ghi@domain.com"
+      expect(mailing_list.split_emails).to eql(['abc@domain.com', 'cde@domain.com', 'efg@domain.com', 'ghi@domain.com'])
     end
   end
 

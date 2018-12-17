@@ -46,7 +46,7 @@ class MailingList < ActiveRecord::Base
   end
 
   def split_emails
-    email_addresses.split(", ")
+    email_addresses.split(/,\s*/)
   end
 
   def extract_invalid_emails

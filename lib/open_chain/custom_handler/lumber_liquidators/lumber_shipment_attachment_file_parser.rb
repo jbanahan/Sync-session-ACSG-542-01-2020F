@@ -150,7 +150,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
 
     def generate_missing_pdf_email master_bill, zip_file
       body_text = "The attached zip file for master bill '#{master_bill}', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution."
-      OpenMailer.send_simple_html('support@vandegriftinc.com', 'Allport ODS docs not in zip file', body_text, [zip_file]).deliver!
+      mailing_list = MailingList.where(system_code:'ODSNotifications').first
+      raise "Allport ODS Notifications mailing list not configured." unless mailing_list
+      OpenMailer.send_simple_html([mailing_list], 'Allport ODS docs not in zip file', body_text, [zip_file], { reply_to:'ll-support@vandegriftinc.com' }).deliver!
     end
 
 end; end; end; end
