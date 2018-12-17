@@ -117,7 +117,13 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [66, :cil_agriculture_license_number, :agriculture_license_number, "Agriculture License Number", {data_type: :string}],
       [67, :cil_add_to_make_amount, :add_to_make_amount, "Additions to Value", {data_type: :decimal, currency: :usd}],
       [68, :cil_psc_reason_code, :psc_reason_code, "PSC Reason Code", {data_type: :string}],
-      [69, :cil_psc_date, :psc_date, "PSC Date", {data_type: :datetime}]
+      [69, :cil_psc_date, :psc_date, "PSC Date", {data_type: :datetime}],
+      [70, :cil_tariff_quota, :cil_tariff_quota, "Tariff Quota", {data_type: :integer, read_only: true,
+                                                                  export_lambda: lambda do |obj|
+                                                                    obj.commercial_invoice_tariffs.where('quota_category IS NOT NULL AND quota_category <> 0').first&.quota_category
+                                                                  end,
+                                                                  qualified_field_name: "(SELECT quota_category FROM commercial_invoice_tariffs WHERE commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id AND (quota_category IS NOT NULL AND quota_category <> 0)  LIMIT 1)"
+      }]
     ]
   end
 end; end; end
