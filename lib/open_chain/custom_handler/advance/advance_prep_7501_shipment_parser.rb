@@ -173,7 +173,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       if process_shipment?(s, last_exported_from_source)
         shipment = s
       else
-        inbound_file.add_info_message "Shipment not updated: file contained outdated info."
+        inbound_file.add_warning_message "Shipment could not be updated. The Prep 7501 file's Created time of '#{last_exported_from_source.in_time_zone("America/New_York")}' is prior to the current Shipment's value of '#{s.last_exported_from_source.in_time_zone("America/New_York")}'."
       end
     end
 

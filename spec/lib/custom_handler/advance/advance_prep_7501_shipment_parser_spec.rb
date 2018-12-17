@@ -183,6 +183,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       shipment = Factory(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
 
       expect(subject.parse xml, user, xml_path).to be_nil
+      expect(log).to have_warning_message("Shipment could not be updated. The Prep 7501 file's Created time of '2018-02-02 22:15' is prior to the current Shipment's value of '2018-04-30 20:00'.")
     end
 
     it "falls back to finding country of origin using Factory PartyInfo" do
