@@ -28,6 +28,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     let (:product1) {
       prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1")
       prod.update_custom_value! custom_defintions[:prod_short_description], "YH145726"
+      prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
       prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1"
       prod
     }
@@ -35,6 +36,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     let (:product2) {
       prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-2")
       prod.update_custom_value! custom_defintions[:prod_short_description], "YH145729"
+      prod.update_custom_value! custom_defintions[:prod_sku_number], "20671580"
       prod.update_custom_value! custom_defintions[:prod_part_number], "PART-2"
       prod
     }
@@ -42,6 +44,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     let (:product3) {
       prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-3")
       prod.update_custom_value! custom_defintions[:prod_short_description], "NCV36576"
+      prod.update_custom_value! custom_defintions[:prod_sku_number], "10419518"
       prod.update_custom_value! custom_defintions[:prod_part_number], "PART-3"
       prod
     }
@@ -104,6 +107,29 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
       end
 
       it "falls back to part number matching if multiple parts are found by sku number" do
+        # Create another part that has the same cq part number (short description), but won't have the part number from the origin file
+        prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1X")
+        prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
+        prod.update_custom_value! custom_defintions[:prod_short_description], "YH145726"
+        prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
+
+        expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1)
+        subject.process user 
+
+        order = Order.where(order_number: "CQ-MON4951").first
+        expect(order).not_to be_nil
+        expect(order.order_lines.length).to eq 1
+        expect(order.order_lines.first.product).to eq product1
+
+        expect(user.messages.length).to eq 1
+        m = user.messages.first
+        expect(m.subject).to eq "CQ Origin Report Complete"
+        expect(m.body).to eq "The report has been processed without error."
+      end
+
+      it "falls back to short description matching if no parts are found by sku number" do
+        product1.update_custom_value! custom_defintions[:prod_sku_number], nil
+
         # Create another part that has the same cq part number (short description), but won't have the part number from the origin file
         prod = Factory(:product, importer: cq, unique_identifier: "CQ-PART-1X")
         prod.update_custom_value! custom_defintions[:prod_short_description], "YH145726"

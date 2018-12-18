@@ -220,8 +220,19 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       # so a lookup on that isn't really feasible).  Also, because of the missing punctuation, we can't use the 
       # FullCQSKU from the file to create the Product, since it's possible that this value isn't going to match what's on the
       # Prep7501.
-      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_short_description].id, string_value: cq_part}).all
+      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: cq_part}).all
+      product = fuzzy_match_part_number(products, row)
 
+      if product.nil?
+        products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_short_description].id, string_value: cq_part}).all
+        product = fuzzy_match_part_number(products, row)
+      end
+      
+      product
+    end
+
+
+    def fuzzy_match_part_number products, row
       return nil if products.length == 0
 
       found = nil
@@ -294,7 +305,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def cdefs
-      @cdefs ||= self.class.prep_custom_definitions [:prod_short_description, :prod_part_number]
+      @cdefs ||= self.class.prep_custom_definitions [:prod_short_description, :prod_sku_number, :prod_part_number]
     end
 
 end; end; end; end
