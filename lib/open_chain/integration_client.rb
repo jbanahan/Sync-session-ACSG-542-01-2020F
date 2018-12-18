@@ -58,6 +58,7 @@ require 'open_chain/custom_handler/descartes/descartes_basic_shipment_xml_parser
 require 'open_chain/custom_handler/lt/lt_856_parser'
 require 'open_chain/custom_handler/pvh/pvh_gtn_order_xml_parser'
 require 'open_chain/custom_handler/pvh/pvh_gtn_invoice_xml_parser'
+require 'open_chain/custom_handler/pvh/pvh_gtn_asn_xml_parser'
 
 module OpenChain
   class IntegrationClient
@@ -292,6 +293,8 @@ module OpenChain
         OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "pvh_gtn_invoice_xml") && custom_features.include?("PVH Feeds")
         OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "pvh_gtn_asn_xml") && custom_features.include?("PVH Feeds")
+        OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)
