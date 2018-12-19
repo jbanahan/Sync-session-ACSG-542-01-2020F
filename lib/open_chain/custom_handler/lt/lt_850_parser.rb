@@ -11,10 +11,19 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
     ["www-vfitrack-net/_lt_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lt_850"]
   end
 
+  def self.pre_process_data data
+    # LT 850's appear to be Windows encoded.  We received a file where there were windows em-dashes
+    # in the vendors name.
+    data.force_encoding("Windows-1252")
+    nil
+  end
+
   ########## required methods
 
   def prep_importer
-    Company.where(importer: true, system_code: "LOLLYT").first
+    lt = Company.where(importer: true, system_code: "LOLLYT").first
+    raise "No Importer account exists with a system code of 'LOLLYT'." if lt.nil?
+    lt
   end
 
   def process_order user, order, edi_segments, product_cache

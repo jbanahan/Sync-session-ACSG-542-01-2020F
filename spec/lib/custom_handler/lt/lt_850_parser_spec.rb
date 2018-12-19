@@ -3,7 +3,6 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::Lt::Lt850Parser do
   let!(:data) { IO.read 'spec/fixtures/files/lt_850.edi' }
   let!(:importer) { Factory(:company, name: "LT", importer: true, system_code: "LOLLYT")}
-  let!(:parser) { described_class.new }
   let(:cdefs) { described_class.new.cdefs }
 
   let!(:uae) { Factory(:country, iso_code: "AE") }
@@ -17,9 +16,10 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
     CustomDefinition.destroy_all
   }
 
-  subject { described_class }
-
   describe "parse", :disable_delayed_jobs do
+    
+    subject { described_class }
+
     it "parses order" do
       subject.parse data, bucket: "bucket", key: "lt.edi"
       
@@ -143,20 +143,20 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
 
   describe "update_standard_product" do
     let(:p) { Factory(:product, unique_identifier: "LOLLYT-ABKLSC", name: nil) }
-    let(:parser) { subject.new }
+
     let(:line) do 
       t = REX12.each_transaction(StringIO.new(data)).first
-      parser.extract_loop(t.segments, parser.line_level_segment_list).first
+      subject.extract_loop(t.segments, subject.line_level_segment_list).first
     end
 
     it "assigns product name and returns true" do
-      expect(parser.update_standard_product p, "", "", line).to eq true
+      expect(subject.update_standard_product p, "", "", line).to eq true
       expect(p.name).to eq "BOYS L/S KNIT TEE CLOSEOUTS"
     end
 
     it "returns false if product name unchanged" do
       p.update_attributes! name: "BOYS L/S KNIT TEE CLOSEOUTS"
-      expect(parser.update_standard_product p, "", "", line).to eq false
+      expect(subject.update_standard_product p, "", "", line).to eq false
       expect(p.name).to eq "BOYS L/S KNIT TEE CLOSEOUTS"
     end
   end
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
     it "errors if REF segments don't include HTS qualifier" do
       refs = [REX12::Segment.new([REX12::Element.new("REF", 0), REX12::Element.new("HTS", 1), REX12::Element.new("9999.99.9999", 2)], 0), 
               REX12::Segment.new([REX12::Element.new("REF", 0), REX12::Element.new("SE", 1), REX12::Element.new("183FA", 2), REX12::Element.new("FALL 2018", 3)], 1)]
-      expect{subject.new.explode_line nil, refs, nil }.to raise_error OpenChain::EdiParserSupport::EdiStructuralError, "Expecting REF with HST qualifier but none found."
+      expect{subject.explode_line nil, refs, nil }.to raise_error OpenChain::EdiParserSupport::EdiStructuralError, "Expecting REF with HST qualifier but none found."
     end
   end
 

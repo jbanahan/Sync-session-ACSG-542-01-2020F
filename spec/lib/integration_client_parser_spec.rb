@@ -298,6 +298,51 @@ describe OpenChain::IntegrationClientParser do
         expect(log).to have_info_message "This is an info message"
       end
     end
+
+    context "with preprocessing data parser" do
+      let (:data) { "File Contents" }
+      let (:s3_bucket) { "bucket" }
+      let (:s3_path) { "path" }
+
+      before :each do 
+        expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return data
+      end
+
+      subject { 
+        Class.new {
+          include OpenChain::IntegrationClientParser
+
+          def self.to_s
+            "the_package_name::the_parser_name"
+          end
+
+          def self.pre_process_data data
+            nil
+          end
+
+          def self.parse file, opts
+
+          end
+        }
+      }
+
+      it "preprocesses data, passing the preprocessed data to the parse method" do
+        expect(subject).to receive(:pre_process_data).with(data).and_return "Preprocessed Data"
+        expect(subject).to receive(:parse).with("Preprocessed Data", instance_of(Hash))
+        subject.process_from_s3 s3_bucket, s3_path
+      end
+
+      it "does not replace data with nil if pre_process_data returns nil" do
+        expect(subject).to receive(:pre_process_data) do |data|
+          # Mutate the string, and make sure the data passed to parse has the mutated value
+          data << " More Data"
+          nil
+        end
+
+        expect(subject).to receive(:parse).with("File Contents More Data", instance_of(Hash))
+        subject.process_from_s3 s3_bucket, s3_path
+      end
+    end
   end
 
   describe "get_s3_key_without_timestamp" do
