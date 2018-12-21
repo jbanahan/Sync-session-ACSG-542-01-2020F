@@ -23,7 +23,9 @@ class MilestoneNotificationConfig < ActiveRecord::Base
   OUTPUT_STYLE_STANDARD ||= "standard"
   OUTPUT_STYLE_MBOL ||= "mbol"
   OUTPUT_STYLE_HBOL ||= "hbol"
-  OUTPUT_STYLES ||= {OUTPUT_STYLE_MBOL_CONTAINER_SPLIT => "Split on MBOL/Container Numbers", OUTPUT_STYLE_STANDARD => "Standard - One 315 per Entry", OUTPUT_STYLE_MBOL => "Split on MBOL - One 315 per MBOL", OUTPUT_STYLE_HBOL => "Split on HBOL - One 315 per HBOL"}
+  # Split on the Cargo Control Number
+  OUTPUT_STYLE_CCN ||= "ccn"
+  OUTPUT_STYLES ||= {OUTPUT_STYLE_MBOL_CONTAINER_SPLIT => "Split on MBOL/Container Numbers", OUTPUT_STYLE_STANDARD => "Standard - One 315 per Entry", OUTPUT_STYLE_MBOL => "Split on MBOL - One 315 per MBOL", OUTPUT_STYLE_HBOL => "Split on HBOL - One 315 per HBOL", OUTPUT_STYLE_CCN => "Split on Cargo Control - On 315 per Number"}
   validates :output_style, inclusion: {in: OUTPUT_STYLES.keys}
   validates_inclusion_of :module_type, in: [CoreModule::ENTRY.class_name, CoreModule::SECURITY_FILING.class_name], message: "is not valid."
 

@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         {model_field_uid: "ent_release_date"}
       ]
       @config.save!
-      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF")
+      @entry = Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF", cargo_control_number: "CCN1\nCCN2")
     end
 
     it "generates and sends xml for 315 update" do
@@ -254,6 +254,28 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(REXML::XPath.each(docs[1], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
     end
 
+    it "sends distinct VfiTrack315 elements for each ccn when output_format is 'ccn'" do
+      @config.output_style = MilestoneNotificationConfig::OUTPUT_STYLE_CCN
+      @config.save!
+
+      c = subject
+      file_contents = nil
+      expect(c).to receive(:ftp_file).exactly(1).times do |file|
+        file_contents = file.read
+      end
+      @entry.cargo_control_number
+      c.receive :save, @entry
+
+      expect(file_contents).not_to be_nil
+      r = REXML::Document.new(file_contents).root
+
+      docs = REXML::XPath.each(r, "VfiTrack315").collect {|v| v }
+
+      expect(docs.size).to eq 2
+      expect(docs[0].text "CargoControlNumber").to eq "CCN1"
+      expect(docs[1].text "CargoControlNumber").to eq "CCN2"
+    end
+
     it "sends milestones for each config that is enabled" do
       config2 = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
       config2.setup_json = [
@@ -286,14 +308,14 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "create_315_data" do
     let(:entry) {
-      Entry.new(broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR", vessel: "VES", voyage: "VOY", entry_port_code: "1234", lading_port_code: "6543", cargo_control_number: "CARGO",
-              po_numbers: "ABC\n DEF")
+      Entry.new(broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR", 
+        vessel: "VES", voyage: "VOY", entry_port_code: "1234", lading_port_code: "6543", po_numbers: "ABC\n DEF")
     }
     let(:milestone) { OpenChain::CustomHandler::Generator315Support::MilestoneUpdate.new('code', Time.zone.now.to_date, SyncRecord.new) }
     let(:canada) { Factory(:country, iso_code: 'CA')}
 
     it "extracts data from entry for 315 creation" do
-      d = subject.send(:create_315_data, entry, {master_bills: ["ABC"], container_numbers: ["CON"], house_bills: ["HAWB"]}, milestone)
+      d = subject.send(:create_315_data, entry, {master_bills: ["ABC"], container_numbers: ["CON"], house_bills: ["HAWB"], cargo_control_numbers: ["CARGO", "CARGO2"]}, milestone)
 
       expect(d.broker_reference).to eq "REF"
       expect(d.entry_number).to eq "ENT"
@@ -304,7 +326,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       expect(d.voyage_number).to eq "VOY"
       expect(d.port_of_entry).to eq "1234"
       expect(d.port_of_lading).to eq "6543"
-      expect(d.cargo_control_number).to eq "CARGO"
+      expect(d.cargo_control_number).to eq "CARGO\n CARGO2"
       expect(d.master_bills).to eq ["ABC"]
       expect(d.container_numbers).to eq ["CON"]
       expect(d.house_bills).to eq ["HAWB"]
