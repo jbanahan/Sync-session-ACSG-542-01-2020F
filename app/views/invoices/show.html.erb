@@ -57,13 +57,14 @@
                   <%= show_model_fields(line, [:invln_volume, :invln_volume_uom], {editor_only: true}) %>
                 </div>
               </div>
-            <%= show_model_fields(line, [:invln_unit_price, :invln_cartons], never_hide: true) %>
-            <div class="row bootstrap-hover">
-              <div class="col-md-4" style="font-weight: bold;">
-                <%= model_field_labels([:invln_net_weight]) %>
-              </div>
-              <div class="col-md-8">
-                <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
+              <%= show_model_fields(line, [:invln_unit_price, :invln_cartons], never_hide: true) %>
+              <div class="row bootstrap-hover">
+                <div class="col-md-4" style="font-weight: bold;">
+                  <%= model_field_labels([:invln_net_weight]) %>
+                </div>
+                <div class="col-md-8">
+                  <%= show_model_fields(line, [:invln_net_weight, :invln_net_weight_uom], {editor_only: true}) %>
+                </div>
               </div>
             </div>
           </div>
