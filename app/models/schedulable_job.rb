@@ -8,6 +8,7 @@
 #  id                 :integer          not null, primary key
 #  last_start_time    :datetime
 #  no_concurrent_jobs :boolean
+#  notes              :text
 #  opts               :text
 #  queue_priority     :integer
 #  run_class          :string(255)
@@ -33,7 +34,7 @@ require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
-    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped, :queue_priority
+    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped, :queue_priority, :notes
 
   validate :valid_opts
 

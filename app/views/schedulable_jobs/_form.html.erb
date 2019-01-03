@@ -30,5 +30,6 @@
     <%=field_bootstrap 'Last Start Time', @sj.last_start_time.blank? ? 'Never' : @sj.last_start_time.in_time_zone(@sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')-%>
     <%- next_run_time = @sj.next_run_time -%>
     <%=field_bootstrap 'Next Run Time', next_run_time.blank? ? 'Never' : next_run_time.in_time_zone(@sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')-%>
+    <%=field_bootstrap 'Notes', f.text_area(:notes, rows:5, style: "width: 40em;")-%>
   <%-end-%>
 </div>
