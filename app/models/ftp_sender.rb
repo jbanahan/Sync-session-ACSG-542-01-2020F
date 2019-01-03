@@ -204,6 +204,25 @@ class FtpSender
     end
   end
 
+  class FtpFile
+    attr_reader :name, :size, :mtime
+
+    def initialize name, size, mtime, file_type
+      @name = name
+      @size = size
+      @mtime = mtime
+      @file_type = file_type
+    end
+
+    def file?
+      @file_type == "file"
+    end
+
+    def directory?
+      @file_type == "directory"
+    end
+  end
+
   class FtpClient
     attr_accessor :log
 
@@ -243,6 +262,24 @@ class FtpSender
 
     def last_response
       @client ? @client.last_response : (@last_response ? @last_response : "")
+    end
+
+    # Returns an array FtpFile objects representing all the files in the 
+    # current working directory.
+    #
+    # Files will by default be converted to the time in the current Time.zone
+    # use a different convert_to_time_zone value to change to something else
+    # 
+    # By default only actual files are returned, to list directories too
+    # pass false the include_only_files param
+    def list_files convert_to_time_zone: Time.zone, include_only_files: true
+      @client.mlsd.map do |f| 
+        next if include_only_files && !f.file?
+
+        # I'm sure there's other types of entries other than just file and directory but I'm just going to assume
+        # anything that's not a file is a directory
+        FtpSender::FtpFile.new(f.pathname, f.size, f.modify.in_time_zone(convert_to_time_zone),  (f.file? ? "file" : "directory"))
+      end.compact
     end
 
     private
@@ -314,6 +351,25 @@ class FtpSender
 
     def last_response
       @last_response
+    end
+
+    # Returns an array FtpFile objects representing all the files in the 
+    # current working directory.
+    #
+    # Files will by default be converted to the time in the current Time.zone
+    # use a different convert_to_time_zone value to change to something else
+    # 
+    # By default only actual files are returned, to list directories too
+    # pass false the include_only_files param
+    def list_files convert_to_time_zone: Time.zone, include_only_files: true
+      @client.dir.entries(@remote_path.to_s).map do |f| 
+        next if include_only_files && !f.file?
+
+        # I'm sure there's other types of entries other than just file and directory but I'm just going to assume
+        # anything that's not a file is a directory
+        FtpSender::FtpFile.new(f.name, f.attributes.size, Time.at(f.attributes.mtime).in_time_zone(convert_to_time_zone), (f.file? ? "file" : "directory"))
+      end.compact
+
     end
 
     private

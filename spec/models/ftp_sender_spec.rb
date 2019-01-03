@@ -422,6 +422,65 @@ describe FtpSender do
           expect(@client.last_response).to eq "200"
         end
       end
+
+      describe "list_files" do
+        let (:file) {
+          f = double("MlsdFileEntry")
+          allow(f).to receive(:file?).and_return true
+          allow(f).to receive(:pathname).and_return "file.txt"
+          allow(f).to receive(:size).and_return 1
+          # This is purposely a Time, as that's what's returned by the mlsd ftp listing
+          allow(f).to receive(:modify).and_return Time.now
+
+          f
+        }
+
+        let (:directory) {
+          f = double("MlsdFileEntry")
+          allow(f).to receive(:file?).and_return false
+          allow(f).to receive(:pathname).and_return "directory"
+          allow(f).to receive(:size).and_return 0
+          # This is purposely a Time, as that's what's returned by the mlsd ftp listing
+          allow(f).to receive(:modify).and_return Time.now
+
+          f
+        }
+
+        it "uses mlsd command and only returns files by default" do
+          expect(@ftp).to receive(:mlsd).and_return [file, directory]
+
+          files = @client.list_files
+          expect(files.length).to eq 1
+          f = files[0]
+          expect(f.name).to eq "file.txt"
+          expect(f.size).to eq 1
+          expect(f.file?).to eq true
+          expect(f.directory?).to eq false
+          expect(f.mtime).to eq file.modify.in_time_zone("UTC")
+        end
+
+        it "converts to another timezone if specified" do
+          expect(@ftp).to receive(:mlsd).and_return [file]
+
+          files = @client.list_files convert_to_time_zone: "America/New_York"
+          expect(files.length).to eq 1
+          f = files[0]
+          expect(f.mtime).to eq file.modify.in_time_zone("America/New_York")
+        end
+
+        it "includes directories if specified" do 
+          expect(@ftp).to receive(:mlsd).and_return [file, directory]
+
+          files = @client.list_files include_only_files: false
+          expect(files.length).to eq 2
+          f = files[1]
+          expect(f.name).to eq "directory"
+          expect(f.size).to eq 0
+          expect(f.file?).to eq false
+          expect(f.directory?).to eq true
+          expect(f.mtime).to eq directory.modify.in_time_zone("UTC")
+        end
+      end
     end
 
   end
@@ -557,6 +616,76 @@ describe FtpSender do
         it "should call last response" do
           # Once the connect is called (as in the before block), the last response is set to ok
           expect(@client.last_response).to eq "0 OK"
+        end
+      end
+
+      describe "list_files" do
+        let (:file) {
+          f = double("SftpFileEntry")
+          allow(f).to receive(:file?).and_return true
+          allow(f).to receive(:name).and_return "file.txt"
+          attributes = double("SftpFileAttributes")
+          allow(attributes).to receive(:size).and_return 1
+          # This is purposely a Time, as that's what's returned by the mlsd ftp listing
+          allow(attributes).to receive(:mtime).and_return Time.now
+          allow(f).to receive(:attributes).and_return attributes
+          
+          f
+        }
+
+        let (:directory) {
+          f = double("SftpFileEntry")
+          allow(f).to receive(:file?).and_return false
+          allow(f).to receive(:name).and_return "directory"
+          attributes = double("SftpFileAttributes")
+          allow(attributes).to receive(:size).and_return 0
+          # This is purposely a Time, as that's what's returned by the mlsd ftp listing
+          allow(attributes).to receive(:mtime).and_return Time.now
+          allow(f).to receive(:attributes).and_return attributes
+
+          f
+        }
+
+        let (:dir_command) {
+          c = double("SftpDirCommand")
+        }
+
+        it "uses directory listing command and only returns files by default" do
+          expect(@ftp).to receive(:dir).and_return dir_command
+          expect(dir_command).to receive(:entries).with("").and_return [file, directory]
+
+          files = @client.list_files
+          expect(files.length).to eq 1
+          f = files[0]
+          expect(f.name).to eq "file.txt"
+          expect(f.size).to eq 1
+          expect(f.file?).to eq true
+          expect(f.directory?).to eq false
+          expect(f.mtime).to eq file.attributes.mtime.in_time_zone("UTC")
+        end
+
+        it "converts to another timezone if specified" do
+          expect(@ftp).to receive(:dir).and_return dir_command
+          expect(dir_command).to receive(:entries).with("").and_return [file]
+
+          files = @client.list_files convert_to_time_zone: "America/New_York"
+          expect(files.length).to eq 1
+          f = files[0]
+          expect(f.mtime).to eq file.attributes.mtime.in_time_zone("America/New_York")
+        end
+
+        it "includes directories if specified" do 
+          expect(@ftp).to receive(:dir).and_return dir_command
+          expect(dir_command).to receive(:entries).with("").and_return [file, directory]
+
+          files = @client.list_files include_only_files: false
+          expect(files.length).to eq 2
+          f = files[1]
+          expect(f.name).to eq "directory"
+          expect(f.size).to eq 0
+          expect(f.file?).to eq false
+          expect(f.directory?).to eq true
+          expect(f.mtime).to eq directory.attributes.mtime.in_time_zone("UTC")
         end
       end
     end
