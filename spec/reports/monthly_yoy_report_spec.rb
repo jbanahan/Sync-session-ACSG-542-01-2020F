@@ -12,7 +12,8 @@ describe OpenChain::Report::MonthlyYoyReport do
   let!(:e2) { Factory(:entry, file_logged_date: month_ago, division_number: '2', customer_number: '2', transport_mode_code: '10', import_country: co1) }
   let!(:e3) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '3', transport_mode_code: '10', import_country: co1) }
   let!(:e4) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '2', transport_mode_code: '40', import_country: co1) }
-  let!(:e5) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
+  # Ensures we are including the final day of the previous month.
+  let!(:e5) { Factory(:entry, file_logged_date: Date.new(2016,4,30), division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
 
   describe "send_email" do
     it "sends email with attached xls" do
@@ -50,14 +51,16 @@ describe OpenChain::Report::MonthlyYoyReport do
     end
 
     it "skips entries with file_logged_date earlier than January two years ago" do
-      e1.update_attributes(file_logged_date: today - 3.years)
+      # This should be December 31, 2013 based on our 'today' value of May 15, 2016.  January 1, 2014 is included, but
+      # one day earlier is too far into the past.
+      e1.update_attributes(file_logged_date: (today.at_beginning_of_month - 2.years).at_beginning_of_year - 1.day)
       results = nil
       Timecop.freeze(today) { results = ActiveRecord::Base.connection.execute(report.query) }
       expect(results.count).to eq 4
     end
 
-    it "skips entries with file_logged_date more recent than the last day of the previous month" do
-      e1.update_attributes(file_logged_date: Date.today.at_beginning_of_month)
+    it "skips entries with file_logged_date from the current month" do
+      e1.update_attributes(file_logged_date: today.at_beginning_of_month)
       results = nil
       Timecop.freeze(today) { results = ActiveRecord::Base.connection.execute(report.query) }
       expect(results.count).to eq 4

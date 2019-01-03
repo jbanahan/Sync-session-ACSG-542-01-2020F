@@ -32,7 +32,9 @@ module OpenChain; module Report; class MonthlyYoyReport
         COUNT(*) AS 'File Count'
       FROM entries
         INNER JOIN countries import_country ON entries.import_country_id = import_country.id
-      WHERE entries.file_logged_date > MAKEDATE(year(now())-2,1) AND file_logged_date < LAST_DAY(NOW() - INTERVAL 1 MONTH)
+      WHERE 
+        entries.file_logged_date > '#{(Time.zone.now.beginning_of_year - 2.years).to_s(:db)}' AND 
+        file_logged_date < '#{Time.zone.now.beginning_of_month.to_s(:db)}' 
       GROUP BY period, country, division_number, customer_number, mode
     SQL
   end
