@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
   end
 
   def review_orders user, shipment
-    ord_nums = @order_cache.values.map(&:order_number)
+    ord_nums = order_cache.values.map(&:order_number)
     flag_unaccepted ord_nums
     if @enable_warnings      
       warnings ord_nums, shipment
@@ -147,27 +147,32 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
   end
 
   def find_product(shipment, style, error_if_not_found: false)
-    @product_cache ||= {}
-
-    prod = @product_cache[style]
+    prod = product_cache[style]
     if prod.nil?
       prod = Product.where(unique_identifier: "#{shipment.importer.system_code}-#{style}").first
-      @product_cache[style] = prod
+      product_cache[style] = prod
     end
 
     prod
   end
 
   def find_order(shipment, po, error_if_not_found: false)
-    @order_cache ||= Hash.new
-    ord = @order_cache[po]
+    ord = order_cache[po]
     if ord.nil?
       ord = Order.where(customer_order_number: po, importer_id: shipment.importer_id).includes(:order_lines => [:product]).first
       raise_error("Order Number #{po} not found.") if error_if_not_found && ord.nil?
-      @order_cache[po] = ord
+      order_cache[po] = ord
     end
 
     ord
+  end
+
+  def order_cache
+    @order_cache ||= {}
+  end
+
+  def product_cache
+    @product_cache ||= {}
   end
 
   def find_order_line_by_style order, style

@@ -81,10 +81,14 @@ module OpenChain; module CustomHandler; module CsvExcelParser
   def parse_and_validate_date date, format
     # by default, validate the date is within 2 years from today
     parsed_date = Date.strptime(date, format) rescue nil
-    if parsed_date
-      parsed_date = nil if (parsed_date.year - Time.zone.now.year).abs > 2
+    if parsed_date && !MasterSetup.test_env?
+      parsed_date = nil if (parsed_date.year - Time.zone.now.year).abs > max_valid_date_age_years
     end
     parsed_date
+  end
+
+  def max_valid_date_age_years
+    2
   end
 
   def text_value value, strip_whitespace: true

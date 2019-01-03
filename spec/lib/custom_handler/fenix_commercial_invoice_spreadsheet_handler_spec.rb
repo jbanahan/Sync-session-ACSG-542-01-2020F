@@ -49,16 +49,14 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
 
     it "should parse a file" do
-      # Using dots in hts numbers here to ensure they're stripped, make sure we
-      # also test the alternate date formats here too
       date = Time.zone.now.to_date
 
       file_contents = [
         ["Column", "Heading"],
         [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
         [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
-        [importer.fenix_customer_number, "INV2", date.strftime("%m/%d/%Y"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
-        [importer.fenix_customer_number, "INV3", date.strftime("%m/%d/%y"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
+        [importer.fenix_customer_number, "INV2", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
+        [importer.fenix_customer_number, "INV3", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
       ]
 
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])

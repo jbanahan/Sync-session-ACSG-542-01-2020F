@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CsvExcelParser do
   subject { Class.new { include OpenChain::CustomHandler::CsvExcelParser }.new }
 
@@ -96,12 +94,29 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       expect(subject.date_value "2016-2-1").to eq Date.new(2016, 2, 1)
     end
 
-    it "returns date from mm-dd-yyyy String" do
-      expect(subject.date_value "02-01-2016").to eq Date.new(2016, 2, 1)
-    end
+    context "with date validation enabled" do
+      before :each do 
+        # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
+        expect(MasterSetup).to receive(:test_env?).at_least(1).times.and_return false
+      end
 
-    it "returns date from mm-dd-yy String" do
-      expect(subject.date_value "02-01-16").to eq Date.new(2016, 2, 1)
+      context "with really old max age date" do 
+        before :each do 
+          expect(subject).to receive(:max_valid_date_age_years).at_least(1).times.and_return 100
+        end
+
+        it "returns date from mm-dd-yyyy String" do
+          expect(subject.date_value "02-01-2016").to eq Date.new(2016, 2, 1)
+        end
+
+        it "returns date from mm-dd-yy String" do
+          expect(subject.date_value "02-01-16").to eq Date.new(2016, 2, 1)
+        end
+      end
+      
+      it "returns nil if date is over max age" do
+        expect(subject.date_value (Time.zone.now - 3.years).strftime("%Y-%m-%d")).to eq nil
+      end
     end
   end
 

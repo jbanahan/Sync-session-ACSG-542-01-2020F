@@ -217,6 +217,11 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       context "with invalid dates" do
+        before :each do 
+          # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
+          expect(MasterSetup).to receive(:test_env?).at_least(1).times.and_return false
+        end
+
         after :each do
           expect(subject).to receive(:foreach).and_return row_data
 
