@@ -40,15 +40,25 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       # Check PARS totals...
       pars_count = DataCrossReference.unused_pars_count
       if pars_count < pars_threshold
-        OpenMailer.send_simple_html(["terri.bandy@purolator.com", "Jessica.Webber@purolator.com"], "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], cc: ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"], reply_to: "hm_support@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver!
       end
     end
 
     nil
   end
 
+  def email_list
+    list = MailingList.where(system_code: "PARSNumbersNeeded").first
+    # Mailing list shouldn't be nil, but in the off chance it is (someone accidently deleted), then send to our bug email so at least it goes out.
+    if list.nil?
+      list = [OpenMailer::BUG_EMAIL]
+    end
+
+    list
+  end
+
   def pars_threshold
-    100
+    150
   end
 
   def cdefs

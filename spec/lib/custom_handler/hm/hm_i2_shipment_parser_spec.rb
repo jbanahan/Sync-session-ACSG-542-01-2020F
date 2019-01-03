@@ -241,7 +241,8 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-02 Exceptions.xls"]).not_to be_nil
       end
 
-      it "sends email regarding PARS numbers being needed" do
+      it "sends email to PARSNumbersNeeded list regarding PARS numbers being needed" do
+        MailingList.create! system_code: "PARSNumbersNeeded", user: Factory(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
         p = described_class.new
 
         allow(p).to receive(:pars_threshold).and_return 30
@@ -251,11 +252,23 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(ActionMailer::Base.deliveries.length).to eq 3
         mail = ActionMailer::Base.deliveries.last
 
-        expect(mail.to).to eq ["terri.bandy@purolator.com", "Jessica.Webber@purolator.com"]
-        expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "hm_support@vandegriftinc.com"]
+        expect(mail.to).to eq ["me@there.com"]
         expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
         expect(mail.subject).to eq "More PARS Numbers Required"
         expect(mail.body).to include "0 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
+      end
+
+      it "sends email to bug list if pars list is missing" do
+        p = described_class.new
+
+        allow(p).to receive(:pars_threshold).and_return 30
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
+        p.parse ca_file, log
+
+        expect(ActionMailer::Base.deliveries.length).to eq 3
+        mail = ActionMailer::Base.deliveries.last
+
+        expect(mail.to).to eq [OpenMailer::BUG_EMAIL]
       end
 
       it "handles invalid invoice date" do
