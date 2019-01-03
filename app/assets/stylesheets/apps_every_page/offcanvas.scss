@@ -65,16 +65,16 @@
 
 .ui-widget {
   font-size: 1rem;
-  overflow:auto;
-  max-height: 85%;
   z-index:1031; // One above the action bar
+  .ui-widget-header {
+    background: #62bcf3;
+  }
   .ui-dialog-titlebar-close {
     overflow:hidden;
   }
 }
-
-.ui-widget-header {
-  background: #62bcf3;
+.ui-widget-content {
+  box-sizing:  content-box !important;
 }
 
 @media screen and (min-width: 768px) {

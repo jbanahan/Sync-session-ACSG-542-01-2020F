@@ -43,6 +43,14 @@ root.Chain =
       )
     null
 
+  # This method is used to create a standard jQuery dialog box with key attributes set to be used everywhere
+  jqueryDialog: (dialogbox, options) ->
+    if !options['maxWidth']?
+      options['maxWidth'] = $(window).width() * 0.90
+    if !options['maxHeight']?
+      options['maxHeight'] = $(window).height() * 0.90
+    dialogbox.dialog(options)
+
   processInfiniteSelectLoad: (targetTableSelector) ->
     targetTable = $(targetTableSelector)
     url = targetTable.attr('data-infinite-table-src')

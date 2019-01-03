@@ -14,8 +14,7 @@
     <% if @order.related_shipments.length == 0  && current_user.company.master %>
     OpenChain.addClickMap('d','Delete','btn_delete');
     <% end %>
-    $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
-      width:'auto',
+    Chain.jqueryDialog($("#mod_edit_line"), {autoOpen:false,title:'Edit Line',
       buttons:{"Save":function() {$("#frm_edit_line").submit();},
                "Cancel":function() {window.location = '<%=order_path(@order)%>';}}
     });
