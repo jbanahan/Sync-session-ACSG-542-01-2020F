@@ -157,7 +157,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     def create_spreadsheets orders_missing_products, header_row
       missing_products = Set.new
       orders_missing_products.each do |row|
-        missing_products << [sku_number(row), cq_part_number(row)] if missing_product?(row)
+        missing_products << [sku_number(row), cq_part_number(row), part_number(row)] if missing_product?(row)
       end
 
       [create_missing_products_workbook(missing_products), create_orders_missing_products_workbook(orders_missing_products, header_row, false), create_orders_missing_products_workbook(orders_missing_products, header_row, true)]
@@ -171,7 +171,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       builder.freeze_horizontal_rows sheet, 1
 
       missing_products.to_a.each do |numbers|
-        builder.add_body_row sheet, [numbers[0], numbers[1], nil, nil]
+        builder.add_body_row sheet, [numbers[0], numbers[1], nil, numbers[2]]
       end
 
       builder
@@ -210,20 +210,28 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     end
 
     def find_product row
+      # First see if we have the part number matching the full CQ SKU, as given.  If so, we can just use this directly.
+      product = nil
+      product = Product.where(importer_id: importer, unique_identifier: "CQ-#{part_number(row)}").first
+      return product unless product.nil?
+
+      # If we didn't find a direct match on the full sku, it's possibly because the the part came in with different punctuation
+      # Their origin system (vendors?) tends to exclude things link hyphens and slashes - which means we can't look up the values using
+      # that. Try and use the sku and then the cq part.
+
+      # Advan Sku number can be used across multiple CQ parts (since the same part might be issue by multiple factories, and CQ puts the factory number
+      # in their full part codes) so find the best match based on the part number (full cq sku).
+      sku = sku_number(row)
+      if !sku.blank?
+        products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: sku}).all
+        product = fuzzy_match_part_number(products, row)
+      end
+      return product unless product.nil?
+
+      # CQ Part Number is just the Full CQ Sku (part number) without the factory code at the front.  It's stored in the short description and this is mostly
+      # just a last ditch effort to find something.  If the Full Sku wasn't found above, it's not likely this will work either (due to bad hyphenation, etc)
       cq_part = cq_part_number(row)
-      return nil if cq_part.blank?
-
-      # CQ Part # can potentially match to multiple products (CQ Part # is unique to the part itself, but the full value we call part number 
-      # includes a prefix of the factory designator - and that full sku is what's on the Prep 7501).  We need to 
-      # find the unique part based on the CQ part number from the file (you'd think we could look up the part based on the 
-      # FULLCQSKU , but the origin report is missing hyphens and other punctuation from the part number, 
-      # so a lookup on that isn't really feasible).  Also, because of the missing punctuation, we can't use the 
-      # FullCQSKU from the file to create the Product, since it's possible that this value isn't going to match what's on the
-      # Prep7501.
-      products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_sku_number].id, string_value: cq_part}).all
-      product = fuzzy_match_part_number(products, row)
-
-      if product.nil?
+      if !cq_part.blank?
         products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_short_description].id, string_value: cq_part}).all
         product = fuzzy_match_part_number(products, row)
       end
