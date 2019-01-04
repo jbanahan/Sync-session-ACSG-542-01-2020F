@@ -199,11 +199,15 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
     context "with Carquest importer" do
       let(:product) { 
-        Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
+        p = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
+        p.update_custom_value! cdefs[:prod_part_number], "11402124"
+        p
       }
 
       let (:product_2) {
-        Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11401806"
+        p = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11401806"
+        p.update_custom_value! cdefs[:prod_part_number], "11401806"
+        p
       }
 
       let! (:order) {
@@ -276,6 +280,14 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
         expect(s.shipment_lines.length).to eq 2
         ol = s.shipment_lines.first.piece_sets.first.order_line
         expect(ol.country_of_origin).to eq "HK"
+      end
+
+      it "handles CQ parts on the PO having different punctuation than the prep 7501" do
+        product.update_attributes! unique_identifier: "CQ-114/0212-4"
+        product.update_custom_value! cdefs[:prod_part_number], "114/0212-4"
+
+        # As long as this doesn't raise an error for not finding a part on the PO then everything is good.
+        s = subject.parse xml, user, xml_path
       end
     end
 

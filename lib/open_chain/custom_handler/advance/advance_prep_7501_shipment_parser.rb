@@ -130,19 +130,17 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     order_number = line_xml.text "PONumber"
     order = orders_cache[order_number]
     if order
-      product = nil
-      if shipment.importer.system_code == "ADVAN"
+      if advan_importer? shipment.importer
         line_number = line_xml.text("LineItemNumber").to_i
         order_line = order.order_lines.find {|ol| ol.line_number == line_number }
         # This really should never happend at all since we're making orders / products in this parser
         inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
       else
         product_code = line_xml.text("ProductCode")
-        product = products_cache[product_code]
+        order_line = find_cq_order_line_by_part_number(order, product_code)
 
-        order_line = order.order_lines.find {|ol| ol.product_id == product.id }
-
-        # This really should never happend at all since we're making orders / products in this parser
+        # This really should never happen at all since we're rejecting the file when it's looking up orders if it can't find the order line
+        # based on the product code given in the 7501.
         inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Product Code #{product_code}." unless order_line
       end
 
@@ -242,7 +240,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     Lock.db_lock(order) do
       line_number = line_xml.text("LineItemNumber").to_i
     
-      if importer.system_code == "ADVAN"
+      if advan_importer? importer
         # Line number is supposed to be a unique line number, not 100% sure it's unique to the order for ADVAN.  
         line = order.order_lines.find {|l| l.line_number == line_number }
 
@@ -256,8 +254,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       else
         # All CQ orders should already be in the system via the PO Origin Report Upload (they need to load this
         # so that we have the unit cost of the products).  This means that we'll just look for the first order line
-        # that has the same product code.
-        line = order.order_lines.find {|l| l.product_id == product.id }
+        # that has the same product code...products pulled from the product_cache for CQ is actually just the part code, NOT an actual product.
+        line = find_cq_order_line_by_part_number(order, product_code)
 
         if line.nil?
           inbound_file.add_reject_message "PO # #{customer_order_number} is missing part number #{product_code}."
@@ -275,7 +273,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       line.quantity = parse_decimal(invoice_line.text "Quantity")
       line.unit_of_measure = invoice_line.text "QuantityUOM"
 
-      if importer.system_code == "ADVAN"
+      if advan_importer? importer
         # For whatever reason, CQ invoices don't have pricing included on them.  The unit cost needs to come from 
         # the CQ PO Origin Report (AdvancePoOriginReportParser).
         total_cost = invoice_line.get_elements("ItemTotalPrice").first
@@ -326,20 +324,27 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     part_number = xml.text "ProductCode"
     return nil if part_number.blank?
 
-    unique_identifier = "#{importer.system_code}-#{part_number}"
-    Lock.acquire("Product-#{unique_identifier}") do 
-      # The products SHOULD all exist already, and we don't want to update data on them if they do.
-      product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
+    # For CQ, we're not actually going to create parts (they should already exist due to the Origin Report upload).  If they don't
+    # the order linking part of this parser will fail anyway.  Just return the part number from the 7501, which we'll then use
+    # to look up order lines.
+    if cq_importer? importer
+      product = part_number
+    else
+      unique_identifier = "#{importer.system_code}-#{part_number}"
+      Lock.acquire("Product-#{unique_identifier}") do 
+        # The products SHOULD all exist already, and we don't want to update data on them if they do.
+        product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
 
-      if !product.persisted?
-        product.name = xml.text "ProductName"
-        product.find_and_set_custom_value cdefs[:prod_part_number], part_number
+        if !product.persisted?
+          product.name = xml.text "ProductName"
+          product.find_and_set_custom_value cdefs[:prod_part_number], part_number
 
-        product.save!
-        product.create_snapshot user, nil, file
+          product.save!
+          product.create_snapshot user, nil, file
+        end
       end
-
     end
+
     cache[part_number] = product
 
     product
@@ -438,6 +443,28 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     inbound_file.reject_and_raise "Failed to find Importer account for Consignee name '#{name}'." unless importer
 
     importer
+  end
+
+  def cq_importer? company
+    company.system_code == "CQ"
+  end
+
+  def advan_importer? company
+    company.system_code == "ADVAN"
+  end
+
+  def find_cq_order_line_by_part_number order, part_number
+    # CQ has not been able to consistently send us part numbers from the origin report that match correctly to the prep 7501.  The
+    # numbers on the origin report tend to be missing punctuation that's on the prep 7501.  So, we're going to strip punctuation
+    # and see which order line's product matches the part number (which should already have stripped punctuation)
+    pn = normalize_part_number(part_number).upcase
+    order.order_lines.find do |order_line|
+      normalize_part_number(order_line.product&.custom_value(cdefs[:prod_part_number])).upcase == pn
+    end
+  end
+
+  def normalize_part_number part_number
+    part_number.to_s.gsub(/[^[[:alnum:]]]/, "")
   end
 
   def cdefs
