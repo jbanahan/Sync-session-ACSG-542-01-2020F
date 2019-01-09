@@ -22,6 +22,22 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
     entry
   end
 
+  def generate_kewill_shipment_data shipments
+    entry = super
+
+    # Pull the CiLoadEdiIdentifier's bill_number value down to all the invoice's file number field.
+    # We're doing this because Advan / CQ can have the same commercial invoice # across different bill's of lading / shipments
+    # This ends up causing a unique key constraint error in Kewill's database UNLESS we use a distinct value for each invoice
+    # as the file number field (the table is keyed on file number (manufacturer_id in Kewill), invoice number and invoice date).
+    # So, we'll use the master bill (really the house for Advan) as that unique value.
+    mbol = entry.edi_identifier&.master_bill
+    entry.invoices.each do |inv|
+      inv.file_number = mbol
+    end
+
+    entry
+  end
+
   def generate_kewill_shipment_container shipment, container
     c = super
     # This is to just keep the mapping from the original ADVAN feed of the container size

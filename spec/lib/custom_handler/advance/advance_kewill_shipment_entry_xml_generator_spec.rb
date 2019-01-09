@@ -69,7 +69,10 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
       expect(data.dates.length).to eq 2
       expect(data.invoices.length).to eq 1
 
-      line = data.invoices.first.invoice_lines.first
+      inv = data.invoices.first
+      expect(inv.file_number).to eq "123456789012"
+
+      line = inv.invoice_lines.first
       # Make sure the invoice's pieces are the expected value (without sets)
       expect(line.pieces).to eq 30
       expect(line.country_of_export).to eq "US"
