@@ -298,10 +298,21 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(seller.text "zip").to eq "00000"
       end
 
-      it "generates 999999999 as cert value when cotton fee flag is true" do
+      it "generates 999999999 as cert value when cotton fee flag is 1" do
         mid
         d = entry_data
-        d.invoices.first.invoice_lines.first.cotton_fee_flag = "Y"
+        d.invoices.first.invoice_lines.first.cotton_fee_flag = "1"
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+        expect(t.text "exemptionCertificate").to eq "999999999"
+      end
+
+      it "generates 999999999 as cert value when cotton fee flag is N" do
+        mid
+        d = entry_data
+        d.invoices.first.invoice_lines.first.cotton_fee_flag = "N"
         doc = subject.generate_entry_xml entry_data, add_entry_info: false
 
         t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
@@ -364,6 +375,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       it "raises an error if a Buyer is in the data but not in VFI Track" do
         entry_data.invoices.first.invoice_lines.first.buyer_customer_number = "BUY"
         expect {subject.generate_entry_xml entry_data, add_entry_info: false}.to raise_error OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError, "No Customer Address # '1' found for 'BUY'."
+      end
+
+      it "allows for invoices to have distinct file numbers" do
+        entry_data.file_number = nil
+        entry_data.invoices.first.file_number = "INVOICE1"
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+        root = doc.root
+        expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/manufacturerId", "INVOICE1")
+        expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/manufacturerId", "INVOICE1")
       end
     end
   end

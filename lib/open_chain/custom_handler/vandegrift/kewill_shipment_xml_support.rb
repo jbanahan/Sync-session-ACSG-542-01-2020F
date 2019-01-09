@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadEntryDate ||= Struct.new(:code, :date)
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
-    CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate)
+    CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number)
     CiLoadInvoiceLine ||= Struct.new(:part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :ftz_quantity, :description, :container_number)
   end
 
@@ -277,7 +277,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def generate_invoice_header parent, entry, invoice, lines, edi_identifier
     generate_identifier_data(parent, edi_identifier) unless edi_identifier.nil?
 
-    add_element(parent, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true)) unless entry.file_number.nil?
+    add_file_number(parent, entry, invoice)
     add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(parent, "custNo", g.string(entry.customer, 10, pad_string: false, exception_on_truncate: true))
@@ -299,7 +299,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def generate_invoice_line parent, entry, invoice, line, counter, edi_identifier
     generate_identifier_data(parent, edi_identifier) unless edi_identifier.nil?
 
-    add_element(parent, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_file_number(parent, entry, invoice)
     add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
     add_element(parent, "commInvLineNo", (counter * 10))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
@@ -328,9 +328,15 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "spiSecondary", g.string(line.spi2, 2, pad_string: false)) unless line.spi2.blank?
     add_element(parent, "nonDutiableAmt", g.number(line.non_dutiable_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.non_dutiable_amount)
     add_element(parent, "addToMakeAmt", g.number(line.add_to_make_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.add_to_make_amount)
-    if true?(line.cotton_fee_flag)
+
+    # This looks a little strange, but there's a logic here...The cotton fee field is only used to indicate if there's an exemption to
+    # the cotton fee (meaning the cotton fee doesn't apply to a textile item).  In that case, the N means "No, there isn't a cotton fee."
+    # or 1 is also acceptable because that's actually the certificate number used to indicate that the cotton fee applies.
+    # That's why 1 / N are the only accepted values.
+    if ["1", "N"].include?(line.cotton_fee_flag.to_s.upcase)
       add_element(parent, "exemptionCertificate", "999999999")
     end
+
     add_element(parent, "manufacturerId2", g.string(line.mid, 15, pad_string: false, exception_on_truncate: true)) unless line.mid.blank?
     add_element(parent, "cartons", g.number(line.cartons, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.cartons)
 
@@ -354,6 +360,17 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   def nonzero? val
     val.to_f.try(:nonzero?)
+  end
+
+  def add_file_number parent, entry, invoice
+    # Prefer the file number from invoice first and then entry, if present
+    # (which, for the way Kewill is set up for us, file number is really just a unique identifier value for the invoice)
+    # So, there's a few cases where on a full shipment where an invoice might appear on multiple shipments (bols) and Kewill
+    # will reject them due to a unique constraint over file_number (manufacturerId), invoice number, invoice date.
+    # So for those cases, we're actually using the file_number as some unique value to work around the unique constraint.
+    file_number = invoice.file_number.presence || (entry.file_number.presence || nil)
+    add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true)) unless file_number.blank?
+    nil
   end
 
   def true? val
