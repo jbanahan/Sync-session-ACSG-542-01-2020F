@@ -1325,6 +1325,45 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect { subject.process_entry @e }.to raise_error error
     end
 
+    context "with special tariffs" do
+      it "assigns header and tariff-level flags" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,15), effective_date_end: Date.new(2017,10,20)
+        entry = subject.process_entry @e
+        expect(entry.special_tariff).to eq true
+        expect(entry.commercial_invoice_tariffs.first.special_tariff).to eq true
+      end
+
+      context "without matching cross reference" do
+        it "doesn't assign header-level flag if range too late" do
+          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,20), effective_date_end: Date.new(2017,10,20)
+          entry = subject.process_entry @e
+          expect(entry.special_tariff).to be_nil
+          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
+        end
+
+        it "doesn't assign header-level flag if range is too early" do
+          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
+          entry = subject.process_entry @e
+          expect(entry.special_tariff).to be_nil
+          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
+        end
+
+        it "doesn't assign header-level flag if hts doesn't match" do
+          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "0123456789", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
+          entry = subject.process_entry @e
+          expect(entry.special_tariff).to be_nil
+          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
+        end
+
+        it "doesn't assign header-level flag if import country isn't 'US'" do
+          SpecialTariffCrossReference.create! import_country_iso: "CA", special_hts_number: "0123456789", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
+          entry = subject.process_entry @e
+          expect(entry.special_tariff).to be_nil
+          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
+        end        
+      end
+    end
+
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }

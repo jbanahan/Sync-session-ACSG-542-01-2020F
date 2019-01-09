@@ -26,6 +26,7 @@
 #  sima_amount                :decimal(11, 2)
 #  sima_code                  :string(255)
 #  special_authority          :string(255)
+#  special_tariff             :boolean
 #  spi_primary                :string(255)
 #  spi_secondary              :string(255)
 #  tariff_description         :string(255)

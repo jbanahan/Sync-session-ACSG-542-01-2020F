@@ -180,6 +180,7 @@
 #  ship_terms                             :string(255)
 #  source_system                          :string(255)
 #  special_program_indicators             :string(255)
+#  special_tariff                         :boolean
 #  split_release_option                   :string(255)
 #  split_shipment                         :boolean
 #  split_shipment_date                    :datetime

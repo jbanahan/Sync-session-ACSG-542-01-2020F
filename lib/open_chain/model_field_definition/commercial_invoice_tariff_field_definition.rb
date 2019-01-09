@@ -28,7 +28,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
       [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}],
       [26,:cit_quota_category,:quota_category,"Quota Category",{:data_type=>:integer}],
       [27,:cit_special_authority,:special_authority,"Special Authority",{:data_type=>:string}],
-      [28,:cit_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}]
+      [28,:cit_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}],
+      [29,:cit_special_tariff, :special_tariff, "Special Tariff",{data_type: :boolean}]
     ]
   end
 end; end; end

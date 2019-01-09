@@ -376,7 +376,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           WHERE entries.id = ci.entry_id AND cil.psc_date IS NOT NULL) 
           THEN 1 ELSE 0 END)"
         }
-      ]
+      ],
+      [232, :ent_special_tariff, :special_tariff, "Special Tariff", {data_type: :boolean}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

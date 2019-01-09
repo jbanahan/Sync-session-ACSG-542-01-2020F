@@ -18,6 +18,7 @@
 # Indexes
 #
 #  by_import_country_effective_date_country_origin_tariff_type      (import_country_iso,effective_date_start,country_origin_iso,special_tariff_type)
+#  hts_date_index                                                   (special_hts_number,effective_date_start,effective_date_end)
 #  index_special_tariff_cross_references_on_hts_country_start_date  (hts_number,country_origin_iso,effective_date_start)
 #
 

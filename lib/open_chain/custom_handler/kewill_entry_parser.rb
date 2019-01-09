@@ -302,9 +302,24 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         entry[release_date_attr] = date
       end
     end
-  end   
-  
+  end
+
   private 
+
+    def process_special_tariffs entry
+      return unless entry.import_date
+      
+      # relation Entry#commercial_invoice_tariffs empty until entry is saved
+      tariffs = entry.commercial_invoices.map{ |ci| ci.commercial_invoice_lines.map{ |cil| cil.commercial_invoice_tariffs}}.flatten
+      special_tariffs = SpecialTariffCrossReference.where(special_hts_number: tariffs.map(&:hts_code).uniq)
+                                                   .where(import_country_iso: "US")
+                                                   .where("effective_date_start <= ?", entry.import_date)
+                                                   .where("effective_date_end >= '#{entry.import_date}' OR effective_date_end IS NULL")
+                                                   .map{ |st| st.special_hts_number }
+      
+      tariffs.each{ |t| t.special_tariff = true if special_tariffs.include? t.hts_code }
+      entry.special_tariff = true if tariffs.find{ |t| t.special_tariff }
+    end 
 
     def self.json_to_tempfile json
        Tempfile.open([Time.zone.now.iso8601, ".json"]) do |f|
@@ -425,6 +440,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       postprocess_notes entry
 
       postprocess_statements entry, user
+
+      process_special_tariffs entry
       nil
     end
 
