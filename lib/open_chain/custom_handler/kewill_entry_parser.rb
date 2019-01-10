@@ -1057,7 +1057,18 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_invoice_tariff_data t, tariff, invoice_header
       tariff.hts_code = t[:tariff_no]
-      tariff.duty_amount = parse_decimal(t[:duty_specific]) + parse_decimal(t[:duty_additional]) + parse_decimal(t[:duty_advalorem]) + parse_decimal(t[:duty_other])
+      # Duty Advalorem is any portion of the duty that's based on a percentage of the entered value.  Duty Rate looks like: 7%
+      tariff.duty_advalorem = parse_decimal(t[:duty_advalorem])
+      # Duty Specific are rates based on units of measure.  .ie 13.2¢/liter
+      # There's plenty of times where you have both Advalorem and Specific Rates -> 13.2¢/liter + 7%
+      tariff.duty_specific = parse_decimal(t[:duty_specific])
+      # Duty Additional is where there's multiple specific rates, the second specific rate is put here.
+      # 13.2¢/liter + 7% + 50.5¢/barrel (barrel amount would go in additional)
+      tariff.duty_additional = parse_decimal(t[:duty_additional])
+      # Not sure what this is supposed to be tracking, there's not a single tariff line in the entry system w/ a 
+      # duty other value...adding anyway, just in case.
+      tariff.duty_other = parse_decimal(t[:duty_other])
+      tariff.duty_amount = [tariff.duty_advalorem, tariff.duty_specific, tariff.duty_additional, tariff.duty_other].compact.sum
       tariff.entered_value = parse_decimal t[:value_entered]
       tariff.entered_value_7501 = tariff.entered_value.round
       # Add the computed rounded entered value to the invoice-level field.

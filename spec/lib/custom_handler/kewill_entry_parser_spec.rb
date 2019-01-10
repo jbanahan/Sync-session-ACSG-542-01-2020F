@@ -239,10 +239,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'tariffs' => [
                   {
                     'tariff_no' => '1234567890',
-                    'duty_specific' => 100,
-                    'duty_advalorem' => 200,
-                    'duty_additional' => 300,
-                    'duty_other' => 400,
+                    'duty_advalorem' => 110,
+                    'duty_specific' => 220,
+                    'duty_additional' => 330,
+                    'duty_other' => 440,
                     'value_entered' => 9960,
                     'spi_primary' => 'JO',
                     'spi_secondary' => 'EY',
@@ -706,10 +706,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
-      expect(tariff.duty_amount).to eq 10.00
+      expect(tariff.duty_advalorem).to eq 1.1
+      expect(tariff.duty_specific).to eq 2.2
+      expect(tariff.duty_additional).to eq 3.3
+      expect(tariff.duty_other).to eq 4.4
+      expect(tariff.duty_amount).to eq 11.00
       expect(tariff.entered_value).to eq BigDecimal.new("99.60")
       expect(tariff.entered_value_7501).to eq 100
-      expect(tariff.duty_rate).to eq BigDecimal.new("0.033")
+      expect(tariff.duty_rate).to eq BigDecimal.new("0.037")
       expect(tariff.spi_primary).to eq "JO"
       expect(tariff.spi_secondary).to eq "EY"
       expect(tariff.classification_qty_1).to eq 1

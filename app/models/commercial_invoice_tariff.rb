@@ -10,8 +10,12 @@
 #  classification_uom_3       :string(255)
 #  commercial_invoice_line_id :integer
 #  created_at                 :datetime         not null
+#  duty_additional            :decimal(12, 2)
+#  duty_advalorem             :decimal(12, 2)
 #  duty_amount                :decimal(12, 2)
+#  duty_other                 :decimal(12, 2)
 #  duty_rate                  :decimal(4, 3)
+#  duty_specific              :decimal(12, 2)
 #  entered_value              :decimal(13, 2)
 #  entered_value_7501         :integer
 #  excise_amount              :decimal(11, 2)

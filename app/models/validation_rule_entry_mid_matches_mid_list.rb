@@ -1,3 +1,5 @@
+# -*- SkipSchemaAnnotations
+
 class ValidationRuleEntryMidMatchesMidList < BusinessValidationRule
   include ValidatesFieldFormat
 

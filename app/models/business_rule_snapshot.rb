@@ -5,7 +5,6 @@
 #  bucket          :string(255)
 #  compared_at     :datetime
 #  created_at      :datetime         not null
-#  deleted         :boolean
 #  doc_path        :string(255)
 #  id              :integer          not null, primary key
 #  recordable_id   :integer          not null

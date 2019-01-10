@@ -8,7 +8,6 @@
 #  compared_at         :datetime
 #  context             :string(255)
 #  created_at          :datetime         not null
-#  deleted             :boolean
 #  doc_path            :string(255)
 #  id                  :integer          not null, primary key
 #  imported_file_id    :integer

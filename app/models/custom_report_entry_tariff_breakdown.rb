@@ -1,3 +1,5 @@
+# -*- SkipSchemaAnnotations
+
 class CustomReportEntryTariffBreakdown < CustomReport
   def self.template_name
     "Entry Tariff Breakdown"
