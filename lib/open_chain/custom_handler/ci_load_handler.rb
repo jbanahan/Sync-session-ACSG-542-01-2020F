@@ -279,6 +279,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         l.pieces = decimal_value(row[15])
         l.buyer_customer_number = text_value(row[16])
         l.seller_mid = text_value(row[17])
+        l.cotton_fee_flag = text_value(row[18])
 
         l
       end
