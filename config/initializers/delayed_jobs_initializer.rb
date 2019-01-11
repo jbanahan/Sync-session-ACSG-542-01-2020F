@@ -155,5 +155,17 @@ module Delayed; class Worker
   
 end; end;
 
-Delayed::Worker.default_queue_name = 'default'
+# Allow the job queue name to come from the vfitrack_settings.yml config file too.
+# By setting this value, every single call to .delay() effectively becomes .delay(queue: "anothervalue").
+# This can be useful if we want to spin up secondary job processing machines and run scripts/jobs that result in the job 
+# queue being utilized.  By having these jobs queue to a different queue name, we can effectively isolate their impact
+# on the primary job queue system and run all these jobs via a secondary one, limiting the impact on the primary product queue.
+#
+# This can be especially useful in cases where we might need to reprocess a lot of objects/snapshots and want to use a second job queue 
+# ec2 instance.
+#
+# Note: For the actual delayed job worker process, the Delayed Job "queues" command line option superceeds this setting.
+# So for the actual delayed jobs process that might need to be run to process jobs in an alternate queue
+# you need to set the alternate queue value in a `config/dj_queue.txt` file (see scripts/start_dj.sh).
+Delayed::Worker.default_queue_name = MasterSetup.config_value(:delayed_job_queue_name, default: 'default')
 Delayed::Worker.plugins << ChainDelayedJobPlugin

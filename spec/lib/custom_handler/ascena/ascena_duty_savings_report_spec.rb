@@ -146,7 +146,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     }
 
     let! (:order) {
-      order = Factory(:order, order_number: "ASCENA-PO")
+      order = Factory(:order, order_number: "ASCENA-JST-PO")
       order.update_custom_value! cdefs[:ord_type], "AGS"
       order
     }
@@ -1309,7 +1309,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let!(:vend_asce) { Factory(:vendor, name: "asce vend") }
     let!(:fact_asce) { Factory(:factory, name: "asce fact") }
     let!(:ord_asce) do 
-      order = Factory(:order, order_number: "ASCENA-po asce", vendor: vend_asce, factory: fact_asce)
+      order = Factory(:order, order_number: "ASCENA-brand asce-po asce", vendor: vend_asce, factory: fact_asce)
       order.update_custom_value! cdefs[:ord_type], "ord type asce"
       order
     end
@@ -1329,7 +1329,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let!(:i) { Factory(:invoice, importer: ann, invoice_number: "inv num ann", vendor: vend_ann_810, factory: fact_ann_810) }
     let!(:il) { Factory(:invoice_line, invoice: i, po_number: "po ann", part_number: "part ann", part_description: "part descr", air_sea_discount: 4, early_pay_discount: 2, trade_discount: 6, middleman_charge: 8)}
     let!(:ord_ann) do 
-      order = Factory(:order, order_number: "ATAYLOR-po ann", vendor: vend_ann_ord, factory: fact_ann_ord)
+      order = Factory(:order, order_number: "ATAYLOR-brand ann-po ann", vendor: vend_ann_ord, factory: fact_ann_ord)
       order.update_custom_value! cdefs[:ord_type], "ord type ann"
       order
     end

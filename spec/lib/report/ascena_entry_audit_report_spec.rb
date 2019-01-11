@@ -36,7 +36,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     Factory(:port, name: 'alliance port', schedule_d_code: '0123')
     Factory(:container, entry: @ent)
     @prod = Factory(:product, unique_identifier: 'ASCENA-part num')
-    @ord = Factory(:order, order_number: 'ASCENA-po num', vendor: vend, factory: fact)
+    @ord = Factory(:order, order_number: 'ASCENA-prod line-po num', vendor: vend, factory: fact)
     @ord.find_and_set_custom_value(cdefs[:ord_type], 'AGS')
     @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
     @ord.save!

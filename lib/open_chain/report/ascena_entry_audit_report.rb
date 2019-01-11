@@ -147,7 +147,7 @@ module OpenChain; module Report; class AscenaEntryAuditReport
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
-        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("#{importer_system_code}-", cil.po_number)
+        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("#{importer_system_code}-", cil.product_line, "-", cil.po_number)
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
         LEFT OUTER JOIN companies fact ON fact.id = o.factory_id

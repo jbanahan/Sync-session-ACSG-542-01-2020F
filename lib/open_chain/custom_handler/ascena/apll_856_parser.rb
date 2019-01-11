@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         # We never update shipments...
         existing_shipments = Shipment.where(reference: reference)
         if existing_shipments.length > 0
-          log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, hbol_and_booking, module_type:Shipment.to_s, module_id:existing_shipments[0].id
+          log.add_identifier :shipment_number, hbol_and_booking, module_type:Shipment, module_id:existing_shipments[0].id
           log.add_info_message "Shipment #{hbol_and_booking} already exists and was not updated."
           return
         end
@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         )
         shp.master_bill_of_lading = "#{shp.vessel_carrier_scac}#{hbol}"
         shp.save!
-        log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, hbol_and_booking, module_type:Shipment.to_s, module_id:shp.id
+        log.add_identifier :shipment_number, hbol_and_booking, module_type:Shipment, module_id:shp.id
         log.add_info_message "Shipment #{hbol_and_booking} created."
 
         errors = []
@@ -141,11 +141,8 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   def process_item shp, con, order_number, i_segs, log
     style = find_element_value(i_segs,'LIN03')
     log.reject_and_raise "Style number is required in LIN segment position 4." if style.blank?
-    ol = OrderLine.joins(:order,:product).
-      where("orders.order_number = ?","ASCENA-#{order_number}").
-      where("products.unique_identifier = ?","ASCENA-#{style}").
-      first
-    log.reject_and_raise("Order Line not found for order ASCENA-#{order_number}, style ASCENA-#{style}", error_class:OrderMissingError) if ol.nil?
+    ol = find_order_line(order_number, style)
+    log.reject_and_raise("Order Line not found for order Ascena Order # #{order_number}, style #{style}", error_class:OrderMissingError) if ol.nil?
     sl = shp.shipment_lines.build(
       product:ol.product,
       container: con,
@@ -156,6 +153,21 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
     )
     sl.linked_order_line_id = ol.id
     sl.save!
+  end
+
+  def find_order_line order_number, style
+    order = find_order(order_number)
+    return nil if order.nil?
+
+    order.order_lines.find { |l| l.product&.unique_identifier == "ASCENA-#{style}"}
+  end
+
+  def find_order order_number
+    @orders ||= Hash.new do |h, k|
+      h[k] = Order.where(importer_id: importer.id, customer_order_number: k).first
+    end
+
+    @orders[order_number]
   end
 
 

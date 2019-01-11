@@ -67,6 +67,7 @@ class DataCrossReference < ActiveRecord::Base
   LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
   CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
   VFI_DIVISION ||= "vfi_division"
+  ASCE_BRAND ||= "asce_brand_xref"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
@@ -83,7 +84,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label:"Customer Number", show_value_column: false),
       xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
       xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
-      xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false)
+      xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
+      xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false)
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -137,7 +139,7 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
-    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND
       MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
     when CA_HTS_TO_DESCR
       MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')
@@ -157,6 +159,10 @@ class DataCrossReference < ActiveRecord::Base
       r[d.key] = d.value
     end
     r
+  end
+
+  def self.find_ascena_brand department
+    find_unique where(cross_reference_type: ASCE_BRAND, key: department)
   end
 
   def self.find_rl_profit_center_by_brand importer_id, brand

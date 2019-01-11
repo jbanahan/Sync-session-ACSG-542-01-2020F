@@ -355,4 +355,98 @@ describe OpenChain::IntegrationClientParser do
       expect(subject.get_s3_key_without_timestamp(nil)).to be_nil
     end
   end
+
+
+
+
+  describe "delay_file_chunk_to_s3" do
+    let (:parser) {
+      Class.new do 
+        include OpenChain::IntegrationClientParser
+
+        def self.parse_file_chunk data, opts
+
+        end
+      end
+    }
+
+    let! (:ms) {
+      stub_master_setup
+    }
+
+    let (:opts) { 
+      {bucket: "bucket", key: "key"}
+    }
+
+    let (:upload_result) {
+      d = instance_double("OpenChain::MockS3::UploadResult")
+      allow(d).to receive(:bucket).and_return "temp_bucket"
+      allow(d).to receive(:key).and_return "temp_key"
+      d
+    }
+
+    it "saves file data to s3 and delays call to process_file_chunk_from_s3" do
+      now = Time.zone.now
+      expect(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:parser_class_name).and_return "parser_class"
+      expect(OpenChain::S3).to receive(:upload_data).with("chain-io-integration-temp", "test/parser_class/#{now.to_f}-file.txt", "Contents").and_return upload_result
+      expect(subject).to receive(:process_file_chunk_from_s3).with("temp_bucket", "temp_key", opts, delete_from_s3: true, parse_method: :parse_file_chunk)
+      Timecop.freeze(now) { 
+        subject.delay_file_chunk_to_s3("/path/to/file.txt", "Contents", opts)
+      }
+    end
+
+    it "strips InboundFile from opts" do
+      opts[:log] = InboundFile.new
+
+      expect(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:parser_class_name).and_return "parser_class"
+      expect(OpenChain::S3).to receive(:upload_data).and_return upload_result
+
+      expect(subject).to receive(:process_file_chunk_from_s3) do |bucket, key, parse_opts, method_opts|
+        expect(parse_opts).to eq({bucket: "bucket", key: "key"})
+      end
+
+      subject.delay_file_chunk_to_s3("/path/to/file.txt", "Contents", opts)
+    end
+  end
+
+  describe "process_file_chunk_from_s3" do
+
+    let (:opts) { 
+      {bucket: "bucket", key: "key"}
+    }
+
+    it "retrieves data from s3, calls parser method, and deletes data" do
+      expect(subject).to receive(:parse_file_chunk).with "Downloaded Data", opts
+      expect(subject).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
+      expect(OpenChain::S3).to receive(:delete).with "bucket", "key"
+
+      subject.process_file_chunk_from_s3 "bucket", "key", opts
+    end
+
+    it "can use a diffrent parse method" do
+      expect(subject).to receive(:do_file).with "Downloaded Data", opts
+      expect(subject).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
+      expect(OpenChain::S3).to receive(:delete).with "bucket", "key"
+
+      subject.process_file_chunk_from_s3 "bucket", "key", opts, parse_method: :do_file     
+    end
+
+    it "does not delete file if instructed" do
+      expect(subject).to receive(:parse_file_chunk).with "Downloaded Data", opts
+      expect(subject).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
+      expect(OpenChain::S3).not_to receive(:delete)
+
+      subject.process_file_chunk_from_s3 "bucket", "key", opts, delete_from_s3: false
+    end
+
+    it "does not delete from s3 if an error is raised" do
+      expect(subject).to receive(:parse_file_chunk).and_raise "Error"
+      expect(subject).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
+      expect(OpenChain::S3).not_to receive(:delete)
+
+      expect { subject.process_file_chunk_from_s3 "bucket", "key", opts }.to raise_error "Error"
+    end
+  end
 end

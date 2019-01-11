@@ -16,6 +16,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     # snapshots take a long time so we're stubbing them
     allow_any_instance_of(Order).to receive(:create_snapshot)
     allow_any_instance_of(Product).to receive(:create_snapshot)
+    DataCrossReference.create!(key: "justice", value: "JST", cross_reference_type: "asce_brand_xref")
+    DataCrossReference.create!(key: "peace", value: 'PEA', cross_reference_type: "asce_brand_xref")
   end
 
   describe "integration folder" do
@@ -44,24 +46,48 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
   end
 
-  describe "parse", :disable_delayed_jobs do
-    before(:all) do
-      @cdefs = described_class.new.send(:cdefs)
+  describe "parse" do
+
+    subject { described_class }
+
+    it "extracts each po from the file and saves them off individually onto a temp s3 bucket" do
+      opts = {key: "s3_key.csv"}
+      
+      expect(subject).to receive(:delay_file_chunk_to_s3) do |key, data, local_opts|
+        expect(key).to eq ("s3_key.csv")
+        expect(data).to eq convert_pipe_delimited([header, detail])
+        expect(local_opts).to eq opts
+
+        nil
+      end
+
+      subject.parse convert_pipe_delimited([header, detail]), opts
     end
+
+    it "handles multiple PO's per file" do
+      opts = {key: "s3_key.csv"}
+      expect(subject).to receive(:save_file_rows_to_s3).with(([header.join("|") + "\n"] + [detail.join("|")+"\n"]), opts)
+      expect(subject).to receive(:save_file_rows_to_s3).with(([header_2.join("|") + "\n"] + [detail_2.join("|")]), opts)
+
+      subject.parse convert_pipe_delimited([header, detail, header_2, detail_2]), opts
+    end
+  end
+
+  describe "parse_file_chunk" do
+    subject { described_class }
+
+    let! (:cdefs) { 
+      described_class.new.send(:cdefs)
+    }
 
     after(:all) do
       CustomDefinition.delete_all
     end
 
-    def cdefs
-      @cdefs
-    end
-
     it "ignores file if PO exists and has revision number greater than the file header's" do
-      cdefs = described_class.prep_custom_definitions [:ord_revision]
       ord = Factory(:order, importer: importer, order_number: "ASCENA-37109")
       ord.update_custom_value!(cdefs[:ord_revision], 3)
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       ord.reload
       # If nothign on the order header or no order lines were added, that shows nothign was updated
       # on the order
@@ -73,13 +99,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"path")
       expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration,nil,"path")
 
-      described_class.parse convert_pipe_delimited([header, detail]), bucket: "bucket", key: "path"
+      subject.parse_file_chunk convert_pipe_delimited([header, detail]), bucket: "bucket", key: "path"
       o = Order.where(customer_order_number: "37109").first
       expect(o).not_to be_nil
       expect(o.importer).to eq importer
       expect(o.order_date).to eq Date.new(2016,11,14)
       expect(o.customer_order_number).to eq "37109"
-      expect(o.order_number).to eq "ASCENA-37109"
+      expect(o.order_number).to eq "ASCENA-JST-37109"
       expect(o.custom_value(cdefs[:ord_selling_channel])).to eq "FRANCHISE"
       expect(o.custom_value(cdefs[:ord_division])).to eq "82"
       expect(o.custom_value(cdefs[:ord_revision])).to eq 2
@@ -106,6 +132,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.custom_value(cdefs[:ord_type])).to eq "AGS"
       expect(o.last_file_bucket).to eq "bucket"
       expect(o.last_file_path).to eq "path"
+      expect(o.custom_value(cdefs[:ord_department])).to eq("JUSTICE")
 
       ol = o.order_lines.first
       expect(ol.custom_value(cdefs[:ord_line_department_code])).to eq "JUSTICE"
@@ -135,7 +162,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "updates existing orders, replaces order lines, uses existing product" do
-      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      o = Factory(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
       product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
       order_line = Factory(:order_line, order: o, line_number: 2, product: product)
 
@@ -143,10 +170,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       # The product shouldn't be snapshotted, we didn't update it
       expect_any_instance_of(Product).not_to receive(:create_snapshot)
 
-      described_class.parse convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
+      subject.parse_file_chunk convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
 
       o.reload
       expect(o.order_date).to eq Date.new(2016,11,15)
+      expect(o.custom_value(cdefs[:ord_department])).to eq("PEACE")
       expect(o.custom_value(cdefs[:ord_selling_channel])).to eq "FRANCH"
       expect(o.custom_value(cdefs[:ord_division])).to eq "83"
       expect(o.custom_value(cdefs[:ord_revision])).to eq 4
@@ -199,13 +227,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "doesn't delete the order line, sends warning email if line is associated with shipment" do
-      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      o = Factory(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
       product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
       order_line = Factory(:order_line, order: o, line_number: 2, product: product)
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
-      described_class.parse convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
+      subject.parse_file_chunk convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
 
       o.reload
       # Make sure a new line wasn't added (was a bug that was in there previously that wasn't skpping shipped lines)
@@ -228,13 +256,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "skips shipped lines, adds other lines from file that weren't shipping" do
-      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      o = Factory(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
       product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
       order_line = Factory(:order_line, order: o, line_number: 2, product: product)
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
-      described_class.parse convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
+      subject.parse_file_chunk convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
 
       o.reload
       expect(o.order_lines.length).to eq 2
@@ -245,14 +273,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "skips shipped lines, updates other lines from file that weren't shipping" do
-      o = Factory(:order, order_number: "ASCENA-37109", importer: importer, customer_order_number: "37109")
+      o = Factory(:order, order_number: "ASCENA-PEA-37109", importer: importer, customer_order_number: "37109")
       product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
       order_line = Factory(:order_line, order: o, line_number: 2, product: product)
       order_line_2 = Factory(:order_line, order: o, line_number: 1, product: product)
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "Pinafore"), product: order_line.product)
       PieceSet.create!(quantity: 1, order_line: order_line, shipment_line: sl)
 
-      described_class.parse convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
+      subject.parse_file_chunk convert_pipe_delimited([header_2, detail, detail_2]), bucket: "bucket 2", key: "path 2"
 
       o.reload
       expect(o.order_lines.length).to eq 2
@@ -266,7 +294,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     it "skips blank lines in the CSV file" do
       # This would have raised an error previously, so we can pretty much just check that an order was saved and if 
       # so, then it's all good.
-      described_class.parse convert_pipe_delimited([header_2, [], ["", ""], detail_2]), bucket: "bucket 2", key: "path 2"
+      subject.parse_file_chunk convert_pipe_delimited([header_2, [], ["", ""], detail_2]), bucket: "bucket 2", key: "path 2"
 
       o = Order.where(customer_order_number: "37109").first
       expect(o).not_to be_nil
@@ -277,14 +305,14 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       vendor = Factory(:company, system_code: "000256")
       vendor_id = vendor.system_identifiers.create! system: "Ascena PO", code: "000256"
-      expect{described_class.parse(convert_pipe_delimited [header, detail])}.to_not change(Company,:count)
+      expect{subject.parse_file_chunk(convert_pipe_delimited [header, detail])}.to_not change(Company,:count)
       expect(Order.first.factory.id).to eq factory.id
       expect(Order.first.vendor.id).to eq vendor.id
     end
 
     it "sets price_per_unit to 0 for each line and leaves other prices blank if order type is 'NONAGS'" do
       header[28] = "NONAGS"
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       ol = Order.first.order_lines.first
 
       expect(ol.price_per_unit).to eq 0
@@ -296,7 +324,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     it "handles a missing vendor code" do
       header[14] = ""
 
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       order = Order.first
 
       expect(order.vendor).to be_nil
@@ -305,7 +333,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     it "does not create a factory if the name is missing" do
       header[19] = nil
 
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       order = Order.first
       expect(order.factory).to be_nil
     end
@@ -315,7 +343,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[19] = nil
 
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       order = Order.first
       expect(order.factory).to eq factory
       factory.reload
@@ -325,7 +353,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     it "updates factory MID if existing mid is blank" do
       factory = Factory(:company, system_code: "001423", name: "Factory")
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
-      described_class.parse(convert_pipe_delimited [header, detail])
+      described_class.parse_file_chunk(convert_pipe_delimited [header, detail])
       factory.reload
 
       expect(factory.mid).to eq "IDSELKAU0105BEK"
@@ -336,24 +364,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       header[18] = ""
 
-      described_class.parse(convert_pipe_delimited [header, detail])
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
       factory.reload
 
       expect(factory.mid).to eq "EXISTING"
     end
   end
 
-  context "data validation", :disable_delayed_jobs do
-    let :header_map do
-      subject.map_header header
-    end
-    let :detail_map do
-      subject.map_detail detail
-    end
+  context "data validation" do
+    subject { described_class }
+    
     context "check that methods are called" do
       it "should fail on header validation issue" do
-        expect(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise described_class::BusinessLogicError, "some error"
-        subject.process_file(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
+        expect_any_instance_of(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise described_class::BusinessLogicError, "some error"
+        subject.parse_file_chunk(convert_pipe_delimited([header_2, detail_2]), key: "file.txt")
 
         expect(Order.count).to eq 0
 
@@ -372,9 +396,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect(rows[1]).to eq detail_2
       end
       it "should fail on detail validation issue" do
-        expect(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise  described_class::BusinessLogicError, "some error"
+        expect_any_instance_of(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise  described_class::BusinessLogicError, "some error"
 
-        subject.process_file(convert_pipe_delimited [header, detail])
+        subject.parse_file_chunk(convert_pipe_delimited [header, detail])
 
         expect(Order.count).to eq 0
         mail = ActionMailer::Base.deliveries.first
@@ -386,10 +410,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       it "should fail when importer not found" do
         importer.destroy
 
-        expect{subject.process_file(convert_pipe_delimited([header, detail]))}.to raise_error "No Importer company found with system code 'ASCENA'."
+        expect{subject.parse_file_chunk(convert_pipe_delimited([header, detail]))}.to raise_error "No Importer company found with system code 'ASCENA'."
       end
     end
+
     context "check validations" do
+      
+      let :header_map do
+        subject.map_header header
+      end
+      let :detail_map do
+        subject.map_detail detail
+      end
+
+      subject { described_class.new }
       it "errors if header order number missing" do
         header[4] = ""
         expect{subject.validate_header(header_map)}.to raise_error "Customer order number missing"

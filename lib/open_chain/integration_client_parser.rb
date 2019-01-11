@@ -55,6 +55,27 @@ module OpenChain; module IntegrationClientParser
       end
     end
 
+    def delay_file_chunk_to_s3 filename, chunk_io, original_parse_opts, delete_from_s3: true, parse_method: :parse_file_chunk
+      # if the original_opts references the log object, we need to remove it...otherwise the object won't deserialize
+      # Plus, we don't want to try and use the same log object for all the chunks of the file.
+      if original_parse_opts && original_parse_opts[:log].is_a?(InboundFile)
+        original_parse_opts = original_parse_opts.deep_dup
+        original_parse_opts.delete :log 
+      end
+      
+      full_path = "#{MasterSetup.get.system_code}/#{parser_class_name}/#{Time.zone.now.to_f}-#{File.basename(filename)}"
+      result = OpenChain::S3.upload_data "chain-io-integration-temp", full_path, chunk_io
+      self.delay.process_file_chunk_from_s3(result.bucket, result.key, original_parse_opts, delete_from_s3: delete_from_s3, parse_method: parse_method)
+      nil
+    end
+
+    def process_file_chunk_from_s3 bucket, key, original_opts, delete_from_s3: true, parse_method: :parse_file_chunk
+      data = retrieve_file_data(bucket, key, original_opts)
+      self.public_send(parse_method, data, original_opts)
+      OpenChain::S3.delete(bucket, key) if delete_from_s3
+      nil
+    end
+
     # This method is not really meant to be run in production, it's meant as a development helper.
     # Pass a path or a File object.
     def process_from_file file, opts={}

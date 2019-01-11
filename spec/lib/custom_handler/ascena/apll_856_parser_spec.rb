@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       Factory(:product,unique_identifier:'ASCENA-415012')
     end
     let :order do
-      Factory(:order_line,line_number:1,product:product,quantity:8771,order:Factory(:order,importer:ascena,order_number:'ASCENA-6225694')).order
+      Factory(:order_line,line_number:1,product:product,quantity:8771,order:Factory(:order,importer:ascena,order_number:'ASCENA-BRAND-6225694', customer_order_number: "6225694")).order
     end
     let :ports do
       {
@@ -113,10 +113,8 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(ActionMailer::Base.deliveries.count).to eq 0
 
       expect(log.company).to eq ascena
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "XM1007980-HK956641"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment XM1007980-HK956641 created."
+      expect(log).to have_identifier(:shipment_number, "XM1007980-HK956641", Shipment, s.id)
+      expect(log).to have_info_message("Shipment XM1007980-HK956641 created.")
     end
     it "should not fail on unknown LOCODE" do
       order #prep order data
@@ -128,29 +126,27 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(subject.process_shipment(first_shipment_array, log)).to be_nil
 
       expect(log.company).to eq ascena
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "XM1007980-HK956641"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_type).to eq "Shipment"
-      expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_INFO)[0].message).to eq "Shipment XM1007980-HK956641 already exists and was not updated."
+      expect(log).to have_identifier(:shipment_number, "XM1007980-HK956641", Shipment, s.id)
+      expect(log).to have_info_message "Shipment XM1007980-HK956641 already exists and was not updated."
     end
     it "should record missing order in shipment" do
       shipment = subject.process_shipment(first_shipment_array, log)
-      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-415012"
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order Line not found for order ASCENA-6225694, style ASCENA-415012"
+      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order Ascena Order # 6225694, style 415012"
+      expect(log).to have_reject_message "Order Line not found for order Ascena Order # 6225694, style 415012"
     end
     it "should fail if style not on order" do
       order
       base_data.gsub!('415012','999999')
       shipment = subject.process_shipment(first_shipment_array, log)
-      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order ASCENA-6225694, style ASCENA-999999"
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Order Line not found for order ASCENA-6225694, style ASCENA-999999"
+      expect(shipment.marks_and_numbers).to eq "* Order Line not found for order Ascena Order # 6225694, style 999999"
+      expect(log).to have_reject_message "Order Line not found for order Ascena Order # 6225694, style 999999"
     end
     it "should fail if style is blank" do
       order
       base_data.gsub!('415012','      ')
 
       expect{subject.process_shipment(first_shipment_array, log)}.to raise_error "Style number is required in LIN segment position 4."
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Style number is required in LIN segment position 4."
+      expect(log).to have_reject_message "Style number is required in LIN segment position 4."
     end
   end
 end

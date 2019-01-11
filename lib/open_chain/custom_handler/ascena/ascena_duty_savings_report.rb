@@ -922,7 +922,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
         LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
         LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
-        LEFT OUTER JOIN orders o ON o.order_number =  CONCAT("#{cust_number == ASCENA_CUST_NUM ? 'ASCENA' : 'ATAYLOR'}-", cil.po_number)
+        LEFT OUTER JOIN orders o ON o.order_number =  CONCAT("#{cust_number == ASCENA_CUST_NUM ? 'ASCENA' : 'ATAYLOR'}-", cil.product_line, '-', cil.po_number)
         LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
         LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}

@@ -4,16 +4,16 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     let (:entry) {
       e = Factory(:entry, entry_filed_date: Date.new(2017,4,21))
       i = e.commercial_invoices.create! invoice_number: "INV"
-      l = i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 10, po_number: '12345'
+      l = i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 10, po_number: '12345', product_line: 'JST'
       l.commercial_invoice_tariffs.create! entered_value: 5
-      l = i.commercial_invoice_lines.create! line_number: 2, value_appraisal_method: "F", mid: "MID2", contract_amount: 10, po_number: '54321'
+      l = i.commercial_invoice_lines.create! line_number: 2, value_appraisal_method: "F", mid: "MID2", contract_amount: 10, po_number: '54321', product_line: 'JST'
       l.commercial_invoice_tariffs.create! entered_value: 5
       e
     }
 
     before do
-      Factory(:order, vendor: Factory(:company, system_code: "ACME"), factory: Factory(:company, mid: "MID"), order_number: "ASCENA-12345")
-      Factory(:order, vendor: Factory(:company, system_code: "KONVENIENTZ"), factory: Factory(:company, mid: "MID2"), order_number: "ASCENA-54321")
+      Factory(:order, vendor: Factory(:company, system_code: "ACME"), factory: Factory(:company, mid: "MID"), order_number: "ASCENA-JST-12345")
+      Factory(:order, vendor: Factory(:company, system_code: "KONVENIENTZ"), factory: Factory(:company, mid: "MID2"), order_number: "ASCENA-JST-54321")
     end
 
     let! (:mids) {
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     it "does not error if entry-filed date is before the FS Start Date as long as Vendor-MID isn't in xref" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
       entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil, mid: "FOO"
-      Order.where(order_number: "ASCENA-54321").first.factory.update_attributes! mid: "FOO"
+      Order.where(order_number: "ASCENA-JST-54321").first.factory.update_attributes! mid: "FOO"
 
       entry.update_attributes(entry_filed_date: Date.new(2017,3,10))
 
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
   
     it "errors for first-sale invoice line if associated vendor-MID ISN'T in xref" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! mid: "FOO"
-      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: "FOO"
+      Order.where(order_number: "ASCENA-JST-12345").first.factory.update_attributes! mid: "FOO"
       expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have a Vendor-MID combination on the approved first-sale list."
     end
 
@@ -88,12 +88,12 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
     end
 
     it "errors if line's MID doesn't match order's" do
-      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: "FOO"
+      Order.where(order_number: "ASCENA-JST-12345").first.factory.update_attributes! mid: "FOO"
       expect(subject.run_validation entry).to eq  "Invoice # INV / Line # 1 must have an MID that matches to the PO. Invoice MID is 'MID' / PO MID is 'FOO'"
     end
   
     it "doesn't error if order's MID is missing" do
-      Order.where(order_number: "ASCENA-12345").first.factory.update_attributes! mid: nil
+      Order.where(order_number: "ASCENA-JST-12345").first.factory.update_attributes! mid: nil
       expect(subject.run_validation entry).to be_nil
     end 
 

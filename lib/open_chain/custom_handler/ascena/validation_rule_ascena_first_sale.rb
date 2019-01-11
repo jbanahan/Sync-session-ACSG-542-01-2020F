@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
-        INNER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.po_number)
+        INNER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.product_line, "-", cil.po_number)
         LEFT OUTER JOIN companies vend ON vend.id = o.vendor_id
         LEFT OUTER JOIN companies fact ON fact.id = o.factory_id
       WHERE e.id = #{entry_id}

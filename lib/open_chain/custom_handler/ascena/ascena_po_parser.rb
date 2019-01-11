@@ -8,45 +8,35 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     ["www-vfitrack-net/_ascena_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ascena_po"]
   end
 
-  def self.parse pipe_delimited_content, opts={}
-    self.new.process_file(pipe_delimited_content, opts)
-  end
-
-  def process_file pipe_delimited_content, opts={}
-    po_rows = []
-    user = User.integration
-    begin
-      # setting zero byte as quote character since there's no quoting in the file
-      # and the text will include " characters to represent inches
-      CSV.parse(pipe_delimited_content, {col_sep:"|", quote_char: "\x00"}) do |row|
-        next if blank_row?(row)
-        if(row[0] == 'H')
-          if po_rows.length > 0
-            # The reason we're delaying here is so that we can let any transient db/locking/etc type of errors
-            # bubble up and transparently let delayed jobs reprocess the file chunk
-            self.delay.process_po(user, po_rows, opts[:bucket], opts[:key])
-            po_rows = []
-          end
+  def self.parse file_content, opts={}
+    file_rows = []
+    # Either we save all the PO's to the job queue, or none of them..none, so when the queue tries again they'll all go then
+    # Don't worry about any extra s3 files, they'll expire after a couple days and get cleaned up.
+    ActiveRecord::Base.transaction do
+      # All this s3 chunking is being done so that we can concurrently process lines from the file and not
+      # have to save the actual file lines into the job queue
+      file_content.each_line do |line|
+        if line[0] == "H" && file_rows.length > 0
+          save_file_rows_to_s3(file_rows, opts)
+          file_rows = []
         end
-        po_rows << row
+
+        file_rows << line
       end
-      self.delay.process_po(user, po_rows, opts[:bucket], opts[:key]) if po_rows.length > 0
-    rescue => e
-      raise e unless Rails.env.production?
-      # Log the error and don't bother attempting to reprocess the file...by adding the file path into the error,
-      # we can always reproc when the error email is received if the error warrants it.
-      e.log_me ["Ascena PO File #{opts[:key]}"]
+
+      save_file_rows_to_s3(file_rows, opts) if file_rows.length > 0
     end
   end
 
-  def date_parse str
-    date = Date.strptime(str, "%m%d%Y") rescue nil
-    (date && date.year < 2000) ? nil : date
+  def self.save_file_rows_to_s3 file_rows, original_parse_opts
+    delay_file_chunk_to_s3(original_parse_opts[:key], file_rows.join, original_parse_opts)
+    nil
   end
 
-  def blank_row? row
-    return true if row.blank?
-    row.find {|c| !c.blank? }.nil?
+  def self.parse_file_chunk data, opts = {}
+    # setting zero byte as quote character since there's no quoting in the file
+    # and the text will include " characters to represent inches
+    self.new.process_po User.integration, CSV.parse(data, {col_sep:"|", quote_char: "\x00"}), opts[:bucket], opts[:key]
   end
 
   class BusinessLogicError < StandardError
@@ -66,6 +56,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def map_header row
     hsh = {}
+    hsh[:ord_department] = row[2]
     hsh[:ord_order_date] = row[1]
     hsh[:ord_line_department_code] = row[2]
     hsh[:ord_customer_order_number] = row[4]
@@ -124,7 +115,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       validate_header(header)
       detail_rows = []
       # First row is the header, so remove it when processing the details
-      rows[1..-1].each_with_index do |dr, x| 
+      rows[1..-1].each_with_index do |dr, x|
+        next if blank_row?(dr)
+
         row = map_detail dr
         validate_detail row, x + 1
         detail_rows << row
@@ -146,7 +139,17 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     end
   end
 
+  def date_parse str
+    date = Date.strptime(str, "%m%d%Y") rescue nil
+    (date && date.year < 2000) ? nil : date
+  end
+
   private
+
+  def blank_row? row
+    return true if row.blank?
+    row.find {|c| !c.blank? }.nil?
+  end
 
   def handle_process_po_error rows, po_number, err, file_name
     temp_file_data(rows, po_number) do |f|
@@ -278,10 +281,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   def update_or_create_order header, bucket, filename, &block
     ord = nil
     continue = false
-    Lock.acquire("ASCENA-#{header[:ord_customer_order_number]}") do
-      ord = Order.where("order_number = ? AND importer_id = #{importer.id}", "ASCENA-#{header[:ord_customer_order_number]}")
+    brand = DataCrossReference.find_ascena_brand(header[:ord_department])
+    Lock.acquire("ASCENA-#{brand}-#{header[:ord_customer_order_number]}") do
+      ord = Order.where("order_number = ? AND importer_id = #{importer.id}", "ASCENA-#{brand}-#{header[:ord_customer_order_number]}")
                  .includes([:custom_values,:order_lines=>{:product=>:custom_values}])
-                 .first_or_initialize(order_number: "ASCENA-#{header[:ord_customer_order_number]}", customer_order_number: header[:ord_customer_order_number],
+                 .first_or_initialize(order_number: "ASCENA-#{brand}-#{header[:ord_customer_order_number]}", customer_order_number: header[:ord_customer_order_number],
                                       importer: importer)
       continue = (!ord.persisted? || newer_revision?(ord, header))
       ord.save! if continue
@@ -305,6 +309,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
                             ship_window_end: date_parse(header[:ord_ship_window_end]), fob_point: header[:ord_fob_point],
                             last_file_bucket: bucket, last_file_path: filename)
       ord.factory = factory if factory
+      ord.find_and_set_custom_value(cdefs[:ord_department], header[:ord_department])
       ord.find_and_set_custom_value(cdefs[:ord_selling_channel], header[:ord_selling_channel])
       ord.find_and_set_custom_value(cdefs[:ord_division], header[:ord_division])
       ord.find_and_set_custom_value(cdefs[:ord_revision], header[:ord_revision])
@@ -320,7 +325,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def newer_revision? persisted_ord, header
     # Use >= so we allow for reprocessing the latest file
-    header[:ord_revision].to_i >= persisted_ord.get_custom_value(cdefs[:ord_revision]).value.to_i
+    header[:ord_revision].to_i >= persisted_ord.custom_value(cdefs[:ord_revision]).to_i
   end
 
   def get_or_create_product user, header, detail, file_key
@@ -374,11 +379,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:ord_line_season, :ord_buyer,:ord_division,:ord_revision, :ord_revision_date, 
-      :ord_assigned_agent, :ord_selling_agent, :ord_selling_channel, :ord_type, :ord_line_color, :ord_line_color_description,
+      :ord_assigned_agent, :ord_department, :ord_selling_agent, :ord_selling_channel, :ord_type, :ord_line_color, :ord_line_color_description,
       :ord_line_department_code,:ord_line_destination_code, :ord_line_size_description,:ord_line_size,
       :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost,:prod_part_number,
       :prod_product_group,:prod_vendor_style ]
   end
-
 
 end; end; end; end
