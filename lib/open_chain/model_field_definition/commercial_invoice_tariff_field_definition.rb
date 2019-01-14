@@ -30,7 +30,7 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
       [27,:cit_special_authority,:special_authority,"Special Authority",{:data_type=>:string}],
       [28,:cit_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}],
       [29,:cit_special_tariff, :special_tariff, "Special Tariff",{data_type: :boolean}],
-      [30,:cit_duty_advalorem, :duty_advalorem, "Advalorem Duty", {data_type: :decimal}],
+      [30,:cit_duty_advalorem, :duty_advalorem, "Ad Valorem Duty", {data_type: :decimal}],
       [31,:cit_duty_specific, :duty_specific, "Specific Duty", {data_type: :decimal}],
       [32,:cit_duty_additional, :duty_additional, "Additional Duty", {data_type: :decimal}],
       [33,:cit_duty_other, :duty_other, "Other Duty", {data_type: :decimal}]
