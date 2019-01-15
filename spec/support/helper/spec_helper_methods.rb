@@ -224,6 +224,10 @@ module Helpers
     expect(obj.custom_value(cdef)).to eq value
   end
 
+  def snapshot_json obj
+    ActiveSupport::JSON.decode(CoreModule.find_by_object(obj).entity_json obj)
+  end
+
   class FakeSnapshotWriterImpl
     def self.entity_json entity
       "{\"fake\":#{entity.id}}"

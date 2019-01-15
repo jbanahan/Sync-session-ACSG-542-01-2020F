@@ -278,16 +278,6 @@ end
     ['.tif', '.tiff', '.jpg', '.jpeg', '.gif', '.png', '.bmp', '.pdf']
   end
 
-  def rebuild_archive_packet
-    if self.stitchable_attachment? && self.attachable_id && self.attachable_type == "Entry"
-      # Just queue a stitch request...if the entry's importer isn't set up for stitching, then the stitch queue handler
-      # will just skip the request, no big deal.
-
-      # In cases where an Entry is being deleted, this is going to generate stitch requests for each attachment being
-      OpenChain::AllianceImagingClient.delay.send_entry_stitch_request(self.attachable_id)
-    end
-  end
-
   # We're aping the custom_file processing api touchpoints here (plus, it's a convenient accessor method anyway)
   def bucket
     self.class.bucket attached

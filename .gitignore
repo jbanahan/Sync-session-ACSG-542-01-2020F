@@ -37,6 +37,7 @@ config/fenix_google_drive_sqs_copy.yml
 config/vfitrack_settings.yml
 config/intacct.yml
 config/pepsi-idp-metadata.xml
+config/stitcher.yml
 .idea
 dump.rdb
 .byebug_history

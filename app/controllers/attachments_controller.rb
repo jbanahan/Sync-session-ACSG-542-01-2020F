@@ -58,7 +58,6 @@ class AttachmentsController < ApplicationController
         filename = att.attached_file_name
         deleted = att.destroy
         if deleted
-          att.rebuild_archive_packet
           attachable.create_async_snapshot current_user, nil, "Attachment Removed: #{filename}" if attachable.respond_to?(:create_async_snapshot)
         end
       end

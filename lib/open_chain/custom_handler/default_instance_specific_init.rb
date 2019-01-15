@@ -24,5 +24,11 @@ module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
       require 'open_chain/registries/default_shipment_registry'
       OpenChain::Registries::ShipmentRegistry.register OpenChain::Registries::DefaultShipmentRegistry
     end
+
+    if MasterSetup.get.custom_feature?("Document Stitching")
+      require 'open_chain/entity_compare/comparator_registry'
+      require 'open_chain/custom_handler/vandegrift/entry_attachment_stitch_request_comparator'
+      OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestComparator
+    end
   end
 end; end; end

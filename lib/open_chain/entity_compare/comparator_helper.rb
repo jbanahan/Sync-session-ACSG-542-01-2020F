@@ -199,4 +199,34 @@ module OpenChain; module EntityCompare; module ComparatorHelper
 
     return any_value_changed?(old_json, new_json, model_field_uids)
   end
+
+  # This method simply loops though the supplied list of snapshot entity hashes
+  # and finds one that has the same core_module and record_id values.
+  def find_matching_entity_hash entity, list
+    cm, id = json_entity_type_and_id(entity)
+    list.find do |other_entity|
+      other_cm, other_id = json_entity_type_and_id(other_entity)
+      other_cm == cm && other_id == id
+    end
+  end
+
+  # Returns true if any entity from the primary list is not in the secondary list.
+  # NOTE: This method is ONLY unidirectional, it does not check if the primary list is missing
+  # entities that might be in the secondary list
+  def any_entities_missing_from_list? primary_list, secondary_list
+    primary_list.each do |entity|
+      return true if find_matching_entity_hash(entity, secondary_list).nil?
+    end
+    false
+  end
+
+  # This method returns true if any entity from either list is missing from the other.
+  # This method can be used to tell if any child object was added or removed from a snapshot entity.
+  def any_entities_missing_from_lists? primary_list, secondary_list
+    # If any primary entities are missing from the secondary entities return true
+    return true if any_entities_missing_from_list?(primary_list, secondary_list)
+    # Now do the inverse and validate that the secondary list has the same entities
+    any_entities_missing_from_list?(secondary_list, primary_list)
+  end
+
 end; end; end

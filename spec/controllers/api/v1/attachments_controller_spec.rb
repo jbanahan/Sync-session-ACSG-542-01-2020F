@@ -21,7 +21,6 @@ describe Api::V1::AttachmentsController do
       it "deletes an attachment" do
         updated_at = product.updated_at
         expect_any_instance_of(Product).to receive(:can_attach?).with(user).and_return true
-        expect_any_instance_of(Attachment).to receive(:rebuild_archive_packet)
         now = Time.zone.parse("2018-11-02 12:00")
         Timecop.freeze(now) do 
           delete :destroy, base_object_type: "products", base_object_id: product.id, id: attachment.id

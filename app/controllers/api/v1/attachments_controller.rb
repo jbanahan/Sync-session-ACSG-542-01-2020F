@@ -36,7 +36,6 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
         filename = attachment.attached_file_name
         deleted = attachment.destroy
         if deleted
-          attachment.rebuild_archive_packet
           obj.create_async_snapshot current_user, nil, "Attachment Removed: #{filename}" if obj.respond_to?(:create_async_snapshot)
         end
 
