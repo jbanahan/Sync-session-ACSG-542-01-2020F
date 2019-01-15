@@ -80,6 +80,7 @@ jobs:
             bundle exec rake db:create db:migrate --trace
             
       # GPG version 1 is needed because version 2 no longer really allows for passing the password to encrypt on the command line.
+      - run: sudo apt-get update
       - run:
           name: Install gpg version 1
           command: sudo apt-get install gnupg1
