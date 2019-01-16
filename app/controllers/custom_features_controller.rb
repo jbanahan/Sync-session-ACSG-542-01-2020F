@@ -38,6 +38,8 @@ require 'open_chain/custom_handler/generic/isf_late_flag_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_intacct_invoice_report_handler'
 require 'open_chain/custom_handler/lands_end/le_chapter_98_parser'
 require 'open_chain/custom_handler/customer_invoice_handler'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_patent_statement_uploader'
+require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_carb_statement_uploader'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -76,6 +78,8 @@ class CustomFeaturesController < ApplicationController
   LUMBER_ALLPORT_BILLING_FILE_PARSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser'
   LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
   CUSTOMER_INVOICE_HANDLER ||= 'OpenChain::CustomHandler::CustomerInvoiceHandler'
+  LL_CARB_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorCarbStatementUploader'
+  LL_PATENT_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentStatementUploader'
 
   SEARCH_PARAMS = {
     'filename' => {:field => 'attached_file_name', :label => 'Filename'},
@@ -700,6 +704,38 @@ class CustomFeaturesController < ApplicationController
 
   def customer_invoice_download
     generic_download 'Customer Invoice Upload (810)'
+  end
+
+  def lumber_carb_index
+    generic_index LL_CARB_UPLOAD.constantize, LL_CARB_UPLOAD, 'Vendor CARB Statement Upload', true
+  end
+
+  def lumber_carb_upload
+    generic_upload(LL_CARB_UPLOAD, 'Vendor CARB Statement Upload', 'lumber_carb', additional_process_params: params) do |f|
+      if !f.attached_file_name.blank? && !LL_CARB_UPLOAD.constantize.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel or CSV file."
+      end
+    end
+  end
+
+  def lumber_carb_download
+    generic_download 'Vendor CARB Statement Upload'
+  end
+
+  def lumber_patent_index
+    generic_index LL_PATENT_UPLOAD.constantize, LL_PATENT_UPLOAD, 'Vendor Patent Statement Upload', true
+  end
+
+  def lumber_patent_upload
+    generic_upload(LL_PATENT_UPLOAD, 'Vendor Patent Statement Upload', 'lumber_patent', additional_process_params: params) do |f|
+      if !f.attached_file_name.blank? && !LL_PATENT_UPLOAD.constantize.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel or CSV file."
+      end
+    end
+  end
+
+  def lumber_patent_download
+    generic_download 'Vendor Patent Statement Upload'
   end
 
   private

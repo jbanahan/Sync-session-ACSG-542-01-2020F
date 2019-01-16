@@ -198,6 +198,28 @@ describe BusinessValidationTemplate do
       expect_any_instance_of(Order).not_to receive(:create_snapshot)
       @bvt.create_result! @o
     end
+
+    it "does not run validations on closed object if instructed not to" do
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("Disable Rules For Closed Objects").and_return true
+      expect(@o).to receive(:closed?).and_return true
+
+      result = @bvt.create_result! @o, run_validation: true
+
+      expect(result[:result]).not_to be_nil
+      expect(result[:tracking]).to be_nil
+    end
+
+    it "runs validations on closed object if not disabled" do
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("Disable Rules For Closed Objects").and_return false
+      expect(@o).to receive(:closed?).and_return true
+
+      result = @bvt.create_result! @o, run_validation: true
+
+      expect(result[:result]).not_to be_nil
+      expect(result[:tracking]).not_to be_nil
+    end
   end
 
   describe "create_results_for_object!" do

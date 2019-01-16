@@ -251,6 +251,20 @@
     </div>
   </div>
   <%-end%>
+  <%- if OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorCarbStatementUploader.can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-6 offset-md-3'>
+      <%=link_to "LL CARB Statement Assign", '/custom_features/lumber_carb', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+    </div>
+  </div>
+  <%-end%>
+  <%- if OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentStatementUploader.can_view?(current_user) -%>
+  <div class='row'>
+    <div class='col-md-6 offset-md-3'>
+      <%=link_to "LL Patent Statement Assign", '/custom_features/lumber_patent', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+    </div>
+  </div>
+  <%-end%>
   <%-if OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler.new(nil).can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-6 offset-md-3'>

@@ -15,6 +15,9 @@ module OpenChain; module ModelFieldDefinition; module ProductVendorAssignmentFie
     pca_index = 1000
     product_custom_fields_to_add = []
     CustomDefinition.where(module_type:'Product').each_with_index do |cd,i|
+      # Virtual fields won't work as nested searches at the moment...not entirely sure how we can make them work, so I'm skipping them for now
+      next if cd.virtual_field?
+
       product_custom_fields_to_add << [
         pca_index+i,
         "#{cd.model_field_uid}_product_vendor_assignment".to_sym,
@@ -30,6 +33,9 @@ module OpenChain; module ModelFieldDefinition; module ProductVendorAssignmentFie
     vca_index = 2000
     vendor_custom_fields_to_add = []
     CustomDefinition.where(module_type:'Company').each_with_index do |cd,i|
+      # Virtual fields won't work as nested searches at the moment...not entirely sure how we can make them work, so I'm skipping them for now
+      next if cd.virtual_field?
+
       vendor_custom_fields_to_add << [
         vca_index+i,
         "#{cd.model_field_uid}_product_vendor_assignment".to_sym,

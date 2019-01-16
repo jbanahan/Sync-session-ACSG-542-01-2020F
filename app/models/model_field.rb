@@ -184,6 +184,10 @@ class ModelField
     @required
   end
 
+  def virtual_field?
+    !@custom_definition.nil? && @custom_definition.virtual_field?
+  end
+
   def self.constant_uid? uid
     uid.to_s.match(/^\*const_/)
   end
@@ -385,11 +389,14 @@ class ModelField
           if obj.is_a?(CustomValue)
             obj.value = d
           elsif self.custom?
-            obj.find_and_set_custom_value(@custom_definition, d)
+            # Virtual fields cannot have values input into them
+            if !@custom_definition.virtual_field?
+              obj.find_and_set_custom_value(@custom_definition, d)
+            end
           else
             obj.send("#{@field_name}=".to_sym, d)
           end
-          v = "#{self.label} set to #{d}"
+          v = "#{self.label} set to #{d}" unless self.custom? && @custom_definition.virtual_field?
         else
           if @import_lambda.arity == 2
             v = @import_lambda.call(obj, data)
@@ -517,9 +524,11 @@ class ModelField
       fields_to_add.push(*build_address_fields(custom_definition, core_module, index))
     else
       fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_definition: custom_definition, label_override: "#{custom_definition.label}",
-        qualified_field_name: "(SELECT #{custom_definition.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
+        qualified_field_name: custom_definition.qualified_field_name,
         definition: custom_definition.definition, default_label: "#{custom_definition.label}",
-        cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid)
+        cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid),
+        # All virtual fields MUST be read only
+        read_only: custom_definition.virtual_field?
       })
     end
     add_model_fields core_module, fields_to_add

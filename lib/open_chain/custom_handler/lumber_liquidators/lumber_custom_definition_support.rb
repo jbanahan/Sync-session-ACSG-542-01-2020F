@@ -100,8 +100,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prod_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Product', cdef_uid: "prod_country_of_origin"},
     class_proposed_hts: {label: "Proposed HTS", data_type: :string, module_type: "Classification", cdef_uid: "class_proposed_hts"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification", cdef_uid: "class_customs_description"},
-    prodven_carb: {label:'CARB Statement',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_carb"},
-    prodven_patent: {label:'Patent Statement',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_patent"},
+    # The following 2 fields should no longer be used...they are legacy fields #
+    prodven_carb: {label:'CARB Statement',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_carb", read_only: true},
+    prodven_patent: {label:'Patent Statement',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_patent", read_only: true},
+    # END LEGACY FIELDS #
+    prodven_carb_statements: {label:'CARB Statements',data_type: :text, module_type:'ProductVendorAssignment', cdef_uid: "prodven_carb_statements", virtual_value_query: "SELECT GROUP_CONCAT(DISTINCT CONCAT(constant_text, ' - ', DATE_FORMAT(effective_date_start, '%Y-%m-%d')) ORDER BY effective_date_start SEPARATOR '\n ') FROM constant_texts WHERE text_type = 'CARB Statement' AND constant_textable_id = \#{customizable_id} AND constant_textable_type = 'ProductVendorAssignment'", virtual_search_query: "SELECT GROUP_CONCAT(DISTINCT CONCAT(constant_text, ' - ', DATE_FORMAT(effective_date_start, '%Y-%m-%d')) ORDER BY effective_date_start SEPARATOR '\n ') FROM constant_texts WHERE text_type = 'CARB Statement' AND constant_textable_id = product_vendor_assignments.id and constant_textable_type = 'ProductVendorAssignment'"},
+    prodven_patent_statements: {label:'Patent Statements',data_type: :text, module_type:'ProductVendorAssignment', cdef_uid: "prodven_patent_statements", virtual_value_query: "SELECT GROUP_CONCAT(DISTINCT CONCAT(constant_text, ' - ', DATE_FORMAT(effective_date_start, '%Y-%m-%d')) ORDER BY effective_date_start SEPARATOR '\n ') FROM constant_texts WHERE text_type = 'Patent Statement' AND constant_textable_id = \#{customizable_id} AND constant_textable_type = 'ProductVendorAssignment'", virtual_search_query: "SELECT GROUP_CONCAT(DISTINCT CONCAT(constant_text, ' - ', DATE_FORMAT(effective_date_start, '%Y-%m-%d')) ORDER BY effective_date_start SEPARATOR '\n ') FROM constant_texts WHERE text_type = 'Patent Statement' AND constant_textable_id = product_vendor_assignments.id and constant_textable_type = 'ProductVendorAssignment'"},
     prodven_risk: {label:'Risk',data_type: :string, module_type:'ProductVendorAssignment', cdef_uid: "prodven_risk"},
     pva_pc_approved_by: {label: 'PC Approved By', data_type: :integer, module_type: 'PlantVariantAssignment', cdef_uid: "pva_pc_approved_by"},
     pva_pc_approved_date: {label: 'PC Approved Date', data_type: :datetime, module_type: 'PlantVariantAssignment', cdef_uid: "pva_pc_approved_date"},
@@ -236,6 +240,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     ordln_po_shipped_bol: {label: "PO Shipped - BOL", data_type: :string, module_type: "OrderLine", cdef_uid: "ordln_po_shipped_bol", read_only: true},
     ordln_po_shipped_container_number: {label: "PO Shipped - Container Number", data_type: :string, module_type: "OrderLine", cdef_uid: "ordln_po_shipped_container_number", read_only: true},
     ordln_po_shipped_seal_number: {label: "PO Shipped - Seal Number", data_type: :string, module_type: "OrderLine", cdef_uid: "ordln_po_shipped_seal_number", read_only: true},
+    ordln_carb_statement: {label: "CARB Statement", data_type: :string, module_type: "OrderLine", cdef_uid: "ordln_carb_statement", read_only: true},
+    ordln_patent_statement: {label: "Patent Statement", data_type: :string, module_type: "OrderLine", cdef_uid: "ordln_patent_statement", read_only: true},
     var_recipe: {label: 'Recipe', data_type: :text, module_type: 'Variant', cdef_uid: "var_recipe"},
     shp_booking_unlocked_date: {label: "Booking Unlocked Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_booking_unlocked_date"},
     shp_vgm_revised_date: {label: "VGM Revised Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_vgm_revised_date"},

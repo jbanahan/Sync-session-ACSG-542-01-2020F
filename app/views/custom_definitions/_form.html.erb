@@ -112,6 +112,8 @@ $(document).ready(function() {
           <%=field_row "User Field", f.check_box(:is_user, :title=>"Does this field represent a User ID?", :id=>'is_user_chk') %>
           <%=field_row "Address Field", f.check_box(:is_address, :title=>"Does this field represent an Address?", :id=>'is_address_chk') %>
           <%=field_row "Glossary definition", f.text_area(:definition, :title=>"A description of this field's meaning which will be displayed in the glossary.",:class=>'form-control') %>
+          <%=field_row "Virtual Search Query", f.text_area(:virtual_search_query, title: "A SQL query to run when this field is used on a search.", class: "form-control") %>
+          <%=field_row "Virtual Value Query", f.text_area(:virtual_value_query, title: "A SQL query to run to retrieve the value of this field.", class: "form-control") %>
         </tbody>
       </table>
     <% end %>

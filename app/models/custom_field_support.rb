@@ -32,12 +32,23 @@ module CustomFieldSupport
   # It returns the actual value inside the custom value object related to the given custom definition.
   # If no custom definition is found for the object, nil is returned.
   def custom_value custom_definition
+    if custom_definition.virtual_field?
+      virtual_custom_value custom_definition
+    else
+      standard_custom_value custom_definition
+    end
+  end
+
+  def virtual_custom_value custom_definition
+    custom_definition.virtual_value self
+  end
+
+  def standard_custom_value custom_definition
     id = custom_definition.id
     cv = self.custom_values.find {|v| v.custom_definition_id == id}
 
     cv ? cv.value(custom_definition) : nil
   end
-
 
   # This method ONLY uses the custom_values association to find the custom value object to use 
   # to set the passed in value - returning the custom value object that had its value set. 
@@ -47,6 +58,7 @@ module CustomFieldSupport
   # For that you should either rely on the autosave aspect of the custom_values relation OR directly save the custom_value
   # returned by this method.
   def find_and_set_custom_value custom_definition, value
+    raise ArgumentError, "Invalid Custom Defintion for #{custom_definition.label}.  Virtual Custom Values are read-only." if custom_definition.virtual_field?
     cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id}
     cv = self.custom_values.build(:custom_definition => custom_definition) if cv.nil?
     cv.set_value(custom_definition, value)

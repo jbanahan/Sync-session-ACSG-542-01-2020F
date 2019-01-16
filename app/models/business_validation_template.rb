@@ -149,7 +149,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
         # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
         # This should mean that only a single process is running validations for this module obj at a time
         if run_validation
-          state_tracking = bvr.run_validation_with_state_tracking
+          state_tracking = bvr.run_validation_with_state_tracking if process_object_rules?(obj)
 
           # We only need to save the whole validation result object if something actually changed
           if self.class.state_tracking_changed?(state_tracking)
@@ -186,6 +186,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   def self.state_tracking_changed? state_tracking
     # check if any rule state inside the result changed or the overall state
+    return false if state_tracking.nil?
+
     state_tracking[:changed] == true ||
       Array.wrap(state_tracking[:rule_states]).any? {|state| state[:changed] == true }
   end
@@ -208,6 +210,17 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
 
     business_validation_result.save! if rule_built
+  end
+
+  def process_object_rules? obj
+    # If we have the feature enabled, we should skip processing rules on all closed objects.
+    # If we have a closed object and we skip it, we do want to make sure that we still update the business validation results updated_at column
+    # otherwise the background job is going to be pulling up this object every single time the job runs to run rules on any objects that have changed.
+    if obj.respond_to?(:closed?) && obj.closed?
+      return !MasterSetup.get.custom_feature?("Disable Rules For Closed Objects")
+    else
+      return true
+    end
   end
 
   def self.async_destroy id

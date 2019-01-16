@@ -630,13 +630,21 @@ OpenChain::Application.routes.draw do
   post "/custom_features/lumber_part/upload" => "custom_features#lumber_part_upload"
   get "/custom_features/lumber_part/:id/download" => "custom_features#lumber_part_download"
 
-  match "/custom_features/eddie_bauer_7501" => "custom_features#eddie_bauer_7501_index", :via => :get
-  match "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload", :via => :post
-  match "/custom_features/eddie_bauer_7501/:id/download" => "custom_features#eddie_bauer_7501_download", :via => :get
+  get "/custom_features/lumber_carb" => "custom_features#lumber_carb_index"
+  post "/custom_features/lumber_carb/upload" => "custom_features#lumber_carb_upload"
+  get "/custom_features/lumber_carb/:id/download" => "custom_features#lumber_carb_download"
 
-  match "/custom_features/ascena_product" => "custom_features#ascena_product_index", :via => :get
-  match "/custom_features/ascena_product/upload" => "custom_features#ascena_product_upload", :via => :post
-  match "/custom_features/ascena_product/:id/download" => "custom_features#ascena_product_download", :via => :get
+  get "/custom_features/lumber_patent" => "custom_features#lumber_patent_index"
+  post "/custom_features/lumber_patent/upload" => "custom_features#lumber_patent_upload"
+  get "/custom_features/lumber_patent/:id/download" => "custom_features#lumber_patent_download"
+
+  get "/custom_features/eddie_bauer_7501" => "custom_features#eddie_bauer_7501_index"
+  post "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload"
+  get "/custom_features/eddie_bauer_7501/:id/download" => "custom_features#eddie_bauer_7501_download"
+
+  get "/custom_features/ascena_product" => "custom_features#ascena_product_index"
+  post "/custom_features/ascena_product/upload" => "custom_features#ascena_product_upload"
+  get "/custom_features/ascena_product/:id/download" => "custom_features#ascena_product_download"
 
   get "/custom_features/ua_missing_classifications" => "custom_features#ua_missing_classifications_index"
   post "/custom_features/ua_missing_classifications/upload" => "custom_features#ua_missing_classifications_upload"

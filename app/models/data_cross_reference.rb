@@ -68,6 +68,8 @@ class DataCrossReference < ActiveRecord::Base
   CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
   VFI_DIVISION ||= "vfi_division"
   ASCE_BRAND ||= "asce_brand_xref"
+  LL_CARB_STATEMENTS ||= "ll_carb_statement"
+  LL_PATENT_STATEMENTS ||= "ll_patent_statement"
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
@@ -85,7 +87,9 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
       xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
       xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
-      xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false)
+      xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false),
+      xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
+      xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true)
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -147,6 +151,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("UnderArmour")
     when HM_PARS_NUMBER
       MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?("pars-maintenance"))
+    when LL_CARB_STATEMENTS, LL_PATENT_STATEMENTS
+      MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?
     else
       false
     end

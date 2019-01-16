@@ -2,20 +2,22 @@
 #
 # Table name: custom_definitions
 #
-#  cdef_uid         :string(255)
-#  created_at       :datetime         not null
-#  data_type        :string(255)
-#  default_value    :string(255)
-#  definition       :text
-#  id               :integer          not null, primary key
-#  is_address       :boolean
-#  is_user          :boolean
-#  label            :string(255)
-#  module_type      :string(255)
-#  quick_searchable :boolean
-#  rank             :integer
-#  tool_tip         :string(255)
-#  updated_at       :datetime         not null
+#  cdef_uid             :string(255)
+#  created_at           :datetime         not null
+#  data_type            :string(255)
+#  default_value        :string(255)
+#  definition           :text
+#  id                   :integer          not null, primary key
+#  is_address           :boolean
+#  is_user              :boolean
+#  label                :string(255)
+#  module_type          :string(255)
+#  quick_searchable     :boolean
+#  rank                 :integer
+#  tool_tip             :string(255)
+#  updated_at           :datetime         not null
+#  virtual_search_query :text
+#  virtual_value_query  :text
 #
 # Indexes
 #
@@ -33,6 +35,7 @@ class CustomDefinition < ActiveRecord::Base
   # to prevent new ones from being made, but we will continue to allow old ones to be saved.  The screen now generates a default cdef_uid
   # on creation, so all new ones will have cdef_uids
   validates  :cdef_uid, presence: :true, on: :create
+  validate :validate_virtual_fields
 
   has_many   :custom_values, :dependent => :destroy
   has_many   :sort_criterions, :dependent => :destroy
@@ -152,6 +155,31 @@ class CustomDefinition < ActiveRecord::Base
     end
   end
 
+  def virtual_field?
+    self.virtual_value_query.present? || self.virtual_search_query.present?
+  end
+
+  # This method generates a query suitable to be used in a SQL FROM or WHERE clause.
+  def qualified_field_name 
+    if self.virtual_search_query.blank?
+      "(SELECT #{self.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{self.id} AND customizable_type = '#{self.module_type}')"
+    else
+      # NOTE: We COULD enforce the datatype by wrapping the virtual search query in a cast...
+      "(#{self.virtual_search_query})"
+    end
+  end
+
+  # This method utilizes the virtual value query (injecting the customizable_id given) and returns the virtual value 
+  # the query finds.  NOTE: A LIMIT 1 is added to all queries.  This method is meant to return a single value 
+  # for a specific "parent" object.
+  def virtual_value customizable
+    return nil if self.virtual_value_query.blank?
+
+    interpolated_query = parameterize_query(self.virtual_value_query, { customizable_id: customizable.id }) +  " LIMIT 1"
+    
+    self.class.connection.execute(interpolated_query).first.try(:first)
+  end
+
   def self.generate_cdef_uid custom_definition
     core_module = custom_definition.core_module
     return nil if core_module.nil?
@@ -177,4 +205,26 @@ class CustomDefinition < ActiveRecord::Base
       FieldLabel.where(model_field_uid: model_field_uid).destroy_all
     end
 
+    def parameterize_query query, replacements
+      # I would MUCH rather utilize Rail's built in methods for query parameterization, but I'm having issues with it because
+      # of specialized queries that contain %'s in them (ie for date formatting in Mysql) and rails/ruby raising ArgumentError: malformed format string due to them
+      # ..ergo, we'er just going to do this with simple regexes to work like standard ruby string interpolation
+      replacements.each_pair do |key, value|
+        if value.is_a?(String)
+          value = self.class.connection.quote(value)
+        end
+
+        regexp = Regexp.new(('#{\s*' + "#{key}" + '\s*}'))
+        
+        # Do NOT do gsub! here...the query value passed in is likely the acutal virtual_value_query attribute and we don't 
+        # want to change that value in place, otherwise every lookup will use the same id we gsub into place.    
+        query = query.gsub(regexp, value.to_s)
+      end
+      query
+    end
+
+    def validate_virtual_fields
+      errors.add(:virtual_search_query, "cannot be blank if Virtual value query is present.") if self.virtual_search_query.blank? && !self.virtual_value_query.blank?
+      errors.add(:virtual_value_query, "cannot be blank if Virtual search query is present.") if self.virtual_value_query.blank? && !self.virtual_search_query.blank?
+    end
 end

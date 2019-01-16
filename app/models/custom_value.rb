@@ -39,6 +39,7 @@ class CustomValue < ActiveRecord::Base
   belongs_to :custom_definition
   belongs_to :customizable, polymorphic: true, inverse_of: :custom_values
   validates  :custom_definition, :presence => true
+  validate :no_virtual_field, on: :create
   # There used to be a validation here that forced the presence of a
   # customizable_id/type.  That validation caused us to be unable to do a
   # save call on a non-persisted customizable object and automatically have
@@ -148,17 +149,19 @@ class CustomValue < ActiveRecord::Base
     end
   end
 
-
-
   private
-  def parse_date d
-    return d unless d.is_a?(String)
-    if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
-      return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
-    elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
-      return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
-    else
-      return d
+    def parse_date d
+      return d unless d.is_a?(String)
+      if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
+        return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+      elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
+        return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
+      else
+        return d
+      end
     end
-  end
+
+    def no_virtual_field
+      errors.add(:custom_definition_id, "cannot have virtual custom values.") if self.custom_definition && self.custom_definition.virtual_field?
+    end
 end

@@ -234,6 +234,39 @@ describe OpenChain::EntityCompare::EntityComparator do
 
         subject.handle_snapshot es
       end
+
+      it "skips process_by_id if object is closed and closed snapshot comparators is disabled" do
+        # Just use any comparator for a module that responds to closed?
+        OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator
+        ms = stub_master_setup
+        expect(ms).to receive(:custom_feature?).with("Disable Order Snapshot Comparators").and_return false
+        expect(ms).to receive(:custom_feature?).with("Disable Comparators For Closed Objects").and_return true
+
+        order = Order.new
+        expect(order).to receive(:closed?).and_return true
+        es = EntitySnapshot.new id: 5, recordable: order
+
+        expect(subject).not_to receive(:delay)
+
+        subject.handle_snapshot es
+      end
+
+      it "does not skip process_by_id if object is not closed and closed snapshot comparators is disabled" do
+        # Just use any comparator for a module that responds to closed?
+        OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator
+        ms = stub_master_setup
+        expect(ms).to receive(:custom_feature?).with("Disable Order Snapshot Comparators").and_return false
+        expect(ms).to receive(:custom_feature?).with("Disable Comparators For Closed Objects").and_return true
+
+        order = Order.new
+        expect(order).to receive(:closed?).and_return false
+        es = EntitySnapshot.new id: 5, recordable: order
+
+        expect(subject).to receive(:delay).and_return subject
+        expect(subject).to receive(:process_by_id)
+
+        subject.handle_snapshot es
+      end
     end
 
     context "test environment" do

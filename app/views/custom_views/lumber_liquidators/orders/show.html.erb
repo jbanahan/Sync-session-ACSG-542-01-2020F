@@ -10,7 +10,7 @@
   :ord_asn_barge_depart,:ord_asn_barge_arrive,:ord_asn_fcr_created
 ]%>
 <%cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions([
-  :prodven_risk,:prodven_carb,:prodven_patent,:prod_old_article,:prod_merch_cat_desc,:prod_merch_cat,
+  :prodven_risk,:prod_old_article,:prod_merch_cat_desc,:prod_merch_cat,
   :ordln_pc_approved_by,:ordln_pc_approved_date,
   :ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,
   :ordln_qa_approved_by,:ordln_qa_approved_date,
@@ -29,7 +29,8 @@
   :ordln_po_create_bol, :ordln_po_create_container_number, :ordln_po_create_seal_number, :ordln_po_booked_article, :ordln_po_booked_quantity, :ordln_po_booked_hts, 
   :ordln_po_booked_price_per_unit, :ordln_po_booked_total_price, :ordln_po_booked_country_origin, :ordln_po_booked_bol, :ordln_po_booked_container_number, 
   :ordln_po_booked_seal_number, :ordln_po_shipped_article, :ordln_po_shipped_quantity, :ordln_po_shipped_hts, :ordln_po_shipped_price_per_unit, :ordln_po_shipped_total_price, 
-  :ordln_po_shipped_country_origin, :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number, :ord_snapshot_discrepancy_comment] +asn_cdefs)%>
+  :ordln_po_shipped_country_origin, :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number, :ord_snapshot_discrepancy_comment, 
+  :ordln_carb_statement, :ordln_patent_statement] +asn_cdefs)%>
 <%rule_state = @order.business_rules_state_for_user(current_user)%>
 <script type='text/javascript'>
 
@@ -323,15 +324,13 @@
               <tr>
                 <%= model_field_labels([:ordln_line_number, :prod_uid,
                   :ordln_ordered_qty, :ordln_unit_of_measure,
-                  cdefs[:prodven_carb].model_field_uid,
-                  cdefs[:prodven_patent].model_field_uid
+                  cdefs[:ordln_carb_statement],
+                  cdefs[:ordln_patent_statement]
                 ], table:true, heading:true) %>
               </tr>
             </thead>
             <tbody>
               <% @order.order_lines.each do |line| %>
-                <%line_carb = cdefs[:prodven_carb].model_field.process_export(line.product.product_vendor_assignments.where(vendor_id:@order.vendor_id).first, User.current)%>
-                <%line_patent = cdefs[:prodven_patent].model_field.process_export(line.product.product_vendor_assignments.where(vendor_id:@order.vendor_id).first, User.current)%>
                 <tr>
                   <%= show_model_fields(line, :ordln_line_number, table: true, editor_only: true) %>
                   <td>
@@ -339,13 +338,7 @@
                     <small><%=cdefs[:ordln_old_art_number].model_field.process_export(line,User.current)%></small><br />
                     <%=cdefs[:ordln_part_name].model_field.process_export(line,User.current)%>
                   </td>
-                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure], table: true, editor_only: true) %>
-                  <td>
-                    <%=line_carb%>
-                  </td>
-                  <td>
-                    <%=line_patent%>
-                  </td>
+                  <%= show_model_fields(line, [:ordln_ordered_qty, :ordln_unit_of_measure, cdefs[:ordln_carb_statement], cdefs[:ordln_patent_statement]], table: true, editor_only: true, never_hide: true) %>
                 </tr>
               <%end %>
             </tbody>

@@ -16,33 +16,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   ]  
 
   def self.parse_file data, log, opts={}
-    parse_dom REXML::Document.new(data), log, opts
-  end
-
-  def self.parse_dom dom, log, opts={}
-    self.new(opts).parse_dom dom, log
+    self.new.parse_dom REXML::Document.new(data), opts
   end
 
   def self.integration_folder
     ["ll/_sap_po_xml", "/home/ubuntu/ftproot/chainroot/ll/_sap_po_xml"]
   end
 
-  def initialize opts={}
-    @user = User.integration
-    @imp = Company.find_by_master(true)
-    @cdefs = self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
-      :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
-      :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent,
-      :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description,
-      :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number,
-      :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg, :ordln_deleted_flag
-    ]
-    @opts = opts
-  end
-
-  def parse_dom dom, log
+  def parse_dom dom, opts = {}
     root = dom.root
-    log.error_and_raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
+    inbound_file.error_and_raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
 
     base = REXML::XPath.first(root,'IDOC')
 
@@ -55,19 +38,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
-    log.company = @imp
-    log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number
+    inbound_file.company = importer
+    inbound_file.add_identifier :po_number, order_number
 
     order = nil
 
     begin
       @first_expected_delivery_date = nil
-      vend = find_vendor(@imp, vendor_system_code)
-      order = find_order(order_number, @imp, ext_time) do |o|
-        log.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, Order.to_s, o.id
+      vend = find_vendor(importer, vendor_system_code)
+      order = find_order(order_number, importer, ext_time) do |o|
+        inbound_file.set_identifier_module_info :po_number, Order, o.id
 
-        o.last_file_bucket = @opts[:bucket]
-        o.last_file_path = @opts[:key]
+        o.last_file_bucket = opts[:bucket]
+        o.last_file_path = opts[:key]
 
         o.customer_order_number = o.order_number
         o.vendor = vend
@@ -83,10 +66,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.order_from_address = order_from_address(base,vend)
         o.fob_point = fob_point base
 
-        header_ship_to = ship_to_address(base,@imp)
+        header_ship_to = ship_to_address(base,importer)
 
         order_lines_processed = []
-        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, @imp, header_ship_to, log).line_number.to_i}
+        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, importer, header_ship_to).line_number.to_i}
         # Look for existing order lines that are not present in the current XML and deal with them.
         o.order_lines.each {|ol|
           if !order_lines_processed.include?(ol.line_number.to_i)
@@ -95,7 +78,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
             # connection, it can simply be deleted, however.  There's no need to keep it around.
             if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
               ol.quantity = 0
-              ol.update_custom_value!(@cdefs[:ordln_deleted_flag], true)
+              ol.update_custom_value!(cdefs[:ordln_deleted_flag], true)
             else
               ol.mark_for_destruction
             end
@@ -103,13 +86,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         }
 
         o.save!
-        o.update_custom_value!(@cdefs[:ord_assigned_agent],assigned_agent(o))
-        o.update_custom_value!(@cdefs[:ord_type],et(order_header,'BSART'))
-        o.update_custom_value!(@cdefs[:ord_sap_extract],ext_time)
+        o.update_custom_value!(cdefs[:ord_assigned_agent],assigned_agent(o))
+        o.update_custom_value!(cdefs[:ord_type],et(order_header,'BSART'))
+        o.update_custom_value!(cdefs[:ord_sap_extract],ext_time)
         buyer_name, buyer_phone = buyer_info(base)
-        o.update_custom_value!(@cdefs[:ord_buyer_name],buyer_name)
-        o.update_custom_value!(@cdefs[:ord_buyer_phone],buyer_phone)
-        o.associate_vendor_and_products! @user
+        o.update_custom_value!(cdefs[:ord_buyer_name],buyer_name)
+        o.update_custom_value!(cdefs[:ord_buyer_phone],buyer_phone)
+        o.associate_vendor_and_products! user
 
         set_header_totals_from_lines o
         set_header_dates_from_lines(base,o)
@@ -117,10 +100,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.save!
 
         o.reload
-        validate_line_totals(o, base, log)
+        validate_line_totals(o, base)
 
         setup_folders o
-        o.create_snapshot(@user, nil, @opts[:key])
+        o.create_snapshot(user, nil, opts[:key])
         o
       end
     rescue OnShipmentError
@@ -166,7 +149,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     already_existing_folders = order.folders.map(&:name)
     folder_list.each do |f|
       if !already_existing_folders.include?(f[:folder_name])
-        new_folder = order.folders.create!(name: f[:folder_name], created_by_id: @user.id)
+        new_folder = order.folders.create!(name: f[:folder_name], created_by_id: user.id)
         new_folder.groups << Group.use_system_group(f[:group_system_code], name: f[:group_name])
       end
     end
@@ -182,15 +165,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def set_header_totals_from_lines order
     total_freight = 0
     order.order_lines.each do |ol|
-      freight = ol.custom_value(@cdefs[:ordln_vendor_inland_freight_amount])
+      freight = ol.custom_value(cdefs[:ordln_vendor_inland_freight_amount])
       if freight
         total_freight += freight
       end
     end
-    order.update_custom_value!(@cdefs[:ord_total_freight], total_freight)
+    order.update_custom_value!(cdefs[:ord_total_freight], total_freight)
 
-    grand_total = ModelField.find_by_uid(:ord_total_cost).process_export(order, @user) + total_freight
-    order.update_custom_value!(@cdefs[:ord_grand_total], grand_total)
+    grand_total = ModelField.find_by_uid(:ord_total_cost).process_export(order, user) + total_freight
+    order.update_custom_value!(cdefs[:ord_grand_total], grand_total)
   end
 
   def set_header_dates_from_lines base, order
@@ -199,7 +182,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       avail_to_promise_dates << el.text unless el.text.blank?
     end
     avail_to_promise = avail_to_promise_dates.sort.first
-    order.update_custom_value!(@cdefs[:ord_avail_to_prom_date],avail_to_promise)
+    order.update_custom_value!(cdefs[:ord_avail_to_prom_date],avail_to_promise)
 
     mapping = {
       'VN_EXPEC_DLVD' => [],
@@ -239,9 +222,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
       order.ship_window_start = mapping['VN_SHIPBEGIN']
       order.ship_window_end = mapping['VN_SHIPEND']
-      order.update_custom_value!(@cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
-      order.update_custom_value!(@cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
-      order.update_custom_value!(@cdefs[:ord_sap_vendor_handover_date],mapping['VN_HNDDTE'])
+      order.update_custom_value!(cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
+      order.update_custom_value!(cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
+      order.update_custom_value!(cdefs[:ord_sap_vendor_handover_date],mapping['VN_HNDDTE'])
     else # legacy PO before June 2016 date logic change
       set_ship_window(order)
     end
@@ -456,21 +439,21 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def process_file? extract_time, order
-      previous_extract_time = order.get_custom_value(@cdefs[:ord_sap_extract]).value
+      previous_extract_time = order.custom_value(cdefs[:ord_sap_extract])
 
       # We only want to process the file if there was no previous process time, OR the current extract is after (or equal to) the previous time
       return previous_extract_time.nil? || extract_time.to_i >=  previous_extract_time.to_i
     end
 
-    def validate_line_totals order, base_el, log
+    def validate_line_totals order, base_el
       expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
       return true if expected_el.nil?
       expected = BigDecimal(expected_el.text)
       actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
-      log.reject_and_raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
+      inbound_file.reject_and_raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
-    def process_line order, line_el, importer, header_ship_to, log
+    def process_line order, line_el, importer, header_ship_to
       line_number = et(line_el,'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
@@ -490,7 +473,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         price_per_unit = extended_cost / qty
       end
 
-      validate_line_not_changed(ol, product, log) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
+      validate_line_not_changed(ol, product) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
 
       ol.price_per_unit = price_per_unit
       ol.product = product
@@ -499,12 +482,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       # There is a possibility these may change between runs. We do not want the part_name or old_article_number
       # to change once they are set.
-      unless ol.get_custom_value(@cdefs[:ordln_part_name]).value.present?
-        ol.find_and_set_custom_value @cdefs[:ordln_part_name], product.name
+      unless ol.custom_value(cdefs[:ordln_part_name]).present?
+        ol.find_and_set_custom_value cdefs[:ordln_part_name], product.name
       end
 
-      unless ol.get_custom_value(@cdefs[:ordln_old_art_number]).value.present?
-        ol.find_and_set_custom_value @cdefs[:ordln_old_art_number], product.get_custom_value(@cdefs[:prod_old_article]).value
+      unless ol.custom_value(cdefs[:ordln_old_art_number]).present?
+        ol.find_and_set_custom_value cdefs[:ordln_old_art_number], product.custom_value(cdefs[:prod_old_article])
       end
 
       exp_del = expected_delivery_date(line_el)
@@ -523,32 +506,34 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         # getting identified as changed as compared to nil ones (see the lumber_order_change_comparator's fingerprinting of OrderData)
         # Rather than changing the fingerprinting method and then have a bunch of things record as changed again, we'll only
         # set a blank string here if the value is already blank, otherwise we'll nil the field.
-        if ol.custom_value(@cdefs[:ordln_custom_article_description]) == ""
+        if ol.custom_value(cdefs[:ordln_custom_article_description]) == ""
           description = ""
         else
           description = nil
         end
       end
 
-      ol.find_and_set_custom_value @cdefs[:ordln_custom_article_description], description
-      ol.find_and_set_custom_value @cdefs[:ordln_gross_weight_kg], gross_weight(line_el)
+      ol.find_and_set_custom_value cdefs[:ordln_custom_article_description], description
+      ol.find_and_set_custom_value cdefs[:ordln_gross_weight_kg], gross_weight(line_el)
+      ol.find_and_set_custom_value cdefs[:ordln_carb_statement], product_vendor_text(order, product, "CARB Statement")
+      ol.find_and_set_custom_value cdefs[:ordln_patent_statement], product_vendor_text(order, product, "Patent Statement")
 
       # Default to false.  Although it's unlikely to actually happen, this prevents an "undeleted" line from being
       # stuck in "deleted" status.
-      ol.find_and_set_custom_value @cdefs[:ordln_deleted_flag], false
+      ol.find_and_set_custom_value cdefs[:ordln_deleted_flag], false
 
       inland_freight_el = get_inland_freight_element line_el
       if inland_freight_el
         inland_freight_amt = BigDecimal(et(inland_freight_el, 'BETRG'))
-        ol.find_and_set_custom_value @cdefs[:ordln_inland_freight_amount], inland_freight_amt
+        ol.find_and_set_custom_value cdefs[:ordln_inland_freight_amount], inland_freight_amt
         vendor_number = REXML::XPath.first(inland_freight_el, '_-LUMBERL_-FREIGHT_COND_VEND/VN_FREIGHT_VNDR').try(:text)
-        ol.find_and_set_custom_value @cdefs[:ordln_inland_freight_vendor_number], vendor_number
+        ol.find_and_set_custom_value cdefs[:ordln_inland_freight_vendor_number], vendor_number
 
         # Vendor inland freight amount is set only if the order's vendor matches the one in the file.
         # It'll either be the same value as inland freight amount or nil, depending on the vendor.  This field
         # is public, the other amount field is not.
         vendor_inland_freight_amt = vendor_number == order.vendor.system_code ? inland_freight_amt : nil
-        ol.find_and_set_custom_value @cdefs[:ordln_vendor_inland_freight_amount], vendor_inland_freight_amt
+        ol.find_and_set_custom_value cdefs[:ordln_vendor_inland_freight_amount], vendor_inland_freight_amt
       end
 
       return ol
@@ -580,19 +565,19 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       REXML::XPath.first(line_el, "E1EDP05[KSCHL='ZHF2' or KSCHL='ZLF2']")
     end
 
-    def validate_line_not_changed ol, product, log
+    def validate_line_not_changed ol, product
       changed = false
       changed = true if ol.product != product
       # This error message is a bit vague, but the product change condition is supposedly not even allowed by SAP.
       # We opted to leave it alone, even after the number of checks this method did was reduced to one in 04/2018. - WBH
-      log.reject_and_raise("Order Line #{ol.line_number} already on a shipment.", error_class:OnShipmentError) if changed
+      inbound_file.reject_and_raise("Order Line #{ol.line_number} already on a shipment.", error_class:OnShipmentError) if changed
     end
 
     def find_product order_line_el
       product_base = REXML::XPath.first(order_line_el,'E1EDP19')
       prod_uid = et(product_base,'IDTNR')
       return Product.where(unique_identifier:prod_uid).first_or_create!(
-        importer:@imp,
+        importer:importer,
         name:et(product_base,'KTEXT')
       )
     end
@@ -757,6 +742,31 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         weight = (weight * BigDecimal("0.453592"))
       end
       weight.round(3, BigDecimal::ROUND_HALF_UP)
+    end
+
+    def product_vendor_text order, product, text_type
+      return nil unless order.vendor && order.order_date
+      pva = product.product_vendor_assignments.where(vendor_id: order.vendor.id).first
+      return nil unless pva
+      pva.constant_text_for_date(text_type, reference_date: order.order_date).try(:constant_text)
+    end
+
+    def cdefs
+      @cdefs ||= self.class.prep_custom_definitions [:ord_sap_extract, :ord_type, :ord_buyer_name, :ord_buyer_phone,
+            :ord_planned_expected_delivery_date, :ord_ship_confirmation_date,
+            :ord_sap_vendor_handover_date, :ord_avail_to_prom_date, :ord_assigned_agent,
+            :ordln_part_name, :ordln_old_art_number, :prod_old_article, :ordln_custom_article_description,
+            :ordln_inland_freight_amount, :ordln_vendor_inland_freight_amount, :ordln_inland_freight_vendor_number,
+            :ord_total_freight, :ord_grand_total, :ordln_gross_weight_kg, :ordln_deleted_flag, :ordln_carb_statement, :ordln_patent_statement
+          ]
+    end
+
+    def importer
+      @importer ||= Company.where(master: true).first
+    end
+
+    def user
+      @user ||= User.integration
     end
 
 end; end; end; end

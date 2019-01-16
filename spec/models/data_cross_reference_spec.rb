@@ -416,6 +416,26 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['ca_hts_to_descr'])).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
       end
     end
+
+    context "ll system" do
+      before :each do 
+        allow(master_setup).to receive(:custom_feature?).with("Lumber Liquidators").and_return true
+      end
+
+      let (:admin_user) {
+        u = User.new
+        allow(u).to receive(:admin?).and_return true
+        u
+      }
+
+      it "returns information about xref screens admin user has access to" do
+        xrefs = DataCrossReference.xref_edit_hash admin_user
+
+        expect(xrefs.size).to eq 2
+        expect(strip_preproc(xrefs['ll_carb_statement'])).to eq title: "CARB Statements", description: "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_carb_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['ll_patent_statement'])).to eq title: "Patent Statements", description: "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_patent_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
+      end
+    end
   end
 
   describe "can_view?" do

@@ -668,6 +668,16 @@ describe SearchCriterion do
           v = sc.apply(Product.where("1=1"))
           expect(v.all).to include @product
         end
+
+        it "handles virtual custom fields" do
+          # Virtual search queries work pretty much identical to standard fields, so we shouldn't need to bother checking all different data types, etc
+          cdef = Factory(:custom_definition, data_type: 'datetime', virtual_search_query: "SELECT NOW()", virtual_value_query: "SELECT NOW()")
+  
+          sc = SearchCriterion.new(model_field_uid: "*cf_#{cdef.id}", operator: "gt", value: (Time.zone.now.to_date - 1.day).to_s)
+          v = sc.apply(Product.where("1=1"))
+          expect(v.all).to include @product
+          expect(sc.test? @product).to eq true
+        end
       end
       context "normal_field" do
         it "should process value before search" do

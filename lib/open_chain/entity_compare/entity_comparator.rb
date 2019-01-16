@@ -25,8 +25,18 @@ module OpenChain; module EntityCompare; class EntityComparator
   end
 
   def self.process_snapshot? snapshot
-    # This method is a simple way to disable all snapshot processing for a distinct snapshot class / type
-    return test? || !MasterSetup.get.custom_feature?("Disable #{snapshot.recordable_type} Snapshot Comparators")
+    return true if test?
+
+    # Check to see if we're disabling all comparators for a particular module - which is true in the case of some systems where 
+    # we know we have no comparators set up for say a Product or something like that and the customer loads a lot of Products
+    return false if MasterSetup.get.custom_feature?("Disable #{snapshot.recordable_type} Snapshot Comparators")
+
+    # Now check to see if snapshots are totally disabled for closed core modules and then check if it's closed
+    if MasterSetup.get.custom_feature?("Disable Comparators For Closed Objects")
+      return false if snapshot.recordable.respond_to?(:closed?) && snapshot.recordable.closed?
+    end
+
+    return true
   end
 
   def self.test?

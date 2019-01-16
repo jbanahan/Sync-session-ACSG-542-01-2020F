@@ -282,6 +282,8 @@ class CoreModule
   end
 
   def self.find_by_class_name(c,case_insensitive=false)
+    c = c.to_s if c.is_a?(Class)
+    
     self.all.each do|m|
       if case_insensitive
         return m if m.class_name.downcase == c.downcase

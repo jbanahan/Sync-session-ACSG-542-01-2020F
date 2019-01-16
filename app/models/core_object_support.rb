@@ -8,6 +8,7 @@ module CoreObjectSupport
     include BroadcastsEvents
     include UpdateModelFieldsSupport
     include FingerprintSupport
+    include ConstantTextSupport
 
     attr_accessor :dont_process_linked_attachments
 

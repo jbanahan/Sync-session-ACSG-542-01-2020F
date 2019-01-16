@@ -444,9 +444,7 @@ module ApplicationHelper
   private :model_field_editor
 
   def model_field_labels(model_field_uids, opts={})
-    if !model_field_uids.respond_to? :each
-      model_field_uids = [model_field_uids]
-    end
+    model_field_uids = Array.wrap(model_field_uids)
 
     output = ""
     opts = {attributes: {}, heading: false, show_prefix: false, table: false, row: false}.merge opts

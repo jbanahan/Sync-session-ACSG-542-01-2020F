@@ -425,6 +425,11 @@ class Shipment < ActiveRecord::Base
     return true if can_cancel_as_carrier?(user)
   end
 
+  # This method is here to just provide API consistency across module for determining if something is closed/cancel'ed
+  def closed?
+    !self.canceled_date.nil?
+  end
+
   ###################
   # Shipment Instructions
   ###################

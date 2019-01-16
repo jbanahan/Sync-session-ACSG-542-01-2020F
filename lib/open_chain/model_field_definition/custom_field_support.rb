@@ -274,6 +274,9 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
   # Make a ModelField based on the given module that links through
   # to a product custom definition.
   def create_and_insert_product_custom_field custom_definition, core_module, index
+    # Virtual fields won't work as nested searches at the moment...not entirely sure how we can make them work, so I'm skipping them for now
+    return if custom_definition.virtual_field?
+
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
       custom_definition: custom_definition,
@@ -286,7 +289,8 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
         p = o.product
         return nil if p.nil?
         p.custom_value(custom_definition)
-      }
+      },
+      field_validator_rule: custom_definition.field_validator_rules.first
     })
     add_model_fields core_module, [mf]
     mf
@@ -306,6 +310,9 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
   # Make a ModelField based on the given module that links through
   # to a variant custom definition.
   def create_and_insert_variant_custom_field custom_definition, core_module, index
+    # Virtual fields won't work as nested searches at the moment...not entirely sure how we can make them work, so I'm skipping them for now
+    return if custom_definition.virtual_field?
+
     uid = "#{custom_definition.model_field_uid}_#{core_module.table_name}".to_sym
     mf = ModelField.new(index,uid,core_module,uid,{
       custom_definition: custom_definition,
@@ -318,7 +325,8 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
         v = o.variant
         return nil if v.nil?
         v.custom_value(custom_definition)
-      }
+      },
+      field_validator_rule: custom_definition.field_validator_rules.first
     })
     add_model_fields core_module, [mf]
     mf
