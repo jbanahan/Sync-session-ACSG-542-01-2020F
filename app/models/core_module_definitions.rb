@@ -63,8 +63,8 @@ module CoreModuleDefinitions
   # on every core object.
   DESCRIPTOR_REPOSITORY ||= {}
 
-  COMMENT = CoreModule.new("Comment", "Comment",{unique_id_field_name: :cmt_unique_identifier})
-  GROUP = CoreModule.new("Group", "Group",{unique_id_field_name: :grp_unique_identifier})
+  COMMENT = CoreModule.new("Comment", "Comment",{unique_id_field_name: :cmt_unique_identifier, destroy_snapshots: false})
+  GROUP = CoreModule.new("Group", "Group",{unique_id_field_name: :grp_unique_identifier, destroy_snapshots: false})
   FOLDER = CoreModule.new("Folder", "Folder", {
     logical_key_lambda: lambda { |obj|
       # We need to find the parent of the folder, and then use the logical key from it, then add in the folder name after that,
@@ -88,7 +88,8 @@ module CoreModuleDefinitions
         groups: { type: Group }
       }, descriptor_repository: DESCRIPTOR_REPOSITORY
     ),
-    unique_id_field_name: :fld_unique_identifier
+    unique_id_field_name: :fld_unique_identifier,
+    destroy_snapshots: false
   })
 
   SECURITY_FILING_LINE = CoreModule.new("SecurityFilingLine","Security Line", {
@@ -96,7 +97,8 @@ module CoreModuleDefinitions
        :unique_id_field_name=>:sfln_line_number,
        :object_from_piece_set_lambda => lambda {|ps| ps.security_filing_line},
        :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
-       :key_model_field_uids=>[:sfln_line_number]
+       :key_model_field_uids=>[:sfln_line_number],
+       :destroy_snapshots => false
    })
   SECURITY_FILING = CoreModule.new("SecurityFiling","Security Filing",{
     :unique_id_field_name=>:sf_transaction_number,
@@ -123,7 +125,8 @@ module CoreModuleDefinitions
       :unique_id_field_name=>:ordln_line_number,
       :object_from_piece_set_lambda => lambda {|ps| ps.order_line},
       :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
-      :key_model_field_uids => [:ordln_line_number]
+      :key_model_field_uids => [:ordln_line_number],
+      :destroy_snapshots => false
   })
   ORDER = CoreModule.new("Order","Order",
     {:file_formatable=>true,
@@ -159,7 +162,8 @@ module CoreModuleDefinitions
        unique_id_field_name: :con_num,
        object_from_piece_set_lambda: lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.container},
        enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
-       key_model_field_uids: [:con_uid]
+       key_model_field_uids: [:con_uid],
+       destroy_snapshots: false
    })
   CARTON_SET = CoreModule.new("CartonSet","Carton Set",{
         show_field_prefix: false,
@@ -169,21 +173,24 @@ module CoreModuleDefinitions
           ps.shipment_line.carton_set.nil? ? nil : ps.shipment_line.carton_set
         },
         enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
-        key_model_field_uids: [:cs_starting_carton]
+        key_model_field_uids: [:cs_starting_carton],
+        destroy_snapshots: false
     })
   SHIPMENT_LINE = CoreModule.new("ShipmentLine", "Shipment Line",{
       :show_field_prefix=>true,
       :unique_id_field_name=>:shpln_line_number,
       :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line},
       :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
-      :key_model_field_uids => [:shpln_line_number]
+      :key_model_field_uids => [:shpln_line_number],
+      :destroy_snapshots => false
   })
   BOOKING_LINE = CoreModule.new('BookingLine', 'Booking Line',
     :show_field_prefix=>true,
     :unique_id_field_name=>:bkln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.booking_line},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
-    :key_model_field_uids => [:bkln_line_number]
+    :key_model_field_uids => [:bkln_line_number],
+    :destroy_snapshots => false
   )
   SHIPMENT = CoreModule.new("Shipment","Shipment",
    {:children=>[ShipmentLine, BookingLine],
@@ -215,7 +222,8 @@ module CoreModuleDefinitions
     :unique_id_field_name=>:soln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line},
     :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
-    :key_model_field_uids => [:soln_line_number]
+    :key_model_field_uids => [:soln_line_number],
+    :destroy_snapshots => false
     })
   SALE = CoreModule.new("SalesOrder","Sale",
     {:children => [SalesOrderLine],
@@ -234,7 +242,8 @@ module CoreModuleDefinitions
     :unique_id_field_name=>:delln_line_number,
     :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line},
     :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? },
-    :key_model_field_uids => [:delln_line_number]
+    :key_model_field_uids => [:delln_line_number],
+    :destroy_snapshots => false
     })
   DELIVERY = CoreModule.new("Delivery","Delivery",
     {:children=>[DeliveryLine],
@@ -252,7 +261,8 @@ module CoreModuleDefinitions
     :unique_id_field_name=>:pva_assignment_id,
     :enabled_lambda=>lambda {MasterSetup.get.variant_enabled?},
     :key_model_field_uids=>[:pva_assignment_id],
-    :key_attribute_field_uid=>:pva_assignment_id
+    :key_attribute_field_uid=>:pva_assignment_id,
+    :destroy_snapshots => false
     })
   VARIANT = CoreModule.new("Variant","Variant",{
     :children=>[PlantVariantAssignment],
@@ -262,7 +272,8 @@ module CoreModuleDefinitions
     :show_field_prefix=>false,
     :unique_id_field_name=>:var_identifier,
     :key_model_field_uids => [:var_identifier],
-    :key_attribute_field_uid => :var_identifier
+    :key_attribute_field_uid => :var_identifier,
+    :destroy_snapshots => false
     })
   TARIFF = CoreModule.new("TariffRecord","Tariff",{
      :changed_at_parents_lambda=>lambda {|tr|
@@ -277,7 +288,8 @@ module CoreModuleDefinitions
      :show_field_prefix=>true,
      :unique_id_field_name=>:hts_line_number,
      :enabled_lambda => lambda { MasterSetup.get.classification_enabled? },
-     :key_model_field_uids => [:hts_line_number]
+     :key_model_field_uids => [:hts_line_number],
+     :destroy_snapshots => false
   })
   CLASSIFICATION = CoreModule.new("Classification","Classification",{
        :children => [TariffRecord],
@@ -288,7 +300,8 @@ module CoreModuleDefinitions
        :unique_id_field_name=>:class_cntry_iso,
        :enabled_lambda => lambda { MasterSetup.get.classification_enabled? },
        :key_model_field_uids => [:class_cntry_name,:class_cntry_iso],
-       :key_attribute_field_uid => :class_cntry_id
+       :key_attribute_field_uid => :class_cntry_id,
+       :destroy_snapshots => false
    })
   PRODUCT = CoreModule.new("Product","Product",{
        :restorable => true,
@@ -348,6 +361,7 @@ module CoreModuleDefinitions
        :unique_id_field_name=>:bi_line_charge_code,
        :key_model_field_uids=>[:bi_line_charge_code],
        :show_field_prefix=>true,
+       :destroy_snapshots => false
    })
   BROKER_INVOICE = CoreModule.new("BrokerInvoice","Broker Invoice",{
       :default_search_columns => [:bi_brok_ref,:bi_suffix,:bi_invoice_date,:bi_invoice_total],
@@ -363,19 +377,22 @@ module CoreModuleDefinitions
         bulk_actions = {}
         bulk_actions["Send to Test"]={:path=>'/broker_invoices/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
         bulk_actions
-      }
+      },
+      :destroy_snapshots => false
   })
   COMMERCIAL_INVOICE_LACEY = CoreModule.new("CommercialInvoiceLaceyComponent","Lacey Component",{
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
        :show_field_prefix => true,
        :unique_id_field_name=>:lcy_line_number,
-       :key_model_field_uids=>[:lcy_line_number]
+       :key_model_field_uids=>[:lcy_line_number],
+       :destroy_snapshots => false
    })
   COMMERCIAL_INVOICE_TARIFF = CoreModule.new("CommercialInvoiceTariff","Invoice Tariff",{
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
        :show_field_prefix => true,
        :unique_id_field_name=>:cit_hts_code,
-       :key_model_field_uids=>[:cit_hts_code]
+       :key_model_field_uids=>[:cit_hts_code],
+       :destroy_snapshots => false
    })
   COMMERCIAL_INVOICE_LINE = CoreModule.new("CommercialInvoiceLine","Invoice Line",{
      :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
@@ -384,7 +401,8 @@ module CoreModuleDefinitions
      :key_model_field_uids=>[:cil_line_number],
      :children => [CommercialInvoiceTariff],
      :child_lambdas => {CommercialInvoiceTariff=>lambda {|i| i.commercial_invoice_tariffs}},
-     :child_joins => {CommercialInvoiceTariff=> "LEFT OUTER JOIN commercial_invoice_tariffs on commercial_invoice_lines.id = commercial_invoice_tariffs.commercial_invoice_line_id"}
+     :child_joins => {CommercialInvoiceTariff=> "LEFT OUTER JOIN commercial_invoice_tariffs on commercial_invoice_lines.id = commercial_invoice_tariffs.commercial_invoice_line_id"},
+     :destroy_snapshots => false
   })
   COMMERCIAL_INVOICE = CoreModule.new("CommercialInvoice","Invoice",{
       :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
@@ -448,18 +466,20 @@ module CoreModuleDefinitions
   # Entry Comment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
   # as such comments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
-  ENTRY_COMMENT = CoreModule.new("EntryComment", "Entry Note", {})
+  ENTRY_COMMENT = CoreModule.new("EntryComment", "Entry Note", {:destroy_snapshots => false})
 
   OFFICIAL_TARIFF = CoreModule.new("OfficialTariff","HTS Regulation",{
        :default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate],
        :quicksearch_fields=> [:ot_hts_code,:ot_full_desc],
-       :quicksearch_extra_fields => [:ot_cntry_name]
+       :quicksearch_extra_fields => [:ot_cntry_name],
+       :destroy_snapshots => false
    })
   PLANT_PRODUCT_GROUP_ASSIGNMENT = CoreModule.new('PlantProductGroupAssignment','Plant Product Group Assignment',
     unique_id_field_name: :ppga_pg_name,
     default_search_columns:[:ppga_pg_name],
     key_model_field_uids: [:ppga_pg_name],
-    show_field_prefix: true)
+    show_field_prefix: true,
+    destroy_snapshots: false)
   PLANT = CoreModule.new("Plant","Plant",
     default_search_columns: [:plant_name],
     unique_id_field_name: :plant_name,
@@ -544,7 +564,8 @@ module CoreModuleDefinitions
     :enabled_lambda => lambda { CoreModule::VFI_INVOICE.enabled? },
     :unique_id_field_name=>:vi_line_number,
     :key_model_field_uids=>[:vi_line_number],
-    :show_field_prefix=>true
+    :show_field_prefix=>true,
+    :destroy_snapshots => false
    })
 
   PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
@@ -557,10 +578,11 @@ module CoreModuleDefinitions
   # Attachment has no field that is really suitable for use in key_model_field_uids or in unique_id_field,
   # as such attachments won't work with snapshot diffs at the moment - diffs aren't accessible from entries so
   # that's not a big deal.
-  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {unique_id_field_name: :att_unique_identifier})
+  ATTACHMENT = CoreModule.new("Attachment", "Attachment", {unique_id_field_name: :att_unique_identifier, destroy_snapshots: false})
   ADDRESS = CoreModule.new("Address","Address",{
     unique_id_field_name: :add_sys_code,
-    enabled_lambda: lambda {true}
+    enabled_lambda: lambda {true},
+    destroy_snapshots: false
   })
   TRADE_LANE = CoreModule.new("TradeLane","Trade Lane", {
     enabled_lambda: lambda { MasterSetup.get.trade_lane_enabled? }
@@ -583,7 +605,8 @@ module CoreModuleDefinitions
     enabled_lambda: lambda { MasterSetup.get.customs_statements_enabled? },
     show_field_prefix: true,
     unique_id_field_name: :dsef_code,
-    key_model_field_uids: [:dsef_code]
+    key_model_field_uids: [:dsef_code],
+    destroy_snapshots: false
   })
 
   CUSTOMS_DAILY_STATEMENT_ENTRY = CoreModule.new("DailyStatementEntry", "Statement Entry", {
@@ -593,7 +616,8 @@ module CoreModuleDefinitions
     key_model_field_uids: [:dse_broker_reference],
     children: [DailyStatementEntryFee],
     child_lambdas: {DailyStatementEntryFee => lambda {|s| s.daily_statement_entry_fees }},
-    child_joins: {DailyStatementEntryFee => "LEFT OUTER JOIN daily_statement_entry_fees on daily_statement_entries.id = daily_statement_entry_fees.daily_statement_entry_id"}
+    child_joins: {DailyStatementEntryFee => "LEFT OUTER JOIN daily_statement_entry_fees on daily_statement_entries.id = daily_statement_entry_fees.daily_statement_entry_id"},
+    destroy_snapshots: false
   })
 
   CUSTOMS_DAILY_STATEMENT = CoreModule.new("DailyStatement", "Daily Statement", {
@@ -628,7 +652,8 @@ module CoreModuleDefinitions
     children: [],
     child_lambdas: {},
     child_joins: {},
-    default_search_columns: [:ras_admin_username, :ras_run_as_username, :ras_start_time, :ras_end_time]
+    default_search_columns: [:ras_admin_username, :ras_run_as_username, :ras_start_time, :ras_end_time],
+    destroy_snapshots: false
   )
 
   USER = CoreModule.new("User", "User",
@@ -647,7 +672,8 @@ module CoreModuleDefinitions
 
   EVENT_SUBSCRIPTION = CoreModule.new("EventSubscription", "Event Subscriptions",
     unique_id_field_name: :evnts_event_type,
-    key_model_field_uids: [:evnts_event_type]
+    key_model_field_uids: [:evnts_event_type],
+    destroy_snapshots: false
   )
 
   INVOICE = CoreModule.new("Invoice", "Customer Invoices",
@@ -673,7 +699,8 @@ module CoreModuleDefinitions
   INVOICE_LINE = CoreModule.new("InvoiceLine", "Invoice Line",
     unique_id_field_name: :invln_ln_number,
     key_model_field_uids: [:invln_ln_number],
-    show_field_prefix: true
+    show_field_prefix: true,
+    destroy_snapshots: false
   )
 
   # Don't need these any longer, clear them...this should be the last line in the file

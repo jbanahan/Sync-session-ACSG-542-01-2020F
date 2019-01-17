@@ -37,6 +37,8 @@ module EntitySnapshotSupport
   end
 
   def async_destroy_snapshots
+    return unless destroys_snapshots?
+
     # We're going to actually copy the snapshots from their current location to a bucket that expires anything over XX days old
     # This allows us some level of grace period to retain snapshots of objects that might have been erroneously purged, but also
     # allows for actually getting rid of snapshots after a time that aren't actually needed and thus not having to continuously pay for them.
@@ -51,6 +53,11 @@ module EntitySnapshotSupport
     end
     klass.destroy_snapshots(self.id, self.class.name)
     true
+  end
+
+  def destroys_snapshots?
+    cm = CoreModule.find_by_object(self)
+    cm.destroy_snapshots
   end
 
   module ClassMethods

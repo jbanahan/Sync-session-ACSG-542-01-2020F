@@ -22,7 +22,9 @@ class CoreModule
       :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
       :module_chain, #default module chain for searches
       :snapshot_descriptor,
-      :restorable # If true, the restore button will appear on the history partial, allowing the user to restore the object to the state it was at the time of that snapshot
+      :restorable, # If true, the restore button will appear on the history partial, allowing the user to restore the object to the state it was at the time of that snapshot
+      :destroy_snapshots # If true, (default) then when an object for this core module is destroyed snapshots associated with it are also destroyed.
+                         # This should be set to false for all leaf value core modules that are snapshotable (like Container, Broker Invoice)
 
   def initialize(class_name,label,opts={})
     o = {:worksheetable => false, 
@@ -39,7 +41,8 @@ class CoreModule
           :object_from_piece_set_lambda => lambda {|ps| nil},
           :enabled_lambda => lambda { true },
           :key_model_field_uids => [],
-          :restorable => false
+          :restorable => false,
+          :destroy_snapshots => true
         }.merge(opts)
     @class_name = class_name
     @label = label
@@ -92,6 +95,7 @@ class CoreModule
     @module_chain = o[:module_chain]
     @snapshot_descriptor = o[:snapshot_descriptor]
     @restorable = o[:restorable]
+    @destroy_snapshots = o[:destroy_snapshots]
   end
 
   def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init

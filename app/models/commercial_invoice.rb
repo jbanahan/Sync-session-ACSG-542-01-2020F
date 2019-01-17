@@ -62,6 +62,18 @@ class CommercialInvoice < ActiveRecord::Base
       user.company.linked_companies.find {|c| c == self.importer || c == self.vendor}
   end
 
+  # This overrides the EntitySnapshotSupport's implementation because we need to destroy snapshots for
+  # commercial invoices that are stand-alone, but not for those that are linked to entries.
+  def destroys_snapshots?
+    # This is just to ensure if for any reason we do turn off snapshots on commercial invoices in core module definitions that 
+    # it takes effect here, even if we forget to delete this method
+    return false unless super
+
+    # If the entry id is blank, then it's a standalone commercial invoice and we should make sure to clean up any snapshots
+    # Otherwise, if the invoice is connected to an entry, the snapshot for that structure is associated with the entry, not the invoice.
+    self.entry_id.blank?
+  end
+
   def self.search_secure user, base_object
     base_object.where(self.search_where(user))
   end

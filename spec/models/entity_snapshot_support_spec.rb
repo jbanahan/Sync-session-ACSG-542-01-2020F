@@ -1,5 +1,5 @@
 describe EntitySnapshotSupport do 
-  # Use an object we know includes the EntitySnapshotSupport
+  # Use an object we know includes the EntitySnapshotSupport and destroys snapshots
   subject { Order.new }
 
   describe "async_destroy_snapshots" do 
@@ -17,6 +17,15 @@ describe EntitySnapshotSupport do
       expect(subject).to receive(:id).and_return 1
       expect(subject.class).to receive(:delay).with({priority: 100}).and_return subject.class
       expect(subject.class).to receive(:destroy_snapshots).with(1, "Order")      
+
+      subject.async_destroy_snapshots
+    end
+
+    it "does not delay destroy_snapshots if object's core module does not return true for destroy_snapshots" do
+      cm = instance_double(CoreModule)
+      expect(CoreModule).to receive(:find_by_object).with(subject).and_return cm
+      expect(cm).to receive(:destroy_snapshots).and_return false
+      expect(subject.class).not_to receive(:destroy_snapshots)
 
       subject.async_destroy_snapshots
     end

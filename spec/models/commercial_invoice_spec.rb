@@ -93,4 +93,15 @@ describe CommercialInvoice do
       expect(CommercialInvoice.new(:importer=>c).can_view?(u)).to be_truthy
     end
   end
+
+  describe "destroys_snapshots?" do
+    it "destroys snapshots for standalone invoice" do
+      expect(subject.destroys_snapshots?).to eq true
+    end
+
+    it "does not destroy snapshots for invoices linked to entries" do
+      subject.entry_id = 1
+      expect(subject.destroys_snapshots?).to eq false
+    end
+  end
 end
