@@ -8,6 +8,12 @@
   &:hover {
     color: $vfi-secondary-shade;
   }
+  .fa.fa-bell-o.fa-lg.message_envelope.messages {
+    color:red !important;
+    &:hover {
+      color: $vfi-secondary-shade !important;
+    }
+  }
 }
 #chain-nav-panel .dropdown-item:hover {
   color: white;
@@ -25,17 +31,10 @@
 }
 .topnav {
   background-color: $vfi-primary;
-}
-#notification_bell .fa.fa-bell-o.fa-lg.message_envelope.messages {
-  color:red;
-  &:hover {
-    color: $vfi-secondary-shade;
+  .popover-content {
+    color: black;
   }
 }
-.topnav .popover-content {
-  color: black;
-}
-
 @media screen and (min-width: 600px) {
   .nav-small-screen {
     display: none;
