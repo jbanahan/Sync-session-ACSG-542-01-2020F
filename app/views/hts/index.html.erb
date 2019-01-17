@@ -1,5 +1,4 @@
 <div class='container' ng-app='HtsApp' style='margin-top:20px;'>
-
   <div ng-controller='HtsCtrl'>
     <div class='row'>
       <div class='col-md-12 text-center'>
@@ -37,8 +36,8 @@
     </div>
     <div ng-show="viewMode=='base'">
       <div class='row' ng-show='chapters.length == 0'>
-        <div class='jumbotron'>
-          Loading data
+        <div class='col-12 text-center'>
+          <div class='loader'>loading</div>
         </div>
       </div>
       <div ng-show='chapters.length > 0' class='row' style='font-weight:bold;'>
@@ -62,7 +61,7 @@
             <button class='btn btn-sm ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
             {{ch.num}}. {{ch.name}} 
           </div>
-          <div ng-repeat='h in ch.headings'>
+          <div class="col-md-12" ng-repeat='h in ch.headings'>
             <div class='row'>
               <div class='col-md-10 offset-md-1'>
                 <button class='btn btn-sm ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
