@@ -1,7 +1,7 @@
-require 'open_chain/report/report_helper'
+require 'open_chain/report/builder_output_report_helper'
 
 module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMismatchReport
-  include OpenChain::Report::ReportHelper
+  include OpenChain::Report::BuilderOutputReportHelper
 
   def self.run_schedulable config = {}
     start_date, end_date = dates
@@ -21,12 +21,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   end
 
   def run_report importer, start_date, end_date
-    wb, sheet = XlsMaker.create_workbook_and_sheet "Entry / ISF Match"
-
-    row_number = 0
-    column_widths = [20, 20, 20, 20, 10, 20, 20, 20, 20, 30, 30, 10, 10, 10, 10, 10, 10, 10, 100]
-    XlsMaker.set_column_widths sheet, column_widths
-    XlsMaker.add_header_row sheet, 0, report_headers, column_widths
+    wb = XlsxBuilder.new
+    sheet = wb.create_sheet "Entry ISF Match", headers: report_headers
 
     entries = Entry.where(importer_id: importer.id, transport_mode_code: ["10", "11"]).where("first_entry_sent_date >= ? AND first_entry_sent_date < ?", start_date.in_time_zone("UTC"), end_date.in_time_zone("UTC")).where("first_entry_sent_date > '2017-04-21'").pluck :id
     entries.each do |id|
@@ -49,7 +45,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
       isfs = isfs.find_all {|i| i.security_filing_lines.length > 0 }
 
       if isfs.length == 0
-        add_exception_row(sheet, (row_number+=1), column_widths, entry, nil, nil, nil, nil)
+        add_exception_row(wb, sheet, entry, nil, nil, nil, nil)
       else
         entry.commercial_invoices.each do |invoice|
           invoice.commercial_invoice_lines.each do |line|
@@ -57,21 +53,24 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
             match = matches(line, tariffs, isfs)
 
             if !match.matches?
-              add_exception_row sheet, (row_number += 1), column_widths, entry, line, tariffs, match.isf, match
+              add_exception_row wb, sheet, entry, line, tariffs, match.isf, match
             end
           end
         end
       end
     end
 
-    workbook_to_tempfile wb, "EntryISfMatch", file_name: "Entry ISF Match.xls"
+    wb.apply_min_max_width_to_columns sheet, min_width: 10, max_width: 100
+
+    write_builder_to_tempfile wb, "Entry ISF Match"
   end
 
   def report_headers 
-    ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description"]
+    ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "", "HTS Code (ascena Verified)", "", "ascena Match?", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description", "ascena Comment", "Date"]
   end
 
-  def add_exception_row sheet, row_number, column_widths, entry, invoice_line, tariff_lines, isf, isf_match
+  def add_exception_row wb, sheet, entry, invoice_line, tariff_lines, isf, isf_match
+    blank = nil
     row = []
     row << field(isf.try(:transaction_number), "")
     row << field(isf.try(:master_bill_of_lading), entry.split_master_bills_of_lading.join(", "))
@@ -85,6 +84,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << invoice_line.try(:country_origin_code)
     row << isf_match.try(:coo)
     row << tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
+    row << blank
+    row << blank
+    row << blank
+    row << blank
     row << tariff_lines.try(:[], 1).try(:hts_code).to_s.hts_format
     row << tariff_lines.try(:[], 2).try(:hts_code).to_s.hts_format
     row << isf_match.try(:hts).to_s.hts_format
@@ -96,7 +99,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     
     row << exception_notes(entry, invoice_line, tariff_lines, isf, isf_match)
 
-    XlsMaker.add_body_row sheet, row_number, row, column_widths
+    wb.add_body_row sheet, row
   end
 
   def field isf_value, entry_value
