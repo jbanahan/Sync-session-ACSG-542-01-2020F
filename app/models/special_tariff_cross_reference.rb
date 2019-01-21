@@ -221,4 +221,19 @@ class SpecialTariffCrossReference < ActiveRecord::Base
         true
       end
 
+      def self.find_can_view(user)
+        if user.admin?
+          return SpecialTariffCrossReference.where("1=1")
+        else
+          return SpecialTariffCrossReference.where("1=0")
+        end
+      end
+
+      def can_view? user
+        user.admin?
+      end
+
+      def can_edit? user
+        user.admin?
+      end
 end

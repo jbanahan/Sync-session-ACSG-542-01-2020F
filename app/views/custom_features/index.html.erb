@@ -300,5 +300,13 @@
       </div>
     </div>
   <%-end-%>
+  <%-if enabled_features.include?('Special Tariff Cross References') %>
+    <div class='row'>
+      <div class='col-md-6 offset-md-3'>
+        <%=link_to "Special Tariff Cross References", special_tariff_cross_references_path, :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+      </div>
+    </div>
+
+  <% end %>
 
 </div>

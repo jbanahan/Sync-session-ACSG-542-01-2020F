@@ -1169,6 +1169,11 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :special_tariff_cross_references, except: [:show] do
+    post 'upload', on: :collection
+    get 'download', on: :collection
+  end
+
   get "/:recordable_type/:recordable_id/business_rule_snapshots" => "business_rule_snapshots#index"
 
   #Griddler inbound email processing

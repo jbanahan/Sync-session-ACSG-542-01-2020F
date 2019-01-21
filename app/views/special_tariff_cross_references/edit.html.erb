@@ -1,0 +1,63 @@
+<%content_for :javascript do %>
+  $(function() {
+    $('.isdate').datepicker();
+    $('#btnSave').click(function() {
+      $('form').submit();
+    })
+  });
+<% end %>
+<% content_for :action_bar do %>
+  <button class="btn btn-secondary navbar-btn ng-scope" id="btnSave">Save</button>
+  <button class='btn_link' link_to='<%=request.referrer%>' key_map='b'>Back</button>
+<% end %>
+
+<div class="container">
+  <div class="row">
+    <%= form_for(@special_tariff) do |f| %>
+      <div class="form-group">
+        <label>HTS Number</label>
+        <%= f.text_field :hts_number, class: "form-control", placeholder: "HTS Number" %>
+      </div>
+
+      <div class="form-group">
+        <label>Special HTS Number</label>
+        <%= f.text_field :special_hts_number, class: "form-control", placeholder: "Special HTS Number" %>
+      </div>
+
+      <div class="form-group">
+        <label>Origin Country</label>
+        <%= f.select(:country_origin_iso, options_from_collection_for_select(@countries, :iso_code, :name, @special_tariff.country_origin_iso), {}, class: "form-control") %>
+      </div>
+
+      <div class="form-group">
+        <label>Import Country</label>
+        <%= f.select(:import_country_iso, options_from_collection_for_select(@countries, :iso_code, :name, @special_tariff.import_country_iso), {}, class: "form-control") %>
+      </div>
+
+      <div class="form-group">
+        <label>Effective Date Start</label>
+        <%= f.text_field :effective_date_start, class: 'form-control isdate', placeholder: "Effective Date Start"  %>
+      </div>
+
+      <div class="form-group">
+        <label>Effective Date End</label>
+        <%= f.text_field :effective_date_end, class: 'form-control isdate', placeholder: "Effective Date End"  %>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+        <%= f.text_field :priority, class: 'form-control', placeholder: "Priority"  %>
+      </div>
+
+      <div class="form-group">
+        <label>Special Tariff Type</label>
+        <%= f.text_field :special_tariff_type, class: 'form-control', placeholder: "Special Tariff Type"  %>
+      </div>
+
+      <div class="form-group">
+        <label>Suppress from feeds?</label>
+        <%= f.check_box :suppress_from_feeds  %>
+      </div>
+    <% end %>
+  </div>
+</div>

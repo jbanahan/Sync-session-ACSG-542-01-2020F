@@ -1,0 +1,67 @@
+<% content_for :action_bar do %>
+  <button class="btn btn-secondary navbar-btn" data-toggle="modal" data-target="#uploadModal" title="Upload"><i class="fa fa-upload"></i></button>
+  <%= link_to download_special_tariff_cross_references_path, title: "Download", class: 'btn navbar-btn btn-secondary' do %>
+    <i class="fa fa-download"></i>
+  <% end %>
+<% end %>
+<div class="modal fade" id="uploadModal" role="dialog">
+  <%= form_tag "/special_tariff_cross_references/upload", :multipart => true, :class => 'form-horizontal', :id => "frm_run" do %>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upload</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Only use the Special Tariff Cross Reference template for uploading data</strong></p>
+          <div class="form-group">
+            <div class="col-md-4">
+              <label for="attached" class='control-label'><%= defined?(file_label) ? file_label : "File:" %></label>
+            </div>
+            <div class="col-md-8">
+              <%= file_field_tag (:attached) %>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <%= submit_tag 'Upload', :id => 'btn_upload', :class => 'btn btn-secondary' %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<%= render :partial => 'shared/search_box' %>
+
+<table class="detail_table">
+  <thead>
+  <th></th>
+  <th>HTS Number</th>
+  <th>Special HTS Number</th>
+  <th>Origin Country ISO</th>
+  <th>Import Country ISO</th>
+  <th>Effective Date Start</th>
+  <th>Effective Date End</th>
+  <th>Priority</th>
+  <th>Special Tariff Type</th>
+  <th>Suppress From Feeds</th>
+  </thead>
+
+  <% @special_tariffs.each do |special_tariff| %>
+    <tr class="hover">
+      <td><%= link_to "View", edit_special_tariff_cross_reference_path(special_tariff) %></td>
+      <td><%= special_tariff.hts_number %></td>
+      <td><%= special_tariff.special_hts_number %></td>
+      <td><%= special_tariff.country_origin_iso %></td>
+      <td><%= special_tariff.import_country_iso %></td>
+      <td><%= special_tariff.effective_date_start %></td>
+      <td><%= special_tariff.effective_date_end %></td>
+      <td><%= special_tariff.priority %></td>
+      <td><%= special_tariff.special_tariff_type %></td>
+      <td><%= special_tariff.suppress_from_feeds %></td>
+    </tr>
+  <% end %>
+</table>
+<%= will_paginate @special_tariffs %>

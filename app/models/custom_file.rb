@@ -48,6 +48,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_hand
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
 require 'open_chain/data_cross_reference_uploader'
+require 'open_chain/special_tariff_cross_reference_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
