@@ -377,7 +377,27 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           THEN 1 ELSE 0 END)"
         }
       ],
-      [232, :ent_special_tariff, :special_tariff, "Special Tariff", {data_type: :boolean}]
+      [232, :ent_special_tariff, :special_tariff, "Special Tariff", {data_type: :boolean}],
+      [233, :ent_total_value_tax, :total_value_tax, "Total Value for Tax", {
+        :data_type=>:decimal,
+        :read_only=>true,
+        :import_lambda=>lambda {|obj,data| "Total Value for Tax ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.value_for_tax },
+        qualified_field_name: <<-SQL
+          (SELECT sum(
+            IFNULL(commercial_invoice_tariffs.entered_value,0) + 
+            IFNULL(commercial_invoice_tariffs.duty_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.sima_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.excise_amount,0))
+          FROM
+            commercial_invoice_tariffs 
+            JOIN (commercial_invoice_lines, commercial_invoices)
+            ON (commercial_invoice_lines.id = commercial_invoice_tariffs.commercial_invoice_line_id 
+              AND commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id)
+          WHERE commercial_invoices.entry_id = entries.id
+            AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
+        SQL
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

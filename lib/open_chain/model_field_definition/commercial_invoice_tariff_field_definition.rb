@@ -33,7 +33,17 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
       [30,:cit_duty_advalorem, :duty_advalorem, "Ad Valorem Duty", {data_type: :decimal}],
       [31,:cit_duty_specific, :duty_specific, "Specific Duty", {data_type: :decimal}],
       [32,:cit_duty_additional, :duty_additional, "Additional Duty", {data_type: :decimal}],
-      [33,:cit_duty_other, :duty_other, "Other Duty", {data_type: :decimal}]
+      [33,:cit_duty_other, :duty_other, "Other Duty", {data_type: :decimal}],
+      [34,:cit_tariff_value_for_tax,:tariff_value_for_tax,"Value for Tax",{
+        :data_type=>:decimal,
+        :read_only=>true,
+        :import_lambda => lambda{ |obj, data| "Value for Tax ignored. (read only)" },
+        :export_lambda => lambda{ |t| t.value_for_tax },
+        :qualified_field_name=> "IFNULL(commercial_invoice_tariffs.entered_value,0) + 
+            IFNULL(commercial_invoice_tariffs.duty_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.sima_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.excise_amount,0)"
+        }]
     ]
   end
 end; end; end

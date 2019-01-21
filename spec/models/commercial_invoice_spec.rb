@@ -93,7 +93,7 @@ describe CommercialInvoice do
       expect(CommercialInvoice.new(:importer=>c).can_view?(u)).to be_truthy
     end
   end
-
+  
   describe "destroys_snapshots?" do
     it "destroys snapshots for standalone invoice" do
       expect(subject.destroys_snapshots?).to eq true
@@ -102,6 +102,29 @@ describe CommercialInvoice do
     it "does not destroy snapshots for invoices linked to entries" do
       subject.entry_id = 1
       expect(subject.destroys_snapshots?).to eq false
+    end
+  end
+  
+  describe "value_for_tax" do
+    let(:ci1) {Factory(:commercial_invoice, commercial_invoice_lines:
+      [Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)]),
+      Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      ])}
+    let(:ci2) {Factory(:commercial_invoice, commercial_invoice_lines:
+      [Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: nil)]),
+      Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      ])}
+
+    it "Returns the sum of all associated invoice_line invoice_tariffs value of tax" do
+      expect(ci1.value_for_tax).to eq BigDecimal.new "6"
+    end
+
+    it "Does not include values of tariffs outside of Canada" do
+      expect(ci2.value_for_tax).to eq BigDecimal.new "3"
     end
   end
 end

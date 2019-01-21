@@ -20,7 +20,7 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
       [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}],
       [18,:ci_destination_code,:destination_code,'Destination Code',{data_type: :string}],
       [19,:ci_updated_at,:updated_at,"Last Updated",{data_type: :datetime,read_only: true}],
-      [20, :ci_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}],
+      [20,:ci_non_dutiable_amount, :non_dutiable_amount, "Non-Dutiable Amount", {data_type: :decimal, currency: :usd}],
       [21,:ci_total_adjusted_value, :total_adjusted_value, "Adjusted Value", {data_type: :decimal, currency: :usd,
         :import_lambda=>lambda {|o,d| "Adjusted Value ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.inject(0) do |acc, nxt| 
@@ -32,7 +32,24 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
         }],
       [22,:ci_mbols, :master_bills_of_lading, "Master Bills", {:data_type=>:text}],
       [22,:ci_hbols, :house_bills_of_lading, "House Bills", {:data_type=>:text}],
-      [23,:ci_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}]
+      [23,:ci_entered_value_7501,:entered_value_7501,"7501 Entered Value",{:data_type=>:integer}],
+      [24,:ci_invoice_value_for_tax,:invoice_value_for_tax,"Value for Tax", {
+        :data_type=>:decimal,
+        :import_lambda=>lambda {|obj,data| "Invoice Value for tax ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.value_for_tax },
+        qualified_field_name: <<-SQL
+          (SELECT sum(
+            IFNULL(commercial_invoice_tariffs.entered_value,0) + 
+            IFNULL(commercial_invoice_tariffs.duty_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.sima_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.excise_amount,0))
+          FROM commercial_invoice_tariffs 
+          JOIN commercial_invoice_lines
+            ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id
+          WHERE commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
+            AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
+        SQL
+        }]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
   end

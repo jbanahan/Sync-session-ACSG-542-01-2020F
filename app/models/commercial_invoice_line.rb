@@ -126,6 +126,13 @@ class CommercialInvoiceLine < ActiveRecord::Base
     contract_amount.nil? ? nil : (contract_amount - value).round(2)
   end
 
+  # Cumulative sum of value_for_tax for commercial invoice tariffs associated
+  #  with a given commercial invoice line
+  def value_for_tax
+    values = self.commercial_invoice_tariffs.map(&:value_for_tax).compact
+    values.length == 0 ? nil : values.sum
+  end
+
   def first_sale_unit_price
     # If we don't have a contract amount (.ie it's nil), then any calculation based off it should be nil too
     (contract_amount.nil? || quantity.nil? || quantity.zero?) ? nil : (contract_amount / quantity).round(2)

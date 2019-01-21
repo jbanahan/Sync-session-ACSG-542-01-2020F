@@ -50,4 +50,13 @@ class CommercialInvoiceTariff < ActiveRecord::Base
   belongs_to :commercial_invoice_line, inverse_of: :commercial_invoice_tariffs
   has_one :entry, through: :commercial_invoice_line
   has_many :commercial_invoice_lacey_components, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice_tariff
+
+  def canadian?
+    value_for_duty_code.present?
+  end
+
+  def value_for_tax
+    canadian? ? [self.entered_value, self.duty_amount, self.sima_amount, self.excise_amount].compact.sum : nil
+  end
+
 end

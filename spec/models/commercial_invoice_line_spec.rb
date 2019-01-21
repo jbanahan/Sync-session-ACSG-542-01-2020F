@@ -97,6 +97,24 @@ describe CommercialInvoiceLine do
     end
   end
 
+  describe "value_for_tax" do
+    let!(:line1) { Factory(:commercial_invoice_line,
+                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, 
+                      duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: 1234)]) }
+    let!(:line2) { Factory(:commercial_invoice_line,
+                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, 
+                      duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: nil)]) }
+
+
+    it "Returns the sum of all associated commercial_invoice_tariffs value of tax" do
+      expect(line1.value_for_tax).to eq BigDecimal.new "10"
+    end
+
+    it "Does not return anything outside of Canada" do
+      expect(line2.value_for_tax).to be_nil
+    end
+  end
+
   describe "first_sale_unit_price" do
     it "detrmines unit price from contract amount / quantity" do
       expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 3).first_sale_unit_price).to eq BigDecimal("33.33")

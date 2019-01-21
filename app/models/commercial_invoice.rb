@@ -54,6 +54,11 @@ class CommercialInvoice < ActiveRecord::Base
           user.company_id == self.vendor_id
   end
 
+  def value_for_tax
+    values = self.commercial_invoice_lines.map(&:value_for_tax).compact
+    values.length == 0 ? nil : values.sum
+  end
+
   def can_edit? user
     return false unless user.edit_entries?
     return user.company.master? || 

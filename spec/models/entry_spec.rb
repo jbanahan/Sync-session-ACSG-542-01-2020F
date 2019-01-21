@@ -255,6 +255,39 @@ describe Entry do
     end
   end
 
+  describe "value_for_tax" do
+    let(:ci1) {Factory(:commercial_invoice, commercial_invoice_lines:
+      [Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)]),
+      Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      ])}
+    let(:ci2) {Factory(:commercial_invoice, commercial_invoice_lines:
+      [Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: nil)]),
+      Factory(:commercial_invoice_line,
+        commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 1, entered_value: 2, value_for_duty_code: 1234)])
+      ])}
+
+    it 'sums all commercial invoice tariff values associated with the entry' do
+      e = Entry.new
+      c = Country.new
+      c.iso_code = "CA"; c.save!
+      e.import_country = c
+      e.commercial_invoices = [ci1]
+      expect(e.value_for_tax).to eq BigDecimal.new "6"
+    end
+
+    it 'does not return anything if the entry is not Candian' do
+      e = Entry.new
+      c = Country.new
+      c.iso_code = "US"; c.save!
+      e.import_country = c
+      e.commercial_invoices = [ci2]
+      expect(e.value_for_tax).to be_nil
+    end
+  end
+
   describe "canadian?" do
     it 'identifies as canadian if import country is CA' do
       e = Entry.new

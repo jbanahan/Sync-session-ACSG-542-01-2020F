@@ -123,7 +123,23 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
                                                                     obj.commercial_invoice_tariffs.where('quota_category IS NOT NULL AND quota_category <> 0').first&.quota_category
                                                                   end,
                                                                   qualified_field_name: "(SELECT quota_category FROM commercial_invoice_tariffs WHERE commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id AND (quota_category IS NOT NULL AND quota_category <> 0)  LIMIT 1)"
-      }]
+      }],
+      [71, :cil_tariff_value_for_tax, :tariff_value_for_tax, "Value for Tax",{
+        data_type: :decimal,
+        read_only: true,
+        import_lambda: lambda{ |obj, data| "Invoice Line - Value for Tax ignored. (read only)" },
+        export_lambda: lambda{|obj| obj.value_for_tax },
+        qualified_field_name: <<-SQL
+          (SELECT sum(
+            IFNULL(commercial_invoice_tariffs.entered_value,0) + 
+            IFNULL(commercial_invoice_tariffs.duty_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.sima_amount,0) + 
+            IFNULL(commercial_invoice_tariffs.excise_amount,0))
+          FROM commercial_invoice_tariffs 
+          WHERE commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id 
+            AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
+        SQL
+        }]
     ]
   end
 end; end; end

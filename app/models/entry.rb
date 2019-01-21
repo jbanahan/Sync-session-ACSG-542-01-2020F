@@ -323,6 +323,12 @@ class Entry < ActiveRecord::Base
     transport_mode_codes
   end
 
+  def value_for_tax
+    return nil unless self.canadian?
+    values = self.commercial_invoices.map(&:value_for_tax).compact
+    values.length == 0 ? nil : values.sum
+  end
+
   def canadian?
     import_country && import_country.iso_code == "CA"
   end
