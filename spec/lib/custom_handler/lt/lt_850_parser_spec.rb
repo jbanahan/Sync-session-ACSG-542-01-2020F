@@ -72,7 +72,6 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ship_to_addr.state).to eq "NJ"
       expect(ship_to_addr.postal_code).to eq "088101564"
       expect(o.ship_to.country).to eq us
-
       expect(o.order_lines.count).to eq 3
       ol1, ol2, ol3 = o.order_lines
       expect(ol1.line_number).to eq 28
@@ -85,7 +84,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol1.sku).to eq "883180143626"
       expect(ol1.unit_msrp).to eq 1
       expect(ol1.price_per_unit).to eq 1.64
-      expect(ol1.hts).to eq "6109.10.0014"
+      expect(ol1.hts).to eq "6109100014"
       expect(ol1.custom_value(cdefs[:ord_line_color])).to eq "XX1"
       expect(ol1.custom_value(cdefs[:ord_line_color_description])).to eq "ASSORTED COLOR 1"
       expect(ol1.custom_value(cdefs[:ord_line_season])).to eq "183FA 2"
@@ -102,7 +101,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol2.sku).to eq "192399830914"
       expect(ol2.unit_msrp).to eq 2
       expect(ol2.price_per_unit).to eq 1.94
-      expect(ol2.hts).to eq "6103.43.1540"
+      expect(ol2.hts).to eq "6103431540"
       expect(ol2.custom_value(cdefs[:ord_line_color])).to eq "XX2"
       expect(ol2.custom_value(cdefs[:ord_line_color_description])).to eq "ASSORTED COLOR 2"
       expect(ol2.custom_value(cdefs[:ord_line_season])).to eq "183FA 2" 
@@ -116,7 +115,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol3.sku).to eq "192399830914"
       expect(ol3.unit_msrp).to eq 2
       expect(ol3.price_per_unit).to eq 1.94
-      expect(ol3.hts).to eq "6109.90.1009"
+      expect(ol3.hts).to eq "6109901009"
       expect(ol3.custom_value(cdefs[:ord_line_color])).to eq "XX2"
       expect(ol3.custom_value(cdefs[:ord_line_color_description])).to eq "ASSORTED COLOR 2"
       expect(ol3.custom_value(cdefs[:ord_line_season])).to eq "183FA 2" 
