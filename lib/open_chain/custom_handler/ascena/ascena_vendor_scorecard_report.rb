@@ -314,7 +314,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
       INNER JOIN entries AS ent ON 
         ci.entry_id = ent.id 
       INNER JOIN orders AS ord ON 
-        CONCAT('ASCENA-', cil.po_number) = ord.order_number
+        CONCAT('ASCENA-', cil.product_line, '-', cil.po_number) = ord.order_number 
       INNER JOIN companies AS vendor ON 
         ord.vendor_id = vendor.id
       INNER JOIN companies AS factory ON 

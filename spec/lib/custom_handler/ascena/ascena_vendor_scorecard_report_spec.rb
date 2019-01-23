@@ -77,9 +77,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       factory = Factory(:company, name: "Crapco Industries")
       factory2 = Factory(:company, name: "Carpco Deluxe Knock-offs")
 
-      order1 = Factory(:order, order_number: "ASCENA-PO", vendor: vendor, factory: factory)
-      order2 = Factory(:order, order_number: "ASCENA-PO2", vendor: vendor, factory: factory2)
-      order3 = Factory(:order, order_number: "ASCENA-PO3", vendor: vendor2, factory: factory)
+      order1A = Factory(:order, order_number: "ASCENA-prodlineA-PO", vendor: vendor, factory: factory)
+      order1B = Factory(:order, order_number: "ASCENA-prodlineA2-PO", vendor: vendor, factory: factory)
+      order2 = Factory(:order, order_number: "ASCENA-prodlineB-PO2", vendor: vendor, factory: factory2)
+      order3 = Factory(:order, order_number: "ASCENA-prodlineC-PO3", vendor: vendor2, factory: factory)
 
       e
     }
@@ -142,7 +143,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
       vendor_bad = Factory(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
       factory_bad = Factory(:company, name: "Chemco Industries")
-      order_bad = Factory(:order, order_number: "ASCENA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      order_bad = Factory(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       tf = subject.run_report nil, {"range_field" => "first_release_date", "start_release_date" => "2017-02-25", "end_release_date" => "2017-03-25"}
       expect(tf).not_to be_nil
@@ -160,7 +161,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
       vendor_bad = Factory(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
       factory_bad = Factory(:company, name: "Chemco Industries")
-      order_bad = Factory(:order, order_number: "ASCENA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      order_bad = Factory(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_bogus-vendorId3", value: "invalid")
 
@@ -180,7 +181,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
       vendor_bad = Factory(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
       factory_bad = Factory(:company, name: "Chemco Industries")
-      order_bad = Factory(:order, order_number: "ASCENA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      order_bad = Factory(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_mismatch-vendorId3", value: "2017-02-22")
 
@@ -200,7 +201,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       tariff_bad = line_bad.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
       vendor_bad = Factory(:company, name: "Bad Ascena Vendor", system_code: "vendorId3")
       factory_bad = Factory(:company, name: "Chemco Industries")
-      order_bad = Factory(:order, order_number: "ASCENA-PO_bad", vendor: vendor_bad, factory: factory_bad)
+      order_bad = Factory(:order, order_number: "ASCENA-prodlineA-PO_bad", vendor: vendor_bad, factory: factory_bad)
 
       DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid_bogus-vendor_system_code_mismatch", value: "2017-02-22")
 
