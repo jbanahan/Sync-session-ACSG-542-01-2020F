@@ -159,6 +159,8 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnAsnXmlPa
 
       finalize_shipment(shipment, xml)
 
+      # If there's any reject messages at this point we'll log a reject, which will roll back any updates done already
+      inbound_file.reject_and_raise("All errors must be fixed before this ASN can be processed.") if inbound_file.failed?
       shipment.save!
       shipment.create_snapshot user, nil, key
       s = shipment
@@ -226,7 +228,10 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnAsnXmlPa
 
     order_number = prefix_identifier_value(importer, po_number)
     order = orders_cache[order_number]
-    raise "PO Number '#{order_number}' could not be found." if order.nil?
+    if order.nil?
+      inbound_file.add_reject_message("PO Number '#{po_number}' could not be found.")
+      return
+    end
 
     order_line = find_order_line(order, line_xml)
     line.product = order_line.product

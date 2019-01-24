@@ -163,7 +163,8 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnAsnXmlParser do
 
     it "raises an error if the order cannot be found" do
       order.destroy
-      expect { subject.process_asn_update asn_xml, user, "bucket", "key" }.to raise_error "PO Number 'SYS-RTTC216384' could not be found."
+      expect { subject.process_asn_update asn_xml, user, "bucket", "key" }.to raise_error "All errors must be fixed before this ASN can be processed."
+      expect(inbound_file).to have_reject_message "PO Number 'RTTC216384' could not be found."
     end
 
     it "raises an error if the order line cannot be found" do
