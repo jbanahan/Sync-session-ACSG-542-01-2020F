@@ -67,9 +67,11 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
       expect(entry.attachments.first).to eq a1
     end
 
-    it "raises an error if the stitch request entity isn't found" do
+    it "handles if the stitch request entity isn't found" do
       entry.destroy
-      expect{ subject.process_stitch_response stitch_response}.to raise_error ActiveRecord::RecordNotFound
+      expect(OpenChain::S3).not_to receive(:download_to_tempfile)
+      expect(OpenChain::S3).to receive(:delete).with('bucket', 'path/to/file.pdf')
+      subject.process_stitch_response stitch_response
     end
 
     it "logs an error if the response has an error message" do

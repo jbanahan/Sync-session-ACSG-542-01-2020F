@@ -34,37 +34,38 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
     message_hash = message_hash['stitch_response']
 
     split_key = message_hash['reference_info']['key'].split("-")
-    entity = split_key[0].constantize.find split_key[1].to_i
-
+    entity = split_key[0].constantize.where(id: split_key[1].to_i).first
     bucket, key = OpenChain::S3.parse_full_s3_path message_hash['destination_file']['path']
-    OpenChain::S3.download_to_tempfile(bucket, key) do |f|
-      Attachment.add_original_filename_method f
-      f.original_filename = "#{entity.entry_number}.pdf"
+    if entity
+      OpenChain::S3.download_to_tempfile(bucket, key) do |f|
+        Attachment.add_original_filename_method f
+        f.original_filename = "#{entity.entry_number}.pdf"
 
-      Lock.db_lock(entity) do 
-        # There's a possibility (though small) that another archive packet could have been created and added since the one we're receiving was
-        # If so, we can just skip this one.
-        created_at = Time.zone.parse(message_hash['reference_info']['time'])
-        other_archive = entity.attachments.find { |a| a.attachment_type == Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE }
-        if other_archive.nil? || other_archive.created_at <= created_at 
-          attachment = entity.attachments.build
-          attachment.attachment_type = Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
-          attachment.attached = f
-          # Use the created_at timestamp to record the actual time the stitch request was 
-          # assembled.  This gives us a precise moment in time to use for finding
-          # which other attachments on the entry have been modified since the request was assembled.
-          attachment.created_at = created_at
-          attachment.save!
+        Lock.db_lock(entity) do 
+          # There's a possibility (though small) that another archive packet could have been created and added since the one we're receiving was
+          # If so, we can just skip this one.
+          created_at = Time.zone.parse(message_hash['reference_info']['time'])
+          other_archive = entity.attachments.find { |a| a.attachment_type == Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE }
+          if other_archive.nil? || other_archive.created_at <= created_at 
+            attachment = entity.attachments.build
+            attachment.attachment_type = Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
+            attachment.attached = f
+            # Use the created_at timestamp to record the actual time the stitch request was 
+            # assembled.  This gives us a precise moment in time to use for finding
+            # which other attachments on the entry have been modified since the request was assembled.
+            attachment.created_at = created_at
+            attachment.save!
 
-          # Clear out any other archive packets already associated with this entry
-          entity.attachments.where("NOT attachments.id = ?", attachment.id).where(attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE).destroy_all
-          entity.create_snapshot User.integration, nil, "Archive Packet"
+            # Clear out any other archive packets already associated with this entry
+            entity.attachments.where("NOT attachments.id = ?", attachment.id).where(attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE).destroy_all
+            entity.create_snapshot User.integration, nil, "Archive Packet"
+          end
         end
       end
-
-      # Now that we've moved the file to its final attachment location, we can delete it from the stitched path
-      OpenChain::S3.delete bucket, key
     end
+    # Now that we've moved the file to its final attachment location, we can delete it from the stitched path
+    OpenChain::S3.delete bucket, key
+
     true
   end
 
