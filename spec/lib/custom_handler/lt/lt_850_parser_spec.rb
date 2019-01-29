@@ -138,6 +138,14 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(order.processing_errors).to eq "BUSINESS LOGIC ERROR!"
       expect(ActionMailer::Base.deliveries.pop).to be_nil
     end
+
+    it "errors if REF segments don't include HTS qualifier" do
+      data.gsub!(/REF\*HST.+$/, '')
+      expect{ subject.parse data, bucket: "bucket", key: "lt.edi" }.to raise_error do |error|
+        expect(error.class).to eq OpenChain::EdiParserSupport::EdiStructuralError
+        expect(error.message).to eq "Order # 417208, UPC # 192399830914: Expecting REF with HST qualifier but none found"
+      end
+    end
   end
 
   describe "update_standard_product" do
@@ -157,14 +165,6 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       p.update_attributes! name: "BOYS L/S KNIT TEE CLOSEOUTS"
       expect(subject.update_standard_product p, "", "", line).to eq false
       expect(p.name).to eq "BOYS L/S KNIT TEE CLOSEOUTS"
-    end
-  end
-
-  describe "explode_line" do
-    it "errors if REF segments don't include HTS qualifier" do
-      refs = [REX12::Segment.new([REX12::Element.new("REF", 0), REX12::Element.new("HTS", 1), REX12::Element.new("9999.99.9999", 2)], 0), 
-              REX12::Segment.new([REX12::Element.new("REF", 0), REX12::Element.new("SE", 1), REX12::Element.new("183FA", 2), REX12::Element.new("FALL 2018", 3)], 1)]
-      expect{subject.explode_line nil, refs, nil }.to raise_error OpenChain::EdiParserSupport::EdiStructuralError, "Expecting REF with HST qualifier but none found."
     end
   end
 

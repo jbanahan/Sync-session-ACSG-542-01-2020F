@@ -350,7 +350,7 @@ describe OpenChain::EdiParserSupport do
       expect(m).not_to be_nil
       expect(m.subject).to eq "Parser EDI Processing Error (ISA: 000004837)"
       expect(m.to).to eq ["edisupport@vandegriftinc.com"]
-      expect(m.body.raw_source).to include "There was a problem processing the attached Parser EDI. A re-creation of only the specific EDI transaction file the file that errored is attached."
+      expect(m.body.raw_source).to include "There was a problem processing the attached Parser EDI. A re-creation of only the specific EDI transaction file that errored is attached."
       expect(m.attachments["file.edi"]).not_to be_nil
       file = m.attachments["file.edi"].read
       transaction = StringIO.new

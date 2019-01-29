@@ -130,7 +130,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
 
   def explode_line line, ref_segments, po1_segment
     hsts = ref_segments.select{ |r| r.element(1).value == "HST" && r.element(2).value != "9999.99.9999" }
-    raise EdiStructuralError, "Expecting REF with HST qualifier but none found." if hsts.count.zero?
+    raise EdiStructuralError, "Order # #{line.order.customer_order_number}, UPC # #{line.sku}: Expecting REF with HST qualifier but none found" if hsts.count.zero?
     split_lines = copy_lines line, (hsts.count - 1)
     hsts.each_with_index do |ref, i|
       ln = split_lines.shift
