@@ -359,6 +359,29 @@ describe DataCrossReference do
     end
   end
 
+  context "one-time alert reference fields" do
+    before do
+      DataCrossReference.create!(cross_reference_type: "ota_reference_fields", key: "Entry~ent_entry_num")
+      DataCrossReference.create!(cross_reference_type: "ota_reference_fields", key: "Entry~ent_release_date")
+      DataCrossReference.create!(cross_reference_type: "ota_reference_fields", key: "Shipment~shp_ref")
+    end
+
+    describe "hash_ota_reference_fields" do
+      it "returns hash of xref fields" do
+        expect(DataCrossReference.hash_ota_reference_fields).to eq("Entry" => [:ent_entry_num, :ent_release_date], "Shipment" => [:shp_ref])
+      end
+    end
+
+    describe "update_ota_reference_fields!" do
+      it "updates xref fields" do
+        update_hsh = {"Entry" => [:ent_entry_num], "Shipment" => [:shp_ref, :shp_mode], "Product" => [:prod_uid]}
+        DataCrossReference.update_ota_reference_fields! update_hsh
+        updated = ["Entry~ent_entry_num", "Product~prod_uid", "Shipment~shp_mode", "Shipment~shp_ref"]
+        expect(DataCrossReference.where(cross_reference_type: "ota_reference_fields").pluck(:key).sort).to eq updated
+      end
+    end
+  end
+
   describe "xref_edit_hash" do
     #no two lambdas share the same identity so this simplifies the tests
     def strip_preproc hsh
@@ -505,6 +528,18 @@ describe DataCrossReference do
 
         it "prevents access for anyone else" do
           expect(DataCrossReference.can_view? 'ca_hts_to_descr', user).to eq false
+        end
+      end
+
+      context "one-time-alert reference fields" do
+        it "allows access for administrators" do
+          user = Factory(:admin_user)
+          expect(DataCrossReference.can_view? "ota_reference_fields", user).to eq true
+        end
+
+        it "prevents access for anyone else" do
+          user = Factory(:user)
+          expect(DataCrossReference.can_view? "ota_reference_fields", user).to eq false
         end
       end
 

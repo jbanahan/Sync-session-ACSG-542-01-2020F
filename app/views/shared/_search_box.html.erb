@@ -29,6 +29,9 @@ $(document).ready( function() {
     addParamRow('');
     document.getElementById("srch_fields1").value = '<%=@default_search_field%>'
   <% end %>
+  $('input.opt-param').each(function(index) {
+    $('#search_box>form').append($(this).prop('outerHTML'));
+  })
   document.getElementById("srch_val1").focus();
 });
 

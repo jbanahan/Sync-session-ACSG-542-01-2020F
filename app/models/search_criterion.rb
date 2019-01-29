@@ -15,6 +15,7 @@
 #  instant_classification_id        :integer
 #  milestone_notification_config_id :integer
 #  model_field_uid                  :string(255)
+#  one_time_alert_id                :integer
 #  operator                         :string(255)
 #  search_run_id                    :integer
 #  search_setup_id                  :integer
@@ -48,6 +49,7 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :instant_classification
   belongs_to :business_validation_rule
   belongs_to :business_validation_template
+  belongs_to :one_time_alert
   belongs_to :state_toggle_button, inverse_of: :search_criterions
   belongs_to :custom_view_template, inverse_of: :search_criterions
 
@@ -132,29 +134,14 @@ class SearchCriterion < ActiveRecord::Base
   def test? obj, user=nil, opts={}
     mf = ModelField.find_by_uid(self.model_field_uid)
     return false if mf.disabled?
-
-    r = false
+    
     if field_relative?
-      # for relative fields, if a secondary object is needed to supply a value (ie. when we're dealing with
-      # objects from mutiple heirarchical levels, we're expecting the obj passed in to be an array containing the appropriate
-      # model objects to test values against..first index is primary object, second is secondary.
-      # Otherwise, the same object will be used for both fields.
-      mf_two = get_relative_model_field
-
-      primary_obj, secondary_obj = [obj, obj]
-      if obj.is_a? Enumerable
-        primary_obj, secondary_obj = obj.take(2)
-      end
-
-      r = passes_relative? mf.process_query_parameter(primary_obj), get_relative_model_field.process_query_parameter(secondary_obj), opts
+      test_relative? mf, obj, user, opts
     elsif field_decimal?
-      mf_two = get_secondary_model_field
-
-      r = passes_decimal? mf, mf_two, obj
+      test_decimal? mf, obj, user, opts
     else
-      r = passes?(mf.process_query_parameter(obj), opts)
+      test_standard? mf, obj, user, opts
     end
-    r
   end
 
   def add_where(p)
@@ -327,6 +314,73 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   private
+
+  def test_standard? mf, object, user, opts
+    compare_one_field(mf, object) do |obj_descendant|
+      passes?(mf.process_query_parameter(obj_descendant), opts)
+    end
+  end
+
+  def test_relative? mf, obj, user, opts
+    # For legacy reasons, also accepts a two-element array for comparisons between hierarchical levels. This can now be done
+    # with a single object (the second one is found by stepping through the module chain). With the array input it's also possible 
+    # to compare two unrelated hierarchies, though currently there probably isn't a use case.
+    mf_two = get_relative_model_field
+    primary_obj, secondary_obj = [obj, obj]
+    if obj.is_a? Enumerable
+      primary_obj, secondary_obj = obj.take(2)
+    end
+    compare_two_fields(mf, primary_obj, mf_two, secondary_obj) do |pri_obj_descendant, sec_obj_descendant|
+      passes_relative? mf.process_query_parameter(pri_obj_descendant), mf_two.process_query_parameter(sec_obj_descendant), opts
+    end
+  end
+
+  def test_decimal? mf, object, user, opts
+    mf_two = get_secondary_model_field
+    
+    compare_one_field(mf, object) do |obj_descendant|
+      passes_decimal? mf, mf_two, obj_descendant
+    end
+  end
+
+  def compare_one_field mf, obj
+    r = false
+    boundary = find_next_module mf
+    CoreModule.walk_object_heirarchy(obj) do |core_module, obj_descendant|
+      break if boundary == core_module # we've passed the target module
+      if mf.core_module == core_module
+        r = yield obj_descendant
+        break if r
+      end
+    end
+    r
+  end
+
+  def compare_two_fields mf1, obj1, mf2, obj2
+    r = false
+    boundary1 = find_next_module mf1
+    boundary2 = find_next_module mf2
+    CoreModule.walk_object_heirarchy(obj1) do |cm1, obj1_descendant|
+      break if boundary1 == cm1 # we've passed the target module
+      CoreModule.walk_object_heirarchy(obj2) do |cm2, obj2_descendant|
+        break if boundary2 == cm2 # we've passed the target module
+        if (mf1.core_module == cm1) && (mf2.core_module == cm2) 
+          r = yield obj1_descendant, obj2_descendant
+          break if r
+        end
+      end
+      break if r
+    end
+    r
+  end
+
+  # Locates MF's CM within module chain and returns next CM
+  def find_next_module mf
+    cm = mf.core_module
+    chain = cm.module_chain.to_a
+    i = chain.find_index(cm)
+    chain[i + 1] if i
+  end
 
   def field_decimal?
     ['nqfdec', 'eqfdec', 'gtfdec', 'ltfdec'].include? self.operator

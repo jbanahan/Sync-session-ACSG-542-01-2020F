@@ -124,6 +124,7 @@ root.ChainNavPanel = {
       addToolsMenu = (cat, u) ->
         items = []
         items.push makeItem('custom-features','Custom Features','/custom_features')
+        items.push makeItem('one-time-alerts', 'One Time Alerts', '/one_time_alerts')
         items.push makeItem('settings', 'Settings', '/settings')
         items.push makeItem('system-tools', 'System Tools', '/tools')
         items.push makeItem('mod-dash', 'Modify Dashboard', '/dashboard_widgets/edit')

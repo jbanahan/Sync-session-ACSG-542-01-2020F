@@ -114,9 +114,9 @@ module OpenChain; module ApplicationControllerLegacy
     OpenChain::CoreModuleProcessor.update_status statusable
   end
     
-  #subclassed controller must implement secure method that returns searchable object 
+  #subclassed controller must implement method (by default, #secure) that returns searchable object.
   #and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
-  def build_search(base_field_list,default_search,default_sort,default_sort_order='a')
+  def build_search(base_field_list,default_search,default_sort,default_sort_order='a',secure_meth=:secure)
     field_list = base_field_list
     begin
       field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
@@ -134,12 +134,12 @@ module OpenChain; module ApplicationControllerLegacy
       sel_cond = 'contains' if sel_cond.nil?
       ent_value = params[("s" + param_counter.to_s).to_sym]
       if sel_field && ent_value
-        @search = add_search_relation (@search.nil? ? secure : @search), sel_field, sel_cond, ent_value
+        @search = add_search_relation (@search.nil? ? self.send(secure_meth) : @search), sel_field, sel_cond, ent_value
       end
     end
 
     if @search.nil?
-      @search = add_search_relation secure, field_list[default_search], 'contains', nil
+      @search = add_search_relation self.send(secure_meth), field_list[default_search], 'contains', nil
     end
 
     @s_sort = field_list[params[:sf]]

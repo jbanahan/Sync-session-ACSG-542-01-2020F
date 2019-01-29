@@ -1,0 +1,110 @@
+<% content_for :javascript do %>
+  $(function() {
+    var scope = $('div[ng-controller]').scope();
+    var id = scope.getId(window.location.href);
+    scope.loadAlert(id);
+    $("#btn_save").click(function() {
+      scope.saveAlert();
+    });
+    $("#btn_delete").click(function() {
+      var deleteConfirmed = confirm("Delete this One Time Alert?");
+      if (deleteConfirmed)
+        scope.deleteAlert(id);
+    });
+    $("#btn_cancel").click(function() {
+      scope.cancelAlert(id);
+    });
+    $("#btn_history").click(function() {
+      window.location = '<%= log_index_one_time_alert_path %>';
+    })
+    $("#btn_copy").click(function() {
+      $("#copy_frm").submit();
+    })
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+  <% if @alert.name.present? %>
+    <button id='btn_copy'>Copy</button>
+  <% end %>
+  <button id='btn_delete'>Delete</button>
+  <button id='btn_history'>History</button>
+<% end %>
+
+<%= form_tag copy_one_time_alert_path(@alert), id: "copy_frm", method: :post, hidden: true %></form>
+
+<div class="row" id="alert-update-failure" style="display:none;">
+  <div class="col-md-6 offset-md-3">
+    <div class="alert alert-danger">
+      <p><b>Notice: </b><span id="error"></span></p>
+    </div>
+  </div>
+</div>
+
+<div id='ng-app' ng-app='OneTimeAlertApp' ng-view>
+  <div id='one-time-alert-wrapper'>
+    <div id='controller' ng-controller='oneTimeAlertCtrl'>
+      <div class='container'>
+        <h2>Modify One Time Alert Notifications</h2><br><br>
+        <div class='row'>
+          <div class='col-md-8'>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Module Type</div>
+              <input class="col-md-5 form-control" disabled=true value={{alert.module_type}}></input>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">One Time Alert Name</div> 
+              <input class="col-md-5 form-control" ng-model="alert.name"></input>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Distribution List</div>
+              <select ng-options="mailing_list.id as mailing_list.label for mailing_list in mailingLists" class="col-md-5 form-control" ng-model="alert.mailing_list_id"></select>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Email Addresses</div>
+              <input class="col-md-5 form-control" ng-model="alert.email_addresses"></input>
+              <small class="offset-md-3 col-md-5">Must be comma-separated</small>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Email Subject</div>
+              <input class="col-md-5 form-control" ng-model="alert.email_subject"></input>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Email Body</div>
+              <textarea class="col-md-5 form-control" rows=5 ng-model="alert.email_body"></textarea>
+            </div>
+            <div class='row bootstrap-hover'>
+              <div class="col-md-3" style="font-weight:bold;">Alert Expire Date</div>
+              <%=text_field_tag :alert_expire_date,"", :id=> "alert-expire", :class=>"col-md-4 form-control isdate", "ng-model"=> "alert.expire_date" %>
+              <small class="offset-md-3 col-md-5">Leave blank to create alerts that do not expire.</small>
+            </div>
+            <div class='row bootstrap-hover'>
+              <input id="blind_copy_me" type='checkbox' ng-model="alert.blind_copy_me"/>
+              <label for="blind_copy_me">&nbsp;Blind copy me when recipients are emailed</label>
+            </div>
+            <div class='row bootstrap-hover'>
+              <input id="send_test_msg" type='checkbox' ng-model="send_test"/>
+              <label for="send_test_msg">&nbsp;Send me a test message to verify output</label>
+            </div>
+          </div>
+        </div>
+        <br><br>
+          <div class="col-md-3" style="font-weight:bold;">Reference Fields</div><br>
+          <div class='row'>
+            <div ng-repeat="crit in searchCriterions">
+              <div chain-search-criterion="crit" model-fields="modelFields"></div>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col-md-12 form-inline'>
+              Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in modelFields'>
+              </select>
+              <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
+            </div>
+          </div>        
+      </div>
+    </div>
+  </div>
+</div>

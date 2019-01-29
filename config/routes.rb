@@ -230,6 +230,13 @@ OpenChain::Application.routes.draw do
             post :send_s3_file_to_kewill
           end
         end
+
+      end
+      
+      resources :one_time_alerts, only: [:edit, :update, :destroy] do 
+        collection do
+          post 'update_reference_fields'
+        end
       end
 
       resources :fenix_postbacks, only: [] do
@@ -1166,6 +1173,19 @@ OpenChain::Application.routes.draw do
   resources :monthly_statements, only: [:index, :show] do 
     member do 
       post 'reload'
+    end
+  end
+
+  resources :one_time_alerts, except: [:show, :update, :destroy] do
+    member do
+      get 'log_index'
+      post 'copy'
+    end
+    collection do
+      get 'reference_fields_index'
+      delete 'mass_delete'
+      put 'mass_expire'
+      put 'mass_enable'
     end
   end
 

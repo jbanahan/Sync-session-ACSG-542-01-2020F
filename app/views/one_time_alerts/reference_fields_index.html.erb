@@ -1,0 +1,169 @@
+<% content_for :javascript do %>
+
+  $(function() {
+
+    var available = escapeJson(<%= @available %>);
+    var included = escapeJson(<%= @included %>);
+    var availableSelect = $("#available-select");
+    var includedSelect = $("#included-select");
+    var module = null;
+
+    $('#module').change(function() {
+      module = $("#module").find("option:selected").text();
+      update();
+    });
+
+    $('#btn_add').click(function() {
+      add();
+    });
+
+    $('#btn_remove').click(function() {
+      remove();
+    });
+
+    $('#btn_save').click(function() {     
+      $.ajax('/api/v1/one_time_alerts/update_reference_fields',{
+          type:'POST',
+          headers: {
+            Accept : "application/json",
+            "Content-Type": "application/json"
+          },
+          data: JSON.stringify({fields: included}),
+          success: function(response) {
+            window.location = "<%= one_time_alerts_path(message:'ref_update') %>"
+          },
+          error: function() {
+            window.alert("Save failed.");
+          }
+        });
+    });
+
+    <!-- based on https://stackoverflow.com/a/6234804 -->
+    function escape(text) {
+      return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\//g, "&#55;")
+      .replace(/{/g, "&#123;")
+      .replace(/}/g, "&#125;")
+      .replace(/;/g, "&#59;");
+    }
+
+    function escapeJson(json) {
+      out = {};
+      Object.keys(json).forEach(function(key) { 
+        out[key] = json[key].map(function(obj) { 
+                                   return {mfid: obj.mfid , label: escape(obj.label)}; 
+                                 });
+      });
+      return out; 
+    }
+
+    function writeModel(model, destination) {
+      var dest = $(destination);
+      dest.empty();
+      model[module].forEach(function(field, idx) {
+        dest.append("<option value='" + field.mfid + "'>" + escape(field.label) + "</option>");
+      }) 
+    }
+
+    function add() {
+      var fields = getSelected(availableSelect.find("option:selected"));
+      move(fields, available, included);
+      sort(available);
+      sort(included);
+      update();      
+    }
+
+    function remove() {
+      var fields = getSelected(includedSelect.find("option:selected"));
+      move(fields, included, available);
+      sort(available);
+      sort(included);
+      update(); 
+    }
+
+    function update() {
+      writeModel(available, availableSelect);
+      writeModel(included, includedSelect);
+    }
+
+    function sort(model) {
+      model[module].sort(function (a,b) {
+        if(a.label < b.label) 
+          return -1;
+        if(a.label > b.label) 
+          return 1;
+        return 0;
+      });
+    }
+
+    function move(fields, fromModel, toModel) {
+      fields.forEach(function(field, idx) {
+        toModel[module].push(field);
+        fromModel[module].splice(fromModel[module].findIndex(function(elem) { return elem.mfid == field.mfid }), 1);
+      });
+    }
+
+    function getSelected(selector) {
+      selectedArr = [];
+      $.each(selector, function(idx, subselect) {
+        var mfid = $(subselect).attr("value");
+        var label = $(subselect).text();
+        selectedArr.push({mfid: mfid, label: label});
+      })
+      return selectedArr;
+    }
+
+  })
+<%end%>
+
+<% content_for :action_bar do %>
+  <button class="btn_link" id="btn_save">Save</button>
+  <button class="btn_link" link_to="<%= one_time_alerts_path %>">Alerts</button>
+<%end%>
+
+<container>
+  <h2>Available reference fields for one-time alerts</h2>
+  <br><br>
+  <div class="row">
+    <div class="col-md-1">
+      <div class="form-group">
+        <label>Module</label>
+        <%= select_tag "module", options_for_select(["Entry", "Product", "Order", "Shipment"]), prompt: "Select one", class: "form-control" %>
+      </div>
+    </div>
+  </div>
+  <br><br>
+  <div class="row">
+    <div class="col-md-3">
+      <div class="form-group">
+        <label>Available</label>
+        <select name="available" id="available-select" class="form-control" size="10" multiple="true"></select>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div style="display: table; margin-top: 2.5em; width: 100%;">
+        <div style="display: table-cell; text-align: center;">
+          <div style="display: inline-block;">
+            <button class="form-control btn btn-default" id="btn_add">
+              <span class="fa fa-chevron-right" aria-hidden="true"></span>
+            </button>
+            <button class="form-control btn btn-default" style="margin-top: 1em;" id="btn_remove">
+              <span class="fa fa-chevron-left" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="form-group">
+        <label>Included</label>
+        <select name="included[]" id="included-select" class="form-control" size="10" multiple="true"></select>
+      </div>
+    </div>
+  </div>
+</container>

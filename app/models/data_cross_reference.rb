@@ -67,6 +67,7 @@ class DataCrossReference < ActiveRecord::Base
   LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
   CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
   VFI_DIVISION ||= "vfi_division"
+  OTA_REFERENCE_FIELDS ||= "ota_reference_fields"
   ASCE_BRAND ||= "asce_brand_xref"
   LL_CARB_STATEMENTS ||= "ll_carb_statement"
   LL_PATENT_STATEMENTS ||= "ll_patent_statement"
@@ -151,6 +152,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("UnderArmour")
     when HM_PARS_NUMBER
       MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?("pars-maintenance"))
+    when OTA_REFERENCE_FIELDS
+      user.admin?
     when LL_CARB_STATEMENTS, LL_PATENT_STATEMENTS
       MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?
     else
@@ -292,6 +295,8 @@ class DataCrossReference < ActiveRecord::Base
     end
   end
 
+  private_class_method :milestone_key
+
   def self.create_us_hts_to_ca! us_hts, ca_hts, importer_id
     add_xref! US_HTS_TO_CA, TariffRecord.clean_hts(us_hts), TariffRecord.clean_hts(ca_hts), importer_id
   end
@@ -336,7 +341,49 @@ class DataCrossReference < ActiveRecord::Base
     add_xref! HM_PARS_NUMBER, pars_number, nil
   end
 
-  private_class_method :milestone_key
+  def self.hash_ota_reference_fields
+    fields = list_ota_reference_fields
+    out = Hash.new{ |h,k| h[k] = [] }
+    fields.each do |f|
+      type, f_uid = f.split("~")
+      out[type] << f_uid.to_sym
+    end
+    out
+  end
+
+  def self.update_ota_reference_fields! hsh
+    new_fields = []
+    hsh.keys.each do |cm_name|
+      hsh[cm_name].each { |uid| new_fields << "#{cm_name}~#{uid}" } if hsh[cm_name]
+    end
+    existing_fields = list_ota_reference_fields
+    fields_to_add = new_fields - existing_fields
+    fields_to_remove = existing_fields - new_fields
+    transaction do
+      insert_ota_reference_fields!(fields_to_add)
+      where(cross_reference_type: OTA_REFERENCE_FIELDS, key: fields_to_remove).destroy_all
+    end
+  end
+
+  def self.insert_ota_reference_fields! fields_to_add
+    to_add = fields_to_add.map do |f|
+      xref = DataCrossReference.new(cross_reference_type: OTA_REFERENCE_FIELDS, key: f)
+      raise "Can't save invalid DataCrossReference: #{xref.errors.messages}" unless xref.valid?
+      # see https://github.com/zdennis/activerecord-import
+      xref.run_callbacks(:save) { false }
+      xref.run_callbacks(:create) { false }
+      xref
+    end
+    import to_add, validate: false
+  end
+
+  private_class_method :insert_ota_reference_fields!
+
+  def self.list_ota_reference_fields
+    DataCrossReference.where(cross_reference_type: OTA_REFERENCE_FIELDS).pluck(:key)
+  end
+
+  private_class_method :list_ota_reference_fields
 
   def self.find_po_fingerprint order
     find_unique_obj scoped, key: order.order_number, xref_type: PO_FINGERPRINT

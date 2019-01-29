@@ -1763,4 +1763,38 @@ describe SearchCriterion do
       expect(sc.apply(Entry).all).to eq []
     end
   end
+
+  context "test hierarchy" do
+    let!(:entry) { Factory(:entry, commercial_invoices: [Factory(:commercial_invoice, commercial_invoice_lines: [Factory(:commercial_invoice_line, cotton_fee: 100)])])}
+    let!(:mf) { ModelField.find_by_uid :ci_currency }
+    let!(:sc) { Factory(:search_criterion, model_field_uid: "cil_cotton_fee", operator: "eq", value: 100)}
+
+    it "applies standard test to object's children" do
+      expect(sc.test? entry).to eq true
+    end
+
+    it "applies decimal test to object's children" do
+      cil = entry.commercial_invoice_lines.first
+      cil.update_attributes! value: 10, contract_amount: 5
+      sc.update_attributes! model_field_uid: "cil_value", operator:"eqfdec", value: 100, secondary_model_field_uid: "cil_contract_amount"
+      entry.reload
+      expect(sc.test? entry).to eq true
+    end
+    
+    context "relative" do
+      before do
+        entry.update_attributes! other_fees: 100
+        sc.update_attributes! operator: "eqf", model_field_uid: "ent_other_fees", value: "cil_cotton_fee"
+      end
+      
+      it "compares fields within same hierarchy" do
+        expect(sc.test? entry).to eq true
+      end
+
+      it "compares fields across hierarchies" do
+        cil2 = Factory(:commercial_invoice_line, cotton_fee: 100)
+        expect(sc.test? [entry, cil2.commercial_invoice.entry]).to eq true
+      end
+    end
+  end
 end

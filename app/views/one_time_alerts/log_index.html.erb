@@ -1,0 +1,28 @@
+<% content_for :action_bar do %>
+  <button class="btn btn_link navbar-btn" link_to="<%= edit_one_time_alert_path @alert %>">Back</button>
+<% end %>
+
+
+<div class="container">
+  <div class="col-md-12">
+  <h3>Sent notifications for One Time Alert "<%= @alert.name %>"</h2><br><br>
+    <row>
+      <table class="detail_table">
+        <thead>
+          <th>Entity</th>
+          <th>Reference Fields</th>
+          <th>Sent Date</th>
+        </thead>
+        <tbody>
+          <% Array.wrap(@alert.log_entries.sort_by(&:logged_at).reverse).each do |log|  %>
+            <tr>
+              <td><%= link_to(log.alertable.label, log.alertable.view_url) %></td>
+              <td><%= log.reference_fields %></td>
+              <td><%= log.logged_at %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </row>
+  </div>
+</div>

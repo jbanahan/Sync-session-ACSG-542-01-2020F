@@ -18,9 +18,9 @@
 #
 # Indexes
 #
-#  index_sync_records_id_type_trading_partner  (syncable_id,syncable_type,trading_partner) UNIQUE
-#  index_sync_records_on_ftp_session_id        (ftp_session_id)
-#  index_sync_records_on_trading_partner       (trading_partner)
+#  index_sync_records_id_type_trading_partner_fingerprint  (syncable_id,syncable_type,trading_partner,fingerprint) UNIQUE
+#  index_sync_records_on_ftp_session_id                    (ftp_session_id)
+#  index_sync_records_on_trading_partner                   (trading_partner)
 #
 
 class SyncRecord < ActiveRecord::Base

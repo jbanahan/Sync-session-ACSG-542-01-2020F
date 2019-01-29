@@ -1,0 +1,120 @@
+<%content_for :javascript do %>
+  var tab = "<%= @tab %>"
+
+  var delete_path = "<%=mass_delete_one_time_alerts_path%>";
+  var enable_path = "<%=mass_enable_one_time_alerts_path%>";
+  var expire_path = "<%=mass_expire_one_time_alerts_path%>";
+
+  function listIds(sel) {
+      return sel.map(function() {return this.id}).get().join(",");
+  };
+
+  $(function() {
+    $("#enabled-tab").click(function() {
+      $('input[id=tab]').val("enabled");
+      $('#mass-enable').hide();
+      $('#mass-expire').show();
+    });
+    $("#expired-tab").click(function() {
+      $('input[id=tab]').val("expired");
+      $('#mass-expire').hide();
+      $('#mass-enable').show();
+    });
+
+    if (tab == "enabled")
+      $("#enabled-tab").trigger("click");
+    else
+      $("#expired-tab").trigger("click");
+    
+    $("#mass-delete").click(function() {
+      var ids = listIds($("#enabled :checked, #expired :checked"));
+      if (ids.length > 0) {
+        var deleteConfirmed = confirm("Delete selected One Time Alerts?");
+        if (deleteConfirmed) {
+          $("input[id=ids]").val(ids);    
+          var form = $("#mass-update");
+          $("#rails-hack").val("DELETE");
+          form.attr("action", delete_path);
+          form.submit();
+        }
+      } else
+          alert("You must select at least one alert.");
+    });
+
+    $("#mass-expire").click(function() {
+      var ids = listIds($("#enabled :checked" ));
+      if (ids.length > 0) {
+        var expireConfirmed = confirm("Expire selected One Time Alerts?");
+        if (expireConfirmed) {
+          $("input[id=ids]").val(ids);
+          var form = $("#mass-update");
+          $("#rails-hack").val("PUT");
+          form.attr("action", expire_path);      
+          form.submit();
+        }
+      } else
+          alert("You must select at least one expired alert.");
+    });
+
+    $("#mass-enable").click(function() {
+      var ids = listIds($("#expired :checked" ));
+      if (ids.length > 0) {
+        var enableConfirmed = confirm("Enable selected One Time Alerts?");
+        if (enableConfirmed) {
+          $("input[id=ids]").val(ids);
+          var form = $("#mass-update");
+          $("#rails-hack").val("PUT");
+          form.attr("action", enable_path);
+          form.submit();
+        }
+      } else
+          alert("You must select at least one enabled alert.");
+    });
+  });
+
+  
+<%end%>
+
+<% content_for :action_bar do %>
+  <button class="btn btn_link navbar-btn" link_to="<%= new_one_time_alert_path %>">New</button>
+  <button id="mass-delete" class="btn navbar-btn">Delete</button>
+  <button id="mass-expire" class="btn navbar-btn">Expire</button>
+  <button id="mass-enable" class="btn navbar-btn">Enable</button>
+  <% if current_user.sys_admin? %>
+    <button class="btn btn_link navbar-btn" link_to="<%= reference_fields_index_one_time_alerts_path %>">Set Ref Fields</button>
+  <% end %>
+  <% if current_user.admin? %>
+    <% if params[:all] %>
+        <button class="btn btn_link navbar-btn" link_to="<%= one_time_alerts_path %>">My Alerts</button>
+    <% else %>
+        <button class="btn btn_link navbar-btn" link_to="<%= one_time_alerts_path(all:true) %>">Admin</button>  
+    <% end %>
+  <% end %>
+<%end%>
+
+<h1>One Time Alert Notifications</h1><br><br>
+
+<%= render :partial => 'shared/search_box' %><br>
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active show" id="enabled-tab" data-toggle="tab" href="#enabled" role="tab" aria-controls="enabled" aria-selected="true">Enabled</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="expired-tab" data-toggle="tab" href="#expired" role="tab" aria-controls="expired" aria-selected="false">Expired</a>
+  </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane show active" id="enabled" role="tabpanel" aria-labelledby="enabled-tab">
+    <%= render partial: "tab_contents", locals: {alerts: @enabled} %>
+  </div>
+  <div class="tab-pane" id="expired" role="tabpanel" aria-labelledby="expired-tab">
+    <%= render partial: "tab_contents", locals: {alerts: @expired} %>
+  </div>
+</div>
+<form id="mass-update" method="POST">
+  <input id="ids" type="hidden" name="ids">
+  <input id="tab" class="opt-param" type="hidden" name="tab" value="<%= @tab %>">
+  <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+  <input id="rails-hack" name="_method" type="hidden"/>
+</form>

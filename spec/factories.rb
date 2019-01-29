@@ -565,3 +565,9 @@ Factory.define :random_audit do |f|
   f.association :user
   f.association :search_setup
 end
+Factory.define :one_time_alert do |f|
+  f.association :user
+end
+Factory.define :one_time_alert_log_entry do |f|
+  f.association :one_time_alert
+end

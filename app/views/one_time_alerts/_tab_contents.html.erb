@@ -1,0 +1,28 @@
+<table class="detail_table">
+  <thead>
+    <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th><%=sortable_search_heading 'name'%></th>
+    <th><%=sortable_search_heading 'creator_name'%></th>
+    <th><%=sortable_search_heading 'created_at'%></th>
+    <th><%=sortable_search_heading 'module_type'%></th>
+    <th><%=sortable_search_heading 'expire_date'%></th>
+    <th><%=sortable_search_heading 'updater_name'%></th>
+    <th><%=sortable_search_heading 'reference_field_uids'%></th>
+  </thead>
+
+  <% alerts.each do |alert| %>
+    <tr class='hover'>
+      <td style="text-align: center;"><input class="alert-select" id="<%=alert.id%>" type="checkbox" name=""></td>
+      <td style="text-align: center;"><a href="<%= edit_one_time_alert_path(alert.id) %>"><i class="fa fa-pencil-square-o" title="Edit"></i></a></td>
+      <td> <%= alert.name %></td>
+      <td><%= alert.creator_name %></td>
+      <td><%= alert.created_at %></td>
+      <td><%= alert.module_type %></td>
+      <td><%= alert.expire_date %></td>
+      <td><%= alert.updater_name %></td>
+      <td><%= alert.reference_field_uids %></td>
+    </tr>
+  <% end %>
+</table>
+<%= will_paginate alerts %> 

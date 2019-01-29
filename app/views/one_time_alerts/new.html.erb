@@ -1,0 +1,28 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#btn_save").click(function() {
+      $("#frm_alert").submit();
+    });
+    $("#btn_cancel").click(function() {
+      window.location = '<%=url_for @alert%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<div class = 'col-md-2'>
+  <%= form_for @alert, :html=>{:id=>'frm_alert'} do |f| %>
+    <div class="form-group">
+    <label for="cm-drop-down">Module</label>
+    <select id='cm-drop-down' name='module_type' class='form-control'>
+      <% @cm_list.each do |tuplet| %>
+        <option value="<%= tuplet[0] %>"><%= tuplet[1] %></option>
+      <% end %>
+    </select>
+   </div>
+  <%end%>
+</div>
