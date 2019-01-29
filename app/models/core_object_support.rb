@@ -44,6 +44,12 @@ module CoreObjectSupport
     CoreModule.find_by_object self
   end
 
+  def label
+    cm = self.core_module
+    uid = cm.unique_id_field.process_export(self, nil)
+    "#{cm.label} #{uid}"
+  end
+
   def business_rules_state_for_user user
     if user.view_all_business_validation_results?
       business_rules_state
