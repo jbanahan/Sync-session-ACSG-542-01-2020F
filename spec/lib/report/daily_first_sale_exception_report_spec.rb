@@ -25,7 +25,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', entered_value: 1, duty_rate: 7, duty_amount: 8)
 
     @prod = Factory(:product, unique_identifier: 'ASCENA-part num')
-    @ord = Factory(:order, order_number: 'ASCENA-po num', vendor: vend)
+    @ord = Factory(:order, order_number: 'ASCENA-brand-po num', vendor: vend)
     @ord.find_and_set_custom_value(cdefs[:ord_type], 'AGS')
     @ord.find_and_set_custom_value(cdefs[:ord_selling_agent], 'agent')
     @ord.save!

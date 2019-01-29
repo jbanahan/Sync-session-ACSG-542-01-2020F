@@ -94,7 +94,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         INNER JOIN commercial_invoice_tariffs cit ON cil.id = cit.commercial_invoice_line_id
         INNER JOIN countries c on e.import_country_id = c.id and c.iso_code = 'US'
-        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.po_number)
+        LEFT OUTER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.product_line, '-', cil.po_number)
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
         INNER JOIN companies vend ON vend.id = o.vendor_id
