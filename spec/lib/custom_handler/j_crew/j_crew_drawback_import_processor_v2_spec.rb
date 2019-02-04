@@ -53,6 +53,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
   end
 
   describe '#process_entry' do
+    let! (:us) { Factory(:country, iso_code: "US")}
+    
     before :each do
       mo = double('mail_obj')
       allow(mo).to receive(:deliver!)

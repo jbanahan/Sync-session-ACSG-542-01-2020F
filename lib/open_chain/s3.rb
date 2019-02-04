@@ -199,7 +199,10 @@ module OpenChain; class S3
   end
 
   def self.integration_bucket_name
-    'chain-io-integration'
+    # Really, we should be pointing to test in anything other than prod...however, there's a ton of unit tests that
+    # will fail if I change this now and don't fix them, and as I'm primarily guarding against trying to send 
+    # data that a developer might be loading to prod, I'm ok for now just guarding against the dev case using prod.
+    MasterSetup.development_env? ? 'chain-io-integration-test' : 'chain-io-integration'
   end
 
   def self.exists? bucket, key, version = nil

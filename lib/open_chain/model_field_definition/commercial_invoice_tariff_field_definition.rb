@@ -43,7 +43,12 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
             IFNULL(commercial_invoice_tariffs.duty_amount,0) + 
             IFNULL(commercial_invoice_tariffs.sima_amount,0) + 
             IFNULL(commercial_invoice_tariffs.excise_amount,0)"
-        }]
+        }],
+      [35,:cit_advalorem_rate, :advalorem_rate, "Ad Valorem Duty Rate", {data_type: :decimal}],
+      [36,:cit_specific_rate, :specific_rate, "Specific Duty Rate", {data_type: :decimal}],
+      [37,:cit_specific_rate_uom, :specific_rate_uom, "Specific Duty Rate UOM", {data_type: :string}],
+      [38,:cit_additional_rate, :additional_rate, "Additional Duty Rate", {data_type: :decimal}],
+      [39,:cit_additional_rate_uom, :additional_rate_uom, "Additional Duty Rate UOM", {data_type: :decimal}]
     ]
   end
 end; end; end

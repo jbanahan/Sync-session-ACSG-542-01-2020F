@@ -574,4 +574,16 @@ describe OpenChain::S3, s3: true do
       expect(OpenChain::S3.get_data bucket, "copy/#{key}").to eq tempfile_content
     end
   end
+
+  describe "integration_bucket_name" do
+
+    it "uses production bucket" do
+      expect(OpenChain::S3.integration_bucket_name).to eq "chain-io-integration"
+    end
+
+    it "uses test bucket in dev enviroment" do
+      expect(MasterSetup).to receive(:development_env?).and_return true
+      expect(OpenChain::S3.integration_bucket_name).to eq "chain-io-integration-test"
+    end
+  end
 end

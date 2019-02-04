@@ -63,7 +63,7 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   end
 
   def request_entry_data file_no
-    request 'entry_data_to_s3', {file_no: file_no.to_i}, aws_context_hash(OpenChain::CustomHandler::KewillEntryParser, "json", filename_prefix: file_no)
+    request 'entry_data_to_s3', {file_no: file_no.to_i}, aws_context_hash("json", filename_prefix: file_no, parser_class: OpenChain::CustomHandler::KewillEntryParser)
   end
 
   def self.delayed_bulk_entry_data search_run_id, primary_keys
@@ -119,39 +119,51 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
 
     context = {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
 
-    request 'updated_statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+    request 'updated_statements_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
   def request_daily_statements statement_numbers, s3_bucket, s3_path, sqs_queue
     params = {daily_statement_numbers: statement_numbers}
-    request 'statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+    request 'statements_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
   def request_monthly_statements statement_numbers, s3_bucket, s3_path, sqs_queue
     params = {monthly_statement_numbers: statement_numbers}
-    request 'statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+    request 'statements_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
   def request_monthly_statements_between start_date, end_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
     params = {start_date: start_date.strftime("%Y%m%d").to_i, end_date: end_date.strftime("%Y%m%d").to_i}
     params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
     
-    request 'monthly_statements_to_s3', params, statement_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+    request 'monthly_statements_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
-  def statement_context_hash s3_bucket, s3_path, sqs_queue
+  def s3_export_context_hash s3_bucket, s3_path, sqs_queue
     {s3_bucket: s3_bucket, s3_path: s3_path, sqs_queue: sqs_queue}
   end
-  private :statement_context_hash
+  private :s3_export_context_hash
 
-  def aws_context_hash parser_class, file_extension, path_date: Time.zone.now, filename_prefix: nil
-    s3_path = self.class.s3_export_path_from_parser(parser_class, file_extension, path_date: path_date, filename_prefix: filename_prefix)
+  def aws_context_hash file_extension, path_date: Time.zone.now, filename_prefix: nil, parser_class: nil, parser_identifier: nil
+    s3_path = nil
+    if !parser_class.nil?
+      s3_path = self.class.s3_export_path_from_parser(parser_class, file_extension, path_date: path_date, filename_prefix: filename_prefix)
+    elsif !parser_identifier.nil?
+      s3_path = self.class.s3_export_path_from_parser_identifier(parser_identifier, file_extension, path_date: path_date, filename_prefix: filename_prefix)
+    end
+    raise "One of parser_class or parser_identifier must be used for this method." if s3_path.blank?
+
     self.class.aws_file_export_context_data(s3_path)
   end
 
   def csv_customer_list customers
     # Remove the newline that to_csv adds
     Array.wrap(customers).to_csv.strip
+  end
+
+  def request_updated_tariff_classifications start_date, end_date, s3_bucket, s3_path, sqs_queue
+    params = {start_date: start_date.strftime("%Y%m%d%H%M").to_i, end_date: end_date.strftime("%Y%m%d%H%M").to_i}
+    request "updated_tariffs_to_s3", params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
 end; end;

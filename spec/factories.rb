@@ -571,3 +571,9 @@ end
 Factory.define :one_time_alert_log_entry do |f|
   f.association :one_time_alert
 end
+Factory.define :tariff_classification do |f|
+  f.association :country
+end
+Factory.define :tariff_classification_rate do |f|
+  f.association :tariff_classification
+end

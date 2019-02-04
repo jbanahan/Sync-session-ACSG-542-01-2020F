@@ -5,9 +5,17 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   let (:tz) {ActiveSupport::TimeZone["Eastern Time (US & Canada)"]}
 
   describe "process_entry" do
+    let! (:us) { Factory(:country, iso_code: "US")}
+
+    let! (:tariff_classification) { 
+      # Use a duty computation that includes all the rate types
+      c = Factory(:tariff_classification, country: us, tariff_number: "1234567890", effective_date_start: Date.new(2001, 1, 1), unit_of_measure_1: "CM", unit_of_measure_2: "KG", duty_computation: "6")
+      rate_1 = Factory(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.50"), rate_specific: BigDecimal("1.25"), rate_additional: BigDecimal("3.55"), special_program_indicator: "JO")
+      rate_2 = Factory(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.15"), rate_specific: BigDecimal("0.25"), rate_additional: BigDecimal("1.55"), special_program_indicator: "MX")
+      c
+    }
 
     before :each do
-      us = Factory(:country, iso_code: "US")
       pms_dates = {
         3 => 15
       }
@@ -402,7 +410,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "creates an entry using json data" do
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       entry.reload
 
       expect(entry).to be_persisted
@@ -725,6 +733,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(tariff.gross_weight).to eq 10000
       expect(tariff.quota_category).to eq 123
       expect(tariff.tariff_description).to eq "STUFF"
+      expect(tariff.advalorem_rate).to eq BigDecimal("0.50")
+      expect(tariff.specific_rate).to eq BigDecimal("1.25")
+      expect(tariff.specific_rate_uom).to eq "CM"
+      expect(tariff.additional_rate).to eq BigDecimal("3.55")
+      expect(tariff.additional_rate_uom).to eq "KG"
 
       expect(tariff.commercial_invoice_lacey_components.length).to eq 2
       lacey = tariff.commercial_invoice_lacey_components.first
@@ -813,7 +826,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "processes liquidation information if liquidation date is not in the future" do
       @e['dates'] << {'date_no'=>44, 'date'=>201501010000}
 
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       entry.reload
 
       expect(entry.liquidation_type_code).to eq "liq_type"
@@ -833,7 +846,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "handles single statement numbers as daily statements" do
       @e['daily_statement_no'] = 'astatement'
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       entry.reload
 
       expect(entry.daily_statement_number).to eq "astatement"
@@ -842,7 +855,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "identifies split shipments" do
       @e['split'] = "Y"
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       entry.reload
       expect(entry.split_shipment?).to eq true
     end
@@ -851,28 +864,28 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       @e['recon_nafta'] = "N"
       @e['recon_9802'] = "N"
       @e['recon_value'] = "N"
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.recon_flags).to eq "CLASS"
 
       @e['recon_class'] = 'N'
       @e['recon_nafta'] = "Y"
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.recon_flags).to eq "NAFTA"
 
       @e['recon_nafta'] = 'N'
       @e['recon_9802'] = "Y"
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.recon_flags).to eq "9802"
 
       @e['recon_9802'] = "N"
       @e['recon_value'] = "Y"
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.recon_flags).to eq "VALUE"
     end
 
     it "handles 98 date for docs received" do
       @e['dates'] << {'date_no'=>98, 'date'=>201503310000}
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.docs_received_date).to eq tz.parse("201503310000").to_date
     end
 
@@ -880,7 +893,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # Put an actual Date value in the entry here so that we're also making sure that
       # the earliest value is handing comparison against the actual entry itself
       e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", first_it_date: Date.new(2016, 1, 1))
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry.first_it_date).to eq tz.parse("201503011000").to_date
     end
 
@@ -897,7 +910,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       e.entry_comments.create! body: "Testing"
 
 
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
 
       # Make sure the exisitng data was wiped and new data populated
       expect(entry).to be_persisted
@@ -933,7 +946,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'lines' => [{'charge' => '1', 'description' => 'DUTY', 'amount'=>-10000, 'vendor'=>'VEND', 'vendor_name' => 'VENDOR NAME', 'vendor_ref'=>'VENDOR', 'charge_type'=>'D'}]
       }
 
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
 
       expect(entry).to be_persisted
       entry.reload
@@ -959,24 +972,24 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(Lock).to receive(:acquire).with("CreateAllianceCustomer").and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
 
-      entry = described_class.new.process_entry @e
+      entry = subject.process_entry @e
       expect(entry).to be_persisted
     end
 
     it "does not update data with a newer last exported from source date" do
       e = Factory(:entry, broker_reference: @e['file_no'], source_system: "Alliance", last_exported_from_source: Time.zone.now)
-      expect(described_class.new.process_entry @e).to be_nil
+      expect(subject.process_entry @e).to be_nil
     end
 
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
-      expect {described_class.new.process_entry @e}.to change(ErrorLogEntry,:count).by(1)
+      expect {subject.process_entry @e}.to change(ErrorLogEntry,:count).by(1)
     end
 
     it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
       @e['dates'].reject! {|v| v['date_no'] == 16 }
 
-      expect {described_class.new.process_entry @e}.to_not change(ErrorLogEntry,:count)
+      expect {subject.process_entry @e}.to_not change(ErrorLogEntry,:count)
     end
 
     it "skips purged entries" do

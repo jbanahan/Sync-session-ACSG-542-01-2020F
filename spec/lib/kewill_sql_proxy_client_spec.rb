@@ -282,9 +282,17 @@ describe OpenChain::KewillSqlProxyClient do
 
   describe "request_entry_data" do
     it "sends request for entry data to sql proxy system" do
-      expect(subject).to receive(:aws_context_hash).with(OpenChain::CustomHandler::KewillEntryParser, "json", filename_prefix: "12345").and_return({hash: :data})
+      expect(subject).to receive(:aws_context_hash).with("json", filename_prefix: "12345", parser_class: OpenChain::CustomHandler::KewillEntryParser).and_return({hash: :data})
       expect(subject).to receive(:request).with('entry_data_to_s3', {file_no: 12345}, {hash: :data})
       subject.request_entry_data "12345"
+    end
+  end
+
+  describe "request_updated_tariff_classifications" do
+    it "sends request for tariff data to sql proxy system" do
+      expect(subject).to receive(:request).with "updated_tariffs_to_s3", {start_date: 201901301225, end_date: 201901301330}, {s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"}, {swallow_error: false}
+
+      subject.request_updated_tariff_classifications(Time.new(2019, 1, 30, 12, 25), Time.new(2019, 1, 30, 13, 30), "bucket", "path", "queue")
     end
   end
 

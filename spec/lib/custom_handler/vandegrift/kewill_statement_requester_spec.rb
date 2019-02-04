@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementRequester do
     before :each do 
       allow(subject).to receive(:poll).and_yield start_time, end_time
       allow(subject).to receive(:sql_proxy_client).and_return sql_proxy_client
-      allow(sql_proxy_client).to receive(:aws_context_hash).with(OpenChain::CustomHandler::Vandegrift::KewillStatementParser, "json", path_date: instance_of(ActiveSupport::TimeWithZone)).and_return({s3_bucket: "test-bucket", s3_path: "test-path", sqs_queue: "test-queue"})
+      allow(sql_proxy_client).to receive(:aws_context_hash).with("json", path_date: instance_of(ActiveSupport::TimeWithZone), parser_class: OpenChain::CustomHandler::Vandegrift::KewillStatementParser).and_return({s3_bucket: "test-bucket", s3_path: "test-path", sqs_queue: "test-queue"})
       allow(OpenChain::SQS).to receive(:get_queue_url).and_return "test"
       allow(OpenChain::S3).to receive(:integration_bucket_name).and_return "test-bucket"
       allow(OpenChain::S3).to receive(:integration_subfolder_path).with("/home/ubuntu/ftproot/chainroot/test/kewill_statements", end_time).and_return "subfolder/path"

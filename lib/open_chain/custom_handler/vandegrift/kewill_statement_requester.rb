@@ -37,7 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
   def self.aws_context_data proxy_client, date, opts
     context = {s3_bucket: opts['s3_bucket'], s3_path: opts['s3_path'], sqs_queue: opts['sqs_queue']}
 
-    default_aws_data = proxy_client.aws_context_hash OpenChain::CustomHandler::Vandegrift::KewillStatementParser, "json", path_date: date
+    default_aws_data = proxy_client.aws_context_hash "json", path_date: date, parser_class: OpenChain::CustomHandler::Vandegrift::KewillStatementParser
     
     context[:s3_bucket] = default_aws_data[:s3_bucket] if context[:s3_bucket].blank?
     context[:s3_path] = default_aws_data[:s3_path] if context[:s3_path].blank?

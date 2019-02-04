@@ -2,6 +2,9 @@
 #
 # Table name: commercial_invoice_tariffs
 #
+#  additional_rate            :decimal(14, 7)
+#  additional_rate_uom        :string(255)
+#  advalorem_rate             :decimal(14, 7)
 #  classification_qty_1       :decimal(12, 2)
 #  classification_qty_2       :decimal(12, 2)
 #  classification_qty_3       :decimal(12, 2)
@@ -31,6 +34,8 @@
 #  sima_code                  :string(255)
 #  special_authority          :string(255)
 #  special_tariff             :boolean
+#  specific_rate              :decimal(14, 7)
+#  specific_rate_uom          :string(255)
 #  spi_primary                :string(255)
 #  spi_secondary              :string(255)
 #  tariff_description         :string(255)

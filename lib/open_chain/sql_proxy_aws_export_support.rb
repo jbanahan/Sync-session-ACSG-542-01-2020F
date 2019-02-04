@@ -13,14 +13,33 @@ module OpenChain; module SqlProxyAwsExportSupport
     def s3_export_path_from_parser parser_class, file_extension, path_date: nil, filename_prefix: nil
       integration_folder = Array.wrap(parser_class.integration_folder).first
 
+      s3_export_path(integration_folder, file_extension: file_extension, path_date: path_date, filename_prefix: filename_prefix)
+    end
+
+    # This method constructs a return path for anything writing to s3 using the given parser identifier string.  This
+    # string should be the SAME value used for the parser in IntegrationClient.
+    # 
+    def s3_export_path_from_parser_identifier parser_identifier, file_extension, system_code: MasterSetup.get.system_code, path_date: nil, filename_prefix: nil
+      raise "Unable to construct accurate s3 export path when system code is blank." if system_code.blank?
+
+      s3_path_prefix = "#{system_code}/#{parser_identifier}"
+
+      s3_export_path(s3_path_prefix, file_extension: file_extension, path_date: path_date, filename_prefix: filename_prefix)
+    end
+
+    def s3_export_path s3_path_prefix, file_extension: nil, path_date: nil, filename_prefix: nil
       path_date = Time.zone.now if path_date.nil?
 
       prefix = ""
       if !filename_prefix.blank?
         prefix = "#{filename_prefix}-"
       end
-      # Just use the date as the filename
-      Pathname.new(OpenChain::S3.integration_subfolder_path(integration_folder, path_date)).join("#{prefix}#{path_date.strftime("%Y-%m-%d-%H-%M-%S-%L")}.#{file_extension}").to_s
+
+      filename = "#{prefix}#{path_date.strftime("%Y-%m-%d-%H-%M-%S-%L")}"
+      filename += ".#{file_extension}" unless file_extension.blank?
+
+      # Just use the date as the non-prefix component of the filename
+      Pathname.new(OpenChain::S3.integration_subfolder_path(s3_path_prefix, path_date)).join("#{filename}").to_s
     end
 
     def default_sqs_queue_url

@@ -575,7 +575,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.fda_message = e[:fda_output_mess]
       # Bond Types are defaulted to broker specified one if the value in the entry data specifies 8
       entry.bond_type = e[:bond_type] == 8 ? e[:broker_bond_type] : e[:bond_type]
-      entry.import_country = Country.where(iso_code: "US").first
+      entry.import_country = us
       entry.split_shipment = e[:split].to_s.upcase == "Y"
       entry.split_release_option = e[:split_release_option].to_i if e[:split_release_option].to_i > 0
 
@@ -896,6 +896,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       invoices.destroy_all
 
+      entry_effective_date = tariff_effective_date(entry)
+
       Array.wrap(e[:commercial_invoices]).each do |i|
         invoice = entry.commercial_invoices.build
         set_invoice_header_data i, invoice
@@ -913,7 +915,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             end
           end
 
-          calculate_duty_rates(line)
+          calculate_duty_rates(line, entry_effective_date)
         end
       end
 
@@ -1087,7 +1089,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.tariff_description = t[:tariff_desc_additional] unless t[:tariff_desc_additional].blank?
     end
 
-    def calculate_duty_rates invoice_line
+    def calculate_duty_rates invoice_line, effective_date
       # When there are multiple tariff lines, only the first tariff line carries the entered value...therefore, we cannot calculate the 
       # duty rate for each line solely off its entered value, since for tariff lines 2+ it will always be zero and therefore show a rate of zero,
       # even if there is duty listed.  
@@ -1096,6 +1098,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       invoice_line.commercial_invoice_tariffs.each do |t|
         t.duty_rate = total_entered_value > 0 ? ((t.duty_amount.presence || 0) / total_entered_value).round(3) : 0
+
+        classification = find_tariff_classification(effective_date, t.hts_code)
+        next unless classification
+        rate_data = classification.extract_tariff_rate_data(invoice_line.country_origin_code, t.spi_primary)
+        t.advalorem_rate = rate_data[:advalorem_rate]
+        t.specific_rate = rate_data[:specific_rate]
+        t.specific_rate_uom = rate_data[:specific_rate_uom]
+        t.additional_rate = rate_data[:additional_rate]
+        t.additional_rate_uom = rate_data[:additional_rate_uom]
       end
 
       nil
@@ -1500,4 +1511,27 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       count
     end
 
+    def tariff_effective_date entry
+      d = entry.first_it_date
+      if d.nil?
+        d = entry.import_date
+      end
+
+      d
+    end
+
+    def us
+      @us ||= Country.where(iso_code: "US").first
+      @us
+    end
+
+    def find_tariff_classification effective_date, tariff_no
+      return nil if effective_date.nil? || tariff_no.blank?
+
+      @tariffs ||= Hash.new do |h, k|
+        h[k] = TariffClassification.find_effective_tariff us, k[0], k[1]
+      end
+
+      @tariffs[[effective_date, tariff_no]]
+    end
 end; end; end;
