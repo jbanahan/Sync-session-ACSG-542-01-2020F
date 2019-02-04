@@ -1,9 +1,9 @@
 <%content_for :javascript do %>
   var tab = "<%= @tab %>"
 
-  var delete_path = "<%=mass_delete_one_time_alerts_path%>";
-  var enable_path = "<%=mass_enable_one_time_alerts_path%>";
-  var expire_path = "<%=mass_expire_one_time_alerts_path%>";
+  var delete_path = "<%=mass_delete_one_time_alerts_path(display_all:params[:display_all])%>";
+  var enable_path = "<%=mass_enable_one_time_alerts_path(display_all:params[:display_all])%>";
+  var expire_path = "<%=mass_expire_one_time_alerts_path(display_all:params[:display_all])%>";
 
   function listIds(sel) {
       return sel.map(function() {return this.id}).get().join(",");
@@ -76,18 +76,18 @@
 <%end%>
 
 <% content_for :action_bar do %>
-  <button class="btn btn_link navbar-btn" link_to="<%= new_one_time_alert_path %>">New</button>
+  <button class="btn btn_link navbar-btn" link_to="<%= new_one_time_alert_path(display_all: params[:display_all]) %>">New</button>
   <button id="mass-delete" class="btn navbar-btn">Delete</button>
   <button id="mass-expire" class="btn navbar-btn">Expire</button>
   <button id="mass-enable" class="btn navbar-btn">Enable</button>
   <% if current_user.sys_admin? %>
-    <button class="btn btn_link navbar-btn" link_to="<%= reference_fields_index_one_time_alerts_path %>">Set Ref Fields</button>
+    <button class="btn btn_link navbar-btn" link_to="<%= reference_fields_index_one_time_alerts_path(display_all: params[:display_all]) %>">Set Ref Fields</button>
   <% end %>
   <% if current_user.admin? %>
-    <% if params[:all] %>
+    <% if params[:display_all] %>
         <button class="btn btn_link navbar-btn" link_to="<%= one_time_alerts_path %>">My Alerts</button>
     <% else %>
-        <button class="btn btn_link navbar-btn" link_to="<%= one_time_alerts_path(all:true) %>">Admin</button>  
+        <button class="btn btn_link navbar-btn" link_to="<%= one_time_alerts_path(display_all: true) %>">Admin</button>  
     <% end %>
   <% end %>
 <%end%>

@@ -19,6 +19,10 @@ app.controller 'oneTimeAlertCtrl', ['$scope', '$location', '$window', 'oneTimeAl
     m = url.match(/\d+(?=\/edit)/)
     m[0] if m
 
+  $scope.get_display_param = () ->
+    param = $location.absUrl().match(/display_all=true/)
+    param[0] if param
+
   $scope.loadAlert = (id) ->
     p = oneTimeAlertSvc.loadAlert id
     p.then (data) ->
@@ -39,31 +43,36 @@ app.controller 'oneTimeAlertCtrl', ['$scope', '$location', '$window', 'oneTimeAl
 
   $scope.updateAlert = (id, params) ->
     oneTimeAlertSvc.updateAlert(id, params).then(() ->
-        $window.location = '/one_time_alerts?message=update'
+        display_param = $scope.get_display_param()
+        $window.location = "/one_time_alerts?message=update#{if display_param then '&' + display_param else ''}"
       (data) ->
         $("#error").text(data.data.error)
         $("#alert-update-failure").show()
         $window.scrollTo(0,0))
 
   $scope.saveAlert = () ->
-    params = {criteria: $scope.searchCriterions, alert: $scope.alert, send_test: $scope.send_test}
+    display_all = $scope.get_display_param() != null
+    params = {criteria: $scope.searchCriterions, alert: $scope.alert, send_test: $scope.send_test, display_all: display_all}
     $scope.updateAlert($scope.alertId, params)
 
   $scope.cancelAlert = (id) ->
     p = oneTimeAlertSvc.loadAlert id
     p.then (data) ->
       name = data["data"]["alert"]["one_time_alert"]["name"]
+      display_param = $scope.get_display_param()
+      url = "/one_time_alerts#{if display_param then '?' + display_param else ''}"
       # if OTA doesn't have a name, infer that user created base record by accident
       if !name || name.length == 0
         oneTimeAlertSvc.deleteAlert(id).then () ->
-          $window.location = '/one_time_alerts'
+          $window.location = url
       else
-        $window.location = '/one_time_alerts'
+        $window.location = url
 
   $scope.deleteAlert = (id) ->
     p = oneTimeAlertSvc.deleteAlert id
+    display_param = $scope.get_display_param()
     p.then () ->
-      $window.location = '/one_time_alerts?message=delete'
+      $window.location = "/one_time_alerts?message=delete#{if display_param then '&' + display_param else ''}"
 
   #from advanced_search.js.coffee.erb
   findByMfid = (ary,mfid) ->

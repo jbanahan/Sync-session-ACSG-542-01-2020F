@@ -102,12 +102,13 @@ describe 'OneTimeAlertApp', () ->
     describe 'saveAlert', () ->
       it "calls updateAlert", () ->
         spyOn($scope, 'updateAlert')
+        spyOn($scope, 'get_display_param').and.returnValue 'display_all=true'
         $scope.alertId = 1
         $scope.alert = {}
         $scope.searchCriterions = "criteria"
         $scope.send_test = true
         $scope.saveAlert()
-        expect($scope.updateAlert).toHaveBeenCalledWith(1, {criteria: "criteria", alert: {}, send_test: true})
+        expect($scope.updateAlert).toHaveBeenCalledWith(1, {criteria: "criteria", alert: {}, send_test: true, display_all: true})
 
     describe 'deleteAlert', () ->
       it "calls service's deleteAlert", () ->

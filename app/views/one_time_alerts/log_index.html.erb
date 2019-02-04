@@ -1,5 +1,5 @@
 <% content_for :action_bar do %>
-  <button class="btn btn_link navbar-btn" link_to="<%= edit_one_time_alert_path @alert %>">Back</button>
+  <button class="btn btn_link navbar-btn" link_to="<%= edit_one_time_alert_path(@alert, display_all: @display_all) %>">Back</button>
 <% end %>
 
 

@@ -14,7 +14,7 @@
   <% alerts.each do |alert| %>
     <tr class='hover'>
       <td style="text-align: center;"><input class="alert-select" id="<%=alert.id%>" type="checkbox" name=""></td>
-      <td style="text-align: center;"><a href="<%= edit_one_time_alert_path(alert.id) %>"><i class="fa fa-pencil-square-o" title="Edit"></i></a></td>
+      <td style="text-align: center;"><a href="<%= edit_one_time_alert_path(alert.id,display_all: params[:display_all]) %>"><i class="fa fa-pencil-square-o" title="Edit"></i></a></td>
       <td> <%= alert.name %></td>
       <td><%= alert.creator_name %></td>
       <td><%= alert.created_at %></td>

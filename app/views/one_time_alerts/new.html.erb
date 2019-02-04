@@ -4,7 +4,7 @@
       $("#frm_alert").submit();
     });
     $("#btn_cancel").click(function() {
-      window.location = '<%=url_for @alert%>';
+      window.location = '<%=one_time_alerts_url(display_all: @display_all)%>';
     });
   });
 <% end %>
@@ -23,6 +23,7 @@
         <option value="<%= tuplet[0] %>"><%= tuplet[1] %></option>
       <% end %>
     </select>
+    <input type="hidden" name="display_all" value="<%= @display_all %>">
    </div>
   <%end%>
 </div>

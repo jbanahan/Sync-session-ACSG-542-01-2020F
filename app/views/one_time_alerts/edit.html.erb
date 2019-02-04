@@ -15,7 +15,7 @@
       scope.cancelAlert(id);
     });
     $("#btn_history").click(function() {
-      window.location = '<%= log_index_one_time_alert_path %>';
+      window.location = '<%= log_index_one_time_alert_path(display_all: @display_all) %>';
     })
     $("#btn_copy").click(function() {
       $("#copy_frm").submit();
@@ -33,7 +33,7 @@
   <button id='btn_history'>History</button>
 <% end %>
 
-<%= form_tag copy_one_time_alert_path(@alert), id: "copy_frm", method: :post, hidden: true %></form>
+<%= form_tag copy_one_time_alert_path(@alert, display_all: @display_all), id: "copy_frm", method: :post, hidden: true %></form>
 
 <div class="row" id="alert-update-failure" style="display:none;">
   <div class="col-md-6 offset-md-3">

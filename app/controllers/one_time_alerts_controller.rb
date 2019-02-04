@@ -13,9 +13,10 @@ class OneTimeAlertsController < ApplicationController
 
   def index
     if OneTimeAlert.can_view? current_user
-      show_all = current_user.admin? && params[:all]
+      show_all = current_user.admin? && params[:display_all]
       enabled_search = create_search(show_all ? :all_enabled : :secure_enabled)
       expired_search = create_search(show_all ? :all_expired : :secure_expired)
+      @display_all = params[:display_all]
       @enabled = enabled_search.paginate(:per_page => 20, :page => params[:page])
       @expired = expired_search.paginate(:per_page => 20, :page => params[:page])
       @tab = params[:tab] || "enabled"
@@ -29,6 +30,7 @@ class OneTimeAlertsController < ApplicationController
   def new
     if OneTimeAlert.can_edit? current_user 
       @alert = OneTimeAlert.new
+      @display_all = params[:display_all]
       @cm_list = M_CLASS_NAMES.map do |mc_name| 
         cm = CoreModule.find_by_class_name(mc_name) 
         [cm.class_name, cm.label]
@@ -40,6 +42,7 @@ class OneTimeAlertsController < ApplicationController
 
   def edit
     @alert = OneTimeAlert.find params[:id]
+    @display_all = params[:display_all]
     if @alert.can_view? current_user
       render :edit
     else
@@ -55,7 +58,7 @@ class OneTimeAlertsController < ApplicationController
                                    expire_date_last_updated_by_id: current_user.id, 
                                    enabled_date: today,
                                    expire_date: today + 1.year)
-      redirect_to edit_one_time_alert_path(alert)
+      redirect_to edit_one_time_alert_path(alert, display_all_param)
     else
       error_redirect "You do not have permission to create One Time Alerts."
     end
@@ -71,7 +74,7 @@ class OneTimeAlertsController < ApplicationController
       else
         alert_cpy = copy_alert(alert)
         add_flash :notices, "One Time Alert has been copied."
-        redirect_to edit_one_time_alert_path(alert_cpy)
+        redirect_to edit_one_time_alert_path(alert_cpy, display_all_param)
       end
     else
       error_redirect "You do not have permission to copy One Time Alerts."
@@ -84,7 +87,7 @@ class OneTimeAlertsController < ApplicationController
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each(&:destroy)
       add_flash :notices, "Selected One Time Alerts have been deleted."
-      redirect_to one_time_alerts_path
+      redirect_to one_time_alerts_path(display_all_param)
     else
       error_redirect "You do not have permission to edit One Time Alerts."
     end
@@ -97,7 +100,7 @@ class OneTimeAlertsController < ApplicationController
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each{ |ota| ota.update_attributes! expire_date: expire_date }
       add_flash :notices, "Selected One Time Alerts will expire at the end of the day."
-      redirect_to one_time_alerts_path
+      redirect_to one_time_alerts_path(display_all_param)
     else
       error_redirect "You do not have permission to edit One Time Alerts."
     end
@@ -109,7 +112,7 @@ class OneTimeAlertsController < ApplicationController
       OneTimeAlert.where(id: params[:ids]&.split(","))
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each{ |ota| ota.update_attributes! expire_date: expire_date }
-      redirect_to one_time_alerts_path
+      redirect_to one_time_alerts_path(display_all_param)
       add_flash :notices, "Expire dates for selected One Time Alerts have been extended."
     else
       error_redirect "You do not have permission to edit One Time Alerts."
@@ -129,6 +132,7 @@ class OneTimeAlertsController < ApplicationController
           h[cm.class_name].sort_by!{ |mf_summary| mf_summary["label"] }
         end
       end
+      @display_all = params[:display_all]
       @available = available.to_json.html_safe
       @included = included.to_json.html_safe
     }
@@ -137,12 +141,17 @@ class OneTimeAlertsController < ApplicationController
   def log_index
     if OneTimeAlert.can_view? current_user
       @alert = OneTimeAlert.find params[:id]
+      @display_all = params[:display_all]
     else
       error_redirect "You do not have permission to view One Time Alerts."
     end
   end
 
   private
+
+  def display_all_param
+    {display_all: params[:display_all]}
+  end
 
   def copy_alert alert
     alert_cpy = alert.dup
