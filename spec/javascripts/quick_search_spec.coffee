@@ -37,8 +37,8 @@ describe 'OCQuickSearch', ->
         }
       }
 
-      OCQuickSearch.writeModuleResponse(resp)
+      OCQuickSearch.writeModuleResponse(resp,null,null,true)
 
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val1, extraField, extraVal, att, business_validation, 'zz')
-      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val2, extraField, extraVal, att, business_validation, 'zz')
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val1, extraField, extraVal, att, business_validation, 'zz', true)
+      expect(OCQuickSearch.makeCard).toHaveBeenCalledWith(fields,val2, extraField, extraVal, att, business_validation, 'zz', true)
       expect(divWrap.html).toHaveBeenCalledWith('BA')

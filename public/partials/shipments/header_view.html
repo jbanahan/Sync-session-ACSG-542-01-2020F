@@ -8,11 +8,11 @@
 </div>
 <div class="form-group">
   <label for="shp_master_bill_of_lading" class="font-weight-bold control-label">{{outerScope.label('shp_master_bill_of_lading')}}</label>
-  <p class="form-control-static" id="shp_master_bill_of_lading">{{outerScope.shp.shp_master_bill_of_lading}}</p>
+  <p class="form-control-static" id="shp_master_bill_of_lading"><a href="javascript:void(0)" ng-click="outerScope.loadSearchModal('ent_mbols',outerScope.shp.shp_master_bill_of_lading)">{{outerScope.shp.shp_master_bill_of_lading}}</a></p>
 </div>
 <div class="form-group">
   <label for="shp_house_bill_of_lading" class="font-weight-bold control-label">{{outerScope.label('shp_house_bill_of_lading')}}</label>
-  <p class="form-control-static" id="shp_house_bill_of_lading">{{outerScope.shp.shp_house_bill_of_lading}}</p>
+  <p class="form-control-static" id="shp_house_bill_of_lading"><a href="javascript:void(0)" ng-click="outerScope.loadSearchModal('ent_hbols',outerScope.shp.shp_house_bill_of_lading)">{{outerScope.shp.shp_house_bill_of_lading}}</a></p>
 </div>
 <div class="form-group">
   <label for="shp_booking_number" class="font-weight-bold control-label">{{outerScope.label('shp_booking_number')}}</label>

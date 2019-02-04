@@ -3,12 +3,13 @@ root.OCQuickSearch =
   byModule: (moduleType,val) ->
     $.getJSON('/quick_search/by_module/'+moduleType+'?v='+encodeURIComponent(val),OCQuickSearch.writeModuleResponse)
 
-  writeModuleResponse: (jsonData) ->
+  writeModuleResponse: (jsonData,status,request,newTab) ->
     qs = jsonData.qs_result
     html = ''
     if qs.vals.length == 10
       html += "<div class='alert alert-warning' role='alert'>Only the first 10 results are shown. For more results, please run a <a href='/#{jsonData.qs_result.adv_search_path}'>full search</a>.</div>"
-    html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.attachments,qs.business_validation_results,qs.search_term) for obj, idx in qs.vals
+    for obj, idx in qs.vals
+      html += OCQuickSearch.makeCard(qs.fields,obj,qs.extra_fields,qs.extra_vals,qs.attachments,qs.business_validation_results,qs.search_term,newTab)
 
     html = '<div class="text-muted">No results found for this search.</div>' if html == ''
 
@@ -18,7 +19,7 @@ root.OCQuickSearch =
     $('#modwrap_'+moduleType)
 
   
-  makeCard: (fields, obj, extraFields, extraVals, attachments, businessValidations, searchTerm) ->
+  makeCard: (fields, obj, extraFields, extraVals, attachments, businessValidations, searchTerm, newTab) ->
 
     cardHeader = () ->
       "<div class='card qs-card'>"
@@ -89,8 +90,9 @@ root.OCQuickSearch =
     resultRow = (label, value) ->
       "<tr><td class='qs-td-label' scope='row'><strong>"+label+":</strong></td><td>"+value+"</td></tr>"
 
-    headerRow = (url, value) ->
-      "<div class='card-header'><div class='float-left'><a href='"+url+"'>"+value+"</a></div><div class='float-right'><a href='"+url+"'><i class='fa fa-link'></i></a></div></div>"
+    headerRow = (url, value, newTab) ->
+      target = if newTab then "_blank" else "_self"
+      "<div class='card-header'><div class='float-left'><a href='#{url}' target='#{target}'>#{value}</a></div><div class='float-right'><a href='#{url}' target='#{target}'><i class='fa fa-link'></i></a></div></div>"
 
     dividerRow = () ->
       "<tr class='divider'><td><small>More Info</small></td><td></td></tr>"
@@ -101,22 +103,22 @@ root.OCQuickSearch =
     resultsFooter = () ->
       "</table>"
 
-    cardContent = (obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm) ->
-      html = showSearchFields(fields, obj, searchTerm)
+    cardContent = (obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm, newTab) ->
+      html = showSearchFields(fields, obj, searchTerm, newTab)
       if html != ''
         html += showExtraFields(extraFields, extraVals, attachments, businessValidations, obj)
         html += resultsFooter()
 
       html
 
-    showSearchFields = (fields, obj, searchTerm) ->   
+    showSearchFields = (fields, obj, searchTerm, newTab) ->   
       fieldCounter = 0
       html = ""
       for id, lbl of fields
         val = obj[id]
         if val && val.length > 0
           if fieldCounter == 0
-            html += headerRow(obj['view_url'], val)
+            html += headerRow(obj['view_url'], val, newTab)
             html += resultsHeader()
           html += resultRow(lbl, getHtmlVal(val,searchTerm))
           fieldCounter++
@@ -128,7 +130,10 @@ root.OCQuickSearch =
             return true if !!v
         false
       html = ""
-      if hasExtraVals attachments[obj.id] or hasExtraVals extraValsForObj or hasExtraVals businessValidations[obj.id]
+      
+      extraValsForObj = extraVals[obj.id]
+      
+      if hasExtraVals(attachments[obj.id]) or hasExtraVals(extraValsForObj) or hasExtraVals(businessValidations[obj.id])
         html = dividerRow()
 
       attValsForObj = attachments[obj.id]
@@ -144,7 +149,6 @@ root.OCQuickSearch =
       if hasExtraVals busValsForObj
         html += resultRow("Business Rule State", businessValidationBuilder(busValsForObj))
 
-      extraValsForObj = extraVals[obj.id]
       if hasExtraVals extraValsForObj
         for id, label of extraFields
           val = extraValsForObj[id]
@@ -172,5 +176,5 @@ root.OCQuickSearch =
       return highlighted.str
 
     h = cardHeader()
-    h += cardContent(obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm)
+    h += cardContent(obj, fields, extraFields, extraVals, attachments, businessValidations, searchTerm, newTab)
     h += cardFooter()

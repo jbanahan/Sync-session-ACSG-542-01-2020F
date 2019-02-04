@@ -10,6 +10,11 @@ class QuickSearchController < ApplicationController
   end
 
   def by_module
+    limit_fields = params[:limit_fields] && params[:limit_fields].split(",").map(&:to_sym)
+    hide_attachments = params[:hide_attachments] == "true"
+    hide_business_rules = params[:hide_business_rules] == "true"
+    override_extra_fields = params[:override_extra_fields]&.split(",")
+    
     cm = CoreModule.find_by_class_name(params[:module_type])
     raise ActionController::RoutingError.new('Not Found') unless cm && cm.view?(current_user)
     return error_redirect("Parameter v is required.") if params[:v].blank?
@@ -17,7 +22,7 @@ class QuickSearchController < ApplicationController
          adv_search_path: "#{cm.class_name.pluralize.underscore}/?force_search=true",
          fields:{}, vals:[], extra_fields: {}, extra_vals: {},  attachments: {}, business_validation_results: {},
          search_term:ActiveSupport::Inflector.transliterate(params[:v].to_s.strip)}
-    with_fields_to_use(cm,current_user) do |field_defs, extra_field_defs|
+    with_fields_to_use(cm,current_user,override_extra_fields: override_extra_fields) do |field_defs, extra_field_defs|
 
       primary_search_clause = nil
       or_clause_array = []
@@ -31,7 +36,8 @@ class QuickSearchController < ApplicationController
         mf = ModelField.find_by_uid(field_def[:model_field_uid])
         uids << mf.uid
         r[:fields][mf.uid] = mf.label
-        
+        next if limit_fields && !limit_fields.include?(field_def[:model_field_uid])
+
         sc = SearchCriterion.new(model_field_uid:mf.uid.to_s, operator:'co', value: r[:search_term])
         value = sc.where_value
         clause = ActiveRecord::Base.send(:sanitize_sql_array, ["(#{sc.where_clause(value)})", value])
@@ -54,12 +60,12 @@ class QuickSearchController < ApplicationController
       distribute_reads do 
         if primary_search_clause
           results = build_relations(cm, current_user, [primary_search_clause], primary_additional_core_modules).limit(10)
-          parse_query_results results, r, cm, current_user, uids, extra_uids
+          parse_query_results results, r, cm, current_user, uids, extra_uids, hide_attachments: hide_attachments, hide_business_rules: hide_business_rules
         end
 
         if r[:vals].length < 10 && or_clause_array.length > 0
           results = build_relations(cm, current_user, [or_clause_array], secondary_additional_core_modules, r[:vals]).limit(10 - r[:vals].length)
-          parse_query_results results, r, cm, current_user, uids, extra_uids
+          parse_query_results results, r, cm, current_user, uids, extra_uids, hide_attachments: hide_attachments, hide_business_rules: hide_business_rules
         end
       end
       
@@ -69,13 +75,13 @@ class QuickSearchController < ApplicationController
   end
 
   private
-    def with_fields_to_use core_module, user
+    def with_fields_to_use core_module, user, override_extra_fields:nil
       @@custom_def_reset ||= nil
       @@qs_field_cache ||= {}
       @@qs_extra_field_cache ||= {}
       if @@custom_def_reset.nil? || CustomDefinition.last.pluck(:updated_at) > @@custom_def_reset
         @@qs_field_cache = {}
-        with_core_module_fields(user) do |cm, fields, extra_fields|
+        with_core_module_fields(user, override_extra_fields: override_extra_fields) do |cm, fields, extra_fields|
           @@qs_field_cache[cm] = fields.collect {|f| field_definition f}
           @@qs_extra_field_cache[cm] = extra_fields.collect {|f| field_definition f}
         end
@@ -102,7 +108,7 @@ class QuickSearchController < ApplicationController
       business_validations.find{|x| x[:state] == r}
     end
 
-    def parse_query_results results, r, core_module, user, uids, extra_uids
+    def parse_query_results results, r, core_module, user, uids, extra_uids, hide_attachments:false, hide_business_rules:false
       results.each do |obj|
         obj_hash = {
           id:obj.id,
@@ -114,7 +120,7 @@ class QuickSearchController < ApplicationController
         r[:vals] << obj_hash
         r[:extra_vals][obj.id] = extra_obj_hash
 
-        if obj.respond_to? :attachments
+        if obj.respond_to?(:attachments) && !hide_attachments
           r[:attachments][obj.id] = obj.attachments.select{|a| a.can_view?(user) }.map {|a| 
             att_returned = Attachment.attachment_json a
             att_returned[:download_link] = download_attachment_path a
@@ -123,7 +129,7 @@ class QuickSearchController < ApplicationController
           }
         end
 
-        if obj.respond_to? :business_validation_results
+        if obj.respond_to?(:business_validation_results) && !hide_business_rules
           viewable_rules = obj.business_validation_results.select{ |r| r.can_view?(user)}
           if viewable_rules.length > 0
             worst_viewable_rule = get_worst_business_state viewable_rules
@@ -167,11 +173,11 @@ class QuickSearchController < ApplicationController
       end
     end
 
-    def with_core_module_fields user
+    def with_core_module_fields user, override_extra_fields:nil
       CoreModule.all.each do |cm|
         next unless cm.enabled? && cm.view?(user)
         fields = cm.quicksearch_fields
-        extra_fields = cm.quicksearch_extra_fields || {}
+        extra_fields = override_extra_fields&.map(&:to_sym) || cm.quicksearch_extra_fields || {}
         next if fields.nil?
         yield cm, fields, extra_fields
       end

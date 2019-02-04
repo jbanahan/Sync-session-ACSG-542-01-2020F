@@ -21,6 +21,11 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       actionMethod(shipment).then (resp) ->
         $scope.loadShipment(sId).then ->
           window.alert('Booking '+namePastTense+'.')
+  
+  $scope.loadSearchModal = (field, number) ->
+    $('#search-modal').modal('show')
+    shipmentSvc.getQuickSearch(field, number).then (data) ->
+      $window.OCQuickSearch.writeModuleResponse data, null, null, true, true    
 
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->

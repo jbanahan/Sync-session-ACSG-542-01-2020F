@@ -203,6 +203,12 @@ describe 'ShipmentService', ->
         http.flush()
         expect(d).toEqual resp
 
+    describe 'getQuickSearch', ->
+      it 'queries QuickSearch API', ->
+        spyOn(jQuery,'getJSON')
+        svc.getQuickSearch("ent_mbols", "12345")
+        expect(jQuery.getJSON).toHaveBeenCalledWith('/quick_search/by_module/Entry?v=12345&limit_fields=ent_mbols&override_extra_fields=ent_filed_date,ent_first_release_received_date,ent_release_date&hide_attachments=true&hide_business_rules=true')
+
     describe 'processTradecardPackManifest', ->
       it 'should submit', ->
         resp = {shipment: {id: 1}}

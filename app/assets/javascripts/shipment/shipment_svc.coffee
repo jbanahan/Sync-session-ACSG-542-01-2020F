@@ -92,6 +92,9 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
           r.push(v)
         return r.map (s) -> s.shp_ref
 
+    getQuickSearch: (fields, number) ->
+      $.getJSON("/quick_search/by_module/Entry?v=#{number}&limit_fields=#{fields}&override_extra_fields=ent_filed_date,ent_first_release_received_date,ent_release_date&hide_attachments=true&hide_business_rules=true")
+
     processTradecardPackManifest: (shp, attachment, manufacturerAddressId, enableWarnings) ->
       shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId, enable_warnings:enableWarnings})
 

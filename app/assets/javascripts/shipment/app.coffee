@@ -3,7 +3,7 @@ shipmentApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
   $httpProvider.interceptors.push 'chainHttpErrorInterceptor'
 ]
-shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRouterProvider) ->
+shipmentApp.config ['$stateProvider','$urlRouterProvider', ($stateProvider,$urlRouterProvider) ->
   $urlRouterProvider.otherwise('/')
 
   $stateProvider.
