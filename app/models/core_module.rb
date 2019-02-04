@@ -337,7 +337,13 @@ class CoreModule
 
   def self.walk_object_heirarchy object, core_module = nil
     core_module = find_by_object(object) if core_module.nil?
-    yield core_module, object
+    do_children = false
+    catch(:stop_walking) do 
+      yield core_module, object
+      do_children = true
+    end
+
+    return nil unless do_children
 
     child_core_module = core_module.children.first
     children = core_module.child_objects(child_core_module, object)

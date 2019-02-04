@@ -6,11 +6,17 @@ module ValidatesCommercialInvoiceLine
   end
 
   def child_objects entry
-    entry.commercial_invoice_lines
-  end
+   objects = []
+   entry.commercial_invoices.each do |inv|
+     inv.commercial_invoice_lines.each do |line|
+       objects << line
+     end
+   end
+   objects
+ end
 
   def module_chain_entities invoice_line
-    {CoreModule::ENTRY => invoice_line.entry, CoreModule::COMMERCIAL_INVOICE => invoice_line.commercial_invoice, CoreModule::COMMERCIAL_INVOICE_LINE => invoice_line}
+    {CoreModule::ENTRY => invoice_line.commercial_invoice.entry, CoreModule::COMMERCIAL_INVOICE => invoice_line.commercial_invoice, CoreModule::COMMERCIAL_INVOICE_LINE => invoice_line}
   end
 
 end

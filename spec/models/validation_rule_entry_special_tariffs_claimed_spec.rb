@@ -20,6 +20,7 @@ describe ValidationRuleEntrySpecialTariffsClaimed do
 
     it "does not report error if special tariff is not utilized" do
       entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.last.destroy
+      entry.reload
       expect(subject.run_validation entry).to be_nil
     end
 

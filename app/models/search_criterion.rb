@@ -345,12 +345,13 @@ class SearchCriterion < ActiveRecord::Base
 
   def compare_one_field mf, obj
     r = false
-    boundary = find_next_module mf
-    CoreModule.walk_object_heirarchy(obj) do |core_module, obj_descendant|
-      break if boundary == core_module # we've passed the target module
-      if mf.core_module == core_module
-        r = yield obj_descendant
-        break if r
+    catch(:break_out) do
+      CoreModule.walk_object_heirarchy(obj) do |core_module, obj_descendant|
+        if mf.core_module == core_module
+          r = yield obj_descendant
+          throw :break_out if r
+          throw :stop_walking # If we hit the target module, don't descend any further
+        end
       end
     end
     r
@@ -358,28 +359,22 @@ class SearchCriterion < ActiveRecord::Base
 
   def compare_two_fields mf1, obj1, mf2, obj2
     r = false
-    boundary1 = find_next_module mf1
-    boundary2 = find_next_module mf2
-    CoreModule.walk_object_heirarchy(obj1) do |cm1, obj1_descendant|
-      break if boundary1 == cm1 # we've passed the target module
-      CoreModule.walk_object_heirarchy(obj2) do |cm2, obj2_descendant|
-        break if boundary2 == cm2 # we've passed the target module
-        if (mf1.core_module == cm1) && (mf2.core_module == cm2) 
-          r = yield obj1_descendant, obj2_descendant
-          break if r
+    catch(:break_out) do
+      CoreModule.walk_object_heirarchy(obj1) do |cm1, obj1_descendant|
+        
+        CoreModule.walk_object_heirarchy(obj2) do |cm2, obj2_descendant|
+          if (mf1.core_module == cm1) && (mf2.core_module == cm2)
+            r = yield obj1_descendant, obj2_descendant
+            throw :break_out if r
+            throw :stop_walking # If we hit the target module, don't descend any further
+          end
+          throw :stop_walking if (mf2.core_module == cm2)
         end
+
+        throw :stop_walking if (mf1.core_module == cm1)
       end
-      break if r
     end
     r
-  end
-
-  # Locates MF's CM within module chain and returns next CM
-  def find_next_module mf
-    cm = mf.core_module
-    chain = cm.module_chain.to_a
-    i = chain.find_index(cm)
-    chain[i + 1] if i
   end
 
   def field_decimal?

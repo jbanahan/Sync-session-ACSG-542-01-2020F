@@ -1764,9 +1764,13 @@ describe SearchCriterion do
     end
   end
 
-  context "test hierarchy" do
-    let!(:entry) { Factory(:entry, commercial_invoices: [Factory(:commercial_invoice, commercial_invoice_lines: [Factory(:commercial_invoice_line, cotton_fee: 100)])])}
-    let!(:mf) { ModelField.find_by_uid :ci_currency }
+  context "hierarchical behavior of #test?" do
+    let(:entry) { Factory(:entry)}
+    let(:ci1) { Factory(:commercial_invoice, entry: entry) }
+    let!(:cil1_1) { Factory(:commercial_invoice_line, commercial_invoice: ci1, cotton_fee: 100) }
+    let!(:cit1_1_1) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
+    let!(:cit1_1_2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_1)}
+    let!(:mf) { ModelField.find_by_uid :cil_cotton_fee }
     let!(:sc) { Factory(:search_criterion, model_field_uid: "cil_cotton_fee", operator: "eq", value: 100)}
 
     it "applies standard test to object's children" do
@@ -1794,6 +1798,54 @@ describe SearchCriterion do
       it "compares fields across hierarchies" do
         cil2 = Factory(:commercial_invoice_line, cotton_fee: 100)
         expect(sc.test? [entry, cil2.commercial_invoice.entry]).to eq true
+      end
+    end
+  
+    # It's difficult/impossible to check which records have been tested through the public interface. 
+    # Hence the specs here for two private methods.
+    describe "compare_one_field" do
+      it "stops yielding after last testable field has been reached" do
+        tested = []
+        block = Proc.new{ |obj_descendant| tested << obj_descendant; false }
+        
+        sc.send(:compare_one_field, mf, entry, &block)
+        expect(tested).to eq [cil1_1]
+      end
+    end
+
+    describe "compare_two_fields" do
+      let!(:cil1_2) { Factory(:commercial_invoice_line, commercial_invoice: ci1) }
+      let!(:cit1_2_1) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
+      let!(:cit1_2_2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil1_2) }
+      
+      let!(:ci2) { Factory(:commercial_invoice, entry: entry) }
+
+      context "single hierarchy" do
+        it "stops yielding after last field testable fields have been reached" do
+          tested = []
+          block = Proc.new{ |obj1_descendant, obj2_descendant| tested << {obj1: obj1_descendant, obj2: obj2_descendant}; false }
+          mf_base = ModelField.find_by_uid :ci_invoice_value
+
+          sc.send(:compare_two_fields, mf_base, entry, mf, entry, &block)
+          expect(tested).to eq([{obj1: ci1, obj2: cil1_1}, {obj1: ci1, obj2: cil1_2}, {obj1: ci2, obj2: cil1_1}, {obj1: ci2, obj2: cil1_2}])
+        end
+      end
+
+      context "two hierarchies" do
+        let(:entry2) { Factory(:entry)}
+        let(:ci_ent2) { Factory(:commercial_invoice, entry: entry2) }
+        let!(:cil_ent2) { Factory(:commercial_invoice_line, commercial_invoice: ci_ent2) }
+        let!(:cit_ent2) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil_ent2)}
+
+        it "stops yielding after last testable fields have been reached" do
+          tested = []
+          block = Proc.new{ |obj1_descendant, obj2_descendant| tested << {obj1: obj1_descendant, obj2: obj2_descendant}; false }
+          mf_base = ModelField.find_by_uid :ci_invoice_value
+
+          sc.send(:compare_two_fields, mf_base, entry, mf, entry2, &block)
+          
+          expect(tested).to eq([{obj1: ci1, obj2: cil_ent2}, {obj1: ci2, obj2: cil_ent2}])
+        end
       end
     end
   end

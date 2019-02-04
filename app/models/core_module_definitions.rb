@@ -98,7 +98,8 @@ module CoreModuleDefinitions
        :object_from_piece_set_lambda => lambda {|ps| ps.security_filing_line},
        :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
        :key_model_field_uids=>[:sfln_line_number],
-       :destroy_snapshots => false
+       :destroy_snapshots => false,
+       :module_chain => [SecurityFilingLine]
    })
   SECURITY_FILING = CoreModule.new("SecurityFiling","Security Filing",{
     :unique_id_field_name=>:sf_transaction_number,
@@ -126,6 +127,7 @@ module CoreModuleDefinitions
       :object_from_piece_set_lambda => lambda {|ps| ps.order_line},
       :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
       :key_model_field_uids => [:ordln_line_number],
+      :module_chain => [OrderLine],
       :destroy_snapshots => false
   })
   ORDER = CoreModule.new("Order","Order",
@@ -182,6 +184,7 @@ module CoreModuleDefinitions
       :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line},
       :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
       :key_model_field_uids => [:shpln_line_number],
+      :module_chain => [ShipmentLine],
       :destroy_snapshots => false
   })
   BOOKING_LINE = CoreModule.new('BookingLine', 'Booking Line',
@@ -190,6 +193,7 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.booking_line},
     :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? },
     :key_model_field_uids => [:bkln_line_number],
+    :module_chain => [BookingLine],
     :destroy_snapshots => false
   )
   SHIPMENT = CoreModule.new("Shipment","Shipment",
@@ -223,7 +227,8 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line},
     :enabled_lambda => lambda { MasterSetup.get.sales_order_enabled? },
     :key_model_field_uids => [:soln_line_number],
-    :destroy_snapshots => false
+    :destroy_snapshots => false,
+    :module_chain => [SalesOrderLine]
     })
   SALE = CoreModule.new("SalesOrder","Sale",
     {:children => [SalesOrderLine],
@@ -243,7 +248,8 @@ module CoreModuleDefinitions
     :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line},
     :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? },
     :key_model_field_uids => [:delln_line_number],
-    :destroy_snapshots => false
+    :destroy_snapshots => false,
+    :module_chain => [DeliveryLine]
     })
   DELIVERY = CoreModule.new("Delivery","Delivery",
     {:children=>[DeliveryLine],
@@ -289,6 +295,7 @@ module CoreModuleDefinitions
      :unique_id_field_name=>:hts_line_number,
      :enabled_lambda => lambda { MasterSetup.get.classification_enabled? },
      :key_model_field_uids => [:hts_line_number],
+     :module_chain => [TariffRecord],
      :destroy_snapshots => false
   })
   CLASSIFICATION = CoreModule.new("Classification","Classification",{
@@ -301,6 +308,7 @@ module CoreModuleDefinitions
        :enabled_lambda => lambda { MasterSetup.get.classification_enabled? },
        :key_model_field_uids => [:class_cntry_name,:class_cntry_iso],
        :key_attribute_field_uid => :class_cntry_id,
+       :module_chain => [Classification, TariffRecord],
        :destroy_snapshots => false
    })
   PRODUCT = CoreModule.new("Product","Product",{
@@ -392,6 +400,7 @@ module CoreModuleDefinitions
        :show_field_prefix => true,
        :unique_id_field_name=>:cit_hts_code,
        :key_model_field_uids=>[:cit_hts_code],
+       :module_chain => [CommercialInvoiceTariff],
        :destroy_snapshots => false
    })
   COMMERCIAL_INVOICE_LINE = CoreModule.new("CommercialInvoiceLine","Invoice Line",{
@@ -402,6 +411,7 @@ module CoreModuleDefinitions
      :children => [CommercialInvoiceTariff],
      :child_lambdas => {CommercialInvoiceTariff=>lambda {|i| i.commercial_invoice_tariffs}},
      :child_joins => {CommercialInvoiceTariff=> "LEFT OUTER JOIN commercial_invoice_tariffs on commercial_invoice_lines.id = commercial_invoice_tariffs.commercial_invoice_line_id"},
+     :module_chain => [CommercialInvoiceLine, CommercialInvoiceTariff],
      :destroy_snapshots => false
   })
   COMMERCIAL_INVOICE = CoreModule.new("CommercialInvoice","Invoice",{
@@ -411,7 +421,8 @@ module CoreModuleDefinitions
       :key_model_field_uids=>[:ci_invoice_number],
       :children => [CommercialInvoiceLine],
       :child_lambdas => {CommercialInvoiceLine=> lambda {|i| i.commercial_invoice_lines}},
-      :child_joins => {CommercialInvoiceLine => "LEFT OUTER JOIN commercial_invoice_lines on commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id"}
+      :child_joins => {CommercialInvoiceLine => "LEFT OUTER JOIN commercial_invoice_lines on commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id"},
+      :module_chain => [CommercialInvoice, CommercialInvoiceLine, CommercialInvoiceTariff]
   })
   ENTRY = CoreModule.new("Entry","Entry",{
        :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
@@ -479,7 +490,10 @@ module CoreModuleDefinitions
     default_search_columns:[:ppga_pg_name],
     key_model_field_uids: [:ppga_pg_name],
     show_field_prefix: true,
-    destroy_snapshots: false)
+    destroy_snapshots: false,
+    module_chain: [PlantProductGroupAssignment]
+    )
+
   PLANT = CoreModule.new("Plant","Plant",
     default_search_columns: [:plant_name],
     unique_id_field_name: :plant_name,
@@ -488,8 +502,10 @@ module CoreModuleDefinitions
     children: [PlantProductGroupAssignment],
     child_lambdas: {PlantProductGroupAssignment => lambda {|p| p.plant_product_group_assignments}},
     child_joins: {PlantProductGroupAssignment => "LEFT OUTER JOIN plant_product_group_assignments ON plants.id = plant_product_group_assignments.plant_id"},
-    available_addresses_lambda: lambda {|plant| plant.company ? plant.company.addresses.order(:name, :city, :line_1) : [] }
+    available_addresses_lambda: lambda {|plant| plant.company ? plant.company.addresses.order(:name, :city, :line_1) : [] },
+    module_chain: [Plant, PlantProductGroupAssignment]
   )
+
   # NOTE: Since we're setting up VENDOR as a full-blown core module based search, it means other variants of Company itself cannot have one, unless further changes are made
   # to the searching classes in quicksearch_controller, api_core_module_base, application_controller, search_query, search_query_controller_helper (possibly others).
   COMPANY = CoreModule.new("Company","Vendor",
@@ -565,7 +581,8 @@ module CoreModuleDefinitions
     :unique_id_field_name=>:vi_line_number,
     :key_model_field_uids=>[:vi_line_number],
     :show_field_prefix=>true,
-    :destroy_snapshots => false
+    :destroy_snapshots => false,
+    :module_chain => [VfiInvoiceLine]
    })
 
   PRODUCT_VENDOR_ASSIGNMENT = CoreModule.new("ProductVendorAssignment","Product Vendor Assignment", {
@@ -606,7 +623,8 @@ module CoreModuleDefinitions
     show_field_prefix: true,
     unique_id_field_name: :dsef_code,
     key_model_field_uids: [:dsef_code],
-    destroy_snapshots: false
+    destroy_snapshots: false,
+    module_chain: [DailyStatementEntryFee]
   })
 
   CUSTOMS_DAILY_STATEMENT_ENTRY = CoreModule.new("DailyStatementEntry", "Statement Entry", {
@@ -617,7 +635,8 @@ module CoreModuleDefinitions
     children: [DailyStatementEntryFee],
     child_lambdas: {DailyStatementEntryFee => lambda {|s| s.daily_statement_entry_fees }},
     child_joins: {DailyStatementEntryFee => "LEFT OUTER JOIN daily_statement_entry_fees on daily_statement_entries.id = daily_statement_entry_fees.daily_statement_entry_id"},
-    destroy_snapshots: false
+    destroy_snapshots: false,
+    module_chain: [DailyStatementEntry, DailyStatementEntryFee]
   })
 
   CUSTOMS_DAILY_STATEMENT = CoreModule.new("DailyStatement", "Daily Statement", {
@@ -700,7 +719,8 @@ module CoreModuleDefinitions
     unique_id_field_name: :invln_ln_number,
     key_model_field_uids: [:invln_ln_number],
     show_field_prefix: true,
-    destroy_snapshots: false
+    destroy_snapshots: false,
+    module_chain: [InvoiceLine]
   )
 
   # Don't need these any longer, clear them...this should be the last line in the file
