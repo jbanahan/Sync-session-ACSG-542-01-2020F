@@ -63,10 +63,14 @@ class IntacctReceivable < ActiveRecord::Base
       "Create Customer account in Intacct and/or ensure account has payment Terms set."
     when /Description 2: Invalid Vendor '(.+)' specified./i
       "Create Vendor account #{$1} in Intacct and/or ensure account has payment Terms set."
+    when /The Date Due field is missing a value./i
+      "Ensure the Vendor account in Intacct has valid payment Terms set."
     else
       # If there's only a single BL01001973 error with a "Description 2: Could not create Document record", then have the user attempt to clear and retry
       # otherwise, return an unknown error.
-      if error.scan("BL01001973").size == 1 && error.scan("XL03000009").size == 1
+      # The missing end tag error occurs when there's some sort of Cloudflare issue and we get an HTML page back from Cloudflare,
+      # rather than the expected XML.
+      if (error.scan("BL01001973").size == 1 && error.scan("XL03000009").size == 1) || error =~ /Missing end tag for 'meta'/i
         "Temporary Upload Error. Click 'Clear This Error' link to try again."
       else
         "Unknown Error. Contact support@vandegriftinc.com to resolve error."

@@ -21,5 +21,13 @@ describe IntacctPayable do
     it "recognizes Payable retry errors" do
       expect(IntacctPayable.suggested_fix "BL01001973 XL03000009").to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
     end
+
+    it "recognizes Cloudflare errors" do
+      expect(IntacctPayable.suggested_fix "Missing end tag for 'meta' (got \"head\")
+Line: 22
+Position: 1066
+Last 80 unconsumed characters:
+").to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
+    end
   end
 end

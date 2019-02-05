@@ -48,7 +48,7 @@ class IntacctPayable < ActiveRecord::Base
     else
       # If there's only a single BL01001973 error with a "Description 2: Could not create Document record", then have the user attempt to clear and retry
       # otherwise, return an unknown error.
-      if error.scan("BL01001973").size == 1 && error.scan("XL03000009").size == 1
+      if (error.scan("BL01001973").size == 1 && error.scan("XL03000009").size == 1) || error =~ /Missing end tag for 'meta'/i
         "Temporary Upload Error. Click 'Clear This Error' link to try again."
       else
         "Unknown Error. Contact support@vandegriftinc.com to resolve error."

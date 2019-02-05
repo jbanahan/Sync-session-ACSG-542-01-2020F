@@ -49,8 +49,20 @@ describe IntacctReceivable do
       expect(IntacctReceivable.suggested_fix "Description 2: Required field Date Due is missing").to eq "Create Customer account in Intacct and/or ensure account has payment Terms set."
     end
 
+    it "recognizes vendor needs terms error" do
+      expect(IntacctReceivable.suggested_fix "The Date Due field is missing a value.").to eq "Ensure the Vendor account in Intacct has valid payment Terms set."
+    end
+
     it "recognizes Receivable retry errors" do
       expect(IntacctReceivable.suggested_fix "BL01001973 XL03000009").to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
+    end
+
+    it "recognizes Cloudflare errors" do
+      expect(IntacctReceivable.suggested_fix "Missing end tag for 'meta' (got \"head\")
+Line: 22
+Position: 1066
+Last 80 unconsumed characters:
+").to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
     end
 
     it "recognizes Receivable invalid vendor errors" do
