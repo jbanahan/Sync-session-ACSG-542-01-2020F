@@ -3,6 +3,7 @@ module Api; module V1; module Admin; class SettingsController < Api::V1::Admin::
   def paths
     urls = {  # general
                attachment_types: attachment_types_path,
+               business_validation_schedules: business_validation_schedules_path,
                charge_codes: charge_codes_path,
                commercial_invoice_maps: commercial_invoice_maps_path,
                companies: companies_path,

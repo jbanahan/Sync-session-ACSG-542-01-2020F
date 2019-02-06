@@ -225,6 +225,8 @@ OpenChain::Application.routes.draw do
 
         resources :state_toggle_buttons, only: [:edit, :update, :destroy]
 
+        resources :business_validation_schedules, except: [:show]
+
         resources :kewill_entry_documents, only: [] do
           collection do
             post :send_s3_file_to_kewill
@@ -1153,6 +1155,8 @@ OpenChain::Application.routes.draw do
     get :download, on: :member
     get :for_referer, on: :collection
   end
+  
+  resources :business_validation_schedules, only: [:index]
 
   resources :custom_view_templates, except: [:show, :update]
 
@@ -1163,6 +1167,7 @@ OpenChain::Application.routes.draw do
   resources :trade_lanes, only: [:index]
 
   resources :product_vendor_assignments, only: [:index]
+
 
   resources :daily_statements, only: [:index, :show] do 
     member do 

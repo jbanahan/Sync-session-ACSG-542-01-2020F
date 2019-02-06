@@ -1,0 +1,74 @@
+<style type="text/css">
+  .label {font-weight: bold;}
+  .field-row {margin-top: 5px; margin-bottom: 30px;}
+</style>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <chain-panel panel-title='Errors' panel-message="errorHandler.errorMessage" panel-type='panel-danger'></chain-panel>
+    </div>
+  </div>
+</div>
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class='container'>
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <h2>Business Validation Schedule</h2><br>
+      </div>
+    </div>
+    <div class="row field-row">
+      <div class="col-md-3">
+        <label class="label" for="bvs_module_type">Module Type</label>
+        <div ng-if="schedule.id">
+          <p id="bvs_module_type" ng-show="schedule.id">{{schedule.module_type}}</p>
+        </div>
+        <div ng-if="!schedule.id">
+          <select id="bvs_module_type" ng-model="schedule.module_type" ng-hide="schedule.id" class="form-control">
+            <option ng-repeat="cm in cmList" value="{{cm}}">{{cm}}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="row field-row">
+      <div class="col-md-6">
+        <label class="label" for="bvs_name">Name</label>
+        <input type="text" ng-model="schedule.name" id="bvs_name" class="form-control">
+      </div>
+    </div>
+    <div ng-show="schedule.id">
+      <label class="label class="label">Date</label>
+      <div class="form-row field-row col-md-6">
+        <input class="form-control col-2" ng-model="schedule.num_days" placeholder="number"></input>
+        <div class="col-1" style="margin: auto;">days</div>
+        <select class="form-control col-2" ng-model="schedule.operator">
+          <option value=""></option>
+          <option value="Before">Before</option>
+          <option value="After">After</option>
+        </select>
+        <select ng-options="scheduleMfs.mfid as scheduleMfs.label for scheduleMfs in schedule_model_fields" class="form-control col-6 mx-1" ng-model="schedule.model_field_uid">
+          <option value=""></option>
+        </select>
+      </div>
+      <div class='row field-row'>
+        <div class="col-md-12" >
+          <label class="label">Parameters</label>
+        </div>
+        <div class="col-md-12" ng-repeat="crit in search_criterions">
+          <div chain-search-criterion="crit" model-fields="criterion_model_fields"></div>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-md-12 form-inline'>
+          Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in criterion_model_fields'>
+          </select>
+          <button ng-show='criterionToAdd' class='btn btn-secondary' ng-click='addCriterion(criterionToAdd)'>Add</button>
+        </div>
+      </div> 
+    </div>
+  </div>
+</chain-loading-wrapper>
+<div chain-action-bar>
+  <button type="button" class="btn btn-secondary" ng-click="cancel(schedule.id)">Cancel</button>
+  <button type="button" class="btn btn-secondary" ng-show="schedule.id" ng-click="delete(schedule.id)">Delete</button>
+  <button class="btn btn-secondary" ng-click="saveSchedule()">Save</button>
+</div>

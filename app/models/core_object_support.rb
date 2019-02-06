@@ -23,6 +23,7 @@ module CoreObjectSupport
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object, conditions: "folders.archived is null OR folders.archived = 0"
     has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy
+    has_many :business_validation_scheduled_jobs, as: :validatable, dependent: :destroy
     has_many :alert_log_entries, as: :alertable, dependent: :destroy, class_name: OneTimeAlertLogEntry
 
     after_save :process_linked_attachments

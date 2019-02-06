@@ -1,0 +1,183 @@
+BusinessValidationScheduleApp = angular.module('BusinessValidationScheduleApp',['ChainComponents', 'ui.router', 'ngSanitize'])
+
+BusinessValidationScheduleApp.config ['$httpProvider', ($httpProvider) ->
+  $httpProvider.defaults.headers.common['Accept'] = 'application/json'
+  $httpProvider.interceptors.push 'chainHttpErrorInterceptor'
+]
+
+BusinessValidationScheduleApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRouterProvider) ->
+  $urlRouterProvider.otherwise('/')
+
+  $stateProvider.
+    state('index', {
+      url: '/',
+      templateUrl: '<%=asset_path("business_validation_schedule/business_validation_schedule_index.html")%>'
+      controller: 'businessValidationScheduleIndexCtrl'
+    }).
+    state('new', {
+      url: '/new'
+      templateUrl: '<%=asset_path("business_validation_schedule/business_validation_schedule_edit.html")%>'
+      controller: 'businessValidationScheduleNewCtrl'
+    }).
+    state('edit', {
+      url: '/:scheduleId/edit'
+      templateUrl: '<%=asset_path("business_validation_schedule/business_validation_schedule_edit.html")%>'
+      controller: 'businessValidationScheduleEditCtrl'
+    })
+]
+
+BusinessValidationScheduleApp.factory 'businessValidationScheduleSvc', ['$http', ($http) ->
+  {
+    loadSchedules: () ->
+      $http.get('/api/v1/admin/business_validation_schedules')
+    
+    newSchedule: () ->
+      $http.get('/api/v1/admin/business_validation_schedules/new')
+
+    loadSchedule: (id) ->
+      $http.get('/api/v1/admin/business_validation_schedules/' + id + '/' + 'edit')
+
+    createSchedule: (params) ->
+      $http.post('/api/v1/admin/business_validation_schedules/', JSON.stringify(params))
+    
+    updateSchedule: (id, params) ->
+      $http.put('/api/v1/admin/business_validation_schedules/' + id, JSON.stringify(params))
+
+    deleteSchedule: (id) ->
+      $http.delete('/api/v1/admin/business_validation_schedules/' + id)
+  }
+]
+
+BusinessValidationScheduleApp.controller 'businessValidationScheduleIndexCtrl', ['$scope', '$state', 'chainErrorHandler','businessValidationScheduleSvc', ($scope,$state,chainErrorHandler,businessValidationScheduleSvc) ->
+  $scope.loadingFlag = "loading"
+
+  $scope.loadSchedules = () ->
+    p = businessValidationScheduleSvc.loadSchedules()
+    p.then (data) ->
+      $scope.schedules = data["data"]
+      $scope.loadingFlag = null
+
+  $scope.cancel = () ->
+    $state.go 'index'
+
+  $scope.newSchedule = () ->
+    $state.go 'new'
+
+  $scope.loadSchedules() unless $scope.$root.isTest
+]
+
+BusinessValidationScheduleApp.controller 'businessValidationScheduleNewCtrl', ['$scope', '$state', 'chainErrorHandler','businessValidationScheduleSvc', ($scope,$state,chainErrorHandler,businessValidationScheduleSvc) ->
+  $scope.loadingFlag = "loading"
+  $scope.errorHandler = chainErrorHandler
+
+  $scope.errorHandler.responseErrorHandler = (rejection) ->
+    $scope.loadingFlag = null
+
+  $scope.loadCoreModuleList = () ->
+    $scope.errorHandler.clear()
+    $scope.schedule = {}
+    businessValidationScheduleSvc.newSchedule().then (data) ->
+      $scope.cmList = data["data"]["cm_list"]
+      $scope.loadingFlag = null
+
+  $scope.saveSchedule = () ->
+    $scope.loadingFlag = "loading"
+    params = {schedule: $scope.schedule}
+    businessValidationScheduleSvc.createSchedule(params).then (data) ->
+      $scope.loadingFlag = null
+      $state.go 'edit', {scheduleId: data["data"]["id"]}
+    
+  $scope.cancel = () ->
+    $state.go 'index'
+
+  $scope.loadCoreModuleList() unless $scope.$root.isTest
+]
+
+BusinessValidationScheduleApp.controller 'businessValidationScheduleEditCtrl', ['$scope', '$state', '$window','chainErrorHandler','businessValidationScheduleSvc', 'chainSearchOperators', ($scope,$state,$window,chainErrorHandler,businessValidationScheduleSvc,chainSearchOperators) ->
+
+  $scope.loadingFlag = "loading"
+  $scope.errorHandler = chainErrorHandler
+
+  $scope.errorHandler.responseErrorHandler = (rejection) ->
+    $scope.loadingFlag = null
+ 
+  $scope.loadSchedule = (id) ->
+    $scope.errorHandler.clear()
+    p = businessValidationScheduleSvc.loadSchedule id
+    p.then (data) ->
+      basicSchedule = data["data"]["schedule"]["business_validation_schedule"]
+      $scope.schedule =
+        id: basicSchedule["id"]
+        module_type: basicSchedule["module_type"]
+        name: basicSchedule["name"]       
+        num_days: basicSchedule["num_days"]
+        operator: basicSchedule["operator"]
+        model_field_uid: basicSchedule["model_field_uid"]
+      
+      $scope.search_criterions = data["data"]["criteria"]
+      $scope.criterion_model_fields = data["data"]["criterion_model_fields"]
+      $scope.schedule_model_fields = data["data"]["schedule_model_fields"]
+      $scope.loadingFlag = null
+
+  $scope.saveSchedule = () ->
+    $scope.loadingFlag = "loading"
+    params = {criteria: $scope.search_criterions, schedule: $scope.schedule}
+    businessValidationScheduleSvc.updateSchedule($state.params.scheduleId, params).success(() ->
+      $state.go 'index')
+
+  $scope.cancel = (id) ->
+    businessValidationScheduleSvc.loadSchedule(id).then (data) ->
+      # num_days is used to flag the form as "populated." If missing, assume user has decided against creating a schedule and delete the stub record too.
+      if data["data"]["schedule"]["business_validation_schedule"]["num_days"]
+        $state.go 'index'
+      else
+        businessValidationScheduleSvc.deleteSchedule(id).then () ->
+          $state.go 'index'    
+
+  $scope.delete = (id) ->
+    proceed = $window.confirm("Delete this schedule?")
+    if proceed
+      businessValidationScheduleSvc.deleteSchedule(id).then () ->
+        $state.go 'index'  
+
+  #from advanced_search.js.coffee.erb
+  findByMfid = (ary,mfid) ->
+    for m in ary
+      return m if m.mfid==mfid
+    return null
+
+  #adapted from advanced_search.js.coffee.erb
+  $scope.addCriterion = (toAddId) ->
+    toAdd = {value:''}
+    mf = findByMfid $scope.criterion_model_fields, toAddId
+    toAdd.mfid = mf.mfid
+    toAdd.datatype = mf.datatype
+    toAdd.label = mf.label
+    toAdd.operator = $scope.operators[toAdd.datatype][0].operator
+    $scope.search_criterions.push toAdd
+
+  $scope.operators = chainSearchOperators.ops
+  registrations = []
+
+  #adapted from advanced_search.js.coffee.erb
+  $scope.removeCriterion = (crit) ->
+    criterions = $scope.search_criterions
+    criterions.splice($.inArray(crit, criterions ),1)
+
+  #adapted from advanced_search.js.coffee.erb
+  registrations.push($scope.$watch 'search_criterions', ((newValue, oldValue, watchScope) ->
+      return unless watchScope.search_criterions && watchScope.search_criterions.length > 0
+      for c in watchScope.search_criterions
+        watchScope.removeCriterion(c) if c && c.deleteMe  # Not sure why, but I've seen console errors due to c being null here.
+    ), true
+  )
+
+  #from advanced_search.js.coffee.erb
+  $scope.$on('$destroy', () ->
+      deregister() for deregister in registrations
+      registrations = null
+    )
+
+  $scope.loadSchedule($state.params.scheduleId) unless $scope.$root.isTest
+]
+

@@ -565,15 +565,26 @@ Factory.define :random_audit do |f|
   f.association :user
   f.association :search_setup
 end
+
+Factory.define :business_validation_scheduled_job do |f|
+  f.validatable :entry
+end
+Factory.define :business_validation_schedule do |f|
+  f.name 'schedule'
+  f.module_type "Entry"
+end
+
 Factory.define :one_time_alert do |f|
   f.association :user
 end
 Factory.define :one_time_alert_log_entry do |f|
   f.association :one_time_alert
 end
+
 Factory.define :tariff_classification do |f|
   f.association :country
 end
 Factory.define :tariff_classification_rate do |f|
   f.association :tariff_classification
 end
+

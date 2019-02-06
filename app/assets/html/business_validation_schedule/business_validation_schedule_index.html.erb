@@ -1,0 +1,38 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <chain-panel panel-title='Errors' panel-message="errorHandler.errorMessage" panel-type='panel-danger'></chain-panel>
+    </div>
+  </div>
+</div>
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class='container'>
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <h2>Business Validation Schedules</h2><br>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th></th>
+          <th scope="col">Name</th>
+          <th scope="col">Module Type</th>
+          <th scope="col">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="s in schedules">
+          <td style="text-align: center;"><a ui-sref="edit({scheduleId: s['id']})"><i class="fa fa-pencil-square-o" title="Edit"></i></a></td>
+          <td>{{s["name"]}}</td>
+          <td>{{s["module_type"]}}</td>
+          <td>{{s["date"] || "DISABLED"}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</chain-loading-wrapper>
+<div chain-action-bar>
+  <button class='btn btn-secondary' ng-click='newSchedule()'>New</button>
+  <button class="btn btn-secondary btn_link" link_to="<%=Rails.application.routes.url_helpers.business_validation_templates_path%>">Templates</button> 
+</div>

@@ -4,6 +4,7 @@
 #
 #  automated_billing_setup_id       :integer
 #  business_validation_rule_id      :integer
+#  business_validation_schedule_id  :integer
 #  business_validation_template_id  :integer
 #  created_at                       :datetime         not null
 #  custom_definition_id             :integer
@@ -49,6 +50,7 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :instant_classification
   belongs_to :business_validation_rule
   belongs_to :business_validation_template
+  belongs_to :business_validation_schedule
   belongs_to :one_time_alert
   belongs_to :state_toggle_button, inverse_of: :search_criterions
   belongs_to :custom_view_template, inverse_of: :search_criterions
