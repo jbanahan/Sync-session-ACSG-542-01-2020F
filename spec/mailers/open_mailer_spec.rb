@@ -702,6 +702,25 @@ EMAIL
       expect(mail.body.raw_source).to match /Temporary Password: #{pwd}/
       expect(mail.body.raw_source).to match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: OpenMailer::LINK_PROTOCOL)}/
     end
+
+    context "with general email suppression enabled" do
+      before :each do 
+        allow_any_instance_of(OpenMailer).to receive(:suppress_all_emails?).and_return true
+      end
+
+      it "is not affected by email suppression enabled" do
+        pwd = "password"
+        mail = OpenMailer.send_invite @user, pwd
+        expect(mail.subject).to eq "[VFI Track] Welcome, Joe Schmoe!"
+        expect(mail.to).to eq [@user.email]
+
+        expect(mail.body.raw_source).to match /Username: #{@user.username}/
+        expect(mail.body.raw_source).to match /Temporary Password: #{pwd}/
+        expect(mail.body.raw_source).to match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: OpenMailer::LINK_PROTOCOL)}/
+
+        expect(mail.delivery_method).to be_an_instance_of OpenMailer::LoggingMailerProxy
+      end
+    end
   end
 
   describe "send_uploaded_items" do

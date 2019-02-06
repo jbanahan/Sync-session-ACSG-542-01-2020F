@@ -544,6 +544,10 @@ EOS
       end
     end
 
+    def user_management_email?
+      return action_name == "send_password_reset" || action_name == "send_invite"
+    end
+
     def handle_sent_email
       if action_name == "send_generic_exception"
         # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
@@ -551,7 +555,8 @@ EOS
         # In dev, we don't actually want to email errors...we're actually going to use the logger instead to render them 
         redirect_to_developer 
       else
-        suppress_email = message.respond_to?(:suppressed) || suppress_all_emails?
+        # Don't suppress emails if they're for user management. Otherwise surpress them if they're marked or all emails are suppressed
+        suppress_email = !user_management_email? && ( message.respond_to?(:suppressed) || suppress_all_emails? )
         sent_email = log_email suppress_email
         if suppress_email
           message.delivery_method NoOpMailer
