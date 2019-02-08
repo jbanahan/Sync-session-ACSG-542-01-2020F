@@ -1,16 +1,9 @@
-require 'spec_helper'
-
 describe User do
   describe "locked?" do
     let(:user) { Factory.create(:user) }
     it 'returns false if user is not active' do
       user.update_attribute(:disabled, true)
       expect(user.locked?).to eq(false)
-    end
-
-    it 'returns true if password_reset is enabled' do
-      user.update_attribute(:password_reset, true)
-      expect(user.locked?).to eq(true)
     end
 
     it 'returns true if password_expired is true' do

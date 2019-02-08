@@ -460,12 +460,9 @@ class User < ActiveRecord::Base
   end
 
   def locked?
-    active? && (
-      password_reset.present? ||
-      password_expired.present? ||
-      password_locked.present?
-    )
+    active? && ( password_expired? || password_locked? )
   end
+  
   # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)
   def admin?
