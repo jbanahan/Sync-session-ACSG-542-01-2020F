@@ -230,6 +230,12 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       expect { subject.parse data_abridged, bucket: "bucket", key: "file.edi" }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>LT order lines are missing for the following Order / UPC pairs:<br>416495 / 192399348648"
     end
 
+    it "errors if UPC found more than once on an order" do
+      load_all
+      data.gsub! /192399348778/, "192399348761"
+      expect { subject.parse data, bucket: "bucket", key: "file.edi" }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>LT orders with duplicate UPCs found for the following Order / UPC pairs:<br>613430 / 192399348761"
+    end
+
     it "errors if container is missing for ocean shipment" do
       load_all
       expect { subject.parse data_missing_container, bucket: "bucket", key: "file.edi" }.to raise_error OpenChain::EdiParserSupport::EdiBusinessLogicError, "<br>LT containers are missing for the following ocean Shipment: LOLLYT-20998"
