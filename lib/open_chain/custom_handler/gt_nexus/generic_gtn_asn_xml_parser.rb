@@ -468,7 +468,7 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnAsnXmlPa
   def find_master_bill xml
     master_bill = xml.text "Container/LineItems/MasterBLNumber"
 
-    if append_carrier_code_to_master_bill?(xml)
+    if !master_bill.blank? && append_carrier_code_to_master_bill?(xml)
       carrier_code = xml.text "PartyInfo[Type = 'Carrier']/Code"
       master_bill = carrier_code + master_bill unless carrier_code.blank? || master_bill.starts_with?(carrier_code)
     end
