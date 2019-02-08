@@ -1,43 +1,66 @@
 require 'spec_helper'
 
 describe RegistrationsController do
-  before(:each) do
-    @system_code = "HAL9000"
-      allow_any_instance_of(MasterSetup).to receive(:system_code).and_return @system_code
-      @email = "john_doe@acme.com"
-      @fname = "John"
-      @lname = "Doe"
-      @company = "Acme"
-      @cust_no = "123456789"
-      @contact = "Jane Smith"
-  end
+  let! (:master_setup) { stub_master_setup }
+  let (:params) {
+    {
+      email: "john_doe@acme.com",
+      fname: "John",
+      lname: "Doe",
+      company: "Acme",
+      cust_no: "123456789",
+      contact: "Jane Smith"
+    }
+  }
 
   describe "send_email" do
-    it "emails Vandegrift with the registration form data and the server's system_code" do
+
+    context "with valid recaptcha", :disable_delayed_jobs do
+
+      before :each do 
+        allow(subject).to receive(:verify_recaptcha).with(timeout: 10).and_return true
+      end
+
+      it "emails Vandegrift with the registration form data and the server's system_code" do
+        post :send_email, params
+        mail = ActionMailer::Base.deliveries.pop
+        thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
+                 "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
+        
+        expect(mail.subject).to eq "Registration Request (test)"
+        expect(response.body).to eq ({flash: {notice: [thanks]}}.to_json)
+      end
       
-      post :send_email, email: @email, fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact
-      mail = ActionMailer::Base.deliveries.pop
-      thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
-               "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
-      
-      expect(mail.subject).to eq "Registration Request (HAL9000)"
-      expect(response.body).to eq ({flash: {notice: [thanks]}}.to_json)
-    end
-    
-    it "validates presence of email, first name, last name, company, contact" do
-      post :send_email, email: "", fname: "", lname: "", company: "", cust_no: @cust_no, contact: ""
-      expect(response.body).to eq ({flash: {errors: ["Email cannot be blank", "First name cannot be blank", "Last name cannot be blank", 
-                                                     "Company cannot be blank", "Contact cannot be blank"]}}.to_json)
-      mail = ActionMailer::Base.deliveries.pop
-      expect(mail).to be_nil
+      it "validates presence of email, first name, last name, company, contact" do
+        [:email, :fname, :lname, :company, :contact].each {|k| params[k] = "" }
+
+        post :send_email, params
+        expect(response.body).to eq ({flash: {errors: ["You must fill in a value for 'Email'.", "You must fill in a value for 'First Name'.", 
+                                                       "You must fill in a value for 'Last Name'.", "You must fill in a value for 'Company'.",
+                                                       "You must fill in a value for 'Contact'."]}}.to_json)
+        expect(ActionMailer::Base.deliveries).to be_blank
+      end
+
+      it "validates well-formedness of email" do
+        params[:email] = "vandegriftinc.com"
+        post :send_email, params
+        expect(response.body).to eq ({flash: {errors: ["Please sign up with a valid email address."]}}.to_json)
+
+        expect(ActionMailer::Base.deliveries).to be_blank
+      end
     end
 
-    it "validates well-formedness of email" do
-      post :send_email, email: "vandegriftinc.com", fname: @fname, lname: @lname, company: @company, cust_no: @cust_no, contact: @contact      
-      expect(response.body).to eq ({flash: {errors: ["Email is invalid"]}}.to_json)
+    context "without a valid recaptcha validation" do
+      before :each do 
+        allow(subject).to receive(:verify_recaptcha).with(timeout: 10).and_return false
+      end
 
-      mail = ActionMailer::Base.deliveries.pop
-      expect(mail).to be_nil
+      it "errors" do
+        post :send_email, params
+        expect(response.body).to eq ({flash: {errors: ["Please verify you are not a robot."]}}.to_json)
+
+        expect(ActionMailer::Base.deliveries).to be_blank
+      end
     end
   end
 end

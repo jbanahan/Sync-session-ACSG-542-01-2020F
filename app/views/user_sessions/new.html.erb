@@ -96,7 +96,7 @@
                       <p>Enter your email and we'll send you instructions for resetting your password.</p>
                       <%=form_tag password_resets_path, id: "password_reset_form" do -%>
                       <div class="col-8">
-                        <%=text_field_tag("email", "", :class=>"form-control")-%>
+                        <%=text_field_tag("email", "", class: "form-control", id: "reset-password-email")-%>
                       </div>
                       <div class="pt-3">
                         <button id="cancel-reset-btn" type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -121,7 +121,7 @@
                       <div class="modal-body">
                           <div class="form-group">
                             <%=label_tag("email", "Email:")-%>
-                            <%=text_field_tag("email", "", :class=>"form-control")-%>
+                            <%=text_field_tag("email", "", :class=>"form-control", :id => "registration-email")-%>
                           </div>
 
                           <div class="form-group">
@@ -147,6 +147,10 @@
                           <div class="form-group">
                             <%=label_tag("contact", "#{Company.find_master.name.titleize} Contact Name:")-%>
                             <%= text_area_tag("contact", "", :class=>"form-control")-%>
+                          </div>
+
+                          <div class="form-group">
+                            <%= recaptcha_tags %>
                           </div>
                       </div>
                       <div class="modal-footer">

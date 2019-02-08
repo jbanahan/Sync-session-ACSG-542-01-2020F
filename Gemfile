@@ -107,6 +107,9 @@ gem 'transaction_retry', '~> 1.0'
 # Distribute database reads across replicas
 gem "distribute_reads", '~> 0.2'
 
+# Google reCaptcha support
+gem "recaptcha", '~> 4.13.1'
+
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'

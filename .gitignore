@@ -38,6 +38,7 @@ config/vfitrack_settings.yml
 config/intacct.yml
 config/pepsi-idp-metadata.xml
 config/stitcher.yml
+config/recaptcha.yml
 .idea
 dump.rdb
 .byebug_history

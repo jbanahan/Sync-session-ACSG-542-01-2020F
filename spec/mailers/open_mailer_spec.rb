@@ -130,12 +130,12 @@ describe OpenMailer do
       fields = { email: "john_doe@acme.com", fname: "John", lname: "Doe", company: "Acme",
                   cust_no: "123456789", contact: "Jane Smith", system_code: "HAL9000"}
 
-      OpenMailer.send_registration_request(fields).deliver!
+      OpenMailer.send_registration_request("john_doe@acme.com", "John", "Doe", "Acme", "123456789", "Jane Smith", "HAL9000").deliver!
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["support@vandegriftinc.com"]
       expect(mail.subject).to eq "Registration Request (HAL9000)"
-      ["Email: #{fields[:email]}", "First Name: #{fields[:fname]}", "Last Name: #{fields[:lname]}", "Company: #{fields[:company]}", "Customer Number: #{fields[:cust_no]}",
-       "Contact: #{fields[:contact]}", "System Code: #{fields[:system_code]}"].each {|f| expect(mail.body).to include f }
+      ["Email: john_doe@acme.com", "First Name: John", "Last Name: Doe", "Company: Acme", "Customer Number: 123456789",
+       "Contact: Jane Smith", "System Code: HAL9000"].each {|f| expect(mail.body).to include f }
     end
   end
 
