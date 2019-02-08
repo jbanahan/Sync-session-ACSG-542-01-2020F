@@ -11,6 +11,7 @@
 #  expire_date                    :date
 #  expire_date_last_updated_by_id :integer
 #  id                             :integer          not null, primary key
+#  inactive                       :boolean          default(FALSE)
 #  mailing_list_id                :integer
 #  module_type                    :string(255)
 #  name                           :string(255)

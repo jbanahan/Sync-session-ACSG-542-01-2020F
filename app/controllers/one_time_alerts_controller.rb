@@ -2,6 +2,7 @@ class OneTimeAlertsController < ApplicationController
   M_CLASS_NAMES = OneTimeAlert::MODULE_CLASS_NAMES
 
   SEARCH_PARAMS = {
+    'inactive' => {:field => 'inactive', :label=> 'Inactive'},
     'name' => {:field => 'name', :label=> 'One Time Alert Name'},
     'creator_name' => {:field => 'creator_name', :label => 'Alert Creator'},
     'created_at' => {:field => 'one_time_alerts.created_at', :label => 'Alert Creation Date'},
@@ -55,6 +56,7 @@ class OneTimeAlertsController < ApplicationController
       today = Date.today
       alert = OneTimeAlert.create!(module_type: params[:module_type], 
                                    user_id: current_user.id,
+                                   inactive: true,
                                    expire_date_last_updated_by_id: current_user.id, 
                                    enabled_date: today,
                                    expire_date: today + 1.year)
@@ -155,6 +157,7 @@ class OneTimeAlertsController < ApplicationController
 
   def copy_alert alert
     alert_cpy = alert.dup
+    alert_cpy.inactive = true
     copy_name(from: alert, to: alert_cpy)
     alert_cpy.user = alert_cpy.expire_date_last_updated_by = current_user
     alert.search_criterions.each{ |sc| alert_cpy.search_criterions << sc.dup }
@@ -195,6 +198,7 @@ class OneTimeAlertsController < ApplicationController
     SQL
 
     OneTimeAlert.select("one_time_alerts.id")
+                .select(:inactive)
                 .select(:name)
                 .select(:creator_name)
                 .select("one_time_alerts.created_at")

@@ -60,6 +60,7 @@ describe 'OneTimeAlertApp', () ->
                 "alert":{
                   "one_time_alert":{
                     "name": "alert name",
+                    "inactive": false,
                     "email_addresses": "abc@123.com",
                     "email_subject": "subject",
                     "email_body": "body",
@@ -81,6 +82,7 @@ describe 'OneTimeAlertApp', () ->
 
         expect(svc.loadAlert).toHaveBeenCalledWith(1)
         expect($scope.alert.name).toEqual 'alert name'
+        expect($scope.alert.inactive).toEqual false
         expect($scope.alert.email_addresses).toEqual 'abc@123.com'
         expect($scope.alert.email_subject).toEqual 'subject'
         expect($scope.alert.email_body).toEqual 'body'

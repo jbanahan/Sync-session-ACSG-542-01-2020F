@@ -1,7 +1,8 @@
 <table class="detail_table">
   <thead>
-    <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
-    <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th style="column-width: 20px;"></th>
+    <th style="column-width: 20px;"></th>    
+    <th><%=sortable_search_heading 'inactive'%></th>
     <th><%=sortable_search_heading 'name'%></th>
     <th><%=sortable_search_heading 'creator_name'%></th>
     <th><%=sortable_search_heading 'created_at'%></th>
@@ -15,6 +16,7 @@
     <tr class='hover'>
       <td style="text-align: center;"><input class="alert-select" id="<%=alert.id%>" type="checkbox" name=""></td>
       <td style="text-align: center;"><a href="<%= edit_one_time_alert_path(alert.id,display_all: params[:display_all]) %>"><i class="fa fa-pencil-square-o" title="Edit"></i></a></td>
+      <td style="text-align: center;"><%= check_box_tag :inactive, "", alert.inactive, disabled: true %></td>
       <td> <%= alert.name %></td>
       <td><%= alert.creator_name %></td>
       <td><%= alert.created_at %></td>

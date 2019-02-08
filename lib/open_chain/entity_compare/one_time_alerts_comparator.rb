@@ -5,6 +5,7 @@ module OpenChain; module EntityCompare; class OneTimeAlertsComparator
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     alerts = OneTimeAlert.where(module_type: type)
+                         .where(inactive: [nil, false])
                          .where("expire_date IS NULL OR expire_date >= '#{Time.zone.now.to_date}'")
     return unless alerts.present?
 

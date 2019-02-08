@@ -36,6 +36,7 @@ app.controller 'oneTimeAlertCtrl', ['$scope', '$location', '$window', 'oneTimeAl
         email_body: basicAlert["email_body"]
         expire_date: basicAlert["expire_date"]
         blind_copy_me: basicAlert["blind_copy_me"]
+        inactive: basicAlert["inactive"]
       
       $scope.mailingLists = data["data"]["mailing_lists"]
       $scope.searchCriterions = data["data"]["criteria"]
@@ -53,6 +54,8 @@ app.controller 'oneTimeAlertCtrl', ['$scope', '$location', '$window', 'oneTimeAl
   $scope.saveAlert = () ->
     display_all = $scope.get_display_param() != null
     params = {criteria: $scope.searchCriterions, alert: $scope.alert, send_test: $scope.send_test, display_all: display_all}
+    if $scope.alert.inactive
+      return unless $window.confirm "Are you sure you want to leave this alert inactive?"
     $scope.updateAlert($scope.alertId, params)
 
   $scope.cancelAlert = (id) ->

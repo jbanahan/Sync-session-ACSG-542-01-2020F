@@ -4,10 +4,10 @@ describe OneTimeAlertsController do
   before { sign_in_as user }
 
   describe "index" do
-    let(:ota1) { Factory(:one_time_alert, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1", expire_date: Date.new(2018,3,15), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num"), Factory(:search_criterion, model_field_uid: "ent_ent_released_date")]) }
-    let(:ota2) { Factory(:one_time_alert, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 2", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_cust_num"), Factory(:search_criterion, model_field_uid: "ent_arrival_date")]) }
-    let(:ota3) { Factory(:one_time_alert, user: Factory(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"), name: "ota 3", module_type: "Entry", expire_date: Date.new(2018,3,15))}
-    let(:ota4) { Factory(:one_time_alert, user: Factory(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"), name: "ota 4", module_type: "Entry", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num")]) }
+    let(:ota1) { Factory(:one_time_alert, inactive: true, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1", expire_date: Date.new(2018,3,15), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num"), Factory(:search_criterion, model_field_uid: "ent_ent_released_date")]) }
+    let(:ota2) { Factory(:one_time_alert, inactive: false, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 2", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_cust_num"), Factory(:search_criterion, model_field_uid: "ent_arrival_date")]) }
+    let(:ota3) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"), name: "ota 3", module_type: "Entry", expire_date: Date.new(2018,3,15))}
+    let(:ota4) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"), name: "ota 4", module_type: "Entry", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num")]) }
     
     it "renders for user with permission" do
       ota1; ota2; ota3; ota4
@@ -21,6 +21,7 @@ describe OneTimeAlertsController do
       expect(assigns(:expired).length).to eq 1
       expired = assigns(:expired).first
       expect(expired.name).to eq ota1.name
+      expect(expired.inactive).to eq true
       expect(expired.creator_name).to eq "David St. Hubbins (dsthubbins)"
       expect(expired.updater_name).to eq "David St. Hubbins (dsthubbins)"
       expect(expired.created_at).to be_within(1).of ota1.created_at
@@ -30,6 +31,7 @@ describe OneTimeAlertsController do
       
       expect(assigns(:enabled).length).to eq 1
       enabled = assigns(:enabled).first
+      expect(enabled.inactive).to eq false
       expect(enabled.name).to eq ota2.name
       expect(enabled.creator_name).to eq "David St. Hubbins (dsthubbins)"
       expect(expired.updater_name).to eq "David St. Hubbins (dsthubbins)"
@@ -138,6 +140,7 @@ describe OneTimeAlertsController do
       ota = OneTimeAlert.first
       expect(ota.module_type).to eq "Entry"
       expect(ota.user).to eq user
+      expect(ota.inactive).to eq true
       expect(ota.expire_date_last_updated_by).to eq user
       expect(ota.enabled_date).to eq dt.to_date
       expect(ota.expire_date).to eq dt.to_date + 1.year
@@ -154,7 +157,7 @@ describe OneTimeAlertsController do
 
   describe "copy" do
     let!(:user2) { Factory(:user) }
-    let!(:alert) { Factory(:one_time_alert, module_type: "Product", blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body", 
+    let!(:alert) { Factory(:one_time_alert, module_type: "Product", inactive: false, blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body", 
                                            email_subject: "subject", name: "OTA Name", enabled_date: Date.new(2018,3,15), expire_date: Date.new(2019,3,15), 
                                            expire_date_last_updated_by: user2, mailing_list: Factory(:mailing_list), user: user2) } 
 
@@ -168,6 +171,7 @@ describe OneTimeAlertsController do
       
       cpy = OneTimeAlert.last
       expect(cpy.id).to_not eq alert.id
+      expect(cpy.inactive).to eq true
       expect(cpy.blind_copy_me).to eq alert.blind_copy_me
       expect(cpy.email_addresses).to eq alert.email_addresses
       expect(cpy.email_body).to eq alert.email_body
