@@ -11367,55 +11367,9 @@ a.text-dark:hover, a.text-dark:focus {
 }
 
 /*! ChainCommon */
-/*! Build Time: Mon Dec 10 2018 09:06:24 GMT-0600 (CST) */
-/*! Git SHA: 213fbe4318e08fdddfba6ff6e23c24a623a509d1 */
-/*! Git Branch: fix_back_navigation_to_main_screen */
-
-.angucomplete-holder {
-  position: relative; }
-
-.angucomplete-dropdown {
-  border: 1px solid rgba(0, 0, 0, 0.125);
-  border-radius: 2px;
-  padding: 6px;
-  cursor: pointer;
-  z-index: 9999;
-  position: absolute;
-  margin-top: -6px;
-  background-color: #ffffff; }
-
-.angucomplete-row {
-  padding: 5px;
-  color: #000000;
-  margin-bottom: 4px;
-  clear: both; }
-
-.angucomplete-selected-row {
-  background-color: #62bcf3;
-  color: #ffffff; }
-
-.angucomplete-image-holder {
-  padding-top: 2px;
-  float: left;
-  margin-right: 10px;
-  margin-left: 5px; }
-
-.angucomplete-image {
-  height: 34px;
-  width: 34px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.125); }
-
-.angucomplete-image-default {
-  /* Add your own default image here
-   background-image: url('/assets/default.png');
-  */
-  background-position: center;
-  background-size: contain;
-  height: 34px;
-  width: 34px; }
-
-/*# sourceMappingURL=angucomplete-alt.css.map */
+/*! Build Time: Mon Feb 04 2019 16:09:39 GMT-0600 (Central Standard Time) */
+/*! Git SHA: a2c243329a84a214a200a7635fdd7d06289bb856 */
+/*! Git Branch: fix-bootstrap-label-badges */
 
 .nav, .pagination, .carousel, .card-header a {
   cursor: pointer; }

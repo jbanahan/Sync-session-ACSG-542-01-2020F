@@ -18,7 +18,7 @@
         </div>
         <div class='row'>
           <div class='col-md-12'>
-            &nbsp;<span class='label label-info' ng-show='svc.project.saving'>Saving</span>
+            &nbsp;<span class='badge badge-info' ng-show='svc.project.saving'>Saving</span>
           </div>
         </div>
         <div class="form-group">
@@ -44,7 +44,7 @@
           <div class='col-sm-10'>
             <div ng-hide='projectSetAdd'>
               <span ng-repeat='ps in svc.project.project_sets'>
-                <span class='label label-default'>
+                <span class='badge badge-secondary'>
                   <a href='/project_sets/{{ps.id}}' style="text-decoration:none; color:white;">
                     {{ps.name}} 
                   </a>
@@ -84,7 +84,7 @@
               <span>{{u.created_by_name}} - {{u.updated_at}}</span>
             </div>
             <div class='card-body'>
-              <div><span ng-show='u.saving' class='label label-info'>Saving</span>&nbsp;</div>
+              <div><span ng-show='u.saving' class='badge badge-info'>Saving</span>&nbsp;</div>
               <div ng-hide='u.edit'>
                 <chain-textile-view ng-model='u.body'></chain-textile-view>
               </div>

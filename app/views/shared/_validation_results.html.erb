@@ -5,7 +5,7 @@
         <div id="validation_status_wrapper"></div>
         <h1 class='page_title' ng-class='svc.stateToBootstrap("text",result.state)'>
           {{result.single_object}}: {{result.object_number}}&nbsp;
-          <span class='label label-info' title="Rerun Validations" ng-show='result.can_run_validations' ng-click='rerunValidations()' style="padding-top: 2px; padding-bottom: 3px; padding-left: 4px; padding-right: 4px; font-size: 45%; vertical-align: 40% "><i class="fa fa-refresh fa-lg"></i></span>
+          <span class='badge badge-info' title="Rerun Validations" ng-show='result.can_run_validations' ng-click='rerunValidations()' style="padding-top: 2px; padding-bottom: 3px; padding-left: 4px; padding-right: 4px; font-size: 45%; vertical-align: 40% "><i class="fa fa-refresh fa-lg"></i></span>
         </h1>
       </div>
     </div>
@@ -37,7 +37,7 @@
               <state-icon state='ruleResultToEdit.state'></state-icon>
               {{ruleResultToEdit.rule.name}}
             </span>
-            <span class='label label-info float-right' ng-show='ruleResultToEdit.overridden_at' style="padding-bottom: 0.2em; padding-top: 0.2em;">Overridden&nbsp;&nbsp;</span>
+            <span class='badge badge-info float-right' ng-show='ruleResultToEdit.overridden_at' style="padding-bottom: 0.2em; padding-top: 0.2em;">Overridden&nbsp;&nbsp;</span>
           </div>
           <div class='card-body'>
             <div ng-show="ruleResultToEdit.rule.description">
@@ -69,7 +69,7 @@
                   <span class='small text-muted'>
                     <br>Overridden by {{ruleResultToEdit.overridden_by.full_name}} <span am-time-ago='ruleResultToEdit.overridden_at' title="{{ruleResultToEdit.overridden_at | amDateFormat:' MMMM Do YYYY, h:mm a'}}"></span>
                   </span>
-                  <span class='float-right label label-info' style='font-size: 100%' ng-show="ruleResultToEdit.editable" ng-click="cancelOverride(ruleResultToEdit)">
+                  <span class='float-right badge badge-info' style='font-size: 100%' ng-show="ruleResultToEdit.editable" ng-click="cancelOverride(ruleResultToEdit)">
                     <i class="fa fa-trash"></i>
                   </span>
                 </span>

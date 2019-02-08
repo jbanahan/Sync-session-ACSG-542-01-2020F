@@ -27,15 +27,15 @@
         <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at ? 'closed-project' : ''%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>' data-project-id='<%=p.id%>'>
           <td><%=link_to 'View', p, :class=>'btn btn-sm'%></td>
           <td><%=p.name%>
-            <%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%>
-            <%=p.on_hold? ? '<span class="label label-warning">on hold</span> '.html_safe : '' %>
+            <%=p.closed_at ? ' <span class="badge badge-secondary">closed</span> '.html_safe : ''%>
+            <%=p.on_hold? ? '<span class="badge badge-warning">on hold</span> '.html_safe : '' %>
           </td>
           <td><%=p.due%></td>
           <td><%=p.project_deliverables.incomplete.count%></td>
           <td>
             <%-p.project_sets.each do |ps|-%>
               <a href=<%=project_set_path(ps)%> style="text-decoration:none;">
-                <span class='label label-default'><%=ps.name%></span>
+                <span class='badge badge-secondary'><%=ps.name%></span>
               </a>
             <%-end-%>
           </td>

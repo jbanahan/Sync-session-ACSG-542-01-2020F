@@ -1,7 +1,7 @@
 <div ng-hide='deliverable.edit'>
   <span ng-class="{'strike':deliverable.complete}">{{deliverable.description}}</span> 
-  <span class='label label-secondary'>{{deliverable.assigned_to_name}}</span> 
-  <span class='label label-primary'>{{deliverable.due_date}}</span> 
-  <span class='label label-danger' ng-show='late()'>late</span>
+  <span class='badge badge-secondary'>{{deliverable.assigned_to_name}}</span> 
+  <span class='badge badge-primary'>{{deliverable.due_date}}</span> 
+  <span class='badge badge-danger' ng-show='late()'>late</span>
   <button class='btn btn-sm btn-secondary deliverable-edit'>Edit</button>
 </div>

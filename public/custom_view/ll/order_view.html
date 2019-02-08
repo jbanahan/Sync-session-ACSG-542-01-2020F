@@ -100,7 +100,7 @@
               Vendor Approval
               <span class='float-right {{order.ord_approval_status=="Accepted" ? "text-success" : ""}}'>
                 {{order.ord_approval_status}}
-                <a class='label label-default' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
+                <a class='badge badge-secondary' ng-if='!order.permissions.can_be_accepted && order.ord_approval_status!="Accepted"' data-toggle="modal" data-target="#mod_cant_be_accepted">
                   Not Ready
                 </a>
                 <order-accept-button></order-accept-button>
