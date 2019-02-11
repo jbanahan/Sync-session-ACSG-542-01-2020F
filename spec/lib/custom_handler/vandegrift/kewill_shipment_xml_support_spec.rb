@@ -386,6 +386,149 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/manufacturerId", "INVOICE1")
         expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/manufacturerId", "INVOICE1")
       end
+
+      let (:tariff_line) {
+        t = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceTariff.new
+        t.hts = "1234567890"
+        t.spi = "JO"
+        t.spi2 = "A+"
+        t.foreign_value = BigDecimal("987.65")
+        t.gross_weight = BigDecimal("12345")
+        t.quantity_1 = BigDecimal("23.45")
+        t.uom_1 = "U1"
+        t.quantity_2 = BigDecimal("56.78")
+        t.uom_2 = "U2"
+
+        t
+      }
+
+      it "builds multiple tariff lines when tariff lines are present" do
+        tariff_1 = tariff_line
+        tariff_2 = tariff_line.dup
+        tariff_2.hts = "9903000000"
+        entry_data.invoices.first.invoice_lines.first.tariff_lines = [tariff_1, tariff_2]
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+
+        # There's going to be some key fields that are missing from the invoice line that have been "moved down" into tariff class records due to the presence of the
+        # special tariff...validate that's the case
+        expect(t.text "tariffNo").to be_nil
+
+        tariffs = REXML::XPath.match(t, "EdiInvoiceTariffClassList/EdiInvoiceTariffClass").to_a
+        expect(tariffs.length).to eq 2
+
+        t1 = tariffs[0]
+        expect(t1.text "manufacturerId").to eq "597549"
+        expect(t1.text "commInvNo").to eq "15MSA10"
+        expect(t1.text "dateInvoice").to eq "20151101"
+        expect(t1.text "commInvLineNo").to eq "10"
+        expect(t1.text "tariffLineNo").to eq "1"
+        expect(t1.text "tariffNo").to eq "1234567890"
+        expect(t1.text "weightGross").to eq "12345"
+        expect(t1.text "kilosPounds").to eq "KG"
+        expect(t1.text "valueForeign").to eq "98765"
+        expect(t1.text "qty1Class").to eq "2345"
+        expect(t1.text "uom1Class").to eq "U1"
+        expect(t1.text "qty2Class").to eq "5678"
+        expect(t1.text "uom2Class").to eq "U2"
+        expect(t1.text "spiPrimary").to eq "JO"
+        expect(t1.text "spiSecondary").to eq "A+"
+
+        t2 = tariffs[1]
+        expect(t2.text "manufacturerId").to eq "597549"
+        expect(t2.text "commInvNo").to eq "15MSA10"
+        expect(t2.text "dateInvoice").to eq "20151101"
+        expect(t2.text "commInvLineNo").to eq "10"
+        expect(t2.text "tariffLineNo").to eq "2"
+        expect(t2.text "tariffNo").to eq "9903000000"
+        expect(t2.text "weightGross").to eq "12345"
+        expect(t2.text "kilosPounds").to eq "KG"
+        expect(t2.text "valueForeign").to eq "98765"
+        expect(t2.text "qty1Class").to eq "2345"
+        expect(t2.text "uom1Class").to eq "U1"
+        expect(t2.text "qty2Class").to eq "5678"
+        expect(t2.text "uom2Class").to eq "U2"
+        expect(t2.text "spiPrimary").to eq "JO"
+        expect(t2.text "spiSecondary").to eq "A+"
+      end
+
+      it "automatically adds additional tariff lines if special tariff cross references exist" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "4202923031", country_origin_iso: "PH", effective_date_start: Date.new(2015, 11, 1), special_hts_number: "1111111111"
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+
+        # There's going to be some key fields that are missing from the invoice line that have been "moved down" into tariff class records due to the presence of the
+        # special tariff...validate that's the case
+        expect(t.text "tariffNo").to be_nil
+
+        tariffs = REXML::XPath.match(t, "EdiInvoiceTariffClassList/EdiInvoiceTariffClass").to_a
+        expect(tariffs.length).to eq 2
+
+        t1 = tariffs[0]
+        expect(t1.text "manufacturerId").to eq "597549"
+        expect(t1.text "commInvNo").to eq "15MSA10"
+        expect(t1.text "dateInvoice").to eq "20151101"
+        expect(t1.text "commInvLineNo").to eq "10"
+        expect(t1.text "tariffLineNo").to eq "1"
+        expect(t1.text "tariffNo").to eq "1111111111"
+        expect(t1.text "weightGross").to eq "78"
+        expect(t1.text "kilosPounds").to eq "KG"
+        expect(t1.text "valueForeign").to eq "317786"
+        expect(t1.text "qty1Class").to eq "9300"
+        expect(t1.text "uom1Class").to eq "QT1"
+        expect(t1.text "qty2Class").to eq "5200"
+        expect(t1.text "uom2Class").to eq "QT2"
+        expect(t1.text "spiPrimary").to eq "JO"
+        expect(t1.text "spiSecondary").to eq "A+"
+
+        t2 = tariffs[1]
+        expect(t2.text "manufacturerId").to eq "597549"
+        expect(t2.text "commInvNo").to eq "15MSA10"
+        expect(t2.text "dateInvoice").to eq "20151101"
+        expect(t2.text "commInvLineNo").to eq "10"
+        expect(t2.text "tariffLineNo").to eq "2"
+        expect(t2.text "tariffNo").to eq "4202923031"
+        expect(t2.text "weightGross").to eq "78"
+        expect(t2.text "kilosPounds").to eq "KG"
+        # The commercial invoice value should have been removed from the "real" tariff line and added to the special tariff line instead
+        expect(t2.text "valueForeign").to be_nil
+        expect(t2.text "qty1Class").to eq "9300"
+        expect(t2.text "uom1Class").to eq "QT1"
+        expect(t2.text "qty2Class").to eq "5200"
+        expect(t2.text "uom2Class").to eq "QT2"
+        expect(t2.text "spiPrimary").to eq "JO"
+        expect(t2.text "spiSecondary").to eq "A+"
+      end
+
+      it "automatically adds special tariff when multi-tariffs are present" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", country_origin_iso: "PH", effective_date_start: Date.new(2015, 11, 1), special_hts_number: "1111111111"
+
+        tariff_1 = tariff_line
+        tariff_2 = tariff_line.dup
+        tariff_2.hts = "9903000000"
+        tariff_2.foreign_value = nil
+        entry_data.invoices.first.invoice_lines.first.tariff_lines = [tariff_1, tariff_2]
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.match(doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/EdiInvoiceTariffClassList/EdiInvoiceTariffClass").to_a
+        expect(t).not_to be_nil
+        expect(t.length).to eq 3
+
+        # We can just verify the tariff numbers involved to tell that the special tariff was added in the right position
+        expect(t[0].text "tariffNo").to eq "1111111111"
+        expect(t[0].text "valueForeign").to eq "98765"
+        expect(t[1].text "tariffNo").to eq "1234567890"
+        expect(t[1].text "valueForeign").to be_nil
+        expect(t[2].text "tariffNo").to eq "9903000000"
+        expect(t[2].text "valueForeign").to be_nil
+      end
     end
   end
 end

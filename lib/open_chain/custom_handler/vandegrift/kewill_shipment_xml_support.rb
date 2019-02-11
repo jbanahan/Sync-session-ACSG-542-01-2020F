@@ -25,7 +25,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
     CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number)
-    CiLoadInvoiceLine ||= Struct.new(:part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :ftz_quantity, :description, :container_number)
+    CiLoadInvoiceLine ||= Struct.new(:tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :ftz_quantity, :description, :container_number)
+    CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2)
   end
 
   # Generate XML from data presented via the structs above.
@@ -299,33 +300,23 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def generate_invoice_line parent, entry, invoice, line, counter, edi_identifier
     generate_identifier_data(parent, edi_identifier) unless edi_identifier.nil?
 
-    add_file_number(parent, entry, invoice)
-    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
-    add_element(parent, "commInvLineNo", (counter * 10))
-    add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
+    invoice_line_number = counter * 10
+
+    add_invoice_line_key_fields(parent, entry, invoice, invoice_line_number)
+
     add_element(parent, "custNo", g.string(entry.customer, 10, pad_string: false, exception_on_truncate: true))
     add_element(parent, "partNo", g.string(line.part_number, 30, pad_string: false, exception_on_truncate: true))
     add_element(parent, "countryOrigin", g.string(line.country_of_origin, 2, pad_string: false, exception_on_truncate: true)) unless line.country_of_origin.blank?
     add_element(parent, "countryExport", g.string(line.country_of_export, 2, pad_string: false, exception_on_truncate: false)) unless line.country_of_export.blank?
-    add_element(parent, "weightGross", g.number(line.gross_weight, 12, pad_string: false)) if nonzero?(line.gross_weight)
-    add_element(parent, "kilosPounds", "KG")
     add_element(parent, "qtyCommercial", g.number(line.pieces, 12, decimal_places: 3, strip_decimals: true, pad_string: false)) if nonzero?(line.pieces)
     add_element(parent, "uomCommercial", g.string((line.pieces_uom.blank? ? "PCS" : line.pieces_uom), 5, pad_string: false, exception_on_truncate: false))
     add_element(parent, "uomVolume", "M3")
     add_element(parent, "unitPrice", g.number(line.unit_price, 15, decimal_places: 3, strip_decimals: true, pad_string: false)) if nonzero?(line.unit_price)
     add_element(parent, "uomUnitPrice", g.string(line.unit_price_uom, 6, pad_string: false, exception_on_truncate: false)) unless line.unit_price_uom.blank?
-    add_element(parent, "tariffNo", g.string(line.hts.to_s.gsub(".", ""), 10, pad_string: false)) unless line.hts.blank?
-    add_element(parent, "valueForeign", g.number(line.foreign_value, 13, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.foreign_value)
-    add_element(parent, "qty1Class", g.number(line.quantity_1, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_1)
-    add_element(parent, "uom1Class", g.string(line.uom_1, 3, pad_string: false)) unless line.uom_1.blank?
-    add_element(parent, "qty2Class", g.number(line.quantity_2, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_2)
-    add_element(parent, "uom2Class", g.string(line.uom_2, 3, pad_string: false)) unless line.uom_2.blank?
     add_element(parent, "purchaseOrderNo", g.string(line.po_number, 35, pad_string: false, exception_on_truncate: true)) unless line.po_number.blank?
     add_element(parent, "custRef", g.string(line.po_number, 35, pad_string: false, exception_on_truncate: true)) unless line.po_number.blank?
     add_element(parent, "contract", g.number(line.first_sale, 12, decimal_places: 2, strip_trailing_zeros: true, pad_string: false)) if nonzero?(line.first_sale)
     add_element(parent, "department", g.number(line.department, 6, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(line.department)
-    add_element(parent, "spiPrimary", g.string(line.spi, 2, pad_string: false)) unless line.spi.blank?
-    add_element(parent, "spiSecondary", g.string(line.spi2, 2, pad_string: false)) unless line.spi2.blank?
     add_element(parent, "nonDutiableAmt", g.number(line.non_dutiable_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.non_dutiable_amount)
     add_element(parent, "addToMakeAmt", g.number(line.add_to_make_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.add_to_make_amount)
 
@@ -355,7 +346,102 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "ftzQuantity", g.number(line.ftz_quantity, 10, pad_string: false, decimal_places: 0)) if nonzero?(line.ftz_quantity)
     add_element(parent, "descr", g.string(line.description, 40, pad_string: false)) unless line.description.blank?
     add_element(parent, "noContainer", g.string(line.container_number, 15, pad_string: false)) unless line.container_number.blank?
+
+    tariff_lines = Array.wrap(line.tariff_lines)
+
+    # In Kewill's EDI system you can send simple tariff data along w/ the commercial invoice line without having to send
+    # child tariff line records.  However, if you do want to send multiple lines...then you need to send the child records.
+    # We'll handle both ways...at least partially due to the handling of the special tariff cross references that allow for
+    # adding special tariffs on the fly.
+    if tariff_lines.length > 0
+      special_tariff_line = nil
+      special_tariff_lines = []
+      tariff_lines.each do |tariff|
+        special_tariffs = additional_tariff_number(invoice.invoice_date, line.country_of_origin, tariff.hts)
+        special_tariffs.each_with_index do |special_tariff, idx|
+          special_tariff_line = tariff.dup
+          special_tariff_line.hts = special_tariff.special_hts_number
+          special_tariff_lines << special_tariff_line
+
+          if idx == 0
+            # The first special tariff should carry the value the actual tariff line did and the tariff line's value needs to be blanked.
+            special_tariff_line.foreign_value = tariff.foreign_value
+            tariff.foreign_value = nil
+          end
+        end
+      end
+
+      tariff_lines.insert(0, *special_tariff_lines) unless special_tariff_lines.blank?
+    else
+      special_tariffs = additional_tariff_number(invoice.invoice_date, line.country_of_origin, line.hts)
+      tariff_lines = []
+      special_tariffs.each_with_index do |special_tariff, idx|
+        # Only the very first tariff line should have the commercial invoice value
+        tariff_lines << convert_invoice_line_to_tariff(line, hts: special_tariff.special_hts_number, copy_value: (idx == 0))
+      end
+
+      # We don't need to break out invoice lines to tariff lines if we only have a single tariff line (.ie
+      # there's no special tariffs being added)
+      tariff_lines << convert_invoice_line_to_tariff(line, copy_value: false) unless tariff_lines.blank?
+    end
+
+    if tariff_lines.blank?
+      add_tariff_fields(parent, line)
+    else
+      tariff_counter = 0
+      tariff_class_element = add_element(parent, "EdiInvoiceTariffClassList")
+      tariff_lines.each do |tariff|
+        tariff_class = add_element(tariff_class_element, "EdiInvoiceTariffClass")
+        add_invoice_tariff_line(tariff_class, entry, invoice, invoice_line_number, tariff, (tariff_counter += 1))
+      end
+    end
+    
     nil
+  end
+
+  def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number
+    file_number = invoice.file_number.presence || entry.file_number
+    add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
+    add_element(parent, "commInvLineNo", invoice_line_number)
+    nil
+  end
+
+  def add_invoice_tariff_line parent, entry, invoice, invoice_line_number, tariff, tariff_line_no
+    add_invoice_line_key_fields(parent, entry, invoice, invoice_line_number)
+    add_tariff_fields(parent, tariff, tariff_line_no: tariff_line_no)
+    nil
+  end
+
+  def add_tariff_fields parent, line, tariff_line_no: nil
+    add_element(parent, "tariffLineNo", tariff_line_no) unless tariff_line_no.nil?
+    add_element(parent, "tariffNo", g.string(line.hts.to_s.gsub(".", ""), 10, pad_string: false)) unless line.hts.blank?
+    add_element(parent, "weightGross", g.number(line.gross_weight, 12, pad_string: false)) if nonzero?(line.gross_weight)
+    add_element(parent, "kilosPounds", "KG")
+    add_element(parent, "valueForeign", g.number(line.foreign_value, 13, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.foreign_value)
+    add_element(parent, "spiPrimary", g.string(line.spi, 2, pad_string: false)) unless line.spi.blank?
+    add_element(parent, "spiSecondary", g.string(line.spi2, 2, pad_string: false)) unless line.spi2.blank?
+    add_element(parent, "qty1Class", g.number(line.quantity_1, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_1)
+    add_element(parent, "uom1Class", g.string(line.uom_1, 3, pad_string: false)) unless line.uom_1.blank?
+    add_element(parent, "qty2Class", g.number(line.quantity_2, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_2)
+    add_element(parent, "uom2Class", g.string(line.uom_2, 3, pad_string: false)) unless line.uom_2.blank?
+    nil
+  end
+
+  def convert_invoice_line_to_tariff line, hts: nil, copy_value: false
+    # The attributes we're using between the invoice line and the tariff line are actually (currently) identical 
+    # So, we're not actually going to do anything aside from cloning the line itself
+    new_line = line.dup
+    new_line.foreign_value = nil unless copy_value
+
+    if hts
+      new_line.hts = hts
+    end
+
+
+
+    new_line
   end
 
   def nonzero? val
@@ -474,5 +560,16 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(party, "name", g.string(buyer.name, 104, pad_string: false, exception_on_truncate: true)) unless buyer.name.blank?
     add_element(party, "zip", g.string(buyer.postal_code, 9, pad_string: false, exception_on_truncate: true)) unless buyer.postal_code.blank?
     nil
+  end
+
+  def additional_tariff_number invoice_date, country_of_origin, hts
+    tariff = hts.to_s.strip.gsub(".", "")
+    return [] if tariff.blank?
+
+    # If the user didn't upload an invoice date, use the current date in eastern time
+    invoice_date = ActiveSupport::TimeZone["America/New_York"].now.to_date if invoice_date.nil?
+
+    @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash "US", true, reference_date: invoice_date
+    Array.wrap(@special_tariffs.tariffs_for country_of_origin, tariff)
   end
 end; end; end; end;
