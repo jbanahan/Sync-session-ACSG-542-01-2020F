@@ -57,10 +57,6 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
       message << "<br>LT order lines are missing for the following Order / UPC pairs:<br>".html_safe
       message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
     end
-    if business_logic_errors[:duplicate_upc].present?
-      message << "<br>LT orders with duplicate UPCs found for the following Order / UPC pairs:<br>".html_safe
-      message << business_logic_errors[:duplicate_upc].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
-    end
     if business_logic_errors[:missing_container].present?
       shipment_number = CGI.escapeHTML(business_logic_errors[:missing_container].first)
       message << "<br>LT containers are missing for the following ocean Shipment: #{shipment_number}".html_safe
@@ -220,16 +216,6 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     @order_cache[order_number]
   end
 
-  def duplicate_upc? order_number, upc
-    @upc_cache ||= Hash.new{ |h,k| h[k] = [] }
-    if @upc_cache[order_number].include? upc
-      true
-    else
-      @upc_cache[order_number] << upc
-      false
-    end
-  end
-
   def process_item shipment, container, order, item_segments
     lin = find_segment(item_segments, "LIN")
     raise EdiStructuralError, "All Item HL Loops must contain an LIN segment." if lin.nil?
@@ -237,10 +223,6 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     po4 = find_segment(item_segments, "PO4")
     upc = find_value_by_qualifier item_segments, "LIN06", "UP"
     if upc
-      if duplicate_upc? order.customer_order_number, upc
-        business_logic_errors[:duplicate_upc] << "#{order.customer_order_number} / #{upc}"
-        return
-      end
       order_line = order.order_lines.find { |line| line.sku == upc }
     end
     unless order_line
