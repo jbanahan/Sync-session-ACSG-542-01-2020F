@@ -1,3 +1,5 @@
+require 'open_chain/business_rules_copier'
+
 class BusinessValidationTemplatesController < ApplicationController
 
   def new
@@ -27,6 +29,7 @@ class BusinessValidationTemplatesController < ApplicationController
       @new_rule = BusinessValidationRule.new
       @groups = Group.all
       @mailing_lists = MailingList.mailing_lists_for_user(current_user)
+      @templates = BusinessValidationTemplate.where(delete_pending: [nil, false]).order(:name)
     }
   end
 
@@ -72,6 +75,38 @@ class BusinessValidationTemplatesController < ApplicationController
       @bv_template.business_validation_rules.update_all(delete_pending: true)
       BusinessValidationTemplate.delay.async_destroy @bv_template.id
 
+      redirect_to business_validation_templates_path
+    }
+  end
+
+  def download    
+    admin_secure {
+      bvt = BusinessValidationTemplate.find params[:id]
+      json = bvt.copy_attributes.to_json
+      filename = "#{bvt.name}_#{Date.today.strftime("%m-%d-%Y")}.json"
+      send_data json, filename: filename, type: 'application/json', disposition: "attachment"
+    }
+  end
+
+  def upload
+    admin_secure {
+      file = params[:attached]
+      if file.nil?
+        error_redirect "You must select a file to upload."
+      else
+        uploader = OpenChain::BusinessRulesCopier::Uploader
+        cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: current_user, attached: file)
+        CustomFile.delay.process(cf.id, current_user.id)
+        add_flash(:notices, "Your file is being processed. You'll receive a VFI Track message when it completes.")
+        redirect_to business_validation_templates_path
+      end
+    }
+  end
+
+  def copy
+    admin_secure {
+      OpenChain::BusinessRulesCopier.delay.copy_template(current_user.id, params[:id].to_i)
+      add_flash(:notices, "Business Validation Template is being copied. You'll receive a VFI Track message when it completes.")
       redirect_to business_validation_templates_path
     }
   end

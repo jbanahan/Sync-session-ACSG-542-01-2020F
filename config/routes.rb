@@ -344,8 +344,12 @@ OpenChain::Application.routes.draw do
   end
 
   resources :business_validation_templates do
+    get 'download', :on=>:member
+    post 'upload', :on=>:collection
+    post 'copy', :on=>:member
     resources :t_search_criterions, only: [:new, :create, :destroy]
     resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
+      post 'copy', :on=>:member
       resources :r_search_criterions, only: [:new, :create, :destroy]
     end
   end

@@ -251,4 +251,26 @@ describe BusinessValidationRulesController do
 
   end
 
+  describe "copy", :disable_delayed_jobs do
+    let(:user) { Factory(:admin_user) }
+    let(:bvt) { Factory(:business_validation_template) }
+    let(:bvru) { Factory(:business_validation_rule) }
+
+    before { sign_in_as user }
+    
+    it "copies business rule to specified template" do
+      expect(OpenChain::BusinessRulesCopier).to receive(:copy_rule).with(user.id, bvru.id, bvt.id)
+      post :copy, id: bvru.id, new_template_id: bvt.id
+      expect(response).to redirect_to(edit_business_validation_template_path bvt)
+      expect(flash[:notices]).to include "Business Validation Rule is being copied. You'll receive a VFI Track message when it completes."
+    end
+
+    it "requires admin" do
+      user = Factory(:user)
+      sign_in_as user
+      expect(OpenChain::BusinessRulesCopier).to_not receive(:copy_rule)
+      post :copy, id: bvru.id, new_template_id: bvt.id
+    end
+  end
+
 end

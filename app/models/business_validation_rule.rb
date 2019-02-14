@@ -128,6 +128,23 @@ class BusinessValidationRule < ActiveRecord::Base
                  'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"}
               }
 
+  def copy_attributes include_external:false
+    attrs = {}
+    omit = [:id, :created_at, :updated_at, :delete_pending, :disabled, :business_validation_template_id].concat(include_external ? [] : [:group_id, :mailing_list_id])
+    attrs["business_validation_rule"] = JSON.parse(self.to_json except: omit)[self.class.name.underscore]
+    attrs["business_validation_rule"]["type"] = self.class.name
+    attrs["business_validation_rule"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
+    attrs
+  end
+
+  def self.parse_copy_attributes rule_hsh
+    rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject{ |k,v| ["search_criterions"].include? k })
+    rule_hsh["business_validation_rule"]["search_criterions"].each do |sc_hsh| 
+      rule.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"])
+    end
+    rule
+  end
+
   def recipients_and_mailing_lists
     emails = self.notification_recipients
 

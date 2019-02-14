@@ -1,4 +1,5 @@
 require 'open_chain/email_validation_support'
+require 'open_chain/business_rules_copier'
 
 class BusinessValidationRulesController < ApplicationController
   include OpenChain::EmailValidationSupport
@@ -77,6 +78,15 @@ class BusinessValidationRulesController < ApplicationController
       @bvr.destroy
       redirect_to edit_business_validation_template_path(@bvt)
     end
+  end
+
+  def copy
+    admin_secure {
+      destination_template_id = params[:new_template_id]
+      OpenChain::BusinessRulesCopier.delay.copy_rule(current_user.id, params[:id].to_i, destination_template_id.to_i)
+      add_flash(:notices, "Business Validation Rule is being copied. You'll receive a VFI Track message when it completes.")
+      redirect_to edit_business_validation_template_path(destination_template_id)
+    }
   end
 
   def edit_angular

@@ -100,6 +100,11 @@ class SearchCriterion < ActiveRecord::Base
     'dt_notregexp'=> 'Not Regex'
   }
 
+  def copy_attributes
+    omit = [:id, :created_at, :updated_at].concat(SearchCriterion.attribute_names.select{ |att| att =~ /_id$/ }.map(&:to_sym))
+    JSON.parse(self.to_json except: omit)
+  end
+
   def operator_label
     CRITERIONS[self.operator]
   end

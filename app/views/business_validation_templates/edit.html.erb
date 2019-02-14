@@ -1,3 +1,18 @@
+<% content_for :javascript do %>
+  $(function() {
+    $('.rule_copy_link').click(function() {
+      var templateId = <%= @bvt.id %>;
+      var ruleId = $(this).attr('data-rule-id');
+      $("#copy_frm").attr("action", "/business_validation_templates/" + templateId + "/business_validation_rules/" + ruleId + "/copy");
+      $("#rule_copy_modal").modal("show");
+    });
+
+    $('#btn_copy').click(function() {
+      $('#copy_frm').submit();
+    })
+  });
+<% end %>
+
 <%-content_for :action_bar do-%>
   <button class="btn_link btn btn-secondary" link_to="<%=business_validation_template_path(@bvt) %>">Back</button>
 <%-end-%>
@@ -22,4 +37,29 @@
       <%= render partial: "bvt_rule", locals: {rules: @rules, new_rule: @new_rule, groups: @groups} %>
     </div>
   </div>  
+</div>
+
+<div id="rule_copy_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Copy Rule</h3>
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">        
+         <form id="copy_frm" method="POST"> 
+           <p>Select a destination template.</p>
+             <div class="col-md-8">
+               <%= select_tag("new_template_id", options_from_collection_for_select(@templates, :id, :name, @bvt.id), class: "form-control") %>
+             </div>
+           <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+         </form>
+      </div>
+      <div class="modal-footer">
+        <div class="col-md-1 offset-md-1">
+          <button type="button" class="btn float-right" id='btn_copy'>Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

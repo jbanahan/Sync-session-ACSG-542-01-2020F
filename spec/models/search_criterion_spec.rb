@@ -15,6 +15,24 @@ describe SearchCriterion do
       expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
     end
   end
+
+  describe "copy_attributes" do
+    let(:criterion) { Factory(:search_criterion, search_setup: Factory(:search_setup), business_validation_template: Factory(:business_validation_template), 
+                                                 one_time_alert: Factory(:one_time_alert), include_empty: true, model_field_uid: "ent_cust_num", 
+                                                 operator: "eq", secondary_model_field_uid: "ent_brok_ref", value: "val") }
+
+    it "hashifies attributes without foreign keys" do
+      attributes = {"search_criterion"=>
+                     {"include_empty"=>true,
+                      "model_field_uid"=>"ent_cust_num",
+                      "operator"=>"eq",
+                      "secondary_model_field_uid"=>"ent_brok_ref",
+                      "value"=>"val"}}
+
+      expect(criterion.copy_attributes).to eq attributes
+    end
+  end
+
   context "less than decimal" do
     before do
       @u = Factory(:master_user)

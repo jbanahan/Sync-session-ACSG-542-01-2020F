@@ -31,6 +31,23 @@ class BusinessValidationTemplate < ActiveRecord::Base
   has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
+  def copy_attributes include_external:false
+    attrs = JSON.parse self.to_json(except: [:id, :created_at, :updated_at, :delete_pending, :disabled])
+    attrs["business_validation_template"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
+    attrs["business_validation_template"]["business_validation_rules"] = self.business_validation_rules.map{ |r| r.copy_attributes(include_external: include_external) }
+    attrs
+  end
+
+  def self.parse_copy_attributes template_hsh
+    template = BusinessValidationTemplate.new(template_hsh["business_validation_template"].reject{ |k,v| ["search_criterions", "business_validation_rules"].include? k })
+    bvt_hsh = template_hsh["business_validation_template"]
+    bvt_hsh["search_criterions"].each{ |sc_hsh| template.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"]) }
+    bvt_hsh["business_validation_rules"].each do |bvru_hsh| 
+      template.business_validation_rules << BusinessValidationRule.parse_copy_attributes(bvru_hsh) 
+    end
+    template
+  end
+
   def self.run_schedulable opts = {}
     opts = {'run_validation' => true}.merge opts
     create_all! run_validation: (opts['run_validation'] != false)

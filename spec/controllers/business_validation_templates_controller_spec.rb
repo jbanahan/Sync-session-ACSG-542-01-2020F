@@ -184,6 +184,56 @@ describe BusinessValidationTemplatesController do
 
   end
 
+  describe "upload", :disable_delayed_jobs do
+    let(:user) { Factory(:admin_user) }
+    let(:file) { double "file"}
+    let(:cf) { double "custom file" }
+    let(:uploader) { OpenChain::BusinessRulesCopier::Uploader }
+    before {sign_in_as user}
+
+    it "processes file with rule copier" do
+      allow(cf).to receive(:id).and_return 1
+      expect(CustomFile).to receive(:create!).with(file_type: uploader.to_s, uploaded_by: user, attached: file.to_s).and_return cf
+      expect(CustomFile).to receive(:process).with(1, user.id)
+      put :upload, attached: file
+      expect(response).to redirect_to business_validation_templates_path
+      expect(flash[:notices]).to include "Your file is being processed. You'll receive a VFI Track message when it completes."
+    end
+
+    it "only allows admin" do
+      user = Factory(:user)
+      sign_in_as user     
+      expect(CustomFile).to_not receive(:create!)
+    end
+
+    it "errors if no file submitted" do
+      put :upload, attached: nil
+      expect(CustomFile).to_not receive(:create!)
+      expect(flash[:errors]).to include "You must select a file to upload."
+    end
+  end
+
+  describe "copy", :disable_delayed_jobs do
+    let(:user) { Factory(:admin_user) }
+    let(:bvt) { Factory(:business_validation_template) }
+
+    before { sign_in_as user }
+
+    it "copies template" do
+      expect(OpenChain::BusinessRulesCopier).to receive(:copy_template).with user.id, bvt.id
+      post :copy, id: bvt.id
+      expect(response).to redirect_to business_validation_templates_path
+      expect(flash[:notices]).to include "Business Validation Template is being copied. You'll receive a VFI Track message when it completes."      
+    end
+
+    it "only allows admin" do
+      user = Factory(:user)
+      sign_in_as user
+      expect(OpenChain::BusinessRulesCopier).to_not receive(:copy_template)
+      post :copy, id: bvt.id
+    end
+  end
+
   describe "edit_angular" do
     before :each do
       @sc = Factory(:search_criterion)

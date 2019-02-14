@@ -181,7 +181,7 @@ describe OneTimeAlertsController do
       expect(cpy.expire_date_last_updated_by).to eq user
       expect(cpy.mailing_list).to eq alert.mailing_list
       expect(cpy.module_type).to eq alert.module_type
-      expect(cpy.name).to eq "OTA Name (COPY)"
+      expect(cpy.name).to eq "OTA Name"
       expect(cpy.user).to eq user
       sc_cpy = cpy.search_criterions.first
       expect(sc_cpy.model_field_uid).to eq 'prod_uid'
@@ -201,7 +201,8 @@ describe OneTimeAlertsController do
     end
 
     it "increments name" do
-      expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
+      sign_in_as user2
+      expect(OneTimeAlert).to receive(:can_edit?).with(user2).and_return true
 
       alert.update_attributes name: "OTA NAME (COPY)"
       put :copy, id: alert.id

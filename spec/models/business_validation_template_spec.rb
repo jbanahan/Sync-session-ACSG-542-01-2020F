@@ -371,4 +371,62 @@ describe BusinessValidationTemplate do
       expect(subject.active?).to eq true
     end
   end
+
+  describe "copy_attributes" do
+    let!(:search_criterion_template) { Factory(:search_criterion, model_field_uid: "ent_cust_num") }
+    let!(:search_criterion_rule) { Factory(:search_criterion, model_field_uid: "ent_brok_ref") }
+    let!(:rule) do 
+      r = ValidationRuleFieldFormat.new description: "rule descr"
+      r.search_criterions << search_criterion_rule
+      r.save!
+      r
+    end
+    let!(:template) { Factory(:business_validation_template, delete_pending: true, description: "templ descr", disabled: true, module_type: "Entry", 
+                                                            name: "templ name", private: true, search_criterions: [search_criterion_template],
+                                                            business_validation_rules: [rule]) }
+
+    it "hashifies attributes including rules, search criterions but skipping other external associations" do
+      expect_any_instance_of(BusinessValidationRule).to receive(:copy_attributes).with(include_external: false).and_call_original
+      attributes = template.copy_attributes["business_validation_template"]
+      top_level_attr = attributes.reject{ |k, v| ["search_criterions", "business_validation_rules"].include? k }
+      expect(top_level_attr).to eq({"description" => "templ descr", "module_type" => "Entry", "name" => "templ name", "private" => true})
+      
+      criterion_attr = attributes["search_criterions"].first["search_criterion"].select{ |k,v| k == "model_field_uid"}
+      expect(criterion_attr).to eq({"model_field_uid" => "ent_cust_num"})
+      
+      rule_attr = attributes["business_validation_rules"].first["business_validation_rule"].select{ |k, v| ["type", "description"].include? k }
+      expect(rule_attr).to eq({"type" => "ValidationRuleFieldFormat", "description" => "rule descr"})
+    end
+
+    it "includes external associations with rules if specified" do # 
+      expect_any_instance_of(BusinessValidationRule).to receive(:copy_attributes).with(include_external: true)
+      template.copy_attributes(include_external: true)
+    end
+  end
+
+  describe "parse_copy_attributes" do
+    it "instantiates template from attributes hash, including criterions, rules" do
+      attributes = {"business_validation_template"=>
+                     {"description"=>"templ descr",
+                      "search_criterions"=>
+                       [{"search_criterion"=>
+                          {"model_field_uid"=>"ent_cust_num"}}],
+                      "business_validation_rules"=>
+                       [{"business_validation_rule"=>
+                          {"description"=>"rule descr",
+                           "type"=>"ValidationRuleFieldFormat",
+                           "search_criterions"=>
+                            [{"search_criterion"=>
+                               {"model_field_uid"=>"ent_brok_ref"}}]}}]}}
+
+      template = described_class.parse_copy_attributes attributes
+      expect(template.description).to eq "templ descr"
+      templ_sc = template.search_criterions.first
+      expect(templ_sc.model_field_uid).to eq "ent_cust_num"
+      rule = template.business_validation_rules.first
+      expect(rule.description).to eq "rule descr"
+      rule_sc = rule.search_criterions.first
+      expect(rule_sc.model_field_uid).to eq "ent_brok_ref"
+    end  
+  end
 end

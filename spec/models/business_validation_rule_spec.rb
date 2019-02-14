@@ -126,4 +126,74 @@ describe BusinessValidationRule do
     end
   end
 
+  describe "copy_attributes" do
+    let!(:group) { Factory(:group) }
+    let!(:mailing_list) { Factory(:mailing_list) } 
+    let!(:search_criterion) { Factory(:search_criterion, model_field_uid: "ent_cust_num", operator: "eq", value: "lumber")}
+    let(:rule) do
+      r = ValidationRuleFieldFormat.new description: "descr", fail_state: "Fail", group_id: group.id,
+                                        mailing_list_id: mailing_list.id, message_pass: "mess pass", message_review_fail: "mess rev/fail",
+                                        message_skipped: "mess skip", name: "rule name", notification_recipients: "tufnel@stonehenge.biz",
+                                        notification_type: "email", rule_attributes_json: "JSON", subject_pass: "sub pass",
+                                        subject_review_fail: "sub review/fail", subject_skipped: "sub skip", suppress_pass_notice: true, 
+                                        suppress_review_fail_notice: true, suppress_skipped_notice: true
+      r.search_criterions << search_criterion
+      r.save!
+      r                                      
+    end
+
+    it "hashifies attributes including search criterions but skipping other external associations" do
+      
+      attributes = {"business_validation_rule"=>
+                     {"description"=>"descr",
+                      "fail_state"=>"Fail",
+                      "message_pass"=>"mess pass",
+                      "message_review_fail"=>"mess rev/fail",
+                      "message_skipped"=>"mess skip",
+                      "name"=>"rule name",
+                      "notification_recipients"=>"tufnel@stonehenge.biz",
+                      "notification_type"=>"email",
+                      "rule_attributes_json"=>"JSON",
+                      "subject_pass"=>"sub pass",
+                      "subject_review_fail"=>"sub review/fail",
+                      "subject_skipped"=>"sub skip",
+                      "suppress_pass_notice"=>true,
+                      "suppress_review_fail_notice"=>true,
+                      "suppress_skipped_notice"=>true,
+                      "type"=>"ValidationRuleFieldFormat",
+                      "search_criterions"=>
+                       [{"search_criterion"=>
+                          {"include_empty"=>nil,
+                           "model_field_uid"=>"ent_cust_num",
+                           "operator"=>"eq",
+                           "secondary_model_field_uid"=>nil,
+                           "value"=>"lumber"}}]}}      
+      
+      expect(rule.copy_attributes).to eq attributes
+    end
+
+    it "includes other external associations if specified" do
+      attributes = rule.copy_attributes(include_external:true)["business_validation_rule"]
+      expect(attributes["mailing_list_id"]).to eq mailing_list.id
+      expect(attributes["group_id"]).to eq group.id
+    end
+  end
+
+  describe "parse_copy_attributes" do
+    it "instantiates rule from attributes hash, including criterions" do
+      attributes = {"business_validation_rule"=>
+                     {"description"=>"descr",
+                      "type"=>"ValidationRuleFieldFormat",
+                      "search_criterions"=>
+                       [{"search_criterion"=>
+                          {"model_field_uid"=>"ent_cust_num"}}]}}
+
+      rule = described_class.parse_copy_attributes attributes
+      expect(rule.type).to eq "ValidationRuleFieldFormat"
+      expect(rule.description).to eq "descr"
+      sc = rule.search_criterions.first
+      expect(sc.model_field_uid).to eq "ent_cust_num"
+    end
+  end
+
 end

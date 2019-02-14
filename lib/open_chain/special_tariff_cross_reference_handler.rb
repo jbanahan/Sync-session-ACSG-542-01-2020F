@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/custom_file_csv_excel_parser'
+require 'open_chain/report/report_helper'
 
 # This file handles both uploads and downloads of Special Tariffs Cross Reference
 module OpenChain; class SpecialTariffCrossReferenceHandler

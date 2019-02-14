@@ -1,3 +1,5 @@
+require 'open_chain/name_incrementer'
+
 class OneTimeAlertsController < ApplicationController
   M_CLASS_NAMES = OneTimeAlert::MODULE_CLASS_NAMES
 
@@ -158,24 +160,11 @@ class OneTimeAlertsController < ApplicationController
   def copy_alert alert
     alert_cpy = alert.dup
     alert_cpy.inactive = true
-    copy_name(from: alert, to: alert_cpy)
+    alert_cpy.name = OpenChain::NameIncrementer.increment(alert.name, OneTimeAlert.where(user_id: current_user.id).map(&:name))
     alert_cpy.user = alert_cpy.expire_date_last_updated_by = current_user
     alert.search_criterions.each{ |sc| alert_cpy.search_criterions << sc.dup }
     alert_cpy.save!
     alert_cpy
-  end
-
-  def copy_name from:, to:
-    base_name = from.name.strip
-    clip = base_name.slice!(/ \(COPY.*\)/)
-    if clip
-      num = (clip.match(/\d+/)[0]).to_i rescue 1
-      to.name = base_name + " (COPY #{num + 1})"
-    else
-      to.name = base_name + " (COPY)"
-    end
-
-    nil
   end
 
   # Uses subqueries because build_search appends a WHERE clauses, which prevents any top-level grouping
