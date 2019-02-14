@@ -31,6 +31,8 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
   $scope.eh.responseErrorHandler = (rejection) ->
     $scope.notificationMessage = null
   $scope.shp = null
+  $scope.remove_shp_ord = null
+
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id, $scope.shipmentLinesNeeded, $scope.bookingLinesNeeded).then (resp) ->
@@ -45,6 +47,22 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
         $scope.shp._shp_warehouse_time_hour = ''
       addConditionalFields $scope.shp
       $scope.loadingFlag = null
+
+  $scope.uniqueOrderOptions = (lines) ->
+    orders = []
+    for line in lines
+      for order_line in line.order_lines
+        item = {order_id: order_line.order_id, order_number: $scope.shipmentLineOrderNumber(order_line)}
+        
+        # Ensure that there are only unique order lines
+        found = false
+        for ol in orders
+          if ol.order_id == item.order_id
+            found = true
+        
+        unless found
+          orders.push item 
+    orders
 
   addConditionalFields = (shp) ->
     fields = {}
@@ -210,12 +228,28 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       saveBookingLine(shipment,line).then ->
         $scope.loadBookingLines($scope.shp)
 
+  $scope.removePO = (shipment,order) ->
+    if window.confirm("Are you sure you want to delete PO #{order.order_number}?")
+      for line in shipment.lines
+        for oln in line.order_lines
+          if oln.order_id == order.order_id
+            line._destroy = 'true'
+      $('#mod_remove_po').modal('hide')
+      $scope.saveShipment({id: shipment.id, lines: shipment.lines})
+
   $scope.deleteAllBookingLines = (shipment) ->
     if window.confirm("Are you sure you want to delete all booking lines from this shipment?")
       for line in shipment.booking_lines
         line._destroy = 'true'
 
       $scope.saveShipment({id: shipment.id, booking_lines: shipment.booking_lines})
+
+  $scope.deleteAllLines = (shipment) ->
+    if window.confirm("Are you sure you want to delete all lines from this shipment?")
+      for line in shipment.lines
+        line._destroy = 'true'
+
+      $scope.saveShipment({id: shipment.id, lines: shipment.lines})
 
   $scope.prepBookingEditObject = copyObjectToScopeAs 'booking'
 

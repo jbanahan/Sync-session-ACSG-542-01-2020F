@@ -115,7 +115,7 @@
     <hr />
     <div class="card">
       <div class="card-header vandegrift-header">Lines</div>
-      <div class="card-body">
+      <div class="card-body p-0">
         <div class="card-header">
           <ul class="nav nav-tabs card-header-tabs" role="tablist">
             <li role="presentation" class="nav-item">
@@ -135,61 +135,93 @@
               <chain-ship-detail-summary shipment='shp'></chain-ship-detail-summary>
             </div>
             <div role="tabpanel" class="tab-pane" id="line_detail">
-              <div class="container-fluid">  <!--start lines section -->
-                <div class="row">
-                  <div class='col-md-12' ng-hide='shp.lines.length >= 0'>
-                    <div class='loader'>Loading</div>
+              <div class="row">  <!--start lines section -->
+                <div class='col-md-12' ng-hide='shp.lines.length >= 0'>
+                  <div class='loader'>Loading</div>
+                </div>
+                <div class="col-md-12" ng-show='shp.lines.length >= 0'>
+                  <div class="card" ng-show='shp.lines.length == 0'>
+                    <div class="card-body text-center">This shipment doesn't have any lines.</div>
                   </div>
-                  <div class="col-md-12" ng-show='shp.lines.length >= 0'>
-                    <div class="card" ng-show='shp.lines.length == 0'>
-                      <div class="card-body">This shipment doesn't have any lines.</div>
+                  <table class='table table-striped' ng-show='shp.lines.length > 0'>
+                    <thead>
+                      <tr>
+                        <th>Line #</th>
+                        <th>Product</th>
+                        <th>Order Number - Line</th>
+                        <th>Quantity</th>
+                        <th>Cartons</th>
+                        <th>Volume (CBMS)</th>
+                        <th>Gross Weight (KGS)</th>
+                        <th>Container</th>
+                        <th ng-show='shp.permissions.can_edit'></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
+                        <td>{{ln.shpln_line_number}}</td>
+                        <td>{{ln.shpln_puid}}</td>
+                        <td>
+                          <div ng-repeat='ol in ln.order_lines'>
+                            <a href='/orders/{{ol.order_id}}'>{{shipmentLineOrderNumber(ol)}} - {{ol.ordln_line_number}}</a>
+                          </div>
+                        </td>
+                        <td>
+                          {{ln.shpln_shipped_qty}}
+                        </td>
+                        <td>
+                          {{ln.shpln_carton_qty}}
+                        </td>
+                        <td>
+                          {{ln.shpln_cbms}}
+                        </td>
+                        <td>
+                          {{ln.shpln_gross_kgs}}
+                        </td>
+                        <td>
+                          {{ln.shpln_container_number}}
+                        </td>
+                        <td ng-show='shp.permissions.can_edit' class='text-right'>
+                          <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
+                          <button class='btn btn-sm btn-outline-dark' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
+                          <button class='btn btn-sm btn-outline-dark' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr ng-show='shp.permissions.can_add_remove_shipment_lines && $parent.shp.lines && $parent.shp.lines.length > 0'>
+                        <td colspan="4"></td>
+                        <td style="tpadding-top: 10px"><button class="btn btn-sm btn-outline-dark" title="Opens a dialog box to select PO for removal" data-toggle='modal' data-target='#mod_remove_po' data-backdrop="static"><i class="fa fa-edit"></i> Remove PO</button></td>
+                        <td style="tpadding-top: 10px"><button class="btn btn-sm btn-danger" title="Immediately delete all lines" ng-click="deleteAllLines($parent.shp)"><i class="fa fa-trash"></i> Delete All Lines</button></td>
+                        <td colspan="3"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+              <div ng-if="shp.lines" class="modal fade" id="mod_remove_po" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Remove PO</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
                     </div>
-                    <table class='table table-striped' ng-show='shp.lines.length > 0'>
-                      <thead>
-                        <tr>
-                          <th>Line #</th>
-                          <th>Product</th>
-                          <th>Order Number - Line</th>
-                          <th>Quantity</th>
-                          <th>Cartons</th>
-                          <th>Volume (CBMS)</th>
-                          <th>Gross Weight (KGS)</th>
-                          <th>Container</th>
-                          <th ng-show='shp.permissions.can_edit'></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
-                          <td>{{ln.shpln_line_number}}</td>
-                          <td>{{ln.shpln_puid}}</td>
-                          <td>
-                            <div ng-repeat='ol in ln.order_lines'>
-                              <a href='/orders/{{ol.order_id}}'>{{shipmentLineOrderNumber(ol)}} - {{ol.ordln_line_number}}</a>
-                            </div>
-                          </td>
-                          <td>
-                            {{ln.shpln_shipped_qty}}
-                          </td>
-                          <td>
-                            {{ln.shpln_carton_qty}}
-                          </td>
-                          <td>
-                            {{ln.shpln_cbms}}
-                          </td>
-                          <td>
-                            {{ln.shpln_gross_kgs}}
-                          </td>
-                          <td>
-                            {{ln.shpln_container_number}}
-                          </td>
-                          <td ng-show='shp.permissions.can_edit' class='text-right'>
-                            <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteShipmentLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                            <button class='btn btn-sm btn-outline-dark' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
-                            <button class='btn btn-sm btn-outline-dark' title='Show Parties' ng-click='prepPartiesModal(ln)' data-toggle='modal' data-target='#mod_shpln_parties'><i class='fa fa-user'></i></button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div class="modal-body">
+                      <p>This will remove all lines associated with a selected PO.</p>
+                      <form>
+                        <div class="form-group">
+                          <select ng-model="remove_shp_ord" class="form-control" ng-options="order.order_number for order in uniqueOrderOptions(shp.lines) track by order.order_id">
+                            <option value="">Select Purchase Order</option>
+                          </select> 
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="button" ng-disabled="!remove_shp_ord" class="btn btn-danger" ng-click="removePO(shp,remove_shp_ord)">Remove</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -259,7 +291,7 @@
                 </div>
                 <div class="col-md-12" ng-show='shp.booking_lines.length >= 0'>
                   <div class="card" ng-show='shp.booking_lines.length == 0'>
-                    <div class="card-body">This shipment doesn't have any booking lines.</div>
+                    <div class="card-body text-center">This shipment doesn't have any booking lines.</div>
                   </div>
                   <table class='table table-striped' ng-show='shp.booking_lines.length > 0'>
                     <thead>
@@ -293,9 +325,9 @@
                       <td>
                         {{ln.bkln_quantity}}
                       </td>
-                        <td>
-                          {{ln[shp.conditionalFields.percentageBooked.fieldName] | number:2}}%
-                        </td>
+                      <td>
+                        {{ln[shp.conditionalFields.percentageBooked.fieldName] | number:2}}%
+                      </td>
                       <td>
                         {{ln.bkln_carton_qty}}
                       </td>
@@ -307,14 +339,15 @@
                       </td>
                       <td class='text-right'>
                         <button ng-show='shp.permissions.can_add_remove_booking_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteBookingLine($parent.shp,ln)"><i class="fa fa-trash"></i></button>
-                        <button ng-show='shp.permissions.can_add_remove_booking_lines' class='btn btn-sm' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
+                        <button ng-show='shp.permissions.can_add_remove_booking_lines' class='btn btn-outline-dark btn-sm' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_booking_line'><i class='fa fa-edit'></i></button>
                       </td>
                     </tr>
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colspan="9" style="text-align:center; padding-top: 10px"><button ng-show='shp.permissions.can_add_remove_booking_lines && $parent.shp.booking_lines && $parent.shp.booking_lines.length > 0' class="btn btn-sm btn-danger" title="Delete All Lines" ng-click="deleteAllBookingLines($parent.shp)"><i class="fa fa-trash"></i> Delete All Lines</button></td>
+                        <td colspan="11" style="text-align:center; padding-top: 10px"><button ng-show='shp.permissions.can_add_remove_booking_lines && $parent.shp.booking_lines && $parent.shp.booking_lines.length > 0' class="btn btn-sm btn-danger" title="Delete All Lines" ng-click="deleteAllBookingLines($parent.shp)"><i class="fa fa-trash"></i> Delete All Lines</button></td>
                       </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>

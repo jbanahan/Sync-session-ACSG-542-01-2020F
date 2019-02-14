@@ -1,4 +1,3 @@
-
 describe 'ShipmentService', ->
 
   beforeEach module('ShipmentApp')
