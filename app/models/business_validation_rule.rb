@@ -124,7 +124,8 @@ class BusinessValidationRule < ActiveRecord::Base
                  },
                  ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
                  ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"},
-                 ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"}
+                 ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
+                 'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"}
               }
 
   def recipients_and_mailing_lists
@@ -211,3 +212,4 @@ require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_upon_request_v
 require_dependency 'open_chain/custom_handler/ann_inc/ann_first_sale_validation_rule'
 
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'
+require_dependency 'open_chain/custom_handler/pvh/pvh_validation_rule_entry_invoice_line_matches_shipment_line'

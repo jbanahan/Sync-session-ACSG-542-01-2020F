@@ -203,7 +203,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(c).to have_xpath_value("Value", "200.0")
       expect(c).to have_xpath_value("Currency", "USD")
 
-      c = REXML::XPath.first(l, "ChargeField[Type/Code = '0026']")
+      c = REXML::XPath.first(l, "ChargeField[Type/Code = '0027']")
       expect(c).to have_xpath_value("Value", "50.0")
     end
 

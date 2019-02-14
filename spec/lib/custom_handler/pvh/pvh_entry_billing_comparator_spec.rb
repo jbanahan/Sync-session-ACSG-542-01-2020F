@@ -4,29 +4,71 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
 
   describe "accept?" do
     
+    
     let (:snapshot) { 
       s = EntitySnapshot.new
       s.recordable = entry
       s
     }
 
-    let (:entry) { Entry.new file_logged_date: Date.new(2019, 1, 1), house_bills_of_lading: "BILLINGTEST" }
+    # This whole context can be deleted once we're done w/ live testing
+    context "with billing testing enabled" do
+      let (:entry) { Entry.new file_logged_date: Date.new(2019, 1, 1), house_bills_of_lading: "BILLINGTEST", customer_number: "PVH" }
+      let (:master_setup) {
+        ms = stub_master_setup
+        expect(ms).to receive(:custom_feature?).with("PVH Billing Testing").and_return true
+        ms
+      }
 
-    ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].each do |cust|
-      it "accepts #{cust} snapshots" do
-        entry.customer_number = cust
-        expect(subject.accept? snapshot).to eq true
+      ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].each do |cust|
+        it "accepts #{cust} snapshots" do
+          entry.customer_number = cust
+          expect(subject.accept? snapshot).to eq true
+        end
+
+        it "does not accept #{cust} snapshots prior to 2019" do
+          entry.file_logged_date = Date.new(2018, 11, 30)
+          expect(subject.accept? snapshot).to eq false
+        end
       end
 
-      it "does not accept #{cust} snapshots prior to 2019" do
-        entry.file_logged_date = Date.new(2018, 11, 30)
+      it "does not accept non-PVH entries" do
+        entry.customer_number = "NOTPVH"
         expect(subject.accept? snapshot).to eq false
+      end
+
+      it "accepts with container of billingtest" do
+        entry.house_bills_of_lading = nil
+        entry.container_numbers = "BILLINGTEST"
+        expect(subject.accept? snapshot).to eq true
       end
     end
 
-    it "does not accept non-PVH entries" do
-      entry.customer_number = "NOTPVH"
-      expect(subject.accept? snapshot).to eq false
+    context "without billing testing enabled" do
+      let (:entry) { Entry.new file_logged_date: Date.new(2019, 1, 1), customer_number: "PVH" }
+
+      let (:master_setup) {
+        ms = stub_master_setup
+        expect(ms).to receive(:custom_feature?).with("PVH Billing Testing").and_return false
+        ms
+      }
+
+      ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].each do |cust|
+        it "accepts #{cust} snapshots" do
+          entry.customer_number = cust
+          expect(subject.accept? snapshot).to eq true
+        end
+
+        it "does not accept #{cust} snapshots prior to 2019" do
+          entry.file_logged_date = Date.new(2018, 11, 30)
+          expect(subject.accept? snapshot).to eq false
+        end
+      end
+
+      it "does not accept non-PVH entries" do
+        entry.customer_number = "NOTPVH"
+        expect(subject.accept? snapshot).to eq false
+      end
     end
   end
 

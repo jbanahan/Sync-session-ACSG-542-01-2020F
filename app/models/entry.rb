@@ -306,6 +306,34 @@ class Entry < ActiveRecord::Base
     ['40', '41'].include? self.transport_mode_code
   end
 
+  def ocean_mode? 
+    code = self.transport_mode_code.to_i
+    return false unless code > 0
+
+    Entry.get_transport_mode_codes_us_ca("SEA").include? code
+  end
+
+  def air_mode?
+    code = self.transport_mode_code.to_i
+    return false unless code > 0
+
+    Entry.get_transport_mode_codes_us_ca("AIR").include? code
+  end
+
+  def rail_mode?
+    code = self.transport_mode_code.to_i
+    return false unless code > 0
+
+    Entry.get_transport_mode_codes_us_ca("RAIL").include? code
+  end
+
+  def truck_mode?
+    code = self.transport_mode_code.to_i
+    return false unless code > 0
+
+    Entry.get_transport_mode_codes_us_ca("TRUCK").include? code
+  end
+
   # Converts a descriptive mode label to an int array of codes, including codes for both the US and Canada (the mode
   # codes for these countries do not overlap).  Unknown mode labels will return an empty array.  Case-insensitive.
   def self.get_transport_mode_codes_us_ca mode_descriptor

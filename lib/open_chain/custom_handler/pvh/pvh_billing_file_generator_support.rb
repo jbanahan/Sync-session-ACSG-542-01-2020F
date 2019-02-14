@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     # Validate we have containers for Ocean shipments
     if Entry.get_transport_mode_codes_us_ca("SEA").include?(mf(entry_snapshot, :ent_transport_mode_code).to_i)
-      return false if mf(entry_snapshot, :ent_container_nums).blank?
+      return false if entry_container_numbers(entry_snapshot).blank?
     end
 
     true
@@ -139,7 +139,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # Extract all the charges and amounts we need to bill on this brokerage invoice
       charges = extract_container_level_charges(invoice_snapshot)
 
-      containers = Entry.split_newline_values(mf(entry_snapshot, :ent_container_nums).to_s)
+      containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
 
       prorations = {}
       # Generate the prorations for each amount
@@ -746,6 +746,13 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def credit_invoice? invoice_snapshot
     mf(invoice_snapshot, :bi_invoice_total).to_f < 0
+  end
+
+  # This method exists solely to strip BILLINGTEST out of the container number field when testing.
+  # This can get removed once we're 100% live and sending invoices to PVH for all files.
+  def entry_container_numbers entry_snapshot
+    container_numbers = mf(entry_snapshot, :ent_container_nums)
+    container_numbers.to_s.gsub(/\s*BILLINGTEST/, "")
   end
 
 end; end; end; end

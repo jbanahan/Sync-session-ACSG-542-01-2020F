@@ -62,13 +62,14 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
   def container_level_codes
     {
       "31" => "C080", 
+      "14" => "C080",
       "33" => "545"
     }
   end
 
   def line_level_codes
     {
-      "255" => "0026",
+      "255" => "0027",
       "22" => "G740"
     }
   end

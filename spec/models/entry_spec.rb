@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Entry do
   
   context "tracking_status" do
@@ -539,4 +537,75 @@ describe Entry do
     end
   end
 
+  describe "ocean_mode?" do
+    [10, 11, 9].each do |code|
+      it "returns true for #{code}" do 
+        e = Entry.new transport_mode_code: code
+        expect(e.ocean_mode?).to eq true
+      end
+    end
+
+    it "returns false for non-ocean codes" do
+      e = Entry.new transport_mode_code: 1
+      expect(e.ocean_mode?).to eq false
+    end
+
+    it "returns false for blank codes" do
+      expect(Entry.new.ocean_mode?).to eq false
+    end
+  end
+
+  describe "air_mode?" do
+    [40, 41, 1].each do |code|
+      it "returns true for #{code}" do 
+        e = Entry.new transport_mode_code: code
+        expect(e.air_mode?).to eq true
+      end
+    end
+
+    it "returns false for non-air codes" do
+      e = Entry.new transport_mode_code: 100
+      expect(e.air_mode?).to eq false
+    end
+
+    it "returns false for blank codes" do
+      expect(Entry.new.air_mode?).to eq false
+    end
+  end
+
+  describe "rail_mode?" do
+    [20,21,6].each do |code|
+      it "returns true for #{code}" do 
+        e = Entry.new transport_mode_code: code
+        expect(e.rail_mode?).to eq true
+      end
+    end
+
+    it "returns false for non-rail codes" do
+      e = Entry.new transport_mode_code: 100
+      expect(e.rail_mode?).to eq false
+    end
+
+    it "returns false for blank codes" do
+      expect(Entry.new.rail_mode?).to eq false
+    end
+  end
+
+  describe "truck_mode?" do
+    [30,31,2].each do |code|
+      it "returns true for #{code}" do 
+        e = Entry.new transport_mode_code: code
+        expect(e.truck_mode?).to eq true
+      end
+    end
+
+    it "returns false for non-truck codes" do
+      e = Entry.new transport_mode_code: 100
+      expect(e.truck_mode?).to eq false
+    end
+
+    it "returns false for blank codes" do
+      expect(Entry.new.truck_mode?).to eq false
+    end
+  end
 end
