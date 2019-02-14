@@ -276,4 +276,49 @@ describe XlsxBuilder do
 
   end
 
+  describe "set_page_setup" do
+    let (:sheet) {
+      subject.create_sheet "Sheet", headers: ["Header", "Header 2", "Header 3"]
+    }
+
+    it "assigns setup values" do
+      subject.set_page_setup sheet, orientation: :landscape, fit_to_width_pages: 10, fit_to_height_pages: 5, margins: {top: 1, bottom: 2, left: 3, right: 4}
+      r = sheet.raw_sheet
+      expect(r.page_setup.orientation).to eq :landscape
+      expect(r.page_setup.fit_to_width).to eq 10
+      expect(r.page_setup.fit_to_height).to eq 5
+      expect(r.page_margins.top).to eq 1
+      expect(r.page_margins.bottom).to eq 2
+      expect(r.page_margins.left).to eq 3
+      expect(r.page_margins.right).to eq 4
+    end
+
+    it "handles blank named params" do
+      subject.set_page_setup sheet
+
+      r = sheet.raw_sheet
+      expect(r.page_setup.orientation).to be_nil
+      expect(r.page_setup.fit_to_width).to be_nil
+      expect(r.page_setup.fit_to_height).to be_nil
+      expect(r.page_margins.top).to eq 1
+      expect(r.page_margins.bottom).to eq 1
+      expect(r.page_margins.left).to eq 0.75
+      expect(r.page_margins.right).to eq 0.75
+    end
+  end
+
+  describe "set_header_foot" do
+    let (:sheet) {
+      subject.create_sheet "Sheet", headers: ["Header", "Header 2", "Header 3"]
+    }
+
+    it "sets header and footer data" do
+      subject.set_header_footer sheet, header: "HEADER", footer: "FOOTER"
+
+      r = sheet.raw_sheet
+      expect(r.header_footer.odd_header).to eq "HEADER"
+      expect(r.header_footer.odd_footer).to eq "FOOTER"
+    end
+  end
+
 end

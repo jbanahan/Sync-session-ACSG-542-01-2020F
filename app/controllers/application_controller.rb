@@ -182,6 +182,13 @@ class ApplicationController < ActionController::Base
     send_data spreadsheet.string, :filename => filename, :type => :xls
   end
 
+  def send_builder_data builder, filename_prefix
+    output = StringIO.new
+    builder.write output
+    output.rewind
+    send_data output.read, filename: "#{filename_prefix}.#{builder.output_format}", type: builder.output_format.to_sym
+  end
+
   def current_user
     distribute_reads do
       # Clearance controller defines current_user method, we need to add in run_as handling here ourselves

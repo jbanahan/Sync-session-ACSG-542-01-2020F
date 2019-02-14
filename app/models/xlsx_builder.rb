@@ -6,6 +6,8 @@ require 'axlsx'
 # Any reading should be done via the OpenChain::XlClient interfaces.
 class XlsxBuilder
 
+  HEADER_BG_COLOR_HEX ||= "62BCF3"
+
   # This is a simple wrapper class that is here as a means to track raw access to any sheet functionality
   # that might be needed.
   class XlsxSheet
@@ -13,6 +15,8 @@ class XlsxBuilder
 
     def initialize sheet
       @raw_sheet = sheet
+      # Default to 8.5 x 11
+      @raw_sheet.page_setup.paper_size = 1
     end
 
     def name
@@ -186,6 +190,36 @@ class XlsxBuilder
     end
   end
 
+  # orientation: one of [:portrait, :landscape]
+  #
+  # fit_to_(width|height)_pages: a numeric value representing the number of horizontal pages you want to scale the
+  # spreadsheet to fit into.  In general, you'll probably want to just set a value of 1, which'll shrink or
+  # grow it to fill a single page
+  #
+  # Margins - should be a hash with numeric values for any/all of :top, :left, :right, :bottom
+  def set_page_setup sheet, orientation: nil, fit_to_width_pages: nil, fit_to_height_pages: nil, margins: nil
+    setup = sheet.raw_sheet.page_setup
+    setup.orientation = orientation unless orientation.nil?
+    fits = {}
+    fits[:width] = fit_to_width_pages unless fit_to_width_pages.nil?
+    fits[:height] = fit_to_height_pages unless fit_to_height_pages.nil?
+
+    setup.fit_to(fits) unless fits.blank?
+    sheet.raw_sheet.page_margins.set(margins) unless margins.nil?
+
+    nil
+  end
+
+  # To do things like put the page number in the header, etc. 
+  # See control characters here: https://github.com/randym/axlsx/blob/master/notes_on_header_footer.md
+  #
+  # NOTE: If you use page number, that is relative to the number of pages the tab itself takes up, not the whole workbook.
+  def set_header_footer sheet, header: nil, footer: nil
+    sheet.raw_sheet.header_footer.odd_header = header unless header.blank?
+    sheet.raw_sheet.header_footer.odd_footer = footer unless footer.blank?
+    nil
+  end
+
   def self.demo
     load 'xlsx_builder.rb'
     b = self.new
@@ -204,6 +238,8 @@ class XlsxBuilder
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet
+    b.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
+    b.set_header_footer sheet, header: '&L&F : &A&R&D &T', footer: '&C&Pof&N'
 
     b.write "tmp/test.xlsx"
   end
@@ -245,7 +281,7 @@ class XlsxBuilder
     end
 
     def create_default_header_style
-      create_style(:default_header, {bg_color: "62BCF3", fg_color: "000000", b: true, alignment: {horizontal: :center}}, prevent_override: false, return_existing: true)
+      create_style(:default_header, {bg_color: HEADER_BG_COLOR_HEX, fg_color: "000000", b: true, alignment: {horizontal: :center}}, prevent_override: false, return_existing: true)
       :default_header
     end
 
@@ -270,7 +306,7 @@ class XlsxBuilder
     end
 
     def new_workbook
-      @package = Axlsx::Package.new
+      @package = Axlsx::Package.new author: "VFI Track"
       workbook = @package.workbook
 
       # Reset the default font size to 10 (default font name is Arial)

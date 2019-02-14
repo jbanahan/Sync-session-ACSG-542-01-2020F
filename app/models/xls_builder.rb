@@ -183,6 +183,30 @@ class XlsBuilder
     nil
   end
 
+  # orientation: one of [:portrait, :landscape]
+  #
+  # fit_to_(width|height)_pages: a numeric value representing the number of horizontal pages you want to scale the
+  # spreadsheet to fit into.  In general, you'll probably want to just set a value of 1, which'll shrink or
+  # grow it to fill a single page
+  #
+  # Margins - should be a hash with numeric values for any/all of :top, :left, :right, :bottom
+  def set_page_setup sheet, orientation: nil, fit_to_width_pages: nil, fit_to_height_pages: nil, margins: nil
+    sheet.raw_sheet.pagesetup[:orientation] = orientation unless orientation.nil?
+    if !margins.nil?
+      m = {}
+      [:top, :left, :right, :bottom].each {|v| m[v] = margins[v] if margins[v] }
+      sheet.raw_sheet.margins.merge!(margins)
+    end
+
+    # fit_to_width/height isn't supported by spreadsheet gem 
+    nil
+  end
+
+  # Not supported by spreadsheet gem, added for API compatibility between builder classes
+  def set_header_footer sheet, header: nil, footer: nil
+    nil
+  end
+
   def self.demo
     load 'xls_builder.rb'
     b = self.new
@@ -202,6 +226,7 @@ class XlsBuilder
     b.freeze_horizontal_rows sheet, 1
     b.set_column_widths sheet, 25, nil, 30
     b.apply_min_max_width_to_columns sheet
+    b.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
 
     b.write "tmp/test.xls"
   end

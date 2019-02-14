@@ -102,6 +102,16 @@ class CsvBuilder
     nil
   end
 
+  # No-op...csv doesn't support this - here merely to maintain api consistency between output formats
+  def set_page_setup sheet, orientation: nil, fit_to_width_pages: nil, fit_to_height_pages: nil, margins: nil, header: nil, footer: nil
+   nil
+  end
+
+  # Not supported by csv, added for API compatibility between builder classes
+  def set_header_footer sheet, header: nil, footer: nil
+    nil
+  end
+
   # This is just a simple way create a demo document with all the functionality that the builder
   # classes provide.
   def self.demo

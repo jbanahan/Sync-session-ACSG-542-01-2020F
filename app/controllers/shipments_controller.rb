@@ -48,7 +48,9 @@ class ShipmentsController < ApplicationController
         else
           OpenChain::CustomHandler::ShipmentDownloadGenerator
         end
-      send_excel_workbook generator.new.generate(s, current_user), "#{s.reference}.xls"
+      builder = XlsxBuilder.new
+      generator.new.generate(builder, s, current_user)
+      send_builder_data builder, "#{s.reference}"
     }
   end
 end

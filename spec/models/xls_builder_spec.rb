@@ -241,4 +241,18 @@ describe XlsBuilder do
     end
   end
 
+  describe "set_page_set" do
+    let (:sheet) {
+      sheet = subject.create_sheet "Sheet", headers: ["Header", "Header 2", "Header 3"]
+    }
+
+    it "sets orientation, margins" do
+      subject.set_page_setup sheet, orientation: :landscape, margins: {top: 1, bottom: 2, left: 3, right: 4}
+      r = sheet.raw_sheet
+
+      expect(r.pagesetup[:orientation]).to eq :landscape
+      expect(r.margins).to eq({top: 1, bottom: 2, left: 3, right: 4})
+    end
+  end
+
 end

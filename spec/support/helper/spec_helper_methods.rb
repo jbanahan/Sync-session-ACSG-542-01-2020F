@@ -242,6 +242,11 @@ module Helpers
     def initialize io
       if io.is_a?(String)
         @workbook = RubyXL::Parser.parse(io)
+      elsif io.is_a?(XlsxBuilder)
+        stringio = StringIO.new
+        io.write stringio
+        stringio.rewind
+        @workbook = RubyXL::Parser.parse_buffer(stringio)
       else
         @workbook = RubyXL::Parser.parse_buffer(io)
       end

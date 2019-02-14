@@ -1,59 +1,60 @@
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+
 module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  def initialize
-    @custom_defintions = self.class.prep_custom_definitions [:prod_part_number]
-  end
-
-  def generate shipment, user
-    workbook = XlsMaker.new_workbook
-
+  def generate builder, shipment, user
     mode = shipment.mode.presence || shipment.booking_mode.presence
     if mode.to_s.upcase != "AIR" && shipment.containers.length > 0
-      shipment.containers.each do |container|
-        sheet = new_sheet(workbook, container)
-        add_headers(sheet, shipment, user, container)
-        add_lines_to_sheet(shipment, user, container.shipment_lines, sheet)
+      # This grouping stuff is because user's can make multiple container records with the same container number.
+      # If we don't handle this then because we use the container number as the tab name, the excel file builder 
+      # blows up due to duplicate sheets named that.
+      container_groups(shipment.containers).each_pair do |container_number, containers|
+        sheet = new_sheet(builder, container_number)
+        add_content_to_sheet(builder, sheet, user, shipment, containers)
+        builder.set_column_widths(sheet, *column_widths) unless sheet.nil?
+        builder.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
       end
     else
-      sheet = new_sheet(workbook)
-      add_headers(sheet, shipment, user)
-      add_lines_to_sheet(shipment, user, shipment.shipment_lines, sheet) if shipment.shipment_lines.size > 0
+      sheet = new_sheet(builder, "Details")
+      add_content_to_sheet(builder, sheet, user, shipment, nil)
+      builder.set_column_widths(sheet, *column_widths) unless sheet.nil?
+      builder.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
     end
 
-    workbook
+    builder
   end
 
   private
 
-  def new_sheet(workbook, container=nil)
-    @next_row = 0
-    @column_widths = []
-    sheet_name = container.try(:container_number) || 'Details'
-    XlsMaker.create_sheet(workbook, sheet_name)
+  def container_groups containers
+    container_groups = Hash.new do |h, k|
+      h[k] = []
+    end
+
+    containers.each {|c| container_groups[c.container_number] << c }
+    container_groups
   end
 
-  def add_headers(sheet, shipment, user, container=nil)
-    add_first_header_rows(shipment, user, sheet)
-    add_container_header_data(sheet, container) if container
-    add_second_header_rows(shipment, user, sheet)
-    2.times { add_row(sheet) }
+  def new_sheet(builder, sheet_name)
+    builder.create_sheet sheet_name
   end
 
-  def add_header_rows(shipment, user, uids, sheet)
-    fields = uids.map { |uid| ModelField.find_by_uid uid }
-    labels = fields.map(&:label)
-    values = fields.map{ |field| field.process_export(shipment, user) }
-    add_header_row(sheet, labels)
-    add_row(sheet, values)
+  def add_content_to_sheet builder, sheet, user, shipment, containers
+    containers = Array.wrap(containers)
+
+    add_first_header_rows(builder, sheet, user, shipment, containers.first)
+    add_second_header_rows(builder, sheet, user, shipment, containers.first)
+    # Add two blank rows
+    2.times { add_row builder, sheet, [] }
+
+    lines = containers.length == 0 ? shipment.shipment_lines : containers.map {|c| c.shipment_lines}.flatten
+
+    add_lines_to_sheet(builder, sheet, user, shipment, lines) if lines.length > 0
+    nil
   end
 
-  def add_container_header_data(sheet, container)
-    insert_row(sheet,0,7,["Container Number","Container Size","Seal Number"])
-    insert_row(sheet,1,7,[container.container_number,container.container_size,container.seal_number])
-  end
-
-  def add_first_header_rows(shipment, user, sheet)
+  def add_first_header_rows(builder, sheet, user, shipment, container)
     fields_to_add = [
       :shp_receipt_location,
       :shp_dest_port_name,
@@ -64,10 +65,20 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_voyage
     ]
 
-    add_header_rows(shipment, user, fields_to_add, sheet)
+    container_fields = container.nil? ? [] : [:con_container_number, :con_container_size, :con_seal_number]
+
+    header_labels = (fields_to_add + container_fields).map { |uid| field_label(uid) }
+    add_header_row(builder, sheet, header_labels)
+
+    # Generate the data for the shipment / container into the row
+    header_values = fields_to_add.map { |uid| field_value(uid, shipment, user) }
+    container_fields.each {|uid| header_values << field_value(uid, container, user) }
+
+    add_row(builder, sheet, header_values, styles: header_values.map {|v| body_style_text(builder)})
+    nil
   end
 
-  def add_second_header_rows(shipment, user, sheet)
+  def add_second_header_rows(builder, sheet, user, shipment, container)
     fields_to_add = [
         :shp_confirmed_on_board_origin_date,
         :shp_departure_date,
@@ -76,15 +87,22 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
         :shp_est_arrival_port_date
     ]
 
-    add_header_rows(shipment, user, fields_to_add, sheet)
+    # The nils below are to make the header row background extend to equal lengths
+    headers = fields_to_add.dup
+    headers.push nil, nil
+    headers.push *[nil, nil, nil] unless container.nil?
+
+    add_header_row(builder, sheet, headers.map { |uid| field_label(uid) })
+    add_row(builder, sheet, fields_to_add.map { |uid| field_value(uid, shipment, user) }, styles: fields_to_add.map {|v| body_style_date(builder)} )
+    nil
   end
 
-  def add_lines_to_sheet(shipment, user, lines, sheet)
+  def add_lines_to_sheet(builder, sheet, user, shipment, lines)
     fields = [
       :con_container_number,
       :ord_cust_ord_no,
-      [@custom_defintions[:prod_part_number], unique_identifier_lambda],
-      :shpln_manufacturer_address_name,
+      cdefs[:prod_part_number],
+      :ord_ven_name,
       :shpln_carton_qty,
       :shpln_shipped_qty,
       :shpln_cbms,
@@ -97,18 +115,22 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shp_docs_received_date
     ]
 
-    add_header_row(sheet, fields.map {|f| field_label(f) })
-    lines.each { |line| add_line_to_sheet(shipment, user, line, fields, sheet) }
-    add_totals_to_sheet(lines, sheet)
+    add_header_row(builder, sheet, fields.map {|f| field_label(f) })
+    lines.each { |line| add_line_to_sheet(builder, sheet, user, shipment, line, fields) }
+    add_totals_to_sheet(builder, sheet, lines)
+    nil
   end
 
-  def add_line_to_sheet(shipment, user, line, fields, sheet)
-    order = line.order_lines.first.order
+  def add_line_to_sheet(builder, sheet, user, shipment, line, fields)
+    order_line = line.order_line
+    order = order_line&.order
+    product = order_line&.product
+
     values = [
       field_value(fields[0], line.container, user),
       field_value(fields[1], order, user),
-      field_value(fields[2], line.order_lines.first.product, user),
-      field_value(fields[3], line, user),
+      field_value(fields[2], product, user),
+      field_value(fields[3], order, user),
       field_value(fields[4], line, user),
       field_value(fields[5], line, user),
       field_value(fields[6], line, user),
@@ -121,71 +143,79 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       field_value(fields[13], shipment, user)
     ]
 
-    add_row(sheet, values)
+    add_body_row(builder, sheet, values)
   end
 
-  def add_totals_to_sheet(lines, sheet)
-    carton_qty_total = lines.sum {|line| line.carton_qty || 0}
-    pieces_total = lines.sum {|line| line.quantity || 0}
-    cbms_total = lines.sum {|line| line.cbms || 0}
-    insert_row(sheet, @next_row, 4, [carton_qty_total, pieces_total, cbms_total])
+  def add_totals_to_sheet(builder, sheet, lines)
+    carton_qty_total = lines.sum {|line| line.carton_qty || 0 }
+    pieces_total = lines.sum {|line| line.quantity || BigDecimal("0") }
+    cbms_total = lines.sum {|line| line.cbms || BigDecimal("0") }
+
+    totals_style = body_style_totals(builder)
+    add_row(builder, sheet, [nil, nil, nil, "Totals:", carton_qty_total, pieces_total, cbms_total], styles: [nil, nil, nil, totals_style, totals_style, totals_style, totals_style])
   end
 
-  def add_header_row(sheet, data=[])
-    XlsMaker.add_header_row(sheet, @next_row, data, @column_widths)
-    @next_row += 1
+  def add_header_row(builder, sheet, data)
+    h_style = header_style(builder)
+    add_row(builder, sheet, data, styles: data.map {|v| h_style })
   end
 
-  def insert_row(sheet, row, column, data=[])
-    XlsMaker.insert_body_row(sheet, row, column, data, @column_widths)
+  def add_body_row(builder, sheet, data)
+    t_style = body_style_text(builder)
+    d_style = body_style_date(builder)
+    n_style = body_style_numeric(builder)
+    styles = [t_style, t_style, t_style, t_style, n_style, n_style, n_style, d_style, t_style, t_style, d_style, d_style, d_style, d_style]
+    add_row(builder, sheet, data, styles: styles)
   end
 
-  def add_row(sheet, data=[])
-    XlsMaker.add_body_row(sheet,@next_row,data, @column_widths)
-    @next_row += 1
+  def add_row(builder, sheet, data, styles: [])
+    builder.add_body_row sheet, data, styles: styles
   end
 
   def field_value field, object, user
-    value = nil
-    Array.wrap(field).each do |f|
-      if f.respond_to?(:call)
-        v = f.call(object, user)
-      else
-        v = mf(f).process_export object, user
-      end
-
-      if !v.blank?
-        value = v
-        break
-      end
-    end
-    value
+    v = mf(field).process_export object, user
+    v = nil if v.blank?
+    v
   end
 
   def field_label field
-    # Always just use the first model field value given
-    f = field.respond_to?(:first) ? field.first : field
-    mf(f).label(false)
+    return nil if field.nil?
+
+    mf(field).label(false)
   end
 
   def mf field
+    return nil if field.nil?
+
     field.respond_to?(:model_field) ? field.model_field : ModelField.find_by_uid(field)
   end
 
-  def unique_identifier_lambda
-    lambda do |prod, user|
-      mf = ModelField.find_by_uid(:prod_uid)
-      value = mf.process_export(prod, user)
+  def cdefs 
+    @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
+  end
 
-      if !value.blank? && !prod.importer.system_code.blank?
-        syscode = prod.importer.system_code
+  def header_style builder
+    builder.create_style(:ship_header, {bg_color:XlsxBuilder::HEADER_BG_COLOR_HEX, fg_color: "000000", b: true, alignment: {horizontal: :center, vertical: :bottom, wrap_text: true}}, return_existing: true)
+  end
 
-        # strip the system code from the front of the product if it's there
-        value = value.sub /^#{syscode}-/i, ""
-      end
+  def body_style_text builder
+    builder.create_style(:ship_text, {alignment: {horizontal: :center, vertical: :center, wrap_text: true}}, return_existing: true)
+  end
 
-      value
-    end
+  def body_style_date builder
+    builder.create_style(:ship_date, {format_code: "YYYY-MM-DD", alignment: {horizontal: :center, vertical: :center, wrap_text: true}}, return_existing: true)
+  end
+
+  def body_style_totals builder
+    builder.create_style(:ship_totals, {format_code: "#,##0.####", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+  end
+
+  def body_style_numeric builder
+    builder.create_style(:ship_number, {format_code: "#,##0.####", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
+  end
+
+  def column_widths
+    [15, 13, 45, 30, 20, 18, 15, 14, 10, 14, 13, 12, 13, 12]
   end
 
 end; end; end
