@@ -550,7 +550,7 @@ class Shipment < ActiveRecord::Base
   end
 
   def dimensional_weight
-    (self.volume / 0.006).round(2) if self.volume
+    (self.volume / BigDecimal("0.006")).round(2) if self.volume
   end
 
   def chargeable_weight

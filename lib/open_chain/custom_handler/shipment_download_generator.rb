@@ -6,6 +6,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   def generate builder, shipment, user
     mode = shipment.mode.presence || shipment.booking_mode.presence
     if mode.to_s.upcase != "AIR" && shipment.containers.length > 0
+      preload_shipment(shipment, lines_through_containers: true)
+
       # This grouping stuff is because user's can make multiple container records with the same container number.
       # If we don't handle this then because we use the container number as the tab name, the excel file builder 
       # blows up due to duplicate sheets named that.
@@ -16,6 +18,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
         builder.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
       end
     else
+      preload_shipment(shipment, lines_through_containers: false)
       sheet = new_sheet(builder, "Details")
       add_content_to_sheet(builder, sheet, user, shipment, nil)
       builder.set_column_widths(sheet, *column_widths) unless sheet.nil?
@@ -26,6 +29,18 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
   end
 
   private
+
+  def preload_shipment shipment, lines_through_containers: false
+    shipment_lines_association = {
+      shipment_lines: [:container, {order_lines: [order: [:vendor], product: [:custom_values]]}]
+    }
+
+    if lines_through_containers
+      shipment_lines_association = {containers: shipment_lines_association}
+    end
+
+     ActiveRecord::Associations::Preloader.new(shipment, shipment_lines_association).run
+  end
 
   def container_groups containers
     container_groups = Hash.new do |h, k|
@@ -106,6 +121,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       :shpln_carton_qty,
       :shpln_shipped_qty,
       :shpln_cbms,
+      "Chargeable Weight (KGS)",
+      :shpln_gross_kgs,
       :ord_window_end,
       :shp_freight_terms,
       :shp_shipment_type,
@@ -134,25 +151,39 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       field_value(fields[4], line, user),
       field_value(fields[5], line, user),
       field_value(fields[6], line, user),
-      field_value(fields[7], order, user),
-      field_value(fields[8], shipment, user),
-      field_value(fields[9], shipment, user),
-      field_value(fields[10], order, user),
+      line.chargeable_weight,
+      field_value(fields[8], line, user),
+      field_value(fields[9], order, user),
+      field_value(fields[10], shipment, user),
       field_value(fields[11], shipment, user),
-      field_value(fields[12], shipment, user),
-      field_value(fields[13], shipment, user)
+      field_value(fields[12], order, user),
+      field_value(fields[13], shipment, user),
+      field_value(fields[14], shipment, user),
+      field_value(fields[15], shipment, user)
     ]
 
     add_body_row(builder, sheet, values)
   end
 
   def add_totals_to_sheet(builder, sheet, lines)
-    carton_qty_total = lines.sum {|line| line.carton_qty || 0 }
-    pieces_total = lines.sum {|line| line.quantity || BigDecimal("0") }
-    cbms_total = lines.sum {|line| line.cbms || BigDecimal("0") }
+    carton_qty_total = 0
+    pieces_total = BigDecimal("0")
+    cbms_total = BigDecimal("0")
+    chargeable_weight_total = BigDecimal("0")
+    gross_weight_total = BigDecimal("0")
+
+    lines.each do |line|
+      carton_qty_total += (line.carton_qty || 0)
+      pieces_total += (line.quantity || BigDecimal("0"))
+      cbms_total += (line.cbms || BigDecimal("0"))
+      chargeable_weight_total += (line.chargeable_weight || BigDecimal("0"))
+      gross_weight_total += (line.gross_kgs || BigDecimal("0"))
+    end
+
 
     totals_style = body_style_totals(builder)
-    add_row(builder, sheet, [nil, nil, nil, "Totals:", carton_qty_total, pieces_total, cbms_total], styles: [nil, nil, nil, totals_style, totals_style, totals_style, totals_style])
+    integer_totals_style = body_style_integer_totals(builder)
+    add_row(builder, sheet, [nil, nil, nil, "Totals:", carton_qty_total, pieces_total, cbms_total, chargeable_weight_total, gross_weight_total], styles: [nil, nil, nil, totals_style, integer_totals_style, totals_style, totals_style, totals_style, totals_style])
   end
 
   def add_header_row(builder, sheet, data)
@@ -164,7 +195,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     t_style = body_style_text(builder)
     d_style = body_style_date(builder)
     n_style = body_style_numeric(builder)
-    styles = [t_style, t_style, t_style, t_style, n_style, n_style, n_style, d_style, t_style, t_style, d_style, d_style, d_style, d_style]
+    i_style = body_style_integer(builder)
+    styles = [t_style, t_style, t_style, t_style, i_style, n_style, n_style, n_style, n_style, d_style, t_style, t_style, d_style, d_style, d_style, d_style]
     add_row(builder, sheet, data, styles: styles)
   end
 
@@ -180,6 +212,8 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
 
   def field_label field
     return nil if field.nil?
+
+    return field if field.is_a?(String)
 
     mf(field).label(false)
   end
@@ -206,16 +240,24 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     builder.create_style(:ship_date, {format_code: "YYYY-MM-DD", alignment: {horizontal: :center, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
+  def body_style_integer_totals builder
+    builder.create_style(:ship_totals_integer, {format_code: "#,##0", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+  end
+
   def body_style_totals builder
-    builder.create_style(:ship_totals, {format_code: "#,##0.####", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+    builder.create_style(:ship_totals, {format_code: "#,##0.00##", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+  end
+
+  def body_style_integer builder
+    builder.create_style(:ship_integer, {format_code: "#,##0", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
   def body_style_numeric builder
-    builder.create_style(:ship_number, {format_code: "#,##0.####", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
+    builder.create_style(:ship_number, {format_code: "#,##0.00##", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
   def column_widths
-    [15, 13, 45, 30, 20, 18, 15, 14, 10, 14, 13, 12, 13, 12]
+    [15, 15, 25, 27, 15, 15, 10, 13, 11, 13, 13, 12, 13, 13, 13, 13]
   end
 
 end; end; end

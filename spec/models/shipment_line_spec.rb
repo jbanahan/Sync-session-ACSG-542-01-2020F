@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ShipmentLine do
   describe "variant validation" do
     it "should validate variant" do
@@ -67,6 +65,50 @@ describe ShipmentLine do
       # A save will invalidate the cache and the next call to order_line will reload it
       shipment_line.save!
       expect(shipment_line.order_line.line_number).to eq (line_number + 100)
+    end
+  end
+
+  describe "dimensional_weight" do
+
+    subject { ShipmentLine.new cbms: BigDecimal("1") }
+
+    it "multiplies volume by 0.006 and rounds to 2 digits" do
+      expect(subject.dimensional_weight).to eq BigDecimal("166.67")
+    end
+
+    it "handles nil volume" do 
+      subject.cbms = nil
+      expect(subject.dimensional_weight).to eq nil
+    end
+  end
+
+  describe "chargeable_weight" do 
+
+    subject { ShipmentLine.new cbms: BigDecimal("1"), gross_kgs: BigDecimal("160") }
+
+    it "uses dimensional_weight if it's more than gross weight" do
+      expect(subject.chargeable_weight).to eq BigDecimal("166.67")
+    end
+
+    it "uses gross weight if it's more than dimensional weight" do
+      subject.gross_kgs = BigDecimal("166.68")
+      expect(subject.chargeable_weight).to eq BigDecimal("166.68")
+    end
+
+    it "handles nil dimensional_weight" do 
+      subject.cbms = nil
+      expect(subject.chargeable_weight).to eq BigDecimal("160")
+    end
+
+    it "handles nil gross weight" do
+      subject.gross_kgs = nil
+      expect(subject.chargeable_weight).to eq BigDecimal("166.67")
+    end
+
+    it "handles nil weights" do
+      subject.cbms = nil
+      subject.gross_kgs = nil
+      expect(subject.chargeable_weight).to eq nil
     end
   end
 end

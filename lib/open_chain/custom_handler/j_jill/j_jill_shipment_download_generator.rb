@@ -6,19 +6,21 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
   def generate builder, shipment, user
     mode = shipment.mode.presence || shipment.booking_mode.presence
     if mode.to_s.upcase != "AIR" && shipment.containers.length > 0
+      preload_shipment(shipment, lines_through_containers: true)
       # This grouping stuff is because user's can make multiple container records with the same container number.
       # If we don't handle this then because we use the container number as the tab name, the excel file builder 
       # blows up due to duplicate sheets named that.
       container_groups(shipment.containers).each_pair do |container_number, containers|
         sheet = new_sheet(builder, container_number)
         add_content_to_sheet(builder, sheet, user, shipment, containers)
-        builder.set_column_widths(sheet, *column_widths) unless sheet.nil?
+        builder.set_column_widths(sheet, *column_widths(shipment)) unless sheet.nil?
         builder.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
       end
     else
+      preload_shipment(shipment, lines_through_containers: false)
       sheet = new_sheet(builder, "Details")
       add_content_to_sheet(builder, sheet, user, shipment, nil)
-      builder.set_column_widths(sheet, *column_widths) unless sheet.nil?
+      builder.set_column_widths(sheet, *column_widths(shipment)) unless sheet.nil?
       builder.set_page_setup(sheet, orientation: :landscape, fit_to_width_pages: 1, margins: {left: 0.5, right: 0.5})
     end
 
@@ -26,6 +28,18 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
   end
 
   private
+
+  def preload_shipment shipment, lines_through_containers: false
+    shipment_lines_association = {
+      shipment_lines: [:container, {order_lines: [:order, product: [:custom_values]]}]
+    }
+
+    if lines_through_containers
+      shipment_lines_association = {containers: shipment_lines_association}
+    end
+
+     ActiveRecord::Associations::Preloader.new(shipment, shipment_lines_association).run
+  end
 
   def container_groups containers
     container_groups = Hash.new do |h, k|
@@ -51,7 +65,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
 
     if lines.length > 0
       rolled_up_lines = roll_up(shipment, user, lines)
-      add_lines_to_sheet(builder, sheet, rolled_up_lines) if rolled_up_lines.count > 0
+      add_lines_to_sheet(shipment, builder, sheet, rolled_up_lines) if rolled_up_lines.count > 0
     end
 
     nil
@@ -145,8 +159,8 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     arr.any? ? "Yes" : "No"
   end
 
-  def line_fields
-    [
+  def line_fields shipment
+    fields = [
       :con_container_number,
       :ord_cust_ord_no,
       [cdefs[:prod_part_number], unique_identifier_lambda],
@@ -164,10 +178,17 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
       :shp_fish_and_wildlife,
       :ord_ship_to_system_code
     ]
+
+    if shipment.air?
+      fields << :shpln_gross_kgs
+      fields << :shpln_chargeable_weight
+    end
+
+    fields
   end
 
-  def add_lines_to_sheet(builder, sheet, lines)
-    add_header_row(builder, sheet, line_fields.map {|f| field_label(f) })
+  def add_lines_to_sheet(shipment, builder, sheet, lines)
+    add_header_row(builder, sheet, line_fields(shipment).map {|f| field_label(f) })
     lines.each { |line| add_body_row(builder, sheet, line) }
     add_totals_to_sheet(builder, sheet, lines)
   end
@@ -176,24 +197,31 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     order = line.order_line&.order
     product = line.order_line&.product
 
-    cust_ord_num = field_value(line_fields[1], order, user)
+    fields = line_fields(shipment)
+
+    cust_ord_num = field_value(fields[1], order, user)
     values = [
-      field_value(line_fields[0], line.container, user),
+      field_value(fields[0], line.container, user),
       cust_ord_num,
-      field_value(line_fields[2], product, user),
+      field_value(fields[2], product, user),
       order&.vendor.name,
-      field_value(line_fields[4], line, user),
-      field_value(line_fields[5], line, user),
-      field_value(line_fields[6], line, user),
-      field_value(line_fields[7], order, user),
-      field_value(line_fields[8], shipment, user),
-      field_value(line_fields[9], shipment, user),
-      field_value(line_fields[10], order, user),
-      field_value(line_fields[11], shipment, user),
-      field_value(line_fields[12], shipment, user),
-      field_value(line_fields[13], shipment, user),
-      field_value(line_fields[14], shipment, user),
-      field_value(line_fields[15], order, user)
+      field_value(fields[4], line, user),
+      field_value(fields[5], line, user),
+      field_value(fields[6], line, user),
+      field_value(fields[7], order, user),
+      field_value(fields[8], shipment, user),
+      field_value(fields[9], shipment, user),
+      field_value(fields[10], order, user),
+      field_value(fields[11], shipment, user),
+      field_value(fields[12], shipment, user),
+      field_value(fields[13], shipment, user),
+      field_value(fields[14], shipment, user),
+      field_value(fields[15], order, user),
+      # We're not referencing chargeable weight or gross weight here because the values we get from Tradecard are not
+      # accurate and Ops didn't want to include them, so the field is left blank to indicate they need to fill it in
+      # before forwarding to the customer
+      nil,
+      nil
     ]
     out_hsh[cust_ord_num] << values
   end
@@ -204,7 +232,8 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     cbms_total = lines.compact.sum {|line| line[6] || BigDecimal("0")}
 
     totals_style = body_style_totals(builder)
-    add_row(builder, sheet, [nil, nil, nil, "Totals:", carton_qty_total, pieces_total, cbms_total], styles: [nil, nil, nil, totals_style, totals_style, totals_style, totals_style])
+    integer_totals_style = body_style_integer_totals(builder)
+    add_row(builder, sheet, [nil, nil, nil, "Totals:", carton_qty_total, pieces_total, cbms_total], styles: [nil, nil, nil, totals_style, integer_totals_style, integer_totals_style, totals_style])
   end
 
   def add_header_row(builder, sheet, data)
@@ -216,7 +245,9 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     t_style = body_style_text(builder)
     d_style = body_style_date(builder)
     n_style = body_style_numeric(builder)
-    styles = [t_style, t_style, t_style, t_style, n_style, n_style, n_style, d_style, t_style, t_style, d_style, d_style, d_style, d_style, t_style, t_style]
+    i_style = body_style_integer(builder)
+
+    styles = [t_style, t_style, t_style, t_style, i_style, i_style, n_style, d_style, t_style, t_style, d_style, d_style, d_style, d_style, t_style, t_style, n_style, n_style]
     add_row(builder, sheet, data, styles: styles)
   end
 
@@ -236,16 +267,28 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     builder.create_style(:jjill_date, {format_code: "YYYY-MM-DD", alignment: {horizontal: :center, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
+  def body_style_integer_totals builder
+    builder.create_style(:jjill_integer_totals, {format_code: "#,##0", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+  end
+
   def body_style_totals builder
-    builder.create_style(:jjill_totals, {format_code: "#,##0.####", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+    builder.create_style(:jjill_totals, {format_code: "#,##0.00##", alignment: {horizontal: :center, vertical: :center, wrap_text: true}, border: {style: :thin, color: "000000", edges: [:top]}, b: true}, return_existing: true)
+  end
+
+  def body_style_integer builder
+    builder.create_style(:jjill_integer, {format_code: "#,##0", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
   def body_style_numeric builder
-    builder.create_style(:jjill_number, {format_code: "#,##0.####", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
+    builder.create_style(:jjill_number, {format_code: "#,##0.00##", alignment: {horizontal: :right, vertical: :center, wrap_text: true}}, return_existing: true)
   end
 
-  def column_widths
-    [15, 13, 45, 30, 20, 18, 15, 14, 10, 14, 13, 12, 13, 12, 8, 13]
+  def column_widths shipment
+    widths = [15, 15, 25, 27, 15, 15, 10, 14, 10, 13, 13, 12, 13, 12, 8, 13]
+    if shipment.air?
+      widths.push *[11, 12]
+    end
+    widths
   end
 
   def field_value field, object, user
@@ -272,7 +315,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     f = field.respond_to?(:first) ? field.first : field
 
     # JILL wants to see some diffrent labels, since this report was copied from another system
-    overrides = {shp_fish_and_wildlife: "Fish & Wildlife Flag", ord_ship_to_system_code: "Warehouse Code", con_container_size: "Container Size", shp_importer_reference: "K File #"}
+    overrides = {shp_fish_and_wildlife: "Fish & Wildlife Flag", ord_ship_to_system_code: "Warehouse Code", con_container_size: "Container Size", shp_importer_reference: "K File #", shpln_chargeable_weight: "Chargeable Weight", shpln_gross_kgs: "Gross Weight"}
     overrides[f] || mf(f).label(false)
   end
 

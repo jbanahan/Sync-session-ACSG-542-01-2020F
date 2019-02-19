@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
       end
 
       it "includes line details for air shipments" do
-        shipment.mode = 'Air'
+        shipment.update_attributes! mode: "Air"
         my_order = Factory(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, my_order, [{carton_qty: 5, quantity: 10, cbms: 15}]
 
@@ -101,6 +101,8 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
         expect(sheet[1]).to eq [shipment.receipt_location, shipment.destination_port.name, shipment.final_dest_port.name, shipment.master_bill_of_lading, shipment.house_bill_of_lading, shipment.vessel, shipment.voyage, shipment.importer_reference]
         expect(sheet[3]).to eq [shipment.confirmed_on_board_origin_date, shipment.departure_date, shipment.eta_last_foreign_port_date, shipment.departure_last_foreign_port_date, shipment.est_arrival_port_date]
 
+        expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer (Name)", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date", "Fish & Wildlife Flag", "Warehouse Code", "Gross Weight", "Chargeable Weight"]
+        
         line = shipment.shipment_lines.first
 
         row = sheet[7]

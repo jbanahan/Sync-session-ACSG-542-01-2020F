@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
     product.update_custom_value!(@cdefs[:prod_part_number], "Part")
 
     line_count.times do
-      line = Factory(:shipment_line, shipment:shipment, product:product, container:container, carton_qty:20, quantity:100, cbms:5)
+      line = Factory(:shipment_line, shipment:shipment, product:product, container:container, carton_qty:20, quantity:100, cbms:5, gross_kgs: 20)
       order_line = Factory(:order_line, order:order, quantity:line.quantity, product:product, country_of_origin:'GN')
       PieceSet.create(order_line:order_line, quantity:line.quantity, shipment_line:line)
     end
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
       end
 
       it "includes line details for air shipments" do
-        shipment.mode = 'Air'
+        shipment.update_attributes! mode: "AIR"
         order = Factory(:order, customer_order_number:'123456789', ship_window_end: 2.days.ago, first_expected_delivery_date: 1.month.from_now)
         create_lines shipment, order, 1, nil
 
@@ -64,15 +64,15 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
         line = shipment.shipment_lines.first
 
         row = sheet[7]
-        expect(row.first(7)).to eq [nil, order.customer_order_number, "Part", order.vendor.name, line.carton_qty, line.quantity, line.cbms]
-        expect(row[7].to_date).to eq order.ship_window_end.to_date
-        expect(row[8..9]).to eq [shipment.freight_terms, shipment.shipment_type]
-        expect(row[10].to_date).to eq order.first_expected_delivery_date.to_date
-        expect(row[11].to_date).to eq shipment.booking_received_date.to_date
-        expect(row[12].to_date).to eq shipment.cargo_on_hand_date.to_date
-        expect(row[13].to_date).to eq shipment.docs_received_date.to_date
+        expect(row.first(9)).to eq [nil, order.customer_order_number, "Part", order.vendor.name, line.carton_qty, line.quantity, line.cbms, line.chargeable_weight, line.gross_kgs]
+        expect(row[9].to_date).to eq order.ship_window_end.to_date
+        expect(row[10..11]).to eq [shipment.freight_terms, shipment.shipment_type]
+        expect(row[12].to_date).to eq order.first_expected_delivery_date.to_date
+        expect(row[13].to_date).to eq shipment.booking_received_date.to_date
+        expect(row[14].to_date).to eq shipment.cargo_on_hand_date.to_date
+        expect(row[15].to_date).to eq shipment.docs_received_date.to_date
 
-        expect(sheet[8]).to eq [nil, nil, nil, "Totals:", 20, 100, 5]
+        expect(sheet[8]).to eq [nil, nil, nil, "Totals:", 20, 100, 5, 833.33, 20]
       end
     end
 
@@ -97,19 +97,19 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
         expect(sheet[2]).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Origin Port Date", "Departure Last Origin Port Date", "Est Arrival Discharge", nil, nil, nil, nil, nil]
         expect(sheet[3]).to eq [shipment.confirmed_on_board_origin_date, shipment.departure_date, shipment.eta_last_foreign_port_date, shipment.departure_last_foreign_port_date, shipment.est_arrival_port_date]
 
-        expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Vendor Name", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date"]
+        expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Vendor Name", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Chargeable Weight (KGS)", "Gross Weight (KGS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date"]
         shipment.shipment_lines.each_with_index do |line, idx|
           row = sheet[7 + idx]
-          expect(row.first(7)).to eq [container1.container_number, order.customer_order_number, "Part", order.vendor.name, line.carton_qty, line.quantity, line.cbms]
-          expect(row[7].to_date).to eq order.ship_window_end.to_date
-          expect(row[8..9]).to eq [shipment.freight_terms, shipment.shipment_type]
-          expect(row[10].to_date).to eq order.first_expected_delivery_date.to_date
-          expect(row[11].to_date).to eq shipment.booking_received_date.to_date
-          expect(row[12].to_date).to eq shipment.cargo_on_hand_date.to_date
-          expect(row[13].to_date).to eq shipment.docs_received_date.to_date
+          expect(row.first(9)).to eq [container1.container_number, order.customer_order_number, "Part", order.vendor.name, line.carton_qty, line.quantity, line.cbms, line.chargeable_weight, line.gross_kgs]
+          expect(row[9].to_date).to eq order.ship_window_end.to_date
+          expect(row[10..11]).to eq [shipment.freight_terms, shipment.shipment_type]
+          expect(row[12].to_date).to eq order.first_expected_delivery_date.to_date
+          expect(row[13].to_date).to eq shipment.booking_received_date.to_date
+          expect(row[14].to_date).to eq shipment.cargo_on_hand_date.to_date
+          expect(row[15].to_date).to eq shipment.docs_received_date.to_date
         end
 
-        expect(sheet[10]).to eq [nil, nil, nil, "Totals:", 60, 300, 15]
+        expect(sheet[10]).to eq [nil, nil, nil, "Totals:", 60, 300, 15, 2499.99, 60]
       end
     end
   end

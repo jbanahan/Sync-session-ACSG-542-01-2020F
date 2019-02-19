@@ -81,6 +81,19 @@ class ShipmentLine < ActiveRecord::Base
     @var_order_line ||= self.order_lines.first
   end
 
+  def dimensional_weight
+    (self.cbms / BigDecimal("0.006")).round(2) if self.cbms
+  end
+
+  def chargeable_weight
+    dm = dimensional_weight
+    kgs = self.gross_kgs
+
+    return nil if dm.nil? && kgs.nil?
+
+    ((dm || 0) > (kgs || 0)) ? dm : kgs
+  end
+
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
