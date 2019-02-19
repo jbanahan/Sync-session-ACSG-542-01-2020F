@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe MasterSetup do
   describe 'custom_features_list' do
     before :each do
@@ -400,6 +398,14 @@ describe MasterSetup do
     it 'returns Rails.env' do
       # force equality comparison based on the actual object id to ensure the right value is getting used
       expect(subject.rails_env.object_id).to eq Rails.env.object_id
+    end
+  end
+
+  describe "instance_directory" do
+    subject { described_class }
+
+    it "returns Rails.root" do
+      expect(subject.instance_directory).to eq Rails.root
     end
   end
 end

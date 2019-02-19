@@ -124,6 +124,7 @@ module OpenChain
         capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exist?(Upgrade.upgrade_error_file_path)
         
         @@upgraded = true
+        restart_app_server
         upgrade_completed = true
       rescue => e
         # If the delayed job upgrade fails at some point we'll need to remove the upgrade_running.txt file in order to get the upgrade
@@ -207,9 +208,14 @@ module OpenChain
       update_master_setup_cache
       log_me "Writing '#{@target}' to #{OpenChain::Upgrade.upgraded_version_path}"
       File.open(OpenChain::Upgrade.upgraded_version_path, "w") {|f| f << "#{@target}\n" }
+      log_me "Upgrade complete"
+    end
+
+    def restart_app_server
+      # Passenger watches the tmp/restart.txt file and will restart the app instance if the timestamp on the file changes.
+      # So just touch the file and the instance we updated will restart.
       log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
-      log_me "Upgrade complete"
     end
 
     def init_schedulable_jobs
@@ -220,10 +226,12 @@ module OpenChain
     def migrate
       c = 0
       begin 
-        #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table
-        while !MasterSetup.get_migration_lock && c<60
-          log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
-          sleep 10
+        # Since we have the ability to clear the migration lock wait if we need to, I'm just going to set this to a long wait time
+        # of an hour.  We do have migrations on large tables that can take 20+ minutes, so I don't really want to fail on those.
+        while !MasterSetup.get_migration_lock && c < 3600
+          # Don't need to log every single sleep/wait iteration
+          log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock" if c % 10 == 0
+          sleep 1
           c += 1
         end
         raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock

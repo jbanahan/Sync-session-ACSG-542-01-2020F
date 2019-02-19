@@ -1,5 +1,6 @@
 require 'open_chain/slack_client'
 require 'open_chain/delayed_job_extensions'
+require 'open_chain/ssm'
 
 class MasterSetupsController < ApplicationController
   include OpenChain::DelayedJobExtensions
@@ -81,8 +82,16 @@ class MasterSetupsController < ApplicationController
   end
 
   def release_migration_lock
-    sys_admin_secure("Only system administrators can run upgrades.") {
+    sys_admin_secure("Only system administrators can release migration locks.") {
       MasterSetup.release_migration_lock(force_release: true)
+      redirect_to edit_master_setup_path MasterSetup.get 
+    }
+  end
+
+  def clear_upgrade_errors
+    sys_admin_secure("Only system administrators can clear upgrade errors.") {
+      OpenChain::Ssm.send_clear_upgrade_errors_command
+      add_flash :notices, "Executing AWS Run Command job to clear errors.  Upgrade should re-run shortly."
       redirect_to edit_master_setup_path MasterSetup.get 
     }
   end

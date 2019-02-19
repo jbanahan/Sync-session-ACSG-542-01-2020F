@@ -434,6 +434,7 @@ OpenChain::Application.routes.draw do
       post 'set_system_message'
       post 'upgrade'
       post 'release_migration_lock'
+      post 'clear_upgrade_errors'
     end
   end
   resources :upgrade_logs, :only=>[:show]

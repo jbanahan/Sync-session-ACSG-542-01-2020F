@@ -188,6 +188,11 @@ class MasterSetup < ActiveRecord::Base
     end
   end
 
+  # Returns the real, absolute path to the rails root for this instance.
+  # This is mostly here to provide an easily mockable shim method.
+  def self.instance_directory
+    Rails.root.realpath
+  end
 
   # checks to see if the given custom feature is in the custom features list
   def custom_feature? feature
