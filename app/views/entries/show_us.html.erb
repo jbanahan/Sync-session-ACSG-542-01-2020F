@@ -7,7 +7,7 @@
     <%= link_to raw("<i class='fa fa-refresh'></i>"), request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Update Entry' %>
   <%end-%>
   <%if current_user.sys_admin?-%>    
-    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
+    <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry),  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Purge' %>
   <%end-%>
   <%if current_user.company.master?-%>
     <%= link_to raw("<i class='fa fa-truck'></i>"), generate_delivery_order_entry_path(@entry), title:'Generate Delivery Order', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
