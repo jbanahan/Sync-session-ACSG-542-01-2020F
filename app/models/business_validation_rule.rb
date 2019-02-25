@@ -125,7 +125,8 @@ class BusinessValidationRule < ActiveRecord::Base
                  ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
                  ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"},
                  ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
-                 'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"}
+                 'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
+                 ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"}
               }
 
   def copy_attributes include_external:false
