@@ -57,25 +57,29 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.departure_date = parse_reference_date asn, "Departed", datatype: :date
       end
 
+      container_xmls = []
+      # For whatever reason, the container data for a single container number can be split across multiple
+      # ASN elements.  For that reason, just build the containers and then process all the line items 
+      # after doing that.  This also allows sorting the line items across the whole shipment rather than
+      # just a single ASN.
       REXML::XPath.match(xml, "/Prep7501Message/Prep7501/ASN/Container").each do |container_xml|
         container = parse_container(shipment, container_xml)
-
-        # Don't make lines if there were any errors...at this point any errors are going to have to do with missing Order / Product data..
-        # So we can't make order lines...ergo, don't attempt to
-        if !inbound_file.failed?
-          # The data in the XML seems to come in an entirely random order.  It doesn't match the order of the
-          # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501 
-          # doesn't match the order of the commercial invoice - it's totally random).
-          # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
-          # doing that.
-          sorted_line_items(container_xml).each do |item_xml|
-            parse_shipment_line(shipment, container, item_xml, orders_cache, products_cache)
-          end
-        end
+        container_xmls << container_xml
       end
 
-      # If the shipment was fully processed, we can mark it to be sent to the entry system
+      # Don't make lines if there were any errors...at this point any errors are going to have to do with missing Order / Product data..
+      # So we can't make order lines...ergo, don't attempt to
       if !inbound_file.failed?
+        # The data in the XML seems to come in an entirely random order.  It doesn't match the order of the
+        # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501 
+        # doesn't match the order of the commercial invoice - it's totally random).
+        # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
+        # doing that.
+        sorted_line_items(container_xmls).each do |item_xml|
+          parse_shipment_line(shipment, item_xml, orders_cache, products_cache)
+        end
+
+        # If the shipment was fully processed, we can mark it to be sent to the entry system
         shipment.find_and_set_custom_value cdefs[:shp_entry_prepared_date], Time.zone.now
       end
 
@@ -94,8 +98,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     s
   end
 
-  def sorted_line_items container_xml
-    items = REXML::XPath.match(container_xml, "LineItems").to_a
+  def sorted_line_items container_xmls
+    items = []
+    container_xmls.each do |container_xml|
+      line_items = REXML::XPath.match(container_xml, "LineItems").to_a
+      items.push *line_items if line_items.length > 0
+    end
+    
     items.sort do |a, b|
       v = a.text("PONumber").to_s <=> b.text("PONumber").to_s
 
@@ -108,8 +117,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   end
 
   def parse_container shipment, xml
-    container = shipment.containers.build
-    container.container_number = xml.text "ContainerNumber"
+    container_number = xml.text "ContainerNumber"
+    container = shipment.containers.find { |c| container_number == c.container_number }
+    if container.blank?
+      container = shipment.containers.build container_number: container_number
+    end
     container.container_size = xml.text "ContainerType"
     container.fcl_lcl = xml.text "ContainerLoad"
     container.seal_number = xml.text "SealNumber"
@@ -117,9 +129,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     container
   end
 
-  def parse_shipment_line shipment, container, line_xml, orders_cache, products_cache
+  def parse_shipment_line shipment, line_xml, orders_cache, products_cache
     line = shipment.shipment_lines.build
-    line.container = container
+    container_number = line_xml.parent.text("ContainerNumber")
+
+    line.container = shipment.containers.find { |c| c.container_number == container_number }
     line.invoice_number = line_xml.text("InvoiceNumber")
     # The carton count on the XML is invalid...It's the piece count, not the actual # of cartons
     line.carton_qty = 0

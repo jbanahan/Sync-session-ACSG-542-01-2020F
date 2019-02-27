@@ -118,8 +118,9 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       expect(lines.length).to eq 2
 
       # It's not obvious, but this is also testing that the line items are being
-      # sorted based on their PO and Line Item Numbers.  The ordering of the XML
-      # is not the order the data is loaded - the spec xml has line 9 before line 8.
+      # sorted based on their PO and Line Item Numbers across multiple ASN elements.  
+      # The ordering of the XML is not the order the data is loaded - 
+      # the spec xml has line 9 before line 8.
       l = lines.first
       expect(l.container).to eq c
       expect(l.invoice_number).to eq "LJ180090"

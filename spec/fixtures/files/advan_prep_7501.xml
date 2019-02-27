@@ -423,6 +423,204 @@
             </OneReferenceMultipleMilestones>
           </MilestoneMessage>
         </LineItems>
+      </Container>
+    </ASN>
+    <ASN>
+      <ShipmentID>4512534M01</ShipmentID>
+      <ShipmentStatus>Final</ShipmentStatus>
+      <PartyInfo>
+        <Type>Provider</Type>
+        <Name>DHL International Supply Chain</Name>
+        <Address>
+          <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+          <AddressLine>Paramus</AddressLine>
+        </Address>
+        <City>
+          <CityName>Paramus</CityName>
+          <State>NJ</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>07652</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Consignee</Type>
+        <Name>Advance Stores Company Inc.</Name>
+        <Address>
+          <AddressLine>5008 Airport Rd</AddressLine>
+        </Address>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>24012</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Supplier</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <Address>
+          <AddressLine>Longkou Economic Development Zone</AddressLine>
+        </Address>
+        <City>
+          <CityName>Longkou</CityName>
+          <State>CN</State>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <PostalCode>265716</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Shipper</Type>
+        <Code>89658</Code>
+        <Name>Shandong Longji Machinery Co., Ltd.</Name>
+        <Address>
+          <AddressLine>Longkou Economic Development Zone</AddressLine>
+        </Address>
+        <City>
+          <CityName>Longkou</CityName>
+          <CountryCode>CN</CountryCode>
+          <CountryName>China</CountryName>
+        </City>
+        <PostalCode>265716</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Notify</Type>
+        <Name>Vandegrift, Baltimore, MD</Name>
+        <Address>
+          <AddressLine>20 South Charles Street, Suite 501</AddressLine>
+        </Address>
+        <City>
+          <CityName>Baltimore</CityName>
+          <State>MD</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>21201</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Sender</Type>
+        <Name>DHL International Supply Chain</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>FreightForwarder</Type>
+        <Code>DHLISC</Code>
+        <Name>DHL International Supply Chain</Name>
+        <Address>
+          <AddressLine>1 Kalisa Way, Suite 112</AddressLine>
+        </Address>
+        <City>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+        <PostalCode>07652</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Customer</Type>
+        <Name>Advance Auto Parts</Name>
+        <Address>
+          <AddressLine>Store Support Center</AddressLine>
+          <AddressLine>5008 Airport Rd</AddressLine>
+          <AddressLine>Roanoke</AddressLine>
+        </Address>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>24012</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Carrier</Type>
+        <Code>OERT</Code>
+        <Name>Orient Express Container Co. Ltd</Name>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>ShipmentFinalDest</Type>
+        <Code>11</Code>
+        <Name>DC 11 (Roanoke, VA)</Name>
+        <City>
+          <CityName>Roanoke</CityName>
+          <State>VA</State>
+          <CountryCode>US</CountryCode>
+          <CountryName>United States</CountryName>
+        </City>
+      </PartyInfo>
+      <Mode>Ocean</Mode>
+      <Voyage>45E</Voyage>
+      <Vessel>ZIM ROTTERDAM</Vessel>
+      <Routing>AW</Routing>
+      <OriginCity>
+        <CityName>Saigon</CityName>
+        <CityCode Qualifier="UN">VNSGN</CityCode>
+        <CityCode Qualifier="K">55224s</CityCode>
+        <CountryCode>VN</CountryCode>
+      </OriginCity>
+      <PortOfLoading>
+        <CityName>Qingdao</CityName>
+        <CityCode Qualifier="UN">CNTAO</CityCode>
+        <CityCode Qualifier="K">57047</CityCode>
+        <CountryCode>CN</CountryCode>
+      </PortOfLoading>
+      <PortOfDischarge>
+        <CityName>Norfolk</CityName>
+        <CityCode Qualifier="UN">USORF</CityCode>
+        <CityCode Qualifier="D">1401</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+      </PortOfDischarge>
+      <BLDestination>
+        <CityName>Roanoke</CityName>
+        <CityCode Qualifier="UN">USROA</CityCode>
+        <CityCode Qualifier="D">1234</CityCode>
+        <State>VA</State>
+        <CountryCode>US</CountryCode>
+      </BLDestination>
+      <EstBLDestDate>2018-03-08T12:00:00.000-08:00</EstBLDestDate>
+      <EstOnBoardDate>2018-01-28T12:00:00.000-08:00</EstOnBoardDate>
+      <EstDepartDate>2018-01-28T12:00:00.000-08:00</EstDepartDate>
+      <EstDischargePortDate>2018-03-02T12:00:00.000-08:00</EstDischargePortDate>
+      <ReferenceDates>
+        <ReferenceDateType>Docs Transmitted</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:12:13.547-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Docs Attached</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:11:32.993-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Trigger Outbound ASN</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Manifest Finalized</ReferenceDateType>
+        <ReferenceDate>2018-02-03T03:09:25.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Vendor Docs Submitted</ReferenceDateType>
+        <ReferenceDate>2018-01-22T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <ReferenceDates>
+        <ReferenceDateType>Departed</ReferenceDateType>
+        <ReferenceDate>2018-01-29T03:11:00.000-08:00</ReferenceDate>
+      </ReferenceDates>
+      <Container>
+        <LoadPlanName>4512534</LoadPlanName>
+        <ContainerNumber>ZIMU1269903</ContainerNumber>
+        <ContainerType>D20</ContainerType>
+        <ContainerTypeName>20' Standard Dry</ContainerTypeName>
+        <ContainerLoad>FCL</ContainerLoad>
+        <LoadLocation>CY</LoadLocation>
+        <SealNumber>ZGLP117168</SealNumber>
+        <ServiceType>CYP/CYP</ServiceType>
+        <ContractNumber>NONE</ContractNumber>
+        <ReferenceNumber1>PALLETIZED(23)</ReferenceNumber1>
+        <ChargeableWeight ANSICode="" Unit="None">0</ChargeableWeight>
+        <DimensionalWeight ANSICode="" Unit="None">0</DimensionalWeight>
+        <ActualWeight ANSICode="KG" Unit="Kilograms">16652.2</ActualWeight>
+        <Volume ANSICode="CR" Unit="Cubic Meters">21.02</Volume>
+        <LadingQuantity ANSICode="EA" Unit="Each">2057</LadingQuantity>
         <LineItems>
           <PONumber>8373111-11</PONumber>
           <LineItemNumber>8</LineItemNumber>
