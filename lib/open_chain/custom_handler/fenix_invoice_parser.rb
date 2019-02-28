@@ -97,6 +97,9 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       inv.currency = safe_strip row[10]
       inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
       inv.customer_number = customer_number(safe_strip(row[1]), inv.currency)
+      # Suffix will be blank or zero for the first invoices..so just leave it null for these
+      suffix = row[4].to_i
+      inv.suffix = suffix if suffix > 0
     end
 
     def find_and_process_invoice row, log
@@ -104,7 +107,6 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       log.add_identifier :invoice_number, invoice_number
 
       broker_reference = safe_strip row[9]
-      invoice_number = FenixInvoiceParser.get_invoice_number(row)
       # We need a broker reference in the system to link to an entry, so that we can then know which 
       # customer the invoice belongs to
       if broker_reference.blank?

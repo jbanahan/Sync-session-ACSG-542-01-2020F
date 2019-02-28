@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     invoice_date = mf(invoice_snapshot, :bi_invoice_date)
     currency = mf(invoice_snapshot, :bi_currency)
 
-    generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY") do |details|
+    generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
       # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
       invoice_lines = json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine")
       invoice_lines.each do |line_snapshot|
@@ -21,6 +21,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
         end
       end
     end
+  end
+
+  # For US, we can just use the suffix directly from the invoice itself.
+  def duty_invoice_number entry_snapshot, invoice_snapshot
+    inv = mf(entry_snapshot, :ent_entry_num)
+    suffix = mf(invoice_snapshot, :bi_suffix)
+    inv += suffix unless suffix.blank?
+
+    inv
   end
 
   def duty_charges_for_line line_snapshot
@@ -56,12 +65,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     {
       "0044" => "C080", 
       "0082" => "974", 
-      "0050" => "545"
-    }
-  end
-
-  def line_level_codes
-    {
+      "0050" => "545",
       "0007" => "G740", 
       "0008" => "E063", 
       "0009" => "AFEE", 

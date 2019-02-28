@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
   }
 
   let (:entry) {
-    e = Factory(:entry, broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890")
+    e = Factory(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890")
     i = e.commercial_invoices.create! invoice_number: "INV"
     i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", quantity: 1, unit_price: 1
 
@@ -136,9 +136,6 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(subject).to receive(:has_duty_charges?).with(invoice_snapshot).and_return true
       expect(subject).to receive(:generate_and_send_duty_charges).with(entry_snapshot, invoice_snapshot, broker_invoice_1)
 
-      expect(subject).to receive(:has_line_charges?).with(invoice_snapshot).and_return true
-      expect(subject).to receive(:generate_and_send_line_charges).with(entry_snapshot, invoice_snapshot, broker_invoice_1)
-
       expect(subject).to receive(:has_container_charges?).with(invoice_snapshot).and_return true
       expect(subject).to receive(:generate_and_send_container_charges).with(entry_snapshot, invoice_snapshot, broker_invoice_1)
 
@@ -154,9 +151,6 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(subject).to receive(:has_duty_charges?).with(invoice_snapshot).and_return false
       expect(subject).not_to receive(:generate_and_send_duty_charges)
 
-      expect(subject).to receive(:has_line_charges?).with(invoice_snapshot).and_return false
-      expect(subject).not_to receive(:generate_and_send_line_charges)
-
       expect(subject).to receive(:has_container_charges?).with(invoice_snapshot).and_return false
       expect(subject).not_to receive(:generate_and_send_container_charges)
 
@@ -169,15 +163,11 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
 
     it "sends credit invoices" do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
-      expect(subject).to receive(:credit_invoice?).with(invoice_snapshot).exactly(3).times.and_return true
+      expect(subject).to receive(:credit_invoice?).with(invoice_snapshot).exactly(2).times.and_return true
 
       expect(subject).to receive(:has_duty_charges?).with(invoice_snapshot).and_return true
       expect(subject).to receive(:generate_and_send_reversal).with(entry_snapshot, invoice_snapshot, broker_invoice_1, "DUTY").and_return true
       expect(subject).not_to receive(:generate_and_send_duty_charges)
-
-      expect(subject).to receive(:has_line_charges?).with(invoice_snapshot).and_return true
-      expect(subject).to receive(:generate_and_send_reversal).with(entry_snapshot, invoice_snapshot, broker_invoice_1, "LINE").and_return true
-      expect(subject).not_to receive(:generate_and_send_line_charges)
 
       expect(subject).to receive(:has_container_charges?).with(invoice_snapshot).and_return true
       expect(subject).to receive(:generate_and_send_reversal).with(entry_snapshot, invoice_snapshot, broker_invoice_1, "CONTAINER").and_return true
@@ -228,12 +218,14 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     it "sends xml with all charges reversed" do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").last
       expect_any_instance_of(Attachment).to receive(:download_to_tempfile).and_yield xml_tempfile
+      expect(subject).to receive(:duty_invoice_number).and_return "DUTYINV"
 
       expect(subject.generate_and_send_reversal entry_snapshot, invoice_snapshot, new_invoice, "DUTY").to eq true
 
       expect(captured_xml.length).to eq 1
 
       x = REXML::Document.new(captured_xml.first).root
+      expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceHeader/InvoiceNumber", "DUTYINV")
 
       lines = REXML::XPath.each(x, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'E063']").to_a
       expect(lines.length).to eq 2

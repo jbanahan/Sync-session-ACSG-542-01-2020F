@@ -43,17 +43,4 @@ describe PartNumberCorrelation do
       expect(@user.messages.last.subject).to eq("ERROR: Part Number Correlation Report")
     end
   end
-
-  describe "alphabet_column_to_numeric_column" do
-    it "should return the correct values for Excel column headings" do
-      @pnc = PartNumberCorrelation.new
-      
-      #note: indexed at 0
-      expect(@pnc.alphabet_column_to_numeric_column("A")).to eq(0)
-      expect(@pnc.alphabet_column_to_numeric_column("Z")).to eq(25)
-      expect(@pnc.alphabet_column_to_numeric_column("AA")).to eq(26)
-      expect(@pnc.alphabet_column_to_numeric_column("AZ")).to eq(51)
-      expect(@pnc.alphabet_column_to_numeric_column("ZZZ")).to eq((26 * (26**2)) + (26 * (26**1)) + 26 - 1)
-    end
-  end
 end

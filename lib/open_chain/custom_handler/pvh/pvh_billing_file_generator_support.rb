@@ -14,7 +14,6 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   PRIMARY_SYNC ||= "PVH BILLING"
   DUTY_SYNC ||= "PVH BILLING DUTY"
   CONTAINER_SYNC ||= "PVH BILLING CONTAINER"
-  LINE_SYNC ||= "PVH BILLING INVOICE LINE"
 
   def generate_and_send entry_snapshot_json
     # Don't even bother trying to send anything if there are failing business rules...
@@ -78,15 +77,6 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       generate_and_send_duty_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
     end
 
-    if has_line_charges?(invoice_snapshot)
-      sent = false
-      if credit_invoice?(invoice_snapshot)
-        sent = generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, "LINE")
-      end
-
-      generate_and_send_line_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
-    end
-
     if has_container_charges?(invoice_snapshot)
       sent = false
       if credit_invoice?(invoice_snapshot)
@@ -104,43 +94,42 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     nil
   end
 
-  def generate_and_send_line_charges(entry_snapshot, invoice_snapshot, invoice)
-    invoice_date = mf(invoice_snapshot, :bi_invoice_date)
-    currency = mf(invoice_snapshot, :bi_currency)
-    generate_and_send_invoice_xml(invoice, invoice_snapshot, "LINE") do |details|
-      # Extract all the charges and amounts we need to bill on this brokerage invoice
-      charges = extract_invoice_line_level_charges(invoice_snapshot)
-
-      invoice_lines = json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine")
-
-      prorations = {}
-      # Generate the prorations for each amount
-      charges.each_pair do |code, amount|
-        prorate_charge_across_all_invoice_lines(invoice_lines, code, amount, prorations)
-      end
-
-      if charges.size > 0
-        invoice_lines.each do |line_snapshot|
-          line_prorations = prorations[record_id(line_snapshot)]
-          invoice_line = add_invoice_line(details, entry_snapshot, line_snapshot)
-
-          line_prorations.each_pair do |charge_code, charge_amount|  
-            add_invoice_line_charge(invoice_line, invoice_date, charge_amount, charge_code, currency)
-          end
-        end
-      end
+  def invoice_number entry_snapshot, invoice_snapshot, invoice_type
+    if invoice_type == "DUTY"
+      # Implementing classes must implement this method, as the algorithm differs between US and Canada
+      inv_num = duty_invoice_number(entry_snapshot, invoice_snapshot)
+    elsif invoice_type == "CONTAINER"
+      inv_num = container_invoice_number(entry_snapshot, invoice_snapshot)
+    else
+      raise "Invalid invoice type #{invoice_type}."
     end
+
+    inv_num.to_s.gsub(/[^A-Za-z0-9]/, "")
+  end
+
+  def container_invoice_number entry_snapshot, invoice_snapshot
+    mf(invoice_snapshot, :bi_invoice_number)
   end
 
   def generate_and_send_container_charges(entry_snapshot, invoice_snapshot, invoice)
+    # Strip any non-alphanumeric chars..not sure if ever bill using them or not, but PVH appears to have systemic issues if 
+    # we even have a hyphen in the invoice number, so just be safe and clear it out.
+    invoice_number = mf(invoice_snapshot, :bi_invoice_number).gsub(/[^A-Za-z0-9]/, "")
     invoice_date = mf(invoice_snapshot, :bi_invoice_date)
     currency = mf(invoice_snapshot, :bi_currency)
-    generate_and_send_invoice_xml(invoice, invoice_snapshot, "CONTAINER") do |details|
+    generate_and_send_invoice_xml(invoice, invoice_snapshot, "CONTAINER", invoice_number) do |details|
       # Extract all the charges and amounts we need to bill on this brokerage invoice
       charges = extract_container_level_charges(invoice_snapshot)
 
-      containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
-
+      # When we have an air entry, we use the House Bills as the container numbers.
+      # PVH enters the House Bills in GTNexus like Containers, so they appear on our Shipment as containers
+      # so this works out real well, as all we have to do to accommodate 
+      if Entry.get_transport_mode_codes_us_ca("AIR").include?(mf(entry_snapshot, :ent_transport_mode_code).to_i)
+        containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
+      else
+        containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
+      end
+      
       prorations = {}
       # Generate the prorations for each amount
       charges.each_pair do |code, amount|
@@ -180,7 +169,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     original_invoice, invoice_xml_lines = find_and_reverse_original_invoice_xml_lines(entry_snapshot, invoice_snapshot, invoice_type)
     return false if invoice_xml_lines.blank?
     
-    generate_and_send_invoice_xml(invoice, invoice_snapshot, invoice_type) do |details|
+    generate_and_send_invoice_xml(invoice, invoice_snapshot, invoice_type, invoice_number(entry_snapshot, invoice_snapshot, invoice_type)) do |details|
       invoice_xml_lines.each do |line|
         details << line
       end
@@ -202,11 +191,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     order_line = shipment_line&.order_line
     order_line_number = order_line&.line_number
 
-    # If container number was blank above, we still could find it using the shipment line
-    container = shipment_line&.container
-    container_number = container&.container_number if container_number.blank?
+
+    container_number, bill_number = container_and_bill_number(shipment_line&.container, shipment_line)
     
-    generate_invoice_line_item(parent_element, "Manifest Line Item", order_line_number, master_bill:  bill_number(container, shipment_line),
+    generate_invoice_line_item(parent_element, "Manifest Line Item", order_line_number, master_bill: bill_number,
       container_number: container_number, order_number: order_number, part_number: part_number)
   end
 
@@ -219,27 +207,36 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     container = find_shipment_container(entry_snapshot, container_number)
 
-    line_item = generate_invoice_line_item(parent_element, "Container", line_counter, master_bill: bill_number(container, nil), container_number: container_number)
+    cont_number, bill_number = container_and_bill_number(container, nil)
+
+    line_item = generate_invoice_line_item(parent_element, "Container", line_counter, master_bill: bill_number, container_number: cont_number)
     generate_charge_field(line_item, "Container", code, invoice_date, amount, currency)
     return true
   end
 
-  def bill_number container, shipment_line
+  def container_and_bill_number container, shipment_line
     # For Ocean FCL modes we need to send the Master Bill as the BLNumber
     # For Ocean LCL / Air modes we need to send the House Bill as the BLNumber
     bill_of_lading = nil
+    container_number = nil
     if container&.shipment&.mode.to_s.strip =~ /Ocean/i
       fcl = container&.fcl_lcl.to_s.strip.upcase != "LCL"
       bill_of_lading = fcl ? container&.shipment&.master_bill_of_lading : container&.shipment&.house_bill_of_lading
+      container_number = container.container_number
     else
-      bill_of_lading = shipment_line&.shipment&.house_bill_of_lading
+      # Leave the container number blank for Air shipments
+      if shipment_line.nil?
+        bill_of_lading = container&.shipment&.house_bill_of_lading
+      else
+        bill_of_lading = shipment_line&.shipment&.house_bill_of_lading
+      end
     end
 
-    bill_of_lading
+    [container_number, bill_of_lading]
   end
 
-  def generate_and_send_invoice_xml broker_invoice, broker_invoice_snapshot, invoice_type, &block
-    xml, filename = generate_invoice_xml(broker_invoice_snapshot, invoice_type, &block)
+  def generate_and_send_invoice_xml broker_invoice, broker_invoice_snapshot, invoice_type, invoice_number, &block
+    xml, filename = generate_invoice_xml(broker_invoice_snapshot, invoice_type, invoice_number, &block)
     return nil unless xml.present?
 
     send_invoice_xml(broker_invoice, invoice_type, filename, xml)
@@ -279,17 +276,16 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     found_shipment_lines.clear
   end
 
-  def generate_invoice_xml broker_invoice_snapshot, invoice_type
+  def generate_invoice_xml broker_invoice_snapshot, invoice_type, invoice_number
     # setup/reset any data used for any previous invoice generations
     reset_data
 
     doc, root = build_xml_document("GenericInvoiceMessage")
-    invoice_number = mf(broker_invoice_snapshot, :bi_invoice_number)
     invoice_date = mf(broker_invoice_snapshot, :bi_invoice_date)
 
     filename = "GI_VANDE_PVH_#{invoice_number}_#{invoice_type}_#{Time.zone.now.to_i}.xml"
 
-    invoice_element, invoice_header, invoice_details = generate_invoice_file_header(root, broker_invoice_snapshot, "#{invoice_number}-#{invoice_type}", invoice_date, filename)
+    invoice_element, invoice_header, invoice_details = generate_invoice_file_header(root, broker_invoice_snapshot, invoice_number, invoice_date, filename)
 
     yield invoice_details
 
@@ -483,40 +479,18 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     extract_container_level_charges(invoice_snapshot).size > 0
   end
 
-  def has_line_charges? invoice_snapshot
-    extract_invoice_line_level_charges(invoice_snapshot).size > 0
-  end
-
   def pvh_importer
     @pvh ||= Company.where(system_code: "PVH").first
   end
 
   def invoice_type_xref
-    {"DUTY" => DUTY_SYNC, "CONTAINER" => CONTAINER_SYNC, "LINE" => LINE_SYNC}
+    {"DUTY" => DUTY_SYNC, "CONTAINER" => CONTAINER_SYNC}
   end
 
-  # This method will ONLY extract charge codes listed in the given cross refernce
+  # This method will extract all charge codes associated with container billing and will skip 
+  # any charge code listed by the skip codes method
   def extract_container_level_charges invoice_snapshot
-    charges = {}
-    json_child_entities(invoice_snapshot, "BrokerInvoiceLine").each do |line|
-      charge_code = mf(line, :bi_line_charge_code)
-      amount = mf(line, :bi_line_charge_amount)
-      next if amount.nil? || amount.zero?
-
-      gtn_code = container_level_codes[charge_code]
-      if !gtn_code.blank?
-        charges[gtn_code] ||= BigDecimal("0")
-        charges[gtn_code] += amount
-      end
-    end
-
-    charges
-  end
-
-  # This method differs from the other extract charges method in that it will return every
-  # charge code mapped to a GTN code, EXCEPT for those codes blacklisted in the skip_codes parameter
-  def extract_invoice_line_level_charges invoice_snapshot
-    codes_to_skip = (duty_level_codes.keys + container_level_codes.keys + skip_codes)
+    codes_to_skip = skip_codes + duty_level_codes.keys
 
     charges = {}
     json_child_entities(invoice_snapshot, "BrokerInvoiceLine").each do |line|
@@ -526,9 +500,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       amount = mf(line, :bi_line_charge_amount)
       next if amount.nil? || amount.zero?
 
-      gtn_code = line_level_codes[charge_code]
+      gtn_code = container_level_codes[charge_code]
       gtn_code = catchall_gtn_code() if gtn_code.blank?
-
       charges[gtn_code] ||= BigDecimal("0")
       charges[gtn_code] += amount
     end
@@ -540,80 +513,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     "942"
   end
 
-  def prorate_charge_across_all_invoice_lines commercial_invoice_lines, charge_code, charge_amount, existing_prorations
-    # PVH wants us to prorate the charge amounts based on the percentage of total commercial invoice value that the
-    # charge line makes up.
-    total_commercial_invoice_value = BigDecimal("0")
-    commercial_invoice_lines.each do |line|
-      value = mf(line, :cil_value)
-      if value 
-        total_commercial_invoice_value += value
-      end
-    end
-
-    total_amount = charge_amount.abs
-    proration_left = total_amount.dup
-    negative_charge = charge_amount < 0
-
-    prorations = {}
-
-    commercial_invoice_lines.each do |line|
-      value = mf(line, :cil_value)
-      prorated_amount = BigDecimal("0")
-
-      # If the line carries no commercial invoice value, then we don't calculate it into the proration valuation
-      if value && value.nonzero?
-        # Truncate the amount at 2 decimal places (essentially to prevent fractional pennies - we'll add them back in below)
-        proration_percentage = (value / total_commercial_invoice_value).round(5, BigDecimal::ROUND_DOWN)
-
-        prorated_amount = (total_amount * proration_percentage).round(2, BigDecimal::ROUND_DOWN)
-      end
-
-      prorations[record_id(line)] = prorated_amount
-      proration_left -= prorated_amount
-    end
-
-    # At this point, just equally distribute the proration amounts left one penny at a time
-    while(proration_left > 0)
-      prorations.each_pair do |id, amount|
-        # If the proration bucket is zero, it means the line had no value, so don't add leftovers back into it
-        next if amount.zero? && total_amount.nonzero?
-
-        prorations[id] = (amount + BigDecimal("0.01"))
-        proration_left -= BigDecimal("0.01")
-
-        break if proration_left <= 0
-      end
-    end
-
-    # Now make sure to flip the sign if we had a negative charge
-    if negative_charge
-      prorations.each_pair do |id, amount|
-        prorations[id] = amount * -1
-      end
-    end
-
-    # Now validate that we actually prorated correctly and the math above worked...
-    total = prorations.values.sum
-    if total != charge_amount
-      raise "Invalid proration calculation for charge code #{charge_code}.  Should have been billed $#{charge_amount}, but was $#{total}."
-    end
-
-    commercial_invoice_lines.each do |line|
-      id = record_id(line)
-      existing_prorations[id] ||= {}
-      existing_prorations[id][charge_code] ||= BigDecimal("0")
-      existing_prorations[id][charge_code] += prorations[id]
-    end
-
-    existing_prorations
-  end
-
   def prorate_charge_across_all_containers entry_snapshot, container_numbers, charge_code, charge_amount, existing_prorations
     total_container_weight = BigDecimal("0")
     container_weights = {}
 
-    container_numbers.each do |container_number|
+    Set.new(container_numbers.to_a).each do |container_number|
       container = find_shipment_container(entry_snapshot, container_number)
 
       container_weight = container.shipment_lines.map {|line| line.gross_kgs }.compact.sum
@@ -621,6 +525,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
       total_container_weight += container_weight if container_weight && container_weight.nonzero?
     end
+
+    raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)}." if container_weights.size == 0
 
     total_amount = charge_amount.abs
     proration_left = total_amount.dup
@@ -753,6 +659,13 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   def entry_container_numbers entry_snapshot
     container_numbers = mf(entry_snapshot, :ent_container_nums)
     container_numbers.to_s.gsub(/\s*BILLINGTEST/, "")
+  end
+
+  # This method exists solely to strip BILLINGTEST out of the container number field when testing.
+  # This can get removed once we're 100% live and sending invoices to PVH for all files.
+  def entry_house_bills entry_snapshot
+    house_bills = mf(entry_snapshot, :ent_hbols)
+    house_bills.to_s.gsub(/\s*BILLINGTEST/, "")
   end
 
 end; end; end; end

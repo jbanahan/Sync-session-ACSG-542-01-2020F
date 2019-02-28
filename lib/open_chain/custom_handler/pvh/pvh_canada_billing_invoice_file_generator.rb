@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
   def generate_and_send_duty_charges(entry_snapshot, invoice_snapshot, invoice)
     invoice_date = mf(invoice_snapshot, :bi_invoice_date)
 
-    generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY") do |details|
+    generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
       # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
       json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine") do |line_snapshot|
 
@@ -20,6 +20,21 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
         end
       end
     end
+  end
+
+  def duty_invoice_number entry_snapshot, invoice_snapshot
+    inv = mf(entry_snapshot, :ent_entry_num)
+    suffix = alphabetic_billing_suffix(mf(invoice_snapshot, :bi_suffix))
+    inv += suffix unless suffix.blank?
+
+    inv
+  end
+
+  def alphabetic_billing_suffix suffix
+    return nil if suffix.blank?
+    # Just use the same algorithm for determing the A-Z column index to determine the suffix to use
+    # 1 will be the first suffix, which we want to map to A, hence subtracting 1.
+    XlsxBuilder.numeric_column_to_alphabetic_column(suffix - 1)
   end
 
   def duty_charges_for_line line_snapshot
@@ -63,12 +78,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     {
       "31" => "C080", 
       "14" => "C080",
-      "33" => "545"
-    }
-  end
-
-  def line_level_codes
-    {
+      "33" => "545",
       "255" => "0027",
       "22" => "G740"
     }

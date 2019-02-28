@@ -36,7 +36,7 @@ class PartNumberCorrelation < ActiveRecord::Base
       tf = OpenChain::TariffFinder.new(self.entry_country_iso, importers)
 
       #note: indexed at zero
-      product_column_number = alphabet_column_to_numeric_column(self.part_column)
+      product_column_number = XlsxBuilder.alphabet_column_to_numeric_column(self.part_column)
 
       rows_used_originally = xlc.get_row(0, 0).length
       current_row = 1
@@ -85,19 +85,5 @@ class PartNumberCorrelation < ActiveRecord::Base
     xlc.set_cell(0, 0, rows_used + 1, "HTS Code")
     xlc.set_cell(0, 0, rows_used + 2, "Country of Origin Code")
     xlc
-  end
-
-  def alphabet_column_to_numeric_column(column_heading)
-    #Note that the return value is indexed at 0. A=>0, B=>1, C=>2, etc...
-    alphabet = '0abcdefghijklmnopqrstuvwxyz'
-    total_length = column_heading.length-1
-    sum = 0
-    column_heading.downcase.chars.each do |character|
-        position_value = alphabet.index(character)
-        contribution = position_value* (26**total_length)
-        sum += contribution
-        total_length -= 1
-    end
-    sum - 1
   end
 end

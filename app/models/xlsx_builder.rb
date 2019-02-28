@@ -244,6 +244,16 @@ class XlsxBuilder
     b.write "tmp/test.xlsx"
   end
 
+  def self.alphabet_column_to_numeric_column column_name
+    # Since this is built into Axlsx, we might as well just proxy their method
+    Axlsx.name_to_indices("#{column_name.upcase}1")[0]
+  end
+
+  def self.numeric_column_to_alphabetic_column number
+    # Since this is built into Axlsx, we might as well just proxy their method
+    Axlsx.col_ref number
+  end
+
   protected
 
     # Any styles, types, default data transformations should be done here (like apply default styles or transforming a value)

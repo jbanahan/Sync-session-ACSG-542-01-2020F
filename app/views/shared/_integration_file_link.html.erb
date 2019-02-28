@@ -1,4 +1,4 @@
-<% if obj.has_last_file? && ((MasterSetup.get.custom_feature? 'Admins View Integration Files' && user.admin?) || (!MasterSetup.get.custom_feature? 'Admins View Integration Files' && user.sys_admin?)) %>
+<% if obj.has_last_file? && ((MasterSetup.get.custom_feature?('Admins View Integration Files') && user.admin?) || (!MasterSetup.get.custom_feature?('Admins View Integration Files') && user.sys_admin?)) %>
   <div>
     <b>Integration File:</b> <%=link_to(obj.last_file_path.split("/").last, download_last_integration_file_attachments_path(attachable_id: obj.id, attachable_type: obj.class.to_s))%>
   </div>

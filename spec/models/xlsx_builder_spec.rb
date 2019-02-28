@@ -321,4 +321,27 @@ describe XlsxBuilder do
     end
   end
 
+  describe "alphabet_column_to_numeric_column" do
+    subject { described_class }
+
+    it "should return the correct values for Excel column headings" do
+      expect(subject.alphabet_column_to_numeric_column("A")).to eq(0)
+      expect(subject.alphabet_column_to_numeric_column("Z")).to eq(25)
+      expect(subject.alphabet_column_to_numeric_column("AA")).to eq(26)
+      expect(subject.alphabet_column_to_numeric_column("AZ")).to eq(51)
+      expect(subject.alphabet_column_to_numeric_column("ZZZ")).to eq(18277)
+    end
+  end
+
+  describe "numeric_column_to_alphabetic_column" do
+    subject { described_class }
+
+    it "should return the correct values for Excel column headings" do
+      expect(subject.numeric_column_to_alphabetic_column(0)).to eq("A")
+      expect(subject.numeric_column_to_alphabetic_column(25)).to eq("Z")
+      expect(subject.numeric_column_to_alphabetic_column(26)).to eq("AA")
+      expect(subject.numeric_column_to_alphabetic_column(51)).to eq("AZ")
+      expect(subject.numeric_column_to_alphabetic_column(18277)).to eq("ZZZ")
+    end
+  end
 end
