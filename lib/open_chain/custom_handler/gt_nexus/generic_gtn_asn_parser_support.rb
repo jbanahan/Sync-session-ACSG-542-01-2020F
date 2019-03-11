@@ -1,6 +1,8 @@
 module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnParserSupport
 
   def find_port port_xml, lookup_type_order: [:schedule_d_code, :schedule_k_code, :unlocode, :iata_code]
+    return nil if port_xml.nil?
+    
     # The port may have Locode, Schedule D or K codes..look for D, then K, then fall back to locode
     port = nil
     Array.wrap(lookup_type_order).each do |lookup_type|
