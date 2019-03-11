@@ -122,6 +122,25 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiContainersList/EdiContainers/uomWeight").to eq "KG"
         expect(s.text "EdiContainersList/EdiContainers/containerType").to eq "CTYPE"
       end
+
+      it "allows bills over 12 digits, truncating to 12" do
+        bill_of_lading.master_bill = "MBOL123456789012345"
+        bill_of_lading.house_bill = "HBOL987654321098765"
+        bill_of_lading.sub_bill = "SUBB123456789012345"
+        bill_of_lading.sub_sub_bill = "SSUB987654321098765"
+        doc = subject.generate_entry_xml entry
+
+        # We're only concerned here with the data under ediShipment, the rest is tested elsewhere
+        s = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment"
+        expect(s).not_to be_nil
+
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/scac").to eq "MBOL"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/masterBillAddl").to eq "123456789012"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/scacHouse").to eq "HBOL"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/houseBillAddl").to eq "987654321098"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/subBillAddl").to eq "123456789012"
+        expect(s.text "EdiShipmentIdList/EdiShipmentId/subSubBillAddl").to eq "987654321098"
+      end
     end
 
     context "with commercial invoice data" do

@@ -269,10 +269,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   end
 
   def generate_identifier_data parent, identifier
-    add_element(parent, "houseBill", g.string(identifier.house_bill, 12, pad_string: false, exception_on_truncate: true)) unless identifier.house_bill.blank?
-    add_element(parent, "masterBill", g.string(identifier.master_bill, 12, pad_string: false, exception_on_truncate: true))
-    add_element(parent, "subBill", g.string(identifier.sub_bill, 12, pad_string: false, exception_on_truncate: true)) unless identifier.sub_bill.blank?
-    add_element(parent, "subSubBill", g.string(identifier.sub_sub_bill, 12, pad_string: false, exception_on_truncate: true)) unless identifier.sub_sub_bill.blank?
+    # Allow truncating the master bill, this is mostly brought on by the fact that there are 1 or 2 shipping companies that 
+    # now use 13 character masterbills, and Kewill's edi only allows 12 chars (dumb).
+    add_element(parent, "houseBill", g.string(identifier.house_bill, 12, pad_string: false)) unless identifier.house_bill.blank?
+    add_element(parent, "masterBill", g.string(identifier.master_bill, 12, pad_string: false))
+    add_element(parent, "subBill", g.string(identifier.sub_bill, 12, pad_string: false)) unless identifier.sub_bill.blank?
+    add_element(parent, "subSubBill", g.string(identifier.sub_sub_bill, 12, pad_string: false)) unless identifier.sub_sub_bill.blank?
   end
 
   def generate_invoice_header parent, entry, invoice, lines, edi_identifier

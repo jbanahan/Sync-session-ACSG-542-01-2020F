@@ -43,8 +43,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         shipment.voyage = asn.text "Voyage"
         shipment.vessel = asn.text "Vessel"
         shipment.country_origin = find_port_country(REXML::XPath.first asn, "OriginCity")
+        # If there's no OriginCity, fall back to the PortOfLoading
+        shipment.country_origin = find_port_country(REXML::XPath.first asn, "PortOfLoading") if shipment.country_origin.nil?
         shipment.country_export = find_port_country(REXML::XPath.first asn, "PortOfLoading")
         shipment.country_import = find_port_country(REXML::XPath.first asn, "BLDestination")
+        # If there's no BLDestination, fall back to the PortOfDischarge
+        shipment.country_import = find_port_country(REXML::XPath.first asn, "PortOfDischarge") if shipment.country_import.nil?
+
 
         inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
 

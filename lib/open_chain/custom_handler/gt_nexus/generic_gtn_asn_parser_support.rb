@@ -25,7 +25,9 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
   end
 
   def find_port_country port_xml
-    iso_code = port_xml.text "CountryCode"
+    iso_code = port_xml&.text("CountryCode")
+    return nil if iso_code.blank?
+    
     @port ||= Hash.new do |h, k|
       h[k] = Country.where(iso_code: k).first
     end
