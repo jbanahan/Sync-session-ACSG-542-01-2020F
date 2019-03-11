@@ -68,22 +68,44 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   end
 
   def generate_and_send_invoice_files(entry_snapshot, invoice_snapshot, invoice)
-    if has_duty_charges?(invoice_snapshot)
+    # It's possible due to some error conditions that we'll have sent one invoice type for the invoice, but not 
+    # another type.  So make sure we're not sending the invoice type over and over again.
+    if has_duty_charges?(invoice_snapshot) && invoice_type_needs_sending?(invoice, "DUTY")
       sent = false
       if credit_invoice?(invoice_snapshot)
-        sent = generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, "DUTY")
+        begin
+          sent = generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, "DUTY")
+        rescue => e
+          handle_errored_sends(invoice, "DUTY", e)
+          return nil
+        end 
       end
 
-      generate_and_send_duty_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
+      begin
+        generate_and_send_duty_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
+      rescue => e
+        handle_errored_sends(invoice, "DUTY", e)
+        return nil
+      end
     end
 
-    if has_container_charges?(invoice_snapshot)
+    if has_container_charges?(invoice_snapshot) && invoice_type_needs_sending?(invoice, "CONTAINER")
       sent = false
       if credit_invoice?(invoice_snapshot)
-        sent = generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, "CONTAINER")
+        begin
+          sent = generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, "CONTAINER")
+        rescue => e
+          handle_errored_sends(invoice, "CONTAINER", e)
+          return nil
+        end 
       end
 
-      generate_and_send_container_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
+      begin
+        generate_and_send_container_charges(entry_snapshot, invoice_snapshot, invoice) unless sent
+      rescue => e
+        handle_errored_sends(invoice, "CONTAINER", e)
+        return nil
+      end
     end
 
     sync_record = find_or_build_sync_record(invoice, PRIMARY_SYNC)
@@ -92,6 +114,18 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     sync_record.save!
     nil
+  end
+
+  def handle_errored_sends invoice, invoice_type, error
+    sync_record = find_or_build_sync_record invoice, invoice_type_xref[invoice_type]
+    sync_record.failure_message = error.message
+    sync_record.save!
+    e.log_me ["Failed to generate #{invoice_type} invoice for Broker Invoice # #{invoice.invoice_number}."]
+  end
+
+  def invoice_type_needs_sending? invoice, invoice_type
+    trading_partner = invoice_type_xref[invoice_type]
+    invoice.sync_records.find { |r| r.trading_partner == trading_partner}.nil?
   end
 
   def invoice_number entry_snapshot, invoice_snapshot, invoice_type
@@ -124,7 +158,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # When we have an air entry, we use the House Bills as the container numbers.
       # PVH enters the House Bills in GTNexus like Containers, so they appear on our Shipment as containers
       # so this works out real well, as all we have to do to accommodate 
-      if Entry.get_transport_mode_codes_us_ca("AIR").include?(mf(entry_snapshot, :ent_transport_mode_code).to_i)
+      if air_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
       else
         containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
@@ -148,6 +182,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         end
       end
     end
+  end
+
+  def air_mode? entry_snapshot
+    Entry.get_transport_mode_codes_us_ca("AIR").include?(mf(entry_snapshot, :ent_transport_mode_code).to_i)
   end
 
   def unsent_invoices entry, broker_invoice_snapshots
@@ -458,8 +496,15 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all 
     # anyway to bill the entry.
     @shipments ||= begin
-      master_bills = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s)
-      Shipment.where(importer_id: pvh_importer.id, master_bill_of_lading: master_bills).to_a
+      # For air shipments, we're going to match on house bill, master bill for ocean.
+      query_params = {importer_id: pvh_importer.id}
+      if air_mode?(entry_snapshot)
+        query_params[:house_bill_of_lading] = Entry.split_newline_values(entry_house_bills(entry_snapshot))
+      else
+        query_params[:master_bill_of_lading] = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s)
+      end
+
+      Shipment.where(query_params).to_a
     end
   end
 

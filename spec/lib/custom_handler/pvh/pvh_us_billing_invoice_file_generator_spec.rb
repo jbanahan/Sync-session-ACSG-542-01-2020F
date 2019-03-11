@@ -277,8 +277,8 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
     end
 
     it "uses house bill for non-ocean modes" do
-      entry.update_attributes! transport_mode_code: 40, house_bills_of_lading: "HBOL987654321"
-      shipment.update_attributes! mode: "AIR"
+      entry.update_attributes! transport_mode_code: 40, house_bills_of_lading: "HBOL987654321", master_bills_of_lading: nil
+      shipment.update_attributes! mode: "AIR", master_bill_of_lading: nil
       shipment.containers.first.update_attributes! container_number: "HBOL987654321"
 
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
