@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
   }
 
   let (:shipment) {
-    s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh)
+    s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
     l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200)

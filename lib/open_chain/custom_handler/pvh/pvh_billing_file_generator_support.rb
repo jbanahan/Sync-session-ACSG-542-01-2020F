@@ -120,12 +120,13 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     sync_record = find_or_build_sync_record invoice, invoice_type_xref[invoice_type]
     sync_record.failure_message = error.message
     sync_record.save!
-    e.log_me ["Failed to generate #{invoice_type} invoice for Broker Invoice # #{invoice.invoice_number}."]
+    error.log_me ["Failed to generate #{invoice_type} invoice for Broker Invoice # #{invoice.invoice_number}."]
   end
 
   def invoice_type_needs_sending? invoice, invoice_type
     trading_partner = invoice_type_xref[invoice_type]
-    invoice.sync_records.find { |r| r.trading_partner == trading_partner}.nil?
+    sr = invoice.sync_records.find { |r| r.trading_partner == trading_partner }
+    sr.nil? || sr.sent_at.nil?
   end
 
   def invoice_number entry_snapshot, invoice_snapshot, invoice_type
@@ -504,7 +505,9 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         query_params[:master_bill_of_lading] = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s)
       end
 
-      Shipment.where(query_params).to_a
+      # The pvh_gtn_asn_xml check is to ensure we're only pulling shipments that were created by the pvh gtn xml parser.  We currently also get an 856 EDI feed too from APL
+      # which we don't want to use.
+      Shipment.where(query_params).where("last_file_path LIKE ?", '%pvh_gtn_asn_xml%').to_a
     end
   end
 
@@ -564,14 +567,23 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     Set.new(container_numbers.to_a).each do |container_number|
       container = find_shipment_container(entry_snapshot, container_number)
-
-      container_weight = container.shipment_lines.map {|line| line.gross_kgs }.compact.sum
+      container_weight = BigDecimal("0")
+      container_weight = container.shipment_lines.map {|line| line.gross_kgs }.compact.sum if container
       container_weights[container_number] = container_weight
 
       total_container_weight += container_weight if container_weight && container_weight.nonzero?
     end
 
-    raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)}." if container_weights.size == 0
+    # We need to fail if any container didn't have weight information associated with it.
+    if container_weights.size == 0
+      raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)}." 
+    else
+      container_weights.each_pair do |container_number, weight|
+        if weight.nil? || weight.zero?
+          raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)} and Container # #{container_number}." 
+        end
+      end
+    end
 
     total_amount = charge_amount.abs
     proration_left = total_amount.dup
