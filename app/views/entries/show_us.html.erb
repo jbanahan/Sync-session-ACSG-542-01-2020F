@@ -460,7 +460,7 @@ $(function() {
         </table>
         <%# The following needs to be here so cache_digests recognizes the shared/detail_table partial as a cache dependency...not sure
             exactly why it doesn't already see it since the partial is used exactly the same as the others, but it's not. (bug?) %>
-        <%# Template Dependency: shared/detail_table %>
+        <%# Template Dependency: shared/detail_table %> 
         <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines} %>
         <%=render :partial => 'shared/integration_file_link', :locals => {:obj => bi, :user => current_user, :exclude_send_button => true} %>
       <% end %>
@@ -468,5 +468,5 @@ $(function() {
   <%end%>
   <%=render :partial => 'shared/attachments', :locals => {:attachable => @entry, :width=>"wide"} %>
   <%= render partial: "quick_jump", locals: {entry: @entry, user: current_user} %>
-  <%= render :partial => 'shared/integration_file_link', :locals => {:obj => @entry, :user => current_user} %>
 <%end-%>
+<%= render :partial => 'shared/integration_file_link', :locals => {:obj => @entry, :user => current_user} %>
