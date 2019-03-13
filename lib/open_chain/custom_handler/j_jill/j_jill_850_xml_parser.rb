@@ -85,8 +85,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.product_category = self.get_product_category_from_vendor_styles(@vendor_styles)
         ord.save!
         log.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, Order.to_s, ord.id, value: cust_ord
-        ord.update_custom_value!(@cdefs[:ord_ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501').text])
-        ord.update_custom_value!(@cdefs[:ord_entry_port_name],REXML::XPath.first(order_root,'TD5/TD508').text)
+        ord.update_custom_value!(@cdefs[:ord_ship_type],SHIP_VIA_CODES[REXML::XPath.first(order_root,'TD5/TD501')&.text])
+        ord.update_custom_value!(@cdefs[:ord_entry_port_name],REXML::XPath.first(order_root,'TD5/TD508')&.text)
         if ord.ship_window_end && ord.get_custom_value(@cdefs[:ord_original_gac_date]).value.blank?
           ord.update_custom_value!(@cdefs[:ord_original_gac_date],ord.ship_window_end)
         end
