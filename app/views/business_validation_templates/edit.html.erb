@@ -10,11 +10,27 @@
     $('#btn_copy').click(function() {
       $('#copy_frm').submit();
     })
+  
+    $('#show_rule_upload_btn').click(function() {
+      $('#rule-upload-modal').modal('show');
+    });
+    
+    $('#btn_rule_upload').click(function() {
+      $('#upload_rule_frm').submit();
+    });
+
+    $('.rule_download_link').click(function() {
+      var ruleId = $(this).attr('data-rule-id');
+      $("#copy_frm").attr("action", "/business_validation_templates/" + templateId + "/business_validation_rules/" + ruleId + "/copy");
+      $("#rule_copy_modal").modal("show");
+    });
+
   });
 <% end %>
 
 <%-content_for :action_bar do-%>
   <button class="btn_link btn btn-secondary" link_to="<%=business_validation_template_path(@bvt) %>">Back</button>
+  <button id="show_rule_upload_btn" class="btn_link btn btn-secondary" title="Rule Upload"><i class='fa fa-upload'></i></button>
 <%-end-%>
 <div class="container">
   <div class="row">
@@ -59,6 +75,32 @@
         <div class="col-md-1 offset-md-1">
           <button type="button" class="btn float-right" id='btn_copy'>Copy</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="rule-upload-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Upload Rule</h3>
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <%= form_tag upload_business_validation_template_business_validation_rules_path(@bvt.id), :multipart => true, :class=>'form-horizontal', :id=>"upload_rule_frm" do %>
+          <p>Select a JSON file.</p>
+          <div class="form-group">
+            <div class="col-md-4">
+              <%= file_field_tag :attached, :style => "width: 500px !important;", accept: ".json, application/json"  %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <div class="modal-footer">
+          <div class="col-md-1 offset-md-1">
+            <button type="button" class="btn float-right" id='btn_rule_upload'>Upload</button>
+          </div>
       </div>
     </div>
   </div>

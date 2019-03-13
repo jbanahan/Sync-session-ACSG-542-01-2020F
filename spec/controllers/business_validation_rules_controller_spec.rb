@@ -248,7 +248,35 @@ describe BusinessValidationRulesController do
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       expect(BusinessValidationRule.find_by_id(@bvr.id)).to be_nil
     end
+  end
 
+  describe "upload", :disable_delayed_jobs do
+    let(:user) { Factory(:admin_user) }
+    let(:file) { double "file"}
+    let(:cf) { double "custom file" }
+    let(:uploader) { OpenChain::BusinessRulesCopier::RuleUploader }
+    before { sign_in_as user }
+
+    it "processes file with rule copier" do
+      allow(cf).to receive(:id).and_return 1
+      expect(CustomFile).to receive(:create!).with(file_type: uploader.to_s, uploaded_by: user, attached: file.to_s).and_return cf
+      expect(CustomFile).to receive(:process).with(1, user.id, bvt_id: '2')
+      put :upload, attached: file, business_validation_template_id: 2
+      expect(response).to redirect_to business_validation_template_path(2)
+      expect(flash[:notices]).to include "Your file is being processed. You'll receive a VFI Track message when it completes."
+    end
+
+    it "only allows admin" do
+      user = Factory(:user)
+      sign_in_as user     
+      expect(CustomFile).to_not receive(:create!)
+    end
+
+    it "errors if no file submitted" do
+      put :upload, attached: nil, business_validation_template_id: 2
+      expect(CustomFile).to_not receive(:create!)
+      expect(flash[:errors]).to include "You must select a file to upload."
+    end
   end
 
   describe "copy", :disable_delayed_jobs do

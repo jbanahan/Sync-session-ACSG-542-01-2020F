@@ -2,7 +2,7 @@ require 'open_chain/name_incrementer'
 
 module OpenChain; module BusinessRulesCopier
   
-  class Uploader
+  class TemplateUploader
     def initialize custom_file
       @custom_file = custom_file
     end
@@ -15,6 +15,28 @@ module OpenChain; module BusinessRulesCopier
           name = OpenChain::NameIncrementer.increment bvt.name, self.class.parent.template_names
           bvt.update_attributes! name: name, disabled: true
           user.messages.create subject: "File Processing Complete", body: "Business Validation Template upload for file #{@custom_file.attached_file_name} is complete."
+        end
+      rescue => e        
+        user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
+      end
+    end
+  end
+
+  class RuleUploader
+    def initialize custom_file
+      @custom_file = custom_file
+    end
+
+    def process user, parameters
+      begin
+        OpenChain::S3.download_to_tempfile(@custom_file.bucket, @custom_file.path) do |file|
+          rule_hsh = JSON.parse(file.read)
+          bvt = BusinessValidationTemplate.find parameters[:bvt_id]
+          bvr = BusinessValidationRule.parse_copy_attributes(rule_hsh)
+          name = OpenChain::NameIncrementer.increment bvr.name, self.class.parent.rule_names(bvt.id)
+          bvr.update_attributes! name: name, disabled: true
+          bvt.business_validation_rules << bvr
+          user.messages.create subject: "File Processing Complete", body: "Business Validation Rule upload for file #{@custom_file.attached_file_name} is complete."
         end
       rescue => e        
         user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")

@@ -1,10 +1,10 @@
 describe OpenChain::BusinessRulesCopier do
   let(:user) { Factory(:user) }
 
-  context "Uploader" do
+  context "TemplateUploader" do
     let(:cf) { double "custom file" }
     let(:file) { double "JSON file"}
-    let(:uploader) { described_class::Uploader.new cf }
+    let(:template_uploader) { described_class::TemplateUploader.new cf }
     before do 
       allow(cf).to receive(:path).and_return "/path"
       allow(cf).to receive(:bucket).and_return "bucket"
@@ -20,7 +20,7 @@ describe OpenChain::BusinessRulesCopier do
         expect(BusinessValidationTemplate).to receive(:parse_copy_attributes).with({"content" => "stuff"}).and_return template
         expect(template).to receive(:update_attributes!).with(name: "temp name", disabled: true)
 
-        uploader.process(user, nil)
+        template_uploader.process(user, nil)
         expect(user.messages.count).to eq 1
         msg = user.messages.first
         expect(msg.subject).to eq "File Processing Complete"
@@ -31,7 +31,50 @@ describe OpenChain::BusinessRulesCopier do
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_raise "ERROR!"
         expect(BusinessValidationTemplate).to_not receive(:parse_copy_attributes)
         
-        uploader.process(user, nil)
+        template_uploader.process(user, nil)
+        expect(user.messages.count).to eq 1
+        msg = user.messages.first
+        expect(msg.subject).to eq "File Processing Complete With Errors"
+        expect(msg.body).to eq "Unable to process file test_json.txt due to the following error:<br>ERROR!"
+      end
+    end
+  end
+
+  context "RuleUploader" do
+    let(:cf) { double "custom file" }
+    let(:file) { double "JSON file"}
+    let(:rule_uploader) { described_class::RuleUploader.new cf }
+    let!(:bvt) { Factory(:business_validation_template) }
+    before do 
+      allow(cf).to receive(:path).and_return "/path"
+      allow(cf).to receive(:bucket).and_return "bucket"
+      allow(cf).to receive(:attached_file_name).and_return "test_json.txt"
+      allow(file).to receive(:read).and_return "{\"content\":\"stuff\"}"
+    end
+
+    describe "process" do
+      it "parses rule attributes from JSON file and notifies user" do
+        rule = OpenStruct.new
+        rule.name = "temp name"
+        bvr_relation = double "bvr relation"
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_yield file
+        expect(BusinessValidationRule).to receive(:parse_copy_attributes).with({"content" => "stuff"}).and_return rule
+        expect(rule).to receive(:update_attributes!).with(name: "temp name", disabled: true)
+        expect_any_instance_of(BusinessValidationTemplate).to receive(:business_validation_rules).and_return bvr_relation
+        expect(bvr_relation).to receive(:<<).with rule
+
+        rule_uploader.process(user, bvt_id: bvt.id)
+        expect(user.messages.count).to eq 1
+        msg = user.messages.first
+        expect(msg.subject).to eq "File Processing Complete"
+        expect(msg.body).to eq "Business Validation Rule upload for file test_json.txt is complete."
+      end
+
+      it "notifies user of error" do
+        expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_raise "ERROR!"
+        expect(BusinessValidationRule).to_not receive(:parse_copy_attributes)
+        
+        rule_uploader.process(user, nil)
         expect(user.messages.count).to eq 1
         msg = user.messages.first
         expect(msg.subject).to eq "File Processing Complete With Errors"

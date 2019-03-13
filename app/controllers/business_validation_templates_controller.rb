@@ -94,7 +94,7 @@ class BusinessValidationTemplatesController < ApplicationController
       if file.nil?
         error_redirect "You must select a file to upload."
       else
-        uploader = OpenChain::BusinessRulesCopier::Uploader
+        uploader = OpenChain::BusinessRulesCopier::TemplateUploader
         cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: current_user, attached: file)
         CustomFile.delay.process(cf.id, current_user.id)
         add_flash(:notices, "Your file is being processed. You'll receive a VFI Track message when it completes.")

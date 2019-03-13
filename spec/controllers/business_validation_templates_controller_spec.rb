@@ -188,7 +188,7 @@ describe BusinessValidationTemplatesController do
     let(:user) { Factory(:admin_user) }
     let(:file) { double "file"}
     let(:cf) { double "custom file" }
-    let(:uploader) { OpenChain::BusinessRulesCopier::Uploader }
+    let(:uploader) { OpenChain::BusinessRulesCopier::TemplateUploader }
     before {sign_in_as user}
 
     it "processes file with rule copier" do

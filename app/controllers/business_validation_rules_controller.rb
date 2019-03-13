@@ -80,6 +80,31 @@ class BusinessValidationRulesController < ApplicationController
     end
   end
 
+  def download
+    admin_secure {
+      bvr = BusinessValidationRule.find params[:id]
+      json = bvr.copy_attributes.to_json
+      filename = "#{bvr.name}_#{Date.today.strftime("%m-%d-%Y")}.json"
+      send_data json, filename: filename, type: 'application/json', disposition: "attachment"
+    }
+  end
+
+  def upload
+    admin_secure {
+      bvt_id = params[:business_validation_template_id]
+      file = params[:attached]
+      if file.nil?
+        error_redirect "You must select a file to upload."
+      else
+        uploader = OpenChain::BusinessRulesCopier::RuleUploader
+        cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: current_user, attached: file)
+        CustomFile.delay.process(cf.id, current_user.id, bvt_id: bvt_id)
+        add_flash(:notices, "Your file is being processed. You'll receive a VFI Track message when it completes.")
+        redirect_to business_validation_template_path(bvt_id)
+      end
+    }
+  end
+
   def copy
     admin_secure {
       destination_template_id = params[:new_template_id]
