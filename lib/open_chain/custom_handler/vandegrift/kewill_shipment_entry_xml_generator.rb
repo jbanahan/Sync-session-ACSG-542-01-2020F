@@ -305,7 +305,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
         inv_line.hts = product.hts_for_country("US").first
       end      
 
-      order_line = shipment_line.order_lines.first
+      order_line = shipment_line.order_line
       if order_line
         inv_line.country_of_origin = order_line.country_of_origin
         inv_line.unit_price = order_line.price_per_unit

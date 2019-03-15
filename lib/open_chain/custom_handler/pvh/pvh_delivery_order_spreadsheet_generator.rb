@@ -280,7 +280,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
                         joins("INNER JOIN shipments ON shipments.id = shipment_lines.shipment_id").
                         joins("INNER JOIN containers ON containers.id = shipment_lines.container_id").
                         joins("INNER JOIN companies on companies.id = shipments.importer_id").
-                        where("companies.alliance_customer_number = ? ", entry.customer_number).
+                        where("companies.alliance_customer_number = 'PVHWSHT'").
                         where("containers.container_number IN (?)", containers).
                         where("shipments.master_bill_of_lading IN (?)", bills)
 

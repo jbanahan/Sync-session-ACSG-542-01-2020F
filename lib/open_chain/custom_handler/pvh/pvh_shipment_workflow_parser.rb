@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
   def process_shipment_lines user, bol, lines
     importer = pvh_importer
 
-    shipment = find_shipment(importer, "PVH-#{bol}")
+    shipment = find_shipment(importer, "PVHWSHT-#{bol}")
     orders = build_orders(importer, lines)
     order_objects = create_orders(user, orders.values)
 
@@ -104,12 +104,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         order = {'order_lines_attributes' => []}
 
         orders[order_number] = order
-        order['ord_ord_num'] = "PVH-#{order_number}"
+        order['ord_ord_num'] = "PVHWSHT-#{order_number}"
         order['ord_cust_ord_no'] = order_number
         order['ord_imp_id'] = importer.id
       end
 
-      style = "#{pvh_importer.system_code}-#{v(line, 15)}"
+      style = "PVHWSHT-#{v(line, 15)}"
       order_line =  order['order_lines_attributes'].find {|line| line['ordln_puid'] == style && line[uid(:ord_line_color)] == v(line, 17)}
       if order_line.nil?
         order_line = {}
@@ -162,9 +162,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
         end
 
         # Find an existing shipment line hooked to the order / style specified on the line
-        order = orders["PVH-#{v(line, 14)}"]
+        order = orders["PVHWSHT-#{v(line, 14)}"]
         # The uniqueness factor of the order lines in the pvh file is the order / style / color (whish they'd send a sku)
-        ol_style = "PVH-#{v(line, 15)}"
+        ol_style = "PVHWSHT-#{v(line, 15)}"
         ol_color = v(line, 17)
         ol_division = v(line, 12) + v(line, 13)
         # Since we're working with object that may not have been saved, we need to use the actual attribute matches on these rather than the ==
@@ -229,8 +229,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhShipmentWorkflowPar
     end
 
     def pvh_importer
-      @pvh ||= Company.importers.where(system_code: "PVH").first
-      raise "No importer with system code 'PVH' found." unless @pvh
+      @pvh ||= Company.importers.where(system_code: "PVHWSHT").first
+      raise "No importer with system code 'PVHWSHT' found." unless @pvh
       @pvh
     end
 

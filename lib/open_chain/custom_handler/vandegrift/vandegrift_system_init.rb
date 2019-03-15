@@ -21,7 +21,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     require 'open_chain/custom_handler/advance/advance_entry_load_shipment_comparator'
     require 'open_chain/custom_handler/pvh/pvh_invoice_comparator'
     require 'open_chain/custom_handler/pvh/pvh_entry_billing_comparator'
-    require 'open_chain/custom_handler/pvh/pvh_kewill_entry_load_shipment_comparator'
     require 'open_chain/custom_handler/vandegrift/kewill_isf_backfill_comparator'
     require 'open_chain/custom_handler/vandegrift/kewill_ci_load_isf_comparator'
     require 'open_chain/custom_handler/vandegrift/vandegrift_entry_archive_comparator'
@@ -43,7 +42,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Pvh::PvhInvoiceComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator
-    OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Pvh::PvhKewillEntryLoadShipmentComparator
 
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator

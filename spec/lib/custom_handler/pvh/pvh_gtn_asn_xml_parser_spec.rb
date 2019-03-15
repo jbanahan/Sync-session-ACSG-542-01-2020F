@@ -21,6 +21,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
     line = i.invoice_lines.create! po_number: "RTTC216384", part_number: "7696164", mid: "MYKULRUB669TAI"
     i
   }
+  let (:existing_shipment) { Factory(:shipment, importer: pvh, reference: "PVH-5093094M01")}
 
   describe "process_asn_update" do
 
@@ -123,6 +124,15 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(l.product).to eq product
       expect(l.order_lines.first).to eq order_line_2
       expect(l.mid).to eq "MYKULRUB669TAI"
+    end
+
+    it "clears any existing Kewill Entry sync record's sent_at date" do
+      sr = existing_shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: Time.zone.now
+
+      subject.process_asn_update asn_xml, user, "bucket", "key"
+
+      sr.reload
+      expect(sr.sent_at).to be_nil
     end
   end
 

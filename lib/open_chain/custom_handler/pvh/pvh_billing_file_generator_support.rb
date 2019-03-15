@@ -111,6 +111,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     sync_record = find_or_build_sync_record(invoice, PRIMARY_SYNC)
     sync_record.sent_at = Time.zone.now
     sync_record.confirmed_at = Time.zone.now + 1.minute
+    sync_record.failure_message = nil
 
     sync_record.save!
     nil
@@ -293,6 +294,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
       sync_record.sent_at = Time.zone.now
       sync_record.confirmed_at = Time.zone.now + 1.minute
+      # If we're updating an existing sync record, there might be a failure message, so clear it now that we have sent the data.
+      sync_record.failure_message = nil
 
       sync_record.save!
     end

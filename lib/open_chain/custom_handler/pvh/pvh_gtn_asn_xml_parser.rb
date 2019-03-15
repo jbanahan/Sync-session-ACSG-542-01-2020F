@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_xml_parser'
+require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_comparator'
 
 module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnAsnXmlParser
 
@@ -22,7 +23,13 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
   end
 
   def finalize_shipment shipment, xml
+    # This indicates to our Kewill entry xml generator that the data is ready to be sent to Kewill.
     set_custom_value(shipment, Time.zone.now, :shp_entry_prepared_date)
+    # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to 
+    # Kewill on each shipment update.
+    sr = shipment.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER}
+    sr.sent_at = nil if sr.present?
+
     nil
   end
 

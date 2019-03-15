@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     {
       "0044" => "C080", 
       "0082" => "974", 
-      "0050" => "545",
+      "0050" => "0545",
       "0007" => "G740", 
       "0008" => "E063", 
       "0009" => "AFEE", 

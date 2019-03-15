@@ -7,6 +7,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   include OpenChain::EntityCompare::ComparatorHelper
   include OpenChain::FtpFileSupport
 
+  TRADING_PARTNER ||= "Kewill Entry"
+
   def self.accept? snapshot
     accept = super
     return false unless accept
@@ -68,7 +70,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   end
 
   def trading_partner shipment
-    "Kewill Entry"
+    TRADING_PARTNER
   end
 
   def invoice_generator alliance_customer_number

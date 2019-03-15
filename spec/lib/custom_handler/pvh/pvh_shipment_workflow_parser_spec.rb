@@ -10,21 +10,21 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     ["01/21/16", "2254444", nil, "KAETHE P", "OOLU7360259", "OOLU", "2567813300", "HOT", "JONESVILLE", "CN", "REGINA MIRACLE INTL", "0159419203", "A3", "4W", "315605", "F3646", "       ", "025", "2394", "MODERN T-SHIRT      ", "6212109020", "   ", " ", "5.32", "0.000", "63", "1/29/2016", "1/28/2016", "WOMEN'S BRA", nil, nil, "USSAV", "016", "12/23/2015", "HKHKG", "12/20/15", "                                       ", nil, nil]
   }
 
-  let (:pvh) { Factory(:importer, system_code: "PVH") }
+  let (:pvh) { Factory(:importer, system_code: "PVHWSHT") }
   let (:user) { Factory(:master_user, product_view: true, order_view: true) }
   let (:unlading_port) { Factory(:port, unlocode: "USSAV")}
   let (:lading_port) { Factory(:port, unlocode: "HKHKG")}
   let (:cdefs) {subject.instance_variable_get("@cdefs")}
-  let (:existing_product) { Factory(:product, unique_identifier: "#{pvh.system_code}-F3646")}
+  let (:existing_product) { Factory(:product, unique_identifier: "PVHWSHT-F3646")}
   let (:existing_order) {
-    order = Factory(:order, importer: pvh, order_number: "#{pvh.system_code}-315605")
+    order = Factory(:order, importer: pvh, order_number: "PVHWSHT-315605")
     order_line = order.order_lines.create! product: existing_product
     order_line.update_custom_value! cdefs[:ord_line_color], "025"
     order_line.update_custom_value! cdefs[:ord_line_division], "A34W"
     order
   }
   let (:existing_shipment) {
-    shipment = Factory(:shipment, reference: "#{pvh.system_code}-OOLU2567813300", importer: pvh)
+    shipment = Factory(:shipment, reference: "PVHWSHT-OOLU2567813300", importer: pvh)
     container = shipment.containers.create! container_number: "OOLU7360259"
     sl = shipment.shipment_lines.create! product: existing_product, container: container
     sl.piece_sets.create! order_line: existing_order.order_lines.first, quantity: 10
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
 
       s = result[:shipment]
       expect(s).to be_persisted
-      expect(s.reference).to eq "PVH-OOLU2567813300"
+      expect(s.reference).to eq "PVHWSHT-OOLU2567813300"
       expect(s.importer).to eq pvh
       expect(s.master_bill_of_lading).to eq "OOLU2567813300"
       expect(s.vessel).to eq "KAETHE P"
@@ -93,13 +93,13 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(ol1.custom_value(cdefs[:ord_line_division])).to eq "A34W"
 
       product = ol1.product
-      expect(product.unique_identifier).to eq "PVH-F3646"
+      expect(product.unique_identifier).to eq "PVHWSHT-F3646"
       expect(product.importer).to eq pvh
       expect(product.custom_value(cdefs[:prod_part_number])).to eq "F3646"
       expect(line.product).to eq product
 
       oh = ol1.order
-      expect(oh.order_number).to eq "PVH-315605"
+      expect(oh.order_number).to eq "PVHWSHT-315605"
       expect(oh.customer_order_number).to eq "315605"
       expect(oh.importer).to eq pvh
 
@@ -140,13 +140,13 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(ol.custom_value(cdefs[:ord_line_division])).to eq "A34W"
 
       product = ol.product
-      expect(product.unique_identifier).to eq "PVH-F3647"
+      expect(product.unique_identifier).to eq "PVHWSHT-F3647"
       expect(product.importer).to eq pvh
       expect(product.custom_value(cdefs[:prod_part_number])).to eq "F3647"
       expect(line.product).to eq product
 
       oh = ol.order
-      expect(oh.order_number).to eq "PVH-315607"
+      expect(oh.order_number).to eq "PVHWSHT-315607"
       expect(oh.customer_order_number).to eq "315607"
       expect(oh.importer).to eq pvh
     end

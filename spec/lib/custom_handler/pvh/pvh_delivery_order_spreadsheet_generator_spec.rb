@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   }
 
   let(:importer) { 
-    i = Factory(:importer, alliance_customer_number: "CUST") 
+    i = Factory(:importer, alliance_customer_number: "PVHWSHT") 
     i.addresses.create! name: "DEST1", line_1: "ADDR1", city: "CITY", state: "ST", postal_code: "12345", phone_number: "123-456-7890", fax_number: "098-765-4321"
     i
   }
