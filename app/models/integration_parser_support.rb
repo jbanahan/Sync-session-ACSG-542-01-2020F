@@ -16,6 +16,12 @@ module IntegrationParserSupport
     self.class.has_last_file? self.last_file_bucket, self.last_file_path
   end
 
+  def can_view_integration_link? user
+    return false unless self.has_last_file?
+    return true if user.sys_admin?
+    return user.admin? && MasterSetup.get.custom_feature?('Admins View Integration Files')
+  end
+
   def self.included(base)
     base.extend(ClassMethods)
   end

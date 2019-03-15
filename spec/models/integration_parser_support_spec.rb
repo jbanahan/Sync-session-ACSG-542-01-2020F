@@ -72,4 +72,42 @@ describe IntegrationParserSupport do
     end
   end
 
+  describe "can_view_integration_link?" do
+
+    let (:object) { Entry.new last_file_bucket: "bucket", last_file_path: "file.txt" }
+
+    it "allows sys admins to view" do
+      user = User.new
+      user.sys_admin = true
+      expect(object.can_view_integration_link? user).to eq true
+    end
+
+    it "allows admins to view if custom feature enabled" do
+      user = User.new
+      user.admin = true
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("Admins View Integration Files").and_return true
+      expect(object.can_view_integration_link? user).to eq true
+    end
+    
+    it "does not allow admins to view if custom feature is not enabled" do
+      user = User.new
+      user.admin = true
+      ms = stub_master_setup
+      expect(ms).to receive(:custom_feature?).with("Admins View Integration Files").and_return false
+      expect(object.can_view_integration_link? user).to eq false
+    end
+
+    it "does not allow standard accounts to view" do
+      user = User.new
+      expect(object.can_view_integration_link? user).to eq false
+    end
+
+    it "does not allow anyone to view if there is no last file" do
+      expect(object).to receive(:has_last_file?).and_return false
+      user = User.new
+      user.sys_admin = true
+      expect(object.can_view_integration_link? user).to eq false
+    end
+  end
 end
