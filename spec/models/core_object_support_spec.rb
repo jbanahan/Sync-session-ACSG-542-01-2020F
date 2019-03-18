@@ -442,5 +442,9 @@ describe CoreObjectSupport do
       expect(res[1]).to eq('b ')
       expect(res[2]).to eq('c  ')
     end
+
+    it "does not return blank elements" do
+      expect(ent.split_newline_values("\n \na\n\n")).to eq ["a"]
+    end
   end
 end

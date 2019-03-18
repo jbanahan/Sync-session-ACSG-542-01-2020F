@@ -229,7 +229,7 @@ module CoreObjectSupport
     end
 
     def split_newline_values string_containing_newlines
-      string_containing_newlines.blank? ? [] : string_containing_newlines.split(/\r?\n */)
+      string_containing_newlines.blank? ? [] : (string_containing_newlines.split(/\r?\n */)).reject(&:blank?)
     end
   end
 end
