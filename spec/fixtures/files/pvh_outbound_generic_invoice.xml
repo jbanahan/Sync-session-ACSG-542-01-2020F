@@ -35,43 +35,43 @@
       <InvoiceHeader>
         <InvoiceNumber>12345-LINE</InvoiceNumber>
         <InvoiceDateTime>2018-11-06T12:00:00</InvoiceDateTime>
-        <InvoiceDetails>
-          <InvoiceLineItem Level="Manifest Line Item">
-            <ItemNumber>000</ItemNumber>
-            <OrderNumber>USPVHCORP</OrderNumber>
-            <ChargeField>
-              <Level>Manifest Line Item</Level>
-              <Type>
-                <Code>E063</Code>
-              </Type>
-              <ChargeDate>
-                <Date>2018-11-02</Date>
-                <Time>12:00:00</Time>
-                <TimeZone>EST</TimeZone>
-              </ChargeDate>
-              <Value>100.0</Value>
-              <Currency>0.0</Currency>
-            </ChargeField>
-          </InvoiceLineItem>
-          <InvoiceLineItem Level="Manifest Line Item">
-            <ItemNumber>000</ItemNumber>
-            <OrderNumber>USPVHCORP</OrderNumber>
-            <ChargeField>
-              <Level>Manifest Line Item</Level>
-              <Type>
-                <Code>E063</Code>
-              </Type>
-              <ChargeDate>
-                <Date>2018-11-02</Date>
-                <Time>12:00:00</Time>
-                <TimeZone>EST</TimeZone>
-              </ChargeDate>
-              <Value>200.0</Value>
-              <Currency>0.0</Currency>
-            </ChargeField>
-          </InvoiceLineItem>
-        </InvoiceDetails>
       </InvoiceHeader>
+      <InvoiceDetails>
+        <InvoiceLineItem Level="Manifest Line Item">
+          <ItemNumber>000</ItemNumber>
+          <OrderNumber>USPVHCORP</OrderNumber>
+          <ChargeField>
+            <Level>Manifest Line Item</Level>
+            <Type>
+              <Code>E063</Code>
+            </Type>
+            <ChargeDate>
+              <Date>2018-11-02</Date>
+              <Time>12:00:00</Time>
+              <TimeZone>EST</TimeZone>
+            </ChargeDate>
+            <Value>100.0</Value>
+            <Currency>0.0</Currency>
+          </ChargeField>
+        </InvoiceLineItem>
+        <InvoiceLineItem Level="Manifest Line Item">
+          <ItemNumber>000</ItemNumber>
+          <OrderNumber>USPVHCORP</OrderNumber>
+          <ChargeField>
+            <Level>Manifest Line Item</Level>
+            <Type>
+              <Code>E063</Code>
+            </Type>
+            <ChargeDate>
+              <Date>2018-11-02</Date>
+              <Time>12:00:00</Time>
+              <TimeZone>EST</TimeZone>
+            </ChargeDate>
+            <Value>200.0</Value>
+            <Currency>0.0</Currency>
+          </ChargeField>
+        </InvoiceLineItem>
+      </InvoiceDetails>
     </GenericInvoice>
   </GenericInvoices>
 </GenericInvoiceMessage>

@@ -148,9 +148,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(x.root).to have_xpath_value("count(GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField)", 1)
     end
 
-    it "matches on shipment quantity if unit cost is the same on all order lines" do
-      order.order_lines.update_all price_per_unit: 5
-
+    it "matches on shipment quantity if order and part number is same on all order lines" do
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
 
@@ -158,8 +156,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'E586']/ItemNumber", "008")
     end
 
-    it "utilizes the first shipment line found if unit cost / quantity is same for all lines" do
-      order.order_lines.update_all price_per_unit: 5
+    it "utilizes the first shipment line found if order, part number is and quantity is same for all lines" do
       shipment.shipment_lines.update_all quantity: 20
 
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
@@ -169,15 +166,29 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'E586']/ItemNumber", "001")
     end
 
-    it "utilizes the first shipment line found if unit cost / quantity doesn't match for any line" do
-      order.order_lines.update_all price_per_unit: 100
-      shipment.shipment_lines.update_all quantity: 200
+    it "utilizes the closes shipment line by  found if if order / part number is same for each line but quantity doesn't match for any line" do
+      shipment.shipment_lines.first.update_attributes! quantity: 21
+      shipment.shipment_lines.second.update_attributes! quantity: 25
 
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
 
       expect(captured_xml.length).to eq 1
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'E586']/ItemNumber", "001")
+    end
+
+    it "handles credit invoices" do
+      broker_invoice_duty.update_attributes! invoice_total: -175
+      broker_invoice_duty.broker_invoice_lines.first.update_attributes! charge_amount: -175
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+      expect(captured_xml.length).to eq 1
+      l = REXML::XPath.first(REXML::Document.new(captured_xml.first).root, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'C531']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("Value", "75.0")
+      expect(l).to have_xpath_value("Purpose", "Decrement")
     end
   end
 
@@ -286,8 +297,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
 
       expect(captured_xml.length).to eq 1
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
-      # Don't include the container number element for Air modes.
-      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", nil)
+      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "HBOL987654321")
     end
 
     it "uses house bill for LCL ocean modes" do 
@@ -302,6 +312,21 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
       # Container number should be included here, since it's just LCL, not Air mode.
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "ABCD1234567890")
+    end
+
+    it "handles credit invoices" do
+      broker_invoice_line_container_charges.update_attributes! invoice_total: -300
+      broker_invoice_line_container_charges.broker_invoice_lines.first.update_attributes! charge_amount: -200
+      broker_invoice_line_container_charges.broker_invoice_lines.second.update_attributes! charge_amount: -100
+      
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      l = REXML::XPath.first(REXML::Document.new(captured_xml.first).root, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'C080']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("Value", "200.0")
+      expect(l).to have_xpath_value("Purpose", "Decrement")
     end
   end
 end

@@ -227,10 +227,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     unit_price = mf(line_snapshot, :ent_unit_price)
 
     shipment_line = find_shipment_line(entry_snapshot, container_number, order_number, part_number, unit_price, units)
-    # TODO What to do if the entry line doesn't match to any shipment line since we need the shipment line to set the ItemNumber XML value
+    raise "Failed to find matching PVH ASN line for PO # #{order_number} and Part Number #{part_number} on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if shipment_line.nil?
+
     order_line = shipment_line&.order_line
     order_line_number = order_line&.line_number
-
 
     container_number, bill_number = container_and_bill_number(shipment_line&.container, shipment_line)
     
@@ -246,6 +246,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     return false unless amount && amount.nonzero?
 
     container = find_shipment_container(entry_snapshot, container_number)
+    raise "Failed to find matching PVH ASN Container for Container # '#{container_number}' on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if container.nil?
 
     cont_number, bill_number = container_and_bill_number(container, nil)
 
@@ -267,8 +268,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # Leave the container number blank for Air shipments
       if shipment_line.nil?
         bill_of_lading = container&.shipment&.house_bill_of_lading
+        container_number = bill_of_lading
       else
         bill_of_lading = shipment_line&.shipment&.house_bill_of_lading
+        container_number = bill_of_lading
       end
     end
 
@@ -408,9 +411,17 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     # The ActiveSupport::TimeZone sets either "EDT" or "EST" depending on the time of the year
     generate_date_time_elements(add_element(charge_field, "ChargeDate"), invoice_date.strftime("%Y-%m-%d"), "12:00:00", timezone: ActiveSupport::TimeZone["America/New_York"].now.zone)
     
-    add_element(charge_field, "Value", amount)
+    # Technically, all reversals should be handled via the find_and_reverse_original_invoice_xml_lines method, which 
+    # just builds the xml for the invoice from the existing sent invoice.  However, there WILL be times where that invoice
+    # doesn't exist any longer (someone cleared the sync record, somethign screwy happened with billing), so we're going to have to 
+    # also handle the decrement (credit) case here too.  So if the amount is negative, then just send a purpose of decrement
+    # and send the absolute value of the amount.
+    negative = amount && amount < 0
+    add_element(charge_field, "Value", amount&.abs)
     add_element(charge_field, "Currency", currency)
-
+    # By default, the purpose is Replace...which is what we want.
+    add_element(charge_field, "Purpose", "Decrement") if negative
+    
     charge_field
   end
 
@@ -423,13 +434,12 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def find_shipment_line entry_snapshot, container_number, order_number, part_number, unit_price, units
     shipments = find_shipments(entry_snapshot)
-
     # Narrow down the shipment_lines to search over if we have a container number
     shipment_lines = []
     if !container_number.blank?
       shipments.each do |s|
-        container = s.containers.find {|c| c.container_number = container_number }
-        shipment_lines.push *container.shipment_lines
+        container = s.containers.find {|c| c.container_number == container_number }
+        shipment_lines.push(*container.shipment_lines) unless container.nil?
       end
     else
       shipments.each do |shipment|
@@ -448,30 +458,22 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     end
 
     # If there's only one line on the shipment that matches, then just return it
-    return order_matched_lines[0] if order_matched_lines.length == 1
+    line = order_matched_lines[0] if order_matched_lines.length == 1
 
-    # At this point we need to try and use other factors to determine which shipment line to match to as there's multiple lines
-    # that have the same part number / order number (which is possible if they're shipping multiple colors/sizes on different lines)
+    if line.nil? && order_matched_lines.length > 0
+      # At this point we need to try and use other factors to determine which shipment line to match to as there's multiple lines
+      # that have the same part number / order number (which is possible if they're shipping multiple colors/sizes on different lines)
 
-    # Try to use the unit cost to find an exact match first
-    ppu_matched_lines = order_matched_lines.select do |line|
-      line.order_line.price_per_unit == unit_price
+      # First try finding an exact match based on the # of units.  If there isn't an exact match, just use the shipment line that has the closest
+      # unit count.
+      unit_differences = []
+      order_matched_lines.each do |line|
+        difference = (line.quantity.abs - units.abs).abs
+        unit_differences << {line: line, difference: difference}
+      end
+
+      line = unit_differences.sort {|a, b| a[:difference] <=> b[:difference] }.first[:line]
     end
-
-    # If there's only one line on the shipment that matches, then just return it
-    return ppu_matched_lines[0] if ppu_matched_lines.length == 1
-
-    # If nothing matched, go back to the full order line matched list see if we can find an exact match based just on quantity
-    ppu_matched_lines = order_matched_lines if ppu_matched_lines.length == 0
-
-    unit_matched_lines = ppu_matched_lines.select do |line|
-      line.quantity == units
-    end
-
-    line = unit_matched_lines.first
-
-    line = ppu_matched_lines.first if line.blank?
-    line = order_matched_lines.first if line.blank?
 
     # we don't want to re-use the same shipment line, so keep track of which ones we've returned
     found_shipment_lines << line if line
@@ -492,14 +494,13 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       break unless container.nil?
     end
 
-    # TODO - What to do if the container isn't found
     container
   end
 
   def find_shipments entry_snapshot
     # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all 
     # anyway to bill the entry.
-    @shipments ||= begin
+    if @shipments.nil?
       # For air shipments, we're going to match on house bill, master bill for ocean.
       query_params = {importer_id: pvh_importer.id}
       if air_mode?(entry_snapshot)
@@ -508,10 +509,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         query_params[:master_bill_of_lading] = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s)
       end
 
-      # The pvh_gtn_asn_xml check is to ensure we're only pulling shipments that were created by the pvh gtn xml parser.  We currently also get an 856 EDI feed too from APL
-      # which we don't want to use.
-      Shipment.where(query_params).where("last_file_path LIKE ?", '%pvh_gtn_asn_xml%').to_a
+      @shipments = Shipment.where(query_params).to_a
     end
+
+    @shipments
   end
 
   def has_charges? invoice_snapshot, code_map
@@ -579,11 +580,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     # We need to fail if any container didn't have weight information associated with it.
     if container_weights.size == 0
-      raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)}." 
+      raise "Failed to find any valid container weight data from a PVH ASN for Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
     else
       container_weights.each_pair do |container_number, weight|
         if weight.nil? || weight.zero?
-          raise "Failed to find any valid container data for Entry file # #{mf(entry_snapshot, :ent_brok_ref)} and Container # #{container_number}." 
+          raise "Failed to find any valid container weight data on a PVH ASN for Container # '#{container_number}' on Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
         end
       end
     end
@@ -693,7 +694,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     invoice_lines = nil
     original_file.download_to_tempfile do |temp|
       xml = REXML::Document.new(temp.read)
-      invoice_lines = REXML::XPath.each(xml, "/GenericInvoiceMessage/GenericInvoices/GenericInvoice/InvoiceHeader/InvoiceDetails/InvoiceLineItem").to_a
+      invoice_lines = REXML::XPath.each(xml, "/GenericInvoiceMessage/GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem").to_a
     end
 
     invoice_lines.each do |line|

@@ -290,8 +290,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
       expect(captured_xml.length).to eq 1
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
-      # Don't include the container number element for Air modes.
-      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", nil)
+      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "HBOL987654321")
     end
 
     it "uses house bill for LCL ocean modes" do 
