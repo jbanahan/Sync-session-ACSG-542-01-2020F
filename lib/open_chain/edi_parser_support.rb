@@ -1,3 +1,4 @@
+require 'open_chain/delayed_job_extensions'
 module OpenChain; module EdiParserSupport
   extend ActiveSupport::Concern
   include OpenChain::DelayedJobExtensions
