@@ -804,6 +804,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
 
       # This should all be nil because the liquidation date is not set
+      expect(entry.liquidation_date).to be_nil
       expect(entry.liquidation_type_code).to be_nil
       expect(entry.liquidation_type).to be_nil
       expect(entry.liquidation_action_code).to be_nil
@@ -824,11 +825,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "processes liquidation information if liquidation date is not in the future" do
-      @e['dates'] << {'date_no'=>44, 'date'=>201501010000}
+      @e['dates'] << {'date_no'=>44, 'date'=>201501011230}
 
       entry = subject.process_entry @e
       entry.reload
 
+      expect(entry.liquidation_date).to eq DateTime.new(2015,1,1,17,30)
       expect(entry.liquidation_type_code).to eq "liq_type"
       expect(entry.liquidation_type).to eq "liq type desc"
       expect(entry.liquidation_action_code).to eq "action_liquidation"

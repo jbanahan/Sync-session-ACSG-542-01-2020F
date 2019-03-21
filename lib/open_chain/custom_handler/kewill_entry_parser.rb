@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     28 => :last_billed_date,
     32 => :invoice_paid_date,
     42 => {attribute: :duty_due_date, datatype: :date},
-    44 => {attribute: :liquidation_date, datatype: :date},
+    44 => {attribute: :liquidation_date, datatype: :datetime},
     48 => {attribute: :daily_statement_due_date, datatype: :date},
     52 => :free_date,
     85 => {attribute: :edi_received_date, datatype: :date},
