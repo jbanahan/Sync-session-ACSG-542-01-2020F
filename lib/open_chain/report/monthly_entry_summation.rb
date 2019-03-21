@@ -1,3 +1,5 @@
+require 'open_chain/report/report_helper'
+
 module OpenChain
   module Report
     class MonthlyEntrySummation
