@@ -11,20 +11,35 @@ class BusinessValidationRulesController < ApplicationController
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
       unless valid_json(params[:business_validation_rule][:rule_attributes_json])
-        error_redirect "Could not save due to invalid JSON. For reference, your attempted JSON was: #{params[:business_validation_rule][:rule_attributes_json]}"
-        return
-      end
-        
-      emails = params[:business_validation_rule][:notification_recipients]
-      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])        
-        error_redirect "Could not save due to invalid email."
-        return
+       error_redirect "Could not save due to invalid JSON. For reference, your attempted JSON was: #{params[:business_validation_rule][:rule_attributes_json]}"
+       return
       end
 
-      if @bvr.save!
-        redirect_to edit_business_validation_template_path(@bvt)
+      emails = params[:business_validation_rule][:notification_recipients]
+      ccs = params[:business_validation_rule][:cc_notification_recipients]
+      bccs = params[:business_validation_rule][:bcc_notification_recipients]
+
+      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])
+       error_redirect "Could not save due to invalid email."
+       return
+      end
+
+      if ccs.present? && !email_list_valid?(params[:business_validation_rule][:cc_notification_recipients])
+       error_redirect "Could not save due to invalid CC email."
+       return
+      end
+
+      if bccs.present? && !email_list_valid?(params[:business_validation_rule][:bcc_notification_recipients])
+       error_redirect "Could not save due to invalid BCC email."
+       return
+      end
+
+      if !@bvr.valid?
+       error_redirect "Business Rules require a Name and Description"
+      elsif @bvr.valid? && @bvr.save!
+       redirect_to edit_business_validation_template_path(@bvt)
       else
-        error_redirect "The rule could not be created."
+       error_redirect "The rule could not be created."
       end
     end
   end
@@ -65,7 +80,7 @@ class BusinessValidationRulesController < ApplicationController
         params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
       end
       params[:business_validation_rule].delete("search_criterions")
-      @bvr.update_attributes!(params[:business_validation_rule].except("id", "mailing_lists", "business_validation_template_id", "search_criterions"))
+      @bvr.update_attributes!(params[:business_validation_rule].except("id", "mailing_lists", "business_validation_template_id", "search_criterions", "type"))
       render json: {notice: "Business rule updated"}
     }
   end
@@ -150,7 +165,7 @@ class BusinessValidationRulesController < ApplicationController
         name: br.name,
         disabled: br.disabled,
         rule_attributes_json: br.rule_attributes_json,
-        type: br.type,
+        type: br.type_to_english,
         group_id: br.group_id,
         notification_type: br.notification_type,
         notification_recipients: br.notification_recipients,

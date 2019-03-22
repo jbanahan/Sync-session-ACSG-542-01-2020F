@@ -1,6 +1,6 @@
 describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
   describe "run_validation" do
-    let(:rule) { described_class.new }
+    let(:rule) { described_class.new(name: "rule name", description: "rule desc") }
 
     let(:cdefs) { described_class.new.cdefs }
     let(:imp) { Factory(:company) }

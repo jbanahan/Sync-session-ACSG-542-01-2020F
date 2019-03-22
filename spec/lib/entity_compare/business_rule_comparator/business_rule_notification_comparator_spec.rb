@@ -240,6 +240,31 @@ describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificat
   end
 
   describe "send_email" do
+    # This is merely a sanity check of exploding comma separated lists.
+    it "handles multiple CC recipients" do
+      bvru_1.update_attribute(:cc_notification_recipients, "cc_email@domain.com, cc2_email@domain.com")
+      described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME",
+                                 customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.cc).to eq(['cc_email@domain.com', 'cc2_email@domain.com'])
+    end
+
+    it "handles BCC recipients" do
+      bvru_1.update_attribute(:bcc_notification_recipients, "bcc_email@domain.com")
+      described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME",
+                                 customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.bcc).to eq(['bcc_email@domain.com'])
+    end
+
+    it "handles CC recipients" do
+      bvru_1.update_attribute(:cc_notification_recipients, "cc_email@domain.com")
+      described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME",
+                                 customer_number: "cust num", description: "new descr 1", message: "new msg 1")
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.cc).to eq(['cc_email@domain.com'])
+    end
+
     it "sends email without customized subject/body" do
       described_class.send_email(id: entry.id, rule: bvru_1, uid: "brok ref", :module_type=>"Entry", state: "Fail", importer_name: "ACME", 
                                  customer_number: "cust num", description: "new descr 1", message: "new msg 1")

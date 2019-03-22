@@ -48,13 +48,13 @@ describe ValidationRuleEntryHtsMatchesPo do
     end
 
     it "skips Product validation if rule attributes tell it to" do
-      @rule.update_attributes! rule_attributes_json: '{"validate_product":false}'
+      @rule.update_attributes!  name: "Name", description: "Description", rule_attributes_json: '{"validate_product":false}'
       @product.classifications.first.tariff_records.first.update_attributes! hts_1: "9876543210"
       expect(@rule.run_child_validation @invoice_line).to be_nil
     end
 
     it "uses a different classification country to validate product data against" do
-      @rule.update_attributes! rule_attributes_json: '{"classification_country":"CA"}'
+      @rule.update_attributes!  name: "Name", description: "Description", rule_attributes_json: '{"classification_country":"CA"}'
       @product.classifications.first.update_attributes! country: Factory(:country, iso_code: "CA")
       expect(@rule.run_child_validation @invoice_line).to be_nil
     end

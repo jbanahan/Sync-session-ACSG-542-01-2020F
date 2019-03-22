@@ -1,19 +1,19 @@
 <% content_for :javascript do %>
   $(function() {
     var notificationRecipients = $('#rule-notification-recipients-field');
-    var mailingLists = $('#mailing_list');
+    var emailComposition = $('#email-composition');
     if ($('#rule-notification-type-field option:selected').is(':empty')) {
       notificationRecipients.prop("disabled", true);
-      mailingLists.hide();
+      emailComposition.hide();
     }
     $('#rule-notification-type-field').change(function() {
       if ($('#rule-notification-type-field option:selected').is(':empty')) {
         notificationRecipients.prop("disabled", true);
-        mailingLists.hide();
+        emailComposition.hide();
       }
       else {
         notificationRecipients.prop("disabled", false);
-        mailingLists.show();
+        emailComposition.show();
       }
     })
   })
@@ -57,21 +57,78 @@
     <%= f.select :notification_type, options_for_select(["Email"]), { include_blank: true }, {class: "form-control", id: "rule-notification-type-field"} %>
   </div>
 
-  <div class="form-group" id="mailing_list">
-    <% if @mailing_lists.present? %>
-      <%= f.label :mailing_list_id, "Distribution Lists" %>
-      <%= f.select :mailing_list_id, options_from_collection_for_select(@mailing_lists, 'id', 'name'), { include_blank: true }, {class: "form-control"} %>
-    <% end %>
-  </div>
+  <div id="email-composition">
+    <div class="form-group" id="mailing_list">
+      <% if @mailing_lists.present? %>
+        <%= f.label :mailing_list_id, "Distribution Lists" %>
+        <%= f.select :mailing_list_id, options_from_collection_for_select(@mailing_lists, 'id', 'name'), { include_blank: true }, {class: "form-control"} %>
+      <% end %>
+    </div>
 
-  <div class="form-group">
-    <%= f.label :notification_recipients %>
-    <%= f.text_area :notification_recipients, rows: 4, class: "form-control", id: "rule-notification-recipients-field", placeholder: "Enter comma-separated email addresses..." %>
+    <div class="form-group">
+      <%= f.label :notification_recipients %>
+      <%= f.text_area :notification_recipients, rows: 4, class: "form-control", id: "rule-notification-recipients-field", placeholder: "Enter comma-separated email addresses..." %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :cc_notification_recipients %>
+      <%= f.text_area :cc_notification_recipients, rows: 4, class: "form-control", id: "rule-notification-recipients-field", placeholder: "Enter comma-separated email addresses..." %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :bcc_notification_recipients %>
+      <%= f.text_area :bcc_notification_recipients, rows: 4, class: "form-control", id: "rule-notification-recipients-field", placeholder: "Enter comma-separated email addresses..." %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :suppress_pass_notice, "Suppress pass notification" %>
+      <%= f.check_box :suppress_pass_notice %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :subject_pass, "Pass subject" %>
+      <%= f.text_field :subject_pass, class: "form-control", placeholder: "Optional" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :message_pass, "Pass Message" %>
+      <%= f.text_field :message_pass, class: "form-control", placeholder: "Optional" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :suppress_review_fail_notice, "Suppress review/fail notification" %>
+      <%= f.check_box :suppress_review_fail_notice %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :subject_review_fail, "Review/Fail subject" %>
+      <%= f.text_field :subject_review_fail, class: "form-control", placeholder: "Optional" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :message_review_fail, "Review/Fail message" %>
+      <%= f.text_field :message_review_fail, class: "form-control", placeholder: "Optional" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :suppress_skipped_notice, "Suppress skipped notification" %>
+      <%= f.check_box :suppress_skipped_notice %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :subject_skipped, "Skipped subject" %>
+      <%= f.text_field :subject_skipped, class: "form-control", placeholder: "Optional" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :message_skipped, "Skipped message" %>
+      <%= f.text_field :message_skipped, class: "form-control", placeholder: "Optional" %>
+    </div>
   </div>
 
   <div class="form-group">
     <%=f.label :disabled%>&nbsp;&nbsp;<%= f.check_box :disabled, checked: true %>
-    <small>Only uncheck if you don't intend to add search criteria.</small>
+    <small>Uncheck once all criteria are added.</small>
   </div>
 
   <div align="center">

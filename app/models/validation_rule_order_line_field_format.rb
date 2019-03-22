@@ -2,7 +2,9 @@
 #
 # Table name: business_validation_rules
 #
+#  bcc_notification_recipients     :text
 #  business_validation_template_id :integer
+#  cc_notification_recipients      :text
 #  created_at                      :datetime         not null
 #  delete_pending                  :boolean
 #  description                     :string(255)

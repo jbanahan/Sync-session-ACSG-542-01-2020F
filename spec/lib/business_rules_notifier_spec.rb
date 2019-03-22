@@ -57,7 +57,7 @@ describe OpenChain::BusinessRulesNotifier do
   def generate_business_rule(value)
     bvt = Factory(:business_validation_template)
     bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:value)
-    bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+    bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat', name: 'Name', description: 'Description', rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
     bvt.reload
     bvt
   end

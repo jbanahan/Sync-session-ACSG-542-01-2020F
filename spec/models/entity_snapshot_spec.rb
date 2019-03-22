@@ -340,7 +340,7 @@ describe EntitySnapshot, :snapshot do
       let! (:bvt) { 
         bvt = Factory(:business_validation_template, module_type: "Entry") 
         bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
-        bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+        bvt.business_validation_rules.create!( name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
         bvt.reload
       }
       let (:entry) { Factory(:entry, customer_number: "12345") }

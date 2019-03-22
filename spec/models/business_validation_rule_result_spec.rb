@@ -42,7 +42,7 @@ describe BusinessValidationRuleResult do
   describe "run_validation" do
     it "should set failure state and message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
@@ -52,7 +52,7 @@ describe BusinessValidationRuleResult do
     end
     it "returns 'true' if new state matches previous one but message has changed" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new state: 'x', message: 'original msg'
       rule.business_validation_rule = vr
@@ -62,7 +62,7 @@ describe BusinessValidationRuleResult do
     end
     it "should default state to Fail if no fail_state" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json)
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       expect(rule.business_validation_rule = vr).to be_truthy
@@ -71,7 +71,7 @@ describe BusinessValidationRuleResult do
     end
     it "defaults state to Fail if fail_state is blank" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json, fail_state: "")
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json, fail_state: "")
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       expect(rule.business_validation_rule = vr).to be_truthy
@@ -80,7 +80,7 @@ describe BusinessValidationRuleResult do
     end
     it "should set state to Pass if no fail message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
@@ -90,7 +90,7 @@ describe BusinessValidationRuleResult do
     end
     it "should set state to skipped if rule search_criterions aren't met" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       vr.search_criterions.create!(model_field_uid: :ord_ord_num, operator: 'eq', value:'ZZ')
       rule = BusinessValidationRuleResult.new
@@ -101,7 +101,7 @@ describe BusinessValidationRuleResult do
     end
     it "should not do anything if overridden_at is set" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json)
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
       rule.overridden_at = Time.now
@@ -111,7 +111,7 @@ describe BusinessValidationRuleResult do
     end
     it "should not do anything if validation rule is inactive" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!(rule_attributes_json:json)
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json)
       expect(vr).to receive(:active?).and_return false
       rule = Factory(:business_validation_rule_result)
       rule.business_validation_rule = vr

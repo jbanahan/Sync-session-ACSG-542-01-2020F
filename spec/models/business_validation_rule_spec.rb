@@ -3,8 +3,14 @@ require 'spec_helper'
 describe BusinessValidationRule do
   describe "recipients_and_mailing_lists" do
     let(:bvt) { Factory(:business_validation_template)}
-    let(:bvru) do  Factory(:business_validation_rule,
+    let(:bvru) do  Factory(:business_validation_rule, type: 'ValidationRuleEntryInvoiceLineFieldFormat',
                            business_validation_template: bvt)
+    end
+
+    describe '#type_to_english' do
+      it 'translates the type to the English equivalent' do
+        expect(bvru.type_to_english).to eql('Entry Invoice Line Field Format')
+      end
     end
 
     it 'defaults to returning notification_recipients' do
@@ -145,7 +151,9 @@ describe BusinessValidationRule do
     it "hashifies attributes including search criterions but skipping other external associations" do
       
       attributes = {"business_validation_rule"=>
-                     {"description"=>"descr",
+                     {"bcc_notification_recipients"=>nil,
+                      "cc_notification_recipients"=>nil,
+                      "description"=>"descr",
                       "fail_state"=>"Fail",
                       "message_pass"=>"mess pass",
                       "message_review_fail"=>"mess rev/fail",

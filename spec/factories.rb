@@ -390,6 +390,8 @@ Factory.define :business_validation_template do |f|
 end
 Factory.define :business_validation_rule do |f|
   f.association :business_validation_template
+  f.sequence :name
+  f.sequence :description
 end
 Factory.define :business_validation_result do |f|
   f.association :business_validation_template

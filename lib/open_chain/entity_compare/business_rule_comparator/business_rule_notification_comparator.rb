@@ -72,7 +72,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
     body += %Q(<p>#{module_type} #{uid} rule status has changed to '#{state}' </p>)
     body += %Q(<p>#{message}</p>)
     body += %Q(<p>#{link id, module_type}</p>)
-    OpenMailer.send_simple_html(rule.recipients_and_mailing_lists, subject, body.html_safe, [], {suppressed: suppress_email?(rule, state)}).deliver!
+    OpenMailer.send_simple_html(rule.recipients_and_mailing_lists, subject, body.html_safe, [], {suppressed: suppress_email?(rule, state), bcc: rule.bcc_notification_recipients, cc: rule.cc_notification_recipients}).deliver!
   end
   
   private

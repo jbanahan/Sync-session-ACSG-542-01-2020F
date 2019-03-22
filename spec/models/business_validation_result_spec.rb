@@ -117,7 +117,7 @@ describe BusinessValidationResult do
 
   describe "run_validation_with_state_tracking" do
     let (:order) { Factory(:order, order_number: "ajklsdfajl") }
-    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json}
+    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat', name: "Name", description: "Description", rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json}
     let (:rule_result) { 
       rr = BusinessValidationRuleResult.new
       rr.business_validation_rule = rule 

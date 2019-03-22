@@ -36,7 +36,7 @@ describe ValidationRuleEntryInvoiceLineFieldFormat do
   end
 
   it "should evaluate all lines when instructed" do
-    @rule.update_attributes! rule_attributes_json: {model_field_uid:'cil_part_number',regex:'YYZ', validate_all: true}.to_json
+    @rule.update_attributes! name: "Name", description: "Description",  rule_attributes_json: {model_field_uid:'cil_part_number',regex:'YYZ', validate_all: true}.to_json
     expect(@rule.run_validation(@ci_line.entry)).to eq "Invoice # INV / Line # 1 Invoice Line - Part Number value 'ABC123' does not match 'YYZ' format.\nInvoice # INV / Line # 2 Invoice Line - Part Number value '123ABC' does not match 'YYZ' format."
   end
 

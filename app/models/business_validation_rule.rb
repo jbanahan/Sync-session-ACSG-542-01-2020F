@@ -2,7 +2,9 @@
 #
 # Table name: business_validation_rules
 #
+#  bcc_notification_recipients     :text
 #  business_validation_template_id :integer
+#  cc_notification_recipients      :text
 #  created_at                      :datetime         not null
 #  delete_pending                  :boolean
 #  description                     :string(255)
@@ -38,12 +40,15 @@ class BusinessValidationRule < ActiveRecord::Base
   belongs_to :mailing_list
   attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, 
                   :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice, :subject_pass, :subject_review_fail, :subject_skipped,
-                  :message_pass, :message_review_fail, :message_skipped, :mailing_list_id
+                  :message_pass, :message_review_fail, :message_skipped, :mailing_list_id, :cc_notification_recipients, :bcc_notification_recipients
 
   has_many :search_criterions, dependent: :destroy
   # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)
   # so we must manually delete the results.  The after_destroy callback below handles this.
   has_many :business_validation_rule_results, inverse_of: :business_validation_rule
+
+  validates :name, presence: true
+  validates :description, presence: true
 
   after_destroy { |rule| destroy_rule_dependents rule }
 
@@ -140,10 +145,14 @@ class BusinessValidationRule < ActiveRecord::Base
 
   def self.parse_copy_attributes rule_hsh
     rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject{ |k,v| ["search_criterions"].include? k })
-    rule_hsh["business_validation_rule"]["search_criterions"].each do |sc_hsh| 
+    rule_hsh["business_validation_rule"]["search_criterions"].each do |sc_hsh|
       rule.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"])
     end
     rule
+  end
+
+  def type_to_english
+    SUBCLASSES[type.to_sym][:label].presence
   end
 
   def recipients_and_mailing_lists

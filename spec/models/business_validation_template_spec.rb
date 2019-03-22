@@ -15,7 +15,7 @@ describe BusinessValidationTemplate do
     before :each do
       @bvt = Factory(:business_validation_template)
       @bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
-      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+      @bvt.business_validation_rules.create!( name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
       @bvt.reload
     end
     it "should create results for entries that match search criterions and don't have business_validation_result" do
@@ -71,7 +71,7 @@ describe BusinessValidationTemplate do
 
       template = Factory(:business_validation_template)
       template.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
-      template.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'12345'}.to_json)
+      template.business_validation_rules.create!(name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'12345'}.to_json)
       template.business_validation_results.create! validatable: entry, state: "Pass", updated_at: (entry.updated_at + 1.hour)
       template.reload
 
@@ -111,7 +111,7 @@ describe BusinessValidationTemplate do
     before :each do
       @o = Factory(:order, order_number: "ajklsdfajl")
       @bvt = described_class.create!(module_type:'Order')
-      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      @bvt.business_validation_rules.create!(name: "Name", description: "Description", type:'ValidationRuleFieldFormat')
       @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       @bvt.reload
       allow_any_instance_of(Order).to receive(:create_snapshot)
@@ -191,7 +191,7 @@ describe BusinessValidationTemplate do
     it "does not snapshot the entity if instructed not to" do
       @o = Factory(:order, order_number: "ajklsdfajl")
       @bvt = described_class.create!(module_type:'Order')
-      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      @bvt.business_validation_rules.create!(name: "Name", description: "Description", type:'ValidationRuleFieldFormat')
       @bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
       @bvt.reload
 
@@ -260,8 +260,8 @@ describe BusinessValidationTemplate do
       ord = Factory(:order, order_number: "ABCD")
       bvt = described_class.create!(module_type:'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
-      rule1 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
-      rule2 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule1 = bvt.business_validation_rules.create! name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule2 = bvt.business_validation_rules.create! name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord).exactly(1).times
 
       tz = ActiveSupport::TimeZone["America/New_York"]
@@ -290,8 +290,8 @@ describe BusinessValidationTemplate do
       ord = Factory(:order, order_number: "ABCD")
       bvt = described_class.create!(module_type:'Order')
       bvt.search_criterions.create! model_field_uid: "ord_ord_num", operator: "nq", value: "XXXXXXXXXX"
-      rule1 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
-      rule2 = bvt.business_validation_rules.create! type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule1 = bvt.business_validation_rules.create! name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
+      rule2 = bvt.business_validation_rules.create! name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json
       expect(BusinessRuleSnapshot).to receive(:create_from_entity).with(ord).exactly(2).times
 
       described_class.create_results_for_object!(ord)
@@ -376,7 +376,7 @@ describe BusinessValidationTemplate do
     let!(:search_criterion_template) { Factory(:search_criterion, model_field_uid: "ent_cust_num") }
     let!(:search_criterion_rule) { Factory(:search_criterion, model_field_uid: "ent_brok_ref") }
     let!(:rule) do 
-      r = ValidationRuleFieldFormat.new description: "rule descr"
+      r = ValidationRuleFieldFormat.new description: "rule descr", name: "rule name"
       r.search_criterions << search_criterion_rule
       r.save!
       r

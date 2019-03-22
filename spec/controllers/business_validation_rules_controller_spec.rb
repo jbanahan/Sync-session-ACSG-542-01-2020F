@@ -27,7 +27,9 @@ describe BusinessValidationRulesController do
             business_validation_rule: {
               "rule_attributes_json" => '{"valid":"json-2"}',
               "type" => "ValidationRuleManual",
-              "group_id" => group.id
+              "group_id" => group.id,
+              "name" => "Name",
+              "description" => "Description"
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
@@ -46,6 +48,34 @@ describe BusinessValidationRulesController do
             }
       expect(response).to be_redirect
       expect(flash[:errors].first).to match(/Could not save due to invalid JSON/)
+    end
+
+    it "only saves for valid bccs (when applicable)" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :create,
+           business_validation_template_id: @bvt.id,
+           business_validation_rule: {
+               "rule_attributes_json" => '{"valid":"json-2"}',
+               "type" => "ValidationRuleManual",
+               "bcc_notification_recipients" => "tufnel@ston'ehenge.biz"
+           }
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to match(/Could not save due to invalid BCC email/)
+    end
+
+    it "only saves for valid ccs (when applicable)" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :create,
+           business_validation_template_id: @bvt.id,
+           business_validation_rule: {
+               "rule_attributes_json" => '{"valid":"json-2"}',
+               "type" => "ValidationRuleManual",
+               "cc_notification_recipients" => "tufnel@ston'ehenge.biz"
+           }
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to match(/Could not save due to invalid CC email/)
     end
 
     it "only saves for valid email (when applicable)" do
@@ -113,7 +143,7 @@ describe BusinessValidationRulesController do
             business_validation_rule: { 
               search_criterions: [{"mfid" => "ent_cust_name",
                                    "datatype" => "string", "label" => "Customer Name",
-                                   "operator" => "eq", "value" => "Monica Lewinsky"}],
+                                   "operator" => "eq", "value" => "Joel Zimmerman"}],
               rule_attributes_json: '{"valid":"json-4"}',
               description: "descr",
               fail_state: "Fail",
@@ -133,7 +163,7 @@ describe BusinessValidationRulesController do
       expect(JSON.parse response.body).to eq({"notice" => "Business rule updated"})
       @bvr.reload
       expect(@bvr.rule_attributes_json).to eq('{"valid":"json-4"}')
-      expect(@bvr.search_criterions.first.value).to eq("Monica Lewinsky")
+      expect(@bvr.search_criterions.first.value).to eq("Joel Zimmerman")
       expect(@bvr.rule_attributes_json).to eq('{"valid":"json-4"}')
       expect(@bvr.description).to eq('descr')
       expect(@bvr.fail_state).to eq('Fail')
@@ -162,14 +192,16 @@ describe BusinessValidationRulesController do
             business_validation_rule: { 
               search_criterions: [{"mfid" => "ent_cust_name",
                                    "datatype" => "string", "label" => "Customer Name",
-                                   "operator" => "eq", "value" => "Monica Lewinsky"}],
+                                   "operator" => "eq", "value" => "Joel Zimmerman",
+                                   "name" => "Name", "description" => "Description"
+                                  }],
              name: "foo",
              rule_attributes_json: '{"valid":"json-4"',
              }
        expect(JSON.parse response.body).to eq({"error" => "Could not save due to invalid JSON."})
        expect(response.status).to eq 500
        expect(@bvr.search_criterions.count).to be_zero
-       expect(@bvr.name).to be_nil
+       expect(@bvr.name).to_not eql("foo")
     end
 
     it "errors if email is invalid (when applicable)" do
@@ -213,7 +245,7 @@ describe BusinessValidationRulesController do
       expect(r["model_fields"].length).to eq(CoreModule::ENTRY.default_module_chain.model_fields(u).values.size)
       rule = r["business_validation_rule"]
       expect(rule).to eq({"mailing_lists"=>[],"business_validation_template_id"=>@bvt.id, "mailing_list_id"=>nil,
-          "description"=>"DESC", "fail_state"=>"FAIL", "disabled" => false, "id"=>@rule.id, "group_id"=>@group.id, "type"=>"ValidationRuleAttachmentTypes",
+          "description"=>"DESC", "fail_state"=>"FAIL", "disabled" => false, "id"=>@rule.id, "group_id"=>@group.id, "type"=>"Has Attachment Types",
           "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', "notification_type" => "Email", "notification_recipients" => "tufnel@stonehenge.biz",
           "suppress_pass_notice"=> true, "suppress_review_fail_notice" => true, "suppress_skipped_notice" => true, "subject_pass" => "subject - PASS", "subject_review_fail" => "subject - FAIL",
           "subject_skipped" => "subject - SKIPPED", "message_pass" => "this rule passed", "message_review_fail" => "this rule failed", "message_skipped" => "this rule was skipped",
