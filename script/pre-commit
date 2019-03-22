@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+# To install, insert a soft link in OpenChain/.git/hooks named "pre-commit" pointing at this file.
+
+def check_for_debug_statements
+  diff_lines = `git diff --cached`
+  current_file = nil
+  files = []
+
+  diff_lines.each_line do |l| 
+    # strip path from line of form "+++ b/path_to_changed_file"
+    current_file = l.match( /(\+\+\+)\W.\/(.+)/ )&.[](2) || current_file
+    # if line begins with '+' and contains ' byebug' or ' debugger'
+    files << current_file if l =~ /^\+.+\W(byebug|debugger)/
+  end
+
+  if !files.empty?
+    puts %(COMMIT REJECTED\n'Byebug' or 'Debugger' statement found in the following files:\n#{files.uniq.join("\n")})
+    exit 1
+  end
+end
+
+check_for_debug_statements
+#insert additional checks
+
+exit 0
+
