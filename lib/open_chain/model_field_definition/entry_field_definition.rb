@@ -397,6 +397,24 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           WHERE commercial_invoices.entry_id = entries.id
             AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
         SQL
+      }],
+      [244, :ent_master_bills_of_lading_count, :master_bills_of_lading_count, "Total Master Bills of Lading", {
+          :data_type=>:integer,
+          :read_only=>true,
+          :import_lambda=>lambda { |obj, data| "Total Master Bills of Lading ignored. (read only)" },
+          :export_lambda=>lambda { |obj| obj.master_bills_of_lading.present? ? obj.split_newline_values(obj.master_bills_of_lading).length : 0 },
+          qualified_field_name: <<-SQL
+            (IF((entries.master_bills_of_lading IS NOT NULL AND entries.master_bills_of_lading <> ""), (CHAR_LENGTH(entries.master_bills_of_lading) - CHAR_LENGTH(REPLACE(entries.master_bills_of_lading, '\n', '')) + 1), 0))
+          SQL
+      }],
+      [245, :ent_house_bills_of_lading_count, :house_bills_of_lading_count, "Total House Bills of Lading", {
+          :data_type=>:integer,
+          :read_only=>true,
+          :import_lambda=>lambda { |obj, data| "Total House Bills of Lading ignored. (read only)" },
+          :export_lambda=>lambda { |obj| obj.house_bills_of_lading.present? ? obj.split_newline_values(obj.house_bills_of_lading).length : 0 },
+          qualified_field_name: <<-SQL
+            (IF((entries.house_bills_of_lading IS NOT NULL AND entries.house_bills_of_lading <> ""), (CHAR_LENGTH(entries.house_bills_of_lading) - CHAR_LENGTH(REPLACE(entries.house_bills_of_lading, '\n', '')) + 1), 0))
+          SQL
       }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
