@@ -707,6 +707,26 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     return [original_invoice, invoice_lines]
   end
 
+  def generate_delete_invoice broker_invoice, invoice_type
+    sync_record = broker_invoice.sync_records.find { |sr| sr.trading_partner == invoice_type_xref[invoice_type] }
+
+    original_file = sync_record&.ftp_session&.attachment
+    return nil if original_file.nil?
+
+    xml = nil
+    original_file.download_to_tempfile do |temp|
+      xml = REXML::Document.new(temp.read)
+    end
+
+    return nil if xml.nil?
+
+    purpose = REXML::XPath.first(xml, "/GenericInvoiceMessage/GenericInvoices/GenericInvoice/Purpose")
+    return nil if purpose.nil?
+    purpose.text = "Delete"
+
+    xml
+  end
+
   def reversal_invoice_type invoice_type
     invoice_type_xref[invoice_type] + " REVERSAL"
   end

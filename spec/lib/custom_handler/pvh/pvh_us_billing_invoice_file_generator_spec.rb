@@ -190,6 +190,56 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("Value", "75.0")
       expect(l).to have_xpath_value("Purpose", "Decrement")
     end
+
+    context "with hmf offsets" do
+
+      it 'handles cases where hmf summed at the line is less than the total hmf' do
+        entry.update_attributes! hmf: 20.05
+        
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+        expect(captured_xml.length).to eq 1
+
+        x = REXML::Document.new(captured_xml.first).root
+        lines = REXML::XPath.each(x, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'D503']").to_a
+        expect(lines.length).to eq 1
+
+        expect(lines.first.text "Value").to eq "20.05"
+      end
+
+      it 'handles cases where hmf summed at the line is more than the total hmf' do
+        entry.update_attributes! hmf: 19.95
+        
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+        expect(captured_xml.length).to eq 1
+
+        x = REXML::Document.new(captured_xml.first).root
+        lines = REXML::XPath.each(x, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'D503']").to_a
+        expect(lines.length).to eq 1
+
+        expect(lines.first.text "Value").to eq "19.95"
+      end
+
+      it "skips adding in hmf offsets for lines that have no hmf to begin with" do
+        entry.update_attributes! hmf: 20.05
+        line = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
+        tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50")
+
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+        expect(captured_xml.length).to eq 1
+
+        x = REXML::Document.new(captured_xml.first).root
+        lines = REXML::XPath.each(x, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'D503']").to_a
+        expect(lines.length).to eq 1
+
+        expect(lines.first.text "Value").to eq "20.05"
+      end
+    end
   end
 
   describe "generate_and_send_container_charges" do

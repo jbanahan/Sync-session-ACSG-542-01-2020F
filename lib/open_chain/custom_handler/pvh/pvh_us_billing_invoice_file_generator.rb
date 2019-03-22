@@ -10,12 +10,14 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     invoice_amount = mf(invoice_snapshot, :bi_invoice_total)
     credit_invoice = invoice_amount && invoice_amount < 0
 
+    hmf_offsets = calculate_hmf_offsets(entry_snapshot)
+
     generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
       # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
       invoice_lines = json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine")
       invoice_lines.each do |line_snapshot|
 
-        charges = duty_charges_for_line(line_snapshot)
+        charges = duty_charges_for_line(line_snapshot, hmf_offsets)
         next unless charges.size > 0
 
         invoice_line = add_invoice_line(details, entry_snapshot, line_snapshot)
@@ -37,11 +39,19 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     inv
   end
 
-  def duty_charges_for_line line_snapshot
+  def duty_charges_for_line line_snapshot, hmf_offsets
     charges = {}
     [:cil_total_duty, :cil_hmf, :cil_prorated_mpf, :cil_cotton_fee, :cil_add_duty_amount, :cil_cvd_duty_amount].each do |uid|
       charge = mf(line_snapshot, uid)
-      charges[uid] = charge if charge && charge.nonzero?
+      if charge && charge.nonzero?
+        if uid == :cil_hmf
+          offset = hmf_offsets[record_id(line_snapshot)]
+          charge += offset if offset
+        end
+
+        charges[uid] = charge 
+      end
+      
     end
 
     charges
@@ -88,6 +98,54 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     # 0600 is freight direct
     # 0090 is Drawback (which has no commercial invoice data)
     ["0099", "0600", "0090"]
+  end
+
+  # What we're doing here is determining if the individual line level hmf values total out to the sum value.
+  # In a world where Kewill's software does prorations correctly, we wouldn't have to worry about this but
+  # as it is, we're not getting totally correct prorations at the line level and the lines don't sum out to the totals.
+  #
+  # Thus, we're going to take the difference of the total and the line sum and add the difference back into the line
+  # level a penny at a time for every line that has hmf.
+  #
+  # The return value will be a hash of the line level ids to the offset value required for each commercial invoice line.
+  def calculate_hmf_offsets entry_snapshot
+    total_hmf = mf(entry_snapshot, :ent_hmf)
+
+    return {} if total_hmf.nil? || total_hmf.zero?
+
+    hmf_line_sum = BigDecimal("0")
+    lines_with_hmf = {}
+
+    json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine") do |line|
+      line_hmf = mf(line, :cil_hmf)
+      if line_hmf && line_hmf.nonzero?
+        lines_with_hmf[record_id(line)] = BigDecimal("0")
+        hmf_line_sum += line_hmf
+      end
+    end
+
+    difference = total_hmf - hmf_line_sum
+
+    return {} if difference.zero?
+
+    # If the difference is less than zero, then the line sum was larger than the total, we need to subtract from the 
+    # lines.  Greater than zero means the total was larger than the line sum and we need to add value back into the lines.
+    loop_addend = difference < 0 ? BigDecimal("0.01") : BigDecimal("-0.01")
+
+    loop do 
+      json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine") do |line|
+        record_id = record_id(line)
+        offset = lines_with_hmf[record_id]
+        next if offset.nil?
+
+        lines_with_hmf[record_id] = (offset + (loop_addend * -1))
+        difference += loop_addend
+        break if difference.zero?
+      end
+      break if difference.zero?
+    end
+
+    lines_with_hmf
   end
 
 end; end; end; end;
