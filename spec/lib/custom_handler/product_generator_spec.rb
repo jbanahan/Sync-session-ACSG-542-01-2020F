@@ -165,7 +165,18 @@ describe OpenChain::CustomHandler::ProductGenerator do
         expect(r.second).to eq({0=>'UID'})
         expect(subject.row_count).to eq 3
       end
+
+      it "does not yield the header row if instructed not to" do
+        r = []
+        subject.sync(include_headers: false) do |row|
+          r << row
+        end
+        expect(r.length).to eq 1
+        # Only the data row should have been yielded..not the header one
+        expect(r.first).to eq ({0=>@p1.unique_identifier, 1=>@p1.name})
+      end
     end
+    
     context "sync_records" do
       context "implments_sync_code" do
         before :each do
@@ -218,7 +229,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       end
     end
     it "should create csv without headers" do
-      @tmp = subject.sync_csv false
+      @tmp = subject.sync_csv include_headers: false
       a = CSV.parse IO.read @tmp
       [@p1,@p2].each_with_index do |p,i|
         expect(a[i][0]).to eq(p.unique_identifier)
@@ -232,16 +243,23 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
 
     it "should call before_csv_write callback" do
-      s = subject
-      def s.before_csv_write cursor, value
+      allow(subject).to receive(:before_csv_write) do |cursor, value|
         Array.wrap(["A", "B", "C"][cursor])
       end
 
-      @tmp = s.sync_csv
+      @tmp = subject.sync_csv
       a = CSV.parse IO.read @tmp
       expect(a[0][0]).to eq("A")
       expect(a[1][0]).to eq("B")
       expect(a[2][0]).to eq("C")
+    end
+
+    it "does not convert nil values to strings if instructed" do
+      allow(subject).to receive(:before_csv_write).and_return [nil]
+
+      @tmp = subject.sync_csv use_raw_values: true
+      a = CSV.parse IO.read @tmp
+      expect(a[0][0]).to be_nil
     end
   end
 

@@ -63,7 +63,7 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   def sync_csv include_headers=true
     f = Tempfile.new(['ProductSync','.csv'])
     cursor = 0
-    sync do |rv|
+    sync(include_headers: include_headers) do |rv|
       if include_headers || cursor > 0
         csm_numbers = rv[1].blank? ? [''] : rv[1].split("\n")
         csm_numbers.each do |c|

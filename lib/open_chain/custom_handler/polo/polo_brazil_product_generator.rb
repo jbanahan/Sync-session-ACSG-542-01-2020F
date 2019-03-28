@@ -22,13 +22,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
   def products_to_send
     send_countries = send_classification_countries
     init_outbound_custom_definitions
-    cd_msl_rec = @out_cdefs[:msl_receive_date]
-    cd_csm_num = @out_cdefs[:csm_numbers]
     Product.select("distinct products.*").need_sync("Brazil").
-      joins("INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (#{send_countries.join(",")})").
-      joins("LEFT OUTER JOIN custom_values rd ON products.id = rd.customizable_id AND rd.customizable_type = 'Product' AND rd.custom_definition_id = #{cd_msl_rec.id}").
-      joins("LEFT OUTER JOIN custom_values csm ON products.id = csm.customizable_id AND csm.customizable_type = 'Product' AND csm.custom_definition_id = #{cd_csm_num.id}").
-      where("TRIM(csm.text_value) != '' OR rd.date_value IS NOT NULL")
+      joins("INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (#{send_countries.join(",")})")
   end
 
   # Generate the file with data that needs to be sent back to MSL+

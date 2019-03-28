@@ -232,7 +232,7 @@ module OpenChain
           :felt => {label: "Is it made of felt?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_felt"},
           :coir => {label: "Is it made of coir?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_coir"},
           :needlepoint => {label: "Is it made from needlepoint?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_needlepoint"},
-          :gender_desc => {label: "Gender Desc", data_type: :string, module_type: "Product", cdef_uid: "prod_gender_desc"},
+          :gender_desc => {label: "RL Gender Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_gender_description"},
           :suffix_indicator => {label: "Suffix Indicator", data_type: :string, module_type: "Product", cdef_uid: "prod_suffix_indicator"},
           :exception_code => {label: "Exception Code", data_type: :string, module_type: "Product", cdef_uid: "prod_exception_code"},
           :suffix => {label: "Suffix", data_type: :string, module_type: "Product", cdef_uid: "prod_suffix"},
@@ -270,7 +270,24 @@ module OpenChain
           # This knit_woven field is a replacement for the old "Knit / Woven?" field.  The old "Knit / Woven?" field became "Material Group (Deprecated)"
           :knit_woven => {label: "Knit / Woven", data_type: :string, module_type: "Product", cdef_uid: "prod_knit_woven"},
           :material_group => {label: "Material Group (Deprecated)", data_type: :string, module_type: "Product", cdef_uid: "prod_material_group"},
-          :allocation_category => {label: "Allocation Category", data_type: :string, module_type: "Product", cdef_uid: "prod_allocation_category"}
+          :allocation_category => {label: "Allocation Category", data_type: :string, module_type: "Product", cdef_uid: "prod_allocation_category"},
+          :merchandising_fabrication => {label: "Merchandising Fabrication", data_type: :string, module_type: "Product", cdef_uid: "prod_merchandising_fabrication"},
+          :product_class_description => {label: "Product Class Description", data_type: :string, module_type: "Product", cdef_uid: "prod_product_class_description"},
+          :material_status => {label: "Material Status", data_type: :string, module_type: "Product", read_only: true, cdef_uid: "prod_material_status"},
+          :ax_export_status => {label: "AX Export Status", data_type: :string, module_type: "Product", read_only: true, cdef_uid: "prod_ax_export_status"},
+          :product_category => {label: "Product Category", data_type: :string, module_type: "Product", cdef_uid: "prod_product_category"},
+          :rl_short_description => {label: "RL Short Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_short_description"},
+          :rl_long_description => {label: "RL Long Description", data_type: :text, module_type: "Product", cdef_uid: "prod_rl_long_description"},
+          :heel_height => {label: "Heel Height", data_type: :string, module_type: "Product", cdef_uid: "prod_heel_height"},
+          :sap_brand_name => {label: "SAP Brand Name", data_type: :string, module_type: "Product", cdef_uid: "prod_sap_brand_name"},
+          :gcc_description_2 => {label: "GCC Description 2", data_type: :string, module_type: "Product", cdef_uid: "prod_gcc_description_2"},
+          :gcc_description_3 => {label: "GCC Description 3", data_type: :string, module_type: "Product", cdef_uid: "prod_gcc_description_3"},
+          :non_textile => {label: "Non Textile", data_type: :string, module_type: "Product", cdef_uid: "prod_non_textile"},
+          :length_in => {label: "Length (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_length_in"},
+          :width_in => {label: "Width (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_width_in"},
+          :height_in => {label: "Height (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_height_in"},
+          :rl_merchandise_division_description => {label: "RL Merchandise Division Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_merchandise_division_description"}
+          
         }
 
         included do |base|

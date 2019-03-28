@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module UnderArmour; module UaSitesSubsHe
     module ClassMethods
       def process opts={}
         g = self.new(opts)
-        g.sync_csv(true, row_sep: "\r\n")
+        g.sync_csv(csv_opts: {row_sep: "\r\n"})
       end
     end
 

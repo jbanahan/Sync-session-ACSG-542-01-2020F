@@ -11,13 +11,14 @@ module OpenChain
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
         
 
-        self.new.process_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
+        self.new.process_ack_file file_contents, opts[:sync_code], opts[:username], opts
       end
       
-      def process_ack_file file_content, file_name, sync_code, username, opts={}
-        un = username.blank? ? 'chainio_admin' : username
+      def process_ack_file file_content, sync_code, username, opts={}
+        file_name = inbound_file.file_name
+
         errors = get_ack_file_errors file_content, file_name, sync_code, opts
-        handle_errors errors, file_name, un, file_content, sync_code unless errors.blank?
+        handle_errors(errors, username, opts[:mailing_list_code], file_name, file_content, sync_code) unless errors.blank?
       end
 
       def get_ack_file_errors file_content, file_name, sync_code, opts={}
@@ -47,20 +48,27 @@ module OpenChain
             errors << "#{cm.label} #{row[0]} confirmed, but it was never sent."
             next
           end
-          fail_message = row[2]=='OK' ? '' : row[2]
-          sync.update_attributes(:confirmed_at=>Time.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
+          fail_message = row[2].to_s.strip.upcase=='OK' ? nil : row[2]
+          sync.update_attributes(:confirmed_at=>Time.zone.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
           errors << "#{cm.label} #{row[0]} failed: #{fail_message}" unless fail_message.blank?
         end
         errors
       end
 
       # override this to do custom handling with the given array of error messages
-      def handle_errors errors, file_name, username, file_content, sync_code
+      def handle_errors errors, username, mailing_list_code, file_name, file_content, sync_code
         messages = ["File Name: #{file_name}"]
         messages += errors
 
-        email_addresses = User.where(username: username).pluck :email
-        email_addresses = ["support@vandegriftinc.com"] unless email_addresses
+        email_addresses = []
+        email_addresses = User.where(username: username).pluck(:email) unless username.blank?
+
+        if !mailing_list_code.blank?
+          list = MailingList.where(system_code: mailing_list_code).first
+          email_addresses << list if list
+        end
+
+        email_addresses = ["support@vandegriftinc.com"] if email_addresses.blank?
 
         Tempfile.open(["temp",".csv"]) do |t|
           t << file_content

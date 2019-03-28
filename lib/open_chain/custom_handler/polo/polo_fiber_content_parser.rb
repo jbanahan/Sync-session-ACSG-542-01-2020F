@@ -305,7 +305,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         md = sole_fiber.match(/(?:out)?soles?/i)
         if md
           results = {}
-          count = parse_standard_fiber_string strip_punctuation(upper_fiber), results, component_type: "Outer"
+          count = parse_standard_fiber_string strip_punctuation(upper_fiber), results, component_type: "Upper"
           parse_standard_fiber_string strip_punctuation(md.pre_match), results, component_type: "Sole", starting_index: (count + 1)
         end
       end
@@ -321,7 +321,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       if fiber.match /up{1,3}ers?\s*[[:punct:]](.*?)(?:out)?soles?\s*[[:punct:]](.*)/i
         # We can just use the two match groups above to extract the fiber details
         results = {}
-        count = parse_standard_fiber_string $1, results, component_type: "Outer"
+        count = parse_standard_fiber_string $1, results, component_type: "Upper"
         parse_standard_fiber_string $2, results, component_type: "Sole", starting_index: (count + 1)
       end
 

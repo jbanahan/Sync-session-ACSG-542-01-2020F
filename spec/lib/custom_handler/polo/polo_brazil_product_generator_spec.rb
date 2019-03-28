@@ -13,28 +13,16 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @custom_defs = nil
     end
     before :each do
-      cdefs = described_class.prep_custom_definitions [:msl_receive_date,:csm_numbers]
-      @cd_msl_rec = cdefs[:msl_receive_date]
-      @cd_csm_num = cdefs[:csm_numbers]
       @countries = {}
       ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
       @p = t.product
       expect_any_instance_of(described_class).to receive(:init_outbound_custom_definitions).and_call_original
     end
-    it "should find product with MSL+ Receive Date having non-US, CA tariffs" do
-      @p.update_custom_value! @cd_msl_rec, 1.day.ago
+    it "should find product having non-US, CA tariffs" do
       expect(described_class.new.products_to_send.to_a).to eq([@p])
-    end
-    it 'finds a product with a CSM Number' do
-      @p.update_custom_value! @cd_csm_num, "CSM"
-      expect(described_class.new.products_to_send.to_a).to eq([@p])
-    end
-    it "should not find product without MSL+ Receive Date or CSM Number" do
-      expect(described_class.new.products_to_send.to_a).to be_empty
     end
     it "should not find product that doesn't need sync" do
-      @p.update_custom_value! @cd_msl_rec, 1.day.ago
       @p.update_attributes(:updated_at=>2.days.ago)
       @p.sync_records.create!(:trading_partner=>"Brazil",:sent_at=>1.day.ago,:confirmed_at=>1.hour.ago)
       expect(described_class.new.products_to_send.to_a).to be_empty
@@ -45,8 +33,6 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       t2 = Factory(:tariff_record, classification: Factory(:classification, country: @countries['TW']))
       p1 = t.product
       p2 = t2.product
-      p1.update_custom_value! @cd_msl_rec, 1.day.ago
-      p2.update_custom_value! @cd_msl_rec, 1.day.ago
 
       products = described_class.new.products_to_send.to_a
       expect(products).to include(p1)
@@ -54,7 +40,6 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should find a product that does not have a tariff record" do
-      @p.update_custom_value! @cd_msl_rec, 1.day.ago
       @p.classifications.first.tariff_records.destroy_all
       expect(described_class.new.products_to_send).to include @p
     end

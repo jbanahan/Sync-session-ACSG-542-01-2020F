@@ -21,19 +21,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
   end
   describe "sync_csv" do
     it "should clean newlines from long description" do
-      header_row = {0=>'uid',1=>'apprlong',2=>'hts',3=>'schedb',4=>'iso'}
       content_row = {0=>'213',1=>"My Long\nDescription",2=>'1234567890',3=>'9876543210',4=>'US',5=>''}
       gen = described_class.new
-      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).with(include_headers: false).and_yield(content_row)
       r = run_to_array gen
       expect(r.size).to eq(1)
       expect(r.first).to eq(['213','My Long Description','1234567890','9876543210','US'])
     end
     it "should force capitalization of ISO codes" do
-      header_row = {0=>'uid',1=>'apprlong',2=>'hts',3=>'schedb',4=>'iso',5=>''}
       content_row = {0=>'213',1=>"My Long Description",2=>'1234567890',3=>'9876543210',4=>'us',5=>''}
       gen = described_class.new
-      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(content_row)
       r = run_to_array gen
       expect(r.size).to eq(1)
       expect(r.first).to eq(['213','My Long Description','1234567890','9876543210','US'])

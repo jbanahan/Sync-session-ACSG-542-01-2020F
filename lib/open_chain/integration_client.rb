@@ -26,9 +26,10 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_pir_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_sap_vendor_xml_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_shipment_attachment_file_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_shipment_plan_xml_parser'
-require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
+require 'open_chain/custom_handler/polo/polo_global_front_end_product_parser'
+require 'open_chain/custom_handler/polo/polo_ax_product_generator'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_zip_handler'
 require 'open_chain/custom_handler/lands_end/le_parts_parser'
@@ -199,18 +200,6 @@ module OpenChain
         OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFileParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ua_article_master") && custom_features.include?('Under Armour Feeds')
         OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser.delay.process_from_s3 bucket, s3_path
-      elsif (parser_identifier == "from_msl") && custom_features.include?('MSL+')
-        if original_filename.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'MSLE', username: ['dlombardi','mgrapp','gtung']
-        else
-          OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, s3_path, original_filename
-        end
-      elsif (parser_identifier == "csm_sync") && custom_features.include?('CSM Sync')
-        OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
-      elsif (parser_identifier == "from_csm") && original_filename.upcase.start_with?("ACK") && custom_features.include?('CSM Sync')
-        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
-      elsif (parser_identifier == "efocus_ack") && custom_features.include?("e-Focus Products")
-        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, username: ['rbjork']
       elsif (parser_identifier == "from_sap") && custom_features.include?('Ann SAP')
         if original_filename.match /^zym_ack/
           OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'ANN-ZYM'
@@ -227,6 +216,18 @@ module OpenChain
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "850") && custom_features.include?("RL 850")
         OpenChain::CustomHandler::Polo::Polo850Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "polo_tradecard_810")
+        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "gfe_products")
+        OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ax_products_ack")
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::Polo::PoloAxProductGenerator.new.sync_code, mailing_list_code: "ax_products_ack"
+      elsif (parser_identifier == "csm_sync") && custom_features.include?('CSM Sync')
+        OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "from_csm") && original_filename.upcase.start_with?("ACK") && custom_features.include?('CSM Sync')
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: 'csm_product', mailing_list_code: "csm_products_ack"
+      elsif (parser_identifier == "efocus_ack") && custom_features.include?("e-Focus Products")
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, mailing_list_code: "efocus_products_ack"
       elsif (parser_identifier == "shoes_for_crews_po_zip")
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "shoes_po")
@@ -241,8 +242,6 @@ module OpenChain
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lenox_po") && custom_features.include?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, s3_path
-      elsif (parser_identifier == "polo_tradecard_810")
-        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "jjill_850") && custom_features.include?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lands_end_parts") && custom_features.include?('Lands End Parts')
@@ -255,8 +254,6 @@ module OpenChain
         OpenChain::CustomHandler::Lt::Lt856Parser.delay.process_from_s3 bucket, s3_path
       elsif (original_directory.include?("to_chain/"))
         ImportedFile.delay.process_integration_imported_file bucket, s3_path, original_path
-      elsif (parser_identifier == "test_from_msl") && custom_features.include?('MSL+')
-        #prevent errors; don't do anything else
       elsif (parser_identifier == "siemens_decrypt") && original_filename.to_s.upcase.ends_with?(".DAT.PGP")
         # Need to send the original filename without the added timestamp in it that our file monitoring process adds.
         OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler.delay.process_from_s3 bucket, s3_path, original_filename: original_filename

@@ -50,7 +50,7 @@ module OpenChain
         true
       end
 
-      def sync
+      def sync include_headers: true
         @row_count = 0
         reset_synced_product_ids
 
@@ -58,11 +58,14 @@ module OpenChain
         synced_products = {}
         rt = Product.connection.execute query
         header_row = {}
-        rt.fields.each_with_index do |f,i|
-          header_row[i-1] = f unless i==0
-        end
+        if include_headers
+          rt.fields.each_with_index do |f,i|
+            header_row[i-1] = f unless i==0
+          end
 
-        header_row = preprocess_header_row header_row
+          header_row = preprocess_header_row header_row
+        end
+        
         rt.each_with_index do |vals,i|
           fingerprint = nil
           if has_fingerprint
@@ -89,7 +92,7 @@ module OpenChain
           # done via the query.
           if processed_rows && processed_rows.length > 0
             # Don't send a header row until we actually have confirmed we have something to send out
-            unless header_row.blank?
+            if include_headers && !header_row.blank?
               header_row.each do |r|
                 yield r
                 @row_count += 1
@@ -161,21 +164,23 @@ module OpenChain
       end
 
       #output a csv file or return nil if no rows written
-      def sync_csv include_headers=true, csv_opts={}
+      def sync_csv include_headers: true, csv_opts: {}, use_raw_values: false
         f = Tempfile.new(['ProductSync','.csv'])
         cursor = 0
-        sync do |rv|
-          if include_headers || cursor > 0
-            max_col = rv.keys.sort.last
-            row = []
-            (0..max_col).each do |i|
+        sync(include_headers: include_headers) do |rv|
+          max_col = rv.keys.sort.last
+          row = []
+          (0..max_col).each do |i|
+            if use_raw_values
+              row << rv[i]
+            else
               v = rv[i]
               v = "" if v.blank?
               row << v.to_s
             end
-            row = before_csv_write cursor, row
-            f << row.to_csv(csv_opts)
-          end
+          end if max_col.to_i >= 0
+          row = before_csv_write cursor, row
+          f << row.to_csv(csv_opts)
           cursor += 1
         end
         f.flush
@@ -190,6 +195,14 @@ module OpenChain
       #stub for callback to intercept array of values to be written as CSV and return changed/corrected values
       def before_csv_write row_num_zero_based, values_array
         values_array 
+      end
+
+      def convert_array_to_results_hash array
+        hash = {}
+        array.each_with_index do |v, i|
+          hash[i] = v
+        end
+        hash
       end
       
       #output a fixed position file based on the layout provided by the subclass in the `fixed_position_map` method

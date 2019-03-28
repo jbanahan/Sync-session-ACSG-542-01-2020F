@@ -189,12 +189,22 @@ module CoreObjectSupport
       "sync_records.id IS NULL OR sync_records.sent_at IS NULL"
     end
 
+    # Deprecated...use join_clause_for_need_sync
     def need_sync_join_clause trading_partner, join_table = self.table_name
+      join_clause_for_need_sync(trading_partner, join_table: join_table)
+    end
+
+    def join_clause_for_need_sync trading_partner, join_table: self.table_name
       sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{join_table}.id and sync_records.trading_partner = ?"
       sanitize_sql_array([sql, name, trading_partner])
     end
 
+    # Deprecated...use where_clause_for_need_sync
     def need_sync_where_clause join_table = self.table_name, sent_at_before = nil
+      where_clause_for_need_sync(join_table: join_table, sent_at_or_before: sent_at_before)
+    end
+
+    def where_clause_for_need_sync join_table: self.table_name, sent_at_or_before: nil
       # sent_at_before is for cases where we don't want to resend product records prior to a certain timeframe OR
       # cases where we're splitting up file sends on product count (batching) and don't want to resend ones we just
       # sent in a previous batch.
@@ -209,9 +219,9 @@ module CoreObjectSupport
             (sync_records.ignore_updates_before IS NULL OR
              sync_records.ignore_updates_before < #{join_table}.updated_at)
             "
-      if sent_at_before.respond_to?(:acts_like_time?) || sent_at_before.respond_to?(:acts_like_date?)
+      if sent_at_or_before.respond_to?(:acts_like_time?) || sent_at_or_before.respond_to?(:acts_like_date?)
         query += " AND
-            (sync_records.sent_at IS NULL OR sync_records.sent_at < '#{sent_at_before.to_s(:db)}')"
+            (sync_records.sent_at IS NULL OR sync_records.sent_at < '#{sent_at_or_before.to_s(:db)}' OR #{join_table}.updated_at > sync_records.sent_at)"
       end
 
       query + "

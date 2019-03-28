@@ -68,7 +68,7 @@ module OpenChain
           vals
         end
         def sync_csv
-          super(false,col_sep:'|') #no headers, pipe delimited, no quoting
+          super(include_headers: false, csv_opts: {col_sep:'|'}) #no headers, pipe delimited, no quoting
         end
         def query
           md5 = "md5(concat(

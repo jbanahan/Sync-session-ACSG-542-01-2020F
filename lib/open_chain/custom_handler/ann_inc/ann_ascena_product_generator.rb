@@ -45,7 +45,7 @@ module OpenChain
         end
 
         def sync_csv
-          super(false) #no headers
+          super(include_headers: false) #no headers
         end
 
         def preprocess_row outer_row, opts = {}

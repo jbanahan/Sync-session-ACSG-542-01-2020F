@@ -66,19 +66,25 @@ describe OpenMailer do
     end
   end
   describe "send_ack_file_exception" do
-    it "should attach file for ack file exceptions" do
-      @tempfile = Tempfile.new ["s3_content", ".txt"]
-      @tempfile.binmode
-      @tempfile << "Content of a tempfile"
-      @tempfile.rewind
+    let! (:tempfile) { 
+      tempfile = Tempfile.new ["s3_content", ".txt"]
+      tempfile.binmode
+      tempfile << "Content of a tempfile"
+      tempfile.rewind
+      tempfile
+    }
 
-      OpenMailer.send_ack_file_exception("example@example.com",["Error 1","Error 2","Error 3"], @tempfile, "s3_content.txt","Sync code").deliver!
+    after :each do 
+      tempfile.close!
+    end
+
+    it "should attach file for ack file exceptions" do
+      expect_any_instance_of(OpenMailer).to receive(:explode_group_and_mailing_lists).with("example@example.com", "TO").and_return "mail@there.com"
+      OpenMailer.send_ack_file_exception("example@example.com",["Error 1","Error 2","Error 3"], tempfile, "s3_content.txt","Sync code").deliver!
       m = OpenMailer.deliveries.pop
-      expect(m.to.first).to eq("example@example.com")
+      expect(m.to.first).to eq("mail@there.com")
       expect(m.subject).to eq("[VFI Track] Ack File Processing Error")
       expect(m.attachments.size).to eq(1)
-
-      @tempfile.close!
     end
   end
   describe 'send_s3_file' do

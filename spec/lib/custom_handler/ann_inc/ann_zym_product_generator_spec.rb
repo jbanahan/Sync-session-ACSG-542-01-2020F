@@ -24,19 +24,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   end
   describe "sync_csv" do
     it "should clean newlines and tabs from long description" do
-      header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
       content_row = {0=>'213',1=>'US',2=>"My Long\nDescription\t",3=>'CA',4=>'9876543210',5=>''}
       gen = described_class.new
-      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).with(include_headers: false).and_yield(content_row)
       r = run_to_array gen
       expect(r.size).to eq(1)
       expect(r.first).to eq(['213','US','My Long Description ','CA','9876543210'])
     end
     it "should not quote empty fields" do
-      header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
       content_row = {0=>'213',1=>'US',2=>"",3=>'',4=>'9876543210',5=>''}
       gen = described_class.new
-      expect(gen).to receive(:sync).and_yield(header_row).and_yield(content_row)
+      expect(gen).to receive(:sync).and_yield(content_row)
       @tmp = gen.sync_csv
       r = IO.read(@tmp)
       expect(r).to eq("213|US|||9876543210\n")

@@ -298,11 +298,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
 
     context "Ralph Lauren" do
-      it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
-        do_parser_test('MSL+', OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler, '/_from_msl/a.csv') do |parser|
-          expect(parser).to receive(:send_and_delete_ack_file_from_s3).with("bucket", '12345', 'a.csv')
-        end
-      end
 
       it "should not raise errors on test files" do
         ack = double("ack_file")
@@ -310,15 +305,9 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect{subject.process_command(cmd)}.to_not raise_error
       end
 
-      it "should handle ack files" do
-        do_parser_test('MSL+', OpenChain::CustomHandler::AckFileHandler, '/_from_msl/a-ack.csv') do |parser|
-          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'MSLE',:username => ['dlombardi','mgrapp','gtung']}
-        end
-      end
-
       it 'should process CSM Acknowledgements' do
         do_parser_test('CSM Sync', OpenChain::CustomHandler::AckFileHandler, '/_from_csm/ACK-file.csv') do |parser|
-          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {sync_code: 'csm_product', username: ['rbjork', 'aditaran']}
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {sync_code: 'csm_product', mailing_list_code: "csm_products_ack"}
         end
       end
 
@@ -328,7 +317,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
       it "should send efocus ack files to ack handler" do
         do_parser_test("e-Focus Products", OpenChain::CustomHandler::AckFileHandler, '/_efocus_ack/file.csv') do |parser|
-          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, :username => ['rbjork']}
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE, mailing_list_code: "efocus_products_ack"}
         end
       end
 
@@ -346,6 +335,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
       it 'should send data to CSM Sync custom handler if feature enabled and path contains _csm_sync' do
         do_parser_test('CSM Sync', OpenChain::CustomHandler::PoloCsmSyncHandler, '/_csm_sync/a.xls', original_filename: 'a.xls')
+      end
+
+      it "handles Polo Global Frontend product files" do
+        do_parser_test("", OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser, "/gfe_products/file.txt")
+      end
+
+      it "handles AX product ack files" do
+        do_parser_test('CSM Sync', OpenChain::CustomHandler::AckFileHandler, '/ax_products_ack/file.txt') do |parser|
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {sync_code: 'AX', mailing_list_code: "ax_products_ack"}
+        end
       end
     end
 

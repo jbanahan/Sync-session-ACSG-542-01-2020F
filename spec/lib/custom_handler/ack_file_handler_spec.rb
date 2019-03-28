@@ -2,20 +2,25 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::AckFileHandler do
 
+  let! (:inbound_file) {
+    f = InboundFile.new
+    f.file_name = "file.csv"
+    allow_any_instance_of(described_class).to receive(:inbound_file).and_return f
+    f
+  }
+
   context "line_handling" do
+    let! (:product) { Factory(:product) }
+
     it "should take optional separator" do
-      p = Factory(:product)
-      t = described_class.new
-      msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
-      expect(t).to receive(:handle_errors).with([msg],'fn', "testuser", "h|h|h\n#{p.unique_identifier}|201306191706|OK","OTHER")
-      t.process_ack_file "h|h|h\n#{p.unique_identifier}|201306191706|OK", 'fn', 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
+      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
+      expect(subject).to receive(:handle_errors).with([msg],"testuser", nil, 'file.csv', "h|h|h\n#{product.unique_identifier}|201306191706|OK","OTHER")
+      subject.process_ack_file "h|h|h\n#{product.unique_identifier}|201306191706|OK", 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
     end
     it "should handle extra whitespace" do
-      p = Factory(:product)
-      t = described_class.new
-      msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
-      expect(t).to receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ","OTHER")
-      t.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
+      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
+      expect(subject).to receive(:handle_errors).with([msg],"testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,\"OK\"        ","OTHER")
+      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,\"OK\"        ", 'OTHER', "testuser"
     end
     
   end
@@ -24,51 +29,47 @@ describe OpenChain::CustomHandler::AckFileHandler do
     it "should default to product handling" do
       p = Factory(:product)
       sr = p.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
-      t = described_class.new
-      t.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"", 'fn', 'OTHER', "testuser"
+      subject.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"", 'OTHER', "testuser"
       sr.reload
       expect(sr.confirmed_at).not_to be_nil
     end
     it "should allow alternate module type" do
       ent = Factory(:entry,broker_reference:'123456')
       sr = ent.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
-      t = described_class.new
-      t.process_ack_file "h,h,h\n#{ent.broker_reference},201306191706,\"OK\"", 'fn', 'OTHER', nil, {module_type:'Entry'}
+      subject.process_ack_file "h,h,h\n123456,201306191706,\"OK\"", 'OTHER', nil, {module_type:'Entry'}
       sr.reload
       expect(sr.confirmed_at).not_to be_nil
     end
   end
   context "sync_records" do
-    before :each do
-      @p = Factory(:product)
-      @u = Factory(:user, email: "example@example.com", username: "testuser")
-    end
+    let! (:product) { Factory(:product) }
+    let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
+
     it "should update product sync record" do
-      @p.sync_records.create!(:trading_partner=>'XYZ')
-      described_class.new.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'XYZ', "testuser"
-      @p.reload
-      expect(@p.sync_records.size).to eq(1)
-      sr = @p.sync_records.first
+      product.sync_records.create!(:trading_partner=>'XYZ')
+      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'XYZ', "testuser"
+      product.reload
+      expect(product.sync_records.size).to eq(1)
+      sr = product.sync_records.first
       expect(sr.trading_partner).to eq('XYZ')
       expect(sr.confirmed_at).to be > 1.minute.ago
-      expect(sr.confirmation_file_name).to eq('fn')
+      expect(sr.confirmation_file_name).to eq('file.csv')
       expect(sr.failure_message).to be_blank
     end
 
     it "should not update sync record for another trading partner" do
-      @p.sync_records.create!(:trading_partner=>'XYZ')
-      described_class.new.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
-      @p.reload
-      expect(@p.sync_records.size).to eq(1)
-      sr = @p.sync_records.first
+      product.sync_records.create!(:trading_partner=>'XYZ')
+      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
+      product.reload
+      expect(product.sync_records.size).to eq(1)
+      sr = product.sync_records.first
       expect(sr.trading_partner).to eq('XYZ')
       expect(sr.confirmed_at).to be_nil
     end
     it "should call errors callback if there is an error" do
-      t = described_class.new
-      msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
-      expect(t).to receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK", "OTHER")
-      t.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
+      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
+      expect(subject).to receive(:handle_errors).with([msg], "testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,OK", "OTHER")
+      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
     end
   end
 
@@ -100,6 +101,39 @@ describe OpenChain::CustomHandler::AckFileHandler do
       subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: [me.username, you.username]})
 
       expect((OpenMailer.deliveries.last.to - [me.email, you.email]).size).to eq(0)
+      expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
+    end
+
+    it "should send an email to the user provided if there's an error while processing the file" do
+      user = Factory(:user, email: "me@there.com")
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
+
+      expect(OpenMailer.deliveries.last.to.first).to eq(user.email)
+      expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
+    end
+
+    it "should send an email to the MailingList provided if there's an error while processing the file" do
+      list = Factory(:mailing_list, system_code: "list", email_addresses: "me@there.com")
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", mailing_list_code: "list"})
+
+      expect(OpenMailer.deliveries.last.to.first).to eq("me@there.com")
+      expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
+    end
+
+    it "should send an email to mailing list and user if there's an error while processing the file" do
+      user = Factory(:user, email: "me@there.com")
+      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list"})
+
+      expect(OpenMailer.deliveries.last.to).to eq(["me@there.com", "you@there.com"])
+      expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
+    end
+
+    it "should send an email to to support if there's an error while processing the file and no user or list is setup" do
+      subject.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ"})
+
+      expect(OpenMailer.deliveries.last.to).to eq(["support@vandegriftinc.com"])
       expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
     end
 
