@@ -561,6 +561,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def fill_missing_fields
       load_helpers
+      invoice_lines = Set.new
       results.each do |row|
         row.official_tariff = official_tariff row
         
@@ -591,6 +592,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         row[:epd_savings] = epd_savings row
         row[:trade_discount_savings] = trade_discount_savings row
         row[:applied_discount] = applied_discount row
+
+        # apply to all but the first appearance of the invoice line
+        zero_fields(row) if invoice_lines.member? row[:cil_id]
+        invoice_lines << row[:cil_id]
       end
 
       nil
@@ -731,6 +736,50 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       imp_ctry_id = row[:import_country_id]
       hts = row[:hts_code]
       tariff_field_helper.tariffs[[imp_ctry_id, hts]]
+    end
+
+    def zero_fields row
+      row[:unit_price] = 0
+      row[:quantity] = 0
+      row[:original_fob_unit_value] = 0
+      row[:original_fob_entered_value] = 0
+      row[:duty] = 0
+      row[:first_sale_difference] = 0
+      row[:first_sale_duty_savings] = 0
+      row[:first_sale_margin_percent] = 0
+      row[:price_before_discounts] = 0
+      row[:entered_value] = 0
+      row[:air_sea_discount] = 0
+      row[:air_sea_per_unit_savings] = 0
+      row[:air_sea_duty_savings] = 0
+      row[:early_payment_discount] = 0
+      row[:epd_per_unit_savings] = 0
+      row[:epd_duty_savings] = 0
+      row[:trade_discount] = 0
+      row[:trade_discount_per_unit_savings] = 0
+      row[:trade_discount_duty_savings] = 0
+      row[:spi_duty_savings] = 0
+      row[:hanger_duty_savings] = 0
+      row[:mp_vs_air_sea] = 0
+      row[:mp_vs_epd] = 0
+      row[:mp_vs_trade_discount] = 0
+      row[:mp_vs_air_sea_epd_trade] = 0
+      row[:first_sale_savings] = 0
+      row[:air_sea_savings] = 0
+      row[:epd_savings] = 0
+      row[:trade_discount_savings] = 0
+
+      #not shown on data tab
+      row[:contract_amount] = 0
+      row[:non_dutiable_amount] = 0
+      row[:value] = 0
+      row[:duty_amount] = 0
+      row[:miscellaneous_discount] = 0
+      row[:other_amount] = 0
+      row[:air_sea_discount_attrib] = 0
+      row[:middleman_charge] = 0
+
+      nil
     end
     
     class EntFieldHelper
@@ -922,7 +971,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
         LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
         LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
-        LEFT OUTER JOIN orders o ON o.order_number =  CONCAT("#{cust_number == ASCENA_CUST_NUM ? 'ASCENA' : 'ATAYLOR'}-", cil.product_line, '-', cil.po_number)
+        LEFT OUTER JOIN orders o ON o.order_number =  IF('#{cust_number}' = '#{ASCENA_CUST_NUM}', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ATAYLOR-', cil.po_number))
         LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
         LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
