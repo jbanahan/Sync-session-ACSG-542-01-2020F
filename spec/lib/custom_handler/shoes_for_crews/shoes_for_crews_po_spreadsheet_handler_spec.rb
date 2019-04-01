@@ -408,6 +408,24 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(order.order_lines.length).to eq 0
     end
 
+    it "does not update an order if the order is booked" do
+      order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
+
+      # mock the find_order so we can provide our own order to make sure that when an order is 
+      # said to be booked that it's not updated.
+      expect(order).to receive(:booked?).and_return true
+      expect(order).not_to receive(:post_update_logic!)
+
+      expect(subject).to receive(:find_order).and_yield true, order
+
+      subject.process_po data, log, "bucket", "key"
+
+      order.reload
+
+      # Just check if there are now lines, if so, it means the order was updated
+      expect(order.order_lines.length).to eq 0
+    end
+
     it "does not call post_update when the order has not been changed" do
       # The easiest way to ensure we get identical fingerprints is to just use the process_po method twice
       # using the same dataset.

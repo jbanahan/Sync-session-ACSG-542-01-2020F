@@ -164,7 +164,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
       order.last_file_path = key
 
       if existing_order
-        if order.shipping?
+        if order.shipping? || order.booked?
           update_status = "shipping"
           break
         else
