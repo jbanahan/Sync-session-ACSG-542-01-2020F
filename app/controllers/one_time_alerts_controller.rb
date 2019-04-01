@@ -87,7 +87,7 @@ class OneTimeAlertsController < ApplicationController
 
   def mass_delete
     if OneTimeAlert.can_edit? current_user
-      OneTimeAlert.where(id: params[:ids]&.split(","))
+      OneTimeAlert.where(id: params[:ids])
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each(&:destroy)
       add_flash :notices, "Selected One Time Alerts have been deleted."
@@ -100,7 +100,7 @@ class OneTimeAlertsController < ApplicationController
   def mass_expire
     if OneTimeAlert.can_edit? current_user
       expire_date = Time.zone.now.to_date
-      OneTimeAlert.where(id: params[:ids]&.split(","))
+      OneTimeAlert.where(id: params[:ids])
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each{ |ota| ota.update_attributes! expire_date: expire_date }
       add_flash :notices, "Selected One Time Alerts will expire at the end of the day."
@@ -113,7 +113,7 @@ class OneTimeAlertsController < ApplicationController
   def mass_enable
     if OneTimeAlert.can_edit? current_user
       expire_date = Time.zone.now.to_date + 1.year
-      OneTimeAlert.where(id: params[:ids]&.split(","))
+      OneTimeAlert.where(id: params[:ids])
                   .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each{ |ota| ota.update_attributes! expire_date: expire_date }
       redirect_to one_time_alerts_path(display_all_param)

@@ -6,8 +6,14 @@
   var expire_path = "<%=mass_expire_one_time_alerts_path(display_all:params[:display_all])%>";
 
   function listIds(sel) {
-      return sel.map(function() {return this.id}).get().join(",");
+      return sel.map(function() {return this.id}).get();
   };
+
+  function addInputTags(sel, ids) {
+    $.each(ids, function(idx, id) {
+      sel.prepend("<input id='ids' type='hidden' name='ids[]' value='" + id + "'>");
+    });
+  }
 
   $(function() {
     $("#enabled-tab").click(function() {
@@ -27,11 +33,11 @@
       $("#expired-tab").trigger("click");
     
     $("#mass-delete").click(function() {
-      var ids = listIds($("#enabled :checked, #expired :checked"));
+      var ids = listIds($("#enabled :checked, #expired :checked").filter($('.alert-select')));
       if (ids.length > 0) {
         var deleteConfirmed = confirm("Delete selected One Time Alerts?");
         if (deleteConfirmed) {
-          $("input[id=ids]").val(ids);    
+          addInputTags($('#mass-update'), ids);
           var form = $("#mass-update");
           $("#rails-hack").val("DELETE");
           form.attr("action", delete_path);
@@ -42,11 +48,11 @@
     });
 
     $("#mass-expire").click(function() {
-      var ids = listIds($("#enabled :checked" ));
+      var ids = listIds($("#enabled :checked" ).filter($('.alert-select')));
       if (ids.length > 0) {
         var expireConfirmed = confirm("Expire selected One Time Alerts?");
         if (expireConfirmed) {
-          $("input[id=ids]").val(ids);
+          addInputTags($('#mass-update'), ids);
           var form = $("#mass-update");
           $("#rails-hack").val("PUT");
           form.attr("action", expire_path);      
@@ -57,11 +63,11 @@
     });
 
     $("#mass-enable").click(function() {
-      var ids = listIds($("#expired :checked" ));
+      var ids = listIds($("#expired :checked" ).filter($('.alert-select')));
       if (ids.length > 0) {
         var enableConfirmed = confirm("Enable selected One Time Alerts?");
         if (enableConfirmed) {
-          $("input[id=ids]").val(ids);
+          addInputTags($('#mass-update'), ids);
           var form = $("#mass-update");
           $("#rails-hack").val("PUT");
           form.attr("action", enable_path);
@@ -113,7 +119,6 @@
   </div>
 </div>
 <form id="mass-update" method="POST">
-  <input id="ids" type="hidden" name="ids">
   <input id="tab" class="opt-param" type="hidden" name="tab" value="<%= @tab %>">
   <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
   <input id="rails-hack" name="_method" type="hidden"/>
