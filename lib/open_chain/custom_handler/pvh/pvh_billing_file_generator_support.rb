@@ -261,8 +261,12 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     bill_of_lading = nil
     container_number = nil
     if container&.shipment&.mode.to_s.strip =~ /Ocean/i
-      fcl = container&.fcl_lcl.to_s.strip.upcase != "LCL"
-      bill_of_lading = fcl ? container&.shipment&.master_bill_of_lading : container&.shipment&.house_bill_of_lading
+      lcl = container&.fcl_lcl.to_s.strip.upcase == "LCL"
+      if lcl
+        # LCL shipments (in general) will use the house bill...but if there's no house bill, use the master from the ASN
+        bill_of_lading = container&.shipment&.house_bill_of_lading
+      end
+      bill_of_lading = container&.shipment&.master_bill_of_lading if bill_of_lading.blank?
       container_number = container.container_number
     else
       # Leave the container number blank for Air shipments
@@ -328,7 +332,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     doc, root = build_xml_document("GenericInvoiceMessage")
     invoice_date = mf(broker_invoice_snapshot, :bi_invoice_date)
 
-    filename = "GI_VANDE_PVH_#{invoice_number}_#{invoice_type}_#{Time.zone.now.to_i}.xml"
+    filename = "GI_VANDE_PVH_#{invoice_number}_#{invoice_type}_#{Time.zone.now.strftime("%Y%m%d%H%M%S")}.xml"
 
     invoice_element, invoice_header, invoice_details = generate_invoice_file_header(root, broker_invoice_snapshot, invoice_number, invoice_date, filename)
 

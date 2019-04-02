@@ -64,12 +64,12 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
     expect(x).to have_xpath_value("TransactionInfo/File/ReceivedTime/Date", "2018-11-07")
     expect(x).to have_xpath_value("TransactionInfo/File/ReceivedTime/Time", "07:00:00")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileType", "XML")
-    expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileName", "GI_VANDE_PVH_#{file_invoice}_1541592000.xml")
+    expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileName", "GI_VANDE_PVH_#{file_invoice}_#{now.strftime("%Y%m%d%H%M%S")}.xml")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/MessageType", "GENINV")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/MessageId", "1541592000")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/ControlNumber", "1541592000")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/HeaderControlNumber", "1541592000")
-    expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/FileName", "GI_VANDE_PVH_#{file_invoice}_1541592000.xml")
+    expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/FileName", "GI_VANDE_PVH_#{file_invoice}_#{now.strftime("%Y%m%d%H%M%S")}.xml")
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Date", "2018-11-07")
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Time", "07:00:00")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/@Type", "Broker Invoice")
@@ -362,6 +362,19 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
       # Container number should be included here, since it's just LCL, not Air mode.
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "ABCD1234567890")
+    end
+
+    it "falls back to master bill for LCL if house bill is blank" do 
+      shipment.update_attributes! house_bill_of_lading: ""
+      c = shipment.containers.first
+      c.fcl_lcl = "LCL"
+      c.save!
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "MBOL1234567890")
     end
 
     it "handles credit invoices" do
