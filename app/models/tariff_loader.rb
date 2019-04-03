@@ -1,13 +1,18 @@
+require 'open_chain/custom_handler/csv_excel_parser'
+require 'open_chain/integration_client_parser'
 require 'zip'
 
 class TariffLoader
-  
+  include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::CsvExcelParser
+
   IMPORT_REG_LAMBDA = lambda {|o,d|
     s = o.import_regulations
     s = "" if s.nil?
     s << " #{d}"
     o.import_regulations = s.strip
   }
+
   EXPORT_REG_LAMBDA = lambda {|o,d|
     s = o.export_regulations
     s = "" if s.nil?
@@ -71,7 +76,7 @@ class TariffLoader
     "EXP_REG3" => EXPORT_REG_LAMBDA,
     "Export Reg 4" => EXPORT_REG_LAMBDA,
     "EXP_REG4" => EXPORT_REG_LAMBDA,
-#ignored fields
+    #ignored fields
     "CALCULATIONMETHOD" => lambda {|o,d|}
   }
   MIN_VALID_COLUMN_LENGTH = 10
@@ -85,7 +90,8 @@ class TariffLoader
     @tariff_set_label = tariff_set_label
     should_do_mfn_parse country
   end
- 
+
+  # TODO this method needs unit-testing
   def process
     ts = nil
     # The first array index should be the file path and the second (if present) is a Tempfile pointing to the file we're processing
@@ -117,14 +123,22 @@ class TariffLoader
     ts
   end
 
-  def self.process_file file_path, tariff_set_label, auto_activate=false
-    raise "#{file_path} is not a file." unless File.file? file_path
-    c = Country.where(:iso_code => file_path.split('/').last[0,2].upcase).first
-    raise "Country not found with ISO #{file_path.split('/').last[0,2].upcase} for file #{file_path}" if c.nil?
-    ts = TariffLoader.new(c,file_path,tariff_set_label).process
-    ts.activate if auto_activate
+  # Files routed by TariffFileMonitor are processed using this method.
+  def self.parse_file file, log, opts = {}
+    log.error_and_raise "#{file.path} is not a file." unless File.file? file.path
+
+    iso_code = file.path.split('/').last[0,2].upcase
+    tariff_set_label = "#{iso_code}-#{Time.zone.now.strftime("%Y-%m-%d")}"
+
+    c = Country.where(iso_code:iso_code).first
+    log.error_and_raise "Country not found with ISO #{iso_code} for file #{file.path}" if c.nil?
+
+    ts = TariffLoader.new(c, file.path, tariff_set_label).process
+    # Files loaded this way are always activated.  (Really, the ones loaded via the old screen are always activated too.)
+    ts.activate
   end
 
+  # Manual upload via screen (tariff_sets) goes this route.  See TariffSetsController.
   def self.process_s3 s3_key, country, tariff_set_label, auto_activate, user=nil
     Tempfile.open(['tariff_s3',".#{s3_key.split('.').last}"]) do |t|
       t.binmode
@@ -133,7 +147,7 @@ class TariffLoader
       t.flush
       ts = TariffLoader.new(country,t.path,tariff_set_label).process
       ts.activate if auto_activate
-      user.messages.create!(:subject=>"Tariff Set #{tariff_set_label} Loaded",:body=>"Tariff Set #{tariff_set_label} has been loaded and has #{auto_activate ? "" : "NOT"} been activated.") if user
+      user.messages.create!(:subject=>"Tariff Set #{tariff_set_label} Loaded",:body=>"Tariff Set #{tariff_set_label} has been loaded and has#{auto_activate ? "" : " NOT"} been activated.") if user
     end
   end
 
@@ -167,98 +181,98 @@ class TariffLoader
 
   private
 
-  def parse_spc_rates tariff, val
-    tariff.special_rates = val
- 
-    # The following regex looks for a decimal value (optionally followed by a %) or words
-    # followed by zero or one space, followed by a colon, followed by zero or one space
-    # followed by an open parenth MFN (any chars) and then the first close parenth
-    if @do_mfn_parse && val =~ /(\d+%?|\w+) ?: ?\(MFN.*?\)/
-      tariff.most_favored_nation_rate = $1
-      #tariff.common_rate = $1
-    end
-  end
+    def parse_spc_rates tariff, val
+      tariff.special_rates = val
 
-  def get_parser file_path
-    file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new    
-  end
-
-  def get_file_to_process file_path
-    # [0] = the path to the file to process, the second index 
-    # [1] = if a zip file, a tempfile reference to the extracted file.
-    file_to_process = []
-    if file_path.downcase.end_with? "zip"
-      Zip::File.open(file_path) do |zip_file| 
-        zip_file.each do |file|
-            parser = get_parser(file.name)
-            # Strip the extension from the file name for the first arg to the Tempfile constructor
-            temp_output = Tempfile.new([File.basename(file.name, ".*"), File.extname(file.name)]) if file.file? && !parser.nil?
-            if temp_output
-              # Since the tempfile call above actually creates the file, force the overwrite
-              # here (the extract call borks if you don't)
-              zip_file.extract(file.name, temp_output.path) {true}
-              file_to_process << temp_output.path
-              file_to_process << temp_output
-              break
-            end
-        end
+      # The following regex looks for a decimal value (optionally followed by a %) or words
+      # followed by zero or one space, followed by a colon, followed by zero or one space
+      # followed by an open parenth MFN (any chars) and then the first close parenth
+      if @do_mfn_parse && val =~ /(\d+%?|\w+) ?: ?\(MFN.*?\)/
+        tariff.most_favored_nation_rate = $1
+        #tariff.common_rate = $1
       end
-    else 
-      file_to_process << file_path
-    end
-    file_to_process
-  end
-  
-  def should_do_mfn_parse country 
-    @do_mfn_parse = MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS.include? country.iso_code.upcase
-  end
-
-  class CsvParser
-
-    def headers
-      raise "Headers not initialized (a row must be read first)" unless @headers
-      @headers
     end
 
-    def foreach file_path, &block
-      CSV.foreach(file_path) do |row|
-        # Iterate through the file until we find the header row
-        if @headers 
-          yield row if TariffLoader.valid_row? row
-        else 
+    def get_parser file_path
+      file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new
+    end
+
+    def get_file_to_process file_path
+      # [0] = the path to the file to process, the second index
+      # [1] = if a zip file, a tempfile reference to the extracted file.
+      file_to_process = []
+      if file_path.downcase.end_with? "zip"
+        Zip::File.open(file_path) do |zip_file|
+          zip_file.each do |file|
+              parser = get_parser(file.name)
+              # Strip the extension from the file name for the first arg to the Tempfile constructor
+              temp_output = Tempfile.new([File.basename(file.name, ".*"), File.extname(file.name)]) if file.file? && !parser.nil?
+              if temp_output
+                # Since the tempfile call above actually creates the file, force the overwrite
+                # here (the extract call borks if you don't)
+                zip_file.extract(file.name, temp_output.path) {true}
+                file_to_process << temp_output.path
+                file_to_process << temp_output
+                break
+              end
+          end
+        end
+      else
+        file_to_process << file_path
+      end
+      file_to_process
+    end
+
+    def should_do_mfn_parse country
+      @do_mfn_parse = MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS.include? country.iso_code.upcase
+    end
+
+    class CsvParser
+
+      def headers
+        raise "Headers not initialized (a row must be read first)" unless @headers
+        @headers
+      end
+
+      def foreach file_path, &block
+        CSV.foreach(file_path) do |row|
+          # Iterate through the file until we find the header row
+          if @headers
+            yield row if TariffLoader.valid_row? row
+          else
+            @headers = row if TariffLoader.valid_header_row? row
+          end
+        end
+
+        raise "No header row found in file #{File.basename(file_path)}." unless @headers
+      end
+
+    end
+
+    class XlsParser
+
+      def headers
+        raise "Headers not initialzied (a row must be read first)" unless @headers
+        @headers
+      end
+
+      def foreach file_path, &block
+        sheet = Spreadsheet.open(file_path).worksheet 0
+        header_index = -1
+        #Find the first row of the spreadsheet that looks like it contains the worksheet headers
+        sheet.each do |row|
           @headers = row if TariffLoader.valid_header_row? row
+          header_index = row.idx if @headers
+          break if @headers
+        end
+
+        raise "No header row found in spreadsheet #{File.basename(file_path)}." unless @headers
+
+        # Start processing tariff information on the line directly after the header row
+        sheet.each header_index + 1 do |row|
+          yield row if TariffLoader.valid_row? row
         end
       end
 
-      raise "No header row found in file #{File.basename(file_path)}." unless @headers
     end
-
-  end
-
-  class XlsParser
-
-    def headers
-      raise "Headers not initialzied (a row must be read first)" unless @headers
-      @headers
-    end
-
-    def foreach file_path, &block
-      sheet = Spreadsheet.open(file_path).worksheet 0
-      header_index = -1
-      #Find the first row of the spreadsheet that looks like it contains the worksheet headers
-      sheet.each do |row|
-        @headers = row if TariffLoader.valid_header_row? row
-        header_index = row.idx if @headers
-        break if @headers
-      end
-
-      raise "No header row found in spreadsheet #{File.basename(file_path)}." unless @headers
-
-      # Start processing tariff information on the line directly after the header row
-      sheet.each header_index + 1 do |row|
-        yield row if TariffLoader.valid_row? row
-      end
-    end
-
-  end
 end

@@ -392,6 +392,10 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "handles Kewill Tariff files" do
         do_parser_test("Kewill Entries", OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser, "/kewill_tariffs/file.json")
       end
+
+      it "handles Tariff Upload files" do
+        do_parser_test("Tariff Upload", TariffLoader, "/tariff_file/file.zip")
+      end
     end
 
     context "foot_locker" do

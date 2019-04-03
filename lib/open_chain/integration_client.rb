@@ -295,6 +295,8 @@ module OpenChain
         OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "pvh_gtn_asn_xml") && custom_features.include?("PVH Feeds")
         OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "tariff_file") && custom_features.include?("Tariff Upload")
+        TariffLoader.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

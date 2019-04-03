@@ -282,6 +282,11 @@ class FtpSender
       end.compact
     end
 
+    # Simple pass-thru method to the underlying client's version of this method.
+    def get_binary_file remote_file, local_file = File.basename(remote_file), block_size = Net::FTP::DEFAULT_BLOCKSIZE, &block
+      @client.getbinaryfile remote_file, local_file, block_size, &block
+    end
+
     private
       def handle_exception e
         if e.is_a? Net::FTPError
@@ -370,6 +375,11 @@ class FtpSender
         FtpSender::FtpFile.new(f.name, f.attributes.size, Time.at(f.attributes.mtime).in_time_zone(convert_to_time_zone), (f.file? ? "file" : "directory"))
       end.compact
 
+    end
+
+    # Simple pass-thru method to the underlying client's version of this method.
+    def get_binary_file remote_file, local_file = File.basename(remote_file), block_size = Net::FTP::DEFAULT_BLOCKSIZE, &block
+      @client.getbinaryfile remote_file, local_file, block_size, &block
     end
 
     private

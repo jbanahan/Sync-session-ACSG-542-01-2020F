@@ -481,8 +481,22 @@ describe FtpSender do
           expect(f.mtime).to eq directory.modify.in_time_zone("UTC")
         end
       end
-    end
 
+      describe "get_binary_file" do
+        it "should pass through execution to client version" do
+          block_head = Proc.new{}
+          expect(@ftp).to receive(:getbinaryfile).with("remote", "local", 12345) do |&block|
+            expect(block).to be block_head
+          end.and_return "abc"
+          expect(@client.get_binary_file("remote", "local", 12345, &block_head)).to eq "abc"
+        end
+
+        it "should pass through execution to client version with default values" do
+          expect(@ftp).to receive(:getbinaryfile).with("full_path/remote.txt", "remote.txt", Net::FTP::DEFAULT_BLOCKSIZE).and_return "abc"
+          expect(@client.get_binary_file("full_path/remote.txt")).to eq "abc"
+        end
+      end
+    end
   end
 
   context "SftpClient" do
@@ -688,8 +702,22 @@ describe FtpSender do
           expect(f.mtime).to eq directory.attributes.mtime.in_time_zone("UTC")
         end
       end
-    end
 
+      describe "get_binary_file" do
+        it "should pass through execution to client version" do
+          block_head = Proc.new{}
+          expect(@ftp).to receive(:getbinaryfile).with("remote", "local", 12345) do |&block|
+            expect(block).to be block_head
+          end.and_return "abc"
+          expect(@client.get_binary_file("remote", "local", 12345, &block_head)).to eq "abc"
+        end
+
+        it "should pass through execution to client version with default values" do
+          expect(@ftp).to receive(:getbinaryfile).with("full_path/remote.txt", "remote.txt", Net::FTP::DEFAULT_BLOCKSIZE).and_return "abc"
+          expect(@client.get_binary_file("full_path/remote.txt")).to eq "abc"
+        end
+      end
+    end
   end
 
   context "empty file check" do
@@ -745,4 +773,5 @@ describe FtpSender do
       expect(FtpSender.send(:get_ftp_client, {protocol: 'sftp'}).class.name).to eq "FtpSender::SftpClient"
     end
   end
+
 end

@@ -11,4 +11,5 @@
 ActiveSupport::Inflector.inflections do |inflect|
   inflect.irregular 'has', 'have'
   inflect.irregular 'is', 'are'
+  inflect.irregular 'was', 'were'
 end
