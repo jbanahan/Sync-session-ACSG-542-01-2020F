@@ -21,6 +21,7 @@ $(function() {
             <th>Wistia Code</th>
             <th>URL Regex</th>
             <th>Groups</th>
+            <th>Last Update</th>
             <th></th>
           </tr>
         </thead>
@@ -31,14 +32,20 @@ $(function() {
                 <%= um.category%>
               </td>
               <td>
-                <a href='<%=download_user_manual_path(um)%>' target='_blank'>
-                  <%=um.name%>
-                </a>
+                <% doc_link = url(um) %>
+                <% if doc_link %>
+                  <a href='<%= doc_link %>' target="_blank">
+                    <%= um.name %>
+                  </a>
+                <% else %>
+                  <script src="https://fast.wistia.com/embed/medias/<%=um.wistia_code%>.jsonp" async></script><span class="wistia_embed wistia_async_<%=um.wistia_code%> popover=true popoverAnimateThumbnail=true popoverContent=link" style="display:inline"><a href="#"><%=um.name%></a></span>
+                  <script src="https://fast.wistia.com/assets/external/E-v1.js" async></script>
+                <% end %>
               </td>
               <td class="text-center">
                 <%= check_box_tag 'master_comp', um.master_company_only, um.master_company_only, disabled: true %>
               </td>
-              <td>
+              <td style="<%= doc_link ? 'color: gray;':'' %>">
                 <%= um.wistia_code%>
               </td>
               <td><%=um.page_url_regex%></td>
@@ -46,6 +53,7 @@ $(function() {
                 <pre>
                   <%=um.groups%>
                 </pre>
+              <td><%=last_update(um)%></td>
               </td>
               <td>
                 <a href='<%=edit_user_manual_path(um)%>'>Edit</a>
@@ -75,7 +83,11 @@ $(function() {
             <%=f.text_field :category, class: 'form-control'%>
           </div>
           <div class="form-group">
-            <%=f.label :wistia_code%>
+            <%=f.label :document_url, "Document URL <small>(overrides Wistia code)</small>".html_safe%>
+            <%=f.text_field :document_url, class: 'form-control'%>
+          </div>
+          <div class="form-group">
+            <%=f.label :wistia_code, "Wistia code <small>(overrides attachment)</small>".html_safe%>
             <%=f.text_field :wistia_code, class: 'form-control'%>
           </div>
           <div class="form-group">

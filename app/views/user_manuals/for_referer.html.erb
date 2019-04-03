@@ -10,10 +10,11 @@
           <ul>
             <%ma.each do |m|%>
             <ul>
-              <% if !m.wistia_code.blank? %>
-                <script src="https://fast.wistia.com/embed/medias/<%=m.wistia_code%>.jsonp" async></script><span class="wistia_embed wistia_async_<%=m.wistia_code%> popover=true popoverAnimateThumbnail=true popoverContent=link" style="display:inline"><a href="#"><%=m.name%></a></span>
+              <% doc_link = url(m) %>
+              <% if !doc_link %>
+                <script src="https://fast.wistia.com/embed/medias/<%=m.wistia_code%>.jsonp" async></script><span class="wistia_embed wistia_async_<%=m.wistia_code%> popover=true popoverAnimateThumbnail=true popoverContent=link" style="display:inline"><a href="#"><%=m.name%></a>&nbsp;&nbsp;<small><%= last_update(m) %></small></span>
               <% else %>
-                <%=link_to m.name, download_user_manual_path(m)%>
+                <span><%=link_to m.name, doc_link, target: "_blank" %>&nbsp;&nbsp;<small><%= last_update(m) %></small></span>
               <% end %>
             </ul>
             <%end%>

@@ -34,7 +34,11 @@ $(function() {
           <%=f.text_field :category, class: 'form-control'%>
         </div>
         <div class="form-group">
-          <%=f.label :wistia_code%>
+          <%=f.label :document_url, "Document URL <small>(overrides Wistia code)</small>".html_safe %>
+          <%=f.text_field :document_url, class: 'form-control'%>
+        </div>
+        <div class="form-group">
+          <%=f.label :wistia_code, "Wistia code <small>(overrides attachment)</small>".html_safe %>
           <%=f.text_field :wistia_code, class: 'form-control'%>
         </div>
         <div class="form-group">

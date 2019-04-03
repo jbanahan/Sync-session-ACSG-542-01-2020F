@@ -1,5 +1,6 @@
 class UserManualsController < ApplicationController
   include DownloadS3ObjectSupport
+  include UserManualHelper
 
   skip_before_filter :portal_redirect, only: [:download]
   around_filter :admin_secure, except: [:download,:for_referer]

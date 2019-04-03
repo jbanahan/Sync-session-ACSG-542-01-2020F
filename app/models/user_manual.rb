@@ -4,6 +4,7 @@
 #
 #  category            :string(255)
 #  created_at          :datetime         not null
+#  document_url        :string(255)
 #  groups              :text
 #  id                  :integer          not null, primary key
 #  master_company_only :boolean          default(FALSE)
@@ -14,7 +15,7 @@
 #
 
 class UserManual < ActiveRecord::Base
-  attr_accessible :groups, :name, :page_url_regex, :wistia_code, :category, :master_company_only
+  attr_accessible :groups, :name, :page_url_regex, :wistia_code, :document_url, :category, :master_company_only
   validates :name, presence: true
 
   has_one :attachment, :as => :attachable, :dependent=>:destroy
@@ -61,4 +62,5 @@ class UserManual < ActiveRecord::Base
     end
 
   end
+
 end

@@ -10352,7 +10352,7 @@ return jQuery;
 
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
- * @version 1.14.6
+ * @version 1.14.7
  * @license
  * Copyright (c) 2016 Federico Zivolo and contributors
  *
@@ -10926,7 +10926,11 @@ function isFixed(element) {
   if (getStyleComputedProperty(element, 'position') === 'fixed') {
     return true;
   }
-  return isFixed(getParentNode(element));
+  var parentNode = getParentNode(element);
+  if (!parentNode) {
+    return false;
+  }
+  return isFixed(parentNode);
 }
 
 /**
@@ -11582,18 +11586,23 @@ function getRoundedOffsets(data, shouldRound) {
   var _data$offsets = data.offsets,
       popper = _data$offsets.popper,
       reference = _data$offsets.reference;
+  var round = Math.round,
+      floor = Math.floor;
 
-
-  var isVertical = ['left', 'right'].indexOf(data.placement) !== -1;
-  var isVariation = data.placement.indexOf('-') !== -1;
-  var sameWidthOddness = reference.width % 2 === popper.width % 2;
-  var bothOddWidth = reference.width % 2 === 1 && popper.width % 2 === 1;
   var noRound = function noRound(v) {
     return v;
   };
 
-  var horizontalToInteger = !shouldRound ? noRound : isVertical || isVariation || sameWidthOddness ? Math.round : Math.floor;
-  var verticalToInteger = !shouldRound ? noRound : Math.round;
+  var referenceWidth = round(reference.width);
+  var popperWidth = round(popper.width);
+
+  var isVertical = ['left', 'right'].indexOf(data.placement) !== -1;
+  var isVariation = data.placement.indexOf('-') !== -1;
+  var sameWidthParity = referenceWidth % 2 === popperWidth % 2;
+  var bothOddWidth = referenceWidth % 2 === 1 && popperWidth % 2 === 1;
+
+  var horizontalToInteger = !shouldRound ? noRound : isVertical || isVariation || sameWidthParity ? round : floor;
+  var verticalToInteger = !shouldRound ? noRound : round;
 
   return {
     left: horizontalToInteger(bothOddWidth && !isVariation && shouldRound ? popper.left - 1 : popper.left),
@@ -58027,7 +58036,7 @@ angular
  * ui-bootstrap4
  * http://morgul.github.io/ui-bootstrap4/
 
- * Version: 3.0.5 - 2018-10-03
+ * Version: 3.0.6 - 2018-11-17
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.common","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -61907,8 +61916,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
 /**
  * A helper directive for the $modal service. It creates a backdrop element.
  */
-  .directive('uibModalBackdrop', ['$animate', '$injector', '$uibModalStack',
-  function($animate, $injector, $modalStack) {
+  .directive('uibModalBackdrop', ['$uibModalStack', '$q', '$animate',
+  function($modalStack, $q, $animate) {
     return {
       restrict: 'A',
       compile: function(tElement, tAttrs) {
@@ -61918,9 +61927,21 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
     };
 
     function linkFn(scope, element, attrs) {
-      if (attrs.modalInClass) {
-        $animate.addClass(element, attrs.modalInClass);
 
+      // Deferred object that will be resolved when this modal is rendered.
+      var modalRenderDeferObj = $q.defer();
+      // Resolve render promise post-digest
+      scope.$$postDigest(function() {
+        modalRenderDeferObj.resolve();
+      });
+
+      modalRenderDeferObj.promise.then(function() {
+        if (attrs.modalInClass) {
+          $animate.addClass(element, attrs.modalInClass);
+        }
+      });
+
+      if (attrs.modalInClass) {
         scope.$on($modalStack.NOW_CLOSING_EVENT, function(e, setIsAsync) {
           var done = setIsAsync();
           if (scope.modalOptions.animation) {
@@ -61930,6 +61951,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
           }
         });
       }
+
+
     }
   }])
 
@@ -62296,13 +62319,11 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
           if (modal.animation) {
             backdropDomEl.attr('modal-animation', 'true');
           }
-          $compile(backdropDomEl)(backdropScope);
-          $animate.enter(backdropDomEl, appendToElement);
-          if ($uibPosition.isScrollable(appendToElement)) {
-            scrollbarPadding = $uibPosition.scrollbarPadding(appendToElement);
-            if (scrollbarPadding.heightOverflow && scrollbarPadding.scrollbarWidth) {
-              appendToElement.css({paddingRight: scrollbarPadding.right + 'px'});
-            }
+
+          $animate.enter($compile(backdropDomEl)(backdropScope), appendToElement);
+          scrollbarPadding = $uibPosition.scrollbarPadding(appendToElement);
+          if (scrollbarPadding.heightOverflow && scrollbarPadding.scrollbarWidth) {
+            appendToElement.css({paddingRight: scrollbarPadding.right + 'px'});
           }
         }
 
@@ -65954,9 +65975,9 @@ angular.module('ui.bootstrap.tooltip').run(function() {!angular.$$csp().noInline
 angular.module('ui.bootstrap.timepicker').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTimepickerCss && angular.element(document).find('head').prepend('<style type="text/css">.uib-time input{width:50px !important;}</style>'); angular.$$uibTimepickerCss = true; });
 angular.module('ui.bootstrap.typeahead').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTypeaheadCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'); angular.$$uibTypeaheadCss = true; });
 //! ChainCommon
-//! Build Time: Mon Feb 04 2019 16:09:39 GMT-0600 (Central Standard Time)
-//! Git SHA: a2c243329a84a214a200a7635fdd7d06289bb856
-//! Git Branch: fix-bootstrap-label-badges
+//! Build Time: Tue Mar 26 2019 21:58:56 GMT-0400 (EDT)
+//! Git SHA: 9c56507e4e1985b88321254b4bdfe077986abcb2
+//! Git Branch: 1652_urls_for_manuals
 
 function Domainer(domainDataAccessSetup) {
   this.das = domainDataAccessSetup;
@@ -69868,5 +69889,5 @@ angular.module("chain-state-toggle-buttons.html", []).run(["$templateCache", fun
 
 angular.module("chain-support-modal.html", []).run(["$templateCache", function ($templateCache) {
   $templateCache.put("chain-support-modal.html",
-    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Help</h4><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button></div><div class=\"modal-body\"><div><div id=\"userManualLoading\" ng-if='umLoading==\"loading\"'><chain-loader></chain-loader></div><div ng-show=\"userManuals.length==0\">There aren't any user manuals for this page.</div><div ng-repeat=\"(cat,umList) in userManuals | orderBy:cat track by $index\"><h3>{{cat}}</h3><div ng-repeat=\"um in umList | orderBy:name track by um.id\"><div ng-if=\"!um.wistia_link\"><a href=\"/user_manuals/{{um.id}}/download\" target=\"_blank\">{{um.name}}</a></div><div ng-if=\"um.wistia_link\"><script ng-src=\"um.wistia_link\" async></script><span class=\"wistia_embed wistia_async_{{um.wistia_code}} popover=true popoverAnimateThumbnail=true popoverContent=link\" style=\"display:inline\"><a href=\"#\">{{um.name}}</a></span></div></div></div><hr></div><div ng-hide=\"ticketNumber || loading\"><label>Send A Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\"><p>Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</p><p ng-show=\"moreHelpMessage\">{{moreHelpMessage}}</p></div></div><div ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>There were errors submitting your support request. You may email <a href=\"mailto:support@vandegriftinc.com\">support@vandegriftinc.com</a> for more help:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div><div ng-show='loading==\"loading\"'><chain-loader></chain-loader></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Send Message</button></div></div></div></div><script src=\"https://fast.wistia.com/assets/external/E-v1.js\" async></script>");
+    "<div class=\"modal fade\" id=\"chain-support-modal\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><h4 class=\"modal-title\">Help</h4><button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">&times;</button></div><div class=\"modal-body\"><div><div id=\"userManualLoading\" ng-if='umLoading==\"loading\"'><chain-loader></chain-loader></div><div ng-show=\"userManuals.length==0\">There aren't any user manuals for this page.</div><div ng-repeat=\"(cat,umList) in userManuals | orderBy:cat track by $index\"><h3>{{cat}}</h3><div ng-repeat=\"um in umList | orderBy:name track by um.id\"><div ng-if=\"um.url\"><span><a href=\"{{um.url}}\" target=\"_blank\">{{um.name}}</a>&nbsp;&nbsp;<small>{{um.last_update}}</small></span></div><div ng-if=\"!um.url\"><script ng-src=\"um.wistia_link\" async></script><span class=\"wistia_embed wistia_async_{{um.wistia_code}} popover=true popoverAnimateThumbnail=true popoverContent=link\" style=\"display:inline\"><a href=\"#\">{{um.name}}</a>&nbsp;&nbsp;<small>{{um.last_update}}</small></span></div></div></div><hr></div><div ng-hide=\"ticketNumber || loading\"><label>Send A Message:</label><textarea ng-model=\"messageBody\" class=\"form-control\"></textarea></div><div ng-show=\"ticketNumber\"><div class=\"alert alert-success\"><p>Your ticket number is <strong id=\"chain-support-ticket-no\">{{ticketNumber}}</strong>.</p><p ng-show=\"moreHelpMessage\">{{moreHelpMessage}}</p></div></div><div ng-show=\"errors.length > 0\"><div class=\"alert alert-danger\"><strong>There were errors submitting your support request. You may email <a href=\"mailto:support@vandegriftinc.com\">support@vandegriftinc.com</a> for more help:</strong><ul><li ng-repeat=\"e in errors\">{{e}}</li></ul></div></div><div ng-show='loading==\"loading\"'><chain-loader></chain-loader></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn\" data-dismiss=\"modal\">Close</button> <button id=\"chain-support-submit\" ng-show=\"!ticketNumber\" ng-disabled=\"!messageBody || messageBody.length == 0\" ng-click=\"submit()\" type=\"button\" class=\"btn btn-primary\">Send Message</button></div></div></div></div><script src=\"https://fast.wistia.com/assets/external/E-v1.js\" async></script>");
 }]);
