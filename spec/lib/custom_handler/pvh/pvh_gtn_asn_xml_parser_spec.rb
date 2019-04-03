@@ -134,6 +134,16 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       sr.reload
       expect(sr.sent_at).to be_nil
     end
+
+    it "clears any existing containers not in the xml" do
+      c = existing_shipment.containers.create! container_number: "CONTAINER"
+      l = Factory(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+    
+      subject.process_asn_update asn_xml, user, "bucket", "key"
+
+      expect(c).not_to exist_in_db
+      expect(l).not_to exist_in_db
+    end
   end
 
   describe "set_additional_shipment_information" do

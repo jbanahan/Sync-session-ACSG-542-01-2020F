@@ -5,6 +5,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
 
   def initialize
     super({})
+    @sent_containers = Set.new
   end
 
   def importer_system_code xml
@@ -23,6 +24,11 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
   end
 
   def finalize_shipment shipment, xml
+    # I'm not sure if this is a widespread GTN thing or localized to PVH, but if any container numbers (or house bills)
+    # change, then we'll get them as new records and thus we need to remove the old ones.
+    # The XML looks to include the whole list of containers (we don't get partials) so we should be safe doing this.
+    remove_unreferenced_containers(shipment, @sent_containers)
+
     # This indicates to our Kewill entry xml generator that the data is ready to be sent to Kewill.
     set_custom_value(shipment, Time.zone.now, :shp_entry_prepared_date)
     # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to 
@@ -53,6 +59,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
   end
 
   def set_additional_container_information shipment, container, container_xml
+    @sent_containers << container.container_number
     container.goods_description = "WEARING APPAREL"
   end
 
@@ -79,6 +86,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
 
   def cdef_uids
     [:shp_entry_prepared_date]
+  end
+
+  def remove_unreferenced_containers shipment, container_numbers_from_xml
+    shipment.containers.each do |container|
+      container.destroy unless container_numbers_from_xml.include?(container.container_number)
+    end
   end
 
 end; end; end; end
