@@ -27,12 +27,10 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
 
   let (:entry) {
     e = Factory(:entry, broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: "10")
+    container = e.containers.create! container_number: "ABCD1234567890"
     invoice = e.commercial_invoices.create! invoice_number: "1"
-    line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART"
-    Factory(:container, commercial_invoice_lines: [line], container_number: "ABCD1234567890")
-    line.reload
-
-    e
+    line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: 20, unit_price: 5, container_id: container.id
+    e.reload
   }
 
   describe "run_validation" do
@@ -70,10 +68,11 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
 
     context "with air shipment" do
       before :each do 
-        entry.update_attributes! transport_mode_code: "40"
+        entry.update_attributes! transport_mode_code: "40", house_bills_of_lading: "HBOL987654321"
         shipment.update_attributes! mode: "AIR"
-        shipment.shipment_lines.update_all container_id: nil
-        shipment.containers.destroy_all
+        shipment.containers.first.update_attributes! container_number: "HBOL987654321"
+        entry.containers.first.update_attributes! container_number: "HBOL987654321"
+        entry.reload
       end
 
       it "finds valid match" do
@@ -96,8 +95,8 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
 
-      it "errors if no shipment found by master bill" do
-        shipment.update_attributes! master_bill_of_lading: "MBOL"
+      it "errors if no shipment found by house bill" do
+        shipment.update_attributes! house_bill_of_lading: "HBOL"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
     end

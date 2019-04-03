@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
   }
 
   let (:entry) {
-    e = Factory(:entry, entry_number: "1198001123", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890")
+    e = Factory(:entry, entry_number: "1198001123", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: 9)
     invoice = e.commercial_invoices.create! invoice_number: "1"
     line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
     tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50"), gst_amount: BigDecimal("5")

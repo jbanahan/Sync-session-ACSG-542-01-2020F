@@ -1,12 +1,14 @@
 require 'open_chain/xml_builder'
 require 'open_chain/ftp_file_support'
 require 'open_chain/entity_compare/comparator_helper'
+require 'open_chain/custom_handler/pvh/pvh_entry_shipment_matching_support'
 
 module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGeneratorSupport
   extend ActiveSupport::Concern
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport
   include OpenChain::EntityCompare::ComparatorHelper
+  include OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport
 
   # This is simply a sync record we're going to add to ANY broker invoice we've already generated billing data for
   # We'll then use the more specific sync codes to associate sync records with the actual files we're generating
@@ -157,13 +159,13 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # Extract all the charges and amounts we need to bill on this brokerage invoice
       charges = extract_container_level_charges(invoice_snapshot)
 
-      # When we have an air entry, we use the House Bills as the container numbers.
+      # When we have an non-ocean entry, we use the House Bills as the container numbers.
       # PVH enters the House Bills in GTNexus like Containers, so they appear on our Shipment as containers
       # so this works out real well, as all we have to do to accommodate 
-      if air_mode?(entry_snapshot)
-        containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
-      else
+      if ocean_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
+      else
+        containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
       end
       
       prorations = {}
@@ -186,8 +188,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     end
   end
 
-  def air_mode? entry_snapshot
-    Entry.get_transport_mode_codes_us_ca("AIR").include?(mf(entry_snapshot, :ent_transport_mode_code).to_i)
+  def ocean_mode? entry_snapshot
+    ocean_mode_entry?(mf(entry_snapshot, :ent_transport_mode_code))
   end
 
   def unsent_invoices entry, broker_invoice_snapshots
@@ -226,7 +228,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     units = mf(line_snapshot, :cil_units)
     unit_price = mf(line_snapshot, :ent_unit_price)
 
-    shipment_line = find_shipment_line(entry_snapshot, container_number, order_number, part_number, unit_price, units)
+    shipment_line = find_shipment_line(find_shipments_by_entry_snapshot(entry_snapshot), container_number, order_number, part_number, units)
     raise "Failed to find matching PVH ASN line for PO # #{order_number} and Part Number #{part_number} on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if shipment_line.nil?
 
     order_line = shipment_line&.order_line
@@ -245,7 +247,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   def add_container_line parent_element, entry_snapshot, container_number, invoice_date, amount, code, currency, line_counter
     return false unless amount && amount.nonzero?
 
-    container = find_shipment_container(entry_snapshot, container_number)
+    container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
     raise "Failed to find matching PVH ASN Container for Container # '#{container_number}' on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if container.nil?
 
     cont_number, bill_number = container_and_bill_number(container, nil)
@@ -436,87 +438,15 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     parent_element
   end
 
-  def find_shipment_line entry_snapshot, container_number, order_number, part_number, unit_price, units
-    shipments = find_shipments(entry_snapshot)
-    # Narrow down the shipment_lines to search over if we have a container number
-    shipment_lines = []
-    if !container_number.blank?
-      shipments.each do |s|
-        container = s.containers.find {|c| c.container_number == container_number }
-        shipment_lines.push(*container.shipment_lines) unless container.nil?
-      end
-    else
-      shipments.each do |shipment|
-        shipment_lines.push *shipment.shipment_lines
-      end
-    end
-
-    translated_part_number = "PVH-#{part_number}"
-
-    # Find all the shipment lines that might match this part / order number...there's potentially more than one
-    order_matched_lines = shipment_lines.select do |line|
-      # Skip any shipment lines we've already returned
-      next if found_shipment_lines.include?(line)
-
-      line.product&.unique_identifier == translated_part_number && line.order_line&.order&.customer_order_number == order_number
-    end
-
-    # If there's only one line on the shipment that matches, then just return it
-    line = order_matched_lines[0] if order_matched_lines.length == 1
-
-    if line.nil? && order_matched_lines.length > 0
-      # At this point we need to try and use other factors to determine which shipment line to match to as there's multiple lines
-      # that have the same part number / order number (which is possible if they're shipping multiple colors/sizes on different lines)
-
-      # First try finding an exact match based on the # of units.  If there isn't an exact match, just use the shipment line that has the closest
-      # unit count.
-      unit_differences = []
-      order_matched_lines.each do |line|
-        difference = (line.quantity.abs - units.abs).abs
-        unit_differences << {line: line, difference: difference}
-      end
-
-      line = unit_differences.sort {|a, b| a[:difference] <=> b[:difference] }.first[:line]
-    end
-
-    # we don't want to re-use the same shipment line, so keep track of which ones we've returned
-    found_shipment_lines << line if line
-
-    line
+  def find_shipments_by_entry_snapshot entry_snapshot
+    find_shipments(mf(entry_snapshot, :ent_transport_mode_code), 
+      Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s),
+      Entry.split_newline_values(entry_house_bills(entry_snapshot)))
   end
 
-  def found_shipment_lines 
-    @found_lines ||= Set.new
-  end
-
-  def find_shipment_container entry_snapshot, container_number
-    shipments = find_shipments(entry_snapshot)
-
-    container = nil
-    shipments.each do |shipment|
-      container = shipment.containers.find {|c| c.container_number == container_number }
-      break unless container.nil?
-    end
-
-    container
-  end
-
-  def find_shipments entry_snapshot
-    # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all 
-    # anyway to bill the entry.
-    if @shipments.nil?
-      # For air shipments, we're going to match on house bill, master bill for ocean.
-      query_params = {importer_id: pvh_importer.id}
-      if air_mode?(entry_snapshot)
-        query_params[:house_bill_of_lading] = Entry.split_newline_values(entry_house_bills(entry_snapshot))
-      else
-        query_params[:master_bill_of_lading] = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s)
-      end
-
-      @shipments = Shipment.where(query_params).to_a
-    end
-
-    @shipments
+  def find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
+    shipments = find_shipments_by_entry_snapshot(entry_snapshot)
+    find_shipment_container(shipments, container_number)
   end
 
   def has_charges? invoice_snapshot, code_map
@@ -533,10 +463,6 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def has_container_charges? invoice_snapshot
     extract_container_level_charges(invoice_snapshot).size > 0
-  end
-
-  def pvh_importer
-    @pvh ||= Company.where(system_code: "PVH").first
   end
 
   def invoice_type_xref
@@ -574,7 +500,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     container_weights = {}
 
     Set.new(container_numbers.to_a).each do |container_number|
-      container = find_shipment_container(entry_snapshot, container_number)
+      container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
       container_weight = BigDecimal("0")
       container_weight = container.shipment_lines.map {|line| line.gross_kgs }.compact.sum if container
       container_weights[container_number] = container_weight
