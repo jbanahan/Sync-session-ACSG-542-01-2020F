@@ -191,6 +191,27 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("Purpose", "Decrement")
     end
 
+    it "handles multiple invoice lines mapped to the same PO line for split tariffs" do
+      shipment.shipment_lines.second.destroy
+      shipment.reload
+      order.order_lines.first.update_attributes! hts: "9999999999"
+      invoice = entry.commercial_invoices.first
+      invoice_line_2 = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
+      tariff = invoice_line_2.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50")
+      entry.reload
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+      expect(captured_xml.length).to eq 1
+
+      x = REXML::Document.new(captured_xml.first).root
+
+      l = REXML::XPath.first(x, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C531']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "125.0")
+    end
+
     context "with hmf offsets" do
 
       it 'handles cases where hmf summed at the line is less than the total hmf' do

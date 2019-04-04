@@ -217,16 +217,56 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       end
     end
 
-    original_invoice.sync_records.create! trading_partner: reversal_invoice_type(invoice_type), sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
+    reversal_sync = original_invoice.sync_records.find {|s| s.trading_partner == reversal_invoice_type(invoice_type) }
+    if reversal_sync.nil?
+      reversal_sync = original_invoice.sync_records.build trading_partner: reversal_invoice_type(invoice_type)
+    end
+    reversal_sync.sent_at = Time.zone.now
+    reversal_sync.confirmed_at = (Time.zone.now + 1.minute)
+    reversal_sync.save!
     true
   end
 
+  class InvoiceLineKey
+    attr_accessor :bill_number, :container_number, :order_number, :part_number, :item_number
+
+    def initialize bill_number, container_number, order_number, part_number, item_number
+      @bill_number = bill_number
+      @container_number = container_number
+      @order_number = order_number
+      @part_number = part_number
+      @item_number = item_number
+    end
+
+    def == other_key
+      self.bill_number == other_key.bill_number &&
+        self.container_number == other_key.container_number &&
+        self.order_number == other_key.order_number &&
+        self.part_number == other_key.part_number &&
+        self.item_number == other_key.item_number
+    end
+
+    def eql?(other_key)
+      self == other_key
+    end
+
+    def hash
+      [self.bill_number, self.container_number, self.order_number, self.part_number, self.item_number].hash
+    end
+  end
+
   def add_invoice_line parent_element, entry_snapshot, line_snapshot
+    key = find_invoice_line_key(entry_snapshot, line_snapshot)
+
+    generate_invoice_line_item(parent_element, "Manifest Line Item", key.item_number, master_bill: key.bill_number,
+      container_number: key.container_number, order_number: key.order_number, part_number: key.part_number)
+  end
+
+  def find_invoice_line_key entry_snapshot, line_snapshot
     container_number = mf(line_snapshot, :cil_con_container_number)
     order_number = mf(line_snapshot, :cil_po_number)
     part_number = mf(line_snapshot, :cil_part_number)
     units = mf(line_snapshot, :cil_units)
-    unit_price = mf(line_snapshot, :ent_unit_price)
 
     shipment_line = find_shipment_line(find_shipments_by_entry_snapshot(entry_snapshot), container_number, order_number, part_number, units)
     raise "Failed to find matching PVH ASN line for PO # #{order_number} and Part Number #{part_number} on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if shipment_line.nil?
@@ -235,9 +275,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     order_line_number = order_line&.line_number
 
     container_number, bill_number = container_and_bill_number(shipment_line&.container, shipment_line)
-    
-    generate_invoice_line_item(parent_element, "Manifest Line Item", order_line_number, master_bill: bill_number,
-      container_number: container_number, order_number: order_number, part_number: part_number)
+
+    InvoiceLineKey.new(bill_number, container_number, order_number, part_number, order_line_number)
   end
 
   def add_invoice_line_charge parent_element, invoice_date, amount, code, currency

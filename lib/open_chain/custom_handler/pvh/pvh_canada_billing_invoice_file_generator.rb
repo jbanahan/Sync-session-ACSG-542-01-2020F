@@ -6,15 +6,41 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
 
   def generate_and_send_duty_charges(entry_snapshot, invoice_snapshot, invoice)
     invoice_date = mf(invoice_snapshot, :bi_invoice_date)
+    invoice_amount = mf(invoice_snapshot, :bi_invoice_total)
+    credit_invoice = invoice_amount && invoice_amount < 0
 
     generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
       # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
-      json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine") do |line_snapshot|
+      invoice_lines = json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine")
 
+      # What's happening here is that we're assembing the actual invoice keys and charges that need to be used because there's not necessarily
+      # a 1-1 mapping between the Commercial Invoice lines and the billing file.  We're summing the charge amounts for each key
+      # and then will send them in a single InvoiceLineItem element
+      invoice_line_item_charges = Hash.new do |h, k|
+        h[k] = {}
+      end
+
+      invoice_lines.each do |line_snapshot|
         charges = duty_charges_for_line(line_snapshot)
         next unless charges.size > 0
 
-        invoice_line = add_invoice_line(details, entry_snapshot, line_snapshot)
+        key = find_invoice_line_key(entry_snapshot, line_snapshot)
+        total_line_charges = invoice_line_item_charges[key]
+
+
+        charges.each_pair do |uid, amount|
+          # If we're generating a credit invoice, we need to multiply the actual duty amounts by negative 1 to get the credit values.
+          amount = (amount * -1) if credit_invoice
+
+          total_line_charges[uid] ||= BigDecimal("0")
+          total_line_charges[uid] += amount
+        end
+      end
+
+      invoice_line_item_charges.each_pair do |key, charges|
+        # Each key represents a new invoice line...each charge is a specific charge element in that line
+        invoice_line = generate_invoice_line_item(details, "Manifest Line Item", key.item_number, master_bill: key.bill_number,
+                          container_number: key.container_number, order_number: key.order_number, part_number: key.part_number)
         charges.each_pair do |uid, amount|
           add_invoice_line_charge invoice_line, invoice_date, amount, duty_gtn_charge_code_map[uid], "CAD"
         end

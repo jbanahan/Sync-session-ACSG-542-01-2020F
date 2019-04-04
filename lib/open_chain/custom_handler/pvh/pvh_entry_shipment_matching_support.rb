@@ -52,6 +52,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
       line.product&.unique_identifier == translated_part_number && line.order_line&.order&.customer_order_number == order_number
     end
 
+    if order_matched_lines.length == 0
+      # If no order lines matched, see if we can match split tariffs
+      order_matched_lines = find_potential_split_tariff_line(shipment_lines, order_number, translated_part_number)
+    end
+
     # If there's only one line on the shipment that matches, then just return it
     line = order_matched_lines[0] if order_matched_lines.length == 1
 
@@ -74,6 +79,20 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     found_shipment_lines << line if line
 
     line
+  end
+
+  def find_potential_split_tariff_line shipment_lines, order_number, part_number
+    # For some cases where a commercial invoice line has to be split into two lines due to 
+    # carrying two tariffs per 1 PO line, we're going to need to toss aside our rule of only using
+    # a shipment line a single time.
+
+    # From what we can tell, in these cases, the order line will have an HTS# of 9999999999.  Ergo, 
+    # IF the the order line has an HTS of 9999999999, we will allow it to be utilized multiple times.
+    shipment_lines.select do |line|
+      line.order_line&.hts.to_s.strip == "9999999999" &&
+        line.product&.unique_identifier == part_number && 
+        line.order_line&.order&.customer_order_number == order_number
+    end
   end
 
   def find_shipment_container shipments, container_number

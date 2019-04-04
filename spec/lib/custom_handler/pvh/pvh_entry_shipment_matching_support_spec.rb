@@ -110,5 +110,14 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
       expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 200)).to eq ocean_shipment_lines.second
       expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 200)).to be_nil
     end
+
+    it "allows matching a PO line multiple times if the tariff number on the line is 9999999999" do
+      order.order_lines.first.update_attributes! hts: "9999999999"
+      ocean_shipment.shipment_lines.second.destroy
+      ocean_shipment.reload
+
+      expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100)).to eq ocean_shipment_lines.first
+      expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100)).to eq ocean_shipment_lines.first
+    end
   end
 end
