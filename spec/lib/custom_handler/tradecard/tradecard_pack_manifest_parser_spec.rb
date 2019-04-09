@@ -418,7 +418,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         86=>detail_line({po:'custordnum',sku:'sk12345',item_qty:'8'})
       }
       rows = init_mock_array 90, row_seed
-      expect{described_class.new.process_rows(@s,rows,@u,nil,true)}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"custordnum":["REF2"]}'
+      expect{described_class.new.process_rows(@s,rows,@u,nil,true)}.to raise_error 'The following purchase orders are assigned to other shipments: custordnum (REF2)'
     end
     it "assigns warning_overridden attribs when enable_warnings is absent" do
       @s.update_attributes! reference: "REF1"

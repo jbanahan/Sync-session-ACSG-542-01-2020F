@@ -472,27 +472,88 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     begin
       s = Shipment.find params[:id]
       raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
-      att = s.attachments.find_by_id(params[:attachment_id])
-      raise StatusableError.new("Attachment not linked to Shipment.", 400) unless att
-      aj = s.attachment_process_jobs.where(attachment_id:att.id,
-                                           job_name: job_name).first_or_create!(user_id:current_user.id)
-      if aj.start_at && aj.error_message.blank?
-        raise AttachmentAlreadyProcessedError.new
+      ids_to_process = params[:attachment_ids].map(&:to_i)
+      check_for_unlinked_attachments(s.attachments, ids_to_process)
+      ajs = get_attachment_process_jobs(s, ids_to_process, job_name)
+
+      if ajs.count > 1
+        AttachmentProcessJobRunner.delay.async_run_jobs(current_user.id, ajs.map(&:id), job_name, params[:manufacturer_address_id], params[:enable_warnings])
+        render json:{object_param_name => obj_to_json_hash(s), notices: ["Worksheets have been submitted for processing. You'll receive a system message when they finish."]}
       else
-        aj.update_attributes!(start_at:Time.now, error_message: nil)
-        if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
-          aj.process manufacturer_address_id: params[:manufacturer_address_id], enable_warnings: params[:enable_warnings]
-        else
-          aj.process enable_warnings: params[:enable_warnings]
-        end
+        AttachmentProcessJobRunner.run_job(ajs.first, job_name, params[:manufacturer_address_id], params[:enable_warnings]) 
         render_show CoreModule::SHIPMENT
       end
+        
     rescue => e
-      aj.update_attributes!(error_message: e.message) if aj && !(e.instance_of? AttachmentAlreadyProcessedError)
+      ajs.first.update_attributes!(error_message: e.message) if ajs&.first && !(e.instance_of? AttachmentAlreadyProcessedError)
       raise e
     end
   end
 
+  class AttachmentProcessJobRunner
+    def self.run_job aj, job_name, manufacturer_address_id, enable_warnings
+      aj.update_attributes!(start_at:Time.now, error_message: nil)
+      if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
+        aj.process manufacturer_address_id: manufacturer_address_id, enable_warnings: enable_warnings
+      else
+        aj.process enable_warnings: enable_warnings
+      end
+    end
+
+    def self.async_run_jobs user_id, ids, job_name, manufacturer_address_id, enable_warnings
+      errors = []
+      aj = nil
+      ids.each do |id|
+        begin
+          aj = AttachmentProcessJob.find id
+          run_job aj, job_name, manufacturer_address_id, enable_warnings
+        rescue => e
+          errors << "#{aj.attachment.attached_file_name}: #{e.message}"
+          aj.update_attributes!(error_message: e.message) if !(e.instance_of? AttachmentAlreadyProcessedError)
+        end
+      end
+      
+      user = User.find user_id
+      if errors.present?
+        user.messages.create! subject: "Shipment #{aj.attachable.reference} worksheet upload completed with errors.",
+                              body: "The following worksheets could not be processed *** #{errors.join(' *** ')}".html_safe
+      else
+        user.messages.create! subject: "Shipment #{aj.attachable.reference} worksheet upload completed.",
+                              body: "All worksheets processed successfully."
+      end
+    end
+  end
+
+
+  class AttachmentAlreadyProcessedError < StatusableError
+    def initialize att_names
+      super "Processing cancelled. The following attachments have already been submitted: #{att_names.join(', ')}", 400
+    end
+  end
+
+  def check_for_unlinked_attachments atts, ids_to_process
+    unlinked_at_names = Attachment.where(id: ids_to_process)
+                                   .where("id NOT IN (#{atts.map(&:id).join(',')})")
+                                   .map(&:attached_file_name)
+    
+    if unlinked_at_names.present?
+      raise StatusableError.new("Processing cancelled. The following attachments are not linked to the shipment: #{unlinked_at_names.join(', ')}", 400)
+    end
+  end
+
+  def get_attachment_process_jobs shipment, ids_to_process, job_name    
+    existing_ajs = shipment.attachment_process_jobs.where(attachment_id: ids_to_process, job_name: job_name)    
+    already_submitted_names = existing_ajs.select{ |aj| aj.start_at && aj.error_message.blank? }.map{ |aj| aj.attachment.attached_file_name}
+    raise AttachmentAlreadyProcessedError.new(already_submitted_names) if already_submitted_names.present?
+    ids_to_process.map do |id| 
+      existing_ajs.find do |aj| 
+        aj.attachment_id == id
+             # set start_at even though it will eventually be overwritten. Prevents user from submitting attachments more than once when processing is done on a delay
+      end || AttachmentProcessJob.create!(attachable: shipment, user: current_user, attachment_id: id, job_name: job_name, 
+                                          start_at:Time.now, error_message: nil)
+    end
+  end
+  
   def make_booking_lines_for_order order_id
     o = Order.includes(:order_lines).where(id:order_id).first
     raise StatusableError.new("Order not found",404) unless o.can_view?(current_user)
@@ -508,9 +569,5 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     [lines, o]
   end
 
-  class AttachmentAlreadyProcessedError < StatusableError
-    def initialize
-      super "This manifest has already been submitted for processing.", 400
-    end
-  end
+
 end; end; end

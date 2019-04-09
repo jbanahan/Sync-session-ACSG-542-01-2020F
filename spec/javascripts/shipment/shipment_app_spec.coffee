@@ -19,31 +19,31 @@ describe 'ShipmentApp', ->
 
     describe 'process', ->
       it 'should delegate to service and redirect', ->
-        attachment = {id: 2}
+        attachments = [{id: 3}]
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processTradecardPackManifest').and.returnValue(r.promise)
-        scope.process(shipment,attachment, 'Tradecard Manifest', true)
+        scope.process(shipment,attachments, 'Tradecard Manifest', true)
         r.resolve({data: {id: 1}})
-        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment, 2, true)
+        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,[3], 2, true)
 
       it 'should delegate to booking worksheet service and redirect', ->
-        attachment = {id: 2}
+        attachments = [{id: 3}]
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processBookingWorksheet').and.returnValue(r.promise)
-        scope.process(shipment,attachment, 'Booking Worksheet', null)
+        scope.process(shipment,attachments, 'Booking Worksheet', null)
         r.resolve({data: {id: 1}})
-        expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, null)
+        expect(svc.processBookingWorksheet).toHaveBeenCalledWith(shipment,[3], 2, null)
 
       it 'should delegate to booking worksheet service and redirect', ->
-        attachment = {id: 2}
+        attachments = [{id: 3}]
         shipment = {id: 1, manufacturerId: 2}
         r = q.defer()
         spyOn(svc,'processManifestWorksheet').and.returnValue(r.promise)
-        scope.process(shipment,attachment, 'Manifest Worksheet', true)
+        scope.process(shipment,attachments, 'Manifest Worksheet', true)
         r.resolve({data: {id: 1}})
-        expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,attachment, 2, true)
+        expect(svc.processManifestWorksheet).toHaveBeenCalledWith(shipment,[3], 2, true)
 
       it 'notifies of error if no service is set up', ->
         spyOn(win, 'alert')

@@ -26,23 +26,11 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
     end
 
     def self.warn_for_bookings order_nums, shipment
-      return unless Array.wrap(order_nums).length > 0
-
-      assigned_to_multi_shp = orders_on_multi_bookings order_nums, shipment.reference
-      mode_mismatch = orders_with_mismatched_transport_mode order_nums, shipment
-      if assigned_to_multi_shp.present? || mode_mismatch.present?
-        raise_formatted_exception(assigned_to_multi_shp, mode_mismatch )
-      end
+      warn :orders_on_multi_bookings, order_nums, shipment
     end
 
     def self.warn_for_manifest order_nums, shipment
-      return unless Array.wrap(order_nums).length > 0
-      
-      assigned_to_multi_shp = orders_on_multi_manifests order_nums, shipment.reference
-      mode_mismatch = orders_with_mismatched_transport_mode order_nums, shipment
-      if assigned_to_multi_shp.present? || mode_mismatch.present?
-        raise_formatted_exception(assigned_to_multi_shp, mode_mismatch )
-      end
+      warn :orders_on_multi_manifests, order_nums, shipment
     end
 
     def self.orders_with_mismatched_transport_mode order_nums, shipment
@@ -63,12 +51,27 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
 
     private
 
+    def self.warn order_retrieval_meth, order_nums, shipment
+      return unless Array.wrap(order_nums).length > 0
+      assigned_to_multi_shp = send(order_retrieval_meth, order_nums, shipment.reference)
+      mode_mismatch = orders_with_mismatched_transport_mode order_nums, shipment
+      if assigned_to_multi_shp.present? || mode_mismatch.present?
+        raise_formatted_exception(assigned_to_multi_shp, mode_mismatch )
+      end
+    end
+
     def self.raise_formatted_exception assigned_to_multi_shp, mode_mismatch
       # BE SURE TO UPDATE PROCESS_MANIFEST_CTRL.COFFEE IF YOU CHANGE THIS ERROR MESSAGE!!
       msg = []
-      msg << "ORDERS FOUND ON MULTIPLE SHIPMENTS: ~#{assigned_to_multi_shp.to_json}" if assigned_to_multi_shp.count > 0
-      msg << "ORDERS FOUND WITH MISMATCHED MODE: ~#{mode_mismatch.to_json}" if mode_mismatch.count > 0
-      raise_error(msg.join("*")) if msg.present?
+      if assigned_to_multi_shp.count > 0
+        partly_flattened = assigned_to_multi_shp.map{ |ord,shps| "#{ord} (#{shps.join(', ')})" }
+        msg << "The following purchase orders are assigned to other shipments: #{partly_flattened.join(', ')}" 
+      end
+      
+      if mode_mismatch.count > 0
+        msg << "The following purchase orders have a mode of transport that doesn't match the assigned shipment: #{mode_mismatch.join(', ')}" 
+      end
+      raise_error(msg.join(" *** ")) if msg.present?
     end
 
     def self.multi_manifests_qry order_nums, reference

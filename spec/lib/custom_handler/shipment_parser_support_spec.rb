@@ -66,11 +66,11 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
           expect(s).to receive(:reference).and_return "REF1"
 
           multi_manifest_output = {"CUSTORD1"=>["REF2", "REF3"]}
-          mismatched_mode_output = {"CUSTORD1"=>"AIR"}
+          mismatched_mode_output = ["CUSTORD1"]
           expect(subject).to receive(:orders_on_multi_manifests).with(["CUSTORD1"], "REF1").and_return multi_manifest_output
           expect(subject).to receive(:orders_with_mismatched_transport_mode).with(["CUSTORD1"], s).and_return mismatched_mode_output
 
-          expect{ subject.warn_for_manifest(["CUSTORD1"], s) }.to raise_error "ORDERS FOUND ON MULTIPLE SHIPMENTS: ~#{multi_manifest_output.to_json}*ORDERS FOUND WITH MISMATCHED MODE: ~#{mismatched_mode_output.to_json}"
+          expect{ subject.warn_for_manifest(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
         end
 
         it "return nil if both checks pass" do
@@ -112,11 +112,11 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
           expect(s).to receive(:reference).and_return "REF1"
 
           multi_bookings_output = {"CUSTORD1"=>["REF2", "REF3"]}
-          mismatched_mode_output = {"CUSTORD1"=>"AIR"}
+          mismatched_mode_output = ["CUSTORD1"]
           expect(subject).to receive(:orders_on_multi_bookings).with(["CUSTORD1"], "REF1").and_return multi_bookings_output
           expect(subject).to receive(:orders_with_mismatched_transport_mode).with(["CUSTORD1"], s).and_return mismatched_mode_output
 
-          expect{ subject.warn_for_bookings(["CUSTORD1"], s) }.to raise_error "ORDERS FOUND ON MULTIPLE SHIPMENTS: ~#{multi_bookings_output.to_json}*ORDERS FOUND WITH MISMATCHED MODE: ~#{mismatched_mode_output.to_json}"
+          expect{ subject.warn_for_bookings(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
         end
 
         it "return nil if both checks pass" do

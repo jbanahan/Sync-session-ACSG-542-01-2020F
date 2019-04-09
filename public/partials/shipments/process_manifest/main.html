@@ -1,11 +1,8 @@
-<div class='container'>
+<div id="root" class='container'>
+  <div><chain-panel panel-title='' panel-message="notices.join('<br>')" panel-type='alert-info'></chain-panel></div>
   <div class="row">
-    <h1>Process Worksheet For Shipment: {{shp.shp_ref}}</h1>
-    <div class="col-6">
-      <label for='attSel'>Select Worksheet To Process</label>
-      <select class='form-control' id='attSel' ng-model='manifestAttachment' ng-options='att.name for att in shp.attachments'></select>
-    </div>
-    <div class="col-6">
+    <h1>Process Worksheets For Shipment: {{shp.shp_ref}}</h1>
+    <div class="col-9">
       <div class="form-group">
         <label for="typeSelect">Select Worksheet Type</label>
         <select class="form-control" id="typeSelect" ng-model="attachmentType">
@@ -22,22 +19,37 @@
     </div>
   </div>
   <add-address-modal shipment-id="shp.id"></add-address-modal>
-</div>
+  <row>
+    <div class="row" style="padding-top: 25px">
+      <div class="col-4 form-group">
+        <label for='attAdd'>Available Worksheets</label>
+        <select class="form-control" id="attAdd" ng-model="selector.attachmentsToAdd" ng-options="att.name for att in selector.availableAttachments" multiple="multiple" size="10"></select>
+      </div>
+      <div class="col-1" style="display: inline-block; padding-top: 60px;">
+        <button style="background-color: Gainsboro;"class="form-control btn" id="btn-assign-attachments" ng-click="add()"><span class="fa fa-chevron-right" aria-hidden="true"></span></button>
+        <button class="form-control btn" style="margin-top: 1em; background-color: Gainsboro" id="btn-remove-attachments" ng-click="remove()"><span class="fa fa-chevron-left" aria-hidden="true"></span></button>
+      </div>
+      <div class="col-4 form-group">
+        <label for="attRem">Worksheets to be Processed</label>
+        <select class="form-control" id="attRem" ng-model="selector.attachmentsToRemove" ng-options="att.name for att in selector.processAttachments" multiple="multiple" size="10"></select>
+      </div>
+    </div>
+  </row>
+  <small ng-show="selector.processAttachments.length > 1" class="col-4 offset-5" style="color: red;">For multiple worksheets, any that generate warnings will be skipped.</small></div>
 <div chain-action-bar>
-  <button class='btn btn-secondary' ng-click='cancel()'>Cancel</button>
-  <button class='btn btn-secondary' ng-click='process(shp,manifestAttachment,attachmentType,true)' ng-show='shp && manifestAttachment && attachmentType'>Submit</button>
+  <button class='btn btn-secondary' ng-click='cancel()'>{{notices.length > 0 ? "Shipment" : "Cancel"}}</button>
+  <button class='btn btn-secondary' ng-click='process(shp,selector.processAttachments,attachmentType,true)' ng-show='shp && (selector.processAttachments.length > 0) && attachmentType'>Submit</button>
 </div>
 <div class="modal" id="shipmentWarningModal" tabindex="-1" role="dialog" aria-labelledby="shipmentWarningModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-body">
-        <p ng-show='warningModalMsg.other_shipments'>The following purchase orders are assigned to other shipments: {{warningModalMsg.other_shipments}}</p>
-        <p ng-show='warningModalMsg.transport_mode'>The following purchase orders have a mode of transport that doesn't match the assigned shipment: {{warningModalMsg.transport_mode}}</p>
+        <p ng-repeat="msg in warningModalMsgs">{{msg}}</p>
         <p>Continue?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" ng-click="confirmCancel()">Close</button>
-        <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='process(shp,manifestAttachment,attachmentType,false)'>Add to Shipment</button>
+        <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='process(shp,selector.processAttachments,attachmentType,false)'>Add to Shipment</button>
       </div>
     </div>
   </div>

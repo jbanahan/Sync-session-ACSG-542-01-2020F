@@ -95,14 +95,14 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',
     getQuickSearch: (fields, number) ->
       $.getJSON("/quick_search/by_module/Entry?v=#{number}&limit_fields=#{fields}&override_extra_fields=ent_filed_date,ent_first_release_received_date,ent_release_date&hide_attachments=true&hide_business_rules=true")
 
-    processTradecardPackManifest: (shp, attachment, manufacturerAddressId, enableWarnings) ->
-      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_id: attachment.id, manufacturer_address_id:manufacturerAddressId, enable_warnings:enableWarnings})
+    processTradecardPackManifest: (shp, attachment_ids, manufacturerAddressId, enableWarnings) ->
+      shipmentPost(shp.id, 'process_tradecard_pack_manifest', {attachment_ids: attachment_ids, manufacturer_address_id:manufacturerAddressId, enable_warnings:enableWarnings})
 
-    processBookingWorksheet: (shp, attachment, placeHolder, enableWarnings) ->
-      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_id: attachment.id, enable_warnings:enableWarnings})
+    processBookingWorksheet: (shp, attachment_ids, placeHolder, enableWarnings) ->
+      shipmentPost(shp.id, 'process_booking_worksheet', {attachment_ids: attachment_ids, enable_warnings:enableWarnings})
 
-    processManifestWorksheet: (shp, attachment, placeHolder, enableWarnings) ->
-      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_id: attachment.id, enable_warnings:enableWarnings})
+    processManifestWorksheet: (shp, attachment_ids, placeHolder, enableWarnings) ->
+      shipmentPost(shp.id, 'process_manifest_worksheet', {attachment_ids: attachment_ids, enable_warnings:enableWarnings})
 
     requestBooking: (shp) ->
       shipmentPost(shp.id, 'request_booking.json')

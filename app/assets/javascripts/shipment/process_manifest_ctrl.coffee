@@ -3,23 +3,14 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
     error = rejection.data.errors[0]
-    if /ORDERS FOUND/.exec(error)
+    if /The following purchase orders/.exec(error)
       @.clear()
-      $scope.warningModalMsg = $scope.formatErrors error
+      $scope.warningModalMsgs = error.split(" *** ")
       $('#shipmentWarningModal').modal 'show'
     $scope.notificationMessage = null
 
-  $scope.formatErrors = (error) ->
-    messages = {}
-    for i in error.split("*")
-      [k, v] = i.split("~")
-      messages[$scope.errLookup k] = JSON.parse v
-    messages["other_shipments"] = $scope.formatMultiShipmentError(messages["other_shipments"]) if messages["other_shipments"]
-    messages["transport_mode"] = messages["transport_mode"].join(", ") if messages["transport_mode"]
-    messages
-
   $scope.errLookup = (k) ->
-    l = {"ORDERS FOUND ON MULTIPLE SHIPMENTS: " : "other_shipments", "ORDERS FOUND WITH MISMATCHED MODE: " : "transport_mode"}
+    l = {"Orders found on multiple shipments: " : "other_shipments", "Orders found with mismatched mode: " : "transport_mode"}
     l[k]
 
   $scope.formatMultiShipmentError = (errJson) ->
@@ -37,15 +28,23 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
+      $scope.notices = resp.data.notices || []
+      $scope.warningModalMsgs = []
       $scope.shp = resp.data.shipment
+      $scope.selector = 
+        availableAttachments: $scope.shp.attachments.slice(0), 
+        attachmentsToAdd: [], 
+        attachmentsToRemove: [], 
+        processAttachments: []
       $scope.loadingFlag = null
 
   $scope.cancel = ->
     $state.go('show',{shipmentId: $scope.shp.id})
 
-  $scope.process = (shipment, attachment, attachmentType, enableWarnings) ->
+  $scope.process = (shipment, attachments, attachmentType, enableWarnings) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
+    $scope.notices = []
     if attachmentType == 'Booking Worksheet'
       handler = shipmentSvc.processBookingWorksheet
     else if attachmentType == 'Tradecard Manifest'
@@ -57,9 +56,28 @@ angular.module('ShipmentApp').controller 'ProcessManifestCtrl', ['$scope','shipm
       $state.go('show', {shipmentId: shipment.id})
 
     if handler
-      handler(shipment, attachment, shipment.manufacturerId, enableWarnings).then((resp) ->
-        $state.go('process_manifest.success')
+      att_ids = (att.id for att in attachments)
+      handler(shipment, att_ids, shipment.manufacturerId, enableWarnings).then((resp) ->
+        if att_ids.length > 1
+          data = resp["data"]
+          $scope.notices = data["notices"] if data
+        else
+          $state.go('process_manifest.success')
       ).finally -> $scope.loadingFlag = null
+
+  $scope.add = () ->
+    $scope.moveSelectionToModel($scope.selector.processAttachments, $scope.selector.availableAttachments, $scope.selector.attachmentsToAdd)
+
+  $scope.remove = () ->
+    $scope.moveSelectionToModel($scope.selector.availableAttachments, $scope.selector.processAttachments, $scope.selector.attachmentsToRemove)
+
+  #add the selected model field uids to the given array in the model
+  $scope.moveSelectionToModel = (toArray, fromArray, selectionArray) ->
+    for attachment in selectionArray
+      toArray.push attachment
+      idx = fromArray.indexOf(attachment)
+      fromArray.splice(idx, 1)
+    selectionArray.splice(0)
 
   if $state.params.shipmentId
     $scope.loadShipment $state.params.shipmentId

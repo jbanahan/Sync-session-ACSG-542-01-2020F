@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
-      expect{described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"CustOrdNum":["REF2"]}'
+      expect{described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'The following purchase orders are assigned to other shipments: CustOrdNum (REF2)'
     end
 
     it "assigns warning_overridden attribs when enable_warnings is absent" do

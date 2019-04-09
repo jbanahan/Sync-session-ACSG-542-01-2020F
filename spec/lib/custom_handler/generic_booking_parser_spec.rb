@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::GenericBookingParser do
       ol = first_order.order_lines.first
       Factory(:booking_line, shipment: Factory(:shipment, reference: "2nd shipment"), order_line: ol)
       
-      expect{described_class.new(enable_warnings: true).process_rows shipment, form_data, user}.to raise_error 'ORDERS FOUND ON MULTIPLE SHIPMENTS: ~{"1502377":["2nd shipment"]}'
+      expect{described_class.new(enable_warnings: true).process_rows shipment, form_data, user}.to raise_error 'The following purchase orders are assigned to other shipments: 1502377 (2nd shipment)'
     end
 
     it "assigns warning_overridden attribs when enable_warnings is absent" do

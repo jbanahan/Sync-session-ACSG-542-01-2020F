@@ -328,50 +328,91 @@ describe Api::V1::ShipmentsController do
   end
   describe "process_tradecard_pack_manifest" do
     before :each do
-      @s = Factory(:shipment)
-      @att = Factory(:attachment,attachable:@s)
+      @s = Factory(:shipment, reference: "ref num")
+      @att = Factory(:attachment,attachable:@s, attached_file_name: "attached.txt")
     end
     it "should fail if user cannot edit shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
-      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 403
-    end
+    end    
+    
     it "should fail if attachment is not attached to this shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-      a2 = Factory(:attachment)
-      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>a2.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      a2 = Factory(:attachment, attached_file_name: "not attached.txt")
+      a3 = Factory(:attachment, attached_file_name: "also not attached.txt")
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[a2.id, a3.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 400
-      expect(JSON.parse(response.body)['errors']).to eq ['Attachment not linked to Shipment.']
+      expect(JSON.parse(response.body)['errors']).to eq ['Processing cancelled. The following attachments are not linked to the shipment: not attached.txt, also not attached.txt']
     end
     it "should fail if AttachmentProcessJob already exists and doesn't have an error" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
-      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 400
-      expect(JSON.parse(response.body)['errors']).to eq ['This manifest has already been submitted for processing.']
+      expect(JSON.parse(response.body)['errors']).to eq ['Processing cancelled. The following attachments have already been submitted: attached.txt']
       expect(apj.error_message).to be_nil
     end
-    it "should process job" do
+    it "processes single job" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       expect_any_instance_of(AttachmentProcessJob).to receive(:process)
-      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
       expect(response).to be_success
-      expect(JSON.parse(response.body)['shipment']).to_not be_nil
+      resp = JSON.parse(response.body)
+      expect(resp['shipment']).to_not be_nil
+      expect(resp['notices']).to be_nil
       aj = AttachmentProcessJob.first
       expect(aj.attachment).to eq @att
       expect(aj.attachable).to eq @s
       expect(aj.user).to eq @u
       expect(aj.start_at).to_not be_nil
       expect(aj.job_name).to eq 'Tradecard Pack Manifest'
+      expect(@u.messages).to be_empty
     end
+    it "processes multiple jobs", :disable_delayed_jobs do
+      att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
+      
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
+      allow_any_instance_of(AttachmentProcessJob).to receive(:process)
+
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(2)
+      expect(response).to be_success
+      resp = JSON.parse(response.body)
+      expect(resp['shipment']).to_not be_nil
+      expect(resp['notices']).to eq ["Worksheets have been submitted for processing. You'll receive a system message when they finish."]
+
+      aj_1, aj_2 = AttachmentProcessJob.all
+      expect(aj_1.attachment).to eq @att
+      expect(aj_1.attachable).to eq @s
+      expect(aj_1.user).to eq @u
+      expect(aj_1.start_at).to_not be_nil
+      expect(aj_1.job_name).to eq 'Tradecard Pack Manifest'
+      expect(aj_2.start_at).to_not be_nil
+      expect(aj_2.attachment).to eq att_2
+      msg = @u.messages.first
+      expect(msg.subject).to eq "Shipment ref num worksheet upload completed."
+      expect(msg.body).to eq "All worksheets processed successfully."
+    end
+    it "assigns timestamp before being queued" do
+      #DelayedJob prevents processing from taking place.
+      #Ensures that submitted but unprocessed worksheets can't be resubmitted
+
+      att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
+      
+      allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
+      post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}
+      expect(AttachmentProcessJob.count).to eq 2
+      expect(AttachmentProcessJob.pluck(:start_at).all?{ |time_stamp| time_stamp.present? }).to eq true
+    end
+
     context "error reporting" do
       before do
         allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       end
-
+   
       it "logs exception" do
         expect_any_instance_of(AttachmentProcessJob).to receive(:process).and_raise "Failed to process!"
-        post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}
         expect(JSON.parse(response.body)['errors']).to eq ['Failed to process!']
         expect(AttachmentProcessJob.first.error_message).to eq 'Failed to process!'
       end
@@ -379,10 +420,28 @@ describe Api::V1::ShipmentsController do
       it "clears log on retry if it doesn't contain 'already submitted' error" do
         apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,error_message:"ERROR",job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
         expect_any_instance_of(AttachmentProcessJob).to receive(:process)
-        post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}
         apj.reload
         expect(apj.error_message).to be_nil
-      end
+      end      
+      
+      it "notifies user of exceptions for multiple jobs", :disable_delayed_jobs do
+        att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
+        bad_attachment = Attachment.first
+        counter = 0
+        
+        allow_any_instance_of(AttachmentProcessJob).to receive(:process) do |apj|
+          counter += 1
+          raise "Failed to process!" if apj.attachment == bad_attachment
+        end
+
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}
+        expect(counter).to eq 2 #The exception didn't prevent the second file from processing
+        expect(@u.messages.count).to eq 1
+        msg = @u.messages.first
+        expect(msg.subject).to eq "Shipment ref num worksheet upload completed with errors."
+        expect(msg.body).to eq "The following worksheets could not be processed *** #{bad_attachment.attached_file_name}: Failed to process!"
+      end   
     end
   end
   describe "create" do
