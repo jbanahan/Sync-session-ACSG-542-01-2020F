@@ -48,7 +48,7 @@ SELECT
   '' AS `Total Brokerage Fees`
 FROM entries
 WHERE entries.release_date >= '#{start_date}' AND entries.release_date < '#{end_date}'
-  AND entries.customer_number = '#{customer_number}'
+  AND entries.customer_number = #{ActiveRecord::Base.sanitize(customer_number)}
 GROUP BY `Year / Month`
 QRY
         q

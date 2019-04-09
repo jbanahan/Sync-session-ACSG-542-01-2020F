@@ -1,13 +1,12 @@
 class CustomReportsController < ApplicationController
   def new
     type = params[:type]
-    if type.blank?
+    report_class = find_custom_report_class(type)
+
+    if report_class.nil?
       error_redirect "You must specify a report type."
     else
-      report_class = Kernel.const_get(type)
-      if report_class.blank? || !inheritance?(report_class)
-        error_redirect "Type must be a CustomReport." 
-      elsif !report_class.can_view? current_user
+      if !report_class.can_view? current_user
         error_redirect "You do not have permission to view this report."
       else
         @report_obj = report_class.new
@@ -80,16 +79,12 @@ class CustomReportsController < ApplicationController
   end
   def create
     type = params[:custom_report_type]
-    klass = nil
-    begin 
-      klass = Kernel.const_get(type)
-    rescue
-      #do nothing
-    end
-    if klass.blank? || !inheritance?(klass)
-      error_redirect "Type must be a CustomReport"
-    elsif !klass.can_view? current_user
-      error_redirect "You do not have permission to use the #{klass.template_name} report."
+    report_class = find_custom_report_class(type)
+
+    if report_class.nil?
+      error_redirect "You must specify a report type."
+    elsif !report_class.can_view? current_user
+      error_redirect "You do not have permission to use the #{report_class.template_name} report."
     else
       #strip fields not accessible to user
       sca = params[:custom_report][:search_columns_attributes]
@@ -100,7 +95,7 @@ class CustomReportsController < ApplicationController
       #add user parameter
       params[:custom_report][:user_id] = current_user.id
 
-      rpt = klass.create(params[:custom_report])
+      rpt = report_class.create(params[:custom_report])
 
       if rpt.errors.any?
         errors_to_flash rpt
@@ -145,12 +140,20 @@ class CustomReportsController < ApplicationController
   def strip_fields hash
     hash.delete_if {|k,v| mf = ModelField.find_by_uid(v[:model_field_uid]); !(mf.can_view?(current_user) && mf.user_accessible?)}
   end
-  def inheritance? klass
-    k = klass
-    while !k.nil?
-      return true if k==CustomReport
-      k = k.superclass
+
+  def find_custom_report_class report_class
+    # We're completely avoiding instantiating the class in any way that comes in from the params because that opens us
+    # up to the potential for remote code executions (see http://gavinmiller.io/2016/the-safesty-way-to-constantize/)
+    # Instead, what we're doing is providing a whitelist of known classes that CAN be used as a custom report and returning
+    # the class that matches what the params are specifying.
+    custom_report = CustomReport.descendants.find do |klass|
+      klass.name == report_class
     end
-    false
+
+    if custom_report.nil?
+      StandardError.new("#{current_user.username} attempted to access an invalid custom report of type '#{report_class}'.").log_me
+    end
+
+    custom_report
   end
 end

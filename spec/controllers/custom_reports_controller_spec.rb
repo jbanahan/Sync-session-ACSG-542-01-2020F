@@ -40,6 +40,10 @@ describe CustomReportsController do
       expect(assigns(:custom_report_type)).to eq('CustomReportEntryInvoiceBreakdown')
     end
     it "should error if the type is not a subclass of CustomReport" do
+      expect_any_instance_of(StandardError).to receive(:log_me) do |error|
+        expect(error.message).to eq "#{@u.username} attempted to access an invalid custom report of type 'String'."
+      end
+      
       get :new, :type=>'String'
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
@@ -195,9 +199,13 @@ describe CustomReportsController do
       expect(flash[:errors].first).to eq("You do not have permission to use the #{CustomReportEntryInvoiceBreakdown.template_name} report.")
     end
     it "should error if type is not a subclass of CustomReport" do
+      expect_any_instance_of(StandardError).to receive(:log_me) do |error|
+        expect(error.message).to eq "#{@u.username} attempted to access an invalid custom report of type 'String'."
+      end
       post :create, {:custom_report_type=>'String',:custom_report=>{:name=>'ABC'}}
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
+
     end
     it "should error if type is not set" do
       post :create, {:custom_report=>{:name=>'ABC'}}

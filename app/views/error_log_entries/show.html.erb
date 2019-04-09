@@ -7,10 +7,6 @@
 <%=field_row 'Other Messages', msgs.html_safe%>
 </table>
 <h2>Trace</h2>
-<%bt = ""%>
-<%@error_log_entry.backtrace.each {|b| bt << "#{b}\n"}%>
-
 <pre style='overflow-x: auto;'>
-  
-<%=bt.html_safe%>
+<%= @error_log_entry.backtrace.join("\n") %>
 </pre>

@@ -28,12 +28,12 @@
 
 class Port < ActiveRecord::Base
 
-  validates :schedule_k_code, :format => {:with=>/^[0-9]{5}$/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}
-  validates :schedule_d_code, :format => {:with=>/^[0-9]{4}$/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
-  validates :cbsa_port, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
-  validates :cbsa_sublocation, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
-  validates :unlocode, :format => {:with=>/^[A-Z0-9]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
-  validates :iata_code, :format => {:with=>/^[A-Z0-9]{3}$/, :message=>"IATA Code must be 3 upper case letters", :if=>:iata_code?}
+  validates :schedule_k_code, :format => {:with=>/\A[0-9]{5}\z/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}
+  validates :schedule_d_code, :format => {:with=>/\A[0-9]{4}\z/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
+  validates :cbsa_port, :format => {:with=>/\A[0-9]{4}\z/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
+  validates :cbsa_sublocation, :format => {:with=>/\A[0-9]{4}\z/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
+  validates :unlocode, :format => {:with=>/\A[A-Z0-9]{5}\z/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
+  validates :iata_code, :format => {:with=>/\A[A-Z0-9]{3}\z/, :message=>"IATA Code must be 3 upper case letters", :if=>:iata_code?}
 
 
   # Find the country who's port of entry this represents (or nil)

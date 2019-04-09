@@ -169,6 +169,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     def query open_orders_only, snapshot_range_start, snapshot_range_end
+      snapshot_range_start = sanitize_date_string(snapshot_range_start) unless snapshot_range_start.blank?
+      snapshot_range_end = sanitize_date_string(snapshot_range_end) unless snapshot_range_end.blank?
+
       <<-QRY
         SELECT 
           ord.id AS order_id, 

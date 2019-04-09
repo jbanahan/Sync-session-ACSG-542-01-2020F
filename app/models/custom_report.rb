@@ -18,8 +18,12 @@
 #
 
 require 'open_chain/search_base'
+require 'dry/core/descendants_tracker'
+
 class CustomReport < ActiveRecord::Base
+  extend Dry::Core::DescendantsTracker
   include OpenChain::SearchBase
+  
   has_many :search_criterions, :dependent=>:destroy
   has_many :search_columns, :dependent=>:destroy, :order => 'rank ASC'
   has_many :search_schedules, :dependent=>:destroy

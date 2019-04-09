@@ -110,6 +110,8 @@ gem "distribute_reads", '~> 0.2'
 # Google reCaptcha support
 gem "recaptcha", '~> 4.13.1'
 
+gem 'dry-core', '0.4.7'
+
 group :development,:test do
   gem 'rspec-rails', '~> 3.5.0'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
