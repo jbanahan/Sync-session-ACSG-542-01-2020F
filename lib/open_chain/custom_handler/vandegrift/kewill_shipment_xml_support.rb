@@ -281,7 +281,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     generate_identifier_data(parent, edi_identifier) unless edi_identifier.nil?
 
     add_file_number(parent, entry, invoice)
-    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(parent, "custNo", g.string(entry.customer, 10, pad_string: false, exception_on_truncate: true))
     add_element(parent, "nonDutiableAmt", g.number(invoice.non_dutiable_amount, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(invoice.non_dutiable_amount)
@@ -363,13 +363,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
         special_tariffs.each_with_index do |special_tariff, idx|
           special_tariff_line = tariff.dup
           special_tariff_line.hts = special_tariff.special_hts_number
+          # Special tariff lines don't carry any actual value
+          special_tariff_line.foreign_value = nil
           special_tariff_lines << special_tariff_line
-
-          if idx == 0
-            # The first special tariff should carry the value the actual tariff line did and the tariff line's value needs to be blanked.
-            special_tariff_line.foreign_value = tariff.foreign_value
-            tariff.foreign_value = nil
-          end
         end
       end
 
@@ -378,13 +374,13 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       special_tariffs = additional_tariff_number(invoice.invoice_date, line.country_of_origin, line.hts)
       tariff_lines = []
       special_tariffs.each_with_index do |special_tariff, idx|
-        # Only the very first tariff line should have the commercial invoice value
-        tariff_lines << convert_invoice_line_to_tariff(line, hts: special_tariff.special_hts_number, copy_value: (idx == 0))
+        # Special tariff lines don't carry any actual value
+        tariff_lines << convert_invoice_line_to_tariff(line, hts: special_tariff.special_hts_number, copy_value: false)
       end
 
       # We don't need to break out invoice lines to tariff lines if we only have a single tariff line (.ie
       # there's no special tariffs being added)
-      tariff_lines << convert_invoice_line_to_tariff(line, copy_value: false) unless tariff_lines.blank?
+      tariff_lines << convert_invoice_line_to_tariff(line, copy_value: true) unless tariff_lines.blank?
     end
 
     if tariff_lines.blank?
@@ -440,8 +436,6 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     if hts
       new_line.hts = hts
     end
-
-
 
     new_line
   end

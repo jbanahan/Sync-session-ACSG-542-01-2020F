@@ -498,7 +498,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t1.text "tariffNo").to eq "1111111111"
         expect(t1.text "weightGross").to eq "78"
         expect(t1.text "kilosPounds").to eq "KG"
-        expect(t1.text "valueForeign").to eq "317786"
+        expect(t1.text "valueForeign").to be_nil
         expect(t1.text "qty1Class").to eq "9300"
         expect(t1.text "uom1Class").to eq "QT1"
         expect(t1.text "qty2Class").to eq "5200"
@@ -515,8 +515,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t2.text "tariffNo").to eq "4202923031"
         expect(t2.text "weightGross").to eq "78"
         expect(t2.text "kilosPounds").to eq "KG"
-        # The commercial invoice value should have been removed from the "real" tariff line and added to the special tariff line instead
-        expect(t2.text "valueForeign").to be_nil
+        # The commercial invoice value should stay with the original line
+        expect(t2.text "valueForeign").to eq "317786"
         expect(t2.text "qty1Class").to eq "9300"
         expect(t2.text "uom1Class").to eq "QT1"
         expect(t2.text "qty2Class").to eq "5200"
@@ -542,9 +542,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
 
         # We can just verify the tariff numbers involved to tell that the special tariff was added in the right position
         expect(t[0].text "tariffNo").to eq "1111111111"
-        expect(t[0].text "valueForeign").to eq "98765"
+        expect(t[0].text "valueForeign").to be_nil
         expect(t[1].text "tariffNo").to eq "1234567890"
-        expect(t[1].text "valueForeign").to be_nil
+        expect(t[1].text "valueForeign").to eq "98765"
         expect(t[2].text "tariffNo").to eq "9903000000"
         expect(t[2].text "valueForeign").to be_nil
       end
