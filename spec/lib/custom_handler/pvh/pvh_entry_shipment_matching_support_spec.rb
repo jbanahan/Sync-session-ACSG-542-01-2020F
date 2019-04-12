@@ -7,8 +7,8 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
   }
 
   let (:importer) { Factory(:importer, system_code: "PVH")}
-  let! (:ocean_shipment) { Factory(:shipment, master_bill_of_lading: "MBOL", importer: importer)}
-  let! (:air_shipment) { Factory(:shipment, house_bill_of_lading: "HBOL", importer: importer)}
+  let! (:ocean_shipment) { Factory(:shipment, mode: "Ocean", master_bill_of_lading: "MBOL", house_bill_of_lading: "SEAHBOL", importer: importer)}
+  let! (:air_shipment) { Factory(:shipment, mode: "Air", master_bill_of_lading: "AIRMBOL", house_bill_of_lading: "HBOL", importer: importer)}
 
   describe "find_shipments" do
     
@@ -35,6 +35,16 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
     it "returns blank array if nothing found" do
       expect(subject.find_shipments "1", "BOL", "BOL").to eq []
       expect(subject.found_shipments).to eq []
+    end
+
+    it "does not find shipments if modes don't match" do
+      ocean_shipment.update_attributes! mode: "SomeOtherMode"
+      expect(subject.find_shipments "10", "MBOL", "HBOL").to eq []
+    end
+
+    it "does not find non-PVH shipments" do
+      ocean_shipment.update_attributes! importer_id: Factory(:importer).id
+      expect(subject.find_shipments "10", "MBOL", "HBOL").to eq []
     end
   end
 

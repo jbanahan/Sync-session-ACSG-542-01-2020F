@@ -96,7 +96,36 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
       end
 
       it "errors if no shipment found by house bill" do
-        shipment.update_attributes! house_bill_of_lading: "HBOL"
+        shipment.update_attributes! house_bill_of_lading: "HBOL", master_bill_of_lading: nil
+        expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
+      end
+    end
+
+    context "with truck shipment" do
+      before :each do 
+        entry.update_attributes! transport_mode_code: "30"
+        shipment.update_attributes! mode: "TRUCK"
+        shipment.containers.first.update_attributes! container_number: "MBOL1234567890"
+        entry.containers.destroy_all
+        entry.reload
+      end
+
+      it "finds valid match" do
+        expect(subject.run_validation entry).to be_blank
+      end
+
+      it "errors if part numbers don't match" do
+        product.update_attributes! unique_identifier: "PVH-PART2"
+        expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
+      end
+
+      it "errors if order numbers don't match" do
+        order.update_attributes! customer_order_number: "ORDER2"
+        expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
+      end
+
+      it "errors if no shipment found by master bill" do
+        shipment.update_attributes! master_bill_of_lading: "MBOL"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
     end

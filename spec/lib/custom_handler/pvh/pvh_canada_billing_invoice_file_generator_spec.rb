@@ -301,10 +301,24 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(lines[0]).to have_xpath_value("Value", "300.0")
     end
 
-    it "uses house bill for non-ocean modes" do
+    it "uses house bill for Air modes" do
       entry.update_attributes! transport_mode_code: 40, house_bills_of_lading: "HBOL987654321"
-      shipment.update_attributes! mode: "1"
+      shipment.update_attributes! mode: "Air"
       shipment.containers.first.update_attributes! container_number: "HBOL987654321"
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
+      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "HBOL987654321")
+    end
+
+    it "uses master bill for Truck modes" do
+      entry.update_attributes! transport_mode_code: 2, master_bills_of_lading: "MBOL1234567890"
+      shipment.update_attributes! mode: "Truck"
+      shipment.containers.update_all container_number: shipment.master_bill_of_lading
+      shipment.reload
 
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges

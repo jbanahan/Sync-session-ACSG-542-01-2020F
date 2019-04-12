@@ -164,8 +164,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # so this works out real well, as all we have to do to accommodate 
       if ocean_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
-      else
+      elsif air_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
+      elsif truck_mode?(entry_snapshot)
+        containers = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols))
       end
       
       prorations = {}
@@ -190,6 +192,14 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def ocean_mode? entry_snapshot
     ocean_mode_entry?(mf(entry_snapshot, :ent_transport_mode_code))
+  end
+
+  def air_mode? entry_snapshot
+    air_mode_entry?(mf(entry_snapshot, :ent_transport_mode_code))
+  end
+
+  def truck_mode? entry_snapshot
+    truck_mode_entry?(mf(entry_snapshot, :ent_transport_mode_code))
   end
 
   def unsent_invoices entry, broker_invoice_snapshots

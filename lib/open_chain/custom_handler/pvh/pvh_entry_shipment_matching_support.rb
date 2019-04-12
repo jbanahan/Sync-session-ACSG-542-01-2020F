@@ -4,15 +4,31 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all 
     # anyway to bill the entry.
     if @shipments.nil?
-      # For air shipments, we're going to match on house bill, master bill for ocean.
-      query_params = {importer_id: pvh_importer.id}
-      if ocean_mode_entry?(transport_mode_code)
-        query_params[:master_bill_of_lading] = master_bills_of_lading
-      else
-        query_params[:house_bill_of_lading] = house_bills_of_lading
+
+      # We're going to return shipments where master bills match or house bills match
+      shipments_query = Shipment.where(importer_id: pvh_importer.id)
+      if ocean_mode_entry? transport_mode_code
+        shipments_query = shipments_query.where("mode LIKE ?", '%Ocean%')
+      elsif air_mode_entry? transport_mode_code
+        shipments_query = shipments_query.where("mode LIKE ?", '%Air%')
+      elsif truck_mode_entry? transport_mode_code
+        shipments_query = shipments_query.where("mode LIKE ?", '%Truck%')
       end
 
-      @shipments = Shipment.where(query_params).to_a
+      master_bills_of_lading = Array.wrap(master_bills_of_lading).reject &:blank?
+      house_bills_of_lading = Array.wrap(house_bills_of_lading).reject &:blank?
+
+      if master_bills_of_lading.length > 0 && house_bills_of_lading.length > 0
+        shipments_query = shipments_query.where("master_bill_of_lading in (?) OR house_bill_of_lading IN (?)", master_bills_of_lading, house_bills_of_lading)
+      elsif master_bills_of_lading.length > 0
+        shipments_query = shipments_query.where(master_bill_of_lading: master_bills_of_lading)
+      elsif house_bills_of_lading.length > 0
+        shipments_query = shipments_query.where(house_bill_of_lading: house_bills_of_lading)
+      else
+        shipments_query = nil
+      end
+
+      @shipments = shipments_query.nil? ? [] : shipments_query.to_a
     end
 
     @shipments
@@ -20,6 +36,14 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
 
   def ocean_mode_entry? transport_mode_code
     Entry.get_transport_mode_codes_us_ca("SEA").include?(transport_mode_code.to_i)
+  end
+
+  def air_mode_entry? transport_mode_code
+    Entry.get_transport_mode_codes_us_ca("AIR").include?(transport_mode_code.to_i)
+  end
+
+  def truck_mode_entry? transport_mode_code
+    Entry.get_transport_mode_codes_us_ca("TRUCK").include?(transport_mode_code.to_i)
   end
 
   def find_shipment_line shipments, container_number, order_number, part_number, units
