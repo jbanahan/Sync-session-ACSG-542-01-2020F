@@ -967,6 +967,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_puma_division_quarter_breakdown
+    if OpenChain::Report::PumaDivisionQuarterBreakdown.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_puma_division_quarter_breakdown
+    klass = OpenChain::Report::PumaDivisionQuarterBreakdown
+    if klass.permission? current_user
+      run_report "Puma Division Quarter Breakdown", klass, {year: params[:year]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
     def run_report name, klass, settings, friendly_settings
       begin

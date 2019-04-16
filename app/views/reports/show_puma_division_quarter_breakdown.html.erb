@@ -1,0 +1,14 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Puma Division Quarter Breakdown</h2><br>
+<%=form_tag reports_run_puma_division_quarter_breakdown_path, :id=>'frm_run' do -%>
+  <div class="container">
+    <div>
+      <span>
+        <%=field_row "Year", select_tag(:year, options_for_select((2015..Time.now.year).map {|m| [m, m]}, Time.now.year-1))%>
+      </span>
+    </div>
+  </div>
+<%end%>
