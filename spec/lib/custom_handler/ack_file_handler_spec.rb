@@ -9,67 +9,118 @@ describe OpenChain::CustomHandler::AckFileHandler do
     f
   }
 
-  context "line_handling" do
+  context "process_ack_file" do
     let! (:product) { Factory(:product) }
 
-    it "should take optional separator" do
-      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
-      expect(subject).to receive(:handle_errors).with([msg],"testuser", nil, 'file.csv', "h|h|h\n#{product.unique_identifier}|201306191706|OK","OTHER")
-      subject.process_ack_file "h|h|h\n#{product.unique_identifier}|201306191706|OK", 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
-    end
-    it "should handle extra whitespace" do
-      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
-      expect(subject).to receive(:handle_errors).with([msg],"testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,\"OK\"        ","OTHER")
-      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,\"OK\"        ", 'OTHER', "testuser"
-    end
-    
-  end
+    context "line_handling" do
+      it "should not handle error if there isn't one" do
+        file_content = "h,h,h\n#{product.unique_identifier},201306191706,OK"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to_not receive(:handle_errors)
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
 
-  context "module_type" do
-    it "should default to product handling" do
-      p = Factory(:product)
-      sr = p.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
-      subject.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"", 'OTHER', "testuser"
-      sr.reload
-      expect(sr.confirmed_at).not_to be_nil
-    end
-    it "should allow alternate module type" do
-      ent = Factory(:entry,broker_reference:'123456')
-      sr = ent.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
-      subject.process_ack_file "h,h,h\n123456,201306191706,\"OK\"", 'OTHER', nil, {module_type:'Entry'}
-      sr.reload
-      expect(sr.confirmed_at).not_to be_nil
-    end
-  end
-  context "sync_records" do
-    let! (:product) { Factory(:product) }
-    let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
+      it "should handle multiple errors" do
+        file_content = "h,h,h\n#{product.unique_identifier},201306191706,Error 1\n#{product.unique_identifier},201306191706,Error 2"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: Error 1", "Product #{product.unique_identifier} failed: Error 2"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
 
-    it "should update product sync record" do
-      product.sync_records.create!(:trading_partner=>'XYZ')
-      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'XYZ', "testuser"
-      product.reload
-      expect(product.sync_records.size).to eq(1)
-      sr = product.sync_records.first
-      expect(sr.trading_partner).to eq('XYZ')
-      expect(sr.confirmed_at).to be > 1.minute.ago
-      expect(sr.confirmation_file_name).to eq('file.csv')
-      expect(sr.failure_message).to be_blank
+      it "should take optional separator" do
+        file_content = "h|h|h\n#{product.unique_identifier}|201306191706|Problem detail goes here"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: Problem detail goes here"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
+      end
+
+      it "should handle extra whitespace" do
+        file_content = "h,h,h\n#{product.unique_identifier},201306191706,\"This is some info about the error\"        "
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: This is some info about the error"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
+
+      it "should error if file line is too short" do
+        # Line has just 2 values.
+        bad_line = "#{product.unique_identifier},201306191706"
+        file_content = "h,h,h\n#{bad_line}"
+        msg = "Malformed response line: #{bad_line}"
+        expect(subject).to receive(:handle_errors).with([msg], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
+
+      it "should use error description when provided in (optional) column D" do
+        line = "#{product.unique_identifier},201306191706,Would be in errors if next column didn't have value,Include me instead"
+        file_content = "h,h,h,h\n#{line}"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: Include me instead"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
+
+      it "should not error if file line is too long" do
+        # Line has 5 values: this is OK.
+        bad_line = "#{product.unique_identifier},201306191706,3,4,5"
+        file_content = "h,h,h\n#{bad_line}"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: 4"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
+
+      it "should ignore a blank error description" do
+        line = "#{product.unique_identifier},201306191706,This is the error text to use,   "
+        file_content = "h,h,h,h\n#{line}"
+        product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        expect(subject).to receive(:handle_errors).with(["Product #{product.unique_identifier} failed: This is the error text to use"], "testuser", nil, 'file.csv', file_content, "OTHER")
+        subject.process_ack_file file_content, 'OTHER', "testuser"
+      end
     end
 
-    it "should not update sync record for another trading partner" do
-      product.sync_records.create!(:trading_partner=>'XYZ')
-      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
-      product.reload
-      expect(product.sync_records.size).to eq(1)
-      sr = product.sync_records.first
-      expect(sr.trading_partner).to eq('XYZ')
-      expect(sr.confirmed_at).to be_nil
+    context "module_type" do
+      it "should default to product handling" do
+        sr = product.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,\"OK\"", 'OTHER', "testuser"
+        sr.reload
+        expect(sr.confirmed_at).not_to be_nil
+      end
+      it "should allow alternate module type" do
+        ent = Factory(:entry,broker_reference:'123456')
+        sr = ent.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+        subject.process_ack_file "h,h,h\n123456,201306191706,\"OK\"", 'OTHER', nil, {module_type:'Entry'}
+        sr.reload
+        expect(sr.confirmed_at).not_to be_nil
+      end
     end
-    it "should call errors callback if there is an error" do
-      msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
-      expect(subject).to receive(:handle_errors).with([msg], "testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,OK", "OTHER")
-      subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
+
+    context "sync_records" do
+      let! (:user) { Factory(:user, email: "example@example.com", username: "testuser") }
+
+      it "should update product sync record" do
+        product.sync_records.create!(:trading_partner=>'XYZ')
+        subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'XYZ', "testuser"
+        product.reload
+        expect(product.sync_records.size).to eq(1)
+        sr = product.sync_records.first
+        expect(sr.trading_partner).to eq('XYZ')
+        expect(sr.confirmed_at).to be > 1.minute.ago
+        expect(sr.confirmation_file_name).to eq('file.csv')
+        expect(sr.failure_message).to be_blank
+      end
+
+      it "should not update sync record for another trading partner" do
+        product.sync_records.create!(:trading_partner=>'XYZ')
+        subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
+        product.reload
+        expect(product.sync_records.size).to eq(1)
+        sr = product.sync_records.first
+        expect(sr.trading_partner).to eq('XYZ')
+        expect(sr.confirmed_at).to be_nil
+      end
+      it "should call errors callback if there is an error" do
+        msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
+        expect(subject).to receive(:handle_errors).with([msg], "testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,OK", "OTHER")
+        subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
+      end
     end
   end
 

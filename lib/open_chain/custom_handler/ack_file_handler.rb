@@ -37,7 +37,11 @@ module OpenChain
         CSV.parse(output.read, csv_opts) do |row|
           row_count += 1
           next if row_count == 1
-          errors << "Malformed response line: #{row.to_csv}" unless row.size==3
+          # Allows for optional 'error description' value in the 4th column.  Older ack files will not contain this.
+          if (row.size < 3)
+            errors << "Malformed response line: #{row.to_csv.strip}"
+            next
+          end
           prod = find_object row, opts
           if prod.nil?
             errors << "#{cm.label} #{row[0]} confirmed, but it does not exist."
@@ -48,7 +52,11 @@ module OpenChain
             errors << "#{cm.label} #{row[0]} confirmed, but it was never sent."
             next
           end
-          fail_message = row[2].to_s.strip.upcase=='OK' ? nil : row[2]
+          error_description = row[3].try(:strip)
+          # A column C value of "OK" means no error, and there will therefore be no fail message.  Assuming we
+          # get something other than "OK" in C, that becomes our fail message UNLESS we get a value in column D
+          # (error description, added spring 2019). D wins out over C in that case.
+          fail_message = row[2].to_s.strip.upcase=='OK' ? nil : (error_description.present? ? error_description : row[2])
           sync.update_attributes(:confirmed_at=>Time.zone.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
           errors << "#{cm.label} #{row[0]} failed: #{fail_message}" unless fail_message.blank?
         end
