@@ -12,6 +12,16 @@ module OpenChain; module Report; module BaseReportHelper
       end
     end
 
+    # Removes outer quotes included by AR's .sanitize
+    def sanitize str
+      ActiveRecord::Base.sanitize(str).gsub(/(\A\')|(\'\z)/,"")
+    end
+
+    # Proxies protected method
+    def sanitize_sql_array prepared_string, var_array
+      ActiveRecord::Base.send(:sanitize_sql_array, [prepared_string, var_array])
+    end
+
     def sanitize_string_in_list values
       values.map {|n| ActiveRecord::Base.connection.quote n }.join(", ")
     end

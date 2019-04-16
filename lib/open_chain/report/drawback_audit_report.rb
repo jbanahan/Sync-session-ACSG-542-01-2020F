@@ -70,7 +70,7 @@ module OpenChain
           INNER JOIN drawback_claims ON a.drawback_claim_id = drawback_claims.id
           LEFT OUTER JOIN drawback_export_histories h ON h.drawback_claim_id = a.drawback_claim_id AND h.part_number = a.export_part_number AND ifnull(h.export_ref_1,'') = ifnull(a.export_ref_1,'') AND h.export_date = a.export_date
           LEFT OUTER JOIN drawback_import_lines i ON i.entry_number = a.import_entry_number AND i.part_number = a.import_part_number 
-          WHERE #{DrawbackClaim.search_where(user)} AND h.drawback_claim_id = #{dc_id}
+          WHERE #{DrawbackClaim.search_where(user)} AND h.drawback_claim_id = #{sanitize dc_id}
           GROUP BY a.id
         SQL
       end

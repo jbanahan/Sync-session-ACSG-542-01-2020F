@@ -1,5 +1,6 @@
 module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
   extend ActiveSupport::Concern
+  include OpenChain::Report::ReportHelper
 
   SYSTEM_CODE = "ASCENA"
 
@@ -32,7 +33,7 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
         (SELECT IFNULL((SELECT ordln.price_per_unit 
                         FROM order_lines ordln 
                           INNER JOIN products prod ON prod.id = ordln.product_id 
-                        WHERE ordln.order_id = #{ord_alias}.id AND prod.unique_identifier = CONCAT("#{importer_system_code}-", #{inv_line_alias}.part_number)
+                        WHERE ordln.order_id = #{ord_alias}.id AND prod.unique_identifier = CONCAT("#{sanitize importer_system_code}-", #{inv_line_alias}.part_number)
                         LIMIT 1),
                        (SELECT ordln.price_per_unit 
                         FROM order_lines ordln 
@@ -55,7 +56,7 @@ module OpenChain; module CustomHandler; module Ascena; module AscenaReportHelper
                         FROM order_lines ordln
                           INNER JOIN products prod ON prod.id = ordln.product_id
                           INNER JOIN custom_values ordln_price ON ordln_price.customizable_id = ordln.id AND ordln_price.customizable_type = "OrderLine" AND ordln_price.custom_definition_id = #{wholesale_unit_price_cdef_id}
-                        WHERE ordln.order_id = #{ord_alias}.id AND prod.unique_identifier = CONCAT("#{importer_system_code}-", #{inv_line_alias}.part_number)
+                        WHERE ordln.order_id = #{ord_alias}.id AND prod.unique_identifier = CONCAT("#{sanitize importer_system_code}-", #{inv_line_alias}.part_number)
                         LIMIT 1),
                        (SELECT ordln_price.decimal_value
                         FROM order_lines ordln

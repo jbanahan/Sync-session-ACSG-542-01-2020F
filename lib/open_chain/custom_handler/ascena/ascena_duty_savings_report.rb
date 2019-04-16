@@ -869,6 +869,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
   class Query
     include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+    include OpenChain::Report::ReportHelper
 
     def run cust_numbers, start_date, end_date
       # performance issues require one query per importer
@@ -971,11 +972,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
         LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
         LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
-        LEFT OUTER JOIN orders o ON o.order_number =  IF('#{cust_number}' = '#{ASCENA_CUST_NUM}', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ATAYLOR-', cil.po_number))
+        LEFT OUTER JOIN orders o ON o.order_number =  IF('#{sanitize cust_number}' = '#{ASCENA_CUST_NUM}', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ATAYLOR-', cil.po_number))
         LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
         LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
-        WHERE e.customer_number = '#{cust_number}' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
+        WHERE e.customer_number = '#{sanitize cust_number}' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
         ORDER BY e.customer_number, e.broker_reference
       SQL
     end

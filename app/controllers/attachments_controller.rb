@@ -139,8 +139,8 @@ class AttachmentsController < ApplicationController
       render_json_error "Cannot accept more than 10 email addresses."
     elsif !email_list_valid? email_list
       render_json_error "Please ensure all email addresses are valid."
-    else
-      total_size = Attachment.where("id IN (#{params[:ids_to_include].join(', ')})").sum(:attached_file_size)
+    else     
+      total_size = Attachment.where("id IN (?)", params[:ids_to_include]).sum(:attached_file_size)
       if total_size > 10485760
         render_json_error "Attachments cannot be over 10 MB."
       else

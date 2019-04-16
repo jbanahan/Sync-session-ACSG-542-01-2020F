@@ -28,9 +28,10 @@ module OpenChain
       end
 
       def fill_sheets(user, workbook, date, summary_sheet, detail_sheet, customer_number)
-        write_query_to_builder workbook, summary_sheet, po_query(user, customer_number, date), 
+        safe_date = sanitize_date_string date
+        write_query_to_builder workbook, summary_sheet, po_query(user, customer_number, safe_date), 
           data_conversions: {"Duty" => currency_format_lambda, "Fees" => currency_format_lambda, "SIMA and Excise" => currency_format_lambda, "Total Duty/Fee" => currency_format_lambda, "Entered Value" => currency_format_lambda, "Avg Duty 18%" => currency_format_lambda, "+/- Duty" => currency_format_lambda} 
-        write_query_to_builder workbook, detail_sheet, detail_query(user, customer_number, date), 
+        write_query_to_builder workbook, detail_sheet, detail_query(user, customer_number, safe_date), 
           data_conversions: {"Invoice Tariff - Entered Value" => currency_format_lambda, "Invoice Tariff - Duty" => currency_format_lambda, "Invoice Tariff - Fees" => currency_format_lambda, "Invoice Tariff - SIMA" => currency_format_lambda, "Invoice Tariff - Excise" => currency_format_lambda, "Due Crown" => currency_format_lambda, "Web Links" => weblink_translation_lambda(workbook, Entry)}
       end
 

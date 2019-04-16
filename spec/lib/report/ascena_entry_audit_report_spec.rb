@@ -187,8 +187,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', 'ATAYLOR', cdefs)
       expect(result.columns).to eq header
       expect(result.count).to eq 2
-      rows = []
-      result.each { |r| rows << r }
+      # check order join
+      expect(result.first["Vendor Name"]).to eq "vend name"
     end
 
     it "skips entries whose release date isn't in the range" do

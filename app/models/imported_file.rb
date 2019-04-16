@@ -366,14 +366,12 @@ class ImportedFile < ActiveRecord::Base
     end
     def process_row row_number, object, messages, failed=false
       key_model_field_value, messages = messages.partition{ |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
-      cr = ChangeRecord.create(:unique_identifier=>key_model_field_value[0], :record_sequence_number=>row_number,:recordable=>object,
-                               :failed=>failed,:file_import_result_id=>@fr.id)
+      cr = ChangeRecord.create!(:unique_identifier=>key_model_field_value[0], :record_sequence_number=>row_number,:recordable=>object,
+                                :failed=>failed,:file_import_result_id=>@fr.id)
       unless messages.blank?
-        msg_sql = []
-        messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
-        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")};"    
-        ActiveRecord::Base.connection.execute sql
-        ActiveRecord::Base.connection.execute "UPDATE file_import_results SET rows_processed = #{row_number - (@imported_file.starting_row - 1)} WHERE ID = #{@fr.id};"
+        crms = messages.map { |m| ChangeRecordMessage.new(change_record_id: cr.id, message: m.gsub(/\\/, '\&\&').gsub(/'/, "''")) }
+        ChangeRecordMessage.import crms
+        FileImportResult.where(id: @fr.id).update_all(rows_processed: row_number - (@imported_file.starting_row - 1))
       end
       
       object.update_attributes(:last_updated_by_id=>@fr.run_by.id) if object.respond_to?(:last_updated_by_id)

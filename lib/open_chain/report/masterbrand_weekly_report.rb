@@ -67,7 +67,7 @@ module OpenChain
                     e.special_program_indicators AS 'SPI(s)',
                     e.recon_flags AS 'Recon Flags'
             FROM entries AS e INNER JOIN ports AS p ON e.entry_port_code = p.schedule_d_code
-            WHERE e.customer_number = '#{vfi_cust_no}' AND 
+            WHERE e.customer_number = '#{sanitize vfi_cust_no}' AND 
                   e.release_date > '#{start_date_time}' AND 
                   e.release_date < '#{end_date_time}'
             ORDER BY e.release_date
