@@ -283,6 +283,7 @@ OpenChain::Application.routes.draw do
   resources :delayed_jobs, :only => [:destroy] do
     member do
       delete :bulk_destroy
+      post :run_now
     end
   end
   resources :ftp_sessions, :only => [:index, :show] do

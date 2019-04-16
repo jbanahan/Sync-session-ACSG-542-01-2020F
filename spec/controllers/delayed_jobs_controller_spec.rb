@@ -6,7 +6,32 @@ describe DelayedJobsController do
     sign_in_as @u
   end
 
-  describe "GET 'download'" do  
+  describe "run_now" do
+    let(:now) { DateTime.new(2019,3,16,12) }
+    let(:yesterday) { DateTime.new(2019,3,15,12) }
+    let(:dj) { Delayed::Job.create!(priority: 10, run_at: yesterday) }
+
+    it "sets run_at and priority" do
+      now = DateTime.new(2019,3,16,12)
+      Timecop.freeze(now) { post :run_now, id: dj.id }
+      dj.reload
+      expect(dj.priority).to eq(-1000)
+      expect(dj.run_at).to eq now
+      expect(response).to redirect_to request.referrer
+      expect(flash[:notices]).to eq ["Delayed Job #{dj.id} will run next."]
+    end
+
+    it "errors if job is locked" do
+      dj.update_attributes! locked_at: Time.now
+      Timecop.freeze(now) { post :run_now, id: dj.id }
+      dj.reload
+      expect(dj.priority).to eq 10
+      expect(dj.run_at).to eq yesterday
+      expect(flash[:errors]).to eq ["Delayed Job #{dj.id} can't be scheduled because it is locked."]
+    end
+  end
+
+  describe "destroy" do  
     before(:each) { @dj = Delayed::Job.create! }
 
     it "should be successful" do

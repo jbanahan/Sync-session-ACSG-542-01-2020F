@@ -145,10 +145,15 @@ $(function() {
       <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{total_queued} queued #{"job".pluralize(total_queued)}" %></p>
       <table id='dj_tbl' class='table table-condensed table-sm'>
         <thead>
-          <tr><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
+          <tr><th>Action</th><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
         </thead>
         <% (errored + running + queued_list).each do |dj| %>
           <tr>
+            <td>
+              <%- if dj.locked_at.blank? -%>
+                <%= link_to "Run Now", run_now_delayed_job_path(dj), :method => :post, :class=>'btn btn-sm btn-primary' %></td>
+              <%- end -%>
+            </td>
             <%-if dj.last_error && dj.locked_at.blank? && @job_groups[dj.id].count > 1 -%>
               <td><button class='btn btn-sm btn-danger btn-bulk-destroy' data-id='<%=dj.id%>' data-count='<%=@job_groups[dj.id].count%>'>Delete</button></td>
             <%-else-%>
