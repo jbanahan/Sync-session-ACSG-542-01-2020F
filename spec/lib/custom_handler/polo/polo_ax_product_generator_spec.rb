@@ -140,8 +140,8 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
       product.update_custom_value! cdefs[:msl_gcc_desc], "GCC"
       product.update_custom_value! cdefs[:gcc_description_2], "GCC2"
       product.update_custom_value! cdefs[:gcc_description_3], "GCC3"
-      product.update_custom_value! cdefs[:length_cm], 1
-      product.update_custom_value! cdefs[:width_cm], 2
+      product.update_custom_value! cdefs[:depth_cm], 1
+      product.update_custom_value! cdefs[:bottom_width_cm], 2
       product.update_custom_value! cdefs[:height_cm], 3
       product.update_custom_value! cdefs[:fabric_1], "f1"
       product.update_custom_value! cdefs[:fabric_2], "f2"
@@ -370,11 +370,11 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
     end
 
     it "converts length in to length cm" do
-      full_product.update_custom_value! cdefs[:length_in], 10
-      full_product.update_custom_value! cdefs[:width_in], 100
+      full_product.update_custom_value! cdefs[:depth_in], 10
+      full_product.update_custom_value! cdefs[:width_bottom_in], 100
       full_product.update_custom_value! cdefs[:height_in], 1000
-      full_product.update_custom_value! cdefs[:length_cm], nil
-      full_product.update_custom_value! cdefs[:width_cm], nil
+      full_product.update_custom_value! cdefs[:depth_cm], nil
+      full_product.update_custom_value! cdefs[:bottom_width_cm], nil
       full_product.update_custom_value! cdefs[:height_cm], nil
 
       rows = subject.preprocess_row({}, product_id: full_product.id)

@@ -283,11 +283,12 @@ module OpenChain
           :gcc_description_2 => {label: "GCC Description 2", data_type: :string, module_type: "Product", cdef_uid: "prod_gcc_description_2"},
           :gcc_description_3 => {label: "GCC Description 3", data_type: :string, module_type: "Product", cdef_uid: "prod_gcc_description_3"},
           :non_textile => {label: "Non Textile", data_type: :string, module_type: "Product", cdef_uid: "prod_non_textile"},
-          :length_in => {label: "Length (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_length_in"},
-          :width_in => {label: "Width (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_width_in"},
-          :height_in => {label: "Height (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_height_in"},
-          :rl_merchandise_division_description => {label: "RL Merchandise Division Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_merchandise_division_description"}
-          
+          :depth_in => {label: "Depth (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_depth_in"},
+          :width_bottom_in => {label: "Width Bottom (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_width_bottom_in"},
+          :height_in => {label: "Height (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_height_in"},
+          :rl_merchandise_division_description => {label: "RL Merchandise Division Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_merchandise_division_description"},
+          :depth_cm => {label: "Depth (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_depth_cm"},
+          :bottom_width_cm => {label: "Bottom Width (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_bottom_width_cm"}
         }
 
         included do |base|

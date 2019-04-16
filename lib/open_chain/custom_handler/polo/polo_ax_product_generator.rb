@@ -214,14 +214,14 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
     # the product has in.  Product will only have one or the other, not both.
     data = {length: nil, width: nil, height: nil}
 
-    data[:length] = product.custom_value(cdefs[:length_cm])
-    data[:width] = product.custom_value(cdefs[:width_cm])
+    data[:length] = product.custom_value(cdefs[:depth_cm])
+    data[:width] = product.custom_value(cdefs[:bottom_width_cm])
     data[:height] = product.custom_value(cdefs[:height_cm])
 
     return data if data[:length].try(:nonzero?) || data[:width].try(:nonzero?) || data[:height].try(:nonzero?)
 
-    data[:length] = convert_to_centimeters product.custom_value(cdefs[:length_in])
-    data[:width] = convert_to_centimeters product.custom_value(cdefs[:width_in])
+    data[:length] = convert_to_centimeters product.custom_value(cdefs[:depth_in])
+    data[:width] = convert_to_centimeters product.custom_value(cdefs[:width_bottom_in])
     data[:height] = convert_to_centimeters product.custom_value(cdefs[:height_in])
 
     data
@@ -273,7 +273,7 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions([
-      :msl_gcc_desc, :gcc_description_2, :gcc_description_3, :length_cm, :width_cm, :height_cm, :length_in, :width_in, :height_in,
+      :msl_gcc_desc, :gcc_description_2, :gcc_description_3, :depth_cm, :bottom_width_cm, :height_cm, :depth_in, :width_bottom_in, :height_in,
       :fabric_1, :fabric_2, :fabric_3, :fabric_4, :fabric_5, :fabric_6, :fabric_7, :fabric_8, :fabric_9, :fabric_10, :fabric_11, :fabric_12,
       :fabric_13, :fabric_14, :fabric_15, :fabric_type_1, :fabric_type_2, :fabric_type_3, :fabric_type_4, :fabric_type_5, :fabric_type_6, 
       :fabric_type_7, :fabric_type_8, :fabric_type_9, :fabric_type_10, :fabric_type_11, :fabric_type_12, :fabric_type_13, :fabric_type_14, 
