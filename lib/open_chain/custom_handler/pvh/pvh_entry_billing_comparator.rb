@@ -10,16 +10,23 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
   def self.accept? snapshot
     accept = super
     return false unless accept
-
-    # This is here SOLELY for the production acceptance testing phase...it can be removed once we go 100% live
+    customer_number = snapshot&.recordable&.customer_number
+    # This fist if is here SOLELY for the production acceptance testing phase...it can be removed once we go 100% live
     # This provides a way to go live without having to do a code update
-    if MasterSetup.get.custom_feature?("PVH Billing Testing")
-      return false unless has_test_indicator?(snapshot&.recordable)
+    if MasterSetup.get.custom_feature?("PVH Billing Testing") && has_test_indicator?(snapshot&.recordable)
+      return false unless ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(customer_number)
+    else
+      # Once both US and CA have gone live, the custom feature checks can be unified back into a single custom feature
+      if "PVHCANADA" == customer_number
+        return false unless MasterSetup.get.custom_feature?("PVH Canada GTN Billing")
+      elsif ["PVH", "PVHNE", "PVHCA"].include?(customer_number)
+        return false unless MasterSetup.get.custom_feature?("PVH US GTN Billing")
+      else
+        return false
+      end  
     end
 
-    ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(snapshot&.recordable&.customer_number) && 
-          # The final file logged date check once we're 100% live can be determined later
-          snapshot&.recordable&.file_logged_date && snapshot&.recordable&.file_logged_date > Date.new(2018, 12, 1)
+    has_broker_invoice?(snapshot&.recordable)
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -47,6 +54,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
 
   def self.pvh_ca_generator
     OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator.new
+  end
+
+  def self.has_broker_invoice? entry
+    entry && entry.broker_invoices.length > 0
   end
 
 end; end; end; end

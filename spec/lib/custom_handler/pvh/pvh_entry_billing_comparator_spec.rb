@@ -3,8 +3,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
   subject { described_class }
 
   describe "accept?" do
-    
-    
+
     let (:snapshot) { 
       s = EntitySnapshot.new
       s.recordable = entry
@@ -13,8 +12,13 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
 
     # This whole context can be deleted once we're done w/ live testing
     context "with billing testing enabled" do
-      let (:entry) { Entry.new file_logged_date: Date.new(2019, 1, 1), house_bills_of_lading: "BILLINGTEST", customer_number: "PVH" }
-      let (:master_setup) {
+      let (:entry) { 
+        e = Entry.new file_logged_date: Date.new(2019, 1, 1), house_bills_of_lading: "BILLINGTEST", customer_number: "PVH" 
+        e.broker_invoices << BrokerInvoice.new(invoice_number: "INV")
+        e
+      }
+
+      let! (:master_setup) {
         ms = stub_master_setup
         expect(ms).to receive(:custom_feature?).with("PVH Billing Testing").and_return true
         ms
@@ -24,11 +28,6 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
         it "accepts #{cust} snapshots" do
           entry.customer_number = cust
           expect(subject.accept? snapshot).to eq true
-        end
-
-        it "does not accept #{cust} snapshots prior to 2019" do
-          entry.file_logged_date = Date.new(2018, 11, 30)
-          expect(subject.accept? snapshot).to eq false
         end
       end
 
@@ -42,31 +41,48 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
         entry.container_numbers = "BILLINGTEST"
         expect(subject.accept? snapshot).to eq true
       end
+
+      it "does not accept unbilled entries" do
+        entry.broker_invoices.clear
+        expect(subject.accept? snapshot).to eq false
+      end
     end
 
     context "without billing testing enabled" do
-      let (:entry) { Entry.new file_logged_date: Date.new(2019, 1, 1), customer_number: "PVH" }
+      let (:entry) { 
+        e = Entry.new file_logged_date: Date.new(2019, 1, 1), customer_number: "PVH" 
+        e.broker_invoices << BrokerInvoice.new(invoice_number: "INV")
+        e
+      }
 
-      let (:master_setup) {
+      let! (:master_setup) {
         ms = stub_master_setup
         expect(ms).to receive(:custom_feature?).with("PVH Billing Testing").and_return false
         ms
       }
 
-      ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].each do |cust|
+      it "accepts PVHCANADA snapshots" do 
+        entry.customer_number = "PVHCANADA"
+        expect(master_setup).to receive(:custom_feature?).with("PVH Canada GTN Billing").and_return true
+        expect(subject.accept? snapshot).to eq true
+      end
+
+      ["PVH", "PVHNE", "PVHCA"].each do |cust|
         it "accepts #{cust} snapshots" do
           entry.customer_number = cust
+          expect(master_setup).to receive(:custom_feature?).with("PVH US GTN Billing").and_return true
           expect(subject.accept? snapshot).to eq true
-        end
-
-        it "does not accept #{cust} snapshots prior to 2019" do
-          entry.file_logged_date = Date.new(2018, 11, 30)
-          expect(subject.accept? snapshot).to eq false
         end
       end
 
       it "does not accept non-PVH entries" do
         entry.customer_number = "NOTPVH"
+        expect(subject.accept? snapshot).to eq false
+      end
+
+      it "does not accept snapshots without broker invoices" do
+        expect(master_setup).to receive(:custom_feature?).with("PVH US GTN Billing").and_return true
+        entry.broker_invoices.clear
         expect(subject.accept? snapshot).to eq false
       end
     end

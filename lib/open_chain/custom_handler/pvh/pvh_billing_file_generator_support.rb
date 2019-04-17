@@ -464,7 +464,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     add_element(type_code, "Code", charge_code)
     # We don't actually have time values for when we issue invoices, so just set to noon
     # The ActiveSupport::TimeZone sets either "EDT" or "EST" depending on the time of the year
-    generate_date_time_elements(add_element(charge_field, "ChargeDate"), invoice_date.strftime("%Y-%m-%d"), "12:00:00", timezone: ActiveSupport::TimeZone["America/New_York"].now.zone)
+    generate_date_time_elements(add_element(charge_field, "ChargeDate"), invoice_date.strftime("%Y-%m-%d"), "12:00:00", timezone: "UTC")
     
     # Technically, all reversals should be handled via the find_and_reverse_original_invoice_xml_lines method, which 
     # just builds the xml for the invoice from the existing sent invoice.  However, there WILL be times where that invoice

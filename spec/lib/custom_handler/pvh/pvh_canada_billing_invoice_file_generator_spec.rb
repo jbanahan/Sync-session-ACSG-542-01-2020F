@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(c).to have_xpath_value("Level", "Manifest Line Item")
       expect(c).to have_xpath_value("ChargeDate/Date", "2018-11-07")
       expect(c).to have_xpath_value("ChargeDate/Time", "12:00:00")
-      expect(c).to have_xpath_value("ChargeDate/TimeZone", "EST")
+      expect(c).to have_xpath_value("ChargeDate/TimeZone", "UTC")
       expect(c).to have_xpath_value("Value", "75.0")
       expect(c).to have_xpath_value("Currency", "CAD")
 
@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("ChargeField/Level", "Container")
       expect(l).to have_xpath_value("ChargeField/ChargeDate/Date", "2018-11-07")
       expect(l).to have_xpath_value("ChargeField/ChargeDate/Time", "12:00:00")
-      expect(l).to have_xpath_value("ChargeField/ChargeDate/TimeZone", "EST")
+      expect(l).to have_xpath_value("ChargeField/ChargeDate/TimeZone", "UTC")
       expect(l).to have_xpath_value("ChargeField/Value", "200.0")
       expect(l).to have_xpath_value("ChargeField/Currency", "CAD")
 
