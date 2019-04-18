@@ -161,13 +161,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
       # When we have an non-ocean entry, we use the House Bills as the container numbers.
       # PVH enters the House Bills in GTNexus like Containers, so they appear on our Shipment as containers
-      # so this works out real well, as all we have to do to accommodate 
-      if ocean_mode?(entry_snapshot)
+      # so this works out real well, as all we have to do to accommodate.
+      if ocean_mode?(entry_snapshot) || truck_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
       elsif air_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
-      elsif truck_mode?(entry_snapshot)
-        containers = Entry.split_newline_values(mf(entry_snapshot, :ent_mbols))
       end
       
       prorations = {}
@@ -284,7 +282,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     order_line = shipment_line&.order_line
     order_line_number = order_line&.line_number
 
-    container_number, bill_number = container_and_bill_number(shipment_line&.container, shipment_line)
+    container_number, bill_number = container_and_bill_number(entry_snapshot, shipment_line&.container, shipment_line)
 
     InvoiceLineKey.new(bill_number, container_number, order_number, part_number, order_line_number)
   end
@@ -299,19 +297,19 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
     raise "Failed to find matching PVH ASN Container for Container # '#{container_number}' on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if container.nil?
 
-    cont_number, bill_number = container_and_bill_number(container, nil)
+    cont_number, bill_number = container_and_bill_number(entry_snapshot, container, nil)
 
     line_item = generate_invoice_line_item(parent_element, "Container", line_counter, master_bill: bill_number, container_number: cont_number)
     generate_charge_field(line_item, "Container", code, invoice_date, amount, currency)
     return true
   end
 
-  def container_and_bill_number container, shipment_line
+  def container_and_bill_number entry_snapshot, container, shipment_line
     # For Ocean FCL modes we need to send the Master Bill as the BLNumber
     # For Ocean LCL / Air modes we need to send the House Bill as the BLNumber
     bill_of_lading = nil
     container_number = nil
-    if container&.shipment&.mode.to_s.strip =~ /Ocean/i
+    if ocean_mode?(entry_snapshot)
       lcl = container&.fcl_lcl.to_s.strip.upcase == "LCL"
       if lcl
         # LCL shipments (in general) will use the house bill...but if there's no house bill, use the master from the ASN
@@ -319,7 +317,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       end
       bill_of_lading = container&.shipment&.master_bill_of_lading if bill_of_lading.blank?
       container_number = container.container_number
-    else
+    elsif air_mode?(entry_snapshot)
       # Leave the container number blank for Air shipments
       if shipment_line.nil?
         bill_of_lading = container&.shipment&.house_bill_of_lading
@@ -328,6 +326,9 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         bill_of_lading = shipment_line&.shipment&.house_bill_of_lading
         container_number = bill_of_lading
       end
+    elsif truck_mode?(entry_snapshot)
+      bill_of_lading = container&.shipment&.master_bill_of_lading
+      container_number = container.container_number
     end
 
     [container_number, bill_of_lading]
