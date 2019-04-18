@@ -560,7 +560,17 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     # We need to fail if any container didn't have weight information associated with it.
     if container_weights.size == 0
-      raise "Failed to find any valid container weight data from a PVH ASN for Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
+      raise "Failed to find any valid container weight data from a PVH ASN for Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'."
+    elsif container_weights.size == 1
+      # If we only have a single container then there's no need to prorate anything based on weight. Based on test docs received, truck
+      # entries/asns may not actually have gross weights, but since they're only ever going to have a single trailer (container), then we can just charge
+      # the full amount.
+
+      # Just set the container weight and total container weight to the same positive value.  That way we can still utilize the proration math below and just
+      # let it calculate out the full amount to the single container and not have a separate code branch just for this case.
+      total_container_weight = BigDecimal("1")
+      container_weights[container_weights.keys.first] = total_container_weight
+      
     else
       container_weights.each_pair do |container_number, weight|
         if weight.nil? || weight.zero?

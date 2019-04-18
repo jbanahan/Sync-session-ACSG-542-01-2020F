@@ -144,6 +144,26 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(c).not_to exist_in_db
       expect(l).not_to exist_in_db
     end
+
+    it "clears shipment lines that were not originally in a container, but were moved to a container on a resend" do
+      l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+
+      subject.process_asn_update asn_xml, user, "bucket", "key"
+      expect(l).not_to exist_in_db
+    end
+
+    it "retains shipment lines that continue to not be in a container" do
+      xml_data.gsub!("<ContainerNumber>SGIND25321</ContainerNumber>", "")
+
+      l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+
+      subject.process_asn_update asn_xml, user, "bucket", "key"
+
+      existing_shipment.reload
+      expect(existing_shipment.containers.length).to eq 0
+      expect(existing_shipment.shipment_lines.length).to eq 2
+      expect(l).not_to exist_in_db
+    end
   end
 
   describe "set_additional_shipment_information" do

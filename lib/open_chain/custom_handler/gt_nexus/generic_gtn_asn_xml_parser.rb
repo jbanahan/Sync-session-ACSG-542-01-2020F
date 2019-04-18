@@ -265,7 +265,7 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnAsnXmlPa
   # Processes all the Container elements in the xml
   def process_containers shipment, xml, orders_cache
     REXML::XPath.each(xml, "Container") do |container_xml|
-      container = container = find_or_create_container(shipment, container_xml)
+      container = find_or_create_container(shipment, container_xml)
       set_container_information(shipment, container, container_xml) unless container.nil?
 
       # Nearest I can tell, GT Nexus does NOT have a unique identifier on the LineItem..

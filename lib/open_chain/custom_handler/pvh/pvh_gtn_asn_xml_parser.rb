@@ -92,6 +92,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     shipment.containers.each do |container|
       container.destroy unless container_numbers_from_xml.include?(container.container_number)
     end
+
+    # There are cases where the data might have originally been sent without a container (truck this is especially likely for)
+    # and then updated later to add the trailer number.  In this case, we need to make sure that 
+    # we remove any shipment lines that do not have a container number.
+    if container_numbers_from_xml.length > 0 && !container_numbers_from_xml.include?("") && !container_numbers_from_xml.include?(nil)
+      shipment.shipment_lines.each do |line|
+        line.destroy if line.container.nil?
+      end
+    end
   end
 
 end; end; end; end
