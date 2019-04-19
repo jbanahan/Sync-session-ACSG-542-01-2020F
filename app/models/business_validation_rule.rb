@@ -132,6 +132,7 @@ class BusinessValidationRule < ActiveRecord::Base
                  ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
                  'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
                  ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"},
+                 ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
                  ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"}
               }
 

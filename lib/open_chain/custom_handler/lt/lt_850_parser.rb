@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
     hts = find_value_by_qualifier refs, "REF01", "HTS"
     if hts != "9999.99.9999"
       line.line_number = value(po1_segment, 1)
-      line.hts = hts.gsub('.', '')
+      line.hts = hts&.gsub('.', '')
       line.price_per_unit = value(po1_segment, 4)
     else
       # HTS and price_per_unit is split among REF*HST segments. Resulting lines share all of the already-assigned data.
@@ -129,13 +129,13 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
   ##########
 
   def explode_line line, ref_segments, po1_segment
-    hsts = ref_segments.select{ |r| r.element(1).value == "HST" && r.element(2).value != "9999.99.9999" }
+    hsts = ref_segments.select{ |r| r.element(1)&.value == "HST" && r.element(2)&.value != "9999.99.9999" }
     raise EdiStructuralError, "Order # #{line.order.customer_order_number}, UPC # #{line.sku}: Expecting REF with HST qualifier but none found" if hsts.count.zero?
     split_lines = copy_lines line, (hsts.count - 1)
     hsts.each_with_index do |ref, i|
       ln = split_lines.shift
-      ln.hts = value(ref, 2).gsub('.', '')
-      ln.price_per_unit = BigDecimal ref.element(-1).sub_element(-1).value
+      ln.hts = value(ref, 2)&.gsub('.', '')
+      ln.price_per_unit = BigDecimal ref.element(-1).sub_element(-1)&.value
       ln.line_number = value(po1_segment, 1).to_i * 100 + (i + 1)
     end
     

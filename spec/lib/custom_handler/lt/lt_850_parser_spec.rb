@@ -146,6 +146,13 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
         expect(error.message).to eq "Order # 417208, UPC # 192399830914: Expecting REF with HST qualifier but none found"
       end
     end
+
+    it "assigns blank HTS if none given" do
+      data.gsub!("REF*HTS*6109.10.0014", "REF*HTS")
+      subject.parse data, bucket: "bucket", key: "lt.edi"
+      ol = Order.first.order_lines.first
+      expect(ol.hts).to be_blank
+    end
   end
 
   describe "update_standard_product" do
