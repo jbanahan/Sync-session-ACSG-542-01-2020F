@@ -21,30 +21,33 @@ class ValidationRuleEntryDutyTaxesMatchSummary < BusinessValidationRule
 
     entry.commercial_invoices.each do |invoice|
       invoice.commercial_invoice_lines.each do |line|
-        cotton_fee_sum += line.cotton_fee if line.cotton_fee
-        hmf_sum += line.hmf if line.hmf
-        mpf_sum += line.prorated_mpf if line.prorated_mpf
-        # Total Duty is never nil
-        duty_sum += line.total_duty
+        cotton_fee_sum += non_nil_value(line.cotton_fee)
+        hmf_sum += non_nil_value(line.hmf)
+        mpf_sum += non_nil_value(line.prorated_mpf)
+        duty_sum += non_nil_value(line.total_duty)
       end
     end
 
-    if duty_sum != entry.total_duty
+    if duty_sum != non_nil_value(entry.total_duty)
       errors << "Invoice Tariff duty amounts should equal the 7501 Total Duty amount #{number_to_currency(entry.total_duty)} but it was #{number_to_currency(duty_sum)}."
     end
 
-    if mpf_sum != entry.mpf
+    if mpf_sum != non_nil_value(entry.mpf)
       errors << "Invoice Line MPF amount should equal the 7501 MPF amount #{number_to_currency(entry.mpf)} but it was #{number_to_currency(mpf_sum)}."
     end
 
-    if hmf_sum != entry.hmf
+    if hmf_sum != non_nil_value(entry.hmf)
       errors << "Invoice Line HMF amount should equal the 7501 HMF amount #{number_to_currency(entry.hmf)} but it was #{number_to_currency(hmf_sum)}."
     end
 
-    if cotton_fee_sum != entry.cotton_fee
+    if cotton_fee_sum != non_nil_value(entry.cotton_fee)
       errors << "Invoice Line Cotton Fee amount should equal the 7501 Cotton Fee amount #{number_to_currency(entry.cotton_fee)} but it was #{number_to_currency(cotton_fee_sum)}."
     end
 
     errors
+  end
+
+  def non_nil_value value
+    value.nil? ? BigDecimal("0") : value
   end
 end

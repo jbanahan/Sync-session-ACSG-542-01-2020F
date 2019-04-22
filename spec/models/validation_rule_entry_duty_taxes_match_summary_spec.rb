@@ -63,5 +63,14 @@ describe ValidationRuleEntryDutyTaxesMatchSummary do
       expect(errors).to include "Invoice Line HMF amount should equal the 7501 HMF amount $10.49 but it was $10.50."
       expect(errors).to include "Invoice Line Cotton Fee amount should equal the 7501 Cotton Fee amount $0.99 but it was $1.00."
     end
+
+    it "doesn't error if all values are nil" do
+      entry = Factory(:entry)
+      entry.commercial_invoices.create! invoice_number: "INVOICE"
+      line = commercial_invoice.commercial_invoice_lines.create!
+      tariff = line.commercial_invoice_tariffs.create! 
+
+      expect(subject.run_validation entry).to be_blank
+    end
   end
 end

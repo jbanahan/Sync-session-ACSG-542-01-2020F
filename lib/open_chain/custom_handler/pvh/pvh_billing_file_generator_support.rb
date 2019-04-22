@@ -644,7 +644,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     invoice_amount_to_find = mf(invoice_snapshot, :bi_invoice_total) * -1
     charge_codes = json_child_entities(invoice_snapshot, "BrokerInvoiceLine").map { |line| mf(line, :bi_line_charge_code) }.sort
     original_invoice = nil
-    json_child_entities(entry_snapshot, "BrokerInvoice") do |other_invoice|
+    sort_broker_invoice_snapshots(json_child_entities(entry_snapshot, "BrokerInvoice")).each do |other_invoice|
       # The invoices are iterated over in chronological order, so if we hit the snapshot we started with, it means
       # that there is no matching invoice issued prior to the one we're working with that has the orignal billing
       # amount we're looking for and the same charge codes.
@@ -695,6 +695,23 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     end
 
     return [original_invoice, invoice_lines]
+  end
+
+  def sort_broker_invoice_snapshots snapshots
+    snapshots.sort do |s1, s2|
+      val = mf(s1, :bi_invoice_date) <=> mf(s2, :bi_invoice_date)
+      if val == 0
+        if mf(s1, :bi_source_system).to_s.strip.upcase == "FENIX"
+          # Fenix suffixes are all numeric, so make sure to sort them as such
+          val = mf(s1, :bi_suffix).to_i <=> mf(s2, :bi_suffix).to_i
+        else
+          # US suffixes are alphabetic (A, B, C, etc..)
+          val = mf(s1, :bi_suffix).to_s <=> mf(s2, :bi_suffix).to_s
+        end
+        
+      end
+      val
+    end
   end
 
   def generate_delete_invoice broker_invoice, invoice_type
