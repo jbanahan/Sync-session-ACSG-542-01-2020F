@@ -1,0 +1,30 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if(!$("select[name='customer_number']").val()) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must complete every field.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>US Billing Summary</h2>
+<%=form_tag reports_run_us_billing_summary_path, id:'frm_run', style: "padding-top: 20px;" do -%>
+  Invoice Date between <%=text_field_tag :start_date, nil, :class=>'isdate'%> and <%=text_field_tag :end_date, nil, :class=>'isdate'%>.<br><br>
+  Invoice Customer: <%= select_tag :customer_number, options_from_collection_for_select(@us_importers, :alliance_customer_number, :name_with_customer_number), include_blank: true %>
+<%end%>
+

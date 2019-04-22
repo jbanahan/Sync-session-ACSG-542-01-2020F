@@ -974,7 +974,7 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
-
+  
   def run_puma_division_quarter_breakdown
     klass = OpenChain::Report::PumaDivisionQuarterBreakdown
     if klass.permission? current_user
@@ -983,6 +983,31 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
+  
+  def show_us_billing_summary
+    if OpenChain::Report::UsBillingSummary.permission? current_user
+      @us_importers = Company.where("alliance_customer_number <> '' AND alliance_customer_number IS NOT NULL")
+                             .order(:name)
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end                             
+
+  def run_us_billing_summary
+    klass = OpenChain::Report::UsBillingSummary
+    if klass.permission? current_user
+      start_date = params[:start_date]
+      end_date = params[:end_date]
+      if Date.parse(start_date) > Date.parse(end_date)
+        error_redirect "The start date must precede the end date."
+        return
+      end
+      friendly_settings = ["Customer Number: #{params[:customer_number]}", "Start Date: #{params[:start_date]}", "End Date: #{params[:end_date]}"]
+      run_report "US Billing Summary", klass, {start_date: start_date, end_date: end_date, customer_number: params[:customer_number]}, friendly_settings
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end      
 
   private
     def run_report name, klass, settings, friendly_settings

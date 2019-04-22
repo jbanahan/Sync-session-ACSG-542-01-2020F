@@ -1031,4 +1031,57 @@ describe ReportsController do
     end
   end
 
+  describe "US Billing Report" do
+    let(:report_class) { OpenChain::Report::UsBillingSummary }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized user" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_us_billing_summary
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized user" do
+        co_1 = Factory(:company, alliance_customer_number: "ACME US")
+        co_2 = Factory(:company, fenix_customer_number: "ACME CA")
+        
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_us_billing_summary
+        expect(assigns(:us_importers)).to eq [co_1]
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized user" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_us_billing_summary, {}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "You do not have permission to view this report"
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for authorized user" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("US Billing Summary", user, OpenChain::Report::UsBillingSummary,
+                                         :settings=>{start_date:'2019-03-03', end_date:'2019-03-10', customer_number: 'ACME'}, 
+                                         :friendly_settings=>["Customer Number: ACME", "Start Date: 2019-03-03", "End Date: 2019-03-10"])
+        post :run_us_billing_summary, {start_date:'2019-03-03', end_date: '2019-03-10', customer_number: 'ACME'}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+
+      it "errors if dates cross" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to_not receive(:run_report!)
+        post :run_us_billing_summary, {start_date:'2019-03-10', end_date: '2019-03-03', customer_number: 'ACME'}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq "The start date must precede the end date."
+      end
+    end
+  end
+
 end

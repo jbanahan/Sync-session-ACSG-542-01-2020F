@@ -792,6 +792,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_company_year_over_year_report" => "reports#run_company_year_over_year_report"
   get "/reports/show_customer_year_over_year_report" => "reports#show_customer_year_over_year_report"
   post "/reports/run_customer_year_over_year_report" => "reports#run_customer_year_over_year_report"
+  get "/reports/show_us_billing_summary" => "reports#show_us_billing_summary"
+  post "/reports/run_us_billing_summary" => "reports#run_us_billing_summary"
   get "/reports/show_puma_division_quarter_breakdown" => "reports#show_puma_division_quarter_breakdown"
   post "/reports/run_puma_division_quarter_breakdown" => "reports#run_puma_division_quarter_breakdown"
 
