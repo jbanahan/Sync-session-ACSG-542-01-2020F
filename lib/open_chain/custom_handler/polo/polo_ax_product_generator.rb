@@ -252,8 +252,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
 FROM products
 INNER JOIN classifications c on c.product_id = products.id 
 INNER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
-RIGHT OUTER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
-RIGHT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status].id}
+INNER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
+INNER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status_manual].id}
 INNER JOIN custom_values fabric_1 on fabric_1.customizable_id = products.id AND fabric_1.customizable_type = 'Product' AND fabric_1.custom_definition_id = #{cdefs[:fabric_1].id} AND fabric_1.string_value <> ''
 INNER JOIN custom_values fabric_type_1 on fabric_type_1.customizable_id = products.id AND fabric_type_1.customizable_type = 'Product' AND fabric_type_1.custom_definition_id = #{cdefs[:fabric_type_1].id} AND fabric_type_1.string_value <> ''
 INNER JOIN custom_values fabric_percent_1 on fabric_percent_1.customizable_id = products.id AND fabric_percent_1.customizable_type = 'Product' AND fabric_percent_1.custom_definition_id = #{cdefs[:fabric_percent_1].id} AND fabric_percent_1.decimal_value > 0
