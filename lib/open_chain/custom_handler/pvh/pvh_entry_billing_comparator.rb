@@ -16,6 +16,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
     if MasterSetup.get.custom_feature?("PVH Billing Testing") && has_test_indicator?(snapshot&.recordable)
       return false unless ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(customer_number)
     else
+      file_logged_date = snapshot&.recordable&.file_logged_date
+      # Go-Live on this project is 4-24-2019.  We will not send billing data for anything prior to this date (except test files)
+      return false if file_logged_date.nil? || file_logged_date < Date.new(2019, 4, 24)
+
       # Once both US and CA have gone live, the custom feature checks can be unified back into a single custom feature
       if "PVHCANADA" == customer_number
         return false unless MasterSetup.get.custom_feature?("PVH Canada GTN Billing")

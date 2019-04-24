@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
 
     context "without billing testing enabled" do
       let (:entry) { 
-        e = Entry.new file_logged_date: Date.new(2019, 1, 1), customer_number: "PVH" 
+        e = Entry.new file_logged_date: Date.new(2019, 4, 24), customer_number: "PVH" 
         e.broker_invoices << BrokerInvoice.new(invoice_number: "INV")
         e
       }
@@ -83,6 +83,12 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
       it "does not accept snapshots without broker invoices" do
         expect(master_setup).to receive(:custom_feature?).with("PVH US GTN Billing").and_return true
         entry.broker_invoices.clear
+        expect(subject.accept? snapshot).to eq false
+      end
+
+      it "does not accept entries opened prior to 2019-04-24" do
+        entry.update_attributes! file_logged_date: Date.new(2019, 4, 23)
+        expect(master_setup).not_to receive(:custom_feature?).with("PVH US GTN Billing")
         expect(subject.accept? snapshot).to eq false
       end
     end
