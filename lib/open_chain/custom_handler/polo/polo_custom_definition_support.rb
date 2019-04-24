@@ -275,6 +275,7 @@ module OpenChain
           :product_class_description => {label: "Product Class Description", data_type: :string, module_type: "Product", cdef_uid: "prod_product_class_description"},
           :material_status => {label: "Material Status", data_type: :string, module_type: "Product", read_only: true, cdef_uid: "prod_material_status"},
           :ax_export_status => {label: "AX Export Status", data_type: :string, module_type: "Product", read_only: true, cdef_uid: "prod_ax_export_status"},
+          :ax_export_status_manual => {label: "AX Export Status-Manual", data_type: :string, module_type: "Product", cdef_uid: "prod_ax_export_status_manual"},
           :product_category => {label: "Product Category", data_type: :string, module_type: "Product", cdef_uid: "prod_product_category"},
           :rl_short_description => {label: "RL Short Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_short_description"},
           :rl_long_description => {label: "RL Long Description", data_type: :text, module_type: "Product", cdef_uid: "prod_rl_long_description"},
