@@ -223,9 +223,9 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnInvoiceX
       invoice.terms_of_sale = terms.text "incotermCode"
       invoice.currency = terms.text "currencyCode"
       invoice.ship_mode = translate_ship_mode(terms.text "shipmentMethodCode")
-      invoice.net_weight = BigDecimal(terms.text "packageDimensionSummary/totalNetWeight")
+      invoice.net_weight = BigDecimal(terms.text("packageDimensionSummary/totalNetWeight").to_s)
       invoice.net_weight_uom = terms.text "packageDimensionSummary/weightUnitCode"
-      invoice.gross_weight = BigDecimal(terms.text "packageDimensionSummary/totalGrossWeight")
+      invoice.gross_weight = BigDecimal(terms.text("packageDimensionSummary/totalGrossWeight").to_s)
       invoice.gross_weight_uom = terms.text "packageDimensionSummary/weightUnitCode"
       invoice.volume = terms.text "packageDimensionSummary/totalGrossVolume"
       invoice.volume_uom = terms.text "packageDimensionSummary/volumeUnitCode"
