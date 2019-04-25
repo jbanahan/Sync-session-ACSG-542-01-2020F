@@ -55,7 +55,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     mode_of_transport_codes = get_transport_mode_codes settings['mode_of_transport']
 
     importer_ids = settings['importer_ids']
-    range_field = settings['range_field']
+    range_field = get_range_field settings
     workbook = nil
     distribute_reads do
       workbook = generate_report importer_ids, year_1, year_2, range_field, settings['include_cotton_fee'], settings['include_taxes'], settings['include_other_fees'], settings['include_isf_fees'], mode_of_transport_codes, settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs']
@@ -100,6 +100,15 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       mode_of_transport_codes = []
       modes_param.try(:each) {|mode| Entry.get_transport_mode_codes_us_ca(mode).each {|i| mode_of_transport_codes << i }}
       mode_of_transport_codes
+    end
+
+    # Pulls the range field from the settings, allowing only certain values so as to bypass potential SQL injection
+    # issues.  Because of the way these queries are written (this is a dynamic field in the query, not a value for
+    # a field), simply sanitizing the settings value is inadequate.
+    def get_range_field settings
+      range_field = settings['range_field']
+      # Defaults to arrival date if bad.  This is the default value on screen.
+      ['arrival_date','eta_date','file_logged_date','fiscal_date','release_date'].include?(range_field) ? range_field : "arrival_date"
     end
 
     def generate_report importer_ids, year_1, year_2, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs
@@ -454,9 +463,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       FROM 
         entries 
       WHERE 
-        importer_id IN (#{importer_ids.join(',')}) AND 
-        #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + mode_of_transport_codes.join(',') + ") AND " : ""}
-        #{entry_types && entry_types.length > 0 ? "entry_type IN ('" + entry_types.join("','") + "') AND " : ""}
+        importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND 
+        #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + sanitize_string_in_list(mode_of_transport_codes) + ") AND " : ""}
+        #{entry_types && entry_types.length > 0 ? "entry_type IN (" + sanitize_string_in_list(entry_types) + ") AND " : ""}
         (
           (
             #{range_field} >= '#{format_jan_1_date(year_1, range_field)}' AND 
@@ -712,9 +721,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
                  (entries.entry_port_code = entry_port.cbsa_port AND entries.import_country_id = #{Country.where(iso_code:'CA').first.try(:id).to_i})
                 )
             WHERE 
-              importer_id IN (#{importer_ids.join(',')}) AND 
-              #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + mode_of_transport_codes.join(',') + ") AND " : ""}
-              #{entry_types && entry_types.length > 0 ? "entry_type IN ('" + entry_types.join("','") + "') AND " : ""}
+              importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND 
+              #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + sanitize_string_in_list(mode_of_transport_codes) + ") AND " : ""}
+              #{entry_types && entry_types.length > 0 ? "entry_type IN (" + sanitize_string_in_list(entry_types) + ") AND " : ""}
               #{range_field} >= '#{format_first_day_of_month(range_field, -1)}' AND 
               #{range_field} < '#{format_first_day_of_current_month(range_field)}'
           ) AS tbl 

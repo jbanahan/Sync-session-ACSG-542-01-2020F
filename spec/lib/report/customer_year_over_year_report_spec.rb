@@ -710,6 +710,29 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(sheet[31]).to eq ['Number of Entries', -1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, -1]
     end
 
+    it "sanitizes dirty input" do
+      ent_2017_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2017,1,16)
+      ent_2017_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2017,1,17)
+
+      Timecop.freeze(make_eastern_date(2018,5,28)) do
+        @temp = described_class.run_report(u, {'year_1' => '2017', 'year_2' => '2018', 'range_field' => "eta_date';drop table entries", 'importer_ids' => [importer.id, "555;drop table entries"], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'entry_types' => ['01','02;drop table entries'], 'mode_of_transport' => ['Air',"Sea';drop table entries"]})
+      end
+      expect(@temp.original_filename).to eq 'Entry_YoY_MULTI_arrival_date_[2017_2018].xlsx'
+
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 2
+
+      # Nothing should match.  This test is mostly just to verify that the inject-y SQL isn't blowing up the report.
+      sheet = reader["MULTI COMPANY - REPORT"]
+      expect(sheet.length).to eq 39
+      expect(sheet[4]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      expect(sheet[16]).to eq [2018,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[17]).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
+      expect(sheet[28]).to eq ['Variance 2017 / 2018','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[29]).to eq ['Number of Entries', 0, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil, nil, 0]
+    end
+
     it "handles UTC time value that falls into another month when converted to eastern, release" do
       # This should be interpreted as January, not February.
       ent_2017 = make_entry 1, '01', :release_date, ActiveSupport::TimeZone["UTC"].parse("2017-02-01 02:00")
