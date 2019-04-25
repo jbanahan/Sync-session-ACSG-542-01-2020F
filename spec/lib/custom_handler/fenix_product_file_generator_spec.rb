@@ -112,7 +112,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
   describe "make_file" do
     before :each do
-      @p = Factory(:product,:unique_identifier=>'myuid')
+      @p = Factory(:product, unique_identifier: 'myuid', name: "Name Description")
       @c = @p.classifications.create!(:country_id=>@canada.id)
       @tariff = @c.tariff_records.create!(:hts_1=>'1234567890')
     end
@@ -325,6 +325,13 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[386, 3]).to eq "   "
       expect(read[389, 2]).to eq "  "
       expect(read).to end_with "\r\n"
+    end
+
+    it "uses name as description if enabled" do
+      @h = generator(@code, {"use_name_for_description" => true})
+      @h.make_file([@p]) {|f| @t = f }
+      read = IO.read(@t.path)
+      expect(read[135, 50]).to eq "Name Description".ljust(50)
     end
 
     context "stale_classification" do

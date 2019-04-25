@@ -19,6 +19,7 @@ module OpenChain
         @output_subdirectory = (options['output_subdirectory'].presence || '')
         @strip_leading_zeros = (options['strip_leading_zeros'].to_s == "true")
         @max_products = options['max_products'].to_i > 0 ? options['max_products'].to_i : 10_000
+        @use_name_for_description = (options['use_name_for_description'].to_s == "true")
 
         if MasterSetup.get.custom_feature? "Full Fenix Product File"
           custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
@@ -177,7 +178,7 @@ module OpenChain
           line << str("", 4) # Tariff Code (91 - 95)
           line << str("", 20) # Keyword (95 - 115)
           line << str("", 20) # Blank Sapce (115 - 135)
-          line << str((@suppress_description ? "" : custom_value(c, :class_customs_description).to_s), 50) # Description 1 (135 - 185)
+          line << str(description(p, c), 50) # Description 1 (135 - 185)
           line << str("", 50) # Description 2 (185 - 235)
           line << str("", 16) # OIC Code (235 - 251)
           line << str("", 41) # Blank Space (251 - 292)
@@ -222,6 +223,16 @@ module OpenChain
           # This is primarily here just because we don't allow all the fields for all systems.
           custom_definition = @cdefs[field]
           custom_definition ? obj.custom_value(custom_definition) : nil
+        end
+
+        def description product, classification
+          return "" if @suppress_description
+
+          if @use_name_for_description
+            product.name.to_s
+          else
+            custom_value(classification, :class_customs_description).to_s
+          end
         end
 
     end
