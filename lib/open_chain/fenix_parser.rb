@@ -40,6 +40,7 @@ module OpenChain; class FenixParser
     'KPIVAL' => :value_currency_request_date=,
     'KPIPART' => :part_number_request_date=,
     'KPIIOR' => :importer_request_date=,
+    'KPIETA' => :arrival_date=,
     "MANINFREC" => :manifest_info_received_date=,
     "SPLITSHPT" => :split_shipment_date=,
     "ACSDECACCP" => :across_declaration_accepted=

@@ -99,6 +99,7 @@ describe OpenChain::FenixParser do
       'KPIVAL' => [Time.new(2017,7,11,12,2), Time.new(2017,7,11,7,57)],
       'KPIPART' => [Time.new(2017,7,12,12,2), Time.new(2017,7,12,7,57)],
       'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)],
+      'KPIETA' => [Time.new(2017,7,16,12,2), Time.new(2017,7,16,7,57)],
       "MANINFREC" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)],
       "SPLITSHPT" => [Time.new(2017,7,15,12,2), Time.new(2017,7,15,7,57)],
       "ACSDECACCP" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)]
@@ -701,6 +702,7 @@ describe OpenChain::FenixParser do
     expect(e.split_shipment_date).to eq tz.parse(@new_activities['SPLITSHPT'][1].to_s).in_time_zone(Time.zone)
     expect(e.split_shipment).to eq true
     expect(e.across_declaration_accepted).to eq tz.parse(@new_activities['ACSDECACCP'][1].to_s).in_time_zone(Time.zone)
+    expect(e.arrival_date).to eq tz.parse(@new_activities['KPIETA'][1].to_s).in_time_zone(Time.zone)
   end
 
   it 'requests LVS child data if entry type is F' do
