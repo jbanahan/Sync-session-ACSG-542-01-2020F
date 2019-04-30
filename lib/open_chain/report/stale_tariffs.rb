@@ -18,14 +18,14 @@ module OpenChain; module Report; class StaleTariffs
   def run run_by, settings={}
     countries, importer_ids = extract_settings settings
     wb = create_workbook countries, importer_ids
-    workbook_to_tempfile wb, "stale_tariffs"
+    xlsx_workbook_to_tempfile wb, "stale_tariffs"
   end
 
   def send_email settings
     countries, importer_ids, email = extract_settings settings
     wb = create_workbook countries, importer_ids
     name = "Stale Tariffs Report #{ ActiveSupport::TimeZone["Eastern Time (US & Canada)"].today.strftime("%Y-%m") }"
-    workbook_to_tempfile wb, '', file_name: "#{name}.xls" do |t|
+    xlsx_workbook_to_tempfile wb, '', file_name: "#{name}.xlsx" do |t|
       subject = name
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
       OpenMailer.send_simple_html(email, subject, body, t).deliver!
@@ -47,26 +47,26 @@ module OpenChain; module Report; class StaleTariffs
   end
 
   def create_workbook countries=nil, importer_ids=nil
-    wb = XlsMaker.new_workbook
+    wb = XlsxBuilder.new
     
     {"hts_1" => "HTS #1", "hts_2" => "HTS #2", "hts_3" => "HTS #3"}.each_pair do |field, name|
-      sheet = wb.create_worksheet :name=>"Stale Tariffs #{name}"
-      heading_row = sheet.row(0)
-      heading_row.push ModelField.find_by_uid(:cmp_name).label
-      heading_row.push ModelField.find_by_uid(:prod_uid).label
-      heading_row.push ModelField.find_by_uid(:class_cntry_name).label
-      heading_row.push name
-      row_cursor = 1
+      sheet = wb.create_sheet("Stale Tariffs #{name}")
+      wb.add_header_row sheet, [ModelField.find_by_uid(:cmp_name).label,
+                                 ModelField.find_by_uid(:prod_uid).label,
+                                 ModelField.find_by_uid(:class_cntry_name).label,
+                                 name]
 
+      row_cursor = 1
       result = get_query_result(field, countries, importer_ids)
       result.each do |result_row|
-        sheet_row = sheet.row(row_cursor)
-        (0..3).each {|i| sheet_row.push result_row[i]}
+        row_content = []
+        (0..3).each {|i| row_content.push result_row[i] }
+        wb.add_body_row sheet, row_content
         row_cursor += 1
       end
 
       if row_cursor ==1 #we haven't written any records
-        sheet.row(row_cursor)[0] = "Congratulations! You don't have any stale tariffs."
+        wb.add_body_row sheet, ["Congratulations! You don't have any stale tariffs."]
       end
     end
     wb

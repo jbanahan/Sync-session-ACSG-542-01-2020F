@@ -51,43 +51,45 @@ describe OpenChain::Report::StaleTariffs do
 
     it 'should show missing tariffs in hts_1' do
       @stale_tariff_record.update_attributes(:hts_1=>'999999')
-      wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
-      sheet = wb.worksheet 0
-      expect(sheet.name).to eq "Stale Tariffs HTS #1"
-      expect(sheet.last_row_index).to eq(1) #2 total rows
-      expect(sheet.row(1)[0]).to eq(importer.name)
-      expect(sheet.row(1)[1]).to eq(@stale_classification.product.unique_identifier)
-      expect(sheet.row(1)[2]).to eq(@stale_classification.country.name)
-      expect(sheet.row(1)[3]).to eq('999999')
+      reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+      expect(reader.keys[0]).to eq "Stale Tariffs HTS #1"
+      sheet = reader[reader.keys[0]]
+      expect(sheet.length).to eql(2)
+      expect(sheet[1]).to eq([importer.name,
+                           @stale_classification.product.unique_identifier,
+                           @stale_classification.country.name,
+                           '999999'])
     end
+
     it 'should show missing tariffs in hts_2' do
       @stale_tariff_record.update_attributes(:hts_2=>'9999992')
-      wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
-      sheet = wb.worksheet 1
-      expect(sheet.name).to eq "Stale Tariffs HTS #2"
-      expect(sheet.last_row_index).to eq(1) #2 total rows
-      expect(sheet.row(1)[0]).to eq(importer.name)
-      expect(sheet.row(1)[1]).to eq(@stale_classification.product.unique_identifier)
-      expect(sheet.row(1)[2]).to eq(@stale_classification.country.name)
-      expect(sheet.row(1)[3]).to eq('9999992')
+      reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+      expect(reader.keys[1]).to eq "Stale Tariffs HTS #2"
+      sheet = reader[reader.keys[1]]
+      expect(sheet.length).to eql(2)
+      expect(sheet[1]).to eq([importer.name,
+                              @stale_classification.product.unique_identifier,
+                              @stale_classification.country.name,
+                              '9999992'])
     end
+
     it 'should show missing tariffs in hts_3' do
       @stale_tariff_record.update_attributes(:hts_3=>'9999993')
-      wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
-      sheet = wb.worksheet 2
-      expect(sheet.name).to eq "Stale Tariffs HTS #3"
-      expect(sheet.last_row_index).to eq(1) #2 total rows
-      expect(sheet.row(1)[0]).to eq(importer.name)
-      expect(sheet.row(1)[1]).to eq(@stale_classification.product.unique_identifier)
-      expect(sheet.row(1)[2]).to eq(@stale_classification.country.name)
-      expect(sheet.row(1)[3]).to eq('9999993')
+      reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+      expect(reader.keys[2]).to eq "Stale Tariffs HTS #3"
+      sheet = reader[reader.keys[2]]
+      expect(sheet.length).to eq(2) #2 total rows
+      expect(sheet[1]).to eq([importer.name,
+                              @stale_classification.product.unique_identifier,
+                              @stale_classification.country.name,
+                              '9999993'])
     end
     it 'should use overriden field names for column headings' do
       FieldLabel.set_label :prod_uid, 'abc'
       @stale_tariff_record.update_attributes(:hts_1=>'9999991')
-      wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
-      sheet = wb.worksheet 0
-      sheet.row(0)[0] == 'abc'
+      reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+      sheet = reader[reader.keys[0]]
+      expect(sheet[0][1]).to eql('abc')
     end
     
     context "with customer_numbers" do
@@ -96,16 +98,16 @@ describe OpenChain::Report::StaleTariffs do
       end
 
       it "includes tariffs associated with company's products" do
-        wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers"=>["ACME"])
-        sheet = wb.worksheet 0
-        expect(sheet.row(1)[3]).to eq('999999')
+        reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+        sheet = reader[reader.keys[0]]
+        expect(sheet[1][3]).to eq('999999')
       end
 
       it "excludes others" do
         Factory(:company, system_code: "KONVENIENTZ")
-        wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers"=>["KONVENIENTZ"])
-        sheet = wb.worksheet 0
-        expect(sheet.row(1)[0]).to eq("Congratulations! You don't have any stale tariffs.")
+        reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report(@u, "customer_numbers" => ["KONVENIENTZ"])).raw_workbook_data
+        sheet = reader[reader.keys[0]]
+        expect(sheet[1][0]).to eq("Congratulations! You don't have any stale tariffs.")
       end
     end
 
@@ -113,9 +115,9 @@ describe OpenChain::Report::StaleTariffs do
 
   context 'run_report without stale tariffs' do
     it 'should write message in spreadsheet' do
-      wb = Spreadsheet.open OpenChain::Report::StaleTariffs.run_report @u
-      sheet = wb.worksheet 0
-      expect(sheet.row(1)[0]).to eq("Congratulations! You don't have any stale tariffs.")
+      reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
+      sheet = reader[reader.keys[0]]
+      expect(sheet[1][0]).to eq("Congratulations! You don't have any stale tariffs.")
     end
   end
 
@@ -129,7 +131,7 @@ describe OpenChain::Report::StaleTariffs do
       expect(mail.subject).to eq "Stale Tariffs Report 2018-01"
       expect(mail.body.raw_source).to match(/Report attached./)
       expect(mail.attachments.count).to eq 1
-      expect(mail.attachments["Stale Tariffs Report 2018-01.xls"]).to_not be_nil
+      expect(mail.attachments["Stale Tariffs Report 2018-01.xlsx"]).to_not be_nil
     end
   end
 
