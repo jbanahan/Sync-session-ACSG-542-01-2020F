@@ -250,7 +250,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe '#set_forecasted_handover_date' do
     # PER SOW 1100 (2016-11-04), Forecasted Handover Date is being relabelled as Forecasted Ship Window End, but we're leaving the variables in the code alone
-    # all tests also confirm that forecasted ship window start is set to 7 days prior to forecasted handover date
+    # all tests also confirm that forecasted ship window start is set to forecasted handover date
     let (:cdefs) { described_class.prep_custom_definitions([:ord_forecasted_handover_date,:ord_planned_handover_date,:ord_forecasted_ship_window_start]) }
     let (:order) { Factory(:order,ship_window_end:Date.new(2016,5,10)) }
      
@@ -258,12 +258,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
       order.update_custom_value!(cdefs[:ord_planned_handover_date],Date.new(2016,5,15))
       expect(subject.set_forecasted_handover_date(order)).to eq true
       expect(order.custom_value(cdefs[:ord_forecasted_handover_date])).to eq Date.new(2016,5,15)
-      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,8)
+      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,15)
     end
     it "should set forecasted handover date to ship_window_end if planned_handover_date is blank" do
       expect(subject.set_forecasted_handover_date(order)).to eq true
       expect(order.custom_value(cdefs[:ord_forecasted_handover_date])).to eq Date.new(2016,5,10)
-      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,3)
+      expect(order.custom_value(cdefs[:ord_forecasted_ship_window_start])).to eq Date.new(2016,5,10)
     end
     it "should return false if did not change" do
       order.update_custom_value!(cdefs[:ord_forecasted_handover_date],Date.new(2016,5,10))

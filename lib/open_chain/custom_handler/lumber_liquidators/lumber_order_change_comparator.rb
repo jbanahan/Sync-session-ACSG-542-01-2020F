@@ -149,12 +149,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     planned_handover_date = ord.custom_value(cdefs[:ord_planned_handover_date])
     if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
-      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date-7.days)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date)
       return true
     end
     if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
       ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
-      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end-7.days)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end)
       return true
     end
     return false
