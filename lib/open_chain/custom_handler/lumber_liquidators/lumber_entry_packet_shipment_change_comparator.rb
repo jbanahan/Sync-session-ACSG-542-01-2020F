@@ -23,13 +23,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
           # the screen to force a send) or one of the attachments was updated more recently than the sync record's
           # sent at date, generate an entry packet.
           if sr.sent_at.nil? || ods_attachment.attached_updated_at > sr.sent_at || vds_attachment.attached_updated_at > sr.sent_at
-            make_entry_packet(ods_attachment, vds_attachment) do |entry_packet_pdf|
+            make_entry_packet(ods_attachment, vds_attachment, shipment) do |entry_packet_pdf|
               attach_entry_packet_to_entry shipment, entry_packet_pdf, sr.persisted?
             end
 
             # The sync record is updated even if the entry packet couldn't be attached to an entry and had to be
-            # emailed to ops instead.  The sync record's meaning is more that the comparator "did something" rather
-            # than that everything walked the happy path.
+            # emailed to ops instead, or if problems were encountered while stitching the packet together.
+            # The sync record's meaning is more that the comparator "did something" rather than that everything
+            # walked the happy path.  Not updating it could mean that problem files keep generating the same errors
+            # over and over.
             sr.sent_at = Time.zone.now
             sr.confirmed_at = (sr.sent_at + 1.minute)
             sr.save!
@@ -61,17 +63,26 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
 
     # Combines ODS (Forwarder Ocean Document Set) and VDS (Vendor Document Set) content to one PDF, called an entry
     # packet.  ODS file content is supposed to come before the VDS within the packet.
-    def make_entry_packet ods_pdf_attachment, vds_pdf_attachment
+    def make_entry_packet ods_pdf_attachment, vds_pdf_attachment, shp
       entry_packet_pdf = CombinePDF.new
 
-      add_attachment_pdf_to_entry_packet ods_pdf_attachment, entry_packet_pdf
-      add_attachment_pdf_to_entry_packet vds_pdf_attachment, entry_packet_pdf
+      begin
+        add_attachment_pdf_to_entry_packet ods_pdf_attachment, entry_packet_pdf
+        add_attachment_pdf_to_entry_packet vds_pdf_attachment, entry_packet_pdf
+      # TODO when we eventually upgrade the CombinePDF gem version, this rescue can look for CombinePDF::ParsingError (it's just a RuntimeError in the old version of gem currently in use)
+      rescue
+        generate_malformed_pdf_email shp
+        # Nil out the PDF object so we don't try to add an empty packet to the entry.
+        entry_packet_pdf = nil
+      end
 
-      # Write the PDF to a temp file and work with that inside a block (so temp is automatically cleaned up).
-      Tempfile.open('EntryPacket - LUMBER.pdf') do |tmp|
-        tmp.binmode
-        entry_packet_pdf.save(tmp.path)
-        yield tmp
+      if entry_packet_pdf
+        # Write the PDF to a temp file and work with that inside a block (so temp is automatically cleaned up).
+        Tempfile.open('EntryPacket - LUMBER.pdf') do |tmp|
+          tmp.binmode
+          entry_packet_pdf.save(tmp.path)
+          yield tmp
+        end
       end
     end
 
@@ -122,6 +133,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
     def generate_missing_entry_email shp, entry_packet_pdf
       body_text = "No entry could be found for master bill '#{shp.master_bill_of_lading}' / shipment reference '#{shp.reference}'.  Once the entry has been opened, the attached Entry Packet document must be attached to it."
       OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Entry: #{shp.master_bill_of_lading} / #{shp.reference}", body_text, [entry_packet_pdf]).deliver!
+    end
+
+    def generate_malformed_pdf_email shp
+      body_text = "Please fix and re-upload the PDF(s) associated with the following Lumber Liquidators shipment:<br><ul><li>VFI Shipment Number: #{shp.reference}</li><li>Shipment Plan: #{shp.importer_reference}</li></ul><br><a href='#{shp.view_url}' target='_blank'>Go to Shipment</a>"
+      pdf_group = MailingList.where(system_code:"allport_pdf_errors").first
+      OpenMailer.send_simple_html(pdf_group, "Bad Lumber Liquidators PDFs - Action Required", body_text.html_safe).deliver!
     end
 
 end; end; end; end

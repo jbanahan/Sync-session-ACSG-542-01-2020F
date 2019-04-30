@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
   }
 
   describe "compare", :snapshot do
-    let (:shipment) { Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555') }
+    let (:shipment) { Factory(:shipment, master_bill_of_lading:'OOLU2100046990', reference: '555', importer_reference:'IMP-555') }
 
     it "generates an entry packet when both components are present and there is no sync record" do
       entry = Factory(:entry, broker_reference:'19283746', master_bills_of_lading:'ABCD1426882,OOLU2100046990', customer_references:'333,555,666', source_system:Entry::KEWILL_SOURCE_SYSTEM)
@@ -277,7 +277,34 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentC
       expect(mail.body).to include ERB::Util.html_escape("Shipment with master bill 'OOLU2100046990' / shipment reference '555' has an invalid ODS-Forwarder Ocean Document Set attachment named file_ods.pdf.  These attachment types must be PDF files.  Please remove the existing ODS-Forwarder Ocean Document Set file and replace it with a PDF.")
     end
 
-  end
+    it "sends an error email if an error is encountered while stitching documents" do
+      expect(subject).to receive(:add_attachment_pdf_to_entry_packet).and_raise(RuntimeError.new("Your stitching failed"))
+      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "some_website"
 
+      Factory(:mailing_list, system_code:"allport_pdf_errors", email_addresses:"abc@def.com,def@jam.com")
+
+      shipment.attachments.create! ods_attachment
+      shipment.attachments.create! vds_attachment
+      snapshot = shipment.create_snapshot Factory(:user)
+
+      # Entry packet attachment should not happen.
+      expect(subject).not_to receive(:attach_entry_packet_to_entry)
+
+      subject.compare shipment.id, snapshot.bucket, snapshot.doc_path, snapshot.version
+
+      shipment.reload
+
+      # Sync record should be set even though we didn't add the entry packet to the entry.
+      expect(shipment.sync_records.length).to eq 1
+      sr = shipment.sync_records.first
+      expect(sr.trading_partner).to eq 'Entry Packet'
+      expect(sr.sent_at.to_i).not_to be_nil
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["abc@def.com", "def@jam.com"]
+      expect(mail.subject).to eq "Bad Lumber Liquidators PDFs - Action Required"
+      expect(mail.body).to include "Please fix and re-upload the PDF(s) associated with the following Lumber Liquidators shipment:<br><ul><li>VFI Shipment Number: 555</li><li>Shipment Plan: IMP-555</li></ul><br><a href='http://some_website/shipments/#{shipment.id}' target='_blank'>Go to Shipment</a>"
+    end
+  end
 
 end
