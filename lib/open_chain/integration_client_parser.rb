@@ -96,6 +96,13 @@ module OpenChain; module IntegrationClientParser
       begin
         data = yield
 
+        # Check for an empty file.  Unless we've specifically allowed this parser to deal with them, this is the
+        # point where we quit processing.
+        if file_empty?(data) && !process_zero_byte_files?
+          log.add_info_message "Zero byte file was not processed."
+          return
+        end
+
         if self.respond_to?(:pre_process_data)
           # This method can be used to do things like set a non-standard encoding.  Having this method makes it easier for
           # parsers that utilize frameworks that already implement the parse data to deal with having to mutute the incoming data
@@ -129,7 +136,9 @@ module OpenChain; module IntegrationClientParser
           finalize_inbound_file_log log, opts
         ensure
           begin
-            post_process_data data
+            if !file_empty?(data) || process_zero_byte_files?
+              post_process_data data
+            end
           ensure
             set_inbound_file nil
           end
@@ -166,6 +175,12 @@ module OpenChain; module IntegrationClientParser
     def post_process_data data
       # Do nothing by default, this is here for parser to implement if they need to do data cleanup
       nil
+    end
+
+    # By default, zero byte/empty files are ignored.  This method can be overridden if a case is encountered where we
+    # do something with a file based on its name only, and don't actually care about its content.
+    def process_zero_byte_files?
+      false
     end
 
     private
@@ -237,6 +252,13 @@ module OpenChain; module IntegrationClientParser
         end
 
         location
+      end
+
+      # Returns true if the data object is nil or length zero, assuming the length of that data can be assessed.
+      # Handles a small minority of parsers that override retrieve_file_data to return things like
+      # Zip::InputStreams, which don't have a length method.
+      def file_empty? data
+        data.nil? || (data.respond_to?(:length) && data.length == 0)
       end
   end
 

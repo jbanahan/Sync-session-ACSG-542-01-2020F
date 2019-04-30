@@ -254,6 +254,64 @@ describe OpenChain::IntegrationClientParser do
         
         expect { subject.process_from_s3 s3_bucket, s3_path }.to raise_error "Error"
       end
+
+      it "ignores an empty file" do
+        expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return ""
+        expect(subject).to_not receive(:parse_file)
+        expect(subject).to_not receive(:post_process_data)
+
+        subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
+
+        log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
+        expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
+
+        expect(log.messages.length).to eq 1
+        expect(log).to have_info_message "Zero byte file was not processed."
+      end
+
+      it "ignores a nil file" do
+        # This may not be possible in the wild.
+        expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return nil
+        expect(subject).to_not receive(:parse_file)
+        expect(subject).to_not receive(:post_process_data)
+
+        subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
+
+        log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
+        expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
+
+        expect(log.messages.length).to eq 1
+        expect(log).to have_info_message "Zero byte file was not processed."
+      end
+
+      it "processes an empty file if parser configured to allow it" do
+        expect(subject).to receive(:process_zero_byte_files?).and_return(true).twice
+
+        expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return ""
+        expect(subject).to receive(:parse_file)
+        expect(subject).to receive(:post_process_data)
+
+        subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
+
+        log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
+        expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
+
+        expect(log.messages.length).to eq 0
+      end
+
+      it "processes a file that cannot be assessed for length" do
+        # Basically just testing that this doesn't cause a NoMethodError.
+        expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return Zip::InputStream.open(StringIO.new("Testing"))
+        expect(subject).to receive(:parse_file)
+        expect(subject).to receive(:post_process_data)
+
+        subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
+
+        log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
+        expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
+
+        expect(log.messages.length).to eq 0
+      end
     end
 
     context "with parser that implements parse" do
