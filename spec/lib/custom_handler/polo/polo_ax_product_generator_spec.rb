@@ -71,6 +71,13 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
       expect(subject.sync_csv).not_to be_nil
     end
 
+    it "syncs a product with a custom Ax Export status" do
+      exported_product.update_custom_value! cdefs[:ax_export_status], ""
+      exported_product.update_custom_value! cdefs[:ax_export_status_manual], "EXPORTED"
+
+      expect(subject.sync_csv).to_not be_nil
+    end
+
     context "with missing data" do
       it "does not sync a product without an EXPORTED Ax Export Status" do
         exported_product.update_custom_value! cdefs[:ax_export_status], ""
