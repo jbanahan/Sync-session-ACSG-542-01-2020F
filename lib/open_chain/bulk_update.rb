@@ -92,7 +92,6 @@ module OpenChain
       end
       replace_search_result_key params
     end
-    private_class_method :cleanse_params
 
     def self.replace_search_result_key params
       # What we need to do here is determine the object keys that we're utilizing for the quick classification
