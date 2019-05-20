@@ -906,12 +906,12 @@ class ReportsController < ApplicationController
       importer_ids = get_customer_year_over_year_report_importer_ids
       if !importer_ids.nil? && importer_ids.length > 0
         run_report "Entry Year Over Year Report", klass, {range_field: params[:range_field], importer_ids: importer_ids,
-                    year_1: params[:year_1], year_2: params[:year_2], include_cotton_fee: params[:cotton_fee] == 'true',
-                    include_taxes: params[:taxes] == 'true', include_other_fees: params[:other_fees] == 'true',
-                    mode_of_transport: params[:mode_of_transport], entry_types: get_customer_year_over_year_report_entry_types,
-                    include_isf_fees: params[:isf_fees] == 'true', include_port_breakdown: params[:port_breakdown] == 'true',
-                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true',
-                    include_line_graphs: params[:line_graphs] == 'true' }, []
+                    ca: params[:country] == "CA", year_1: params[:year_1], year_2: params[:year_2], 
+                    include_cotton_fee: params[:cotton_fee] == 'true', include_taxes: params[:taxes] == 'true', 
+                    include_other_fees: params[:other_fees] == 'true', mode_of_transport: params[:mode_of_transport], 
+                    entry_types: get_customer_year_over_year_report_entry_types, include_isf_fees: params[:isf_fees] == 'true', 
+                    include_port_breakdown: params[:port_breakdown] == 'true', 
+                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true', include_line_graphs: params[:line_graphs] == 'true' }, []
       else
         error_redirect "At least one importer must be selected."
       end

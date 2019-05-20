@@ -44,7 +44,7 @@ describe OpenChain::Report::CustomerYearOverYearReport do
               entry_type:entry_type, entered_value:55.55, total_duty:44.44, mpf:33.33, hmf:22.22, cotton_fee:11.11, total_taxes:9.99,
               other_fees:8.88, total_fees:7.77, arrival_date:make_utc_date(2018,1,1+counter), release_date:make_utc_date(2018,2,2+counter),
               file_logged_date:make_utc_date(2018,3,3+counter), fiscal_date:Date.new(2018,4,4+counter),
-              eta_date:Date.new(2018,5,5+counter), total_units:543.2, total_gst:6.66, export_country_codes:'CN',
+              eta_date:Date.new(2018,5,5+counter), total_units:543.2, total_gst:6.66, total_duty_gst:5.55, export_country_codes:'CN',
               transport_mode_code:transport_mode_code, broker_invoice_total:12.34, importer_id:importer.id,
               entry_port_code:entry_port_code, import_country:import_country)
       entry.update_attributes date_range_field => date_range_field_val
@@ -186,28 +186,28 @@ describe OpenChain::Report::CustomerYearOverYearReport do
       expect(raw_sheet.length).to eq 19
       expect(raw_sheet[0]).to eq ['Customer Number','Customer Name','Broker Reference','Entry Summary Line Count',
                                       'Entry Type','Total Entered Value','Total Duty','MPF','HMF','Cotton Fee',
-                                      'Total Taxes','Total Fees','Other Taxes & Fees','Arrival Date','Release Date',
-                                      'File Logged Date','Fiscal Date','ETA Date','Total Units','Total GST',
+                                      'Total Taxes','Other Taxes & Fees','Total Fees','Arrival Date','Release Date',
+                                      'File Logged Date','Fiscal Date','ETA Date','Total Units',
                                       'Country Export Codes','Mode of Transport','Total Broker Invoice','ISF Fees',
                                       'Port of Entry Code']
-      expect(raw_sheet[1]).to eq ['ABCD', 'Crudco', 'brok ref 1', 3, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,16), Date.new(2018,2,3), Date.new(2018,3,4), Date.new(2018,4,5), Date.new(2018,5,6), 543.2, 6.66, 'CN', '10', 12.34, 2.22, nil]
-      expect(raw_sheet[2]).to eq ['ABCD', 'Crudco', 'brok ref 2', 5, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,17), Date.new(2018,2,4), Date.new(2018,3,5), Date.new(2018,4,6), Date.new(2018,5,7), 543.2, 6.66, 'CN', '9', 12.34, 1.11, nil]
-      expect(raw_sheet[3]).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,3,3), Date.new(2018,2,5), Date.new(2018,3,6), Date.new(2018,4,7), Date.new(2018,5,8), 543.2, 6.66, 'CN', '40', 12.34, 1.11, nil]
-      expect(raw_sheet[4]).to eq ['ABCD', 'Crudco', 'brok ref 4', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,4), Date.new(2018,2,6), Date.new(2018,3,7), Date.new(2018,4,8), Date.new(2018,5,9), 543.2, 6.66, 'CN', '41', 12.34, 0.00, nil]
-      expect(raw_sheet[5]).to eq ['ABCD', 'Crudco', 'brok ref 5', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,16), Date.new(2018,2,7), Date.new(2018,3,8), Date.new(2018,4,9), Date.new(2018,5,10), 543.2, 6.66, 'CN', '40', 12.34, 0.00, nil]
-      expect(raw_sheet[6]).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,25), Date.new(2018,2,8), Date.new(2018,3,9), Date.new(2018,4,10), Date.new(2018,5,11), 543.2, 6.66, 'CN', '30', 12.34, 0.00, nil]
-      expect(raw_sheet[7]).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,5,15), Date.new(2018,2,9), Date.new(2018,3,10), Date.new(2018,4,11), Date.new(2018,5,12), 543.2, 6.66, 'CN', '666', 12.34, 0.00, nil]
-      expect(raw_sheet[8]).to eq ['ABCD', 'Crudco', 'brok ref 8', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,6,6), Date.new(2018,2,10), Date.new(2018,3,11), Date.new(2018,4,12), Date.new(2018,5,13), 543.2, 6.66, 'CN', '40', 12.34, 0.00, nil]
-      expect(raw_sheet[9]).to eq ['ABCD', 'Crudco', 'brok ref 9', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,1), Date.new(2018,2,11), Date.new(2018,3,12), Date.new(2018,4,13), Date.new(2018,5,14), 543.2, 6.66, 'CN', '10', 12.34, 0.00, nil]
-      expect(raw_sheet[10]).to eq ['ABCD', 'Crudco', 'brok ref 10', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,17), Date.new(2018,2,12), Date.new(2018,3,13), Date.new(2018,4,14), Date.new(2018,5,15), 543.2, 6.66, 'CN', '11', 12.34, 0.00, nil]
-      expect(raw_sheet[11]).to eq ['ABCD', 'Crudco', 'brok ref 11', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,3,2), Date.new(2018,2,13), Date.new(2018,3,14), Date.new(2018,4,15), Date.new(2018,5,16), 543.2, 6.66, 'CN', '40', 12.34, 2.22, nil]
-      expect(raw_sheet[12]).to eq ['ABCD', 'Crudco', 'brok ref 12', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,4,7), Date.new(2018,2,14), Date.new(2018,3,15), Date.new(2018,4,16), Date.new(2018,5,17), 543.2, 6.66, 'CN', '20', 12.34, 0.00, nil]
-      expect(raw_sheet[13]).to eq ['ABCD', 'Crudco', 'brok ref 13', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,21), Date.new(2018,2,15), Date.new(2018,3,16), Date.new(2018,4,17), Date.new(2018,5,18), 543.2, 6.66, 'CN', '21', 12.34, 3.33, '6789']
-      expect(raw_sheet[14]).to eq ['ABCD', 'Crudco', 'brok ref 14', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,22), Date.new(2018,2,16), Date.new(2018,3,17), Date.new(2018,4,18), Date.new(2018,5,19), 543.2, 6.66, 'CN', '10', 12.34, 1.11, '5678']
-      expect(raw_sheet[15]).to eq ['ABCD', 'Crudco', 'brok ref 15', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,27), Date.new(2018,2,17), Date.new(2018,3,18), Date.new(2018,4,19), Date.new(2018,5,20), 543.2, 6.66, 'CN', '10', 12.34, 1.11, '6789']
-      expect(raw_sheet[16]).to eq ['ABCD', 'Crudco', 'brok ref 16', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,28), Date.new(2018,2,18), Date.new(2018,3,19), Date.new(2018,4,20), Date.new(2018,5,21), 543.2, 6.66, 'CN', '10', 12.34, 1.11, nil]
-      expect(raw_sheet[17]).to eq ['ABCD', 'Crudco', 'brok ref 17', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,29), Date.new(2018,2,19), Date.new(2018,3,20), Date.new(2018,4,21), Date.new(2018,5,22), 543.2, 6.66, 'CN', '10', 12.34, 1.11, '6789']
-      expect(raw_sheet[18]).to eq ['ABCD', 'Crudco', 'brok ref 18', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,30), Date.new(2018,2,20), Date.new(2018,3,21), Date.new(2018,4,22), Date.new(2018,5,23), 543.2, 6.66, 'CN', '10', 12.34, 1.11, 'No Match']
+      expect(raw_sheet[1]).to eq ['ABCD', 'Crudco', 'brok ref 1', 3, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,16), Date.new(2018,2,3), Date.new(2018,3,4), Date.new(2018,4,5), Date.new(2018,5,6), 543.2, 'CN', '10', 12.34, 2.22, nil]
+      expect(raw_sheet[2]).to eq ['ABCD', 'Crudco', 'brok ref 2', 5, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,2,17), Date.new(2018,2,4), Date.new(2018,3,5), Date.new(2018,4,6), Date.new(2018,5,7), 543.2, 'CN', '9', 12.34, 1.11, nil]
+      expect(raw_sheet[3]).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,3,3), Date.new(2018,2,5), Date.new(2018,3,6), Date.new(2018,4,7), Date.new(2018,5,8), 543.2, 'CN', '40', 12.34, 1.11, nil]
+      expect(raw_sheet[4]).to eq ['ABCD', 'Crudco', 'brok ref 4', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,4), Date.new(2018,2,6), Date.new(2018,3,7), Date.new(2018,4,8), Date.new(2018,5,9), 543.2, 'CN', '41', 12.34, 0.00, nil]
+      expect(raw_sheet[5]).to eq ['ABCD', 'Crudco', 'brok ref 5', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,16), Date.new(2018,2,7), Date.new(2018,3,8), Date.new(2018,4,9), Date.new(2018,5,10), 543.2, 'CN', '40', 12.34, 0.00, nil]
+      expect(raw_sheet[6]).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,4,25), Date.new(2018,2,8), Date.new(2018,3,9), Date.new(2018,4,10), Date.new(2018,5,11), 543.2, 'CN', '30', 12.34, 0.00, nil]
+      expect(raw_sheet[7]).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '13', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,5,15), Date.new(2018,2,9), Date.new(2018,3,10), Date.new(2018,4,11), Date.new(2018,5,12), 543.2, 'CN', '666', 12.34, 0.00, nil]
+      expect(raw_sheet[8]).to eq ['ABCD', 'Crudco', 'brok ref 8', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2016,6,6), Date.new(2018,2,10), Date.new(2018,3,11), Date.new(2018,4,12), Date.new(2018,5,13), 543.2, 'CN', '40', 12.34, 0.00, nil]
+      expect(raw_sheet[9]).to eq ['ABCD', 'Crudco', 'brok ref 9', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,1), Date.new(2018,2,11), Date.new(2018,3,12), Date.new(2018,4,13), Date.new(2018,5,14), 543.2, 'CN', '10', 12.34, 0.00, nil]
+      expect(raw_sheet[10]).to eq ['ABCD', 'Crudco', 'brok ref 10', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,1,17), Date.new(2018,2,12), Date.new(2018,3,13), Date.new(2018,4,14), Date.new(2018,5,15), 543.2, 'CN', '11', 12.34, 0.00, nil]
+      expect(raw_sheet[11]).to eq ['ABCD', 'Crudco', 'brok ref 11', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,3,2), Date.new(2018,2,13), Date.new(2018,3,14), Date.new(2018,4,15), Date.new(2018,5,16), 543.2, 'CN', '40', 12.34, 2.22, nil]
+      expect(raw_sheet[12]).to eq ['ABCD', 'Crudco', 'brok ref 12', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,4,7), Date.new(2018,2,14), Date.new(2018,3,15), Date.new(2018,4,16), Date.new(2018,5,17), 543.2, 'CN', '20', 12.34, 0.00, nil]
+      expect(raw_sheet[13]).to eq ['ABCD', 'Crudco', 'brok ref 13', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,21), Date.new(2018,2,15), Date.new(2018,3,16), Date.new(2018,4,17), Date.new(2018,5,18), 543.2, 'CN', '21', 12.34, 3.33, '6789']
+      expect(raw_sheet[14]).to eq ['ABCD', 'Crudco', 'brok ref 14', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,22), Date.new(2018,2,16), Date.new(2018,3,17), Date.new(2018,4,18), Date.new(2018,5,19), 543.2, 'CN', '10', 12.34, 1.11, '5678']
+      expect(raw_sheet[15]).to eq ['ABCD', 'Crudco', 'brok ref 15', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,27), Date.new(2018,2,17), Date.new(2018,3,18), Date.new(2018,4,19), Date.new(2018,5,20), 543.2, 'CN', '10', 12.34, 1.11, '6789']
+      expect(raw_sheet[16]).to eq ['ABCD', 'Crudco', 'brok ref 16', 2, '02', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,28), Date.new(2018,2,18), Date.new(2018,3,19), Date.new(2018,4,20), Date.new(2018,5,21), 543.2, 'CN', '10', 12.34, 1.11, nil]
+      expect(raw_sheet[17]).to eq ['ABCD', 'Crudco', 'brok ref 17', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,29), Date.new(2018,2,19), Date.new(2018,3,20), Date.new(2018,4,21), Date.new(2018,5,22), 543.2, 'CN', '10', 12.34, 1.11, '6789']
+      expect(raw_sheet[18]).to eq ['ABCD', 'Crudco', 'brok ref 18', 2, '01', 55.55, 44.44, 33.33, 22.22, 11.11, 9.99, 8.88, 7.77, Date.new(2017,5,30), Date.new(2018,2,20), Date.new(2018,3,21), Date.new(2018,4,22), Date.new(2018,5,23), 543.2, 'CN', '10', 12.34, 1.11, 'No Match']
 
       port_sheet = reader["Port Breakdown"]
       expect(port_sheet).to_not be_nil
@@ -304,6 +304,84 @@ describe OpenChain::Report::CustomerYearOverYearReport do
                                        'Total Fees','Total Broker Invoice']
       expect(port_sheet[1]).to eq ["Port A", "5678", 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
       expect(port_sheet[2]).to eq ['Grand Totals', nil, 2, 4, 1086.4, 2, 111.1, 88.88, 66.66, 44.44, 15.54, 24.68]
+    end
+
+    it "generates spreadsheet with Canada fields" do
+      port_a = Factory(:port, schedule_d_code:'5678', name:'Port A')
+
+      ent_2016_Jan_1 = make_entry 1, '01', :eta_date, make_utc_date(2016,1,16)
+      ent_2016_Jan_2 = make_entry 2, '01', :eta_date, make_utc_date(2016,1,17)
+      ent_2017_Jan = make_entry 3, '01', :eta_date, make_utc_date(2017,1,17)
+      ent_2017_Apr_1 = make_entry 6, '01', :eta_date, make_utc_date(2017,4,6), broker_invoice_isf_charge_count:1, entry_port_code:'5678'
+      ent_2017_Apr_2 = make_entry 7, '01', :eta_date, make_utc_date(2017,4,7), broker_invoice_isf_charge_count:1, entry_port_code:'5678'
+
+      # These should be excluded because they are outside our date ranges.
+      ent_2015_Dec = make_entry 4, '01', :eta_date, make_utc_date(2015,12,13)
+      ent_2018_Feb = make_entry 5, '01', :eta_date, make_utc_date(2018,2,8)
+
+      Timecop.freeze(make_eastern_date(2017,5,28)) do
+        @temp = described_class.run_report(u, {'ca' => true, 'year_1' => '2016', 'year_2' => '2017', 'range_field' => 'eta_date', 'importer_ids' => [importer.id], 'include_cotton_fee' => false, 'include_taxes' => false, 'include_other_fees' => false, 'include_isf_fees' => false, 'include_port_breakdown' => true})
+      end
+      expect(@temp.original_filename).to eq 'Entry_YoY_CRUDCO_eta_date_[2016_2017].xlsx'
+
+      reader = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(reader.length).to eq 3
+
+      sheet = reader["Crudco Consumables an - REPORT"]
+      expect(sheet.length).to eq 36
+      expect(sheet[4]).to eq [2016,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[5]).to eq ['Number of Entries', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[6]).to eq ['Entry Summary Lines', 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]
+      expect(sheet[7]).to eq ['Total Units', 1086.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1086.4]
+      expect(sheet[8]).to eq ['Entry Type 01', 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      expect(sheet[9]).to eq ['Total Entered Value', 111.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 111.1]
+      expect(sheet[10]).to eq ['Total Duty', 88.88, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 88.88]
+      expect(sheet[11]).to eq ['Total Broker Invoice', 24.68, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 24.68]
+      expect(sheet[12]).to eq ['Total GST', 13.32, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 13.32]
+      expect(sheet[13]).to eq ['Total Duty & GST', 11.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 11.1]
+      expect(sheet[14]).to eq []
+      expect(sheet[15]).to eq [2017,'January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[16]).to eq ['Number of Entries', 1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 3]
+      expect(sheet[17]).to eq ['Entry Summary Lines', 2, 0, 0, 4, nil, nil, nil, nil, nil, nil, nil, nil, 6]
+      expect(sheet[18]).to eq ['Total Units', 543.2, 0.0, 0.0, 1086.4, nil, nil, nil, nil, nil, nil, nil, nil, 1629.6]
+      expect(sheet[19]).to eq ['Entry Type 01', 1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 3]
+      expect(sheet[20]).to eq ['Total Entered Value', 55.55, 0.0, 0.0, 111.1, nil, nil, nil, nil, nil, nil, nil, nil, 166.65]
+      expect(sheet[21]).to eq ['Total Duty', 44.44, 0.0, 0.0, 88.88, nil, nil, nil, nil, nil, nil, nil, nil, 133.32]
+      expect(sheet[22]).to eq ['Total Broker Invoice', 12.34, 0.0, 0.0, 24.68, nil, nil, nil, nil, nil, nil, nil, nil, 37.02]
+      expect(sheet[23]).to eq ['Total GST', 6.66, 0.0, 0.0, 13.32, nil, nil, nil, nil, nil, nil, nil, nil, 19.98]
+      expect(sheet[24]).to eq ['Total Duty & GST', 5.55, 0.0, 0.0, 11.1, nil, nil, nil, nil, nil, nil, nil, nil, 16.65]
+      expect(sheet[25]).to eq []
+      expect(sheet[26]).to eq ['Variance 2016 / 2017','January','February','March','April','May','June','July','August','September','October','November','December','Grand Totals']
+      expect(sheet[27]).to eq ['Number of Entries', -1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[28]).to eq ['Entry Summary Lines', -2, 0, 0, 4, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+      expect(sheet[29]).to eq ['Total Units', -543.2, 0.0, 0.0, 1086.4, nil, nil, nil, nil, nil, nil, nil, nil, 543.2]
+      expect(sheet[30]).to eq ['Entry Type 01', -1, 0, 0, 2, nil, nil, nil, nil, nil, nil, nil, nil, 1]
+      expect(sheet[31]).to eq ['Total Entered Value', -55.55, 0.0, 0.0, 111.1, nil, nil, nil, nil, nil, nil, nil, nil, 55.55]
+      expect(sheet[32]).to eq ['Total Duty', -44.44, 0.0, 0.0, 88.88, nil, nil, nil, nil, nil, nil, nil, nil, 44.44]
+      expect(sheet[33]).to eq ['Total Broker Invoice', -12.34, 0.0, 0.0, 24.68, nil, nil, nil, nil, nil, nil, nil, nil, 12.34]
+      expect(sheet[34]).to eq ['Total GST', -6.66, 0.0, 0.0, 13.32, nil, nil, nil, nil, nil, nil, nil, nil, 6.66]
+      expect(sheet[35]).to eq ['Total Duty & GST', -5.55, 0.0, 0.0, 11.1, nil, nil, nil, nil, nil, nil, nil, nil, 5.55]
+
+      raw_sheet = reader["Data"]
+      expect(raw_sheet.length).to eq 6
+
+      expect(raw_sheet[0]).to eq ['Customer Number','Customer Name','Broker Reference','Entry Summary Line Count',
+                                  'Entry Type','Total Entered Value','Total Duty','Arrival Date','Release Date',
+                                  'File Logged Date','Fiscal Date','ETA Date','Total Units','Total GST','Total Duty & GST',
+                                  'Country Export Codes','Mode of Transport','Total Broker Invoice','Port of Entry Code']
+      expect(raw_sheet[1]).to eq ['ABCD', 'Crudco', 'brok ref 1', 2, '01', 55.55, 44.44, Date.new(2018,1,2), Date.new(2018,2,3), Date.new(2018,3,4), Date.new(2018,4,5), Date.new(2016,1,16), 543.2, 6.66, 5.55, 'CN', '10', 12.34, nil]
+      expect(raw_sheet[2]).to eq ['ABCD', 'Crudco', 'brok ref 2', 2, '01', 55.55, 44.44, Date.new(2018,1,3), Date.new(2018,2,4), Date.new(2018,3,5), Date.new(2018,4,6), Date.new(2016,1,17), 543.2, 6.66, 5.55, 'CN', '10', 12.34, nil]
+      expect(raw_sheet[3]).to eq ['ABCD', 'Crudco', 'brok ref 3', 2, '01', 55.55, 44.44, Date.new(2018,1,4), Date.new(2018,2,5), Date.new(2018,3,6), Date.new(2018,4,7), Date.new(2017,1,17), 543.2, 6.66, 5.55, 'CN', '10', 12.34, nil]
+      expect(raw_sheet[4]).to eq ['ABCD', 'Crudco', 'brok ref 6', 2, '01', 55.55, 44.44, Date.new(2018,1,7), Date.new(2018,2,8), Date.new(2018,3,9), Date.new(2018,4,10), Date.new(2017,4,6), 543.2, 6.66, 5.55, 'CN', '10', 12.34, "5678"]
+      expect(raw_sheet[5]).to eq ['ABCD', 'Crudco', 'brok ref 7', 2, '01', 55.55, 44.44, Date.new(2018,1,8), Date.new(2018,2,9), Date.new(2018,3,10), Date.new(2018,4,11), Date.new(2017,4,7), 543.2, 6.66, 5.55, 'CN', '10', 12.34, "5678"]
+      
+      port_sheet = reader["Port Breakdown"]
+      expect(port_sheet.length).to eq 3
+      expect(port_sheet[0]).to eq ['May 2017 Port Breakdown','Entry Port Code','Number of Entries','Entry Summary Lines',
+                                   'Total Units','Entry Type 01','Total Entered Value','Total Duty','Total Broker Invoice',
+                                   'Total GST', 'Total Duty & GST']
+      expect(port_sheet[1]).to eq ["Port A", "5678", 2, 4, 1086.4, 2, 111.1, 88.88, 24.68, 13.32, 11.1]
+      expect(port_sheet[2]).to eq ['Grand Totals', nil, 2, 4, 1086.4, 2, 111.1, 88.88, 24.68, 13.32, 11.1]
     end
 
     it "generates spreadsheet based on file logged date" do

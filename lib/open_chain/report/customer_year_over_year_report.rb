@@ -8,7 +8,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
   YearOverYearData ||= Struct.new(:range_year,:range_month,:customer_number,:customer_name,:broker_reference,
                                        :entry_line_count,:entry_type,:entered_value,:total_duty,:mpf,:hmf,:cotton_fee,
                                        :total_taxes,:other_fees,:total_fees,:arrival_date,:release_date,
-                                       :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst,
+                                       :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst, :total_duty_gst,
                                        :export_country_codes,:transport_mode_code,:broker_invoice_total,
                                        :entry_type_count_hash,:entry_count,:isf_fees,:mode_of_transportation_count_hash,
                                        :entry_port_code) do
@@ -25,6 +25,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       self.total_fees ||= 0.00
       self.total_units ||= 0.00
       self.total_gst ||= 0.00
+      self.total_duty_gst ||= 0.00
       self.broker_invoice_total ||= 0.00
       self.isf_fees ||= 0.00
       self.entry_type_count_hash ||= {}
@@ -49,7 +50,17 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     self.new.run_year_over_year_report settings
   end
 
+  def us_fields
+    {'mpf' => true, 'hmf' => true, 'total_fees' => true, 'total_duty_fees' => true}
+  end
+
+  def ca_fields
+    {'total_gst' => true, 'total_duty_gst' => true}
+  end
+
   def run_year_over_year_report settings
+    settings['opt_fields'] = settings['ca'] ? ca_fields : us_fields
+    settings['opt_fields'].merge!('cotton_fee' => settings['include_cotton_fee'], 'total_taxes' => settings['include_taxes'], 'other_fees' => settings['include_other_fees'], 'isf_fees' => settings['include_isf_fees'])
     year_1, year_2 = get_years settings
 
     mode_of_transport_codes = get_transport_mode_codes settings['mode_of_transport']
@@ -58,7 +69,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     range_field = get_range_field settings
     workbook = nil
     distribute_reads do
-      workbook = generate_report importer_ids, year_1, year_2, range_field, settings['include_cotton_fee'], settings['include_taxes'], settings['include_other_fees'], settings['include_isf_fees'], mode_of_transport_codes, settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs']
+      workbook = generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, settings['opt_fields'], settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs']
     end
 
     system_code = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:system_code).to_s : 'MULTI'
@@ -111,7 +122,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       ['arrival_date','eta_date','file_logged_date','fiscal_date','release_date'].include?(range_field) ? range_field : "arrival_date"
     end
 
-    def generate_report importer_ids, year_1, year_2, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs
+    def generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, opt_fields, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs
       wb = XlsxBuilder.new
       assign_styles wb
 
@@ -146,6 +157,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         d.eta_date = result_set_row['eta_date']
         d.total_units = result_set_row['total_units']
         d.total_gst = result_set_row['total_gst']
+        d.total_duty_gst = result_set_row['total_duty_gst']
         d.export_country_codes = result_set_row['export_country_codes']
         d.transport_mode_code = result_set_row['transport_mode_code']
         d.broker_invoice_total = result_set_row['broker_invoice_total']
@@ -154,11 +166,11 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         raw_data << d
       end
 
-      generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, raw_data, group_by_mode_of_transport, include_line_graphs
-      generate_data_sheet wb, raw_data
+      generate_summary_sheet wb, importer_ids, year_1, year_2, raw_data, group_by_mode_of_transport, opt_fields, include_line_graphs
+      generate_data_sheet wb, raw_data, opt_fields
 
       if include_port_breakdown
-        generate_port_breakdown_sheet wb, importer_ids, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, entry_types
+        generate_port_breakdown_sheet wb, importer_ids, range_field, mode_of_transport_codes, entry_types, opt_fields
       end
 
       wb
@@ -171,7 +183,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     # This sheet contains data summarized by month and year.
-    def generate_summary_sheet wb, importer_ids, year_1, year_2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, data_arr, group_by_mode_of_transport, include_line_graphs
+    def generate_summary_sheet wb, importer_ids, year_1, year_2, data_arr, group_by_mode_of_transport, opt_fields, include_line_graphs
       company_name = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:name) : "MULTI COMPANY"
       # Handling long company names: some versions of Excel allow only 30 characters for tab names, so, because of the
       # 9-char suffix tacked on, company names are truncated at 21 characters.
@@ -186,12 +198,12 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 0, 0
 
       counter = 6 # 4 blank rows at top plus 2 blanks in between the year blocks and the comparison block.
-      counter += add_row_block wb, sheet, year_1, nil, 1, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      counter += add_row_block wb, sheet, year_1, nil, 1, year_hash, group_by_mode_of_transport, opt_fields
       wb.add_body_row sheet, [] # blank row
-      counter += add_row_block wb, sheet, year_2, nil, 2, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      counter += add_row_block wb, sheet, year_2, nil, 2, year_hash, group_by_mode_of_transport, opt_fields
       wb.add_body_row sheet, [] # blank row
       # Compare the two years.
-      counter += add_row_block wb, sheet, year_1, year_2, 3, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
+      counter += add_row_block wb, sheet, year_1, year_2, 3, year_hash, group_by_mode_of_transport, opt_fields
 
       wb.set_column_widths sheet, *([20] + Array.new(12, 14) + [15])
 
@@ -202,8 +214,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       sheet
     end
 
-    def add_row_block wb, sheet, year, comp_year, block_pos, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, year_hash, group_by_mode_of_transport
-      counter = 11
+    def add_row_block wb, sheet, year, comp_year, block_pos, year_hash, group_by_mode_of_transport, opt_fields
+      counter = 7
       wb.add_body_row sheet, make_summary_headers(comp_year ? "Variance #{year} / #{comp_year}" : year), styles: Array.new(14, :default_header)
       wb.add_body_row sheet, get_category_row_for_year_month("Number of Entries", year_hash, year, comp_year, block_pos, :entry_count, decimal:false), styles: [:bold] + Array.new(13, :number)
       wb.add_body_row sheet, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, :entry_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
@@ -220,24 +232,44 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       end
       wb.add_body_row sheet, get_category_row_for_year_month("Total Entered Value", year_hash, year, comp_year, block_pos, :entered_value), styles: [:bold] + Array.new(13, :currency)
       wb.add_body_row sheet, get_category_row_for_year_month("Total Duty", year_hash, year, comp_year, block_pos, :total_duty), styles: [:bold] + Array.new(13, :currency)
-      wb.add_body_row sheet, get_category_row_for_year_month("MPF", year_hash, year, comp_year, block_pos, :mpf), styles: [:bold] + Array.new(13, :currency)
-      wb.add_body_row sheet, get_category_row_for_year_month("HMF", year_hash, year, comp_year, block_pos, :hmf), styles: [:bold] + Array.new(13, :currency)
-      if include_cotton_fee
+      if opt_fields['mpf']
+        wb.add_body_row sheet, get_category_row_for_year_month("MPF", year_hash, year, comp_year, block_pos, :mpf), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
+      if opt_fields['hmf']
+        wb.add_body_row sheet, get_category_row_for_year_month("HMF", year_hash, year, comp_year, block_pos, :hmf), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
+      if opt_fields['cotton_fee']
         wb.add_body_row sheet, get_category_row_for_year_month("Cotton Fee", year_hash, year, comp_year, block_pos, :cotton_fee), styles: [:bold] + Array.new(13, :currency)
         counter += 1
       end
-      if include_taxes
+      if opt_fields['total_taxes']
         wb.add_body_row sheet, get_category_row_for_year_month("Total Taxes", year_hash, year, comp_year, block_pos, :total_taxes), styles: [:bold] + Array.new(13, :currency)
         counter += 1
-      end
-      if include_other_fees
+      end     
+      if opt_fields['other_fees']
         wb.add_body_row sheet, get_category_row_for_year_month("Other Fees", year_hash, year, comp_year, block_pos, :other_fees), styles: [:bold] + Array.new(13, :currency)
         counter += 1
       end
-      wb.add_body_row sheet, get_category_row_for_year_month("Total Fees", year_hash, year, comp_year, block_pos, :total_fees), styles: [:bold] + Array.new(13, :currency)
-      wb.add_body_row sheet, get_category_row_for_year_month("Total Duty & Fees", year_hash, year, comp_year, block_pos, :total_duty_and_fees), styles: [:bold] + Array.new(13, :currency)
+      if opt_fields['total_fees']
+        wb.add_body_row sheet, get_category_row_for_year_month("Total Fees", year_hash, year, comp_year, block_pos, :total_fees), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
+      if opt_fields['total_duty_fees']
+        wb.add_body_row sheet, get_category_row_for_year_month("Total Duty & Fees", year_hash, year, comp_year, block_pos, :total_duty_and_fees), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
       wb.add_body_row sheet, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, :broker_invoice_total), styles: [:bold] + Array.new(13, :currency)
-      if include_isf_fees
+      if opt_fields['total_gst']
+        wb.add_body_row sheet, get_category_row_for_year_month("Total GST", year_hash, year, comp_year, block_pos, :total_gst), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
+      if opt_fields['total_duty_gst']
+        wb.add_body_row sheet, get_category_row_for_year_month("Total Duty & GST", year_hash, year, comp_year, block_pos, :total_duty_gst), styles: [:bold] + Array.new(13, :currency)
+        counter += 1
+      end
+      if opt_fields['isf_fees']
         wb.add_body_row sheet, get_category_row_for_year_month("ISF Fees", year_hash, year, comp_year, block_pos, :isf_fees), styles: [:bold] + Array.new(13, :currency)
         counter += 1
       end
@@ -367,6 +399,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         month_data.total_fees += row.total_fees
         month_data.total_units += row.total_units
         month_data.total_gst += row.total_gst
+        month_data.total_duty_gst += row.total_duty_gst
         month_data.broker_invoice_total += row.broker_invoice_total
         month_data.isf_fees += row.isf_fees
       end
@@ -390,20 +423,50 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     # There is no need to condense the overall data on this tab.
-    def generate_data_sheet wb, data_arr
-      sheet = wb.create_sheet "Data", headers: ["Customer Number","Customer Name","Broker Reference","Entry Summary Line Count",
-                                         "Entry Type","Total Entered Value","Total Duty","MPF","HMF","Cotton Fee",
-                                         "Total Taxes","Total Fees","Other Taxes & Fees","Arrival Date","Release Date",
-                                         "File Logged Date","Fiscal Date","ETA Date","Total Units","Total GST",
-                                         "Country Export Codes","Mode of Transport","Total Broker Invoice","ISF Fees","Port of Entry Code"]
+    def generate_data_sheet wb, data_arr, opt_fields
+      fields = data_sheet_fields opt_fields
+      sheet = wb.create_sheet "Data", headers: fields.keys
 
       data_arr.each do |row|
-        wb.add_body_row sheet, [row.customer_number,row.customer_name,row.broker_reference,row.entry_line_count,row.entry_type,row.entered_value,row.total_duty,row.mpf,row.hmf,row.cotton_fee,row.total_taxes,row.other_fees,row.total_fees,row.arrival_date,row.release_date,row.file_logged_date,row.fiscal_date,row.eta_date,row.total_units,row.total_gst,row.export_country_codes,row.transport_mode_code,row.broker_invoice_total,row.isf_fees, row.entry_port_code], styles: Array.new(3, nil) + [:number, nil] + Array.new(8, :currency) + Array.new(5, nil) + [:number, :currency, nil, nil, :currency, nil]
+        values = fields.values.map{ |v| row.send v[:meth] }
+        styles = fields.values.map{ |v| v[:style] }
+        wb.add_body_row sheet, values, styles: styles
       end
 
       wb.set_column_widths sheet, *Array.new(24, 20)
 
       sheet
+    end
+
+    def data_sheet_fields opt_fields
+      fields = {"Customer Number" => {meth: :customer_number, style: nil}, 
+                "Customer Name" => {meth: :customer_name, style: nil},
+                "Broker Reference" => {meth: :broker_reference, style: nil},
+                "Entry Summary Line Count" => {meth: :entry_line_count, style: :number},
+                "Entry Type" => {meth: :entry_type, style: nil},
+                "Total Entered Value" => {meth: :entered_value, style: :currency},
+                "Total Duty" => {meth: :total_duty, style: :currency}}
+
+      fields["MPF"] = {meth: :mpf, style: :currency} if opt_fields["mpf"]
+      fields["HMF"] = {meth: :hmf, style: :currency} if opt_fields["hmf"]
+      fields["Cotton Fee"] = {meth: :cotton_fee, style: :currency} if opt_fields["cotton_fee"]
+      fields["Total Taxes"] = {meth: :total_taxes, style: :currency} if opt_fields["total_taxes"]
+      fields["Other Taxes & Fees"] = {meth: :other_fees, style: :currency} if opt_fields["other_fees"]
+      fields["Total Fees"] = {meth: :total_fees, style: :currency} if opt_fields["total_fees"]
+      fields.merge!({"Arrival Date" => {meth: :arrival_date, style: nil},
+                     "Release Date" => {meth: :release_date, style: nil},
+                     "File Logged Date" => {meth: :file_logged_date, style: nil},
+                     "Fiscal Date" => {meth: :fiscal_date, style: nil},
+                     "ETA Date" => {meth: :eta_date, style: nil},
+                     "Total Units" => {meth: :total_units, style: :number}})
+      fields["Total GST"] = {meth: :total_gst, style: :currency} if opt_fields["total_gst"]
+      fields["Total Duty & GST"] = {meth: :total_duty_gst, style: :currency} if opt_fields["total_duty_gst"]
+      fields.merge!({"Country Export Codes" => {meth: :export_country_codes, style: nil},
+                     "Mode of Transport" => {meth: :transport_mode_code, style: nil},
+                     "Total Broker Invoice" => {meth: :broker_invoice_total, style: :currency}})
+      fields["ISF Fees"] = {meth: :isf_fees, style: :currency} if opt_fields["isf_fees"]
+      fields["Port of Entry Code"] = {meth: :entry_port_code, style: nil}
+      fields
     end
 
     # Note that this query excludes data from the current month and beyond, regardless of whether or not entries
@@ -444,7 +507,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         fiscal_date, 
         eta_date, 
         IFNULL(total_units, 0.0) AS total_units, 
-        IFNULL(total_gst, 0.0) AS total_gst, 
+        IFNULL(total_gst, 0.0) AS total_gst,
+        IFNULL(total_duty_gst, 0.0) AS total_duty_gst,
         export_country_codes, 
         transport_mode_code, 
         IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total, 
@@ -513,7 +577,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       "America/New_York"
     end
 
-    def generate_port_breakdown_sheet wb, importer_ids, range_field, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees, mode_of_transport_codes, included_entry_types
+    def generate_port_breakdown_sheet wb, importer_ids, range_field, mode_of_transport_codes, included_entry_types, opt_fields
       result_set = ActiveRecord::Base.connection.exec_query make_port_breakdown_query(importer_ids, range_field, mode_of_transport_codes, included_entry_types)
 
       port_hash = {}
@@ -540,6 +604,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         d.other_fees += result_set_row['other_fees']
         d.total_fees += result_set_row['total_fees']
         d.total_units += result_set_row['total_units']
+        d.total_gst += result_set_row['total_gst']
+        d.total_duty_gst += result_set_row['total_duty_gst']
         d.broker_invoice_total += result_set_row['broker_invoice_total']
         d.isf_fees += result_set_row['isf_fees']
       end
@@ -549,7 +615,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         entry_types.merge port_hash[entry_port_name].entry_type_count_hash.keys
       end
 
-      column_headings = make_port_breakdown_column_headings entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+      column_headings = make_port_breakdown_column_headings entry_types, opt_fields
       sheet = wb.create_sheet "Port Breakdown", headers: column_headings
 
       # Row for every port.
@@ -557,14 +623,14 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         next unless entry_port_name
 
         d = port_hash[entry_port_name]
-        row = make_port_breakdown_row d, entry_port_name, entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+        row = make_port_breakdown_row d, entry_port_name, entry_types, opt_fields
         wb.add_body_row sheet, row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
       end
 
       # Single 'N/A' row for any entries that don't have an entry port assigned, or a bogus entry port.
       d = port_hash[nil]
       if d
-        row = make_port_breakdown_row d, 'N/A', entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+        row = make_port_breakdown_row d, 'N/A', entry_types, opt_fields
         wb.add_body_row sheet, row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
       end
 
@@ -584,6 +650,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         totals.total_fees += port_data.total_fees
         totals.total_units += port_data.total_units
         totals.broker_invoice_total += port_data.broker_invoice_total
+        totals.total_gst += port_data.total_gst
+        totals.total_duty_gst += port_data.total_duty_gst
         totals.isf_fees += port_data.isf_fees
 
         entry_types.each do |entry_type|
@@ -593,7 +661,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           totals.entry_type_count_hash[entry_type] += (port_data.entry_type_count_hash[entry_type].presence || 0)
         end
       end
-      totals_row = make_port_breakdown_row totals, 'Grand Totals', entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+      totals_row = make_port_breakdown_row totals, 'Grand Totals', entry_types, opt_fields
       wb.add_body_row sheet, totals_row, styles: get_port_breakdown_row_formats(entry_types, column_headings)
 
       wb.set_column_widths sheet, *([30] + Array.new(column_headings.length - 1, 20))
@@ -601,7 +669,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       sheet
     end
 
-    def make_port_breakdown_column_headings entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+    def make_port_breakdown_column_headings entry_types, opt_fields
       column_headings = ["#{Date.today.strftime("%B %Y")} Port Breakdown","Entry Port Code","Number of Entries","Entry Summary Lines","Total Units"]
 
       entry_types.each do |entry_type|
@@ -609,43 +677,37 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         column_headings << "Entry Type #{entry_type}"
       end
 
-      column_headings += ["Total Entered Value","Total Duty","MPF","HMF"]
-      if include_cotton_fee
-        column_headings << "Cotton Fee"
-      end
-      if include_taxes
-        column_headings << "Total Taxes"
-      end
-      if include_other_fees
-        column_headings << "Other Taxes & Fees"
-      end
-      column_headings += ["Total Fees","Total Broker Invoice"]
-      if include_isf_fees
-        column_headings << "ISF Fees"
-      end
+      column_headings += ["Total Entered Value","Total Duty"]
+      column_headings << "MPF" if opt_fields['mpf']
+      column_headings << "HMF" if opt_fields['hmf']
+      column_headings << "Cotton Fee" if opt_fields['cotton_fee']
+      column_headings << "Total Taxes" if opt_fields['total_taxes']
+      column_headings << "Other Taxes & Fees" if opt_fields['other_fees']
+      column_headings << "Total Fees" if opt_fields['total_fees']
+      column_headings << "Total Broker Invoice"
+      column_headings << "Total GST" if opt_fields['total_gst']
+      column_headings << "Total Duty & GST" if opt_fields['total_duty_gst']
+      column_headings << "ISF Fees" if opt_fields['isf_fees']
       column_headings
     end
 
-    def make_port_breakdown_row d, entry_port_name, entry_types, include_cotton_fee, include_taxes, include_other_fees, include_isf_fees
+    def make_port_breakdown_row d, entry_port_name, entry_types, opt_fields
       row_arr = [entry_port_name, d.entry_port_code, d.entry_count, d.entry_line_count, d.total_units]
       entry_types.each do |entry_type|
         entry_type_count = d.entry_type_count_hash[entry_type]
         row_arr << (entry_type_count.presence || 0)
       end
-      row_arr += [d.entered_value, d.total_duty, d.mpf, d.hmf]
-      if include_cotton_fee
-        row_arr << d.cotton_fee
-      end
-      if include_taxes
-        row_arr << d.total_taxes
-      end
-      if include_other_fees
-        row_arr << d.other_fees
-      end
-      row_arr += [d.total_fees, d.broker_invoice_total]
-      if include_isf_fees
-        row_arr << d.isf_fees
-      end
+      row_arr += [d.entered_value, d.total_duty]
+      row_arr << d.mpf if opt_fields['mpf']
+      row_arr << d.hmf if opt_fields['hmf']
+      row_arr << d.cotton_fee if opt_fields['cotton_fee']
+      row_arr << d.total_taxes if opt_fields['total_taxes']
+      row_arr << d.other_fees if opt_fields['other_fees']
+      row_arr << d.total_fees if opt_fields['total_fees']
+      row_arr << d.broker_invoice_total
+      row_arr << d.total_gst if opt_fields['total_gst']
+      row_arr << d.total_duty_gst if opt_fields['total_duty_gst']
+      row_arr << d.isf_fees if opt_fields['isf_fees']
       row_arr
     end
 
@@ -673,7 +735,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
           SUM(total_taxes) AS total_taxes, 
           SUM(other_fees) AS other_fees, 
           SUM(total_fees) AS total_fees, 
-          SUM(broker_invoice_total) AS broker_invoice_total, 
+          SUM(broker_invoice_total) AS broker_invoice_total,
+          SUM(total_gst) AS total_gst,
+          SUM(total_duty_GST) AS total_duty_gst,
           SUM(isf_fees) AS isf_fees 
         FROM 
           (
@@ -700,7 +764,9 @@ module OpenChain; module Report; class CustomerYearOverYearReport
               IFNULL(total_taxes, 0.0) AS total_taxes, 
               IFNULL(other_fees, 0.0) AS other_fees, 
               IFNULL(total_fees, 0.0) AS total_fees, 
-              IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total, 
+              IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total,
+              IFNULL(total_gst, 0.0) AS total_GST,
+              IFNULL(total_duty_gst, 0.0) AS total_duty_gst,
               (
                 SELECT 
                   IFNULL(SUM(charge_amount), 0.0) 

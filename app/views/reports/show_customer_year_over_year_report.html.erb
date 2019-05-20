@@ -1,14 +1,30 @@
 <% content_for :javascript do -%>
 $(function() {
-  $('#country').change(function () {
-    if (this.value == 'CA') {
-      document.getElementById("company-ca").style.display = "block";
-      document.getElementById("company-us").style.display = "none";
+  usElem = document.getElementById("company-us");
+  caElem = document.getElementById("company-ca");
+  dropdownsPresent = usElem && caElem;
+  
+  function updateBoxes() {   
+    if (document.getElementById("country").value == 'CA') {
+      $('.us_only').prop('disabled', true);
+      if (dropdownsPresent) {
+        caElem.style.display = "block";
+        usElem.style.display = "none";
+      }
     } else {
-      document.getElementById("company-ca").style.display = "none";
-      document.getElementById("company-us").style.display = "block";
+      $('.us_only').prop('disabled', false);
+      if (dropdownsPresent) {
+        caElem.style.display = "none";
+        usElem.style.display = "block";}
     }
+  };  
+
+  $('#country').change(function () {
+    updateBoxes();
   });
+
+  // Ensure that "back" button doesn't create inconsistent state.
+  updateBoxes();
 });
 <%end-%>
 <% content_for :action_bar do %>
@@ -19,14 +35,14 @@ $(function() {
 <%=form_tag reports_run_customer_year_over_year_report_path, :id=>'frm_run' do -%>
 <div class="container">
   <div style="line-height: 2.5">
+    <div>
+      <%=field_row "Country", select_tag(:country, options_for_select(['US', 'CA'].map {|m| [m, m]}, 'US'))%>
+    </div>
     <%if current_user.sys_admin?%>
       <div style="line-height: 1.2">
         <span style="vertical-align: top"><%=field_row "Customer Number (one per line)", text_area_tag(:importer_customer_numbers, nil, rows:3) %></span>
       </div>
     <%else%>
-      <div>
-        <%=field_row "Country", select_tag(:country, options_for_select(['US', 'CA'].map {|m| [m, m]}, 'US'))%>
-      </div>
       <div id="company-us">
         <%=field_row "Importer(s)", select_tag(:importer_id_us, options_from_collection_for_select(@us_importers, 'id', :name_with_customer_number), multiple: true)%>
       </div>
@@ -60,10 +76,10 @@ $(function() {
   </div>
   <div style="margin-top: 20px">
     <b>Optional fields (check to include)</b><br>
-    <span style="margin-right:10px"><%=field_row "Cotton Fee", check_box_tag(:cotton_fee, 'true')%></span>
-    <span style="margin-right:10px"><%=field_row "Taxes", check_box_tag(:taxes, 'true')%></span>
-    <span style="margin-right:10px"><%=field_row "Other Fees", check_box_tag(:other_fees, 'true')%></span>
-    <%=field_row "ISF Fees", check_box_tag(:isf_fees, 'true')%><br>
+    <span style="margin-right:10px"><%=field_row "Cotton Fee", check_box_tag(:cotton_fee, 'true', false, class: 'us_only')%></span>
+    <span style="margin-right:10px"><%=field_row "Taxes", check_box_tag(:taxes, 'true', false, class: 'us_only')%></span>
+    <span style="margin-right:10px"><%=field_row "Other Fees", check_box_tag(:other_fees, 'true', false, class: 'us_only')%></span>
+    <%=field_row "ISF Fees", check_box_tag(:isf_fees, 'true', false, class: 'us_only')%><br>
     <%=field_row "Port Breakdown for Current Month", check_box_tag(:port_breakdown, 'true')%><br>
     <%=field_row "Line Graphs", check_box_tag(:line_graphs, 'true')%>
   </div>

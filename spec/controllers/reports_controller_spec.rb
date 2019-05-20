@@ -860,13 +860,13 @@ describe ReportsController do
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
                                           :settings=>{range_field:'some_date', importer_ids:[5], year_1:'2015', year_2:'2017',
-                                                      include_cotton_fee:true, include_taxes:false, include_other_fees:false,
+                                                      ca:false, include_cotton_fee:true, include_taxes:false, include_other_fees:false,
                                                       mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:true,
                                                       include_port_breakdown:false, group_by_mode_of_transport:true, include_line_graphs:true}, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:['5'], importer_id_ca:['6'],
-                                          year_1:'2015', year_2: '2017', cotton_fee:'true', taxes:'false', other_fees:nil,
-                                          mode_of_transport:['Sea'], entry_types:"01\r\n\r\n02\r\n", isf_fees:'true',
-                                          port_breakdown:'false', group_by_mode_of_transport:'true', line_graphs:'true'}
+                                                   year_1:'2015', year_2: '2017', cotton_fee:'true', taxes:'false', other_fees:nil,
+                                                   mode_of_transport:['Sea'], entry_types:"01\r\n\r\n02\r\n", isf_fees:'true',
+                                                   port_breakdown:'false', group_by_mode_of_transport:'true', line_graphs:'true'}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end
@@ -876,13 +876,13 @@ describe ReportsController do
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
-                                         :settings=>{range_field:'some_date', importer_ids:[6,7], year_1:'2015', year_2:'2017',
-                                                     include_cotton_fee:false, include_taxes:true, include_other_fees:true,
+                                         :settings=>{range_field:'some_date', importer_ids:[6,7], ca:true, year_1:'2015', year_2:'2017',
+                                                     include_cotton_fee:false, include_taxes:false,include_other_fees:false,
                                                      mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
                                                      include_port_breakdown:true, group_by_mode_of_transport:false, include_line_graphs:false}, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:['6','7'],
-                                          year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
-                                          mode_of_transport:['Sea'], entry_types:"01\r\n02", isf_fees:'false',
+                                          year_1:'2015', year_2: '2017', cotton_fee:nil, taxes:nil, other_fees:nil,
+                                          mode_of_transport:['Sea'], entry_types:"01\r\n02", isf_fees:nil,
                                           port_breakdown:'true', group_by_mode_of_transport:'false', line_graphs:'false'}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -922,8 +922,8 @@ describe ReportsController do
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
-                                                           :settings=>{range_field:'some_date', importer_ids:[importer_1.id,importer_2.id], year_1:'2015', year_2:'2017',
-                                                                       include_cotton_fee:false, include_taxes:true, include_other_fees:true,
+                                                           :settings=>{range_field:'some_date', importer_ids:[importer_1.id,importer_2.id], ca: false, 
+                                                                       year_1:'2015', year_2:'2017', include_cotton_fee:false, include_taxes:true, include_other_fees:true,
                                                                        mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
                                                                        include_port_breakdown:true, group_by_mode_of_transport:false, include_line_graphs:false}, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', importer_customer_numbers:" SYS01  \r\n\r\ninvalid_code\r\nSYS02\r\n",
