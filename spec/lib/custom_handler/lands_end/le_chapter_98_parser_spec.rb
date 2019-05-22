@@ -65,7 +65,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
     line.part_number = default_values[:part_style]
     line.country_of_origin = default_values[:country_origin]
     line.pieces = default_values[:pcs].to_d
-    line.hts = '9801001098'
+    line.hts = '9801002600'
     line.foreign_value = default_values[:value].to_d
     line.mid = 'XORUSFAR6220LAS'
     line

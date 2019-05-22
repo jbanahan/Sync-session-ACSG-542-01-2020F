@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeChapter98Parser
     roll_up_hash['part_style'] = lines.first[12]
     roll_up_hash['pcs'] = 0
     roll_up_hash['mid'] = 'XORUSFAR6220LAS'
-    roll_up_hash['tariff_number'] = '9801001098'
+    roll_up_hash['tariff_number'] = '9801002600'
     roll_up_hash['cotton_fee'] = ''
     roll_up_hash['value'] = 0
     roll_up_hash['qty1'] = ''
