@@ -354,5 +354,22 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       # Container number should be included here, since it's just LCL, not Air mode.
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "ABCD1234567890")
     end
+
+    it "sends Dock Fees" do
+      broker_invoice_line_container_charges.broker_invoice_lines.last.destroy
+      broker_invoice_line_container_charges.reload
+      broker_invoice_line_container_charges.broker_invoice_lines.first.update_attributes! charge_code: "13"
+      entry.reload
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      x = REXML::Document.new(captured_xml.first).root
+      inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '974']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "200.0")
+    end
   end
 end

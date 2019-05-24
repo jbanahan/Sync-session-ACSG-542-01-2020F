@@ -106,7 +106,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
       "14" => "C080",
       "33" => "0545",
       "255" => "0027",
-      "22" => "G740"
+      "22" => "G740",
+      "13" => "974"
     }
   end
 
