@@ -341,4 +341,35 @@ module Helpers
       data
     end
   end
+
+  def populate_custom_values object, custom_definitions
+    # Most specs that utilize cdefs reference the custom definitions of the class under test,
+    # that method returns a hash of identifiers to the custom definitions, that's what we're 
+    # possible expecting and handling here.
+    if custom_definitions.is_a?(Hash)
+      custom_definitions = custom_definitions.values
+    end
+
+    obj_class = object.class.to_s
+    custom_definitions.each do |cd|
+      next unless cd.core_module.class_name == obj_class
+
+      value = case cd.data_type.to_s
+      when "string", "text"
+        cd.cdef_uid.to_s
+      when "date"
+        cd.created_at.to_date
+      when "datetime"
+        cd.created_at
+      when "decimal", "integer"
+        cd.id
+      when "boolean"
+        true
+      else
+        raise "Unexpected CustomDefinition data type #{cd.data_type.to_s}"
+      end
+      object.update_custom_value! cd, value
+    end
+    nil
+  end
 end

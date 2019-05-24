@@ -103,6 +103,7 @@ module OpenChain
           :origin_wildlife => {label: "Origin of Wildlife", data_type: :string, module_type: "Product", cdef_uid: "prod_origin_wildlife"},
           :semi_precious => {label: "Semi-Precious", data_type: :boolean, module_type: "Product", cdef_uid: "prod_semi_precious"},
           :semi_precious_type => {label: "Type of Semi-Precious", data_type: :string, module_type: "Product", cdef_uid: "prod_semi_precious_type"},
+          :precious_semi_precious => {label: "Precious or Semi-Precious", data_type: :string, module_type: "Product", cdef_uid: "prod_precious_semi_precious"},
           :cites => {label: "CITES", data_type: :boolean, module_type: "Product", cdef_uid: "prod_cites"},
           :fish_wildlife => {label: "Fish & Wildlife", data_type: :boolean, module_type: "Product", cdef_uid: "prod_fish_wildlife"},
           :msl_fiber_status => {label: "MSL Fiber Status", data_type: :string, module_type: "Product", cdef_uid: "prod_msl_fiber_status"},
@@ -167,6 +168,8 @@ module OpenChain
           :cost_of_component => {label: "Cost of Component", data_type: :string, module_type: "Product", cdef_uid: "prod_cost_of_component"},
           :weight_of_components => {label: "Weight of Components", data_type: :string, module_type: "Product", cdef_uid: "prod_weight_of_components"},
           :material_content_of_posts_earrings => {label: "Material Content of Posts - Earrings", data_type: :string, module_type: "Product", cdef_uid: "prod_material_content_of_posts_earrings"},
+          :coated_filled_plated => {label: "Coated, Filled or Plated", data_type: :string, module_type: "Product", cdef_uid: "prod_coated_filled_plated"},
+          :type_coated_filled_plated => {label: "Type of Coating, Filling or Plating", data_type: :string, module_type: "Product", cdef_uid: "prod_coated_filled_plated_type"},
           :filled => {label: "Filled", data_type: :boolean, module_type: "Product", cdef_uid: "prod_filled"},
           :type_of_fill => {label: "Type of Fill", data_type: :string, module_type: "Product", cdef_uid: "prod_type_of_fill"},
           :coated => {label: "Is the fabric coated?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_coated"},
@@ -289,7 +292,13 @@ module OpenChain
           :height_in => {label: "Height (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_height_in"},
           :rl_merchandise_division_description => {label: "RL Merchandise Division Description", data_type: :string, module_type: "Product", cdef_uid: "prod_rl_merchandise_division_description"},
           :depth_cm => {label: "Depth (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_depth_cm"},
-          :bottom_width_cm => {label: "Bottom Width (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_bottom_width_cm"}
+          :bottom_width_cm => {label: "Bottom Width (cm)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_bottom_width_cm"},
+          :length_in => {label: "Length (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_length_in"},
+          :width_in => {label: "Width (in.)", data_type: :decimal, module_type: "Product", cdef_uid: "prod_width_in"},
+          :japanese_leather_definition => {label: "Japanese Leather Definition", data_type: :boolean, module_type: "Product", cdef_uid: "prod_japanese_leather_definition"},
+          :eu_sanitation_certificate => {label: "EU Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_eu_sanitation_certificate"},
+          :japan_sanitation_certificate => {label: "Japan Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_japan_sanitation_certificate"},
+          :korea_sanitation_certificate => {label: "Korea Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_korea_sanitation_certificate"}          
         }
 
         included do |base|

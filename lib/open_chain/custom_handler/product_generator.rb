@@ -56,7 +56,7 @@ module OpenChain
 
         has_fingerprint = self.respond_to? :trim_fingerprint
         synced_products = {}
-        rt = Product.connection.execute query
+        rt = execute_query(query)
         header_row = {}
         if include_headers
           rt.fields.each_with_index do |f,i|
@@ -426,6 +426,13 @@ module OpenChain
             q_alias = alternate_alias.nil? ? (cd ? " as `#{cd.label}`" : " as `Custom #{cd_id}`") : " as `#{alternate_alias}`"    
           end
           q_alias
+        end
+
+        def execute_query query
+          # Execute the search query against the read replica
+          distribute_reads do 
+            return Product.connection.execute query
+          end
         end
     end
   end

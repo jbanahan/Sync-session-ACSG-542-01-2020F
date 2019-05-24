@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::ProductGenerator do
 
   class FakeProductGenerator < OpenChain::CustomHandler::ProductGenerator
@@ -524,5 +522,13 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(xml.name).to eq "ROOT_ELEMENT"
     end
 
+  end
+
+  describe "execute_query" do
+    it "uses distrbute_reads" do
+      expect(subject).to receive(:distribute_reads).and_yield
+      result = subject.send(:execute_query, "SELECT now()")
+      expect(result.first[0]).to be_within(1.minute).of(Time.zone.now)
+    end
   end
 end
