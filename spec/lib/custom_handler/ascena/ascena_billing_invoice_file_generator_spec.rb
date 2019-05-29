@@ -216,7 +216,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(ftp_opts[:server]).to eq "connect.vfitrack.net"
       expect(ftp_opts[:username]).to eq "www-vfitrack-net"
       expect(ftp_opts[:folder]).to eq "to_ecs/_ascena_billing"
-      expect(ftp_opts[:remote_file_name]).to eq "ASC_DUTY_INVOICE_AP_20170113121009000.dat"
+      expect(ftp_opts[:remote_file_name]).to eq "ASC_DUTY_INVOICE_AP_INVOICENUMBER_20170113121009000.dat"
 
       # Make sure the sync record is created...
       broker_invoice.reload

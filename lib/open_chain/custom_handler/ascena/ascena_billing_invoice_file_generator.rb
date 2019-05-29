@@ -62,9 +62,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         sr = broker_invoice.sync_records.where(trading_partner: sync_type).first_or_initialize
         
         if sync_type == DUTY_SYNC
-          send_file(duty_file, sr, true)
+          send_file(duty_file, invoice_number, sr, duty_file: true)
         elsif sync_type == BROKERAGE_SYNC
-          send_file(brokerage_file, sr)
+          send_file(brokerage_file, invoice_number, sr)
         end
 
         sr.sent_at = Time.zone.now
@@ -73,8 +73,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       end
     end
 
-    def send_file lines, sync_record, duty_file = false
-      filename = "ASC_#{duty_file ? "DUTY" : "BROKER"}_INVOICE_AP_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y%m%d%H%M%S%L")}.dat"
+    def send_file lines, invoice_number, sync_record, duty_file: false
+      filename = "ASC_#{duty_file ? "DUTY" : "BROKER"}_INVOICE_AP_#{invoice_number}_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y%m%d%H%M%S%L")}.dat"
       Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |f|
         Attachment.add_original_filename_method f, filename
 
