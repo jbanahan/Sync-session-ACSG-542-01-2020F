@@ -86,8 +86,9 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryPartsComparator
         data = {po_number: po_number, part_number: part_no, importer_id: importer.id, tariffs: Set.new}
         json_child_entities(line, "CommercialInvoiceTariff").each do |tariff|
           hts = mf(tariff, 'cit_hts_code').to_s
-          # Skip any tariff rows that are from chapter 98
-          next if hts.starts_with?("98") || hts.blank?
+          # Skip any tariff rows that are from chapter 98 or special tariffs
+          next if hts.blank? || ["98", "9902", "9903", "9908"].any? {|x| hts.starts_with?(x) }
+
           data[:tariffs] << hts.to_s.gsub(".", "")
           data[:tariff_description] = mf(tariff, 'cit_tariff_description').to_s
 

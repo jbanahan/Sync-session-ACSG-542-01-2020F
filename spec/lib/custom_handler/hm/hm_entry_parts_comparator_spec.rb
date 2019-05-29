@@ -40,14 +40,14 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
     let (:cdefs) { subject.cdefs }
     let (:us) { Country.where(iso_code: "US").first_or_create! }
     let (:official_tariff) { OfficialTariff.create! country_id: us.id, hts_code: "1234567890"}
+    let (:invoice) { Factory(:commercial_invoice, entry: entry, invoice_number: "12345") }
+    let (:invoice_line) { Factory(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5) }
+    let (:invoice_tariff) { Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description") }
 
     before :each do
       us
       official_tariff
-      invoice = Factory(:commercial_invoice, entry: entry, invoice_number: "12345")
-      invoice_line = Factory(:commercial_invoice_line, commercial_invoice: invoice, part_number: "PART", quantity: 5)
-      invoice_tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 10, hts_code: "1234567890", tariff_description: "Description")
-      
+      invoice_tariff
     end
 
     context "with default snapshot" do
@@ -151,6 +151,21 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
           subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
           prod = Product.where(importer_id: importer.id).first
           expect(prod.entity_snapshots.length).to eq 1
+        end
+      end
+
+      context "with 'special' tariffs" do
+        ["9802", "9902", "9903", "9908"].each do |tariff|
+          before :each do 
+            invoice_line.commercial_invoice_tariffs.create! entered_value: 10, hts_code: "1234567890", tariff_description: "Description"
+            invoice_tariff.update_attributes! entered_value: 0, hts_code: tariff, tariff_description: "Special Tariff"
+          end
+
+          it "skips special tariff number" do
+            subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
+            prod = Product.first
+            expect(prod.classifications.first.tariff_records.first.hts_1).to eq "1234567890"
+          end
         end
       end
     end
