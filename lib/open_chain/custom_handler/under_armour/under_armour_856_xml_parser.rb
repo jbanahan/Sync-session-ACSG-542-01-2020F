@@ -120,9 +120,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     shipment.est_delivery_date = parse_date(ship_xml, "DeliveryDate")
     # UA refers to this value as the ASN #
     shipment.importer_reference = ship_xml.text "ExtDocNumber"
-    # The DocNumber (IBD# in UA's world) will eventually be pulled onto 315's for UA so we need to record it in the shipment
-    # Booking Number is a good enough spot for it (even if it's not actually a booking #)
-    shipment.booking_number = ship_xml.text "DocNumber"
+    # The Original ASN Number (IBD# in UA's world) will eventually be pulled onto 315's for UA so we need to record it in the shipment.
+    # Booking Number is a good enough spot for it (even if it's not actually a booking #).
+    shipment.booking_number = REXML::XPath.first(ship_xml, "Order/Carton/CartonDetails/CustomerField/CustomFieldValue[@CustomFieldName='OriginalASN']").try :text
 
     shipment
   end

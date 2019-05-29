@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(shipment).not_to be_nil
 
       expect(shipment.importer_reference).to eq "ASN0001045"
-      expect(shipment.booking_number).to eq "6000000556"
+      expect(shipment.booking_number).to eq "6001580643"
       expect(shipment.master_bill_of_lading).to eq "MBOL1938"
       expect(shipment.house_bill_of_lading).to eq "HBOL1938"
       expect(shipment.vessel_carrier_scac).to eq "SCAC"
@@ -113,22 +113,22 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       it "appends error if trailer is blank" do
         data.gsub!("<Trailer>MBOL1938</Trailer>", "<Trailer></Trailer>")
         subject.process_shipment xml, user, "bucket", "file.xml", errors, log
-        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."]
-        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: No container number value found in 'Trailer' element."
+        expect(errors).to eq ["IBD # 6001580643 / ASN # ASN0001045: No container number value found in 'Trailer' element."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_WARNING)[0].message).to eq "IBD # 6001580643 / ASN # ASN0001045: No container number value found in 'Trailer' element."
       end
 
       it "appends error if po couldn't be found" do
         order.destroy
         subject.process_shipment xml, user, "bucket", "file.xml", errors, log
-        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."]
-        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: Failed to find Order # 4200001938."
+        expect(errors).to eq ["IBD # 6001580643 / ASN # ASN0001045: Failed to find Order # 4200001938."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6001580643 / ASN # ASN0001045: Failed to find Order # 4200001938."
       end
 
       it "appends error if order line couldn't be found" do
         order.order_lines.destroy_all
         subject.process_shipment xml, user, "bucket", "file.xml", errors, log
-        expect(errors).to eq ["IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."]
-        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6000000556 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."
+        expect(errors).to eq ["IBD # 6001580643 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."]
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IBD # 6001580643 / ASN # ASN0001045: Failed to find SKU 1242757-001-XL on Order 4200001938."
       end
     end
 

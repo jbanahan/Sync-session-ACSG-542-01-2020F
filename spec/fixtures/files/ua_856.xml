@@ -96,6 +96,12 @@
           </PackQty>
           <Order>6000000556</Order>
           <OrderLine>900001</OrderLine>
+          <CustomerField>
+            <CustomFieldValue CustomFieldName="SomethingElse">WrongValue</CustomFieldValue>
+          </CustomerField>
+          <CustomerField>
+            <CustomFieldValue CustomFieldName="OriginalASN">6001580643</CustomFieldValue>
+          </CustomerField>
         </CartonDetails>
       </Carton>
       <Carton>
@@ -126,6 +132,9 @@
           </PackQty>
           <Order>6000000556</Order>
           <OrderLine>900001</OrderLine>
+          <CustomerField>
+            <CustomFieldValue CustomFieldName="OriginalASN">6001580644</CustomFieldValue>
+          </CustomerField>
         </CartonDetails>
       </Carton>
       <!-- This carton exists to make sure we're using the Order/OrderLine values to only pull those cartons that match to the order detail being processed. -->
@@ -157,6 +166,9 @@
           </PackQty>
           <Order>6000000556</Order>
           <OrderLine>900002</OrderLine>
+          <CustomerField>
+            <CustomFieldValue CustomFieldName="OriginalASN">6001580645</CustomFieldValue>
+          </CustomerField>
         </CartonDetails>
       </Carton>
     </Order>
