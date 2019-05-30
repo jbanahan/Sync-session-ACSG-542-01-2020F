@@ -292,7 +292,7 @@ module OpenChain
     def send_slack_failure master_setup, error=nil
       begin
         msg = error_message master_setup, error
-        slack_client.send_message('it-dev',msg,{icon_emoji:':loudspeaker:'})
+        slack_client.send_message('it-dev-notifications',msg,{icon_emoji:':loudspeaker:'})
       rescue => e
         #don't interrupt, just log
         e.log_me

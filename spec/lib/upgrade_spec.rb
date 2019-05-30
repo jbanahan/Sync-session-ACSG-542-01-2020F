@@ -63,7 +63,7 @@ describe OpenChain::Upgrade do
 
     it "forwards error message to slack" do
       expect(subject).to receive(:slack_client).and_return slack
-      expect(slack).to receive(:send_message).with('it-dev', "<!group>: Upgrade failed for server: #{`hostname`.strip}, instance: #{master_setup.system_code}, error: Error Message", {icon_emoji:':loudspeaker:'})
+      expect(slack).to receive(:send_message).with('it-dev-notifications', "<!group>: Upgrade failed for server: #{`hostname`.strip}, instance: #{master_setup.system_code}, error: Error Message", {icon_emoji:':loudspeaker:'})
       
       subject.send_slack_failure master_setup, error
     end
