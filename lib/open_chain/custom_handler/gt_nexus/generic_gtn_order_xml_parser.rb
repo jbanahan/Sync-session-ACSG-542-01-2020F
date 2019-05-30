@@ -418,9 +418,9 @@ module OpenChain; module CustomHandler; module GtNexus; class GenericGtnOrderXml
   def set_order_line_information order, order_line, item_xml
     base_item = base_item_element(item_xml)
 
-    order_line.quantity = BigDecimal(base_item.text "quantity")
+    order_line.quantity = BigDecimal(base_item.text("quantity").to_s)
     order_line.unit_of_measure = base_item.text "unitOfMeasureCode"
-    order_line.price_per_unit = BigDecimal(item_xml.text "itemPrice/pricePerUnit")
+    order_line.price_per_unit = BigDecimal(item_xml.text("itemPrice/pricePerUnit").to_s)
     order_line.hts = base_item.text "customsClassification/classificationNumber"
 
     nil
