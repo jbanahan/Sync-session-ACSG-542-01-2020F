@@ -315,7 +315,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       db_start_time = start_time.to_s(:db)
 
       qry = <<-QRY
-SELECT SUM(c.amount)
+SELECT IFNULL(SUM(c.amount), 0)
 FROM intacct_alliance_exports e
 INNER JOIN intacct_checks c on e.id = c.intacct_alliance_export_id
 WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_CHECK}' and e.data_received_date >= '#{db_start_time}' and c.intacct_upload_date IS NULL
@@ -327,10 +327,10 @@ QRY
       # The bit in the middle w/ the VFI/LMD stuff is excluding any receivables for the LMD company that
       # represent the internal billing process we do for Freight Shipments.
       qry = <<-QRY
-SELECT SUM(CASE 
+SELECT IFNULL(SUM(CASE 
 WHEN r.receivable_type like '%#{IntacctReceivable::CREDIT_INVOICE_TYPE}%'  THEN l.amount * -1
 ELSE l.amount
-END) FROM intacct_alliance_exports e 
+END),0) FROM intacct_alliance_exports e 
 INNER JOIN intacct_receivables r on r.intacct_alliance_export_id = e.id AND (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' OR (r.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' and r.customer_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE}'))
 INNER JOIN intacct_receivable_lines l on r.id = l.intacct_receivable_id
 WHERE e.export_type = '#{IntacctAllianceExport::EXPORT_TYPE_INVOICE}' AND e.data_received_date >= '#{db_start_time}'  and r.intacct_upload_date IS NULL
@@ -342,7 +342,7 @@ QRY
       # The bit in the middle below excludes the payables generated from VFI to LMD as part of the inter-company
       # freight billing process.
       qry = <<-QRY
-SELECT SUM(l.amount)
+SELECT IFNULL(SUM(l.amount), 0)
 FROM intacct_alliance_exports e
 INNER JOIN intacct_payables p on p.intacct_alliance_export_id = e.id and (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE}' or (p.company = '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE}' and p.vendor_number <> '#{OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_LMD_VENDOR_CODE}'))
 INNER JOIN intacct_payable_lines l on p.id = l.intacct_payable_id
