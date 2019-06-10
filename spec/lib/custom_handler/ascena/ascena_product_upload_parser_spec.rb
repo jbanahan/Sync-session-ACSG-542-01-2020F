@@ -114,6 +114,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect(s.context).to eq "file.xls"
     end
 
+    it "creates Maurices record when brand is 'MAU'" do
+      Factory(:importer, system_code: "MAUR")
+      file_row[0] = "MAU"
+
+      expect(subject).to receive(:foreach).with(custom_file, skip_headers: true).exactly(2).times.and_yield file_row
+
+      subject.process_file custom_file, user
+
+      prod = Product.where(unique_identifier: "MAUR-Style").first
+      expect(prod).not_to be_nil
+    end
+
+    it "raises exception if Maurices importer record missing" do
+      file_row[0] = "MAU"
+
+      expect(subject).to receive(:foreach).with(custom_file, skip_headers: true).exactly(2).times.and_yield file_row
+      expect{ subject.process_file custom_file, user }.to raise_error "Unable to find Maurices company account."
+    end
+
     it "doesn't save or snapshot products that haven't changed any information" do
       # The easiest way to do this is just process the file twice...once using a time that's 
       # in the past, and then the current time and then checking that the product's updated_at 

@@ -6,6 +6,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
+  attr_accessor :importer
+
   def initialize custom_file
     @custom_file = custom_file
   end
@@ -96,7 +98,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
       # Basically, at this point, we're using the key as the style and then extracting the garment type and hts from
       # each row and putting them in the classification notes field (sort them alphabetically based on the garment type)
       classification_notes = rows.map {|row| [text_value(row[2]), hts_val(row)]}.sort {|a, b| a[0].to_s <=> b[0].to_s }.map {|v| "#{v[0]}: #{v[1].hts_format}"}.join "\n "
-
       process_file_row(user, custom_file.attached_file_name, rows.first, style, nil, classification_notes)
     end
 
@@ -141,6 +142,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     # the standard ActiveRecord "changed?" method call doesn't really work well for determining if the product
     # changed...so we're doing it manually.
     changed = MutableBoolean.new(false)
+    self.importer = text(row[0]).upcase == "MAU" ? maurices : ascena
     find_or_create_product(style, changed) do |product|
       product.name = text(row[6])
 
@@ -191,7 +193,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def find_or_create_product style, flag
-    unique_identifier = "ASCENA-#{style}"
+    unique_identifier = "#{importer.system_code}-#{style}"
     product = nil
     Lock.acquire("Product-#{unique_identifier}") do 
       product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first_or_initialize
@@ -206,10 +208,16 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     end
   end
 
-  def importer
-    @importer ||= Company.where(system_code: "ASCENA", importer: true).first
-    raise "Unable to find Ascena company account." unless @importer
-    @importer
+  def ascena
+    @ascena ||= Company.where(system_code: "ASCENA", importer: true).first
+    raise "Unable to find Ascena company account." unless @ascena
+    @ascena
+  end
+
+  def maurices
+    @maurices ||= Company.where(system_code: "MAUR", importer: true).first
+    raise "Unable to find Maurices company account." unless @maurices
+    @maurices
   end
 
   def us
