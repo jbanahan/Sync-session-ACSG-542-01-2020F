@@ -33,7 +33,9 @@
 <% end %>
 <% content_for :action_bar do -%>
   <% unless @company.locked? %>
-    <button id='btn_new'>New</button>
+    <% if !(@company.master? && MasterSetup.get.custom_feature?("WWW")) %>
+      <button id='btn_new'>New</button>
+    <% end %>
     <%if current_user.admin? -%>
       <button id='btn_from_template'>New From Template</button>
       <button id='btn_bulk'>Bulk</button>

@@ -321,12 +321,13 @@ class UsersController < ApplicationController
       begin
         User.transaction do 
           results.each do |res|
+            password = res.delete('password')
             res.merge! params[:user]
             u = company.users.build res
             # Password is no longer an accessible attribute, so set it
             # manually. Setting the password here updates the encrypted password
             # as well.
-            u.password = res['password']
+            u.password = password
             u.save!
             u.create_snapshot(current_user)
             count += 1
@@ -474,20 +475,24 @@ class UsersController < ApplicationController
   def add_copied_permissions_to_user source_user, destination_user
     attribs = source_user.attributes
                          .symbolize_keys
-                         .extract!(:order_view, :order_edit, :order_delete, :order_comment, :order_attach, 
+                         .extract!(:time_zone, :disabled, :disallow_password, :portal_mode, :tariff_subscribed, :support_agent, :system_user,
+                                   :order_view, :order_edit, :order_delete, :order_comment, :order_attach, 
                                    :shipment_view, :shipment_edit, :shipment_delete, :shipment_comment, :shipment_attach, 
                                    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_comment, :sales_order_attach, 
                                    :delivery_view, :delivery_edit, :delivery_delete, :delivery_comment, :delivery_attach, 
                                    :product_view, :product_edit, :product_delete, :product_comment, :product_attach, 
                                    :classification_edit, 
+                                   :variant_edit,
                                    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach, 
                                    :entry_attach, :entry_comment, :entry_edit, :entry_view, 
-                                   :broker_invoice_edit, :broker_invoice_view, 
+                                   :broker_invoice_edit, :broker_invoice_view,                                    
                                    :commercial_invoice_edit, :commercial_invoice_view, 
+                                   :statement_view,
                                    :drawback_edit, :drawback_view, 
                                    :survey_edit, :survey_view, 
                                    :project_edit, :project_view, 
-                                   :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view)
+                                   :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view,
+                                   :vfi_invoice_view)
     destination_user.update_attributes(attribs)
   end
 end

@@ -109,7 +109,7 @@
         <td class='hover'><span class='light_text'>n/a</span></td>
       </tr>
       <tr class='permission_row'>
-        <td class='hover label_cell'><div>Customer Invoice</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
+        <td class='hover label_cell'><div>Commercial Invoice</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
         <td class='hover'><%= permission_box user, 'view_entries?', :commercial_invoice_view, f %></td>
         <td class='hover'><%= permission_box user, 'edit_entries?', :commercial_invoice_edit, f %></td>
         <td class='hover'><span class='light_text'>n/a</span></td>
@@ -119,7 +119,7 @@
     <% end %>
     <% if ms.customs_statements_enabled? -%>
       <tr class='permission_row'>
-        <td class='hover label_cell'><div>Customs Statements</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
+        <td class='hover label_cell'><div>Customs Statement</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
         <td class='hover'><%= permission_box user, 'view_statements?', :statement_view, f %></td>
         <td class='hover'><span class='light_text'>n/a</span></td>
         <td class='hover'><span class='light_text'>n/a</span></td>

@@ -157,7 +157,7 @@ class User < ActiveRecord::Base
     :support_agent,
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
-    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :group_ids,
+    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :disabled, :group_ids,
     :portal_mode,
     :system_user, :statement_view, :department
 
