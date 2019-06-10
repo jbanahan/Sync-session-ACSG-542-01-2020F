@@ -69,12 +69,12 @@ root.OCQuickSearch =
       bus.outerHTML
 
     attachmentBuilder = (a) ->
-      label = document.createTextNode(a.type + ' - ' + a.name)
-      if (a.type + ' - ' + a.name).length > 13
-        smlabel = document.createTextNode((' ' + a.type + ' - ' + a.name).substring(0, 11) + '...' )
-      else
-        smlabel = ' ' + label.textContent
-
+      attNamePrefix = if a.type then (a.type + ' - ') else ""
+      label = document.createTextNode(attNamePrefix + a.name)
+      smLabelStr = ' ' + attNamePrefix + a.name
+      smLabelStr = smLabelStr.substring(0, 11) + '...' if (attNamePrefix + a.name).length > 13
+      smlabel = document.createTextNode(smLabelStr)
+      
       att = document.createElement('a')
       att.setAttribute('href', a.download_link)
       att.setAttribute('title', label.textContent)
