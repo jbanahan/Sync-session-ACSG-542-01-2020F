@@ -15,6 +15,8 @@ describe DelayedJobManager do
     end
   end
 
+  let! (:master_setup) { stub_master_setup }
+
   let (:cache) {
     MockMemcache.new
   }

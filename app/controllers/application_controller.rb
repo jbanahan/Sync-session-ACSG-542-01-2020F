@@ -54,9 +54,12 @@ class ApplicationController < ActionController::Base
 
   def prep_exception_notifier
     #prep for exception notification
-    request.env["exception_notifier.exception_data"] = {
-      :user => current_user
-    } if current_user
+    data = {
+      server_name: InstanceInformation.server_name,
+      server_role: InstanceInformation.server_role
+    }
+    data[:user] = current_user if current_user
+    request.env["exception_notifier.exception_data"] = data
   end
 
   def help

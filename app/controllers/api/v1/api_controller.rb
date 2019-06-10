@@ -8,6 +8,7 @@ module Api; module V1; class ApiController < ActionController::Base
   before_filter :set_master_setup
   before_filter :log_request
   before_filter :log_run_as_request
+  before_filter :prep_exception_notifier
   around_filter :set_user_settings
   before_filter :new_relic
   before_filter :prep_model_fields
@@ -127,9 +128,7 @@ module Api; module V1; class ApiController < ActionController::Base
       User.current = user
       # Set the current user into our notifier data so we know which user's
       # request may have caused an error if we get exceptions from the request.
-      request.env["exception_notifier.exception_data"] = {
-        :user =>  user
-      }
+      request.env["exception_notifier.exception_data"][:user] = user
 
       @default_tz = Time.zone
       Time.zone = User.current.time_zone
@@ -182,9 +181,18 @@ module Api; module V1; class ApiController < ActionController::Base
         NewRelic::Agent.add_custom_attributes attrs
       end
     end
+
     def prep_model_fields
       ModelField.reload_if_stale
       ModelField.disable_stale_checks = true
+    end
+
+    def prep_exception_notifier
+      #prep for exception notification
+      request.env["exception_notifier.exception_data"] = {
+        server_name: InstanceInformation.server_name,
+        server_role: InstanceInformation.server_role
+      }
     end
 
 end; end; end

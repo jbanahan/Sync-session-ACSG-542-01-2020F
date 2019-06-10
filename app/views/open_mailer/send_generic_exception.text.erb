@@ -1,12 +1,13 @@
-<%-rq = MasterSetup.get.request_host%>
-<%=master_setups_url host:(rq.blank? ? 'localhost:3000' : rq)%>
+<%= @master_setup_link %>
 
 Error: <%=@exception%>
 Message: <%=@error_message%>
-Master UUID: <%=MasterSetup.get.uuid%>
+Master UUID: <%=@uuid%>
 Time: <%=@time%>
-Root: <%=Rails.root.to_s%>
+Root: <%=@root%>
 Host: <%= @hostname %>
+Server Name: <%= @server_name %>
+Server Role: <%= @server_role %>
 Process ID: <%= @process_id %>
 
 Additional Messages:

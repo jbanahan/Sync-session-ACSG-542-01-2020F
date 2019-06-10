@@ -584,6 +584,20 @@ EMAIL
   end
 
   describe "send_generic_exception", email_log: true do
+    let! (:master_setup) { 
+      ms = stub_master_setup
+      allow(MasterSetup).to receive(:instance_directory).and_return "/path/to/root"
+      allow(ms).to receive(:uuid).and_return "uuid"
+      allow(MasterSetup).to receive(:hostname).and_return "hostname"
+      allow(ms).to receive(:request_host).and_return "request_host"
+      ms
+    }
+
+    let! (:instance_information) {
+      allow(InstanceInformation).to receive(:server_role).and_return "Test Role"
+      allow(InstanceInformation).to receive(:server_name).and_return "test-server"
+    }
+
     it "should send an exception email (even if instance configured to suppress it)" do
       allow_any_instance_of(OpenMailer).to receive(:suppress_all_emails?).and_return true
 
@@ -595,15 +609,22 @@ EMAIL
         f.flush
         f.rewind
 
-        OpenMailer.send_generic_exception(error, ["My Message"], nil, nil, [f.path]).deliver
+        now = Time.zone.now
+        Timecop.freeze(now) {
+          OpenMailer.send_generic_exception(error, ["My Message"], nil, nil, [f.path]).deliver
+        }
 
         mail = ActionMailer::Base.deliveries.pop
         source = mail.body.raw_source
+        expect(source).to include("http://request_host/master_setups")
         expect(source).to include("Error: #{error}")
         expect(source).to include("Message: #{error.message}")
-        expect(source).to include("Master UUID: #{MasterSetup.get.uuid}")
-        expect(source).to include("Root: #{Rails.root.to_s}")
-        expect(source).to include("Host: #{Socket.gethostname}")
+        expect(source).to include("Master UUID: uuid")
+        expect(source).to include("Time: #{now.in_time_zone("America/New_York").strftime("%Y-%m-%d %H:%M:%S %Z %z")}")
+        expect(source).to include("Root: /path/to/root")
+        expect(source).to include("Host: hostname")
+        expect(source).to include("Server Name: test-server")
+        expect(source).to include("Server Role: Test Role")
         expect(source).to include("Process ID: #{Process.pid}")
         expect(source).to include("Additional Messages:")
         expect(source).to include("My Message")
@@ -633,10 +654,6 @@ EMAIL
     end
 
     it "should send an exception email with a large attachment warning" do
-      # This is just primarily a test to make sure regressions weren't introduced
-      # when the save_large_attachment method was modified
-      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
-
       Tempfile.open(["file", "txt"]) do |f|
         e = nil
         begin
@@ -660,7 +677,7 @@ EMAIL
 
         body = <<EMAIL
 An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
-Click <a href='http://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
+Click <a href='http://request_host/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EMAIL
         expect(mail.body.raw_source).to match(body)

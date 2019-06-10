@@ -213,7 +213,7 @@ EOS
   def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
     @imported_file = imported_file
     @source = source
-    mail(:to=>"bug@vandegriftinc.com",:subject =>"[VFI Track Exception] - Imported File Error") do |format|
+    mail(:to=>BUG_EMAIL,:subject =>"[VFI Track Exception] - Imported File Error") do |format|
       format.text
     end
   end
@@ -222,7 +222,7 @@ EOS
     @user = user
     @error = error
     @params = params
-    mail(:to => "bug@vandegriftinc.com", :subject => "[VFI Track Exception] Search Failure") do |format|
+    mail(:to => BUG_EMAIL, :subject => "[VFI Track Exception] Search Failure") do |format|
       format.text
     end
   end
@@ -234,18 +234,23 @@ EOS
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages.nil? ? [] : additional_messages
-    @time = Time.now.in_time_zone("Eastern Time (US & Canada)").inspect
-    @hostname = Socket.gethostname
+    @time = Time.now.in_time_zone("America/New_York").strftime("%Y-%m-%d %H:%M:%S %Z %z")
+    @hostname = MasterSetup.hostname
+    @server_name = InstanceInformation.server_name
+    @server_role = InstanceInformation.server_role
+    @root = MasterSetup.instance_directory
     @process_id = Process.pid
+    @uuid = MasterSetup.get.uuid
+    @master_setup_link = master_setups_url(host: MasterSetup.get.request_host, protocol: LINK_PROTOCOL)
     local_attachments = {}
     attachment_paths.each do |ap|
-      if save_large_attachment ap, 'bug@vandegriftinc.com'
+      if save_large_attachment ap, BUG_EMAIL
         @additional_messages << @body_text
       else
         local_attachments[attachment_filename(ap)] = create_attachment ap
       end
     end
-    m = mail(:to=>"bug@vandegriftinc.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
+    m = mail(:to=>BUG_EMAIL, :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
       format.text
     end
 
