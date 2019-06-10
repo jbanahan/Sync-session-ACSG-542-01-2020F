@@ -73,12 +73,22 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
   def metric_weight amount, uom
     return nil unless amount
 
-    case uom.to_s.upcase
+    weight = case uom.to_s.upcase
     when "LB", "LBS"
-      (BigDecimal("0.453592") * amount).round(2)
+      (amount * BigDecimal("0.453592")).round(2)
+    when "G" # Grams
+      (amount / BigDecimal("1000")).round(2)
     else
       amount
     end
+
+    # Since Kewill doesn't support decimal weights via the EDI feed, we're going to round anything
+    # nonzero under 1 pound up to 1 pound.
+    if weight.nonzero? && weight < 1
+      weight = BigDecimal("1")
+    end
+
+    weight
    end
 
   def generator

@@ -6,7 +6,7 @@ module OpenChain; module ModelFieldDefinition; module InvoiceLineFieldDefinition
       [3,:invln_early_pay_disc, :early_pay_discount, "Discount - Early Payment", {datatype: :decimal}],
       [4,:invln_first_sale, :first_sale, "First Sale", {datatype: :decimal}],
       [5,:invln_fw, :fish_wildlife, "Fish and Wildlife", {datatype: :decimal}],
-      [6,:invln_gross_weight, :gross_weight, "Gross Weight", {datatype: :integer}],
+      [6,:invln_gross_weight, :gross_weight, "Gross Weight", {datatype: :decimal}],
       [7,:invln_gross_weight_uom, :gross_weight_uom, "Gross Weight UOM", {datatype: :string}],
       [8,:invln_hts_number, :hts_number, "HTS Number", {datatype: :string, 
           export_lambda: lambda {|t| t.hts_number.blank? ? "" : t.hts_number.hts_format},
@@ -39,7 +39,15 @@ module OpenChain; module ModelFieldDefinition; module InvoiceLineFieldDefinition
       [32,:invln_container_number, :container_number, "Container Number", {datatype: :string}],
       [33,:invln_related_parties, :related_parties, "Related Parties?", {datatype: :boolean}],
       [34,:invln_spi, :spi, "Special Program", {datatype: :string}],
-      [35,:invln_spi2, :spi, "Secondary Special Program", {datatype: :string}]
+      [35,:invln_spi2, :spi, "Secondary Special Program", {datatype: :string}],
+      [35,:invln_spi2, :spi, "Secondary Special Program", {datatype: :string}],
+      [36,:invln_carrier_name, :carrier_name, "Carrier Name", {datatype: :string}],
+      [37,:invln_customer_reference_number, :customer_reference_number, "Customer Reference Number", {datatype: :string}],
+      [38,:invln_customer_reference_number_2, :customer_reference_number_2, "Secondary Reference Number", {datatype: :string}],
+      [39,:invln_secondary_po_number, :secondary_po_number, "Secondary PO Number", {datatype: :string}],
+      [40,:invln_secondary_po_line_number, :secondary_po_line_number, "Secondary PO Line Number", {datatype: :string}],
+      [41,:invln_house_bill_of_lading, :house_bill_of_lading, "House Bill Of Lading", {datatype: :string}],
+      [42,:invln_sku, :sku, "SKU", {datatype: :string}]
     ]
 
     add_fields CoreModule::INVOICE_LINE, make_country_arrays(1000,"invln_origin","invoice_lines", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)

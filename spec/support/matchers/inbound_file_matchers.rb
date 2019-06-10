@@ -52,9 +52,15 @@ end
 RSpec::Matchers.define :have_identifier do |identifier_type, identifier_value, *args|
   match do |log|
     ids = Array.wrap(log.get_identifiers(identifier_type, value: identifier_value))
-    if args.try(:length) > 0
-      module_type = args[0].to_s
-      module_id = args[1]
+    arg_len = args.try(:length)
+    if arg_len > 0
+      if arg_len == 1
+        module_type = args[0].class.to_s
+        module_id = args[0].id
+      else
+        module_type = args[0].to_s
+        module_id = args[1]
+      end
 
       return !ids.find { |id| id.module_type == module_type && id.module_id == module_id }.nil?
     else

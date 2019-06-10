@@ -372,4 +372,18 @@ module Helpers
     end
     nil
   end
+
+  def xlsx_data spreadsheet_data, sheet_name: nil
+    data = spreadsheet_data
+    # we're going to assume anything other than an xlsx builder is an IO
+    if spreadsheet_data.is_a?(XlsxBuilder)
+      data = StringIO.new
+      spreadsheet_data.write data
+      data.rewind
+    end
+    d = XlsxTestReader.new data
+    raw_data = d.raw_workbook_data
+    sheet_name.blank? ? raw_data : raw_data[sheet_name]
+  end
+  
 end

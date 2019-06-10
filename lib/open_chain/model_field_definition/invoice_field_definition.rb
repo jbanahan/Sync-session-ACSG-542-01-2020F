@@ -39,13 +39,15 @@ module OpenChain; module ModelFieldDefinition; module InvoiceFieldDefinition
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT invoice_lines.part_number ORDER BY invoice_lines.part_number SEPARATOR '\n ')
             FROM invoice_lines
             WHERE invoice_lines.invoice_id = invoices.id)"
-        }]
+        }],
+        [24, :inv_customer_reference_number_2, :customer_reference_number_2, "Secondary Reference Number", {datatype: :string}]
     ]
     add_fields CoreModule::INVOICE, make_importer_arrays(1000,"inv","invoices")
     add_fields CoreModule::INVOICE, make_vendor_arrays(2000,"inv","invoices")
     add_fields CoreModule::INVOICE, make_factory_arrays(3000,'inv','invoices')
     add_fields CoreModule::INVOICE, make_country_arrays(4000,"inv_origin","invoices", "country_origin", association_title: "Origin", country_selector: DefaultCountrySelector)
     add_fields CoreModule::INVOICE, make_consignee_arrays(5000, "inv", "invoices")
+    add_fields CoreModule::INVOICE, make_country_arrays(6000,"inv_import","invoices", "country_import", association_title: "Import", country_selector: DefaultCountrySelector)
     
   end
 end; end; end

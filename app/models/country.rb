@@ -59,6 +59,7 @@ class Country < ActiveRecord::Base
     ['BULGARIA', 'BG', 'BGR'],
     ['BURKINA FASO', 'BF', 'BFA'],
     ['BURUNDI', 'BI', 'BDI'],
+    ['BURMA', 'BU', 'BUR'],
     ['CAMBODIA', 'KH', 'KHM'],
     ['CAMEROON', 'CM', 'CMR'],
     ['CANADA', 'CA', 'CAN'],

@@ -14,6 +14,8 @@ require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_commercial_invoice_pa
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/hm/hm_i1_interface'
 require 'open_chain/custom_handler/hm/hm_i2_shipment_parser'
+require 'open_chain/custom_handler/hm/hm_i977_parser'
+require 'open_chain/custom_handler/hm/hm_i978_parser'
 require 'open_chain/custom_handler/j_jill/j_jill_850_xml_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/lenox/lenox_po_parser'
@@ -184,6 +186,10 @@ module OpenChain
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "hm_i2") && custom_features.include?('H&M I2 Interface')
         OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_i977") && custom_features.include?('H&M Interfaces')
+        OpenChain::CustomHandler::Hm::HmI977Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_i978") && custom_features.include?('H&M Interfaces')
+        OpenChain::CustomHandler::Hm::HmI978Parser.delay(priority: -5).process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_isf") && custom_features.include?('Kewill ISF')
         OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "gtn_asn_xml") && custom_features.include?('Lumber SAP')

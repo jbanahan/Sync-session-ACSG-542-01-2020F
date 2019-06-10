@@ -66,6 +66,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_pattern: {label:'Pattern',data_type: :string, module_type:'Product', cdef_uid: "prod_pattern"},
     prod_buyer_name: {label:'Buyer Name',data_type: :string, module_type:'Product', cdef_uid: "prod_buyer_name"},
     prod_class: {label: "Class", data_type: :string, module_type: "Product", cdef_uid: "prod_class"},
+    prod_type: {label: "Product Type", data_type: :string, module_type: "Product", cdef_uid: "prod_type"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification", cdef_uid: "class_customs_description"},
     class_set_type: {label: "Set Type", data_type: :string, module_type: "Classification", cdef_uid: "class_set_type"},
     class_special_program_indicator: {label: "Special Program Indicator", data_type: :string, module_type: "Classification", cdef_uid: "class_special_program_indicator"},

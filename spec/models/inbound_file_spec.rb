@@ -243,6 +243,14 @@ describe InboundFile do
       end
       expect(inf.identifiers.length).to eq 0
     end
+
+    it "allows passing core object to determine module type and id" do
+      p = Product.new
+      p.id = 100
+
+      subject.add_identifier :po_number, "123", object: p
+      expect(subject).to have_identifier(:po_number, "123", Product, 100)
+    end
   end
 
   describe "set_identifier_module_info" do

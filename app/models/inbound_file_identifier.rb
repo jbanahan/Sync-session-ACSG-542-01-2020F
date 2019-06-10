@@ -24,6 +24,7 @@ class InboundFileIdentifier < ActiveRecord::Base
   TYPE_ISF_NUMBER = "ISF Host System File Number"
   TYPE_DAILY_STATEMENT_NUMBER = "Daily Statement Number"
   TYPE_MONTHLY_STATEMENT_NUMBER = "Monthly Statement Number"
+  TYPE_PARS_NUMBER = "PARS Number"
 
   def self.translate_identifier id
     if id.is_a?(Symbol)

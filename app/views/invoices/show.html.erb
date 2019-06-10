@@ -4,7 +4,12 @@
 <div class="row">
   <div class="col-12"><h1>Customer Invoice</h1></div>
   <div class="col-md-4">
-    <%= show_model_fields(@invoice, [:inv_inv_num, :inv_inv_date, :inv_cust_ref_num, :inv_origin_cntry_name, :inv_ship_mode, :inv_desc_of_goods], {never_hide: true}) %>
+    <%= show_model_fields(@invoice, [:inv_inv_num, :inv_inv_date, :inv_cust_ref_num, :inv_customer_reference_number_2, :inv_origin_cntry_name, :inv_import_cntry_name, :inv_ship_mode, :inv_desc_of_goods], {never_hide: true}) %>
+  </div>
+  <div class="col-md-4">
+    <%= show_model_fields(@invoice, [:inv_imp_name, :inv_consignee_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
+  </div>
+  <div class="col-md-4">
     <div class="row bootstrap-hover">
       <div class="col-md-4" style="font-weight: bold;">
         <%= model_field_labels([:inv_gross_weight]) %>
@@ -13,11 +18,14 @@
         <%= show_model_fields(@invoice, [:inv_gross_weight, :inv_gross_weight_uom], {editor_only: true}) %>
       </div>
     </div>
-  </div>
-  <div class="col-md-4">
-    <%= show_model_fields(@invoice, [:inv_imp_name, :inv_consignee_name, :inv_ven_name, :inv_factory_name, :inv_terms_of_payment, :inv_terms_of_sale], {never_hide: true}) %>
-  </div>
-  <div class="col-md-4">
+    <div class="row bootstrap-hover">
+      <div class="col-md-4" style="font-weight: bold;">
+        <%= model_field_labels([:inv_net_weight]) %>
+      </div>
+      <div class="col-md-8">
+        <%= show_model_fields(@invoice, [:inv_net_weight, :inv_net_weight_uom], {editor_only: true}) %>
+      </div>
+    </div>
     <%= show_model_fields(@invoice, [:inv_inv_tot_foreign, :inv_inv_tot_domestic, :inv_net_invoice_total, :inv_total_discounts, :inv_total_charges, :inv_currency, :inv_exchange_rate, :inv_manually_generated], {never_hide: true}) %>
   </div>
 </div>

@@ -199,6 +199,22 @@ describe OpenChain::IntegrationClientCommandProcessor do
         cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i2/a.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
+
+      it "should send data to H&M i977 parser if feature enabled and path contains _hm_i977" do
+        expect(master_setup).to receive(:custom_features_list).and_return ['H&M Interfaces']
+        expect(OpenChain::CustomHandler::Hm::HmI977Parser).to receive(:delay).and_return OpenChain::CustomHandler::Hm::HmI977Parser
+        expect(OpenChain::CustomHandler::Hm::HmI977Parser).to receive(:process_from_s3).with("bucket", '12345')
+        cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i977/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect(subject.process_command(cmd)).to eq(success_hash)
+      end
+
+      it "should send data to H&M i978 parser if feature enabled and path contains _hm_i978" do
+        expect(master_setup).to receive(:custom_features_list).and_return ['H&M Interfaces']
+        expect(OpenChain::CustomHandler::Hm::HmI978Parser).to receive(:delay).with(priority: -5).and_return OpenChain::CustomHandler::Hm::HmI978Parser
+        expect(OpenChain::CustomHandler::Hm::HmI978Parser).to receive(:process_from_s3).with("bucket", '12345')
+        cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i978/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect(subject.process_command(cmd)).to eq(success_hash)
+      end
     end
     context "lands_end" do
       it "should send data to Lands End Parts parser" do

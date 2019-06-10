@@ -2,51 +2,58 @@
 #
 # Table name: invoice_lines
 #
-#  air_sea_discount      :decimal(12, 2)
-#  carrier_code          :string(255)
-#  cartons               :integer
-#  container_number      :string(255)
-#  country_export_id     :integer
-#  country_origin_id     :integer
-#  created_at            :datetime         not null
-#  customs_quantity      :decimal(12, 2)
-#  customs_quantity_uom  :string(255)
-#  department            :string(255)
-#  early_pay_discount    :decimal(12, 2)
-#  first_sale            :boolean
-#  fish_wildlife         :boolean
-#  gross_weight          :integer
-#  gross_weight_uom      :string(255)
-#  hts_number            :string(255)
-#  id                    :integer          not null, primary key
-#  invoice_id            :integer
-#  line_number           :integer
-#  master_bill_of_lading :string(255)
-#  mid                   :string(255)
-#  middleman_charge      :decimal(12, 2)
-#  net_weight            :decimal(12, 2)
-#  net_weight_uom        :string(255)
-#  order_id              :integer
-#  order_line_id         :integer
-#  part_description      :string(255)
-#  part_number           :string(255)
-#  pieces                :decimal(13, 4)
-#  po_line_number        :string(255)
-#  po_number             :string(255)
-#  product_id            :integer
-#  quantity              :decimal(12, 3)
-#  quantity_uom          :string(255)
-#  related_parties       :boolean
-#  spi                   :string(255)
-#  spi2                  :string(255)
-#  trade_discount        :decimal(12, 2)
-#  unit_price            :decimal(12, 3)
-#  updated_at            :datetime         not null
-#  value_domestic        :decimal(13, 2)
-#  value_foreign         :decimal(11, 2)
-#  variant_id            :integer
-#  volume                :decimal(11, 2)
-#  volume_uom            :string(255)
+#  air_sea_discount            :decimal(12, 2)
+#  carrier_code                :string(255)
+#  carrier_name                :string(255)
+#  cartons                     :integer
+#  container_number            :string(255)
+#  country_export_id           :integer
+#  country_origin_id           :integer
+#  created_at                  :datetime         not null
+#  customer_reference_number   :string(255)
+#  customer_reference_number_2 :string(255)
+#  customs_quantity            :decimal(12, 2)
+#  customs_quantity_uom        :string(255)
+#  department                  :string(255)
+#  early_pay_discount          :decimal(12, 2)
+#  first_sale                  :boolean
+#  fish_wildlife               :boolean
+#  gross_weight                :decimal(12, 2)
+#  gross_weight_uom            :string(255)
+#  house_bill_of_lading        :string(255)
+#  hts_number                  :string(255)
+#  id                          :integer          not null, primary key
+#  invoice_id                  :integer
+#  line_number                 :integer
+#  master_bill_of_lading       :string(255)
+#  mid                         :string(255)
+#  middleman_charge            :decimal(12, 2)
+#  net_weight                  :decimal(12, 2)
+#  net_weight_uom              :string(255)
+#  order_id                    :integer
+#  order_line_id               :integer
+#  part_description            :string(255)
+#  part_number                 :string(255)
+#  pieces                      :decimal(13, 4)
+#  po_line_number              :string(255)
+#  po_number                   :string(255)
+#  product_id                  :integer
+#  quantity                    :decimal(12, 3)
+#  quantity_uom                :string(255)
+#  related_parties             :boolean
+#  secondary_po_line_number    :string(255)
+#  secondary_po_number         :string(255)
+#  sku                         :string(255)
+#  spi                         :string(255)
+#  spi2                        :string(255)
+#  trade_discount              :decimal(12, 2)
+#  unit_price                  :decimal(12, 3)
+#  updated_at                  :datetime         not null
+#  value_domestic              :decimal(13, 2)
+#  value_foreign               :decimal(11, 2)
+#  variant_id                  :integer
+#  volume                      :decimal(11, 2)
+#  volume_uom                  :string(255)
 #
 # Indexes
 #

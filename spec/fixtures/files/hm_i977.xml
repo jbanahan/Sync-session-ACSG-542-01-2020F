@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:CustomsMasterDataTransaction xmlns:ns2="http://www.hm.com/ICC/Types/MetaData/1.0" xmlns:ns0="http://www.hm.com/IntegrationObjects/CustomsMasterData/1.0.1">
+  <TransactionMetaData>
+    <ns2:SourceSystemName>SAPECC</ns2:SourceSystemName>
+    <ns2:TransactionType>CustomsMasterData</ns2:TransactionType>
+    <ns2:UniqueTransactionID>a22a1dd7-2a7f-18fb-b8ed-ed78c3f92c2b</ns2:UniqueTransactionID>
+    <ns2:TransactionDateTime>2018-12-19T09:30:47Z</ns2:TransactionDateTime>
+  </TransactionMetaData>
+  <TransactionProperties>
+    <IdocNumber>0000000013361258</IdocNumber>
+  </TransactionProperties>
+  <Payload>
+    <CustomsMasterData>
+      <SiteId>W196</SiteId>
+      <Articles>
+        <Article>
+          <ArticleName>000475463001176002</ArticleName>
+          <ArticleDescription>Other shoe Black, 38</ArticleDescription>
+          <CustId>Men</CustId>
+          <CustType>Leather</CustType>
+          <Commcode>61171000</Commcode>
+          61171000
+          6117100000
+          <Importcode>6117100000</Importcode>
+          <CreationDate>20161005</CreationDate>
+          <ArticleType>Z001</ArticleType>
+          <Articlecomp>100% Leather</Articlecomp>
+          <HMOrders>
+            <HMOrder>
+              <HMOrderNr>302290</HMOrderNr>
+              <Season>201706</Season>
+              <Deldate>20170615</Deldate>
+              <PurDocType>Z001</PurDocType>
+              <PurDocNum>4505599652</PurDocNum>
+              <Datechange>20170615</Datechange>
+            </HMOrder>
+            <HMOrder>
+              <HMOrderNr>302292</HMOrderNr>
+              <Season>201706</Season>
+              <Deldate>20170615</Deldate>
+              <PurDocType>Z001</PurDocType>
+              <PurDocNum>4505599645</PurDocNum>
+              <Datechange>20170615</Datechange>
+            </HMOrder>
+          </HMOrders>
+        </Article>
+        <Article>
+          <ArticleName>000475463001176003</ArticleName>
+          <ArticleDescription>Other shoe Black, 39</ArticleDescription>
+          <CustId>Men</CustId>
+          <CustType>Leather</CustType>
+          <Commcode>61171000</Commcode>
+          <Importcode>6117100000</Importcode>
+          <CreationDate>20161005</CreationDate>
+          <ArticleType>Z001</ArticleType>
+          <Articlecomp>100% Leather</Articlecomp>
+          <HMOrders>
+            <HMOrder>
+              <HMOrderNr>302290</HMOrderNr>
+              <Season>201706</Season>
+              <Deldate>20170615</Deldate>
+              <PurDocType>4505599653</PurDocType>
+              <PurDocNum>Z001</PurDocNum>
+              <Datechange>20170615</Datechange>
+            </HMOrder>
+          </HMOrders>
+        </Article>
+      </Articles>
+    </CustomsMasterData>
+  </Payload>
+</ns0:CustomsMasterDataTransaction>

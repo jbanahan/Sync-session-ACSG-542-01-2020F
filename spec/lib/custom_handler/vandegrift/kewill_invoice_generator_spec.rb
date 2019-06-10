@@ -95,6 +95,28 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
       expect(ce.invoices.first.invoice_lines.first.gross_weight).to eq BigDecimal("55.79")
     end
 
+    it "rounds gross weight to 1 KG if it's under 1" do
+      invoice.invoice_lines.first.gross_weight = BigDecimal(".01")
+      ce = subject.generate_invoice invoice
+      expect(ce.invoices.first.invoice_lines.first.gross_weight).to eq BigDecimal("1")
+    end
+
+    it "converts gross weight G to KG" do
+      invoice.invoice_lines.first.gross_weight = BigDecimal("2000")
+      invoice.invoice_lines.first.gross_weight_uom = "G"
+
+      ce = subject.generate_invoice invoice
+      expect(ce.invoices.first.invoice_lines.first.gross_weight).to eq BigDecimal("2")
+    end
+
+    it "converts gross weight LB to KG" do
+      invoice.invoice_lines.first.gross_weight = BigDecimal("2000")
+      invoice.invoice_lines.first.gross_weight_uom = "LB"
+
+      ce = subject.generate_invoice invoice
+      expect(ce.invoices.first.invoice_lines.first.gross_weight).to eq BigDecimal("907.18")
+    end
+
     it "skips first sale calculation if middleman_charge is missing" do
       invoice.invoice_lines.first.middleman_charge = nil
       ce = subject.generate_invoice invoice
