@@ -18,6 +18,7 @@ describe OpenChain::CustomHandler::Hm::HmI977Parser do
     it "parses a single article xml into a product" do
       product = subject.process_article article_xml, user, "file.xml"
       expect(product).not_to be_nil
+      product.reload
 
       expect(product.unique_identifier).to eq "HENNE-0004754"
       expect(product.name).to eq "Other shoe Black, 38"

@@ -19,12 +19,10 @@
           <CustId>Men</CustId>
           <CustType>Leather</CustType>
           <Commcode>61171000</Commcode>
-          61171000
-          6117100000
           <Importcode>6117100000</Importcode>
           <CreationDate>20161005</CreationDate>
           <ArticleType>Z001</ArticleType>
-          <Articlecomp>100% Leather</Articlecomp>
+          <ArticleCompositionDetails>100% Leather</ArticleCompositionDetails>
           <HMOrders>
             <HMOrder>
               <HMOrderNr>302290</HMOrderNr>
@@ -53,7 +51,7 @@
           <Importcode>6117100000</Importcode>
           <CreationDate>20161005</CreationDate>
           <ArticleType>Z001</ArticleType>
-          <Articlecomp>100% Leather</Articlecomp>
+          <ArticleCompositionDetails>100% Leather</ArticleCompositionDetails>
           <HMOrders>
             <HMOrder>
               <HMOrderNr>302290</HMOrderNr>

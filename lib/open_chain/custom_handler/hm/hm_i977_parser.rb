@@ -23,6 +23,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     find_or_create_product(part_number) do |product|
       p = nil
       if update_product_values(article_xml, product)
+        product.save!
         inbound_file.add_identifier :article_number, product.custom_value(cdefs[:prod_part_number]), object: product
         product.create_snapshot user, nil, filename
         p = product
@@ -40,7 +41,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     product.name = article_xml.text("ArticleDescription") if product.name.blank?
     set_custom_value(product, cdefs[:prod_product_group], article_xml.text("CustId"), changed)
     set_custom_value(product, cdefs[:prod_type], article_xml.text("CustType"), changed)
-    set_custom_value(product, cdefs[:prod_fabric_content], article_xml.text("Articlecomp"), changed)
+    set_custom_value(product, cdefs[:prod_fabric_content], article_xml.text("ArticleCompositionDetails"), changed)
 
     # From what I can tell, Commcode is just an abbreviated version of Importcode.  So only use it if
     # ImportCode is blank
