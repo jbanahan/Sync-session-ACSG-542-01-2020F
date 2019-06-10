@@ -1,6 +1,6 @@
-<div ng-repeat='fld in outerScope.$parent.dictionary.fieldsByRecordType(outerScope.$parent.dictionary.recordTypes.Product) | chainSkipReadOnlyFields | productEditFields track by fld.uid'>
+<div ng-repeat='fld in outerScope.dictionary.fieldsByRecordType(outerScope.dictionary.recordTypes.Product) | chainSkipReadOnlyFields | productEditFields track by fld.uid'>
   <div class="form-group">
     <label class="control-label" for="{{fld.uid}}">{{fld.label}}</label>
-    <chain-field-input input-class='form-control' model='outerScope.$parent.productEditObject' field='fld'></chain-field-input>
+    <chain-field-input input-class='form-control' model='outerScope.productEditObject' field='fld'></chain-field-input>
   </div>
 </div>

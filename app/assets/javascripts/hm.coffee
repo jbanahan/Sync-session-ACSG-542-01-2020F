@@ -1,4 +1,4 @@
-app = angular.module 'HMApp', ['ChainComponents']
+app = angular.module 'HMApp', ['ChainComponents','ngSanitize']
 app.config(['$httpProvider', ($httpProvider) ->
     $httpProvider.defaults.headers.common['Accept'] = 'application/json';
 ])

@@ -1,4 +1,4 @@
-projectApp = angular.module('ProjectApp',['ChainComponents','LocalStorageModule'])
+projectApp = angular.module('ProjectApp',['ChainComponents','LocalStorageModule', 'ngSanitize'])
 projectApp.factory 'projectSvc', ['$http',($http) ->
   handleProjectSave = (svc,project,promise) ->
     project.saving = true
@@ -20,6 +20,7 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
       svc.loadingMessage = 'Loading...'
       $http.get('/projects/'+projectId+'.json').then(((resp) ->
         svc.project = resp.data.project
+        svc.project.due = new Date svc.project.due
         svc.loadingMessage = null
       ),((resp) ->
         svc.errorMessage = resp.data.error
@@ -95,11 +96,7 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
     getDeliverables: (layout) ->
       svc = @
       svc.loadingMessage = "Loading..."
-      p = $http.get('/project_deliverables.json?layout='+layout)
-      p.success () ->
-        svc.loadingMessage = null
-      p.error () ->
-        svc.loadingMessage = null
+      $http.get('/project_deliverables.json?layout='+layout).then(svc.loadingMessage = null)
   }
 ]
 projectApp.filter 'deliverableSort', [() ->

@@ -8,7 +8,7 @@ class HmController < ApplicationController
   end
   
   def show_po_lines
-    
+    @no_action_bar = true #implements it's own via show_po_lines.html.erb
   end
 
   private

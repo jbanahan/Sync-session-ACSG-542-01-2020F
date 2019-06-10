@@ -1,4 +1,4 @@
-srApp = angular.module 'SurveyResponseApp', ['ChainComponents','angularMoment']
+srApp = angular.module 'SurveyResponseApp', ['ChainComponents','angularMoment', 'ngSanitize']
 
 srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
   saveResponse = (r,buildData,success) ->

@@ -87,7 +87,7 @@
                   <br />
                   <div ng-hide='columnsToRemove'>&nbsp;</div>
                   <div ng-show='columnsToRemove'>
-                    <button id="btn_remove_column" class='btn btn-secondary'  ng-click='removeColumns()'>Remove</button>
+                    <button id="btn_remove_column" class='btn btn-secondary' ng-click='removeColumns()'>Remove</button>
                     <button class='btn btn-secondary' ng-click='moveColumnsUp()'>Up</button>
                     <button class='btn btn-secondary' ng-click='moveColumnsDown()'>Down</button>
                   </div>
@@ -345,7 +345,7 @@
                       <div class='control-group'>
                         <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
                         <div class='controls'>
-                          <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
+                          <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="'sftp'" ng-false-value="'ftp'"/>
                         </div>
                       </div>
                       <div class='control-group'>
@@ -471,7 +471,7 @@
     </btn-download>
     <a class='btn btn-secondary navbar-btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new' title='Upload'><i class='fa fa-upload'></i></a>
     <span ng-show='searchSetup.uploadable_error_messages.length > 0'>
-      <span chain-message-box title='Upload' as-button='true' extra-class="'btn btn-secondary navbar-btn'" button-icon-class='fa fa-upload'>
+      <span chain-message-box title="'Upload'" as-button='true' extra-class="'btn btn-secondary navbar-btn'" button-icon-class='fa fa-upload'>
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>
           {{s}}
         </div>

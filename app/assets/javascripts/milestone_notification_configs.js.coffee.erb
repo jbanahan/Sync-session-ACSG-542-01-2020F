@@ -1,4 +1,4 @@
-MilestoneConfigApp = angular.module('MilestoneConfigApp', ['ChainComponents','ui.router'])
+MilestoneConfigApp = angular.module('MilestoneConfigApp', ['ChainComponents','ui.router', 'ngSanitize'])
 MilestoneConfigApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json'
   $httpProvider.interceptors.push 'chainHttpErrorInterceptor'

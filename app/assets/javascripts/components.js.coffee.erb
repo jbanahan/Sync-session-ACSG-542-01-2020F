@@ -574,9 +574,10 @@
     getListForCurrentUser: (callback) ->
       if @.users.length == 0
         svc = this
-        $http.get('/api/v1/users/enabled_users').success((data) ->
+
+        $http.get('/api/v1/users/enabled_users').then( (data) ->
           svc.users = []
-          for c in data
+          for c in data.data
             cName = c.company.name
             for u in c.company.users
               u.company_name = cName
@@ -1067,7 +1068,7 @@
         if scope.perPage
           url += "&per_page=" + scope.perPage
 
-        successHandler = (response,status,headers,config) ->
+        successHandler = (response) ->
           data = response.data
           # This is primarily just a backup check to make sure we're not attempting to load a page that doesn't exist, if
           # we do, just jump to the first page of the search results (note, this incurs another http request)
@@ -1079,17 +1080,18 @@
 
             scope.loadedSearchId = scope.searchResult.id
             readSearchSelections scope, data.id
-            $http.get(scope.urlPrefix+searchId+'/total_objects.json').success((data) ->
-              sr.total_objects = data.total_objects
+            $http.get(scope.urlPrefix+searchId+'/total_objects.json').then((resp) ->
+              sr.total_objects = resp.data.total_objects
               scope.loading = false
             )
           else
             loadResultPage(scope, searchId, 1)
-        errorHandler = (data,status) ->
+
+        errorHandler = (resp) ->
           if scope.errors
-            if status == 404
+            if resp.status == 404
               scope.errors.push "This search with id "+id+" could not be found."
-            else if data.status == 0 # request cancelled through 'Save' button
+            else if resp.status == -1 # request cancelled through 'Save' button
               scope.canceller.cancelled.resolve()
             else
               scope.errors.push "An error occurred while loading this search result. Please reload and try again."

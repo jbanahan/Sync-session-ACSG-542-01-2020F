@@ -8,9 +8,9 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
 
   $scope.loadSubscribedCountries = () ->
     $scope.countries = []
-    $http.get('/hts/subscribed_countries.json').success((data)->
-      $scope.limitedMode = data.limited_mode
-      $scope.countries = data.countries
+    $http.get('/hts/subscribed_countries.json').then ((resp)->
+      $scope.limitedMode = resp.data.limited_mode
+      $scope.countries = resp.data.countries
       $scope.subscribed_isos = (country.iso for country in $scope.countries)
       $scope.country = $scope.countries[0]
     )
@@ -18,28 +18,33 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
   loadCountry = (country) ->
     $scope.chapters = []
     if (country.iso in $scope.subscribed_isos) and (country.view == true)
-      $http.get('/hts/'+country.iso+'.json').success((data) ->
+      successCallback = (resp) ->
         $scope.viewMode = 'base'
-        $scope.chapters = data.chapters
-      ).error((data) ->
+        $scope.chapters = resp.data.chapters
+      errorCallback = (resp) ->
         $scope.viewMode = 'more-info'
-      )
+
+      $http.get('/hts/'+country.iso+'.json').then(successCallback, errorCallback)
     else
       $scope.viewMode = 'more-info'
 
   $scope.loadChapter = (country,chapter) ->
-    $http.get('/hts/'+country.iso+'/chapter/'+chapter.num+'.json').success((data) ->
-      chapter.headings = data.headings
-      ).error((data) ->
+    successCallback = (resp) ->
+      chapter.headings = resp.data.headings
+    
+    errorCallback = (resp) ->
         $scope.viewMode = 'more-info'
-      )
+    
+    $http.get('/hts/'+country.iso+'/chapter/'+chapter.num+'.json').then(successCallback,errorCallback)
 
   $scope.loadHeading = (country,chapter,heading) ->
-    $http.get('/hts/'+country.iso+'/heading/'+chapter.num+heading.num+'.json').success((data) ->
-      heading.sub_headings = data.sub_headings
-      ).error((data) ->
-        $scope.viewMode = 'more-info'
-      )
+    successCallback = (resp) ->
+      heading.sub_headings = resp.data.sub_headings
+    
+    errorCallback = (resp) ->
+      $scope.viewMode = 'more-info'
+    
+    $http.get('/hts/'+country.iso+'/heading/'+chapter.num+heading.num+'.json').then(successCallback,errorCallback)
 
   $scope.loadSubscribedCountries()
 

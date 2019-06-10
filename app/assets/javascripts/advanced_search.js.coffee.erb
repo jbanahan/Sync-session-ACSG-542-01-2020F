@@ -38,18 +38,18 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
         title: 'Welcome to the Advanced Search Tour'
         content: "You can use the arrow keys to move back and forth through the tour."
         template: "<div class='popover tour'>
-        <div class='arrow'></div>
-        <h3 class='popover-header'></h3>
-        <div class='popover-body'></div>
-        <div class='popover-navigation'>
-          <hr />
-          <div class='btn-group'>
-            <button class='btn btn-sm btn-secondary' data-role='prev'><i class='fa fa-caret-left' aria-hidden='true'></i> Prev</button>
-            <button id='tour_nxt_btn' class='btn btn-sm' data-role='next'>Next <i class='fa fa-caret-right' style='color: gold' aria-hidden='true'></i></button>
+          <div class='arrow'></div>
+          <h3 class='popover-header'></h3>
+          <div class='popover-body'></div>
+          <div class='popover-navigation'>
+            <hr />
+            <div class='btn-group'>
+              <button class='btn btn-sm btn-secondary' data-role='prev'><i class='fa fa-caret-left' aria-hidden='true'></i> Prev</button>
+              <button id='tour_nxt_btn' class='btn btn-sm' data-role='next'>Next <i class='fa fa-caret-right' style='color: gold' aria-hidden='true'></i></button>
+            </div>
+            <button class='btn btn-sm btn-secondary' data-role='end'>End Tour</button>
           </div>
-          <button class='btn btn-sm btn-secondary' data-role='end'>End Tour</button>
-        </div>
-      </div>"
+        </div>"
       }
       {
         title: "Selecting your Search"
@@ -407,17 +407,19 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       $scope.availableSorts.push mf unless findByMfid($scope.searchSetup.sort_criterions,mf.mfid)
 
   loadSearch = (id) ->
-    $http.get('/advanced_search/'+id+'/setup.json').success((data,status,headers,config) ->
-      document.title = data.title
-      $scope.searchSetup = data
-      BulkActions.setCoreModule(data.module_type)
+    successCallback = (resp) ->
+      $window.document.title = resp.data.title
+      $scope.searchSetup = resp.data
+      BulkActions.setCoreModule(resp.data.module_type)
       resetAvailables()
-    ).error((data,status) ->
-      if status == 404
+
+    errorCallback = (resp) ->
+      if resp.status == 404
         $scope.errors.push "This search with id "+id+" could not be found."
       else
         $scope.errors.push "An error occurred while loading this search setup. Please reload and try again."
-    )
+
+    $http.get('/advanced_search/'+id+'/setup.json').then(successCallback,errorCallback)
 
   $scope.searchId = parseInt $routeParams.searchId
   $scope.searchWrapper = {searchResult:{}, canceller: {cancel: $q.defer(), cancelled: $q.defer()} , loading: false}
@@ -429,8 +431,8 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     loadSearch $scope.searchId
     $scope.searchWrapper.searchResult.id = $scope.searchId
   else
-    $http.get('/advanced_search/last_search_id.json').success((data,status,headers,config) ->
-      $location.path '/'+data.id+'/'+$scope.page
+    $http.get('/advanced_search/last_search_id.json').then((resp) ->
+      $location.path '/'+resp.data.id+'/'+$scope.page
     )
 
   $scope.operators = chainSearchOperators.ops
@@ -447,16 +449,19 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   
   #email and status panels
   $scope.sendEmail = (mailFields) ->
-    $http.post('/advanced_search/'+$scope.searchSetup.id+'/send_email',{'mail_fields':mailFields}).success((data) ->
+    successCallback = (resp) ->
       $('#email-modal').modal 'hide'
       $scope.clearPanels
       $scope.setSuccessPanel "Email sent"
       window.scrollTo(0,0)
-      ).error((data, status) ->
-        if data.error
-            $scope.setErrorPanel data.error
-        else
-          $scope.setErrorPanel 'Server temporarily unavailable. Please try again later.')
+      
+    errorCallback = (resp) ->
+      if resp.error
+        $scope.setErrorPanel resp.error
+      else
+        $scope.setErrorPanel 'Server temporarily unavailable. Please try again later.'
+
+    $http.post('/advanced_search/'+$scope.searchSetup.id+'/send_email',{'mail_fields':mailFields}).then(successCallback,errorCallback)
 
   $scope.setErrorPanel = (message) ->
     panel = Chain.makeErrorPanel(message, false)
@@ -482,14 +487,16 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.give = (targetId) ->
     $scope.givePrompt = false
     $scope.giveUserId = null
-    $http.post('/search_setups/'+$scope.searchSetup.id+'/give.json',{'other_user_id':targetId}).success((data) ->
-      if data.given_to
-        $scope.notices.push "Report given to " + data.given_to + "."
+    successCallback = (resp) ->
+      if resp.data.given_to
+        $scope.notices.push "Report given to " + resp.data.given_to + "."
       else
         $scope.notices.push "Report given to user."
-    ).error((data) ->
+    
+    errorCallback = (resp) ->
       $scope.errors.push "Error giving this report, please try again."
-    )
+    
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/give.json',{'other_user_id':targetId}).then(successCallback,errorCallback)
 
   $scope.copyReportName = null
   $scope.copyPrompt = false
@@ -497,26 +504,30 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.copy = (copyName) ->
     $scope.copyPrompt = false
     $scope.copyReportName = null
-    $http.post('/search_setups/'+$scope.searchSetup.id+'/copy.json',{'new_name':copyName}).success((data) ->
-      $scope.notices.push "A copy of this report has been created as " + data.name + "."
-      $location.path '/'+data.id+'/1'
-    ).error((data) ->
+    successCallback = (resp) ->
+      $scope.notices.push "A copy of this report has been created as " + resp.data.name + "."
+      $location.path '/'+resp.data.id+'/1'
+    
+    errorCallback = (resp) ->
       $scope.copyPrompt = true
-      if data.error
-        $scope.errors.push data.error
+      if resp.error
+        $scope.errors.push resp.error
       else
         $scope.errors.push "Error copying this report, please try again."
-    )
+
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/copy.json',{'new_name':copyName}).then(successCallback,errorCallback)
 
   $scope.makeTemplate = (ss) ->
-    $http.post('/api/v1/admin/search_setups/'+ss.id+'/create_template.json',{}).success((data) ->
+    successCallback = (resp) ->
       $scope.notices.push "Template created successfully."
-    ).error((data) ->
-      if data.error
-        $scope.errors.push data.error
+    
+    errorCallback = (resp) ->
+      if resp.error
+        $scope.errors.push resp.error
       else
         $scope.errors.push "Error creating template."
-    )
+
+    $http.post('/api/v1/admin/search_setups/'+ss.id+'/create_template.json',{}).then(successCallback,errorCallback)
 
   #stateful view settings
   $scope.showSetup = false
@@ -529,7 +540,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.handleSearchOverride = (scope, callback) ->
     if scope.searchWrapper.loading && scope.errors.length == 0
       canceller = scope.searchWrapper.canceller
-      canceller.cancel.resolve()
+      canceller.cancel.resolve('SearchOverride')
       canceller.cancelled.promise.then ->
         # reset promises
         canceller.cancel = $q.defer()
@@ -554,7 +565,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       
       ss.search_schedules = (sched for sched in ss.search_schedules when !$scope.emailTooLong(sched))
 
-      $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
+      successCallback = () ->
         # Unless we're already on the first page, change to it.
         if $scope.page != 1
           $location.path '/'+ss.id+'/1'
@@ -565,11 +576,12 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
             id: ss.id
             saved: true
           }
-          loadSearch $scope.searchId
+          loadSearch parseInt $routeParams.searchId
 
-      ).error((data) ->
+      errorCallback = (data) ->
         $scope.errors.push "An error occurred while saving this search."
-      )
+
+      $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).then(successCallback,errorCallback)
     )
 
   $scope.changeSearch = (newId) ->
@@ -582,11 +594,14 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchWrapper.searchResult = {}
     mt = $scope.searchSetup.module_type
     $scope.searchSetup = {}
-    $http.post('/advanced_search.json',JSON.stringify({module_type:mt})).success((data) ->
-      $location.path '/'+data.id+'/1'
-    ).error((data) ->
+    
+    successCallback = (resp) ->
+      $location.path '/'+resp.data.id+'/1'
+
+    errorCallback = (resp) ->
       $scope.error.push "An error occurred while creating this search."
-    )
+
+    $http.post('/advanced_search.json',JSON.stringify({module_type:mt})).then(successCallback,errorCallback)
 
   $scope.deletePrompt = false
   #delete current setup and change location to replacement setup
@@ -594,11 +609,14 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchWrapper.searchResult = {}
     id = $scope.searchSetup.id
     $scope.searchSetup = {}
-    $http.delete('/advanced_search/'+id+'.json').success((data) ->
-      $location.path '/'+data.id+'/1'
-    ).error((data) ->
+    successCallback = (resp) ->
+      $location.path '/'+resp.data.id+'/1'
+    
+    errorCallback = (resp) ->
       $scope.errors.push "An error occurred while deleting this search. Please reload and try again."
-    )
+    
+    $http.delete('/advanced_search/'+id+'.json').then(successCallback, errorCallback)
+
   $scope.toggleSetup = () ->
     $scope.showSetup = !$scope.showSetup
     $timeout ->
@@ -713,15 +731,17 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #send background job to build excel
   $scope.backgroundDownload = () ->
-    $http.get('/advanced_search/'+$scope.searchSetup.id+"/download.json").
-      success(() ->
-        $scope.notices.push "Report is running in the background. You will receive a system message when it's done."
-      ).error((data) ->
-        if data.errors
-          $scope.errors.push error for error in data.errors
-        else
-          $scope.errors.push "Report download failed.  Please contact support"
-      )
+    
+    successCallback = (resp) ->
+      $scope.notices.push "Report is running in the background. You will receive a system message when it's done."
+    
+    errorCallback = (resp) ->
+      if resp.errors
+        $scope.errors.push error for error in resp.errors
+      else
+        $scope.errors.push "Report download failed.  Please contact support"
+    
+    $http.get('/advanced_search/'+$scope.searchSetup.id+"/download.json").then(successCallback,errorCallback)
 
   $scope.foregroundDownload = () ->
     downloadFormat = $scope.searchSetup.download_format
