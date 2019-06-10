@@ -391,7 +391,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
   def generate_and_send_us_files invoice, rows, missing_product_data
     pdf_data = make_pdf_info(invoice, rows)
-    spreadsheet = build_addendum_spreadsheet(invoice, rows)
+    spreadsheet = build_addendum_spreadsheet(:kewill, invoice, rows)
     Tempfile.open(["HM-Invoice", ".pdf"]) do |file|
       file.binmode
       OpenChain::CustomHandler::CommercialInvoicePdfGenerator.render_content file, pdf_data
@@ -418,7 +418,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   end
 
   def generate_and_send_ca_files invoice, rows, missing_product_data
-    spreadsheet = build_addendum_spreadsheet(invoice, rows)
+    spreadsheet = build_addendum_spreadsheet(:fenix, invoice, rows)
     exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data, :fenix) if missing_product_data.length > 0
 
     files = []
@@ -508,7 +508,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i
   end
 
-  def build_addendum_spreadsheet invoice, rows
+  def build_addendum_spreadsheet system, invoice, rows
     wb, sheet = XlsMaker.create_workbook_and_sheet invoice.invoice_number, ["Shipment ID", "Part Number", "Description", "MID", "Country of Origin", "HTS", "Net Weight", "Net Weight UOM", "Unit Price", "Quantity", "Total Value"]
 
     totals = {quantity: BigDecimal("0"), weight: BigDecimal("0"), value: BigDecimal("0")}
@@ -521,7 +521,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         source_row = rows[counter]
         weight = (decimal_value(source_row[16]).presence || BigDecimal("0"))
 
-        t = l.commercial_invoice_tariffs.first
+        # Don't use special tariff for returned entries
+        t = (system == :kewill) ? standard_tariffs(l).first : l.commercial_invoice_tariffs.first
 
         row = [invoice.invoice_number, l.part_number, t.try(:tariff_description), l.mid, l.country_origin_code, t.try(:hts_code).try(:hts_format), weight, "G", l.unit_price, l.quantity, l.value]
         totals[:quantity] += (l.quantity.presence || 0)
@@ -536,6 +537,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     XlsMaker.add_body_row sheet, (counter += 1), ["", "", "", "", "", "", totals[:weight], "", "", totals[:quantity], totals[:value]], widths
 
     wb
+  end
+
+  def standard_tariffs cil
+    cil.commercial_invoice_tariffs.reject{ |cit| cit&.hts_code.to_s =~ /^(9902)|(9903)|(9908)/ }
   end
 
   def build_missing_product_spreadsheet invoice_number, missing_products, destination_system

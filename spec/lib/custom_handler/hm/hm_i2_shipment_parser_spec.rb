@@ -571,7 +571,23 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       line.country_origin_code = "COO2"
       line.unit_price = 21.50
       t = line.commercial_invoice_tariffs.build
+      
+      # special tariff
       t.tariff_description = "DESC2"
+      t.hts_code = "9902543210"
+      
+      # another special tariff
+      t = line.commercial_invoice_tariffs.build      
+      t.tariff_description = "DESC3"
+      t.hts_code = "9903543210"
+
+      # yet another special tariff
+      t = line.commercial_invoice_tariffs.build      
+      t.tariff_description = "DESC4"
+      t.hts_code = "9908543210"
+      
+      t = line.commercial_invoice_tariffs.build
+      t.tariff_description = "DESC5"
       t.hts_code = "9876543210"
 
       i.commercial_invoice_lines << line
@@ -582,14 +598,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     it "builds the spreadsheet using invoice data and csv data" do
       row = []
       row[16] = 800
-      wb = subject.build_addendum_spreadsheet invoice, [row, row]
+      wb = subject.build_addendum_spreadsheet :fenix, invoice, [row, row]
 
       expect(wb.worksheets.length).to eq 1
       sheet = wb.worksheets.first
 
       expect(sheet.row(0)).to eq ["Shipment ID", "Part Number", "Description", "MID", "Country of Origin", "HTS", "Net Weight", "Net Weight UOM", "Unit Price", "Quantity", "Total Value"]
       expect(sheet.row(1)).to eq ["INV", "12345", "DESC", "MID", "COO", "1234.56.7890", 800, "G", 20.50, 10, 100.40]
-      expect(sheet.row(2)).to eq ["INV", "123456", "DESC2", "MID2", "COO2", "9876.54.3210", 800, "G", 21.50, 10.1, 200.40]
+      expect(sheet.row(2)).to eq ["INV", "123456", "DESC2", "MID2", "COO2", "9902.54.3210", 800, "G", 21.50, 10.1, 200.40]
+      expect(sheet.row(3)).to eq ["", "", "", "", "", "", 1600, "", "", 20.1, 300.80]
+    end
+
+    it "builds the spreadsheet using invoice data and csv data, skipping special tariffs for US" do
+      row = []
+      row[16] = 800
+      wb = subject.build_addendum_spreadsheet :kewill, invoice, [row, row]
+
+      expect(wb.worksheets.length).to eq 1
+      sheet = wb.worksheets.first
+
+      expect(sheet.row(0)).to eq ["Shipment ID", "Part Number", "Description", "MID", "Country of Origin", "HTS", "Net Weight", "Net Weight UOM", "Unit Price", "Quantity", "Total Value"]
+      expect(sheet.row(1)).to eq ["INV", "12345", "DESC", "MID", "COO", "1234.56.7890", 800, "G", 20.50, 10, 100.40]
+      expect(sheet.row(2)).to eq ["INV", "123456", "DESC5", "MID2", "COO2", "9876.54.3210", 800, "G", 21.50, 10.1, 200.40]
       expect(sheet.row(3)).to eq ["", "", "", "", "", "", 1600, "", "", 20.1, 300.80]
     end
   end
