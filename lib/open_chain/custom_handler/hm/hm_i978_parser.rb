@@ -35,13 +35,17 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       shipments = [shipment_data]
     end
 
+    if !primary_ca_import_parser? && !primary_us_import_parser?
+      inbound_file.add_info_message("i978 process is not fully enabled.  No files will be emitted from this parser.")
+    end
+
     invoices = []
     shipments.each do |shipment|
       i = process_shipment_data(shipment, user, bucket, filename)
       invoices << i unless i.nil?
     end
 
-    if invoices.length > 0 && fenix?(invoices.first)
+    if invoices.length > 0 && fenix?(invoices.first) && primary_ca_import_parser?
       generate_and_send_pars_pdf(invoices)
       check_unused_pars_count()
     end
@@ -69,9 +73,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     return nil unless inv
 
-    if fenix? inv
+    if fenix?(inv) && primary_ca_import_parser?
       generate_and_send_ca_files(inv)
-    else
+    elsif kewill?(inv) && primary_us_import_parser?
       generate_and_send_us_files(inv)
     end
 
@@ -457,7 +461,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       # to have 2 simultaneous transactions open at the same time where the pars number is not used, both would select the same one
       # and then both use it.  The ideal solution here is probably to write a stored proc that doles out the next number which 
       # would mean we could then reference it from anywhere, but that's rather involved for this single case.
-      if invoice.customer_reference_number_2.blank? && fenix?(shipment_data)
+
+      # If this isn't the primary parser for CA, we can't use Pars Numbers.
+      if invoice.customer_reference_number_2.blank? && fenix?(shipment_data) && primary_ca_import_parser?
         invoice.customer_reference_number_2 = DataCrossReference.find_and_mark_next_unused_hm_pars_number
         inbound_file.add_identifier :pars_number, invoice.customer_reference_number_2
         # save the invoice immediately, so that we ensure even if this invoice number errors for some reason that when it's reloaded
@@ -742,6 +748,18 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     def email_unused_pars_to
       MailingList.where(system_code: "PARSNumbersNeeded").first
+    end
+
+    # There is a period of time when this i978 and the old i2 parser are running in parallel.  The i2 needs to take precedence in that situation
+    # and the i978 should not generate any files nor should it utilize PARS numbers as the i2 is also doing all these things.  Once this
+    # i978 becomes fully live (and the i2 is discontinued) then the Custom Feature string should be set and this parser will be the one generating
+    # files.
+    def primary_ca_import_parser?
+      @is_primary_ca ||= MasterSetup.get.custom_feature?("H&M i978 CA Import Live")
+    end
+
+    def primary_us_import_parser?
+      @is_primary_us ||= MasterSetup.get.custom_feature?("H&M i978 US Import Live")
     end
 
 end; end; end; end

@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
       before :each do 
         # Turn off pars notifications for now
-        expect_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
+        allow_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
       end
 
       it "creates an invoice" do
@@ -283,6 +283,16 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(invoice).not_to be_nil
         expect(invoice.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].parse "1900-01-01 00:00"
       end
+
+      it "skips file if not the primary parser for CA" do
+        allow(master_setup).to receive(:custom_feature?).with("H&M i978 CA Import Live").and_return true
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
+        expect(OpenChain::CustomHandler::Hm::HmParsPdfGenerator).not_to receive(:generate_pars_pdf)
+        described_class.parse_file ca_file, log
+
+        expect(log).to have_info_message("File skipped because i978 files are set up to take precendence.")
+        expect(ActionMailer::Base.deliveries.length).to eq 0
+      end
     end
 
     context "with us shipment" do
@@ -445,6 +455,17 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         expect(invoice).not_to be_nil
         expect(invoice.commercial_invoice_lines.first.country_origin_code).to eq "BU"
+      end
+
+      it "skips file if not the primary parser for US" do
+        entry
+        set_us_product_custom_values 10.00, "987654"
+        allow(master_setup).to receive(:custom_feature?).with("H&M i978 US Import Live").and_return true
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).not_to receive(:generate_and_send_invoices)
+        described_class.parse_file us_file, log
+
+        expect(log).to have_info_message("File skipped because i978 files are set up to take precendence.")
+        expect(ActionMailer::Base.deliveries.length).to eq 0
       end
     end
 

@@ -25,6 +25,13 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     log.company = product_importer
     log.error_and_raise "No importer record found with system code HENNE." if @product_importer.nil?
 
+    # If this parser is no longer the parser of record for the i2 file, then we can just stop at this point 
+    # since no data is actually saved to the system for these files.
+    if skip_file?(system)
+      log.add_info_message("File skipped because i978 files are set up to take precendence.")
+      return
+    end
+
     # Canadian customs requires that electronically filed PARS entries must be under 999 lines (WTF, eh?).
     # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
     # a completely separate file.
@@ -45,6 +52,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     nil
+  end
+
+  def skip_file? system
+    (system == :fenix && !primary_ca_import_parser?) || (system == :kewill && !primary_us_import_parser?)
   end
 
   def email_list
@@ -161,11 +172,11 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     set_totals(invoice)
 
     if forward_to_entry_system
-      if system == :fenix
+      if system == :fenix && primary_ca_import_parser?
         OpenChain::CustomHandler::FenixNdInvoiceGenerator.generate invoice
         # Generate the files for the carrier and send them
         generate_and_send_ca_files invoice, rows, missing_product_data
-      else
+      elsif system == :kewill && primary_us_import_parser?
         # Send to Kewill Customs
         g = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
         g.generate_and_send_invoices invoice.invoice_number, invoice, gross_weight_uom: "G"
@@ -599,6 +610,15 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
+  # There is a period of time when this i2 parser and then new i978 are running in parallel.  The i2 needs to take precedence in 
+  # that situation and should generate all files.  When the i978 goes live, this parser must no longer generate any files / emails
+  # and allow the i978 one to do all the work (essentially ignoring the i2 files).
+  def primary_ca_import_parser?
+    @is_primary_ca ||= !MasterSetup.get.custom_feature?("H&M i978 CA Import Live")
+  end
 
+  def primary_us_import_parser?
+    @is_primary_us ||= !MasterSetup.get.custom_feature?("H&M i978 US Import Live")
+  end
 
 end; end; end; end;
