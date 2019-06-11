@@ -703,6 +703,12 @@ module ApplicationHelper
     end
   end
 
+  def app_internals master_setup
+    if master_setup.production?
+      render("shared/app_internals").html_safe
+    end
+  end
+
   # Displays a milestone demarcation, showing which milestone has been achieved for the given object
   # The setup can be a hash with keys of the titles to use for the displayed dates with corresponding
   # model fields for their values.
