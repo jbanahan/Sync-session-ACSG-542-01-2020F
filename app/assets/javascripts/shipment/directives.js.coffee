@@ -9,6 +9,15 @@ shipmentApp.directive 'chainShipDetailSummary', ->
   templateUrl: '/partials/shipments/ship_detail_summary.html'
   }
 
+shipmentApp.directive 'dateInput', ->
+  {
+    require: 'ngModel'
+    link: (scope, elem, attr, modelCtrl) ->
+      modelCtrl.$formatters.push (modelValue) ->
+        new Date(modelValue)
+      return
+  }
+
 shipmentApp.directive 'bookingShippingComparison', ->
   {
   restrict: 'E'
@@ -49,7 +58,7 @@ shipmentApp.directive 'addressBookAutocomplete',['addressModalSvc',(addressModal
 
 shipmentApp.directive 'addAddressModal', ['$http', 'addressModalSvc', ($http, addressModalSvc) ->
   restrict: 'E'
-  scope: 
+  scope:
     shipmentId: '='
   templateUrl:'/partials/shipments/address_modal/add_address_modal.html'
   controllerAs:'ctrl'
