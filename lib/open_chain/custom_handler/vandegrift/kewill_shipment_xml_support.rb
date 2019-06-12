@@ -400,7 +400,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number
     file_number = invoice.file_number.presence || entry.file_number
     add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true))
-    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(parent, "commInvLineNo", invoice_line_number)
     nil
@@ -498,7 +498,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   def add_seller_mid parent, entry, invoice, counter, mid
     party = add_element(parent, "EdiInvoiceParty")
-    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
+    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(party, "commInvLineNo", (counter * 10))
     add_element(party, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(party, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
@@ -542,7 +542,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   def add_buyer parent, entry, invoice, counter, buyer
     party = add_element(parent, "EdiInvoiceParty")
-    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: true))
+    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(party, "commInvLineNo", (counter * 10))
     add_element(party, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(party, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
