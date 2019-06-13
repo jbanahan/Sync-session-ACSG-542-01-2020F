@@ -6,13 +6,15 @@
 
 <%# Bootstrap standard input widths (input-large, etc) don't seem to work on file inputs #%>
 <div class="col-md-4 offset-md-1">
-  <div class="form-group">
-    <label for="<%=(defined?(file_input_name) ? file_input_name : :attached).to_s%>" class='col-md-1 control-label'><%= defined?(file_label) ? file_label : "File:"%></label>
-      <%= file_field_tag (defined?(file_input_name) ? file_input_name : :attached), style: "width: 500px !important;", class: "form-control-file"%>
-  </div>
-  <div class="form-group">
-    <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn btn-secondary' %>
-  </div>
+  <form>
+    <div class="form-group">
+      <label for="<%=(defined?(file_input_name) ? file_input_name : :attached).to_s%>" class='col-form-label'><%= defined?(file_label) ? file_label : "File:"%></label>
+        <%= file_field_tag (defined?(file_input_name) ? file_input_name : :attached), style: "width: 500px !important;", class: "form-control-file"%>
+    </div>
+    <div class="form-group">
+      <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn btn-secondary' %>
+    </div>
+  </form>
 </div>
 
 <% end %>
@@ -20,19 +22,19 @@
 <%= render :partial => 'shared/search_box' %>
 <table class='detail_table'>
   <thead>
-      <tr>
-          <th>File Name</th>
-          <th>Uploaded By</th>
-          <th>Uploaded At</th>
-          <th>Start</th>
-          <th>Finish</th>
-        <% if defined?(show_error) && show_error %>
-          <th>Error</th>
-        <% end %>
-        <% if defined?(allow_reprocess) && allow_reprocess %>
-          <th>&nbsp;</th>
-        <% end %>
-      </tr>
+    <tr>
+      <th>File Name</th>
+      <th>Uploaded By</th>
+      <th>Uploaded At</th>
+      <th>Start</th>
+      <th>Finish</th>
+    <% if defined?(show_error) && show_error %>
+      <th>Error</th>
+    <% end %>
+    <% if defined?(allow_reprocess) && allow_reprocess %>
+      <th>&nbsp;</th>
+    <% end %>
+    </tr>
   </thead>
   <tbody>
     <%@files.each do |f|%>

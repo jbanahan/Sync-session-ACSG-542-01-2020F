@@ -1,6 +1,86 @@
 require 'spec_helper'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
 describe Product do
+
+  describe "product_importer" do
+    let(:imp) { Factory(:company, system_code: "ACME")}
+    let(:entry) { Factory(:entry, importer: imp) }
+    let!(:imp1) { Factory(:company, system_code: "NOTACME")}
+    let(:rule_attr) {{}}
+
+    it "returns the company associated with the entry with no importer system code specified" do
+      expect(Product.product_importer(entry, rule_attr["importer_system_code"])).to eq imp
+    end
+
+    it "returns the company given the system code in the rule attribute" do
+      rule_attr = {"importer_system_code"=>"NOTACME"}
+      expect(Product.product_importer(entry, rule_attr["importer_system_code"])).to eq imp1
+    end
+  end
+
+  describe "create_prod_part_hsh" do
+    before do
+      @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
+    end
+    let(:imp) { Factory(:company, system_code: "ACME") }
+    let(:entry) { Factory(:entry, importer: imp) }
+    let(:invoice_1) { Factory(:commercial_invoice, entry: entry, invoice_number: "123456")}
+    let!(:line_1) { Factory(:commercial_invoice_line, commercial_invoice: invoice_1, 
+      line_number: 1, part_number: "attr_part_1") }
+    let(:invoice_2) { Factory(:commercial_invoice, entry: entry, invoice_number: "654321") }
+    let!(:line_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, 
+      line_number: 1, part_number: "attr_part_2") }
+    let!(:line_2_2) { Factory(:commercial_invoice_line, 
+      commercial_invoice: invoice_2, line_number: 2, part_number: "attr_part_3") }
+    
+    let!(:product_1) { Factory(:product, importer: imp, unique_identifier: "attr_part_1")}
+    let!(:product_2) { Factory(:product, importer: imp, unique_identifier: "attr_part_2")}
+    let!(:product_3) { Factory(:product, importer: imp, unique_identifier: "attr_part_3")}
+
+    let!(:cval_fw_1) { CustomValue.create! custom_definition: @cdefs[:prod_part_number], customizable: product_1, string_value: "attr_part_1" }
+    let!(:cval_fw_2) { CustomValue.create! custom_definition: @cdefs[:prod_part_number], customizable: product_2, string_value: "attr_part_2" }
+    let!(:cval_fw_3) { CustomValue.create! custom_definition: @cdefs[:prod_part_number], customizable: product_3, string_value: "attr_part_3" }
+
+    context "vandegrift instance" do
+      it "creates a hash of product part numbers" do
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("WWW").and_return true
+
+        line_data = entry.commercial_invoices
+                         .flat_map(&:commercial_invoice_lines)
+                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number, 
+                                      line_num: cil.line_number, 
+                                      part_num: cil.part_number} }
+        expect(Product.create_prod_part_hsh(imp.id, 
+          line_data.map{ |l| l[:part_num] }, @cdefs)).to include(
+            product_1.id=>"attr_part_1", 
+            product_2.id=>"attr_part_2", 
+            product_3.id=>"attr_part_3")
+      end
+    end
+
+    context "other instances" do
+      it "creates a hash of product part numbers" do
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("WWW").and_return false
+
+        cdefs = double "cdefs"
+        line_data = entry.commercial_invoices
+                         .flat_map(&:commercial_invoice_lines)
+                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number, 
+                                      line_num: cil.line_number, 
+                                      part_num: cil.part_number} }
+        expect(Product.create_prod_part_hsh(imp.id, 
+          line_data.map{ |l| l[:part_num] }, cdefs)).to include(
+            product_1.id=>"attr_part_1", 
+            product_2.id=>"attr_part_2", 
+            product_3.id=>"attr_part_3")
+      end
+    end
+  end
+
   describe "classifications_by_region" do
     before :each do
       @product = Product.new

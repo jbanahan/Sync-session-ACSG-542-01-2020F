@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
       builder = missing_products_builder
       sheet = builder.create_sheet "Missing Products", headers: ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description", 
         "Merchandise Department Description", "Merchandise Class Description", "Merchandise Sub-Class Description", "Item Description", "US HTS Code", "US Duty", 
-        "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Comments"]
+        "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Inactive (Discontinued)", "Comments"]
       builder.freeze_horizontal_rows sheet, 1
 
       missing_products.to_a.each do |numbers|

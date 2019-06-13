@@ -8,6 +8,7 @@
 #  entity_type_id     :integer
 #  id                 :integer          not null, primary key
 #  importer_id        :integer
+#  inactive           :boolean          default(FALSE)
 #  last_file_bucket   :string(255)
 #  last_file_path     :string(255)
 #  last_updated_by_id :integer
@@ -68,6 +69,31 @@ class Product < ActiveRecord::Base
 
   def locked?
     false
+  end
+
+  # figure out the correct product importer of an entry
+  #  given the current context of the system running
+  def self.product_importer ent, sys_code
+    if sys_code
+      Company.where(system_code: sys_code).first
+    else
+      ent.importer
+    end
+  end
+
+  # Create a hash of parts given their part numbers and the importer's id
+  def self.create_prod_part_hsh importer_id, part_numbers, cdefs
+    out = {}
+    if MasterSetup.get.custom_feature?("WWW")
+      CustomValue.joins("INNER JOIN products ON customizable_type = 'Product' AND customizable_id = products.id")
+                 .where("products.importer_id = ?", importer_id)
+                 .where(custom_definition_id: cdefs[:prod_part_number].id, string_value: part_numbers)
+                 .each{ |cv| out[cv.customizable_id] = cv.string_value }
+    else
+      Product.where(importer_id: importer_id, unique_identifier: part_numbers)
+             .each{ |p| out[p.id] = p.unique_identifier }
+    end
+    out
   end
 
   # returns a hash of arrays with a key of region and an array of all classifications for that region as value
@@ -256,8 +282,8 @@ class Product < ActiveRecord::Base
 
       records << tariff_record
     end
-    
-    
+
+
     records
   end
 

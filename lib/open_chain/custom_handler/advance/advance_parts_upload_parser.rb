@@ -50,6 +50,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
       advan << "" # Customs Description (CA Only)
       advan << text_value(line[9]) # First HTS 1 (US)
       advan << text_value(line[11]) # First HTS 1 (CA)
+      advan << boolean_value(line[15]) # Part Inactive
       
       lines << advan
     end
@@ -68,6 +69,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
       cq << line[8] # Customs Description
       cq << text_value(line[9]) # First HTS 1 (US)
       cq << text_value(line[11]) # First HTS 1 (CA)
+      cq << boolean_value(line[15]) # Part Inactive
       
       lines << cq
     end
@@ -87,7 +89,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
     raise ArgumentError, "The field 'First HTS 1 (CA)' is not set up as part of the imported file setup." if ModelField.find_by_uid(@ca).blank?
     raise ArgumentError, "The field 'First HTS 1 (US)' is not set up as part of the imported file setup." if ModelField.find_by_uid(@us).blank?
 
-    [:prod_imp_syscode, :prod_uid,  @cdefs[:prod_part_number].model_field_uid, @cdefs[:prod_sku_number].model_field_uid, @cdefs[:prod_short_description].model_field_uid, :prod_name, @cdefs[:prod_units_per_set].model_field_uid, :class_cntry_iso, @cdefs[:class_customs_description].model_field_uid, @us, @ca]
+    [:prod_imp_syscode, :prod_uid, @cdefs[:prod_part_number].model_field_uid, @cdefs[:prod_sku_number].model_field_uid, @cdefs[:prod_short_description].model_field_uid, :prod_name, @cdefs[:prod_units_per_set].model_field_uid, :class_cntry_iso, @cdefs[:class_customs_description].model_field_uid, @us, @ca, :prod_inactive]
   end
 
 

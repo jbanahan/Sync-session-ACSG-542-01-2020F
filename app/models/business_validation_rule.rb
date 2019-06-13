@@ -63,6 +63,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
                 ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
                 ValidationRuleEntryHtsMatchesPo: {label:"Entry Invoice Line HTS Matches PO HTS"},
+                ValidationRuleEntryProductInactive: {label:"Entry product has inactive flag set"},
                 ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label:"At Least One Entry Invoice Line Matches Field Format"},
                 ValidationRuleEntryInvoiceCooMatchesSpi: {label:"Entry Invoice Line Country of Origin Matches Primary SPI"},
                 ValidationRuleAttachmentTypes: {label:"Has Attachment Types"},

@@ -1,11 +1,9 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
 
   let (:file_contents) {
     # Taken from an actual file..
     [
-      [10692256.0, "AC965T", "INA", "INAAC965T", "Interior Accessories", "FLOOR MATS & CARPET", "RUBBER", "4-PC SET", "FLOOR MAT TAN 1 EA ATOCF", 4016910000.0, "2.70%", 4016910011.0, "7.00%", "$2.28", 4.0]
+      [10692256.0, "AC965T", "INA", "INAAC965T", "Interior Accessories", "FLOOR MATS & CARPET", "RUBBER", "4-PC SET", "FLOOR MAT TAN 1 EA ATOCF", 4016910000.0, "2.70%", 4016910011.0, "7.00%", "$2.28", 4.0, "N"]
     ]
   }
 
@@ -47,6 +45,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
         cdefs[:class_customs_description].model_field_uid.to_s,
         "*fhts_1_#{countries.first.id}",
         "*fhts_1_#{countries.second.id}",
+        'prod_inactive'
       ]
     }
 
@@ -87,9 +86,9 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(lines.length).to eq 2
 
       line = lines.first
-      expect(line).to eq ["ADVAN", "ADVAN-10692256", "10692256", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "US", "", "4016910000", "4016910011"]
+      expect(line).to eq ["ADVAN", "ADVAN-10692256", "10692256", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "US", "", "4016910000", "4016910011", false]
       line = lines.second
-      expect(line).to eq ["CQ", "CQ-INAAC965T", "INAAC965T", "10692256", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "CA", "FLOOR MAT TAN 1 EA ATOCF", "4016910000", "4016910011"]
+      expect(line).to eq ["CQ", "CQ-INAAC965T", "INAAC965T", "10692256", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "CA", "FLOOR MAT TAN 1 EA ATOCF", "4016910000", "4016910011", false]
     end
 
     it "excludes advan line if missing first column data" do
@@ -98,7 +97,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(lines.length).to eq 1
 
       line = lines.first
-      expect(line).to eq ["CQ", "CQ-INAAC965T", "INAAC965T", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "CA", "FLOOR MAT TAN 1 EA ATOCF", "4016910000", "4016910011"]
+      expect(line).to eq ["CQ", "CQ-INAAC965T", "INAAC965T", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "CA", "FLOOR MAT TAN 1 EA ATOCF", "4016910000", "4016910011", false]
     end
 
     it "excludes CQ line if missing third column data" do
@@ -107,7 +106,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
       expect(lines.length).to eq 1
 
       line = lines.first
-      expect(line).to eq ["ADVAN", "ADVAN-10692256", "10692256", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "US", "", "4016910000", "4016910011"]
+      expect(line).to eq ["ADVAN", "ADVAN-10692256", "10692256", "", "AC965T", "FLOOR MAT TAN 1 EA ATOCF", 4, "US", "", "4016910000", "4016910011", false]
     end
   end
 

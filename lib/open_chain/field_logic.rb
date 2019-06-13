@@ -51,8 +51,12 @@ module OpenChain
           # This saves all standard model attributes and custom values from the passed in object parameters
           base_object.update_model_field_attributes! object_parameters, update_model_field_opts
           inner_opts[:before_validate].call base_object
-          raise OpenChain::ValidationLogicError unless CoreModule.find_by_object(base_object).validate_business_logic base_object
-          OpenChain::FieldLogicValidator.validate!(base_object) 
+
+          if !base_object.respond_to?(:inactive) || !base_object.inactive
+            raise OpenChain::ValidationLogicError unless CoreModule.find_by_object(base_object).validate_business_logic base_object
+            OpenChain::FieldLogicValidator.validate!(base_object) 
+          end
+
           base_object.piece_sets.each {|p| p.create_forecasts} if base_object.respond_to?('piece_sets')
           
           base_object.update_attributes(:last_updated_by_id=>user.id) if base_object.respond_to?(:last_updated_by_id)

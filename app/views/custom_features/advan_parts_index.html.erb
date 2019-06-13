@@ -1,14 +1,13 @@
 <% content_for :head_tags do %>
 <style type="text/css">
-  #layout thead td {padding-left: 3px; padding-right: 3px; font-size: 75%; border: 1px solid black;}
-  #layout {margin-top: 20px; margin-bottom: 25px;}
+  #layout thead td {font-size: 75%;}
 </style>
 <% end %>
 
 <% content_for :upload_form do %>
 <h2>Upload ONLY Part Files in Excel or CSV format.</h2>
 <h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
-<table id="layout">
+<table id="layout" class="table table-sm table-bordered my-3">
   <thead>
     <tr>
       <td>AAP SKU</td>
@@ -26,6 +25,7 @@
       <td>CAN Duty</td>
       <td>Freight Cost </td>
       <td>Piece Per Set</td>
+      <td>Inactive (Discontinued)</td>
     </tr>
   </thead>
 </table>

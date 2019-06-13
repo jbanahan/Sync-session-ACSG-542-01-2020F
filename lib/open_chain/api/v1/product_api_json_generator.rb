@@ -11,7 +11,7 @@ module OpenChain; module Api; module V1; class ProductApiJsonGenerator
   def obj_to_json_hash obj
     product_fields = limit_fields(
       [:prod_uid, :prod_ent_type, :prod_name, :prod_uom, :prod_changed_at, :prod_last_changed_by, :prod_created_at,
-       :prod_div_name, :prod_imp_name, :prod_imp_syscode] +
+       :prod_div_name, :prod_imp_name, :prod_imp_syscode, :prod_inactive] +
       custom_field_keys(CoreModule::PRODUCT)
     )
 

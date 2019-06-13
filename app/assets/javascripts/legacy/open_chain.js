@@ -331,8 +331,11 @@ var OpenChain = (function() {
         }
       });
       $("form").submit(function() {
-        if(Classify.hasInvalidTariffs()) {
-          window.alert("Please fix or erase invalid tariff numbers.");
+        if(Classify.hasInvalidTariffs()) { 
+          if (window.confirm("This Product has invalid tariffs.  It is strongly advised that you fix or remove them.  Are you sure you want to update it without resolving this issue?")) {
+            $("form").find("input[mf_id*='hts_hts']").removeClass("error");
+            return true;
+          }
           return false;
         }
         removeEmptyClassifications();
@@ -426,10 +429,10 @@ var OCSurvey = (function() {
 
       h += "<div>"
       h += "<div class='row'><div class='col-md-12'>"
-      h += "<div class='col-xs-4'>"
+      h += "<div class='col-4'>"
       h += "<input style='float: left; margin-right: 20px;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
       h += "</div>"
-      h += "<div class='col-xs-2' id='q-upload-attachment-button'>"
+      h += "<div class='col-2' id='q-upload-attachment-button'>"
       h += "</div></div></div></div></div>"
 
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";

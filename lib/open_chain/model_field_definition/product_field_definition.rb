@@ -156,7 +156,8 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         read_only: true,
         export_lambda: lambda {|obj| obj.vendors.collect {|v| v.name}.sort.join("\n")},
         qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT name ORDER BY name SEPARATOR '\\n') FROM companies INNER JOIN product_vendor_assignments ON companies.id = product_vendor_assignments.vendor_id WHERE product_vendor_assignments.product_id = products.id)"
-      }]
+      }],
+      [23,:prod_inactive,:inactive,"Inactive",{:data_type=>:boolean}]
     ]
     add_fields CoreModule::PRODUCT, make_last_changed_by(12,'prod',Product)
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
