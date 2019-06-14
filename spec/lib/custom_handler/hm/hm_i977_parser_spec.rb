@@ -20,9 +20,9 @@ describe OpenChain::CustomHandler::Hm::HmI977Parser do
       expect(product).not_to be_nil
       product.reload
 
-      expect(product.unique_identifier).to eq "HENNE-0004754"
+      expect(product.unique_identifier).to eq "HENNE-0475463"
       expect(product.name).to eq "Other shoe Black, 38"
-      expect(product.custom_value(cdefs[:prod_part_number])).to eq "0004754"
+      expect(product.custom_value(cdefs[:prod_part_number])).to eq "0475463"
       expect(product.custom_value(cdefs[:prod_product_group])).to eq "Men"
       expect(product.custom_value(cdefs[:prod_type])).to eq "Leather"
       expect(product.custom_value(cdefs[:prod_po_numbers])).to eq "302290\n 302292"
@@ -34,11 +34,11 @@ describe OpenChain::CustomHandler::Hm::HmI977Parser do
       s = product.entity_snapshots.first
       expect(s.user).to eq user
       expect(s.context).to eq "file.xml"
-      expect(inbound_file).to have_identifier(:article_number, "0004754", Product, product.id)
+      expect(inbound_file).to have_identifier(:article_number, "0475463", Product, product.id)
     end
 
     it "does not update parts where nothing has changed" do
-      product = Product.create! unique_identifier: "HENNE-0004754", importer: hm, name: "Other shoe Black, 38"
+      product = Product.create! unique_identifier: "HENNE-0475463", importer: hm, name: "Other shoe Black, 38"
       product.update_custom_value! cdefs[:prod_product_group], "Men"
       product.update_custom_value! cdefs[:prod_type], "Leather"
       product.update_custom_value! cdefs[:prod_po_numbers], "302290\n 302292"
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Hm::HmI977Parser do
     end
 
     it "uses an existing product, appending multiple po numbers and seasons" do
-      product = Product.create! unique_identifier: "HENNE-0004754", importer: hm, name: "Other shoe Black, 38"
+      product = Product.create! unique_identifier: "HENNE-0475463", importer: hm, name: "Other shoe Black, 38"
       product.update_custom_value! cdefs[:prod_po_numbers], "PO"
       product.update_custom_value! cdefs[:prod_season], "SEASON"
 
