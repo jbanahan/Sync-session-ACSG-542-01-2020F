@@ -5,7 +5,7 @@ class CreateProjectUpdates < ActiveRecord::Migration
       t.integer :created_by_id
       t.text :body
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :project_updates, :project_id
     add_index :project_updates, :created_by_id

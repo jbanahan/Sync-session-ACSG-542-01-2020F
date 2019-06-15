@@ -5,7 +5,7 @@ class CreateHtsTranslations < ActiveRecord::Migration
       t.references :country
       t.string :hts_number
       t.string :translated_hts_number
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :hts_translations, [:hts_number, :country_id, :company_id], :name => "index_hts_translations_on_hts_and_country_id_and_company_id"

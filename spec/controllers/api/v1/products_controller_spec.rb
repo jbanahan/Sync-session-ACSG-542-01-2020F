@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::ProductsController do
 
   before :each do
@@ -277,9 +275,6 @@ describe Api::V1::ProductsController do
         end
 
         it "handles all other exceptions as server errors" do
-          env = 'not_test'
-          allow(env).to receive(:production?).and_return false
-          allow(Rails).to receive(:env).and_return(env) #errors are raised in test
           expect(controller).to receive(:show) do
             raise "Oops, something weird happened!"
           end

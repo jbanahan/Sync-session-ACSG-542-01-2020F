@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UserTemplatesController do
   describe '#index' do
     it "should admin secure" do

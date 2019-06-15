@@ -185,7 +185,7 @@ module OpenChain; class TariffFileMonitor
 
       email_subject = "Tariff File Monitor Errors"
 
-      OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver!
+      OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver_now
     end
 
     def send_success_email email_to, report_files
@@ -197,7 +197,7 @@ module OpenChain; class TariffFileMonitor
 
       email_subject = "Tariff File Monitor Update"
 
-      OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver!
+      OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver_now
     end
 
 end; end;

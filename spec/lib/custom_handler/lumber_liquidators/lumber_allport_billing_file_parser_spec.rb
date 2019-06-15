@@ -41,17 +41,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
   end
 
   describe 'process' do
-    let(:custom_file) { double "custom file" }
-    before { allow(custom_file).to receive(:attached_file_name).and_return "file.xls" }
-    let(:attachment) { File.open('spec/fixtures/files/test_sheet_1.xls', 'rb') }
-    before { allow(custom_file).to receive(:attached).and_return attachment }
-    before { allow(attachment).to receive(:options).and_return bucket: "test-bucket" }
-    before { allow(attachment).to receive(:path).and_return attachment.path }
-    before { allow(OpenChain::S3).to receive(:download_to_tempfile).with("test-bucket", attachment.path, {original_filename: "file.xls"}).and_yield attachment }
-    let(:subject) { described_class.new(custom_file) }
-    let(:file_reader) { double "dummy reader" }
-    before { allow_any_instance_of(MasterSetup).to receive(:request_host).and_return 'some_host' }
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:request_host).and_return 'some_host'
+      ms
+    }
 
+    let(:custom_file) { double "custom file" }
+    let(:attachment) { File.open('spec/fixtures/files/test_sheet_1.xls', 'rb') }
+    let(:file_reader) { double "dummy reader" }
     let(:header_row) { ["A", "B", "C", "D", "E", "F", "G"] }
     let(:column_header_row) { ["Purchase Order", "BL/AWB/PRO", "Container", "Vessel", "POL", "Service Type", "CY/CY (FCL) Management Fee"] }
     let(:blank_row) { ["", "", "", "", "", "", ""] }
@@ -59,6 +57,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
     let(:row_1b) { ["x", "BOL-1", "CON-2", "x", "x", "x", "20.10"] }
     let(:row_2) { ["x", "BOL-2", "CON-3", "x", "x", "x", "25.25"] }
     let(:totals_row) { ["", "", "", "", "", "", "75.75"] }
+
+    subject { described_class.new(custom_file) }
+
+    before :each do 
+      allow(custom_file).to receive(:attached_file_name).and_return "file.xls"
+      allow(custom_file).to receive(:attached).and_return attachment
+      allow(Attachment).to receive(:bucket).and_return "test-bucket"
+      allow(attachment).to receive(:path).and_return attachment.path
+      allow(OpenChain::S3).to receive(:download_to_tempfile).with("test-bucket", attachment.path, {original_filename: "file.xls"}).and_yield attachment
+    end
 
     def yield_standard_header base
       base.and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).and_yield(header_row).

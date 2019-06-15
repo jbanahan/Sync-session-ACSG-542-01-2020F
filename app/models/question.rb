@@ -21,6 +21,10 @@
 #
 
 class Question < ActiveRecord::Base
+  attr_accessible :attachment_required_for_choices, :choices, 
+    :comment_required_for_choices, :content, :rank, :require_attachment, 
+    :require_comment, :survey_id, :warning
+  
   belongs_to :survey, touch: true, inverse_of: :questions
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
   
@@ -28,7 +32,7 @@ class Question < ActiveRecord::Base
   validates :content, :length=>{:minimum=>10}
   validate :parent_lock
 
-  default_scope :order => "questions.rank ASC, questions.id ASC"
+  scope :by_rank, -> { order(:rank, :id) }
 
   accepts_nested_attributes_for :attachments, :reject_if => lambda {|q|
     q[:attached].blank?

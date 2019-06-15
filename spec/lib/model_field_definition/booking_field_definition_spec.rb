@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldDefinition::BookingLineFieldDefinition do
   before(:each) do
     @olq = ModelField.find_by_uid(:bkln_order_line_quantity)

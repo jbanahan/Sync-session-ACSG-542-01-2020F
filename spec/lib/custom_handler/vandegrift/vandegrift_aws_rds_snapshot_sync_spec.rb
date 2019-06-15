@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
 
   let (:setup) {

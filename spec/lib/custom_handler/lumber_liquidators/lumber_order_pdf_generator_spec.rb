@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator do
   let(:cdefs){ subject.instance_variable_get("@cdefs") }
 

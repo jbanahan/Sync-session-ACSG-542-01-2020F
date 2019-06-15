@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'rex12'
 
 describe OpenChain::CustomHandler::Ascena::Apll856Parser do

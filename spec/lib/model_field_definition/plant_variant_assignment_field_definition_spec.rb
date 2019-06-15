@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldDefinition::PlantVariantAssignmentFieldDefinition do
   context "foreign key relationships" do
     before :each do

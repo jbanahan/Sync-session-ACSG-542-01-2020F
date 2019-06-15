@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator do
   subject { described_class }
 

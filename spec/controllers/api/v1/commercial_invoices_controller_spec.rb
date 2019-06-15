@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::CommercialInvoicesController do
   before(:each) do
     MasterSetup.get.update_attributes(entry_enabled:true)

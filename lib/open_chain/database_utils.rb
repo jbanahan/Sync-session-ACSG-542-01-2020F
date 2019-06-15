@@ -71,7 +71,7 @@ module OpenChain; class DatabaseUtils
       end
 
       def config_hash config
-        {adapter: config["adapter"], host: config["host"], database: config["database"], port: config["port"], username: config["username"]}.with_indifferent_access
+        {adapter: config["adapter"], host: config["host"], database: config["database"], port: config["port"], username: config["username"], encoding: config["encoding"], collation: config["collation"]}.with_indifferent_access
       end
 
       def database_config

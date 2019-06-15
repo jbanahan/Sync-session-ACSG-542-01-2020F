@@ -13,7 +13,7 @@ class RegistrationsController < ApplicationController
      company: "Company", contact: "Contact"}.each { |k, v| add_flash(:errors, "You must fill in a value for '#{v}'.") if params[k].empty? }
 
     if !has_errors? && valid_recaptcha && valid_email
-      OpenMailer.delay.send_registration_request(params[:email], params[:fname], params[:lname], params[:company], params[:contact], params[:cust_no], MasterSetup.get.system_code)
+      OpenMailer.send_registration_request(params[:email], params[:fname], params[:lname], params[:company], params[:contact], params[:cust_no], MasterSetup.get.system_code).deliver_later
       render json: {flash: {notice: [
         "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
         "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."

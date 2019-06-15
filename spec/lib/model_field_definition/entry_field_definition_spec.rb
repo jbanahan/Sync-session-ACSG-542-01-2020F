@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
   describe 'ent_first_billed_date' do
     let :mf do

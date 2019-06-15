@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
   describe "sync" do

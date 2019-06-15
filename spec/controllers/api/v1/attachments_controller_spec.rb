@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::AttachmentsController do
 
   let (:user) { Factory(:user) }
@@ -161,13 +159,15 @@ describe Api::V1::AttachmentsController do
     end
 
     it "calls log_update and attachment_added if base object responds to those methods" do
-      expect_any_instance_of(Product).to receive(:log_update).with(user)
+      answer = Factory(:answer)
+      allow_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
+      expect_any_instance_of(Answer).to receive(:log_update).with(user)
       attachment_id = nil
-      expect_any_instance_of(Product).to receive(:attachment_added) do |instance, attach|
+      expect_any_instance_of(Answer).to receive(:attachment_added) do |instance, attach|
         attachment_id = attach.id
       end
 
-      post :create, base_object_type: "products", base_object_id: product.id, file: file, att_attachment_type: "Attachment Type"
+      post :create, base_object_type: "answers", base_object_id: answer.id, file: file, att_attachment_type: "Attachment Type"
       expect(response).to be_success
 
       json = JSON.parse response.body

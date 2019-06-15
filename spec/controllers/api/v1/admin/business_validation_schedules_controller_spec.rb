@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::BusinessValidationSchedulesController do
   let! :user do
     u = Factory(:admin_user)

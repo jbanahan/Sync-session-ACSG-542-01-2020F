@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Registries::OrderAcceptanceRegistry do
 
   subject { described_class }

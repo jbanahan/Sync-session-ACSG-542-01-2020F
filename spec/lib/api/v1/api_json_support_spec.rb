@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Api::V1::ApiJsonSupport do
   let (:jsonize) { double("OpenChain::Api::ApiEntityJsonizer") }
   let (:user) { User.new username: "test" }
@@ -11,6 +9,14 @@ describe OpenChain::Api::V1::ApiJsonSupport do
 
       def initialize(jsonize)
         super(jsonizer: jsonize)
+      end
+
+      def params 
+        raise "Mock me"
+      end
+
+      def current_user
+        raise "Mock me"
       end
     end.new(jsonize)
   }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SurveysController do
   before :each do
 
@@ -272,8 +270,8 @@ describe SurveysController do
       post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s,"1"=>u3.id.to_s}
       expect(response).to redirect_to survey_path(@s)
       expect(flash[:notices].size).to eq(1)
-      expect(SurveyResponse.find_by_survey_id_and_user_id(@s.id,u2.id)).not_to be_nil
-      expect(SurveyResponse.find_by_survey_id_and_user_id(@s.id,u3.id)).not_to be_nil
+      expect(SurveyResponse.find_by(survey: @s.id, user: u2.id)).not_to be_nil
+      expect(SurveyResponse.find_by(survey: @s.id, user: u3.id)).not_to be_nil
     end
     it "should notify user when assigned" do
       u2 = Factory(:user)
@@ -298,7 +296,7 @@ describe SurveysController do
       post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s,"1"=>u3.id.to_s}
       expect(response).to redirect_to survey_path(@s)
       expect(flash[:notices].size).to eq(1)
-      expect(SurveyResponse.find_by_survey_id_and_user_id(@s.id,u3.id)).not_to be_nil
+      expect(SurveyResponse.find_by(survey: @s.id, user: u3.id)).not_to be_nil
       expect(SurveyResponse.where(:user_id=>u2.id,:survey_id=>@s.id).count).to eq(2)
     end
     it "should set subtitle" do
@@ -306,7 +304,7 @@ describe SurveysController do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
       post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s}, :subtitle=>'sub'
       expect(response).to redirect_to survey_path(@s)
-      expect(SurveyResponse.find_by_survey_id_and_user_id(@s.id,u2.id).subtitle).to eq('sub')
+      expect(SurveyResponse.find_by(survey: @s.id, user: u2.id).subtitle).to eq('sub')
     end
     it "assigns to groups" do
       g = Group.create! system_code: "g", name: "Group"

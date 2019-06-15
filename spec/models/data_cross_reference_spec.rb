@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DataCrossReference do
 
   context "hash_for_type" do

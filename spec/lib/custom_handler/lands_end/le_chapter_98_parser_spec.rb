@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
 
 describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do

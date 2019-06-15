@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
         outbound_file.rewind
 
         body_text = "Attached is a Kewill-based report."
-        OpenMailer.send_simple_html(to_addr, subject, body_text, [outbound_file]).deliver!
+        OpenMailer.send_simple_html(to_addr, subject, body_text, [outbound_file]).deliver_now
       end
     end
 

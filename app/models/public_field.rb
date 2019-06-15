@@ -14,6 +14,7 @@
 #
 
 class PublicField < ActiveRecord::Base
+  attr_accessible :model_field_uid, :searchable
 
   after_save :reload_model_fields
 

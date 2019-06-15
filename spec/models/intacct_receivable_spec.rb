@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe IntacctReceivable do
 
   describe "create_receivable_type" do

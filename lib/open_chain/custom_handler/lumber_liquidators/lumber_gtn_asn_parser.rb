@@ -176,7 +176,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
     if errors.length > 0
       body_text = "Errors were encountered while parsing ASN file for #{shipping_order_number}.<br><br>#{errors.uniq.join("<br>")}"
-      OpenMailer.send_simple_html("ll-support@vandegriftinc.com", "Lumber GTN ASN Parser Errors: #{shipping_order_number}", body_text.html_safe).deliver!
+      OpenMailer.send_simple_html("ll-support@vandegriftinc.com", "Lumber GTN ASN Parser Errors: #{shipping_order_number}", body_text.html_safe).deliver_now
     end
 
     nil

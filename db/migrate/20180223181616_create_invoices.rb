@@ -27,7 +27,7 @@ class CreateInvoices < ActiveRecord::Migration
       t.decimal  :volume, :precision => 11, :scale => 5
       t.string   :volume_uom
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

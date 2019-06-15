@@ -10,6 +10,8 @@
 #
 
 class EntityType < ActiveRecord::Base
+  attr_accessible :module_type, :name
+  
   has_many :entity_type_fields, :dependent => :destroy
   has_many :products, :dependent => :nullify
   validates :name, :presence => true, :uniqueness => true   

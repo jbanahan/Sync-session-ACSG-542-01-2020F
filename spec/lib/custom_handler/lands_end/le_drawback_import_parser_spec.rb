@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
   before :each do
     @le_company = Factory(:company)
@@ -68,6 +66,6 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
   it "should import duty per unit from KeyJsonItem" do
     KeyJsonItem.lands_end_cd('23105002004-2740747').first_or_create!(json_data:{entry_number:'23105002004',part_number:'2740747',duty_per_unit:1.2}.to_json)
     @p.parse @data
-    expect(DrawbackImportLine.find_by_part_number('2740747').duty_per_unit).to eq(1.2)
+    expect(DrawbackImportLine.find_by(part_number: '2740747').duty_per_unit).to eq(1.2)
   end
 end

@@ -23,7 +23,7 @@ class CreateDutyCalcExportFileLines < ActiveRecord::Migration
       t.decimal :nafta_duty_rate
       t.integer :duty_calc_export_file_id
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :duty_calc_export_file_lines, :duty_calc_export_file_id

@@ -159,7 +159,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
       end
       email_body += "</p>"
 
-      OpenMailer.send_simple_html("it-admin@vandegriftinc.com", "BACKUP FAILURE: AWS#{instance_id.blank? ? "" : " Instance-Id #{instance_id}"}.", email_body.html_safe).deliver!
+      OpenMailer.send_simple_html("it-admin@vandegriftinc.com", "BACKUP FAILURE: AWS#{instance_id.blank? ? "" : " Instance-Id #{instance_id}"}.", email_body.html_safe).deliver_now
     ensure
       slack_client.send_message! "it-alerts-warnings", "An error occurred attempting to snapshot#{instance_id.blank? ? "" : " Instance-Id #{instance_id}"}."
     end

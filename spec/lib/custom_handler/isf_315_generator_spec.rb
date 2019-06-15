@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::CustomHandler::Isf315Generator do
 
   describe "accepts?" do

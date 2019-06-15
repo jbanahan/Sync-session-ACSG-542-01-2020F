@@ -4,7 +4,7 @@ class CreateProjects < ActiveRecord::Migration
       t.string :name
       t.date :due
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

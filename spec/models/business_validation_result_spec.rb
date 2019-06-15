@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationResult do
   let(:bvr) { Factory(:business_validation_result) }
   

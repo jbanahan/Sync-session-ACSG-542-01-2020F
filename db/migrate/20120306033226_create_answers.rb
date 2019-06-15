@@ -6,7 +6,7 @@ class CreateAnswers < ActiveRecord::Migration
       t.string :choice
       t.string :rating
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :answers, :survey_response_id
     add_index :answers, :question_id

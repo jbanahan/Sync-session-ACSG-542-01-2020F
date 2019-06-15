@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe VendorPlantsController do
   before :each do
     sign_in_as Factory(:user)

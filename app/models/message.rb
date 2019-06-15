@@ -20,6 +20,9 @@
 #
 
 class Message < ActiveRecord::Base
+  attr_accessible :body, :folder, :link_name, :link_path, :subject, 
+    :user_id, :viewed, :created_at
+  
   belongs_to  :user
   
   validates   :user, :presence => true
@@ -35,7 +38,7 @@ class Message < ActiveRecord::Base
   # on the messages index page
   def email_to_user
     if user.active? && user.email_new_messages
-      OpenMailer.delay.send_message(self)
+      OpenMailer.send_message(self).deliver_later
     end
   end
 

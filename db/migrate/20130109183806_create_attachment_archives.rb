@@ -6,7 +6,7 @@ class CreateAttachmentArchives < ActiveRecord::Migration
       t.datetime :start_at
       t.datetime :finish_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :attachment_archives, :company_id
     create_table :attachment_archives_attachments do |t|

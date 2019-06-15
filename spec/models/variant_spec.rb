@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Variant do
   describe '#can_view?' do
     before :each do

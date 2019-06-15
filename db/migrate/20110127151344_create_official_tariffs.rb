@@ -9,7 +9,7 @@ class CreateOfficialTariffs < ActiveRecord::Migration
       t.string :general_rate
       t.string :rate_2
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

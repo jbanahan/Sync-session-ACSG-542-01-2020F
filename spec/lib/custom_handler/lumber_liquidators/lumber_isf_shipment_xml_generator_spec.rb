@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenerator do
 
   describe 'generate_xml' do
@@ -152,7 +150,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
       expect(root.text('SHIPMENT_TYPE')).to eq('01')
       expect(root.text('MOT_CD')).to eq('11')
       expect(root.text('VOAYGE_NBR')).to eq('voyage')
-      expect(root.text('EST_SAIL_DATE')).to eq('2016-08-31T09:10:11')
+      expect(root.text('EST_SAIL_DATE')).to eq('2016-08-31T00:00:00')
       expect(root.text('SCAC_CD')).to eq('ABCD')
       expect(root.text('PO_NBR')).to eq('SHPREF')
       expect(root.text('BOOKING_NBR')).to eq('ORDNUM1')

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser do
   before :each do
     @eddie = Factory(:company,system_code:'EDDIE')
@@ -16,7 +14,7 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
     context "with disabled delayed jobs", :disable_delayed_jobs do 
       it "should create orders" do
         expect { subject.parse(@data) }.to change(Order,:count).from(0).to(2)
-        ord = Order.find_by_order_number('EDDIE-E0442642-0011')
+        ord = Order.find_by(order_number: 'EDDIE-E0442642-0011')
         expect(ord.customer_order_number).to eq 'E0442642-0011'
         expect(ord.vendor.name).to eq 'SHAHI EXPORTS PVT LTD'
         expect(ord.vendor.system_code).to eq 'EDDIE-E0002450'
@@ -39,7 +37,7 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
       it "should find existing product" do
         p = Factory(:product,unique_identifier:'EDDIE-009-8498',importer:@eddie)
         subject.parse(@data)
-        expect(Order.find_by_order_number('EDDIE-E0442642-0011').order_lines.find_by_product_id(p.id)).not_to be_nil
+        expect(Order.find_by(order_number: 'EDDIE-E0442642-0011').order_lines.find_by(product: p)).not_to be_nil
       end
       it "should delete and rebuild lines on existing order" do
         p = Factory(:product,unique_identifier:'EDDIE-009-9999',importer:@eddie)
@@ -48,13 +46,13 @@ E-0442642-0011                      SHAHI EXPORTS PVT LTD              91 E00024
         ord = line_to_delete.order
         ord.reload
         expect(ord.order_lines.count).to eq 4
-        expect(ord.order_lines.find_by_product_id(p.id)).to be_nil
+        expect(ord.order_lines.find_by(product: p)).to be_nil
       end
       it "should use existing vendor" do
         sys_code = "EDDIE-E0002450"
         vendor = Factory(:company,vendor:true,system_code:sys_code)
         subject.parse @data
-        expect(Order.find_by_order_number('EDDIE-E0442642-0011').vendor).to eq vendor
+        expect(Order.find_by(order_number: 'EDDIE-E0442642-0011').vendor).to eq vendor
       end
 
       it "should fail if EDDIE company can't be found" do

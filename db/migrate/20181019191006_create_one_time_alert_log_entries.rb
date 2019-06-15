@@ -7,7 +7,7 @@ class CreateOneTimeAlertLogEntries < ActiveRecord::Migration
       t.string :alertable_type
       t.string :reference_fields
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'spreadsheet'
-
 describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
   let (:user) {
@@ -939,7 +936,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(messages[0]).to eq("See attached spreadsheet for full list of invoice numbers that could not be generated.")
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
         obj = double('mailer')
-        expect(obj).to receive(:deliver)
+        expect(obj).to receive(:deliver_now)
         obj
       end
 

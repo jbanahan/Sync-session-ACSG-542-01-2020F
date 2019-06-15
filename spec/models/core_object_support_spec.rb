@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CoreObjectSupport do
   describe "find_by_custom_value" do
     it "shuould find by value" do
@@ -189,6 +187,10 @@ describe CoreObjectSupport do
     before :each do
       class TestCoreObject < ActiveRecord::Base
         include CoreObjectSupport
+
+        def self.table_name
+          "test_core_objects"
+        end
 
         def self.name
           "Class' Name"

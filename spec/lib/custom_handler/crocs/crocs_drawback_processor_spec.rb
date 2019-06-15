@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
   describe "process_entries_by_arrival_date" do
     

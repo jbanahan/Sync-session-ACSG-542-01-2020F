@@ -22,7 +22,7 @@
       </div>
       <div class="row py-md-1">
         <div class="col-md-2"></div>
-      <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.scoped.empty? || MasterSetup.get.custom_feature?('fenix') -%>
+      <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.all.empty? || MasterSetup.get.custom_feature?('fenix') -%>
         <div class="col-md-4 col-sm-12">
       <% else -%>
         <div class="col-md-8 col-sm-12">
@@ -167,9 +167,9 @@
             </div>
           </div>
         </div>
-        <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.scoped.empty? || MasterSetup.get.custom_feature?('fenix') %>
+        <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.all.empty? || MasterSetup.get.custom_feature?('fenix') %>
           <div class="col-md-4 col-sm-12 pl-md-0 pt-sm-3 pt-md-0">
-            <%unless PublicField.scoped.empty?-%>
+            <%unless PublicField.all.empty?-%>
               <div class="row">
                 <div class="col">
                   <div class="card">

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/tariff_finder'
 require 'open_chain/xl_client'
 

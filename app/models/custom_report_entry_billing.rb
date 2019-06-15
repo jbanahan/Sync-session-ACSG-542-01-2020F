@@ -1,6 +1,8 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportEntryBilling < CustomReport
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  
   #display name for report
   def self.template_name
     "Entry Billing"

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::KewillEntryDocumentsController do
 
   # Implicit in this test is a few checks for the SnsApiControllerSupport module that I don't know how to actually write

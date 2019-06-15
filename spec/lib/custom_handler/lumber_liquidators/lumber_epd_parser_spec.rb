@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
   before :each do
     @base_struct = Struct.new(:article_num, :variant_id,

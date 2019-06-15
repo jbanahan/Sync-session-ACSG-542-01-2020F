@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotGenerator do
 
   describe "execute_snapshot" do

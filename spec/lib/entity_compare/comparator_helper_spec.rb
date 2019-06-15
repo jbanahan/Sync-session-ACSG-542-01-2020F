@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::EntityCompare::ComparatorHelper do
   subject {
     Class.new do

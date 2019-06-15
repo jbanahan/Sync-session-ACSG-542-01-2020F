@@ -759,7 +759,7 @@ describe User do
   context "send_invite_emails" do
     it "should send an invite email to a user" do
       e = double("Email")
-      expect(e).to receive(:deliver)
+      expect(e).to receive(:deliver_now!)
       u = Factory(:user)
 
       expect(OpenMailer).to receive(:send_invite) do |user, password|
@@ -776,7 +776,7 @@ describe User do
 
     it "should send an invite email to multiple users" do
       e = double("email")
-      expect(e).to receive(:deliver).twice
+      expect(e).to receive(:deliver_now!).twice
       expect(OpenMailer).to receive(:send_invite).twice.and_return(e)
 
       u = Factory(:user)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Validations::Password::PreviousPasswordValidator do
   let!(:user) { Factory.create(:user) }
 

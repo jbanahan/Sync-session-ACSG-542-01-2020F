@@ -21,7 +21,7 @@ module OpenChain
         workbook_to_tempfile wb, 'MonthlyUserAudit-' do |t|
           subject = "#{Time.now.strftime('%B')} VFI Track User Audit Report for #{MasterSetup.get.system_code}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
-          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
+          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver_now
         end
       end
 

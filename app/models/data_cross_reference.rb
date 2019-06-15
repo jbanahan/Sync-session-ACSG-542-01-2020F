@@ -20,6 +20,9 @@ require 'open_chain/data_cross_reference_upload_preprocessor'
 require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
+  attr_accessible :company_id, :company, :cross_reference_type, :key, :value,
+    :created_at
+  
   belongs_to :company
   validates_presence_of :key, :cross_reference_type
 
@@ -386,7 +389,7 @@ class DataCrossReference < ActiveRecord::Base
   private_class_method :list_ota_reference_fields
 
   def self.find_po_fingerprint order
-    find_unique_obj scoped, key: order.order_number, xref_type: PO_FINGERPRINT
+    find_unique_obj nil, key: order.order_number, xref_type: PO_FINGERPRINT
   end
 
   def self.create_po_fingerprint order, fingerprint
@@ -424,6 +427,8 @@ class DataCrossReference < ActiveRecord::Base
   private_class_method :find_unique_obj
 
   def self.find_unique_relation relation, key: nil, xref_type: nil
+    relation = DataCrossReference.all if relation.nil?
+
     if key
       relation = relation.where(key: key)
     end

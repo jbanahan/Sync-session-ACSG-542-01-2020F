@@ -6,7 +6,7 @@ class CreateBusinessValidationScheduledJobs < ActiveRecord::Migration
       t.string :validatable_type
       t.datetime :run_date
       
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

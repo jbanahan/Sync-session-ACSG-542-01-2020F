@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
     subject = "Custom invoice upload incomplete"
     inv_nums = errors.map{|n| CGI.escapeHTML n }.join("<br>").html_safe
     body = "<p>The following invoices in <strong>#{CGI.escapeHTML file_name}</strong> already exist and could not be updated:<br>#{inv_nums}</p>".html_safe
-    OpenMailer.send_simple_html(user.email, subject, body).deliver!
+    OpenMailer.send_simple_html(user.email, subject, body).deliver_now
   end
 
   class Wrapper < RowWrapper

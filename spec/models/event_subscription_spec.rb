@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EventSubscription do
   let (:master_setup) do
     ms = double("MasterSetup")

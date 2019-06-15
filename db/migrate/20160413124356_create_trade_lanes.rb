@@ -6,7 +6,7 @@ class CreateTradeLanes < ActiveRecord::Migration
       t.decimal :tariff_adjustment_percentage, precision: 4, scale: 3
       t.text :notes
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :trade_lanes, :origin_country_id
     add_index :trade_lanes, :destination_country_id

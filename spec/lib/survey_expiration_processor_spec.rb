@@ -1,6 +1,6 @@
-require 'spec_helper'
-
 describe OpenChain::SurveyExpirationProcessor, type: :mailer do 
+
+  let!(:master_setup) { stub_master_setup }
 
 	before :each do
 		/ Set up the 'ecosystem' for the test:

@@ -11,7 +11,7 @@ class RemoveMilestonePlans < ActiveRecord::Migration
       t.integer :test_rank
       t.boolean :inbound
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

@@ -1,6 +1,4 @@
 require "rexml/document"
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipmentComparator do
   describe "accept?" do
     let (:snapshot) { EntitySnapshot.new }

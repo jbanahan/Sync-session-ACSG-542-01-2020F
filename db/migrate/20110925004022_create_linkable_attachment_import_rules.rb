@@ -4,7 +4,7 @@ class CreateLinkableAttachmentImportRules < ActiveRecord::Migration
       t.string :path
       t.string :model_field_uid
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::EntityCompare::OneTimeAlertsComparator do
   describe "compare" do
     let(:ent) { Factory(:entry, gross_weight: 5, broker_reference: "BROKREF_ABC") }

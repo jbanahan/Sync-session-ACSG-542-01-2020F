@@ -8,7 +8,7 @@ class CreateBusinessValidationSchedules < ActiveRecord::Migration
 
       t.string :name
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

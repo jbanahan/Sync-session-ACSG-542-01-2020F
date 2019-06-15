@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Api::OrderApiClient do
   subject { described_class.new('test', 'test', 'test') }
   let(:http_client) { double("OpenChain::JsonHttpClient") }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::PoloCsmSyncHandler do
 
   before :all do
@@ -69,7 +67,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
           13=>{'value'=>'CSMDEPT','datatype'=>'string'}
         )
         @h.process Factory(:user)
-        p = Product.find_by_unique_identifier 'newproduid'
+        p = Product.find_by unique_identifier: 'newproduid'
         expect(p.custom_value(cdefs[:csm_season])).to eq('seas')
       end
 

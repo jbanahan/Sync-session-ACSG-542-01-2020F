@@ -16,6 +16,8 @@
 #
 
 class LinkableAttachment < ActiveRecord::Base
+  attr_accessible :attachment_id, :model_field_uid, :value
+  
   has_one :attachment, :as => :attachable, :dependent => :destroy
   has_many :linked_attachments
 
@@ -28,7 +30,7 @@ class LinkableAttachment < ActiveRecord::Base
   #get a distinct list of model_field_uids in database
   def self.model_field_uids
     m = CACHE.get('LinkableAttachment:model_field_uids')
-    m = LinkableAttachment.find_by_sql('SELECT DISTINCT model_field_uid FROM linkable_attachments').collect {|a| a.model_field_uid} unless m
+    m = LinkableAttachment.pluck(:model_field_uid).uniq unless m
     m.blank? ? [] : m
   end
 

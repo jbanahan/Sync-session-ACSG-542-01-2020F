@@ -12,6 +12,8 @@
 #
 
 class StatusRule < ActiveRecord::Base
+  attr_accessible :description, :module_type, :name, :test_rank, :search_criterions_attributes
+  
   has_many :search_criterions, :dependent => :destroy
   
   #module links (NEVER MAKE THESE :dependent => :destroy)

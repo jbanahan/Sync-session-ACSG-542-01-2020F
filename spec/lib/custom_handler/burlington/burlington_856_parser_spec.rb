@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
   describe "process_transaction" do

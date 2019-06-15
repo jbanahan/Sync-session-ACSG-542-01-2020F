@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsCommerci
       t.binmode
       process_file path, t, file_number
       t.rewind
-      OpenMailer.send_simple_html(user.email, "Lands' End CI Load File #{File.basename(send_filename, ".*")}", "Attached is the Lands' End CI Load file generated from #{File.basename(path)}.  Please verify the file contents before loading the file into the CI Load program.".html_safe, [t]).deliver!
+      OpenMailer.send_simple_html(user.email, "Lands' End CI Load File #{File.basename(send_filename, ".*")}", "Attached is the Lands' End CI Load file generated from #{File.basename(path)}.  Please verify the file contents before loading the file into the CI Load program.".html_safe, [t]).deliver_now
     end
     nil
   end

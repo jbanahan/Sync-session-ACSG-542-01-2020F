@@ -3,7 +3,7 @@ class CreateDutyCalcExportFiles < ActiveRecord::Migration
     create_table :duty_calc_export_files do |t|
       t.integer :user_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::Events::EntryEvents::EntryEventHandler do 
 
   context "listeners" do 

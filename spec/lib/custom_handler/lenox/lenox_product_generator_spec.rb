@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
 
   def verify_line line, values = {}

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::AllianceWebtrackingMonitorReport do
 
   subject { described_class }

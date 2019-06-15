@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CommercialInvoicesController do
   describe "show" do
     before :each do

@@ -9,7 +9,7 @@ class CreateSurveyResponses < ActiveRecord::Migration
       t.datetime :submitted_date
       t.datetime :accepted_date
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :survey_responses, :survey_id
     add_index :survey_responses, :user_id

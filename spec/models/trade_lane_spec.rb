@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TradeLane do
   context 'validations' do
     it "should require destination country" do

@@ -236,7 +236,7 @@ module OpenChain; class FenixParser
         #match up any broker invoices that might have already been loaded
         @entry.link_broker_invoices
         #write time to process without reprocessing hooks
-        @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+        @entry.update_column(:time_to_process, ((Time.now-start_time) * 1000).to_i)
 
         # F type entries are LVS Summaries...when we get one of these we then want to request a full listing of any of the "child" LVS
         # transaction numbers so we can pull the summary level dates down into the child entries.
@@ -890,7 +890,7 @@ module OpenChain; class FenixParser
       subject = "Transaction # #{entry.entry_number} cannot be reused in Fenix ND"
       message = "Transaction # #{entry.entry_number} / File # #{new_file_number} has been used previously in old Fenix as File # #{entry.broker_reference}. Please correct this Fenix ND file and resend to VFI Track."
       m = OpenMailer.send_simple_html(Group.use_system_group("fenix_admin", name: "Fenix Admin"), subject, message)
-      m.deliver! if Array.wrap(m.to).length > 0
+      m.deliver_now if Array.wrap(m.to).length > 0
 
       false
     else
@@ -934,14 +934,8 @@ module OpenChain; class FenixParser
   end
 
   def forwarding_config
-    @config ||= begin 
-      # The config should just be a mapping of Importer Tax Ids to FTP folders the data needs to be forwarded to.
-      if File.exist?("config/fenix_b3_forwarding.yml")
-        YAML.load_file "config/fenix_b3_forwarding.yml"
-      else
-        {}
-      end
-    end
+    c = MasterSetup.secrets["fenix_b3_forwarding"]
+    c.nil? ? {} : c
   end
 
   def summary_entry_type? entry

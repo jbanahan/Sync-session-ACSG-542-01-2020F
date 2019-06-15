@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CustomViewSelector do
 
   subject { described_class }

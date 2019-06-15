@@ -41,7 +41,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
     workbook_to_tempfile wb, 'ActualVsPotentialFirstSale-', file_name: "Actual vs Potential First Sale.xls" do |t|
       subject = "Actual vs Potential First Sale Report"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
-      OpenMailer.send_simple_html(email, subject, body, t).deliver!
+      OpenMailer.send_simple_html(email, subject, body, t).deliver_now
     end
   end
   

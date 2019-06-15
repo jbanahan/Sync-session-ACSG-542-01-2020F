@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryTariffMatchesProduct do
   context "full rule test" do
     before :each do

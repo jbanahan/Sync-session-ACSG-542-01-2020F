@@ -29,6 +29,12 @@ require 'open_chain/google_drive'
 require 'open_chain/s3'
 
 class Attachment < ActiveRecord::Base
+  attr_accessible :alliance_revision, :alliance_suffix, :attachable_id,
+    :attachable, :attachable_type, :attached_content_type, :attached_file_name, 
+    :attached_file_size, :attached_updated_at, :attachment_type, :checksum, 
+    :is_private, :source_system_timestamp, :uploaded_by_id, :uploaded_by, 
+    :attached, :updated_at
+  
   has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
@@ -123,9 +129,9 @@ class Attachment < ActiveRecord::Base
       if total_emails > 1
         altered_subject = email_subject + " (#{email_index} of #{total_emails})"
         email_index += 1
-        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachments, full_name, email).deliver!
+        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachments, full_name, email).deliver_now
       else
-        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver_now
       end
     end
     return true

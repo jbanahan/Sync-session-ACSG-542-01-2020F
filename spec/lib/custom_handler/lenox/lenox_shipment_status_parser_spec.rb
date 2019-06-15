@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
   def default_row overrides={}
     h = {po:'ORD123',part:'PART',qty:100,pol:'Yantian, China',
@@ -47,7 +45,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     it "should not run if user cannot view" do
       u = User.new
       expect(described_class).to receive(:can_view?).with(u).and_return false
-      expect(described_class).not_to receive(:parse)
+      expect_any_instance_of(described_class).not_to receive(:parse)
       described_class.new(@cf).process(u)
     end
     it "should write error message to user" do

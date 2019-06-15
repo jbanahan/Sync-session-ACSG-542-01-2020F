@@ -1,54 +1,58 @@
-require 'spec_helper'
-
 describe OpenChain::SlackClient do
+
+  let (:slack_client) { instance_double(Slack::Web::Client) }
+
   before :each do
-    @fake_client = double('Slack::Web::Client')
-    allow(OpenChain::SlackClient).to receive(:slack_client).and_return @fake_client
-  end
-  describe "initalize" do
-    it "should get bot-api token from default location" do
-      expect(File).to receive(:exist?).with("config/slack_client.yml").and_return true
-      expect(YAML).to receive(:load_file).with("config/slack_client.yml").and_return({"VFITRACK_SLACK_TOKEN"=>"abc"})
-      expect(described_class.new.slack_token).to eq 'abc'
-    end
-
-    it "uses provided token" do
-      expect(described_class.new("token").slack_token).to eq 'token'
-    end
+    allow(subject).to receive(:slack_client).and_return slack_client
   end
 
-  describe "send message" do
-    it "should send message if @slack_token" do
-      allow(Rails.env).to receive(:production?).and_return true
-      expected = {channel:'c',  text:'txt', as_user: true}
-      expect(@fake_client).to receive(:chat_postMessage).with(expected)
-      c = described_class.new('abc')
-      c.send_message!('c','txt')
-    end
-    it "raises an error if no @slack_token" do
-      allow(Rails.env).to receive(:production?).and_return true
-      expect(@fake_client).not_to receive(:chat_postMessage)
-      c = described_class.new ''
-      expect{c.send_message!('c','txt')}.to raise_error "SlackClient initialization failed: No slack_token set. (Try setting up the slack_client.yml file)"
-    end
-    it "should prefix DEV MESSAGE: if not Rails.env.production?" do
-      expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
-      expect(@fake_client).to receive(:chat_postMessage).with(expected)
-      c = described_class.new('abc')
-      c.send_message!('c','txt')
+  describe "send message!" do
+    context "in production env" do
+      before :each do 
+        allow(MasterSetup).to receive(:production_env?).and_return true
+      end
+
+      context "with slack enabled" do
+        before :each do 
+          allow(subject.class).to receive(:slack_configured?).and_return true
+        end
+
+        it "should send message if configured" do
+          expected = {channel:'c',  text:'txt', as_user: true}
+          expect(slack_client).to receive(:chat_postMessage).with(expected)
+          subject.send_message!('c','txt')
+        end
+      end
+
+      it "raises an error if slack is not configured" do
+        allow(subject.class).to receive(:slack_configured?).and_return false
+        expect { subject.send_message!('c','txt') }.to raise_error "A Slack api_key has not been configured in secrets.yml"
+      end
     end
 
-    it "should not raise error for non-bang version" do
-      expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
-      expect(@fake_client).to receive(:chat_postMessage).with(expected).and_raise('hello')
-      c = described_class.new('abc')
-      expect {c.send_message('c','txt')}.to_not raise_error
+    context "not in production env" do
+      before :each do 
+        allow(MasterSetup).to receive(:production_env?).and_return false
+      end
+
+      context "with slack enabled" do
+        before :each do 
+          allow(subject.class).to receive(:slack_configured?).and_return true
+        end
+
+        it "should prefix message with DEV MESSAGE" do
+          expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
+          expect(slack_client).to receive(:chat_postMessage).with(expected)
+          subject.send_message!('c','txt')
+        end
+      end
     end
-    it "should raise error for bang version" do
-      expected = {channel:'c',  text:'DEV MESSAGE: txt', as_user:true}
-      expect(@fake_client).to receive(:chat_postMessage).with(expected).and_raise('hello')
-      c = described_class.new('abc')
-      expect {c.send_message!('c','txt')}.to raise_error(/hello/)
+  end
+
+  describe "send_message" do 
+    it "swallows errors raised by ! version of method" do
+      expect(subject).to receive(:send_message!).with("channel", "text", {opts: true}).and_raise "error"
+      subject.send_message("channel", "text", {opts: true})
     end
   end
 end

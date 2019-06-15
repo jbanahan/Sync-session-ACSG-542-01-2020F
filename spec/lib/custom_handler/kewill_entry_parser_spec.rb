@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::KewillEntryParser do
 
   let (:tz) {ActiveSupport::TimeZone["Eastern Time (US & Canada)"]}

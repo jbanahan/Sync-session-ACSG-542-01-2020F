@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::FixedPositionGenerator do
  
   describe "str" do

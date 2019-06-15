@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::Events::IsfEvents::IsfEventHandler do 
 
   context "listeners" do 

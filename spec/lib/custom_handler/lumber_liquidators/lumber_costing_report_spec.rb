@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:api) { double("OpenChain::Api::OrderApiClient")}
   subject { described_class.new api_client: api}

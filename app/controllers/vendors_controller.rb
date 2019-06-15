@@ -121,9 +121,9 @@ class VendorsController < ApplicationController
   def render_infinite_empty collection, noun
     if collection.empty?
       if params[:page].blank?
-        render text: "<div class='alert alert-success'>There aren't any #{noun}.</div>"
+        render html: "<div class='alert alert-success'>There aren't any #{noun}.</div>".html_safe
       else
-        render text: "<tr class='last-row'><td colspan='50'><div class='alert alert-info text-center' style='margin-top:10px'>There aren't any more #{noun}.</div></td></tr>"
+        render html: "<tr class='last-row'><td colspan='50'><div class='alert alert-info text-center' style='margin-top:10px'>There aren't any more #{noun}.</div></td></tr>".html_safe
       end
       return true
     else

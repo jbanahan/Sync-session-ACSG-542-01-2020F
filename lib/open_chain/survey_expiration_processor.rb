@@ -8,7 +8,7 @@ class OpenChain::SurveyExpirationProcessor
 			responses = expired_survey.survey_responses.reminder_email_needed
 			recipient_addresses = expired_survey.survey_subscriptions.map{|ss| ss.user.email}.compact
 			recipient_addresses.each do |recipient|
-				OpenMailer.send_survey_expiration_reminder(recipient, expired_survey, responses).deliver!
+				OpenMailer.send_survey_expiration_reminder(recipient, expired_survey, responses).deliver_now
 			end
 			responses.each do |response|
 				response.expiration_notification_sent_at = Time.now

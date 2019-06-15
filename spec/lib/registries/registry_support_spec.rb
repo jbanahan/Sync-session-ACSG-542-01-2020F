@@ -3,6 +3,10 @@ describe OpenChain::Registries::RegistrySupport do
   subject {
     Class.new do 
       include OpenChain::Registries::RegistrySupport
+
+      def registered
+        raise "Mock me"
+      end
     end.new
   }
 

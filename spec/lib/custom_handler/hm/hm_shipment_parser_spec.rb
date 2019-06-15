@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmShipmentParser do
   before(:all) { described_class.prep_custom_definitions described_class.cdef_keys }
   after(:all) { CustomDefinition.destroy_all }

@@ -28,6 +28,8 @@
 #
 
 class ItemChangeSubscription < ActiveRecord::Base
+  attr_accessible :app_message, :broker_invoice_id, :commercial_invoice_id, :company_id, :container_id, :delivery_id, :email, :entry_id, :order_id, :product_id, :sales_order_id, :security_filing_id, :shipment_id, :user_id
+  
   belongs_to  :shipment
   belongs_to  :order
   belongs_to  :product

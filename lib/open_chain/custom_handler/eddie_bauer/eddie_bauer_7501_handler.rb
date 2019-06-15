@@ -92,14 +92,14 @@ module OpenChain; module CustomHandler; module EddieBauer
     def send_report email, report
       subject = "Eddie Bauer 7501 Audit"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
-      OpenMailer.send_simple_html(email, subject, body, [report]).deliver!
+      OpenMailer.send_simple_html(email, subject, body, [report]).deliver_now
     end
 
     def send_errors email, errors
       errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."  
       body = "Eddie Bauer 7501 '#{@custom_file.attached_file_name}' has finished processing.\n\n#{errors.join("\n")}"
       subject = "Eddie Bauer 7501 Audit Completed With Errors"
-      OpenMailer.send_simple_html(email, subject, body).deliver!
+      OpenMailer.send_simple_html(email, subject, body).deliver_now
     end
 
   end

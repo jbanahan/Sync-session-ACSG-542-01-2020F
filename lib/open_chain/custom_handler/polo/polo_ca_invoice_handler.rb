@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Polo
         subject = "Errors were encountered while processing '#{@custom_file.attached_file_name}'"
         body = e.message
         OpenChain::S3.download_to_tempfile(@custom_file.bucket, @custom_file.path, original_filename: @custom_file.attached_file_name) do |f|
-          OpenMailer.send_simple_html(user.email, subject, body, f).deliver
+          OpenMailer.send_simple_html(user.email, subject, body, f).deliver_now
         end
       rescue
         error = "Errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."

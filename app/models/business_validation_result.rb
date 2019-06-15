@@ -17,10 +17,15 @@
 #
 
 class BusinessValidationResult < ActiveRecord::Base
+  attr_accessible :business_validation_template_id, :state, :validatable_id,
+    :validatable, :validatable_type, :updated_at
+  
   belongs_to :business_validation_template
   belongs_to :validatable, polymorphic: true
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_result, autosave: true
-  scope :public, joins(:business_validation_template).where(business_validation_templates: {private: [nil, false]})
+  
+  scope :public_rule, -> { joins(:business_validation_template).where(business_validation_templates: {private: [nil, false]}) }
+
 
   def can_view? user
     if self.business_validation_template.private?

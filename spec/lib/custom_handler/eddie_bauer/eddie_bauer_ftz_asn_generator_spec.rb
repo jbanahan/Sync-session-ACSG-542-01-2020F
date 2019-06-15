@@ -1,4 +1,3 @@
-require "spec_helper"
 require 'digest/md5'
 
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do

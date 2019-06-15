@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe LinkedAttachment do
   context 'validations' do
     it 'should require an attachable' do

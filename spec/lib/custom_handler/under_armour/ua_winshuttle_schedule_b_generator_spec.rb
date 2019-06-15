@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator do
   it "should have sync_code" do
     expect(described_class.new.sync_code).to eq('winshuttle-b')

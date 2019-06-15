@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SnapshotS3Support do
 
   subject { Class.new { include SnapshotS3Support } }
@@ -20,6 +18,12 @@ describe SnapshotS3Support do
     it "fails if bucket name is over 63 chars" do
       expect(Rails).to receive(:env).and_return "123456789012345678901234567890123"
       expect { subject.bucket_name }.to raise_error "Bucket name too long: 123456789012345678901234567890123.syscode.snapshots.vfitrack.net"
+    end
+
+    it "errors if system code is blank outside of test env" do
+      expect(MasterSetup).to receive(:test_env?).and_return false
+      expect(ms).to receive(:system_code).and_return ""
+      expect { subject.bucket_name }.to raise_error "The system_code must be set for this deployment."
     end
   end
 
@@ -137,7 +141,21 @@ describe SnapshotS3Support do
     let (:source_path) { "path/to/doc.txt" }
     let (:env) { "test-environment"}
 
-    subject { Class.new { include SnapshotS3Support }.new }
+    subject { Class.new { 
+      include SnapshotS3Support
+
+      def bucket
+        raise "Mock me"
+      end
+
+      def doc_path
+        raise "Mock me"
+      end
+
+      def version
+        raise "Mock me"
+      end
+    }.new }
 
     before :each do 
       allow(subject).to receive(:bucket).and_return source_bucket

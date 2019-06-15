@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'rexml/document'
 
 describe OpenChain::CustomHandler::PoloCaEfocusGenerator do

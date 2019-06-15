@@ -23,6 +23,6 @@ $(function() {$("#btn_delete_redirect").click(function() {$("#btn_delete").click
 <%end%>
 <% if @entity_type.id %>
   <div style='display:none;'>
-    <%= button_to('Delete', entity_type_path(@entity_type),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+    <%= button_to('Delete', entity_type_path(@entity_type),:method => :delete, :data => {:confirm => "Are you sure?"}, :id => "btn_delete") %>
   </div>
 <% end %>

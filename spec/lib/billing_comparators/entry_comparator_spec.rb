@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BillingComparators::EntryComparator do
   describe "compare" do
     it "exits if the type isn't 'Entry'" do

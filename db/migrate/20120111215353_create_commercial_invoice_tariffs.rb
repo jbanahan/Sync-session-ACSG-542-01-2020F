@@ -15,7 +15,7 @@ class CreateCommercialInvoiceTariffs < ActiveRecord::Migration
       t.string :classification_uom_3 
       t.integer :gross_weight, :integer
       t.string :tariff_description
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :commercial_invoice_tariffs, :commercial_invoice_line_id

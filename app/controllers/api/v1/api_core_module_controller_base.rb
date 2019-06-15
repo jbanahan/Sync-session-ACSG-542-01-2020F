@@ -160,7 +160,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   def render_search core_module
     user = current_user
     raise StatusableError.new("You do not have permission to view this module.", 401) unless user.view_module?(core_module)
-    k = core_module.klass.scoped.select("DISTINCT #{core_module.table_name}.id")
+    k = core_module.klass.all.select("DISTINCT #{core_module.table_name}.id")
 
     #apply search criterions
     search_criterions.each do |sc|
@@ -197,9 +197,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
 
   def render_search_csv query
     u = current_user
-    response.headers['Content-Type'] = 'text/csv'
-    response.headers['Content-Disposition'] = 'attachment; filename=results.csv'
-
+  
     fields = params['fields'].blank? ? [] : params['fields'].split(',')
     model_fields = fields.collect {|uid| ModelField.find_by_uid(uid.to_sym)}
     model_fields.delete_if {|mf| mf.blank?}
@@ -214,7 +212,10 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
     r << "Maximum rows (#{per_page}) reached." if r.length == (per_page + 1)
 
-    render text: r.join("\n")
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=results.csv'
+    # Renders the response without setting the content type
+    render body: r.join("\n")
   end
 
   def search_criterions

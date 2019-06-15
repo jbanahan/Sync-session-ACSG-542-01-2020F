@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Ec2 do
 
   subject { described_class }

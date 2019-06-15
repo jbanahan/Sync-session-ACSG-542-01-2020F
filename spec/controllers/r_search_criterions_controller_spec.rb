@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe RSearchCriterionsController do
 
   describe "create" do

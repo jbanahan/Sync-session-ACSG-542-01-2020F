@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CreateZipSupport do
   subject {
     Class.new do 

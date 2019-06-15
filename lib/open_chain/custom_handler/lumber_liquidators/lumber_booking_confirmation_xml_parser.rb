@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
     def generate_missing_shipment_email shipment_ref, log
       body_text = "A booking confirmation was received for shipment '#{shipment_ref}', but a shipment with a matching reference number could not be found."
       log.add_warning_message body_text
-      OpenMailer.send_simple_html('ll-support@vandegriftinc.com', 'Lumber Liquidators Booking Confirmation: Missing Shipment', body_text).deliver!
+      OpenMailer.send_simple_html('ll-support@vandegriftinc.com', 'Lumber Liquidators Booking Confirmation: Missing Shipment', body_text).deliver_now
     end
 
 end; end; end; end;

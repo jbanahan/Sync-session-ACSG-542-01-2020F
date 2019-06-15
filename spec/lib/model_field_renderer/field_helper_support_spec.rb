@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
   def base_object
     k = Class.new do

@@ -21,7 +21,7 @@ class CreateDrawbackClaims < ActiveRecord::Migration
       t.date :duty_check_received_date
       t.decimal :duty_check_amount, :precision => 11, :scale=>2
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :drawback_claims, :importer_id
     add_column :companies, :drawback, :boolean

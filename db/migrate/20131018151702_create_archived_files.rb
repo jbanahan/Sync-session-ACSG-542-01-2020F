@@ -4,7 +4,7 @@ class CreateArchivedFiles < ActiveRecord::Migration
       t.string :file_type
       t.string :comment
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :archived_files, :file_type
     add_index :archived_files, :created_at

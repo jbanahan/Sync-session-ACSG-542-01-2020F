@@ -54,7 +54,7 @@ module OpenChain; module Report; class PreparerSiteInvalidEntryReport
       OpenMailer.send_simple_html(emails,
                                   "[VFI Track] Statement Preparer Site Invalid Report - #{Time.zone.now.to_date}", "The attached report lists all entries with an invalid preparer site statement from #{start_date.to_date}".html_safe,
                                   [t]
-      ).deliver!
+      ).deliver_now
     end
   end
 

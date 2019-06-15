@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DelayedJobsController do
   before :each do
     @u = Factory(:user, :admin => true, :sys_admin => true, :company => Factory(:company, :master=>true))

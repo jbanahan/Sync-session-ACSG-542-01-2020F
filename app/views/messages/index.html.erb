@@ -18,7 +18,7 @@
           </h5>
           <hr>
           <div id="msg-<%=message.id%>" class="collapse" message-id='<%=message.id%>'>
-            <%= raw message.body%>
+            <%= sanitize(message.body) %>
           </div>
         </div>
       <%- end %>  

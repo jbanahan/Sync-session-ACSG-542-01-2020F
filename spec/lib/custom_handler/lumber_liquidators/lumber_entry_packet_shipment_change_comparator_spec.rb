@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberEntryPacketShipmentChangeComparator do
   describe "accept?" do
     let (:snapshot) { EntitySnapshot.new }

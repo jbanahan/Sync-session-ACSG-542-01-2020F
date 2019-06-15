@@ -5,7 +5,7 @@ class CreateUserManuals < ActiveRecord::Migration
       t.string :page_url_regex
       t.text :groups
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

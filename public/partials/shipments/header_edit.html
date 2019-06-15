@@ -72,9 +72,9 @@
 <label for="shp_volume">{{outerScope.label('shp_volume')}}</label>
 <input type="text" id="shp_volume" ng-model="outerScope.header.shp_volume" class="form-control" />
 <label for="shp_dimensional_weight" class="control-label">Dimensional Weight</label>
-<p class="form-control-static" id="shp_dimensional_weight">{{dimWeight = ((outerScope.header.shp_volume || 0) / 0.006).toFixed(2); dimWeight + ' kg' }}</p>
+<p class="form-control-static" id="shp_dimensional_weight">{{dimWeight = ((outerScope.parseFloat(outerScope.header.shp_volume) || 0) / 0.006).toFixed(2); dimWeight + ' kg' }}</p>
 <label for="shp_chargeable_weight" class="control-label">Chargable Weight</label>
-<p class="form-control-static" id="shp_chargeable_weight">{{(outerScope.header.shp_gross_weight > dimWeight ? outerScope.header.shp_gross_weight : dimWeight) + ' kg' }}</p>
+<p class="form-control-static" id="shp_chargeable_weight">{{(outerScope.parseFloat(outerScope.header.shp_gross_weight) > dimWeight ? outerScope.parseFloat(outerScope.header.shp_gross_weight) : dimWeight) + ' kg' }}</p>
 <label for="shp_freight_total">{{outerScope.label('shp_freight_total')}}</label>
 <input type="number" step="0.01" id="shp_freight_total" ng-model="outerScope.header.shp_freight_total" class="form-control" />
 <label for="shp_invoice_total">{{outerScope.label('shp_invoice_total')}}</label>

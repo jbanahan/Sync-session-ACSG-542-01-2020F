@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ChangeRecord do
   describe "messages" do
     it 'should return all messages' do

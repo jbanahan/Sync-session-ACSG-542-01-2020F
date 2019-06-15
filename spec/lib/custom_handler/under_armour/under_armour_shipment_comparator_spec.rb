@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
 
   subject { described_class }

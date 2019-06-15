@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BillingComparators::ProductComparator do
   let :base_hash do
     {"entity"=>{"core_module"=>"Product", "record_id"=>1, "children"=>

@@ -8,7 +8,7 @@ class CreateBookingLines < ActiveRecord::Migration
       t.integer :line_number
       t.decimal :quantity
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

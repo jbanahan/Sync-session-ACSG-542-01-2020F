@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaEntryBillingComparator do
   subject { described_class }
 

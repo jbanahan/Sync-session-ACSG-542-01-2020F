@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
   describe "run_schedulable" do

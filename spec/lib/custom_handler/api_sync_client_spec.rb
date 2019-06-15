@@ -1,16 +1,40 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::ApiSyncClient do
+
+  class FakeApiSyncClient < OpenChain::CustomHandler::ApiSyncClient
+    def syncable_type 
+      "TestObject"
+    end
+
+    def sync_code
+      "Test"
+    end
+
+    def retrieve_remote_data a
+      raise "Mock me"
+    end
+  end
 
   describe "sync" do
 
     before :each do
-      @client = Class.new(OpenChain::CustomHandler::ApiSyncClient).new
-      allow(@client).to receive(:syncable_type).and_return "TestObject"
-      allow(@client).to receive(:sync_code).and_return "Test"
+      @client = FakeApiSyncClient.new()
     end
 
     context "query method" do
+
+      class FakeQueryApiSyncClient < FakeApiSyncClient
+        def query
+          raise "Mock me"
+        end
+
+        def process_query_result a, b
+          raise "Mock me"
+        end
+      end
+
+      before :each do
+        @client = FakeQueryApiSyncClient.new()
+      end
 
       it "executes query, parses results, calls do_sync for each result, checks for more data to sync" do
         row_1 = [1, 'UID']
@@ -70,6 +94,21 @@ describe OpenChain::CustomHandler::ApiSyncClient do
     end
 
     context "object method" do
+
+      class ObjectFakeApiSyncClient < FakeApiSyncClient
+        def objects_to_sync
+          raise "Mock Me"
+        end
+
+        def process_object_result a
+          raise "Mock Me"
+        end
+      end
+
+      before :each do 
+        @client = ObjectFakeApiSyncClient.new
+      end
+
       it "iterates over objects to sync and calls do_sync for each result" do
         o1 = Object.new
         o2 = Object.new

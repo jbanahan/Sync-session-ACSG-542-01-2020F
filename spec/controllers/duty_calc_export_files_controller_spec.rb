@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DutyCalcExportFilesController do
   before :each do
     @user = Factory(:user)

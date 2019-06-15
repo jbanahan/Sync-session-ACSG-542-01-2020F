@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe HmController do
   before :each do
     MasterSetup.get.update_attributes(custom_features:'H&M')

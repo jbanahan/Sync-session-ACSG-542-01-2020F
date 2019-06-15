@@ -63,7 +63,7 @@ describe OneTimeAlert do
       expect(sr.trading_partner).to eq "one_time_alert"
       expect(sr.sent_at).to eq now
       expect(sr.confirmed_at).to eq(now + 1.minute)
-      expect(sr.fingerprint).to eq ota.id
+      expect(sr.fingerprint).to eq ota.id.to_s
       
       log = ota.log_entries.first
       expect(log.alertable).to eq ent

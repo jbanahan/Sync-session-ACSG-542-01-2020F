@@ -16,6 +16,8 @@
 require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcImportFile < ActiveRecord::Base
+  attr_accessible :importer_id, :user_id
+  
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
   has_one :attachment, as: :attachable, dependent: :destroy
   belongs_to :importer, :class_name=>"Company"
@@ -85,7 +87,7 @@ class DutyCalcImportFile < ActiveRecord::Base
   def self.generate_output_file importer, user
     ActiveRecord::Base.transaction do 
       dif = DutyCalcImportFile.create!(:user_id=>user.id,:importer_id=>importer.id)
-      DutyCalcImportFile.connection.execute("INSERT INTO duty_calc_import_file_lines (duty_calc_import_file_id,drawback_import_line_id) SELECT #{dif.id}, dil.id FROM drawback_import_lines dil left outer join duty_calc_import_file_lines difl ON dil.id = difl.drawback_import_line_id WHERE difl.id is NULL AND dil.importer_id = #{importer.id};")
+      DutyCalcImportFile.connection.execute("INSERT INTO duty_calc_import_file_lines (duty_calc_import_file_id,drawback_import_line_id, created_at, updated_at) SELECT #{dif.id}, dil.id, now(), now() FROM drawback_import_lines dil left outer join duty_calc_import_file_lines difl ON dil.id = difl.drawback_import_line_id WHERE difl.id is NULL AND dil.importer_id = #{importer.id};")
       dif.reload
       dif.duty_calc_import_file_lines.each do |difl|
         yield difl

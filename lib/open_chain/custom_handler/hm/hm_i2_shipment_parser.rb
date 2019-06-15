@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       # Check PARS totals...
       pars_count = DataCrossReference.unused_pars_count
       if pars_count < pars_threshold
-        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
       end
     end
 
@@ -413,7 +413,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         wb.binmode
         spreadsheet.write wb
         Attachment.add_original_filename_method wb, "Invoice Addendum #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xls"
-        OpenMailer.send_simple_html(["Brampton-H&M.cl.us@geodis.com", "OnlineDCPlainfield@hm.com"], "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", [file, wb], reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(["Brampton-H&M.cl.us@geodis.com", "OnlineDCPlainfield@hm.com"], "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", [file, wb], reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver_now
       end
     end
 
@@ -423,7 +423,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         wb.binmode
         exception_spreadsheet.write wb
         Attachment.add_original_filename_method wb, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xls"
-        OpenMailer.send_simple_html(["nb@vandegriftinc.com"], "[VFI Track] H&M Commercial Invoice #{invoice.invoice_number} Exceptions", "The Exception report for invoice # #{invoice.invoice_number} is attached to this email.", [wb]).deliver!
+        OpenMailer.send_simple_html(["nb@vandegriftinc.com"], "[VFI Track] H&M Commercial Invoice #{invoice.invoice_number} Exceptions", "The Exception report for invoice # #{invoice.invoice_number} is attached to this email.", [wb]).deliver_now
       end
     end
   end
@@ -437,7 +437,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       files << create_tempfile_report(spreadsheet, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xls")
       files << create_tempfile_report(exception_spreadsheet, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xls") if exception_spreadsheet
 
-      OpenMailer.send_simple_html(["hm_ca@vandegriftinc.com"], "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice #{exception_spreadsheet ? " and the Exception report " : ""}for invoice # #{invoice.invoice_number} is attached to this email.", files).deliver!
+      OpenMailer.send_simple_html(["hm_ca@vandegriftinc.com"], "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice #{exception_spreadsheet ? " and the Exception report " : ""}for invoice # #{invoice.invoice_number} is attached to this email.", files).deliver_now
     ensure
       files.each do |f|
         f.close! unless f.closed?
@@ -606,7 +606,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
-      OpenMailer.send_simple_html(["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver_now
     end
   end
 

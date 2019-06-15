@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SettingsController do
   describe "summary" do
     let!(:user) { Factory(:admin_user) }
@@ -30,7 +28,7 @@ describe SettingsController do
                                             import_country: [import_country],
                                             business_validation_template: [bvt],
                                             attachment_type: [att_type],
-                                            schedulable_job: [sched_job] }.with_indifferent_access)
+                                            schedulable_job: [sched_job] })
     end
     
     it "only allows use by admins" do

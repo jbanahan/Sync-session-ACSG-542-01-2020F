@@ -85,15 +85,15 @@ module SurveyResponsesControllerSupport
     h['survey_response']['can_submit'] = !archived && respond_mode && sr.submitted_date.blank? && sr.checkout_by_user.nil?
     h['survey_response']['can_comment'] = !archived && sr.checkout_by_user.nil?
     h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user) && sr.checkout_by_user.nil?
-    h['survey_response'][:answers].each_with_index do |a, i| 
+    h['survey_response']['answers'].each_with_index do |a, i| 
       a['sort_number'] = (i+1)
-      if a[:answer_comments] && !sr.can_edit?(user)
-        a[:answer_comments].delete_if {|ac| ac['private']}
+      if a['answer_comments'] && !sr.can_edit?(user)
+        a['answer_comments'].delete_if {|ac| ac['private']}
       end
 
       answer = sr.answers.find {|ans| a['id'].to_i == ans.id}
-      a[:attachments] = Attachment.attachments_as_json(answer)[:attachments] unless answer.nil?
-      a[:question][:attachments] = Attachment.attachments_as_json(answer.question)[:attachments] unless a[:question].nil? || answer.nil? || answer.question.nil?
+      a['attachments'] = Attachment.attachments_as_json(answer)[:attachments] unless answer.nil?
+      a['question']['attachments'] = Attachment.attachments_as_json(answer.question)['attachments'] unless a['question'].nil? || answer.nil? || answer.question.nil?
     end
 
     # In order to do some validation that questions requiring comments actually have 
@@ -139,7 +139,7 @@ module SurveyResponsesControllerSupport
     )
     j[:can_edit] = (cap.can_edit?(user) && cap.status!=CorrectiveActionPlan::STATUSES[:resolved])
     j[:can_update_actions] = (cap.can_update_actions?(user) && cap.status == CorrectiveActionPlan::STATUSES[:active])
-    j["corrective_action_plan"][:corrective_issues].each do |ci|
+    j["corrective_action_plan"]['corrective_issues'].each do |ci|
       issue = cap.corrective_issues.find {|iss| ci['id'].to_i == iss.id}
       ci[:attachments] = Attachment.attachments_as_json(issue)[:attachments] unless issue.nil?
     end

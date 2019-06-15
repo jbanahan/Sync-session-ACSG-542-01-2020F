@@ -1,5 +1,3 @@
-require 'spec_helper' 
-
 describe GridMaker do
   context "max_details" do
     before :each do 

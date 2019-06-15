@@ -135,31 +135,25 @@ class User < ActiveRecord::Base
 
   cattr_accessor :current
 
-  attr_accessible :username, :email, :time_zone,
-    :email_format, :company_id,
-    :first_name, :last_name, :search_open,
-    :order_view, :order_edit, :order_delete, :order_attach, :order_comment,
-    :shipment_view, :shipment_edit, :shipment_delete, :shipment_attach, :shipment_comment,
-    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
-    :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
-    :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
-    :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
-    :survey_view, :survey_edit,
-    :project_view, :project_edit,
-    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach,
-    :vfi_invoice_view, :vfi_invoice_edit,
-    :trade_lane_view, :trade_lane_edit, :trade_lane_comment, :trade_lane_attach,
-    :broker_invoice_view, :broker_invoice_edit,
-    :variant_edit,
-    :classification_edit,
-    :commercial_invoice_view, :commercial_invoice_edit,
-    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
-    :support_agent,
-    :simple_entry_mode,
-    :tariff_subscribed, :homepage,
-    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password, :disabled, :group_ids,
-    :portal_mode,
-    :system_user, :statement_view, :department
+  attr_accessible :username, :email, :time_zone,:email_format, :company_id,
+    :first_name, :last_name, :search_open,:order_view, :order_edit, 
+    :order_delete, :order_attach, :order_comment, :shipment_view, :shipment_edit,
+    :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view, 
+    :sales_order_edit, :sales_order_delete, :sales_order_attach, 
+    :sales_order_comment, :delivery_view, :delivery_edit, :delivery_delete, 
+    :delivery_attach, :delivery_comment, :product_view, :product_edit, 
+    :product_delete, :product_attach, :product_comment, :entry_view, 
+    :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
+    :survey_view, :survey_edit, :project_view, :project_edit, 
+    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach, :vfi_invoice_view, 
+    :vfi_invoice_edit, :trade_lane_view, :trade_lane_edit, :trade_lane_comment, 
+    :trade_lane_attach, :broker_invoice_view, :broker_invoice_edit, 
+    :variant_edit, :classification_edit, :commercial_invoice_view, 
+    :commercial_invoice_edit, :security_filing_view, :security_filing_edit, 
+    :security_filing_comment, :security_filing_attach, :support_agent, 
+    :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :uid, 
+    :google_name, :oauth_token, :oauth_expires_at, :disallow_password, 
+    :disabled, :group_ids, :portal_mode,:system_user, :statement_view, :department
 
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -194,7 +188,7 @@ class User < ActiveRecord::Base
 
   # find or create the ApiAdmin user
   def self.api_admin
-    u = User.find_by_username('ApiAdmin')
+    u = User.find_by(username: 'ApiAdmin')
     if !u
       u = Company.find_master.users.build(
         username:'ApiAdmin',
@@ -216,7 +210,7 @@ class User < ActiveRecord::Base
 
   #find or create the integration user
   def self.integration
-    u = User.find_by_username('integration')
+    u = User.find_by(username: 'integration')
     if !u
       h = {
         username:'integration',
@@ -320,7 +314,8 @@ class User < ActiveRecord::Base
         cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
         user.update_user_password cleartext, cleartext
         user.update_column :password_reset, true
-        OpenMailer.send_invite(user, cleartext).deliver
+        # Use the ! deliver_now variant because we never want the message to be suppressed on any system
+        OpenMailer.send_invite(user, cleartext).deliver_now!
       end
     end
     nil
@@ -456,7 +451,8 @@ class User < ActiveRecord::Base
   #send password reset email to user
   def deliver_password_reset_instructions!
     forgot_password!
-    OpenMailer.send_password_reset(self).deliver
+    # Use the ! deliver_now variant because we never want the message to be suppressed on any system
+    OpenMailer.send_password_reset(self).deliver_now!
   end
 
   def locked?
@@ -476,11 +472,6 @@ class User < ActiveRecord::Base
 
   def active?
     return !self.disabled
-  end
-
-  #should the advanced search box be open on the user's screen
-  def search_open?
-    return self.search_open
   end
 
   def full_name

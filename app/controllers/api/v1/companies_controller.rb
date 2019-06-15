@@ -6,7 +6,7 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
   def index
     r = {}
     if params[:roles].blank?
-      ary = query_base(params[:linked_with]).all
+      ary = query_base(params[:linked_with]).all.to_a
       ary << current_user.company unless ary.include? current_user.company
       r['companies'] = companies_as_json!(ary)
     else

@@ -14,9 +14,13 @@
 #
 
 class BulkProcessLog < ActiveRecord::Base
+
+  attr_accessible :bulk_type, :changed_object_count, :finished_at, 
+    :started_at, :total_object_count, :user_id, :user
+  
   BULK_TYPES ||= {update: "Bulk Update", classify: "Bulk Classify"}
   belongs_to :user
-  has_many :change_records, :order => "failed DESC, record_sequence_number ASC"
+  has_many :change_records, -> { order([{failed: :desc}, :record_sequence_number]) }
   has_many :entity_snapshots
 
   def self.with_log user, bulk_type

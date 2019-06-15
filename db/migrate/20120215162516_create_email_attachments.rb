@@ -4,7 +4,7 @@ class CreateEmailAttachments < ActiveRecord::Migration
       t.string :email, :limit => 1024
       t.integer :attachment_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -4,7 +4,7 @@ class CreateMailboxes < ActiveRecord::Migration
       t.string :name
       t.string :email_aliases
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :mailboxes, :email_aliases
   end

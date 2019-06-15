@@ -45,6 +45,7 @@
 # and send a file when the user updates the date via the button press.
 class StateToggleButton < ActiveRecord::Base
   # Permission group system codes should be separated by newlines
+  attr_accessible :activate_confirmation_text, :activate_text, :date_attribute, :date_custom_definition_id, :deactivate_confirmation_text, :deactivate_text, :disabled, :display_index, :identifier, :module_type, :permission_group_system_codes, :simple_button, :user_attribute, :user_custom_definition_id
 
   has_many :search_criterions, inverse_of: :state_toggle_button, dependent: :destroy
   belongs_to :date_custom_definition, class_name: 'CustomDefinition'

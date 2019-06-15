@@ -47,6 +47,15 @@
 class Invoice < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
+
+  attr_accessible :consignee_id, :country_import_id, :country_origin_id, :currency, 
+    :customer_reference_number, :customer_reference_number_2, :description_of_goods, :exchange_rate, 
+    :factory_id, :gross_weight, :gross_weight_uom, :importer_id, :importer, :invoice_date, 
+    :invoice_number, :invoice_total_domestic, :invoice_total_foreign, 
+    :last_exported_from_source, :last_file_bucket, :last_file_path, 
+    :manually_generated, :net_invoice_total, :net_weight, :net_weight_uom, 
+    :ship_mode, :ship_to_id, :terms_of_payment, :terms_of_sale, :total_charges, 
+    :total_discounts, :vendor_id, :volume, :volume_uom
   
   belongs_to :country_origin, class_name: "Country"
   belongs_to :country_import, class_name: "Country"

@@ -6,7 +6,7 @@ class CreateCorrectiveIssues < ActiveRecord::Migration
       t.text :suggested_action
       t.string :action_taken
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :corrective_issues, :corrective_action_plan_id
   end

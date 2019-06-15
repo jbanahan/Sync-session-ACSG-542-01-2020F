@@ -3,7 +3,7 @@ class CreateSummaryStatements < ActiveRecord::Migration
     create_table :summary_statements do |t|
       t.string :statement_number
       t.integer :customer_id, null: false
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

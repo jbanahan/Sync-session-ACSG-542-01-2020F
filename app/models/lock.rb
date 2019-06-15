@@ -24,8 +24,8 @@ class Lock
   private_class_method :create_connection_pool
 
   def self.redis_config
-    config = YAML.load_file('config/redis.yml')[Rails.env]
-    raise "No configuration found for #{Rails.env} in config/redis.yml" unless config
+    config = MasterSetup.secrets["redis"]
+    raise "No configuration found under the 'redis' key in secrets.yml." if config.blank?
     config = config.with_indifferent_access
   end
   private_class_method :redis_config

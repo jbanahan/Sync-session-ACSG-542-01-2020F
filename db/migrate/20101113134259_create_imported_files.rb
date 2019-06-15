@@ -6,7 +6,7 @@ class CreateImportedFiles < ActiveRecord::Migration
       t.string :content_type
       t.integer :import_config_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

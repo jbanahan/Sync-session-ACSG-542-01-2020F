@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductChangeComparator do
   describe '#accept?' do
     it 'should accept products' do

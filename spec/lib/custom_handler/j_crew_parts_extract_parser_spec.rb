@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JCrewPartsExtractParser do
 
   before :each do 
@@ -129,7 +127,7 @@ FILE
 
 FILE
       OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), 'file.txt')
-      product = Product.find_by_unique_identifier("JCREW-23346")
+      product = Product.find_by(unique_identifier: "JCREW-23346")
       # HTS #
       expect(product.hts_for_country(us)).to include("6204312010")
       # expect(line1[60, 10]).to eq("6204624020")
@@ -137,7 +135,7 @@ FILE
       expect(product.name).to eq("womens knit swim cali hipster 82% polyester 18% elastane")
       expect(product.custom_value(@cdefs[:prod_part_number])).to eq('23346')
 
-      product = Product.find_by_unique_identifier("JCREW-23953")
+      product = Product.find_by(unique_identifier: "JCREW-23953")
       # HTS #
       expect(product.hts_for_country(us)).to include("6204624020")
       # expect(line1[60, 10]).to eq("6204624020")
@@ -166,7 +164,7 @@ FILE
                                       women‘s knit swim neon cali halter 82% polyester 18% elastane
 FILE
       OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
-      product = Product.find_by_unique_identifier("JCREW-23953")
+      product = Product.find_by(unique_identifier: "JCREW-23953")
       expect(product.name).to eq("women‘s knit swim neon cali halter 82% polyester 18% elastane")
     end
 

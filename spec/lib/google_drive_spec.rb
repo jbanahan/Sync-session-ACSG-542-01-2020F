@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'socket'
 
 # This set of specs takes quite a while to complete (25 seconds or so) as there are a number of HTTP 

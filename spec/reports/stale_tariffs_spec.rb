@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/report'
 
 describe OpenChain::Report::StaleTariffs do

@@ -14,6 +14,9 @@
 #
 
 class SupportRequest < ActiveRecord::Base
+  attr_accessible :body, :external_link, :referrer_url, :severity, 
+    :ticket_number, :user_id, :user
+
   belongs_to :user
 
   def send_request!
@@ -42,19 +45,7 @@ class SupportRequest < ActiveRecord::Base
   end
 
   def self.support_request_config
-    if defined?(@@config)
-      return @@config
-    else
-      if File.exist?("config/support_request.yml")
-        config = YAML.load_file("config/support_request.yml")
-        if config && config.keys.size > 0
-          @@config = config
-          return @@config
-        end
-      else
-        return nil
-      end
-    end
+    MasterSetup.secrets["support_request"]
   end
 
   class EmailSender
@@ -72,7 +63,7 @@ class SupportRequest < ActiveRecord::Base
         support_request.save!
       end
       support_request.update_attributes! ticket_number: support_request.id.to_s
-      OpenMailer.send_support_request_to_helpdesk(@addresses, support_request).deliver!
+      OpenMailer.send_support_request_to_helpdesk(@addresses, support_request).deliver_now
       support_request
     end
 

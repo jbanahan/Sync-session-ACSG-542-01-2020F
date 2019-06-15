@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Polo::PoloProductApiSyncGenerator do
 
   describe "sync" do

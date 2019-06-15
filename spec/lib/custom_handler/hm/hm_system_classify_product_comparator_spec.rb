@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmSystemClassifyProductComparator do
   let(:u) { Factory(:user, username: "integration") }
   let!(:company) { Factory(:company, system_code: "HENNE")}

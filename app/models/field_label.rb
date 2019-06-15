@@ -17,11 +17,12 @@
 #You should only need to access this method through the static self.set_label(model_field_uid,label) and self.label_text(model_field_uid) methods.  
 #Everything else is handled internally.
 class FieldLabel < ActiveRecord::Base
+  attr_accessible :label, :model_field_uid
 
   after_destroy :clear_default_key
 
-  validate :model_field_uid, :presence=>true, :uniqueness=>true, :length => {:minimum => 1}
-  validate :label, :presence=>true, :length => {:minimum => 1}
+  validates :model_field_uid, :presence=>true, :uniqueness=>true, :length => {:minimum => 1}
+  validates :label, :presence=>true, :length => {:minimum => 1}
 
   DEFAULT_VALUES_CACHE = {
     #Fallback hard coded values loaded by ModelField static definitions
@@ -32,9 +33,9 @@ class FieldLabel < ActiveRecord::Base
     f = FieldLabel.new(:model_field_uid=>mf_uid) if f.nil?
     f.label = lbl
     # Don't reload the cache if the label hasn't changed at all
-    if f.changed?
+    if !f.persisted? || f.changed?
       f.save!
-      ModelField.reload
+      ModelField.reload true
     end
   end
 
@@ -57,5 +58,6 @@ class FieldLabel < ActiveRecord::Base
   private
     def clear_default_key
       DEFAULT_VALUES_CACHE.delete self.model_field_uid.to_sym
+      ModelField.reload true
     end
 end

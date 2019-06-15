@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe RegionsController do
   
   before :each do
@@ -18,12 +16,12 @@ describe RegionsController do
     end
     it "should restrict create" do
       post :create, :name=>"EMEA", :format=>:json
-      expect(Region.find_by_name("EMEA")).to be_nil
+      expect(Region.find_by(name: "EMEA")).to be_nil
     end
     it "should restrict destroy" do
       r = Factory(:region,:name=>"EMEA")
       delete :destroy, :id=>r.id
-      expect(Region.find_by_name("EMEA")).not_to be_nil
+      expect(Region.find_by(name: "EMEA")).not_to be_nil
     end
     before :each do
       @r = Factory(:region)

@@ -1,13 +1,26 @@
 describe OpenChain::IntegrationClientParser do
 
-  subject { Class.new { include OpenChain::IntegrationClientParser } }
+  class FakeParser
+    include OpenChain::IntegrationClientParser 
+
+    def self.integration_folder
+      raise "Mock me"
+    end
+
+    def self.parse_file_chunk a, b
+      raise "Mock Me"
+    end
+
+  end
+
+  subject { FakeParser }
 
   describe "process_past_days" do
     it "processes files from the previous few days, default options" do
-      expect(subject).to receive(:delay).with({priority: 500}).and_return(subject.class).exactly(3)
-      expect(subject.class).to receive(:process_day).with(DateTime.new(2018,8,6), { imaging: false, skip_delay:false })
-      expect(subject.class).to receive(:process_day).with(DateTime.new(2018,8,7), { imaging: false, skip_delay:false })
-      expect(subject.class).to receive(:process_day).with(DateTime.new(2018,8,8), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:delay).with({priority: 500}).and_return(subject).exactly(3)
+      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,6), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,7), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,8), { imaging: false, skip_delay:false })
 
       Timecop.freeze(Date.new(2018,8,8)) do
         subject.process_past_days 3
@@ -483,12 +496,18 @@ describe OpenChain::IntegrationClientParser do
       subject.process_file_chunk_from_s3 "bucket", "key", opts
     end
 
+    class FakeDoFileParser < FakeParser
+      def self.do_file a, b
+        raise "Mock Me"
+      end
+    end
+
     it "can use a diffrent parse method" do
-      expect(subject).to receive(:do_file).with "Downloaded Data", opts
-      expect(subject).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
+      expect(FakeDoFileParser).to receive(:do_file).with "Downloaded Data", opts
+      expect(FakeDoFileParser).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
       expect(OpenChain::S3).to receive(:delete).with "bucket", "key"
 
-      subject.process_file_chunk_from_s3 "bucket", "key", opts, parse_method: :do_file     
+      FakeDoFileParser.process_file_chunk_from_s3 "bucket", "key", opts, parse_method: :do_file     
     end
 
     it "does not delete file if instructed" do

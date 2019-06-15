@@ -21,6 +21,8 @@
 #
 
 class CartonSet < ActiveRecord::Base
+  attr_accessible :carton_qty, :gross_kgs, :height_cm, :length_cm, :net_kgs, :net_net_kgs, :shipment_id, :starting_carton, :width_cm
+  
   belongs_to :shipment, inverse_of: :carton_sets
   has_many :shipment_lines, inverse_of: :carton_set
 

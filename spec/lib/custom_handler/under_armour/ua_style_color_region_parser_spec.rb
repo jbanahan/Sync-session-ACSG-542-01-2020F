@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
   before :each do
     @cf = double('custom_file')
@@ -168,9 +166,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       expect(p.get_custom_value(cdefs[:colors]).value).to eq "001\n002"
       expect(p.get_custom_value(cdefs[:prod_import_countries]).value).to eq "AU\nMX"
       expect(p.variants.count).to eq 2
-      v = p.variants.find_by_variant_identifier '001'
+      v = p.variants.find_by variant_identifier:  '001'
       expect(v.get_custom_value(cdefs[:var_import_countries]).value).to eq "AU\nMX"
-      v2 = p.variants.find_by_variant_identifier '002'
+      v2 = p.variants.find_by variant_identifier:  '002'
       expect(v2.get_custom_value(cdefs[:var_import_countries]).value).to eq "MX"
     end
     it 'should update existing style' do
@@ -183,9 +181,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorRegionParser do
       expect(p.name).to eq 'My Name'
       expect(p.get_custom_value(cdefs[:prod_seasons]).value).to eq "FW17\nSS15\nSS17"
       expect(p.variants.count).to eq 2
-      v = p.variants.find_by_variant_identifier '001'
+      v = p.variants.find_by variant_identifier:  '001'
       expect(v.get_custom_value(cdefs[:var_import_countries]).value).to eq "AU\nMX"
-      v2 = p.variants.find_by_variant_identifier '002'
+      v2 = p.variants.find_by variant_identifier:  '002'
       expect(v2.get_custom_value(cdefs[:var_import_countries]).value).to eq "MX"
     end
   end

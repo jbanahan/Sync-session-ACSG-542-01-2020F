@@ -200,7 +200,7 @@ root.Chain =
 
   #tell the server never to show this user message to the current user again
   hideMessage : (messageName) ->
-    $.post('/hide_message/'+messageName)
+    $.post('/users/hide_message', {message_name: messageName})
 
   #populates the user list from json result
   populateUserList : (selectBox,defaultSelection,data) ->
@@ -577,6 +577,7 @@ $(document).ready () ->
   $(document).on 'click', '.email-message-toggle', (evt) ->
     evt.preventDefault()
     $.ajax {
+      method: 'POST'
       url:'/users/email_new_message.json'
       success: (data) ->
         h = ''
@@ -586,6 +587,7 @@ $(document).ready () ->
   $(document).on 'click', '.task-email-toggle', (evt) ->
     evt.preventDefault()
     $.ajax {
+      method: "POST"
       url:'/users/task_email.json'
       success: (data) ->
         h = ''

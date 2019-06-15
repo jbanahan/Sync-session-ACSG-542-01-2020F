@@ -1,11 +1,9 @@
-require 'spec_helper'
-
 describe Api::V1::FoldersController do
 
   let (:user) { Factory(:user) }
   let (:base_object) { Factory(:order) }
   let (:folder) { 
-    base_object.folders.create! name: "Folder Name", created_by: user
+    base_object.folders.create! name: "Folder Name", created_by_id: user.id
   }
 
   before :each do
@@ -33,7 +31,7 @@ describe Api::V1::FoldersController do
       end
 
       it "retrieves folder, attachment, comment, and group information" do
-        att = folder.attachments.create! attached_file_name: "file.txt", uploaded_by: user
+        att = folder.attachments.create! attached_file_name: "file.txt", uploaded_by_id: user.id
         comment = folder.comments.create! user: user, subject: "Subject", body: "Body"
         group = Group.use_system_group "code"
         folder.groups << group

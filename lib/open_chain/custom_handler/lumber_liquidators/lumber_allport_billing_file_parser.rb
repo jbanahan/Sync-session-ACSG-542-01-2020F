@@ -212,7 +212,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
             body_text += "<br><br>Errors encountered:<br>#{errors.join("<br>")}"
           end
 
-          OpenMailer.send_simple_html(user.email, 'Lumber ACS Billing Validation Report', body_text.html_safe, [outbound_file, inbound_file]).deliver!
+          OpenMailer.send_simple_html(user.email, 'Lumber ACS Billing Validation Report', body_text.html_safe, [outbound_file, inbound_file]).deliver_now
         end
       end
     end
@@ -226,7 +226,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
     def generate_malformed_file_error_email user, inbound_custom_file
       download_inbound_file_for_email_attachment(inbound_custom_file) do |inbound_file|
         body_text = "This file could not be processed because the column header line could not be found.  In order for that line to be found, the first two column headings must be (exactly) 'Purchase Order' and 'BL/AWB/PRO'.  Please correct and upload the file again."
-        OpenMailer.send_simple_html(user.email, 'Malformed Lumber ACS Billing File', body_text.html_safe, [inbound_file]).deliver!
+        OpenMailer.send_simple_html(user.email, 'Malformed Lumber ACS Billing File', body_text.html_safe, [inbound_file]).deliver_now
       end
     end
 

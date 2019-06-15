@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Answer do
   
   describe "log_update" do
@@ -77,15 +75,15 @@ describe Answer do
   it "should accept nested attributes for comments" do
     a = Factory(:answer)
     u = Factory(:user)
-    a.update_attributes(:answer_comments_attributes=>[{:user_id=>u.id,:content=>'abcdef'}])
+    a.update(:answer_comments_attributes=>[{:user_id=>u.id,:content=>'abcdef'}])
     expect(AnswerComment.find_by_answer_id_and_user_id(a.id,u.id).content).to eq("abcdef")
   end
   it "should not accepted updates for comments via nested attributes" do
     a = Factory(:answer)
     u = Factory(:user)
     ac = a.answer_comments.create!(:user=>u,:content=>'abcdefg')
-    a.update_attributes(:answer_comments_attributes=>[{:id=>ac.id,:content=>'xxx'}])
-    expect(AnswerComment.find_by_answer_id_and_user_id(a.id,u.id).content).to eq("abcdefg")
+    a.update(:answer_comments_attributes=>[{:id=>ac.id,:content=>'xxx'}])
+    expect(AnswerComment.find_by(answer: a, user: u).content).to eq("abcdefg")
   end
   it "should allow attachments" do
     a = Factory(:answer)
@@ -93,7 +91,7 @@ describe Answer do
   end
   it "should update parent response when answer is updated" do
     a = Factory(:answer)
-    a.survey_response.update_attributes(:updated_at=>1.week.ago)
+    a.survey_response.update(:updated_at=>1.week.ago)
     a.choice = "X"
     now = Time.zone.now
     Timecop.freeze(now) do

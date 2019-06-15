@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Rds do
 
   subject { OpenChain::Rds }

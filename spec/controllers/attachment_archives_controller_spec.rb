@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentArchivesController do
   before :each do
     allow_any_instance_of(User).to receive(:edit_attachment_archives?).and_return true

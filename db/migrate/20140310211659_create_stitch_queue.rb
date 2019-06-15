@@ -5,7 +5,7 @@ class CreateStitchQueue < ActiveRecord::Migration
       t.string :stitch_queuable_type
       t.integer :stitch_queuable_id
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :stitch_queue_items, [:stitch_type, :stitch_queuable_type, :stitch_queuable_id], :unique => true, :name=>"index_stitch_queue_item_by_types_and_id"

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ScheduledReportsController do
 
   before :each do
@@ -89,7 +87,7 @@ describe ScheduledReportsController do
       expect(response).to redirect_to user_scheduled_reports_path(@user)
 
       # Another user should now have report copies
-      search_copy = SearchSetup.find_by_user_id(@another_user.id)
+      search_copy = SearchSetup.find_by(user_id: @another_user.id)
 
       # Since we're using the SearchSetup's give functionality, just making
       # sure we found a result should be enough to determine that this works.

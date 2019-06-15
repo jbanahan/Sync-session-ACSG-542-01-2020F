@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::AscenaCumulativeEntryReport do
   let(:parser) { described_class.new }
   let(:us) { Factory :country, iso_code: "US" }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidatesField do
   
   class Rule < BusinessValidationRule

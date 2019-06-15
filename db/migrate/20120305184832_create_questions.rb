@@ -6,7 +6,7 @@ class CreateQuestions < ActiveRecord::Migration
       t.text :choices
       t.text :content
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :questions, :survey_id
   end

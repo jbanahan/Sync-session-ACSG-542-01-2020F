@@ -19,6 +19,10 @@
 #
 
 class ImportedFileDownload < ActiveRecord::Base
+  attr_accessible :additional_countries, :attached_content_type,
+    :attached_file_name, :attached_file_size, :attached_updated_at,
+    :created_at, :imported_file_id, :updated_at, :user_id
+
   belongs_to :imported_file, :inverse_of=>:imported_file_downloads
   belongs_to :user, :inverse_of=>:imported_file_downloads
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
   
   subject { described_class }

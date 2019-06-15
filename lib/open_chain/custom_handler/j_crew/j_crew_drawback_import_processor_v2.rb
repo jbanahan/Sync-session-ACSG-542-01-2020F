@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
         user.email,
         'J Crew Drawback Import V2 Error Log',
         "**J Crew Drawback Import V2 Error Log**\n#{log.join("\n")}"
-      ).deliver!
+      ).deliver_now
     end
     log
   end

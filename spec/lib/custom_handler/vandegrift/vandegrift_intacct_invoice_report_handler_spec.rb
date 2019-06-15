@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHandler do
   let!(:ms) do
     ms = stub_master_setup

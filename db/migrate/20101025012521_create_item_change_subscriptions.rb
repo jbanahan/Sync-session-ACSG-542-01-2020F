@@ -8,7 +8,7 @@ class CreateItemChangeSubscriptions < ActiveRecord::Migration
       t.boolean :app_message
       t.boolean :email
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

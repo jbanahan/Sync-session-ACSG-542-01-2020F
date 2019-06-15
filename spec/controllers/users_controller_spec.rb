@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UsersController do
   let (:user) { Factory(:user) }
   before :each do
@@ -248,12 +246,6 @@ describe UsersController do
       expect(assigns(:user)).to eq u
       expect(response).to be_success
     end
-    it "should work without user id" do
-      u = Factory(:user)
-      get :event_subscriptions
-      expect(assigns(:user)).to eq user
-      expect(response).to be_success
-    end
   end
   describe 'hide_message' do
     it "should hide message" do
@@ -284,7 +276,7 @@ describe UsersController do
       post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1,'email_format'=>'html'}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq(2)
-      u = User.find_by_company_id_and_username user.company_id, 'uname'
+      u = User.find_by(company_id: user.company_id, username: 'uname')
       expect(u.email).to eq('joe@sample.com')
       expect(u.first_name).to eq('Joe')
       expect(u.last_name).to eq('Smith')
@@ -293,7 +285,7 @@ describe UsersController do
       expect(u.email_format).to eq('html')
       expect(u.encrypted_password).to_not be_nil
 
-      u = User.find_by_company_id_and_username user.company_id, 'un2'
+      u = User.find_by(company_id: user.company_id, username: 'un2')
       expect(u.email).to eq('fred@sample.com')
       expect(u.first_name).to eq('Fred')
       expect(u.last_name).to eq('Dryer')
@@ -449,9 +441,9 @@ describe UsersController do
       user.admin = true
       user.save
 
-      post :unlock_user, user_id: 1
+      post :unlock_user, id: 1
       expect(response).to redirect_to "/referer"
-      expect(flash[:errors].first).to eq("User with ID 1 not found.")
+      expect(flash[:errors].first).to eq("Cannot unlock this user.")
     end
 
     it "should error when the current user is not an admin" do
@@ -461,7 +453,7 @@ describe UsersController do
       company = Factory.create(:company)
       locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company)
 
-      post :unlock_user, user_id: locked_user.id
+      post :unlock_user, id: locked_user.id
 
       expect(response).to redirect_to "/referer"
       expect(flash[:errors].first).to eq("You must be an administrator to unlock a user.")
@@ -474,7 +466,7 @@ describe UsersController do
       company = Factory.create(:company)
       locked_user = Factory(:user, username: "AugustusGloop", password_locked: true, company: company, password_expired: true, failed_logins: 10)
 
-      post :unlock_user, user_id: locked_user.id
+      post :unlock_user, id: locked_user.id
 
       expect(response).to redirect_to(edit_company_user_path(locked_user.company, locked_user))
       expect(flash[:notices]).to include("Account unlocked.")

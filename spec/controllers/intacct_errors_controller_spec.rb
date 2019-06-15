@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe IntacctErrorsController do
   before :each do
     allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"

@@ -6,7 +6,7 @@ class CreateRequestLog < ActiveRecord::Migration
       t.string :url
       t.integer :run_as_session_id
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :request_logs, [:user_id]

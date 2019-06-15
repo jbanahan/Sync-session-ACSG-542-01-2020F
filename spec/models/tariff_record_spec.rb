@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TariffRecord do
 
   it "should not allow the same line number on multiple records for same classification" do

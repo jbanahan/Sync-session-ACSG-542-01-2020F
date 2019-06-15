@@ -1,6 +1,6 @@
-require 'spec_helper'
-
 describe ReportsController do
+
+  let! (:master_setup) { stub_master_setup }
 
   before(:each) do
     @u = Factory(:user)
@@ -82,7 +82,7 @@ describe ReportsController do
 
       it "rejects unauthorized users" do
         expect(report_class).to receive(:permission?).with(@u).and_return(false)
-        expect(ReportResult).to_not receive(:execute_report)
+        expect_any_instance_of(ReportResult).to_not receive(:execute_report)
         
         post :run_stale_tariffs
         expect(flash[:errors].first).to eq "You do not have permission to view this report."
@@ -91,41 +91,36 @@ describe ReportsController do
   end
 
   describe 'tariff comparison report' do
-    before(:each) do
-      Country.destroy_all
-      2.times do |i| 
-        c = Factory(:country)
-        c.tariff_sets.create(:label=>"t#{i}")
-      end
-      @excluded_country = Factory(:country)
-    end
-
     context "show" do
       it "should set all countries with tariffs" do
+        c = Country.new
+        c2 = Country.new
+        expect(OpenChain::Report::TariffComparison).to receive(:available_countries).and_return [c, c2]
         get :show_tariff_comparison
         expect(response).to be_success
-        countries = assigns(:countries)
-        expect(countries.size).to eq(2)
-        expect(countries).not_to include(@excluded_country)
+        
+        expect(assigns(:countries)).to eq [c, c2]
       end
     end
 
     context "run", :disable_delayed_jobs do
+      let (:country) { Factory(:country) }
+      let (:first_tariff_set) { country.tariff_sets.create! label: "Old" }
+      let (:second_tariff_set) { country.tariff_sets.create! label: "New" }
+
       it "should call report with tariff ids in settings" do
         allow_any_instance_of(ReportResult).to receive(:execute_report)
-        old_ts = TariffSet.first
-        new_ts = TariffSet.last
-
-        post :run_tariff_comparison, {'old_tariff_set_id'=>old_ts.id.to_s,'new_tariff_set_id'=>new_ts.id.to_s}
+        
+        post :run_tariff_comparison, {'old_tariff_set_id'=>first_tariff_set.id.to_s,'new_tariff_set_id'=>second_tariff_set.id.to_s}
         expect(response).to redirect_to('/report_results')
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
 
-        found = ReportResult.find_by_name 'Tariff Comparison'
+        found = ReportResult.find_by(name: 'Tariff Comparison')
         expect(found.run_by).to eq(@u)
-        expect(found.friendly_settings).to eq(["Country: #{old_ts.country.name}","Old Tariff File: #{old_ts.label}","New Tariff File: #{new_ts.label}"])
+        expect(found.friendly_settings).to eq(["Country: #{first_tariff_set.country.name}","Old Tariff File: #{first_tariff_set.label}","New Tariff File: #{second_tariff_set.label}"])
         settings = ActiveSupport::JSON.decode found.settings_json
-        expect(settings['old_tariff_set_id']).to eq(old_ts.id.to_s)
-        expect(settings['new_tariff_set_id']).to eq(new_ts.id.to_s)
+        expect(settings['old_tariff_set_id']).to eq(first_tariff_set.id.to_s)
+        expect(settings['new_tariff_set_id']).to eq(second_tariff_set.id.to_s)
       end
     end
   end
@@ -318,15 +313,13 @@ describe ReportsController do
   describe "RL Monthly Tariff Totals" do
     context "show" do
       it "should render page for Polo user" do
-        MasterSetup.create(system_code: 'polo')
-        @u = Factory(:master_user, product_view: true, time_zone: "Hawaii")
-        sign_in_as @u
-
+        expect(OpenChain::Report::RlTariffTotals).to receive(:permission?).with(@u).and_return true
         get :show_rl_tariff_totals
         expect(response).to be_success
       end
 
       it "should not render page for non-Polo user" do
+        expect(OpenChain::Report::RlTariffTotals).to receive(:permission?).with(@u).and_return false
         get :show_rl_tariff_totals
         expect(response).to_not be_success
       end
@@ -339,9 +332,7 @@ describe ReportsController do
       end
 
       it "should run report for RL user" do
-        MasterSetup.create(system_code: 'polo')
-        @u = Factory(:master_user, product_view: true)
-        sign_in_as @u
+        expect(OpenChain::Report::RlTariffTotals).to receive(:permission?).with(@u).and_return true
         expect(ReportResult).to receive(:run_report!).with("Ralph Lauren Monthly Tariff Totals", @u, OpenChain::Report::RlTariffTotals, {:settings=>{time_zone: @u.time_zone, start_date: @start_date, end_date: @end_date}, :friendly_settings=>[]})
         post :run_rl_tariff_totals, {start_date: @start_date, end_date: @end_date}
         expect(response).to be_redirect
@@ -349,6 +340,7 @@ describe ReportsController do
       end
 
       it "should not run report for non-RL user" do
+        expect(OpenChain::Report::RlTariffTotals).to receive(:permission?).with(@u).and_return false
         expect(ReportResult).not_to receive(:run_report!).with("Ralph Lauren Monthly Tariff Totals", @u, OpenChain::Report::RlTariffTotals, {:settings=>{time_zone: @u.time_zone, start_date: @start_date, end_date: @end_date}, :friendly_settings=>[]})
         post :run_rl_tariff_totals, {start_date: @start_date, end_date: @end_date}
         expect(response).to be_redirect
@@ -360,16 +352,13 @@ describe ReportsController do
   describe "LL Product Risk Report" do
     context 'show' do
       it 'renders page for LL user' do
-        MasterSetup.create!(system_code: 'll')
-        @u = Factory(:master_user)
-        allow(@u).to receive(:view_products?).and_return true
-        sign_in_as @u
-
+        expect(OpenChain::Report::LlProdRiskReport).to receive(:permission?).with(@u).and_return true
         get :show_ll_prod_risk_report
         expect(response).to be_success
       end
 
       it "doesn't render page for non-LL user" do
+        expect(OpenChain::Report::LlProdRiskReport).to receive(:permission?).with(@u).and_return false
         get :show_ll_prod_risk_report
         expect(response).to_not be_success
       end
@@ -377,16 +366,13 @@ describe ReportsController do
 
     context 'run' do
       it 'runs report for LL user' do
-        MasterSetup.create!(system_code: 'll')
-        @u = Factory(:master_user)
-        allow(@u).to receive(:view_products?).and_return true
-        sign_in_as @u
-
+        expect(OpenChain::Report::LlProdRiskReport).to receive(:permission?).with(@u).and_return true
         expect(ReportResult).to receive(:run_report!).with("Lumber Liquidators Product Risk Report", @u, OpenChain::Report::LlProdRiskReport, :settings=>{}, :friendly_settings=>[])
         post :run_ll_prod_risk_report
       end
 
       it "doesn't run report for non-LL user" do
+        expect(OpenChain::Report::LlProdRiskReport).to receive(:permission?).with(@u).and_return false
         expect(ReportResult).not_to receive(:run_report!)
         post :run_ll_prod_risk_report
       end
@@ -396,38 +382,32 @@ describe ReportsController do
   describe "PVH Billing Summary Report" do
     context "show" do
       it "renders page for Vandegrift user" do
-        MasterSetup.create(system_code: 'www-vfitrack-net')
-        @u = Factory(:master_user)
-        allow(@u).to receive(:view_broker_invoices?).and_return true
-        sign_in_as @u
-
+        expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return true
+        
         get :show_pvh_billing_summary
         expect(response).to be_success
       end
 
       it "doesn't render page for non-Vandegrift user" do
+        expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return false
         get :show_pvh_billing_summary
         expect(response).to_not be_success
       end
     end
 
     context "run" do
-      before(:each) do 
-        MasterSetup.create(system_code: 'www-vfitrack-net')
-        @invoice_numbers = "123456789 987654321 246810121" 
-        @u = Factory(:master_user)
-        allow(@u).to receive(:view_broker_invoices?).and_return true
-        sign_in_as @u
-      end
+      let (:invoice_numbers) { "123456789 987654321 246810121" }
 
       it "runs report for Vandegrift user" do
+        expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return true
         expect(ReportResult).to receive(:run_report!).with("PVH Billing Summary", @u, OpenChain::Report::PvhBillingSummary, {:settings => {:invoice_numbers => ['123456789', '987654321', '246810121']}, :friendly_settings=>[]})
-        post :run_pvh_billing_summary, {invoice_numbers: @invoice_numbers}
+        post :run_pvh_billing_summary, {invoice_numbers: invoice_numbers}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."
       end
 
       it "doesn't run report with missing invoice numbers" do
+        expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return true
         expect(ReportResult).not_to receive(:run_report!)
         post :run_pvh_billing_summary, {invoice_numbers: " \n "}
         expect(response).to be_redirect
@@ -435,10 +415,9 @@ describe ReportsController do
       end
 
       it "doesn't run report for non-Vandegrift user" do
-        @u = Factory(:user)
-        sign_in_as @u
+        expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return false
         expect(ReportResult).not_to receive(:run_report!)
-        post :run_pvh_billing_summary, {invoice_numbers: @invoice_numbers}
+        post :run_pvh_billing_summary, {invoice_numbers: invoice_numbers}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq "You do not have permission to view this report"
       end
@@ -446,27 +425,21 @@ describe ReportsController do
   end
 
   describe "SG Duty Due Report" do
-    before :each do  
-      MasterSetup.create(system_code: 'www-vfitrack-net')
-      @u = Factory(:master_user)
-      allow(@u).to receive(:view_entries?).and_return true
-      sign_in_as @u
-    end
 
     context "show" do
       it "doesn't render page for unauthorized users" do
-        expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).and_return false
+        expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).with(@u).and_return false
         get :show_sg_duty_due_report
         expect(response).not_to be_success
       end
       
       it "renders page for authorized users" do
+        expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).with(@u).and_return true
         sgi = Factory(:company, name: 'SGI APPAREL LTD', alliance_customer_number: 'SGI')
         sgold = Factory(:company, name: 'S GOLDBERG & CO INC', alliance_customer_number: 'SGOLD')
         rugged = Factory(:company, name: 'RUGGED SHARK LLC', alliance_customer_number: 'RUGGED')
         Factory(:company)
 
-        sign_in_as @u
         get :show_sg_duty_due_report
         expect(response).to be_success
         expect(assigns(:choices)).to eq [sgi, sgold, rugged]
@@ -483,6 +456,7 @@ describe ReportsController do
       end
 
       it "runs report for authorized users" do
+        expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).and_return true
         expect(ReportResult).to receive(:run_report!).with("SG Duty Due Report", @u, OpenChain::Report::SgDutyDueReport, {:settings => {customer_number: 'SGOLD'}, :friendly_settings=>[]})
         post :run_sg_duty_due_report, {customer_number: "SGOLD"}
         expect(flash[:notices].first).to eq "Your report has been scheduled. You'll receive a system message when it finishes."

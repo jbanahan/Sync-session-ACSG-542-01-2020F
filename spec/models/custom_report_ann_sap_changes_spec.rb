@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportAnnSapChanges do
   before :each do
     @u = Factory(:master_user)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser do
 
   describe '#parse_file' do

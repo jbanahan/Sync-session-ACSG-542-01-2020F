@@ -8,7 +8,7 @@ class CreateOfficialQuotas < ActiveRecord::Migration
       t.string :unit_of_measure
       t.integer :official_tariff_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -9,7 +9,7 @@ class CreateEmails < ActiveRecord::Migration
       t.text :mime_content
       t.references :email_linkable, :polymorphic=>true
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :emails, :mailbox_id
     add_index :emails, :created_at #for sorting

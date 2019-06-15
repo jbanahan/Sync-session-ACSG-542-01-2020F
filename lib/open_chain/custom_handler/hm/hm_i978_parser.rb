@@ -205,14 +205,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
-      OpenMailer.send_simple_html(email_pars_coversheet_to, filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(email_pars_coversheet_to, filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver_now
     end
   end
 
   def check_unused_pars_count
     pars_count = DataCrossReference.unused_pars_count
     if pars_count < pars_threshold
-      OpenMailer.send_simple_html(email_unused_pars_to, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html(email_unused_pars_to, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
     end
   end
 
@@ -236,7 +236,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         files << create_tempfile_report(addendum_builder, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xlsx")
         files << create_tempfile_report(exception_builder, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xlsx") if exception_builder
 
-        OpenMailer.send_simple_html(email_canadian_files_to, "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice #{exception_builder ? " and the Exception report " : ""}for invoice # #{invoice.invoice_number} is attached to this email.", files).deliver!
+        OpenMailer.send_simple_html(email_canadian_files_to, "H&M Commercial Invoice #{invoice.invoice_number}", "The Commercial Invoice #{exception_builder ? " and the Exception report " : ""}for invoice # #{invoice.invoice_number} is attached to this email.", files).deliver_now
       ensure
         files.each do |f|
           f.close! unless f.closed?
@@ -267,7 +267,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         files << create_tempfile_report(addendum_builder, "Invoice Addendum #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xlsx")
         files << create_tempfile_report(nil, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.pdf", write_lambda: lambda {|file| OpenChain::CustomHandler::CommercialInvoicePdfGenerator.render_content file, pdf_data}) 
 
-        OpenMailer.send_simple_html(email_us_files_to, "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", files, reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver!
+        OpenMailer.send_simple_html(email_us_files_to, "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", files, reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver_now
       ensure
         files.each do |f|
           f.close! unless f.closed?
@@ -278,7 +278,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         file = nil
         begin
           file = create_tempfile_report(exception_builder, "#{Attachment.get_sanitized_filename(invoice.invoice_number)} Exceptions.xlsx")
-          OpenMailer.send_simple_html(email_us_exception_files_to, "[VFI Track] H&M Commercial Invoice #{invoice.invoice_number} Exceptions", "The Exception report for invoice # #{invoice.invoice_number} is attached to this email.", [file]).deliver!
+          OpenMailer.send_simple_html(email_us_exception_files_to, "[VFI Track] H&M Commercial Invoice #{invoice.invoice_number} Exceptions", "The Exception report for invoice # #{invoice.invoice_number} is attached to this email.", [file]).deliver_now
         ensure
           file.close unless file.closed?
         end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule do
   let(:rule) { described_class.new }
   let(:imp) { Factory(:company, system_code: "ATAYLOR") }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ModelFieldsController do
   it "should filter fields w/o permission" do
     u = Factory(:user)

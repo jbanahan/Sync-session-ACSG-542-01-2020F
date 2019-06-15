@@ -9,7 +9,7 @@ module OpenChain; module Report; class HmOkLog
     begin
       def f.original_file_name; 'ok_log.xls'; end;
       email_to = opts_hash['email']
-      OpenMailer.send_simple_html(email_to, "Vandegrift OK Log", "H&M OK Log", [f]).deliver!
+      OpenMailer.send_simple_html(email_to, "Vandegrift OK Log", "H&M OK Log", [f]).deliver_now
     ensure
       f.unlink
     end

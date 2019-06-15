@@ -4,7 +4,7 @@ class CreateSearchTemplates < ActiveRecord::Migration
       t.string :name
       t.string :module_type
       t.text :search_json
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

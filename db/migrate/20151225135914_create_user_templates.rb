@@ -4,7 +4,7 @@ class CreateUserTemplates < ActiveRecord::Migration
       t.string :name
       t.text :template_json
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

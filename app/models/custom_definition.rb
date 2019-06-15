@@ -26,6 +26,10 @@
 #
 
 class CustomDefinition < ActiveRecord::Base
+  attr_accessible :cdef_uid, :data_type, :default_value, :definition, 
+    :is_address, :is_user, :label, :module_type, :quick_searchable, :rank, 
+    :tool_tip, :virtual_search_query, :virtual_value_query
+
   cattr_accessor :skip_reload_trigger
 
   validates  :label, :presence => true

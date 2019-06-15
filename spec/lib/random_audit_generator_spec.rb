@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::RandomAuditGenerator do
   describe "run" do
     let(:results) do

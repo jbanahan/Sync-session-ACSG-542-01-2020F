@@ -43,8 +43,18 @@
 
 class FieldValidatorRule < ActiveRecord::Base
   include HoldsCustomDefinition
+
+  attr_accessible :allow_everyone_to_view, :can_edit_groups, 
+    :can_mass_edit_groups, :can_view_groups, :comment, :contains, 
+    :custom_definition_id, :custom_message, :disabled, :ends_with, 
+    :greater_than, :greater_than_date, :less_than, :less_than_date, 
+    :less_than_from_now, :less_than_from_now_uom, :mass_edit, 
+    :maximum_length, :minimum_length, :model_field_uid, :module_type, 
+    :more_than_ago, :more_than_ago_uom, :one_of, :read_only, :regex, 
+    :required, :starts_with, :xml_tag_name
+  
   before_validation :set_module_type, on: :create
-  if Rails.env=='test'
+  if Rails.env.test?
     # needs to fire on save to make test cases work because they run inside transactions
     after_save :update_cache
   else

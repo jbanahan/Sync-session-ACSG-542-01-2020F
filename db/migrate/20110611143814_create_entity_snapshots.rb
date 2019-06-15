@@ -6,7 +6,7 @@ class CreateEntitySnapshots < ActiveRecord::Migration
       t.text :snapshot
       t.integer :user_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :entity_snapshots, [:recordable_id,:recordable_type]
     add_index :entity_snapshots, :user_id

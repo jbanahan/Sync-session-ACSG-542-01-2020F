@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BulkAction::BulkActionRunner do
   before :each do
     @bucket_name = 'bn'

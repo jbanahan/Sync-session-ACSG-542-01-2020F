@@ -5,7 +5,7 @@ class CreateLinkedAttachments < ActiveRecord::Migration
       t.string :attachable_type
       t.integer :attachable_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :linked_attachments, [:attachable_id,:attachable_type], {:name=>'linked_type'}
     add_index :linked_attachments, :linkable_attachment_id, {:name=>'linked_attch_id'}

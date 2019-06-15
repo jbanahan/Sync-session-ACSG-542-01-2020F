@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::KewillDataRequester do
 
   describe "request_updated_since_last_run" do

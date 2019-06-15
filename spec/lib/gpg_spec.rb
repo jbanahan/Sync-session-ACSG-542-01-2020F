@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::GPG do
 
   # There's little point in testing decrypt without encrypt

@@ -128,19 +128,19 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   def notify_about_multiple_shipments cust_ord, shp_refs
     subject = "Revisions to JJill Purchase Order #{cust_ord} were Rejected."
     message = "Revisions for PO #{cust_ord} was rejected because the Purchase Order exists on multiple Shipments: #{shp_refs.join(", ")}"
-    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!  
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver_now  
   end
 
   def notify_about_shipped_po cust_ord, shp_ref
     subject = "Revisions to JJill Purchase Order #{cust_ord} were Rejected."
     message = "Revisions for PO #{cust_ord} were rejected because the Shipment #{shp_ref} was already shipped."
-    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver_now
   end
 
   def notify_about_transport_mode_diff cust_ord, shp_ref
     subject = "Mode of Transport Discrepancy for PO #{cust_ord} and Shipment #{shp_ref}"
     message = "The Mode of Transport for PO #{cust_ord} does not match the Booked Mode of Transport for Shipment #{shp_ref}"
-    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver!
+    OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{subject}", message).deliver_now
   end
 
   def compare_transport_modes shp_ref, order_root

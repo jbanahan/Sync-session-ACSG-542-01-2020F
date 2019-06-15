@@ -449,13 +449,11 @@ var OCSearch = (function() {
       $("#search_setup_outer").show("blind", { direction: "vertical" }, 500)
       $("#show_srch_setup").hide();
       $("#hide_srch_setup").show();
-      $.post('/search_setups/sticky_open');
     },
     hideSetup: function() {
       $("#search_setup_outer").hide("blind", { direction: "vertical" }, 500)
       $("#hide_srch_setup").hide();
       $("#show_srch_setup").show();
-      $.post('/search_setups/sticky_close');
     },
     addSearchCriterion: function(parentTable,parentObject,fieldList,m,field,operator,value,id,canDelete, include_empty_checked) {
       var h = "<tr class='sp_row'><td>";

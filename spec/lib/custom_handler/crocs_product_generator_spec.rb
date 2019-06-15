@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CrocsProductGenerator do
   describe "remote_file_name" do
     it "should be in correct format" do

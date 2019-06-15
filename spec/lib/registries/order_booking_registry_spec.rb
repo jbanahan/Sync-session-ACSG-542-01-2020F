@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Registries::OrderBookingRegistry do
   before :each do
     described_class.clear

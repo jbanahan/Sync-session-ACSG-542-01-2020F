@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::TradePreferenceProgramsController do
   let :prep_countries do
     us = Factory(:country,iso_code:'US')

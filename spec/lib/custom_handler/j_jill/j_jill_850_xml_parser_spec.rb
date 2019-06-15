@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
   describe "parse" do

@@ -10,5 +10,7 @@
 #
 
 class EmailAttachment < ActiveRecord::Base
+  attr_accessible :attachment_id, :email
+  
   belongs_to :attachment
 end

@@ -9,7 +9,7 @@ class CreateDrawbackExportHistories < ActiveRecord::Migration
       t.decimal :claim_amount, :precision => 13, :scale => 4
       t.integer :drawback_claim_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :drawback_export_histories, [:drawback_claim_id]
     add_index :drawback_export_histories, [:part_number,:export_ref_1,:export_date], {:name=>:export_idx} 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator do
 
   describe "generate_invoice" do

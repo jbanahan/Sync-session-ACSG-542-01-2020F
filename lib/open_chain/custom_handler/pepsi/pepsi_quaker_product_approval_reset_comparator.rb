@@ -8,44 +8,33 @@ module OpenChain; module CustomHandler; module Pepsi; class PepsiQuakerProductAp
   extend OpenChain::EntityCompare::ComparatorHelper
   extend OpenChain::EntityCompare::ProductComparator
 
-  CUSTOM_DEFINITIONS = {}
-  CUSTOM_DEFINITIONS_TO_CHECK =  [
-    :prod_shipper_name, :prod_prod_code, :prod_us_broker, :prod_us_alt_broker, :prod_alt_prod_code,
-    :prod_coo, :prod_tcsa, :prod_recod, :prod_first_sale, :prod_related, :prod_fda_pn, :prod_fda_uom_1, :prod_fda_uom_2,
-    :prod_fda_fce, :prod_fda_sid, :prod_fda_dims, :prod_oga_1, :prod_oga_2, :prod_prog_code, :prod_proc_code, :prod_indented_use,
-    :prod_trade_name, :prod_cbp_mid, :prod_fda_mid,:prod_base_customs_description, :prod_fda_code, :prod_fda_reg, :prod_fdc, :prod_fda_desc,
-    :class_add_cvd, :class_fta_end, :class_fta_start, :class_fta_notes, :class_fta_name,
-    :class_ior, :class_tariff_shift, :class_val_content, :class_ruling_number, :class_customs_desc_override
-  ]
-
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
-    return unless type=='Product' && !old_bucket.blank?
-    compare_hashes(id,get_json_hash(old_bucket,old_path,old_version),get_json_hash(new_bucket,new_path,new_version))
+    return if old_bucket.blank?
+    self.new.compare_hashes(id,get_json_hash(old_bucket,old_path,old_version),get_json_hash(new_bucket,new_path,new_version))
   end
 
-  def self.compare_hashes id, old_hash, new_hash
+  def compare_hashes id, old_hash, new_hash
     old_fingerprint = fingerprint(old_hash)
     new_fingerprint = fingerprint(new_hash)
     reset(id) if old_fingerprint!=new_fingerprint
   end
 
-  def self.reset id
+  def reset id
     p = Product.find_by_id id
     return unless p #must have been deleted
-    self.prep_custom_definitions([:prod_quaker_validated_by,:prod_quaker_validated_date]).each do |k,v|
+    reset_cdefs.each do |k,v|
       p.update_custom_value!(v,nil)
     end
-    p.create_snapshot(User.integration)
+    p.create_snapshot(User.integration, nil, "Product Approval Reset")
   end
 
-  def self.fingerprint hash
-    load_cdef_cache
+  def fingerprint hash
     pmf = hash['entity']['model_fields']
     r = {
       'prod_uid' => pmf['prod_uid'],
       'classifications' => {}
     }
-    CUSTOM_DEFINITIONS.each do |k,cd|
+    cdefs.each do |k,cd|
       next unless cd.module_type=='Product'
       r[k.to_s] = pmf[cd.model_field_uid]
     end
@@ -57,7 +46,7 @@ module OpenChain; module CustomHandler; module Pepsi; class PepsiQuakerProductAp
         iso = cls_mf['class_cntry_iso']
         r['classifications'][iso] = {}
         h = r['classifications'][iso]
-        CUSTOM_DEFINITIONS.each do |k,cd|
+        cdefs.each do |k,cd|
           next unless cd.module_type=='Classification'
           h[k.to_s] = cls_mf[cd.model_field_uid]
         end
@@ -77,11 +66,21 @@ module OpenChain; module CustomHandler; module Pepsi; class PepsiQuakerProductAp
     r.to_json
   end
 
-  def self.load_cdef_cache
-    return unless CUSTOM_DEFINITIONS.empty?
-    prep_custom_definitions(CUSTOM_DEFINITIONS_TO_CHECK).each do |k,v|
-      CUSTOM_DEFINITIONS[k] = v
-    end
+  def cdefs 
+    @cdefs ||= self.class.prep_custom_definitions([
+    :prod_shipper_name, :prod_prod_code, :prod_us_broker, :prod_us_alt_broker, :prod_alt_prod_code,
+    :prod_coo, :prod_tcsa, :prod_recod, :prod_first_sale, :prod_related, :prod_fda_pn, :prod_fda_uom_1, :prod_fda_uom_2,
+    :prod_fda_fce, :prod_fda_sid, :prod_fda_dims, :prod_oga_1, :prod_oga_2, :prod_prog_code, :prod_proc_code, :prod_indented_use,
+    :prod_trade_name, :prod_cbp_mid, :prod_fda_mid,:prod_base_customs_description, :prod_fda_code, :prod_fda_reg, :prod_fdc, :prod_fda_desc,
+    :class_add_cvd, :class_fta_end, :class_fta_start, :class_fta_notes, :class_fta_name,
+    :class_ior, :class_tariff_shift, :class_val_content, :class_ruling_number, :class_customs_desc_override
+  ])
+  end
+
+  def reset_cdefs
+    @reset_cdefs ||= self.class.prep_custom_definitions([
+      :prod_quaker_validated_by,:prod_quaker_validated_date
+    ])
   end
 
 end; end; end; end

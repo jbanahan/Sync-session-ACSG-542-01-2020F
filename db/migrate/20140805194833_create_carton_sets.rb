@@ -11,7 +11,7 @@ class CreateCartonSets < ActiveRecord::Migration
       t.decimal :gross_kgs, :precision => 8, :scale=>4
       t.integer :shipment_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :carton_sets, :shipment_id
   end

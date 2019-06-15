@@ -5,7 +5,7 @@ class CreateSystemIdentifiers < ActiveRecord::Migration
       t.string :system, null: false
       t.string :code, null: false
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :system_identifiers, [:system, :code], unique: true

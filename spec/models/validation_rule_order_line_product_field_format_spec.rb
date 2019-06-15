@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleOrderLineProductFieldFormat do
   it "should fail when product doesn't match" do
     p = Factory(:product,unique_identifier:'px')

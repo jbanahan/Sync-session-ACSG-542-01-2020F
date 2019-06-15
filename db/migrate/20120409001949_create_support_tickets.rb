@@ -9,7 +9,7 @@ class CreateSupportTickets < ActiveRecord::Migration
       t.boolean :email_notifications
       t.integer :last_saved_by_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :support_tickets, :requestor_id
     add_index :support_tickets, :agent_id

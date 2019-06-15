@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::CustomViewTemplatesController do
   before do
     @u = Factory(:sys_admin_user)

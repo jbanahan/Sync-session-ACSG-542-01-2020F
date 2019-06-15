@@ -2,8 +2,8 @@ require 'open_chain/sql_proxy_client'
 
 module OpenChain; class FenixSqlProxyClient < SqlProxyClient
 
-  def self.proxy_config_file
-    Rails.root.join('config', 'fenix_sql_proxy.yml')
+  def self.proxy_config_key
+    "fenix_sql_proxy"
   end
 
   def request_images_added_between start_time, end_time, s3_bucket, sqs_queue

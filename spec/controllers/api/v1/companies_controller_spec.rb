@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::CompaniesController do
   describe "index" do
     before :each do

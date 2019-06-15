@@ -18,8 +18,9 @@ module OpenChain; module CustomHandler; class FenixDocumentsRequester
   private_class_method :sql_proxy_client
 
   def self.imaging_config 
-    @@imaging_config ||= YAML.load_file("config/kewill_imaging.yml").with_indifferent_access
-    @@imaging_config[Rails.env]
+    # Even though this says "kewill_imaging" this is really just the AWS S3 / SQS data to relay to the service to utilize 
+    # when sending the documents back
+    MasterSetup.secrets["kewill_imaging"].with_indifferent_access
   end
   private_class_method :imaging_config
 

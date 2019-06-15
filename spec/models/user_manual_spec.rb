@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UserManual do
   let (:company) { Factory(:company,:master=>true) }
   let (:user) { Factory(:user, company: company)}

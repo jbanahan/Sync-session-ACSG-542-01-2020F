@@ -4,7 +4,7 @@ class RecreateMilestones < ActiveRecord::Migration
       t.string :name
       t.string :code
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     create_table :milestone_definitions do |t|

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe StateToggleButton do
 
   let (:shipment) { Factory(:shipment, importer_reference: "12345") }

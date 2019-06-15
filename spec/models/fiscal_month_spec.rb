@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FiscalMonth do
   let(:user) { Factory(:sys_admin_user) }
   let(:fm) { Factory(:fiscal_month)}

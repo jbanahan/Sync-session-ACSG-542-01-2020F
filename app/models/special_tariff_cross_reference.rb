@@ -23,6 +23,7 @@
 #
 
 class SpecialTariffCrossReference < ActiveRecord::Base
+  attr_accessible :country_origin_iso, :effective_date_end, :effective_date_start, :hts_number, :import_country_iso, :priority, :special_hts_number, :special_tariff_type, :suppress_from_feeds
 
   before_validation :clean_hts
   before_validation :clean_country

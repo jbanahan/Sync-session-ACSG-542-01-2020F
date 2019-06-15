@@ -6,7 +6,7 @@ class CreateCustomReports < ActiveRecord::Migration
       t.string :type
       t.boolean :include_links
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :custom_reports, :type
     add_index :custom_reports, :user_id

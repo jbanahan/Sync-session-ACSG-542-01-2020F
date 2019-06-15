@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FileImportResult do
 
   before :each do

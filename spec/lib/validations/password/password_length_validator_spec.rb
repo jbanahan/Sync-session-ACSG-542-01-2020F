@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Validations::Password::PasswordLengthValidator do
   let!(:user) { Factory.build(:user) }
 

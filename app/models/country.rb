@@ -278,26 +278,27 @@ class Country < ActiveRecord::Base
 
   @@skip_reload = false
 
-  attr_accessible :import_location, :classification_rank, :quicksearch_show, :active_origin
+  attr_accessible :import_location, :classification_rank, :quicksearch_show, 
+    :active_origin
+
   after_save :update_model_fields
   after_commit :update_cache
 
-  scope :import_locations, where(:import_location=>true)
-  scope :show_quicksearch, where(:quicksearch_show=>true)
-  scope :sort_name, order("name ASC")
+  scope :import_locations, -> { where(:import_location=>true) }
+  scope :show_quicksearch, -> { where(:quicksearch_show=>true) }
+  scope :sort_name, -> { order("name ASC") }
+  scope :sort_classification_rank, -> { order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC") }
 
-	has_many :addresses
+  has_many :addresses
   has_many :tariff_sets
-	has_many :official_tariffs
+  has_many :official_tariffs
   has_many  :trade_lanes_as_origin, :class_name => 'TradeLane', :foreign_key=>'origin_country_id'
   has_many  :trade_lanes_as_destination, :class_name => 'TradeLane', :foreign_key=>'destination_country_id'
   has_many  :product_rate_overrides_as_origin, :class_name => 'ProductRateOverride', :foreign_key=>'origin_country_id'
   has_many  :product_rate_overrides_as_destination, :class_name => 'ProductRateOverride', :foreign_key=>'destination_country_id'
-  has_and_belongs_to_many :regions
+  has_and_belongs_to_many :regions, -> { order(:name, :id) }
 
-  scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
-
-	validates_uniqueness_of :iso_code
+  validates_uniqueness_of :iso_code
   validate :quicksearch_only_for_import_locations
 
   def self.find_cached_by_id country_id
@@ -307,7 +308,7 @@ class Country < ActiveRecord::Base
     c
   end
 
-	def self.load_default_countries force_load = false
+  def self.load_default_countries force_load = false
     begin
       @@skip_reload = true
       return if Country.count == ALL_COUNTRIES.size && !force_load
@@ -324,7 +325,7 @@ class Country < ActiveRecord::Base
       ModelField.reload true
     end
     return nil
-	end
+  end
 
   def quicksearch_only_for_import_locations
     if quicksearch_show && !import_location

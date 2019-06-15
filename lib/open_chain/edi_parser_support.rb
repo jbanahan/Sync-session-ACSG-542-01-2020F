@@ -498,7 +498,7 @@ module OpenChain; module EdiParserSupport
         end
         body += "</p>"
 
-        OpenMailer.send_simple_html(to_address, "#{parser_name} EDI Processing Error (ISA: #{isa_code(transaction)})", body.html_safe, [f]).deliver!
+        OpenMailer.send_simple_html(to_address, "#{parser_name} EDI Processing Error (ISA: #{isa_code(transaction)})", body.html_safe, [f]).deliver_now
       end
     end
 

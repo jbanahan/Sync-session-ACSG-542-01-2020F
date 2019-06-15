@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::SearchCriterionsController do
   let (:user) { Factory(:master_user) }
   let (:search_setup) { Factory(:search_setup, user: user) }

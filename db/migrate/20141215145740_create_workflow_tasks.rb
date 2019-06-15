@@ -10,7 +10,7 @@ class CreateWorkflowTasks < ActiveRecord::Migration
       t.text :payload_json
       t.datetime :passed_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :workflow_tasks, [:workflow_instance_id, :task_type_code]
     add_index :workflow_tasks, :test_class_name

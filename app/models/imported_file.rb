@@ -32,6 +32,11 @@ class ImportedFile < ActiveRecord::Base
   #hash of valid update modes. keys are valid database values, values are acceptable descriptions for the view layer
   UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
 
+  attr_accessible :attached_content_type, :attached_file_name, :attached_file_size,
+    :attached_updated_at, :created_at, :module_type, :note, :processed_at,
+    :search_setup_id, :search_setup, :starting_column, :starting_row, :update_mode, :updated_at,
+    :user_id, :user
+
   has_attached_file :attached, :path => ":master_setup_uuid/imported_file/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
@@ -126,7 +131,7 @@ class ImportedFile < ActiveRecord::Base
     additional_countries = []
     additional_countries = opts[:extra_country_ids].collect {|id| Country.find(id).iso_code} unless opts[:extra_country_ids].blank?
     make_imported_file_download_from_s3_path s3_path, current_user, additional_countries
-    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', s3_path, self.attached_file_name).deliver!
+    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', s3_path, self.attached_file_name).deliver_now
   end
 
 
@@ -194,7 +199,7 @@ class ImportedFile < ActiveRecord::Base
   end
 
   def email_items_file current_user, email_addresses, search_criterions=[]
-     OpenMailer.send_uploaded_items(email_addresses,self,make_items_file(search_criterions),current_user).deliver
+     OpenMailer.send_uploaded_items(email_addresses,self,make_items_file(search_criterions),current_user).deliver_now
   end
 
   def process(user,options={})
@@ -215,7 +220,7 @@ class ImportedFile < ActiveRecord::Base
   def preview(user,options={})
     @a_data = options[:attachment_data] if !options[:attachment_data].nil?
     msgs = FileImportProcessor.preview self
-    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver_now if self.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
     msgs
   end
   
@@ -336,7 +341,7 @@ class ImportedFile < ActiveRecord::Base
           @imported_file.errors[:base] << "There was an error processing the file: #{e.message}"
           e.log_me ["Imported File ID: #{@imported_file.id}"]
         end
-        OpenMailer.send_imported_file_process_fail(@imported_file, @imported_file.search_setup.user).deliver if @imported_file.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
+        OpenMailer.send_imported_file_process_fail(@imported_file, @imported_file.search_setup.user).deliver_now if @imported_file.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
       end
     end
 
@@ -358,12 +363,13 @@ class ImportedFile < ActiveRecord::Base
 
     def initialize(imported_file,user_id)
       @imported_file = imported_file
-      @fr = @imported_file.file_import_results.build(:run_by=>User.find(user_id))
+      @fr = @imported_file.file_import_results.build(:run_by=>User.find_by_id(user_id))
     end
 
     def process_row_count count
       @fr.update_attributes(:expected_rows=>(count - @imported_file.starting_row - 1))
     end
+
     def process_row row_number, object, messages, failed=false
       key_model_field_value, messages = messages.partition{ |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
       cr = ChangeRecord.create!(:unique_identifier=>key_model_field_value[0], :record_sequence_number=>row_number,:recordable=>object,

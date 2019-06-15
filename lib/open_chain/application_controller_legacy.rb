@@ -63,6 +63,7 @@ module OpenChain; module ApplicationControllerLegacy
     search_run = nil
     if force_search
       search_run = SearchRun.
+        joins(:search_setup).
         includes(:search_setup).
         where("search_setups.module_type = ?",core_module.class_name).
         where(:user_id=>current_user.id).

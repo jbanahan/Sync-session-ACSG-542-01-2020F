@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap do
   describe 'act' do
     before :each do

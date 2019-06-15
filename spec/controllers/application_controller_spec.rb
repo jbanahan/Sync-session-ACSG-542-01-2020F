@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ApplicationController do
 
   describe "advanced_search" do
@@ -264,6 +262,25 @@ describe ApplicationController do
       allow(controller).to receive(:form_authenticity_token).and_return "testing"
       request.env['X-XSRF-Token'] = "testing"
       post :destroy, :id => 1
+    end
+  end
+
+  describe "validate_redirect" do
+
+    let! (:master_setup) { 
+      stub_master_setup
+    }
+
+    it "returns redirect if valid" do 
+      expect(controller.validate_redirect("http://localhost/path/to/page")).to eq "http://localhost/path/to/page"
+    end
+
+    it "raises an error if redirect is to a different host" do
+      expect { controller.validate_redirect("http://some.domain.com") }.to raise_error "Illegal Redirect"
+    end
+
+    it "does not error if no domain is given" do
+      expect { controller.validate_redirect("/path/to/page.html") }.not_to raise_error
     end
   end
 

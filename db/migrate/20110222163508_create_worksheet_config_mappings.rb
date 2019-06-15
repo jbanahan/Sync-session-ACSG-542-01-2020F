@@ -7,7 +7,7 @@ class CreateWorksheetConfigMappings < ActiveRecord::Migration
       t.integer :custom_definition_id
       t.integer :worksheet_config_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

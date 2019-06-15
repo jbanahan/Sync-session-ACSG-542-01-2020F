@@ -38,10 +38,22 @@
 #  vfi_invoice_enabled         :boolean
 #
 
+require 'uuidtools'
 require "open_chain/git"
 require 'open_chain/database_utils'
 
 class MasterSetup < ActiveRecord::Base
+  attr_accessible :broker_invoice_enabled, :classification_enabled, 
+    :custom_features, :customs_statements_enabled, :delivery_enabled, 
+    :drawback_enabled, :entry_enabled, :friendly_name, :ftp_polling_active, 
+    :invoices_enabled, :last_delayed_job_error_sent, :logo_image, 
+    :migration_host, :order_enabled, :project_enabled, :request_host, 
+    :sales_order_enabled, :security_filing_enabled, 
+    :send_test_files_to_instance, :shipment_enabled, :stats_api_key, 
+    :suppress_email, :suppress_ftp, :system_code, :system_message, 
+    :target_version, :trade_lane_enabled, :uuid, :variant_enabled, 
+    :vendor_management_enabled, :vfi_invoice_enabled
+  
   cattr_accessor :current
 
   CACHE_KEY = "MasterSetup:setup"
@@ -62,6 +74,21 @@ class MasterSetup < ActiveRecord::Base
   # Returns true if Rails.env indicates development
   def self.development_env?
     rails_env.development?
+  end
+
+  # Simple mockable means for accessing rails secrets.
+  def self.secrets
+    Rails.application.secrets
+  end
+
+  # Simple mockable means for accessing rails config
+  def self.rails_config
+    Rails.application.config
+  end
+
+  # Simple mockable means for accessing specific rails config keys
+  def self.rails_config_key key
+    config.send(key.to_s)
   end
 
   # This method exists as a straight forward way to mock out 
@@ -100,14 +127,25 @@ class MasterSetup < ActiveRecord::Base
         m = CACHE.get CACHE_KEY unless m
       rescue
       end
+
+      if m.nil? || !m.is_a?(MasterSetup)
+        # The `after_find :update_cache` above will actually handle setting the cache in this case, so 
+        # we don't have to do it again here.
+        m = MasterSetup.first
+      end
     end
-    
-    if m.nil? || !m.is_a?(MasterSetup)
+
+    if m.nil? && !MasterSetup.test_env?
       m = init_base_setup
+      # If there's no actual master setup table in existence, then nil is returned.  This would only ever happen
+      # in initializers that run as a new system is being deployed.  For any of those initializers, they need to be
+      # be aware that get MIGHT return nil and handle accordingly.  No "real" code outside of initializers should ever
+      # need to handle a nil return value.
+      return nil if m.nil?
       CACHE.set CACHE_KEY, m
     end
 
-    m.is_a?(MasterSetup) ? m : MasterSetup.first
+    m
   end
 
   def self.get_migration_lock host: nil
@@ -150,24 +188,51 @@ class MasterSetup < ActiveRecord::Base
     end
   end
 
-  def self.init_base_setup
+  def self.master_setup_initialized?
+    @@initialized ||= begin
+      ActiveRecord::Base.connection.table_exists?("master_setups") && !MasterSetup.first.nil?
+    end
+  end
+
+  def self.init_base_setup company_name: "My Company", sys_admin_email: "support@vandegriftinc.com", init_script: false, host_name: nil, system_code: nil
+    return nil unless ActiveRecord::Base.connection.table_exists?("master_setups")
+
     m = MasterSetup.first
-    if m.nil?
-      m = MasterSetup.create!(:uuid => UUIDTools::UUID.timestamp_create.to_s)
-      if User.scoped.empty?
-        c = Company.first_or_create!(name:'My Company',master:true)
-        if c.users.empty?
-          pass = 'init_pass'
-          u = c.users.build(:username=>"chainio_admin",:email=>"support@vandegriftinc.com")
-          u.password = pass
-          u.sys_admin = true
-          u.admin = true
-          u.save
-          OpenMailer.send_new_system_init(pass).deliver if production_env?
+    return m unless m.nil?
+
+    if !MasterSetup.test_env?
+      raise "You must run the script/init_base_setup.rb script" unless init_script
+
+      ActiveRecord::Base.transaction do
+        m = MasterSetup.create!(uuid: UUIDTools::UUID.timestamp_create.to_s, system_code: system_code, request_host: host_name, target_version: OpenChain::Git.current_tag_name(allow_branch_name: MasterSetup.development_env?))
+        # If there's no users, create a user and company (.all is used here is make sure there's no weird default scope applied)
+        if User.all.first.nil?
+          c = Company.first_or_create!(name:company_name, master:true)
+          if c.users.empty?
+            u = c.users.build(username: "sysadmin", email: sys_admin_email, first_name: "System", last_name: "Administrator")
+            u.sys_admin = true
+            u.admin = true
+            # Any old random password works here, this is simply to get around a validation in user.  The invite email below
+            # actually changes the password to a temp one before emailing it to a user.
+            u.password = Digest::SHA256.hexdigest(Time.zone.now.to_s)
+            u.save!
+            if production_env? || development_env?
+              User.send_invite_emails u.id
+            end
+          end
         end
       end
+    else
+      # Just create a blank master setup in test env, don't create! one because that'll throw off test cases ability to create
+      # their own internally in the db for test usage.
+      m = MasterSetup.new
     end
     m
+  end
+
+  def self.init_test_setup
+    return unless Rails.env.test?
+    MasterSetup.first_or_create! :uuid => UUIDTools::UUID.timestamp_create.to_s
   end
 
   def self.ftp_enabled?
@@ -263,7 +328,7 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.config_true?(settings_key) 
-    result = config[settings_key].to_s == "true"
+    result = vfitrack_config[settings_key].to_s == "true"
 
     if block_given?
       yield if result
@@ -273,7 +338,7 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.config_value(settings_key, default: nil, yield_if_equals: nil)
-    result = config[settings_key]
+    result = vfitrack_config[settings_key]
     return_val = result.nil? ? default : result
 
     if block_given?
@@ -284,10 +349,10 @@ class MasterSetup < ActiveRecord::Base
     return_val
   end
 
-  def self.config
-    Rails.application.config.vfitrack
+  def self.vfitrack_config
+    rails_config.vfitrack
   end
-  private_class_method :config
+  private_class_method :vfitrack_config
 
 
   def self.upgrades_allowed?

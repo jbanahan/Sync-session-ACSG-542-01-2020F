@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AckFileHandler do
 
   let! (:inbound_file) {

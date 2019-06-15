@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceChargeCode do
     before :each do
       @entry = Factory(:entry)

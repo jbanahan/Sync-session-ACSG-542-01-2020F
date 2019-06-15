@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SentEmailsController do
 
   let(:user) { Factory(:admin_user, :company => Factory(:company, :master=>true)) }

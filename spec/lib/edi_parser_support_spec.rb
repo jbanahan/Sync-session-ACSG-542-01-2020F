@@ -1,8 +1,10 @@
-require 'spec_helper'
-
 describe OpenChain::EdiParserSupport do
   subject {
-    Class.new { include OpenChain::EdiParserSupport }.new
+    Class.new { include OpenChain::EdiParserSupport 
+      def self.user
+        raise "Mock this."
+      end
+    }.new
   }
 
   let (:file_path) { 'spec/support/bin/ascena_apll_856.txt' }
@@ -555,10 +557,17 @@ describe OpenChain::EdiParserSupport do
         subject.class.process_transaction(transaction, opts)
       end
 
-      it "uses User.integration user method is not implemented" do
-        expect(parser).to receive(:process_transaction).with(User.integration, transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
-        subject.class.process_transaction(transaction, opts)
+      context "with no user method implementation" do
+        subject {
+          Class.new { include OpenChain::EdiParserSupport }.new
+        }
+
+        it "uses User.integration user method is not implemented" do
+          expect(parser).to receive(:process_transaction).with(User.integration, transaction, last_file_bucket: opts[:bucket], last_file_path: opts[:key])
+          subject.class.process_transaction(transaction, opts)
+        end
       end
+      
     end
 
     context "with errors" do

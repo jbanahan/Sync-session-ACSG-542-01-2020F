@@ -1,3 +1,5 @@
+require 'uuidtools'
+
 module OpenChain
   class TestInstanceManager
     # call this method to prep the test instance
@@ -11,11 +13,11 @@ module OpenChain
     end
 
     def clear_schedulable_jobs!
-      SchedulableJob.scoped.destroy_all
+      SchedulableJob.all.destroy_all
     end
 
     def clear_scheduled_reports!
-      SearchSchedule.scoped.destroy_all
+      SearchSchedule.all.destroy_all
     end
 
     def update_master_setup! req_host, uuid, friendly_name
@@ -42,7 +44,7 @@ module OpenChain
     end
 
     def update_users! request_host
-      User.scoped.update_all(tariff_subscribed:false, host_with_port: request_host)
+      User.all.update_all(tariff_subscribed:false, host_with_port: request_host)
       EventSubscription.delete_all
     end
   end

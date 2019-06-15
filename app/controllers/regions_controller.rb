@@ -4,7 +4,7 @@ class RegionsController < ApplicationController
     @page_title = 'Tools'
   end
   def index
-    @regions = Region.all
+    @regions = Region.by_name.all
   end
 
   def create

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler do
 
   describe "gpg_helper" do

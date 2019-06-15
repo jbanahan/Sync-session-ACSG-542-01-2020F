@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 
 describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldDefinition::ShipmentFieldDefinition do
   describe "total cartons" do
     it "should total cartons without considering shipment lines" do

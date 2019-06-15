@@ -33,6 +33,8 @@ require 'open_chain/custom_handler/crocs/crocs_receiving_parser'
 
 #file uploaded from web to be processed to create drawback data
 class DrawbackUploadFile < ActiveRecord::Base
+  attr_accessible :error_message, :finish_at, :processor, :start_at, :attachment, :attachments_attributes
+  
   PROCESSOR_UA_WM_IMPORTS ||= 'ua_wm_imports'
   PROCESSOR_UA_DDB_EXPORTS ||= 'ua_ddb_exports'
   PROCESSOR_UA_FMI_EXPORTS ||= 'ua_fmi_exports'
@@ -71,21 +73,22 @@ class DrawbackUploadFile < ActiveRecord::Base
         OpenChain::OhlDrawbackParser.parse tempfile.path
         OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?",90.days.ago)
       },
-      PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
+      # This should only run on UnderArmour's instance, so the master company is what we want to link to
+      PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.where(master: true).first },
       PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_UA_STO_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportParser.parse self.attachment.attached.path},
       PROCESSOR_UA_STO_EXPORTS_V2 => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser.parse self.attachment.attached.path},
-      PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
-      PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
+      PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by(alliance_customer_number: "JCREW")},
+      PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by(alliance_customer_number: "JCREW")},
       PROCESSOR_JCREW_IMPORT_V2 => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2.parse_csv_file(tempfile.path,user) },
-      PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")},
-      PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
-      PROCESSOR_LANDS_END_CD => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
+      PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by(alliance_customer_number: "LANDS")},
+      PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by(alliance_customer_number: "LANDS")).parse IO.read tempfile.path},
+      PROCESSOR_LANDS_END_CD => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser.new(Company.find_by(alliance_customer_number: "LANDS")).parse IO.read tempfile.path},
       PROCESSOR_CROCS_RECEIVING=>lambda {
         start_date, end_date = OpenChain::CustomHandler::Crocs::CrocsReceivingParser.parse_s3 self.attachment.attached.path
         OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor.process_entries_by_arrival_date start_date, end_date
       },
-      PROCESSOR_CROCS_EXPORTS => lambda { OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("CROCS")}
+      PROCESSOR_CROCS_EXPORTS => lambda { OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by(alliance_customer_number: "CROCS")}
     }
     to_run = p_map[self.processor]
     raise "Processor #{self.processor} not found." if to_run.nil?

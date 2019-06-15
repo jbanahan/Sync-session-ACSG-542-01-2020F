@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DrawbackClaimsController do
   before :each do
 

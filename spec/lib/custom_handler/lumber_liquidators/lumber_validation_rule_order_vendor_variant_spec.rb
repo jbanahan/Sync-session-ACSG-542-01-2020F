@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:pva_pc_approved_date]

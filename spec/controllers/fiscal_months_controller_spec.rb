@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FiscalMonthsController do
   let(:user) { Factory(:sys_admin_user) }
   let(:co) { Factory(:company, fiscal_reference: "release_date") }
@@ -81,7 +79,7 @@ describe FiscalMonthsController do
     it "creates" do
       start_date = DateTime.new(2016,3,15)
       end_date = DateTime.new(2016,3,16)
-      expect{ get :create, fiscal_month: fm_params}.to change(FiscalMonth, :count).from(0).to(1)
+      expect{ post :create, company_id: co.id, fiscal_month: fm_params}.to change(FiscalMonth, :count).from(0).to(1)
 
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       fm = FiscalMonth.first
@@ -96,7 +94,7 @@ describe FiscalMonthsController do
       user.sys_admin = false; user.save!
       start_date = DateTime.new(2016,3,15)
       end_date = DateTime.new(2016,3,16)
-      expect{ get :create, fiscal_month: fm_params}.to_not change(FiscalMonth, :count)
+      expect{ post :create, company_id: co.id, fiscal_month: fm_params}.to_not change(FiscalMonth, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
@@ -193,8 +191,7 @@ describe FiscalMonthsController do
     
     it "rejects wrong file type" do
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
-      expect(FiscalMonth).to_not receive(:import_csv)
-      expect(FiscalMonth).to_not receive(:import_xls)
+      expect(CustomFile).to_not receive(:create!)
       post :upload, company_id: co.id, attached: file
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       expect(flash[:errors]).to eq ["Only XLS, XLSX, and CSV files are accepted."]
@@ -203,7 +200,7 @@ describe FiscalMonthsController do
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      expect(FiscalMonth).to_not receive(:import_csv)
+      expect(CustomFile).to_not receive(:create!)
       post :upload, company_id: co.id, attached: file
     end
   end

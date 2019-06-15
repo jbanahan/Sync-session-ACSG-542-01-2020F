@@ -1,8 +1,6 @@
-require 'spec_helper'
-
 describe OpenChain::FreshserviceClient do
   let(:fs_token) { "token" }
-  let(:fs_client) { described_class.new(fs_token) }
+  let(:fs_client) { described_class.new(token: fs_token) }
   let (:rest_response) {
     response = instance_double(RestClient::Response)
     allow(response).to receive(:body).and_return freshservice_json
@@ -10,9 +8,16 @@ describe OpenChain::FreshserviceClient do
   }
 
   describe "initialize" do
+    let (:secrets) {
+      {
+        "fresh_service" => {
+          "api_key" => "abc"
+        }
+      }
+    }
+    
     it "retrieves token from default location" do
-      expect(File).to receive(:exist?).with("config/freshservice_client.yml").and_return true
-      expect(YAML).to receive(:load_file).with("config/freshservice_client.yml").and_return({"VFITRACK_FRESHSERVICE_TOKEN"=>"abc"})
+      expect(MasterSetup).to receive(:secrets).and_return secrets
       expect(described_class.new.token).to eq 'abc'
     end
   end
@@ -54,7 +59,7 @@ describe OpenChain::FreshserviceClient do
 
     it "raises exception if token is missing" do
       fs_client.token = nil
-      expect{ fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the freshservice_client.yml file)"
+      expect{ fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
     end
 
     it "raises exception if request_complete" do
@@ -135,7 +140,7 @@ describe OpenChain::FreshserviceClient do
 
     it "raises exception if token is missing" do
       fs_client.token = nil
-      expect{ fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the freshservice_client.yml file)"
+      expect{ fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
       expect(fs_client.request_complete).to eq false
     end
 

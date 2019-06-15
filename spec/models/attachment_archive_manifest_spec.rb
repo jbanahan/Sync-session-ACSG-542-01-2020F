@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentArchiveManifest do
   before :each do 
     @c = Factory(:company)

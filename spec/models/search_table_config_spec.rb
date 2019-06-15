@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchTableConfig do
   describe '#for_user' do
     it 'should find generic' do

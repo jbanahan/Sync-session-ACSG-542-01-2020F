@@ -18,7 +18,7 @@ $(document).ready( function() {
   <% @company.divisions.each do |div| %>
   <li>
   	<% if @company.can_edit?(current_user) %><%= link_to div.name, edit_company_division_path(@company,div) %><%else%><%=div.name%><%end%>
-   	<% if @company.can_edit?(current_user) && !div.has_children? %> - <%= link_to 'Delete', company_division_path(@company,div), :confirm => 'Are you sure?', :method => :delete %><%end%>
+   	<% if @company.can_edit?(current_user) && !div.has_children? %> - <%= link_to 'Delete', company_division_path(@company,div), :data => {:confirm => 'Are you sure?'}, :method => :delete %><%end%>
   </li>
   <% end %>
 </ul>

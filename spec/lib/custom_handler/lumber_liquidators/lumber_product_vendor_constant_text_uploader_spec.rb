@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstantTextUploader do
 
-  describe "process" do
+  describe "process", :without_partial_double_verification do
     let (:user) { Factory(:user) }
     let (:custom_file) { instance_double(CustomFile) }
     let (:row_data) {

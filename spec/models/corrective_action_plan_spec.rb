@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CorrectiveActionPlan do
   before :each do
     @cap = Factory(:corrective_action_plan)

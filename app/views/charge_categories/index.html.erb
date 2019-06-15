@@ -19,7 +19,7 @@ $(function() {
     <%@charge_categories.each do |c|-%>
     <tr class='hover'>
       <td><%=c.charge_code%></td><td><%=c.category%></td>
-      <td><%=link_to "Delete", company_charge_category_path(@company,c), :confirm=>'Are you sure?', :method=>:delete%></td>
+      <td><%=link_to "Delete", company_charge_category_path(@company,c), :data => {:confirm=>'Are you sure?'}, :method=>:delete%></td>
     </tr>
     <%end-%>
   </tbody>

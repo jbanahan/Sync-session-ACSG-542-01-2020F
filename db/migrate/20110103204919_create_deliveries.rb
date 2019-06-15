@@ -9,7 +9,7 @@ class CreateDeliveries < ActiveRecord::Migration
       t.string :mode
       t.integer :customer_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

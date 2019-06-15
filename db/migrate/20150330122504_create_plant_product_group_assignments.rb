@@ -4,7 +4,7 @@ class CreatePlantProductGroupAssignments < ActiveRecord::Migration
       t.integer :plant_id
       t.integer :product_group_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :plant_product_group_assignments, :plant_id
     add_index :plant_product_group_assignments, :product_group_id

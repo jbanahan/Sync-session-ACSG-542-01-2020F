@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe VfiInvoiceLine do
   let(:inv_line) { Factory(:vfi_invoice_line, unit_price: 15.30, quantity: 2) }
 

@@ -4,7 +4,7 @@ class CreateDivisions < ActiveRecord::Migration
       t.string :name
       t.references :company
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

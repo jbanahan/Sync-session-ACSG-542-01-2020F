@@ -45,6 +45,14 @@ class SearchSchedule < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   include OpenChain::EmailValidationSupport
 
+  attr_accessible :custom_report_id, :custom_report, :day_of_month, :disabled, 
+    :download_format, :email_addresses, :exclude_file_timestamp, 
+    :ftp_password, :ftp_port, :ftp_server, :ftp_subfolder, :ftp_username, 
+    :last_finish_time, :last_start_time, :mailing_list_id, :protocol, 
+    :report_failure_count, :run_friday, :run_hour, :run_monday, 
+    :run_saturday, :run_sunday, :run_thursday, :run_tuesday, 
+    :run_wednesday, :search_setup_id, :search_setup, :send_if_empty
+
   RUFUS_TAG = "search_schedule"  
 
   belongs_to :search_setup
@@ -128,10 +136,10 @@ class SearchSchedule < ActiveRecord::Base
     end
     unless self.email_addresses.blank?
       if email_list_valid? self.email_addresses
-        OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!
+        OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver_now
       else
         msg = "The above scheduled search contains an invalid email address. Please correct it and try again."
-        OpenMailer.send_search_bad_email(user.email, self.search_setup, msg).deliver!
+        OpenMailer.send_search_bad_email(user.email, self.search_setup, msg).deliver_now
       end
     end
   end
@@ -244,7 +252,7 @@ class SearchSchedule < ActiveRecord::Base
         #do email & internal message here
         # The FtpSender already logs all errors emanating from it, and automatically retries to send so there's no point in calling log_me on the error again here
         search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
-        OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
+        OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver_now
         add_info = ["Protocol: #{protocol}", "Server Name: #{self.ftp_server}", "Account: #{self.ftp_username}", "Subfolder: #{self.ftp_subfolder}"]
         send_error_to_user user, e.message, add_info
       end
@@ -272,7 +280,7 @@ class SearchSchedule < ActiveRecord::Base
       subject = "Scheduled Report '#{search_name}' failed"
       body = "Your Scheduled Report '#{search_name}' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed #{self.report_failure_count} time#{(self.report_failure_count > 1 ? "s in a row" : "")}.  On the 5th consecutive failure, VFI Track will disable the report."
     end
-    OpenMailer.send_simple_html(user.email, subject, body).deliver!
+    OpenMailer.send_simple_html(user.email, subject, body).deliver_now
   end
 
   def make_days_of_week

@@ -10,7 +10,7 @@ class AddEntityComparatorLogs < ActiveRecord::Migration
       t.string  :new_path
       t.string  :new_version
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :entity_comparator_logs, [:recordable_id, :recordable_type], name: "index_entity_comparator_logs_rec_id_and_rec_type"

@@ -1,6 +1,3 @@
-# encoding: utf-8
-require 'spec_helper'
-
 describe ImportedFile do
   describe "result_keys_where" do
     it "should build proper where clause" do
@@ -46,7 +43,7 @@ describe ImportedFile do
       begin
         f = Factory(:imported_file, :user=>current_user, :attached_file_name=>original_attachment_name)
         mail = double "mail delivery"
-        allow(mail).to receive(:deliver!).and_return(nil)
+        allow(mail).to receive(:deliver_now).and_return(nil)
         expect(OpenMailer).to receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
         expect(f).to receive(:make_updated_file).and_return(s3_path)
         expect(f).to receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]).and_call_original
@@ -255,6 +252,8 @@ describe ImportedFile do
   end
 
   describe "FileImportProcessJob#perform" do
+    let! (:master_setup) { stub_master_setup }
+
     before :each do
       @u = Factory(:user)
       @i = Factory(:imported_file, :search_setup => Factory(:search_setup), :attached_file_name => "test.txt")
@@ -292,12 +291,10 @@ describe ImportedFile do
         raise error
       end
 
-      ms = double("MasterSetup")
-      expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:custom_feature?).with("LogImportedFileErrors").and_return true
+      expect(master_setup).to receive(:custom_feature?).with("LogImportedFileErrors").and_return true
 
       mail = double("mail")
-      expect(mail).to receive :deliver
+      expect(mail).to receive :deliver_now
       expect(OpenMailer).to receive(:send_imported_file_process_fail).with(@i, @i.search_setup.user).and_return mail
       ImportedFile::FileImportProcessJob.new(@i, @u).perform
 

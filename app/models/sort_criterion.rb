@@ -19,6 +19,8 @@
 class SortCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport
+
+  attr_accessible :custom_definition_id, :descending, :model_field_uid, :rank, :search_setup_id
   
   belongs_to :search_setup
   

@@ -15,6 +15,8 @@
 class SalesOrder < ActiveRecord::Base
   include CoreObjectSupport
 
+  attr_accessible :customer_id, :division_id, :order_date, :order_number, :ship_to_id
+
   belongs_to :customer, :class_name => "Company"
   belongs_to :division
   belongs_to :ship_to, :class_name => "Address"

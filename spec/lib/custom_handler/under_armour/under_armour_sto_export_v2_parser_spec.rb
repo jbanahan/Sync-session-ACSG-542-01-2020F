@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
   describe "parse" do
     before :each do

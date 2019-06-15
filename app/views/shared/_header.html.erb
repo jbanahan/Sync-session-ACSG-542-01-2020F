@@ -12,8 +12,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= app_internals(ms) %>
     <%= favicon_links -%>
+
     <%= stylesheet_link_tag    "application", :media => "all" -%>
     <%= javascript_include_tag "application" -%>
+    <%= javascript_include_tag "jquery_ujs" -%>
+
     <% if @include_legacy_scripts %>
       <%= javascript_include_tag "legacy" %>
     <% end %>

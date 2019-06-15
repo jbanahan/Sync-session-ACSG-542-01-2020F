@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceValueMatchesDaPercent do
 
   before :each do

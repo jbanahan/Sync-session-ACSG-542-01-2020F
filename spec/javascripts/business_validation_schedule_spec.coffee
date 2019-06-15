@@ -3,7 +3,7 @@ describe 'BusinessValidationScheduleApp', () ->
 
   describe 'businessValidationScheduleSvc', () ->
     svc = http = null
-    beforeEach inject(($httpBackend,businessValidationScheduleSvc) ->
+    beforeEach inject((businessValidationScheduleSvc, $httpBackend) ->
       svc = businessValidationScheduleSvc
       http = $httpBackend
     )
@@ -14,7 +14,7 @@ describe 'BusinessValidationScheduleApp', () ->
 
     describe 'loadSchedules', () ->
       it "executes route", () ->
-        http.expectGET('/api/v1/admin/business_validation_schedules').respond "returnVal"
+        http.expectGET(new RegExp("/api/v1/admin/business_validation_schedules")).respond "returnVal"
         promise = svc.loadSchedules()
         resolvedPromise = null
         promise.success (data) ->
@@ -24,7 +24,7 @@ describe 'BusinessValidationScheduleApp', () ->
     
     describe 'newSchedule', () ->
       it "executes route", () ->
-        http.expectGET('/api/v1/admin/business_validation_schedules/new').respond "returnVal"
+        http.expectGET(new RegExp('/api/v1/admin/business_validation_schedules/new')).respond "returnVal"
         promise = svc.newSchedule()
         resolvedPromise = null
         promise.success (data) ->
@@ -34,7 +34,7 @@ describe 'BusinessValidationScheduleApp', () ->
 
     describe 'loadSchedule', () ->
       it "executes route", () ->
-        http.expectGET('/api/v1/admin/business_validation_schedules/1/edit').respond "returnVal"
+        http.expectGET(new RegExp('/api/v1/admin/business_validation_schedules/1/edit')).respond "returnVal"
         promise = svc.loadSchedule(1)
         resolvedPromise = null
         promise.success (data) ->
@@ -88,7 +88,7 @@ describe 'BusinessValidationScheduleApp', () ->
         ctrl = $controller('businessValidationScheduleIndexCtrl',{$scope:$scope, $state:$state, chainErrorHandler:chainErrorHandler, businessValidationScheduleSvc:svc})
         
         # default route automatically loads along with controller
-        $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_index.html").respond "returnVal"
+        $httpBackend.expectGET(new RegExp('/assets/business_validation_schedule/business_validation_schedule_index.+html')).respond "returnVal"
       )
 
       describe 'loadSchedules', () ->
@@ -119,7 +119,7 @@ describe 'BusinessValidationScheduleApp', () ->
 
       describe 'loadCoreModuleList', () ->
         it "assigns data to scope", () ->
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_index.html").respond "returnVal"
+          $httpBackend.expectGET(new RegExp('/assets/business_validation_schedule/business_validation_schedule_index.+html')).respond "returnVal"
           data = { data: {"cm_list" : "core module list"} }
 
           deferredLoad = $q.defer()
@@ -133,8 +133,8 @@ describe 'BusinessValidationScheduleApp', () ->
 
       describe 'saveSchedule', () ->
         it "calls 'createSchedule' service", () ->
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_edit.html").respond "returnVal"
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_index.html").respond "returnVal"
+          $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_edit.+html")).respond "returnVal"
+          $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_index.+html")).respond "returnVal"
           $scope.schedule = "schedule_data"
           deferredLoad = $q.defer()
           deferredLoad.resolve({data: {id: 1}})
@@ -159,7 +159,7 @@ describe 'BusinessValidationScheduleApp', () ->
 
       describe 'loadSchedule', () ->
         it "assigns data to scope", () ->
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_index.html").respond "returnVal"
+          $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_index.+html")).respond "returnVal"
           data = 
             { 
               "data":{
@@ -198,8 +198,8 @@ describe 'BusinessValidationScheduleApp', () ->
 
       describe 'saveSchedule', () ->
         it "calls createSchedule service", () ->
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_index.html").respond "returnVal"
-          $httpBackend.expectGET("/assets/business_validation_schedule/business_validation_schedule_edit.html").respond "returnVal"
+          $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_index.+html")).respond "returnVal"
+          $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_edit.+html")).respond "returnVal"
           $scope.schedule = "schedule_data"
           $scope.search_criterions = "criterion_data"
           spyOn(svc, 'updateSchedule').and.returnValue {success: ()-> null}

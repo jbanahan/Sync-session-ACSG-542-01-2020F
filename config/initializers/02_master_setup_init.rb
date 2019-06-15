@@ -4,14 +4,11 @@
 # in what master setup is cached, but ultimately as all the servers come back online (usually within
 # split seconds of eachother) as the last server comes online, this call will clear the cache and the correct
 # master setup will be always be used.
-if ActiveRecord::Base.connection.table_exists? "master_setups"
+if MasterSetup.master_setup_initialized?
   ms = MasterSetup.first
-  if ms
-    ms.update_cache
+  ms.update_cache
+
+  if Rails.env.production? && ActiveRecord::Base.connection.table_exists?('instance_informations')
+    InstanceInformation.check_in
   end
 end
-
-if Rails.env.production? && ActiveRecord::Base.connection.table_exists?('instance_informations')
-  InstanceInformation.check_in
-end
-

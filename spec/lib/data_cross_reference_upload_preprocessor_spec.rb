@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::DataCrossReferenceUploadPreprocessor do
   describe "preprocessor_for_xref" do
     context "if xref-type missing/unrecognized" do

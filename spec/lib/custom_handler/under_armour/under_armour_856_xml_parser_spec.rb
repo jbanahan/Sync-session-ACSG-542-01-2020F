@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
 
   let (:data) { IO.read "spec/fixtures/files/ua_856.xml" }
@@ -7,7 +5,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
   let (:user) { Factory(:user) }
   let! (:ua) { Factory(:importer, system_code: "UNDAR")}
   let (:product) {
-    Factory(:product, importer: ua, unique_identifier: "UNDAR-1242757-001")
+    Factory(:product, importer_id: ua.id, unique_identifier: "UNDAR-1242757-001")
   }
 
   let (:variant) {
@@ -15,8 +13,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
   }
 
   let (:order) {
-    order = Factory(:order, importer: ua, order_number: "UNDAR-4200001938", customer_order_number: "4200001938")
-    line = Factory(:order_line, order: order, product: product, variant: variant, sku: "1242757-001-XL")
+    order = Factory(:order, importer_id: ua.id, order_number: "UNDAR-4200001938", customer_order_number: "4200001938")
+    line = Factory(:order_line, order_id: order.id, product_id: product.id, variant_id: variant.id, sku: "1242757-001-XL")
     order
   }
 

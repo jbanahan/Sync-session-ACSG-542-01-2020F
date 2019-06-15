@@ -15,7 +15,7 @@ class CreateSchedulableJobs < ActiveRecord::Migration
       t.string :run_class
       t.text :opts
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

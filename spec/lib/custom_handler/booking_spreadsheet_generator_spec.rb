@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
 
   describe "shipment_vendor_info" do

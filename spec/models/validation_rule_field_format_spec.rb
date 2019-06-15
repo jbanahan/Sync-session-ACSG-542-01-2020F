@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleFieldFormat do
   it "handles checking equality on two fields" do
     commercial_invoice_line = Factory(:commercial_invoice_line, value: 35, contract_amount: 6)

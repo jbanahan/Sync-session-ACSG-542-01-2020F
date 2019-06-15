@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleOrderLineFieldFormat do
   before :each do
     @rule = described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts',regex:'ABC'}.to_json)

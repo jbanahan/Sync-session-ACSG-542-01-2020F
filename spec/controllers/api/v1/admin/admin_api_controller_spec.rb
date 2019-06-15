@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::AdminApiController do
   controller do
     def index

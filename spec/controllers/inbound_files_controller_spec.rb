@@ -47,12 +47,7 @@ describe InboundFilesController do
 
     # Verifies we're using 'find' rather than 'where' search.
     it "throws RecordNotFound exception if the file can't be found" do
-      begin
-        get :show, id: inbound_file.id + 1
-        fail "Should have thrown exception"
-      rescue ActiveRecord::RecordNotFound => e
-        expect(e.to_s).to eq("Couldn't find InboundFile with id=#{inbound_file.id + 1}")
-      end
+      expect { get :show, id: inbound_file.id + 1 }.to raise_error ActiveRecord::RecordNotFound
     end
 
     it "rejects if user isn't admin" do
@@ -75,12 +70,7 @@ describe InboundFilesController do
 
     # Verifies we're using 'find' rather than 'where' search.
     it "throws RecordNotFound exception if the file can't be found" do
-      begin
-        get :download, id: inbound_file.id + 1
-        fail "Should have thrown exception"
-      rescue ActiveRecord::RecordNotFound => e
-        expect(e.to_s).to eq("Couldn't find InboundFile with id=#{inbound_file.id + 1}")
-      end
+      expect { get :download, id: inbound_file.id + 1 }.to raise_error ActiveRecord::RecordNotFound
     end
 
     it "rejects if user is not an admin" do

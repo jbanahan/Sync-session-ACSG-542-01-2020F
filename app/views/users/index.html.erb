@@ -18,10 +18,9 @@
 
     $("#move_user_submit_button").click(function(){
       destination_company_id = parseInt($("#user_move_company_select").val());
-      $("#users_form").prop("action","/users/move_to_new_company/" + destination_company_id);
-
       if (destination_company_id) { //this will catch null, undefined, NaN, 0, false, and empty strings
-        $("#users_form").submit();
+        $("#users_form :input:checkbox:checked").clone().appendTo("#hidden-ids")
+        $("#move_users_form").submit();
       }
       else{
         alert("Please select a destination company for these users and then try again.");
@@ -79,13 +78,18 @@
       </div>
       <div class="modal-body">
         <p>The selected user(s) should be transferred to...</p>
-        <select class="form-control" id="user_move_company_select">
-          <% Company.all.each do |c| %>
-            <option value=<%=c.id%>>
-              <%=c.name%>
-            </option>
-          <% end %>
-        </select>
+        <%=form_tag(move_to_new_company_users_path(), id: "move_users_form") do %>
+          <select class="form-control" name="destination_company_id" id="user_move_company_select">
+            <% Company.all.each do |c| %>
+              <option value=<%=c.id%>>
+                <%=c.name%>
+              </option>
+            <% end %>
+          </select>
+          <div id="hidden-ids" style="visibility: hidden;">
+            Test
+          </div>
+        <% end %>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="move_user_cancel_button" data-dismiss="modal">Cancel</button>

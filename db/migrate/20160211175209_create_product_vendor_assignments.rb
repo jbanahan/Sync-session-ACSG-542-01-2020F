@@ -4,7 +4,7 @@ class CreateProductVendorAssignments < ActiveRecord::Migration
       t.integer :product_id
       t.integer :vendor_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :product_vendor_assignments, :product_id
     add_index :product_vendor_assignments, :vendor_id

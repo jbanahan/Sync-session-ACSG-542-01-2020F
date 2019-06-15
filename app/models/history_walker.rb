@@ -41,7 +41,7 @@ class IcsListener
       end
       if s.email?
         text_only = !s.user.email_format.nil? && s.user.email_format=="text"
-        OpenMailer.send_change(h,s,text_only).deliver
+        OpenMailer.send_change(h,s,text_only).deliver_now
       end
     end
   end

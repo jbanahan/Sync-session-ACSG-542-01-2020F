@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 
 describe OpenChain::CustomHandler::AnnInc::AnnAuditComparator do

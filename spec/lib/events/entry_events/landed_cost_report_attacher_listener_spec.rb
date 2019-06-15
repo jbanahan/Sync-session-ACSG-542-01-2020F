@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
   describe "accepts?" do

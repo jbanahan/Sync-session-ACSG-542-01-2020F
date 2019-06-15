@@ -17,7 +17,7 @@ class AddTariffClassifications < ActiveRecord::Migration
       t.boolean :blocked_record
       t.datetime :last_exported_from_source
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :tariff_classifications, [:tariff_number, :country_id, :effective_date_start], name: "idx_tariff_classifications_on_number_country_effective_date", unique: true
@@ -29,7 +29,7 @@ class AddTariffClassifications < ActiveRecord::Migration
       t.decimal :rate_advalorem, precision: 14, scale: 8
       t.decimal :rate_additional, precision: 14, scale: 8
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :tariff_classification_rates, [:tariff_classification_id, :special_program_indicator], name: "idx_tariff_classification_rates_on_tariff_id_spi"

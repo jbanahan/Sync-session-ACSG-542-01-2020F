@@ -5,7 +5,7 @@ class CreateEntitySnapshotFailures < ActiveRecord::Migration
       t.string :snapshot_type
       t.text :snapshot_json, limit: 4294967295
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

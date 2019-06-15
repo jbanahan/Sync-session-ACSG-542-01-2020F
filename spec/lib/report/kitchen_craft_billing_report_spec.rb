@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::KitchenCraftBillingReport do
 
   context "run" do

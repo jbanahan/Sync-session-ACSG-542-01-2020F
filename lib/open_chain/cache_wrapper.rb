@@ -33,13 +33,14 @@ class CacheWrapper
     Dalli::Client.new(server, settings)
   end
 
-  def self.memcache_settings file_path: 'config/memcached.yml'
-    # Load memcached settings from config/memcached.yml
-    settings = (file_path && File.exist?(file_path)) ? YAML::load(File.open(file_path))[Rails.env] : {}
-    raise "No memcache client configuration file found at '#{file_path}'." unless File.exist?(file_path)
-
-    settings = YAML::load(File.open(file_path))[Rails.env]
-    raise "No memcache client configuration found in file '#{file_path}' for Rails '#{Rails.env}' environment." if settings.blank?
+  def self.memcache_settings
+    # Because of how early in the loading process this class is invoked, files from app/models haven't been loaded yet.
+    # Ergo, we're going to pull the memcache endpoint directly from Rails secrets rather than through our proxy method in 
+    # MasterSetup.
+    secrets_settings = Rails.application.secrets["memcache"]
+    raise "No memcache endpoint configuration found in 'secrets.yml' under 'memcache' key." if secrets_settings.blank?
+    # Dupe the settings since we're modifying the hash below and we don't want to mutate the actual secrets data.
+    settings = secrets_settings.dup
 
     # This is an AWS Elasticache'ism...we can use Elasticache Automatic Discovery protocol to determine what cache cluster nodes to utilize, rather than coding
     # node endpoints directly into our configuration
@@ -54,6 +55,7 @@ class CacheWrapper
 
     settings["namespace"] = namespace_hash(memcache_namespace)
     settings["compress"] = true
+    settings["pool_size"] = 5
     settings = settings.symbolize_keys
 
     [server, settings]

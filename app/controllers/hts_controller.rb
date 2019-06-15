@@ -13,7 +13,7 @@ class HtsController < ApplicationController
 
   def country
     return render_json_error("no_permission", 401) unless permission
-    c = Country.find_by_iso_code params[:iso]
+    c = Country.find_by(iso_code: params[:iso])
     h = {chapters:[]}
     c.official_tariffs.select("distinct left(hts_code,2) as 'ch_code', chapter").order('left(hts_code,4) ASC').each do |ot|
       hd = {num:ot.ch_code,name:ot.chapter,sub_headings:[]}
@@ -25,7 +25,7 @@ class HtsController < ApplicationController
   def chapter
     return render_json_error("no_permission", 401) unless permission
     h = {headings:[]}
-    Country.find_by_iso_code(params[:iso]).official_tariffs.select("distinct mid(hts_code,3,2) as 'hd_code', heading").order('left(hts_code,4) ASC').where("left(hts_code,2) = ?",params[:chapter]).each do |ot|
+    Country.find_by(iso_code: params[:iso]).official_tariffs.select("distinct mid(hts_code,3,2) as 'hd_code', heading").order('left(hts_code,4) ASC').where("left(hts_code,2) = ?",params[:chapter]).each do |ot|
       h[:headings] << {num:ot.hd_code,name:ot.heading}
     end
     render json: h
@@ -34,7 +34,7 @@ class HtsController < ApplicationController
   def heading
     return render_json_error("no_permission", 401) unless permission
     h = {sub_headings:[]}
-    c = Country.find_by_iso_code(params[:iso])
+    c = Country.find_by(iso_code: params[:iso])
     c.official_tariffs.select("distinct mid(hts_code,5,2) as 'sh_code', sub_heading").order('left(hts_code,6) ASC').where("left(hts_code,4) = ?",params[:heading]).each do |ot|
       sh = {num:ot.sh_code,name:ot.sub_heading,remaining_descriptions:[]}
       c.official_tariffs.order('hts_code ASC').where('left(hts_code,6) = ?',"#{params[:heading]}#{ot.sh_code}").each do |rd|

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::TicketTrackingReport do
   let!(:us) { Factory(:country, iso_code: "US")}
   let!(:report) { described_class.new }

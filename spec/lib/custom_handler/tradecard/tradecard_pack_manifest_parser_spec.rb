@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
   describe "process_attachment" do
     it "should get path and call parse" do
@@ -499,7 +497,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         rows = init_mock_array 90, row_seed
         expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(2)
         @s.reload
-        cs = @s.carton_sets.find_by_starting_carton('1100')
+        cs = @s.carton_sets.find_by(starting_carton: '1100')
         expect(cs.carton_qty).to eq 2
         expect(cs.length_cm).to eq 10
         expect(cs.width_cm).to eq 100

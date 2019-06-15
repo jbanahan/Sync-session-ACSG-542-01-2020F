@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EntitySnapshot, :snapshot do
 
   let (:user) { Factory(:user) }
@@ -121,9 +119,7 @@ describe EntitySnapshot, :snapshot do
       ModelField.reload
       #not worrying about permissions
       allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
-      allow_any_instance_of(Classification).to receive(:can_edit?).and_return(true)
-      allow_any_instance_of(TariffRecord).to receive(:can_edit?).and_return(true)
-
+      
       @p = Factory(:product,:name=>'nm',:unique_identifier=>'uid')
       @tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p))
       @first_snapshot = @p.create_snapshot user
@@ -325,6 +321,31 @@ describe EntitySnapshot, :snapshot do
       expect(es.doc_path).to eq expected_path
       expect(es.version).to eq expected_version
       expect(es.compared_at).to be_nil
+      expect(es.change_record_id).to be_nil
+      expect(es.imported_file_id).to be_nil
+      expect(es.context).to be_nil
+    end
+
+    it "should include imported file and context if provided" do
+      expected_path = '/my/path'
+      expected_bucket = 'bucket'
+      expected_version = 'ABC123'
+      expected_json = '{"a":"b"}'
+      ent = Factory(:entry)
+      u = Factory(:user)
+      imp = Factory(:imported_file)
+      cont = '21st Century Capitalism'
+      allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
+      expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
+      
+      es = EntitySnapshot.create_from_entity(ent,u,imp,cont)
+      expect(es.bucket).to eq expected_bucket
+      expect(es.doc_path).to eq expected_path
+      expect(es.version).to eq expected_version
+      expect(es.compared_at).to be_nil
+      expect(es.change_record_id).to be_nil
+      expect(es.imported_file_id).to eq imp.id
+      expect(es.context).to eq cont
     end
 
     it "should call EntityCompare.handle_snapshot with snapshot" do

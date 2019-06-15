@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::PoloSapBomHandler do
   context 'security' do
     it "shoud allow user who can edit products" do
@@ -40,7 +38,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
-      p = Product.find_by_unique_identifier 'parentuid'
+      p = Product.find_by unique_identifier: 'parentuid'
       expect(p.bill_of_materials_children.size).to eq(2)
       r = p.bill_of_materials_children.to_a
       expect(r.first.child_product.unique_identifier).to eq('10003')
@@ -75,11 +73,11 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
         6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
-      p2 = Product.find_by_unique_identifier('parentuid2')
+      p2 = Product.find_by(unique_identifier: 'parentuid2')
       expect(p2.bill_of_materials_children.size).to eq(2)
       expect(p2.child_products.first.unique_identifier).to eq('10005')
       expect(p2.child_products.last.unique_identifier).to eq('10006')
-      expect(Product.find_by_unique_identifier('parentuid').bill_of_materials_children.size).to eq(2)
+      expect(Product.find_by(unique_identifier: 'parentuid').bill_of_materials_children.size).to eq(2)
     end
     it "should process duplicate parents with different plant codes and only take last values" do
       expect(@xlc).to receive(:last_row_number).and_return(4)

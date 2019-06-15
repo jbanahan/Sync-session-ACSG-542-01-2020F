@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Wto6ChangeResetter do
   describe "reset_fields_if_changed" do
     before(:each) do

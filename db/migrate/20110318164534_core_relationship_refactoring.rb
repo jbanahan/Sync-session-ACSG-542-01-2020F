@@ -8,11 +8,11 @@ class CoreRelationshipRefactoring < ActiveRecord::Migration
     remove_column :piece_sets, :delivery_id
     create_table :shipment_lines do |t|
       t.integer :line_number
-      t.timestamps
+      t.timestamps null: false
     end
     create_table :delivery_lines do |t|
       t.integer :line_number
-      t.timestamps
+      t.timestamps null: false
     end
     add_column :piece_sets, :shipment_line_id, :integer
     add_column :piece_sets, :delivery_line_id, :integer

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::OhlDrawbackParser do
   before :all do 
     @companies = Company.all
@@ -11,8 +9,8 @@ describe OpenChain::OhlDrawbackParser do
     OpenChain::OhlDrawbackParser.parse @sample_path
   end
   after :all do
-    Country.scoped.destroy_all
-    Entry.scoped.destroy_all
+    Country.all.destroy_all
+    Entry.all.destroy_all
     Company.destroy_all
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
@@ -21,7 +19,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(entries.collect {|e| e.entry_number}).to eq(["11350368418", "11353554642", "11365647418", "OHL03410879"])
   end
   it "should map new 20 column format" do
-    ent = Entry.find_by_entry_number "OHL03410879"
+    ent = Entry.find_by entry_number: "OHL03410879"
     expect(ent.importer.name).to eq("UNDER ARMOUR INC.")
     expect(ent.arrival_date.to_date).to eq(@est.parse("2014-04-17").to_date)
     expect(ent.entry_port_code).to eq("2704")
@@ -49,7 +47,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(tr.duty_rate).to eq(BigDecimal('0.056'))
   end
   it 'should map newer 31 column format' do
-    ent = Entry.find_by_entry_number '11365647418'
+    ent = Entry.find_by entry_number: '11365647418'
     expect(ent.entry_port_code).to eql '4601'
     expect(ent.arrival_date).to eql @est.parse('2014-04-01')
     expect(ent.mpf).to eql BigDecimal(485)
@@ -75,7 +73,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(tr.duty_rate).to eq BigDecimal('0.012')
   end
   it 'should map header fields' do
-    ent = Entry.find_by_entry_number '11350368418'
+    ent = Entry.find_by entry_number: '11350368418'
     expect(ent.entry_port_code).to eq('1303')
     expect(ent.arrival_date).to eq(@est.parse('2010-12-27')) 
     expect(ent.mpf).to eq(BigDecimal('139.20'))
@@ -86,17 +84,17 @@ describe OpenChain::OhlDrawbackParser do
     expect(ent.merchandise_description).to eq('WEARING APPAREL, FOOTWEAR')
   end
   it 'should handle empty mpf' do
-    ent = Entry.find_by_entry_number '11353554642'
+    ent = Entry.find_by entry_number: '11353554642'
     expect(ent.mpf).to be_nil
   end
   it 'should map invoice header fields' do
-    ent = Entry.find_by_entry_number '11350368418'
+    ent = Entry.find_by entry_number: '11350368418'
     expect(ent.commercial_invoices.size).to eq(1)
     ci = ent.commercial_invoices.first
     ci.invoice_number = 'N/A'
   end
   it 'should map invoice line fields' do
-    lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+    lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
     expect(lines.size).to eq(15)
     first_line = lines.first
     expect(first_line.part_number).to eq('1216859-001')
@@ -108,7 +106,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(last_line.quantity).to eq(111)
   end
   it 'should map hts fields' do
-    lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+    lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
     lines.each {|line| expect(line.commercial_invoice_tariffs.size).to eq(1)}
     first_hts = lines.first.commercial_invoice_tariffs.first
     expect(first_hts.hts_code).to eq('6104632006')
@@ -118,7 +116,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(first_hts.entered_value).to eq(BigDecimal('61544.00'))
     expect(first_hts.duty_rate).to eq(BigDecimal('0.034'))
 
-    other_hts = Entry.find_by_entry_number('11350368418').commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
+    other_hts = Entry.find_by(entry_number: '11350368418').commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
     expect(other_hts.duty_amount).to eq(BigDecimal('26.35'))
     expect(other_hts.classification_qty_1).to eq(BigDecimal('1'))
     expect(other_hts.classification_uom_1).to eq('DOZ')
@@ -127,7 +125,7 @@ describe OpenChain::OhlDrawbackParser do
   it 'should replace invoice lines' do
     #process again
     OpenChain::OhlDrawbackParser.parse @sample_path
-    lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+    lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
     expect(lines.size).to eq(15)
   end
   it 'should create importer company' do
@@ -135,10 +133,10 @@ describe OpenChain::OhlDrawbackParser do
     Entry.all.each {|ent| expect(ent.importer).to eq(c)}
   end
   it 'should update existing entry' do
-    ent = Entry.find_by_entry_number('11350368418')
+    ent = Entry.find_by(entry_number: '11350368418')
     ent.update_attributes(:merchandise_description=>'X')
     OpenChain::OhlDrawbackParser.parse @sample_path
-    found = Entry.find_by_entry_number('11350368418')
+    found = Entry.find_by entry_number: ('11350368418')
     expect(found.id).to eq(ent.id)
     expect(found.merchandise_description).to eq('WEARING APPAREL, FOOTWEAR')
     expect(Entry.all.size).to eq(4)
@@ -154,11 +152,11 @@ describe OpenChain::OhlDrawbackParser do
   end
   context "country_of_origin" do
     it 'should map country of origin based on code' do
-      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
       expect(lines.find_by_part_number("1216024-290").country_origin_code).to eq("KH")
     end
     it 'should leave blank if country not 2 letter found' do
-      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
       expect(lines.find_by_part_number("1216024-454").country_origin_code).to eq("")
     end
   end

@@ -15,6 +15,8 @@
 #
 
 class ChargeCategory < ActiveRecord::Base
+  attr_accessible :category, :charge_code, :company_id
+  
   belongs_to :company
 
   validates_presence_of :company

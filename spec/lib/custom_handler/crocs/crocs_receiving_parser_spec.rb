@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
   before :each do 
     @s3_path = 'abc'
@@ -91,15 +89,15 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       defs = described_class.prep_custom_definitions [:shpln_po,:shpln_sku,:shpln_color,:shpln_size,:shpln_coo,:shpln_received_date]
 
       expect(Product.all.size).to eq(2)
-      style1 = Product.find_by_unique_identifier('CROCS-STY1')
+      style1 = Product.find_by(unique_identifier: 'CROCS-STY1')
       expect(style1).not_to be_nil
-      style2 = Product.find_by_unique_identifier('CROCS-STY2')
+      style2 = Product.find_by(unique_identifier: 'CROCS-STY2')
       expect(style2).not_to be_nil
       s = Shipment.first
       expect(s.importer).to eq(@importer)
       expect(s.reference).to eq('CROCS-1')
       expect(s.shipment_lines.size).to eq(6)
-      sl1 = s.shipment_lines.find_by_line_number(1)
+      sl1 = s.shipment_lines.find_by(line_number: 1)
       expect(sl1.quantity).to eq(10)
       expect(sl1.product).to eq(style1)
       expect(sl1.get_custom_value(defs[:shpln_po]).value).to eq('PO1')
@@ -109,7 +107,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       expect(sl1.get_custom_value(defs[:shpln_coo]).value).to eq('CN')
       expect(sl1.get_custom_value(defs[:shpln_received_date]).value.to_date).to eq(Time.now.to_date) 
       
-      sl2 = s.shipment_lines.find_by_line_number(2)
+      sl2 = s.shipment_lines.find_by(line_number: 2)
       expect(sl2.quantity).to eq(11)
       expect(sl2.product).to eq(style1)
       expect(sl2.get_custom_value(defs[:shpln_po]).value).to eq('PO1')

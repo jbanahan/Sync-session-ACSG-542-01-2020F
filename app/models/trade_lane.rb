@@ -20,6 +20,8 @@
 class TradeLane < ActiveRecord::Base
   include CoreObjectSupport
 
+  attr_accessible :destination_country_id, :notes, :origin_country_id, :tariff_adjustment_percentage
+
   belongs_to :origin_country, class_name: 'Country', inverse_of: :trade_lanes_as_origin
   belongs_to :destination_country, class_name: 'Country', inverse_of: :trade_lanes_as_destination
 

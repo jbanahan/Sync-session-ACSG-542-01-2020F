@@ -7,7 +7,7 @@ class CreateSearchSetups < ActiveRecord::Migration
       t.boolean :simple
       t.datetime :last_accessed
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

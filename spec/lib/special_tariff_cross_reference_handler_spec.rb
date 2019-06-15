@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::SpecialTariffCrossReferenceHandler do
   describe 'download handling' do
     let(:user) { Factory(:user, admin: true) }
@@ -8,7 +6,7 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
 
     it 'sends the csv file' do
       Timecop.freeze(Time.zone.now) do
-        subject.send_tariffs user
+        subject.send_tariffs user.id
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq [user.email]

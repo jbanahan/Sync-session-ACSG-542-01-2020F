@@ -87,7 +87,7 @@ class InstantClassificationsController < ApplicationController
       params[:sort_order].each_with_index do |ic_id,index|
         InstantClassification.find(ic_id).update_attributes(:rank=>index)
       end
-      render :text => "" #effectively noop
+      render html: "" #effectively noop
     }
   end
 

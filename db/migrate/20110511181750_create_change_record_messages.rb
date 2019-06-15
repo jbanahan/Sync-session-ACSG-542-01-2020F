@@ -4,7 +4,7 @@ class CreateChangeRecordMessages < ActiveRecord::Migration
       t.integer :change_record_id
       t.string :message
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

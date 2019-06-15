@@ -9,7 +9,7 @@ class CreateLocations < ActiveRecord::Migration
       t.string :iata
       t.string :coordinates
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

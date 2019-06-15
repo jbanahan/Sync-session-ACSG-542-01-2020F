@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
   subject {described_class}
 
@@ -347,26 +345,26 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
     end
 
     it "returns bookings that do not have booking received dates" do
-      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      shipments = subject.open_bookings_hook(nil, Shipment.all, nil)
       expect(shipments.all).to include shipment
     end
 
     it "does not return shipments that have a booking received date" do
       shipment.update_attributes! booking_received_date: Time.zone.now
-      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      shipments = subject.open_bookings_hook(nil, Shipment.all, nil)
       expect(shipments.all).not_to include shipment
     end
 
     it "returns bookings that have a booking received date and a booking unlocked date" do
       shipment.update_custom_value! booking_unlocked_date, Time.zone.now
 
-      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      shipments = subject.open_bookings_hook(nil, Shipment.all, nil)
       expect(shipments.all).to include shipment
     end
 
     it "does not return bookings that are cancelled" do
       shipment.update_attributes! canceled_date: Time.zone.now
-      shipments = subject.open_bookings_hook(nil, Shipment.scoped, nil)
+      shipments = subject.open_bookings_hook(nil, Shipment.all, nil)
       expect(shipments.all).not_to include shipment
     end
   end

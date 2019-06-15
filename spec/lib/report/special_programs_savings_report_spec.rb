@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::SpecialProgramsSavingsReport do
   let(:report_headers) { ['Customer Number', 'Broker Reference', 'Entry Number', 'Release Date', 'Country ISO Code',
                     'Invoice-Invoice Number', 'Invoice Line - PO Number', 'Invoice Line - Country Origin Code',
@@ -62,7 +60,7 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
 
     it 'uses last month as the start and end date with EST as default' do
       mail = double('mail')
-      allow(mail).to receive(:deliver!)
+      allow(mail).to receive(:deliver_now)
       start_date = nil
       end_date = nil
 

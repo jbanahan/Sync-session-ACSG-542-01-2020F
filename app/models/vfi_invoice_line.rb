@@ -21,6 +21,9 @@
 
 class VfiInvoiceLine < ActiveRecord::Base
   include DefaultLineNumberSupport
+
+  attr_accessible :charge_amount, :charge_code, :charge_description, :line_number, :quantity, :unit, :unit_price, :vfi_invoice_id
+  
   belongs_to :vfi_invoice, :inverse_of => :vfi_invoice_lines, :touch => true
   has_many :invoiced_events
 

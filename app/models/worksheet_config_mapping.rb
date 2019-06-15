@@ -14,6 +14,8 @@
 
 class WorksheetConfigMapping < ActiveRecord::Base
   include HoldsCustomDefinition
+
+  attr_accessible :column, :custom_definition_id, :model_field_uid, :row, :worksheet_config_id
   
   belongs_to :worksheet_config
 end

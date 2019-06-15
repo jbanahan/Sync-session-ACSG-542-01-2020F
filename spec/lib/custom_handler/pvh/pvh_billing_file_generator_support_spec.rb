@@ -2,6 +2,10 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
   subject { 
     Class.new do 
       include OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport
+
+      def duty_invoice_number p1, p2
+        raise "Mock this."
+      end
     end.new
   }
 
@@ -131,7 +135,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       broker_invoice_1
     end
 
-    it "generates invoice files for all types" do
+    it "generates invoice files for all types", :without_partial_double_verification do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       expect(subject).to receive(:has_duty_charges?).with(invoice_snapshot).and_return true
       expect(subject).to receive(:generate_and_send_duty_charges).with(entry_snapshot, invoice_snapshot, broker_invoice_1)
@@ -146,7 +150,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(sr.sent_at).not_to be_nil
     end
 
-    it "marks invoice synced, even if no files sent" do
+    it "marks invoice synced, even if no files sent", :without_partial_double_verification do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       expect(subject).to receive(:has_duty_charges?).with(invoice_snapshot).and_return false
       expect(subject).not_to receive(:generate_and_send_duty_charges)
@@ -161,7 +165,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(sr.sent_at).not_to be_nil
     end
 
-    it "sends credit invoices" do
+    it "sends credit invoices", :without_partial_double_verification do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       expect(subject).to receive(:credit_invoice?).with(invoice_snapshot).exactly(2).times.and_return true
 

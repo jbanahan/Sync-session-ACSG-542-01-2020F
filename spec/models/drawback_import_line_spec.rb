@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DrawbackImportLine do
   describe "unallocated" do
     it "should return if no allocations" do

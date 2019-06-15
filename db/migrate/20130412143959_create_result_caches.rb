@@ -7,7 +7,7 @@ class CreateResultCaches < ActiveRecord::Migration
       t.integer :per_page
       t.text :object_ids
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :result_caches, [:result_cacheable_id,:result_cacheable_type], :name=>"result_cacheable"
   end

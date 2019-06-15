@@ -1,7 +1,5 @@
 <%content_for :action_bar do -%>
-  <%pms = params.clone-%>
-  <%pms[:mode]='simple'-%>
-  <button title='Simple Mode' class='btn_link' link_to='<%=entry_path(@entry,pms)%>'><i class='fa fa-search-minus'></i></button>
+  <button title='Simple Mode' class='btn_link' link_to='<%=entry_path(@entry, {mode: "simple"})%>'><i class='fa fa-search-minus'></i></button>
   <%if current_user.company.master?-%>
     <%= link_to raw("<i class='fa fa-file-image-o'></i>"), get_images_entry_path(@entry), title:'Update Images', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
     <%= link_to raw("<i class='fa fa-refresh'></i>"), request_entry_data_entry_path(@entry), class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', method: 'POST', title: 'Update Entry' %>
@@ -173,7 +171,7 @@ $(function() {
       <tr>
         <td style="width:33%;">
           <table>
-            <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
+            <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country&.iso_code}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
             <%= show_model_fields @entry, [:ent_lading_port_name, :ent_unlading_port_name, :ent_destination_state,:ent_type,:ent_mfids,:ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom], table: true %>
           </table>
         </td>

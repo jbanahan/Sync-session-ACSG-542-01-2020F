@@ -82,7 +82,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
     # At the moment, there is no distinction for attachment types based on the object type in use,
     # however, I'm pretty sure that is coming, so I'm codifying it now.
     find_object(params, current_user) do |obj|
-      render json: {"attachment_types" => AttachmentType.all.map {|t| {name: t.name, value: t.name}} }
+      render json: {"attachment_types" => AttachmentType.by_name.all.map {|t| {name: t.name, value: t.name}} }
     end
   end
 

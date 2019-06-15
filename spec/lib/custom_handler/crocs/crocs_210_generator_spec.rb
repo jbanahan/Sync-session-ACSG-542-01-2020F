@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
 
   before :each do

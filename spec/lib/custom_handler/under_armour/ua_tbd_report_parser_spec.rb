@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
   before :each do
     @cf = double(:custom_file)
@@ -172,7 +170,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       #call prep_custom_definitions after process_rows so we make sure the base class
       #properly initializes the custom defintions without this call
       cdefs = described_class.prep_custom_definitions [:colors,:plant_codes]
-      p = Product.find_by_unique_identifier('1234567')
+      p = Product.find_by(unique_identifier: '1234567')
       expect(p.get_custom_value(cdefs[:colors]).value).to eq("122\n123")
       expect(p.get_custom_value(cdefs[:plant_codes]).value).to eq("0020\n0023")
       p.name == "desc1" #use the first one
@@ -186,7 +184,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-123','23','','','','','','','desc1',''],
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
-      p = Product.find_by_unique_identifier('1234567')
+      p = Product.find_by(unique_identifier: '1234567')
       expect(p.get_custom_value(cdefs[:colors]).value).to eq("001\n122\n123")
       expect(p.get_custom_value(cdefs[:plant_codes]).value).to eq("0020\n0023\n0066")
     end
@@ -195,7 +193,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-123','23','','','','','','','desc1',''],
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
-      p = Product.find_by_unique_identifier('1234567')
+      p = Product.find_by(unique_identifier: '1234567')
       expect(p.entity_snapshots.size).to eq(1)
       expect(p.entity_snapshots.first.user).to eq(@u)
     end
@@ -208,7 +206,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
         ['','1234567-122','20','','','','','','','desc2','']
       ], @u
       imp_country_cd = described_class.prep_custom_definitions([:prod_import_countries])[:prod_import_countries]
-      p = Product.find_by_unique_identifier('1234567')
+      p = Product.find_by(unique_identifier: '1234567')
       expect(p.get_custom_value(imp_country_cd).value).to eq("CA\nUS")
     end
   end

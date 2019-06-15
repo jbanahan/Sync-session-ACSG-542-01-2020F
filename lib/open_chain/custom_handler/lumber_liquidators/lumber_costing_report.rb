@@ -146,7 +146,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       body += "<p>Please find attached to this email the following #{"attachment".pluralize(invoices.length)}:<ul>"
       invoices.each {|i| body += "<li>#{i.original_filename}</li>" }
       body += "</ul></p>"
-      OpenMailer.send_simple_html("ll-ap@vandegriftinc.com", "Manual Billing for File # #{entry.broker_reference}", body.html_safe, invoices, reply_to: "ll-support@vandegriftinc.com").deliver!
+      OpenMailer.send_simple_html("ll-ap@vandegriftinc.com", "Manual Billing for File # #{entry.broker_reference}", body.html_safe, invoices, reply_to: "ll-support@vandegriftinc.com").deliver_now
 
       # We need to add a sync record SOLELY for the entry.  We don't add any for the invoices since we didn't invoice them via the cost report.
       sr = entry.sync_records.first_or_initialize trading_partner: self.class.sync_code

@@ -5,7 +5,7 @@ class CreatePorts < ActiveRecord::Migration
       t.string :schedule_k_code
       t.string :name
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :ports, :schedule_d_code
     add_index :ports, :schedule_k_code

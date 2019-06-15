@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Fisher::FisherCommercialInvoiceSpreadsheetHandler do
 
   subject {described_class.new nil }

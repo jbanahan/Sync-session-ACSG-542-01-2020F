@@ -26,7 +26,7 @@ module OpenChain; module Report; class PoloMissingHtsReport
     end
 
     workbook_to_tempfile(wb, "Missing CA HTS Report", file_name: "Missing CA HTS Report #{ex_factory_start} - #{ex_factory_end}.xls") do |t|
-      OpenMailer.send_simple_html(emails, "[VFI Track] Missing CA HTS Report - #{ex_factory_start}", "The attached report lists all the styles missing Canadian HTS values with #{@cdefs[:ord_line_ex_factory_date].label} values between #{ex_factory_start} and #{ex_factory_end}.".html_safe, [t]).deliver!
+      OpenMailer.send_simple_html(emails, "[VFI Track] Missing CA HTS Report - #{ex_factory_start}", "The attached report lists all the styles missing Canadian HTS values with #{@cdefs[:ord_line_ex_factory_date].label} values between #{ex_factory_start} and #{ex_factory_end}.".html_safe, [t]).deliver_now
     end
   end
 

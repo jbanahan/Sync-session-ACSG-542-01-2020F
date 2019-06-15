@@ -39,27 +39,24 @@ describe TariffLoader do
   end
 
   describe 'process_s3' do
+
+    let (:tempfile) {
+      t = instance_double(Tempfile)
+      allow(t).to receive(:path).and_return "/path/to/file.zip"
+      t
+    }
+
     it 'processes and activates a file from S3' do
-      country = double("country")
+      country = instance_double(Country)
       user = Factory(:user)
 
-      tmp = double("tempfile")
-      expect(Tempfile).to receive(:open).with(['tariff_s3',".zip"]).and_yield tmp
-      expect(tmp).to receive(:binmode)
-      chain_io_object = double("chain_io_object")
-      chain_io_bucket = double("chain_io_bucket", objects:{"s3_filename.zip"=>chain_io_object})
-      s3 = double("aws_s3", buckets:{"chain-io"=>chain_io_bucket})
-      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(s3)
-      expect(chain_io_object).to receive(:read).and_return "file content"
-      expect(tmp).to receive(:write).with("file content")
-      expect(tmp).to receive(:flush)
-      expect(tmp).to receive(:path).and_return("full_file_path")
-
-      loader = double("loader")
-      expect(described_class).to receive(:new).with(country, "full_file_path", "AU-2017-08-09").and_return loader
-      tariff_set = double("tariff_set")
+      loader = instance_double(TariffLoader)
+      expect(described_class).to receive(:new).with(country, "/path/to/file.zip", "AU-2017-08-09").and_return loader
+      tariff_set = instance_double(TariffSet)
       expect(loader).to receive(:process).and_return(tariff_set)
       expect(tariff_set).to receive(:activate)
+
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("chain-io", "s3_filename.zip", {original_filename: "s3_filename.zip"}).and_yield tempfile
 
       described_class.process_s3 "s3_filename.zip", country, "AU-2017-08-09", true, user
 
@@ -69,44 +66,31 @@ describe TariffLoader do
     end
 
     it 'processes a file from S3 but does not activate' do
-      country = double("country")
+      country = instance_double(Country)
       user = Factory(:user)
 
-      chain_io_object = double("chain_io_object")
-      chain_io_bucket = double("chain_io_bucket", objects:{"s3_filename.zip"=>chain_io_object})
-      s3 = double("aws_s3", buckets:{"chain-io"=>chain_io_bucket})
-      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(s3)
-      expect(chain_io_object).to receive(:read).and_return "file content"
-
-      loader = double("loader")
-      expect(described_class).to receive(:new).with(country, /tariff_s3/, "AU-2017-08-09").and_return loader
-      tariff_set = double("tariff_set")
+      loader = instance_double(TariffLoader)
+      expect(described_class).to receive(:new).with(country, "/path/to/file.zip", "AU-2017-08-09").and_return loader
+      tariff_set = instance_double(TariffSet)
       expect(loader).to receive(:process).and_return(tariff_set)
       expect(tariff_set).to_not receive(:activate)
 
-      described_class.process_s3 "s3_filename.zip", country, "AU-2017-08-09", false, user
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("chain-io", "s3_filename.zip", {original_filename: "s3_filename.zip"}).and_yield tempfile
 
-      expect(user.messages.length).to eq 1
-      expect(user.messages[0].subject).to eq "Tariff Set AU-2017-08-09 Loaded"
-      expect(user.messages[0].body).to eq "Tariff Set AU-2017-08-09 has been loaded and has NOT been activated."
+      described_class.process_s3 "s3_filename.zip", country, "AU-2017-08-09", false, user
     end
 
     # Basically just ensuring the method doesn't blow up if it's not given a user.
     it 'processes a file from S3 with no user provided' do
-      country = double("country")
-      user = Factory(:user)
+      country = instance_double(Country)
 
-      chain_io_object = double("chain_io_object")
-      chain_io_bucket = double("chain_io_bucket", objects:{"s3_filename.zip"=>chain_io_object})
-      s3 = double("aws_s3", buckets:{"chain-io"=>chain_io_bucket})
-      expect(AWS::S3).to receive(:new).with(AWS_CREDENTIALS).and_return(s3)
-      expect(chain_io_object).to receive(:read).and_return "file content"
-
-      loader = double("loader")
-      expect(described_class).to receive(:new).with(country, /tariff_s3/, "AU-2017-08-09").and_return loader
-      tariff_set = double("tariff_set")
+      loader = instance_double(TariffLoader)
+      expect(described_class).to receive(:new).with(country, "/path/to/file.zip", "AU-2017-08-09").and_return loader
+      tariff_set = instance_double(TariffSet)
       expect(loader).to receive(:process).and_return(tariff_set)
       expect(tariff_set).to receive(:activate)
+
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("chain-io", "s3_filename.zip", {original_filename: "s3_filename.zip"}).and_yield tempfile
 
       described_class.process_s3 "s3_filename.zip", country, "AU-2017-08-09", true
     end

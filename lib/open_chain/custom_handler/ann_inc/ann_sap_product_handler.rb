@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
     OpenMailer.send_simple_html(['ann-support@vandegriftinc.com',
                                 'Elizabeth_Hodur@anninc.com',
                                 'Veronica_Miller@anninc.com',
-                                'alyssa_ahmed@anninc.com'], subject, body).deliver!
+                                'alyssa_ahmed@anninc.com'], subject, body).deliver_now
   end
 
   def order_being_cancelled?(row)

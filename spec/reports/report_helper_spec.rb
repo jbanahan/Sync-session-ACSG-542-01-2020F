@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::ReportHelper do
 
   subject {

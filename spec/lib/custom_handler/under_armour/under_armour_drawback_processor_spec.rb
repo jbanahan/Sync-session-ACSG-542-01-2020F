@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:po,:del_date,:coo,:size,:color]

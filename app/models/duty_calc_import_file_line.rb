@@ -15,6 +15,8 @@
 #
 
 class DutyCalcImportFileLine < ActiveRecord::Base
+  attr_accessible :drawback_import_line_id, :duty_calc_import_file_id
+  
   belongs_to :duty_calc_import_file
   belongs_to :drawback_import_line
 end

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/intacct/intacct_xml_generator'
 
 describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do

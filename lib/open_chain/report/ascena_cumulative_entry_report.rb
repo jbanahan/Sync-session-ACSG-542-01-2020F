@@ -46,7 +46,7 @@ module OpenChain; module Report; class AscenaCumulativeEntryReport
     workbook_to_tempfile(workbook, "report", file_name: "#{title}.xls") do |t|
       workbook.write t
       t.flush
-      OpenMailer.send_simple_html(addresses, title, "Attached is the #{title}", t).deliver!
+      OpenMailer.send_simple_html(addresses, title, "Attached is the #{title}", t).deliver_now
     end
   end
 

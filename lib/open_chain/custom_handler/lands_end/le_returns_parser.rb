@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
       t.binmode
       download_and_parse path, t
       t.rewind
-      OpenMailer.send_simple_html(user.email, "Lands' End Returns File '#{t.original_filename}'", "Attached is the Lands' End returns file generated from #{File.basename(path)}.  Please correct all colored lines in the attached file and upload corrections to VFI Track.".html_safe, [t]).deliver!
+      OpenMailer.send_simple_html(user.email, "Lands' End Returns File '#{t.original_filename}'", "Attached is the Lands' End returns file generated from #{File.basename(path)}.  Please correct all colored lines in the attached file and upload corrections to VFI Track.".html_safe, [t]).deliver_now
     end
     nil
   end

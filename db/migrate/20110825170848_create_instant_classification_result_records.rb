@@ -5,7 +5,7 @@ class CreateInstantClassificationResultRecords < ActiveRecord::Migration
       t.integer :entity_snapshot_id
       t.integer :product_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :instant_classification_result_records, :instant_classification_result_id, :name=>'result_ids'
   end

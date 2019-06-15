@@ -11,7 +11,7 @@ class CreateCommercialInvoiceLines < ActiveRecord::Migration
       t.decimal :duty_rate, :precision => 11, :scale => 2
       t.integer :commercial_invoice_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

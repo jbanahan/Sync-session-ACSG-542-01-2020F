@@ -1,8 +1,5 @@
-require 'spec_helper'
-require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-
 describe Product do
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   describe "product_importer" do
     let(:imp) { Factory(:company, system_code: "ACME")}
@@ -155,10 +152,10 @@ describe Product do
       @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')
       @p = @tr.product
       @snapshot = @p.create_snapshot(@u)
-      @snapshot.update_attributes(created_at:1.month.ago)
+      @snapshot.update!(created_at:1.month.ago)
     end
     it "should return true if first 6 changed" do
-      @tr.update_attributes(hts_1:'6666660000')
+      @tr.update!(hts_1:'6666660000')
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
@@ -181,12 +178,12 @@ describe Product do
       expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
     it "should return false if last 4 changed" do
-      @tr.update_attributes(hts_1:'1234560000')
+      @tr.update!(hts_1:'1234560000')
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
     it "should return true if change happened in same day" do
-      @snapshot.update_attributes(created_at:5.minutes.ago)
+      @snapshot.update!(created_at:5.minutes.ago)
       Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(3.minutes.ago)).to be_truthy
@@ -251,7 +248,7 @@ describe Product do
   end
   context "security" do
     before :each do
-      MasterSetup.get.update_attributes(:variant_enabled=>true)
+      MasterSetup.get.update!(:variant_enabled=>true)
       @master_user = Factory(:master_user,:product_view=>true,:product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
       @importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
         @other_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)

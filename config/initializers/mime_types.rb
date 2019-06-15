@@ -6,3 +6,5 @@
 #Mime::Type.register "text/csv", :csv
 
 # NOTE: axlsx_rails provided the mime type support for xlsx types
+
+Mime::Type.register "application/vnd.ms-excel", :xls

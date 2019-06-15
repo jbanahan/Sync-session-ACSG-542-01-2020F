@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JJill::JJillSupport do
   before :each do
     @k = Class.new {extend OpenChain::CustomHandler::JJill::JJillSupport}

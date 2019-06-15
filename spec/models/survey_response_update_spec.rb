@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SurveyResponseUpdate do
   describe "update_eligible scope" do
     before :each do
@@ -15,7 +13,7 @@ describe SurveyResponseUpdate do
   describe "run_updates" do
     before :each do
       @quiet_email = double('email')
-      allow(@quiet_email).to receive(:deliver)
+      allow(@quiet_email).to receive(:deliver_now)
       @u = Factory(:user)
     end
     context "subscription_tests" do
@@ -31,7 +29,7 @@ describe SurveyResponseUpdate do
 
         #expectation
         eml = double('email')
-        expect(eml).to receive(:deliver)
+        expect(eml).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_survey_subscription_update).with(sr, [update], [ss]).and_return(eml)
 
         #run
@@ -58,7 +56,7 @@ describe SurveyResponseUpdate do
 
         #expectation
         eml = double('email')
-        expect(eml).to receive(:deliver)
+        expect(eml).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_survey_subscription_update).with(sr, [update], [ss2]).and_return(eml)
 
         #run
@@ -74,7 +72,7 @@ describe SurveyResponseUpdate do
 
         #expectation
         eml = double('email')
-        expect(eml).to receive(:deliver)
+        expect(eml).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_survey_subscription_update).with(sr, [update, update2], [ss]).and_return(eml)
 
         #run
@@ -84,10 +82,10 @@ describe SurveyResponseUpdate do
     context "survey_user" do
       before :each do
         quiet_email = double('email')
-        allow(quiet_email).to receive(:deliver)
-        allow(OpenMailer).to receive(:send_subscription_updates).and_return(quiet_email)
+        allow(quiet_email).to receive(:deliver_now)
+        allow(OpenMailer).to receive(:send_survey_subscription_update).and_return(quiet_email)
       end
-      it "should send to survey recipent if someone else updated" do
+      it "should send to survey recipient if someone else updated" do
         #setup
         sr = Factory(:survey_response,user:@u)
         sr.survey_response_updates.create!(user:@u,updated_at:2.hours.ago)
@@ -95,8 +93,8 @@ describe SurveyResponseUpdate do
 
         #expectation
         eml = double('email')
-        expect(eml).to receive(:deliver)
-        expect(OpenMailer).to receive(:send_survey_user_update).with(sr).and_return(eml)
+        expect(eml).to receive(:deliver_now)
+        allow(OpenMailer).to receive(:send_survey_user_update).with(sr).and_return(eml)
 
         #run
         described_class.run_updates

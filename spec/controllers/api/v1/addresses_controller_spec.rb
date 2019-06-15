@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::AddressesController do
   let (:user) { Factory(:admin_user) }
   let :enable_admin do

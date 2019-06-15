@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TSearchCriterionsController do
 
   describe "create" do

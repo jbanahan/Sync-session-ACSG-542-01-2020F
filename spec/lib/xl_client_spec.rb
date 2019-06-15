@@ -1,8 +1,18 @@
 # encoding: UTF-8
-require 'spec_helper'
-
 describe OpenChain::XLClient do
 
+  let! (:master_setup) { 
+    ms = stub_master_setup
+    allow(MasterSetup).to receive(:secrets).and_return xl_config
+    ms
+  }
+  let (:xl_config) {
+    {
+      "xl_server" => {
+        "base_url" => "http://localhost:22001"
+      }
+    }
+  }
   let (:error_response) { {"errors" => "Error"} }
   let (:dummy_response) { {"cell"=>{"my"=>"response"}} }
   let (:init_path) { 'somepath' }
@@ -36,13 +46,13 @@ describe OpenChain::XLClient do
     it "should raise error if raise_errors is enabled" do
       cmd = {"command"=>"new","path"=>path}
       subject.raise_errors = true
-      expect(subject).to receive(:private_send).with(cmd).and_return("errors"=>["BAD"])
+      expect(subject).to receive(:send_command).with(cmd).and_return("errors"=>["BAD"])
       expect {subject.send(cmd)}.to raise_error OpenChain::XLClientError
     end
     it "should not raise error if raise_errors is not enabled" do
       cmd = {"command"=>"new","path"=>path}
       resp = {'errors'=>'BAD'}
-      expect(subject).to receive(:private_send).with(cmd).and_return(resp)
+      expect(subject).to receive(:send_command).with(cmd).and_return(resp)
       expect(subject.send(cmd)).to eq(resp)
     end
   end
@@ -253,7 +263,8 @@ describe OpenChain::XLClient do
   describe 'charset handling in send' do
     it 'should specify application/json and UTF-8 charset as Content-Type in the request and parse response charset' do
       command = {"test" => "test"}
-      uri = URI("#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process")
+      uri = URI("http://test/process")
+      expect(subject).to receive(:request_uri).and_return uri
       
       #Mock out the actual Net::HTTP stuff (since we don't have an actual mock http server to run)
       http = double("Net::HTTP")

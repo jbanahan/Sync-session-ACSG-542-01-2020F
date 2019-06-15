@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
   def expect_custom_value product, code, val
     expect(product.custom_value(@cdefs[code])).to eq val

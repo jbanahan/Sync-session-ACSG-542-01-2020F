@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::DataCrossReferencesController do
   describe "count_xrefs" do
     let!(:xref_1) { DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE" }

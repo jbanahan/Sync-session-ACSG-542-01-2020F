@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CiLoadHandler do
 
   let (:row_data) {

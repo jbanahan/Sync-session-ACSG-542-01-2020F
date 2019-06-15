@@ -18,13 +18,11 @@ module OpenChain
 
       @path = assemble_file_path path, @options
       @session_id = Digest::SHA1.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" #should be unqiue enough
-      base_url = "#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process"
-      @uri = URI(base_url)
     end
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
-      r = private_send command
+      r = send_command command
       raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && r.is_a?(Hash) && !r['errors'].blank? 
       r
     end
@@ -235,29 +233,41 @@ module OpenChain
     end
     
     private
-    def private_send command
+
+    def request_uri
+      URI("#{xlserver_base_url}/process")
+    end
+
+    def xlserver_base_url
+      url = MasterSetup.secrets["xl_server"].try(:[], "base_url")
+      raise "No 'base_url' key found under 'xl_server' config in secrets.yml." if url.blank?
+      url
+    end
+
+    def send_command command
       command['session'] = @session_id
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       retry_count = 0
       response_body = "no response"
       begin
-        req = Net::HTTP::Post.new(@uri.path)
+        uri = request_uri
+        req = Net::HTTP::Post.new(uri.path)
         req.set_content_type "application/json", "charset"=>json.encoding.to_s
         req.body = json
-        res = Net::HTTP.start(@uri.host,@uri.port) do |http|
+        res = Net::HTTP.start(uri.host, uri.port) do |http|
           http.read_timeout = 600
           http.request req
         end
         response_body = get_response_body res
         r = JSON.parse response_body
-      rescue
+      rescue => e
         retry_count += 1
         if retry_count < 3
           sleep 1
           retry
         end
-        r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
+        r = {'errors'=>["Communications error: #{e.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
       end
       r
     end

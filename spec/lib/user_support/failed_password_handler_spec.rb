@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::UserSupport::FailedPasswordHandler do
   let!(:user) { Factory.create(:user) }
   subject { OpenChain::UserSupport::FailedPasswordHandler }

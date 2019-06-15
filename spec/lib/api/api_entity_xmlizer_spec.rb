@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Api::ApiEntityXmlizer do
 
   it "should defer do Jsonizer for hash" do

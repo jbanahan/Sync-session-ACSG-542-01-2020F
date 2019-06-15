@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DrawbackExportHistory do
   describe "bulk_insert" do
     it "should insert multiple records" do

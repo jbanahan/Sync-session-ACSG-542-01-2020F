@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerator do
 
   describe "run_schedulable" do

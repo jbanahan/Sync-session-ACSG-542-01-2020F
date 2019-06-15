@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DrawbackUploadFile do
   describe "process" do
     before :each do
@@ -13,6 +11,7 @@ describe DrawbackUploadFile do
       @importer = Factory(:company,:importer=>true)
     end
     it "should set finish_at" do
+      @importer.update! master: true
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
       d.process @user
@@ -20,6 +19,7 @@ describe DrawbackUploadFile do
       expect(d.finish_at).to be > 2.seconds.ago
     end
     it "should write system message when processing is complete" do
+      @importer.update! master: true
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
       d.process @user
@@ -60,9 +60,10 @@ describe DrawbackUploadFile do
       expect(d.process(@user)).to eq('def')
     end
     it "should route DDB Export file" do
+      @importer.update! master: true
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
       imp = Factory(:company,:importer=>true)
-      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',Company.find_by_importer(true)).and_return('abc')
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route FMI Export file" do

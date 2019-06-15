@@ -4,7 +4,7 @@ class CreatePlants < ActiveRecord::Migration
       t.string :name
       t.integer :company_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :plants, :company_id
   end

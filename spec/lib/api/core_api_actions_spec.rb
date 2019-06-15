@@ -7,6 +7,18 @@ describe OpenChain::Api::CoreApiActions do
       def core_module
         CoreModule::BROKER_INVOICE
       end
+
+      def get a, b
+        raise "Mock me"
+      end
+
+      def put a, b
+        raise "Mock me"
+      end
+
+      def post a, b
+        raise "Mock me"
+      end
     end.new 
   }
 

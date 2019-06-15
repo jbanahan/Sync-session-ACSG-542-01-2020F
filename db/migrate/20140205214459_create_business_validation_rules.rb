@@ -7,7 +7,7 @@ class CreateBusinessValidationRules < ActiveRecord::Migration
       t.string :description
       t.string :fail_state
       t.text :rule_attributes_json
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :business_validation_rules, :business_validation_template_id, {name: 'template_id'}
   end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CoreModuleProcessor do
 
   describe "validate_and_save_module" do
@@ -323,6 +321,8 @@ describe OpenChain::CoreModuleProcessor do
       }
 
       result = "Failed"
+      def result.error?; raise "Mock Me"; end
+
       allow(result).to receive(:error?).and_return true
       expect(ModelField.find_by_uid(:prod_uid)).to receive(:process_import).with(p, "unique_id", User.current).and_return result
 

@@ -62,9 +62,9 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
       expect(i.terms_of_sale).to eq "FOB"
       expect(i.currency).to eq "USD"
       expect(i.ship_mode).to eq "Air"
-      expect(i.net_weight).to eq BigDecimal("608.357")
+      expect(i.net_weight).to eq BigDecimal("608.36")
       expect(i.net_weight_uom).to eq "KG"
-      expect(i.gross_weight).to eq BigDecimal("766.846")
+      expect(i.gross_weight).to eq BigDecimal("766.85")
       expect(i.gross_weight_uom).to eq "KG"
       expect(i.volume).to eq BigDecimal("5.445")
       expect(i.volume_uom).to eq "CR"

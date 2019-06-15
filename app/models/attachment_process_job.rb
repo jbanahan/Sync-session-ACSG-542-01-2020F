@@ -27,6 +27,10 @@ require 'open_chain/custom_handler/generic_booking_parser'
 require 'open_chain/custom_handler/generic_shipment_manifest_parser'
 
 class AttachmentProcessJob < ActiveRecord::Base
+  attr_accessible :attachable_id, :attachable, :attachable_type, :attachment_id, 
+    :attachment, :error_message, :finish_at, :job_name, :manufacturer_address_id, 
+    :start_at, :user_id, :user
+  
   JOB_TYPES ||= {
       'Tradecard Pack Manifest'=>"OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser",
       'Booking Worksheet'=>"OpenChain::CustomHandler::GenericBookingParser",

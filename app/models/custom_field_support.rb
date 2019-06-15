@@ -19,7 +19,7 @@ module CustomFieldSupport
     # unique custom value constraint errors if this model (self) is saved later
 
     # Skip if model hasn't been saved since the custom values couldn't have been saved w/o the model already existing in the db. 
-    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.new_record? && !self.lock_custom_values
+    cv = self.custom_values.find_by(custom_definition_id: id) if cv.nil? && !self.new_record? && !self.lock_custom_values
     if cv.nil?
       cv = self.custom_values.build(:custom_definition => custom_definition)
       cv.value = custom_definition.default_value unless custom_definition.default_value.nil?
@@ -94,8 +94,12 @@ module CustomFieldSupport
   # updates the custom value in the database (creating the record if needed)
   # custom_definition can be either a CustomDefinition object or an integer representing the CustomDefinition#id
   def update_custom_value! custom_definition, value
-    cd = custom_definition
-    cd = CustomDefinition.find_by_id custom_definition if custom_definition.is_a?(Numeric)
+    if custom_definition.is_a?(CustomDefinition)
+      cd = custom_definition
+    else
+      cd = CustomDefinition.find_by_id(custom_definition)
+    end
+    
     cv = get_custom_value(cd)
     cv.set_value(cd, value)
     cv.save!

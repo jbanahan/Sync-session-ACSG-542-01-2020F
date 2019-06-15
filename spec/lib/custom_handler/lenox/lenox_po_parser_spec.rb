@@ -74,8 +74,8 @@ R                 RB05722520131105                                              
     expect(o.order_number).to eq 'LENOX-RB057225'
     expect(o.order_lines.count).to eq 4
     expect(o.id).to eq ord.id
-    expect(o.order_lines.find_by_line_number(1).product.unique_identifier).to eq 'LENOX-6083927'
-    expect(o.order_lines.find_by_line_number(100)).to eq o_line2
+    expect(o.order_lines.find_by(line_number: 1).product.unique_identifier).to eq 'LENOX-6083927'
+    expect(o.order_lines.find_by(line_number: 100)).to eq o_line2
   end
   it "should delete lines with D as first character" do
     ord = Factory(:order,order_number:'LENOX-RB057225',importer_id:@lenox.id)

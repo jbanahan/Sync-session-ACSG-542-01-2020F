@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Generic::IsfLateFlagFileParser do
   let(:user) { Factory(:user) }
   let(:custom_file) { double "custom file "}

@@ -22,6 +22,9 @@ class MailingList < ActiveRecord::Base
   # This is so we can give a warning on save.
   attr_accessor :non_vfi_email_addresses
 
+  attr_accessible :company_id, :company, :email_addresses, :hidden, :name, 
+    :non_vfi_addresses, :system_code, :user_id, :user
+
   belongs_to :company
   belongs_to :user
 

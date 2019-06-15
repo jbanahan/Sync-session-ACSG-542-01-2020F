@@ -10,7 +10,7 @@ class KillImportConfigs < ActiveRecord::Migration
       t.string :model_type
       t.boolean :ignore_first_row
       t.string :file_type
-      t.timestamps
+      t.timestamps null: false
     end
     create_table :import_config_mappings do |t|
       t.string :model_field_uid

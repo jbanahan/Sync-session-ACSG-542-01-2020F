@@ -19,6 +19,8 @@
 #
 
 class SearchTableConfig < ActiveRecord::Base
+  attr_accessible :company_id, :config_json, :name, :page_uid, :user_id
+  
   # user and company are optional
   belongs_to :user
   belongs_to :company

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BulkProcessLogsController do
 
   before :each do

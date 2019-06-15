@@ -10,7 +10,7 @@
 <%=form_for @message, :html=>{:id=>'frm_foo'} do |f|%>
   <table>
     <%=field_row "User", f.select(:user_id,User.all.collect {|u| [u.username,u.id]},{:include_blank=>true}) %>
-    <%=field_row "Subject", f.text_field(:subject)%>
-    <%=field_row "Body", f.text_area(:body)%>
+    <%=field_row "Subject", f.text_field(:subject, size: 38)%>
+    <%=field_row "Body", f.text_area(:body, {rows: 20, cols: 40})%>
   </table>
 <%end%>

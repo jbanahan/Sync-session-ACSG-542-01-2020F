@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryHtsMatchesPo do
 
   describe "run_child_validation" do
@@ -42,7 +40,7 @@ describe ValidationRuleEntryHtsMatchesPo do
     end
 
     it "fails if Product Country doesn't match" do
-      @product.classifications.first.update_attributes! country: Factory(:country)
+      @product.classifications.first.update_attributes! country_id: Factory(:country).id
 
       expect(@rule.run_child_validation @invoice_line).to eq "Invoice Line for PO #{@invoice_line.po_number} / Part #{@invoice_line.part_number} matches to an Order line, but not to any Product associated with the Order."
     end
@@ -55,7 +53,7 @@ describe ValidationRuleEntryHtsMatchesPo do
 
     it "uses a different classification country to validate product data against" do
       @rule.update_attributes!  name: "Name", description: "Description", rule_attributes_json: '{"classification_country":"CA"}'
-      @product.classifications.first.update_attributes! country: Factory(:country, iso_code: "CA")
+      @product.classifications.first.update_attributes! country_id: Factory(:country, iso_code: "CA").id
       expect(@rule.run_child_validation @invoice_line).to be_nil
     end
 

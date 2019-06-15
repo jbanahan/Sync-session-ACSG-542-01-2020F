@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UserManualsController do
   def check_admin_secured
     sign_in_as Factory(:user)

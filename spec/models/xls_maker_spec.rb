@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe XlsMaker do
 
   describe "make_from_search_query" do

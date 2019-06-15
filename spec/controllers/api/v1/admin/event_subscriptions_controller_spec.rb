@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::EventSubscriptionsController do
   describe "show_by_event_type_object_id_and_subscription_type" do
     it "should return subscription users" do

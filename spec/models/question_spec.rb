@@ -1,10 +1,8 @@
-require 'spec_helper'
-
 describe Question do
   it 'should default sort by rank' do
     q2 = Factory(:question,:rank=>2)
     q1 = Factory(:question,:rank=>1)
-    expect(Question.all).to eq([q1,q2])
+    expect(Question.by_rank.to_a).to eq([q1,q2])
   end
   it "should touch parent survey" do
     q = Factory(:question)

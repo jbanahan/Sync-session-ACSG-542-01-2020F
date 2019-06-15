@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::DataCrossReferenceUploader do
   describe "process" do
     let(:user) { Factory(:user) }

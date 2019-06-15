@@ -38,13 +38,16 @@
 #
 
 class SurveyResponse < ActiveRecord::Base
-  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at, :checkout_by_user, :checkout_token, :checkout_expiration
+  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, 
+    :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at, 
+    :checkout_by_user, :checkout_token, :checkout_expiration
+    
   belongs_to :user
   belongs_to :survey
   belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses
   belongs_to :group
   has_many :answers, inverse_of: :survey_response, autosave: true
-  has_many :questions, :through=>:survey
+  has_many :questions, -> { order(:rank, :id) }, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
   has_many :survey_response_updates, :dependent=>:destroy
   has_many :tpp_orders, class_name: 'Order', foreign_key: 'tpp_survey_response_id'
@@ -126,7 +129,7 @@ class SurveyResponse < ActiveRecord::Base
   #send email invite to user
   def invite_user!
     m = OpenMailer.send_survey_invite(self)
-    m.deliver!
+    m.deliver_now
     unless self.email_sent_date #only set it the first time
       self.email_sent_date=0.seconds.ago
       self.save

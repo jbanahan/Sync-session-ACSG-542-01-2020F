@@ -64,7 +64,7 @@ class MessagesController < ApplicationController
     else
       add_flash :errors, "You do not have permission to change another user's message."
     end
-    render :text => Message.unread_message_count(current_user.id)
+    render html: Message.unread_message_count(current_user.id)
   end
   
   def read_all
@@ -92,7 +92,7 @@ class MessagesController < ApplicationController
     admin_secure do
       body = RedCloth.new(params[:message_body]).to_html
       Message.delay.send_to_users(params[:receivers], help.strip_tags(params[:message_subject]), body)
-      flash[:notices] = ["Message sent."]
+      add_flash :notices, "Message sent."
       redirect_to request.referrer
     end
   end

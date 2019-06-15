@@ -93,7 +93,7 @@ module OpenChain; module Report
     def run
       query = Entry.where(:customer_number=>@alliance_customer_number)
         .where("entries.release_date > ? AND entries.release_date < ?", Time.zone.parse(@release_date_start), Time.zone.parse(@release_date_end))
-      query = query.merge Entry.search_secure(@run_by, Entry.scoped)
+      query = query.merge Entry.search_secure(@run_by, Entry.all)
       query = query.order("entries.release_date ASC, entries.broker_reference")
       wb = create_report(entry_ids: query.pluck(:id))
       workbook_to_tempfile wb, "Landed Cost #{@alliance_customer_number} "

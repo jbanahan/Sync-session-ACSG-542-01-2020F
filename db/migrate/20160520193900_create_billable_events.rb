@@ -5,7 +5,7 @@ class CreateBillableEvents < ActiveRecord::Migration
       t.integer :entity_snapshot_id, null: false
       t.string :event_type
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :billable_events, [:billable_eventable_type, :billable_eventable_id], :name => "index_billable_events_on_billable_eventable"

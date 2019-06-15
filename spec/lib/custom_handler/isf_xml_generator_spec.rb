@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'time'
 
 describe OpenChain::CustomHandler::ISFXMLGenerator do

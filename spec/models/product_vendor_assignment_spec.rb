@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProductVendorAssignment do
   context "security" do
     before :each do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationRuleResult do
   describe "can_view" do
     it "should allow users who can view results" do

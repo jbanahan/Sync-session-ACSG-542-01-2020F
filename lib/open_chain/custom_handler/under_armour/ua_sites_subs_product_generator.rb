@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesSubsPro
   def self.run_and_email user, addresses
     sites_report = assign_filename user, "sites", OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator.process
     subs_report = assign_filename user, "subs", OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator.process
-    OpenMailer.send_simple_html(addresses, "Sites and Subs reports", "Sites and Subs reports attached (unless empty).", [sites_report, subs_report].compact).deliver!
+    OpenMailer.send_simple_html(addresses, "Sites and Subs reports", "Sites and Subs reports attached (unless empty).", [sites_report, subs_report].compact).deliver_now
   end
 
   def self.assign_filename user, type, tempfile

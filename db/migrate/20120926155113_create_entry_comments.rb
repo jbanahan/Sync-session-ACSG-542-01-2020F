@@ -6,7 +6,7 @@ class CreateEntryComments < ActiveRecord::Migration
       t.datetime :generated_at
       t.string :username
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :entry_comments, :entry_id
   end

@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
           dest_file.rewind
           filename = output_filename(custom_file.attached_file_name)
           Attachment.add_original_filename_method dest_file, filename
-          OpenMailer.send_simple_html(user.email, "JCrew Returns File #{filename}", "Attached is the processed J Crew Returns file.", [dest_file]).deliver!
+          OpenMailer.send_simple_html(user.email, "JCrew Returns File #{filename}", "Attached is the processed J Crew Returns file.", [dest_file]).deliver_now
         end
       end
     end

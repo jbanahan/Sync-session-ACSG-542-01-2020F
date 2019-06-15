@@ -1,6 +1,4 @@
-require 'spec_helper'
- 
- describe SummaryStatement do
+describe SummaryStatement do
   before(:each) {@ss = Factory(:summary_statement)}
   
   describe "self.include?" do

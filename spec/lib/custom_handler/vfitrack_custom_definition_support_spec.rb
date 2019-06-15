@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::VfitrackCustomDefinitionSupport do
   it "should load custom definitions" do
     k = Class.new do
@@ -20,7 +18,7 @@ describe OpenChain::CustomHandler::VfitrackCustomDefinitionSupport do
     expected.each do |e|
       cd = defs[e[0]]
       expect(cd.label).to eq(e[1])
-      expect(cd.data_type).to eq(e[2].to_sym)
+      expect(cd.data_type).to eq(e[2])
       expect(cd.module_type).to eq(e[3])
     end
   end

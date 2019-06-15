@@ -5,7 +5,7 @@ class CreateInstanceInformations < ActiveRecord::Migration
       t.datetime :last_check_in
       t.string :version
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

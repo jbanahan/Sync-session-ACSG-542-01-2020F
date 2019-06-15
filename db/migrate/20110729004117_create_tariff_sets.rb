@@ -4,7 +4,7 @@ class CreateTariffSets < ActiveRecord::Migration
       t.integer :country_id
       t.string :label
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

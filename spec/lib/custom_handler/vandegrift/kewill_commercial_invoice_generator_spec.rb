@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator do
 
   let(:entry_data) {

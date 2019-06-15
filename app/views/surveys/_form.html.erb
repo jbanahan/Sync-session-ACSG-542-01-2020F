@@ -122,7 +122,7 @@
           <%end%>
         <h2 id='email_head'>Email Setup</h2>
           <%=field_bootstrap "Subject", f.text_field(:email_subject, :id=>"eml_sub", :class=>'form-control')%>
-          <%=field_bootstrap "Body", f.text_area(:email_body, :id=>"email_body", :class=>'form-control')%>
+          <%=field_bootstrap "Body", f.text_area(:email_body, :id=>"email_body", :class=>'form-control', :cols => 40, :rows => 20)%>
           <%=field_bootstrap "", "<a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>".html_safe%>
         <hr />
         <div id='questions'>

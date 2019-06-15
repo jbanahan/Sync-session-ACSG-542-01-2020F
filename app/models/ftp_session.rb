@@ -16,6 +16,8 @@
 #
 
 class FtpSession < ActiveRecord::Base
+  attr_accessible :data, :file_name, :last_server_response, :log, :protocol, :retry_count, :server, :username
+
   has_one :attachment, :as => :attachable, :dependent=>:destroy
 
   EMPTY_MESSAGE ||= "File was empty, not sending."

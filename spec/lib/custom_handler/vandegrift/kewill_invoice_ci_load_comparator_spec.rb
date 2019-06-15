@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
   describe "send_invoice" do
 
     class FakeInvoiceGenerator
-      def generate_and_send_invoice invoice, sync_record: nil
+      def generate_and_send_invoice invoice, sync_record
         nil
       end
     end

@@ -5,7 +5,7 @@ class CreateChargeCategories < ActiveRecord::Migration
       t.string :charge_code
       t.string :category
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :charge_categories, :company_id
   end

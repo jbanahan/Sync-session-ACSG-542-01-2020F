@@ -18,7 +18,7 @@ class CreateEntries < ActiveRecord::Migration
       t.datetime :invoice_paid_date
       t.datetime :liquidation_date
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :entries, :customer_number
     add_index :entries, :broker_reference

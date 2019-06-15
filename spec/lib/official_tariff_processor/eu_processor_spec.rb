@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::OfficialTariffProcessor::EuProcessor do
   let(:eu_tariff) do
     Factory(:official_tariff, hts_code:'0101300000',

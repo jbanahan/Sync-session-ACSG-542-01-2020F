@@ -6,7 +6,7 @@ class CreateCustomDefinitions < ActiveRecord::Migration
       t.integer :rank
       t.string :module_type
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

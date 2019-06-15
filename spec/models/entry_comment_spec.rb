@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EntryComment do
   before :each do 
     @entry = Factory(:entry)

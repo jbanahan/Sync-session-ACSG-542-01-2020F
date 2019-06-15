@@ -1,7 +1,3 @@
-# encoding: utf-8
-
-require 'spec_helper'
-
 describe OpenChain::Api::ApiClient do
   before :all do
     WebMock.enable!
@@ -36,13 +32,13 @@ describe OpenChain::Api::ApiClient do
     end
 
     it "subsitutes dev endpoint on development systems" do
-      expect(described_class).to receive(:development?).and_return true
+      expect(MasterSetup).to receive(:development_env?).and_return true
       c = OpenChain::Api::ApiClient.new 'test', 'test', 'test'
       expect(c.endpoint).to eq "http://localhost:3000"
     end
 
     it "does not substitute endpoint if custom feature is enabled" do
-      expect(described_class).to receive(:development?).and_return true
+      expect(MasterSetup).to receive(:development_env?).and_return true
       ms = stub_master_setup
       expect(ms).to receive(:custom_feature?).with("Allow Production API Client in Dev").and_return true
       c = OpenChain::Api::ApiClient.new 'test', 'test', 'test'

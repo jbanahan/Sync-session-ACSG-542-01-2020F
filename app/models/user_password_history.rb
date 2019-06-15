@@ -15,6 +15,8 @@
 #
 
 class UserPasswordHistory < ActiveRecord::Base
+  attr_accessible :hashed_password, :password_salt, :user_id
+  
   belongs_to :user
 
   validates :password_salt, presence: true

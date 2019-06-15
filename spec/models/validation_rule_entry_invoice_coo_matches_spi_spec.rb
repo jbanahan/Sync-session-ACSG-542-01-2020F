@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceCooMatchesSpi do
   before :each do
     @rule = described_class.new(rule_attributes_json:{"BD" => "8", "IL" => "13"}.to_json)

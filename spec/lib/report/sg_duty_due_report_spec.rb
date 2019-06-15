@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'open_chain/report/sg_duty_due_report'
-
 describe OpenChain::Report::SgDutyDueReport do
 
   describe "get_entries" do
@@ -25,7 +22,8 @@ describe OpenChain::Report::SgDutyDueReport do
        allow(co).to receive(:can_view?).with(u).and_return true
        parser = described_class.new
        results = parser.get_entries u, co
-       expect(results.count).to eq 2
+       results = results.to_a
+       expect(results.length).to eq 2
        expect(results[0][:arrival_date].to_date.to_s).to eq '2016-03-01'
        expect(results[0][:daily_statement_approved_date].to_date.to_s).to eq '2016-03-02'
        expect(results[0][:daily_statement_number]).to eq '87654321CD'

@@ -793,4 +793,11 @@ module ApplicationHelper
 
     "/vendor_portal#/#{route}"
   end
+
+  # Makes sure that json doesn't have XSS vulnerability in it
+  def scriptify_json json_string
+    # Cribbed from here: https://sophiebits.com/2012/08/03/preventing-xss-json.html
+    escaped = json_string.gsub(/(?<=<\/)s(?=cript)/i) { |m| "\\u%04x" % m.ord }
+    escaped.html_safe
+  end
 end

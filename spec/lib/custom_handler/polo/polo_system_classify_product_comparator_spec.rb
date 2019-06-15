@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
 describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do

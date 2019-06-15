@@ -9,7 +9,7 @@ class CreateSyncRecords < ActiveRecord::Migration
       t.string :confirmation_file_name
       t.string :failure_message
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :sync_records, [:syncable_id,:syncable_type]
     add_index :sync_records, :trading_partner

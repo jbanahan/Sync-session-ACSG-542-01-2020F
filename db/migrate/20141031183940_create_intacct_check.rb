@@ -27,11 +27,11 @@ class CreateIntacctCheck < ActiveRecord::Migration
       t.references :intacct_payable
       t.string :intacct_adjustment_key
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :intacct_checks, :intacct_alliance_export_id
-    add_index :intacct_checks, [:file_number, :suffix, :check_number, :check_date, :bank_number], name: 'index_by_check_unique_identifers'
+    add_index :intacct_checks, [:file_number, :suffix, :check_number, :check_date, :bank_number], name: 'index_by_check_unique_identifers', length: {file_number: 10, suffix: 10, bank_number: 10}
     add_index :intacct_checks, [:company, :bill_number, :vendor_number], name: "index_by_payable_identifiers"
   end
 end

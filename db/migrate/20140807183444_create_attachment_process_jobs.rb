@@ -9,7 +9,7 @@ class CreateAttachmentProcessJobs < ActiveRecord::Migration
       t.references :user
       t.references :attachable, polymorphic: true
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :attachment_process_jobs, :attachment_id
     add_index :attachment_process_jobs, :user_id

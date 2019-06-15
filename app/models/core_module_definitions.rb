@@ -330,7 +330,7 @@ module CoreModuleDefinitions
          bulk_actions = {}
          bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
          bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify',:ajax_callback=>'BulkActions.handleBulkClassify'} if current_user.edit_classifications?
-         bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? && !InstantClassification.scoped.empty?
+         bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? && !InstantClassification.all.empty?
          bulk_actions["Send to Test"]={:path=>'/products/bulk_send_last_integration_file_to_test.json', font_icon:'fa fa-share-square'} if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank?
          bulk_actions
        },

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
 
   let (:data) { IO.read "spec/fixtures/files/ua_po.xml" }

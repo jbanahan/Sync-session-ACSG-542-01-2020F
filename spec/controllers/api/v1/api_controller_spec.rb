@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::ApiController do
 
   describe '#allow_csv' do

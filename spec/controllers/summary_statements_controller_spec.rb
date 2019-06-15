@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SummaryStatementsController do
   before(:each) do
     @u = Factory(:user)

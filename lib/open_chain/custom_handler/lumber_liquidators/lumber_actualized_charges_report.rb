@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
     wb = write_entry_values "Charges #{start_date} - #{end_date}", values
     if email_to
       workbook_to_tempfile wb, "report", file_name: "Actualized Charges #{start_date} - #{end_date}.xls" do |file|
-        OpenMailer.send_simple_html(email_to, "[VFI Track] Actualized Charges Report", "Attached is your Actualized Charges report for entries released after #{start_date} and prior to #{end_date}.", file).deliver!
+        OpenMailer.send_simple_html(email_to, "[VFI Track] Actualized Charges Report", "Attached is your Actualized Charges report for entries released after #{start_date} and prior to #{end_date}.", file).deliver_now
       end
     else
       workbook_to_tempfile wb, "report", file_name: "Actualized Charges #{start_date} - #{end_date}.xls"  

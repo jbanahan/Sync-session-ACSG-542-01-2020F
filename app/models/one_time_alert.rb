@@ -20,6 +20,11 @@
 #
 
 class OneTimeAlert < ActiveRecord::Base
+  attr_accessible :blind_copy_me, :email_addresses, :email_body, :email_subject, 
+    :enabled_date, :expire_date, :expire_date_last_updated_by_id, 
+    :expire_date_last_updated_by, :inactive, :mailing_list_id, :mailing_list, 
+    :module_type, :name, :user_id, :user
+  
   belongs_to :user
   belongs_to :expire_date_last_updated_by, class_name: "User"
   belongs_to :mailing_list
@@ -67,7 +72,7 @@ class OneTimeAlert < ActiveRecord::Base
       body += "<br><p>THIS IS A TEST EMAIL ONLY AND NOT A NOTIFICATION</p>".html_safe
     end
     bcc = self.user.email if self.blind_copy_me?
-    OpenMailer.send_simple_html(recipients_and_mailing_lists, self.email_subject, body, [], bcc: bcc).deliver!
+    OpenMailer.send_simple_html(recipients_and_mailing_lists, self.email_subject, body, [], bcc: bcc).deliver_now
   end
 
   def recipients_and_mailing_lists

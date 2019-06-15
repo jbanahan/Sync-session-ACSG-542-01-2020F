@@ -5,7 +5,7 @@ class CreateCustomFileRecords < ActiveRecord::Migration
       t.integer :linked_object_id
       t.integer :custom_file_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

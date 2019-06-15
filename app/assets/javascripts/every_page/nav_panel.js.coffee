@@ -188,7 +188,7 @@ root.ChainNavPanel = {
             <i class='fa fa-user-circle-o fa-lg'></i><span class='caret'></span> 
           </a> 
           <div class='dropdown-menu dropdown-menu-right' aria-labelledby='user_dropdown_menu'>
-            <a "+ ( if mobile then "" else "id='btn_account'" )+" class='dropdown-item' href='/me'>My Account</a> 
+            <a "+ ( if mobile then "" else "id='btn_account'" )+" class='dropdown-item' href='/users/me'>My Account</a> 
             <a "+ ( if mobile then "" else "id='btn_dashboard'" )+" class='dropdown-item' href='/dashboard_widgets'>My Dashboard</a> 
             <a "+ ( if mobile then "" else "id='uploads'" )+" class='dropdown-item' href='/imported_files'>My Uploads</a> 
             <a "+ ( if mobile then "" else "id='nav-set-homepage'" )+" class='dropdown-item' href='javascript:void(null);'>Set Homepage</a> 

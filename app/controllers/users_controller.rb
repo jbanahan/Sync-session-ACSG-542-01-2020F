@@ -1,5 +1,4 @@
 class UsersController < ApplicationController
-  skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
   skip_before_filter :require_user, only: [:disable_run_as]
     def root_class
       User
@@ -228,7 +227,7 @@ class UsersController < ApplicationController
 
     def unlock_user
       if current_user.admin?
-        u = User.find_by_id params[:user_id]
+        u = User.find_by_id params[:id]
         if u
           u.password_expired = false
           u.password_locked = false
@@ -238,7 +237,7 @@ class UsersController < ApplicationController
           add_flash :notices, "Account unlocked."
           redirect_to edit_company_user_path u.company, u
         else
-          error_redirect "User with ID #{params[:user_id]} not found."
+          error_redirect "Cannot unlock this user."
         end
       else
         error_redirect "You must be an administrator to unlock a user."
@@ -247,7 +246,7 @@ class UsersController < ApplicationController
 
     def enable_run_as
       if current_user.admin?
-        u = User.find_by_username params[:username]
+        u = User.find_by(username: params[:username])
         if u
           Lock.db_lock(current_user) do 
             if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
@@ -391,7 +390,7 @@ class UsersController < ApplicationController
         # that is in effect on the login homepage redirect
         uri = uri.path + (uri.query ? ("?"+uri.query) : "") + (uri.fragment ? ("#" + uri.fragment): "")
       end
-      current_user.update_attributes! homepage: uri
+      current_user.update! homepage: uri
 
       render :json=>{'OK'=>'OK'}
     else
@@ -493,6 +492,6 @@ class UsersController < ApplicationController
                                    :project_edit, :project_view, 
                                    :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view,
                                    :vfi_invoice_view)
-    destination_user.update_attributes(attribs)
+    destination_user.update(attribs)
   end
 end

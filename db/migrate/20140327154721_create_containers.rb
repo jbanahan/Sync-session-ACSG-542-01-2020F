@@ -13,7 +13,7 @@ class CreateContainers < ActiveRecord::Migration
       t.string :fcl_lcl
       t.references :entry
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :containers, :entry_id
   end

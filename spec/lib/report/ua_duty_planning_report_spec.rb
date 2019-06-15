@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::UaDutyPlanningReport do
   describe '#run_report' do
     before :each do
@@ -22,7 +20,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
     end
     let :make_tariffs do
       @country_rates.collect do |iso,rate|
-        country = Country.find_by_iso_code iso
+        country = Country.find_by iso_code: iso
         country.official_tariffs.create!(hts_code:'1234567890',common_rate_decimal:rate,special_rates:'XYZ')
       end
     end
@@ -35,7 +33,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
       p.update_custom_value!(@cdefs[:prod_seasons],['SS16','FW17','SS18'].join("\n"))
 
       @country_rates.keys.each do |iso|
-        country = Country.find_by_iso_code iso
+        country = Country.find_by iso_code: iso
         Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:country,product:p))
       end
       p
@@ -176,7 +174,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
         make_tariffs
         Factory(:official_tariff,hts_code:'987654321',common_rate_decimal:0.99,country_id:countries['CN'].id)
         p = make_product
-        p.classifications.find_by_country_id(countries['CN'].id).tariff_records(line_number:'99',hts_1:'987654321')
+        p.classifications.find_by(country: countries['CN']).tariff_records(line_number:'99',hts_1:'987654321')
         f = described_class.run_report user, season: 'FW17'
         results = CSV.read(f.path)
         expect(results.length).to eq 2

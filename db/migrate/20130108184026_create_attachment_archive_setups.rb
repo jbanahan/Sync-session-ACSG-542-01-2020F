@@ -4,7 +4,7 @@ class CreateAttachmentArchiveSetups < ActiveRecord::Migration
       t.integer :company_id
       t.date :start_date
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :attachment_archive_setups, :company_id
   end

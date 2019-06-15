@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::SqlProxyPostbacksController do
   let! (:user) {
     u = Factory(:admin_user, api_auth_token: "Token")

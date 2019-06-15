@@ -16,6 +16,8 @@
 #
 
 class AnswerComment < ActiveRecord::Base
+  attr_accessible :answer_id, :answer, :content, :private, :user_id, :user
+  
   belongs_to :user
   belongs_to :answer, :touch=>true
   

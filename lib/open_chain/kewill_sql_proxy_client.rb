@@ -6,8 +6,8 @@ require 'open_chain/sql_proxy_aws_export_support'
 module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   include OpenChain::SqlProxyAwsExportSupport
 
-  def self.proxy_config_file
-    Rails.root.join('config', 'sql_proxy.yml')
+  def self.proxy_config_key
+    "kewill_sql_proxy"
   end
 
   # For dj purposes

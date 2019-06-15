@@ -14,5 +14,9 @@
 #
 
 class UpgradeLog < ActiveRecord::Base
+  attr_accessible :created_at, :finished_at, :from_version,
+    :instance_information_id, :log, :started_at, :to_version,
+    :updated_at
+
   belongs_to :instance_information
 end

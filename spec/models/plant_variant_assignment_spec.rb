@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PlantVariantAssignment do
 
   # testing search_where and can_view? together because the should enforce

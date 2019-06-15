@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleOrderVendorFieldFormat do
   it "should pass when field matches" do
     c = Factory(:company,vendor:true,name:'MyCompany')

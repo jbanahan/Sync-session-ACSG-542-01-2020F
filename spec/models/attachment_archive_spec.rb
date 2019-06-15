@@ -1,5 +1,3 @@
-describe 'spec_helper'
-
 describe AttachmentArchive do
   describe "attachment_list_json" do
     it "should write entry information" do

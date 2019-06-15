@@ -15,6 +15,8 @@
 
 # This is essentially a setup for automated 210 XML docs to be sent out from Entry Broker Invoices.
 class AutomatedBillingSetup < ActiveRecord::Base
+  attr_accessible :customer_number, :enabled
+
   has_many :search_criterions, dependent: :destroy, autosave: true
   validates :customer_number, presence: true
 

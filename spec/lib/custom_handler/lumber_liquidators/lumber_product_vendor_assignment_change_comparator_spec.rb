@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorAssignmentChangeComparator do
   describe "autoflow" do
     before :each do

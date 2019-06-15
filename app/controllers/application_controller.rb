@@ -8,10 +8,13 @@ class ApplicationController < ActionController::Base
   include OpenChain::ApplicationControllerLegacy
   include RequestLoggingSupport
   include AuthTokenSupport
-
-  protect_from_forgery
+  
+  # Prevent CSRF attacks by raising an exception.
+  # For APIs, you may want to use :null_session instead.
+  protect_from_forgery with: :exception
+  
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
-  skip_before_filter :authorize
+  skip_before_filter :require_login
   before_filter :chainio_redirect
   before_filter :prep_model_fields
   before_filter :new_relic
@@ -108,7 +111,7 @@ class ApplicationController < ActionController::Base
       }
       output += out.to_s
       
-      render text: output, content_type: "text/plain"
+      render plain: output
     else
       raise ActionController::RoutingError.new('Not Found')
     end
@@ -219,12 +222,23 @@ class ApplicationController < ActionController::Base
     @run_as_user
   end
 
+  def validate_redirect redirect
+    # This is a simple helper method to validate that a redirect path is going back to the domain name configured 
+    # for this instance.
+    uri_redirect = URI(redirect)
+
+    # We'll allow redirects if there are no hosts...this happens in cases where the path doesn't include the full domain
+    # and is treated like a relative path -> "/controller/1"
+    raise "Illegal Redirect" unless uri_redirect.host.blank? || URI("https://#{MasterSetup.get.request_host}").host == uri_redirect.host
+    redirect
+  end
+
   protected
   def verified_request?
     # Angular uses the header X-XSRF-Token (rather than rails' X-CSRF-Token default), just account for that
     # rather than making config modifications to our angular apps (since we'd have to update several different files
     # rather than just this single spot)
-    super || (form_authenticity_token == request.headers['X-XSRF-Token'])
+    super || valid_authenticity_token?(session, request.headers['X-XSRF-Token'])
   end
 
   private

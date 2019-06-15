@@ -13,13 +13,14 @@
 #
 
 class InstanceInformation < ActiveRecord::Base
+  attr_accessible :host, :last_check_in, :name, :role, :version
 
   has_many :upgrade_logs, :dependent => :destroy
 
   #check in with database, the hostname variable only needs to be passed in test cases
   def self.check_in hostname = nil
     h = hostname.blank? ? Rails.application.config.hostname : hostname
-    ii = InstanceInformation.find_or_initialize_by_host h
+    ii = InstanceInformation.find_or_initialize_by host: h
     ii.last_check_in = 0.seconds.ago
     ii.version = MasterSetup.current_code_version
     # Only needed for initial migration run since instance information is referenced in initailizers
@@ -29,18 +30,22 @@ class InstanceInformation < ActiveRecord::Base
     ii
   end
 
+  # This is the value of the "Name" AWS tag for the ec2 instance the code is currently running on.
   def self.server_name
-    # These values could be cached, but I don't think they'll be called often enough
-    # to warrant that
     @@server_name ||= tag_value("Name")
-    @@server_name
   end
 
+  # This is the value of the "Role" AWS tag for the ec2 instance the code is currently running on.
+  # It currently should be one of: "Web" (web server) or "Job Queue" (delayed job queue runner)
   def self.server_role
-    # These values could be cached, but I don't think they'll be called often enough
-    # to warrant that
     @@server_role ||= tag_value("Role")
-    @@server_role
+  end
+
+  # This is the value of the "Group" AWS tag for the ec2 instance the code is currently running on.
+  # This tag is used to group servers together that belong to the same deployment instance for a specific
+  # customer deployment (.ie a full stack deploy for a single customer).
+  def self.deployment_group
+    @@deployment_group ||= tag_value("Group")
   end
 
   def self.webserver?

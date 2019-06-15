@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldDefinition::OfficialTariffFieldDefinition do
   describe "WTO 6 Digit" do
     it "should get 6 digit HTS w/o formatting" do

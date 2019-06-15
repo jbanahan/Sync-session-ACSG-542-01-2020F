@@ -13,7 +13,8 @@ class SnapshotWriter
     value = model_field.process_export entity, nil, true
 
     # For Timestamps we always want to store off the value adjusted to UTC (just like the database)
-    if value.respond_to?(:in_time_zone)
+    if value.acts_like?(:time)
+      # Strip any milliseconds off as well.
       value = value.in_time_zone("UTC")
     end
 

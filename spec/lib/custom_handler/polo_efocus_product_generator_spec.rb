@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
   describe "generate" do
     it "should create xls file, and ftp it while rows are written to spreadsheet" do

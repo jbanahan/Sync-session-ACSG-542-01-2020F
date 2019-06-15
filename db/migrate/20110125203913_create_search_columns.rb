@@ -6,7 +6,7 @@ class CreateSearchColumns < ActiveRecord::Migration
       t.string :model_field_uid
       t.integer :custom_definition_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::PreparerSiteInvalidEntryReport do
   let(:start_date) { (Time.zone.now).beginning_of_day.in_time_zone("America/New_York")  }
   let(:end_date) { (Time.zone.now).end_of_day.in_time_zone("America/New_York") }

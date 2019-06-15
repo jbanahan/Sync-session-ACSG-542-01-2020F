@@ -19,6 +19,8 @@ class Variant < ActiveRecord::Base
   include TouchesParentsChangedAt
   include UpdateModelFieldsSupport
 
+  attr_accessible :product_id, :product, :variant_identifier
+
   belongs_to :product, inverse_of: :variants
   has_many :plant_variant_assignments, inverse_of: :variant, dependent: :destroy
 

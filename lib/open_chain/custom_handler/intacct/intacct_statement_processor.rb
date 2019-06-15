@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       Attachment.add_original_filename_method(file, filename)
       file.rewind
       
-      OpenMailer.send_simple_html(email_to, subject, body.html_safe, file).deliver!
+      OpenMailer.send_simple_html(email_to, subject, body.html_safe, file).deliver_now
     end
     
   end

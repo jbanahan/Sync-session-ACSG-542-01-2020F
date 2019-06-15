@@ -65,7 +65,7 @@ SQL
         temp = workbook_to_tempfile wb, "Intacct Integration Errors #{Time.zone.now.strftime("%m-%d-%Y")}"
         Attachment.add_original_filename_method temp
         temp.original_filename = "Intacct Integration Errors #{Time.zone.now.strftime("%m-%d-%Y")}.xls"
-        OpenMailer.send_simple_html(email_to, "Intacct Integration Errors #{Time.zone.now.strftime("%m/%d/%Y")}", "The attached report lists all the outstanding Intacct integration errors for today.  Please resolve all these errors at your earliest convenience.<br><br>Contact support@vandegriftinc.com if you are unable to resolve any of the errors listed in the report.".html_safe, [temp]).deliver!
+        OpenMailer.send_simple_html(email_to, "Intacct Integration Errors #{Time.zone.now.strftime("%m/%d/%Y")}", "The attached report lists all the outstanding Intacct integration errors for today.  Please resolve all these errors at your earliest convenience.<br><br>Contact support@vandegriftinc.com if you are unable to resolve any of the errors listed in the report.".html_safe, [temp]).deliver_now
       ensure 
         temp.close! unless temp.nil? || temp.closed?
       end

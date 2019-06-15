@@ -5,7 +5,7 @@ class CreateCorrectiveActionPlans < ActiveRecord::Migration
       t.references :created_by
       t.string :status
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :corrective_action_plans, :survey_response_id
     add_index :corrective_action_plans, :created_by_id

@@ -7,7 +7,7 @@ class CreateOrders < ActiveRecord::Migration
       t.string :season
       t.references :division
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

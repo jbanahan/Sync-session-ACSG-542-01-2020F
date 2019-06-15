@@ -12,7 +12,7 @@ class CreateSalesOrders < ActiveRecord::Migration
       t.integer :ship_to_id
        
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
   def run_to_array generator=described_class.new
     @tmp = generator.sync_csv
@@ -30,7 +28,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
-      p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
+      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r.first).to eq([p.unique_identifier,'','PLONG','','CA12345678','N','N','N','N'])
@@ -78,7 +76,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
-      p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
+      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
 
       p.update_custom_value! @cdefs[:related_styles], "#{p.unique_identifier}\np-style\nt-style" #uid should not duplicate
 

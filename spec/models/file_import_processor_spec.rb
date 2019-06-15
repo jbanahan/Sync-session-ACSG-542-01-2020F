@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'file_import_processor'
-
 describe FileImportProcessor do
   it 'should initialize without search setup' do
     imp = Factory(:imported_file)
@@ -18,7 +15,7 @@ describe FileImportProcessor do
       @ss = SearchSetup.new(:module_type=>"Product")
       @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0)
       country = Factory(:country)
-      pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
+      pro = FileImportProcessor::CSVImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
       allow(pro).to receive(:get_columns).and_return([
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
@@ -53,7 +50,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
       pro.do_row 0, ['uid-abc','name'], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').name).to eq('name')
+      expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('name')
     end
     it "should not set blank values" do
       p = Factory(:product,unique_identifier:'uid-abc',name:'name')
@@ -63,7 +60,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
       pro.do_row 0, ['uid-abc','  '], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').name).to eq('name')
+      expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('name')
     end
     it "should set boolean false values" do
       p = Factory(:product,unique_identifier:'uid-abc',name:'name')
@@ -74,7 +71,7 @@ describe FileImportProcessor do
       ])
       pro.do_row 0, ['uid-abc', false], true, -1, @u
       # False values, when put in string fields, turn to 0 via rails type coercion
-      expect(Product.find_by_unique_identifier('uid-abc').name).to eq('0')
+      expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('0')
     end
     it "should create children" do
       country = Factory(:country)
@@ -87,7 +84,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>4)
       ])
       pro.do_row 0, ['uid-abc',country.iso_code,1,'1234567890'], true, -1, @u
-      p = Product.find_by_unique_identifier('uid-abc')
+      p = Product.find_by(unique_identifier: 'uid-abc')
       expect(p.classifications.size).to eq(1)
       cl = p.classifications.first
       expect(cl.country).to eq(country)
@@ -115,7 +112,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name','cval'], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq('cval')
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq('cval')
     end
     it "should set boolean custom values" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
@@ -126,7 +123,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name',true], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_truthy
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_truthy
     end
     it "should set boolean false custom values" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
@@ -137,7 +134,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name', false], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_falsey
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_falsey
     end
     it "should set boolean custom value to true w/ text of '1'" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
@@ -148,7 +145,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name', "1"], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq true
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq true
     end
     it "should set boolean custom value to false w/ text of '0'" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
@@ -159,7 +156,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name', "0"], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq false
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq false
     end
     it "should not unset boolean custom values when nil value is present" do
       prod = Factory(:product, unique_identifier: 'uid-abc')
@@ -173,7 +170,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name', nil], true, -1, @u
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_truthy
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_truthy
     end
     it "should not set read only custom values" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
@@ -185,7 +182,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
       ])
       pro.do_row 0, ['uid-abc','name','cval'], true, -1, User.new
-      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_blank
+      expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_blank
     end
     it "should error when user doesn't have permission" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
@@ -210,7 +207,7 @@ describe FileImportProcessor do
         ])
         pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
         expect(Product.count).to eq(1)
-        p = Product.find_by_unique_identifier 'uid-abc'
+        p = Product.find_by(unique_identifier: 'uid-abc')
         expect(p.classifications.size).to eq(1)
         expect(p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1).to eq('1234567890')
       end
@@ -225,7 +222,7 @@ describe FileImportProcessor do
         ])
         pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
         expect(Product.count).to eq(1)
-        p = Product.find_by_unique_identifier 'uid-abc'
+        p = Product.find_by(unique_identifier: 'uid-abc')
         expect(p.classifications.size).to eq(1)
         expect(p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1).to eq('1234567890')
       end
@@ -246,7 +243,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
         ])
         pro.do_row 0, [1.0,2.0, BigDecimal("3.0")], true, -1, @u
-        delta_p = Product.find_by_unique_identifier('1')
+        delta_p = Product.find_by(unique_identifier: '1')
         expect(delta_p).not_to be_nil
         expect(delta_p.id).to eq(p.id)
         expect(delta_p.name).to eq("2")
@@ -260,7 +257,7 @@ describe FileImportProcessor do
           SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
         ])
         pro.do_row 0, [1,2.1, BigDecimal("3.10")], true, -1, @u
-        p = Product.find_by_unique_identifier('1')
+        p = Product.find_by(unique_identifier: '1')
         expect(p.name).to eq("2.1")
         expect(p.unit_of_measure).to eq("3.1")
       end

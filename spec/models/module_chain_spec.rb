@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ModuleChain do
   describe "model_fields" do
     it "returns all model fields for the chain" do

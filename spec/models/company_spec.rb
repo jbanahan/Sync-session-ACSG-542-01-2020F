@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Company do
   describe "migrate_accounts" do
     before :each do

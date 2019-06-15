@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchColumn do
   describe 'key_column?' do
     it 'should be a key column' do

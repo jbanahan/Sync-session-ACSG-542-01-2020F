@@ -247,7 +247,7 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1,:per_page=>1).first) : Product.find(@pks.values.first)
-    @preview_instant_classification = InstantClassification.find_by_product @preview_product, current_user
+    @preview_instant_classification = InstantClassification.find_by(product: @preview_product), current_user
   end
 
   private

@@ -6,7 +6,7 @@ class CreateRunAsSession < ActiveRecord::Migration
       t.datetime :start_time
       t.datetime :end_time
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :run_as_sessions, [:user_id]

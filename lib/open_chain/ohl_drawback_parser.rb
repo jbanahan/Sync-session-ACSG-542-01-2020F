@@ -109,7 +109,7 @@ module OpenChain
       entry_rows.each {|r| process_details r}
       @entry.save!
       #set time to process in milliseconds without calling callbacks
-      @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+      @entry.update_column :time_to_process, ((Time.now-start_time) * 1000).to_i
       @entry
     end
 
@@ -129,7 +129,7 @@ module OpenChain
     def process_header row
       importer_name = row[@map[:importer_name]]
       raise "Importer Name is required." if importer_name.blank?
-      c = Company.find_or_create_by_name_and_importer importer_name, true
+      c = Company.find_or_create_by(name: importer_name, importer: true)
       @entry = Entry.find_by_entry_number_and_importer_id row[@map[:entry_number]], c.id
       @entry ||= Entry.new(:source_system=>SOURCE_CODE,:importer_id=>c.id,:import_country=>Country.find_by_iso_code('US'),:entry_number=>row[@map[:entry_number]],:total_duty_direct=>0)
       @entry.commercial_invoices.destroy_all 

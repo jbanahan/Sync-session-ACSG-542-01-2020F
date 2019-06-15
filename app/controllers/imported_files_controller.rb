@@ -210,7 +210,7 @@ class ImportedFilesController < ApplicationController
             render :json=>{:error=>$!.message}
           end
         }
-        format.html { render :text=>"This page is not accessible for end users."}
+        format.html { render html: "This page is not accessible for end users."}
       end
     }
   end

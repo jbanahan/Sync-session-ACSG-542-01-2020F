@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotPurger do
 
   let (:setup) { {"owner_id" => "12345", "tag_keys" => ["Application", "Environment"], "tags" => {"Environment" => "Production"}, "region" => "us-notaregion-1"} }

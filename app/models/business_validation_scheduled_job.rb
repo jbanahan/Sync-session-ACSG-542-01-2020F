@@ -12,6 +12,8 @@
 #
 
 class BusinessValidationScheduledJob < ActiveRecord::Base
+  attr_accessible :business_validation_schedule_id, :run_date, :validatable_id, :validatable_type
+  
   belongs_to :business_validation_schedule
   belongs_to :validatable, polymorphic: true
 end

@@ -15,6 +15,9 @@
 
 class Plant < ActiveRecord::Base
   include CoreObjectSupport
+
+  attr_accessible :company_id, :company, :name
+  
   belongs_to :company, inverse_of: :plants, touch: true
 
   has_many :plant_product_group_assignments, inverse_of: :plant, dependent: :destroy
@@ -24,7 +27,7 @@ class Plant < ActiveRecord::Base
   before_destroy :validate_in_use
 
   def unassigned_product_groups
-    return ProductGroup.scoped if self.id.nil?
+    return ProductGroup.all if self.id.nil?
     ProductGroup.
       where("product_groups.id NOT IN (SELECT plant_product_group_assignments.product_group_id FROM plant_product_group_assignments WHERE plant_product_group_assignments.plant_id = #{self.id})")
   end

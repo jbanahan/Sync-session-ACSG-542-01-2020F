@@ -16,6 +16,8 @@
 #
 
 class MilestoneNotificationConfig < ActiveRecord::Base
+  attr_accessible :customer_number, :enabled, :module_type, :output_style, :setup, :testing
+
   # In other words...a config for outputting a 315
   has_many :search_criterions, dependent: :destroy, autosave: true
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
   #Even though you should only call the static get_style method,
   #we're going to test the instance methods individually for ease of constructing
@@ -186,7 +184,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr2.classification.update_custom_value! @appr, 1.day.ago
       tr3 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
       tr3.classification.update_custom_value! @appr, 1.day.ago
-      tr3.classification.update_attributes(updated_at:2.days.ago)
+      tr3.classification.update_column :updated_at, 2.days.ago
       @c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]
       p = Product.find tr1.product.id
       expect(p.classifications.size).to eq(1)

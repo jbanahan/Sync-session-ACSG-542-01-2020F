@@ -69,6 +69,17 @@ class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
+  attr_accessible :accepted_at, :accepted_by_id, :agent_id, :approval_status, 
+    :closed_at, :closed_by_id, :currency, :customer_order_number, 
+    :customer_order_status, :division_id, :factory_id, 
+    :first_expected_delivery_date, :fob_point, :importer_id, :importer,
+    :last_exported_from_source, :last_file_bucket, :last_file_path, 
+    :last_revised_date, :mode, :order_date, :order_from_address_id, 
+    :order_number, :processing_errors, :product_category, :season, 
+    :selling_agent_id, :ship_from_id, :ship_from, :ship_to_id, :ship_to_id, 
+    :ship_window_end, :ship_window_start, :terms_of_payment, :terms_of_sale, 
+    :tpp_survey_response_id, :vendor_id, :vendor, :order_lines_attributes
+
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
@@ -85,13 +96,15 @@ class Order < ActiveRecord::Base
 	validates :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 
-	has_many :order_lines, dependent: :destroy, order: 'line_number', autosave: true, inverse_of: :order
+	has_many :order_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true, inverse_of: :order
 	has_many :piece_sets, :through => :order_lines
   has_many :booking_lines_by_order_line, :through => :order_lines, source: :booking_lines
   has_many :booking_lines
 
   accepts_nested_attributes_for :order_lines, :allow_destroy => true
 
+  scope :not_closed, -> { where(closed_at: nil) }
+  scope :is_closed, -> { where.not(closed_at: nil) }
 
   ########
   # Post Create Logic (must be called manually after an order is created in the system to trigger events & snapshots)
@@ -174,8 +187,6 @@ class Order < ActiveRecord::Base
   ########
   # Order Close Logic
   ########
-
-  scope :not_closed, where('orders.closed_at is null')
 
   #set the order as closed and take a snapshot and save!
   def close! user, async_snapshot=false
@@ -333,10 +344,6 @@ class Order < ActiveRecord::Base
 
   def can_attach? user
     return user.attach_orders? && self.can_view?(user)
-  end
-
-  def self.find_by_vendor(vendor)
-    return Order.where({:vendor_id => vendor})
   end
 
   def find_same

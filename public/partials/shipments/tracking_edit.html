@@ -60,6 +60,10 @@
 <label for="shp_in_warehouse_time">{{outerScope.label('shp_in_warehouse_time')}}</label>
 <div class="row">
     <div class="col-sm-6">
+        <input date-input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="form-control" placeholder="YYYY-MM-DD"/>
+    </div>
+    <div class="col-sm-6">
+        <input date-input type="time" placeholder="HH:MM" id="shp_warehouse_time_hour" pattern="\d{2}:\d{2}" ng-pattern="/^\d{2}:\d{2}$/" ng_model="outerScope.tracking._shp_warehouse_time_hour" class="form-control" />
         <input date-input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="col-sm-6 form-control" placeholder="YYYY-MM-DD"/>
     </div>
     <div class="col-sm-6">

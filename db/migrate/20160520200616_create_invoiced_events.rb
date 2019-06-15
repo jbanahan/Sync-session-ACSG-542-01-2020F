@@ -6,7 +6,7 @@ class CreateInvoicedEvents < ActiveRecord::Migration
       t.string :invoice_generator_name
       t.string :charge_type
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :invoiced_events, :billable_event_id

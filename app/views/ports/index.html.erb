@@ -59,7 +59,7 @@
       </td>
       <td>
         <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>' iata='<%=p.iata_code%>' ao='<%=p.active_origin%>' ad='<%=p.active_destination%>'>Update</a> |
-        <%=link_to 'Delete', port_path(p), :confirm => 'Are you sure?', :method=>:delete%>
+        <%=link_to 'Delete', port_path(p), :data => {:confirm => 'Are you sure?'}, :method=>:delete%>
       </td>
     </tr>
     <%end-%>

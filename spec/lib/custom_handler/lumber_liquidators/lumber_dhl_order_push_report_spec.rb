@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport do
 
   def expect_no_results tempfile

@@ -23,10 +23,12 @@ class PlantVariantAssignment < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
 
+  attr_accessible :disabled, :plant_id, :plant, :variant_id, :variant
+
   belongs_to :plant, inverse_of: :plant_variant_assignments
   belongs_to :variant, inverse_of: :plant_variant_assignments
 
-  scope :enabled, where('disabled = ? OR disabled is null',false)
+  scope :enabled, -> { where(disabled: [nil, 0]) }
 
   dont_shallow_merge :PlantVariantAssignment, ['id','created_at','updated_at']
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchTemplatesController do
   describe "destroy" do
     it "should delete search template" do

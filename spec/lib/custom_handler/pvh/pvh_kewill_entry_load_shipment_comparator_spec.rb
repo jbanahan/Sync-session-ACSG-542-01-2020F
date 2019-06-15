@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Pvh::PvhKewillEntryLoadShipmentComparator do
     end
 
     it "returns false for other countries" do
-      shipment.update_attributes! country_import_id: Factory(:country, iso_code: "NOTUS").id
+      shipment.update_attributes! country_import_id: Factory(:country, iso_code: "!S").id
       shipment.reload
 
       expect(subject.has_entry_load_configured? shipment).to eq false

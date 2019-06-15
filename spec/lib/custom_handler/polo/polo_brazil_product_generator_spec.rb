@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
   after :each do
     @tmp.close! if @tmp  && !@tmp.closed?
@@ -9,7 +7,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
     end
     after :all do
-      CustomDefinition.scoped.destroy_all
+      CustomDefinition.all.destroy_all
       @custom_defs = nil
     end
     before :each do
@@ -49,7 +47,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @custom_defs = described_class.new.send(:init_outbound_custom_definitions)
     end
     after :all do
-      CustomDefinition.scoped.destroy_all
+      CustomDefinition.all.destroy_all
       @custom_defs = nil
     end
 

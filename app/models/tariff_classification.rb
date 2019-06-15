@@ -27,6 +27,12 @@
 #
 
 class TariffClassification < ActiveRecord::Base
+  attr_accessible :antidumping_duty, :base_rate_indicator, :blocked_record, 
+    :countervailing_duty, :country_id, :duty_computation, :effective_date_end, 
+    :effective_date_start, :last_exported_from_source, 
+    :number_of_reporting_units, :tariff_description, :tariff_number, 
+    :unit_of_measure_1, :unit_of_measure_2, :unit_of_measure_3
+  
   has_many :tariff_classification_rates, inverse_of: :tariff_classification, dependent: :destroy, autosave: true
   belongs_to :country
 

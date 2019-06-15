@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::ImportExportRegulationParser do
 
   before :each do

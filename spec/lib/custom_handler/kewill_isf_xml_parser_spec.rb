@@ -1,36 +1,19 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::KewillIsfXmlParser do
-  before :each do
-    @path = 'spec/support/bin/isf_sample.xml'
-    @k = OpenChain::CustomHandler::KewillIsfXmlParser
-    @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
-  end
+
+  let (:xml_path) { 'spec/support/bin/isf_sample.xml' }
+  let (:xml_data) { IO.read xml_path }
+  let (:est) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"] }
+
   let (:log) { InboundFile.new }
-  describe 'process_past_days' do
-    it "should delay processing" do
-      expect(@k).to receive(:delay).exactly(3).times.and_return(@k)
-      expect(@k).to receive(:process_day).exactly(3).times
-      @k.process_past_days 3
-    end
-  end
-  describe 'process_day' do
-    it 'should process all files from the given day' do
-      d = Date.new
-      expect(OpenChain::S3).to receive(:integration_keys).with(d, ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]).and_yield("a").and_yield("b")
-      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
-      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      expect(@k).to receive(:parse_file).with("x", instance_of(InboundFile), {:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false})
-      expect(@k).to receive(:parse_file).with("y", instance_of(InboundFile), {:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
-      @k.process_day d
-    end
-  end
+  
   describe "parse_file" do
+    subject { described_class }
+
     it 'should process from text' do
       c = Factory(:company,:alliance_customer_number=>'EDDIE')
 
       expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
-      @k.parse_file IO.read(@path), log, bucket: "bucket", key: "key"
+      subject.parse_file xml_data, log, bucket: "bucket", key: "key"
       sf = SecurityFiling.first
       expect(sf.host_system_file_number).to eq('1870446')
       expect(sf.host_system).to eq("Kewill")
@@ -51,19 +34,19 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should not replace entry numbers" do
       sf = Factory(:security_filing,:entry_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse_file IO.read(@path), log
+      subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_numbers).to eql("123456")
     end
     it "should not replace entry reference numbers" do
       sf = Factory(:security_filing,:entry_reference_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse_file IO.read(@path), log
+      subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_reference_numbers).to eql("123456")
     end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
-      @k.parse_file IO.read(@path), log
+      subject.parse_file xml_data, log
       # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
       sf = SecurityFiling.first
       expect(sf.transaction_number).to be_nil
@@ -74,14 +57,14 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
-      @k.parse_file IO.read(@path), log
+      subject.parse_file xml_data, log
       sf.reload
       expect(sf.booking_number).to eq('BKING')
       expect(sf.security_filing_lines.size).to eq(2)
       expect(sf.security_filing_lines.collect {|ln| ln.line_number}).to eq([1,2])
     end
     it "should set amazon bucket & path" do
-      @k.parse_file IO.read(@path), log, :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
+      subject.parse_file xml_data, log, :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
       sf = SecurityFiling.first
       expect(sf.last_file_bucket).to eq('bucket')
       expect(sf.last_file_path).to eq('isf_2435412_20210914_20131118145402586.1384804944.xml')
@@ -90,27 +73,27 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(Lock).to receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
       expect(Lock).to receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
-      @k.parse_file IO.read(@path), log
+      subject.parse_file xml_data, log
       expect(SecurityFiling.first).not_to be_nil
     end
     it "should raise exception if host_system_file_number is blank" do
-      dom = REXML::Document.new File.new(@path)
+      dom = REXML::Document.new xml_data
       dom.root.elements['ISF_SEQ_NBR'].text=''
 
-      expect{@k.parse_file dom.to_s, log}.to raise_error "ISF_SEQ_NBR is required."
+      expect{subject.parse_file dom.to_s, log}.to raise_error "ISF_SEQ_NBR is required."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "ISF_SEQ_NBR is required."
     end
 
     it "should raise exception if last event time is missing" do
-      dom = REXML::Document.new File.new(@path)
+      dom = REXML::Document.new xml_data
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR='8' or EVENT_NBR='20' or EVENT_NBR='21']")
 
-      expect{@k.parse_file dom.to_s, log}.to raise_error "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
+      expect{subject.parse_file dom.to_s, log}.to raise_error "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
     end
 
     it "parses a document with only event type 8, adding notes, but not removing existing info" do
-      dom = REXML::Document.new File.new(@path)
+      dom = REXML::Document.new xml_data
 
       dom.elements.delete_all("IsfHeaderData/lines")
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '8']")
@@ -123,7 +106,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         :po_numbers=>"A\nB", countries_of_origin: "C\nD", notes: notes.join("\n"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
 
-      expect{@k.parse_file dom.to_s, log}.not_to raise_error
+      expect{subject.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).to eq sf
@@ -140,11 +123,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ]
     end
     it "uses event date 20 as last event date if 21 or 8 are not present" do
-      dom = REXML::Document.new File.new(@path)
+      dom = REXML::Document.new xml_data
 
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '20']")
 
-      expect{@k.parse_file dom.to_s, log}.not_to raise_error
+      expect{subject.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).not_to be_nil
@@ -153,13 +136,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
   end
   describe "parse_dom" do
-    before :each do
-      @dom = REXML::Document.new File.new(@path)
-      @sf = Factory(:security_filing)
-    end
+    let (:dom) { REXML::Document.new xml_data }
+    let (:security_filing) { Factory(:security_filing) }
 
     it "should create security filing" do
-      sf = @k.new.parse_dom @dom, @sf, "bucket", "file.txt"
+      sf = subject.parse_dom dom, security_filing, "bucket", "file.txt"
 
       expect(sf.last_file_bucket).to eq("bucket")
       expect(sf.last_file_path).to eq("file.txt")
@@ -186,9 +167,9 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.first_accepted_date.to_i).to eq(Time.utc(2012,11,27,14,14,2).to_i)
       expect(sf.last_sent_date.to_i).to eq(Time.utc(2012,11,27,15,13,36).to_i)
       expect(sf.last_accepted_date.to_i).to eq(Time.utc(2012,11,27,15,14,2).to_i)
-      sf.estimated_vessel_load_date.strftime("%Y%m%d") == @est.local(2012,11,30).strftime("%Y%m%d")
-      sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == @est.local(2014,6,26).strftime("%Y%m%d")
-      sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == @est.local(2014,8,4).strftime("%Y%m%d")
+      sf.estimated_vessel_load_date.strftime("%Y%m%d") == est.local(2012,11,30).strftime("%Y%m%d")
+      sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == est.local(2014,6,26).strftime("%Y%m%d")
+      sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == est.local(2014,8,4).strftime("%Y%m%d")
       expect(sf.po_numbers).to eq("0425694\n0425697")
       expect(sf.cbp_updated_at.to_date).to eq(Date.new(2012, 11, 27))
       expect(sf.status_description).to eq("Accepted No Bill Match")
@@ -208,7 +189,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should build notes" do
       #skipping events 19, 20, 21
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.notes.lines("\n").collect {|ln| ln.strip}).to eq([
         "2012-11-27 06:40 EST: EDI Received",
         "2012-11-27 06:40 EST: Logged",
@@ -230,39 +211,39 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ])
     end
     it "should handle multiple brokerrefs segments" do
-      ref = @dom.root.add_element("brokerrefs")
+      ref = dom.root.add_element("brokerrefs")
       ref.add_element("BROKER_FILER_CD").text="316"
       ref.add_element("ENTRY_NBR").text="12345678"
       ref.add_element("BROKER_REF_NO").text="XYZ"
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.entry_numbers).to eq("31619212983\n31612345678")
       expect(sf.entry_reference_numbers).to eq("1921298\nXYZ")
     end
     it "should handle multiple container numbers" do
-      ref = @dom.root.add_element("containers")
+      ref = dom.root.add_element("containers")
       ref.add_element("CONTAINER_NBR").text="CON"
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.container_numbers).to eq("KKFU1694054\nCON")
     end
     it "should handle multiple house bills" do
-      ref = @dom.root.add_element("bols")
+      ref = dom.root.add_element("bols")
       ref.add_element("MASTER_BILL_NBR").text="XM02368200"
       ref.add_element("MASTER_SCAC_CD").text="KKLU"
       ref.add_element("HOUSE_BILL_NBR").text='XXXX'
       ref.add_element("HOUSE_SCAC_CD").text='YYYY'
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.house_bills_of_lading).to eq("HBSCHBL123\nYYYYXXXX")
     end
     it "should set countries of origin" do
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.countries_of_origin).to eq("CN\nMX")
     end
     it "should remove lines not in updated xml" do
-      @sf.security_filing_lines.create! line_number: 1
-      @sf.security_filing_lines.create! line_number: 2
-      @dom.root.delete_element("/IsfHeaderData/lines[1]")
+      security_filing.security_filing_lines.create! line_number: 1
+      security_filing.security_filing_lines.create! line_number: 2
+      dom.root.delete_element("/IsfHeaderData/lines[1]")
 
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       # Since parse dom doesn't save, we're working w/ activerecord objects at this point that haven't actually
       # been persisted...just make sure we have 1 line remaining that's not marked for destruction
       lines = sf.security_filing_lines.find_all {|ln| !ln.destroyed?}
@@ -271,23 +252,23 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should set importer if it already exists by alliance customer number" do
       c = Factory(:company,:alliance_customer_number=>'EDDIE')
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       expect(sf.importer).to eq(c)
     end
     it "should create new importer" do
       Factory(:company,:alliance_customer_number=>'NOTEDDIE')
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       c = sf.importer
       expect(c.name).to eq('EDDIE')
       expect(c).to be_importer
       expect(c.alliance_customer_number).to eq('EDDIE')
     end
     it "should not fail if there is no matching entity found by MID" do 
-      @dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
+      dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
         el.text = "NONMATCHING"
       end
 
-      sf = @k.new.parse_dom @dom, @sf
+      sf = subject.parse_dom dom, security_filing
       sf.security_filing_lines.each do |line|
         expect(line.manufacturer_name).to be_nil
       end
@@ -295,49 +276,49 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
     context "status codes" do
       it "sets ACCNOMATCH description" do
-        @dom.root.elements['STATUS_CD'].text = "ACCNOMATCH"
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Accepted No Bill Match"
+        dom.root.elements['STATUS_CD'].text = "ACCNOMATCH"
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Accepted No Bill Match"
       end
 
       it "sets DEL_ACCEPT description" do
-        @dom.root.elements['STATUS_CD'].text = "DEL_ACCEPT"
-        @sf.last_event = Time.zone.now
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Delete Accepted"
-        expect(@sf.delete_accepted_date).to eq @sf.last_event
+        dom.root.elements['STATUS_CD'].text = "DEL_ACCEPT"
+        security_filing.last_event = Time.zone.now
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Delete Accepted"
+        expect(security_filing.delete_accepted_date).to eq security_filing.last_event
       end
 
       it "sets ACCMATCH description" do
-        @dom.root.elements['STATUS_CD'].text = "ACCMATCH"
-        @sf.last_event = Time.zone.now
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Accepted And Matched"
-        expect(@sf.ams_match_date).to eq @sf.last_event
+        dom.root.elements['STATUS_CD'].text = "ACCMATCH"
+        security_filing.last_event = Time.zone.now
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Accepted And Matched"
+        expect(security_filing.ams_match_date).to eq security_filing.last_event
       end
 
       it "sets REPLACE description" do
-        @dom.root.elements['STATUS_CD'].text = "REPLACE"
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Replaced"
+        dom.root.elements['STATUS_CD'].text = "REPLACE"
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Replaced"
       end
 
       it "sets ACCEPTED description" do
-        @dom.root.elements['STATUS_CD'].text = "ACCEPTED"
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Accepted"
+        dom.root.elements['STATUS_CD'].text = "ACCEPTED"
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Accepted"
       end
 
       it "sets ACCWARNING description" do
-        @dom.root.elements['STATUS_CD'].text = "ACCWARNING"
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Accepted With Warnings"
+        dom.root.elements['STATUS_CD'].text = "ACCWARNING"
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Accepted With Warnings"
       end
 
       it "sets DELETED description" do
-        @dom.root.elements['STATUS_CD'].text = "DELETED"
-        @k.new.parse_dom @dom, @sf
-        expect(@sf.status_description).to eq "Deleted"
+        dom.root.elements['STATUS_CD'].text = "DELETED"
+        subject.parse_dom dom, security_filing
+        expect(security_filing.status_description).to eq "Deleted"
       end
     end
   end

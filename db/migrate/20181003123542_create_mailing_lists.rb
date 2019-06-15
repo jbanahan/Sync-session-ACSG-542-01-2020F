@@ -3,7 +3,7 @@ class CreateMailingLists < ActiveRecord::Migration
     create_table :mailing_lists do |t|
       t.string :system_code, null: false
       t.string :name
-      t.timestamps
+      t.timestamps null: false
       t.integer :user_id
       t.integer :company_id
       t.text :email_addresses

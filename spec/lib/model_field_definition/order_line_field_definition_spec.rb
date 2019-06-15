@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe "OrderLineFieldDefinition" do
   before :each do
     @mf = ModelField.find_by_uid(:ordln_total_cost)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ScheduleSupport do
   describe "run_if_needed" do
     before :each do
@@ -196,106 +194,112 @@ describe OpenChain::ScheduleSupport do
 =end
   end
 
-  describe "next_run_time" do
-    before :each do
-      c = class FakeSchedulable
-        include OpenChain::ScheduleSupport
-      end
+  class FakeSchedulable
+    include OpenChain::ScheduleSupport
 
-      @s = c.new
-      @last_start = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01")
-      allow(@s).to receive(:last_start_time).and_return @last_start
+    def last_start_time
+      raise "Mock me"
+    end
+  end
+
+  describe "next_run_time" do
+    subject { FakeSchedulable.new }
+    let (:last_start) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01") }
+
+
+    before :each do
+      allow(subject).to receive(:last_start_time).and_return last_start
     end
 
     it "uses interval string to determine next runtime" do
-      allow(@s).to receive(:interval).and_return "1m"
-      allow(@s).to receive(:wednesday_active?).and_return true
+      allow(subject).to receive(:interval).and_return "1m"
+      allow(subject).to receive(:wednesday_active?).and_return true
 
-      expect(@s.next_run_time).to eq (@last_start + 1.minute).utc
+      expect(subject.next_run_time).to eq (last_start + 1.minute).utc
     end
 
     it "handles interval hours" do
-      allow(@s).to receive(:interval).and_return "1h"
-      allow(@s).to receive(:wednesday_active?).and_return true
+      allow(subject).to receive(:interval).and_return "1h"
+      allow(subject).to receive(:wednesday_active?).and_return true
 
-      expect(@s.next_run_time).to eq (@last_start + 1.hour)
+      expect(subject.next_run_time).to eq (last_start + 1.hour)
     end
 
     it "handles mixed intervals" do
-      allow(@s).to receive(:interval).and_return "1h30m"
-      allow(@s).to receive(:wednesday_active?).and_return true
+      allow(subject).to receive(:interval).and_return "1h30m"
+      allow(subject).to receive(:wednesday_active?).and_return true
 
-      expect(@s.next_run_time).to eq (@last_start + 1.hour + 30.minutes)
+      expect(subject.next_run_time).to eq (last_start + 1.hour + 30.minutes)
     end
 
     it "does not run on days that are not configured in the schedule" do
       # Jan 1, 2014 was a wednesday, so the next run time should
       # be Jan 2 (thurs), midnight
-      allow(@s).to receive(:interval).and_return "1h"
-      allow(@s).to receive(:thursday_active?).and_return true
+      allow(subject).to receive(:interval).and_return "1h"
+      allow(subject).to receive(:thursday_active?).and_return true
 
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02").utc
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02").utc
     end
 
     it "returns nil if no day is configured to run on" do
-      allow(@s).to receive(:interval).and_return "1h"
-      expect(@s.next_run_time).to be_nil
+      allow(subject).to receive(:interval).and_return "1h"
+      expect(subject.next_run_time).to be_nil
     end
 
     it "uses interval string as a cron expression (using 1 minute granularity)" do
-      allow(@s).to receive(:interval).and_return "* * * * *"
-      expect(@s.next_run_time).to eq (@last_start + 1.minute).utc
+      allow(subject).to receive(:interval).and_return "* * * * *"
+      expect(subject.next_run_time).to eq (last_start + 1.minute).utc
     end
 
     it "uses cron ranges" do
-      allow(@s).to receive(:interval).and_return "30-59 * * * *"
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:30").utc
+      allow(subject).to receive(:interval).and_return "30-59 * * * *"
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:30").utc
     end
 
     it "uses cron slash intervals " do
-      allow(@s).to receive(:interval).and_return "30-59/15 * * * *"
-      @last_start = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:31")
-      allow(@s).to receive(:last_start_time).and_return @last_start
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:45").utc
+      allow(subject).to receive(:interval).and_return "30-59/15 * * * *"
+      last_start = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:31")
+      allow(subject).to receive(:last_start_time).and_return last_start
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:45").utc
     end
 
     it "uses cron named weekday ranges" do
-      allow(@s).to receive(:interval).and_return "0 0 * * THU-FRI"
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02 00:00").utc
+      allow(subject).to receive(:interval).and_return "0 0 * * THU-FRI"
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02 00:00").utc
     end
 
     it "uses comma seperated values for cron ranges" do
-      allow(@s).to receive(:interval).and_return "5,10,15,20 0 * * *"
-      expect(@s.next_run_time).to eq (@last_start + 5.minutes).utc
+      allow(subject).to receive(:interval).and_return "5,10,15,20 0 * * *"
+      expect(subject.next_run_time).to eq (last_start + 5.minutes).utc
     end
 
     it "allows for last day of month cron usage" do
-      allow(@s).to receive(:interval).and_return '0 0 * * FRI#L'
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-31 00:00").utc
+      allow(subject).to receive(:interval).and_return '0 0 * * FRI#L'
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-31 00:00").utc
     end
 
     it "allows for X-weekday of month cron usage" do
-      allow(@s).to receive(:interval).and_return '0 0 * * FRI#3'
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-17 00:00").utc
+      allow(subject).to receive(:interval).and_return '0 0 * * FRI#3'
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-17 00:00").utc
     end
 
     it "allows for second to last weekday of month cron usage" do
-      allow(@s).to receive(:interval).and_return '0 0 * * FRI#-2'
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-24 00:00").utc
+      allow(subject).to receive(:interval).and_return '0 0 * * FRI#-2'
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-24 00:00").utc
     end
 
     it "handles invalid expressions" do
-      allow(@s).to receive(:interval).and_return "* * * * * * * *"
-      expect(@s.next_run_time).to be_nil
+      allow(subject).to receive(:interval).and_return "* * * * * * * *"
+      expect(subject.next_run_time).to be_nil
     end
 
     it "returns next day if hour/minute to run job has already been run the day of the schedule" do
-      allow(@s).to receive(:last_start_time).and_return ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 15:30")
-      allow(@s).to receive(:hour_to_run).and_return 0
-      allow(@s).to receive(:minute_to_run).and_return 0
-      allow(@s).to receive(:wednesday_active?).and_return true
+      allow(subject).to receive(:last_start_time).and_return ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 15:30")
+      allow(subject).to receive(:hour_to_run).and_return 0
+      allow(subject).to receive(:minute_to_run).and_return 0
+      allow(subject).to receive(:wednesday_active?).and_return true
 
-      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-08 00:00").utc
+      expect(subject.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-08 00:00").utc
     end
   end
 end

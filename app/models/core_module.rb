@@ -587,7 +587,11 @@ class CoreModule
 
     # This appears to have to be done outside the CoreModule constructors becuase of the circular reference
     # to CoreModule inside the core module classes (.ie Product, Entry, etc)
-    self.all.each {|cm| cm.klass.class_eval{attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)}}
+    self.all.each {|cm| cm.klass.class_eval {
+        attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)
+        attr_accessible :virtual_identifier
+      }
+    }
   end
   private_class_method :add_virtual_identifier
 

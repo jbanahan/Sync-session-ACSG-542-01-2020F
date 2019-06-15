@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchRun do
   before :each do
     @u = Factory(:master_user)

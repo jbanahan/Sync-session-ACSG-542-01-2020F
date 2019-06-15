@@ -15,13 +15,15 @@
 #
 
 class SurveyResponseUpdate < ActiveRecord::Base
+  attr_accessible :survey_response_id, :user_id, :user, :updated_at
+  
   belongs_to :user
   belongs_to :survey_response
   
   validates :user, presence:true
   validates :survey_response, presence:true
 
-  scope :update_eligible, where('updated_at < ?',1.hour.ago)
+  scope :update_eligible, -> { where('updated_at < ?', 1.hour.ago) }
 
   def self.run_schedulable
     run_updates
@@ -51,7 +53,7 @@ class SurveyResponseUpdate < ActiveRecord::Base
   def self.send_user_update sr, updates
     return if sr.status == sr.class::STATUSES[:needs_rating]
     return if updates.length==1 && updates.first.user == sr.user 
-    OpenMailer.send_survey_user_update(sr).deliver 
+    OpenMailer.send_survey_user_update(sr).deliver_now
   end
   def self.send_subscription_updates survey_response, updates
     subs = survey_response.survey.survey_subscriptions.to_a
@@ -59,6 +61,6 @@ class SurveyResponseUpdate < ActiveRecord::Base
       subs.delete_if {|s| s.user == updates.first.user}
     end
     return if subs.empty? #nothing to send
-    OpenMailer.send_survey_subscription_update(survey_response, updates, subs).deliver
+    OpenMailer.send_survey_subscription_update(survey_response, updates, subs).deliver_now
   end
 end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentsController do
 
   describe "create" do
@@ -13,20 +11,27 @@ describe AttachmentsController do
       sign_in_as user
     end
 
-    it "calls log_update and attachment_added if base object responds to those methods" do
-      expect_any_instance_of(Product).to receive(:log_update).with(user)
-      attachment_id = nil
-      expect_any_instance_of(Product).to receive(:attachment_added) do |instance, attach|
-        attachment_id = attach.id
-      end
-
-      post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}
-      expect(response).to redirect_to prod
-      expect(prod.attachments.length).to eq 1
-      att = prod.attachments.first
+    it "calls log_update if base object responds to those methods" do
+      answer = Factory(:answer)
+      expect_any_instance_of(Answer).to receive(:log_update).with(user)
+      expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
+      
+      post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer"}
+      expect(response).to redirect_to answer
+      answer.reload
+      expect(answer.attachments.length).to eq 1
+      att = answer.attachments.first
       expect(att.uploaded_by).to eq user
       expect(att.attached_file_name).to eq "test.txt"
-      expect(att.id).to eq attachment_id
+    end
+
+    it "calls attachment_added if base object responds to those methods" do
+      answer = Factory(:answer)
+      expect_any_instance_of(Answer).to receive(:attachment_added).with(instance_of(Attachment))
+      expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
+      
+      post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer"}
+      expect(response).to redirect_to answer
     end
 
     context "with http request" do

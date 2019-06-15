@@ -55,7 +55,7 @@ module OpenChain; module Report; class MissingStatementSummaryEntryReport
       OpenMailer.send_simple_html(emails,
                                   "[VFI Track] Statement Entry Summary not on File- #{start_date.to_date}", "The attached report lists all entries with a missing entry summary from #{start_date.to_date}".html_safe,
                                   [t]
-      ).deliver!
+      ).deliver_now
     end
   end
 

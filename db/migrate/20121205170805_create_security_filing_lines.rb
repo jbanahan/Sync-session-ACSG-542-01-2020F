@@ -11,7 +11,7 @@ class CreateSecurityFilingLines < ActiveRecord::Migration
       t.string :mid
       t.string :country_of_origin_code
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :security_filing_lines, :security_filing_id
     add_index :security_filing_lines, :part_number

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Lock do
 
   before :each do
@@ -162,10 +160,10 @@ describe Lock do
     it "raises a timeout error when connection pool times out" do
       # Need to rejigger the connection pool so it only allows a single connection checked out
       # at a time so we can force a timeout
-      config = YAML.load_file('config/redis.yml')
-      config['test']['pool_size'] = 1
+      config = MasterSetup.secrets["redis"].dup
+      config['pool_size'] = 1
       cp = ConnectionPool.new(size: 1, timeout: 1) do
-        Lock.send(:get_redis_client, config['test'].with_indifferent_access)
+        Lock.send(:get_redis_client, config.with_indifferent_access)
       end
       allow(Lock).to receive(:get_connection_pool).and_return cp
 

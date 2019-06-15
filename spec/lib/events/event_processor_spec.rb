@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::Events::EventProcessor do
 
   context "process_event" do

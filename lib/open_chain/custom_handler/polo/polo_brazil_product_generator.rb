@@ -62,7 +62,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
         file << outbound_file_content(p, nil, nil).to_csv(col_sep: '|')
       end
 
-      sr = p.sync_records.find_or_initialize_by_trading_partner("Brazil")
+      sr = p.sync_records.find_or_initialize_by(trading_partner: "Brazil")
       sr.update_attributes(:sent_at=>Time.now, confirmed_at: (Time.now + 1.minute))
     end
     file.flush

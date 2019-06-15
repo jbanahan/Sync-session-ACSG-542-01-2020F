@@ -1,19 +1,19 @@
-require 'spec_helper'
-
 describe OpenChain::SqlProxyClient do
-  let (:json_client) { instance_double(OpenChain::JsonHttpClient) }
-  let (:config) { {'test' => {'auth_token' => "config_auth_token", "url" => "config_url"}} }
-  subject { OpenChain::SqlProxyClient.new(json_client) }
 
-  after :each do
-    # Needed otherwise the config is memoized and never loaded again during the tests
-    described_class.remove_instance_variable(:@proxy_config) if described_class.instance_variable_get(:@proxy_config)
+  class FakeSqlProxyClient < OpenChain::SqlProxyClient
+    def self.proxy_config_key
+      raise "Mock Me"
+    end
   end
+
+  let (:json_client) { instance_double(OpenChain::JsonHttpClient) }
+  let (:secrets) { {"fake_config" => {'auth_token' => "config_auth_token", "url" => "config_url"}} }
+  subject { FakeSqlProxyClient.new(json_client) }
 
   describe "request" do
     before :each do
-      allow(described_class).to receive(:proxy_config_file).and_return "fake/path/config.yml"
-      expect(YAML).to receive(:load_file).with("fake/path/config.yml").and_return config
+      allow(FakeSqlProxyClient).to receive(:proxy_config_key).and_return "fake_config"
+      allow(MasterSetup).to receive(:secrets).and_return secrets
     end
 
     it "uses json_client to request data" do
@@ -42,18 +42,18 @@ describe OpenChain::SqlProxyClient do
 
   describe "proxy_config" do
     it "raises an error if no config file found" do
-      allow(described_class).to receive(:proxy_config_file).and_return "fake/path/config.yml"
-      expect { described_class.proxy_config }.to raise_error "No SQL Proxy client configuration file found at 'fake/path/config.yml'."
+      allow(FakeSqlProxyClient).to receive(:proxy_config_key).and_return "fake"
+      expect { FakeSqlProxyClient.proxy_config }.to raise_error "No SQL Proxy client configuration file found in secrets.yml with key 'fake'."
     end
 
     it "memoizes proxy load" do
-      allow(described_class).to receive(:proxy_config_file).and_return "fake/path/config.yml"
-      expect(YAML).to receive(:load_file).with("fake/path/config.yml").and_return config
+      allow(FakeSqlProxyClient).to receive(:proxy_config_key).and_return "fake_config"
+      allow(MasterSetup).to receive(:secrets).and_return secrets
 
-      expect(described_class.proxy_config).to eq config
+      expect(FakeSqlProxyClient.proxy_config).to eq secrets["fake_config"]
       # If the proxy wasn't memoized, then the expectations above will fail since they only
       # expect a single call to the load_file, etc
-      expect(described_class.proxy_config).to eq config
+      expect(FakeSqlProxyClient.proxy_config).to eq secrets["fake_config"]
     end
   end
 

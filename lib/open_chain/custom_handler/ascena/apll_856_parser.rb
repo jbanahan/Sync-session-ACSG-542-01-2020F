@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           body << "</ul></p>"
           to = "edisupport@vandegriftinc.com"
           subject = "Ascena/APLL ASN EDI Processing Error (ISA: #{isa})"
-          OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver!
+          OpenMailer.send_simple_html(to, subject, body.html_safe, [f]).deliver_now
         end
       end
     end

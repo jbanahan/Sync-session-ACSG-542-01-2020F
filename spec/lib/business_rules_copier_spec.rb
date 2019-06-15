@@ -14,8 +14,7 @@ describe OpenChain::BusinessRulesCopier do
 
     describe "process" do
       it "parses template attributes from JSON file and notifies user" do
-        template = OpenStruct.new
-        template.name = "temp name"
+        template = BusinessValidationTemplate.new name: "temp name"
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_yield file
         expect(BusinessValidationTemplate).to receive(:parse_copy_attributes).with({"content" => "stuff"}).and_return template
         expect(template).to receive(:update_attributes!).with(name: "temp name", disabled: true)
@@ -54,9 +53,10 @@ describe OpenChain::BusinessRulesCopier do
 
     describe "process" do
       it "parses rule attributes from JSON file and notifies user" do
-        rule = OpenStruct.new
-        rule.name = "temp name"
-        bvr_relation = double "bvr relation"
+        rule = instance_double(BusinessValidationRule)
+        allow(rule).to receive(:name).and_return "temp name"
+
+        bvr_relation = double("bvr relation")
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_yield file
         expect(BusinessValidationRule).to receive(:parse_copy_attributes).with({"content" => "stuff"}).and_return rule
         expect(rule).to receive(:update_attributes!).with(name: "temp name", disabled: true)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TppHtsOverride do
   context 'security' do
     describe '#can_view?' do

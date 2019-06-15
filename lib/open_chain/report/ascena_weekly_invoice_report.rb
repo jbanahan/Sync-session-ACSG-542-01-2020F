@@ -20,7 +20,7 @@ module OpenChain; module Report; class AscenaWeeklyInvoiceReport
     workbook_to_tempfile wb, 'AscenaWeeklyInvoiceReport-', file_name: 'Ascena Weekly Invoice Report.xls' do |t|
       subject = "Ascena Weekly Invoice Report - #{range[0].strftime('%-m/%-d/%Y')} to #{range[1].strftime('%-m/%-d/%Y')}"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
-      OpenMailer.send_simple_html(email, subject, body, t).deliver!
+      OpenMailer.send_simple_html(email, subject, body, t).deliver_now
     end
   end
 

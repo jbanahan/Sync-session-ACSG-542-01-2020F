@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
   def default_row overrides={}
     #only creating relevant fields

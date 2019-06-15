@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PowerOfAttorney do
   before(:each) do
     @comp = Factory(:company)

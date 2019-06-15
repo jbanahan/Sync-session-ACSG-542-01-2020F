@@ -86,7 +86,7 @@ class QuickSearchController < ApplicationController
           @@qs_extra_field_cache[cm] = extra_fields.collect {|f| field_definition f}
         end
 
-        cds = CustomDefinition.find_all_by_quick_searchable true
+        cds = CustomDefinition.where(quick_searchable:true)
         cds.each do |cd|
           field_array = @@qs_field_cache[cd.core_module]
           field_array << field_definition(cd.model_field.uid) if field_array

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SnapshotWriter do
   let (:descriptor) {
     SnapshotDescriptor.for(Entry, {

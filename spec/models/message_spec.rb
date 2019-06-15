@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Message do
   describe 'unread_message_count' do
     before :each do
@@ -22,10 +20,11 @@ describe Message do
 
   describe "email_to_user" do
     let(:user) { Factory(:user, email_new_messages: true) }
+    let(:mail) { instance_double(ActionMailer::MessageDelivery) }
 
     it "sends emails to user who gets a system message" do
-      expect(OpenMailer).to receive(:delay).and_return OpenMailer
-      expect(OpenMailer).to receive(:send_message)
+      expect(OpenMailer).to receive(:send_message).with(instance_of(Message)).and_return mail
+      expect(mail).to receive(:deliver_later)
 
       user.messages.create! subject: "Subject", body: "Body"
     end
@@ -33,7 +32,7 @@ describe Message do
     it "does not send email to user that doesn't want them" do
       user.email_new_messages = false
       user.save!
-      expect(OpenMailer).not_to receive(:delay)
+      expect(OpenMailer).not_to receive(:send_message)
       user.messages.create! subject: "Subject", body: "Body"
     end
 
@@ -41,7 +40,7 @@ describe Message do
       user.disabled = true
       user.save!
 
-      expect(OpenMailer).not_to receive(:delay)
+      expect(OpenMailer).not_to receive(:send_message)
       user.messages.create! subject: "Subject", body: "Body"
     end
   end

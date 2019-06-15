@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::ShipmentsController do
   before(:each) do
     MasterSetup.get.update_attributes(shipment_enabled:true)
@@ -823,7 +821,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes order numbers that are available to utilize" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.all
 
       get :autocomplete_order, id: @s.id, n: "CNUM"
 
@@ -835,7 +833,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes using order_number" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.all
 
       get :autocomplete_order, id: @s.id, n: "ORDER"
       expect(response).to be_success
@@ -848,7 +846,7 @@ describe Api::V1::ShipmentsController do
 
     it "prefers customer order number if both order number and customer order number match" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.scoped
+      expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return Order.all
 
       get :autocomplete_order, id: @s.id, n: "NUM"
       expect(response).to be_success
@@ -879,7 +877,7 @@ describe Api::V1::ShipmentsController do
 
     it "autocompletes products that are available to utilize" do
       # Just return all orders...all we care about is that Shipment.available_orders is used
-      expect_any_instance_of(Shipment).to receive(:available_products).with(@u).and_return Product.scoped
+      expect_any_instance_of(Shipment).to receive(:available_products).with(@u).and_return Product.all
 
       get :autocomplete_product, id: @s.id, n: "Prod1"
 

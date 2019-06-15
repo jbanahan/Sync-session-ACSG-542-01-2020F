@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Polo::Polo850Parser do
 
   describe "integration_folder" do

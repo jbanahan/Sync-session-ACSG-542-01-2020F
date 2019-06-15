@@ -31,10 +31,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
   end
 
   def generate_and_send!
-    secrets = HashWithIndifferentAccess.new(YAML.load(File.read(Rails.root.join('config','secrets.yml'))))
-    options = secrets[Rails.env]['isf_xml_generator']
-
-    document = generate(options)
+    document = generate
     send! document
   end
 

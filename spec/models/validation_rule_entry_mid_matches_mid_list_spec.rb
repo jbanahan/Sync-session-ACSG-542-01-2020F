@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryMidMatchesMidList do
 
   let! (:company) { Factory(:company, system_code: 'ACOMPANY') }

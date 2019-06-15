@@ -10,7 +10,7 @@ class CreateSentEmails < ActiveRecord::Migration
       t.timestamp :email_date
       t.text :email_body
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     def email_file f, email_address
       Attachment.add_original_filename_method f
       f.original_filename = "winshuttle_#{Time.now.strftime('%Y%m%d')}.xls"
-      OpenMailer.send_simple_html(email_address,'Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[f]).deliver
+      OpenMailer.send_simple_html(email_address,'Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[f]).deliver_now
     end
 
     def preprocess_row base_row, opts = {}

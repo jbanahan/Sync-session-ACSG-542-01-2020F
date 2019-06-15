@@ -4,8 +4,8 @@ class TariffSetsController < ApplicationController
     @page_title = 'Tools'
   end
   def index
-    t = params[:country_id] ? TariffSet.where(:country_id=>params[:country_id]) : TariffSet.where(true)
-    t = t.includes(:country).order("countries.name ASC, tariff_sets.label DESC").to_a
+    t = params[:country_id] ? TariffSet.where(:country_id=>params[:country_id]) : TariffSet.all
+    t = t.joins(:country).includes(:country).order(Country.arel_table[:name].asc, {label: :desc}).to_a
     respond_to do |format|
       format.json {render :json => t.to_json}
       format.html {@tariff_sets = t}#index.html.erb

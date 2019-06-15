@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
     before do
       @entry = Factory(:entry)
       @port = Factory(:port, name: 'Entry Port')
-      @entry.transport_mode_code = 1
+      @entry.transport_mode_code = "1"
       @entry.us_entry_port = @port
       @entry.broker_reference = 'abcdef'
       @entry.entry_number = 'e123number'
@@ -124,7 +124,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
     it 'generates the initial hash' do
       expected_initial_hash = {
-          transport: 1,
+          transport: "1",
           entry_port_name: 'Entry Port',
           broker_number: 'abcdef',
           entry_number: 'e123number',

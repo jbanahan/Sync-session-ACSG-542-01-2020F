@@ -17,6 +17,9 @@
 #
 
 class BillableEvent < ActiveRecord::Base
+  attr_accessible :billable_eventable_id, :billable_eventable, :billable_eventable_type, 
+    :entity_snapshot_id, :event_type
+  
   belongs_to :billable_eventable, :polymorphic => true
   belongs_to :entity_snapshot
   has_many :invoiced_events

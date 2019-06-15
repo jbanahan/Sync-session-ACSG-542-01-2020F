@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe QuickSearchController do
   before :each do 
     MasterSetup.get.update_attributes(vendor_management_enabled: true, entry_enabled: true, broker_invoice_enabled: true)

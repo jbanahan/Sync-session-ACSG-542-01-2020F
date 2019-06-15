@@ -1,6 +1,8 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportContainerListing < CustomReport
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  
   def self.template_name
     "Container Listing"
   end

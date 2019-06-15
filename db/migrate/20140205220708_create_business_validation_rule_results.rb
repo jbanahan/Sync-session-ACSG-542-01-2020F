@@ -9,7 +9,7 @@ class CreateBusinessValidationRuleResults < ActiveRecord::Migration
       t.references :overridden_by
       t.datetime :overridden_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :business_validation_rule_results, :business_validation_result_id, name: 'business_validation_result'
     add_index :business_validation_rule_results, :business_validation_rule_id, name: 'business_validation_rule'

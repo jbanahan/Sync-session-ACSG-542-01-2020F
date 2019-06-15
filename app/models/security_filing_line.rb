@@ -27,6 +27,11 @@ class SecurityFilingLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport
   include ShallowMerger
+
+  attr_accessible :commercial_invoice_number, :country_of_origin_code, :hts_code, 
+    :line_number, :manufacturer_name, :mid, :part_number, :po_number, :quantity, 
+    :security_filing_id
+  
   belongs_to :security_filing
   has_many :piece_sets
 

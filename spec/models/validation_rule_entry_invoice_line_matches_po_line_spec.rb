@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceLineMatchesPoLine do 
 
   describe "run_child_validation" do
@@ -20,21 +18,21 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
     end
 
     it "does not notify if PO and line are found" do
-      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      po = Factory(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
       product = Factory(:product, importer: @line.entry.importer)
       product.update_custom_value! @part_no_cd, @line.part_number
 
-      po.order_lines.create! product: product
+      po.order_lines.create! product_id: product.id
 
       expect(described_class.new.run_child_validation @line).to be_nil
     end
 
     it "notifies if extra field does not match" do
       po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
-      product = Factory(:product, importer: @line.entry.importer)
+      product = Factory(:product, importer_id: @line.entry.importer.id)
       product.update_custom_value! @part_no_cd, @line.part_number
 
-      po.order_lines.create! product: product, quantity: 10
+      po.order_lines.create! product_id: product.id, quantity: 10
       @line.update_attributes(quantity:11)
 
       h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'gt'}]}
@@ -42,11 +40,11 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
     end
 
     it 'does not notify if field matches' do
-      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      po = Factory(:order, importer_id: @line.entry.importer.id, customer_order_number: @line.po_number)
       product = Factory(:product, importer: @line.entry.importer)
       product.update_custom_value! @part_no_cd, @line.part_number
 
-      po.order_lines.create! product: product, quantity: 10
+      po.order_lines.create! product_id: product.id, quantity: 10
       @line.update_attributes(quantity:11)
 
       h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'lt'}]}

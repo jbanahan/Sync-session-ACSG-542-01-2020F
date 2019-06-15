@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerCaDrawbackGenerator do
   describe "generate_exports_from_us_entry" do
     it "should make DutyCalcExportFileLines" do

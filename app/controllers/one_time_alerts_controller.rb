@@ -24,7 +24,7 @@ class OneTimeAlertsController < ApplicationController
       @expired = expired_search.paginate(:per_page => 20, :page => params[:page])
       @tab = params[:tab] || "enabled"
       msg = message(params)
-      flash.now[:notices] = [msg] if msg
+      add_flash(:notices, msg, now: true) if msg
     else
       error_redirect "You do not have permission to view One Time Alerts."
     end

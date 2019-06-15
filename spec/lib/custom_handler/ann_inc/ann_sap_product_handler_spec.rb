@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   
   def default_values 

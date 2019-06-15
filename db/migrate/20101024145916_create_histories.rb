@@ -10,7 +10,7 @@ class CreateHistories < ActiveRecord::Migration
       t.string :type
       t.datetime :walked
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

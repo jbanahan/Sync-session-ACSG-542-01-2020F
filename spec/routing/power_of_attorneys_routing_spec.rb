@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe PowerOfAttorneysController do
   describe "routing" do
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
   def make_csv_file order_type
@@ -88,7 +86,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(invoice).not_to be_nil
         expect(invoice.invoice_number).to eq "INV#-01"
         expect(invoice.importer).to eq hm_fenix
-        expect(invoice.invoice_date).to eq Time.zone.parse("2016-02-03 03:05:00")
+        expect(invoice.invoice_date).to eq Time.zone.parse("2016-02-03").to_date
         expect(invoice.gross_weight).to eq 4
         expect(invoice.currency).to eq "USD"
 
@@ -281,7 +279,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         described_class.parse_file file, log
 
         expect(invoice).not_to be_nil
-        expect(invoice.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].parse "1900-01-01 00:00"
+        expect(invoice.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].parse("1900-01-01 00:00").to_date
       end
 
       it "skips file if not the primary parser for CA" do

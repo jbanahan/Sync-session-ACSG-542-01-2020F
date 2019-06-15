@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::FieldsController do
   before(:each) do
     MasterSetup.get.update_attributes(shipment_enabled:true)

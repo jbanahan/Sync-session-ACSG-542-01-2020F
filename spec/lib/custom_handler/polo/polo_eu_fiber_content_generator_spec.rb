@@ -1,12 +1,10 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
 
   describe "generate" do
     it "should email report" do
       u = Factory(:master_user, username:'EU Fiber Content', email:'a@sample.com')
       mail = double('mail')
-      expect(mail).to receive(:deliver!)
+      expect(mail).to receive(:deliver_now)
       d = described_class.new
       f = double('file')
       expect(d).to receive(:sync_xls).and_return(f)
@@ -16,13 +14,13 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
     it "should create user" do
       master_company = Factory(:company, master:true)
       mail = double('mail')
-      expect(mail).to receive(:deliver!)
+      expect(mail).to receive(:deliver_now)
       d = described_class.new
       f = double('file')
       expect(d).to receive(:sync_xls).and_return(f)
       expect(OpenMailer).to receive(:send_simple_html).with('bug@vandegriftinc.com','VFI Track EU Fiber Content Report','Fiber content report is attached.',f).and_return(mail)
       expect{d.generate}.to change(User,:count).by(1)
-      u = User.find_by_username('EU Fiber Content')
+      u = User.find_by(username: 'EU Fiber Content')
       expect(u.view_products?).to be_truthy
     end
   end
@@ -62,7 +60,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(do_sync).to eq [@headers,[
         'UID','NM','FC','1234567890','CSM','MD', 'SEA'
         ]]
-      expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
+      expect(p.sync_records.find_by(trading_partner: "eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should get changed record" do
       p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.second.ago)
@@ -76,7 +74,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(do_sync).to eq [@headers,[
         'UID','NM','FC','1234567890','CSM','MD', 'SEA'
         ]]
-      expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
+      expect(p.sync_records.find_by(trading_partner: "eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should not get record not changed" do
       p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.day.ago)

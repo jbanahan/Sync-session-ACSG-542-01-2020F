@@ -18,6 +18,7 @@
 #
 
 class OfficialScheduleBCode < ActiveRecord::Base
+  attr_accessible :end_use_classification, :hitech_classification, :hts_code, :long_description, :naics_classification, :quantity_1, :quantity_2, :short_description, :sitc_code, :usda_code
 
   #clears current schedule b list and reloads it from census file
   def self.load_from_census_file file_path
@@ -33,9 +34,9 @@ class OfficialScheduleBCode < ActiveRecord::Base
         }
         next if data_hash[:hts_code].to_s.blank? || data_hash[:hts_code].to_i <= 0
 
-        osb = OfficialScheduleBCode.find_by_hts_code(data_hash[:hts_code])
+        osb = OfficialScheduleBCode.find_by(hts_code: data_hash[:hts_code])
         osb = OfficialScheduleBCode.new unless osb
-        osb.update_attributes data_hash
+        osb.update! data_hash
       }
     end
     OfficialScheduleBCode.count

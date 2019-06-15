@@ -4,7 +4,7 @@ class CreateImportConfigMappings < ActiveRecord::Migration
       t.string :model_field_uid
       t.integer :column
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

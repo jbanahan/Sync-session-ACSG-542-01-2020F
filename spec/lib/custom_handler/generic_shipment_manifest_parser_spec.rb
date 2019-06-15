@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 describe OpenChain::CustomHandler::GenericShipmentManifestParser do

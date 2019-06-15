@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
   # A lot of this spec is mocked out since this is mostly like a controller class that's 

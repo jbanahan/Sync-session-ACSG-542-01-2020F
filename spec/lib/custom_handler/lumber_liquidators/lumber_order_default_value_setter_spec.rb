@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderDefaultValueSetter do
   describe "set_defaults" do
     before :each do

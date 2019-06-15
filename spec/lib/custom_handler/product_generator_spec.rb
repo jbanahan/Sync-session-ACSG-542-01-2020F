@@ -356,7 +356,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
 
   describe "write_sync_records" do
-    it "replaces old sync records, incorporates values of #autoconfirm and #has_fingerprint into record insertions" do
+    it "replaces old sync records, incorporates values of #autoconfirm and #has_fingerprint into record insertions", :without_partial_double_verification do
       inst = subject
       allow(inst).to receive(:sync_code).and_return('SYNC_CODE')
       prod_1 = Factory(:product)
@@ -462,7 +462,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(REXML::XPath.each(xml, "Product/Col6").size).to eq 0
     end
 
-    it "calls write_row_to_xml to add elements to XML if implemented" do
+    it "calls write_row_to_xml to add elements to XML if implemented", :without_partial_double_verification do
       root_element, cursor_val, row_val = nil
       allow(subject).to receive(:write_row_to_xml) do |root, cursor, row|
         row_val = row
@@ -484,7 +484,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       expect(cursor_val).to eq 0
     end
 
-    it "calls before_xml_write if implemented before writing data to xml" do
+    it "calls before_xml_write if implemented before writing data to xml", :without_partial_double_verification do
       cursor_val, vals = nil
       allow(subject).to receive(:before_xml_write) do |cursor, values|
         cursor_val = cursor

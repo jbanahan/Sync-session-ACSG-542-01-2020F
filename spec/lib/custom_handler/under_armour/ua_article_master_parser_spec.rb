@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   before :all do
     # Speed up specs by preloading custom defs
@@ -450,7 +448,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
       context "with single HTS" do
         it "updates classification's tariff if it already exists and has been changed" do
-          tr = Factory(:tariff_record, classification: classi, hts_1: "1111111111")
+          tr = classi.tariff_records.create! hts_1: "1111111111"
           subject.create_or_update_tariff! classi, ["2222222222"], change_flag
           tr.reload
           expect(tr.hts_1).to eq "2222222222"
@@ -458,7 +456,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         end
 
         it "doesn't update tariff if it hasn't been changed" do
-          tr = Factory(:tariff_record, classification: classi, hts_1: "1111111111")
+          tr = classi.tariff_records.create! hts_1: "1111111111"
           subject.create_or_update_tariff! classi, ["1111111111"], change_flag
           tr.reload
           expect(tr.hts_1).to eq "1111111111"

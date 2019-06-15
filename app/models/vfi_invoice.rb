@@ -17,6 +17,9 @@
 
 class VfiInvoice < ActiveRecord::Base
   include CoreObjectSupport
+
+  attr_accessible :currency, :customer_id, :customer, :invoice_date, 
+    :invoice_number
   
   belongs_to :customer, :class_name => "Company"
   has_many :vfi_invoice_lines, :dependent => :destroy, :inverse_of => :vfi_invoice

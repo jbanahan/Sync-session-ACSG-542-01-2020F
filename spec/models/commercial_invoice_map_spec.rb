@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CommercialInvoiceMap do
   describe "generate_invoice!" do
     before :each do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::DasProductGenerator do
   #YYYYMMDDHHMMSSLLL-DAPART.DAT
   describe "remote_file_name" do

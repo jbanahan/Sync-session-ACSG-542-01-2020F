@@ -1,4 +1,3 @@
-require 'spec_helper'
 describe PowerOfAttorneysController do
   before(:each) do
     @company = Factory(:company)
@@ -135,21 +134,21 @@ describe PowerOfAttorneysController do
         # away the send_data call)
         @controller.render :nothing => true
       end
-      get :download, :id => @poa.id      
+      get :download, company_id: @poa.company_id, id: @poa.id
     end
 
     it "returns error message if POA not found" do
       @poa.destroy
       expect(@user).to receive(:view_power_of_attorneys?).and_return true
       expect(@controller).to_not receive(:send_data)
-      get :download, :id => @poa.id
+      get :download, company_id: @poa.company_id, id: @poa.id
       expect(response).to redirect_to(companies_path)
     end
 
     it "blocks unauthorized user" do
       expect(@user).to receive(:view_power_of_attorneys?).and_return false
       expect(@controller).to_not receive(:send_data)
-      get :download, :id => @poa.id
+      get :download, company_id: @poa.company_id, id: @poa.id
       expect(response).to redirect_to(companies_path)
     end
   end

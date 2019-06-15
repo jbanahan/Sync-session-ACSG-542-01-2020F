@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PasswordResetsHelper do
   let!(:user) { Factory(:user) }
   describe '#requires_old_password?' do

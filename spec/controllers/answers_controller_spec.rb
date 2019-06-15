@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AnswersController do
   describe 'update' do
     before :each do

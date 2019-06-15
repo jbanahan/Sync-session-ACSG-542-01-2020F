@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TextileController do
   describe "preview" do
     it "should send back formatted html without authentication" do

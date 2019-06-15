@@ -10,7 +10,7 @@ class CreateVfiInvoiceLines < ActiveRecord::Migration
       t.string :unit
       t.decimal :unit_price, :precision => 11, :scale => 2
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :vfi_invoice_lines, :vfi_invoice_id

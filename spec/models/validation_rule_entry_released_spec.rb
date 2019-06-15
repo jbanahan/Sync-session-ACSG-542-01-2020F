@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryReleased do
   before :each do
     @rule = ValidationRuleEntryReleased.new(rule_attributes_json: {hold_date: 'ent_cbp_hold_date', release_date: 'ent_cbp_hold_release_date'}.to_json)

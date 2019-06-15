@@ -75,9 +75,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
         ensure
           if completed
             now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
-            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"), "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver!
+            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"), "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver_now
           else
-            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver!
+            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver_now
           end
         end
       end

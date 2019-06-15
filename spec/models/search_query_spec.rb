@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchQuery do
   before :each do
     allow(Product).to receive(:search_where).and_return("1=1")
@@ -147,7 +145,8 @@ describe SearchQuery do
       # Make sure that the search criterion's value is the only thing referencing a different module level so 
       # that we're sure that we're testing the code that handles collecting this field's core module
       classfication = Factory(:classification,:product=>@p1)
-      classfication.update_attributes :updated_at => 1.day.from_now
+      classfication.update_column :updated_at, 1.day.from_now
+
       @ss.search_criterions.clear
       @ss.search_criterions.build(:model_field_uid=>'prod_created_at', :operator=>'bfld', :value=>"class_updated_at")
       r = @sq.execute per_page: 1000

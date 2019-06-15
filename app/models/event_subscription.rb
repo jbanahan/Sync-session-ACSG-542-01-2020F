@@ -16,6 +16,8 @@
 #
 
 class EventSubscription < ActiveRecord::Base
+  attr_accessible :email, :event_type, :system_message, :user_id
+  
   belongs_to :user, inverse_of: :event_subscriptions, touch: true
 
   validates :user, presence: true

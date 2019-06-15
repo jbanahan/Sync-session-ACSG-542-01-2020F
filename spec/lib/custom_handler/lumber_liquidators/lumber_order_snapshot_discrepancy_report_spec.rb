@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderSnapshotDiscrepancyReport do
 
   describe "permission?" do

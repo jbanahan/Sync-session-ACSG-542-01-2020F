@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator do
 
   def make_source_row data

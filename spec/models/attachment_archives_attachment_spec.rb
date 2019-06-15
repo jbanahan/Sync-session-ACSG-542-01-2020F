@@ -1,5 +1,3 @@
-describe 'spec_helper'
-
 describe AttachmentArchivesAttachment do
   context "output_path" do
     it "should use the attached entry to generate a path based on the broker reference number" do

@@ -15,5 +15,5 @@
 #
 
 class StitchQueueItem < ActiveRecord::Base
-
+  attr_accessible :stitch_queuable_id, :stitch_queuable_type, :stitch_type
 end

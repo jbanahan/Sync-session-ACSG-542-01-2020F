@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentArchiveManifestsController do
   before :each do
     @u = Factory(:user)
@@ -14,7 +12,7 @@ describe AttachmentArchiveManifestsController do
       expect_any_instance_of(AttachmentArchiveManifest).to receive(:delay).and_return(d)
       post :create, :company_id=>@u.company.id.to_s
       expect(response).to be_success
-      m = AttachmentArchiveManifest.find_by_company_id(@u.company.id)
+      m = AttachmentArchiveManifest.find_by(company: @u.company)
       expect(JSON.parse(response.body)).to eq({'id'=>m.id})
     end
     it "should fail if user cannot view archives" do

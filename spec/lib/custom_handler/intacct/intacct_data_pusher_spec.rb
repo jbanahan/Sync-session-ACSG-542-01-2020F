@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/intacct/intacct_data_pusher'
 
 describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do

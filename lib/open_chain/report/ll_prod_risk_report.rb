@@ -45,7 +45,7 @@ module OpenChain
         workbook_to_tempfile wb, 'LlProdRiskReport-' do |t|
           subject = "Products Needing Risk Assignment"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
-          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
+          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver_now
         end
       end
 

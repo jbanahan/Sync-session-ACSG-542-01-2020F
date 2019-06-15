@@ -6,7 +6,7 @@ class CreateTariffRecords < ActiveRecord::Migration
       t.string :hts_3
       t.integer :classification_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

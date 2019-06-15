@@ -7,7 +7,7 @@ $(function() {
 
 <% content_for :action_bar do %>
 <% if @custom_definition.can_edit?(current_user)%><button id='btn_edit'>Edit</button><%end%>
-<%= button_to('Delete', custom_definition_path(@custom_definition),:method => :delete, :confirm => "Are you sure?  Deleting this field will delete all data.  There is no undo.", :id => "btn_delete") %>
+<%= button_to('Delete', custom_definition_path(@custom_definition), method: :delete, data: {confirm: "Are you sure?  Deleting this field will delete all data.  There is no undo."}, id: "btn_delete") %>
 <button id='back_to_search'>Back To Search</button>
 <% end %>
 

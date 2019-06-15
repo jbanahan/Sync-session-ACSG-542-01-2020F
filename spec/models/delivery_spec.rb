@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Delivery do
   describe 'linkable attachments' do
     it 'should have linkable attachments' do

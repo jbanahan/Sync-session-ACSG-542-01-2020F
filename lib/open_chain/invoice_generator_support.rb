@@ -6,7 +6,7 @@ module OpenChain; module InvoiceGeneratorSupport
  
   def email_invoice invoice, addresses, subject, filename, detail_tempfile=nil
     invoice_tmp = create_xl_invoice invoice, filename
-    OpenMailer.send_simple_html(addresses, subject, "Attached is the #{subject}", [invoice_tmp, detail_tempfile].compact).deliver!  
+    OpenMailer.send_simple_html(addresses, subject, "Attached is the #{subject}", [invoice_tmp, detail_tempfile].compact).deliver_now  
     invoice_tmp.close
     detail_tempfile.close if detail_tempfile
   end

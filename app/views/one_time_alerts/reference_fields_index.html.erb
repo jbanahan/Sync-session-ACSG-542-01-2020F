@@ -2,8 +2,8 @@
 
   $(function() {
 
-    var available = escapeJson(<%= @available %>);
-    var included = escapeJson(<%= @included %>);
+    var available = escapeJson(<%= scriptify_json(@available) %>);
+    var included = escapeJson(<%= scriptify_json(@included) %>);
     var availableSelect = $("#available-select");
     var includedSelect = $("#included-select");
     var module = null;

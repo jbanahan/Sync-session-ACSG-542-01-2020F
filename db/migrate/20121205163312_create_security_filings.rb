@@ -31,7 +31,7 @@ class CreateSecurityFilings < ActiveRecord::Migration
       t.date :estimated_vessel_load_date
       t.string :po_numbers
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :security_filings,  :importer_id
     add_index :security_filings,  :host_system_file_number

@@ -18,6 +18,10 @@
 #
 
 class OfficialQuota < ActiveRecord::Base
+  attr_accessible :category, :country_id, :hts_code, 
+    :official_tariff_id, :square_meter_equivalent_factor, 
+    :unit_of_measure
+  
   belongs_to :country
   belongs_to :official_tariff
   self.table_name = :official_quotas

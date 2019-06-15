@@ -7,7 +7,7 @@
 #  id                :integer          not null, primary key
 #  run_as_session_id :integer
 #  updated_at        :datetime         not null
-#  url               :string(255)
+#  url               :text(65535)
 #  user_id           :integer
 #
 # Indexes
@@ -17,6 +17,8 @@
 #
 
 class RequestLog < ActiveRecord::Base
+  attr_accessible :http_method, :run_as_session_id, :url, :user_id
+  
   belongs_to :user
   belongs_to :run_as_session, inverse_of: :request_logs
   has_one :attachment, as: :attachable, dependent: :destroy

@@ -44,7 +44,7 @@ module OpenChain
           end_date_formatted = Date.parse(settings['end_date']).strftime("%-m-%-d-%y")
           subject = "Tariff Totals for the Period #{start_date_formatted} to #{end_date_formatted}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
-          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver!
+          OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver_now
         end
       end
 

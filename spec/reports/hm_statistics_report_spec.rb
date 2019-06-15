@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::HmStatisticsReport do
   let!(:day_before) {ActiveSupport::TimeZone["UTC"].local(2016,01,14)}
   let!(:assigned_day) {ActiveSupport::TimeZone["UTC"].local(2016,01,15)}

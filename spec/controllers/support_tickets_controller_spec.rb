@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SupportTicketsController do
   describe 'index' do
     before :each do

@@ -30,7 +30,7 @@ class CreateStatementTables < ActiveRecord::Migration
       t.string :last_file_path
       t.datetime :last_exported_from_source
       
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :monthly_statements, :statement_number, unique: true
@@ -68,7 +68,7 @@ class CreateStatementTables < ActiveRecord::Migration
       t.string :last_file_path
       t.datetime :last_exported_from_source
       
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :daily_statements, :statement_number, unique: true
@@ -97,7 +97,7 @@ class CreateStatementTables < ActiveRecord::Migration
       t.decimal :preliminary_total_amount, precision: 11, scale: 2
       t.decimal :billed_amount, precision: 11, scale: 2
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :daily_statement_entries, :daily_statement_id

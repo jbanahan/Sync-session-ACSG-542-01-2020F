@@ -10,6 +10,7 @@
 #
 
 class LinkableAttachmentImportRule < ActiveRecord::Base
+  attr_accessible :model_field_uid, :path
 
   validates :path, :presence=>true, :uniqueness=>true
   validates :model_field_uid, :presence=>true
@@ -82,7 +83,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     cache = nil
     @@lock.synchronize do
       clear_cache
-      LinkableAttachmentImportRule.scoped.each do |r|
+      LinkableAttachmentImportRule.all.each do |r|
         @@link_cache_updated_at = r.updated_at if @@link_cache_updated_at.nil? || r.updated_at > @@link_cache_updated_at
         mf = ModelField.find_by_uid(r.model_field_uid)
         next if mf.blank?

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Validations::Password::PasswordAgePoller do
   before do
     @not_old_password = Factory.create(:user, password_changed_at: Time.zone.now)

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/custom_handler/intacct/intacct_client'
 
 describe OpenChain::CustomHandler::Intacct::IntacctClient do
@@ -566,16 +565,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
     let! (:config) {
       {
-        "sender_id" => "vfi",
-        "sender_password" => "<vfi-password>",
-        "company_id" => "vfi",
-        "user_id" => "user",
-        "user_password" => "<user-password>"
+        "intacct" => {
+          "sender_id" => "vfi",
+          "sender_password" => "<vfi-password>",
+          "company_id" => "vfi",
+          "user_id" => "user",
+          "user_password" => "<user-password>"
+        }
       }
     }
 
     it "parses yaml file contents, symbolizes keys, and xml encodes values" do
-      expect(YAML).to receive(:load_file).with(Rails.root.join("config", "intacct.yml")).and_return config
+      expect(MasterSetup).to receive(:secrets).and_return config
       conf = subject.intacct_config
 
       expect(conf[:sender_id]).to eq "vfi"
@@ -586,13 +587,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     end
 
     it "handles missing config file" do
-      expect(YAML).to receive(:load_file).and_raise Errno::ENOENT
+      expect(MasterSetup).to receive(:secrets).and_return({})
 
-      expect { subject.intacct_config }.to raise_error "No Intacct client configuration file found at 'config/intacct.yml'."
+      expect { subject.intacct_config }.to raise_error "No Intacct client configuration file found in secrets.yml."
     end
 
     it "caches config lookup" do
-      expect(YAML).to receive(:load_file).with(Rails.root.join("config", "intacct.yml")).and_return config
+      expect(MasterSetup).to receive(:secrets).and_return config
       conf = subject.intacct_config
 
       expect(subject.intacct_config.object_id).to eq conf.object_id

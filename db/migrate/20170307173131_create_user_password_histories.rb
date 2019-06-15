@@ -4,7 +4,7 @@ class CreateUserPasswordHistories < ActiveRecord::Migration
       t.integer :user_id
       t.string :hashed_password
       t.string :password_salt
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :user_password_histories, [:user_id, :created_at]

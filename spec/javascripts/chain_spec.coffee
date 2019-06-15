@@ -2,7 +2,7 @@ describe 'hideMessage', () ->
   it "should do post", () ->
     spyOn $, 'post'
     Chain.hideMessage 'abc'
-    expect($.post).toHaveBeenCalledWith('/hide_message/abc')
+    expect($.post).toHaveBeenCalledWith('/users/hide_message', {message_name: "abc"})
 
 describe 'sendEmailAttachments', () ->
   it 'should post correct parameters to correct URL', () ->

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SchedulableJob do
 
   describe '.create_default_jobs!' do
@@ -17,11 +15,16 @@ describe SchedulableJob do
 
   describe "run" do
     class TestSchedulable
+      def self.run_schedulable a; end
     end
 
     class TestSchedulableNoParams
       def self.run_schedulable; end
     end
+
+    class BadSchedulable
+    end
+
     it "should submit job" do
       expect(TestSchedulable).to receive(:run_schedulable).with({'last_start_time'=>nil})
       sj = SchedulableJob.new(:run_class=>"TestSchedulable")
@@ -71,13 +74,13 @@ describe SchedulableJob do
       expect(m.to.first).to eq "me@there.com"
     end
     it "should not attempt to run classes with no run_schedulable method" do
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>{}, failure_email: "me@there.com")
+      sj = SchedulableJob.new(:run_class=>"BadSchedulable",:opts=>{}, failure_email: "me@there.com")
       sj.run
 
       m = OpenMailer.deliveries.pop
       expect(m.to.first).to eq "me@there.com"
       expect(m.subject).to include "Failed"
-      expect(m.body.raw_source).to include "No 'run_schedulable' method exists on 'TestSchedulable' class."
+      expect(m.body.raw_source).to include "No 'run_schedulable' method exists on 'BadSchedulable' class."
     end
     it "should log an error if no error email is configured" do
       opts = {'last_start_time'=>nil,'a'=>"b"}

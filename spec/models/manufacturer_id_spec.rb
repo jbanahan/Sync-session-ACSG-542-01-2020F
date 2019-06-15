@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ManufacturerId do
 
   describe "load_mid_records" do

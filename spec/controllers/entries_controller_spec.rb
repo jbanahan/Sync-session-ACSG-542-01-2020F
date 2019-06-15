@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EntriesController do
 
   before :each do
@@ -440,7 +438,7 @@ describe EntriesController do
 
   describe "by_entry_port" do
     it "validates access and creates an entry port query" do
-      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id, iso_code: 'US'
+      get :by_entry_port, importer_id: @u.company.id, port_code: 'ABC', iso_code: 'US'
 
       expect(response).to be_success
       expect(assigns(:entries).to_sql).to match(/SELECT.*FROM/i)
@@ -450,7 +448,7 @@ describe EntriesController do
     it "secures action" do
       expect(Entry).to receive(:can_view_importer?).and_return false
 
-      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
+      get :by_entry_port, importer_id: @u.company.id, port_code: 'ABC', iso_code: "US"
       expect(response).to redirect_to("/")
       expect(flash[:errors]).to eq ["You do not have permission to view this entry."]
     end

@@ -109,7 +109,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
 
   private 
     def sqs_queue
-      Rails.application.config.attachment_stitcher['request_queue']
+      queue = MasterSetup.secrets["pdf_stitcher"].try(:[], "request_queue")
+      raise "No 'request_queue' key found under 'pdf_stitcher' config in secrets.yml." if queue.blank?
+      queue
     end
 
     def find_attachments_by_type json, attachment_type_list, skip_archive_attachment: true

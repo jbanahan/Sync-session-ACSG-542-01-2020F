@@ -1,10 +1,8 @@
-require 'spec_helper'
-
 describe OpenChain::FenixSqlProxyClient do
   before :each do
     @http_client = double("MockHttpClient")
     @c = described_class.new @http_client
-    @proxy_config = {'test' => {'auth_token' => "config_auth_token", "url" => "config_url"}}
+    @proxy_config = {'auth_token' => "config_auth_token", "url" => "config_url"}
     allow(described_class).to receive(:proxy_config).and_return(@proxy_config)
   end
 

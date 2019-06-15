@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceLineTariffFieldFormat do
 
   describe "run_validation" do

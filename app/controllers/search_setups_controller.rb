@@ -26,7 +26,7 @@ class SearchSetupsController < ApplicationController
       search_setup.search_columns.destroy_all if !params[:search_setup][:search_columns_attributes].blank? #clear, they will be reloaded
       search_setup.sort_criterions.destroy_all #clear, they will be reloaded
       search_setup.update_attributes(params[:search_setup])
-      redirect_to Kernel.const_get(search_setup.module_type)
+      redirect_to core_module_class(search_setup)
     end
   end
   
@@ -52,7 +52,7 @@ class SearchSetupsController < ApplicationController
         respond_to do |format|
           format.html {
             add_flash :errors, error_message
-            redirect_to Kernel.const_get(base.module_type)
+            redirect_to core_module_class(base)
           }
           format.json {
             render :json=>{"error"=>error_message}, :status=>422
@@ -64,7 +64,7 @@ class SearchSetupsController < ApplicationController
         respond_to do |format|
           format.html {
             add_flash :notices, "A copy of this report has been created as '" + copy.name + "'."
-            redirect_to Kernel.const_get(copy.module_type)
+            redirect_to core_module_class(copy)
           }
           format.json {
             render :json=>{"ok"=>"ok", "id"=>copy.id, "name"=>copy.name}
@@ -88,7 +88,7 @@ class SearchSetupsController < ApplicationController
       format.html {
         if error_message.blank?
           add_flash :notices, "Report #{base.name} has been given to #{other_user.full_name}."
-          redirect_to Kernel.const_get(base.module_type)
+          redirect_to core_module_class(base)
         else
           error_redirect error_message
         end
@@ -105,21 +105,12 @@ class SearchSetupsController < ApplicationController
   def destroy
     base = SearchSetup.for_user(current_user).find(params[:id])
     name = base.name
-    mod_type = Kernel.const_get(base.module_type)
     if base.destroy
       add_flash :notices, "#{name} successfully deleted."
     else 
       add_flash :errors, "#{name} could not be deleted."
     end
-    redirect_to mod_type
-  end
-  def sticky_open
-    current_user.update_attributes({:search_open=>true})
-    render :text => ""
-  end
-  def sticky_close
-    current_user.update_attributes({:search_open=>false})
-    render :text => ""
+    redirect_to core_module_class(base)
   end
 
   private 
@@ -133,5 +124,11 @@ class SearchSetupsController < ApplicationController
         end
       end
     end unless p[:search_setup][:search_criterions_attributes].nil? 
+  end
+
+  def core_module_class search_setup
+    cm = CoreModule.find_by_class_name(search_setup.module_type)
+    raise "Unknown module type: #{search_setup.module_type}" if cm.nil?
+    cm.klass
   end
 end

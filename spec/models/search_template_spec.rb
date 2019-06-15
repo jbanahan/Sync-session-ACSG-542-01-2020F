@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchTemplate do
   before :each do
     @ss = SearchSetup.new(name:'MyName',module_type:'Order',include_links:true,no_time:true)

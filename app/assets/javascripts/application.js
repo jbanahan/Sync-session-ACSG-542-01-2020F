@@ -10,7 +10,9 @@
 // WARNING: THE FIRST BLANK LINE MARKS THE END OF WHAT'S TO BE PROCESSED, ANY BLANK LINE SHOULD
 // GO AFTER THE REQUIRES BELOW.
 //= require jquery
-//= require jquery_ujs
+// Because all the stub'ed applications below require jquery_ujs (and the fact that it comes from a gem)
+// we need to link it externally and then add it in as an asset to the header.
+//= link jquery_ujs
 //= require json3
 //= require bootstrap.bundle
 //= require jquery-ui

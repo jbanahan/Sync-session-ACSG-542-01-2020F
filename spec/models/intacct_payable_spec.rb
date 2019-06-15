@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe IntacctPayable do
   describe "suggested_fix" do
     it "recognizes Payable missing vendor errors" do

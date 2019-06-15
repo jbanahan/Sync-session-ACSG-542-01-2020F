@@ -84,8 +84,8 @@ module Helpers
       raise "Mock S3 method #{sym} not implemented, you must stub it yourself or include the `s3: true` tag on your test to use the real implementation."
     end
 
-    def self.url_for bucket, path, expires_in, options = {}
-      "http://#{bucket}.s3.com/#{path}?expires_in=#{expires_in.to_i}"
+    def self.url_for bucket, key, expires_in=1.minute, options = {}
+      "http://#{bucket}.s3.com/#{key}?expires_in=#{expires_in.to_i}"
     end
     
     def self.upload_data bucket_name, path, data, options = {}
@@ -141,6 +141,63 @@ module Helpers
       true
     end
 
+    # TODO - Reimplement the mocking of s3 to actually mock the underlying client and not
+    # the outer OpenChain::S3 shell
+    def self.download_to_tempfile bucket, key, options = {}
+      raise "Method must be mocked!"
+    end
+
+    def self.each_file_in_bucket(bucket, max_files: nil, prefix: nil)
+      raise "Method must be mocked!"
+    end
+
+    def self.metadata metadata_key, bucket, key, version = nil
+      raise "Method must be mocked!"
+    end
+
+    def self.create_s3_tempfile local_file, bucket: 'test', tmp_s3_path: "test/temp"
+      raise "Method must be mocked!"
+    end
+
+    def self.with_s3_tempfile local_file, bucket: 'test', tmp_s3_path: "test/temp"
+      raise "Method must be mocked!"
+    end
+
+    def self.get_data bucket, key, io = nil
+      raise "Method must be mocked!"
+    end
+
+    def self.bucket_exists? bucket_name
+      raise "Method must be mocked!"
+    end
+
+    def self.copy_object from_bucket, from_key, to_bucket, to_key, from_version: nil
+      raise "Method must be mocked!"
+    end
+
+    def self.create_bucket! bucket_name, opts={}
+      raise "Method must be mocked!"
+    end
+
+    def self.integration_subfolder_path folder, upload_date
+      raise "Method must be mocked!"
+    end
+
+    def self.bucket_exists? bucket_name
+      raise "Method must be mocked!"
+    end
+
+    def self.integration_keys upload_date, subfolders
+      raise "Method must be mocked!"
+    end
+
+    def self.zero_file bucket, key
+      raise "Method must be mocked!"
+    end
+
+    def self.upload_file bucket, key, file, write_options = {}
+      raise "Method must be mocked!"
+    end
   end
 
   # Stub out the S3 methods

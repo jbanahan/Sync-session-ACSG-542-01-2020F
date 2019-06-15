@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler:: Polo::PoloJiraEntryReport do
     it "fails if no email address provided" do
       settings = {}
 
-      expect_any_instance_of(subject).not_to receive(:run_report)
+      expect_any_instance_of(subject).not_to receive(:run)
       expect(OpenMailer).not_to receive(:send_simple_html)
 
       expect { subject.run_schedulable(settings) }.to raise_error(RuntimeError, 'Scheduled instances of the Jira Ticket Discrepancy Report must include an email_to setting with an array of email addresses.')

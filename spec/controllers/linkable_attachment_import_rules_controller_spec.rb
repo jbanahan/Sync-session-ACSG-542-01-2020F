@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe LinkableAttachmentImportRulesController do
   before(:each) do
 

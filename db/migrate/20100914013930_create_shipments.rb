@@ -9,7 +9,7 @@ class CreateShipments < ActiveRecord::Migration
       t.integer :ship_to_id
       t.integer :carrier_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

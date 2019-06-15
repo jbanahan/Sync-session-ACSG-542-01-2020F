@@ -4,7 +4,7 @@ class CreateEntityTypeFields < ActiveRecord::Migration
       t.string :model_field_uid
       t.integer :entity_type_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :entity_type_fields, :entity_type_id
   end

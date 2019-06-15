@@ -1,6 +1,6 @@
-require 'spec_helper'
-
 describe OpenChain::AllianceImagingClient do
+
+  let! (:master_setup) { stub_master_setup }
 
   describe "bulk_request_images" do
     before :each do
@@ -337,7 +337,7 @@ describe OpenChain::AllianceImagingClient do
     }
 
     let (:config) {
-      {"sqs_receive_queue" => "sqs"}.with_indifferent_access
+      {"sqs_receive_queue" => "sqs"}
     }
 
     let (:tempfile) {
@@ -397,12 +397,9 @@ describe OpenChain::AllianceImagingClient do
     end
 
     context "with fenix document proxy enabled" do
-      let! (:master_setup) {
-        ms = stub_master_setup
-        allow(ms).to receive(:custom_feature?).with("Proxy Fenix Drive Docs").and_return true
-
-        ms
-      }
+      before :each do
+        allow(master_setup).to receive(:custom_feature?).with("Proxy Fenix Drive Docs").and_return true
+      end
 
       let (:entry) { Entry.new source_system: Entry::FENIX_SOURCE_SYSTEM }
       let (:attachment) { Attachment.new }
@@ -498,8 +495,7 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "run_schedulable" do
-    let! (:ms) { stub_master_setup }
-
+    
     it "implements SchedulableJob interface" do
       allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
       expect(OpenChain::AllianceImagingClient).to receive(:consume_images)

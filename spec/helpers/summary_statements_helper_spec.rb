@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SummaryStatementsHelper do
   before(:each) do
     @company = Factory(:company)

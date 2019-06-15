@@ -48,7 +48,7 @@ module OpenChain; module Report; class DutySavingsReport
     workbook_to_tempfile wb, 'DutySavings-', file_name: "Duty Savings Report.xls" do |t|
       subject = "Duty Savings Report: #{start_date.strftime("%m-%d-%Y")} through #{(end_date - 1.minute).strftime("%m-%d-%Y")}"
       body = "<p>Report attached.<br>--This is an automated message, please do not reply.<br>This message was generated from VFI Track</p>".html_safe
-      OpenMailer.send_simple_html(email, subject, body, t).deliver!
+      OpenMailer.send_simple_html(email, subject, body, t).deliver_now
     end
   end
   

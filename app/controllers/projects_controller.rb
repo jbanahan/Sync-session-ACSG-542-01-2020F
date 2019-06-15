@@ -8,7 +8,7 @@ class ProjectsController < ApplicationController
       error_redirect "You do not have permission to view projects."
       return
     end
-    @projects = Project.scoped
+    @projects = Project.all
   end
 
   def show
@@ -32,7 +32,7 @@ class ProjectsController < ApplicationController
     if !p.can_edit? current_user
       return render_json_error "You do not have permission to edit this project.", 401
     end
-    p.update_attributes(sanitize_project_params params[:project])
+    p.update(sanitize_project_params params[:project])
     unless p.errors.blank?
       return render_json_error p.errors.full_messages.join('\n'), 400
     end
@@ -109,10 +109,10 @@ class ProjectsController < ApplicationController
     if !p.can_edit? current_user
       return render_json_error "You do not have permission to edit this project.", 401
     end
-    ps = ProjectSet.find_by_name params[:project_set_name].strip
+    ps = ProjectSet.find_by(name: params[:project_set_name]&.strip)
     ps.projects.destroy(p) if ps
     ps.destroy if ps && ps.projects.empty?
-    p.update_attributes(updated_at:0.seconds.ago)
+    p.update(updated_at:0.seconds.ago)
     render_project p
   end
 end

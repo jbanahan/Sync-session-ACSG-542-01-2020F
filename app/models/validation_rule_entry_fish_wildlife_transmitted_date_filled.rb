@@ -14,8 +14,7 @@ class ValidationRuleEntryFishWildlifeTransmittedDateFilled < BusinessValidationR
 
   def run_validation entry
     return nil if entry.fish_and_wildlife_transmitted_date
-
-    ActiveRecord::Associations::Preloader.new(entry, {commercial_invoices: :commercial_invoice_lines}).run
+    ActiveRecord::Associations::Preloader.new.preload(entry, {commercial_invoices: :commercial_invoice_lines})
     line_data = entry.commercial_invoices
                      .flat_map(&:commercial_invoice_lines)
                      .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number,

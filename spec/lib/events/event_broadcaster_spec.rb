@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::Events::EventBroadcaster do
 
   describe "broadcast" do

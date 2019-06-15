@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
   let(:log) { InboundFile.new }
 

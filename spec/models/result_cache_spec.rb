@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ResultCache do
   before :each do
     allow(Product).to receive(:search_where).and_return("1=1")

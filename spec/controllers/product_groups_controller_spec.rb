@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProductGroupsController do
   describe "index" do
     it "should restrict to admins" do

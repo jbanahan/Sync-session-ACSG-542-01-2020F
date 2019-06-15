@@ -70,13 +70,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
     subject = "[VFI Track] Intacct Invoice Report Upload completed successfully"
     body = "".html_safe << "The updated Intacct Invoice Report #{attachment.original_filename} is attached."
     body << "<br>".html_safe << "The following invoices could not be found: #{missing_invoices.join(", ")}" if missing_invoices.present?
-    OpenMailer.send_simple_html(addr, subject, body, [attachment]).deliver!
+    OpenMailer.send_simple_html(addr, subject, body, [attachment]).deliver_now
   end
 
   def send_failure_email addr, error
     subject = "[VFI Track] Intacct Invoice Report Upload completed with errors"
     body = "The Intacct Invoice Report could not be updated due to the following error: #{error}"
-    OpenMailer.send_simple_html(addr, subject, body).deliver!
+    OpenMailer.send_simple_html(addr, subject, body).deliver_now
   end
 
   private

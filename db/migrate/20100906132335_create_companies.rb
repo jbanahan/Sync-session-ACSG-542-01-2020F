@@ -6,7 +6,7 @@ class CreateCompanies < ActiveRecord::Migration
       t.boolean :vendor
       t.boolean :master
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

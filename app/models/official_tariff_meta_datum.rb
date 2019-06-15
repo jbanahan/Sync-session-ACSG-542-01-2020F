@@ -17,6 +17,9 @@
 #
 
 class OfficialTariffMetaDatum < ActiveRecord::Base
+  attr_accessible :auto_classify_ignore, :country, :country_id, :hts_code, 
+    :notes, :summary_description
+  
   validates :country_id, :presence=>true
   validates :hts_code, :presence=>true
   self.table_name = :official_tariff_meta_datas

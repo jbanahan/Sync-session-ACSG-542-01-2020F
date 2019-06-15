@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Country do
   it "should reload model field on save" do
     expect(ModelField).to receive(:reload).with(true)
@@ -8,7 +6,7 @@ describe Country do
   describe "load_default_countries" do
     it "should create countries" do
       Country.load_default_countries
-      expect(Country.scoped.count).to eq(Country::ALL_COUNTRIES.size)
+      expect(Country.all.count).to eq(Country::ALL_COUNTRIES.size)
       c = Country.where(iso_code: "VN").first
       expect(c.name).to eq('VIET NAM')
       expect(c.iso_3_code).to eq('VNM')

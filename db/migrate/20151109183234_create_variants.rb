@@ -4,7 +4,7 @@ class CreateVariants < ActiveRecord::Migration
       t.references :product, null: false
       t.string :variant_identifier
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :variants, :product_id
   end

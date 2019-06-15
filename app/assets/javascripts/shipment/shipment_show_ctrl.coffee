@@ -362,4 +362,9 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
         $scope.dictionary = dict
         $scope.loadShipment $state.params.shipmentId
 
+  $scope.parseInt = (val) ->
+    Number.parseInt(val)
+
+  $scope.parseFloat = (val) ->
+    Number.parseFloat(val)
 ]

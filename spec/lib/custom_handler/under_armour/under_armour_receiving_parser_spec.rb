@@ -1,8 +1,6 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
   before :each do
-    @importer = Factory(:company,:importer=>true)
+    @importer = Factory(:company, master: true, importer: true)
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @xl_client = double('xl_client')
     @s3_path = 'abc'
@@ -112,19 +110,19 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     expect(vendors.first.name).to eq('COACO (PERU)')
     products = Product.where(:unique_identifier=>'1100530')
     expect(products.size).to eq(1)
-    s = Shipment.find_by_reference '180075781'
+    s = Shipment.find_by(reference: '180075781')
     expect(s.shipment_lines.size).to eq(1)
     expect(s.vendor).to eq(vendors.first)
     expect(s.importer).to eq(@importer)
-    expect(s.get_custom_value(CustomDefinition.find_by_label('Delivery Date')).value).to eq(Date.new(2010,10,1))
+    expect(s.get_custom_value(CustomDefinition.find_by(label: 'Delivery Date')).value).to eq(Date.new(2010,10,1))
     line = s.shipment_lines.first
     expect(line.line_number).to eq(1)
     expect(line.product).to eq(products.first)
     expect(line.quantity).to eq(4)
-    expect(line.get_custom_value(CustomDefinition.find_by_label('Country of Origin')).value).to eq('PE')
-    expect(line.get_custom_value(CustomDefinition.find_by_label('PO Number')).value).to eq('450016177')
-    expect(line.get_custom_value(CustomDefinition.find_by_label('Size')).value).to eq('LG')
-    expect(line.get_custom_value(CustomDefinition.find_by_label('Color')).value).to eq('413')
+    expect(line.get_custom_value(CustomDefinition.find_by(label: 'Country of Origin')).value).to eq('PE')
+    expect(line.get_custom_value(CustomDefinition.find_by(label: 'PO Number')).value).to eq('450016177')
+    expect(line.get_custom_value(CustomDefinition.find_by(label: 'Size')).value).to eq('LG')
+    expect(line.get_custom_value(CustomDefinition.find_by(label: 'Color')).value).to eq('413')
   end
   it "should skip result lines" do
     @line_array[6][1] = 'Result'
@@ -137,7 +135,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     expect(@xl_client).to receive(:last_row_number).with(0).and_return(1)
     @make_line_lambda.call(1,@line_array)
     described_class.parse_s3(@s3_path)
-    expect(Shipment.first.shipment_lines.first.get_custom_value(CustomDefinition.find_by_label('Size')).value).to eq("6")
+    expect(Shipment.first.shipment_lines.first.get_custom_value(CustomDefinition.find_by(label: 'Size')).value).to eq("6")
   end
   it 'should parse multi-line shipment' do
     expect(@xl_client).to receive(:last_row_number).with(0).and_return(2)
@@ -147,8 +145,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     @line_array[15][1] = 10
     @make_line_lambda.call(2,@line_array)
     described_class.parse_s3(@s3_path)
-    po_cdef = CustomDefinition.find_by_label('PO Number')
-    color_cdef = CustomDefinition.find_by_label('Color')
+    po_cdef = CustomDefinition.find_by(label: 'PO Number')
+    color_cdef = CustomDefinition.find_by(label: 'Color')
     expect(Shipment.count).to eq(1)
     s = Shipment.first
     expect(s.shipment_lines.size).to eq(2)
@@ -173,9 +171,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     s = Shipment.first
     expect(s.shipment_lines.size).to eq(2)
     line_1 = s.shipment_lines.where(:line_number=>1).first
-    expect(line_1.get_custom_value(CustomDefinition.find_by_label("PO Number")).value).to eq("450016177")
+    expect(line_1.get_custom_value(CustomDefinition.find_by(label: "PO Number")).value).to eq("450016177")
     line_2 = s.shipment_lines.where(:line_number=>2).first
-    expect(line_2.get_custom_value(CustomDefinition.find_by_label("PO Number")).value).to eq("123456")
+    expect(line_2.get_custom_value(CustomDefinition.find_by(label: "PO Number")).value).to eq("123456")
   end
   it 'should parse multiple colors for the same ibd / style / po' do
     expect(@xl_client).to receive(:last_row_number).with(0).and_return(2)
@@ -183,7 +181,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     @line_array[9][1] = "1100530-123"
     @make_line_lambda.call(2,@line_array)
     described_class.parse_s3(@s3_path)
-    color_cdef = CustomDefinition.find_by_label('Color')
+    color_cdef = CustomDefinition.find_by(label: 'Color')
     s = Shipment.first
     expect(s.shipment_lines.size).to eq(2)
     line_1 = s.shipment_lines.where(:line_number=>1).first
@@ -200,9 +198,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     s = Shipment.first
     expect(s.shipment_lines.size).to eq(2)
     line_1 = s.shipment_lines.where(:line_number=>1).first
-    expect(line_1.get_custom_value(CustomDefinition.find_by_label("Size")).value).to eq("LG")
+    expect(line_1.get_custom_value(CustomDefinition.find_by(label: "Size")).value).to eq("LG")
     line_2 = s.shipment_lines.where(:line_number=>2).first
-    expect(line_2.get_custom_value(CustomDefinition.find_by_label("Size")).value).to eq("SM")
+    expect(line_2.get_custom_value(CustomDefinition.find_by(label: "Size")).value).to eq("SM")
   end
   it 'should parse multiple shipments' do
     expect(@xl_client).to receive(:last_row_number).with(0).and_return(2)
@@ -220,14 +218,14 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     expect(line_1.line_number).to eq(1)
     expect(line_1.product).to eq(Product.find_by_unique_identifier('1100530'))
     expect(line_1.quantity).to eq(4)
-    expect(line_1.get_custom_value(CustomDefinition.find_by_label('PO Number')).value).to eq('450016177')
+    expect(line_1.get_custom_value(CustomDefinition.find_by(label: 'PO Number')).value).to eq('450016177')
     s = Shipment.find_by_reference 'ibd2'
     expect(s.shipment_lines.size).to eq(1)
     line_2 = s.shipment_lines.first
     expect(line_2.line_number).to eq(1)
     expect(line_2.product).to eq(Product.find_by_unique_identifier('123'))
     expect(line_2.quantity).to eq(10)
-    expect(line_2.get_custom_value(CustomDefinition.find_by_label('PO Number')).value).to eq('123456')
+    expect(line_2.get_custom_value(CustomDefinition.find_by(label: 'PO Number')).value).to eq('123456')
   end
   it 'should overwrite lines as the style color size level' do
     @make_line_lambda.call(1,@line_array)
@@ -266,7 +264,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     @make_line_lambda.call(1,@line_array)
     described_class.parse_s3(@s3_path)
     s = Shipment.find_by_reference '181'
-    expect(s.shipment_lines.first.get_custom_value(CustomDefinition.find_by_label('PO Number')).value).to eq('9999')
+    expect(s.shipment_lines.first.get_custom_value(CustomDefinition.find_by(label: 'PO Number')).value).to eq('9999')
     expect(s.vendor.system_code).to eq('1')
   end
 end

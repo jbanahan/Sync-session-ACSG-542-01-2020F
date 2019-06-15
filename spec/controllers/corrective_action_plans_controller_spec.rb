@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CorrectiveActionPlansController do
   before :each do
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CompaniesController do
   let (:company) { Factory(:company,:master=>true) }
   let (:user) { Factory(:user, admin: true, company: company)}

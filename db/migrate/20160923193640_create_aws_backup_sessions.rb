@@ -6,7 +6,7 @@ class CreateAwsBackupSessions < ActiveRecord::Migration
       t.datetime :end_time
       t.text :log
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

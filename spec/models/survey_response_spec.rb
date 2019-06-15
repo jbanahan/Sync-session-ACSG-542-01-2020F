@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SurveyResponse do
   describe "last_logged_by_user" do
     it "should find most recently saved message created_at associated with given user" do
@@ -187,7 +185,7 @@ describe SurveyResponse do
         expect(last_delivery.to).to eq [user.email]
         expect(last_delivery.subject).to eq survey.email_subject
         expect(last_delivery.body.raw_source).to include(survey.email_body)
-        expect(last_delivery.body.raw_source).to include("<a href='http://localhost:3000/survey_responses/#{response.id}'>http://localhost:3000/survey_responses/#{response.id}</a>")
+        expect(last_delivery.body.raw_source).to include("<a href='https://localhost:3000/survey_responses/#{response.id}'>https://localhost:3000/survey_responses/#{response.id}</a>")
       end
     end
 
@@ -217,7 +215,7 @@ describe SurveyResponse do
         expect(last_delivery.to).to eq [user.email, user2.email]
         expect(last_delivery.subject).to eq survey.email_subject
         expect(last_delivery.body.raw_source).to include survey.email_body
-        expect(last_delivery.body.raw_source).to include "<a href='http://localhost:3000/survey_responses/#{response.id}'>http://localhost:3000/survey_responses/#{response.id}</a>"
+        expect(last_delivery.body.raw_source).to include "<a href='https://localhost:3000/survey_responses/#{response.id}'>https://localhost:3000/survey_responses/#{response.id}</a>"
       end
     end
   end
@@ -311,11 +309,17 @@ describe SurveyResponse do
 
   describe "clear_expired_checkouts" do
     it "clears checkout information and logs expiration" do
-      user = Factory(:user)
-      sr = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: Time.zone.now - 1.day)
-      sr2 = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: Time.zone.now - 1.day + 2.seconds)
+      now = Time.zone.now
 
-      SurveyResponse.clear_expired_checkouts(Time.zone.now - 1.day + 1.second)
+      sr = nil
+      sr2 = nil
+      Timecop.freeze(now) do 
+        user = Factory(:user)
+        sr = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day)
+        sr2 = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day + 2.seconds)
+
+        SurveyResponse.clear_expired_checkouts(now - 1.day + 1.second)
+      end
 
       sr.reload
       expect(sr.checkout_token).to be_nil

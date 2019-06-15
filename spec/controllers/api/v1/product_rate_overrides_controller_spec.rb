@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::ProductRateOverridesController do
   let :make_hash do
     Factory(:country,iso_code:'CA')

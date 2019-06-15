@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
       error_body << "</ul></p>"
     end
 
-    OpenMailer.send_simple_html(Group.use_system_group("UA Article Master Errors", name: "UA Article Master Errors"), 'UA Article Master Processing Errors', error_body.html_safe).deliver!
+    OpenMailer.send_simple_html(Group.use_system_group("UA Article Master Errors", name: "UA Article Master Errors"), 'UA Article Master Processing Errors', error_body.html_safe).deliver_now
   end
 
   def self.process_articles! doc, file_key

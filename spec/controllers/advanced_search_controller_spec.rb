@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AdvancedSearchController do
   before :each do
     @user = Factory(:master_user,:email=>'a@example.com')
@@ -102,9 +100,9 @@ describe AdvancedSearchController do
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_columns.size).to eq(3)
-      expect(@ss.search_columns.find_by_rank_and_model_field_uid(1,'prod_name')).not_to be_nil
-      expect(@ss.search_columns.find_by_rank_and_model_field_uid(2,'prod_uid')).not_to be_nil
-      constant_field = @ss.search_columns.find_by_rank_and_model_field_uid(3, '_constsomeotherjunk')
+      expect(@ss.search_columns.find_by(rank: 1, model_field_uid: 'prod_name')).not_to be_nil
+      expect(@ss.search_columns.find_by(rank: 2, model_field_uid: 'prod_uid')).not_to be_nil
+      constant_field = @ss.search_columns.find_by(rank: 3, model_field_uid: '_constsomeotherjunk')
       expect(constant_field.constant_field_name).to eq "Broker"
       expect(constant_field.constant_field_value).to eq "Vandegrift"
     end
@@ -117,8 +115,8 @@ describe AdvancedSearchController do
       expect(response).to be_success
       @ss.reload
       expect(@ss.sort_criterions.size).to eq(2)
-      expect(@ss.sort_criterions.find_by_rank_and_model_field_uid(1,'prod_name')).to be_descending
-      expect(@ss.sort_criterions.find_by_rank_and_model_field_uid(2,'prod_uid')).not_to be_descending
+      expect(@ss.sort_criterions.find_by(rank: 1, model_field_uid: 'prod_name')).to be_descending
+      expect(@ss.sort_criterions.find_by(rank: 2, model_field_uid: 'prod_uid')).not_to be_descending
     end
     it "should recreate schedules" do
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
@@ -132,7 +130,7 @@ describe AdvancedSearchController do
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_schedules.size).to eq(2)
-      email = @ss.search_schedules.find_by_email_addresses('b@example.com')
+      email = @ss.search_schedules.find_by(email_addresses: 'b@example.com')
       expect(email.run_hour).to eq(6)
       expect(email.day_of_month).to eq(1)
       expect(email.download_format).to eq('xls')
@@ -147,7 +145,7 @@ describe AdvancedSearchController do
       expect(email.disabled).to be_truthy
       expect(email.report_failure_count).to eq(2)
 
-      ftp = @ss.search_schedules.find_by_ftp_server("ftp.example.com")
+      ftp = @ss.search_schedules.find_by(ftp_server: "ftp.example.com")
       expect(ftp.ftp_username).to eq('user')
       expect(ftp.ftp_password).to eq('pass')
       expect(ftp.ftp_subfolder).to eq('/sub')
@@ -163,8 +161,8 @@ describe AdvancedSearchController do
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_criterions.size).to eq(2)
-      expect(@ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_uid','eq','y').include_empty?).to be_truthy
-      expect(@ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_name','ew','q').include_empty?).to be_falsey
+      expect(@ss.search_criterions.find_by(model_field_uid: "prod_uid", operator: "eq", value: 'y').include_empty?).to be_truthy
+      expect(@ss.search_criterions.find_by(model_field_uid: "prod_name", operator: "ew", value: "q").include_empty?).to be_falsey
     end
   end
 

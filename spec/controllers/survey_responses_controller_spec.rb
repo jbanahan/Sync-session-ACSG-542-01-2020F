@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SurveyResponsesController do
   describe 'show' do
     before :each do
@@ -106,8 +104,8 @@ describe SurveyResponsesController do
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false
         q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
         sr = q.survey.generate_response! @u, 'subt'
-        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user:@u)
-        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user:@u)
+        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user_id:@u.id)
+        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user_id:@u.id)
         get :show, :id=>sr.id, :format=>:json
         expect(response).to be_success
         j = JSON.parse response.body
@@ -121,8 +119,8 @@ describe SurveyResponsesController do
         allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return true
         q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
         sr = q.survey.generate_response! @u, 'subt'
-        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user:@u)
-        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user:@u)
+        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user_id:@u.id)
+        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user_id:@u.id)
         get :show, :id=>sr.id, :format=>:json
         expect(response).to be_success
         j = JSON.parse response.body
@@ -334,26 +332,26 @@ describe SurveyResponsesController do
     end
     
     it "restricts access" do
+      expect(OpenMailer).not_to receive(:send_survey_reminder)
       post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body
       
-      expect(ActionMailer::Base.deliveries.count).to eq 0
       expect(flash[:errors]).to include "You do not have permission to work with this survey."
       expect(response).to redirect_to request.referrer
     end
 
     it "only sends with an email address" do
       allow(@u).to receive(:edit_surveys?).and_return true
+      expect(OpenMailer).not_to receive(:send_survey_reminder)
       post :remind, id: @sr.id, email_to: "", email_subject: @email_subject, email_body: @email_body
       
-      expect(ActionMailer::Base.deliveries.count).to eq 0
       expect(JSON.parse(response.body)["error"]).to eq "Email address is required."
     end
 
     it "validates emails" do
       allow(@u).to receive(:edit_surveys?).and_return true
+      expect(OpenMailer).not_to receive(:send_survey_reminder)
       post :remind, id: @sr.id, email_to: "joe@test sue@test.com", email_subject: @email_subject, email_body: @email_body
 
-      expect(ActionMailer::Base.deliveries.count).to eq 0
       expect(JSON.parse(response.body)["error"]).to eq "Invalid email. Be sure to separate multiple addresses with spaces."
     end
 
@@ -361,15 +359,12 @@ describe SurveyResponsesController do
       allow(@u).to receive(:edit_surveys?).and_return true
       stub_master_setup
       link_addr = "http://localhost:3000/survey_responses/#{@sr.id}"
+
+      message_delivery = instance_double(ActionMailer::MessageDelivery)
+      expect(OpenMailer).to receive(:send_survey_reminder).with(@sr, ["joe@test.com", "sue@test.com"], "Reminder: Important Survey", "Please follow the link below to complete your survey.").and_return message_delivery
+      expect(message_delivery).to receive(:deliver_later)
       
       post :remind, id: @sr.id, email_to: @email_to, email_subject: @email_subject, email_body: @email_body
-
-      expect(ActionMailer::Base.deliveries.count).to eq 1
-      
-      msg = ActionMailer::Base.deliveries.pop
-      expect(msg.to).to eq ["joe@test.com", "sue@test.com"]
-      expect(msg.subject).to eq @email_subject
-      expect(msg.body.raw_source).to match(/#{Regexp.quote(@email_body)}.+#{Regexp.quote(link_addr)}/)
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
   end  

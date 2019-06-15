@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::SurveyResponsesController do
 
   describe "index" do
@@ -478,7 +476,9 @@ describe Api::V1::SurveyResponsesController do
     context "with corrective_action_plan" do
       before :each do
         @cap = @survey_response.create_corrective_action_plan! status: CorrectiveActionPlan::STATUSES[:active]
-        @comment = @cap.comments.create! body: "Comment", user: @user, created_at: (Time.zone.now - 1.day)
+        Timecop.freeze(Time.zone.now - 1.day) do
+          @comment = @cap.comments.create! body: "Comment", user: @user
+        end
         @issue = @cap.corrective_issues.create! description: "Description", suggested_action: "Do this", action_taken: "Did that"
         @att = @issue.attachments.create! attached_file_name: "file.txt", attached_file_size: 1
 

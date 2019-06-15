@@ -6,7 +6,7 @@ class CreateErrorLogEntries < ActiveRecord::Migration
       t.text :additional_messages_json
       t.text :backtrace_json
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::XmlBuilder do
   before :all do
     @builder = Class.new { extend OpenChain::XmlBuilder }

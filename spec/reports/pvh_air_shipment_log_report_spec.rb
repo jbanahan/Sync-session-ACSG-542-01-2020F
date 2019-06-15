@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::PvhAirShipmentLogReport do
 
   describe "run_report" do
@@ -100,13 +98,13 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
   end
 
   describe "permission?" do
-    context "set with custom feature WWW VFI Track Reports" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
+      ms
+    }
 
-      # Proper Server setup
-      let! (:master_setup) {
-        ms = stub_master_setup
-        allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
-      }
+    context "set with custom feature WWW VFI Track Reports" do
 
       it "allows permission for master users with custom_feature WWW VFI Track Reports set" do
         user = Factory(:master_user)
@@ -153,7 +151,7 @@ describe OpenChain::Report::PvhAirShipmentLogReport do
 
     it "denies permission for non-WWW VFI Track Reports instance" do
       # Improper server setup
-      allow(MasterSetup).to receive(:custom_feature).and_return "blah"
+      allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
       user = Factory(:master_user)
       allow(user).to receive(:view_entries?).and_return true
       expect(described_class.permission? user).to eq false

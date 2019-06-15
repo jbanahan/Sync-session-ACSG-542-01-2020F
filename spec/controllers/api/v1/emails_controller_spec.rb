@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::EmailsController do  
   describe "#validate_email_list" do
     before do

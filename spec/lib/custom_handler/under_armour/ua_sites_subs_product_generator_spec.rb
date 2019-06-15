@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator do
   describe "run_and_send_email" do
     it "sends email with attached reports for sites and subs" do

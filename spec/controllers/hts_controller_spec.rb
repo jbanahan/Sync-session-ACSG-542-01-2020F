@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'json'
-
 describe HtsController do
 
   describe "country" do

@@ -5,7 +5,7 @@ class CreateBusinessValidationTemplates < ActiveRecord::Migration
       t.string :module_type, null: false
       t.string :description
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

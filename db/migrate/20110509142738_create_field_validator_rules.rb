@@ -22,7 +22,7 @@ class CreateFieldValidatorRules < ActiveRecord::Migration
       t.integer :minimum_length
       t.integer :maximum_length
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

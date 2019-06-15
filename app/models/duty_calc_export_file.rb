@@ -16,6 +16,8 @@
 require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcExportFile < ActiveRecord::Base
+  attr_accessible :importer_id, :user_id
+  
   belongs_to :importer, :class_name=>"Company"
   has_many :duty_calc_export_file_lines, :dependent=>:destroy
   has_one :attachment, as: :attachable, dependent: :destroy
@@ -110,7 +112,7 @@ class DutyCalcExportFile < ActiveRecord::Base
       d = DutyCalcExportFile.create!(:importer_id=>importer.id)
       sql = "UPDATE duty_calc_export_file_lines SET duty_calc_export_file_id = #{d.id} WHERE duty_calc_export_file_id is null and importer_id = #{importer.id} AND (#{extra_where ? extra_where : '1=1'})"
       sql << " LIMIT #{limit_size}" if limit_size
-      d.connection.execute sql
+      DutyCalcExportFile.connection.execute sql
       d.reload
       d.duty_calc_export_file_lines.each do |line|
         yield line

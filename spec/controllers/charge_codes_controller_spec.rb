@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ChargeCodesController do
   before :each do
     @u = Factory(:user,:admin=>true,:company=>Factory(:company,:master=>true))

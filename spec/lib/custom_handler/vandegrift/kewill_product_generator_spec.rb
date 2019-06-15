@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
   subject { described_class.new "CUST"}

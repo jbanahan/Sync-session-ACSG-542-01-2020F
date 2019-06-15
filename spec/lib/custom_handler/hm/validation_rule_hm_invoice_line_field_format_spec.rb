@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::ValidationRuleHmInvoiceLineFieldFormat do
   let!(:ci) { Factory(:commercial_invoice, invoice_number: "12345") }
   

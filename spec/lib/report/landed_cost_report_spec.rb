@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'spreadsheet'
-
 describe OpenChain::Report::LandedCostReport do
   before :each do 
     @user = Factory :master_user

@@ -11,13 +11,15 @@ describe OpenChain::Ssm do
   describe "send_clear_upgrade_errors_command" do 
 
     it "sends comand to run clear_upgrade_errors script" do
+      allow(InstanceInformation).to receive(:deployment_group).and_return "Customer"
       expect(MasterSetup).to receive(:instance_directory).and_return Pathname.new("/path/to/instance")
       expect(ssm_client).to receive(:send_command).with(
         {
           document_name: "AWS-RunShellScript",
           targets: [
             {key: "tag:Application", values: ["VFI Track"]},
-            {key: "tag:Role", values: ["Web", "Job Queue"]}
+            {key: "tag:Role", values: ["Web", "Job Queue"]},
+            {key: "tag:Group", values: ["Customer"]}
           ],
           timeout_seconds: 600,
           parameters: {

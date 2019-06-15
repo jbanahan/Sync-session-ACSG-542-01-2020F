@@ -34,7 +34,7 @@ class CreateInvoiceLines < ActiveRecord::Migration
       t.decimal :volume, :precision => 11, :scale => 2
       t.string  :volume_uom
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :invoice_lines, :invoice_id

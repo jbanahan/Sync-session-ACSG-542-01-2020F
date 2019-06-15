@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe KeyJsonItem do
   context 'validations' do
     it "should require key_scope" do

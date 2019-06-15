@@ -4,7 +4,7 @@ class CreateUserSessions < ActiveRecord::Migration
       t.string :username
       t.string :password
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -12,7 +12,7 @@ class CreateStateToggleButtons < ActiveRecord::Migration
       t.string :deactivate_text
       t.string :deactivate_confirmation_text
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :state_toggle_buttons, :module_type
     add_index :state_toggle_buttons, :updated_at #for cache expiration lookup

@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
   private
     def generate_missing_shipment_email shipment_ref
       body_text = "A plan name was received for shipment '#{shipment_ref}', but a shipment with a matching reference number could not be found."
-      OpenMailer.send_simple_html('ll-support@vandegriftinc.com', 'Lumber Liquidators Shipment Plan: Missing Shipment', body_text).deliver!
+      OpenMailer.send_simple_html('ll-support@vandegriftinc.com', 'Lumber Liquidators Shipment Plan: Missing Shipment', body_text).deliver_now
     end
 
     def get_element_text root, xpath

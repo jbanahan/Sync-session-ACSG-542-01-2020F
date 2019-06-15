@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProductTradePreferenceProgram do
   context 'security' do
     it "should allow view if user can view both product and trade preference program" do

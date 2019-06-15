@@ -29,7 +29,7 @@ module OpenChain
       end
 
       if suspended_users.length > 0
-        OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "VFI Track #{"Account".pluralize(suspended_users.length)} Disabled", email_body(suspended_users, MasterSetup.get.request_host)).deliver!
+        OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "VFI Track #{"Account".pluralize(suspended_users.length)} Disabled", email_body(suspended_users, MasterSetup.get.request_host)).deliver_now
       end
       suspended_users
     end

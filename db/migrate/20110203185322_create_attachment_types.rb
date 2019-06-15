@@ -4,7 +4,7 @@ class CreateAttachmentTypes < ActiveRecord::Migration
       t.string :name
       t.string :module_type
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

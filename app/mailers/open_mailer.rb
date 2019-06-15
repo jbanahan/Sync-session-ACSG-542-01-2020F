@@ -1,7 +1,10 @@
-class OpenMailer < ActionMailer::Base
-  include AbstractController::Callbacks # This can be removed when migrating to rails 4
+require 'base64'
+require 'mini_mime'
 
-  after_filter :handle_sent_email #includes handling for :redirect_to_developer, :send_generic_exception
+class OpenMailer < ActionMailer::Base
+  default :from => "do-not-reply@vfitrack.net"
+  
+  after_action :handle_sent_email #includes handling for :redirect_to_developer, :send_generic_exception
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -9,9 +12,6 @@ An attachment named '_filename_' for this message was larger than the maximum sy
 Click <a href='_path_'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EOS
-
-  default :from => "do-not-reply@vfitrack.net"
-  LINK_PROTOCOL ||= Rails.env.production? ? "https" : "http"
   BUG_EMAIL = "bug@vandegriftinc.com"
 
   #send a simple plain text email
@@ -34,9 +34,9 @@ EOS
     m = mail(opts) do |format|
       format.html
     end
+    suppress_email(m) if suppressed
 
     local_attachments.each {|name, content| m.attachments[name] = content}
-    set_suppressed_flag(m) if suppressed
     m
   end
 
@@ -107,7 +107,7 @@ EOS
       :subject => "[VFI Track] #{search_name} Result",
       :from => 'do-not-reply@vfitrack.net')
     unless attachment_saved
-      m.attachments[attachment_name] = create_attachment file_path
+      m.attachments[attachment_name] = create_attachment attachment_name, file_path
     end
     m
   end
@@ -120,7 +120,8 @@ EOS
       :reply_to => @user.email,
       :subject => subject)
     unless attachment_saved
-      m.attachments[attachment_filename(file_path)] = create_attachment file_path
+      name = attachment_filename(file_path)
+      m.attachments[name] = create_attachment name, file_path
     end
     m
   end
@@ -141,7 +142,7 @@ EOS
       :subject => "[VFI Track] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
 
     unless attachment_saved
-      m.attachments[imported_file.attached_file_name] = create_attachment data_file_path
+      m.attachments[imported_file.attached_file_name] = create_attachment imported_file.attached_file_name, data_file_path
     end
 
     m
@@ -173,7 +174,7 @@ EOS
     m = mail(:to=>to, :reply_to=>current_user.email, :subject => subject)
     # Postmark does not handle blank CC / BCC fields any longer without erroring (dumb)
     m.cc = cc unless cc.blank?
-    m.attachments[a_name] = create_attachment(t) unless large_attachment
+    m.attachments[a_name] = create_attachment(a_name, t) unless large_attachment
 
     m
   end
@@ -202,7 +203,7 @@ EOS
 
   def send_search_bad_email(to, search, error_message)
     @search_name = search.name
-    @search_url = Rails.application.routes.url_helpers.advanced_search_url(host: MasterSetup.get.request_host, id: search.id, protocol: (Rails.env.development? ? "http" : "https"))
+    @search_url = advanced_search_url(host: MasterSetup.get.request_host, id: search.id)
     @error_message = error_message
 
     mail(:to=>to, :subject => "[VFI Track] Search Transmission Failure") do |format|
@@ -230,9 +231,9 @@ EOS
   #only Exception#log_me should use this.  Everything else should just call .log_me on the exception
   def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil, attachment_paths=[]
     @exception = e
-    @error_message = error_message ? error_message : e.message
-    @backtrace = backtrace ? backtrace : e.backtrace
-    @backtrace = [] unless @backtrace
+    # Sometimes (like from log_me) the error given is just a String, so handle that case.
+    @error_message = error_message ? error_message : (e.respond_to?(:message) ? e.message.to_s : "")
+    @backtrace = backtrace ? backtrace : (e.respond_to?(:backtrace) ? Array.wrap(e.backtrace) : [] )
     @additional_messages = additional_messages.nil? ? [] : additional_messages
     @time = Time.now.in_time_zone("America/New_York").strftime("%Y-%m-%d %H:%M:%S %Z %z")
     @hostname = MasterSetup.hostname
@@ -241,13 +242,14 @@ EOS
     @root = MasterSetup.instance_directory
     @process_id = Process.pid
     @uuid = MasterSetup.get.uuid
-    @master_setup_link = master_setups_url(host: MasterSetup.get.request_host, protocol: LINK_PROTOCOL)
+    @master_setup_link = master_setups_url(host: MasterSetup.get.request_host)
     local_attachments = {}
     attachment_paths.each do |ap|
       if save_large_attachment ap, BUG_EMAIL
         @additional_messages << @body_text
       else
-        local_attachments[attachment_filename(ap)] = create_attachment ap
+        name = attachment_filename(ap)
+        local_attachments[name] = create_attachment name, ap
       end
     end
     m = mail(:to=>BUG_EMAIL, :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
@@ -264,14 +266,14 @@ EOS
     @sync_code = sync_code
     mail_opts = {to: explode_group_and_mailing_lists(recipient, "TO"), subject: subject}
     m = mail(mail_opts)
-    m.attachments[file_name] = create_attachment attached_file
+    m.attachments[file_name] = create_attachment file_name, attached_file
     m
   end
 
   def send_survey_expiration_reminder to, expired_survey, expired_responses
     @expired_survey = expired_survey
     @expired_responses = expired_responses
-    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{expired_survey.id}"
+    @link_addr = survey_url(expired_survey, host: MasterSetup.get.request_host)
     mail(to: to, subject: "Survey \"#{@expired_survey.name}\" has #{expired_responses.count} expired survey(s).") do |format|
       format.html
     end
@@ -282,7 +284,7 @@ EOS
     survey = survey_response.survey
     @subtitle = survey_response.subtitle
     @body_textile = survey.email_body
-    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    @link_addr = survey_response_url(survey_response, host: MasterSetup.get.request_host)
     email_subject = survey.email_subject + (@subtitle.blank? ? "" : " - #{@subtitle}")
     to = [survey_response.user.try(:email)]
     to << survey_response.group
@@ -293,8 +295,7 @@ EOS
   end
 
   def send_survey_reminder survey_response, to, subject, body
-    link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
-    @body_content = "<p>#{ERB::Util.html_escape(body).gsub("\n", "<br>")}</p><p>#{link_addr}</p>".html_safe
+    @body_content = "<p>#{ERB::Util.html_escape(body).gsub("\n", "<br>")}</p><p>#{survey_response_url(survey_response, host: MasterSetup.get.request_host)}</p>".html_safe
     @attachment_messages = []
     mail(:to=>to, :subject=>subject) do |format|
       format.html { render 'send_simple_html' }
@@ -304,7 +305,7 @@ EOS
   #send survey update notification
   def send_survey_subscription_update survey_response, response_updates, survey_subscriptions, corrective_action_plan = false
     @cap_mode = corrective_action_plan
-    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    @link_addr = survey_response_url(survey_response, host: MasterSetup.get.request_host)
     @updated_by = response_updates.collect {|u| u.user.full_name}
     @survey_title = get_survey_title survey_response
 
@@ -317,7 +318,7 @@ EOS
   #send survey update to survey response assigned user
   def send_survey_user_update survey_response, corrective_action_plan = false
     @cap_mode = corrective_action_plan
-    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
+    @link_addr = survey_url(survey_response.survey, host: MasterSetup.get.request_host)
 
     to = [survey_response.user.try(:email)]
     to << survey_response.group
@@ -360,7 +361,14 @@ EOS
   def send_invite user, temporary_password
     @user = user
     @temporary_password = temporary_password
-    @login_url = url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: LINK_PROTOCOL)
+
+    # This is mostly working around an issue in init_base_setup, trying to send an email w/ a MasterSetup that was JUST generated.
+    ms = MasterSetup.get
+    if ms.request_host.blank?
+      ms = MasterSetup.first
+    end
+
+    @login_url = new_user_session_url(host: MasterSetup.get.request_host)
 
     mail(to:user.email,subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
       format.html
@@ -370,7 +378,6 @@ EOS
   def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
     @user = user
     @tasks = tasks
-    @lp = LINK_PROTOCOL
     time = Time.now
     mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
       format.html
@@ -392,7 +399,8 @@ EOS
         if email_attachment
           @attachment_messages << attachment_text
         else
-          local_attachments[attachment_filename(file)] = create_attachment(file)
+          name = attachment_filename(file)
+          local_attachments[name] = create_attachment(name, file)
         end
       end
     end
@@ -405,16 +413,6 @@ EOS
     m
   end
 
-  def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
-    @user = user
-    @tasks = tasks
-    @lp = LINK_PROTOCOL
-    time = Time.now
-    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
-      format.html
-    end
-  end
-
   def send_crocs_manual_bill_reminder invoice_number
     @invoice_number = invoice_number
     mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[VFI Track] Crocs Invoice # #{invoice_number}") do |fmt|
@@ -422,7 +420,7 @@ EOS
     end
   end
 
-  def log_email suppressed=false
+  def log_email message, suppressed: false
     # Note: This method is stubbed out in testing unless you specifically tag your testing spec with "email_log: true"
     attachment_list = []
     message.attachments.each { |att| attachment_list << message_att_to_standard_att(att) } unless message.attachments.empty?
@@ -509,7 +507,7 @@ EOS
           else
 
             filename = attachment_filename(file)
-            local_attachments[filename] = create_attachment(file)
+            local_attachments[filename] = create_attachment(filename, file)
           end
         end
       end
@@ -562,45 +560,39 @@ EOS
     def handle_sent_email
       if action_name == "send_generic_exception"
         # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
-        log_email false
+        log_email mail, suppressed: false
         # In dev, we don't actually want to email errors...we're actually going to use the logger instead to render them 
         redirect_to_developer 
       else
-        # Don't suppress emails if they're for user management. Otherwise surpress them if they're marked or all emails are suppressed
-        suppress_email = !user_management_email? && ( message.respond_to?(:suppressed) || suppress_all_emails? )
-        sent_email = log_email suppress_email
+        # It's possible via the API we provide to mark a single instance of the mail object as being suppressed so check for that or if
+        # we're suppressing ALL emails (like on dev or live test systems)
+        suppress_email = email_suppressed?(mail) || suppress_all_emails?
+        sent_email = log_email mail, suppressed: suppress_email
         if suppress_email
-          message.delivery_method NoOpMailer
-        else
-          message.delivery_method(LoggingMailerProxy, message.delivery_method.settings.merge({original_delivery_method: message.delivery_method, sent_email: sent_email}))
+          # Setting this to false prevents mail delivers, however, the caller can override this by using the ! variant of the deliver_now / deliver_later methods
+          # This is what we want because then we can decide if we want to not have the messages by suppressed ever at the calling stage.
+          # The VAST majority of deliveries should not be using the ! variants
+          mail.perform_deliveries = false
         end
+
+        message.delivery_method(LoggingMailerProxy, mail.delivery_method.settings.merge({original_delivery_method: mail.delivery_method, sent_email: sent_email}))
       end      
     end
 
-    def set_suppressed_flag message
-      message.define_singleton_method(:suppressed) { true } 
+    def suppress_email mail
+      mail.perform_deliveries = false
+    end
+
+    def email_suppressed? mail
+      mail.perform_deliveries == false
     end
 
     def suppress_all_emails?
       # We don't want to suppress emails in test env, since the test mailer is used to capture emails for test cases to introspect
-      !test_env? && !MasterSetup.email_enabled?
+      !MasterSetup.test_env? && !MasterSetup.email_enabled?
     end
 
     require 'mail/check_delivery_params'
-    class NoOpMailer
-      attr_accessor :settings
-
-      def initialize settings
-        @settings = settings
-      end
-
-      def deliver!(mail)
-        # We'll still want to check the mail for validity so that errors raised normally on an email would be 
-        # Below is what the standard mailer does
-        Mail::CheckDeliveryParams.check(mail)
-      end
-    end
-
     # This class exists soley as a means of sitting between the "real" mailer and our code, so that if an error occurs when a message is delivered (.ie deliver! is called)
     # that we log that error against the sent_email log object that was created for when the mail object was actually built.
     #
@@ -631,7 +623,10 @@ EOS
         # but for now, just swallow them when there's an InvalidMessageError, which occurs
         # whenever a recipient is referenced that is inactive.  There's no use re-raising this
         # error, since the email will never actually go through (unless user is reactivated and stays that way)
-        if error.is_a?(Postmark::InvalidMessageError)
+        if error.is_a?(Postmark::ApiInputError) || error.is_a?(Postmark::InactiveRecipientError)
+          # TODO InactiveRecipientErrors now have the ability to notify you which account was actually inactive
+          # We should hook this and notify someone/thing about the inactive account.
+          # NOTE: This will only notify when ALL the recipients on the email are inactive
           return true
         else
           return false
@@ -639,17 +634,8 @@ EOS
       end
     end
 
-    # Broken out for ease of mocking without forcing Rails.env to return bad values in test
-    def test_env?
-      Rails.env.test?
-    end
-
-    def development_env?
-      Rails.env.development?
-    end
-    
     def redirect_to_developer
-      if development_env?
+      if MasterSetup.development_env?
         headers['X-ORIGINAL-TO'] = message.to.blank? ? 'blank' : message.to.join(", ")
         headers['X-ORIGINAL-CC'] = message.cc.blank? ? 'blank' : message.cc.join(", ")
         headers['X-ORIGINAL-BCC'] = message.bcc.blank? ? 'blank' : message.bcc.join(", ")
@@ -712,14 +698,25 @@ EOS
       end
     end
 
-    def create_attachment data, data_is_file = true
+    def create_attachment filename, data, data_is_file = true
       if data_is_file
         data = IO.read((data.respond_to?(:path) ? data.path : (data.respond_to?(:to_path) ? data.to_path.to_s : data)), mode: "rb")
       end
-      # When using the native Rails mail attachments you no longer have to base64 encode the data, the
-      # postmark library handles that behind the scenes for us now.
-      {content: data,
-        mime_type: "application/octet-stream"}
+
+      # What we're doing here is encoding our mail messages ourself.  For some reason, after upgrading to Rails 4.2
+      # mail is getting cr/lf added in place of lf.  This poses a problem for attachments (like EDI) where that cr actually
+      # makes the file invalid.  I believe the issue is actually a regression in the mail gem.
+      #
+      # Rails indicate in the action mailer basics documentation if you pre-encode your email content using a hash like below
+      # that the data will be left as is.
+
+      # MiniMine is what's used in the mail gem, so I just utilized it here in the same manner to find the mimetype.
+      mime_type = MiniMime.lookup_by_filename(filename)&.content_type
+      mime_type = "application/octet-stream" if mime_type.nil?
+
+      {content: Base64.encode64(data),
+        encoding: "base64",
+        mime_type: mime_type}
     end
 
     def emailer_host user

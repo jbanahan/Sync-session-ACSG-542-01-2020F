@@ -21,8 +21,9 @@ describe SearchWriter do
 
     subject { described_class.new search_setup }
 
-    def standard_run expected_query_opts: {}, max_results: nil, audit: nil, use_tempfile: nil, builder_class: CsvBuilder, builder_sheet_class: CsvBuilder::CsvSheet, skip_builder_expectations: false
+    def standard_run expected_query_opts: {}, max_results: nil, audit: nil, use_tempfile: nil, builder_class: CsvBuilder, builder_sheet_class: CsvBuilder::CsvSheet, skip_builder_expectations: false, original_filename: "Report name.xlsx"
       s = use_tempfile ? Tempfile.new(["file",".xlsx"]) : StringIO.new
+      Attachment.add_original_filename_method(s, original_filename)
       opts = {raise_max_results_error: true}.merge expected_query_opts
       expect_any_instance_of(SearchQuery).to receive(:execute).with(opts).and_yield search_results_hash
       if !skip_builder_expectations
@@ -67,7 +68,6 @@ describe SearchWriter do
 
     it "substitutes audit for search results" do
       # feature doesn't really work without multiple records, so just check that it ran and produced a header row
-      allow_any_instance_of(Tempfile).to receive(:original_filename).and_return "Report name.xlsx"
       expect(OpenChain::RandomAuditGenerator).to receive(:run).with([search_results_hash], 0, "header").and_call_original
       file = standard_run(use_tempfile: true, audit:{"record_type" => "header", "percent" => 0})
       output = CSV.parse(file.read)
@@ -141,7 +141,6 @@ describe SearchWriter do
         
         RandomAudit.destroy_all
         
-        allow_any_instance_of(Tempfile).to receive(:original_filename).and_return "Report name.xlsx"
         Timecop.freeze(now) do 
           file = standard_run(use_tempfile: true, skip_builder_expectations: true, audit: {"percent" => 0, "record_type" => "header"})
           s = Spreadsheet.open file
@@ -247,7 +246,6 @@ describe SearchWriter do
       it "writes audit tab (if specified)" do
         now = Time.zone.now
         xlsx = nil; file = nil
-        allow_any_instance_of(Tempfile).to receive(:original_filename).and_return "Report name.xlsx"
         Timecop.freeze(now) do 
           file = standard_run(use_tempfile: true, skip_builder_expectations: true, audit: {"percent" => 0, "record_type" => "header"})
           xlsx = XlsxTestReader.new file

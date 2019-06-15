@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FingerprintSupport do
 
   describe "generate_fingerprint" do

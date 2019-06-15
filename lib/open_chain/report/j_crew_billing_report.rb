@@ -25,7 +25,7 @@ module OpenChain; module Report; class JCrewBillingReport
     opts[:end_date] = end_date.to_s
 
     self.run_report(User.integration, opts) do |tempfile|
-      OpenMailer.send_simple_html(email_to, "J Crew Billing #{start_date.strftime("%m/%d/%Y")} - #{end_date.strftime("%m/%d/%Y")}", "Please find attached the J Crew Billing file data for the time period of #{start_date.strftime("%m/%d/%Y")} - #{end_date.strftime("%m/%d/%Y")}.", tempfile).deliver!
+      OpenMailer.send_simple_html(email_to, "J Crew Billing #{start_date.strftime("%m/%d/%Y")} - #{end_date.strftime("%m/%d/%Y")}", "Please find attached the J Crew Billing file data for the time period of #{start_date.strftime("%m/%d/%Y")} - #{end_date.strftime("%m/%d/%Y")}.", tempfile).deliver_now
     end
   end
 

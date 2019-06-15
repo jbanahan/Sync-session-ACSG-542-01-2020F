@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe RandomAuditsController do
   let(:u) { Factory(:user) }
   let!(:ra) { Factory(:random_audit, user: u) }

@@ -4,7 +4,7 @@ class CreateInstantClassifications < ActiveRecord::Migration
       t.string :name
       t.integer :rank
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

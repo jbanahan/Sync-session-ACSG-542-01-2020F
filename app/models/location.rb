@@ -15,6 +15,6 @@
 #
 
 class Location < ActiveRecord::Base
-
+  attr_accessible :coordinates, :function, :iata, :locode, :name, :status, :sub_division
 
 end

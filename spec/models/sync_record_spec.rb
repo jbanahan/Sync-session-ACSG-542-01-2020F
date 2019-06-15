@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SyncRecord do
   describe "problem?" do
     it 'should be a problem if sent more than 1 hour ago and not confirmed after sent time' do

@@ -9,12 +9,12 @@ class RemoveInventoryObjects < ActiveRecord::Migration
   def self.down
     create_table :inventory_outs do |t|
 
-      t.timestamps
+      t.timestamps null: false
     end
     
     create_table :inventory_ins do |t|
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_column :piece_sets, :inventory_out_id, :integer
     add_column :piece_sets, :inventory_in_id, :integer

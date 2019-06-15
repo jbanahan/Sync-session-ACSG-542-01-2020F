@@ -10,7 +10,7 @@ class CreateProjectDeliverables < ActiveRecord::Migration
       t.integer :estimated_hours
       t.boolean :complete
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :project_deliverables, :project_id
     add_index :project_deliverables, :assigned_to_id

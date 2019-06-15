@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FtpSession do
 
   describe "successful?" do

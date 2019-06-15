@@ -390,17 +390,19 @@ XML
 
     def self.intacct_config
       @intacct_config ||= begin
-        config = YAML.load_file(Rails.root.join('config', 'intacct.yml')).symbolize_keys
+        config = MasterSetup.secrets["intacct"]&.with_indifferent_access&.symbolize_keys
+
         # Since these properties get loaded to an XML file, need to encode all the values properly
         # Not expecting multi-level config values for this yet, so don't worry about parsing hashes,etc.
+
         config.each_pair do |k, v|
           # Expected keys are 
           config[k] = v.encode(xml: :text) if v.is_a?(String)
-        end
-      rescue Errno::ENOENT
-        # do nothing...if the load raises we'll report a nicer error
+        end unless config.blank?
+
+        config.blank? ? nil : config
       end
-      raise "No Intacct client configuration file found at 'config/intacct.yml'." unless @intacct_config
+      raise "No Intacct client configuration file found in secrets.yml." unless @intacct_config
       @intacct_config
     end
 

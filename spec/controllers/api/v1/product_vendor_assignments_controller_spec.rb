@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::ProductVendorAssignmentsController do
   describe '#index' do
     it "should get product vendor assignments" do

@@ -46,7 +46,9 @@ describe OpenChain::DatabaseUtils do
           "host" => "host",
           "port" => 1000,
           "pool" => 1,
-          "timeout" => 5000
+          "timeout" => 5000,
+          "encoding" => "enc",
+          "collation" => "coll"
         }
       }
 
@@ -57,26 +59,30 @@ describe OpenChain::DatabaseUtils do
       it "parses standard database config" do
         config = subject.primary_database_configuration
         expect(config).not_to be_nil
-        expect(config.size).to eq 5
+        expect(config.size).to eq 7
         expect(config[:adapter]).to eq "adapter"
         expect(config[:database]).to eq "database"
         expect(config[:username]).to eq "username"
         expect(config[:host]).to eq "host"
         expect(config[:port]).to eq 1000
+        expect(config[:encoding]).to eq "enc"
+        expect(config[:collation]).to eq "coll"
       end
 
       it "parses database config with URL" do
         database_config.clear
-        database_config['url'] = "adapter://username:password@host:1000/database?pool=1&timeout=1000"
+        database_config['url'] = "adapter://username:password@host:1000/database?pool=1&timeout=1000&encoding=enc&collation=coll"
 
         config = subject.primary_database_configuration
         expect(config).not_to be_nil
-        expect(config.size).to eq 5
+        expect(config.size).to eq 7
         expect(config[:adapter]).to eq "adapter"
         expect(config[:database]).to eq "database"
         expect(config[:username]).to eq "username"
         expect(config[:host]).to eq "host"
         expect(config[:port]).to eq 1000
+        expect(config[:encoding]).to eq "enc"
+        expect(config[:collation]).to eq "coll"
       end
     end
 
@@ -98,7 +104,9 @@ describe OpenChain::DatabaseUtils do
                 "host" => "host",
                 "port" => 1000,
                 "pool" => 1,
-                "timeout" => 5000
+                "timeout" => 5000,
+                "encoding" => "enc",
+                "collation" => "coll"
               },
               {
                 "name" => "replica",
@@ -123,27 +131,31 @@ describe OpenChain::DatabaseUtils do
       it "parses makara database config" do
         config = subject.primary_database_configuration
         expect(config).not_to be_nil
-        expect(config.size).to eq 5
+        expect(config.size).to eq 7
         expect(config[:adapter]).to eq "adapter_makara"
         expect(config[:database]).to eq "database"
         expect(config[:username]).to eq "username"
         expect(config[:host]).to eq "host"
         expect(config[:port]).to eq 1000
+        expect(config[:encoding]).to eq "enc"
+        expect(config[:collation]).to eq "coll"
       end
 
       it "parses database config with URL" do
         master_config = database_config["makara"]["connections"].first
         ["adapter", "database", "username", "host", "port"].each { |k| master_config.delete k }
-        master_config['url'] = "adapter://username:password@host:1000/database?pool=1&timeout=1000"
+        master_config['url'] = "adapter://username:password@host:1000/database?pool=1&timeout=1000&encoding=enc&collation=coll"
 
         config = subject.primary_database_configuration
         expect(config).not_to be_nil
-        expect(config.size).to eq 5
+        expect(config.size).to eq 7
         expect(config[:adapter]).to eq "adapter_makara"
         expect(config[:database]).to eq "database"
         expect(config[:username]).to eq "username"
         expect(config[:host]).to eq "host"
         expect(config[:port]).to eq 1000
+        expect(config[:encoding]).to eq "enc"
+        expect(config[:collation]).to eq "coll"
       end
     end
   end

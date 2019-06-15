@@ -86,7 +86,7 @@ class ProjectDeliverablesController < ApplicationController
         end
       end
 
-      OpenMailer.send_high_priority_tasks(user, high_priority_pds_for_user).deliver!
+      OpenMailer.send_high_priority_tasks(user, high_priority_pds_for_user).deliver_later
       add_flash :notices, "Email successfully sent to #{user.email}."
       redirect_to project_deliverables_path
     else

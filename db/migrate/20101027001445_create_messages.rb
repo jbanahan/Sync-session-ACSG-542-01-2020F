@@ -9,7 +9,7 @@ class CreateMessages < ActiveRecord::Migration
       t.string :link_name
       t.string :link_path
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -20,6 +20,9 @@
 #
 
 class SupportTicket < ActiveRecord::Base
+  attr_accessible :agent_id, :body, :email_notifications, :last_saved_by_id, :requestor_id, :state, :subject, :requestor,
+    :support_ticket_comments_attributes, :attachments_attributes
+  
   belongs_to :requestor, :class_name => "User"
   belongs_to :agent, :class_name => "User"
   belongs_to :last_saved_by, :class_name => "User"
@@ -36,7 +39,7 @@ class SupportTicket < ActiveRecord::Base
     q[:attached].blank?
   }
 
-  scope :open, where(" NOT state <=> ? ","closed")
+  scope :open, -> { where(" NOT state <=> ? ","closed") }
   
   def can_view? user
     self.requestor == user || user.admin? || user.support_agent? || user.sys_admin?
@@ -50,12 +53,12 @@ class SupportTicket < ActiveRecord::Base
   def send_notification
     return if self.last_saved_by.nil?
     if self.requestor == self.last_saved_by  
-      OpenMailer.send_support_ticket_to_agent(self).deliver
+      OpenMailer.send_support_ticket_to_agent(self).deliver_now
     elsif self.agent == self.last_saved_by
-      OpenMailer.send_support_ticket_to_requestor(self).deliver if self.email_notifications?
+      OpenMailer.send_support_ticket_to_requestor(self).deliver_now if self.email_notifications?
     else
-      OpenMailer.send_support_ticket_to_agent(self).deliver
-      OpenMailer.send_support_ticket_to_requestor(self).deliver if self.email_notifications?
+      OpenMailer.send_support_ticket_to_agent(self).deliver_now
+      OpenMailer.send_support_ticket_to_requestor(self).deliver_now if self.email_notifications?
     end
   end
 

@@ -23,6 +23,9 @@ require 'open_chain/entity_compare/entity_comparator'
 class BusinessRuleSnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
+  attr_accessible :bucket, :compared_at, :doc_path, :recordable_id, :recordable,
+    :recordable_type, :version
+
   belongs_to :recordable, polymorphic: true
   after_destroy :delete_from_s3
 

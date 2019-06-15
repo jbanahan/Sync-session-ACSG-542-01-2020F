@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SyncRecordsController do
 
   before :each do
@@ -16,7 +14,7 @@ describe SyncRecordsController do
     expect(response).to redirect_to request.referrer
 
     p.reload
-    expect(Product.scoped.need_sync("Testing").all.include?(p)).to be_truthy
+    expect(Product.all.need_sync("Testing").all.include?(p)).to be_truthy
 
     sr = p.sync_records.first
     expect(sr.sent_at).to be_nil

@@ -22,6 +22,8 @@ class SalesOrderLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
 
+  attr_accessible :line_number, :price_per_unit, :product_id, :quantity, :sales_order_id
+
   dont_shallow_merge :SalesOrderLine, ['id','created_at','updated_at','line_number']
   
   belongs_to :sales_order

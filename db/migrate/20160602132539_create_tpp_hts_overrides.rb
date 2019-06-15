@@ -8,7 +8,7 @@ class CreateTppHtsOverrides < ActiveRecord::Migration
       t.date :start_date
       t.date :end_date
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :tpp_hts_overrides, :trade_preference_program_id, name: 'tpp_id'
     add_index :tpp_hts_overrides, :hts_code

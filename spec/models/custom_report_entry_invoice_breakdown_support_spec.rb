@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportEntryInvoiceBreakdownSupport do
 
   class Cr < CustomReport

@@ -11,7 +11,7 @@ class AddRandomAudits < ActiveRecord::Migration
       t.string :report_name
       t.datetime :report_date
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

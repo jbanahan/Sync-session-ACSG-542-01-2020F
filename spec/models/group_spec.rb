@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Group do
   describe "visible_to_user" do
     before :each do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe MessagesController do
 
   before(:each) do

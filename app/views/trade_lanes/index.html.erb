@@ -7,11 +7,10 @@
   <%= app_internals(MasterSetup.get) %>
   <%= stylesheet_link_tag    "trade_lanes", :media => "all" -%>
   <%= javascript_include_tag "trade_lanes" -%>
+  <%= javascript_include_tag "jquery_ujs" -%>
+  <%= csrf_meta_tags -%>
   </head>
-<body>
-  <% if run_as_user %>
-    <div id='run_as_box'>Logged In As: <%=run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
-  <% end %>
+<% body_tag(master_setup, current_user, run_as_user) %>
   <% if current_user %>
     <%= render "shared/nav_panel" %>
   <% end %>

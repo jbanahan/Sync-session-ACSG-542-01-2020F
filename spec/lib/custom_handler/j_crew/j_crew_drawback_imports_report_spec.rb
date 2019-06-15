@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
 
   describe "run" do

@@ -8,7 +8,7 @@ class CreateBrokerInvoiceLines < ActiveRecord::Migration
       t.string :vendor_name
       t.string :vendor_reference
       t.string :charge_type
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :broker_invoice_lines, :broker_invoice_id

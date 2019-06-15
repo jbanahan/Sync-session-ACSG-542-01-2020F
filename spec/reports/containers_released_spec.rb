@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::ContainersReleased do
   before :each do
     importer = Factory(:company,:importer=>true)

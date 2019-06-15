@@ -15,7 +15,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
       opts['end_date'] = end_date
 
       workbook = self.run_report(User.integration, opts)
-      OpenMailer.send_simple_html(opts['email_to'], "Special Programs Savings Report", "Report run on #{Time.zone.now}", workbook).deliver!
+      OpenMailer.send_simple_html(opts['email_to'], "Special Programs Savings Report", "Report run on #{Time.zone.now}", workbook).deliver_now
     end
   end
 

@@ -36,6 +36,11 @@ class OrderLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
 
+  attr_accessible :country_of_origin, :currency, :hts, :line_number, 
+    :order_id, :order, :price_per_unit, :product_id, :product, :quantity, :ship_to_id, 
+    :ship_to, :sku, :total_cost_digits, :unit_msrp, :unit_of_measure, :variant_id,
+    :created_at, :updated_at, :variant
+
   belongs_to :order, inverse_of: :order_lines
   belongs_to :ship_to, :class_name => 'Address'
   belongs_to :variant

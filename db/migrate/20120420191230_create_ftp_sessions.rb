@@ -7,7 +7,7 @@ class CreateFtpSessions < ActiveRecord::Migration
       t.text :log
       t.binary :data
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

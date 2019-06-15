@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DutyCalcExportFileLine do
   describe "allocate" do
     before(:each) do
@@ -41,7 +39,7 @@ describe DutyCalcExportFileLine do
     it "should allocate across multiple imports" do
       i2 = Factory(:drawback_import_line,quantity:30,importer:@imp,part_number:'abc',import_date:Date.new(2014,12,22))
       expect { @exp_line.allocate! }.to change(DrawbackAllocation,:count).from(0).to(2)
-      expect(DrawbackAllocation.scoped.collect {|a| [a.drawback_import_line_id,a.quantity]}).to eql([[i2.id,30],[@imp_line.id,20]])
+      expect(DrawbackAllocation.all.collect {|a| [a.drawback_import_line_id,a.quantity]}).to eql([[i2.id,30],[@imp_line.id,20]])
 
     end
   end

@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Talbots; class TalbotsLandedCostC
     recipients = Group.where(system_code: "TALBOTS LC REPORT").first.try(:users)
     if recipients
       emails = recipients.map(&:email).join(",")
-      OpenMailer.send_simple_html(emails, subject, body, [attachment]).deliver!
+      OpenMailer.send_simple_html(emails, subject, body, [attachment]).deliver_now
     end
   end
 

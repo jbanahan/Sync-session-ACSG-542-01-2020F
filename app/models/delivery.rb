@@ -17,6 +17,9 @@ class Delivery < ActiveRecord::Base
   
   include CoreObjectSupport
 
+  attr_accessible :carrier_id, :customer_id, :mode, :reference, :ship_from_id, 
+    :ship_to_id
+
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"
   belongs_to  :ship_from, :class_name => "Address"

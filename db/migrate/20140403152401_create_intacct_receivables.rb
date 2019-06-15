@@ -5,7 +5,7 @@ class CreateIntacctReceivables < ActiveRecord::Migration
       t.string :suffix
       t.datetime :data_requested_date
       t.datetime :data_received_date
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :intacct_alliance_exports, [:file_number, :suffix]
 
@@ -20,7 +20,7 @@ class CreateIntacctReceivables < ActiveRecord::Migration
       t.datetime :intacct_upload_date
       t.string :intacct_key
       t.text :intacct_errors
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :intacct_receivables, :intacct_alliance_export_id
     add_index :intacct_receivables, [:company, :customer_number, :invoice_number], name: 'intacct_recveivables_by_company_customer_number_invoice_number'
@@ -36,7 +36,7 @@ class CreateIntacctReceivables < ActiveRecord::Migration
       t.string :broker_file
       t.string :vendor_number
       t.string :vendor_reference
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :intacct_receivable_lines, :intacct_receivable_id
 
@@ -51,7 +51,7 @@ class CreateIntacctReceivables < ActiveRecord::Migration
       t.datetime :intacct_upload_date
       t.string :intacct_key
       t.text :intacct_errors
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :intacct_payables, :intacct_alliance_export_id
     add_index :intacct_payables, [:company, :vendor_number, :bill_number], name: 'intacct_payables_by_company_vendor_number_bill_number'

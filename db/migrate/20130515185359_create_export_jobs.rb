@@ -5,7 +5,7 @@ class CreateExportJobs < ActiveRecord::Migration
       t.timestamp :end_time
       t.boolean :successful
       t.string :export_type
-      t.timestamps
+      t.timestamps null: false
     end
 
     create_table :export_job_links do |t|

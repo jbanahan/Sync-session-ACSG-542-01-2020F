@@ -23,6 +23,9 @@ require 'open_chain/active_dates_support'
 class TppHtsOverride < ActiveRecord::Base
   include CoreObjectSupport
   include OpenChain::ActiveDatesSupport
+
+  attr_accessible :end_date, :hts_code, :note, :rate, :start_date, :trade_preference_program_id
+  
   belongs_to :trade_preference_program, inverse_of: :tpp_hts_overrides
 
   validates :start_date, presence: true

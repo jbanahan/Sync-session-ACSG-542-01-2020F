@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::PollingJob do
   class FakePollingJob
     include OpenChain::PollingJob

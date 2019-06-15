@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SupportTicket do
   before :each do
     @st = SupportTicket.new
@@ -57,13 +55,13 @@ describe SupportTicket do
       @mock_email = double(:email)
     end
     it "should notify agent when requestor is_last_saved_by" do
-      expect(@mock_email).to receive(:deliver)
+      expect(@mock_email).to receive(:deliver_now)
       expect(OpenMailer).to receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
       @st.last_saved_by = @requestor
       @st.send_notification
     end
     it "should notify requestor when agent is last_saved_by" do
-      expect(@mock_email).to receive(:deliver)
+      expect(@mock_email).to receive(:deliver_now)
       expect(OpenMailer).to receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = @agent
       @st.send_notification
@@ -75,7 +73,7 @@ describe SupportTicket do
       @st.send_notification
     end
     it "should notify both when last_saved_by is not agent or requestor" do
-      expect(@mock_email).to receive(:deliver).twice
+      expect(@mock_email).to receive(:deliver_now).twice
       expect(OpenMailer).to receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
       expect(OpenMailer).to receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = Factory(:user)

@@ -1,14 +1,12 @@
-require 'spec_helper'
-
 # This test file has to be a little bit wonky due to the way rspec hooks into the controller classes
 # and the fact that we're using the local controller outside an http environment..which rspec is not a fan of.
-TestLocalController = Class.new(LocalController) do 
+TestLocalController = Class.new do 
+  include LocalControllerSupport
   # required so rspec will run
   attr_accessor :request, :params
 
-  def show
-    # Just use a really simple page, all we care about for the test is that something renders to a string
-    render layout: "standalone", template: "hts/index", locals: {master_setup: MasterSetup.new}
+  def show 
+    render_view({}, {layout: "layouts/standalone", template: "hts/index", locals: {master_setup: MasterSetup.new}})
   end
 
 end

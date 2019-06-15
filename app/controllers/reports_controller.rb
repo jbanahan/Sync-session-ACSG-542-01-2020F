@@ -49,7 +49,7 @@ class ReportsController < ApplicationController
   end
 
   def show_tariff_comparison
-    @countries = Country.where("id in (select country_id from tariff_sets)").order("name ASC")
+    @countries = OpenChain::Report::TariffComparison.available_countries
   end
 
   def run_tariff_comparison

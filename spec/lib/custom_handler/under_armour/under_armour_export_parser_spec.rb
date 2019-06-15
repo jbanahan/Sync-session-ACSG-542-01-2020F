@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
 
   before :each do
@@ -10,7 +8,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     before :each do
       DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN",:import_date=>"2011-10-01",:quantity=>10,:product_id=>Factory(:product,:unique_identifier=>'1000375-609').id)
       DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+TW",:import_date=>"2011-10-01",:quantity=>10,:product_id=>Factory(:product,:unique_identifier=>'1000377-001').id)
-      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+MY",:import_date=>"2011-11-01",:quantity=>10,:product_id=>Product.find_by_unique_identifier('1000377-001').id)
+      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+MY",:import_date=>"2011-11-01",:quantity=>10,:product_id=>Product.find_by(unique_identifier: '1000377-001').id)
       @lines = [
 "Style,Color,UPC,PO Number,PO Line Number,Export Date,TCMD CONTAINER,VAN TCN,PO Received Date,Vendor,VENDOR NAME,Facility,ISO,FACNAME,Item,DESC,CRC,STYLE2,Units Received,Cost,Recd $",
 "1000375-609,LG,698611559156,0055404558,5,10/2/2011,MSKU 812950 ,HX7NNW-3903-S0622M2,11-Nov-11,60581514,UNDER ARMOUR,1375142,DE,GRAFENWOEHR MAIN STORE,470566840000001,UA MEN TOP MAROON LARGE,4947811,1000375609,20,$9.50 ,$190.00",
@@ -26,7 +24,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       @t.close
     end
     it "should parse multi line CSV" do
-      line = DutyCalcExportFileLine.find_by_part_number '1000375-609-LG+CN'
+      line = DutyCalcExportFileLine.find_by(part_number: '1000375-609-LG+CN')
       expect(line.export_date).to eq(Date.new(2011,10,2))
       expect(line.ship_date).to eq(Date.new(2011,10,2))
       expect(line.ref_1).to eq('0055404558')
@@ -41,8 +39,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
       expect(line.importer).to eq(@importer)
     end
     it "should pick country of origin for most recent import prior to export if multiple are found" do
-      expect(DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+MY')).not_to be_nil
-      expect(DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+TW')).to be_nil
+      expect(DutyCalcExportFileLine.find_by(part_number: '1000377-001-XXL+MY')).not_to be_nil
+      expect(DutyCalcExportFileLine.find_by(part_number: '1000377-001-XXL+TW')).to be_nil
     end
     it "should skip lines without country of origin match" do
       expect(DutyCalcExportFileLine.where("part_number like \"1000377-410%\"")).to be_empty

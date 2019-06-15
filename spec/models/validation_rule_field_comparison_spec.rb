@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleFieldComparison do
 
   it "validates a field with specified operator/operand" do

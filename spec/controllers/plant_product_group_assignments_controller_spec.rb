@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PlantProductGroupAssignmentsController do
   before :each do
     sign_in_as Factory(:user)

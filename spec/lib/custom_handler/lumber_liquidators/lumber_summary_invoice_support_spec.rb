@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport do
 
   subject { Class.new { include OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSupport }.new }

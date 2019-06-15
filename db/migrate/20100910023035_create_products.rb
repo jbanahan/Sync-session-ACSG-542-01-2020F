@@ -7,7 +7,7 @@ class CreateProducts < ActiveRecord::Migration
       t.string :description
       t.integer :vendor_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

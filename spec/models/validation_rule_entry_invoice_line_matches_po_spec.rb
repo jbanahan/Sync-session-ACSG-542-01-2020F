@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceLineMatchesPo do
 
   describe "run_child_validation" do

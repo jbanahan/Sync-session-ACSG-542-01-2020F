@@ -41,6 +41,16 @@ class DrawbackClaim < ActiveRecord::Base
   include CoreObjectSupport
   include UpdateModelFieldsSupport
 
+  attr_accessible :abi_accepted_date, :bill_amount, :billed_date, 
+    :duty_check_amount, :duty_check_received_date, :duty_claimed, 
+    :entry_number, :exports_end_date, :exports_start_date, :hmf_claimed, 
+    :hmf_mpf_check_amount, :hmf_mpf_check_number, 
+    :hmf_mpf_check_received_date, :importer_id, :importer, :liquidated_date, 
+    :mpf_claimed, :name, :net_claim_amount, :planned_claim_amount, 
+    :sent_to_client_date, :sent_to_customs_date, :total_claim_amount, 
+    :total_duty, :total_export_value, :total_pieces_claimed, 
+    :total_pieces_exported
+
   belongs_to :importer, :class_name=>"Company"
   
   validates_presence_of :importer_id

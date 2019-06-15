@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXmlGenerator do
   describe '#generate_xml' do
     def match_address xml, address

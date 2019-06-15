@@ -1,6 +1,10 @@
 module OpenChain
   module Report
     class TariffComparison
+
+      def self.available_countries
+        Country.where("id in (select country_id from tariff_sets)").order("name ASC")
+      end
       
       # Run the report
       # settings = {'old_tariff_set_id'=>1,'new_tariff_set_id'=>2}

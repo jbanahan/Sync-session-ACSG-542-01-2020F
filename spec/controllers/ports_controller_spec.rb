@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PortsController do
   before :each do
     @u = Factory(:admin_user)

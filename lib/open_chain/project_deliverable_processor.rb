@@ -31,7 +31,7 @@ class OpenChain::ProjectDeliverableProcessor
       user = User.find(key)
       pds_for_user = []
       value.each { |v| pds_for_user << v }
-      OpenMailer.send_high_priority_tasks(user, pds_for_user).deliver!
+      OpenMailer.send_high_priority_tasks(user, pds_for_user).deliver_now
     end
   end
 end

@@ -12,6 +12,8 @@
 require 'spreadsheet'
 
 class WorksheetConfig < ActiveRecord::Base
+  attr_accessible :module_type, :name, :worksheet_config_mappings_attributes
+  
   has_many :worksheet_config_mappings, :dependent => :destroy
 
   validates :name, :presence => true

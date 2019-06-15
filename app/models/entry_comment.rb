@@ -17,6 +17,8 @@
 #
 
 class EntryComment < ActiveRecord::Base
+  attr_accessible :body, :created_at, :entry_id, :entry, :generated_at, 
+    :public_comment, :updated_at, :username
 
   # Be aware that the entry parsers, for performance reasons, do NOT call destroy_all when reprocessing entry notes, 
   # so if ANY dependent destroys are added below, you MUST go back to the entry parser and amend that (or work around it)

@@ -9,7 +9,7 @@ module OpenChain; class ScheduledJobMonitor
             "<p>You can determine if the job is legitimately still running by checking the Master Setup page and seeing if a Delayed Job instance is still running the job.</p>" +
             "<p>If no job is still running, you must reset the running flag on the scheduled job edit page.</p>").html_safe
 
-      OpenMailer.send_simple_html(email(opts), "[VFI Track] Long Running Jobs", body).deliver!
+      OpenMailer.send_simple_html(email(opts), "[VFI Track] Long Running Jobs", body).deliver_now
     end
   end
 

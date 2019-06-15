@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
   subject { described_class.new nil }

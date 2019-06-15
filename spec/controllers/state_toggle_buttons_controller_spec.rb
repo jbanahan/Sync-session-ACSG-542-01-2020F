@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe StateToggleButtonsController do
 
   let!(:u) { Factory(:user) }
@@ -14,7 +12,7 @@ describe StateToggleButtonsController do
     it "lists STBs and user/date-field labels for a sys-admin" do
       expect(u).to receive(:admin?).and_return true
       get :index
-      expect(assigns(:buttons)).to eq [{'stb' => stb, 'user_field' => 'Closed By', 'date_field' => 'Closed At'}]
+      expect(assigns(:buttons)).to eq [{'stb' => stb, 'user_field' => 'Closed By', 'date_field' => 'Closed At'}.symbolize_keys]
       expect(response).to render_template :index
     end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryDutyFree do
   before :each do
     @rule = ValidationRuleEntryDutyFree.new(rule_attributes_json: {spi_primary: '8'}.to_json)

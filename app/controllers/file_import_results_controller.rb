@@ -20,7 +20,7 @@ class FileImportResultsController < ApplicationController
       @fir = FileImportResult.find(params[:id])
       if @fir.change_records.length > 200
         FileImportResult.delay.download_results(false, current_user.id, @fir.id, true)
-        flash[:notices] = ["You will receive a system message when your file is finished processing."]
+        add_flash :notices, "You will receive a system message when your file is finished processing."
         redirect_to :back
       else
         FileImportResult.download_results(false, current_user.id, @fir) do |t|
@@ -36,7 +36,7 @@ class FileImportResultsController < ApplicationController
       @fir = FileImportResult.find(params[:id])
       if @fir.change_records.length > 200
         FileImportResult.delay.download_results(true, current_user.id, @fir.id, true)
-        flash[:notices] = ["You will receive a system message when your file is finished processing."]
+        add_flash :notices, "You will receive a system message when your file is finished processing."
         redirect_to :back
       else
         FileImportResult.download_results(true, current_user.id, @fir) do |t|

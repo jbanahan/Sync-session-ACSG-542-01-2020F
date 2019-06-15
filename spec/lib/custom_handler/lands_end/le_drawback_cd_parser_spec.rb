@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser do
   before :each do
     @le_company = Factory(:company)

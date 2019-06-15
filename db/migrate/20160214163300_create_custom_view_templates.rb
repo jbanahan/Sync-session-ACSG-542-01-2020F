@@ -4,7 +4,7 @@ class CreateCustomViewTemplates < ActiveRecord::Migration
       t.string :template_identifier
       t.string :template_path
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :custom_view_templates, :template_identifier
   end

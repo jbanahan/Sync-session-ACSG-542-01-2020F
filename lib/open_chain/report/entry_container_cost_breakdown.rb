@@ -54,7 +54,7 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
   end
 
   def find_entries run_by, customer, start_date, end_date
-    Entry.search_secure(run_by, Entry.scoped).where(customer_number: customer).where("release_date >= ? and release_date < ?", start_date, end_date).order(:release_date)
+    Entry.search_secure(run_by, Entry.all).where(customer_number: customer).where("release_date >= ? and release_date < ?", start_date, end_date).order(:release_date)
   end
 
   def load_entry id

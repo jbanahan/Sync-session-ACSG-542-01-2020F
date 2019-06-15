@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CommercialInvoiceLine do
   describe "duty_plus_fees_amount" do
     it "sums all duty and fees for a line" do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
   subject { Class.new { include OpenChain::CustomHandler::CustomFileCsvExcelParser }.new }
 

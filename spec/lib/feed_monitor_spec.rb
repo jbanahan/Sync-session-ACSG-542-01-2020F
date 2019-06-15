@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::FeedMonitor do
   before :each do
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]

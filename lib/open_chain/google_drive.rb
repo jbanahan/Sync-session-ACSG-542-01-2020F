@@ -42,7 +42,7 @@ module OpenChain; class GoogleDrive
   
   # Uploads the provided file to the specified path under the user account specified.
   # 
-  # user_email - a drive email account that has already been authorized for access (.ie there's a reference to it in google_drive.yml)
+  # user_email - a drive email account that has already been authorized for access (.ie there's a reference to it under the google_authentication key in secrets.yml)
   # If blank/nil, the system default will be used.
   # path - a standard path like 'folder/subfolder/file.txt'.  The path may consist solely of a filename, but it MUST have a name.
   # file - a IO/File object or a string path to the file to upload

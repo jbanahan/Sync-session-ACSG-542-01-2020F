@@ -9,7 +9,7 @@ class ChargeCodesController < ApplicationController
   end
   def create
     admin_secure {
-      c = ChargeCode.find_by_code params[:charge_code][:code]
+      c = ChargeCode.find_by(code: params[:charge_code][:code])
       if c
         error_redirect "A charge code with code \"#{c.code}\" already exists."
       else
@@ -34,7 +34,7 @@ class ChargeCodesController < ApplicationController
     admin_secure {
       c = ChargeCode.find params[:id]
       if c
-        c.update_attributes params[:charge_code]
+        c.update params[:charge_code]
         add_flash :notices, "Charge code #{c.code} updated."
       else
         add_flash :errors, "Charge code not found."

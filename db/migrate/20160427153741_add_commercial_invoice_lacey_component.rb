@@ -12,10 +12,10 @@ class AddCommercialInvoiceLaceyComponent < ActiveRecord::Migration
       t.string :harvested_from_country
       t.decimal :percent_recycled_material, precision: 5, scale: 2
       t.string :container_numbers
-      t.references :commercial_invoice_tariff, index: true, null: false
+      t.references :commercial_invoice_tariff, null: false
     end
 
-    add_index :commercial_invoice_lacey_components, :commercial_invoice_tariff_id, name: "lacey_components_by_tariff_id"
+    add_index :commercial_invoice_lacey_components, [:commercial_invoice_tariff_id], name: "lacey_components_by_tariff_id"
   end
 
 end

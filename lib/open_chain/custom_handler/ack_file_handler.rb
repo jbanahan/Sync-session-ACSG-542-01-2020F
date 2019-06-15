@@ -83,7 +83,7 @@ module OpenChain
           t.flush
           t.rewind
 
-          OpenMailer.send_ack_file_exception(email_addresses, messages, t, file_name, sync_code).deliver!
+          OpenMailer.send_ack_file_exception(email_addresses, messages, t, file_name, sync_code).deliver_now
         end
       end
       

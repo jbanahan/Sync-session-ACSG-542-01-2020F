@@ -13,7 +13,7 @@ class CreateInboundFiles < ActiveRecord::Migration
       t.string :s3_path
       t.integer :requeue_count
       t.datetime :original_process_start_date
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :inbound_files, [:s3_bucket, :s3_path]

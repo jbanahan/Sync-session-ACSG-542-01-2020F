@@ -8,7 +8,7 @@ class CreateAttachments < ActiveRecord::Migration
       t.datetime :attached_updated_at
       t.integer :uploaded_by_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe InstantClassification do
   describe "find by product" do
     before :each do

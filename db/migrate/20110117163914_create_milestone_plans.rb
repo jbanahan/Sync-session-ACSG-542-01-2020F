@@ -4,7 +4,7 @@ class CreateMilestonePlans < ActiveRecord::Migration
       t.string :name
       t.integer :test_rank
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

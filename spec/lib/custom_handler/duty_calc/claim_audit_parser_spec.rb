@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
   describe "process_from_attachment" do
     before :each do
@@ -11,20 +9,20 @@ describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
       end
       it "must be attached to a DrawbackClaim" do
         att = Factory(:attachment,attachable:Factory(:order),attached_file_name:'a.xlsx')
-        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        expect{described_class.process_from_attachment(att.id,@u.id)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /is not attached to a DrawbackClaim/
       end
       it "must be a user who can edit the claim" do
         att = Factory(:attachment,attachable:Factory(:drawback_claim),attached_file_name:'a.xlsx')
         allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return false
-        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        expect{described_class.process_from_attachment(att.id,@u.id)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /cannot edit DrawbackClaim/
       end
       it "must not have existing export history lines for the claim" do
         allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
         att = Factory(:attachment,attachable:Factory(:drawback_claim),attached_file_name:'a.xlsx')
         att.attachable.drawback_claim_audits.create!
-        expect{described_class.process_from_attachment(att,@u)}.to change(@u.messages,:count).from(0).to(1)
+        expect{described_class.process_from_attachment(att.id,@u.id)}.to change(@u.messages,:count).from(0).to(1)
         expect(@u.messages.first.body).to match /already has DrawbackClaimAudit records/
       end
     end

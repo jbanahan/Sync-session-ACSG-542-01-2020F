@@ -7,7 +7,7 @@ module UserManualHelper
       nil
     else
       Rails.application.routes.url_helpers.download_user_manual_url(um, host: MasterSetup.get.request_host, 
-                                                                        protocol: (Rails.env.development? ? "http" : "https"))
+                                                                        protocol: (MasterSetup.development_env? ? "http" : "https"))
     end
   end
 

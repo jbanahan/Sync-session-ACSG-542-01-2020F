@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::UsersController do
 
   before :each do
@@ -39,14 +37,14 @@ describe Api::V1::UsersController do
     end
   end
 
-  describe "google_oauth2" do
+  describe "google_oauth2", :without_partial_double_verification do
 
     before :each do
       use_json
       @u = Factory(:user, username: "user", api_auth_token: "auth_token", email: "me@gmail.com")
       @config = {client_secret: "secret", client_id: "id"}
       allow(Rails.application.config).to receive(:google_oauth2_api_login).and_return @config
-      allow_any_instance_of(described_class).to receive(:test?).and_return false
+      allow(MasterSetup).to receive(:test_env?).and_return false
     end
 
     it "uses an omniauth request to validate a user's access token" do
@@ -63,7 +61,7 @@ describe Api::V1::UsersController do
     end
 
     it "returns 404 if server is not setup for google oauth logins" do
-      expect_any_instance_of(described_class).to receive(:test?).and_return false
+      expect(MasterSetup).to receive(:test_env?).and_return false
       expect(Rails.application.config).to receive(:respond_to?).with(:google_oauth2_api_login).and_return false
 
       post :google_oauth2, access_token: "token"

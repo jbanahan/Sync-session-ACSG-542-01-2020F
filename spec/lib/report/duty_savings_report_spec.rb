@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::DutySavingsReport do
   let(:report) { described_class.new }
   let(:arrival_date) { DateTime.new(2016,01,15) }

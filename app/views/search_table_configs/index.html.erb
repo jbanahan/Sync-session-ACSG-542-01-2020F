@@ -26,7 +26,7 @@ $(function() {
         <td><%=stc.page_uid%></td>
         <td><%=stc.company.try(:name)%></td>
         <td><%=link_to "edit", edit_search_table_config_path(stc)%></td>
-        <td><%=link_to "delete", search_table_config_path(stc), :confirm => 'Delete this search table config?', :method => :delete %></td>
+        <td><%=link_to "delete", search_table_config_path(stc), :data => {:confirm => 'Delete this search table config?'}, :method => :delete %></td>
       </tr>
     <%end%>
   </tbody>

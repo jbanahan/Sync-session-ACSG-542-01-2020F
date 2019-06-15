@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'open_chain/report/intacct_exception_report'
-
 describe OpenChain::Report::IntacctExceptionReport do
 
   before :each do

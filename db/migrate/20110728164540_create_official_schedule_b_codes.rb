@@ -12,7 +12,7 @@ class CreateOfficialScheduleBCodes < ActiveRecord::Migration
       t.string :naics_classification
       t.string :hitech_classification
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

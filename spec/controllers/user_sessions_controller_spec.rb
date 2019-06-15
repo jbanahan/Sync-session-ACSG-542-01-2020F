@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UserSessionsController do
   let (:sign_in_failure) {
     "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your VFI Track password?' link below the password box to reset your password."
@@ -112,7 +110,7 @@ describe UserSessionsController do
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :format => "json"
     
       expect(response).to be_success
-      expect(response.body).to eq " "
+      expect(response.body).to be_blank
     end
 
     it "should return json with errors if login failed" do

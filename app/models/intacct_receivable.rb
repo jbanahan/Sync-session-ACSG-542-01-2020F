@@ -26,6 +26,11 @@
 #
 
 class IntacctReceivable < ActiveRecord::Base
+  attr_accessible :company, :currency, :customer_number, :customer_reference, 
+    :intacct_alliance_export_id, :intacct_alliance_export, :intacct_errors, 
+    :intacct_key, :intacct_upload_date, :invoice_date, :invoice_number, 
+    :lmd_identifier, :receivable_type, :created_at
+  
   belongs_to :intacct_alliance_export, :inverse_of => :intacct_receivables
   has_many :intacct_receivable_lines, :dependent => :destroy
 

@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/sql_proxy_client'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 require 'open_chain/custom_handler/intacct/intacct_client'

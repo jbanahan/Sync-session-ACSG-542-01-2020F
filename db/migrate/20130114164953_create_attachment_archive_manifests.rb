@@ -5,7 +5,7 @@ class CreateAttachmentArchiveManifests < ActiveRecord::Migration
       t.datetime :finish_at
       t.integer :company_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :attachment_archive_manifests, :company_id
   end

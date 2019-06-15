@@ -4,74 +4,26 @@ Rails.application.config.pepsi_sso_url = nil
 
 OmniAuth.config.failure_raise_out_environments = [:test]
 
-if File.exist?("config/google_auth.json")
-  google_auth_settings = JSON.parse(File.read("config/google_auth.json"))
-
-  # This is a simple monkey patch for the Google Auth2 provider...the provider was using a Google+ authentication channel (I think at the time 
-  # it was the only one available).  When Google killed Google+, the gem switched to the different oauth endpoint, but in doing so they
-  # also updated the JWT gemspec dependency to rely on JWT 2, which would force us to have to update a whole host of other gems simply
-  # to use a different Google OAuth2 endpoint.  This is easier...we'll eventaully get around to upgrading the gem.  At that point, this can be removed.
-
-  module OmniAuth; module Strategies; class GoogleOauth2 < OmniAuth::Strategies::OAuth2
-
-    # This copy/pasted basically straight from GoogleOauth2...the only real change is to support multiple iss URLs.
-    extra do
-      hash = {}
-      hash[:id_token] = access_token['id_token']
-      if !options[:skip_jwt] && !access_token['id_token'].nil?
-        hash[:id_info] = ::JWT.decode(
-          access_token['id_token'], nil, false, verify_iss: options.verify_iss,
-                                                iss: ['https://accounts.google.com', 'accounts.google.com'],
-                                                verify_aud: true,
-                                                aud: options.client_id,
-                                                verify_sub: false,
-                                                verify_expiration: true,
-                                                verify_not_before: true,
-                                                verify_iat: true,
-                                                verify_jti: false,
-                                                leeway: options[:jwt_leeway]
-        ).first
-      end
-      hash[:raw_info] = raw_info unless skip_info?
-      prune! hash
-    end
-
-    def raw_info
-      @raw_info ||= access_token.get('https://www.googleapis.com/oauth2/v3/userinfo').parsed
-    end
-
-  end; end; end
-
-  # This patch is to allow the verify_iss validation to support multiple iss URLs
-  module JWT; class Verify
-    def verify_iss
-      valid_iss = @options.values_at(:iss, "iss").flatten.compact
-      return if valid_iss.length == 0
-
-      if !valid_iss.include? @payload['iss'].to_s
-        raise(
-          JWT::InvalidIssuerError,
-          "Invalid issuer. Expected #{options_iss}, received #{@payload['iss'] || '<none>'}"
-        )
-      end
-    end
-  end; end
+if !MasterSetup.secrets["google_oauth2"].blank?
+  # To get these settings, you need to log into the Google Developers console, choose the VFI Track
+  # project, open the credentials page and go to the OAuth 2.0 client IDs.  You will need to access or create
+  # credentials for a Web application.  Once created you can download the json file Google gives you,
+  # and extract the client_id and client_secret values from it and place those keys and values under a 
+  # 'google_oauth2' key in secrets.yml.
+  #
+  # NOTE: Client IDs are specific to EVERY deployment instance.  You cannot use the same client id
+  # for 'www' and for 'test' or a customer specific instance.
+  google_auth_settings = MasterSetup.secrets["google_oauth2"]
 
   Rails.application.config.middleware.use OmniAuth::Builder do
     # The client options below can be removed once we can upgrade the Google OAuth 2 gem...they're just overridind the default ones
     # from the old gem w/ the new ones
-    provider(:google_oauth2, google_auth_settings["web"]["client_id"], google_auth_settings["web"]["client_secret"], {
-      client_options: {
-        site: 'https://oauth2.googleapis.com',
-         authorize_url: 'https://accounts.google.com/o/oauth2/auth',
-         token_url: '/token'
-       }
-    })
+    provider(:google_oauth2, google_auth_settings["client_id"], google_auth_settings["client_secret"])
   end
   Rails.application.config.use_google_auth = true
 end
 
-if File.exist?("config/pepsi-idp-metadata.xml") && MasterSetup.get.custom_feature?("Pepsi SSO")
+if File.exist?("config/pepsi-idp-metadata.xml")
   spid = "pepsi.vfitrack.net"
 
   idp_metadata_settings = OneLogin::RubySaml::IdpMetadataParser.new.parse_to_hash(IO.read("config/pepsi-idp-metadata.xml"))

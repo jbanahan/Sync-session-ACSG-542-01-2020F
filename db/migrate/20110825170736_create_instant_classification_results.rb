@@ -5,7 +5,7 @@ class CreateInstantClassificationResults < ActiveRecord::Migration
       t.datetime :run_at
       t.datetime :finished_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :instant_classification_results, :run_by_id
   end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::SftpMonthlyArchiver do
   it 'throws an exception if an Alliance customer number is not present' do
     expect{OpenChain::SftpMonthlyArchiver.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance Customer Number Required')

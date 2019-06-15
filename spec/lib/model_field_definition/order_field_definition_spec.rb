@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe "OrderFieldDefinition" do
   describe "ord_total_cost" do
     before :each do

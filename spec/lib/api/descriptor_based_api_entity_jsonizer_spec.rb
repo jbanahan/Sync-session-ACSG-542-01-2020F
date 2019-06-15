@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::Api::DescriptorBasedApiEntityJsonizer do
 
   let (:order) { Factory(:order) }

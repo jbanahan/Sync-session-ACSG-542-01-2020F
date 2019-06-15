@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::AscenaEntryAuditReport do
 
   let(:report) { described_class.new }

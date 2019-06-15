@@ -5,7 +5,7 @@ class CreateBusinessValidationResults < ActiveRecord::Migration
       t.references :validatable, polymorphic: true
       t.string :state
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :business_validation_results, :business_validation_template_id, name: 'business_validation_template'
     add_index :business_validation_results, [:validatable_id, :validatable_type], name: 'validatable'

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TariffSetsController do
 
   describe "index" do

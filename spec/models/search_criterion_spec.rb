@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchCriterion do
   before :each do
     @product = Factory(:product)
@@ -44,14 +42,14 @@ describe SearchCriterion do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       @sc.update_attribute(:value, '200')
       expect(@sc.test?(cil)).to be_falsey
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils).to be_empty
     end
 
     it "should pass if field is less than other field's value as decimal" do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_truthy
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils.first).to eq(cil)
     end
   end
@@ -67,14 +65,14 @@ describe SearchCriterion do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       @sc.update_attribute(:value, '0.4')
       expect(@sc.test?(cil)).to be_falsey
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils).to be_empty
     end
 
     it "should pass if field is greater than other field's value as decimal" do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_truthy
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils.first).to eq(cil)
     end
   end
@@ -89,7 +87,7 @@ describe SearchCriterion do
     it "should pass if field is equal to other field's value as decimal" do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_truthy
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils.first).to eq(cil)
     end
 
@@ -97,7 +95,7 @@ describe SearchCriterion do
       @sc.update_attribute(:value, '50')
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_falsey
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils).to be_empty
     end
   end
@@ -112,7 +110,7 @@ describe SearchCriterion do
     it "should pass if field is not equal to other field's value as decimal" do
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_truthy
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils.first).to eq(cil)
     end
 
@@ -120,7 +118,7 @@ describe SearchCriterion do
       @sc.update_attribute(:value, '100')
       cil = CommercialInvoiceLine.create!(line_number: 1, value: 10, contract_amount: 5)
       expect(@sc.test?(cil)).to be_falsey
-      cils = @sc.apply(CommercialInvoiceLine.scoped).all
+      cils = @sc.apply(CommercialInvoiceLine.all).all
       expect(cils).to be_empty
     end
   end
@@ -191,28 +189,28 @@ describe SearchCriterion do
     it "should pass if field is not equal to other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "should not pass if field is equal other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.day.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "should pass if field is null" do
       ent = Factory(:entry, :arrival_date=>2.days.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "should pass if other field is null" do
       ent = Factory(:entry, :arrival_date=>nil,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
   end
@@ -229,14 +227,14 @@ describe SearchCriterion do
       time2 = Time.new("2017", "01", "01", "12", "58")
       ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "should pass if field is not equal to other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
@@ -244,21 +242,21 @@ describe SearchCriterion do
       time = Time.new("2017", "01", "01", "12", "59")
       ent = Factory(:entry,:arrival_date=>time,:release_date=>time)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "should pass if field is null" do
       ent = Factory(:entry, :arrival_date=>1.day.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
     it "should pass if other field is null" do
       ent = Factory(:entry, :arrival_date=>nil,:release_date=>1.day.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
   end
@@ -275,7 +273,7 @@ describe SearchCriterion do
       time2 = Time.new("2017", "01", "01", "12", "58")
       ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
@@ -283,7 +281,7 @@ describe SearchCriterion do
       time = Time.new("2017", "01", "01", "12", "59")
       ent = Factory(:entry,:arrival_date=>time,:release_date=>time)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
 
@@ -292,21 +290,21 @@ describe SearchCriterion do
       time2 = Time.new("2017", "01", "01", "12", "58")
       ent = Factory(:entry,:arrival_date=>time1,:release_date=>time2)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "should not pass if field is null" do
       ent = Factory(:entry, :arrival_date=>2.days.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
 
     it "should not pass if other field is null" do
       ent = Factory(:entry, :arrival_date=>nil,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
   end
@@ -320,45 +318,45 @@ describe SearchCriterion do
     it "should pass if field is after other field's value" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
     it "should fail if field is same as other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if field is before other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if field is null" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if other field is null" do
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass if field is null and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass if field is not null and other field is true and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass for custom date fields before another custom date field" do
@@ -375,7 +373,7 @@ describe SearchCriterion do
       ent.update_custom_value! @def2, 2.month.ago
 
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
     it "should pass when comparing fields across multiple module levels" do
@@ -386,7 +384,7 @@ describe SearchCriterion do
       @sc.value = "ci_invoice_date"
 
       expect(@sc.test?([ent, inv])).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
   end
@@ -400,45 +398,45 @@ describe SearchCriterion do
     it "should pass if field is before other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
     it "should fail if field is same as other field's value" do
       ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if field is after other field's value" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if field is null" do
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should fail if other field is null" do
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
       expect(@sc.test?(ent)).to be_falsey
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass if field is null and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass if field is not null and other field is true and include empty is true" do
       @sc.include_empty = true
       ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
       expect(@sc.test?(ent)).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents).to be_empty
     end
     it "should pass for custom date fields before another custom date field" do
@@ -454,7 +452,7 @@ describe SearchCriterion do
       @product.update_custom_value! @def2, 1.month.ago
 
       expect(@sc.test?(@product)).to be_truthy
-      prods = @sc.apply(Product.scoped).all
+      prods = @sc.apply(Product.all).all
       expect(prods.first).to eq(@product)
     end
     it "should pass when comparing fields across multiple module levels" do
@@ -465,7 +463,7 @@ describe SearchCriterion do
       @sc.value = "ci_invoice_date"
 
       expect(@sc.test?([ent, inv])).to be_truthy
-      ents = @sc.apply(Entry.scoped).all
+      ents = @sc.apply(Entry.all).all
       expect(ents.first).to eq(ent)
     end
   end
@@ -739,10 +737,11 @@ describe SearchCriterion do
         end
 
         it "should find something with a nil date and include_empty" do
-          @product.update_attributes(:created_at=>nil)
-          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
+          # Need to use an order since there are no nullable datetime fields on a product
+          order = Factory(:order)
+          sc = SearchCriterion.new(:model_field_uid=>:ord_closed_at,:operator=>"pm",:value=>2)
           sc.include_empty = true
-          expect(sc.apply(Product.where("1=1")).all).to include @product
+          expect(sc.apply(Order.all)).to include order
         end
 
         it "should find a product when there is a regex match on the appropriate text field" do

@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe Address do
 
   describe '#can_view?' do

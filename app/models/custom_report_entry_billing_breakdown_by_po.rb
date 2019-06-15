@@ -1,6 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportEntryBillingBreakdownByPo < CustomReport
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
 
 	def self.template_name
     "Entry Billing Breakdown By PO"

@@ -23,9 +23,8 @@ module OpenChain; module CustomHandler; class KewillDocumentsRequester
   end
   private_class_method :sql_proxy_client
 
-  def self.imaging_config 
-    @@imaging_config ||= YAML.load_file("config/kewill_imaging.yml").with_indifferent_access
-    @@imaging_config[Rails.env]
+  def self.imaging_config
+    MasterSetup.secrets["kewill_imaging"].with_indifferent_access
   end
   private_class_method :imaging_config
 

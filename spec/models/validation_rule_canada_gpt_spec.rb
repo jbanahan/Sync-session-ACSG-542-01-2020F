@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleCanadaGpt do
 
   describe "run_validation" do

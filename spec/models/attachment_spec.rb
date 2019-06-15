@@ -1,6 +1,3 @@
-# encoding: utf-8
-require 'spec_helper'
-
 describe Attachment do
   describe "attachments_as_json" do
     it "should create json" do

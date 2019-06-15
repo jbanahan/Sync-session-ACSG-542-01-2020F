@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnAscenaProductGenerator do
   def run_to_array generator=subject
     @tmp = generator.sync_csv

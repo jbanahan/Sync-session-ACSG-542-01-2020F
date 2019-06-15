@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
   let(:data) { IO.read 'spec/fixtures/files/ellery_856.edi' }
   let(:cdefs) { described_class.new.cdefs }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OfficialTariffsController do
   before :each do
     @us = Factory(:country,:iso_code=>"US", import_location: true)

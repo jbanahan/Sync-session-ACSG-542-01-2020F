@@ -49,7 +49,7 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
           read_only: true,
           qualified_field_name: "(SELECT #{cd.data_column} FROM product_vendor_assignments INNER JOIN custom_values ON custom_values.custom_definition_id = #{cd.id} AND custom_values.customizable_id = product_vendor_assignments.id and custom_values.customizable_type = 'ProductVendorAssignment' WHERE product_vendor_assignments.product_id = order_lines.product_id AND product_vendor_assignments.vendor_id = (SELECT vendor_id FROM orders WHERE orders.id = order_lines.order_id) LIMIT 1)",
           export_lambda: lambda {|ol| pva = ProductVendorAssignment.where(product_id:ol.product_id,vendor_id:ol.order.vendor_id).first; pva ? pva.get_custom_value(cd).value : nil},
-          field_validator_rule: cd.field_validator_rules.first
+          field_validator_rule: ModelField.field_validator_rule(cd.model_field_uid)
         }
       ]
       add_fields CoreModule::ORDER_LINE, pva_fields_to_add

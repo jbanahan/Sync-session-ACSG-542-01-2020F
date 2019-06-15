@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
         body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files.size)} for File # #{file_number}."
       end
       
-      OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body,files).deliver!
+      OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body,files).deliver_now
     ensure
       files.each {|f| f.close! unless f.closed? }
     end

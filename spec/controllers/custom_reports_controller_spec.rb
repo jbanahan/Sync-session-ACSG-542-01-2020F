@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportsController do
   before :each do
     @u = Factory(:master_user)
@@ -166,7 +164,7 @@ describe CustomReportsController do
     it "should write error message text if user does not equal current user" do
       @rpt.update_attributes(:user_id=>Factory(:user).id)
       get :preview, :id=>@rpt.id
-      expect(response.body).to eq("You cannot preview another user's report.")
+      expect(response.body).to eq("You cannot preview another user&#39;s report.")
     end
     it "should render result if user matches current user" do
       get :preview, :id=>@rpt.id

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::GroupsController do
   let (:user) { Factory(:admin_user)}
 

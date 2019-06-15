@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmPoLineParser do
   let!(:cf) { double("custom file") }
   let!(:handler) { described_class.new cf }

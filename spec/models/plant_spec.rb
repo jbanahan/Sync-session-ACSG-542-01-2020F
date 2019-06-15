@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Plant do
   describe '#search_where' do
     it "should find plant only where user can find company" do

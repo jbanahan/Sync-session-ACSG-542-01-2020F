@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleAttachmentTypes do
 
   it "should return nil if all attachments are present" do

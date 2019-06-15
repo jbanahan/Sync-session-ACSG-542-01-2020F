@@ -11,7 +11,7 @@ class CreateDrawbackClaimAudits < ActiveRecord::Migration
       t.decimal :quantity, :precision => 13, :scale => 4
       t.integer :drawback_claim_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :drawback_claim_audits, [:drawback_claim_id]
     add_index :drawback_claim_audits, [:export_part_number,:export_ref_1,:export_date], {name: :export_idx}

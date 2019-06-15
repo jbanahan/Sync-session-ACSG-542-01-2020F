@@ -290,7 +290,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
         return nil if p.nil?
         p.custom_value(custom_definition)
       },
-      field_validator_rule: custom_definition.field_validator_rules.first
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid)
     })
     add_model_fields core_module, [mf]
     mf
@@ -326,7 +326,7 @@ module OpenChain; module ModelFieldDefinition; module CustomFieldSupport
         return nil if v.nil?
         v.custom_value(custom_definition)
       },
-      field_validator_rule: custom_definition.field_validator_rules.first
+      field_validator_rule: ModelField.field_validator_rule(custom_definition.model_field_uid)
     })
     add_model_fields core_module, [mf]
     mf

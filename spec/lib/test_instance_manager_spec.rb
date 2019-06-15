@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::TestInstanceManager do
   describe "prep_test_instance" do
     it "should perform prep tasks" do

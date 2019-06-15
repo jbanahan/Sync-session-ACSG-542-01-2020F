@@ -8,7 +8,7 @@ class CreateConstantTexts < ActiveRecord::Migration
       t.integer :constant_textable_id, null: false
       t.string :constant_textable_type, null: false
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :constant_texts, [:constant_textable_id, :constant_textable_type], name: "idx_constant_textable_id_and_constant_textable_type"

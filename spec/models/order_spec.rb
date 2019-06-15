@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Order do
   
   describe 'display_order_number' do

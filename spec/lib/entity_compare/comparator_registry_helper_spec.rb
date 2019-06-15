@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::EntityCompare::ComparatorRegistryHelper do
   let (:comparator) {
     Class.new do

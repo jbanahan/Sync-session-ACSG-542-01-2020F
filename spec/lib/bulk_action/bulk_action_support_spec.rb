@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/bulk_action/bulk_action_support'
 
 describe OpenChain::BulkAction::BulkActionSupport do

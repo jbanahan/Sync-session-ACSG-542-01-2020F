@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   describe '#process' do
     it "should convert flat file data and user id call go" do

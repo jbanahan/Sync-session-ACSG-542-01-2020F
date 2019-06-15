@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TradePreferenceProgram do
   context 'validations' do
     it 'should require origin country' do

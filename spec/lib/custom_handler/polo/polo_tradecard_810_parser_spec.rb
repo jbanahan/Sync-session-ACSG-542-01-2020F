@@ -31,17 +31,6 @@ XML
     end
   end
 
-  describe "process_from_s3" do
-    it "retrieves S3 data and parses it" do
-      expect(OpenChain::S3).to receive(:get_data).with('abc', '123').and_return xml
-      subject.process_from_s3 'abc', '123'
-
-      inv = CommercialInvoice.first
-      expect(inv).to_not be_nil
-    end
-
-  end
-
   describe "parse_file" do
     let (:log) { InboundFile.new }
 

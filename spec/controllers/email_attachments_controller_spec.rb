@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EmailAttachmentsController do
   before :each do
     @ea = Factory(:email_attachment)

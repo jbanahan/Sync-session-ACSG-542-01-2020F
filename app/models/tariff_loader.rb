@@ -140,11 +140,7 @@ class TariffLoader
 
   # Manual upload via screen (tariff_sets) goes this route.  See TariffSetsController.
   def self.process_s3 s3_key, country, tariff_set_label, auto_activate, user=nil
-    Tempfile.open(['tariff_s3',".#{s3_key.split('.').last}"]) do |t|
-      t.binmode
-      s3 = AWS::S3.new AWS_CREDENTIALS
-      t.write s3.buckets['chain-io'].objects[s3_key].read
-      t.flush
+    OpenChain::S3.download_to_tempfile("chain-io", s3_key, original_filename: s3_key) do |t|
       ts = TariffLoader.new(country,t.path,tariff_set_label).process
       ts.activate if auto_activate
       user.messages.create!(:subject=>"Tariff Set #{tariff_set_label} Loaded",:body=>"Tariff Set #{tariff_set_label} has been loaded and has#{auto_activate ? "" : " NOT"} been activated.") if user

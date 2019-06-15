@@ -5,9 +5,9 @@ class TextileController < ApplicationController
   
   def preview
     if params[:c]
-      render :text=>RedCloth.new(params[:c]).to_html  
+      render html: RedCloth.new(params[:c]).to_html.html_safe
     else
-      render :text=>""
+      render html: ""
     end
   end
 end

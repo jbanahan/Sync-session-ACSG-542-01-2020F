@@ -90,7 +90,6 @@
     <% end %>
   <% end %>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
-  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
 <div class="container">
@@ -166,7 +165,7 @@
           <%= show_model_fields(line, [:ordln_ppu, :ordln_currency, :ordln_total_cost], table: true, editor_only: true) %>
           <td>
             <% if @order.can_edit?(current_user) && !@order.locked?%>
-              <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+              <%= link_to 'Delete', order_order_line_path(@order,line) , data: {confirm: 'Are you sure?'}, :method => :delete %>
               &nbsp;|&nbsp;
             <% end %>
             <a id='lnk_det_s_<%=line.id%>' href="#">Detail</a>
@@ -250,6 +249,6 @@
 </div>
 <div style='display:none;'>
   <!--hidden and linked through delete on button bar-->
-  <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+  <%= button_to('Delete', order_path(@order),:method => :delete, data: {confirm: "Are you sure?"}, :id => "btn_delete") %>
 </div>
 <%=render :partial => 'shared/integration_file_link', :locals => {:obj => @order, :user => current_user} %>

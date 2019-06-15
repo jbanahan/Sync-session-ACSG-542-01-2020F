@@ -52,6 +52,17 @@
 class CommercialInvoiceTariff < ActiveRecord::Base
   include CustomFieldSupport
 
+  attr_accessible :commercial_invoice_line_id, :hts_code, :duty_amount,
+    :entered_value, :spi_primary, :spi_secondary, :classification_qty_1,
+    :classification_uom_1, :classification_qty_2, :classification_uom_2,
+    :classification_qty_3, :classification_uom_3, :gross_weight, :integer,
+    :tariff_description, :created_at, :updated_at, :tariff_provision,
+    :value_for_duty_code, :gst_amount, :gst_rate_code, :sima_amount, :excise_amount,
+    :excise_rate_code, :duty_rate, :quota_category, :special_authority,
+    :sima_code, :entered_value_7501, :special_tariff, :duty_advalorem,
+    :duty_specific, :duty_additional, :duty_other, :advalorem_rate,
+    :specific_rate, :specific_rate_uom, :additional_rate, :additional_rate_uom
+
   belongs_to :commercial_invoice_line, inverse_of: :commercial_invoice_tariffs
   has_one :entry, through: :commercial_invoice_line
   has_many :commercial_invoice_lacey_components, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice_tariff

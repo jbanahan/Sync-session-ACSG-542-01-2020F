@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BulkUpdateClassification do
   describe "go" do
     before :each do

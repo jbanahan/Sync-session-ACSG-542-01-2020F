@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::AscenaWeeklyInvoiceReport do
   let(:report) { described_class.new }
   let(:date) { Date.new(2017,04,10) }

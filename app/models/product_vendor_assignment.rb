@@ -18,6 +18,8 @@
 class ProductVendorAssignment < ActiveRecord::Base
   include CoreObjectSupport
 
+  attr_accessible :product_id, :product, :vendor_id, :vendor
+
   belongs_to :product
   belongs_to :vendor, class_name: 'Company'
 

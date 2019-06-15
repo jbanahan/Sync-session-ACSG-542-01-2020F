@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::DrawbackExportsWithoutImports do
   describe "run_report" do
     before :each do
@@ -38,7 +36,7 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
     end
     it "should only include exports within 'not_in_imports' scope" do
       dont_find = DutyCalcExportFileLine.create!(:part_number=>'DEF',:export_date=>1.day.ago,:quantity=>100,:ref_1=>'r1',:ref_2=>'r2',:importer_id=>@c.id)
-      DrawbackImportLine.create!(:part_number=>dont_find.part_number,:import_date=>1.month.ago,:product=>Factory(:product),:importer_id=>@c.id)
+      DrawbackImportLine.create!(:part_number=>dont_find.part_number,:import_date=>1.month.ago,:product_id=>Factory(:product).id,:importer_id=>@c.id)
       @tmp = described_class.run_report @u, {'start_date'=>1.month.ago,'end_date'=>1.month.from_now}
       wb = Spreadsheet.open @tmp
       s = wb.worksheet 0

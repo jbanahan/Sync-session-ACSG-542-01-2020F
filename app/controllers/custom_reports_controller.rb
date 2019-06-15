@@ -120,7 +120,7 @@ class CustomReportsController < ApplicationController
   def preview
     rpt = CustomReport.find params[:id]
     if rpt.user_id != current_user.id
-      render :text=>"You cannot preview another user's report."
+      render html: "You cannot preview another user's report."
     else
       @rpt = rpt
       render :partial=>'preview'

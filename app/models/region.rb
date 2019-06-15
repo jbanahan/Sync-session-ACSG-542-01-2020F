@@ -12,7 +12,7 @@ class Region < ActiveRecord::Base
   attr_accessible :name
   has_and_belongs_to_many :countries
 
-  default_scope :order=>"name ASC, id ASC"
+  scope :by_name, -> { order(:name, :id) }
 
   after_destroy :clean_searches
   after_destroy :reload_fields

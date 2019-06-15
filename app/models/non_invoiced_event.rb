@@ -14,6 +14,9 @@
 #
 
 class NonInvoicedEvent < ActiveRecord::Base
+  attr_accessible :billable_event_id, :created_at, :invoice_generator_name,
+    :updated_at
+
   belongs_to :billable_event
 
   validates :billable_event, presence: true

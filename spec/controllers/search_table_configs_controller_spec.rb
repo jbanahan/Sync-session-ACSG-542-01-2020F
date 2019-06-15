@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchTableConfigsController do
   let!(:user) { Factory(:sys_admin_user, company: Factory(:company, name: "Oracle")) }
   before { sign_in_as user }

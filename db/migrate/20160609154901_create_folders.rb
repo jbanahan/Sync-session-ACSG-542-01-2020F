@@ -5,7 +5,7 @@ class CreateFolders < ActiveRecord::Migration
       t.references :base_object, polymorphic: true, null: false
       t.references :created_by, null: false
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :folders, [:base_object_id, :base_object_type]

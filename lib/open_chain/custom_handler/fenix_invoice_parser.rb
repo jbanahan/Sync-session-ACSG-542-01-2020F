@@ -87,7 +87,10 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       end
     end
 
-    create_intacct_invoice(invoice) unless invoice.nil? || invoice.customer_number == "GENERIC"
+    # Only do intacct stuff in WWW instance
+    if MasterSetup.get.custom_feature?("WWW")
+      create_intacct_invoice(invoice) unless invoice.nil? || invoice.customer_number == "GENERIC"
+    end
   end
 
   private 

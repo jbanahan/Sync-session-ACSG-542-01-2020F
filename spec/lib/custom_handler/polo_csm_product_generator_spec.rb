@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::PoloCsmProductGenerator do
   describe "remote_file_name" do
     #ChainYYYYMMDDHHSS.csv

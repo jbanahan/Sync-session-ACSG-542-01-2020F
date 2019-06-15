@@ -5,7 +5,7 @@ class CreateGroups < ActiveRecord::Migration
       t.string :name
       t.string :description
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :groups, :system_code, unique: true

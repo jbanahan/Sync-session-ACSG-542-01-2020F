@@ -3,7 +3,7 @@ class CreateMasterSetups < ActiveRecord::Migration
     create_table :master_setups do |t|
       t.string :uuid
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -70,12 +70,27 @@
 class SecurityFiling < ActiveRecord::Base
   include CoreObjectSupport 
   include IntegrationParserSupport
+
+  attr_accessible :ams_match_date, :booking_number, :broker_customer_number, 
+    :cbp_updated_at, :container_numbers, :countries_of_origin, 
+    :delete_accepted_date, :entry_numbers, :entry_port_code, 
+    :entry_reference_numbers, :estimated_vessel_arrival_date, 
+    :estimated_vessel_load_date, :estimated_vessel_sailing_date, 
+    :file_logged_date, :first_accepted_date, :first_sent_date, :host_system, 
+    :host_system_file_number, :house_bills_of_lading, :importer_account_code, 
+    :importer_id, :importer_tax_id, :lading_port_code, :last_accepted_date, 
+    :last_event, :last_file_bucket, :last_file_path, :last_sent_date, 
+    :late_filing, :manufacturer_names, :master_bill_of_lading, :notes, 
+    :po_numbers, :scac, :status_code, :status_description, :time_to_process, 
+    :transaction_number, :transport_mode_code, :unlading_port_code, 
+    :us_customs_first_file_date, :vessel, :vessel_departure_date, :voyage
+  
   belongs_to :importer, :class_name=>'Company'
-  has_many :security_filing_lines, dependent: :destroy, order: 'line_number', autosave: true
+  has_many :security_filing_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true
   has_many :piece_sets, :through=>:security_filing_lines
 
   validates_uniqueness_of :host_system_file_number, {:scope=>:host_system, :if=>lambda {!self.host_system_file_number.blank?}}
-  scope :not_matched, where(:status_code=>"ACCNOMATCH")
+  scope :not_matched, -> { where(:status_code=>"ACCNOMATCH") }
 
   def can_view? user
     user.view_security_filings? && company_permission?(user) 

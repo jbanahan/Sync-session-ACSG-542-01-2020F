@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryDoesNotSharePos do
   before :each do
     @rule = ValidationRuleEntryDoesNotSharePos.new

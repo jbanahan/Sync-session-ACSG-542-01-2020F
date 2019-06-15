@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Pepsi::PepsiSystemInit do
   describe '#init' do
     before :each do

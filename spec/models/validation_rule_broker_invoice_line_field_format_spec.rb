@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleBrokerInvoiceLineFieldFormat do
   before do
     @rule = described_class.new(rule_attributes_json:{model_field_uid: 'bi_line_charge_amount', operator: 'gt', value: 5000}.to_json)

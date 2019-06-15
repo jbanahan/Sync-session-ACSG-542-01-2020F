@@ -11,7 +11,7 @@ class CreateUsers < ActiveRecord::Migration
       t.datetime :current_login_at
       t.datetime :last_login_at
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

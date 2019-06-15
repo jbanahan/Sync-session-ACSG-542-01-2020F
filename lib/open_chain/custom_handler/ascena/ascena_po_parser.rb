@@ -157,7 +157,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       body += "<p>Error:<br>#{ERB::Util.html_escape(err.message)}</p>"
       body += "<p>The CSV lines for this PO were extracted from the Ascena file and are attached.</p>"
 
-      OpenMailer.send_simple_html(["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"], "Ascena PO # #{po_number} Errors", body.html_safe, [f]).deliver!
+      OpenMailer.send_simple_html(["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"], "Ascena PO # #{po_number} Errors", body.html_safe, [f]).deliver_now
     end
   end
 
@@ -183,7 +183,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       body += "</ul></p>"
       body += "<p>The CSV lines for this PO were extracted from the Ascena file and are attached.</p>"
 
-      OpenMailer.send_simple_html("ascena_us@vandegriftinc.com", "Ascena PO # #{po_number} Lines Already Shipped", body.html_safe, [f]).deliver!
+      OpenMailer.send_simple_html("ascena_us@vandegriftinc.com", "Ascena PO # #{po_number} Lines Already Shipped", body.html_safe, [f]).deliver_now
     end
   end
 

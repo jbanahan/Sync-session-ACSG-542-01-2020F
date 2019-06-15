@@ -7,7 +7,7 @@ class CreateFiscalMonths < ActiveRecord::Migration
       t.date :end_date
       t.integer :company_id
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :fiscal_months, [:start_date, :end_date]

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::PoloSapProductGenerator do
   before :all do
     @cdefs = described_class.prep_custom_definitions described_class.cdefs

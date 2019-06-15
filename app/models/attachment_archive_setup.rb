@@ -20,7 +20,9 @@
 #
 
 class AttachmentArchiveSetup < ActiveRecord::Base
-  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :include_only_listed_attachments, :send_in_real_time, :archive_scheme, :end_date
+  attr_accessible :company_id, :start_date, :combine_attachments, 
+    :combined_attachment_order, :include_only_listed_attachments, 
+    :send_in_real_time, :archive_scheme, :end_date
 
   belongs_to :company
 
@@ -34,7 +36,7 @@ class AttachmentArchiveSetup < ActiveRecord::Base
     AttachmentArchiveSetup.transaction do
       archive = AttachmentArchive.create! :name=>name, :start_at=>Time.now, :company_id=>self.company_id 
       running_size = 0
-      available_entry_files(@broker_reference_override).each do |att|
+      available_entry_files(broker_reference_override: @broker_reference_override).each do |att|
         running_size += att.attached_file_size
         break if running_size > max_size_in_bytes
         archive.attachment_archives_attachments.create!(:attachment_id=>att.id,:file_name=>att.unique_file_name)
@@ -107,14 +109,16 @@ class AttachmentArchiveSetup < ActiveRecord::Base
   end
 
   def entry_attachments_available_count
-    available_entry_files(@broker_reference_override).count
+    available_entry_files(broker_reference_override: @broker_reference_override, countable_query: true).count
   end
 
   private
-  def available_entry_files broker_reference_override = nil
+  def available_entry_files broker_reference_override: nil, countable_query: false
     non_stitchable_attachments = Attachment.stitchable_attachment_extensions.collect {|ext| "attachments.attached_file_name NOT like '%#{ext}'"}.join (" AND ")
 
-    a = Attachment.select("distinct attachments.*").
+    select_values = countable_query ? "id" : "*"
+
+    a = Attachment.select("distinct attachments.#{select_values}").
       joins("INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \"Entry\"").
       joins("LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id").
       # Rather than relying on a join against the archive setup table for a flag, which would mean for any customer that switched off the packet we'd instantly then 

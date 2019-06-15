@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationTemplatesController do
   before :each do
 

@@ -13,8 +13,8 @@ After=network-online.target
 
 [Service]
 User=root
-WorkingDirectory=/home/ubuntu/chainio/wwwvfitracknet
-ExecStart=/home/ubuntu/chainio/wwwvfitracknet/misc_files/systemd/chainio.sh
+WorkingDirectory=/home/ubuntu/chainio/primary_instance
+ExecStart=/home/ubuntu/chainio/primary_instance/misc_files/systemd/chainio.sh
 
 # Closest equivelant to: start on runlevel [2345]
 [Install]

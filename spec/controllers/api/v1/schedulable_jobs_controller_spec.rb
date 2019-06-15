@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::SchedulableJobsController do
 
   describe "run_jobs" do

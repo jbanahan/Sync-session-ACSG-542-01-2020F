@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AnswerCommentsController do
   describe "create" do
     before :each do

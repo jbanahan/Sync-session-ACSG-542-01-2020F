@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
     def validate_attachment_is_pdf shipment, attachment
       if attachment.attached_content_type.to_s.match(/pdf/i).nil?
         body = "Shipment with master bill '#{shipment.master_bill_of_lading}' / shipment reference '#{shipment.reference}' has an invalid #{attachment.attachment_type} attachment named #{attachment.attached_file_name}.  These attachment types must be PDF files.  Please remove the existing #{attachment.attachment_type} file and replace it with a PDF."
-        OpenMailer.send_simple_html("support@vandegriftinc.com", "Invalid Document Type for #{shipment.master_bill_of_lading} / #{shipment.reference}", body).deliver!
+        OpenMailer.send_simple_html("support@vandegriftinc.com", "Invalid Document Type for #{shipment.master_bill_of_lading} / #{shipment.reference}", body).deliver_now
         return false
       end
 
@@ -127,12 +127,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
 
     def generate_entry_packet_success_email shp, entry, revised
       body_text = "#{(revised ? 'Revised d' : 'D')}ocs for master bill '#{shp.master_bill_of_lading}' / shipment reference '#{shp.reference}' have been transfered to entry '#{entry.broker_reference}'."
-      OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Entry Doc Success: #{shp.master_bill_of_lading} / #{shp.reference} / #{entry.broker_reference}", body_text).deliver!
+      OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Entry Doc Success: #{shp.master_bill_of_lading} / #{shp.reference} / #{entry.broker_reference}", body_text).deliver_now
     end
 
     def generate_missing_entry_email shp, entry_packet_pdf
       body_text = "No entry could be found for master bill '#{shp.master_bill_of_lading}' / shipment reference '#{shp.reference}'.  Once the entry has been opened, the attached Entry Packet document must be attached to it."
-      OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Entry: #{shp.master_bill_of_lading} / #{shp.reference}", body_text, [entry_packet_pdf]).deliver!
+      OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Entry: #{shp.master_bill_of_lading} / #{shp.reference}", body_text, [entry_packet_pdf]).deliver_now
     end
 
     def generate_malformed_pdf_email shp

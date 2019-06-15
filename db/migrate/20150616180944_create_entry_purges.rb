@@ -6,7 +6,7 @@ class CreateEntryPurges < ActiveRecord::Migration
       t.string :source_system
       t.datetime :date_purged
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

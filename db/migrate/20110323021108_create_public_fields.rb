@@ -4,7 +4,7 @@ class CreatePublicFields < ActiveRecord::Migration
       t.string :model_field_uid
       t.boolean :searchable
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

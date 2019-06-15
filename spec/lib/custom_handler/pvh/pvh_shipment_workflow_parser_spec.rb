@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
   let (:custom_file) { double "CustomFile" }
   subject { OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser.new custom_file }

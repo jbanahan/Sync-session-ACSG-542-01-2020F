@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleProductClassificationFieldFormat do
   let!(:descr_cdef) { Factory(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'Customs Description') }
   let!(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid,regex:'good descr'}.to_json) }

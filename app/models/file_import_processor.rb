@@ -412,7 +412,7 @@ class FileImportProcessor
   # find or build a new object based on the unique identfying column optionally scoped by the parent object
   def find_or_build_by_unique_field data_map, object_map, my_core_module
 
-    search_scope = my_core_module.klass.scoped #search the whole table unless parent is found below
+    search_scope = my_core_module.klass.all #search the whole table unless parent is found below
 
     # get the next core module up the chain
     parent_core_module = @module_chain.parent my_core_module

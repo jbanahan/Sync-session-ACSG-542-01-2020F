@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerator do
   before do
     co = Factory(:company, system_code: "sys code")

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AnswerComment do
   it "should require answer" do
     c = AnswerComment.new(:user=>Factory(:user),:content=>'abc')

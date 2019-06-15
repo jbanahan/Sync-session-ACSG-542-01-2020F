@@ -4,7 +4,7 @@ class PasswordResetsController < ApplicationController
   skip_before_filter :force_reset
 
   def create
-    @user = User.find_by_email(params[:email])
+    @user = User.find_by(email: params[:email])
     if @user
       if @user.disallow_password?
         add_flash :errors, "You do not have a password enabled login"
@@ -51,7 +51,7 @@ class PasswordResetsController < ApplicationController
 
     if success
       @user.on_successful_login request
-      flash[:notice] = "Password successfully updated"
+      add_flash :notice, "Password successfully updated"
       redirect_to root_url
     else 
       errors_to_flash @user, now: true

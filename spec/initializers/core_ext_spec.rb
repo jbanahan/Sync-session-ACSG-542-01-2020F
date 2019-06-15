@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe 'time zone parse_us_base_format' do
   before :each do
     @zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
@@ -79,20 +77,18 @@ describe "hts_format" do
 end
 
 describe "log_me" do
-  context "NoMethodError" do
-    it "proxies NoMethodErrorClasses" do
-      begin
-        raise NoMethodError, "Testing"
-      rescue => e
-        expect {e.log_me ["Test"]}.to change(ErrorLogEntry,:count).by(2) #one for main error, one for proxied error
-      end
-    end
-  end
 
   it "delays an email send if log_me call has no attachments" do
     m = double("OpenMailer")
-    expect(OpenMailer).to receive(:delay).and_return m
-    expect(m).to receive(:send_generic_exception)
+    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace| 
+      expect(exception).to eq "StandardError"
+      expect(messages.first).to eq "Testing"
+      expect(messages.second).to match "Error Database ID: "
+      expect(message).to eq "Testing"
+      expect(backtrace).to be_a(Array)
+      m
+    end
+    expect(m).to receive(:deliver_later)
 
     begin
       raise StandardError, "Testing"
@@ -103,8 +99,17 @@ describe "log_me" do
 
   it "immediately sends exception if attachment paths has a value" do
     mail = double("mail")
-    expect(OpenMailer).to receive(:send_generic_exception).and_return mail
-    expect(mail).to receive(:deliver)
+    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace, files| 
+      expect(exception).to eq "StandardError"
+      expect(messages.first).to eq "Testing"
+      expect(messages.second).to match "Error Database ID: "
+      expect(message).to eq "Testing"
+      expect(backtrace).to be_a(Array)
+      expect(files).to eq ["Attachment Path"]
+      mail
+    end
+
+    expect(mail).to receive(:deliver_now)
 
     begin
       raise StandardError, "Testing"
@@ -116,7 +121,7 @@ describe "log_me" do
   it "immediately sends exception if send_now is true" do
     mail = double("mail")
     expect(OpenMailer).to receive(:send_generic_exception).and_return mail
-    expect(mail).to receive(:deliver)
+    expect(mail).to receive(:deliver_now)
 
     begin
       raise StandardError, "Testing"
@@ -133,6 +138,21 @@ describe "log_me" do
       orig_dupe = orig.deep_dup
       orig_dupe['key'][0]['new_key'] = 'new_value'
       expect(orig['key'][0]['new_key']).to be_nil
+    end
+  end
+end
+
+describe "to_boolean" do
+
+  ["true", "tRuE", "1", "T", "on"].each do |v|
+    it "handles '#{v}' value as true" do
+      expect(v.to_boolean).to eq true
+    end
+  end
+
+  ["false", "somethingelse"].each do |v|
+    it "handles '#{v}' value as false" do
+      expect(v.to_boolean).to eq false
     end
   end
 end

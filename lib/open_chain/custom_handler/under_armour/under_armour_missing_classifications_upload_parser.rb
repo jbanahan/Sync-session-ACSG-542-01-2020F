@@ -93,7 +93,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
 
   def send_email codes_hsh, filename
     body = error_string(codes_hsh, filename)
-    OpenMailer.send_simple_html(ERROR_EMAIL, "Missing Classifications Upload Error", body).deliver!
+    OpenMailer.send_simple_html(ERROR_EMAIL, "Missing Classifications Upload Error", body).deliver_now
   end
 
   def error_string codes_hsh, filename

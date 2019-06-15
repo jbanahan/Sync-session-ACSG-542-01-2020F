@@ -45,7 +45,7 @@ module OpenChain; class FtpSiteMonitor
 
     email_subject = "#{ftp_data[:protocol].capitalize} monitor failure for #{ftp_data[:hostname]} / #{ftp_data[:directory]}" if email_subject.blank?
 
-    OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver!
+    OpenMailer::send_simple_html(email_to, email_subject, body.html_safe).deliver_now
   end
 
   def ftp_files protocol, hostname, port, username, password, directory

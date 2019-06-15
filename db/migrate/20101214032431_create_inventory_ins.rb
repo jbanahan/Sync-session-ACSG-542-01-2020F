@@ -2,7 +2,7 @@ class CreateInventoryIns < ActiveRecord::Migration
   def self.up
     create_table :inventory_ins do |t|
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

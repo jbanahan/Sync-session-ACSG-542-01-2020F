@@ -6,7 +6,7 @@ class CreateOfficialTariffMetaDatas < ActiveRecord::Migration
       t.boolean :auto_classify_ignore
       t.text :notes
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :official_tariff_meta_datas, [:country_id,:hts_code]

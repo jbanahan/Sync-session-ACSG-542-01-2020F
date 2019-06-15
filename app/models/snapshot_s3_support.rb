@@ -28,10 +28,16 @@ module SnapshotS3Support
   module ClassMethods
     #bucket name for storing entity snapshots
     def bucket_name env = MasterSetup.rails_env
+      system_code = MasterSetup.get.system_code
+      # This can happen very early in the deployment process if a new system is being deployed..so catch
+      # it and raise the error
+      raise "The system_code must be set for this deployment." if system_code.blank? && !MasterSetup.test_env?
+
       # NOTE: DO NOT CHANGE the bucket naming style for live systems without making sure the delete_from_s3 
       # accounts for the potential for multiple bucket naming styles.
-      r = "#{env}.#{MasterSetup.get.system_code}.snapshots.vfitrack.net"
+      r = "#{env}.#{system_code}.snapshots.vfitrack.net"
       raise "Bucket name too long: #{r}" if r.length > 63
+
       return r
     end
 

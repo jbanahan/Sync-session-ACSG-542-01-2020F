@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProductGroup do
   describe "in_use" do
     it "should be false if no links" do

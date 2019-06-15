@@ -45,7 +45,9 @@ module OpenChain; class Ssm
     end
 
     def default_vfitrack_targets
-      create_targets_params({"Application" => "VFI Track", "Role" => ["Web", "Job Queue"]})
+      group = InstanceInformation.deployment_group
+      raise "AWS 'Group' tag must be set for all VFI Track instances." if group.blank?
+      create_targets_params({"Application" => "VFI Track", "Role" => ["Web", "Job Queue"], "Group" => group})
     end
 
     def create_targets_params tags

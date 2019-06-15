@@ -23,6 +23,10 @@
 #
 
 class IntacctAllianceExport < ActiveRecord::Base
+  attr_accessible :ap_total, :ar_total, :check_number, :customer_number, 
+    :data_received_date, :data_requested_date, :division, :export_type, 
+    :file_number, :invoice_date, :suffix, :intacct_checks
+  
   has_many :intacct_receivables, :dependent => :destroy
   has_many :intacct_payables, :dependent => :destroy
   has_many :intacct_checks, :dependent => :destroy

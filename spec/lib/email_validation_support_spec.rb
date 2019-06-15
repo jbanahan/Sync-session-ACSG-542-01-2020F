@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe OpenChain::EmailValidationSupport do
   let(:klass) do
     Class.new { include OpenChain::EmailValidationSupport }.new

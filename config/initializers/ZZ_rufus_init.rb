@@ -75,7 +75,8 @@ if defined?(PhusionPassenger)
   end
 else
   # Allow an easy way to have the scheduler run locally on a dev machine
-  if Rails.env.development? && MasterSetup.get.custom_feature?("Run Scheduler")
+  # MasterSetup get might be nil on a dev system that has not been init'ed yet
+  if Rails.env.development? && MasterSetup.master_setup_initialized? && MasterSetup.get&.custom_feature?("Run Scheduler")
     OpenChain::WebScheduler.execute_scheduler
   end
 end

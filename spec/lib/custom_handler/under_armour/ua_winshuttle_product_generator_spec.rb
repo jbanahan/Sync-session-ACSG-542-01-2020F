@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
 
   it "should have sync_code" do
@@ -119,7 +117,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       expect(rows.size).to eq(3)
       p.update_attributes(updated_at:2.minutes.from_now)
       p.reload
-      p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_attributes(hts_1:'987654321')
+      p.classifications.find_by(country: @ca).tariff_records.first.update_attributes(hts_1:'987654321')
       rows = []
       described_class.new.sync {|row| rows << row}
       expect(rows.size).to eq(2)
@@ -153,7 +151,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     before :each do 
       @f = double('file')
       @mailer = double(:mailer)
-      expect(@mailer).to receive(:deliver)
+      expect(@mailer).to receive(:deliver_now)
     end
     it "should email result" do
       expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com','Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[@f]).and_return(@mailer)

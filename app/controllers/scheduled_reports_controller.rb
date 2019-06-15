@@ -57,7 +57,7 @@ class ScheduledReportsController < ApplicationController
         search = ((type == "sr") ? SearchSetup.find_by_id(id) : ((type == "cr") ? CustomReport.find_by_id(id): nil))
 
         if search
-          users = User.find_all_by_id(params[:assign_to_user_id])
+          users = User.where(id: params[:assign_to_user_id])
 
           users.each do |assign_to|
             search.give_to assign_to, !params[:copy_schedules].nil?

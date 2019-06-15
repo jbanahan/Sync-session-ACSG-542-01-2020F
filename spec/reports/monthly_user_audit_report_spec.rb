@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::MonthlyUserAuditReport do
   it "sends an email to unlocked, admin users with a correctly-formatted xls sorted by users.disabled/companies.name" do
     stub_master_setup

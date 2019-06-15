@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
   end
 
   def self.consume_stitch_responses
-    OpenChain::SQS.poll stitcher_info("response_queue") do |message_hash|
+    OpenChain::SQS.poll(response_queue) do |message_hash|
       process_stitch_response message_hash
     end
   end
@@ -71,9 +71,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
 
 
   private
-    def self.stitcher_info key
-      Rails.application.config.attachment_stitcher[key.to_s]
+    def self.response_queue
+      queue = MasterSetup.secrets["pdf_stitcher"].try(:[], "response_queue")
+      raise "No 'response_queue' key found under 'pdf_stitcher' config in secrets.yml." if queue.blank?
+      queue
     end
-    private_class_method :stitcher_info
+    private_class_method :response_queue
 
 end; end; end; end

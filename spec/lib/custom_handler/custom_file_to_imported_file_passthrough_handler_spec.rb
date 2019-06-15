@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
 
   subject {
@@ -20,7 +18,7 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
     }
 
 
-    context "with full setup" do
+    context "with full setup", :without_partial_double_verification do
       before :each do
         allow(subject).to receive(:search_setup_attributes).and_return search_setup_attributes
         allow(subject).to receive(:search_column_uids).and_return search_column_uids

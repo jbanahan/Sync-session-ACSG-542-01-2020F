@@ -18,6 +18,8 @@
 #
 
 class RunAsSession < ActiveRecord::Base
+  attr_accessible :end_time, :run_as_user_id, :start_time, :user_id
+  
   has_many :request_logs, dependent: :destroy, inverse_of: :run_as_session
   belongs_to :user
   belongs_to :run_as_user, class_name: "User"

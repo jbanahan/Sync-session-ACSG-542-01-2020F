@@ -7,7 +7,7 @@ class CreateSpecialTariffCrossReference < ActiveRecord::Migration
       t.date :effective_date_start
       t.date :effective_date_end
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :special_tariff_cross_references, [:hts_number, :country_origin_iso, :effective_date_start], name: "index_special_tariff_cross_references_on_hts_country_start_date"

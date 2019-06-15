@@ -14,5 +14,5 @@ $(function() {$("#btn_delete_redirect").click(function() {$("#btn_delete").click
   </table>
 <%end%>
 <div style='display:none;'>
-  <%=button_to('Delete', linkable_attachment_import_rule_path(@rule),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") if @rule.id%>
+  <%=button_to('Delete', linkable_attachment_import_rule_path(@rule),:method => :delete, :data => {:confirm => "Are you sure?"}, :id => "btn_delete") if @rule.id%>
 </div>

@@ -22,7 +22,7 @@ class CreateSearchSchedules < ActiveRecord::Migration
       t.datetime :last_finish_time
       t.integer :search_setup_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

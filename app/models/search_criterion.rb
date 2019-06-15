@@ -44,6 +44,14 @@ class SearchCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport
 
+  attr_accessible :automated_billing_setup_id, :business_validation_rule_id, 
+    :business_validation_schedule_id, :business_validation_template_id, 
+    :custom_definition_id, :custom_report_id, :custom_view_template_id, 
+    :imported_file_id, :include_empty, :instant_classification_id, 
+    :milestone_notification_config_id, :model_field_uid, :one_time_alert_id, 
+    :operator, :search_run_id, :search_setup_id, :secondary_model_field_uid, 
+    :state_toggle_button_id, :status_rule_id, :value
+
   belongs_to :milestone_plan
   belongs_to :status_rule
   belongs_to :search_setup

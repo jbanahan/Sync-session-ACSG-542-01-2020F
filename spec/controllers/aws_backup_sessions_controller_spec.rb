@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AwsBackupSessionsController do
   let!(:session) { Factory(:aws_backup_session) }
   let!(:u) { Factory(:sys_admin_user) }

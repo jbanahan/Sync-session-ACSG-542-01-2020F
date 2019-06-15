@@ -10,7 +10,7 @@ class CreateManufacturerId < ActiveRecord::Migration
       t.string :country
       t.boolean :active
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :manufacturer_ids, :mid

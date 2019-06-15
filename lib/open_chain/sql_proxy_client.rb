@@ -13,7 +13,7 @@ module OpenChain; class SqlProxyClient
     request_body['context'] = request_context unless request_context.blank?
 
     begin
-      config = self.class.proxy_config[Rails.env]
+      config = self.class.proxy_config
       @json_client.post "#{config['url']}/job/#{job_name}", request_body, {}, config['auth_token']
     rescue => e
       raise e if request_params[:swallow_error] === false
@@ -28,13 +28,9 @@ module OpenChain; class SqlProxyClient
   end
 
   def self.proxy_config
-    @proxy_config ||= begin
-      YAML.load_file self.proxy_config_file
-    rescue Errno::ENOENT
-      # do nothing...if the load raises we'll report a nicer error
-    end
-    raise "No SQL Proxy client configuration file found at '#{self.proxy_config_file}'." unless @proxy_config
-    @proxy_config
+    config = MasterSetup.secrets[self.proxy_config_key]
+    raise "No SQL Proxy client configuration file found in secrets.yml with key '#{self.proxy_config_key}'." if config.blank?
+    config
   end
 
 end; end

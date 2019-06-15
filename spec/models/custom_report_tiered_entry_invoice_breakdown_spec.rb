@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportTieredEntryInvoiceBreakdown do
 
   context "static methods" do

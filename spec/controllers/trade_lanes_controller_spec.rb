@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe TradeLanesController do
   before :each do
     @u = Factory(:user)

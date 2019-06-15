@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DataCrossReferencesController do
 
   #no two lambdas share the same identity so this simplifies the tests
@@ -23,7 +21,7 @@ describe DataCrossReferencesController do
       get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
 
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access)
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xrefs).first).to eq xref
       # Just ensure that the search is utilized by checking for one of the values it assigns
       expect(assigns(:search)).not_to be_nil
@@ -58,7 +56,7 @@ describe DataCrossReferencesController do
 
       get :edit, id: xref.id
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access)
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).to eq xref
       expect(assigns(:importers).count).to eq 1
     end
@@ -79,7 +77,7 @@ describe DataCrossReferencesController do
 
       get :new, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access)
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).not_to be_nil
       expect(assigns(:xref).cross_reference_type).to eq DataCrossReference::RL_VALIDATED_FABRIC
       expect(assigns(:importers).count).to eq 1
@@ -99,7 +97,7 @@ describe DataCrossReferencesController do
 
       get :edit, id: xref.id
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access)
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).to eq xref
     end
   end
@@ -241,7 +239,7 @@ describe DataCrossReferencesController do
     it "rejects wrong file type" do
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
-      expect(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
+      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
       
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
       
@@ -253,7 +251,7 @@ describe DataCrossReferencesController do
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return false
       @user.sys_admin = false; @user.save!
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      expect(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
+      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
       
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
     end

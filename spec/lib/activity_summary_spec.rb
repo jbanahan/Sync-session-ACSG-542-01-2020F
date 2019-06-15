@@ -1,25 +1,17 @@
-require 'spec_helper'
-
 describe OpenChain::ActivitySummary do
-  before :each do
-    @us = Factory(:country,iso_code:'US')
-    @ca = Factory(:country,iso_code:'CA')
-  end
-
-  after :each do
-    Country.destroy_all
-  end
+  let! (:us) { Factory(:country,iso_code:'US') }
+  let! (:ca) { Factory(:country,iso_code:'CA') } 
 
   describe "generate_us_entry_summary" do
     it "should make json" do
-      ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,first_release_received_date:'2013-12-25 05:00:00 UTC')
+      ent = Factory(:entry,import_country_id:us.id,importer_id:Factory(:company).id,first_release_received_date:'2013-12-25 05:00:00 UTC')
       h = described_class.generate_us_entry_summary(ent.importer_id, Time.parse('2013-12-27 16:00:00 UTC'))
       expect(h['activity_summary']['summary']['1w']['count']).to eq(1)
     end
   end
   describe "generate_ca_entry_summary" do
     it "should make json" do
-      ent = Factory(:entry,import_country_id:@ca.id,importer_id:Factory(:company).id,release_date:'2013-12-25 05:00:00 UTC')
+      ent = Factory(:entry,import_country_id:ca.id,importer_id:Factory(:company).id,release_date:'2013-12-25 05:00:00 UTC')
       h = described_class.generate_ca_entry_summary(ent.importer_id, Time.parse('2013-12-27 16:00:00 UTC'))
       expect(h['activity_summary']['summary']['1w']['count']).to eq(1)
     end
@@ -29,10 +21,10 @@ describe OpenChain::ActivitySummary do
 
     it "should create summary section" do
       importer = Factory(:company)
-      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-24 05:00:00 UTC', release_date:'2013-12-25 05:00:00 UTC', total_duty:100,total_gst:50,total_duty_gst:150,entered_value:1000,total_invoiced_value:1100,total_units:70)
-      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-14 05:00:00 UTC', release_date: '2013-12-15 05:00:00 UTC', total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
-      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2013-12-17 05:00:00 UTC', file_logged_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_gst:40,total_duty_gst:90,entered_value:60,total_invoiced_value:66,total_units:3)
-      Factory(:entry,import_country_id:@ca.id,importer_id:importer.id, arrival_date: '2012-12-24 05:00:00 UTC', release_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      Factory(:entry,import_country_id:ca.id,importer_id:importer.id, arrival_date: '2013-12-24 05:00:00 UTC', release_date:'2013-12-25 05:00:00 UTC', total_duty:100,total_gst:50,total_duty_gst:150,entered_value:1000,total_invoiced_value:1100,total_units:70)
+      Factory(:entry,import_country_id:ca.id,importer_id:importer.id, arrival_date: '2013-12-14 05:00:00 UTC', release_date: '2013-12-15 05:00:00 UTC', total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      Factory(:entry,import_country_id:ca.id,importer_id:importer.id, arrival_date: '2013-12-17 05:00:00 UTC', file_logged_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_gst:40,total_duty_gst:90,entered_value:60,total_invoiced_value:66,total_units:3)
+      Factory(:entry,import_country_id:ca.id,importer_id:importer.id, arrival_date: '2012-12-24 05:00:00 UTC', release_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
 
       h = OpenChain::ActivitySummary::CAEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
       expect(h['summary']['1w']['count']).to eq(1)
@@ -77,19 +69,19 @@ describe OpenChain::ActivitySummary do
     end
     it "should create k84 section" do
       importer = Factory(:company,name:'IMP')
-      Factory(:entry,k84_due_date:Date.new(2012,12,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
-      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2012,12,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
       #only find last 3, so don't find this one
-      Factory(:entry,k84_due_date:Date.new(2012,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2012,1,25),total_duty_gst:100,import_country_id:ca.id,importer_id:importer.id)
       h = OpenChain::ActivitySummary::CAEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-02-25 16:00:00 UTC')
       k = h['k84']
       expect(k.size).to eq(4)
@@ -112,10 +104,10 @@ describe OpenChain::ActivitySummary do
       it "should create summary section" do
         importer = Factory(:company)
 
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 40,arrival_date: "2013-12-24 05:00:00 UTC",first_release_received_date:'2013-12-25 05:00:00 UTC',total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-14 05:00:00 UTC",first_release_received_date:'2013-12-15 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2012-12-24 05:00:00 UTC",first_release_received_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 40,arrival_date: "2013-12-24 05:00:00 UTC",first_release_received_date:'2013-12-25 05:00:00 UTC',total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-14 05:00:00 UTC",first_release_received_date:'2013-12-15 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2012-12-24 05:00:00 UTC",first_release_received_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
         #don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,first_release_received_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
@@ -157,13 +149,13 @@ describe OpenChain::ActivitySummary do
 
       it "should create statements section" do
         importer = Factory(:company,name:'IMP')
-        not_paid = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
-        paid1 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
-        paid2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
-        paid3 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
-        paid4 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,9,25),monthly_statement_paid_date:Date.new(2013,9,24),total_duty:200,total_fees:100)
+        not_paid = Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
+        paid1 = Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        paid2 = Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        paid3 = Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
+        paid4 = Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,9,25),monthly_statement_paid_date:Date.new(2013,9,24),total_duty:200,total_fees:100)
         #next line won't be included since we only return record from next month and last 3
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,8,24),monthly_statement_paid_date:Date.new(2013,8,24),total_duty:200,total_fees:100)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,8,24),monthly_statement_paid_date:Date.new(2013,8,24),total_duty:200,total_fees:100)
         #don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-11-25 16:00:00 UTC')
@@ -188,11 +180,11 @@ describe OpenChain::ActivitySummary do
 
       it "should create separate lines per importer_id" do
         imp1 = Factory(:company,name:'imp1')
-        Factory(:entry,import_country_id:@us.id,importer_id:imp1.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        Factory(:entry,import_country_id:us.id,importer_id:imp1.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
         imp2 = Factory(:company,name:'imp2') #linked
-        Factory(:entry,import_country_id:@us.id,importer_id:imp2.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        Factory(:entry,import_country_id:us.id,importer_id:imp2.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
         imp3 = Factory(:company,name:'imp3') #not linked
-        Factory(:entry,import_country_id:@us.id,importer_id:imp3.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        Factory(:entry,import_country_id:us.id,importer_id:imp3.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
         imp1.linked_companies << imp2
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash imp1.id, Time.parse('2013-11-25 16:00:00 UTC')
         statements = h['pms']
@@ -208,28 +200,28 @@ describe OpenChain::ActivitySummary do
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
             )
           )
         ).commercial_invoice_line.commercial_invoice_tariffs.create!(entered_value:150)
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-11-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:us.id,first_release_received_date:"2013-11-01",importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V2',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:us.id,first_release_received_date:"2013-12-01",importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,import_country_id:@us.id,first_release_received_date:"2012-11-01",importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:us.id,first_release_received_date:"2012-11-01",importer_id:importer.id)
             )
           )
         )
@@ -253,11 +245,11 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
         # don't find not released
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
         # don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-24 16:00:00 UTC')
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
@@ -274,10 +266,10 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
         #don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-24 16:00:00 UTC',first_release_received_date:nil)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
@@ -307,7 +299,7 @@ describe OpenChain::ActivitySummary do
             #everything for 1 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,first_release_received_date:'2013-12-25 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,first_release_received_date:'2013-12-25 16:00:00 UTC')
               )
             )
           )
@@ -315,7 +307,7 @@ describe OpenChain::ActivitySummary do
             #every other for 4 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,first_release_received_date:'2013-12-18 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,first_release_received_date:'2013-12-18 16:00:00 UTC')
               )
             )
           ) if i%2 == 0
@@ -323,7 +315,7 @@ describe OpenChain::ActivitySummary do
             #first for open
             commercial_invoice_line:Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:'2013-12-26 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_filed_date:'2013-12-26 16:00:00 UTC')
               )
             )
           ) if i == 0
@@ -436,8 +428,8 @@ describe OpenChain::ActivitySummary do
 
     before :each do
       @importer = Factory(:company, importer: true)
-      @e1 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
-      @e2 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: @us.id, source_system: 'Alliance')
+      @e1 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
+      @e2 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
     end
 
     it "returns a query finding all entries released within 1w" do
@@ -450,7 +442,7 @@ describe OpenChain::ActivitySummary do
     end
 
     it "returns a query finding all CA entries released within 1w" do
-      @e1.update_attributes! import_country: @ca, release_date: @e1.first_release_received_date
+      @e1.update_attributes! import_country: ca, release_date: @e1.first_release_received_date
       @e2.update_attributes! release_date: @e2.first_release_received_date
 
       qry = ca_generator.create_by_release_range_query @importer.id, '1w', Time.parse('2014-01-08 12:00:00 UTC')
@@ -509,7 +501,7 @@ describe OpenChain::ActivitySummary do
     end
 
     it "excludes entries for other countries" do
-      @e2.update_attributes! import_country: @ca
+      @e2.update_attributes! import_country: ca
 
       qry = us_generator.create_by_release_range_query @importer.id,'1w', Time.parse('2014-01-08 12:00:00 UTC')
       expect(qry.all.size).to eq(1)
@@ -521,7 +513,7 @@ describe OpenChain::ActivitySummary do
       stub_master_setup
       date1 = ActiveSupport::TimeZone["UTC"].parse('2013-12-25')
       date2 = ActiveSupport::TimeZone["UTC"].parse('2014-01-01')
-      Factory(:entry, importer: (imp = Factory :company, name: "Acme"), import_country: @us, entry_filed_date: date1, first_release_received_date: date2, 
+      Factory(:entry, importer: (imp = Factory :company, name: "Acme"), import_country: us, entry_filed_date: date1, first_release_received_date: date2, 
               entry_number: "ENTRY NUM", entered_value: 10, customer_references: "CUST REF", po_numbers: "PO NUMs", customer_name: "CUST NAME", source_system: 'Alliance')
       gen = OpenChain::ActivitySummary.generator_for_country "US"
       f = gen.create_by_release_range_download imp.id, '1w', ActiveSupport::TimeZone["UTC"].parse('2014-01-05')
@@ -590,16 +582,16 @@ describe OpenChain::ActivitySummary do
 
     describe "build_digest" do
       it "should return empty if entries are empty" do
-        allow(@company).to receive(:view_vendors?).with(@user) {true}
-        allow(@user).to receive(:view_entries?) {true}
+        allow(@company).to receive(:view_vendors?).and_return true
+        allow(@user).to receive(:view_entries?).and_return true
 
         entries = []
         expect(generator.build_digest(entries)).to be nil
       end
 
       it "should return digest for multiple dates, ports" do
-        allow(@company).to receive(:view_vendors?) {true}
-        allow(@user).to receive(:view_entries?) {true}
+        allow(@company).to receive(:view_vendors?).and_return true
+        allow(@user).to receive(:view_entries?).and_return true
 
         digest = {:company_name=>"Acme",
                   :company_report=>{:date_hsh=>{@date1=>{:port_hsh=>{"Boston"=>{:port_total_duty=>300,
@@ -905,7 +897,7 @@ describe OpenChain::ActivitySummary do
               out = subject.update_args gen, "st-hubbins@hellhole.co.uk", "AMAZING report!!", "Hi David, this one's for you!", user
               expect(out[0]).to eq "st-hubbins@hellhole.co.uk"
               expect(out[1]).to eq "AMAZING report!!"
-              expect(out[2]).to eq "<p>Nigel Tufnel (tufnel@stonehenge.biz) has sent you a report.</p><br>Hi David, this one&#x27;s for you!"
+              expect(out[2]).to eq "<p>Nigel Tufnel (tufnel@stonehenge.biz) has sent you a report.</p><br>Hi David, this one&#39;s for you!"
             end
           end
 

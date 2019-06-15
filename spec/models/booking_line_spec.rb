@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BookingLine do
   describe 'when validating' do
     describe 'when order line id is present' do

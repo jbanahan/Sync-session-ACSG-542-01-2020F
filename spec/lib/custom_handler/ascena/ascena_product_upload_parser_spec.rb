@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
   let (:custom_file) { 

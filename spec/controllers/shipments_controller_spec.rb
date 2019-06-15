@@ -25,7 +25,7 @@ describe ShipmentsController do
 
     it "uses J Jill generator for shipments with JJILL importer" do
       co = Factory(:company, system_code: "JJILL")
-      shipment.update_attributes! importer: co
+      shipment.update_attributes! importer_id: co.id
 
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true
       expect_any_instance_of(OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator).to receive(:generate).with(instance_of(XlsxBuilder), shipment, u)

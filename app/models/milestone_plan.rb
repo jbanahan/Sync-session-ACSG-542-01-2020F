@@ -10,6 +10,8 @@
 #
 
 class MilestonePlan < ActiveRecord::Base
+  attr_accessible :code, :name, :milestone_definitions_attributes
+  
   has_many :piece_sets
   has_many :milestone_definitions, :dependent => :destroy, :autosave=>true
 

@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       shipment_lines_association = {containers: shipment_lines_association}
     end
 
-     ActiveRecord::Associations::Preloader.new(shipment, shipment_lines_association).run
+     ActiveRecord::Associations::Preloader.new.preload(shipment, shipment_lines_association)
   end
 
   def container_groups containers

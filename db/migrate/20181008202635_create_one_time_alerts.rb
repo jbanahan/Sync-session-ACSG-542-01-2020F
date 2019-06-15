@@ -13,7 +13,7 @@ class CreateOneTimeAlerts < ActiveRecord::Migration
       t.date :enabled_date
       t.date :expire_date
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   def make_csv_file rows

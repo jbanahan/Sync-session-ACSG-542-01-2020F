@@ -22,6 +22,8 @@
 # importer using "Code A", while another feed like an 856 from another carrier might
 # reference that importer using "Code B"
 class SystemIdentifier < ActiveRecord::Base
+  attr_accessible :code, :company_id, :system
+  
   belongs_to :company, inverse_of: :system_identifiers
 
   validates_presence_of :system, :code

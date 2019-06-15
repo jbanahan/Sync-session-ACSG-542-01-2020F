@@ -1,8 +1,16 @@
-require 'spec_helper'
-
 describe UpdateModelFieldsSupport do
   before :each do
     User.current = Factory(:user)
+  end
+
+  class ProcessImportResult < String
+    def initialize val
+      super(val)
+    end
+
+    def error?
+      false
+    end
   end
 
   describe "update_model_field_attributes" do
@@ -170,7 +178,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "does not raise an error on model field import validation errors" do
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -183,7 +191,7 @@ describe UpdateModelFieldsSupport do
       existing = Factory(:product)
       p = Product.new
 
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -317,7 +325,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "raises an error on model field import validation errors" do
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -334,7 +342,7 @@ describe UpdateModelFieldsSupport do
       existing = Factory(:product)
       p = Product.new
 
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -505,7 +513,7 @@ describe UpdateModelFieldsSupport do
 
     it "runs validations on assigned object" do
       existing = Factory(:product, unique_identifier: 'unique_id')
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       allow_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -531,7 +539,7 @@ describe UpdateModelFieldsSupport do
 
     it "does not run validations on assigned object if instructed not to" do
       existing = Factory(:product, unique_identifier: 'unique_id')
-      result = "fail"
+      result = ProcessImportResult.new "fail" 
       allow(result).to receive(:error?).and_return true
       allow(ModelField.find_by_uid(:prod_uid)).to receive(:process_import).and_return result
 
@@ -598,7 +606,7 @@ describe UpdateModelFieldsSupport do
       expect(p.classifications.length).to eq 0
     end
 
-    it "rejects child attribute assignments on existing values using methods" do
+    it "rejects child attribute assignments on existing values using methods", :without_partial_double_verification do
       expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
       expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 
@@ -620,7 +628,7 @@ describe UpdateModelFieldsSupport do
       expect(classifications.first.get_custom_value(@class_cd).value).to be_nil
     end
 
-    it "rejects child attribute assignments on new values using methods" do
+    it "rejects child attribute assignments on new values using methods", :without_partial_double_verification do
       expect(Product).to receive(:model_field_attribute_rejections).and_return [:reject_me]
       expect(Product).to receive(:reject_me) {|attrs| !attrs.include? :class_cntry_iso }
 

@@ -13,7 +13,7 @@ class CreateAwsSnapshots < ActiveRecord::Migration
 
       t.references :aws_backup_session, null: false
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :aws_snapshots, :instance_id

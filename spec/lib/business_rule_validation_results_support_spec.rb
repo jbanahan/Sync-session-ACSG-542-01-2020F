@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 class FakeController < ApplicationController; end
 
 describe FakeController, :type => :controller do

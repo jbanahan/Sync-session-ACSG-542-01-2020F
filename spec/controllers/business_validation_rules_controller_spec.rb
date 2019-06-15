@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationRulesController do
   describe "create" do
     before :each do
@@ -320,7 +318,7 @@ describe BusinessValidationRulesController do
     
     it "copies business rule to specified template" do
       expect(OpenChain::BusinessRulesCopier).to receive(:copy_rule).with(user.id, bvru.id, bvt.id)
-      post :copy, id: bvru.id, new_template_id: bvt.id
+      post :copy, business_validation_template_id: bvt.id, id: bvru.id, new_template_id: bvt.id
       expect(response).to redirect_to(edit_business_validation_template_path bvt)
       expect(flash[:notices]).to include "Business Validation Rule is being copied. You'll receive a VFI Track message when it completes."
     end
@@ -329,7 +327,7 @@ describe BusinessValidationRulesController do
       user = Factory(:user)
       sign_in_as user
       expect(OpenChain::BusinessRulesCopier).to_not receive(:copy_rule)
-      post :copy, id: bvru.id, new_template_id: bvt.id
+      post :copy, business_validation_template_id: bvt.id, id: bvru.id, new_template_id: bvt.id
     end
   end
 

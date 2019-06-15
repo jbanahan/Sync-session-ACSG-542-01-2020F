@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ApplicationHelper do
 
   describe 'field_value' do

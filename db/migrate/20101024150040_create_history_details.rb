@@ -5,7 +5,7 @@ class CreateHistoryDetails < ActiveRecord::Migration
       t.string :key
       t.string :value
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

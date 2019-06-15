@@ -33,6 +33,11 @@ require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
+  attr_accessible :bucket, :bulk_process_log_id, :change_record_id, 
+    :compared_at, :context, :doc_path, :imported_file_id, :imported_file, 
+    :recordable_id, :recordable_type, :snapshot, :user_id, :user, :version, 
+    :recordable, :created_at
+
   cattr_accessor :snapshot_writer_impl
 
   belongs_to :recordable, polymorphic: true, inverse_of: :entity_snapshots
@@ -340,7 +345,7 @@ class EntitySnapshot < ActiveRecord::Base
     parse_diff_datetimes(old_mf)
 
     # Diff here is an activerecord hash method which uses == to determine equality
-    fields_changed = new_mf.diff(old_mf).keys
+    fields_changed = hash_diff(new_mf, old_mf).keys
     fields_changed.each do |mf_uid|
       # Don't show values as different if they're both blank .ie if one is nil and the other is "" don't log that as a change.
       # This is because the diff screen itself skips over any field where they're both blank...so if we don't do this here,
@@ -349,6 +354,11 @@ class EntitySnapshot < ActiveRecord::Base
       r[mf_uid] = [old_mf[mf_uid],new_mf[mf_uid]] unless old_mf[mf_uid].blank? && new_mf[mf_uid].blank?
     end
     r
+  end
+
+  def hash_diff h1, h2
+    # This is pretty much copied from the ActiveSupport::CoreExtensions::Hash#Diff method that was removed in Rails 4.1
+    h1.dup.delete_if { |k, v| h2[k] == v }.merge(h2.dup.delete_if { |k, v| h1.has_key?(k) })
   end
 
   def parse_diff_datetimes model_field_hash

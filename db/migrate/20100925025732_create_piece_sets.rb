@@ -5,7 +5,7 @@ class CreatePieceSets < ActiveRecord::Migration
       t.references :shipment
       t.references :product
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -29,7 +29,7 @@ $(document).ready( function() {
 	<td><%= ad.shipping ? 'Yes' : 'No' %></td>
         <% if current_user.admin? %>
 	<td>
-	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :confirm => 'Are you sure?', :method => :delete %><%end%>
+	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :data => {:confirm => 'Are you sure?'}, :method => :delete %><%end%>
 	</td>
         <% end %>
 	</tr>

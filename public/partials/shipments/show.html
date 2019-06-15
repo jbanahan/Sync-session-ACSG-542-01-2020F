@@ -71,7 +71,7 @@
                     <td>{{con.con_container_size}}</td>
                     <td>{{con.con_seal_number}}</td>
                     <td ng-show='shp.permissions.can_edit' class="text-right">
-                      <button class="btn btn-danger btn-sm" title='{{con.con_shipment_line_count > 0 ? "Remove lines from container first." : "Delete"}}' ng-disabled='con.con_shipment_line_count > 0' ng-click='deleteContainer(shp,con)'><i class="fa fa-trash"></i></button>
+                      <button class="btn btn-danger btn-sm" title='{{parseInt(con.con_shipment_line_count) > 0 ? "Remove lines from container first." : "Delete"}}' ng-disabled='parseInt(con.con_shipment_line_count) > 0' ng-click='deleteContainer(shp,con)'><i class="fa fa-trash"></i></button>
                       <button class="btn btn-outline-dark btn-sm" title='Edit' ng-click='editContainer(con)' data-toggle='modal' data-target='#mod_new_container'><i class="fa fa-edit"></i></button>
                     </td>
                   </tr>

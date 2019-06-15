@@ -272,7 +272,7 @@ describe ReportResult do
     end
   end
 
-  describe "execute_sql_proxy_report" do
+  describe "execute_sql_proxy_report", :without_partial_double_verification do
     subject { ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: user.id, status: "new", report_class: TestReport.to_s }
 
     it "runs an alliance report" do
@@ -298,13 +298,13 @@ describe ReportResult do
     end
   end
 
-  describe "continue_sql_proxy_report" do
+  describe "continue_sql_proxy_report", :without_partial_double_verification do
     subject { ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: user.id, status: "new", report_class: TestReport.to_s }
 
     let (:tempfile) { Tempfile.new "ContinueAlliancReportSpec" }
     
     after :each do
-      tempfile.close? unless tempfile.closed?
+      tempfile.close! unless tempfile.closed?
     end
 
     it "continues a sql proxy report" do

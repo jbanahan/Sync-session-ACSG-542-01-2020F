@@ -16,7 +16,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     start_date, end_date = calculate_dates params['after_x_days_ago'], params['before_x_days_ago']
     report = self.new.run User.integration, start_date: start_date, end_date: end_date
     subject = "Eddie Bauer CA Statement Summary for #{start_date} to #{end_date}"
-    OpenMailer.send_simple_html(params['email'], subject, "Attached is the #{subject}", [report]).deliver!
+    OpenMailer.send_simple_html(params['email'], subject, "Attached is the #{subject}", [report]).deliver_now
     report.close
   end
 

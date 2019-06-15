@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::DelayedJobExtensions do
   subject { Class.new { include OpenChain::DelayedJobExtensions }.new }
 

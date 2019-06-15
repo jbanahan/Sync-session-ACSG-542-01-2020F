@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Port do
   context 'validations' do
     it 'should only allow 5 digit schedule k codes' do
@@ -61,7 +59,7 @@ describe Port do
       Port.load_cbsa_data data
       expect(Port.all.size).to eq(2)
       [['0922','9922','Port Name, Is Here'],['4444','4441','Another Port']].each do |a|
-        p = Port.find_by_cbsa_port a[0]
+        p = Port.find_by cbsa_port: a[0]
         expect(p.cbsa_sublocation).to eq(a[1])
         expect(p.name).to eq(a[2])
       end
@@ -71,7 +69,7 @@ describe Port do
       Port.load_schedule_d data
       expect(Port.all.size).to eq(2)
       {"0101"=>"PORTLAND, ME","0102"=>"BANGOR, ME"}.each do |code,name|
-        expect(Port.find_by_schedule_d_code(code).name).to eq(name)
+        expect(Port.find_by(schedule_d_code: code).name).to eq(name)
       end
     end
     it 'should replace all schedule d records' do
@@ -81,15 +79,15 @@ describe Port do
       new_data = "\"01\",,\"PORTLAND, ME\"\n,\"4601\",\"JERSEY\"\n,\"0102\",\"B\""
       Port.load_schedule_d new_data
       expect(Port.all.size).to eq(2) #0101 should be gone, 4601 should be added, and 0102 should be updated
-      expect(Port.find_by_schedule_d_code("0101")).to be_nil
-      expect(Port.find_by_schedule_d_code("4601").name).to eq("JERSEY")
-      expect(Port.find_by_schedule_d_code("0102").name).to eq("B")
+      expect(Port.find_by(schedule_d_code: "0101")).to be_nil
+      expect(Port.find_by(schedule_d_code: "4601").name).to eq("JERSEY")
+      expect(Port.find_by(schedule_d_code: "0102").name).to eq("B")
     end
     it 'should load schedule k csv' do
       data = "01520  Hamilton, ONT                                      Canada\n01527  Clarkson, ONT                                      Canada                  \n01528  Britt, ONT                                         Canada              "
       Port.load_schedule_k data
       expect(Port.all.size).to eq(3)
-      expect(Port.find_by_schedule_k_code("01527").name).to eq("Clarkson, ONT, Canada")
+      expect(Port.find_by(schedule_k_code: "01527").name).to eq("Clarkson, ONT, Canada")
     end
     it 'should replace all schedule k records' do
       data = "01520  Hamilton, ONT                                      Canada\n01527  Clarkson, ONT                                      Canada                  \n01528  Britt, ONT                                         Canada              "
@@ -98,14 +96,14 @@ describe Port do
       new_data = "01528  Britt, ONT                                         Canada                \n01530  Lakeview, ONT                                      Canada                  \n01530  Mississauga, ONT                                   Canada                   "
       Port.load_schedule_k new_data
       expect(Port.all.size).to eq(2)
-      expect(Port.find_by_schedule_k_code("01520")).to be_nil
-      expect(Port.find_by_schedule_k_code("01530")).not_to be_nil
+      expect(Port.find_by(schedule_k_code: "01520")).to be_nil
+      expect(Port.find_by(schedule_k_code: "01530")).not_to be_nil
     end
     it 'should use last schedule k record for port description' do
       data = "01530  Lakeview, ONT                                      Canada                  \n01530  Mississauga, ONT                                   Canada                   "
       Port.load_schedule_k data
       expect(Port.all.size).to eq(1)
-      expect(Port.find_by_schedule_k_code("01530").name).to eq("Mississauga, ONT, Canada")
+      expect(Port.find_by(schedule_k_code: "01530").name).to eq("Mississauga, ONT, Canada")
     end
 
     context "UNLOC codes" do

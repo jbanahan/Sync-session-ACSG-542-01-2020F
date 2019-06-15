@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FieldValidatorRule do
   describe "max length" do
     before :each do

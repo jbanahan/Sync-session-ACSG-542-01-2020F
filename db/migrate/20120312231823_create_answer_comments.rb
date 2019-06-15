@@ -5,7 +5,7 @@ class CreateAnswerComments < ActiveRecord::Migration
       t.integer :user_id
       t.text :content
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :answer_comments, :answer_id
   end

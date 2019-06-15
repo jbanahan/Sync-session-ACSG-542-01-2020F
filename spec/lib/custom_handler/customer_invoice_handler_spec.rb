@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::CustomerInvoiceHandler do
   let!(:cf) { instance_double("CustomFile") }
   let!(:parser) { described_class.new cf }

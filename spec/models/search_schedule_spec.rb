@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchSchedule do
   
   describe "run_search" do
@@ -258,7 +256,7 @@ describe SearchSchedule do
       it "should send and email and create user message" do
         expect(FtpSender).to receive(:send_file).and_raise IOError, "Error!"
         m = double("mail")
-        expect(m).to receive("deliver")
+        expect(m).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_search_fail).with(@u.email, @setup.name, "Error!", @s.ftp_server, @s.ftp_username, @s.ftp_subfolder).and_return m
         tf = double("Tempfile")
         expect(tf).to receive(:path)

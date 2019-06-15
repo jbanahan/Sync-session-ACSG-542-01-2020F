@@ -10,7 +10,7 @@ class CreateSalesOrderLines < ActiveRecord::Migration
       t.integer :sales_order_id
       t.integer :line_number
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

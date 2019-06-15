@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 # The product api client is a super-thin shell around the api_client, as such
 # there's very little to test in here.  Just that it's calling the right 
 # parent class methods.

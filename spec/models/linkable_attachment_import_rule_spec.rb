@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe LinkableAttachmentImportRule do
   after :each do
     LinkableAttachmentImportRule.load_cache

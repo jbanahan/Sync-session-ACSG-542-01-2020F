@@ -4,7 +4,7 @@ class CreateDrawbackImport < ActiveRecord::Migration
       t.decimal :quantity, :precision => 13, :scale => 4
       t.integer :product_id
       t.integer :line_number
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :drawback_import_lines, :product_id
     add_column :piece_sets, :drawback_import_line_id, :integer

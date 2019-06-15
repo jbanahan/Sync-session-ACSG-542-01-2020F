@@ -3,7 +3,7 @@ class CreateMilestoneForecast < ActiveRecord::Migration
     create_table :milestone_forecast_sets do |t|
       t.integer :piece_set_id
       t.string :state
-      t.timestamps
+      t.timestamps null: false
     end
     create_table :milestone_forecasts do |t|
       t.integer :milestone_definition_id
@@ -11,7 +11,7 @@ class CreateMilestoneForecast < ActiveRecord::Migration
       t.date :planned
       t.date :forecast
       t.string :state
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :milestone_forecast_sets, [:state], :name=>"mfs_state"

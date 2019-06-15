@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PlantProductGroupAssignment do
   before :each do
     @plant = Factory(:plant)

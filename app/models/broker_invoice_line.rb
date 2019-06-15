@@ -22,6 +22,11 @@
 
 class BrokerInvoiceLine < ActiveRecord::Base
   include CustomFieldSupport
+
+  attr_accessible :broker_invoice_id, :charge_amount, :charge_code, 
+    :charge_description, :charge_type, :created_at, :hst_percent, :updated_at,
+    :vendor_name, :vendor_reference
+
   belongs_to :broker_invoice, :touch=>true
   has_one :entry, :through=>:broker_invoice
 

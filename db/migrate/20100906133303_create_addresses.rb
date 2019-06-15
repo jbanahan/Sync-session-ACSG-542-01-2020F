@@ -12,7 +12,7 @@ class CreateAddresses < ActiveRecord::Migration
       t.boolean :ship_to
       t.references :company
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

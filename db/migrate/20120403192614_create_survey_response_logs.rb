@@ -4,7 +4,7 @@ class CreateSurveyResponseLogs < ActiveRecord::Migration
       t.integer :survey_response_id
       t.text :message
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :survey_response_logs, :survey_response_id
   end

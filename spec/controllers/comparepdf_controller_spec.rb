@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ComparepdfController do
 
   describe "compare" do

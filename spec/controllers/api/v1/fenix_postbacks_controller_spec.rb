@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::FenixPostbacksController do
   before :each do
     @user = Factory(:admin_user, api_auth_token: "Token")

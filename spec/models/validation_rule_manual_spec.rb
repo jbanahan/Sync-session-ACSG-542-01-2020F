@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleManual do
   describe "run_validation" do
     it "should always return manual check needed" do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::GroupsController do
   let (:user) { Factory(:user, company: Factory(:company, name: "ACME", system_code: "AC")) }
   let (:group) { Group.create! system_code: "GROUP", name: "Name", description: "Description" }

@@ -9,7 +9,7 @@ class CreateCustomValues < ActiveRecord::Migration
       t.date :date_value
       t.integer :custom_definition_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

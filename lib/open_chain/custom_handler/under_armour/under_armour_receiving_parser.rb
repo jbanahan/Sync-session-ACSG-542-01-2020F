@@ -91,9 +91,9 @@ module OpenChain; module CustomHandler; module UnderArmour
     def process_header row
       sys_code = trim_numeric row[0]
       ref = trim_numeric row[6]
-      vendor = Company.find_or_create_by_system_code_and_vendor(sys_code,true,:name=>row[1])
-      @shipment = Shipment.find_by_reference ref
-      @shipment = Shipment.new(:reference=>ref,:vendor=>vendor,:importer=>Company.find_by_importer(true)) unless @shipment
+      vendor = Company.find_or_create_by(system_code: sys_code, vendor: true, name: row[1])
+      @shipment = Shipment.find_by(reference: ref)
+      @shipment = Shipment.new(:reference=>ref,:vendor=>vendor,:importer=>Company.where(master: true, importer: true).first) unless @shipment
     end
 
     def process_detail row
@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       uid = row[9].split('-').first
       p = @product_cache[uid]
       if p.blank?
-        p = Product.find_or_create_by_unique_identifier(uid)
+        p = Product.find_or_create_by(unique_identifier: uid)
         @product_cache[uid] = p
       end
       p

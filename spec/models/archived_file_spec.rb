@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ArchivedFile do
   describe "make_from_file!" do
     it "should make with file" do

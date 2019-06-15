@@ -16,6 +16,8 @@
 #
 
 class CustomFileRecord < ActiveRecord::Base
+  attr_accessible :custom_file_id, :linked_object_id, :linked_object_type
+  
   belongs_to :custom_file
   belongs_to :linked_object, :polymorphic => true
 end

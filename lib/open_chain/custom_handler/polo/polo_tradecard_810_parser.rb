@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloTradecard810Parse
       possible_order_numbers = Polo850VandegriftParser::RL_BUYER_MAP.values.map {|v| Order.compose_po_number v, po_number}
 
       # The unique order identifier is a composition of the importer's code + the order number
-      orders = Order.where(order_number: [possible_order_numbers]).
+      orders = Order.where(order_number: possible_order_numbers).
                 joins("INNER JOIN custom_values cv ON cv.customizable_id = orders.id AND cv.customizable_type = 'Order' AND cv.custom_definition_id = #{@cdefs[:ord_invoicing_system].id} AND cv.string_value = 'Tradecard'").all
 
       orders.each do |order|

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::MassOrderCreator do
   subject do
     Class.new { include OpenChain::CustomHandler::MassOrderCreator }.new

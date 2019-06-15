@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Classification do
   describe 'classified?' do
     before :each do

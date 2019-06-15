@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomValue do
   describe "batch_write!" do
     before :each do
@@ -31,7 +29,7 @@ describe CustomValue do
     end
     it "should roll back all if one fails" do
       @p.update_custom_value! @cd, "xyz"
-      cv = CustomValue.find_by_custom_definition_id @cd.id
+      cv = CustomValue.find_by(custom_definition: @cd.id)
       cv.value = 'abc'
       bad_cv = CustomValue.new(:customizable=>@p)
       expect {CustomValue.batch_write! [cv,bad_cv]}.to raise_error(/custom_definition/)
@@ -41,7 +39,7 @@ describe CustomValue do
     it "should insert and update values" do
       cd2 = Factory(:custom_definition,:module_type=>"Product",:data_type=>"integer")
       @p.update_custom_value! @cd, "xyz"
-      cv = CustomValue.find_by_custom_definition_id @cd.id
+      cv = CustomValue.find_by(custom_definition: @cd)
       cv.value = 'abc'
       cv2 = CustomValue.new(:customizable=>@p,:custom_definition=>cd2)
       cv2.value = 2
@@ -149,11 +147,15 @@ describe CustomValue do
       cv.value = true
       CustomValue.batch_write! [cv], true
       @p = Product.find @p.id
-      expect(@p.get_custom_value(@cd).value).to be_truthy
+      expect(@p.get_custom_value(@cd).value).to eq true
       cv.value = false
       CustomValue.batch_write! [cv], true
       @p = Product.find @p.id
-      expect(@p.get_custom_value(@cd).value).to be_falsey
+      expect(@p.get_custom_value(@cd).value).to eq false
+      cv.value = nil
+      CustomValue.batch_write! [cv], false, skip_insert_nil_values: false
+      @p = Product.find @p.id
+      expect(@p.get_custom_value(@cd).value).to eq nil
     end
     it "should handle text" do
       @cd.update_attributes(:data_type=>'text')
@@ -162,16 +164,15 @@ describe CustomValue do
       CustomValue.batch_write! [cv], true
       expect(@p.get_custom_value(@cd).value).to eq('aaaa')
     end
+    
     it "should handle datetime" do
-      t = 2.minutes.ago
+      t = Time.zone.now
       @cd.update_attributes(data_type:'datetime')
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = t
       CustomValue.batch_write! [cv], true
-      g = @p.get_custom_value(@cd).value
-      expect(g).to be_same_second_as t
+      expect(@p.custom_value(@cd).to_i).to eq t.to_i
     end
-
 
     it "should skip nil values" do
       @cd.update_attributes(:data_type=>'text')
@@ -193,30 +194,249 @@ describe CustomValue do
     end
   end
 
-  describe "value" do
-    it "should round trip a datetime" do
-      t = 2.minutes.ago
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"datetime")
-      p = Factory(:product)
-      p.update_custom_value!(cd,t)
-      p.reload
-      expect(p.get_custom_value(cd).value).to be_same_second_as t
+  describe "value=" do
+    let (:object) { Factory(:product) }
+
+    subject {
+      CustomValue.new customizable: object, custom_definition: cd
+    }
+    context "with boolean value" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean") }
+      
+      [true, "true", "1", 1].each do |val|
+        it "handles #{val} value as true" do
+          subject.value = val
+          expect(subject.boolean_value).to eq true
+          # Make sure no unexpected data coercion changes made w/ data coming back out of the database
+          subject.save!
+          subject.reload
+          expect(subject.boolean_value).to eq true
+        end
+      end
+
+      [false, "false", '0', 0].each do |val|
+        it "handles #{val} value as false" do
+          subject.value = val
+          expect(subject.boolean_value).to eq false
+          # Make sure no unexpected data coercion changes made w/ data coming back out of the database
+          subject.save!
+          subject.reload
+          expect(subject.boolean_value).to eq false
+        end
+      end
+
+      it "handes nil value" do
+        subject.value = nil
+        expect(subject.boolean_value).to eq nil
+        # Make sure no unexpected data coercion changes made w/ data coming back out of the database
+        subject.save!
+        subject.reload
+        expect(subject.boolean_value).to eq nil
+      end
+
+      it "handles blank string" do
+        subject.value = "  "
+        expect(subject.boolean_value).to eq nil
+        # Make sure no unexpected data coercion changes made w/ data coming back out of the database
+        subject.save!
+        subject.reload
+        expect(subject.boolean_value).to eq nil
+      end
     end
 
-    it "handles user objects" do
-      user = Factory(:user)
-      user_def = Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
-      cv = CustomValue.new custom_definition: user_def
-      cv.value = user
-      expect(cv.value).to eq user.id
+    context "with text values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"text") }
+
+      it "saves text value" do
+        subject.value = "Test"
+        expect(subject.text_value).to eq "Test"
+        subject.save!
+        subject.reload
+        expect(subject.text_value).to eq "Test"
+      end
     end
 
-    it "handles address objects" do
-      addr = Factory(:address)
-      addr_def = Factory(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true)
-      cv = CustomValue.new custom_definition: addr_def
-      cv.value = addr
-      expect(cv.value).to eq addr.id
+    context "with string values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"string") }
+
+      it "saves string value" do
+        subject.value = "Test"
+        expect(subject.string_value).to eq "Test"
+        subject.save!
+        subject.reload
+        expect(subject.string_value).to eq "Test"
+      end
+    end
+
+    context "with date values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"date") }
+
+      it "saves date value" do
+        d = Date.new(2019, 1, 1)
+        subject.value = d
+        expect(subject.date_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.date_value).to eq d
+      end
+
+      it "saves string date value" do 
+        d = Date.new(2019, 12, 1)
+        subject.value = "12/01/2019"
+        expect(subject.date_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.date_value).to eq d
+      end
+
+      it "saves string date value with hyphens" do 
+        d = Date.new(2019, 12, 1)
+        subject.value = "12-01-2019"
+        expect(subject.date_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.date_value).to eq d
+      end
+
+      it "saves date value with YYYY-MM-DD format" do
+        d = Date.new(2019, 12, 1)
+        subject.value = "2019-12-01"
+        expect(subject.date_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.date_value).to eq d
+      end
+    end
+
+    context "with datetime values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"datetime") }
+
+      it "saves datetime value" do
+        d = Time.zone.parse("2019-01-12T12:00:00 -0500")
+        subject.value = "2019-01-12T12:00:00 -0500"
+        expect(subject.datetime_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.datetime_value).to eq d
+      end
+
+      it "handles YYYY-MM-DD" do
+        d = Time.zone.parse("2019-01-12")
+        subject.value = "2019-01-12"
+        expect(subject.datetime_value).to eq d
+        subject.save!
+        subject.reload
+        expect(subject.datetime_value).to eq d
+      end
+
+      it "handles null" do
+        subject.value = nil
+        expect(subject.datetime_value).to eq nil
+        subject.save!
+        subject.reload
+        expect(subject.datetime_value).to eq nil
+      end
+    end
+
+    context "with integer values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"integer") }
+
+      it "handles integer value" do
+        subject.value = 1
+        expect(subject.integer_value).to eq 1
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq 1
+      end
+
+      it "handles value as string" do
+        subject.value = "1"
+        expect(subject.integer_value).to eq 1
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq 1
+      end
+
+      it "handles value as decimal string" do
+        subject.value = "1.6"
+        expect(subject.integer_value).to eq 1
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq 1
+      end
+
+      it "handles null" do
+        subject.value = nil
+        expect(subject.integer_value).to eq nil
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq nil
+      end
+    end
+
+    context "with decimal values" do
+      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"decimal") }
+
+      it "handles decimal value" do
+        # See how value is rounded too by passing a value that should be rounded
+        subject.value = BigDecimal("1.12345")
+        expect(subject.decimal_value).to eq BigDecimal("1.1235")
+        subject.save!
+        subject.reload
+        expect(subject.decimal_value).to eq BigDecimal("1.1235")
+      end
+
+      it "handles value as string" do
+        subject.value = "1.12345"
+        expect(subject.decimal_value).to eq BigDecimal("1.1235")
+        subject.save!
+        subject.reload
+        expect(subject.decimal_value).to eq BigDecimal("1.1235")
+      end
+
+      it "handles null" do
+        subject.value = nil
+        expect(subject.decimal_value).to eq nil
+        subject.save!
+        subject.reload
+        expect(subject.decimal_value).to eq nil
+      end
+    end
+
+    context "with user values" do
+      let (:cd) { Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true) }
+      let (:user) { Factory(:user) }
+
+      it "handles user objects" do
+        subject.value = user
+        expect(subject.integer_value).to eq user.id
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq user.id
+
+        subject.value = nil
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq nil
+      end
+    end
+
+    context "with address values" do
+      let (:cd) { Factory(:custom_definition, label: "Testing Address", module_type: "Product", data_type: 'integer', is_address: true) }
+      let (:address) { Factory(:address) }
+
+      it "handles user objects" do
+        subject.value = address
+        expect(subject.integer_value).to eq address.id
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq address.id
+
+        subject.value = nil
+        subject.save!
+        subject.reload
+        expect(subject.integer_value).to eq nil
+      end
     end
   end
 end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lt::Lt850Parser do
   let!(:data) { IO.read 'spec/fixtures/files/lt_850.edi' }
   let!(:importer) { Factory(:company, name: "LT", importer: true, system_code: "LOLLYT")}

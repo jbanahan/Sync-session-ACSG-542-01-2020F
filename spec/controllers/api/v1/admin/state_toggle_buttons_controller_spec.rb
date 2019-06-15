@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::StateToggleButtonsController do
   let!(:user) { Factory(:admin_user) }
   before do

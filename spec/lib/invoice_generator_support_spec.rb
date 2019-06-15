@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::InvoiceGeneratorSupport do
   let(:generator) do
     Class.new { include OpenChain::InvoiceGeneratorSupport }.new

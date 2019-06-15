@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentRegistry do
 
   describe "can_uncancel?" do

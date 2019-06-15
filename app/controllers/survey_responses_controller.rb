@@ -29,7 +29,7 @@ class SurveyResponsesController < ApplicationController
         @no_action_bar = true
       end
 
-      format.json do 
+      format.json do
         render json: json_survey_response(sr, current_user)
       end
     end
@@ -126,7 +126,7 @@ class SurveyResponsesController < ApplicationController
       unless email_list.map{ |e| EmailValidator.valid? e }.all?
         render json: {error: "Invalid email. Be sure to separate multiple addresses with spaces."}
       else
-        OpenMailer.delay.send_survey_reminder(sr, email_list, params[:email_subject], params[:email_body])
+        OpenMailer.send_survey_reminder(sr, email_list, params[:email_subject], params[:email_body]).deliver_later
         render json: {ok: "ok"}
       end
     end

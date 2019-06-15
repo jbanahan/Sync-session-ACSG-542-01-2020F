@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "accepts?" do

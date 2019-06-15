@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
       to << Group.use_system_group("ORDER_REJECTED_EMAIL", name: "Order Rejected Email")
       
-      OpenMailer.send_simple_html(to,subject,body,[f]).deliver!
+      OpenMailer.send_simple_html(to,subject,body,[f]).deliver_now
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe UserTemplate do
   describe 'create_user!' do
     before :each do

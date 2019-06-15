@@ -136,7 +136,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
     subject = "Invalid Fenix 810 Invoice for #{importer_name}"
     body = "<p>Failed to generate Fenix 810 invoice due to the following error:<br><br>#{error_text}</p>"
 
-    OpenMailer.send_simple_html(invalid_invoice_error_email_address(), subject, body).deliver!
+    OpenMailer.send_simple_html(invalid_invoice_error_email_address(), subject, body).deliver_now
   end
 
   def invalid_invoice_error_email_address

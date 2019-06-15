@@ -13,6 +13,8 @@
 class InstantClassification < ActiveRecord::Base
   include UpdateModelFieldsSupport
 
+  attr_accessible :name, :rank, :virtual_identifier, :search_criterions_attributes, :classifications_attributes
+
   has_many :search_criterions, :dependent=>:destroy
   has_many :classifications, :dependent=>:destroy
 
@@ -28,7 +30,7 @@ class InstantClassification < ActiveRecord::Base
     }
   accepts_nested_attributes_for :classifications, :allow_destroy => true
 
-  scope :ranked, order("rank ASC").includes(:search_criterions)
+  scope :ranked, -> { order("rank ASC").includes(:search_criterions) }
 
   # Find the InstantClassification that matches the given Product
   # 

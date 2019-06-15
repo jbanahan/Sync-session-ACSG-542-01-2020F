@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomViewTemplate do
   describe '#for_object' do
     before :each do

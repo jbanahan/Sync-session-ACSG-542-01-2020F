@@ -1,4 +1,4 @@
-if !Rails.env.test? && ActiveRecord::Base.connection.table_exists?('master_setups') && MasterSetup.count > 0
+if !Rails.env.test? && MasterSetup.master_setup_initialized?
   require 'open_chain/custom_handler/ann_inc/ann_inc_system_init'
   OpenChain::CustomHandler::AnnInc::AnnIncSystemInit.init
 

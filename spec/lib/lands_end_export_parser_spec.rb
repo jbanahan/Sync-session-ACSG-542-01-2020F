@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::LandsEndExportParser do
   before :each do
     @importer = Factory(:company,:importer=>true)

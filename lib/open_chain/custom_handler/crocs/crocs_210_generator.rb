@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
         # For some operational purpsose, if there are inland / cartage services on the invoice they cannot be sent
         # via the 210 feed and must instead be manaully billed by operations.
         if has_cartage_services? invoice
-          OpenMailer.send_crocs_manual_bill_reminder(invoice.invoice_number).deliver!
+          OpenMailer.send_crocs_manual_bill_reminder(invoice.invoice_number).deliver_now
         else
           xml = generate_xml invoice
 

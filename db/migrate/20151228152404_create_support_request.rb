@@ -8,7 +8,7 @@ class CreateSupportRequest < ActiveRecord::Migration
       t.references :user, index: true
       t.string :external_link
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 end

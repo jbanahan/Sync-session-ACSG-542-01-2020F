@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BrokerInvoiceLine do
 
   context "duty_charge_type?" do

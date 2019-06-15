@@ -22,7 +22,7 @@ class CreateTariffSetRecords < ActiveRecord::Migration
       t.string  :import_regulations
       t.string  :export_regulations
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :tariff_set_records, :tariff_set_id

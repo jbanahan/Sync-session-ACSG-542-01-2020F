@@ -10,7 +10,7 @@ class EmailAttachmentsController < ApplicationController
 
     if ea.blank?
       add_flash :errors, "Requested attachment could not be found."
-      redirect_to request.referrer
+      redirect_to validate_redirect(request.referrer)
     elsif ea.email.upcase.split(/[,;]/).include?(email.upcase)
       # Technically, the user portion of the email address is allowed to be case-sensitive.
       # In practice this isn't done by any email server/service of note.  

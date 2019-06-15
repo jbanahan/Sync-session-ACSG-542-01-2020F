@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lt::Lt856Parser do
 
    # Breakdown of the two shipments in lt_856.edi (preorder traversal)

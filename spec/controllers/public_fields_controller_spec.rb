@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PublicFieldsController do
   before :each do
     @u = Factory(:user,:admin=>true)

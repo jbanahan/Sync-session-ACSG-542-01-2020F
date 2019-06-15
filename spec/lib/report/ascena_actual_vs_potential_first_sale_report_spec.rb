@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
   let(:report) { described_class.new }
 

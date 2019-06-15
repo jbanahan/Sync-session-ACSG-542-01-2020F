@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe PolymorphicFinders do
   subject { Class.new {include PolymorphicFinders}.new }
 
@@ -32,11 +30,11 @@ describe PolymorphicFinders do
     end
 
     it "handles lowercase and underscorized version of classname" do
-      expect(subject.polymorphic_scope "broker_invoice").to eq BrokerInvoice.scoped
+      expect(subject.polymorphic_scope "broker_invoice").to eq BrokerInvoice.all
     end
 
     it "handles pluralized (rails route) form of classname" do
-      expect(subject.polymorphic_scope "broker_invoices").to eq BrokerInvoice.scoped
+      expect(subject.polymorphic_scope "broker_invoices").to eq BrokerInvoice.all
     end
 
     it "fails if class doesn't inherit from ActiveRecord::Base" do

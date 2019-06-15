@@ -48,7 +48,6 @@ $(function() {
     <button id='btn_add_line'>Add Product</button>
   <% end %>
   <button class='btn_link' link_to='<%=history_sales_order_path(@sales_order)%>' key_map='h'>History</button>
-  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:sales_order_id => @sales_order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <%end%>
 <%=render :partial=>'shared/attachments',:locals=>{:attachable=>@sales_order}%>
 <div class='next_to_attachments'>
@@ -90,7 +89,7 @@ $(function() {
           <td class="has_numeric"><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : number_with_precision(line.price_per_unit * line.quantity, precision: 5, strip_insignificant_zeros: true) %></td>
           <td>
             <% if @sales_order.can_edit?(current_user) && !@sales_order.locked?%>
-              <%= link_to 'Delete', sales_order_sales_order_line_path(@sales_order,line) , :confirm => 'Are you sure?', :method => :delete %>
+              <%= link_to 'Delete', sales_order_sales_order_line_path(@sales_order,line) , :data => {:confirm => 'Are you sure?'}, :method => :delete %>
             <% end %> 
           </td>
         </tr>
@@ -139,5 +138,5 @@ $(function() {
  <% end %>
 </div>
 <div style='display:none;'>
-  <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+  <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :data => {:confirm => "Are you sure?"}, :id => "btn_delete") %>
 </div>

@@ -164,6 +164,49 @@ class Shipment < ActiveRecord::Base
   include CoreObjectSupport
   include ISFSupport
   include IntegrationParserSupport
+
+  attr_accessible :arrival_port_date, :arrive_at_transship_port_date, 
+    :available_for_delivery_date, :barge_arrive_date, :barge_depart_date, 
+    :bol_date, :booked_quantity, :booking_approved_by_id, 
+    :booking_approved_date, :booking_cargo_ready_date, :booking_carrier, 
+    :booking_confirmed_by_id, :booking_confirmed_date, :booking_cutoff_date, 
+    :booking_est_arrival_date, :booking_est_departure_date, 
+    :booking_first_port_receipt_id, :booking_mode, :booking_number, 
+    :booking_received_date, :booking_request_count, :booking_requested_by_id, :booking_requested_by,
+    :booking_requested_equipment, :booking_revised_by_id, :booking_revised_date, 
+    :booking_shipment_type, :booking_vessel, :booking_voyage, :buyer_address_id, :buyer_address,
+    :cancel_requested_at, :cancel_requested_by_id, :canceled_by_id, 
+    :canceled_date, :cargo_on_board_date, :cargo_on_hand_date, 
+    :cargo_ready_date, :carrier_id, :carrier_released_date, 
+    :confirmed_on_board_origin_date, :consignee_id, :consignee, :consolidator_address_id, :consolidator_address, 
+    :container_stuffing_address_id, :container_stuffing_address, :container_unloaded_date, 
+    :country_export_id, :country_import_id, :country_origin_id,
+    :country_export, :country_import, :country_origin,
+    :customs_released_carrier_date, :delay_reason_codes, :delivered_date, 
+    :departure_date, :departure_last_foreign_port_date, :description_of_goods, 
+    :destination_port_id, :destination_port, :do_issued_at, :docs_received_date, 
+    :empty_out_at_origin_date, :empty_return_date, :entry_port_id, 
+    :est_arrival_port_date, :est_delivery_date, :est_departure_date, 
+    :est_inland_port_date, :est_load_date, :eta_last_foreign_port_date, 
+    :export_license_required, :fcr_created_final_date, :final_dest_port_id, 
+    :first_port_receipt_id, :first_port_receipt, :fish_and_wildlife, :forwarder_id, :freight_terms, 
+    :freight_total, :full_container_discharge_date, :full_ingate_date, 
+    :full_out_gate_discharge_date, :gross_weight, :hazmat, 
+    :house_bill_of_lading, :importer_id, :importer, :importer_reference, 
+    :in_warehouse_time, :inland_destination_port_id, :inland_port_date, 
+    :invoice_total, :isf_sent_at, :isf_sent_by_id, :lacey_act, :lading_port_id, :lading_port, 
+    :last_exported_from_source, :last_file_bucket, :last_file_path, 
+    :last_foreign_port_id, :lcl, :marks_and_numbers, :master_bill_of_lading, 
+    :mode, :number_of_packages, :number_of_packages_uom, :on_rail_destination_date, 
+    :packing_list_sent_by_id, :packing_list_sent_date, :pickup_at, 
+    :port_last_free_day, :receipt_location, :reference, :requested_equipment, 
+    :seller_address_id, :seller_address, :ship_from_id, :ship_from, :ship_to_address_id, :ship_to_address, :ship_to_id, 
+    :shipment_cutoff_date, :shipment_instructions_sent_by_id, 
+    :shipment_instructions_sent_date, :shipment_type, :solid_wood_packing_materials, 
+    :trucker_name, :unlading_port_id, :unlading_port, :vendor_id, :vendor, :vessel, :vessel_carrier_scac, 
+    :vessel_nationality, :vgm_sent_by_id, :vgm_sent_date, :volume, :voyage, 
+    :warning_overridden_at, :warning_overridden_by_id
+  
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
   belongs_to  :forwarder, :class_name => "Company"

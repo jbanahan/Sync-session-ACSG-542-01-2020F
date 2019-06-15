@@ -8,7 +8,7 @@ class CreateUpgradeLogs < ActiveRecord::Migration
       t.text :log
       t.integer :instance_information_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

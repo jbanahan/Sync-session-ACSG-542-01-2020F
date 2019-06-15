@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe RegistrationsController do
   let! (:master_setup) { stub_master_setup }
   let (:params) {
@@ -22,12 +20,14 @@ describe RegistrationsController do
       end
 
       it "emails Vandegrift with the registration form data and the server's system_code" do
+        message_delivery = instance_double(ActionMailer::MessageDelivery)
+        expect(OpenMailer).to receive(:send_registration_request).with("john_doe@acme.com", "John", "Doe", "Acme", "Jane Smith", "123456789", MasterSetup.get.system_code).and_return message_delivery
+        expect(message_delivery).to receive(:deliver_later)
+
         post :send_email, params
-        mail = ActionMailer::Base.deliveries.pop
         thanks = "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
                  "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
         
-        expect(mail.subject).to eq "Registration Request (test)"
         expect(response.body).to eq ({flash: {notice: [thanks]}}.to_json)
       end
       

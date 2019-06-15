@@ -144,7 +144,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
     def generate_missing_shipment_email master_bill, zip_content_pdf, s3_path
       write_pdf_zip_entry_to_temp_file(zip_content_pdf, s3_path) do |temp_file|
         body_text = "VFI Track has tried for 4 days to find a shipment matching master bill '#{master_bill}' without success.  No further attempts will be made.  Allport document attachments (ODS) are available for this shipment.  VFI operations will be required to manually upload vendor docs (VDS) and shipment docs (ODS) manually."
-        OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Shipment: #{master_bill}", body_text, [temp_file]).deliver!
+        OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Shipment: #{master_bill}", body_text, [temp_file]).deliver_now
       end
     end
 
@@ -152,7 +152,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
       body_text = "The attached zip file for master bill '#{master_bill}', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution."
       mailing_list = MailingList.where(system_code:'ODSNotifications').first
       raise "Allport ODS Notifications mailing list not configured." unless mailing_list
-      OpenMailer.send_simple_html([mailing_list], 'Allport ODS docs not in zip file', body_text, [zip_file], { reply_to:'ll-support@vandegriftinc.com' }).deliver!
+      OpenMailer.send_simple_html([mailing_list], 'Allport ODS docs not in zip file', body_text, [zip_file], { reply_to:'ll-support@vandegriftinc.com' }).deliver_now
     end
 
 end; end; end; end

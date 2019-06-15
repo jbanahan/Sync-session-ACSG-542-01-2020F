@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::MarcJacobsFreightBudget do
   before :each do 
     @u = Factory(:user)

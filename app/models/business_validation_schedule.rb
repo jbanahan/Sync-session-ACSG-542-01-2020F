@@ -13,6 +13,8 @@
 #
 
 class BusinessValidationSchedule < ActiveRecord::Base
+  attr_accessible :model_field_uid, :module_type, :name, :num_days, :operator
+
   has_many :search_criterions
   has_many :business_validation_scheduled_jobs
 end

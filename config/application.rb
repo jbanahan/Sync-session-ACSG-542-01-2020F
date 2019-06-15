@@ -2,39 +2,25 @@ require File.expand_path('../boot', __FILE__)
 
 require 'rails/all'
 
-if defined?(Bundler)
-  # If you precompile assets before deploying to production,
-  #  use this line
-  Bundler.require *Rails.groups(:assets => %w(development test))
-  # If you want your assets lazily compiled in production,
-  #  use this line
-  # Bundler.require(:default, :assets, Rails.env)
-end
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require(*Rails.groups)
 
 require 'csv'
 require 'json'
 
-# This is required solely for the version of paperclip we're currently using, once we can move to 
-# a v5 series of that gem (where aws v2 support was added), this can be removed.
-# This must be required before any models are loaded, since paperclip attempts to load the AWS namespace
-# during the 'extended' method callback of the models (so at load time). 
-require 'aws-sdk-v1'
-
 module OpenChain
   class Application < Rails::Application
+
+    # Set the newrelic license key up directly.  There appears to be a manual way to load the license key
+    # but it works just as well to just set it as an environment variable.
+    if Rails.application.secrets["new_relic"]
+      ENV["NEW_RELIC_LICENSE_KEY"] = Rails.application.secrets["new_relic"]["license_key"]
+    end
+
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
-
-    # Custom directories with classes and modules you want to be autoloadable.
-    # config.autoload_paths += %W(#{config.root}/extras)
-
-    # Only load the plugins named here, in the order given (default is alphabetical).
-    # :all can be used as a placeholder for all plugins not explicitly named.
-    # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
-
-    # Activate observers that should always be running.
-    # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
@@ -44,18 +30,12 @@ module OpenChain
     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s]
     # config.i18n.default_locale = :de
 
-    # JavaScript files you want as :defaults (application.js is always included).
-    # config.action_view.javascript_expansions[:defaults] = %w(jquery rails)
-
-    # Configure the default encoding used in templates for Ruby 1.9.
-    config.encoding = "utf-8"
-
-    # Configure sensitive parameters which will be filtered from the log file.
-    config.filter_parameters += [:password]
+    # Do not swallow errors in after_commit/after_rollback callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
 
     if Rails.env.production?
       config.middleware.use(ExceptionNotification::Rack,
-        ignore_if: lambda { |env, exception| exception.is_a?(UnreportedError) }, 
+        ignore_if: lambda { |env, exception| exception.is_a?(UnreportedError) || MasterSetup.get.custom_feature?("Suppress Exception Emails") }, 
         email: {
           email_prefix: "[VFI Track Exception]",
           sender_address: %{"Exception Notifier" <bug@vandegriftinc.com>},
@@ -64,7 +44,16 @@ module OpenChain
       )
     end
 
+    # The following config pretty much completely disables strong_parameters.  When we start to use them and eliminate 
+    # the protected_attributes, this can be removed.  We can do a hybrid of the two by removing the following config 
+    # and adding `before_action { params.permit! }` for any controllers we know are still protected by attr_accessible.
+    config.action_controller.permit_all_parameters = true
     config.active_record.schema_format = :sql
+    config.active_job.queue_adapter = :delayed_job
+    config.action_mailer.delivery_method = :postmark
+    config.active_record.include_root_in_json = true
+    ActiveSupport::JSON::Encoding.time_precision = 0
+    
     if Rails.env.test?
       initializer :after => :initialize_dependency_mechanism do
         ActiveSupport::Dependencies.mechanism = :load
@@ -84,29 +73,22 @@ module OpenChain
       end
     end
 
-    # Enable the asset pipeline
-    config.assets.enabled = true
+    if !Rails.env.test?
+      raise "Postmark email settings must be configured under the 'postmark' key in config/secrets.yml." if Rails.application.secrets["postmark"].blank? || Rails.application.secrets["postmark"].try(:[], "postmark_api_key").blank?
+      config.action_mailer.postmark_settings = { api_token: Rails.application.secrets["postmark"]["postmark_api_key"] }  
+    end
 
-    # Version of your assets, change this if you want to expire all your assets
-    config.assets.version = '1.0'
-
-    config.assets.precompile += %w( vendor_portal.js vendor_portal.css trade_lanes.js trade_lanes.css chain_vendor_maint.css chain_vendor_maint.js chain_admin.css chain_admin.js pdfobject.js )
-
-    config.action_mailer.delivery_method = :postmark
-
-    email_settings = YAML::load_file("config/email.yml")
-    postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?
-    config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
-
-    ::AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
+    aws = Rails.application.secrets["aws"]&.with_indifferent_access
+    raise "AWS credentials must be configured under the 'aws' key in config/secrets.yml." if aws.blank?
 
     config.paperclip_defaults = {
-      :storage => :s3,
-      :s3_credentials => ::AWS_CREDENTIALS,
-      :s3_permissions => :private,
-      :bucket => 'chain-io',
+      storage: :s3,
+      s3_credentials: aws,
+      s3_permissions: :private,
+      s3_region: aws['region'],
+      bucket: 'chain-io',
       # Anything matching this regular expression is turned into an underscore
-      :restricted_characters => /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+      restricted_characters: /[\x00-\x1F\/\\:\*\?\"<>\|]/u
     }
 
     # Add an interpolation so that you can use :master_setup_uuid in the Paperclip has_attached_file 'path'

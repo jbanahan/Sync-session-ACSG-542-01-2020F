@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
   let (:standard_data) { IO.read 'spec/fixtures/files/talbots.edi' }
   let (:prepack_data) { IO.read 'spec/fixtures/files/talbots_prepack.edi'}

@@ -5,7 +5,7 @@ class CreateChargeCodes < ActiveRecord::Migration
       t.string :description
       t.boolean :apply_hst
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

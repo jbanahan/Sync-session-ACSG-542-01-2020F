@@ -1,6 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportBillingAllocationByValue < CustomReport
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
 
   def self.template_name
     "Invoice Allocation By Invoice Value"
@@ -45,7 +46,7 @@ class CustomReportBillingAllocationByValue < CustomReport
     bill_columns = []
     invoices = BrokerInvoice.select("distinct broker_invoices.*")
                 .includes(:entry=>[:commercial_invoice_lines])
-                .joins("INNER JOIN entries ON entries.id = broker_invoices.entry_id")
+                .joins(:entry)
                 .order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
                 .where("1=1")
     search_criterions.each {|sc| invoices = sc.apply(invoices)}

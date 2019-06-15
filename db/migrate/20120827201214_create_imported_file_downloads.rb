@@ -9,7 +9,7 @@ class CreateImportedFileDownloads < ActiveRecord::Migration
       t.integer :attached_file_size
       t.datetime :attached_updated_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :imported_file_downloads, :imported_file_id
   end

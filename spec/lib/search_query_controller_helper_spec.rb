@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::SearchQueryControllerHelper do
   before :each do
     @k = Class.new do
@@ -101,7 +99,7 @@ describe OpenChain::SearchQueryControllerHelper do
     # Make sure the changed at time is set to a time that will roll back a day
     # based on the timezone translation of GMT -> Hawaii
     @p = Factory(:product, :name=>'mpn')
-    @p.update_column :changed_at, '2014-02-02 00:00:00-00:00'
+    @p.update_column :changed_at, '2014-02-02'
     r = @k.new.execute_query_to_hash(SearchQuery.new(@ss,@user),@user,1,50)
     r = HashWithIndifferentAccess.new r
     # The only thing we really care about is how the time was returned

@@ -5,7 +5,7 @@ class CreateSearchRuns < ActiveRecord::Migration
       t.integer :position
       t.integer :search_setup_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

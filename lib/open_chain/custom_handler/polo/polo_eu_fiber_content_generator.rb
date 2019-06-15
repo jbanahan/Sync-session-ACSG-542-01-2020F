@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
     end
     f = sync_xls
     if f
-      OpenMailer.send_simple_html(u.email,'VFI Track EU Fiber Content Report','Fiber content report is attached.',f).deliver!
+      OpenMailer.send_simple_html(u.email,'VFI Track EU Fiber Content Report','Fiber content report is attached.',f).deliver_now
     end
     nil
   end

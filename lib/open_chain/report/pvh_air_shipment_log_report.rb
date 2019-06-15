@@ -23,7 +23,7 @@ module OpenChain; module Report; class PvhAirShipmentLogReport
     begin
       temp = self.new.run_report settings
       date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.strftime "%m/%d/%Y %I:%M %p"
-      OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] PVH Air Shipment Log", "Attached is the PVH Air Shipment Log Report for #{date}", [temp]).deliver!
+      OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] PVH Air Shipment Log", "Attached is the PVH Air Shipment Log Report for #{date}", [temp]).deliver_now
     ensure
       temp.close! if temp && !temp.closed?
     end

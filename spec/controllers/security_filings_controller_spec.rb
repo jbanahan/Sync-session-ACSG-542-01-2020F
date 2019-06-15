@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SecurityFilingsController do
   before :each do
 

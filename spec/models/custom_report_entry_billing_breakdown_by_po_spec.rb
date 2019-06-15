@@ -1,11 +1,8 @@
-require 'spec_helper'
-require 'spreadsheet'
-
 describe CustomReportEntryBillingBreakdownByPo do
 
-   before :each do
-      @master_user = Factory(:master_user)
-    end
+  before :each do
+    @master_user = Factory(:master_user)
+  end
 
   context "Class Methods" do
 

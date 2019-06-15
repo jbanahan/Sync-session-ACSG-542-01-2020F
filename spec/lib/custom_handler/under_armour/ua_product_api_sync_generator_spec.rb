@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
 
   describe "sync" do

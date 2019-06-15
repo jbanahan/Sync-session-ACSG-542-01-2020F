@@ -1,5 +1,4 @@
 require 'open_chain/custom_handler/vandegrift/kewill_entry_documents_sender'
-require 'api/v1/sns_api_controller_support'
 
 module Api; module V1; module Admin; class KewillEntryDocumentsController < AdminApiController
   include Api::V1::SnsApiControllerSupport

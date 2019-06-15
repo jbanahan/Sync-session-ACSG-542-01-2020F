@@ -23,7 +23,7 @@ module OpenChain; module Report; class InboundFileReport
     report_query = query(params[:start_time], params[:end_time], params[:company_ids], params[:statuses], params[:parser_names])
 
     generate_results_to_tempfile(report_query, params[:output_format], "VFI Track Files", "VFI Track Files #{params[:end_time].strftime "%Y-%m-%d-%H-%M"}", data_conversions: data_conversions(builder(params[:output_format]), params[:time_zone])) do |tempfile|
-      OpenMailer.send_simple_html(params[:email_to], "VFI Track Files Report", "Your VFI Track Files report for #{start_date.strftime "%Y-%m-%d %H:%M"} - #{end_date.strftime "%Y-%m-%d %H:%M"} is attached.", [tempfile]).deliver!
+      OpenMailer.send_simple_html(params[:email_to], "VFI Track Files Report", "Your VFI Track Files report for #{start_date.strftime "%Y-%m-%d %H:%M"} - #{end_date.strftime "%Y-%m-%d %H:%M"} is attached.", [tempfile]).deliver_now
     end
   end
 

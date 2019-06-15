@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::MonthlyYoyReport do
   
   let(:co1) { Factory(:country, iso_code: "CA") }

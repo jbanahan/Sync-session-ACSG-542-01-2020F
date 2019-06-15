@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe LinkableAttachment do
   context 'integrity checks' do
     it 'should require model_field_uid' do

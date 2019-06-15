@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DutyCalcImportFile do
   before :each do
     @importer = Factory(:company,:importer=>true)
@@ -50,7 +48,7 @@ describe DutyCalcImportFile do
         expect(sheet.row(1)[0]).to eq("a")
         expect(sheet.row(1)[1]).to eq("b")
       end
-      expect(d.duty_calc_import_file_lines.pluck(:drawback_import_line_id).sort).to eq(DrawbackImportLine.scoped.pluck(:id).sort)
+      expect(d.duty_calc_import_file_lines.pluck(:drawback_import_line_id).sort).to eq(DrawbackImportLine.all.pluck(:id).sort)
     end
     it "should generate multiple when the number of lines is over the max_lines_per_file" do
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path, 1

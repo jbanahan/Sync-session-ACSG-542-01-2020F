@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator do
   subject { described_class.new }
   let(:e) { Factory(:entry, entry_number: "12345", customer_number: "CUSTNUM", importer: Factory(:company)) }

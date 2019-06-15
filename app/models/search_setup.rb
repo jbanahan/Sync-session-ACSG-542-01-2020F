@@ -20,15 +20,18 @@
 
 require 'open_chain/search_base'
 class SearchSetup < ActiveRecord::Base
-  
   include OpenChain::SearchBase
+
+  attr_accessible :download_format, :include_links, :module_type, :name, 
+    :no_time, :simple, :user_id, :user, :search_criterions_attributes,
+    :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
 
   validates   :name, :presence => true
   validates   :user, :presence => true
   validates   :module_type, :presence => true
   
   has_many :search_criterions, :dependent => :destroy
-  has_many :sort_criterions, :dependent => :destroy, :order=>"rank ASC"
+  has_many :sort_criterions, -> { order(:rank) }, :dependent => :destroy
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files 
@@ -37,7 +40,7 @@ class SearchSetup < ActiveRecord::Base
   has_one :result_cache, :as=>:result_cacheable, :dependent=>:destroy
 
   belongs_to :user
-  
+
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| 
       r_val = false

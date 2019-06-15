@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
   def run_to_array generator=described_class.new
     @tmp = generator.sync_csv

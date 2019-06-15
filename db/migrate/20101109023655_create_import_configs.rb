@@ -6,7 +6,7 @@ class CreateImportConfigs < ActiveRecord::Migration
       t.boolean :ignore_first_row
       t.string :file_type
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

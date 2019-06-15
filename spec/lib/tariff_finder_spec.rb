@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::TariffFinder do
 
   def build_entry hts, part, coo, imp_id, country_id, release_date, mid_code

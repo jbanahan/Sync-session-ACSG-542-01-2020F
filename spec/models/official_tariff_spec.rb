@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OfficialTariff do
   context 'callbacks' do
     it 'should set common_rate_decimal on save if numeric' do

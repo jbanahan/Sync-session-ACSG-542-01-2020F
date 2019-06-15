@@ -6,7 +6,7 @@ class CreateChangeRecords < ActiveRecord::Migration
       t.string :recordable_type
       t.integer :record_sequence_number
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

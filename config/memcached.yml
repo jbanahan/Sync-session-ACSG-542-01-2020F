@@ -1,8 +1,0 @@
-development:
-  server: localhost:11211
-
-test:
-  server: localhost:11211
-
-production:
-  configuration_endpoint: chain-cache.roatcx.cfg.use1.cache.amazonaws.com:11211

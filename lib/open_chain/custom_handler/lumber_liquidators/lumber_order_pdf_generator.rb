@@ -301,7 +301,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       host = "https://#{MasterSetup.get.request_host}"
       subject = "Lumber Liquidators PO #{v(order, user, :ord_ord_num)} - #{initial_pdf ? "NEW" : "UPDATE"}"
       body = "You have received the attached purchase order from Lumber Liquidators.  If you have a VFI Track account, you may access the order at <a href=\"#{host}\">#{host}</a>".html_safe
-      OpenMailer.send_simple_html(contact_email, subject, body, file).deliver!
+      OpenMailer.send_simple_html(contact_email, subject, body, file).deliver_now
     end
   end
 

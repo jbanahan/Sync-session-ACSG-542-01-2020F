@@ -4,7 +4,7 @@ class CreateSurveyResponseUpdates < ActiveRecord::Migration
       t.references :user
       t.references :survey_response
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :survey_response_updates, :user_id
     add_index :survey_response_updates, [:survey_response_id,:user_id], unique:true

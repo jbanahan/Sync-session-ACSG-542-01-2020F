@@ -31,7 +31,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     file_name = "Company_YoY_[#{year_1}_#{year_2}].xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "YoY Report", file_name: "#{file_name}" do |temp|
-        OpenMailer.send_simple_html(settings['email'], "Company YoY Report #{year_1} vs. #{year_2}", "The VFI year-over-year report is attached, comparing #{year_1} and #{year_2}.", temp).deliver!
+        OpenMailer.send_simple_html(settings['email'], "Company YoY Report #{year_1} vs. #{year_2}", "The VFI year-over-year report is attached, comparing #{year_1} and #{year_2}.", temp).deliver_now
       end
     else
       workbook_to_tempfile(workbook, "YoY Report", file_name: "#{file_name}")

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentArchiveSetup do
   let (:importer) { Factory(:company) }
   let (:entry) { Factory(:entry,:importer=>importer,:arrival_date=>1.month.ago, broker_reference: "REF") }

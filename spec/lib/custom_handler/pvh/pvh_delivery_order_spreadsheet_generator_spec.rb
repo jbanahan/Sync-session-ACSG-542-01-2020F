@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
 
   let(:product) { Factory(:product, importer: importer) }

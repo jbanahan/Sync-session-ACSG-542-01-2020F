@@ -7,7 +7,7 @@ class CreateSurveys < ActiveRecord::Migration
       t.string :email_subject
       t.text :email_body
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :surveys, :company_id
   end

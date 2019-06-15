@@ -1,11 +1,15 @@
 describe DownloadS3ObjectSupport do
 
-  subject { Class.new { extend DownloadS3ObjectSupport } }
+  class FakeDownloadS3ObjectSupportController < ApplicationController
+    include DownloadS3ObjectSupport
+  end
+
+  subject { FakeDownloadS3ObjectSupportController.new }
 
   let(:ms) { stub_master_setup }
 
   describe "download_attachment" do
-    let(:attachment) { double("attach") }
+    let(:attachment) { instance_double(Attachment) }
 
     it "downloads an attachment with disposition defaulted" do
       expect(ms).to receive(:custom_feature?).with("Attachment Mask").and_return false

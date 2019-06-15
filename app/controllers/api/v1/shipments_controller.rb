@@ -82,7 +82,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     # based on the user's linked companies.
     order = params["order_id"].present? ? Order.where(id: params["order_id"].to_i).first : nil
 
-    shipments = Shipment.search_secure current_user, Shipment.scoped
+    shipments = Shipment.search_secure current_user, Shipment.all
     if order
       if order.can_view?(current_user)
         shipments = shipments.where(vendor_id: order.vendor_id, importer_id: order.importer_id)

@@ -7,7 +7,7 @@ class CreateSearchTableConfigs < ActiveRecord::Migration
       t.integer :user_id
       t.integer :company_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :search_table_configs, :page_uid
     add_index :search_table_configs, :user_id

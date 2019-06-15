@@ -1,11 +1,9 @@
-require 'spec_helper'
-
 describe Region do
-  context "default_scope" do
+  context "by_name" do
     it "should sort by name" do
       r1 = Factory(:region,:name=>"B")
       r2 = Factory(:region,:name=>"A")
-      expect(Region.where("1").to_a).to eq([r2,r1])
+      expect(Region.by_name.where("1").to_a).to eq([r2,r1])
     end
   end
   context "destroy" do

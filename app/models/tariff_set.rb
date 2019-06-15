@@ -12,13 +12,15 @@
 
 require 'open_chain/official_tariff_processor/tariff_processor'
 class TariffSet < ActiveRecord::Base
+  attr_accessible :active, :country_id, :label
+  
   has_many :tariff_set_records, :dependent => :destroy
   belongs_to :country
 
   # Replaces the OfficialTariffs for this country with the values from this set
   # If a user is provided, the user will receive a system message when the process is complete
   def activate user=nil
-    OfficialTariff.transaction do
+    Lock.acquire("OfficialTariff-#{self.country.iso_code}") do 
       OfficialTariff.where(:country_id=>self.country_id).destroy_all
       self.tariff_set_records.each do |tsr|
         ot = tsr.build_official_tariff
@@ -29,11 +31,14 @@ class TariffSet < ActiveRecord::Base
       TariffSet.where(:country_id=>self.country_id).where("tariff_sets.id = #{self.id} OR tariff_sets.active = ?",true).each do |ts|
         ts.update_attributes(:active=>ts.id==self.id)
       end
-      if user
-        user.messages.create(:subject=>"Tariff Set #{self.label} activated.",:body=>"Tariff Set #{self.label} has been successfully activated.")
-      end
-      User.where(tariff_subscribed:true).where("disabled = 0 OR disabled IS NULL").each {|u| OpenMailer.send_tariff_set_change_notification(self, u).deliver}
     end
+
+    if user
+      self.class.delay.notify_user_of_tariff_set_update(self.id, user.id)
+    end
+
+    self.class.delay.notify_of_tariff_set_update(self.id)
+    nil
   end
 
   #returns an array where the first element is a collection of TariffSetRecords that have been added
@@ -57,6 +62,23 @@ class TariffSet < ActiveRecord::Base
       end
     end
     [added,removed,changed]
+  end
+
+  def self.notify_of_tariff_set_update tariff_set_id
+    ts = TariffSet.where(id: tariff_set_id).first
+    return if ts.nil?
+
+    User.where(tariff_subscribed:true, disabled: [nil, 0]).each {|u| OpenMailer.send_tariff_set_change_notification(ts, u).deliver_later }
+  end
+
+  def self.notify_user_of_tariff_set_update tariff_set_id, user_id
+    ts = TariffSet.where(id: tariff_set_id).first
+    return if ts.nil?
+
+    user = User.where(id: user_id).first
+    return if user.nil?
+
+    user.messages.create(:subject=>"Tariff Set #{ts.label} activated.",:body=>"Tariff Set #{ts.label} has been successfully activated.")
   end
 
 end

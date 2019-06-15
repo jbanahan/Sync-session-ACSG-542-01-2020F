@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe "AllianceProductSupport" do
   class AllianceProductSupportInst
     def remote_file_name; "x.csv"; end

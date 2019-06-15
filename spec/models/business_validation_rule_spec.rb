@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationRule do
   describe "recipients_and_mailing_lists" do
     let(:bvt) { Factory(:business_validation_template)}

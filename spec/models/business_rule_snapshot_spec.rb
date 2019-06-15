@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessRuleSnapshot do
 
   describe "create_from_entity" do
@@ -26,7 +24,8 @@ describe BusinessRuleSnapshot do
     }
 
     it "returns history data for given entity" do
-      now = Time.zone.now
+      # JSON doesn't include milliseconds, so just use a time setup that doesn't have any
+      now = Time.zone.parse("2019-02-25T22:31:07.000")
       # Timecop used so the rule's result changed/updated at values will be consistent with expectations
       Timecop.freeze(now) do
         BusinessValidationTemplate.create_all! run_validation: true

@@ -17,6 +17,8 @@
 class PlantProductGroupAssignment < ActiveRecord::Base
   include CoreObjectSupport
 
+  attr_accessible :plant_id, :product_group_id
+
   belongs_to :plant, inverse_of: :plant_product_group_assignments, touch: true
   belongs_to :product_group, inverse_of: :plant_product_group_assignments
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler do
   let (:custom_file) {
     custom_file = CustomFile.new attached_file_name: "file.xlsx"

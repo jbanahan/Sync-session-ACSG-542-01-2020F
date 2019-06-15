@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
   let! (:master_setup) {
@@ -190,7 +188,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @h.make_file([@p]) {|f| @t = f }
       @p.reload
       expect(@p.sync_records.size).to eq(1)
-      sr = @p.sync_records.find_by_trading_partner("fenix-#{@code}")
+      sr = @p.sync_records.find_by(trading_partner: "fenix-#{@code}")
       expect(sr.sent_at).to be < sr.confirmed_at
       expect(sr.confirmation_file_name).to eq("Fenix Confirmation")
     end

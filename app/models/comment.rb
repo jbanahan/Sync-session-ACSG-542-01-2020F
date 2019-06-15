@@ -18,12 +18,15 @@
 
 require 'open_chain/event_publisher'
 class Comment < ActiveRecord::Base
+  attr_accessible :body, :commentable_id, :commentable_type, :subject, 
+    :user_id, :user, :commentable
+  
   belongs_to :commentable, :polymorphic => true
   belongs_to :user
   validates :commentable, :presence => true
   validates :user, :presence => true
 
-  default_scope :order => 'created_at DESC'
+  scope :by_created_at, -> { order(created_at: :desc) }
 
   after_create :publish_comment_create
 
@@ -59,7 +62,7 @@ class Comment < ActiveRecord::Base
   end
 
   def self.gather obj, since=nil, limit=nil
-    gathered = Comment.unscoped.where(commentable_id: obj).order("updated_at DESC")
+    gathered = Comment.where(commentable_id: obj).order(updated_at: :desc)
     gathered = gathered.where("updated_at >= \"#{since.utc.to_s(:db)}\"") if since
     gathered = gathered.limit(limit) if limit
     gathered.map{ |com| "#{com.updated_at.in_time_zone(Time.zone.name).strftime('%m-%d %H:%M')} #{com.subject}: #{com.body}" }.join("\n \n")

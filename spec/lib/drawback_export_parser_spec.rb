@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::DrawbackExportParser do
 
   describe "parse_zip_file" do
@@ -85,7 +83,7 @@ describe OpenChain::DrawbackExportParser do
 
 
   describe "parse_xlsx_file" do
-    it "uses xlclient to retrieve xl data and passes data to csv lines" do
+    it "uses xlclient to retrieve xl data and passes data to csv lines", :without_partial_double_verification do
       data = [["header"], ["row"]]
       xl_client = double("OpenChain::XLClient")
       expect(xl_client).to receive(:all_row_values).with(0).and_yield(data[0]).and_yield(data[1])

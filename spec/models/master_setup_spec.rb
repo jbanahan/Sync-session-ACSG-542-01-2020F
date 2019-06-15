@@ -70,24 +70,34 @@ describe MasterSetup do
   end
 
   context "need_upgrade?" do
+    let! (:master_setup) { 
+      ms = MasterSetup.create! target_version: "CURRENT"
+      allow(MasterSetup).to receive(:get).with(false).and_return ms
+      ms
+    }
+    
     it "should require an upgrade if the target version from the DB is not the same as the current code version" do
-      MasterSetup.get.update_attributes :target_version => "UPDATE ME!!!"
+      master_setup.update_attributes! :target_version => "UPDATE ME!!!"
       expect(MasterSetup.need_upgrade?).to be_truthy
     end
 
     it "should not require an upgrade if the target version is same as current code version" do
-      MasterSetup.get.update_attributes :target_version => MasterSetup.current_code_version
+      expect(MasterSetup).to receive(:current_code_version).and_return "CURRENT"
       expect(MasterSetup.need_upgrade?).to be_falsey
     end
 
     it "should not require an upgrade if the target version is blank" do
-      MasterSetup.get.update_attributes :target_version => nil
+      master_setup.update_attributes :target_version => nil
       expect(MasterSetup.need_upgrade?).to be_falsey
     end
   end
 
   describe "get_migration_lock" do
-    let! (:master_setup) { MasterSetup.create! }
+    let! (:master_setup) { 
+      ms = MasterSetup.first_or_create! 
+      allow(MasterSetup).to receive(:first).and_return ms
+      ms
+    }
     subject { described_class }
 
     it "sets hostname into a blank migration lock" do
@@ -115,7 +125,11 @@ describe MasterSetup do
   end
 
   describe "release_migration_lock" do
-    let! (:master_setup) { MasterSetup.create! }
+    let! (:master_setup) { 
+      ms = MasterSetup.first_or_create! 
+      allow(MasterSetup).to receive(:first).and_return ms
+      ms
+    }
     subject { described_class }
 
     it "clears the migration host if it's set to the current host" do
@@ -318,7 +332,7 @@ describe MasterSetup do
     let! (:ms) { stub_master_setup }
     let (:config) { {} }
     before :each do 
-      allow(MasterSetup).to receive(:config).and_return(config)
+      allow(MasterSetup).to receive(:vfitrack_config).and_return(config)
     end
 
     it "returns true by default" do

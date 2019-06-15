@@ -6,11 +6,11 @@ class DashboardWidgetsController < ApplicationController
 
   def index
     @no_action_bar = true #implements it's own in the dashboard index.html.erb
-    @widgets = current_user.dashboard_widgets
+    @widgets = current_user.dashboard_widgets.by_rank
   end
 
   def edit
-    @widgets = current_user.dashboard_widgets
+    @widgets = current_user.dashboard_widgets.order(:rank)
     @searches = current_user.search_setups.order("module_type ASC")
   end
   def save

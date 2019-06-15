@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe VendorsController do
   before :each do
     @u = Factory(:user)

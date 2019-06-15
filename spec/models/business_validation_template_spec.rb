@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessValidationTemplate do
   describe "create_all!" do
     before :each do
@@ -23,7 +21,7 @@ describe BusinessValidationTemplate do
       # don't match
       Factory(:entry,customer_number:'54321')
       @bvt.create_results!
-      expect(BusinessValidationResult.scoped.count).to eq 1
+      expect(BusinessValidationResult.all.count).to eq 1
       expect(BusinessValidationResult.first.validatable).to eq match
       expect(BusinessValidationResult.first.state).to be_nil
     end

@@ -85,7 +85,7 @@ module LinesSupport
 
   #clean up piece sets after destroy
   def merge_piece_sets
-    foreign_key = self.class.reflections[:piece_sets].foreign_key
+    foreign_key = self.class.reflections["piece_sets"].foreign_key
     self.piece_sets.each do |ps|
       # We can delete the current piece set if it does not have any links to anything other than the current object's id
       if ps.foreign_key_count == 1 && !ps.attributes[foreign_key].nil?

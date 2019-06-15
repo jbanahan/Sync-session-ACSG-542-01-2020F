@@ -42,6 +42,16 @@
 
 class CommercialInvoice < ActiveRecord::Base
   include CoreObjectSupport
+
+  attr_accessible :consignee_id, :country_origin_code, :currency, 
+    :destination_code, :docs_ok_date, :docs_received_date, 
+    :entered_value_7501, :entry_id, :exchange_rate, :gross_weight, 
+    :house_bills_of_lading, :importer_id, :importer, :invoice_date, :invoice_number, 
+    :invoice_value, :invoice_value_foreign, :issue_codes, 
+    :master_bills_of_lading, :mfid, :non_dutiable_amount, :rater_comments, 
+    :total_charges, :total_quantity, :total_quantity_uom, :vendor_id, 
+    :vendor_name
+
   has_many :commercial_invoice_lines, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice
   belongs_to :entry, inverse_of: :commercial_invoices
   belongs_to :vendor, :class_name => "Company"

@@ -3,7 +3,7 @@ class CreateMultiStateWorkflowTasks < ActiveRecord::Migration
     create_table :multi_state_workflow_tasks do |t|
       t.references :workflow_task
       t.string :state
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :multi_state_workflow_tasks, :workflow_task_id
   end

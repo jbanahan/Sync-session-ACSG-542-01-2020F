@@ -4,7 +4,7 @@ class CreateFieldLabels < ActiveRecord::Migration
       t.string :model_field_uid
       t.string :label
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

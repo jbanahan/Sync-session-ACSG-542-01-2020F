@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::PoloMissingHtsReport do
 
   def get_emailed_worksheet sheet_name, file_name, mail = ActionMailer::Base.deliveries.pop

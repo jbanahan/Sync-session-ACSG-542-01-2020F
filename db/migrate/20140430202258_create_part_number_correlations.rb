@@ -9,7 +9,7 @@ class CreatePartNumberCorrelations < ActiveRecord::Migration
       t.datetime :finished_time
       t.belongs_to :user
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

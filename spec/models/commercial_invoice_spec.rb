@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CommercialInvoice do
   describe "search_secure" do
     it "should find all if from master company" do

@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
     prod = Product.where(unique_identifier: id, importer_id: @importer.id).first_or_create!
     Lock.with_lock_retry(prod) do 
       us_classification = prod.classifications.where(country_id: @us.id).first_or_create!
-      tariff = us_classification.tariff_records.where(classification_id: us_classification.id).first_or_create!
+      tariff = us_classification.tariff_records.first_or_create!
       tariff.hts_1 = row[14]
       tariff.save!
 

@@ -6,7 +6,7 @@ class AttachmentTypesController < ApplicationController
   end
   def index
     admin_secure {
-      @attachment_types = AttachmentType.all
+      @attachment_types = AttachmentType.by_name.all
       respond_to do |format|
         format.html {render :layout => 'one_col'}# index.html.erb
       end

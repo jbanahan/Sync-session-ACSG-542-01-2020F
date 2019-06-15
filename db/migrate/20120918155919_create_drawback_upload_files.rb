@@ -5,7 +5,7 @@ class CreateDrawbackUploadFiles < ActiveRecord::Migration
       t.datetime :start_at
       t.datetime :finish_at
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :drawback_upload_files, :processor
   end

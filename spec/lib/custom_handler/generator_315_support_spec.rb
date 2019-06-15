@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Generator315Support do
   subject do 
     Class.new do 

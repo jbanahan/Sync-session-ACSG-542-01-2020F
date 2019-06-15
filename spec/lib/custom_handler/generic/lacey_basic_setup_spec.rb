@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Generic::LaceyBasicSetup do
   let :base_obj do
     described_class.new("Joe Wood","jwood",short_name:'J-Wood')
@@ -62,7 +60,7 @@ describe OpenChain::CustomHandler::Generic::LaceyBasicSetup do
     end
     it "should make user template for base users" do
       expect{base_obj.prep_user_templates}.to change(UserTemplate,:count).from(0).to(user_template_count)
-      t = UserTemplate.find_by_name "Standard J-Wood User"
+      t = UserTemplate.find_by name: "Standard J-Wood User"
       h = JSON.parse(t.template_json)
       expect(h['permissions'].sort).to eq ['order_view','order_comment','order_attach','product_view','product_comment','product_attach','vendor_view','vendor_comment','vendor_attach'].sort
       expect(h['password_reset']).to be_truthy
@@ -70,7 +68,7 @@ describe OpenChain::CustomHandler::Generic::LaceyBasicSetup do
     end
     it "should make user template for vendors" do
       expect{base_obj.prep_user_templates}.to change(UserTemplate,:count).from(0).to(user_template_count)
-      t = UserTemplate.find_by_name "Standard Vendor User"
+      t = UserTemplate.find_by name: "Standard Vendor User"
       h = JSON.parse(t.template_json)
       expect(h['permissions'].sort).to eq ['order_view','order_comment','order_attach','product_view'].sort
       expect(h['password_reset']).to be_truthy

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProjectUpdate do
   context "security" do
     it "should allow view if project is visible" do

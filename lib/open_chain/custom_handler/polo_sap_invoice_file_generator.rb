@@ -123,7 +123,7 @@ module OpenChain
 
                 unless files[:email].blank?
                   conf = RL_INVOICE_CONFIGS[rl_company]
-                  OpenMailer.send_simple_html(mailing_list(conf[:email_to]), "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files[:email]).deliver!
+                  OpenMailer.send_simple_html(mailing_list(conf[:email_to]), "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files[:email]).deliver_now
                 end
               end
             ensure

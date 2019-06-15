@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
 
   describe "get_generator" do
@@ -116,14 +114,14 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       @tf = Tempfile.new("file")
       @tf << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf.flush
-      allow(@tf).to receive(:original_filename).and_return "file.xlsx"
+      Attachment.add_original_filename_method(@tf, "file.xlsx")
       @tf
     }
     let (:temp2) {
       @tf2 = Tempfile.new("file")
       @tf2 << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf2.flush
-      allow(@tf2).to receive(:original_filename).and_return "file-b.xls"
+      Attachment.add_original_filename_method(@tf2, "file-b.xls")
       @tf2
     }
 
@@ -166,7 +164,7 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       @tf = Tempfile.new("file")
       @tf << "Content" # We need to put content in here, otherwise the mailer strips blank files from the emails
       @tf.flush
-      allow(@tf).to receive(:original_filename).and_return "file.xlsx"
+      Attachment.add_original_filename_method(@tf, "file.xlsx")
       @tf
     }
 

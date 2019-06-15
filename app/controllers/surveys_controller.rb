@@ -227,7 +227,7 @@ class SurveysController < ApplicationController
   def toggle_subscription
     @survey = Survey.find params[:id]
     if current_user.view_surveys? && @survey.company_id == current_user.company_id
-      existing = SurveySubscription.find_by_survey_id_and_user_id(@survey.id, current_user.id)
+      existing = SurveySubscription.find_by(survey_id:@survey.id, user_id: current_user.id)
       if existing
         existing.destroy
       else

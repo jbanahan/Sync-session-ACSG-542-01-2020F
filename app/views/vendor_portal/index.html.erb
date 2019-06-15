@@ -13,6 +13,8 @@
   </style>
 
   <%= javascript_include_tag "vendor_portal" -%>
+  <%= javascript_include_tag "jquery_ujs" -%>
+  <%= csrf_meta_tags -%>
   <script type="text/javascript">
     $(document).on('click','#support-link',function(evt) {
       $('chain-support-modal .modal').modal('show');

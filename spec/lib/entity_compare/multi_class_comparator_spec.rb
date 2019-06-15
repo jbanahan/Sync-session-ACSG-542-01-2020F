@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::EntityCompare::MultiClassComparator do
   subject do
     Class.new { extend OpenChain::EntityCompare::MultiClassComparator.includes("Entry", "Order") }    

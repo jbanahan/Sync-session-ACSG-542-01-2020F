@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportIsfStatus do
 
   describe "template_name" do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProjectSetsController do
   before :each do
     @u = Factory(:master_user, project_view: true)

@@ -4,7 +4,7 @@ class CreateDutyCalcImportFileLines < ActiveRecord::Migration
       t.integer :duty_calc_file_id
       t.integer :drawback_import_line_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       if error_count > 0
         send_messages_to_users(users, subject, message)
       else
-        OpenMailer.send_simple_html(users.map(&:email), subject, message.html_safe).deliver!
+        OpenMailer.send_simple_html(users.map(&:email), subject, message.html_safe).deliver_now
       end
     end
 
@@ -174,7 +174,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
       body += "Please see the attached report for all error messages and resolve the issues before resending the files."
 
-      OpenMailer.send_simple_html(email_to << ERROR_EMAIL, "Alliance Day End Errors", body.html_safe, [f]).deliver!
+      OpenMailer.send_simple_html(email_to << ERROR_EMAIL, "Alliance Day End Errors", body.html_safe, [f]).deliver_now
     end
   end
 
@@ -269,7 +269,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     body = "<p>The following checks have already been sent to Intacct and need to be manually removed from the Check Register report. The banks subtotals and report totals must also be manually recalculated and adjusted in the report to account for the removed checks. Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
     errors.each { |err| body += "<li>#{CGI.escapeHTML err}</li>" }
     body += "</ul></p>"
-    OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver!
+    OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver_now
   end
 
   private
@@ -301,7 +301,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
           msg << "<li>$#{sprintf('%.2f', ex.ar_total)} AR / #{sprintf('%.2f', ex.ap_total)} AP for Invoice #{ex.file_number}#{ex.suffix} could not be retrieved.</li>"
         end
       end.<<("/ul").html_safe
-      OpenMailer.send_simple_html(users.map(&:email) << ERROR_EMAIL, subject, body).deliver!
+      OpenMailer.send_simple_html(users.map(&:email) << ERROR_EMAIL, subject, body).deliver_now
     end
 
     def send_messages_to_users users, subject, message

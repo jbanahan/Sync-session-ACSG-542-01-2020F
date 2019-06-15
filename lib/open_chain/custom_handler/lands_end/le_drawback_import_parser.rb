@@ -27,7 +27,7 @@ module OpenChain
                 q = DrawbackImportLine.where(importer_id:@company.id,
                   entry_number:row[0],part_number:part_number).
                   where("id NOT IN (select drawback_import_line_id from duty_calc_import_file_lines)")
-                p = Product.find_by_unique_identifier "LANDSEND-#{part_number}"
+                p = Product.find_by unique_identifier: "LANDSEND-#{part_number}"
                 if p.nil?
                   p = Product.new(unique_identifier:"LANDSEND-#{part_number}")
                   p.dont_process_linked_attachments = true

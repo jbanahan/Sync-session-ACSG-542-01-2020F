@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe HomeController do
 
   before :each do

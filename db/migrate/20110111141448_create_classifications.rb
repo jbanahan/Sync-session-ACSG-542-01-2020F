@@ -6,7 +6,7 @@ class CreateClassifications < ActiveRecord::Migration
       t.text :compliant_description
       t.integer :product_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CartonSet do
   describe "total_gross_kgs" do 
     it "figures out the gross kgs" do

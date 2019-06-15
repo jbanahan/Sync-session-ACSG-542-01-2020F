@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/s3'
 
 describe OpenChain::S3, s3: true do
@@ -566,6 +565,10 @@ describe OpenChain::S3, s3: true do
   describe "copy_object" do
     before :each do
       upload_tempfile key: key
+    end
+
+    after :each do 
+      OpenChain::S3.delete bucket, "copy/#{key}"
     end
 
     it "copies the given source path to a new object" do

@@ -50,6 +50,15 @@
 
 class Company < ActiveRecord::Base
   include CoreObjectSupport
+
+  attr_accessible :agent, :alliance_customer_number, :broker, :carrier, 
+    :consignee, :customer, :drawback, :ecellerate_customer_number, 
+    :enabled_booking_types, :factory, :fenix_customer_number, 
+    :fiscal_reference, :forwarder, :importer, :irs_number, 
+    :last_alliance_product_push_at, :locked, :master, :mid, :name, :name_2, 
+    :selling_agent, :show_business_rules, :slack_channel, :system_code, 
+    :ticketing_system_code, :vendor, :linked_companies, :addresses
+
   validates  :name,  :presence => true
   validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
@@ -66,7 +75,7 @@ class Company < ActiveRecord::Base
   has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
   has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
   has_many  :customer_deliveries, :class_name => "Delivery", :foreign_key => "customer_id", :dependent => :destroy
-  has_many  :users, :dependent => :destroy, :order=>"first_name ASC, last_name ASC, username ASC"
+  has_many  :users, -> { order(:first_name, :last_name, :username) }, :dependent => :destroy
   has_many  :orders, :through => :divisions, :dependent => :destroy
   has_many  :products, :through => :divisions, :dependent => :destroy
   has_many  :histories, :dependent => :destroy
@@ -79,7 +88,7 @@ class Company < ActiveRecord::Base
   has_many  :attachments, as: :attachable, dependent: :destroy
   has_many  :plants, dependent: :destroy, inverse_of: :company
   has_many  :plant_variant_assignments, through: :plants
-  has_many  :active_variants_as_vendor, through: :plant_variant_assignments, source: :variant, conditions: "plant_variant_assignments.disabled = 0 OR plant_variant_assignments.disabled is null"
+  has_many  :active_variants_as_vendor, -> { where(plant_variant_assignments: {disabled: [nil, 0]}) }, through: :plant_variant_assignments, source: :variant
   has_many  :all_variants_as_vendor, through: :plant_variant_assignments, source: :variant
   has_many  :summary_statements, :foreign_key => :customer_id
   has_many  :product_vendor_assignments, dependent: :destroy, foreign_key: :vendor_id
@@ -93,17 +102,17 @@ class Company < ActiveRecord::Base
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 
-  scope :carriers, where(:carrier=>true)
-  scope :vendors, where(:vendor=>true)
-  scope :customers, where(:customer=>true)
-  scope :importers, where(:importer=>true)
-  scope :consignees, where(:consignee=>true)
-  scope :agents, where(:agent=>true)
-  scope :by_name, order("companies.name ASC")
-  scope :active_importers, where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')")
+  scope :carriers, -> { where(:carrier=>true) }
+  scope :vendors, -> { where(:vendor=>true) }
+  scope :customers, -> { where(:customer=>true) }
+  scope :importers, -> { where(:importer=>true) }
+  scope :consignees, -> { where(:consignee=>true) }
+  scope :agents, -> { where(:agent=>true) }
+  scope :by_name, -> { order("companies.name ASC") }
+  scope :active_importers, -> { where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')") }
   #find all companies that have attachment_archive_setups that include a start date
-  scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")
-  scope :has_slack_channel, where('slack_channel IS NOT NULL AND slack_channel <> ""')
+  scope :attachment_archive_enabled, -> { joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null") }
+  scope :has_slack_channel, -> { where('slack_channel IS NOT NULL AND slack_channel <> ""') } 
 
   def linked_company? c
     (self == c) || self.linked_companies.include?(c)
@@ -196,7 +205,7 @@ class Company < ActiveRecord::Base
 
   def visible_companies
     if self.master?
-      Company.scoped
+      Company.all
     else
       Company.where("companies.id = ? OR companies.master = ? OR companies.id IN (select child_id from linked_companies where parent_id = ?)",self.id,true,self.id)
     end

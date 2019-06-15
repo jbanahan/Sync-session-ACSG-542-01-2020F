@@ -7,7 +7,7 @@ class CreateTradePreferencePrograms < ActiveRecord::Migration
       t.string :tariff_identifier
       t.decimal :tariff_adjustment_percentage, precision: 4, scale: 3
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :trade_preference_programs, :origin_country_id, name: 'tpp_origin'
     add_index :trade_preference_programs, :destination_country_id, name: 'tpp_destination'

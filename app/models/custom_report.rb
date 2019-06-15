@@ -23,9 +23,13 @@ require 'dry/core/descendants_tracker'
 class CustomReport < ActiveRecord::Base
   extend Dry::Core::DescendantsTracker
   include OpenChain::SearchBase
+
+  attr_accessible :include_links, :name, :no_time, :type, :user_id, :user,
+  :search_criterions_attributes, :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
+
   
   has_many :search_criterions, :dependent=>:destroy
-  has_many :search_columns, :dependent=>:destroy, :order => 'rank ASC'
+  has_many :search_columns, -> { order(:rank) }, :dependent=>:destroy
   has_many :search_schedules, :dependent=>:destroy
   has_many :report_results
   belongs_to :user, :inverse_of=>:custom_reports
@@ -46,7 +50,7 @@ class CustomReport < ActiveRecord::Base
       a[:_destroy].blank?
     }
   
-  scope :for_user, lambda {|u| where(:user_id => u)}
+  scope :for_user, lambda { |u| where(user: u) }
   attr_reader :preview_run
 
   # Stupid hack because rails protects the type attribute by default (not 100% sure why - default polymorhpism column name?)...
@@ -135,7 +139,7 @@ class CustomReport < ActiveRecord::Base
 
     def setup_report_query active_record_class, run_by, row_limit, opt = {}
       opt = {:distinct => true}.merge opt
-      query = active_record_class.scoped
+      query = active_record_class.all
       query = active_record_class.select("DISTINCT `#{active_record_class.table_name}`.*") if opt[:distinct]
 
       search_criterions.each {|sc| query = sc.apply query}

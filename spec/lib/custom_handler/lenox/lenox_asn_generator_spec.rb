@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
   describe "run_schedulable" do
     it "should ftp_file" do

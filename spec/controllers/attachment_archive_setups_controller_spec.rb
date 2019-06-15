@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentArchiveSetupsController do
   before :each do 
     @admin = Factory(:admin_user)

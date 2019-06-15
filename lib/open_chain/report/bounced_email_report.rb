@@ -33,7 +33,7 @@ module OpenChain; module Report; class BouncedEmailReport
 
     report = xlsx_workbook_to_tempfile(workbook, "Bounced Emails", file_name: "Bounced Emails for #{beginning_of_yesterday.to_date}.xlsx")
     body = "Attached is the bounced email report for #{beginning_of_yesterday.to_date}"
-    OpenMailer.send_simple_html(emails, "Bounced Email Report for #{beginning_of_yesterday.to_date}", body, report).deliver!
+    OpenMailer.send_simple_html(emails, "Bounced Email Report for #{beginning_of_yesterday.to_date}", body, report).deliver_now
   end
 
   def create_workbook_and_worksheet

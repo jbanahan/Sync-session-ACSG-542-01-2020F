@@ -155,7 +155,7 @@
   $(function() {
     var userPromise = {
       then: function(callback) {
-        callback(<%=current_user.api_hash.to_json.html_safe%>);
+        callback(<%=scriptify_json(current_user.api_hash.to_json)%>);
       }
     };
     writeNotificationCenter = function(wrapper) {

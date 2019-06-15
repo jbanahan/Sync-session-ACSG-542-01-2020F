@@ -11,11 +11,11 @@ Server Role: <%= @server_role %>
 Process ID: <%= @process_id %>
 
 Additional Messages:
-<%@additional_messages.each do |m|%>
+<%Array.wrap(@additional_messages).each do |m|%>
 <%=m.to_s.html_safe%>
 <%end%>
 
 Backtrace:
-<%@backtrace.each do |b|%>
+<%Array.wrap(@backtrace).each do |b|%>
 <%=b%>
 <%end%>

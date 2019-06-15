@@ -18,6 +18,10 @@
 #
 
 class SentEmail < ActiveRecord::Base
+  attr_accessible :delivery_error, :email_bcc, :email_body, :email_cc, 
+    :email_date, :email_from, :email_reply_to, :email_subject, :email_to, 
+    :suppressed, :attachments
+  
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
 
   def can_view? user
@@ -26,7 +30,7 @@ class SentEmail < ActiveRecord::Base
 
   def self.find_can_view user
     if user.admin?
-      SentEmail.scoped
+      SentEmail.all
     end
   end
 

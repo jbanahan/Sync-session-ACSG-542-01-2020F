@@ -1,6 +1,3 @@
-# encoding: utf-8
-require 'spec_helper'
-
 describe CustomFile do
   context 'security' do
     it 'should delegate view to handler' do
@@ -164,7 +161,7 @@ describe CustomFile do
       subject = 'sub'
       body = 'body'
       mail = double "mail delivery"
-      allow(mail).to receive(:deliver!).and_return(nil)
+      allow(mail).to receive(:deliver_now).and_return(nil)
       expect(OpenMailer).to receive(:send_s3_file).with(@u,to,cc,subject,body,'chain-io',s3,f.attached_file_name).and_return(mail)
       f.email_updated_file @u, to, cc, subject, body
     end

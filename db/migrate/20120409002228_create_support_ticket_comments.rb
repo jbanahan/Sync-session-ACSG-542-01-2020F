@@ -5,7 +5,7 @@ class CreateSupportTicketComments < ActiveRecord::Migration
       t.integer :user_id
       t.text :body
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :support_ticket_comments, :support_ticket_id
   end

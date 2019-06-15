@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique do
   before :each do
     @rule = described_class.new

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe HoldsCustomDefinition do
   
   context "custom_definition" do

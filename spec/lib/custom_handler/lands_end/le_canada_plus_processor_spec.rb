@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor do
   describe "process_from_s3" do
     it "retrieves file from S3 and passes it to ZIP handler" do

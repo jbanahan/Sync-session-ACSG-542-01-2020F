@@ -27,6 +27,9 @@
 #
 
 class Port < ActiveRecord::Base
+  attr_accessible :active_destination, :active_origin, :cbsa_port, 
+    :cbsa_sublocation, :iata_code, :name, :schedule_d_code, :schedule_k_code, 
+    :unlocode
 
   validates :schedule_k_code, :format => {:with=>/\A[0-9]{5}\z/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}
   validates :schedule_d_code, :format => {:with=>/\A[0-9]{4}\z/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
@@ -87,9 +90,9 @@ class Port < ActiveRecord::Base
       data.lines do |row|
         code = row[0,5]
         name = "#{row[7,50].strip}, #{row[57,25].strip}"
-        p = Port.find_by_schedule_k_code code
+        p = Port.find_by(schedule_k_code: code)
         if p
-          p.update_attributes(:schedule_k_code=>code,:name=>name)
+          p.update!(:schedule_k_code=>code,:name=>name)
         else
           Port.create!(:schedule_k_code=>code,:name=>name)
         end
@@ -103,7 +106,7 @@ class Port < ActiveRecord::Base
     Port.transaction do
       data.lines do |row|
         ary = row.split("\t")
-        p = Port.find_by_cbsa_port ary[0]
+        p = Port.find_by(cbsa_port: ary[0])
         #do nothing if port is found
         next if p || ary[0].blank? || ary[1].blank? || ary[2].blank?
         Port.create!(:name=>ary[2].strip,:cbsa_port=>ary[0].strip,:cbsa_sublocation=>ary[1].strip)

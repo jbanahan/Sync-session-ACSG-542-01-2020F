@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ChargeCategory do
   context "validations" do
     before :each do

@@ -27,6 +27,6 @@ else
   export RAILS_ENV="production"
   cd "/home/ubuntu/chainio"
 
-  exec "wwwvfitracknet/script/dj_monitor.sh" quiet
+  exec "primary_instance/script/dj_monitor.sh" quiet
 fi
 

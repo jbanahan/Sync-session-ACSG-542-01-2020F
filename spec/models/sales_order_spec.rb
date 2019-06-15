@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SalesOrder do
 
   describe 'linkable attachments' do

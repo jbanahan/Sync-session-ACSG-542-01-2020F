@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
   describe '#parse' do
     it 'should validate internal integrity and fail on missed validation' do
@@ -28,7 +26,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(described_class).to receive(:process_data).with(ds,u).and_return ['bad']
 
       mail_obj = double('mail')
-      allow(mail_obj).to receive(:deliver!)
+      allow(mail_obj).to receive(:deliver_now)
       expect(OpenMailer).to receive(:send_simple_text).with(
         u.email,
         "J Crew Drawback Import V2 Error Log",
@@ -57,7 +55,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
     
     before :each do
       mo = double('mail_obj')
-      allow(mo).to receive(:deliver!)
+      allow(mo).to receive(:deliver_now)
       allow(OpenMailer).to receive(:send_simple_text).and_return(mo)
       @crew = Factory(:company,alliance_customer_number:'JCREW')
       # create underlying entry

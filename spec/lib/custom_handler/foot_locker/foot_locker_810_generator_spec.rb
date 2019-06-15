@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
   describe "generate_xml" do

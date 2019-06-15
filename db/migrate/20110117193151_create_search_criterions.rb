@@ -7,7 +7,7 @@ class CreateSearchCriterions < ActiveRecord::Migration
       t.string :value
       t.integer :milestone_plan_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

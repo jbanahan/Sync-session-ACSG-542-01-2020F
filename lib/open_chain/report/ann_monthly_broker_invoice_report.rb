@@ -31,7 +31,7 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
     workbook_to_tempfile(wb, "report", file_name: "#{title}.xls") do |t|
       wb.write t
       t.flush
-      OpenMailer.send_simple_html(to_addr, title, %Q(Attached is the completed report named "#{title}.xls").html_safe, t, cc: cc_addr).deliver!
+      OpenMailer.send_simple_html(to_addr, title, %Q(Attached is the completed report named "#{title}.xls").html_safe, t, cc: cc_addr).deliver_now
     end
   end
 

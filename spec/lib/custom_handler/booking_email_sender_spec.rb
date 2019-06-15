@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::BookingEmailSender do
 
   subject { described_class }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
   let (:file_contents) {

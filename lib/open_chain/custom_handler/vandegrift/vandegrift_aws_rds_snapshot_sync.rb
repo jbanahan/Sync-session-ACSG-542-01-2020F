@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
       end
       email_body += "</p>"
 
-      OpenMailer.send_simple_html("it-admin@vandegriftinc.com", "DATABASE BACKUP FAILURE: RDS #{database_identifier}.", email_body.html_safe).deliver!
+      OpenMailer.send_simple_html("it-admin@vandegriftinc.com", "DATABASE BACKUP FAILURE: RDS #{database_identifier}.", email_body.html_safe).deliver_now
     ensure
       slack_client.send_message! "it-alerts-warnings", "An error occurred attempting to sync snapshots for #{database_identifier} RDS database."
     end

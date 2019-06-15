@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::OfficialTariffProcessor::TariffProcessorRegistry do
   describe "get" do
     ['IT', 'GB', 'FR', 'US', 'CA', 'CL', 'CN', 'MX', "SG"].each do |iso|

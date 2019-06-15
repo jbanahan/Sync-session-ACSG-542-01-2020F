@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
   subject { described_class }
   let(:ent) { Factory(:entry, entry_number: "ENTNUM", importer: co, last_billed_date: DateTime.now)}

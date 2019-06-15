@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::FenixParser do
 
   before :each do
@@ -162,10 +160,10 @@ describe OpenChain::FenixParser do
     expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
 
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.last_file_bucket).to eq('bucket')
     expect(ent.last_file_path).to eq('file/path/b3_detail_rns_114401_2013052958482.1369859062.csv')
-    expect(ent.import_country).to eq(Country.find_by_iso_code('CA'))
+    expect(ent.import_country).to eq(Country.find_by(iso_code: 'CA'))
     expect(ent.entry_number).to eq(@barcode)
     expect(ent.importer_tax_id).to eq(@importer_tax_id)
     expect(ent.last_exported_from_source).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20150904201516"))
@@ -269,7 +267,7 @@ describe OpenChain::FenixParser do
     expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
 
     OpenChain::FenixParser.parse @entry_lambda.call(true), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
 
     expect(ent.on_hold).to eq true
     expect(ent.hold_date).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['1276'][1].to_s).in_time_zone(Time.zone)
@@ -282,7 +280,7 @@ describe OpenChain::FenixParser do
     expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
 
     OpenChain::FenixParser.parse @entry_lambda.call(false), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
 
 
     expect(ent.on_hold).to eq false
@@ -375,7 +373,7 @@ describe OpenChain::FenixParser do
   it 'should overwrite lines on reprocess' do
     2.times {OpenChain::FenixParser.parse @entry_lambda.call}
     expect(Entry.where(:broker_reference=>@file_number).size).to eq(1)
-    expect(Entry.find_by_broker_reference(@file_number).commercial_invoices.size).to eq(1)
+    expect(Entry.find_by(broker_reference: @file_number).commercial_invoices.size).to eq(1)
   end
   it "should zero pad port codes" do
     @entry_port_code = '1'
@@ -387,13 +385,13 @@ describe OpenChain::FenixParser do
   it 'should handle blank date time' do
     @across_sent_date = ','
     OpenChain::FenixParser.parse @entry_lambda.call
-    expect(Entry.find_by_broker_reference(@file_number).across_sent_date).to be_nil
+    expect(Entry.find_by(broker_reference: @file_number).across_sent_date).to be_nil
   end
   it 'should find exit port in schedule d' do
     @exit_port_code = '1234'
     port = Factory(:port,:schedule_d_code=>@exit_port_code)
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.us_exit_port).to eq(port)
   end
   it 'should only update entries with Fenix as source code' do
@@ -410,7 +408,7 @@ describe OpenChain::FenixParser do
     @country_origin_code = 'UIN'
     @country_export_code = 'UNJ'
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.origin_country_codes).to eq('US')
     expect(ent.export_country_codes).to eq('US')
     expect(ent.export_state_codes).to eq('NJ')
@@ -425,7 +423,7 @@ describe OpenChain::FenixParser do
     # port ' 708  ' should be '0708'
     @exit_port_code = ' 444 '
     OpenChain::FenixParser.parse @entry_lambda.call
-    expect(Entry.find_by_broker_reference(@file_number).us_exit_port_code).to eq('0444')
+    expect(Entry.find_by(broker_reference: @file_number).us_exit_port_code).to eq('0444')
   end
 
   it 'should parse files with almost no information in them' do
@@ -436,7 +434,7 @@ describe OpenChain::FenixParser do
     }
 
     OpenChain::FenixParser.parse entry_data.call
-    entry = Entry.find_by_broker_reference 12345
+    entry = Entry.find_by broker_reference: 12345
     expect(entry).not_to be_nil
     expect(entry.entry_number).to eq("1234567890")
     expect(entry.importer_tax_id).to eq("TAXID")
@@ -452,7 +450,7 @@ describe OpenChain::FenixParser do
     }
 
     OpenChain::FenixParser.parse entry_data.call
-    entry = Entry.find_by_broker_reference 12345
+    entry = Entry.find_by broker_reference: 12345
     expect(entry).not_to be_nil
     expect(entry.master_bills_of_lading).to eq("MASTERBILL")
     expect(entry.container_numbers).to eq("CONT")
@@ -555,28 +553,28 @@ describe OpenChain::FenixParser do
   it "should handle date time values with missing time components" do
     @release_date = "01/09/2012,"
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.release_date).to eq(@est.parse_us_base_format(@release_date.gsub(',',' 12:00am')))
   end
 
   it "should handle date time values with invalid date times" do
     @release_date = "192012,"
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.release_date).to be_nil
   end
 
   it "should handle 0 for duty rate" do
     @duty_rate = 0
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate).to eq(BigDecimal("0"))
   end
 
   it "should handle blank duty rate" do
     @duty_rate = ""
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate).to be_nil
   end
 
@@ -587,7 +585,7 @@ describe OpenChain::FenixParser do
     @duty_amount = "123.62"
 
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate).to eq(BigDecimal(@duty_rate))
     # Make sure we're not truncating the classification quantity
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.classification_qty_1).to eq(BigDecimal(@hts_qty))
@@ -602,19 +600,14 @@ describe OpenChain::FenixParser do
     @entered_value = "300.10"
 
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate).to eq(BigDecimal("0.07"))
-  end
-
-  it "should retry with_lock 5 times and re-raise error if failed after that" do
-    expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_raise  ActiveRecord::StatementInvalid
-    expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error ActiveRecord::StatementInvalid
   end
 
   it "should not set total packages uom if total packages is blank" do
     @number_of_pieces = ""
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.total_packages).to be_nil
     expect(ent.total_packages_uom).to be_nil
   end
@@ -642,7 +635,7 @@ describe OpenChain::FenixParser do
     @cadex_sent_date = ','
 
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.cadex_accept_date.to_i).to eq entry.cadex_accept_date.to_i
     expect(ent.cadex_sent_date.to_i).to eq entry.cadex_sent_date.to_i
     expect(ent.release_date.to_i).to eq entry.release_date.to_i
@@ -652,7 +645,7 @@ describe OpenChain::FenixParser do
     entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
 
     OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
+    ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.cadex_accept_date.strftime("%m/%d/%Y")).to eq @cadex_accept_date[0, 10]
     expect(ent.cadex_sent_date.strftime("%m/%d/%Y")).to eq @cadex_sent_date[0, 10]
     expect(ent.release_date.strftime("%m/%d/%Y")).to eq @release_date[0, 10]
@@ -661,13 +654,13 @@ describe OpenChain::FenixParser do
   it "skips purged entres" do
     EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: (ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2]) + 1.day)
     OpenChain::FenixParser.parse @entry_lambda.call
-    expect(Entry.find_by_broker_reference @file_number).to be_nil
+    expect(Entry.find_by(broker_reference: @file_number)).to be_nil
   end
 
   it "creates new entries if purged before current source system export date" do
     EntryPurge.create! source_system: 'Fenix', broker_reference: @file_number, date_purged: Time.zone.parse("2015-01-01 00:00")
     OpenChain::FenixParser.parse @entry_lambda.call
-    expect(Entry.find_by_broker_reference @file_number).not_to be_nil
+    expect(Entry.find_by(broker_reference: @file_number)).not_to be_nil
   end
 
   it "uses old timestamp from filename if no timestamp record" do
@@ -680,7 +673,7 @@ describe OpenChain::FenixParser do
     @use_new_activities = true
 
     OpenChain::FenixParser.parse @entry_lambda.call
-    e = Entry.find_by_broker_reference @file_number
+    e = Entry.find_by(broker_reference: @file_number)
 
     tz = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     expect(e.first_do_issued_date).to eq tz.parse(@new_activities['DOGIVEN'][0].to_s).in_time_zone(Time.zone)
@@ -728,7 +721,7 @@ describe OpenChain::FenixParser do
     @currency = 'CAD'
     @exchange_rate = ""
     OpenChain::FenixParser.parse @entry_lambda.call
-    e = Entry.find_by_broker_reference @file_number
+    e = Entry.find_by(broker_reference: @file_number)
 
     expect(e.commercial_invoices.first.exchange_rate).to eq BigDecimal(1)
   end
@@ -743,7 +736,7 @@ describe OpenChain::FenixParser do
     # Just make sure this doesn't fail.
     @duty_amount = ""
     OpenChain::FenixParser.parse @entry_lambda.call
-    e = Entry.find_by_broker_reference @file_number
+    e = Entry.find_by(broker_reference: @file_number)
 
     expect(e.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_amount).to be_nil
   end
@@ -752,7 +745,7 @@ describe OpenChain::FenixParser do
     imp = Factory(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
     fm = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,9,1), end_date: Date.new(2015,9,30))
     OpenChain::FenixParser.parse @entry_lambda.call
-    e = Entry.find_by_broker_reference @file_number
+    e = Entry.find_by(broker_reference: @file_number)
     expect(e.fiscal_date).to eq fm.start_date
     expect(e.fiscal_month).to eq 1
     expect(e.fiscal_year).to eq 2015
@@ -783,7 +776,7 @@ describe OpenChain::FenixParser do
 
   it "parses old style assists" do
     OpenChain::FenixParser.parse @entry_lambda.call(true, false, false)
-    e = Entry.find_by_broker_reference @file_number
+    e = Entry.find_by(broker_reference: @file_number)
     line = e.commercial_invoices.first.commercial_invoice_lines.first
     expect(line.adjustments_amount).to eq (@adjusted_vcc - @line_value + @adjustments_per_piece)
   end
@@ -791,7 +784,7 @@ describe OpenChain::FenixParser do
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
-      ent = Entry.find_by_broker_reference @file_number
+      ent = Entry.find_by(broker_reference: @file_number)
       imp = ent.importer
       expect(imp.name).to eq(@importer_name)
       expect(imp.fenix_customer_number).to eq(@importer_tax_id)
@@ -801,14 +794,14 @@ describe OpenChain::FenixParser do
       # Make sure we're not updating importer names that aren't tax ids
       imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>"Test")
       OpenChain::FenixParser.parse @entry_lambda.call
-      ent = Entry.find_by_broker_reference @file_number
+      ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.importer).to eq(imp)
       expect(imp.name).to eq("Test")
     end
     it "should update an existing importer's name if the name is the tax id" do
       imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>@importer_tax_id)
       OpenChain::FenixParser.parse @entry_lambda.call
-      ent = Entry.find_by_broker_reference @file_number
+      ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.importer.id).to eq(imp.id)
       expect(ent.importer.name).to eq(@importer_name)
     end
@@ -818,7 +811,7 @@ describe OpenChain::FenixParser do
       ent = Factory(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
 
       OpenChain::FenixParser.parse @entry_lambda.call
-      ent = Entry.find_by_broker_reference @file_number
+      ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.importer.id).to eq(updated_imp.id)
     end
   end
@@ -856,7 +849,7 @@ describe OpenChain::FenixParser do
       @invoices[0][:entered_value]=1
       @invoices[1][:entered_value]=2
       OpenChain::FenixParser.parse @multi_line_lambda.call
-      expect(Entry.find_by_broker_reference(@file_number).entered_value).to eq(3)
+      expect(Entry.find_by(broker_reference: @file_number).entered_value).to eq(3)
     end
     it 'should total GST' do
       @invoices[0][:duty] = 2
@@ -864,7 +857,7 @@ describe OpenChain::FenixParser do
       @invoices[1][:duty] = 6
       @invoices[1][:gst_amount] = 5
       OpenChain::FenixParser.parse @multi_line_lambda.call
-      ent = Entry.find_by_broker_reference(@file_number)
+      ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.total_gst).to eq(9)
       expect(ent.total_duty_gst).to eq(17)
     end
@@ -894,7 +887,7 @@ describe OpenChain::FenixParser do
       @invoices[0][:detail_po] = 'a'
       @invoices[1][:detail_po] = 'b'
       OpenChain::FenixParser.parse @multi_line_lambda.call
-      ent = Entry.find_by_broker_reference @file_number
+      ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.commercial_invoices.first.commercial_invoice_lines.first.po_number).to eq('a')
       expect(ent.commercial_invoices.last.commercial_invoice_lines.first.po_number).to eq('b')
       expect(ent.po_numbers).to eq("a\n b")
@@ -903,7 +896,7 @@ describe OpenChain::FenixParser do
       it 'invoice value - different invoices' do
         ['19.10','20.03'].each_with_index {|b,i| @invoices[i][:line_val]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        ent = Entry.find_by_broker_reference(@file_number)
+        ent = Entry.find_by(broker_reference: @file_number)
         expect(ent.total_invoiced_value).to eq(BigDecimal('39.13'))
         invoice_vals = ent.commercial_invoices.collect {|i| i.invoice_value}
         expect(invoice_vals).to eq([BigDecimal('19.29'),BigDecimal('20.23')])
@@ -914,7 +907,7 @@ describe OpenChain::FenixParser do
           @invoices[i][:seq]=1
         }
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        ent = Entry.find_by_broker_reference(@file_number)
+        ent = Entry.find_by(broker_reference: @file_number)
         expect(ent.total_invoiced_value).to eq(BigDecimal('39.13'))
         expect(ent.commercial_invoices.size).to eq(1)
         expect(ent.commercial_invoices.first.invoice_value).to eq(BigDecimal('39.52'))
@@ -922,49 +915,49 @@ describe OpenChain::FenixParser do
       it 'duty amount' do
         ['9.10','10.10'].each_with_index {|b,i| @invoices[i][:duty]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).total_duty).to eq(BigDecimal('19.20'))
+        expect(Entry.find_by(broker_reference: @file_number).total_duty).to eq(BigDecimal('19.20'))
       end
       it 'units' do
         ['50.12','18.15'].each_with_index {|b,i| @invoices[i][:cq]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).total_units).to eq(BigDecimal('68.27'))
+        expect(Entry.find_by(broker_reference: @file_number).total_units).to eq(BigDecimal('68.27'))
       end
       it 'bills of lading' do
         # Disable the additional BL lines
         @additional_bols = []
         ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).master_bills_of_lading).to eq("x\n y")
+        expect(Entry.find_by(broker_reference: @file_number).master_bills_of_lading).to eq("x\n y")
       end
       it 'vendor names' do
         ['x','y'].each_with_index {|b,i| @invoices[i][:vend]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).vendor_names).to eq("x\n y")
+        expect(Entry.find_by(broker_reference: @file_number).vendor_names).to eq("x\n y")
       end
       it 'origin country codes' do
         ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).origin_country_codes).to eq("CN\n US")
+        expect(Entry.find_by(broker_reference: @file_number).origin_country_codes).to eq("CN\n US")
       end
       it 'export country codes' do
         ['PR','UNJ'].each_with_index {|b,i| @invoices[i][:exp]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).export_country_codes).to eq("PR\n US")
+        expect(Entry.find_by(broker_reference: @file_number).export_country_codes).to eq("PR\n US")
       end
       it 'origin state codes' do
         ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).origin_state_codes).to eq("IN")
+        expect(Entry.find_by(broker_reference: @file_number).origin_state_codes).to eq("IN")
       end
       it 'export state codes' do
         ['UNV','UIN'].each_with_index {|b,i| @invoices[i][:exp]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).export_state_codes).to eq("NV\n IN")
+        expect(Entry.find_by(broker_reference: @file_number).export_state_codes).to eq("NV\n IN")
       end
       it 'container numbers' do
         ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        containers = Entry.find_by_broker_reference(@file_number).container_numbers.split("\n ")
+        containers = Entry.find_by(broker_reference: @file_number).container_numbers.split("\n ")
         # Make sure we're accounting for the container numbers pulled from the CON records
         expect(containers.include?('x')).to be_truthy
         expect(containers.include?('y')).to be_truthy
@@ -975,11 +968,11 @@ describe OpenChain::FenixParser do
       it "part numbers" do
         ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).part_numbers).to eq("x\n y")
+        expect(Entry.find_by(broker_reference: @file_number).part_numbers).to eq("x\n y")
       end
       it "invoice numbers" do
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        expect(Entry.find_by_broker_reference(@file_number).commercial_invoice_numbers.split("\n ")).to eq([@invoices[0][:inv_num], @invoices[1][:inv_num]])
+        expect(Entry.find_by(broker_reference: @file_number).commercial_invoice_numbers.split("\n ")).to eq([@invoices[0][:inv_num], @invoices[1][:inv_num]])
       end
 
       it "should not use bols that are 15 chars long and are subsets of a BL line number" do
@@ -990,7 +983,7 @@ describe OpenChain::FenixParser do
         @additional_bols = ["abcd", "1234567890123456789"]
         ["123456789012345",'y'].each_with_index {|b,i| @invoices[i][:bol]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        entry = Entry.find_by_broker_reference(@file_number)
+        entry = Entry.find_by(broker_reference: @file_number)
         bols = entry.master_bills_of_lading.split("\n ")
         [@additional_bols, "y"].flatten.each do |bol|
           expect(bols.include?(bol)).to be_truthy
@@ -1003,7 +996,7 @@ describe OpenChain::FenixParser do
         @barcode = '00000000000000'
         OpenChain::FenixParser.parse @multi_line_lambda.call
 
-        expect(Entry.find_by_broker_reference(@file_number)).to be_nil
+        expect(Entry.find_by(broker_reference: @file_number)).to be_nil
       end
     end
 

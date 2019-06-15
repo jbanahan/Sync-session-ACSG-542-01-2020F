@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::GoogleAccountChecker do
   let!(:user) { Factory(:user, username: "user1", email: 'dummy@vandegriftinc.com', disabled: false) }
 

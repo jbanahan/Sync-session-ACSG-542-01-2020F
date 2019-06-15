@@ -4,7 +4,7 @@ class CreateDashboardWidgets < ActiveRecord::Migration
       t.integer :user_id
       t.integer :search_setup_id
       t.integer :rank
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

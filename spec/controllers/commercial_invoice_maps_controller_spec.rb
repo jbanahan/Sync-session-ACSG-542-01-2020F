@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CommercialInvoiceMapsController do
   before :each do
     @u = Factory(:user,:admin=>true)
@@ -34,8 +32,8 @@ describe CommercialInvoiceMapsController do
       post :update_all, p
       expect(response).to redirect_to commercial_invoice_maps_path
       expect(CommercialInvoiceMap.all.size).to eq(2)
-      expect(CommercialInvoiceMap.find_by_source_mfid("prod_uid").destination_mfid).to eq("cil_part_number")
-      expect(CommercialInvoiceMap.find_by_source_mfid("shp_ref").destination_mfid).to eq("ci_invoice_number")
+      expect(CommercialInvoiceMap.find_by(source_mfid: "prod_uid").destination_mfid).to eq("cil_part_number")
+      expect(CommercialInvoiceMap.find_by(source_mfid: "shp_ref").destination_mfid).to eq("ci_invoice_number")
     end
     it "should delete existing items" do
       #this one will be replaced
@@ -49,8 +47,8 @@ describe CommercialInvoiceMapsController do
       post :update_all, p
       expect(response).to redirect_to commercial_invoice_maps_path
       expect(CommercialInvoiceMap.all.size).to eq(2)
-      expect(CommercialInvoiceMap.find_by_source_mfid("prod_uid").destination_mfid).to eq("cil_part_number")
-      expect(CommercialInvoiceMap.find_by_source_mfid("shp_ref").destination_mfid).to eq("ci_invoice_number")
+      expect(CommercialInvoiceMap.find_by(source_mfid: "prod_uid").destination_mfid).to eq("cil_part_number")
+      expect(CommercialInvoiceMap.find_by(source_mfid: "shp_ref").destination_mfid).to eq("ci_invoice_number")
     end
   end
 end

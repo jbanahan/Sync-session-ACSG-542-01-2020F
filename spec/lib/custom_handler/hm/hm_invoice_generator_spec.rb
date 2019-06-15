@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   let(:hm) { Factory(:company, alliance_customer_number: "HENNE", name: "H&M") }
   let(:country) { Factory(:country, iso_code: "CA") }

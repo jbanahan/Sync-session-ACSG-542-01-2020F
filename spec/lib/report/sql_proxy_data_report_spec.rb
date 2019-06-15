@@ -1,9 +1,39 @@
-require 'spec_helper'
-
 describe OpenChain::Report::SqlProxyDataReport do
   
   class FakeReport
     include OpenChain::Report::SqlProxyDataReport
+
+    def self.sql_proxy_query_name a, b
+      raise "Mock Me"
+    end
+
+    def self.sql_proxy_parameters a, b
+      {}
+    end
+
+    def get_data_conversions a, b
+      {}
+    end
+
+    def sql_proxy_query_name
+      raise "Mock Me"
+    end
+
+    def sql_proxy_parameters a, b
+      raise "Mock Me"
+    end
+
+    def worksheet_name a, b
+      raise "Mock Me"
+    end
+
+    def column_headers a, b
+      raise "Mock Me"
+    end
+
+    def report_filename a, b
+      raise "Mock Me"
+    end
   end
 
   subject { FakeReport.new }

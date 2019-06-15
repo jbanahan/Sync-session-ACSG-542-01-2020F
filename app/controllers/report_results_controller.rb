@@ -27,7 +27,7 @@ class ReportResultsController < ApplicationController
       @customizable_reports << rpt if rpt.can_view?(current_user)
     end
     @current_custom_reports = current_user.custom_reports.order("name ASC").all
-    r = (current_user.admin? && params[:show_all] && params[:show_all]=='true') ? ReportResult.where(true) : ReportResult.where(:run_by_id=>current_user.id)
+    r = (current_user.admin? && params[:show_all] && params[:show_all]=='true') ? ReportResult.all : ReportResult.where(:run_by_id=>current_user.id)
     @report_results = r.order("run_at DESC").paginate(:per_page=>20,:page => params[:page])
   end
 

@@ -94,7 +94,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
 
         message += " missing from VFI Track. Please ensure these files get pushed from Alliance to VFI Track."
 
-        OpenMailer.send_simple_html("support@vandegriftinc.com", "[VFI Track] Missing Entry Files", message, [t]).deliver!
+        OpenMailer.send_simple_html("support@vandegriftinc.com", "[VFI Track] Missing Entry Files", message, [t]).deliver_now
       end
     end
   end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SecurityFiling do
   context "validations" do
     it "should fail on non-unique host_system_file_number for same host_system" do

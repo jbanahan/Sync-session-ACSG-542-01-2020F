@@ -10,7 +10,7 @@ module OpenChain
       def initialize fenix_customer_code, options = {}
         super()
         @fenix_customer_code = fenix_customer_code
-        @canada_id = Country.find_by_iso_code('CA').id
+        @canada_id = Country.find_by(iso_code: 'CA').id
         @importer_id = options['importer_id']
         @use_part_number = (options['use_part_number'].to_s == "true")
         @additional_where = options['additional_where']
@@ -51,7 +51,7 @@ module OpenChain
 
       def find_products
         r = Product.
-          includes(:classifications=>:tariff_records).
+          eager_load(:classifications=>:tariff_records).
           # Prevent stale classifications from going to Fenix
           joins("LEFT OUTER JOIN custom_values v on classifications.id = v.customizable_id AND v.customizable_type = 'Classification' AND custom_definition_id = #{@cdefs[:class_stale_classification].id}").
           where("v.boolean_value IS NULL OR v.boolean_value = 0").

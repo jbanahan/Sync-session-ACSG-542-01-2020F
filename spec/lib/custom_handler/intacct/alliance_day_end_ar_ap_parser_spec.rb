@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser do
 
   describe "extract_invoices" do

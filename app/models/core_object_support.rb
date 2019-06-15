@@ -12,7 +12,7 @@ module CoreObjectSupport
 
     attr_accessor :dont_process_linked_attachments
 
-    has_many :comments, as: :commentable, dependent: :destroy
+    has_many :comments, -> { order(created_at: :desc) }, as: :commentable, dependent: :destroy
     has_many :attachments, as: :attachable, dependent: :destroy, inverse_of: :attachable
     has_many :attachment_process_jobs, as: :attachable, dependent: :destroy, class_name: AttachmentProcessJob
     has_many :linked_attachments, as: :attachable, dependent: :destroy
@@ -21,7 +21,7 @@ module CoreObjectSupport
     has_many :sync_records, as: :syncable, dependent: :destroy, autosave: true, inverse_of: :syncable
     has_many :business_validation_results, as: :validatable, dependent: :destroy
     has_many :survey_responses, as: :base_object, dependent: :destroy, inverse_of: :base_object
-    has_many :folders, as: :base_object, dependent: :destroy, inverse_of: :base_object, conditions: "folders.archived is null OR folders.archived = 0"
+    has_many :folders, -> { where(archived: [nil, 0]) }, as: :base_object, dependent: :destroy, inverse_of: :base_object
     has_many :billable_events, :as => :billable_eventable, :class_name => 'BillableEvent', :dependent => :destroy
     has_many :business_validation_scheduled_jobs, as: :validatable, dependent: :destroy
     has_many :alert_log_entries, as: :alertable, dependent: :destroy, class_name: OneTimeAlertLogEntry
@@ -37,8 +37,8 @@ module CoreObjectSupport
       has_many :item_change_subscriptions, dependent: :destroy
     end
 
-    scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }
-    scope :has_attachment, joins("LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '#{self.name}' AND linked_attachments.attachable_id = #{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '#{self.name}' AND attachments.attachable_id = #{self.table_name}.id").where('attachments.id is not null OR linked_attachments.id is not null').uniq
+    scope :need_sync, -> (trading_partner) { joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }
+    scope :has_attachment, -> { joins("LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '#{self.name}' AND linked_attachments.attachable_id = #{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '#{self.name}' AND attachments.attachable_id = #{self.table_name}.id").where('attachments.id is not null OR linked_attachments.id is not null').uniq }
   end
 
   def core_module
@@ -63,7 +63,11 @@ module CoreObjectSupport
 
   def business_rules_state include_private:true
     r = nil
-    results = self.business_validation_results.send(include_private ? :all : :public)
+    if include_private
+      results = self.business_validation_results
+    else
+      results = self.business_validation_results.public_rule
+    end
     results.each do |bvr|
       r = BusinessValidationResult.worst_state r, bvr.state
     end
@@ -71,22 +75,30 @@ module CoreObjectSupport
   end
 
   def business_rules state, include_private:true
-    self.business_validation_results.
+    results = self.business_validation_results.
       joins(:business_validation_template).
       joins(business_validation_rule_results: [:business_validation_rule]).
-      where(business_validation_rule_results: {state: state}).
-      where(include_private || {business_validation_templates: {private: [nil, false]}}).
-      uniq.
+      where(business_validation_rule_results: {state: state})
+    
+    if !include_private
+      results = results.where({business_validation_templates: {private: [nil, false]}})
+    end
+
+    results.uniq.
       order("business_validation_rules.name").
       pluck("business_validation_rules.name")
   end
 
   def business_rule_templates state, include_private:true
-    self.business_validation_results.
+    results = self.business_validation_results.
       joins(:business_validation_template).
-      where(business_validation_results: {state: state}).
-      where(include_private || {business_validation_templates: {private: [nil, false]}}).
-      uniq.
+      where(business_validation_results: {state: state})
+
+    if !include_private
+      results = results.where({business_validation_templates: {private: [nil, false]}})
+    end
+
+    results.uniq.
       order("business_validation_templates.name").
       pluck("business_validation_templates.name")
   end

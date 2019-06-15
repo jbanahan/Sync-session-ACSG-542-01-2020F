@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SearchSetup do
   describe "result_keys" do
     it "should initialize query" do
@@ -57,7 +55,7 @@ describe SearchSetup do
     end
     it "should copy to another user" do
       @s.give_to @u2
-      d = SearchSetup.find_by_user_id @u2.id
+      d = SearchSetup.find_by(user: @u2)
       expect(d.name).to eq("X (From #{@u.full_name})")
       expect(d.id).not_to be_nil
       @s.reload
@@ -68,14 +66,14 @@ describe SearchSetup do
       @s.save
       @s.give_to @u2, true
 
-      d = SearchSetup.find_by_user_id @u2.id
+      d = SearchSetup.find_by(user: @u2)
       expect(d.name).to eq("X (From #{@u.full_name})")
       expect(d.search_schedules.size).to eq(1)
     end
     it "should strip existing '(From X)' values from search names" do
       @s.update_attributes :name => "Search (From David St. Hubbins) (From Nigel Tufnel)"
       @s.give_to @u2
-      d = SearchSetup.find_by_user_id @u2.id
+      d = SearchSetup.find_by user: @u2
       expect(d.name).to eq("Search (From #{@u.full_name})")
     end
     it "should create a notification for recipient" do
@@ -158,7 +156,9 @@ describe SearchSetup do
           region.countries << Factory(:country)
         end
 
-        allow(cm.klass).to receive(:search_where).and_return("1=1")
+        if cm.klass.respond_to?(:search_where)
+          allow(cm.klass).to receive(:search_where).and_return("1=1")
+        end
 
         cm.model_fields.keys.in_groups_of(20,false) do |uids|
           i = 0

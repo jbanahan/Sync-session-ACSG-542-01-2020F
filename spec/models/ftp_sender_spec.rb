@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FtpSender do
   before :each do
     @server = "abc"

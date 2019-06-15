@@ -108,7 +108,9 @@ module OpenChain; module Report; module SqlProxyDataReport
       parameters = nil
       if self.respond_to?(:sql_proxy_parameters)
         parameters = self.sql_proxy_parameters(run_by, settings)
-      else
+      end
+
+      if parameters.blank?
         # The sql_proxy query call will fail if there are parameters that are unaccounted for in the settings hash
         # In order to keep API parity w/ the standard reporting interface I also don't want to add another method parameter.
         # So, just remove any keys that we might be adding here (or we know will be passed in) from the settings as the 

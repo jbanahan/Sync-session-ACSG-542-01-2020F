@@ -14,7 +14,7 @@ class CreateBrokerInvoices < ActiveRecord::Migration
       t.string :bill_to_zip
       t.integer :bill_to_country_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :broker_invoices, :entry_id
     add_index :broker_invoices, :invoice_date

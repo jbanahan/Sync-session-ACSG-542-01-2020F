@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
   describe "parse_csv_line" do
     def default_vals

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CsvMaker do
   context "make_from_search_query" do
     before :each do

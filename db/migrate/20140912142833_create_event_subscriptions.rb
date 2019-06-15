@@ -5,7 +5,7 @@ class CreateEventSubscriptions < ActiveRecord::Migration
       t.string :event_type
       t.boolean :email
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :event_subscriptions, :user_id
   end

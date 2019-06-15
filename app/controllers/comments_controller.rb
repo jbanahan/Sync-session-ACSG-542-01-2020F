@@ -61,9 +61,9 @@ class CommentsController < ApplicationController
       email_sent = email(cmt)
     }
     if email_sent || params[:to].blank?
-      render :text=>"OK"
+      render html: "OK"
     else
-      render :text=>"Email is invalid."
+      render html: "Email is invalid."
     end
   end
 
@@ -85,7 +85,7 @@ private
   def email cmt
     to = params[:to]
     if email_list_valid?(to)
-      OpenMailer.delay.send_comment(current_user,to,cmt,comment_url(cmt))
+      OpenMailer.send_comment(current_user,to,cmt,comment_url(cmt)).deliver_later
       true
     else
       false

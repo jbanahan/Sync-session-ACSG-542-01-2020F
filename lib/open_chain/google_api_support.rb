@@ -13,16 +13,17 @@ module OpenChain; module GoogleApiSupport
   SCOPES ||= [Google::Apis::DriveV3::AUTH_DRIVE, Google::Apis::AdminDirectoryV1::AUTH_ADMIN_DIRECTORY_USER_READONLY, Google::Apis::AppsactivityV1::AUTH_ACTIVITY]
 
   def default_google_account
-    Rails.env.production? ? "integration@vandegriftinc.com" : "integration-dev@vandegriftinc.com"
+    MasterSetup.production_env? ? "integration@vandegriftinc.com" : "integration-dev@vandegriftinc.com"
   end
 
-  def account_credentials google_account:, scope:, credentials_file: "config/google_api.yml"
+  def account_credentials google_account:, scope:
     # The UserRefreshCredentials here are used to retrieve access_tokens from the google auth system.  They internally store state about the token and transparently fetch
     # new tokens whenever the old one expires. Credentials are NOT thread-safe.
     google_account = default_google_account() if google_account.blank?
 
     @credential_store ||= begin
-      data = YAML::load_file(credentials_file)
+      data = MasterSetup.secrets["google_authentication"]
+      raise "You do not appear to have set up google authentication.  Please add authentication information to secrets.yml under 'google_authentication' key." if data.blank?
       store = {}
       data.each_pair do |email_account, data|
         # Symbolize the yaml keys - that's the way google likes them (one liner curtesy of https://gist.github.com/Integralist/9503099 ) 
@@ -41,7 +42,7 @@ module OpenChain; module GoogleApiSupport
     scoped_credentials = @credential_store[scope]
     raise "No scope has been set up for #{scope}.  You must add this scope to the OpenChain::GoogleApiSupport::SCOPES array constant to be able to use it." if scoped_credentials.nil?
     credentials = scoped_credentials[google_account]
-    raise "No user credentials appear to be configured for #{google_account}.  Check the credentials in #{credentials_file}." unless credentials
+    raise "No user credentials appear to be configured for #{google_account}.  Check the 'google_authentication' credentials in secrets.yml." unless credentials
 
     credentials
   end
@@ -73,16 +74,16 @@ module OpenChain; module GoogleApiSupport
   module ClassMethods
 
     # This method needs to be run any time any new Scope is being added to the SCOPES constant above.  It will generate
-    # a new refresh token and output yaml configuration that should be placed in the API credentials file (config/google_api.yml).
+    # a new refresh token and output yaml configuration that should be placed under the "google_authentication" key in secrets.yml.
     #
     # The code can be run on any developer machine prior to deploying new features accessing new Google APIs.
     # It should NOT be run multiple times as there is only around 25 refresh tokens that are granted before some are revoked.
     #
     # If run too many times, it's possible you will invalidate the current production refresh token.
-    def authorize_all_scopes account, credentials_file: "config/google_api.yml", token_file: "tmp/token.yml"
+    def authorize_all_scopes account, token_file: "tmp/token.yml"
       require 'googleauth/stores/file_token_store'
 
-      data = YAML::load_file(credentials_file)
+      data = MasterSetup.secrets["google_authentication"]
       account_data = data[account]
       raise "No account data exists for #{account}." if account_data.nil?
       client_id = Google::Auth::ClientId.new account_data["client_id"], account_data["client_secret"]
@@ -100,12 +101,12 @@ module OpenChain; module GoogleApiSupport
 
       token_data = JSON.parse token
 
-      puts "\n\nAdd the following lines to '#{credentials_file}' replacing any existing data for #{account} with the following:\n\n"
+      puts "\n\nAdd the following lines to 'secrets.yml' under the 'google_authentication' key, replacing any existing data for #{account} with the following:\n\n"
       config_output = {account => {"client_id" => client_id.id, "client_secret" => client_id.secret, "refresh_token" => token_data["refresh_token"]}}.to_yaml
       config_output = config_output[4..-1] if config_output.starts_with?("---\n")
       puts config_output
 
-      puts "\n\nOnce you update the #{account} data in the #{credentials_file} file, you can delete the file named #{token_file}."
+      puts "\n\nOnce you update the #{account} data in 'secrets.yml', you can delete the file named #{token_file}."
 
       nil
     end

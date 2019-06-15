@@ -14,7 +14,7 @@ class CreateReportResults < ActiveRecord::Migration
       t.text :run_errors
       t.integer :run_by_id
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :report_results, :run_by_id

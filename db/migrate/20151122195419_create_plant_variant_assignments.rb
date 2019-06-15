@@ -4,7 +4,7 @@ class CreatePlantVariantAssignments < ActiveRecord::Migration
       t.references :plant, null: false
       t.references :variant, null: false
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :plant_variant_assignments, :plant_id
     add_index :plant_variant_assignments, :variant_id

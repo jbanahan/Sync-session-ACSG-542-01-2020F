@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ProjectDeliverable do
   describe "not_closed" do
     it "should not return closed deliverables" do

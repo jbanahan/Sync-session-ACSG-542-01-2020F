@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::VendorsController do
   context 'base methods' do
     before :each do

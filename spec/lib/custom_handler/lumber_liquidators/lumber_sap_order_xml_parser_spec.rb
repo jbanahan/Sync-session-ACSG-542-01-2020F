@@ -1,6 +1,3 @@
-require 'spec_helper'
-require 'rexml/document'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
   before :all do
     #This is here purely to speed up spec loading...so that the custom defs only have to get created once, since they can take a while to generate.
@@ -112,7 +109,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(o.order_lines.size).to eq(3)
 
       # existing product
-      ol = o.order_lines.find_by_line_number(1)
+      ol = o.order_lines.find_by(line_number: 1)
       expect(ol.line_number).to eq 1
       expect(ol.product).to eq @product1
       expect(ol.quantity).to eq 5602.8
@@ -142,7 +139,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect(ship_to.system_code).to eq '9444'
 
       # new product
-      ol2 = o.order_lines.find_by_line_number(2)
+      ol2 = o.order_lines.find_by(line_number: 2)
       new_prod = ol2.product
       expect(new_prod.unique_identifier).to eq '000000000010003151'
       expect(new_prod.name).to eq 'MS STN Qing Drag Bam 9/16x3-3/4" Str'
@@ -158,7 +155,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       # inland freight amount (above).
       expect(ol2.get_custom_value(@cdefs[:ordln_vendor_inland_freight_amount]).value).to eq 55.22
 
-      ol3 = o.order_lines.find_by_line_number(3)
+      ol3 = o.order_lines.find_by(line_number: 3)
       expect(ol3.quantity).to eq 8168.4
       expect(ol3.price_per_unit).to eq 1.82
 
@@ -182,7 +179,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       }
       let :prep_mailer do
         m = double('mail')
-        expect(m).to receive(:deliver!)
+        expect(m).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_simple_html).with(
           array_including(['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com', group]),
           "Order 4700000325 XML rejected.",
@@ -261,7 +258,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       }
       let :prep_mailer do
         m = double('mail')
-        expect(m).to receive(:deliver!)
+        expect(m).to receive(:deliver_now)
         expect(OpenMailer).to receive(:send_simple_html).with(
           array_including(['ll-support@vandegriftinc.com', 'POResearch@lumberliquidators.com', group]),
           "Order 4700000325 XML rejected.",
@@ -336,7 +333,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{subject.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
 
       o = Order.first
-      ol = o.order_lines.find_by_line_number(1)
+      ol = o.order_lines.find_by(line_number: 1)
       expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq @product1.name
 
       old_product_name = @product1.name
@@ -347,7 +344,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{subject.parse_dom(dom)}.to_not change(Order,:count)
 
       o = Order.first
-      ol = o.order_lines.find_by_line_number(1)
+      ol = o.order_lines.find_by(line_number: 1)
       expect(ol.get_custom_value(@cdefs[:ordln_part_name]).value).to eq old_product_name
     end
 
@@ -356,7 +353,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{subject.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
 
       o = Order.first
-      ol = o.order_lines.find_by_line_number(1)
+      ol = o.order_lines.find_by(line_number: 1)
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq '123456'
 
       cv = @product1.find_and_set_custom_value @cdefs[:prod_old_article], '654321'
@@ -366,7 +363,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       expect{subject.parse_dom(dom)}.to_not change(Order,:count)
 
       o = Order.first
-      ol = o.order_lines.find_by_line_number(1)
+      ol = o.order_lines.find_by(line_number: 1)
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to eq '123456'
     end
 
@@ -557,7 +554,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       dom = REXML::Document.new(@test_data)
       expect{subject.parse_dom(dom)}.to change(Company,:count).by(1)
 
-      vendor = Company.find_by_system_code_and_vendor('0000100131',true)
+      vendor = Company.find_by(system_code: '0000100131',vendor: true)
       expect(vendor).to_not be_nil
 
       expect(@importer.linked_companies).to include(vendor)

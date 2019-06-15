@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
               orders_only_errors_spreadsheet.write orders_only_errors
 
               body = "Attached are the product lines that were missing from VFI Track.  Please fill out the #{missing_products.original_filename} file with all the necessary information and load the data into VFI Track, then reprocess the attached #{orders.original_filename} PO file to load the POs that were missing products into the system."
-              OpenMailer.send_simple_html(user.email, "CQ Origin PO Report Result", body, [missing_products, orders, orders_only_errors]).deliver!
+              OpenMailer.send_simple_html(user.email, "CQ Origin PO Report Result", body, [missing_products, orders, orders_only_errors]).deliver_now
             end
             
           end

@@ -20,6 +20,9 @@ class Classification < ActiveRecord::Base
   include ShallowMerger
   include TouchesParentsChangedAt
   include UpdateModelFieldsSupport
+
+  attr_accessible :country_id, :country, :instant_classification_id, :product_id,
+    :product, :tariff_records_attributes
   
   belongs_to :product, inverse_of: :classifications
   belongs_to :country
@@ -29,7 +32,7 @@ class Classification < ActiveRecord::Base
   validate :unique_line_numbers_for_tariffs
   validates :country_id, :presence => true
 
-  scope :sort_classification_rank, joins(:country).order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
+  scope :sort_classification_rank, -> { joins(:country).order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC") }
   
   has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested
    

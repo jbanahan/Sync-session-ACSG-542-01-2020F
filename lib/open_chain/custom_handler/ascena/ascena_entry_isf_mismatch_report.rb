@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   def self.run_schedulable config = {}
     start_date, end_date = dates
     tf = self.new.run_report ascena, start_date, end_date
-    OpenMailer.send_simple_html(config["email"], "Ascena Entry/ISF Mismatch #{start_date.to_date} - #{end_date.to_date}", "The Entry/ISF Mismatch report for Entry Summary Sent Dates between #{start_date.to_date} - #{end_date.to_date} is attached.", [tf]).deliver!
+    OpenMailer.send_simple_html(config["email"], "Ascena Entry/ISF Mismatch #{start_date.to_date} - #{end_date.to_date}", "The Entry/ISF Mismatch report for Entry Summary Sent Dates between #{start_date.to_date} - #{end_date.to_date} is attached.", [tf]).deliver_now
   end
 
   def self.dates 

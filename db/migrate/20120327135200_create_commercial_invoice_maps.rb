@@ -4,7 +4,7 @@ class CreateCommercialInvoiceMaps < ActiveRecord::Migration
       t.string :source_mfid
       t.string :destination_mfid
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

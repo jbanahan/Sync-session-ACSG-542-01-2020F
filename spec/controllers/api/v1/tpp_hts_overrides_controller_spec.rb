@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::TppHtsOverridesController do
   before :each do
     @u = Factory(:user)
@@ -8,8 +6,6 @@ describe Api::V1::TppHtsOverridesController do
     allow_any_instance_of(User).to receive(:view_trade_preference_programs?).and_return true
     allow_any_instance_of(TppHtsOverride).to receive(:can_view?).and_return true
     allow_any_instance_of(TppHtsOverride).to receive(:can_edit?).and_return true
-    allow_any_instance_of(TppHtsOverride).to receive(:can_attach?).and_return true
-    allow_any_instance_of(TppHtsOverride).to receive(:can_comment?).and_return true
     allow_api_access @u
   end
   describe '#index' do

@@ -1,5 +1,3 @@
-require "spec_helper"
-
 describe "FtpFileSupport" do
   class FtpSupportImpl 
     include OpenChain::FtpFileSupport

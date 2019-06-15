@@ -9,10 +9,10 @@ module OpenChain; class StatClient
   #main run class to collect all appropriate stats
   def self.run
     collect_active_users
-    collect_total_products unless Product.scoped.empty? 
-    collect_total_entries unless Entry.scoped.empty?
-    collect_report_recipients unless SearchSchedule.scoped.empty?
-    unless Survey.scoped.empty?
+    collect_total_products unless Product.all.empty? 
+    collect_total_entries unless Entry.all.empty?
+    collect_report_recipients unless SearchSchedule.all.empty?
+    unless Survey.all.empty?
       collect_total_surveys
       collect_total_survey_responses
     end
@@ -25,7 +25,7 @@ module OpenChain; class StatClient
   def self.collect_total_products; total_count 'tot_prod', Product; end
   def self.collect_report_recipients 
     emails = Set.new
-    SearchSchedule.scoped.pluck(:email_addresses).each do |addresses|
+    SearchSchedule.all.pluck(:email_addresses).each do |addresses|
       next if addresses.blank?
       addresses.split(",").each do |interim_e| 
         interim_e.split(';').each {|e| emails << e.strip unless e.blank? or e =~ /vandegriftinc\.com/}
@@ -51,10 +51,11 @@ module OpenChain; class StatClient
 
     # If the stats API key is not set, then do nothing silently
     return nil if ms.stats_api_key.blank?
+    base_url = stats_server_url
+    return nil if base_url.blank?
 
     raise "URL was blank" if url.blank?
-    @@base_url ||= YAML.load(IO.read('config/stats_server.yml'))[Rails.env]['base_url']
-    full_url = @@base_url + url
+    full_url = base_url + url
     uri = URI(full_url)
     req = Net::HTTP::Post.new(uri.path)
     req.set_content_type 'application/json'
@@ -62,7 +63,7 @@ module OpenChain; class StatClient
     json_hash[:uuid] = ms.uuid
     req.set_form_data json_hash
     http = Net::HTTP.new(uri.host,uri.port)
-    http.use_ssl = true if @@base_url =~ /^https/
+    http.use_ssl = true if base_url =~ /^https/
     res =  http.request req
     case res.code
     when '200'
@@ -76,6 +77,10 @@ module OpenChain; class StatClient
 
   private
   def self.total_count stat_code, obj
-    add_numeric stat_code, (obj.respond_to?(:count) ? obj.count : obj.scoped.count), Time.now
+    add_numeric stat_code, obj.count, Time.now
+  end
+
+  def self.stats_server_url
+    MasterSetup.secrets["vfi_stats"].try(:[], "base_url")
   end
 end; end

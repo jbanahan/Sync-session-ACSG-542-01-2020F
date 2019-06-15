@@ -10,7 +10,7 @@ class CreateOrderLines < ActiveRecord::Migration
 			t.date :ship_no_later_date
       t.references :order
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

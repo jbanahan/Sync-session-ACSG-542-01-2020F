@@ -6,7 +6,7 @@ class CreateVfiInvoices < ActiveRecord::Migration
       t.string :invoice_number
       t.string :currency
       
-      t.timestamps
+      t.timestamps null: false
     end
     
     add_index :vfi_invoices, [:customer_id, :invoice_number], unique: true

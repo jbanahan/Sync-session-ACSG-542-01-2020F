@@ -10,8 +10,7 @@ module PolymorphicFinders
   end
 
   def polymorphic_scope model_name
-    # Change to .all for rails 4.x (scoped is removed)
-    constantize(model_name).scoped
+    constantize(model_name).all
   end
 
   def constantize model_name

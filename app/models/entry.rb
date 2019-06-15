@@ -247,6 +247,72 @@ class Entry < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
+  attr_accessible :across_declaration_accepted, :across_sent_date, 
+    :ams_hold_date, :ams_hold_release_date, :aphis_hold_date, 
+    :aphis_hold_release_date, :arrival_date, :arrival_notice_receipt_date, 
+    :atf_hold_date, :atf_hold_release_date, :available_date, :b3_print_date, 
+    :bol_received_date, :bond_type, :broker_invoice_total, :broker_reference, 
+    :cadex_accept_date, :cadex_sent_date, :cancelled_date, :cargo_control_number, 
+    :cargo_manifest_hold_date, :cargo_manifest_hold_release_date, :carrier_code, 
+    :carrier_name, :cbp_hold_date, :cbp_hold_release_date, 
+    :cbp_intensive_hold_date, :cbp_intensive_hold_release_date, :census_warning, 
+    :charge_codes, :commercial_invoice_numbers, :company_number, 
+    :consignee_address_1, :consignee_address_2, :consignee_city, :consignee_state, 
+    :container_numbers, :container_sizes, :cotton_fee, :customer_name, 
+    :customer_number, :customer_references, :daily_statement_approved_date, 
+    :daily_statement_due_date, :daily_statement_number, :ddtc_hold_date, 
+    :ddtc_hold_release_date, :delivery_order_pickup_date, :departments, 
+    :destination_state, :direct_shipment_date, :division_number, 
+    :docs_received_date, :documentation_request_date, :duty_due_date, 
+    :edi_received_date, :employee_name, :entered_value, :entry_filed_date, 
+    :entry_number, :entry_port_code, :entry_type, :error_free_release, :eta_date, 
+    :exam_ordered_date, :exam_release_date, :expected_update_time, 
+    :export_country_codes, :export_date, :export_state_codes, :fcl_lcl, 
+    :fda_hold_date, :fda_hold_release_date, :fda_message, 
+    :fda_pending_release_line_count, :fda_release_date, :fda_review_date, 
+    :fda_transmit_date, :file_logged_date, :final_delivery_date, 
+    :final_statement_date, :first_7501_print, :first_do_issued_date, 
+    :first_entry_sent_date, :first_it_date, :first_release_date, 
+    :first_release_received_date, :fiscal_date, :fiscal_month, 
+    :fiscal_year, :fish_and_wildlife_hold_date, :fish_and_wildlife_hold_release_date, 
+    :fish_and_wildlife_secure_facility_date, :fish_and_wildlife_transmitted_date, 
+    :free_date, :freight_pickup_date, :fsis_hold_date, :fsis_hold_release_date, 
+    :gross_weight, :hmf, :hold_date, :hold_release_date, :house_bills_of_lading, 
+    :house_carrier_code, :import_country_id, :import_date, :importer_id, :importer, 
+    :importer_request_date, :importer_tax_id, :invoice_paid_date, :isf_accepted_date, 
+    :isf_sent_date, :it_numbers, :k84_due_date, :k84_month, :k84_receive_date, 
+    :lading_port_code, :lading_port, :last_7501_print, :last_billed_date, 
+    :last_exported_from_source, :last_file_bucket, :last_file_path, 
+    :liquidation_action_code, :liquidation_action_description, :liquidation_ada, 
+    :liquidation_cvd, :liquidation_date, :liquidation_duty, 
+    :liquidation_extension_code, :liquidation_extension_count, 
+    :liquidation_extension_description, :liquidation_fees, :liquidation_tax, 
+    :liquidation_total, :liquidation_type, :liquidation_type_code, 
+    :location_of_goods, :location_of_goods_description, 
+    :manifest_info_received_date, :master_bills_of_lading, 
+    :merchandise_description, :mfids, :monthly_statement_due_date, 
+    :monthly_statement_number, :monthly_statement_paid_date, 
+    :monthly_statement_received_date, :mpf, :nhtsa_hold_date, 
+    :nhtsa_hold_release_date, :nmfs_hold_date, :nmfs_hold_release_date, 
+    :ogd_request_date, :on_hold, :one_usg_date, :origin_country_codes, 
+    :origin_state_codes, :other_agency_hold_date, :other_agency_hold_release_date, 
+    :other_fees, :paperless_certification, :paperless_release, :pars_ack_date, 
+    :pars_reject_date, :part_number_request_date, :part_numbers, :pay_type, 
+    :po_numbers, :po_request_date, :product_lines, :recon_flags, 
+    :release_cert_message, :release_date, :release_type, :ship_terms, 
+    :source_system, :special_program_indicators, :special_tariff, 
+    :split_release_option, :split_shipment, :split_shipment_date, :store_names, 
+    :sub_house_bills_of_lading, :summary_line_count, :summary_rejected, 
+    :tariff_request_date, :time_to_process, :total_add, :total_cvd, :total_duty, 
+    :total_duty_direct, :total_duty_gst, :total_entry_fee, :total_fees, :total_gst, 
+    :total_invoiced_value, :total_non_dutiable_amount, :total_packages, 
+    :total_packages_uom, :total_taxes, :total_units, :total_units_uoms, 
+    :tracking_status, :transport_mode_code, :trucker_called_date, 
+    :ult_consignee_code, :ult_consignee_name, :unlading_port_code, :unlading_port,
+    :us_exit_port_code, :usda_hold_date, :usda_hold_release_date, 
+    :value_currency_request_date, :vendor_names, :vessel, :voyage, :worksheet_date, 
+    :import_country, :ca_entry_port, :updated_at
+
   # Tracking status is about whether an entry has been fully prepared
   # It does not report on release status, just whether the entry has been
   # prepared for presentation to customs
@@ -441,7 +507,12 @@ class Entry < ActiveRecord::Base
   end
 
   def first_sale_savings
-    commercial_invoice_lines.map {|cil| cil.first_sale_savings }.compact.sum
+    line_amounts = []
+    commercial_invoices.each do |inv|
+      inv.commercial_invoice_lines.each {|cil| line_amounts << cil.first_sale_savings }
+    end
+
+    line_amounts.compact.sum
   end
   
   def populated_holds

@@ -4,7 +4,7 @@ class CreateAutomatedBillingSetup < ActiveRecord::Migration
       t.string :customer_number
       t.boolean :enabled
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :automated_billing_setups, :customer_number

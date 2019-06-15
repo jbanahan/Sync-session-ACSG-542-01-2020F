@@ -52,7 +52,7 @@ The following House Bills are on the shpment activity report but haven't had the
 
 #{missing_house_bills.join("\r\n")}
 MSG
-      OpenMailer.send_simple_text('ecellerate@vandegriftinc.com','ECellerate Missing HBOLs',msg).deliver!
+      OpenMailer.send_simple_text('ecellerate@vandegriftinc.com','ECellerate Missing HBOLs',msg).deliver_now
     end
   end
 

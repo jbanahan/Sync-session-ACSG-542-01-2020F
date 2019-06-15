@@ -6,7 +6,7 @@ class CreateFileImportResults < ActiveRecord::Migration
       t.datetime :finished_at
       t.integer :run_by_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

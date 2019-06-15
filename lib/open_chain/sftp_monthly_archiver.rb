@@ -67,7 +67,7 @@ module OpenChain
           if @settings['notification_email'].present?
             OpenMailer.send_simple_html(@settings['notification_email'],
                                         "Attachment Archive #{archive.name} Uploaded",
-                                        "An attachment archive named #{archive.name} is being sent to you.  You should receive it shortly.").deliver
+                                        "An attachment archive named #{archive.name} is being sent to you.  You should receive it shortly.").deliver_now
           end
         end
       rescue => e

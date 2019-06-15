@@ -2,8 +2,8 @@ require 'open_chain/sql_proxy_client'
 
 module OpenChain; class KewillImagingSqlProxyClient < SqlProxyClient
 
-  def self.proxy_config_file
-    Rails.root.join('config', 'kewill_imaging_sql_proxy.yml')
+  def self.proxy_config_key
+    "kewill_imaging_sql_proxy"
   end
 
   def request_images_added_between start_time, end_time, customer_numbers, s3_bucket, sqs_queue

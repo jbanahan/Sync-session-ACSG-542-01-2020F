@@ -187,7 +187,11 @@ module OpenChain
     def get_source
       log_me "Fetching source"
       capture_and_log 'git fetch'
-      log_me "Fetch complete, checking out #{@target}"
+      # This should clean up any files marked as modified, this should ONLY ever happen on test branches, where if a file is deleted (or ignored) and branches are flipped
+      # between you might get a situation where on a branch it shows as modified.
+      log_me "Fetch complele, cleaning up."
+      capture_and_log 'git reset --hard HEAD'
+      log_me "Reset complete, checking out #{@target}"
       capture_and_log "git checkout #{@target}"
       log_me "Source checked out"
       update_configurations

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
   describe "generate_and_send" do

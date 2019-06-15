@@ -6,7 +6,7 @@ class CreateStatusRules < ActiveRecord::Migration
       t.string :description
       t.integer :test_rank
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
   subject { described_class }
@@ -10,6 +8,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       tf << "Content"
       tf.flush
       tf.rewind
+      Attachment.add_original_filename_method(tf, "12345 - CUST.pdf")
       allow(tf).to receive(:original_filename).and_return "12345 - CUST.pdf"
       tf
     }

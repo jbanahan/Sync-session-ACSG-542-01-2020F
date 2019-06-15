@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassificationsUploadParser do
   let!(:user) { Factory(:master_user) }
   let!(:custom_file) { double "custom file "}

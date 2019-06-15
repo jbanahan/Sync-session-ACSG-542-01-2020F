@@ -4,6 +4,9 @@ require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 class CustomReportAnnSapChanges < CustomReport
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  
   def self.template_name
     'SAP Changes'
   end

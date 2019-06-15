@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparator do
   subject { described_class }
   let :order_data_klass do
@@ -8,6 +6,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   before :each do 
     allow(Lock).to receive(:with_lock_retry).and_yield
+    order_data_klass::PLANNED_HANDOVER_DATE_UID.clear
+    order_data_klass::SAP_EXTRACT_DATE_UID.clear
+    order_data_klass::COUNTRY_ORIGIN_UID.clear
+    order_data_klass::ORDER_TYPE_UID.clear
+    order_data_klass::BOOKING_CONFIRMED_DATE_UID.clear
+    order_data_klass::PC_APPROVED_DATE_UID.clear
+    order_data_klass::PC_APPROVED_DATE_EXEC_UID.clear
   end
 
   def order_data_instance hash, snapshot = nil
@@ -16,7 +21,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
 
   describe '#compare' do
     it 'should do nothing if not an Order type' do
-      expect(described_class).not_to receive(:run_changes)
+      expect(described_class).not_to receive(:execute_business_logic)
       described_class.compare 'Product', 1, 'ob', 'op', 'ov', 'nb', 'np', 'nv'
     end
     it 'should build OrderData objects and execute_business_logic' do
@@ -171,7 +176,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
   describe '#set_price_revised_dates' do
     let (:order) {
       order = Factory(:order_line,line_number:1).order
-      expect(order).not_to receive(:snapshot)
+      expect(order).not_to receive(:create_snapshot)
       order
     }
     let (:cdefs) { subject.prep_custom_definitions([:ord_sap_extract,:ord_price_revised_date,:ordln_price_revised_date]) }

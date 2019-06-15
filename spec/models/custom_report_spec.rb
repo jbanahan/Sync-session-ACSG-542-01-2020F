@@ -1,18 +1,16 @@
-require 'spec_helper'
-require 'spreadsheet'
-
 describe CustomReport do
+
+  let! (:master_setup) { stub_master_setup }
 
   describe "give_to" do
     before :each do
-      MasterSetup.create(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
       @u2 = Factory(:user)
       @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true)
     end
     it "should copy to another user" do
       @s.give_to @u2
-      d = CustomReport.find_by_user_id @u2.id
+      d = CustomReport.find_by(user: @u2)
       expect(d.name).to eq("ABC (From #{@u.full_name})")
       expect(d.id).not_to be_nil
       expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)

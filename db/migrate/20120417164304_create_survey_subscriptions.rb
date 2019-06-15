@@ -4,7 +4,7 @@ class CreateSurveySubscriptions < ActiveRecord::Migration
       t.integer :survey_id
       t.integer :user_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

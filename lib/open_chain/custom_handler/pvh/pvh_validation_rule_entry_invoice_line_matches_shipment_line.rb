@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhValidationRuleEntry
   end
 
   def preload_entry entry
-    ActiveRecord::Associations::Preloader.new(entry, {commercial_invoices: {commercial_invoice_lines: :container}}).run
+    ActiveRecord::Associations::Preloader.new.preload(entry, {commercial_invoices: {commercial_invoice_lines: :container}})
   end
 
 end; end; end; end

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
   let(:user) { Factory(:master_user) }
   let(:fenix) { OpenChain::CustomHandler::FenixNdInvoiceGenerator }

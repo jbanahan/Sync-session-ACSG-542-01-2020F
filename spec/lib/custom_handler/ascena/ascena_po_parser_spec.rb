@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header) { ["H","11142016","JUSTICE","","37109","1990","","FRANCHISE","pgroup","82","SUM 2015","","2","12082016","000256","LF PRODUCTS PTE. LTD","Smith","001423","IDSELKAU0105BEK","JIASHAN JSL CASE & BAG CO., LTD","000022","YCHOI","FCA","CHINA (MAINLAND)","OCN","01172017","01172018","HONG KONG","AGS","","","","USD","","","",""] }
   let(:detail) { ["D","","1","","","820799","351152","CB-YING YANG IRRI 3\"","617","SILVER","1","10","","","03010848311526700486","","","0","","2.02","3.46","3.13","7.00","","","","","","","","","","","","","",""] }

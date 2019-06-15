@@ -9,7 +9,7 @@ class CreateProductRateOverrides < ActiveRecord::Migration
       t.date :end_date
       t.text :notes
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :product_rate_overrides, :product_id, name: 'prod_id'
     add_index :product_rate_overrides, [:origin_country_id,:destination_country_id], name: 'countries'

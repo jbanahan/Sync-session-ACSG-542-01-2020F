@@ -1,10 +1,8 @@
-require 'spec_helper'
-
 describe OpenChain::KewillSqlProxyClient do
   before :each do
     @http_client = double("MockHttpClient")
     @c = described_class.new @http_client
-    @proxy_config = {'test' => {'auth_token' => "config_auth_token", "url" => "config_url"}}
+    @proxy_config = {'auth_token' => "config_auth_token", "url" => "config_url"}
     allow(described_class).to receive(:proxy_config).and_return(@proxy_config)
   end
 
@@ -13,21 +11,21 @@ describe OpenChain::KewillSqlProxyClient do
     it "requests invoice details from alliance" do
       request_context = {'content' => 'context'}
       request_body = {'job_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/invoice_details", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/invoice_details", request_body, {}, @proxy_config['auth_token'])
       
       @c.request_alliance_invoice_details "123", "suffix     ", request_context
     end
 
     it "strips blank suffixes down to blank string" do
       request_body = {'job_params' => {:file_number=>123, :suffix=>' '}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/invoice_details", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/invoice_details", request_body, {}, @proxy_config['auth_token'])
 
       @c.request_alliance_invoice_details "123", "     "
     end
 
     it "doesn't send context if a blank one is provided" do
       request_body = {'job_params' => {:file_number=>123, :suffix=>'A'}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/invoice_details", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/invoice_details", request_body, {}, @proxy_config['auth_token'])
 
       @c.request_alliance_invoice_details "123", "A"
     end
@@ -41,7 +39,7 @@ describe OpenChain::KewillSqlProxyClient do
   describe "request_alliance_invoice_numbers_since" do
     it "requests invoice numbers since given date" do
       request_body = {'job_params' => {:invoice_date=>20140101}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/find_invoices", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/find_invoices", request_body, {}, @proxy_config['auth_token'])
 
       @c.request_alliance_invoice_numbers_since Date.new(2014,1,1)
     end
@@ -51,7 +49,7 @@ describe OpenChain::KewillSqlProxyClient do
     it "requests check details" do
       request_body = {'job_params' => {file_number: 123, check_number: 456, check_date: 20141101, bank_number: 10, check_amount: 101}}
 
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/check_details", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/check_details", request_body, {}, @proxy_config['auth_token'])
       @c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("1.01999").to_s
     end
 
@@ -67,7 +65,7 @@ describe OpenChain::KewillSqlProxyClient do
       end_t = start + 1.hour
 
       request_body = {'job_params' => {start_date: start.strftime("%Y%m%d").to_i, end_date: end_t.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}, 'context'=>{results_as_array: true}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/file_tracking", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/file_tracking", request_body, {}, @proxy_config['auth_token'])
 
       @c.request_file_tracking_info start, end_t
     end
@@ -79,7 +77,7 @@ describe OpenChain::KewillSqlProxyClient do
       end_t = start + 1.hour
 
       request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M")}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/updated_entries", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/updated_entries", request_body, {}, @proxy_config['auth_token'])
       @c.request_updated_entry_numbers start, end_t, ""
     end
 
@@ -88,7 +86,7 @@ describe OpenChain::KewillSqlProxyClient do
       end_t = start + 1.hour
 
       request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M"), customer_numbers: "CUST1,CUST2"}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/updated_entries", request_body, {}, @proxy_config['test']['auth_token'])
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/updated_entries", request_body, {}, @proxy_config['auth_token'])
       @c.request_updated_entry_numbers start, end_t, ["CUST1", "CUST2"]
     end
 
@@ -97,7 +95,7 @@ describe OpenChain::KewillSqlProxyClient do
       end_t = start + 1.hour
 
       request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M")}}
-      expect(@http_client).to receive(:post).with("#{@proxy_config['test']['url']}/job/updated_entries", request_body, {}, @proxy_config['test']['auth_token']).and_raise "Error"
+      expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/updated_entries", request_body, {}, @proxy_config['auth_token']).and_raise "Error"
       
       expect {@c.request_updated_entry_numbers start, end_t, ""}.to raise_error "Error"
     end

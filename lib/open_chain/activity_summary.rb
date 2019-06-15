@@ -515,7 +515,7 @@ order by importer_id, monthly_statement_due_date desc"
           to << addresses unless addresses.blank?
           mailing_list = MailingList.where(id: mailing_list).first unless mailing_list.nil?
           to << mailing_list unless mailing_list.nil?
-          OpenMailer.send_simple_html(to, subject, body, [report]).deliver!
+          OpenMailer.send_simple_html(to, subject, body, [report]).deliver_now
         ensure
           report.close
         end
@@ -531,7 +531,7 @@ order by importer_id, monthly_statement_due_date desc"
       end
 
       def self.update_args_with_user addresses, body, user_id
-        user = User.find user_id
+        user = User.find_by_id user_id
         if addresses.blank?
           addresses = user.email 
         else

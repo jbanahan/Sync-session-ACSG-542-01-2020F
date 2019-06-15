@@ -1,4 +1,0 @@
-development:
-  :postmark_api_key: 725c82b3-6844-4377-a984-45d277573342
-production:
-  :postmark_api_key: 725c82b3-6844-4377-a984-45d277573342

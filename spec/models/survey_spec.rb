@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Survey do
   describe "copy!" do
     before :each do 
@@ -57,8 +55,8 @@ describe Survey do
     s = Factory(:survey)
     s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
     s = Survey.find(s.id)
-    expect(s.questions.find_by_content("09876543210").rank).to eq(1)
-    expect(s.questions.find_by_content("1234567890").rank).to eq(2)
+    expect(s.questions.find_by(content: "09876543210").rank).to eq(1)
+    expect(s.questions.find_by(content: "1234567890").rank).to eq(2)
   end
   describe 'generate_response' do
     it 'should make a response with all answers' do

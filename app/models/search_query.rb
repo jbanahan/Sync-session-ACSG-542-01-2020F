@@ -214,7 +214,9 @@ class SearchQuery
       end
       
     end
-    wheres << @search_setup.core_module.klass.search_where(@user)
+    klass = @search_setup.core_module.klass
+
+    wheres << klass.search_where(@user) if klass.respond_to?(:search_where)
     wheres << @extra_where unless @extra_where.blank?
     if wheres.empty?
       return ""
@@ -227,7 +229,7 @@ class SearchQuery
     r = " ORDER BY "
     sorts = @search_setup.sort_criterions
     #using this sort instead of .order so we don't make a db call when working with an unsaved SearchSetup
-    sorts.sort! {|a,b|
+    sorts.sort {|a,b|
       x = a.rank <=> b.rank
       x = a.model_field_uid <=> b.model_field_uid if x==0
       x

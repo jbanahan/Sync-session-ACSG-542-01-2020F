@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BroadcastsEvents do
 
   before :each do

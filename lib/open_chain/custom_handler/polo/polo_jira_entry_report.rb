@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
       report_month_formatted = report_start.strftime("%m/%Y")
       subject = "[VFI Track] Jira Ticket Discrepancy Report for the Month of #{report_month_formatted}"
       body = "Attached please find the Jira Ticket Discrepancy Report for the Month of #{report_month_formatted}.  For any issues related to the report or to change the report email distribution list, please contact VFI Track Support at vfitrack_support@vandegriftinc.com."
-      OpenMailer.send_simple_html(settings['email_to'], subject, body, [temp]).deliver!
+      OpenMailer.send_simple_html(settings['email_to'], subject, body, [temp]).deliver_now
     ensure
       temp.close! if temp && temp.respond_to?(:close!) && !temp.closed?
     end

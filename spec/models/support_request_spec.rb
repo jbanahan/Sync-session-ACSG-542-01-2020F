@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SupportRequest do
 
   let(:user) { Factory(:user) }

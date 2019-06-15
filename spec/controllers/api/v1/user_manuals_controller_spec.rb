@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::UserManualsController do
   describe '#index' do
     it "should find for user and page" do

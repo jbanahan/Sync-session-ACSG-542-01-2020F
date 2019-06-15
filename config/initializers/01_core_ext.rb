@@ -1,26 +1,3 @@
-# This patch make sure that if the DB goes down for any reason, that any connections in the pool that were related
-# to it are revalidated and reconnected when checked out again.  This prevents us from having to restart the server
-# when there is database connectivity issues.
-# See https://github.com/rails/rails/issues/16213
-
-# This is fixed in Rails 5 (though I'm not sure if Rails 4 will work with the code below or not - hence the raise)
-# See https://github.com/rails/rails/pull/17468 for Rails 4 change that will resolve the issue too
-if Rails::VERSION::MAJOR == 3
-  module ActiveRecord; module ConnectionAdapters; class ConnectionPool
-
-    def checkout_and_verify_with_rescue(c)
-      checkout_and_verify_without_rescue(c)
-    rescue => exception
-      checkin(c)
-      throw exception
-    end
-    alias_method_chain :checkout_and_verify, :rescue
-
-  end; end ;end
-else
-  raise "ConnectionPool patch must be verified for Rails versions != 3."
-end
-
 ActiveSupport::TimeZone.class_eval do
   #parse a date in "01/28/2008 04:27am" format
   def parse_us_base_format str
@@ -60,40 +37,10 @@ String.class_eval do
     end 
   end
 
+  # Returns true for any value considered true by ActiveRecord when coercing user data to the database
+  # False for everything else
   def to_boolean
-    ActiveRecord::ConnectionAdapters::Column.value_to_boolean self
-  end
-end
-
-# Backporting Array#deep_dup, Hash#deep_dup, Object#deep_dup from Rails 4 to 3.2 (.ie remove this when we move to Rails 4)
-# In Rails 3.x, if you deep_dup a Hash with an array value, the array contents are not duped.  So if you have a hash inside that
-# array (like when posting nested AR attributes) and you clone it, and then modify the hash inside the cloned array, both 
-# the original and the cloned hash reflect the changes.
-# 
-# In other words, without the patch, the following happens: 
-# 
-# orig = {'key' => [{'inner_key' => 'inner_value'}]}
-# orig_dupe = orig.deep_dup
-# orig_dupe['key'][0]['new_key'] = 'new_value'
-# orig['key'][0]['new_key'] # => "new_value" !!!! WTF - Should be nil !!!!
-
-Array.class_eval do
-  def deep_dup
-    map { |it| it.deep_dup }
-  end
-end
-
-Hash.class_eval do
-  def deep_dup
-    each_with_object(dup) do |(key, value), hash|
-      hash[key.deep_dup] = value.deep_dup
-    end
-  end
-end
-
-Object.class_eval do
-  def deep_dup
-    duplicable? ? dup : self
+    ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(self.upcase)
   end
 end
 
@@ -108,17 +55,11 @@ Exception.class_eval do
     msgs << "Error Database ID: #{e.id}"
     if e.email_me?
       if attachment_paths.blank? && !send_now
-        # Psych (via Delayed Jobs) has an issue serializing NoMethodErrors due to the NameError object used inside NoMethodError.
-        # This is a workaround for dealing w/ that since the issue has been open in Psych for over a year with no plans for resolution.
-        if self.is_a? NoMethodError
-          error = SerializableNoMethodError.new self.message
-          error.set_backtrace self.backtrace
-          error.log_me messages, attachment_paths, send_now
-        else
-          OpenMailer.delay.send_generic_exception(self,msgs,self.message,self.backtrace)
-        end
+        # Rails can't serialize classes, so just send the exception class name itself, which is really all the actual output utilizes anyway
+        # if all the params are fed to the method
+        OpenMailer.send_generic_exception(self.class.to_s, msgs, self.message, self.backtrace).deliver_later
       else
-        OpenMailer.send_generic_exception(self,msgs,self.message,self.backtrace,Array.wrap(attachment_paths)).deliver
+        OpenMailer.send_generic_exception(self.class.to_s, msgs, self.message, self.backtrace, Array.wrap(attachment_paths)).deliver_now
       end
     end
   end

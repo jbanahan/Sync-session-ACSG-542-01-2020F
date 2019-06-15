@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
       body += "</ul></p>"
     end
 
-    OpenMailer.send_simple_html(user.email, subject, body.html_safe).deliver!
+    OpenMailer.send_simple_html(user.email, subject, body.html_safe).deliver_now
   end
 
 end; end; end; end

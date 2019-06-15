@@ -26,7 +26,6 @@ require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
-require 'open_chain/custom_handler/kewill_isf_manual_parser'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_epd_parser'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
@@ -52,8 +51,13 @@ require 'open_chain/special_tariff_cross_reference_handler'
 require 'open_chain/business_rules_copier'
 
 class CustomFile < ActiveRecord::Base
+  attr_accessible :attached_content_type, :attached_file_name, :attached,
+    :attached_file_size, :attached_updated_at, :error_at, :error_message, 
+    :file_type, :finish_at, :module_type, :start_at, :uploaded_by_id,
+    :uploaded_by
+
   has_many :custom_file_records
-  has_many :linked_products, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product', :uniq=>true
+  has_many :linked_products, -> { uniq }, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product'
   has_many :linked_objects, :through => :custom_file_records
   has_many :search_runs
   belongs_to :uploaded_by, :class_name=>'User'
@@ -103,7 +107,7 @@ class CustomFile < ActiveRecord::Base
 
   # send the updated version of the file
   def email_updated_file current_user, to, cc, subject, body
-    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', handler.make_updated_file(current_user), self.attached_file_name).deliver!
+    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', handler.make_updated_file(current_user), self.attached_file_name).deliver_now
   end
 
   def secure_url(expires_in=10.seconds)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DashboardWidgetsController do
 
   before :each do

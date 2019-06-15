@@ -25,7 +25,7 @@ module OpenChain; class SpecialTariffCrossReferenceHandler
 
     report = xlsx_workbook_to_tempfile(workbook, "Special Tariffs", file_name: "Special Tariffs for #{Time.zone.now.strftime("%m/%d/%Y")}")
     body = "Attached is the list of special tariffs for #{Time.zone.now.strftime("%m/%d/%Y")}"
-    OpenMailer.send_simple_html([user.email], "Special Tariffs Current as of #{Time.zone.now.strftime("%m/%d/%Y")}", body, report).deliver!
+    OpenMailer.send_simple_html([user.email], "Special Tariffs Current as of #{Time.zone.now.strftime("%m/%d/%Y")}", body, report).deliver_now
   end
 
 

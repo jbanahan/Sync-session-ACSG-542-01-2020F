@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
   describe "accept?" do

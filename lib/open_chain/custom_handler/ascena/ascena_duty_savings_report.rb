@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       fm = fiscal_month.back(1)
       self.new(config['cust_numbers']).run(fm) do |report|
         body = "Attached is the Duty Savings Report for #{fm.fiscal_descriptor}."
-        OpenMailer.send_simple_html(email_to, "Duty Savings Report #{fm.fiscal_descriptor}", body, report).deliver!
+        OpenMailer.send_simple_html(email_to, "Duty Savings Report #{fm.fiscal_descriptor}", body, report).deliver_now
       end
     end
   end

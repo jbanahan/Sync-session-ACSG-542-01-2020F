@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::ModelFieldGenerator::CommentGenerator do
   describe '_comment_count' do
     before :each do

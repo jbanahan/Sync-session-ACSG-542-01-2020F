@@ -33,19 +33,13 @@ module OpenChain; module Api; class ApiClient
 
   # This method exists solely to point all aliases at dev when run from dev system and not another system (unless overridden)
   def self.substitute_endpoint endpoint_alias
-    if !development?
+    if !MasterSetup.development_env?
       return endpoint_alias
     elsif MasterSetup.get.custom_feature?("Allow Production API Client in Dev")
       return endpoint_alias
     else
       return "dev"
     end
-  end
-
-  # This is pretty much here solely for testing...I don't like mocking
-  # out the rails env
-  def self.development?
-    Rails.env.development?
   end
 
   def self.valid_endpoint? endpoint_alias
@@ -72,8 +66,7 @@ module OpenChain; module Api; class ApiClient
   end
 
   def self.get_config
-    @@config ||= YAML.load_file 'config/api_client.yml'
-    @@config
+    MasterSetup.secrets.api_client
   end
   private_class_method :get_config
 

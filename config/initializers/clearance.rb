@@ -65,6 +65,9 @@ Clearance.configure do |config|
   config.httponly = true
   # We don't use SSL in dev, so if we secure the cookie, we won't be able to stay logged in
   config.secure_cookie = Rails.application.config.use_secure_cookies
+  # TODO - We should change this to true..but I think we'll also have to adjust how we handle
+  # the API key so for now, keep this as false.
+  config.rotate_csrf_on_sign_in = false
   config.cookie_expiration = lambda {|cookies|
     # Basically, since the clearance devs are a tad bit opinionated and they
     # don't really want to implement a remember function when logging

@@ -239,7 +239,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
             # Temp file is evidently purged by the time this comparison is made.
             [nil]
         ).and_return(m)
-        expect(m).to receive(:deliver!)
+        expect(m).to receive(:deliver_now)
 
         subject.run_schedulable(settings)
 
@@ -258,7 +258,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         # The current day is day 5 of the fiscal month, not day 4 (what the settings are looking for).
         FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
 
-        expect_any_instance_of(subject).not_to receive(:run_report)
+        expect(subject).not_to receive(:run_report)
         expect(OpenMailer).not_to receive(:send_simple_html)
 
         subject.run_schedulable(settings)
@@ -279,7 +279,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
         # There is no info on file for previous quarter.
 
-        expect_any_instance_of(subject).not_to receive(:run_report)
+        expect(subject).not_to receive(:run_report)
         expect(OpenMailer).not_to receive(:send_simple_html)
 
         subject.run_schedulable(settings)

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe LinesSupport do
   describe "default_line_number" do
     it "should create line numbers for in memory lines" do
@@ -41,7 +39,7 @@ describe LinesSupport do
       expect(c_line.save).to be_truthy
 
       expect(PieceSet.count).to eq(1)
-      expect(PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id)).not_to be_nil
+      expect(PieceSet.find_by(drawback_import_line_id: d_line.id, commercial_invoice_line_id: c_line.id)).not_to be_nil
     end
     it 'should link drawback import line to commercial invoice line' do
       c_line = Factory(:commercial_invoice_line)
@@ -50,7 +48,7 @@ describe LinesSupport do
       expect(d_line.save).to be_truthy
 
       expect(PieceSet.count).to eq(1)
-      expect(PieceSet.find_by_drawback_import_line_id_and_commercial_invoice_line_id(d_line.id,c_line.id)).not_to be_nil
+      expect(PieceSet.find_by(drawback_import_line_id: d_line.id, commercial_invoice_line_id: c_line.id)).not_to be_nil
     end
   end
 

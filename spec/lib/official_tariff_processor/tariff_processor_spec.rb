@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::OfficialTariffProcessor::TariffProcessor do
   describe "process_country" do
     it "should do nothing if country not in registry" do

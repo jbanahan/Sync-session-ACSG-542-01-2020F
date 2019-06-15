@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::Admin::SearchSetupsController do
   describe "create_from_setup" do
     it "should create a new template based on search setup id" do

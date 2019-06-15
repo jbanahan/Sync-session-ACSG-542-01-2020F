@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe BusinessRuleSnapshotsController do
 
   let! (:entity) { Factory(:entry, broker_reference: "REF") }

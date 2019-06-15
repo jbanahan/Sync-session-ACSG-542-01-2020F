@@ -137,7 +137,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
   end
 
   def self.find_products user, query_opts, cdefs
-    p = Product.includes([:custom_values,:classifications=>[:tariff_records,:country]])
+    p = Product.joins([:custom_values,:classifications=>[:tariff_records,:country]])
     p = Product.search_secure user, p
     if !query_opts[:style_s3_path].blank?
       uids = get_uids_from_s3(query_opts[:style_s3_path])
@@ -149,7 +149,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
     end
     p = p.where('tariff_records.line_number = (SELECT min(line_number) FROM tariff_records WHERE tariff_records.classification_id = classifications.id)')
     p = p.where('length(tariff_records.hts_1)>1')
-    p
+    p.uniq
   end
 
   def self.get_uids_from_s3 path

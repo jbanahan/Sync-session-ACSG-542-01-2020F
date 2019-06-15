@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'open_chain/integration_client'
 require 'open_chain/s3'
 

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DrawbackClaim do
   context "callbacks" do
     before :each do

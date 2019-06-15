@@ -74,7 +74,8 @@ dtemp
 
       if template_hash['groups']
         template_hash['groups'].each do |grp_code|
-          Group.find_by_system_code(grp_code).users << u
+          g = Group.find_by(system_code: grp_code)
+          g.users << u if g
         end
       end
 

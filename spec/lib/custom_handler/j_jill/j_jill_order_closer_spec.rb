@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
   describe "close?" do
     it "should close an order > 60 days after ship_window_end" do

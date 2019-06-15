@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe CustomReportContainerListing do
   before :each do
     @u = Factory(:master_user)

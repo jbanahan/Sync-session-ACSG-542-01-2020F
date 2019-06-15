@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe DutyCalcExportFile do
   before :each do
     @importer = Factory(:company,:importer=>true)

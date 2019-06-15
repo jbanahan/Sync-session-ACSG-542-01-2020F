@@ -4,7 +4,7 @@ class NonInvoicedEvents < ActiveRecord::Migration
       t.integer :billable_event_id, null: false
       t.string :invoice_generator_name
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :non_invoiced_events, :billable_event_id

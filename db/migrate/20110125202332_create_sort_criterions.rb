@@ -7,7 +7,7 @@ class CreateSortCriterions < ActiveRecord::Migration
       t.integer :custom_definition_id
       t.boolean :descending
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

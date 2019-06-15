@@ -21,7 +21,7 @@ module OpenChain
       if !data.blank?
         to = MailingList.where(system_code: "ISF Monitor").first.presence || "support@vandegriftinc.com"
         subject = "ISF Processing Stuck"
-        OpenMailer::send_simple_html(to, subject, email_body(data)).deliver!
+        OpenMailer::send_simple_html(to, subject, email_body(data)).deliver_now
       end
     end
 

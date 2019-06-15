@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
           email_to = OpenMailer::BUG_EMAIL if email_to.blank?
 
           # Don't attach the email if it's too large...no point in trying to send a 70MB file.
-          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file_info[:attachment_type], file.original_filename, file_info[:too_large] ? nil : file).deliver!
+          OpenMailer.send_kewill_imaging_error(email_to, file_info[:errors], file_info[:attachment_type], file.original_filename, file_info[:too_large] ? nil : file).deliver_now
         end
       end
 

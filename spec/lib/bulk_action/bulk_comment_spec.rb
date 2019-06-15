@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BulkAction::BulkComment do
   describe '#act' do
     before :each do

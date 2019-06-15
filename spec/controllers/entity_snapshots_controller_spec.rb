@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe EntitySnapshotsController do
   let (:product) { Factory(:product,:name=>'nm') }
   let (:user) { Factory(:user) }

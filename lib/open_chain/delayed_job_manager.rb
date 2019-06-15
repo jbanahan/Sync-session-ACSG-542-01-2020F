@@ -22,7 +22,7 @@ class DelayedJobManager
       return false if next_warning_time && Time.zone.now < next_warning_time
 
       if message_count > max_messages
-        OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{message_count} Items")).deliver!
+        OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{message_count} Items")).deliver_now
         memcache.set "DelayedJobManager:next_backlog_warning", reporting_delay_minutes.minutes.from_now
         return true
       end
@@ -61,7 +61,7 @@ class DelayedJobManager
     OpenChain::CloudWatch.send_delayed_job_error_count real_error_count
 
     if real_error_count > 0
-      OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors."), error_messages).deliver!
+      OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors."), error_messages).deliver_now
       return true
     else
       return false

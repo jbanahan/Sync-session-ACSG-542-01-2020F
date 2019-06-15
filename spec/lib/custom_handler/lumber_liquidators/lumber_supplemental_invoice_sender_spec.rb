@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender do
 
   describe "run_schedulable" do

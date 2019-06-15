@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe FtpSessionsController do
   before :each do
 

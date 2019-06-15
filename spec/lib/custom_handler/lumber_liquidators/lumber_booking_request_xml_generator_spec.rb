@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator do
 
   describe 'generate_xml' do
@@ -139,7 +137,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_shipping_order.text('Purpose')).to eq('Create')
         expect(elem_shipping_order.text('ShippingOrderNumber')).to eq('SHPREF')
         expect(elem_shipping_order.text('Status')).to eq('Submitted')
-        expect(elem_shipping_order.text('CargoReadyDate')).to eq('2016-08-31T09:10:11.345')
+        expect(elem_shipping_order.text('CargoReadyDate')).to eq('2016-08-31T00:00:00.000')
         expect(elem_shipping_order.text('CommercialInvoiceNumber')).to eq('N/A')
         expect(elem_shipping_order.text('LoadType')).to eq('CY')
         expect(elem_shipping_order.text('TransportationMode')).to eq('Air')

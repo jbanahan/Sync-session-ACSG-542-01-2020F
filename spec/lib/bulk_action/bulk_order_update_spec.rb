@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::BulkAction::BulkOrderUpdate do
   describe "#act" do
     before :each do

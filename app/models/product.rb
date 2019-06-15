@@ -33,6 +33,11 @@ class Product < ActiveRecord::Base
   include TouchesParentsChangedAt
   include IntegrationParserSupport
 
+  attr_accessible :changed_at, :division_id, :entity_type_id, :importer_id,
+    :last_file_bucket, :last_file_path, :last_updated_by_id, :last_updated_by, 
+    :name, :status_rule_id, :unique_identifier, :unit_of_measure, :importer,
+    :created_at, :updated_at, :classifications_attributes, :variants_attributes, :inactive
+  
   belongs_to :importer, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
@@ -47,10 +52,8 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
-  has_many   :bill_of_materials_children, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
-    :foreign_key=>:parent_product_id, :include=>:child_product
-  has_many   :bill_of_materials_parents, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
-    :foreign_key=>:child_product_id, :include=>:parent_product
+  has_many   :bill_of_materials_children, -> { includes(:child_product) }, dependent: :destroy, class_name: "BillOfMaterialsLink", foreign_key: :parent_product_id
+  has_many   :bill_of_materials_parents, -> { includes(:parent_product) }, dependent: :destroy, class_name: "BillOfMaterialsLink", foreign_key: :child_product_id
   has_many   :child_products, :through=>:bill_of_materials_children
   has_many   :parent_products, :through=>:bill_of_materials_parents
   has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'

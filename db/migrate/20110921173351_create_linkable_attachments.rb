@@ -5,7 +5,7 @@ class CreateLinkableAttachments < ActiveRecord::Migration
       t.string :value
       t.integer :attachment_id
 
-      t.timestamps
+      t.timestamps null: false
     end
     add_index :linkable_attachments, :model_field_uid, {:name=>'linkable_mfuid'}
     add_index :linkable_attachments, :attachment_id, {:name=>'linkable_attachment_id'}

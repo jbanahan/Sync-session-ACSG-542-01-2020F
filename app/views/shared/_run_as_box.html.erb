@@ -5,7 +5,7 @@
     <% end %>
   </div>
   <% if run_as_user %>
-  <div class="run_as_message">Logged In As: <%=run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <%=link_to("Disable", disable_run_as_path())%></div>
+  <div class="run_as_message">Logged In As: <%=run_as_user.full_name%>, Running As: <%=current_user.full_name%> - <%=link_to("Disable", disable_run_as_users_path(), method: :post)%></div>
   <% end %>
   <div class="clear"></div>
 </div>

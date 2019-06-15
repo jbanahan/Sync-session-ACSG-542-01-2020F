@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::EntityCompare::RunBusinessValidations do
 
   subject { described_class }

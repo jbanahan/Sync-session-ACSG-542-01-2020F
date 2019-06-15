@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Report::EntryContainerCostBreakdown do
 
   context "with entry data" do

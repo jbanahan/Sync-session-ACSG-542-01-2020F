@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
           report_descriptor = "Ascena Vendor Scorecard [#{quarter_descriptor}]"
           settings['file_name'] = report_descriptor
           temp = self.new.run_scorecard_report settings
-          OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] #{report_descriptor}", "Attached is the Ascena Vendor Scorecard Report for #{quarter_descriptor}, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.", [temp]).deliver!
+          OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] #{report_descriptor}", "Attached is the Ascena Vendor Scorecard Report for #{quarter_descriptor}, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.", [temp]).deliver_now
         ensure
           temp.close! if temp && !temp.closed?
         end

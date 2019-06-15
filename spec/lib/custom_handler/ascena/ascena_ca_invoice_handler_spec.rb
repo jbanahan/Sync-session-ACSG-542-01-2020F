@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
   describe 'process' do
     before :each do 

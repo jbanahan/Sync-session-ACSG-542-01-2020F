@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ValidationRuleEntryInvoiceFieldFormat do
   before :each do
     @rule = described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes',regex:'ABC'}.to_json)

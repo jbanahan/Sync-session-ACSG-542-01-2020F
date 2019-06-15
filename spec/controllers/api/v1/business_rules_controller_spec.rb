@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::BusinessRulesController do
   before :each do
     @u = Factory(:master_user)

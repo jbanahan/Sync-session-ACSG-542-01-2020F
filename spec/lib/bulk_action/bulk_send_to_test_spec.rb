@@ -37,7 +37,7 @@ describe OpenChain::BulkAction::BulkSendToTest do
       described_class.act @u, @ord.id, {'module_type' => 'Order'}, nil, nil
     end
 
-    it "does not send file if object doesn't support this behavior" do
+    it "does not send file if object doesn't support this behavior", :without_partial_double_verification do
       company = Factory(:company)
 
       allow_any_instance_of(Company).to receive(:can_view?).and_return true

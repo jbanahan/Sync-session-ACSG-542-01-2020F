@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit do
   before :each do
     @ent = Factory(:entry, commercial_invoice_numbers: "123456789\n 987654321")

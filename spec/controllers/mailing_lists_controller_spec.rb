@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe MailingListsController do
   let (:company) { Factory(:company) }
   let (:user) { Factory(:user, company: company) }

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser do
   describe "extract_check_info" do
     it "extracts check info from file" do

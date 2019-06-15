@@ -40,7 +40,7 @@ class OpenChain::AllianceImagingClient
   #not unit tested since it'll all be mocks
   def self.request_images file_number, message_options = {}
     conf = imaging_config
-    OpenChain::SQS.send_json conf["sqs_send_queue"], {"file_number"=>file_number, "sqs_queue"=>conf[:sqs_receive_queue], "s3_bucket" => conf[:s3_bucket]}, message_options
+    OpenChain::SQS.send_json conf["sqs_send_queue"], {"file_number"=>file_number, "sqs_queue"=>conf['sqs_receive_queue'], "s3_bucket" => conf['s3_bucket']}, message_options
   end
   
   #not unit tested since it'll all be mocks
@@ -54,7 +54,7 @@ class OpenChain::AllianceImagingClient
       # the message won't get deleted (as raising from the poll block causes the message to stay in the queue),
       # thus, after 5 minutes the message will get retried.  This allows for transient errors to be 
       # retried after a lengthy wait.
-      OpenChain::SQS.poll(imaging_config[:sqs_receive_queue], visibility_timeout: 300) do |hsh|
+      OpenChain::SQS.poll(imaging_config['sqs_receive_queue'], visibility_timeout: 300) do |hsh|
         # Create a deep_dup of the hash so anything we may do with it doesn't muck upthe 
         # hash if we need to proxy it
         hash = hsh.deep_dup
@@ -112,13 +112,10 @@ class OpenChain::AllianceImagingClient
   end
 
   def self.proxy_fenix_drive_docs_config
-    @proxy_config ||= begin
-      YAML.load_file 'config/proxy_fenix_drive_docs.yml'
-    rescue Errno::ENOENT
-      # do nothing...if the load raises we'll report a nicer error
-    end
-    raise "No Fenix Drive Docs proxy configuration file found at 'config/proxy_fenix_drive_docs.yml'." unless @proxy_config
-    @proxy_config
+    config = MasterSetup.secrets["proxy_fenix_drive_docs"]
+
+    raise "No Fenix Drive Docs proxy configuration found under 'proxy_fenix_drive_docs' key in secrets.yml" if config.blank?
+    config
   end
 
   # The file passed in here must have the correct file extension for content type discovery or
@@ -308,10 +305,10 @@ class OpenChain::AllianceImagingClient
     rel
   end
 
-  private
-
-    def self.imaging_config 
-      @@imaging_config ||= YAML.load_file("config/kewill_imaging.yml").with_indifferent_access
-      @@imaging_config[Rails.env]
-    end
+  def self.imaging_config
+    config = MasterSetup.secrets["kewill_imaging"]
+    raise "No Kewill Imaging config set up.  Make sure a 'kewill_imaging' key is configured in secrets.yml." if config.blank?
+    config
+  end
+  private_class_method :imaging_config
 end

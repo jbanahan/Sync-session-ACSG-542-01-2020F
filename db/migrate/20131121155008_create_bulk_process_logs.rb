@@ -8,7 +8,7 @@ class CreateBulkProcessLogs < ActiveRecord::Migration
       t.integer :total_object_count
       t.integer :changed_object_count
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_column :change_records, :bulk_process_log_id, :integer

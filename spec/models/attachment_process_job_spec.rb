@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe AttachmentProcessJob do
   before :each do
     @s = Factory(:shipment)

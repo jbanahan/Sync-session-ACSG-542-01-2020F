@@ -13,34 +13,34 @@ OpenChain::Application.routes.draw do
   get '/:subpath/fonts/:font.svg', to: redirect('/fonts/%{font}.svg', status: 302)
   get '/:subpath/fonts/:font.eot', to: redirect('/fonts/%{font}.eot', status: 302)
 
-  match '/hts/subscribed_countries' => 'hts#subscribed_countries', :via=>:get
-  match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
-  match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
-  match '/hts/:iso' => 'hts#country', :via=>:get
-  match '/hts' => 'hts#index', :via=>:get
+  get '/hts/subscribed_countries', to: 'hts#subscribed_countries'
+  get '/hts/:iso/heading/:heading', to: 'hts#heading'
+  get '/hts/:iso/chapter/:chapter', to: 'hts#chapter'
+  get '/hts/:iso', to: 'hts#country'
+  get '/hts', to: 'hts#index'
 
-  match "auth/:provider/callback" => "user_sessions#create_from_omniauth"
-  match 'auth/failure' => redirect("/login")
+  get "auth/:provider/callback", to: "user_sessions#create_from_omniauth"
+  get 'auth/failure', to: redirect("/login")
 
   namespace :api do
     namespace :v1 do
-      match '/business_rules/for_module/:module_type/:id' => 'business_rules#for_module', via: :get
-      match '/business_rules/refresh/:module_type/:id' => 'business_rules#refresh', via: :post
-      match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
-      match '/messages/count/:user_id' => 'messages#count'
-      get "/emails/validate_email_list" => "emails#validate_email_list"
-      post "/entries/importer/:importer_id/activity_summary/us/download" => 'entries#store_us_activity_summary_download'
-      post "/entries/importer/:importer_id/activity_summary/ca/download" => 'entries#store_ca_activity_summary_download'
-      post "/entries/importer/:importer_id/activity_summary/us/email" => 'entries#email_us_activity_summary_download'
-      post "/entries/importer/:importer_id/activity_summary/ca/email" => 'entries#email_ca_activity_summary_download'
+      get '/business_rules/for_module/:module_type/:id', to: 'business_rules#for_module'
+      get '/business_rules/refresh/:module_type/:id', to: 'business_rules#refresh'
+      get '/comments/for_module/:module_type/:id', to: 'comments#for_module'
+      get '/messages/count/:user_id', to: 'messages#count'
+      get "/emails/validate_email_list", to: "emails#validate_email_list"
+      post "/entries/importer/:importer_id/activity_summary/us/download", to: 'entries#store_us_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/ca/download", to: 'entries#store_ca_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/us/email", to: 'entries#email_us_activity_summary_download'
+      post "/entries/importer/:importer_id/activity_summary/ca/email", to: 'entries#email_ca_activity_summary_download'
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
       resources :comments, only: [:create,:destroy]
-      get "/:base_object_type/:base_object_id/comments" => "comments#polymorphic_index"
-      post "/:base_object_type/:base_object_id/comments" => "comments#polymorphic_create"
-      get "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_show"
-      delete "/:base_object_type/:base_object_id/comment/:id" => "comments#polymorphic_destroy"
+      get "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_index"
+      post "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_create"
+      get "/:base_object_type/:base_object_id/comment/:id", to: "comments#polymorphic_show"
+      delete "/:base_object_type/:base_object_id/comment/:id", to: "comments#polymorphic_destroy"
 
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
@@ -66,13 +66,13 @@ OpenChain::Application.routes.draw do
           get :shipment_lines
           get :booking_lines
           post :send_shipment_instructions
-          put 'book_order/:order_id' => 'shipments#book_order'
+          match 'book_order/:order_id', to: 'shipments#book_order', via: [:put, :patch]
           get :state_toggle_buttons
           post :toggle_state_button
         end
         collection do
-          post 'booking_from_order/:order_id' => 'shipments#create_booking_from_order'
-          get 'open_bookings' => "shipments#open_bookings"
+          post 'booking_from_order/:order_id', to: 'shipments#create_booking_from_order'
+          get 'open_bookings', to: "shipments#open_bookings"
         end
       end
       resources :fields, only: [:index]
@@ -115,24 +115,24 @@ OpenChain::Application.routes.draw do
           post :google_oauth2
           get :me
           get :enabled_users
-          post 'me/toggle_email_new_messages' => 'users#toggle_email_new_messages'
+          post 'me/toggle_email_new_messages', to: 'users#toggle_email_new_messages'
           post :change_my_password
         end
 
       end
 
       resources :official_tariffs, only: [] do
-        get 'find/:iso/:hts' => 'official_tariffs#find', on: :collection, constraints: {hts: /[\d\.]+/}
+        get 'find/:iso/:hts', to: 'official_tariffs#find', on: :collection, constraints: {hts: /[\d\.]+/}
       end
       resources :products, only: [:index, :show, :create, :update] do
         # The optional param is for temporary backwards compatibility on the API
-        get 'by_uid(/:path_uid)' => "products#by_uid", on: :collection
+        get 'by_uid(/:path_uid)', to: "products#by_uid", on: :collection
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
         post :validate, on: :member
       end
       resources :variants, only: [:show] do
-        get 'for_vendor_product/:vendor_id/:product_id' => 'variants#for_vendor_product', on: :collection
+        get 'for_vendor_product/:vendor_id/:product_id', to: 'variants#for_vendor_product', on: :collection
       end
       resources :product_rate_overrides, only: [:index, :show, :update, :create]
 
@@ -147,8 +147,10 @@ OpenChain::Application.routes.draw do
       end
 
       resources :product_vendor_assignments, only: [:index,:show,:update,:create] do
-        put :bulk_update, on: :collection
-        post :bulk_create, on: :collection
+        collection do 
+          match :bulk_update, via: [:put, :patch]
+          post :bulk_create
+        end
       end
 
       resources :model_fields, only: [:index] do
@@ -176,38 +178,38 @@ OpenChain::Application.routes.draw do
       resources :trade_preference_programs, except: [:destroy]
       resources :tpp_hts_overrides, except: [:destroy]
 
-      match "/setup_data" => "setup_data#index", via: :get
+      get "/setup_data", to: "setup_data#index"
 
-      match "/ports/autocomplete" => "ports#autocomplete", :via => :get
-      match "/divisions/autocomplete" => "divisions#autocomplete", via: :get
+      get "/ports/autocomplete", to: "ports#autocomplete"
+      get "/divisions/autocomplete", to: "divisions#autocomplete"
 
-      match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
-      match "/intacct_data/receive_check_result" => "intacct_data#receive_check_result", :via => :post
-      post "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details"
-      post "/alliance_data/receive_alliance_entry_tracking_details" => "alliance_data#receive_alliance_entry_tracking_details"
-      post "/alliance_data/receive_updated_entry_numbers" => "alliance_data#receive_updated_entry_numbers"
-      post "/alliance_data/receive_entry_data" => "alliance_data#receive_entry_data"
-      post "/alliance_data/receive_mid_updates" => "alliance_data#receive_mid_updates"
-      post "/alliance_data/receive_address_updates" => "alliance_data#receive_address_updates"
-      post "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data"
-      post "/sql_proxy_postbacks/receive_sql_proxy_report_data" => "sql_proxy_postbacks#receive_sql_proxy_report_data"
+      post "/intacct_data/receive_alliance_invoice_details", to: "intacct_data#receive_alliance_invoice_details"
+      post "/intacct_data/receive_check_result", to: "intacct_data#receive_check_result"
+      post "/alliance_data/receive_alliance_entry_details", to: "alliance_data#receive_alliance_entry_details"
+      post "/alliance_data/receive_alliance_entry_tracking_details", to: "alliance_data#receive_alliance_entry_tracking_details"
+      post "/alliance_data/receive_updated_entry_numbers", to: "alliance_data#receive_updated_entry_numbers"
+      post "/alliance_data/receive_entry_data", to: "alliance_data#receive_entry_data"
+      post "/alliance_data/receive_mid_updates", to: "alliance_data#receive_mid_updates"
+      post "/alliance_data/receive_address_updates", to: "alliance_data#receive_address_updates"
+      post "/alliance_reports/receive_alliance_report_data", to: "alliance_reports#receive_alliance_report_data"
+      post "/sql_proxy_postbacks/receive_sql_proxy_report_data", to: "sql_proxy_postbacks#receive_sql_proxy_report_data"
 
-      match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
+      post "/schedulable_jobs/run_jobs", to: "schedulable_jobs#run_jobs"
 
-      get "/:base_object_type/:base_object_id/attachments" => "attachments#index"
-      post "/:base_object_type/:base_object_id/attachments" => "attachments#create"
-      get "/:base_object_type/:base_object_id/attachment/:id" => "attachments#show"
-      delete "/:base_object_type/:base_object_id/attachment/:id" => "attachments#destroy"
-      get "/:base_object_type/:base_object_id/attachment/:id/download" => "attachments#download"
-      get "/:base_object_type/:base_object_id/attachment_types" => "attachments#attachment_types"
-      get "/data_cross_references/count_xrefs" => "data_cross_references#count_xrefs"
+      get "/:base_object_type/:base_object_id/attachments", to: "attachments#index"
+      post "/:base_object_type/:base_object_id/attachments", to: "attachments#create"
+      get "/:base_object_type/:base_object_id/attachment/:id", to: "attachments#show"
+      delete "/:base_object_type/:base_object_id/attachment/:id", to: "attachments#destroy"
+      get "/:base_object_type/:base_object_id/attachment/:id/download", to: "attachments#download"
+      get "/:base_object_type/:base_object_id/attachment_types", to: "attachments#attachment_types"
+      get "/data_cross_references/count_xrefs", to: "data_cross_references#count_xrefs"
 
-      match "/feedback/send_feedback" => 'feedback#send_feedback', via: :post
+      post "/feedback/send_feedback", to: 'feedback#send_feedback'
 
       namespace :admin do
-        match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
-        match 'search_setups/:id/create_template' => 'search_setups#create_template', via: :post
-        get "/settings/paths" => "settings#paths"
+        get 'event_subscriptions/:event_type/:subscription_type/:object_id', to: "event_subscriptions#show_by_event_type_object_id_and_subscription_type"
+        post 'search_setups/:id/create_template', to: 'search_setups#create_template'
+        get "/settings/paths", to: "settings#paths"
         resources :users, only: [] do
           member do
             post :add_templates
@@ -259,26 +261,26 @@ OpenChain::Application.routes.draw do
 
       resources :search_criterions, only: [:index, :create, :update, :destroy]
 
-      get "/:base_object_type/:base_object_id/folders" => "folders#index"
-      post "/:base_object_type/:base_object_id/folders" => "folders#create"
-      get "/:base_object_type/:base_object_id/folder/:id" => "folders#show"
-      put "/:base_object_type/:base_object_id/folder/:id" => "folders#update"
-      delete "/:base_object_type/:base_object_id/folder/:id" => "folders#destroy"
+      get "/:base_object_type/:base_object_id/folders", to: "folders#index"
+      post "/:base_object_type/:base_object_id/folders", to: "folders#create"
+      get "/:base_object_type/:base_object_id/folder/:id", to: "folders#show"
+      match "/:base_object_type/:base_object_id/folder/:id", to: "folders#update", via: [:put, :patch]
+      delete "/:base_object_type/:base_object_id/folder/:id", to: "folders#destroy"
 
       resources :groups, only: [:index, :show]
-      get "/groups/show_excluded_users/:id" => "groups#show_excluded_users"
-      post "/:base_object_type/:base_object_id/groups/:id/add" => "groups#add_to_object"
-      post "/:base_object_type/:base_object_id/groups" => "groups#set_groups_for_object"
+      get "/groups/show_excluded_users/:id", to: "groups#show_excluded_users"
+      post "/:base_object_type/:base_object_id/groups/:id/add", to: "groups#add_to_object"
+      post "/:base_object_type/:base_object_id/groups", to: "groups#set_groups_for_object"
 
       resources :search_table_configs, only: [] do
-        get 'for_page/:page_uid' => "search_table_configs#for_page", on: :collection
+        get 'for_page/:page_uid', to: "search_table_configs#for_page", on: :collection
       end
     end
   end
 
   resources :aws_backup_sessions, only: [:index, :show]
   namespace :customer do
-    match '/lumber_liquidators/sap_vendor_setup_form/:vendor_id' => 'lumber_liquidators#sap_vendor_setup_form', via: :get
+    get '/lumber_liquidators/sap_vendor_setup_form/:vendor_id', to: 'lumber_liquidators#sap_vendor_setup_form'
   end
   resources :delayed_jobs, :only => [:destroy] do
     member do
@@ -305,21 +307,22 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
-  match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get, :as => :entries_activity_summary_us_with_importer
-  match '/entries/importer/:importer_id/activity_summary/us/content' => 'entries#us_activity_summary_content', :via => :get
-  match '/entries/importer/:importer_id/activity_summary/us/duty_detail' => 'entries#us_duty_detail', :via => :get
+  get '/entries/activity_summary/us', to: 'entries#us_activity_summary'
+  get '/entries/importer/:importer_id/activity_summary/us', to: 'entries#us_activity_summary', as: :entries_activity_summary_us_with_importer
+  get '/entries/importer/:importer_id/activity_summary/us/content', to: 'entries#us_activity_summary_content'
+  get '/entries/importer/:importer_id/activity_summary/us/duty_detail', to: 'entries#us_duty_detail'
 
-  match '/entries/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get
-  match '/entries/importer/:importer_id/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get, :as => :entries_activity_summary_ca_with_importer
-  match '/entries/importer/:importer_id/activity_summary/ca/content' => 'entries#ca_activity_summary_content', :via => :get
+  get '/entries/activity_summary/ca', to: 'entries#ca_activity_summary'
+  get '/entries/importer/:importer_id/activity_summary/ca', to: 'entries#ca_activity_summary', as: :entries_activity_summary_ca_with_importer
+  get '/entries/importer/:importer_id/activity_summary/ca/content', to: 'entries#ca_activity_summary_content'
 
-  match '/entries/importer/:importer_id/entry_port/:port_code/country/:iso_code' => 'entries#by_entry_port', :via => :get
-  match '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range' => 'entries#by_release_range', :via=>:get
-  match '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range/download' => 'entries#by_release_range_download', :via=>:get
-  match "/entries/bi" => "entries#bi_three_month", :via=>:get
-  match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
-  match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
+  get '/entries/importer/:importer_id/entry_port/:port_code/country/:iso_code', to: 'entries#by_entry_port'
+  get '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range', to: 'entries#by_release_range'
+  get '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range/download', to: 'entries#by_release_range_download'
+  get "/entries/bi", to: "entries#bi_three_month"
+  get "/entries/bi/three_month", to: "entries#bi_three_month"
+  get "/entries/bi/three_month_hts", to: "entries#bi_three_month_hts"
+
   resources :entries, :only => [:index,:show] do
     member do
       get 'validation_results'
@@ -337,7 +340,7 @@ OpenChain::Application.routes.draw do
       post 'bulk_send_last_integration_file_to_test'
     end
 
-    resources :broker_invoices, :only=>[:create] do 
+    resources :broker_invoices do 
       member do 
         get 'sync_records'
       end
@@ -345,24 +348,32 @@ OpenChain::Application.routes.draw do
   end
 
   resources :business_validation_templates do
-    get 'download', :on=>:member
-    post 'upload', :on=>:collection
-    post 'copy', :on=>:member
+    member do 
+      get 'download'
+      post 'copy'
+    end
+    collection do 
+      post 'upload'
+    end
     resources :t_search_criterions, only: [:new, :create, :destroy]
     resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
-      get 'download', :on=>:member
-      post 'upload', :on=>:collection
-      post 'copy', :on=>:member
+      member do 
+        post 'copy'
+        get 'download'
+      end
+      collection do 
+        post 'upload'
+      end
       resources :r_search_criterions, only: [:new, :create, :destroy]
     end
   end
 
-  match '/business_validation_templates/:id/manage_criteria' => 'business_validation_templates#manage_criteria', via: :get
-  match '/business_validation_templates/:id/edit_angular' => 'business_validation_templates#edit_angular', via: :get
-  match '/business_validation_rules/:id/edit_angular' => 'business_validation_rules#edit_angular', via: :get
+  get '/business_validation_templates/:id/manage_criteria', to: 'business_validation_templates#manage_criteria'
+  get '/business_validation_templates/:id/edit_angular', to: 'business_validation_templates#edit_angular'
+  get '/business_validation_rules/:id/edit_angular', to: 'business_validation_rules#edit_angular'
 
   resources :business_validation_rule_results, only: [:update] do
-    put 'cancel_override', :on=>:member
+    match 'cancel_override', :on=>:member, via: [:put, :patch]
   end
 
   resources :commercial_invoices, :only => [:show]
@@ -420,11 +431,11 @@ OpenChain::Application.routes.draw do
   resources :field_validator_rules do
     get 'validate', :on=>:collection
   end
-  resources :field_labels, :only=>[:index] do
+  resources :field_labels, only: [:index] do
     post 'save', :on=>:collection
   end
-  resources :password_resets, :only => [:edit, :create, :update]
-  resources :dashboard_widgets, :only => [:index] do
+  resources :password_resets, only: [:edit, :create, :update]
+  resources :dashboard_widgets, only: [:index] do
     collection do
       get 'edit'
       post 'save'
@@ -443,7 +454,8 @@ OpenChain::Application.routes.draw do
   resources :upgrade_logs, :only=>[:show]
   resources :attachment_types
 
-  match "/official_tariffs/auto_classify/:hts" => "official_tariffs#auto_classify"
+  get "/official_tariffs/auto_classify/:hts", to: "official_tariffs#auto_classify"
+
   resources :official_tariffs, :only=>[:index,:show] do
     collection do
     get 'find'
@@ -455,6 +467,11 @@ OpenChain::Application.routes.draw do
   resources :official_tariff_meta_data, :only=>[:create,:update]
 
   resources :status_rules
+
+  # TODO Fix this route to be resourceful
+  get "/attachments/email_attachable/:attachable_type/:attachable_id", to: "attachments#show_email_attachable"
+  post "/attachments/email_attachable/:attachable_type/:attachable_id", to: "attachments#send_email_attachable"
+
   resources :attachments do
     member do
       get 'download'
@@ -467,56 +484,23 @@ OpenChain::Application.routes.draw do
   end
 
   resources :comments do
-    post 'send_email', :on => :member
-    post 'bulk_count', :on => :collection
-    post 'bulk', :on => :collection
+    post 'send_email', on: :member
+    post 'bulk_count', on: :collection
+    post 'bulk', on: :collection
   end
-  match "/textile/preview" => "textile#preview"
-  match "/tracker" => "public_shipments#index"
-	match "/index.html" => "home#index"
-  match "/shipments/:id/add_sets" => "shipments#add_sets"
-  match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
-  match "/shipments/:id/undo_receive" => "shipments#undo_receive"
-  match "/deliveries/:id/add_sets" => "deliveries#add_sets"
-  match "/login" => "user_sessions#new", :as => :login
-  match "/logout" => "user_sessions#destroy", :as => :logout
-  match "/register" => "registrations#send_email", :via => :post
-  match "/my_subscriptions" => "users#event_subscriptions"
-  match "/settings" => "settings#index", :as => :settings
-  match "/tools" => "settings#tools", :as => :tools
-  get "/settings/system_summary" => "settings#system_summary"
-  match "/adjust_inventory" => "products#adjust_inventory"
-  match "/feedback" => "feedback#send_feedback"
-  match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
-  match "/help" => "chain_help#index"
-  match '/users/find_by_email' => "users#find_by_email", :via => :get
-  match '/users/move_to_new_company/:destination_company_id' => "users#move_to_new_company", :via => :post
-  match "/accept_tos" => "users#accept_tos"
-  match "/show_tos" => "users#show_tos"
-  match "/public_fields" => "public_fields#index"
-  match "/public_fields/save" => "public_fields#save", :via => :post
-  match "/users/email_new_message" => "users#email_new_message"
-  match "/users/task_email" => "users#task_email"
-  match "/hide_message/:message_name" => 'users#hide_message', :via => :post
-  match "/quick_search" => "quick_search#show"
-  match '/quick_search/by_module/:module_type' => 'quick_search#by_module', via: :get
-  match "/enable_run_as" => "users#enable_run_as"
-  match "/disable_run_as" => "users#disable_run_as"
-  match "/unlock_user/:user_id" => "users#unlock_user", :as => :unlock_user, :via => :post
-  match "/users/set_homepage" => "users#set_homepage", :via => :post
-  match "/me" => "users#me", via: :get
-  match "/logo.png" => "logo#logo", via: :get
 
-  match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
-  match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
+  resources :public_fields, only: [:index] do
+    collection do 
+      post :save
+    end
+  end
 
-  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#show_email_attachable", via: :get
-  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
-
-  match "/comparepdf" => "comparepdf#compare", via: :get
-
-  match "/project_deliverables/:user_id/notify_now" => "project_deliverables#notify_now", via: :get
-  match "/glossary/:core_module" => "model_fields#glossary", via: :get
+  # TODO Fix these routes to be resourceful
+  get "email_attachments/:id", to: "email_attachments#show", as: :email_attachments_show
+  post "email_attachments/:id/download", to: "email_attachments#download", as: :email_attachments_download
+  resources :email_attachments, only: [:show] do
+    post :download
+  end
 
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
@@ -532,7 +516,7 @@ OpenChain::Application.routes.draw do
   end
 
   resources :random_audits, :only => [] do
-    get 'download', :on => :member
+    get 'download', on: :member
   end
 
   resources :run_as_sessions, :only => [:index, :show]
@@ -607,9 +591,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ascena_ca_invoices/upload" => "custom_features#ascena_ca_invoices_upload", :via => :post
   match "/custom_features/ascena_ca_invoices/:id/download" => "custom_features#ascena_ca_invoices_download", :via => :get
 
-  get "/custom_features/hm_po_line_parser" => "custom_features#hm_po_line_parser_index"
-  post "/custom_features/hm_po_line_parser/upload" => "custom_features#hm_po_line_parser_upload"
-  get "/custom_features/hm_po_line_parser/:id/download" => "custom_features#hm_po_line_parser_download"
+  get "/custom_features/hm_po_line_parser", to: "custom_features#hm_po_line_parser_index"
+  post "/custom_features/hm_po_line_parser/upload", to: "custom_features#hm_po_line_parser_upload"
+  get "/custom_features/hm_po_line_parser/:id/download", to: "custom_features#hm_po_line_parser_download"
 
   match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
   match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post
@@ -623,65 +607,65 @@ OpenChain::Application.routes.draw do
   match "/custom_features/fisher_ci_load/upload" => "custom_features#fisher_ci_load_upload", :via => :post
   match "/custom_features/fisher_ci_load/:id/download" => "custom_features#fisher_ci_load_download", :via => :get
 
-  get "/custom_features/crew_returns" => "custom_features#crew_returns_index"
-  post "/custom_features/crew_returns/upload" => "custom_features#crew_returns_upload"
-  get "/custom_features/crew_returns/:id/download" => "custom_features#crew_returns_download"
+  get "/custom_features/crew_returns", to: "custom_features#crew_returns_index"
+  post "/custom_features/crew_returns/upload", to: "custom_features#crew_returns_upload"
+  get "/custom_features/crew_returns/:id/download", to: "custom_features#crew_returns_download"
 
-  get "/custom_features/pvh_workflow" => "custom_features#pvh_workflow_index"
-  post "/custom_features/pvh_workflow/upload" => "custom_features#pvh_workflow_upload"
-  get "/custom_features/pvh_workflow/:id/download" => "custom_features#pvh_workflow_download"
+  get "/custom_features/pvh_workflow", to: "custom_features#pvh_workflow_index"
+  post "/custom_features/pvh_workflow/upload", to: "custom_features#pvh_workflow_upload"
+  get "/custom_features/pvh_workflow/:id/download", to: "custom_features#pvh_workflow_download"
 
-  get "/custom_features/pvh_ca_workflow" => "custom_features#pvh_ca_workflow_index"
-  post "/custom_features/pvh_ca_workflow/upload" => "custom_features#pvh_ca_workflow_upload"
-  get "/custom_features/pvh_ca_workflow/:id/download" => "custom_features#pvh_ca_workflow_download"
+  get "/custom_features/pvh_ca_workflow", to: "custom_features#pvh_ca_workflow_index"
+  post "/custom_features/pvh_ca_workflow/upload", to: "custom_features#pvh_ca_workflow_upload"
+  get "/custom_features/pvh_ca_workflow/:id/download", to: "custom_features#pvh_ca_workflow_download"
 
-  get "/custom_features/advan_parts" => "custom_features#advan_parts_index"
-  post "/custom_features/advan_parts/upload" => "custom_features#advan_parts_upload"
-  get "/custom_features/advan_parts/:id/download" => "custom_features#advan_parts_download"
+  get "/custom_features/advan_parts", to: "custom_features#advan_parts_index"
+  post "/custom_features/advan_parts/upload", to: "custom_features#advan_parts_upload"
+  get "/custom_features/advan_parts/:id/download", to: "custom_features#advan_parts_download"
 
-  get "/custom_features/cq_origin" => "custom_features#cq_origin_index"
-  post "/custom_features/cq_origin/upload" => "custom_features#cq_origin_upload"
-  get "/custom_features/cq_origin/:id/download" => "custom_features#cq_origin_download"
+  get "/custom_features/cq_origin", to: "custom_features#cq_origin_index"
+  post "/custom_features/cq_origin/upload", to: "custom_features#cq_origin_upload"
+  get "/custom_features/cq_origin/:id/download", to: "custom_features#cq_origin_download"
 
-  get "/custom_features/lumber_part" => "custom_features#lumber_part_index"
-  post "/custom_features/lumber_part/upload" => "custom_features#lumber_part_upload"
-  get "/custom_features/lumber_part/:id/download" => "custom_features#lumber_part_download"
+  get "/custom_features/lumber_part", to: "custom_features#lumber_part_index"
+  post "/custom_features/lumber_part/upload", to: "custom_features#lumber_part_upload"
+  get "/custom_features/lumber_part/:id/download", to: "custom_features#lumber_part_download"
 
-  get "/custom_features/lumber_carb" => "custom_features#lumber_carb_index"
-  post "/custom_features/lumber_carb/upload" => "custom_features#lumber_carb_upload"
-  get "/custom_features/lumber_carb/:id/download" => "custom_features#lumber_carb_download"
+  get "/custom_features/lumber_carb", to: "custom_features#lumber_carb_index"
+  post "/custom_features/lumber_carb/upload", to: "custom_features#lumber_carb_upload"
+  get "/custom_features/lumber_carb/:id/download", to: "custom_features#lumber_carb_download"
 
-  get "/custom_features/lumber_patent" => "custom_features#lumber_patent_index"
-  post "/custom_features/lumber_patent/upload" => "custom_features#lumber_patent_upload"
-  get "/custom_features/lumber_patent/:id/download" => "custom_features#lumber_patent_download"
+  get "/custom_features/lumber_patent", to: "custom_features#lumber_patent_index"
+  post "/custom_features/lumber_patent/upload", to: "custom_features#lumber_patent_upload"
+  get "/custom_features/lumber_patent/:id/download", to: "custom_features#lumber_patent_download"
 
-  get "/custom_features/eddie_bauer_7501" => "custom_features#eddie_bauer_7501_index"
-  post "/custom_features/eddie_bauer_7501/upload" => "custom_features#eddie_bauer_7501_upload"
-  get "/custom_features/eddie_bauer_7501/:id/download" => "custom_features#eddie_bauer_7501_download"
+  get "/custom_features/eddie_bauer_7501", to: "custom_features#eddie_bauer_7501_index"
+  post "/custom_features/eddie_bauer_7501/upload", to: "custom_features#eddie_bauer_7501_upload"
+  get "/custom_features/eddie_bauer_7501/:id/download", to: "custom_features#eddie_bauer_7501_download"
 
-  get "/custom_features/ascena_product" => "custom_features#ascena_product_index"
-  post "/custom_features/ascena_product/upload" => "custom_features#ascena_product_upload"
-  get "/custom_features/ascena_product/:id/download" => "custom_features#ascena_product_download"
+  get "/custom_features/ascena_product", to: "custom_features#ascena_product_index"
+  post "/custom_features/ascena_product/upload", to: "custom_features#ascena_product_upload"
+  get "/custom_features/ascena_product/:id/download", to: "custom_features#ascena_product_download"
 
-  get "/custom_features/ua_missing_classifications" => "custom_features#ua_missing_classifications_index"
-  post "/custom_features/ua_missing_classifications/upload" => "custom_features#ua_missing_classifications_upload"
-  get "/custom_features/ua_missing_classifications/:id/download" => "custom_features#ua_missing_classifications_download"
+  get "/custom_features/ua_missing_classifications", to: "custom_features#ua_missing_classifications_index"
+  post "/custom_features/ua_missing_classifications/upload", to: "custom_features#ua_missing_classifications_upload"
+  get "/custom_features/ua_missing_classifications/:id/download", to: "custom_features#ua_missing_classifications_download"
 
-  get "/custom_features/isf_late_filing" => "custom_features#isf_late_filing_index"
-  post "/custom_features/isf_late_filing/upload" => "custom_features#isf_late_filing_upload"
-  get "/custom_features/isf_late_filing/:id/download" => "custom_features#isf_late_filing_download"
+  get "/custom_features/isf_late_filing", to: "custom_features#isf_late_filing_index"
+  post "/custom_features/isf_late_filing/upload", to: "custom_features#isf_late_filing_upload"
+  get "/custom_features/isf_late_filing/:id/download", to: "custom_features#isf_late_filing_download"
 
-  get "/custom_features/intacct_invoice" => "custom_features#intacct_invoice_index"
-  post "/custom_features/intacct_invoice/upload" => "custom_features#intacct_invoice_upload"
-  get "/custom_features/intacct_invoice/:id/download" => "custom_features#intacct_invoice_download"
+  get "/custom_features/intacct_invoice", to: "custom_features#intacct_invoice_index"
+  post "/custom_features/intacct_invoice/upload", to: "custom_features#intacct_invoice_upload"
+  get "/custom_features/intacct_invoice/:id/download", to: "custom_features#intacct_invoice_download"
 
-  get "/custom_features/lumber_allport_billing" => "custom_features#lumber_allport_billing_index"
-  post "/custom_features/lumber_allport_billing/upload" => "custom_features#lumber_allport_billing_upload"
-  get "/custom_features/lumber_allport_billing/:id/download" => "custom_features#lumber_allport_billing_download"
+  get "/custom_features/lumber_allport_billing", to: "custom_features#lumber_allport_billing_index"
+  post "/custom_features/lumber_allport_billing/upload", to: "custom_features#lumber_allport_billing_upload"
+  get "/custom_features/lumber_allport_billing/:id/download", to: "custom_features#lumber_allport_billing_download"
 
-  get "/custom_features/customer_invoice_handler" => "custom_features#customer_invoice_index"
-  post "/custom_features/customer_invoice_handler/upload" => "custom_features#customer_invoice_upload"
-  get "/custom_features/customer_invoice_handler/:id/download" => "custom_features#customer_invoice_download"
+  get "/custom_features/customer_invoice_handler", to: "custom_features#customer_invoice_index"
+  post "/custom_features/customer_invoice_handler/upload", to: "custom_features#customer_invoice_upload"
+  get "/custom_features/customer_invoice_handler/:id/download", to: "custom_features#customer_invoice_download"
 
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
@@ -747,58 +731,58 @@ OpenChain::Application.routes.draw do
   match "/reports/show_ll_prod_risk_report" => "reports#show_ll_prod_risk_report", :via => :get
   match "/reports/run_ll_prod_risk_report" => "reports#run_ll_prod_risk_report", :via => :post
   match "/reports/show_special_programs_savings_report" => "reports#show_special_programs_savings_report", :via => :get
-  match "/reports/run_special_programs_savings_report" => "reports#run_special_programs_savings_report", :via => :post
-  get "/reports/show_pvh_container_log" => "reports#show_pvh_container_log"
-  post "/reports/run_pvh_container_log" => "reports#run_pvh_container_log"
-  get "/reports/show_pvh_air_shipment_log" => "reports#show_pvh_air_shipment_log"
-  post "/reports/run_pvh_air_shipment_log" => "reports#run_pvh_air_shipment_log"
-  get "reports/show_monthly_entry_summation" => "reports#show_monthly_entry_summation"
-  post "reports/run_monthly_entry_summation" => "reports#run_monthly_entry_summation"
-  get "/reports/show_container_cost_breakdown" => "reports#show_container_cost_breakdown"
-  post "/reports/run_container_cost_breakdown" => "reports#run_container_cost_breakdown"
-  get "/reports/show_ll_dhl_order_push_report" => "reports#show_ll_dhl_order_push_report"
-  post "/reports/run_ll_dhl_order_push_report" => "reports#run_ll_dhl_order_push_report"
-  get "/reports/show_j_crew_drawback_imports_report" => "reports#show_j_crew_drawback_imports_report"
-  post "/reports/run_j_crew_drawback_imports_report" => "reports#run_j_crew_drawback_imports_report"
-  get "/reports/show_ua_duty_planning_report" => "reports#show_ua_duty_planning_report"
-  post "/reports/run_ua_duty_planning_report" => "reports#run_ua_duty_planning_report"
-  get "/reports/show_lumber_actualized_charges_report" => "reports#show_lumber_actualized_charges_report"
-  post "/reports/run_lumber_actualized_charges_report" => "reports#run_lumber_actualized_charges_report"
-  get "/reports/show_entries_with_holds_report" => "reports#show_entries_with_holds_report"
-  post "/reports/run_entries_with_holds_report" => "reports#run_entries_with_holds_report"
-  get "/reports/show_rl_jira_report" => "reports#show_rl_jira_report"
-  post "/reports/run_rl_jira_report" => "reports#run_rl_jira_report"
-  get "/reports/show_duty_savings_report" => "reports#show_duty_savings_report"
-  post "/reports/run_duty_savings_report" => "reports#run_duty_savings_report"
-  get "/reports/show_daily_first_sale_exception_report" => "reports#show_daily_first_sale_exception_report"
-  post "/reports/run_daily_first_sale_exception_report" => "reports#run_daily_first_sale_exception_report"
-  get "/reports/show_ticket_tracking_report" => "reports#show_ticket_tracking_report"
-  post "/reports/run_ticket_tracking_report" => "reports#run_ticket_tracking_report"
-  get "/reports/show_ascena_entry_audit_report" => "reports#show_ascena_entry_audit_report"
-  post "/reports/run_ascena_entry_audit_report" => "reports#run_ascena_entry_audit_report"
-  get "/reports/show_ascena_duty_savings_report" => "reports#show_ascena_duty_savings_report"
-  post "/reports/run_ascena_duty_savings_report" => "reports#run_ascena_duty_savings_report"
-  get "/reports/show_ascena_mpf_savings_report" => "reports#show_ascena_mpf_savings_report"
-  post "/reports/run_ascena_mpf_savings_report" => "reports#run_ascena_mpf_savings_report"
-  get "/reports/show_ppq_by_po_report" => "reports#show_ppq_by_po_report"
-  post "/reports/run_ppq_by_po_report" => "reports#run_ppq_by_po_report"
-  get "/reports/show_ascena_actual_vs_potential_first_sale_report" => "reports#show_ascena_actual_vs_potential_first_sale_report"
-  post "/reports/run_ascena_actual_vs_potential_first_sale_report" => "reports#run_ascena_actual_vs_potential_first_sale_report"
-  get "/reports/show_ascena_vendor_scorecard_report" => "reports#show_ascena_vendor_scorecard_report"
-  post "/reports/run_ascena_vendor_scorecard_report" => "reports#run_ascena_vendor_scorecard_report"
-  get "/reports/show_lumber_order_snapshot_discrepancy_report" => "reports#show_lumber_order_snapshot_discrepancy_report"
-  post "/reports/run_lumber_order_snapshot_discrepancy_report" => "reports#run_lumber_order_snapshot_discrepancy_report"
-  get "/reports/show_company_year_over_year_report" => "reports#show_company_year_over_year_report"
-  post "/reports/run_company_year_over_year_report" => "reports#run_company_year_over_year_report"
-  get "/reports/show_customer_year_over_year_report" => "reports#show_customer_year_over_year_report"
-  post "/reports/run_customer_year_over_year_report" => "reports#run_customer_year_over_year_report"
+  match "/reports/run_special_programs_savings_report" => "reports#run_special_programs_savings_report", :via => :post  
+  get "/reports/show_pvh_container_log", to: "reports#show_pvh_container_log"
+  post "/reports/run_pvh_container_log", to: "reports#run_pvh_container_log"
+  get "/reports/show_pvh_air_shipment_log", to: "reports#show_pvh_air_shipment_log"
+  post "/reports/run_pvh_air_shipment_log", to: "reports#run_pvh_air_shipment_log"
+  get "reports/show_monthly_entry_summation", to: "reports#show_monthly_entry_summation"
+  post "reports/run_monthly_entry_summation", to: "reports#run_monthly_entry_summation"
+  get "/reports/show_container_cost_breakdown", to: "reports#show_container_cost_breakdown"
+  post "/reports/run_container_cost_breakdown", to: "reports#run_container_cost_breakdown"
+  get "/reports/show_ll_dhl_order_push_report", to: "reports#show_ll_dhl_order_push_report"
+  post "/reports/run_ll_dhl_order_push_report", to: "reports#run_ll_dhl_order_push_report"
+  get "/reports/show_j_crew_drawback_imports_report", to: "reports#show_j_crew_drawback_imports_report"
+  post "/reports/run_j_crew_drawback_imports_report", to: "reports#run_j_crew_drawback_imports_report"
+  get "/reports/show_ua_duty_planning_report", to: "reports#show_ua_duty_planning_report"
+  post "/reports/run_ua_duty_planning_report", to: "reports#run_ua_duty_planning_report"
+  get "/reports/show_lumber_actualized_charges_report", to: "reports#show_lumber_actualized_charges_report"
+  post "/reports/run_lumber_actualized_charges_report", to: "reports#run_lumber_actualized_charges_report"
+  get "/reports/show_entries_with_holds_report", to: "reports#show_entries_with_holds_report"
+  post "/reports/run_entries_with_holds_report", to: "reports#run_entries_with_holds_report"
+  get "/reports/show_rl_jira_report", to: "reports#show_rl_jira_report"
+  post "/reports/run_rl_jira_report", to: "reports#run_rl_jira_report"
+  get "/reports/show_duty_savings_report", to: "reports#show_duty_savings_report"
+  post "/reports/run_duty_savings_report", to: "reports#run_duty_savings_report"
+  get "/reports/show_daily_first_sale_exception_report", to: "reports#show_daily_first_sale_exception_report"
+  post "/reports/run_daily_first_sale_exception_report", to: "reports#run_daily_first_sale_exception_report"
+  get "/reports/show_ticket_tracking_report", to: "reports#show_ticket_tracking_report"
+  post "/reports/run_ticket_tracking_report", to: "reports#run_ticket_tracking_report"
+  get "/reports/show_ascena_entry_audit_report", to: "reports#show_ascena_entry_audit_report"
+  post "/reports/run_ascena_entry_audit_report", to: "reports#run_ascena_entry_audit_report"
+  get "/reports/show_ascena_duty_savings_report", to: "reports#show_ascena_duty_savings_report"
+  post "/reports/run_ascena_duty_savings_report", to: "reports#run_ascena_duty_savings_report"
+  get "/reports/show_ascena_mpf_savings_report", to: "reports#show_ascena_mpf_savings_report"
+  post "/reports/run_ascena_mpf_savings_report", to: "reports#run_ascena_mpf_savings_report"
+  get "/reports/show_ppq_by_po_report", to: "reports#show_ppq_by_po_report"
+  post "/reports/run_ppq_by_po_report", to: "reports#run_ppq_by_po_report"
+  get "/reports/show_ascena_actual_vs_potential_first_sale_report", to: "reports#show_ascena_actual_vs_potential_first_sale_report"
+  post "/reports/run_ascena_actual_vs_potential_first_sale_report", to: "reports#run_ascena_actual_vs_potential_first_sale_report"
+  get "/reports/show_ascena_vendor_scorecard_report", to: "reports#show_ascena_vendor_scorecard_report"
+  post "/reports/run_ascena_vendor_scorecard_report", to: "reports#run_ascena_vendor_scorecard_report"
+  get "/reports/show_lumber_order_snapshot_discrepancy_report", to: "reports#show_lumber_order_snapshot_discrepancy_report"
+  post "/reports/run_lumber_order_snapshot_discrepancy_report", to: "reports#run_lumber_order_snapshot_discrepancy_report"
+  get "/reports/show_company_year_over_year_report", to: "reports#show_company_year_over_year_report"
+  post "/reports/run_company_year_over_year_report", to: "reports#run_company_year_over_year_report"
+  get "/reports/show_customer_year_over_year_report", to: "reports#show_customer_year_over_year_report"
+  post "/reports/run_customer_year_over_year_report", to: "reports#run_customer_year_over_year_report"
   get "/reports/show_us_billing_summary" => "reports#show_us_billing_summary"
   post "/reports/run_us_billing_summary" => "reports#run_us_billing_summary"
-  get "/reports/show_puma_division_quarter_breakdown" => "reports#show_puma_division_quarter_breakdown"
-  post "/reports/run_puma_division_quarter_breakdown" => "reports#run_puma_division_quarter_breakdown"
+  get "/reports/show_puma_division_quarter_breakdown", to: "reports#show_puma_division_quarter_breakdown"
+  post "/reports/run_puma_division_quarter_breakdown", to: "reports#run_puma_division_quarter_breakdown"
 
   resources :report_results, :only => [:index,:show] do
-    get 'download', :on => :member
+    get 'download', on: :member
   end
   resources :custom_reports, :except=>[:index,:edit] do
     member do
@@ -825,6 +809,9 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  get "/login", to: "user_sessions#new", as: :login
+  match "/logout", to: "user_sessions#destroy", as: :logout, via: [:get, :post, :delete]
+
   resources :user_sessions, :only => [:index,:new,:create,:destroy]
 
   resources :item_change_subscriptions
@@ -835,14 +822,13 @@ OpenChain::Application.routes.draw do
     member do
       get 'history'
       get 'make_invoice'
-      put 'generate_invoice'
       get :download
     end
     collection do
       post 'bulk_send_last_integration_file_to_test'
     end
     resources :shipment_lines do
-      post :create_multiple, :on => :collection
+      post :create_multiple, on: :collection
     end
 	end
 
@@ -851,7 +837,7 @@ OpenChain::Application.routes.draw do
       get 'history'
     end
     resources :delivery_lines do
-      post :create_multiple, :on => :collection
+      post :create_multiple, on: :collection
     end
 	end
 
@@ -870,6 +856,7 @@ OpenChain::Application.routes.draw do
       get 'history'
       get :next_item
       get :previous_item
+      patch :import_worksheet
       put :import_worksheet
       get :validation_results
     end
@@ -913,13 +900,25 @@ OpenChain::Application.routes.draw do
   end
 
 	resources :addresses do
-		get 'render_partial', :on => :member
+		get 'render_partial', on: :member
 	end
 
   resources :users, :only => [:index] do
     resources :scheduled_reports, :only=>[:index]
     member do
       get 'history'
+      post 'unlock', action: "unlock_user"
+    end
+    collection do 
+      get 'find_by_email'
+      get 'me'
+      post "email_new_message"
+      post "task_email"
+      post "set_homepage"
+      post 'run_as', action: "enable_run_as"
+      post 'disable_run_as'
+      post 'hide_message'
+      post 'move_to_new_company'
     end
   end
 
@@ -992,12 +991,12 @@ OpenChain::Application.routes.draw do
         post :create_from_template
       end
       resources :debug_records, :only => [:index, :show] do
-        get :destroy_all, :on => :collection
+        get :destroy_all, on: :collection
       end
     end
     resources :charge_categories, :only => [:index, :create, :destroy]
-		get :shipping_address_list, :on => :member
-    get :attachment_archive_enabled, :on => :collection
+		get :shipping_address_list, on: :member
+    get :attachment_archive_enabled, on: :collection
     resources :fiscal_months, :except=>[:show] do
       get 'download', :on=>:collection
       post 'upload', :on=>:collection
@@ -1025,7 +1024,7 @@ OpenChain::Application.routes.draw do
       get 'download'
       post 'download_items'
       post 'process_file'
-      put 'update_search_criterions'
+      match 'update_search_criterions', via: [:put, :patch]
     end
     get 'show_angular', :on=>:collection
     resources :imported_file_downloads, :only=>[:index,:show]
@@ -1034,10 +1033,6 @@ OpenChain::Application.routes.draw do
   match "/imported_files_results/:id/total_objects" => "imported_files#total_objects", :via => :get
 
   resources :search_setups do
-    collection do
-      post 'sticky_open'
-      post 'sticky_close'
-    end
     member do
       get 'copy'
       post 'copy'
@@ -1058,21 +1053,29 @@ OpenChain::Application.routes.draw do
       get 'toggle_subscription'
       post 'assign'
       get 'copy'
+      patch 'archive'
       put 'archive'
+      patch 'restore'
       put 'restore'
     end
   end
   resources :survey_responses do
     member do
       get 'invite'
+      patch 'archive'
       put 'archive'
+      patch 'restore'
       put 'restore'
       post 'remind'
     end
     resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
-      post 'add_comment', on: :member
-      put 'activate', on: :member
-      put 'resolve', on: :member
+      member do 
+        post 'add_comment'
+        patch 'activate'
+        put 'activate'
+        patch 'resolve'
+        put 'resolve'
+      end
     end
     resources :survey_response_logs, :only=>[:index]
   end
@@ -1080,11 +1083,16 @@ OpenChain::Application.routes.draw do
     resources :answer_comments, only:[:create]
   end
   resources :corrective_issues, :only=>[:create,:update,:destroy] do
-    post 'update_resolution', on: :member, to: :update_resolution_status
+    member do 
+      post 'update_resolution', action: :update_resolution_status
+    end
   end
 
   resources :drawback_upload_files, :only=>[:index,:create] do
-    put 'process_j_crew_entries', on: :collection
+    collection do 
+      patch 'process_j_crew_entries'
+      put 'process_j_crew_entries'
+    end
   end
   resources :duty_calc_import_files, :only=>[:create] do
     get 'download', on: :member
@@ -1122,8 +1130,12 @@ OpenChain::Application.routes.draw do
   resources :projects, except: [:destroy] do
     resources :project_updates, only: [:update,:create]
     resources :project_deliverables, only: [:update,:create]
-    put 'toggle_close', on: :member
-    put 'toggle_on_hold', on: :member
+    member do 
+      patch 'toggle_close'
+      put 'toggle_close'
+      patch 'toggle_on_hold'
+      put 'toggle_on_hold'
+    end
   end
   resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show] do
@@ -1134,17 +1146,14 @@ OpenChain::Application.routes.draw do
   end
   resources :intacct_errors, only: [:index] do
     # Gets are here to accomodate clearing directly from Excel exception report
-    put 'clear_receivable', on: :member
-    get 'clear_receivable', on: :member
-    put 'clear_payable', on: :member
-    get 'clear_payable', on: :member
-    put 'clear_check', on: :member
-    get 'clear_check', on: :member
+    match 'clear_receivable', on: :member, via: [:get, :put]
+    match 'clear_payable', on: :member, via: [:get, :put]
+    match 'clear_check', on: :member, via: [:get, :put]
   end
   match "/intacct_errors/push_to_intacct" => "intacct_errors#push_to_intacct", via: :post
 
   resources :data_cross_references do
-    get 'show' => "data_cross_references#edit"
+    get 'show', to: "data_cross_references#edit"
     get 'download', on: :collection
     post 'upload', on: :collection
   end
@@ -1211,13 +1220,28 @@ OpenChain::Application.routes.draw do
     get 'download', on: :collection
   end
 
-  get "/:recordable_type/:recordable_id/business_rule_snapshots" => "business_rule_snapshots#index"
+  # The following are routes for just some random stuff that doesn't have resourceful routes for some reason
+  post "/textile/preview", to: "textile#preview"
+  post "/tracker", to: "public_shipments#index"
+  get "/index.html", to: "home#index"
+  post "/register", to: "registrations#send_email"
+  get "/settings", to: "settings#index", as: :settings
+  get "/tools", to: "settings#tools", as: :tools
+  get "/settings/system_summary", to: "settings#system_summary"
+  post "/feedback", to: "feedback#send_feedback"
+  get "/model_fields/find_by_module_type", to: "model_fields#find_by_module_type"
+  
+  match "/quick_search", to: "quick_search#show", via: [:post, :get]
+  match '/quick_search/by_module/:module_type', to: 'quick_search#by_module', via: [:post, :get]
 
-  #Griddler inbound email processing
-  mount_griddler
+  get "/logo.png", to: "logo#logo"
+  get "/comparepdf", to: "comparepdf#compare"
+  get "/glossary/:core_module", to: "model_fields#glossary"
+
+  get "/:recordable_type/:recordable_id/business_rule_snapshots", to: "business_rule_snapshots#index"
 
   #Jasmine test runner
-  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
+  mount JasmineRails::Engine => '/specs' if defined?(JasmineRails) && !Rails.env.production?
 
   get "/dump_request", to: "application#dump_request"
 

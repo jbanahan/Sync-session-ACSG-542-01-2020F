@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   let(:validator) { described_class.new }

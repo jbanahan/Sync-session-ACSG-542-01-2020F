@@ -1,7 +1,11 @@
 describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
 
-  subject { 
+  subject {
     s = described_class.new
+    # The following allows us to mock a method that doesn't exist on the abstract class under test
+    def s.sync_code 
+      raise "Mock Me!"
+    end
     allow(s).to receive(:sync_code).and_return "abstract_code"
     s
   }

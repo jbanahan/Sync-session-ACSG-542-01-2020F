@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe SnapshotDescriptor do
 
   let (:json) { '{"json": "WEEEEE!"}' }

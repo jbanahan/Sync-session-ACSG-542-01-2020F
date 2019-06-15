@@ -73,7 +73,30 @@ jobs:
               database: circle_test
               username: root
               host: 127.0.0.1
+              encoding: utf8mb4
+              collation: utf8mb4_general_ci
             ' > config/database.yml
+      - run:
+          name: Generate config/secrets.yml
+          command: |-
+            echo "test:
+              secret_token: 26d141c9a7204906121db95e892d2c8b500c3db440c06d3eaa6715f0cbf8763f
+              secret_key_base: d8d79c3a681e63dad3b221dd189fe83df5480b79bca4458ffa4fcffbd1035608
+              aws:
+                access_key_id: $AWS_ACCESS_KEY_ID
+                secret_access_key: $AWS_SECRET_ACCESS_KEY
+                region: us-east-1
+              google_authentication:
+                integration-dev@vandegriftinc.com:
+                  client_id: $GOOGLE_CLIENT_ID
+                  client_secret: $GOOGLE_CLIENT_SECRET
+                  refresh_token: $GOOGLE_REFRESH_TOKEN
+              redis:
+                server: localhost
+                port: 6379
+              memcache:
+                server: localhost:11211
+            " > config/secrets.yml
       - run: 
           name: Create / Migrate Database
           command: |-
@@ -89,12 +112,13 @@ jobs:
       - run: 
           name: Rspec Unit Tests
           command: |-
-            bundle exec rspec --colour --require spec_helper --format RspecJunitFormatter --out /tmp/circle-tests/rspec/rspec.xml --format progress $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
+            bundle exec rspec --require spec_helper --format RspecJunitFormatter --out /tmp/circle-tests/rspec/rspec.xml --format progress $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
       # This is based on your 1.0 configuration file or project settings
+      # TODO Figure out how to run Jasmine tests in Headless Chrome
       - run:
           name: Jasmine Unit Tests
           command: |-
-            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake spec:javascript; fi
+            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake jasmine:ci; fi
       # Teardown
       #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
       # Save test results

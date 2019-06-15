@@ -39,7 +39,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
 
       it "uses different importer for products, if specified" do
         imp = Factory(:company, system_code: "ACME")
-        product_2.update_attributes! importer: imp
+        product_2.update_attributes! importer_id: imp.id
 
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!
         expect(rule.run_validation entry).to eq "Fish and Wildlife Transmission Date missing but F&W products found:\ninvoice 654321 / line 1 / part cdef_part_2"
@@ -73,7 +73,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
 
       it "uses different importer for products, if specified" do
         imp = Factory(:company, system_code: "ACME")
-        product_2.update_attributes! importer: imp
+        product_2.update_attributes! importer_id: imp.id
 
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!
         expect(rule.run_validation entry).to eq "Fish and Wildlife Transmission Date missing but F&W products found:\ninvoice 654321 / line 1 / part attr_part_2"

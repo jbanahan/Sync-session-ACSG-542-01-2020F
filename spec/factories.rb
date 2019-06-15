@@ -105,6 +105,10 @@ Factory.define :official_tariff do |t|
   t.full_description "description"
   t.association :country
 end
+Factory.define :official_tariff_meta_datum do |t|
+  t.sequence(:hts_code) {|n| "123456#{n}"}
+  t.association :country
+end
 Factory.define :product do |p|
   p.sequence(:unique_identifier) {|n| "uid#{n}"}
 end

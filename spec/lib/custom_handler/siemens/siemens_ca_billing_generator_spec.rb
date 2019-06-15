@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
   subject {OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator.new('spec/fixtures/files/vfitrack-passphraseless.gpg.key')}
 

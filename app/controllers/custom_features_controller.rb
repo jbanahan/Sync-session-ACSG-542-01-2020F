@@ -5,7 +5,6 @@ require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/intacct/alliance_day_end_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
-require 'open_chain/custom_handler/kewill_isf_manual_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
@@ -47,7 +46,6 @@ class CustomFeaturesController < ApplicationController
   EDDIE_CI_UPLOAD ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
   FENIX_CI_UPLOAD ||= 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
   JCREW_PARTS ||= 'OpenChain::CustomHandler::JCrewPartsExtractParser'
-  KEWILL_ISF ||= 'OpenChain::CustomHandler::KewillIsfManualParser'
   LENOX_SHIPMENT ||= 'OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser'
   POLO_CA_INVOICES ||= 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
   POLO_SAP_BOM ||= 'OpenChain::CustomHandler::PoloSapBomHandler'
@@ -228,14 +226,6 @@ class CustomFeaturesController < ApplicationController
 
   def ua_missing_classifications_download
     generic_download 'UA Missing Classifications'
-  end
-
-  def kewill_isf_index
-    generic_index OpenChain::CustomHandler::KewillIsfManualParser.new(nil), KEWILL_ISF, "Kewill ISF Manual Parser"
-  end
-
-  def kewill_isf_upload
-    generic_upload KEWILL_ISF, "Kewill ISF Manual Parser", "kewill_isf"
   end
 
   def polo_sap_bom_index

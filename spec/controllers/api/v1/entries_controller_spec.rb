@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Api::V1::EntriesController do
   let(:downloader) { OpenChain::ActivitySummary::EntrySummaryDownload }
   let(:imp) { Factory(:company) }

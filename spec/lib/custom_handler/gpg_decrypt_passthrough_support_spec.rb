@@ -1,9 +1,11 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
   subject do 
     Class.new do 
       include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
+
+      def gpg_helper
+        raise "Mock me"
+      end
     end
   end
 
@@ -11,7 +13,7 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
 
     let (:log) { InboundFile.new }
     let (:gpg_helper) { 
-      gpg = instance_double("OpenChain::GPG")
+      gpg = instance_double(OpenChain::GPG)
       allow_any_instance_of(subject).to receive(:gpg_helper).and_return gpg
       gpg
     }
@@ -71,6 +73,10 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
     subject { 
       Class.new do 
         include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
+
+        def gpg_helper
+          raise "Mock me"
+        end
       end.new
     }
 
@@ -95,8 +101,8 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
     end
 
     it "pulls filename from original_filename method and strips pgp from filename" do
-      file = File.open('spec/fixtures/files/passphraseless-encrypted.gpg', "rb")    
-      allow(file).to receive(:original_filename).and_return "encrypted.txt.pgp"
+      file = File.open('spec/fixtures/files/passphraseless-encrypted.gpg', "rb")
+      Attachment.add_original_filename_method(file, "encrypted.txt.pgp")
 
       filename = nil
       subject.decrypt_file_to_tempfile(file) do |temp|

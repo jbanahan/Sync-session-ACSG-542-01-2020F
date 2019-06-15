@@ -1,26 +1,12 @@
-# == Schema Information
-#
-# Table name: custom_reports
-#
-#  created_at    :datetime         not null
-#  id            :integer          not null, primary key
-#  include_links :boolean
-#  name          :string(255)
-#  no_time       :boolean
-#  type          :string(255)
-#  updated_at    :datetime         not null
-#  user_id       :integer
-#
-# Indexes
-#
-#  index_custom_reports_on_type     (type)
-#  index_custom_reports_on_user_id  (user_id)
-#
+# -*- SkipSchemaAnnotations
 
 require 'custom_report_entry_invoice_breakdown_support'
 
 class CustomReportTieredEntryInvoiceBreakdown < CustomReport
   include CustomReportEntryInvoiceBreakdownSupport
+
+  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  
   #display name for report
   def self.template_name
     "Tiered Entry Summary Billing Breakdown"

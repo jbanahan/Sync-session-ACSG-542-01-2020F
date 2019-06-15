@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Validator::VariantLineIntegrityValidator do
   it "should allow product that matches variant" do
     ol = OrderLine.new

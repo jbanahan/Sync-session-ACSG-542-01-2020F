@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OrderLine do
   describe "variant validation" do
     it "should validate variant" do

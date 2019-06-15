@@ -76,7 +76,7 @@ $(function() {
         <% if MasterSetup.get.production? %>
           <%=field_bootstrap "Send Test Files To", f.text_field(:send_test_files_to_instance,:class=>'form-control') %>
         <% end %>
-        <%=field_bootstrap "Custom Features", f.text_area(:custom_features,:class=>'form-control')%>
+        <%=field_bootstrap "Custom Features", f.text_area(:custom_features, class: 'form-control', rows: 20)%>
         <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
         <hr/>
         <%=field_bootstrap "Classification Enabled", f.check_box(:classification_enabled) %>

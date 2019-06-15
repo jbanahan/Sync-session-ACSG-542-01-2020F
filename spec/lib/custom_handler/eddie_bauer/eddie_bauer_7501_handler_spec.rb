@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
   def create_data
     country = Factory(:country, iso_code: 'US')

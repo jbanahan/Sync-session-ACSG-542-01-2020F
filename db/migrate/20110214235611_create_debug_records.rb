@@ -6,7 +6,7 @@ class CreateDebugRecords < ActiveRecord::Migration
       t.text :request_params
       t.string :request_path
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -1,5 +1,14 @@
 describe OpenChain::CustomHandler::CsvExcelParser do
-  subject { Class.new { include OpenChain::CustomHandler::CsvExcelParser }.new }
+  
+  class FakeCsvExcelParser
+    include OpenChain::CustomHandler::CsvExcelParser
+
+    def file_reader file
+      raise "Should be mocked."
+    end
+  end
+
+  subject { FakeCsvExcelParser.new }
 
   describe "foreach" do
     let (:file_reader) { double("file_reader") }

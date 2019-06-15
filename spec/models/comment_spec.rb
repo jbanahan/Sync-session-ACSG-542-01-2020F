@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Comment do
   describe "publish_event" do
     it "should publish event on create" do

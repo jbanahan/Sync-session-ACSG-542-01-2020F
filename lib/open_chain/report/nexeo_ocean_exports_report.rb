@@ -10,7 +10,7 @@ module OpenChain; module Report; class NexeoOceanExportsReport
     end_date = (now - 1.month).at_end_of_month + 1.day
 
     f = run_report(User.integration, start_date: start_date.to_s, end_date: end_date.to_s)
-    OpenMailer.send_simple_html(opts['email_to'], "Nexeo Exports for #{start_date.strftime("%b")}", "Attached is the Nexeo Export shipment report for #{start_date.strftime("%B")}.", f).deliver!
+    OpenMailer.send_simple_html(opts['email_to'], "Nexeo Exports for #{start_date.strftime("%b")}", "Attached is the Nexeo Export shipment report for #{start_date.strftime("%B")}.", f).deliver_now
 
   end
 

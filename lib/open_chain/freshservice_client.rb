@@ -3,8 +3,8 @@ require 'rest_client'
 module OpenChain; class FreshserviceClient
   attr_accessor :token, :change_id, :request_complete
 
-  def initialize fs_token=default_fs_token('config/freshservice_client.yml')
-    @token = fs_token
+  def initialize token: default_fs_token
+    @token = token
     @request_complete = false
   end
 
@@ -18,7 +18,7 @@ module OpenChain; class FreshserviceClient
   
   def create_change! instance, new_version, server_name
     if token.blank?
-      raise "FreshserviceClient failed: No fs_token set. (Try setting up the freshservice_client.yml file)"
+      raise "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
     end
     if request_complete
      raise "FreshserviceClient failed: This change request has already been sent!"
@@ -34,7 +34,7 @@ module OpenChain; class FreshserviceClient
 
   def add_note! message
     if token.blank?
-      raise "FreshserviceClient failed: No fs_token set. (Try setting up the freshservice_client.yml file)"
+      raise "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
     elsif change_id.blank?
       raise "FreshserviceClient failed: No change_id set."
     end
@@ -111,12 +111,10 @@ module OpenChain; class FreshserviceClient
   end
 
 
-  def default_fs_token fs_config
-    @@token ||= ''
-    if @@token.blank? && File.exist?(fs_config)
-      @@token = YAML.load_file(fs_config).fetch('VFITRACK_FRESHSERVICE_TOKEN', '')
-    end
-    @@token
+  def default_fs_token
+    api_key = MasterSetup.secrets["fresh_service"].try(:[], "api_key")
+    raise "You must set up an 'api_key' value under the 'fresh_service' key in secrets.yml." if api_key.blank?
+    api_key
   end
 
 end; end

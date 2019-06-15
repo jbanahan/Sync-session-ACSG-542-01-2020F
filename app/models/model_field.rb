@@ -52,12 +52,7 @@ class ModelField
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
     @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type].to_sym
-    pf = nil
-    if @@public_field_cache.empty?
-      pf = PublicField.find_by_model_field_uid @uid
-    else
-      pf = @@public_field_cache[@uid]
-    end
+    pf = self.class.public_field(@uid)
     @public = !pf.nil?
     @public_searchable = @public && pf.searchable
     @qualified_field_name = o[:qualified_field_name]
@@ -67,8 +62,11 @@ class ModelField
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
     @process_query_result_lambda = o[:process_query_result_lambda]
-    @field_validator_rule = self.class.field_validator_rule uid
-    @field_validator_rule = o[:field_validator_rule] ? o[:field_validator_rule] : @field_validator_rule
+    if o[:field_validator_rule]
+      @field_validator_rule = o[:field_validator_rule]
+    else
+      @field_validator_rule = self.class.field_validator_rule uid  
+    end
     @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
     @mass_edit = o[:mass_edit] || @field_validator_rule.try(:mass_edit?)
 
@@ -332,12 +330,7 @@ class ModelField
   def base_label
     # Load the label once, and no longer even if it's nil - no point in relooking up nil over and over again
     return @base_label if defined?(@base_label)
-    f = nil
-    if @@field_label_cache.empty?
-      f = FieldLabel.where(:model_field_uid=>@uid).first
-    else
-      f = @@field_label_cache[@uid]
-    end
+    f = @@field_label_cache[@uid]
     if f.nil?
       #didn't find in database, check default cache or custom definition table
       if self.custom?
@@ -546,13 +539,13 @@ class ModelField
   private_constant :DISABLED_MODEL_FIELDS
 
   def self.field_validator_rule model_field_uid
-    r = nil
-    if @@field_validator_rules.empty?
-      r = FieldValidatorRule.find_by_model_field_uid model_field_uid
-    else
-      r =  @@field_validator_rules[model_field_uid]
-    end
-    r
+    # Our @@ caches should always be refreshed when this method is called so there shouldn't be any issues just referenceing the cache directly
+    @@field_validator_rules[model_field_uid]
+  end
+
+  def self.public_field model_field_uid
+    # Our @@ caches should always be refreshed when this method is called so there shouldn't be any issues just referenceing the cache directly
+    @@public_field_cache[model_field_uid]
   end
 
   def self.add_fields(core_module,descriptor_array)
@@ -686,7 +679,7 @@ class ModelField
       field_validator_rules_cache do
         custom_definition_cache do
           field_label_cache do
-            return yield
+            return yield if block_given?
           end
         end
       end

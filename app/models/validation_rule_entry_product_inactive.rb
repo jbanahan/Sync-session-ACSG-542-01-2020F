@@ -10,7 +10,7 @@ class ValidationRuleEntryProductInactive < BusinessValidationRule
   end
 
   def run_validation entry
-    ActiveRecord::Associations::Preloader.new(entry, {commercial_invoices: :commercial_invoice_lines}).run
+    ActiveRecord::Associations::Preloader.new.preload(entry, {commercial_invoices: :commercial_invoice_lines})
     line_data = entry.commercial_invoices
                      .flat_map(&:commercial_invoice_lines)
                      .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number,

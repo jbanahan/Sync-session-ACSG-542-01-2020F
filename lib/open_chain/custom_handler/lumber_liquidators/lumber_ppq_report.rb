@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
     wb = run_report(start_date, end_date)
     subject = "PPQ Report #{run_time.strftime('%m/%d/%y')}"
     workbook_to_tempfile(wb, "Lumber_PPQ", file_name: "PPQ Report #{run_time.strftime('%m-%d-%y')}.xls") do |temp|
-      OpenMailer.send_simple_html(email_to, subject, "Attached is the PPQ Report for #{run_time.strftime('%m/%d/%y')}.", temp).deliver!
+      OpenMailer.send_simple_html(email_to, subject, "Attached is the PPQ Report for #{run_time.strftime('%m/%d/%y')}.", temp).deliver_now
     end
   end
 

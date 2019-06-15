@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::Api::ApiEntityJsonizer do
 
   describe '#entity_to_json' do

@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe OpenChain::SQS do
 
   subject { described_class }

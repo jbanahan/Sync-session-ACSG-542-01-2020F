@@ -8,7 +8,7 @@ class CreateCustomFiles < ActiveRecord::Migration
       t.datetime :attached_updated_at
       t.string :attached_file_name
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

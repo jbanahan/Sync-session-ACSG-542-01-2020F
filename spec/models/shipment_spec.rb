@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe Shipment do
   let :order_booking do
     obr = Class.new do

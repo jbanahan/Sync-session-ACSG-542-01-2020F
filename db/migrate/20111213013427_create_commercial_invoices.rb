@@ -5,7 +5,7 @@ class CreateCommercialInvoices < ActiveRecord::Migration
       t.string :vendor_name
       t.integer :entry_id
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

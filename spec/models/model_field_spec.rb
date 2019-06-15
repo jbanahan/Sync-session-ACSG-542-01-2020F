@@ -1,5 +1,3 @@
-require 'spec_helper'
-
 describe ModelField do
   describe "Product Custom Defintion On Other Module" do
     before :each do
@@ -73,12 +71,14 @@ describe ModelField do
     end
     it "should not write if read only" do
       FieldLabel.set_label :x, "PLBL"
-      mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string,:read_only=>true})
-      expect(mf).to be_read_only
-      p = Product.new(:name=>'x')
-      r = mf.process_import p, 'n', User.new
-      expect(p.name).to eq 'x'
-      expect(r).to eq "Value ignored. PLBL is read only."
+      ModelField.warm_expiring_caches do 
+        mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{data_type: :string, read_only: true})
+        expect(mf).to be_read_only
+        p = Product.new(:name=>'x')
+        r = mf.process_import p, 'n', User.new
+        expect(p.name).to eq 'x'
+        expect(r).to eq "Value ignored. PLBL is read only."
+      end
     end
     it "should set read_only for custom_defintion that is read only" do
       cd = Factory :custom_definition
@@ -120,36 +120,36 @@ describe ModelField do
     end
 
     it "allows viewing when user is in FieldValidatorRule view group" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_truthy
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_truthy
     end
 
     it "allows viewing when user is in FieldValidatorRule edit group" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_truthy
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_truthy
     end
 
     it "prevents viewing if user is in view group but lambda blocks access" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}}).can_view?(user)).to be_falsey
+      expect(ModelField.new(1,:x,CoreModule::SHIPMENT,:z,{:can_view_lambda=>lambda {|user| false}, field_validator_rule: rule}).can_view?(user)).to be_falsey
     end
 
     it "prevents viewing when user is not in a group allowed to view the field" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to be_falsey
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to be_falsey
     end
 
     it "allows viewing when allow_everyone_to_view exists on the FieldValidatorRule" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP", allow_everyone_to_view: true
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP", allow_everyone_to_view: true
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to eq true
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to eq true
     end
 
     it "disallows viewing when an edit group is set for the FieldValidatorRule and user is not in that group" do
@@ -157,9 +157,9 @@ describe ModelField do
       # if the view group was blank, anyone can view it....however, due to the sheer number of fields that lumber 
       # has that have this exact setup and are likely relying on this behavior, I'm not going to change this.
       # This is the reason that FieldValidatorRule#allow_everyone_to_view exists.
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_view? user).to eq false
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_view? user).to eq false
     end
   end
 
@@ -181,16 +181,16 @@ describe ModelField do
     end
 
     it 'disallows mass_edit if user is not in mass_edit group, if group is provided' do
-      FieldValidatorRule.create! module_type: "Order", model_field_uid: 'uid', can_mass_edit_groups: "Group"
+      rule = FieldValidatorRule.create! module_type: "Order", model_field_uid: 'uid', can_mass_edit_groups: "Group"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true).can_mass_edit?(user)).to be_falsey
+      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true, field_validator_rule: rule).can_mass_edit?(user)).to be_falsey
     end
 
     it 'allows mass_edit if user is in the mass_edit group, if group is provided' do
-      FieldValidatorRule.create! module_type: "Order", model_field_uid: "uid", can_mass_edit_groups: "GROUP1\nGROUP"
+      rule = FieldValidatorRule.create! module_type: "Order", model_field_uid: "uid", can_mass_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true).can_mass_edit?(user)).to be_truthy
+      expect(ModelField.new(1, :uid, CoreModule::ORDER, "UID", mass_edit: true, field_validator_rule: rule).can_mass_edit?(user)).to be_truthy
     end
   end
 
@@ -214,30 +214,30 @@ describe ModelField do
     end
 
     it "it allows edit if user is in edit group" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP1\nGROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_truthy
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is not in edit group" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_edit_groups: "GROUP"
       user = Factory(:user)
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_falsey
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_falsey
     end
 
     it "allows edit if user is in view group when no edit groups exist" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_truthy
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_truthy
     end
 
     it "disallows edit if user is in view group when edit groups exist" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'uid', can_view_groups: "GROUP", can_edit_groups: "GROUP2"
       user = Factory(:user)
       user.groups << Factory(:group, system_code: "GROUP")
-      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID").can_edit? user).to be_falsey
+      expect(ModelField.new(1, :uid, CoreModule::ENTRY, "UID", field_validator_rule: rule).can_edit? user).to be_falsey
     end
   end
 
@@ -538,9 +538,9 @@ describe ModelField do
         end
         p.save!
         expect(p.classifications.size).to eq(1)
-        cls = p.classifications.find_by_country_id(@c.id)
+        cls = p.classifications.find_by(country: @c)
         expect(cls.tariff_records.size).to eq(1)
-        tr = cls.tariff_records.find_by_line_number 1
+        tr = cls.tariff_records.find_by(line_number: 1)
         expect(tr.hts_1).to eq "1234567891"
         expect(tr.hts_2).to eq "1234567892"
         expect(tr.hts_3).to eq "1234567893"
@@ -679,7 +679,7 @@ describe ModelField do
         @p.classifications.create!(:country_id=>@country.id).tariff_records.create! # = 0
         country_2 = Factory(:country)
         @p.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:hts_1=>'123') # = 1
-        @p.classifications.find_by_country_id(country_2.id).tariff_records.create!(:hts_1=>'123') # = 0 don't add for second component of same classification
+        @p.classifications.find_by(country: country_2).tariff_records.create!(:hts_1=>'123') # = 0 don't add for second component of same classification
         @p.classifications.create!(:country_id=>Factory(:country).id).tariff_records.create!(:hts_1=>'123') # = 1
         @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'2')
         sq = SearchQuery.new(@ss,@user)
@@ -696,7 +696,7 @@ describe ModelField do
         mf = ModelField.find_by_uid :class_comp_cnt
         expect(mf.process_export(cl,nil,true)).to eq 2
         sc = SearchCriterion.new(model_field_uid: :class_comp_cnt, operator:'eq',value:'2')
-        expect(sc.apply(Classification.scoped).first).to eq tr.classification
+        expect(sc.apply(Classification.all).first).to eq tr.classification
       end
     end
     context "regions" do
@@ -742,11 +742,11 @@ describe ModelField do
           expect(@mf.process_import(@p,1, User.new)).to match(/ignored/)
         end
         it "should not count tariff records without hts_1 values" do
-          @p.classifications.find_by_country_id(@c1.id).tariff_records.first.update_attributes(:hts_1=>'')
+          @p.classifications.find_by(country: @c1).tariff_records.first.update_attributes(:hts_1=>'')
           expect(@sc.apply(Product.where("1")).first).to be_nil
         end
         it "should not double count multiple tariff records for country" do
-          @p.classifications.find_by_country_id(@c1.id).tariff_records.create!(:hts_1=>'987654321')
+          @p.classifications.find_by(country: @c1).tariff_records.create!(:hts_1=>'987654321')
           x = @sc.apply(Product.where("1")).uniq
           expect(x.product.size).to eq(1)
           expect(x.first).to eq @p
@@ -1243,9 +1243,9 @@ describe ModelField do
     end
 
     it "does not add fields disabled via FieldValidatorRules" do
-      FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'ent_brok_ref', disabled: true
+      rule = FieldValidatorRule.create! module_type: "Entry", model_field_uid: 'ent_brok_ref', disabled: true
 
-      ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}]]
+      ModelField.add_fields CoreModule::ENTRY, [[1,:ent_brok_ref,:broker_reference, "Broker Reference",{data_type: :string, field_validator_rule: rule}]]
       mf = ModelField.find_by_uid 'ent_brok_ref'
       expect(mf).to be_blank
     end
@@ -1271,7 +1271,7 @@ describe ModelField do
       #query the value
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:u.username)
       Factory(:company) #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [comp]
     end
 
@@ -1293,7 +1293,7 @@ describe ModelField do
       #query the value
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:u.full_name)
       Factory(:company) #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [comp]
     end
   end
@@ -1315,7 +1315,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.name)
       Factory(:address,name:'Not Me') #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
 
@@ -1329,7 +1329,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'co',value:'Market')
       Factory(:address,line_1:'Not Me') #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
 
@@ -1343,7 +1343,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.city)
       Factory(:address,city:'Not Me') #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
 
@@ -1357,7 +1357,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.state)
       Factory(:address,state:'Not Me') #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
 
@@ -1371,7 +1371,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.postal_code)
       Factory(:address,postal_code:'Not Me') #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
 
@@ -1385,7 +1385,7 @@ describe ModelField do
 
       sc = SearchCriterion.new(model_field_uid: mf.uid, operator:'eq',value:@ad.country.iso_code)
       Factory(:address,country:Factory(:country,iso_code:'XY')) #don't find this one
-      search_result = sc.apply(Company.scoped)
+      search_result = sc.apply(Company.all)
       expect(search_result.to_a).to eq [@ad.company]
     end
   end
