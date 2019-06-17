@@ -1,11 +1,13 @@
-require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+require 'open_chain/custom_handler/hm/hm_business_logic_support'
 
 # HM (for some reason) names all their feeds with random numeric values.
 # This is a simple parts feed (w/ some PO data in it)
 module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
 
   def self.parse_file file_content, log, opts = {}
     # Each file is supposed to represent a single PO's worth of articles, so we should be ok just parsing them all 
@@ -78,22 +80,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   end
 
   def extract_part_number xml
-    # H&M's sku number break down is as follows (SKU will be padded with leading zeroes to 18 digits)
-    # We need to trim any leading zeros until the value is 16 chars and only then extract an article number
-
-    # The first 7 digits of SKU is style number
-    # Next 3 digits are color
-    # Next 3 digits are season
-    # Last 3 are size
-    part = xml.text("ArticleName").to_s
-
-    # Strip leading zeros until the part number is 16 digits long
-    while(part.length > 16 && part[0] == "0")
-      part = part.slice(1, part.length)
-    end
-
-    # All we care about is the Style Number, which is what is sent on the entry.  Nothing else.
-    part[0..6]
+    extract_style_number_from_sku xml.text("ArticleName")
   end
 
   def hm

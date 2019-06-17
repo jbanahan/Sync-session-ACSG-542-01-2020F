@@ -1,6 +1,7 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/vandegrift/fenix_nd_invoice_810_generator'
+require 'open_chain/custom_handler/hm/hm_business_logic_support'
 
 # HM (for some reason) names all their feeds with random numeric values.
 # This is for processing an XML file containing truck crossing data 
@@ -15,6 +16,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
   include ActionView::Helpers::NumberHelper
+  include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
 
   def self.parse_file file_content, log, opts = {}
     # Each file is supposed to represent a single truck shipment's data, so we should be ok just parsing them all 
@@ -368,7 +370,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       # order if you purchased something online.)
       line.po_number = item["SalesOrderNumber"]
       line.po_line_number = item["SalesOrderItemNumber"]
-      line.part_number = item["ArticleNumber"].to_s[0..6]
+      line.part_number = extract_style_number_from_sku(item["ArticleNumber"])
       line.sku = item["ArticleNumber"]
       description = item["ArticleDescription"]
       composition = item["ArticleComposition"]

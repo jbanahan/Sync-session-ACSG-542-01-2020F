@@ -12,12 +12,14 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
   let (:ca) { Factory(:country, iso_code: "CA") }
   let (:us) { Factory(:country, iso_code: "US") }
   let (:product) {
-    p = Factory(:product, unique_identifier: "HENNE-6198160", importer_id: product_importer.id)
+    # Delivery Item # 1
+    p = Factory(:product, unique_identifier: "HENNE-0615141", importer_id: product_importer.id)
     p.update_hts_for_country country, "6115950000"
     p
   }
   let (:product_2) {
-    p = Factory(:product, unique_identifier: "HENNE-6158160", importer_id: product_importer.id)
+    # Delivery Item # 2 / 3
+    p = Factory(:product, unique_identifier: "HENNE-0742769", importer_id: product_importer.id)
     p.update_hts_for_country country, "6115951111"
     p
   }
@@ -86,8 +88,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         l = i.invoice_lines.first
         expect(l.po_number).to eq "E000003487"
         expect(l.po_line_number).to eq "000010"
-        expect(l.part_number).to eq "6198160"
-        expect(l.sku).to eq "619816001188002"
+        expect(l.part_number).to eq "0615141"
+        expect(l.sku).to eq "000615141001188004"
         expect(l.part_description).to eq "TROUSERS GREEN,44 - 100% BCI COTTON"
         expect(l.quantity).to eq BigDecimal("2")
         expect(l.quantity_uom).to eq "PC"
@@ -233,8 +235,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
       let! (:entry) {
         e = Factory(:entry, source_system: "Alliance", importer: importer, release_date: Time.zone.now, export_country_codes: "CN")
         inv = Factory(:commercial_invoice, entry: e, invoice_number: "123456")
-        inv_line = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "6198160", mid: "MID1")
-        inv_line_2 = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "6158160", mid: "MID2")
+        inv_line = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0615141", mid: "MID1")
+        inv_line_2 = Factory(:commercial_invoice_line, commercial_invoice: inv, country_origin_code: "CN", part_number: "0742769", mid: "MID2")
 
         e.reload
       }
@@ -279,8 +281,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         l = i.invoice_lines.first
         expect(l.po_number).to eq "E000003487"
         expect(l.po_line_number).to eq "000010"
-        expect(l.part_number).to eq "6198160"
-        expect(l.sku).to eq "619816001188002"
+        expect(l.part_number).to eq "0615141"
+        expect(l.sku).to eq "000615141001188004"
         expect(l.part_description).to eq "TROUSERS GREEN,44 - 100% BCI COTTON"
         expect(l.quantity).to eq BigDecimal("2")
         expect(l.quantity_uom).to eq "PC"
