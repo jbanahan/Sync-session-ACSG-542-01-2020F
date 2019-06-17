@@ -13,8 +13,10 @@ shipmentApp.directive 'dateInput', ->
   {
     require: 'ngModel'
     link: (scope, elem, attr, modelCtrl) ->
-      modelCtrl.$formatters.push (modelValue) ->
-        new Date(modelValue)
+      #Angular 1.3+ date object requirement override
+      # This will mimic the prior behavior which allows strings in date fields
+      modelCtrl.$formatters.length = 0
+      modelCtrl.$parsers.length = 0
       return
   }
 
