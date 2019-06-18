@@ -41,7 +41,7 @@
 #  first_name              :string(255)
 #  forgot_password         :boolean
 #  google_name             :string(255)
-#  hidden_message_json     :text
+#  hidden_message_json     :text(65535)
 #  homepage                :string(255)
 #  host_with_port          :string(255)
 #  id                      :integer          not null, primary key

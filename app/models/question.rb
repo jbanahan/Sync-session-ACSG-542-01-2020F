@@ -3,9 +3,9 @@
 # Table name: questions
 #
 #  attachment_required_for_choices :string(255)
-#  choices                         :text
+#  choices                         :text(65535)
 #  comment_required_for_choices    :string(255)
-#  content                         :text
+#  content                         :text(65535)
 #  created_at                      :datetime         not null
 #  id                              :integer          not null, primary key
 #  rank                            :integer

@@ -5,7 +5,7 @@
 #  created_at     :datetime         not null
 #  id             :integer          not null, primary key
 #  request_method :string(255)
-#  request_params :text
+#  request_params :text(65535)
 #  request_path   :string(255)
 #  updated_at     :datetime         not null
 #  user_id        :integer

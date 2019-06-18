@@ -7,7 +7,7 @@
 #  broker_customer_number        :string(255)
 #  cbp_updated_at                :datetime
 #  container_numbers             :string(255)
-#  countries_of_origin           :text
+#  countries_of_origin           :text(65535)
 #  created_at                    :datetime         not null
 #  delete_accepted_date          :datetime
 #  entry_numbers                 :string(255)
@@ -33,9 +33,9 @@
 #  last_file_path                :string(255)
 #  last_sent_date                :datetime
 #  late_filing                   :boolean
-#  manufacturer_names            :text
+#  manufacturer_names            :text(65535)
 #  master_bill_of_lading         :string(255)
-#  notes                         :text
+#  notes                         :text(65535)
 #  po_numbers                    :string(255)
 #  scac                          :string(255)
 #  status_code                   :string(255)

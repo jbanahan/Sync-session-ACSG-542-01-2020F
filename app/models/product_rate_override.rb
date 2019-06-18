@@ -6,7 +6,7 @@
 #  destination_country_id :integer
 #  end_date               :date
 #  id                     :integer          not null, primary key
-#  notes                  :text
+#  notes                  :text(65535)
 #  origin_country_id      :integer
 #  product_id             :integer
 #  rate                   :decimal(8, 4)

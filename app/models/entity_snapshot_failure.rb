@@ -5,7 +5,7 @@
 #  created_at    :datetime         not null
 #  id            :integer          not null, primary key
 #  snapshot_id   :integer
-#  snapshot_json :text(2147483647)
+#  snapshot_json :text(4294967295)
 #  snapshot_type :string(255)
 #  updated_at    :datetime         not null
 #

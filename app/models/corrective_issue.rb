@@ -5,10 +5,10 @@
 #  action_taken              :string(255)
 #  corrective_action_plan_id :integer
 #  created_at                :datetime         not null
-#  description               :text
+#  description               :text(65535)
 #  id                        :integer          not null, primary key
 #  resolved                  :boolean
-#  suggested_action          :text
+#  suggested_action          :text(65535)
 #  updated_at                :datetime         not null
 #
 # Indexes

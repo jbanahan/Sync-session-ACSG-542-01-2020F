@@ -5,7 +5,7 @@
 #  created_at    :datetime         not null
 #  id            :integer          not null, primary key
 #  name          :string(255)
-#  template_json :text
+#  template_json :text(65535)
 #  updated_at    :datetime         not null
 #
 

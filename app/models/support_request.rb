@@ -2,7 +2,7 @@
 #
 # Table name: support_requests
 #
-#  body          :text
+#  body          :text(65535)
 #  created_at    :datetime         not null
 #  external_link :string(255)
 #  id            :integer          not null, primary key

@@ -7,7 +7,7 @@
 #  id              :integer          not null, primary key
 #  module_type     :string(255)
 #  output_style    :string(255)
-#  setup           :text
+#  setup           :text(65535)
 #  testing         :boolean
 #
 # Indexes

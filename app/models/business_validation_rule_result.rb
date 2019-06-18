@@ -6,8 +6,8 @@
 #  business_validation_rule_id   :integer
 #  created_at                    :datetime         not null
 #  id                            :integer          not null, primary key
-#  message                       :text
-#  note                          :text
+#  message                       :text(65535)
+#  note                          :text(65535)
 #  overridden_at                 :datetime
 #  overridden_by_id              :integer
 #  state                         :string(255)

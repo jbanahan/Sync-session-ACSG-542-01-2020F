@@ -4,7 +4,7 @@
 #
 #  company_id        :integer
 #  created_at        :datetime         not null
-#  email_addresses   :text
+#  email_addresses   :text(65535)
 #  hidden            :boolean          default(FALSE)
 #  id                :integer          not null, primary key
 #  name              :string(255)

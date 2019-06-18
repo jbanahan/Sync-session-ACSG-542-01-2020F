@@ -4,7 +4,7 @@
 #
 #  id              :integer          not null, primary key
 #  inbound_file_id :integer
-#  message         :text
+#  message         :text(65535)
 #  message_status  :string(255)
 #
 

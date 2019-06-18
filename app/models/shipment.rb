@@ -97,7 +97,7 @@
 #  last_file_path                   :string(255)
 #  last_foreign_port_id             :integer
 #  lcl                              :boolean
-#  marks_and_numbers                :text
+#  marks_and_numbers                :text(65535)
 #  master_bill_of_lading            :string(255)
 #  mode                             :string(255)
 #  number_of_packages               :integer
@@ -109,7 +109,7 @@
 #  port_last_free_day               :date
 #  receipt_location                 :string(255)
 #  reference                        :string(255)
-#  requested_equipment              :text
+#  requested_equipment              :text(65535)
 #  seller_address_id                :integer
 #  ship_from_id                     :integer
 #  ship_to_address_id               :integer

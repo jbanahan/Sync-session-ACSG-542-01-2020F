@@ -4,7 +4,7 @@
 #
 #  archive_scheme                  :string(255)
 #  combine_attachments             :boolean
-#  combined_attachment_order       :text
+#  combined_attachment_order       :text(65535)
 #  company_id                      :integer
 #  created_at                      :datetime         not null
 #  end_date                        :date

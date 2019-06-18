@@ -14,11 +14,11 @@
 #  hts_code                 :string(255)
 #  id                       :integer          not null, primary key
 #  importer_id              :integer
-#  nafta_duty               :integer
-#  nafta_duty_rate          :integer
-#  nafta_us_equiv_duty      :integer
+#  nafta_duty               :decimal(10, )
+#  nafta_duty_rate          :decimal(10, )
+#  nafta_us_equiv_duty      :decimal(10, )
 #  part_number              :string(255)
-#  quantity                 :integer
+#  quantity                 :decimal(10, )
 #  ref_1                    :string(255)
 #  ref_2                    :string(255)
 #  ref_3                    :string(255)

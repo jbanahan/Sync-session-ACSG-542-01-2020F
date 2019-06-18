@@ -3,9 +3,9 @@
 # Table name: sent_emails
 #
 #  created_at     :datetime         not null
-#  delivery_error :text
+#  delivery_error :text(65535)
 #  email_bcc      :string(255)
-#  email_body     :text
+#  email_body     :text(65535)
 #  email_cc       :string(255)
 #  email_date     :datetime
 #  email_from     :string(255)

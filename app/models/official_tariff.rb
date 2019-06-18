@@ -4,8 +4,8 @@
 #
 #  add_valorem_rate                 :string(255)
 #  calculation_method               :string(255)
-#  chapter                          :string(800)
-#  column_2_rate                    :string(255)
+#  chapter                          :text(65535)
+#  column_2_rate                    :text(65535)
 #  common_rate                      :string(255)
 #  common_rate_decimal              :decimal(8, 4)
 #  country_id                       :integer
@@ -13,19 +13,19 @@
 #  erga_omnes_rate                  :string(255)
 #  export_regulations               :string(255)
 #  fda_indicator                    :string(255)
-#  full_description                 :text
+#  full_description                 :text(65535)
 #  general_preferential_tariff_rate :string(255)
 #  general_rate                     :string(255)
-#  heading                          :string(800)
+#  heading                          :text(65535)
 #  hts_code                         :string(255)
 #  id                               :integer          not null, primary key
 #  import_regulations               :string(255)
 #  most_favored_nation_rate         :string(255)
 #  per_unit_rate                    :string(255)
-#  remaining_description            :string(800)
+#  remaining_description            :text(65535)
 #  special_rate_key                 :string(255)
-#  special_rates                    :text
-#  sub_heading                      :string(800)
+#  special_rates                    :text(65535)
+#  sub_heading                      :text(65535)
 #  unit_of_measure                  :string(255)
 #  updated_at                       :datetime         not null
 #  use_count                        :integer

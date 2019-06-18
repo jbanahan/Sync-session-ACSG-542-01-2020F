@@ -5,7 +5,7 @@
 #  created_at               :datetime         not null
 #  custom_report_id         :integer
 #  email_to                 :string(255)
-#  friendly_settings_json   :text
+#  friendly_settings_json   :text(65535)
 #  id                       :integer          not null, primary key
 #  name                     :string(255)
 #  report_class             :string(255)
@@ -15,8 +15,8 @@
 #  report_data_updated_at   :datetime
 #  run_at                   :datetime
 #  run_by_id                :integer
-#  run_errors               :text
-#  settings_json            :text
+#  run_errors               :text(65535)
+#  settings_json            :text(65535)
 #  status                   :string(255)
 #  updated_at               :datetime         not null
 #

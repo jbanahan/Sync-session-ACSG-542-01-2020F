@@ -2,10 +2,10 @@
 #
 # Table name: error_log_entries
 #
-#  additional_messages_json :text
-#  backtrace_json           :text
+#  additional_messages_json :text(65535)
+#  backtrace_json           :text(65535)
 #  created_at               :datetime         not null
-#  error_message            :text
+#  error_message            :text(65535)
 #  exception_class          :string(255)
 #  id                       :integer          not null, primary key
 #  updated_at               :datetime         not null

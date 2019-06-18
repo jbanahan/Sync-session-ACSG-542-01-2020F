@@ -6,7 +6,7 @@
 #  id          :integer          not null, primary key
 #  module_type :string(255)
 #  name        :string(255)
-#  search_json :text
+#  search_json :text(65535)
 #  updated_at  :datetime         not null
 #
 

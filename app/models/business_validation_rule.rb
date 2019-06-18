@@ -2,9 +2,9 @@
 #
 # Table name: business_validation_rules
 #
-#  bcc_notification_recipients     :text
+#  bcc_notification_recipients     :text(65535)
 #  business_validation_template_id :integer
-#  cc_notification_recipients      :text
+#  cc_notification_recipients      :text(65535)
 #  created_at                      :datetime         not null
 #  delete_pending                  :boolean
 #  description                     :string(255)
@@ -17,9 +17,9 @@
 #  message_review_fail             :string(255)
 #  message_skipped                 :string(255)
 #  name                            :string(255)
-#  notification_recipients         :text
+#  notification_recipients         :text(65535)
 #  notification_type               :string(255)
-#  rule_attributes_json            :text
+#  rule_attributes_json            :text(65535)
 #  subject_pass                    :string(255)
 #  subject_review_fail             :string(255)
 #  subject_skipped                 :string(255)

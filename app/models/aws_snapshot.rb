@@ -12,7 +12,7 @@
 #  purged_at             :datetime
 #  snapshot_id           :string(255)
 #  start_time            :datetime
-#  tags_json             :text
+#  tags_json             :text(65535)
 #  updated_at            :datetime         not null
 #  volume_id             :string(255)
 #

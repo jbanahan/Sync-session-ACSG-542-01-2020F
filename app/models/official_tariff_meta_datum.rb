@@ -7,7 +7,7 @@
 #  created_at           :datetime         not null
 #  hts_code             :string(255)
 #  id                   :integer          not null, primary key
-#  notes                :text
+#  notes                :text(65535)
 #  summary_description  :string(255)
 #  updated_at           :datetime         not null
 #

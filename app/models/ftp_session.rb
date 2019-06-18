@@ -3,11 +3,11 @@
 # Table name: ftp_sessions
 #
 #  created_at           :datetime         not null
-#  data                 :binary
+#  data                 :binary(65535)
 #  file_name            :string(255)
 #  id                   :integer          not null, primary key
 #  last_server_response :string(255)
-#  log                  :text
+#  log                  :text(65535)
 #  protocol             :string(255)
 #  retry_count          :integer
 #  server               :string(255)

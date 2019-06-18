@@ -3,7 +3,7 @@
 # Table name: key_json_items
 #
 #  id          :integer          not null, primary key
-#  json_data   :text
+#  json_data   :text(65535)
 #  key_scope   :string(255)
 #  logical_key :string(255)
 #

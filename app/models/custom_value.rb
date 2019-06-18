@@ -13,7 +13,7 @@
 #  id                   :integer          not null, primary key
 #  integer_value        :integer
 #  string_value         :string(255)
-#  text_value           :text
+#  text_value           :text(65535)
 #  updated_at           :datetime         not null
 #
 # Indexes

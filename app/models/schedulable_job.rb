@@ -8,8 +8,8 @@
 #  id                 :integer          not null, primary key
 #  last_start_time    :datetime
 #  no_concurrent_jobs :boolean
-#  notes              :text
-#  opts               :text
+#  notes              :text(65535)
+#  opts               :text(65535)
 #  queue_priority     :integer
 #  run_class          :string(255)
 #  run_friday         :boolean

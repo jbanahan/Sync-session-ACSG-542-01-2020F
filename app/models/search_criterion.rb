@@ -24,7 +24,7 @@
 #  state_toggle_button_id           :integer
 #  status_rule_id                   :integer
 #  updated_at                       :datetime         not null
-#  value                            :text
+#  value                            :text(65535)
 #
 # Indexes
 #

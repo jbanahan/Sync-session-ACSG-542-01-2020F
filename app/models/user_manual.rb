@@ -5,7 +5,7 @@
 #  category            :string(255)
 #  created_at          :datetime         not null
 #  document_url        :string(255)
-#  groups              :text
+#  groups              :text(65535)
 #  id                  :integer          not null, primary key
 #  master_company_only :boolean          default(FALSE)
 #  name                :string(255)

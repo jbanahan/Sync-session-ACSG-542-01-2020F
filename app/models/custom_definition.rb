@@ -6,7 +6,7 @@
 #  created_at           :datetime         not null
 #  data_type            :string(255)
 #  default_value        :string(255)
-#  definition           :text
+#  definition           :text(65535)
 #  id                   :integer          not null, primary key
 #  is_address           :boolean
 #  is_user              :boolean
@@ -16,8 +16,8 @@
 #  rank                 :integer
 #  tool_tip             :string(255)
 #  updated_at           :datetime         not null
-#  virtual_search_query :text
-#  virtual_value_query  :text
+#  virtual_search_query :text(65535)
+#  virtual_value_query  :text(65535)
 #
 # Indexes
 #

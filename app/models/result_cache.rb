@@ -4,7 +4,7 @@
 #
 #  created_at            :datetime         not null
 #  id                    :integer          not null, primary key
-#  object_ids            :text
+#  object_ids            :text(65535)
 #  page                  :integer
 #  per_page              :integer
 #  result_cacheable_id   :integer

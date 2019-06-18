@@ -7,11 +7,11 @@
 #  hitech_classification  :string(255)
 #  hts_code               :string(255)
 #  id                     :integer          not null, primary key
-#  long_description       :text
+#  long_description       :text(65535)
 #  naics_classification   :string(255)
-#  quantity_1             :text
-#  quantity_2             :text
-#  short_description      :text
+#  quantity_1             :text(65535)
+#  quantity_2             :text(65535)
+#  short_description      :text(65535)
 #  sitc_code              :string(255)
 #  updated_at             :datetime         not null
 #  usda_code              :string(255)

@@ -9,7 +9,7 @@
 #  currency                    :string(255)
 #  customer_reference_number   :string(255)
 #  customer_reference_number_2 :string(255)
-#  description_of_goods        :text
+#  description_of_goods        :text(65535)
 #  exchange_rate               :decimal(8, 6)
 #  factory_id                  :integer
 #  gross_weight                :decimal(11, 2)

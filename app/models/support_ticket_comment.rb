@@ -2,7 +2,7 @@
 #
 # Table name: support_ticket_comments
 #
-#  body              :text
+#  body              :text(65535)
 #  created_at        :datetime         not null
 #  id                :integer          not null, primary key
 #  support_ticket_id :integer

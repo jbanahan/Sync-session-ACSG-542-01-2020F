@@ -5,7 +5,7 @@
 #  broker_invoice_enabled      :boolean
 #  classification_enabled      :boolean          default(TRUE), not null
 #  created_at                  :datetime         not null
-#  custom_features             :text
+#  custom_features             :text(65535)
 #  customs_statements_enabled  :boolean
 #  delivery_enabled            :boolean          default(TRUE), not null
 #  drawback_enabled            :boolean
@@ -14,7 +14,7 @@
 #  ftp_polling_active          :boolean
 #  id                          :integer          not null, primary key
 #  invoices_enabled            :boolean
-#  last_delayed_job_error_sent :datetime         default(2001-01-01 00:00:00 UTC)
+#  last_delayed_job_error_sent :datetime         default(Mon, 01 Jan 2001 00:00:00 UTC +00:00)
 #  logo_image                  :string(255)
 #  migration_host              :string(255)
 #  order_enabled               :boolean          default(TRUE), not null
@@ -28,7 +28,7 @@
 #  suppress_email              :boolean
 #  suppress_ftp                :boolean
 #  system_code                 :string(255)
-#  system_message              :text
+#  system_message              :text(65535)
 #  target_version              :string(255)
 #  trade_lane_enabled          :boolean
 #  updated_at                  :datetime         not null

@@ -7,7 +7,7 @@
 #  from_version            :string(255)
 #  id                      :integer          not null, primary key
 #  instance_information_id :integer
-#  log                     :text
+#  log                     :text(65535)
 #  started_at              :datetime
 #  to_version              :string(255)
 #  updated_at              :datetime         not null

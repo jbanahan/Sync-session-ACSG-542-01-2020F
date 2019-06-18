@@ -5,7 +5,7 @@
 #  created_at :datetime         not null
 #  end_time   :datetime
 #  id         :integer          not null, primary key
-#  log        :text
+#  log        :text(65535)
 #  name       :string(255)
 #  start_time :datetime
 #  updated_at :datetime         not null

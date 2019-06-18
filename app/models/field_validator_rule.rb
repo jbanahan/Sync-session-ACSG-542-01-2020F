@@ -3,10 +3,10 @@
 # Table name: field_validator_rules
 #
 #  allow_everyone_to_view :boolean
-#  can_edit_groups        :text
-#  can_mass_edit_groups   :text
-#  can_view_groups        :text
-#  comment                :text
+#  can_edit_groups        :text(65535)
+#  can_mass_edit_groups   :text(65535)
+#  can_view_groups        :text(65535)
+#  comment                :text(65535)
 #  contains               :string(255)
 #  created_at             :datetime         not null
 #  custom_definition_id   :integer
@@ -27,7 +27,7 @@
 #  module_type            :string(255)
 #  more_than_ago          :integer
 #  more_than_ago_uom      :string(255)
-#  one_of                 :text
+#  one_of                 :text(65535)
 #  read_only              :boolean
 #  regex                  :string(255)
 #  required               :boolean

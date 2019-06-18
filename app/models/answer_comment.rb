@@ -3,7 +3,7 @@
 # Table name: answer_comments
 #
 #  answer_id  :integer
-#  content    :text
+#  content    :text(65535)
 #  created_at :datetime         not null
 #  id         :integer          not null, primary key
 #  private    :boolean

@@ -6,12 +6,12 @@
 #  company_id                  :integer
 #  created_at                  :datetime         not null
 #  created_by_id               :integer
-#  email_body                  :text
+#  email_body                  :text(65535)
 #  email_subject               :string(255)
 #  expiration_days             :integer
 #  id                          :integer          not null, primary key
 #  name                        :string(255)
-#  ratings_list                :text
+#  ratings_list                :text(65535)
 #  require_contact             :boolean
 #  system_code                 :string(255)
 #  trade_preference_program_id :integer

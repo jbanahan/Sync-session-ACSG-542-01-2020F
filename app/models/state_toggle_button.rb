@@ -14,7 +14,7 @@
 #  id                            :integer          not null, primary key
 #  identifier                    :string(255)
 #  module_type                   :string(255)
-#  permission_group_system_codes :text
+#  permission_group_system_codes :text(65535)
 #  simple_button                 :boolean
 #  updated_at                    :datetime         not null
 #  user_attribute                :string(255)

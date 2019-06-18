@@ -13,7 +13,7 @@
 #  imported_file_id    :integer
 #  recordable_id       :integer
 #  recordable_type     :string(255)
-#  snapshot            :text
+#  snapshot            :text(65535)
 #  updated_at          :datetime         not null
 #  user_id             :integer
 #  version             :string(255)

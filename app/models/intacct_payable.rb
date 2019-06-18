@@ -10,7 +10,7 @@
 #  currency                   :string(255)
 #  id                         :integer          not null, primary key
 #  intacct_alliance_export_id :integer
-#  intacct_errors             :text
+#  intacct_errors             :text(65535)
 #  intacct_key                :string(255)
 #  intacct_upload_date        :datetime
 #  payable_type               :string(255)

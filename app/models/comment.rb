@@ -2,7 +2,7 @@
 #
 # Table name: comments
 #
-#  body             :text
+#  body             :text(65535)
 #  commentable_id   :integer
 #  commentable_type :string(255)
 #  created_at       :datetime         not null

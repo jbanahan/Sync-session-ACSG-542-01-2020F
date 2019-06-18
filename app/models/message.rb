@@ -2,7 +2,7 @@
 #
 # Table name: messages
 #
-#  body       :text
+#  body       :text(65535)
 #  created_at :datetime         not null
 #  folder     :string(255)      default("inbox")
 #  id         :integer          not null, primary key

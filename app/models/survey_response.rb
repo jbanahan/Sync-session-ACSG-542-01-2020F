@@ -3,7 +3,7 @@
 # Table name: survey_responses
 #
 #  accepted_date                   :datetime
-#  address                         :text
+#  address                         :text(65535)
 #  archived                        :boolean
 #  base_object_id                  :integer
 #  base_object_type                :string(255)

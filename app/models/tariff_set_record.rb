@@ -4,25 +4,25 @@
 #
 #  add_valorem_rate                 :string(255)
 #  calculation_method               :string(255)
-#  chapter                          :text
-#  column_2_rate                    :string(255)
+#  chapter                          :text(65535)
+#  column_2_rate                    :text(65535)
 #  country_id                       :integer
 #  created_at                       :datetime         not null
 #  erga_omnes_rate                  :string(255)
 #  export_regulations               :string(255)
 #  fda_indicator                    :string(255)
-#  full_description                 :text
+#  full_description                 :text(65535)
 #  general_preferential_tariff_rate :string(255)
 #  general_rate                     :string(255)
-#  heading                          :text
+#  heading                          :text(65535)
 #  hts_code                         :string(255)
 #  id                               :integer          not null, primary key
 #  import_regulations               :string(255)
 #  most_favored_nation_rate         :string(255)
 #  per_unit_rate                    :string(255)
-#  remaining_description            :text
-#  special_rates                    :text
-#  sub_heading                      :text
+#  remaining_description            :text(65535)
+#  special_rates                    :text(65535)
+#  sub_heading                      :text(65535)
 #  tariff_set_id                    :integer
 #  unit_of_measure                  :string(255)
 #  updated_at                       :datetime         not null

@@ -4,8 +4,8 @@
 #
 #  blind_copy_me                  :boolean
 #  created_at                     :datetime         not null
-#  email_addresses                :text
-#  email_body                     :text
+#  email_addresses                :text(65535)
+#  email_body                     :text(65535)
 #  email_subject                  :string(255)
 #  enabled_date                   :date
 #  expire_date                    :date

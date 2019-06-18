@@ -3,7 +3,7 @@
 # Table name: search_table_configs
 #
 #  company_id  :integer
-#  config_json :text
+#  config_json :text(65535)
 #  created_at  :datetime         not null
 #  id          :integer          not null, primary key
 #  name        :string(255)

@@ -5,7 +5,7 @@
 #  created_at                   :datetime         not null
 #  destination_country_id       :integer
 #  id                           :integer          not null, primary key
-#  notes                        :text
+#  notes                        :text(65535)
 #  origin_country_id            :integer
 #  tariff_adjustment_percentage :decimal(5, 2)
 #  updated_at                   :datetime         not null

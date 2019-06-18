@@ -9,7 +9,7 @@
 #  created_at            :datetime         not null
 #  id                    :integer          not null, primary key
 #  module_type           :string(255)
-#  note                  :text
+#  note                  :text(65535)
 #  processed_at          :datetime
 #  search_setup_id       :integer
 #  starting_column       :integer          default(1)

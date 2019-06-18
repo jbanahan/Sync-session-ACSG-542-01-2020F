@@ -32,26 +32,26 @@
 #  cbp_intensive_hold_release_date        :datetime
 #  census_warning                         :boolean
 #  charge_codes                           :string(255)
-#  commercial_invoice_numbers             :text
+#  commercial_invoice_numbers             :text(65535)
 #  company_number                         :string(255)
 #  consignee_address_1                    :string(255)
 #  consignee_address_2                    :string(255)
 #  consignee_city                         :string(255)
 #  consignee_state                        :string(255)
-#  container_numbers                      :text
+#  container_numbers                      :text(65535)
 #  container_sizes                        :string(255)
 #  cotton_fee                             :decimal(11, 2)
 #  created_at                             :datetime         not null
 #  customer_name                          :string(255)
 #  customer_number                        :string(255)
-#  customer_references                    :text
+#  customer_references                    :text(65535)
 #  daily_statement_approved_date          :date
 #  daily_statement_due_date               :date
 #  daily_statement_number                 :string(255)
 #  ddtc_hold_date                         :datetime
 #  ddtc_hold_release_date                 :datetime
 #  delivery_order_pickup_date             :datetime
-#  departments                            :text
+#  departments                            :text(65535)
 #  destination_state                      :string(255)
 #  direct_shipment_date                   :date
 #  division_number                        :string(255)
@@ -105,7 +105,7 @@
 #  hmf                                    :decimal(11, 2)
 #  hold_date                              :datetime
 #  hold_release_date                      :datetime
-#  house_bills_of_lading                  :text
+#  house_bills_of_lading                  :text(65535)
 #  house_carrier_code                     :string(255)
 #  id                                     :integer          not null, primary key
 #  import_country_id                      :integer
@@ -116,7 +116,7 @@
 #  invoice_paid_date                      :datetime
 #  isf_accepted_date                      :datetime
 #  isf_sent_date                          :datetime
-#  it_numbers                             :text
+#  it_numbers                             :text(65535)
 #  k84_due_date                           :date
 #  k84_month                              :integer
 #  k84_receive_date                       :date
@@ -143,9 +143,9 @@
 #  location_of_goods                      :string(255)
 #  location_of_goods_description          :string(255)
 #  manifest_info_received_date            :datetime
-#  master_bills_of_lading                 :text
+#  master_bills_of_lading                 :text(65535)
 #  merchandise_description                :string(255)
-#  mfids                                  :text
+#  mfids                                  :text(65535)
 #  monthly_statement_due_date             :date
 #  monthly_statement_number               :string(255)
 #  monthly_statement_paid_date            :date
@@ -168,9 +168,9 @@
 #  pars_ack_date                          :datetime
 #  pars_reject_date                       :datetime
 #  part_number_request_date               :datetime
-#  part_numbers                           :text
+#  part_numbers                           :text(65535)
 #  pay_type                               :integer
-#  po_numbers                             :text
+#  po_numbers                             :text(65535)
 #  po_request_date                        :datetime
 #  product_lines                          :string(255)
 #  recon_flags                            :string(255)
@@ -184,8 +184,8 @@
 #  split_release_option                   :string(255)
 #  split_shipment                         :boolean
 #  split_shipment_date                    :datetime
-#  store_names                            :text
-#  sub_house_bills_of_lading              :text
+#  store_names                            :text(65535)
+#  sub_house_bills_of_lading              :text(65535)
 #  summary_line_count                     :integer
 #  summary_rejected                       :boolean
 #  tariff_request_date                    :datetime
@@ -216,7 +216,7 @@
 #  usda_hold_date                         :datetime
 #  usda_hold_release_date                 :datetime
 #  value_currency_request_date            :datetime
-#  vendor_names                           :text
+#  vendor_names                           :text(65535)
 #  vessel                                 :string(255)
 #  voyage                                 :string(255)
 #  worksheet_date                         :datetime

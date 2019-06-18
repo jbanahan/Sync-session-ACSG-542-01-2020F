@@ -2,7 +2,7 @@
 #
 # Table name: entry_comments
 #
-#  body           :text
+#  body           :text(65535)
 #  created_at     :datetime         not null
 #  entry_id       :integer
 #  generated_at   :datetime

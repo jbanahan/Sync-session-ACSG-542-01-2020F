@@ -3,13 +3,13 @@
 # Table name: support_tickets
 #
 #  agent_id            :integer
-#  body                :text
+#  body                :text(65535)
 #  created_at          :datetime         not null
 #  email_notifications :boolean
 #  id                  :integer          not null, primary key
 #  last_saved_by_id    :integer
 #  requestor_id        :integer
-#  state               :text
+#  state               :text(65535)
 #  subject             :string(255)
 #  updated_at          :datetime         not null
 #

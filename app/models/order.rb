@@ -26,7 +26,7 @@
 #  order_date                   :date
 #  order_from_address_id        :integer
 #  order_number                 :string(255)
-#  processing_errors            :text
+#  processing_errors            :text(65535)
 #  product_category             :string(255)
 #  season                       :string(255)
 #  selling_agent_id             :integer

@@ -13,7 +13,7 @@
 #  entry_id               :integer
 #  exchange_rate          :decimal(8, 6)
 #  gross_weight           :integer
-#  house_bills_of_lading  :text
+#  house_bills_of_lading  :text(65535)
 #  id                     :integer          not null, primary key
 #  importer_id            :integer
 #  invoice_date           :date
@@ -21,10 +21,10 @@
 #  invoice_value          :decimal(13, 2)
 #  invoice_value_foreign  :decimal(13, 2)
 #  issue_codes            :string(255)
-#  master_bills_of_lading :text
+#  master_bills_of_lading :text(65535)
 #  mfid                   :string(255)
 #  non_dutiable_amount    :decimal(13, 2)
-#  rater_comments         :text
+#  rater_comments         :text(65535)
 #  total_charges          :decimal(11, 2)
 #  total_quantity         :decimal(12, 5)
 #  total_quantity_uom     :string(255)

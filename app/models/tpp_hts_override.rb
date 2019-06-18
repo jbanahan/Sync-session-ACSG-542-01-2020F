@@ -6,7 +6,7 @@
 #  end_date                    :date
 #  hts_code                    :string(255)
 #  id                          :integer          not null, primary key
-#  note                        :text
+#  note                        :text(65535)
 #  rate                        :decimal(8, 4)
 #  start_date                  :date
 #  trade_preference_program_id :integer
