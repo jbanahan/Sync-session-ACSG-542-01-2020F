@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def validate_detail detail, row_num
     raise BusinessLogicError, "Part number missing on row #{row_num}" if detail[:prod_part_number].blank?
-    raise BusinessLogicError, "Quantity missing on row #{row_num}" if detail[:ordln_quantity].blank?
+    raise BusinessLogicError, "Quantity missing on row #{row_num}" if parse_quantity(detail[:ordln_quantity], nil_if_blank: true).nil?
     raise BusinessLogicError, "Line number missing on row #{row_num}" if detail[:ordln_line_number].nil? || detail[:ordln_line_number].zero?
   end
 
@@ -86,25 +86,38 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     hsh
   end
 
-  def map_detail row
+  def map_detail row, all_rows
     hsh = {}
-    hsh[:ordln_line_number] = row[2].to_i
-    hsh[:prod_part_number] = row[5]
-    hsh[:prod_vendor_style] = row[6]
-    hsh[:prod_name] = row[7]
-    hsh[:ordln_color] = row[8]
-    hsh[:ordln_color_description] = row[9]
-    hsh[:ordln_size] = row[10]
-    hsh[:ordln_size_description] = row[11]
-    hsh[:ordln_sku] = row[14]
-    hsh[:ordln_quantity] = row[17]
-    hsh[:ordln_price_per_unit] = row[19]
-    hsh[:ordln_wholesale_unit_price] = row[20]
-    hsh[:ordln_estimated_unit_landing_cost] = row[21]
-    hsh[:ordln_unit_msrp] = row[22]
-    hsh
-  end
+    # One of Ascena's systems appends the SKU number to the line number in order to explode prepack lines up to the style level,
+    # this results in overflowing the integer field used to store the line number.
+    if row[2].to_s.length > 4
+      hsh[:ordln_line_number] = row[2] = row[2].to_s[0, 4].to_i
+    else
+      hsh[:ordln_line_number] = row[2].to_s.to_i  
+    end
 
+    # For prepack lines, .ie line numbers we see more than once, just sum the quantity of the current line into the existing
+    # line from the file that shares the line number
+    if (existing_line = all_rows.find {|ex_line| ex_line[:ordln_line_number] == hsh[:ordln_line_number] }).present?
+      existing_line[:ordln_quantity] += parse_quantity(row[17])
+      return nil
+    else
+      hsh[:prod_part_number] = row[5]
+      hsh[:prod_vendor_style] = row[6]
+      hsh[:prod_name] = row[7]
+      hsh[:ordln_color] = row[8]
+      hsh[:ordln_color_description] = row[9]
+      hsh[:ordln_size] = row[10]
+      hsh[:ordln_size_description] = row[11]
+      hsh[:ordln_sku] = row[14]
+      hsh[:ordln_quantity] = parse_quantity(row[17], nil_if_blank: true)
+      hsh[:ordln_price_per_unit] = row[19]
+      hsh[:ordln_wholesale_unit_price] = row[20]
+      hsh[:ordln_estimated_unit_landing_cost] = row[21]
+      hsh[:ordln_unit_msrp] = row[22]
+      return hsh  
+    end
+  end
 
   def process_po user, rows, bucket, filename
     po_number = nil
@@ -118,7 +131,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       rows[1..-1].each_with_index do |dr, x|
         next if blank_row?(dr)
 
-        row = map_detail dr
+        row = map_detail(dr, detail_rows)
+        # row will be nil if we're dealing with the secondary, tertiary, etc lines for a prepack item.
+        # For prepack rows, we're just summing the quantities together across the multiple lines of the prepack.
+        next if row.nil?
+
         validate_detail row, x + 1
         detail_rows << row
       end
@@ -383,6 +400,16 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       :ord_line_department_code,:ord_line_destination_code, :ord_line_size_description,:ord_line_size,
       :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost,:prod_part_number,
       :prod_product_group,:prod_vendor_style ]
+  end
+
+  def parse_quantity value, nil_if_blank: false
+    if value.blank?
+      return nil_if_blank ? nil : BigDecimal("0")
+    end
+
+    BigDecimal(value)
+  rescue
+    return nil_if_blank ? nil : BigDecimal("0")
   end
 
 end; end; end; end

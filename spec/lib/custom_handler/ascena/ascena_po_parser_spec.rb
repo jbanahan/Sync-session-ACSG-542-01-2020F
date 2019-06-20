@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   let(:header) { ["H","11142016","JUSTICE","","37109","1990","","FRANCHISE","pgroup","82","SUM 2015","","2","12082016","000256","LF PRODUCTS PTE. LTD","Smith","001423","IDSELKAU0105BEK","JIASHAN JSL CASE & BAG CO., LTD","000022","YCHOI","FCA","CHINA (MAINLAND)","OCN","01172017","01172018","HONG KONG","AGS","","","","USD","","","",""] }
-  let(:detail) { ["D","","1","","","820799","351152","CB-YING YANG IRRI 3\"","617","SILVER","1","10","","","03010848311526700486","","","0","","2.02","3.46","3.13","7.00","","","","","","","","","","","","","",""] }
+  let(:detail) { ["D","","1","","","820799","351152","CB-YING YANG IRRI 3\"","617","SILVER","1","10","","","03010848311526700486","","","10","","2.02","3.46","3.13","7.00","","","","","","","","","","","","","",""] }
   let(:header_2) { ["H","11152016","PEACE",nil,"37109","1991",nil,"FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS",nil,nil,nil,"USD",nil,nil,nil,nil] }
   let(:detail_2) { ["D",nil,"2",nil,nil,"820799","451152","AB-YING YANG IRRI","618","GRAY","2","11",nil,nil,"13010848311526700486",nil,nil,"2",nil,"3.02","4.46","4.13","8.00",nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil] }
 
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(ol.custom_value(cdefs[:ord_line_size])).to eq "1"
       expect(ol.custom_value(cdefs[:ord_line_size_description])).to eq "10"
       expect(ol.sku).to eq "03010848311526700486"
-      expect(ol.quantity).to eq 0
+      expect(ol.quantity).to eq 10
       expect(ol.price_per_unit).to eq 2.02
       expect(ol.custom_value(cdefs[:ord_line_wholesale_unit_price])).to eq 3.46
       expect(ol.custom_value(cdefs[:ord_line_estimated_unit_landing_cost])).to eq 3.13
@@ -367,6 +367,31 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
       expect(factory.mid).to eq "EXISTING"
     end
+
+    it "handles overflowing line numbers" do
+      detail[2] = "0004300185471"
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail])
+
+      o = Order.where(customer_order_number: "37109").first
+      expect(o).not_to be_nil
+      line = o.order_lines.first
+      expect(line.line_number).to eq 4
+    end
+
+    it "handles prepack lines with duplicate line numbers" do
+      detail[2] = "0004300185471"
+      detail_2 = detail.dup
+      # To simulate prepack lines, we can just send basically the same detail line twice.
+      detail_2[2] = "0004300181111"
+      subject.parse_file_chunk(convert_pipe_delimited [header, detail, detail_2.dup])
+
+      o = Order.where(customer_order_number: "37109").first
+      expect(o).not_to be_nil
+      expect(o.order_lines.length).to eq 1
+      line = o.order_lines.first
+      expect(line.line_number).to eq 4
+      expect(line.quantity).to eq 20
+    end
   end
 
   context "data validation" do
@@ -418,7 +443,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         subject.map_header header
       end
       let :detail_map do
-        subject.map_detail detail
+        subject.map_detail detail, []
       end
 
       subject { described_class.new }
