@@ -102,7 +102,7 @@ module EntriesHelper
       fields[:commercial_invoice] = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_date,:ci_invoice_value,:ci_total_adjusted_value,:ci_currency,:ci_exchange_rate]
       fields[:commercial_invoice_line] = [:cil_part_number,:cil_po_number,:cil_customs_line_number,:cil_mid,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_cash_discount,:cil_miscellaneous_discount,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code]
       fields[:commercial_invoice_tariff] = [:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:ent_tariff_provision,
-        :cit_classification_qty_1,:cit_classification_uom_1,:ent_value_for_duty_code,:ent_gst_rate_code,:ent_gst_amount,:ent_sima_amount,:ent_excise_amount,:ent_excise_rate_code        
+        :cit_classification_qty_1,:cit_classification_uom_1,:ent_value_for_duty_code,:ent_gst_rate_code,:ent_gst_amount,:ent_sima_amount,:ent_excise_amount,:ent_excise_rate_code
       ]
       fields[:broker_invoice] = [:bi_invoice_number,:bi_suffix,:bi_invoice_date,:bi_invoice_total,:bi_currency,:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso]
       fields[:broker_invoice_line] = [:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type,:bi_line_hst_percent]

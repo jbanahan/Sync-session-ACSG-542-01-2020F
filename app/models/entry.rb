@@ -119,6 +119,7 @@
 #  it_numbers                             :text(65535)
 #  k84_due_date                           :date
 #  k84_month                              :integer
+#  k84_payment_due_date                   :date
 #  k84_receive_date                       :date
 #  lading_port_code                       :string(255)
 #  last_7501_print                        :datetime
@@ -659,15 +660,18 @@ class Entry < ActiveRecord::Base
     end
 
     unless k84_basis.blank?
-      month = k84_basis.month 
+      month = k84_basis.month
       # Anything after the 24th is the next month
       month += 1 if  k84_basis.day > 24
-      # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber), 
+      # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber),
       # so loop back to 1
       month = (month % 12) if month > 12
       year = month==1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
       self.k84_month = month
       self.k84_due_date = Date.new(year,month,25)
+
+      k84_payment_due_date = Calendar.find_all_events_in_calendar_month(self.k84_due_date.year.to_s, self.k84_month, 'K84Due').first
+      self.k84_payment_due_date = k84_payment_due_date.nil? ? nil : k84_payment_due_date.event_date
     end
   end
 end

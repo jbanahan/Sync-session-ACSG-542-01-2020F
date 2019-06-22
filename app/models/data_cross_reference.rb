@@ -75,6 +75,8 @@ class DataCrossReference < ActiveRecord::Base
   LL_CARB_STATEMENTS ||= "ll_carb_statement"
   LL_PATENT_STATEMENTS ||= "ll_patent_statement"
 
+  VFI_CALENDAR ||= "vfi_calendar"
+
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
   def self.xref_edit_hash user

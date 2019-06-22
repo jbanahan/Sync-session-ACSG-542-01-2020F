@@ -415,7 +415,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           qualified_field_name: <<-SQL
             (IF((entries.house_bills_of_lading IS NOT NULL AND entries.house_bills_of_lading <> ""), (CHAR_LENGTH(entries.house_bills_of_lading) - CHAR_LENGTH(REPLACE(entries.house_bills_of_lading, '\n', '')) + 1), 0))
           SQL
-      }]
+      }],
+      [246, :ent_k84_payment_due_date, :k84_payment_due_date, "K84 Payment Due Date", {:data_type=>:date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

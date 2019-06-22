@@ -2,7 +2,7 @@
 <%content_for :action_bar do -%>
   <button class="btn_link" link_to="<%=entry_path(@entry, format: :xlsx)%>" title='Download'><i class='fa fa-download'></i></button>
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>' title='Sync Records'><i class='fa fa-exchange'></i></button>
-  <%if current_user.sys_admin?-%>    
+  <%if current_user.sys_admin?-%>
     <%= link_to raw("<i class='fa fa-trash'></i>"), purge_entry_path(@entry), method: "POST",  data: { confirm: 'Purging an entry will delete it forever.  Are you certain you want to purge this entry?'}, class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Purge' %>
   <%end-%>
 <% end -%>
@@ -58,7 +58,7 @@
       </td>
       <td style="width:33%;">
         <table>
-          <%= show_model_fields @entry, [:ent_direct_shipment_date,:ent_eta_date,:ent_arrival_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_exam_ordered_date, :ent_exam_release_date, :ent_b3_print_date], table: true %>
+          <%= show_model_fields @entry, [:ent_direct_shipment_date,:ent_eta_date,:ent_arrival_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_k84_payment_due_date,:ent_exam_ordered_date, :ent_exam_release_date, :ent_b3_print_date], table: true %>
         </table>
       </td>
       <td style="width:34%;">

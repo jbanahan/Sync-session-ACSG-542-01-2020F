@@ -193,7 +193,7 @@ describe Entry do
   end
 
   context 'ports' do
-    before :each do 
+    before :each do
       @port = Factory(:port)
     end
     it 'should find matching lading port' do
@@ -250,6 +250,23 @@ describe Entry do
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "H", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
       expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+    end
+
+    it "uses k84 month and due date to find the payment due date" do
+      calendar = Factory(:calendar, calendar_type: 'K84Due', year: 2013)
+      cal_event = Factory(:calendar_event, event_date: Date.parse('2013-01-29'), calendar_id: calendar.id)
+
+      @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "V", cadex_accept_date: Time.zone.now
+      expect(@entry.k84_month).to eq 1
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_payment_due_date.to_date).to eq(Date.new(2013,1,29))
+    end
+
+    it "does not update the k84 payment due date if no calendar event is found" do
+      @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "C", cadex_accept_date: Time.zone.now
+      expect(@entry.k84_month).to eq 1
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_payment_due_date).to be_nil
     end
   end
 

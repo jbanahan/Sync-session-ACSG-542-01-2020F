@@ -97,6 +97,7 @@ class Company < ActiveRecord::Base
   has_many  :fiscal_months
   has_many  :mailing_lists
   has_many  :system_identifiers, dependent: :destroy, inverse_of: :company
+  has_many :calendars, dependent: :destroy, inverse_of: :company
 
   has_one :attachment_archive_setup, :dependent => :destroy
 

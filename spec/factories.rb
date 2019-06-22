@@ -213,6 +213,19 @@ Factory.define :custom_report do |s|
   s.name  'custom report name'
   s.association :user
 end
+
+Factory.define :calendar do |c|
+  c.calendar_type 'xyz'
+  c.year 2099
+  c.company_id nil
+end
+
+Factory.define :calendar_event do |e|
+  e.label ''
+  e.event_date '2019-04-05'
+  e.association :calendar
+end
+
 Factory.define :search_schedule do |s|
   s.association :search_setup
 end
