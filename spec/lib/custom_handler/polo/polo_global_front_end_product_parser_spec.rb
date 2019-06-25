@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
       expect(p.entity_snapshots.length).to eq 1
     end
 
-    it "does not save or snapshot if product is unchanged" do
+    it "does not save or snapshot if product is unchanged, but sets flag" do
       p = Product.create! unique_identifier: "200002644189"      
       p.update_custom_value! cdefs[:digit_style_6], "002644"
       p.update_custom_value! cdefs[:season], "999"
@@ -75,6 +75,8 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
 
       expect_any_instance_of(Product).not_to receive(:save!)
       expect(subject.parse_line row, user, "file.txt").to be_nil
+      p.reload
+      expect(p.custom_value(cdefs[:ax_updated_without_change])).to eq true
     end
   end
 

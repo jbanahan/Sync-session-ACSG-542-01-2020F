@@ -298,7 +298,8 @@ module OpenChain
           :japanese_leather_definition => {label: "Japanese Leather Definition", data_type: :boolean, module_type: "Product", cdef_uid: "prod_japanese_leather_definition"},
           :eu_sanitation_certificate => {label: "EU Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_eu_sanitation_certificate"},
           :japan_sanitation_certificate => {label: "Japan Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_japan_sanitation_certificate"},
-          :korea_sanitation_certificate => {label: "Korea Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_korea_sanitation_certificate"}          
+          :korea_sanitation_certificate => {label: "Korea Requires Sanitation Certificate", data_type: :boolean, module_type: "Product", cdef_uid: "prod_korea_sanitation_certificate"},
+          :ax_updated_without_change => {label: "Updated Without Change", data_type: :boolean, module_type: "Product", read_only: true, cdef_uid: "prod_ax_updated_without_change"}
         }
 
         included do |base|

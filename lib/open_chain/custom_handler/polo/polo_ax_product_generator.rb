@@ -44,6 +44,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
         first
 
     rows = []
+
+    # If flag has been set, reloaded product gets sent even without changes and afterwards we need to unset it.
+    product.update_custom_value! cdefs[:ax_updated_without_change], false
+
     if product
       classifications_sent = false
 
@@ -248,19 +252,21 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
     # We're just going to look up the products individually during the preprocess row phase...there's so many custom definitions involved
     # that the query to include them all will be a nightmare.  Plus, the MSL feed, which this is replacing was already 
     # handling the products 1 by 1 so this shouldn't be any more load than that was causing.
-    q = "SELECT DISTINCT products.id
-FROM products
-INNER JOIN classifications c on c.product_id = products.id 
-INNER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
-LEFT OUTER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
-LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status_manual].id}
-INNER JOIN custom_values fabric_1 on fabric_1.customizable_id = products.id AND fabric_1.customizable_type = 'Product' AND fabric_1.custom_definition_id = #{cdefs[:fabric_1].id} AND fabric_1.string_value <> ''
-INNER JOIN custom_values fabric_type_1 on fabric_type_1.customizable_id = products.id AND fabric_type_1.customizable_type = 'Product' AND fabric_type_1.custom_definition_id = #{cdefs[:fabric_type_1].id} AND fabric_type_1.string_value <> ''
-INNER JOIN custom_values fabric_percent_1 on fabric_percent_1.customizable_id = products.id AND fabric_percent_1.customizable_type = 'Product' AND fabric_percent_1.custom_definition_id = #{cdefs[:fabric_percent_1].id} AND fabric_percent_1.decimal_value > 0
-INNER JOIN custom_values fiber_content on fiber_content.customizable_id = products.id AND fiber_content.customizable_type = 'Product' AND fiber_content.custom_definition_id = #{cdefs[:fiber_content].id} AND fiber_content.string_value <> ''
-INNER JOIN custom_values msl_gcc_desc on msl_gcc_desc.customizable_id = products.id AND msl_gcc_desc.customizable_type = 'Product' AND msl_gcc_desc.custom_definition_id = #{cdefs[:msl_gcc_desc].id} AND msl_gcc_desc.string_value <> ''
-INNER JOIN custom_values non_textile on non_textile.customizable_id = products.id AND non_textile.customizable_type = 'Product' AND non_textile.custom_definition_id = #{cdefs[:non_textile].id} AND non_textile.string_value <> ''
-"
+    q = <<-SQL 
+          SELECT DISTINCT products.id
+          FROM products
+            INNER JOIN classifications c on c.product_id = products.id 
+            INNER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
+            LEFT OUTER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
+            LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status_manual].id}
+            LEFT OUTER JOIN custom_values ax_updated_without_change ON ax_updated_without_change.customizable_id = products.id AND ax_updated_without_change.customizable_type = 'Product' AND ax_updated_without_change.custom_definition_id = #{cdefs[:ax_updated_without_change].id}
+            INNER JOIN custom_values fabric_1 on fabric_1.customizable_id = products.id AND fabric_1.customizable_type = 'Product' AND fabric_1.custom_definition_id = #{cdefs[:fabric_1].id} AND fabric_1.string_value <> ''
+            INNER JOIN custom_values fabric_type_1 on fabric_type_1.customizable_id = products.id AND fabric_type_1.customizable_type = 'Product' AND fabric_type_1.custom_definition_id = #{cdefs[:fabric_type_1].id} AND fabric_type_1.string_value <> ''
+            INNER JOIN custom_values fabric_percent_1 on fabric_percent_1.customizable_id = products.id AND fabric_percent_1.customizable_type = 'Product' AND fabric_percent_1.custom_definition_id = #{cdefs[:fabric_percent_1].id} AND fabric_percent_1.decimal_value > 0
+            INNER JOIN custom_values fiber_content on fiber_content.customizable_id = products.id AND fiber_content.customizable_type = 'Product' AND fiber_content.custom_definition_id = #{cdefs[:fiber_content].id} AND fiber_content.string_value <> ''
+            INNER JOIN custom_values msl_gcc_desc on msl_gcc_desc.customizable_id = products.id AND msl_gcc_desc.customizable_type = 'Product' AND msl_gcc_desc.custom_definition_id = #{cdefs[:msl_gcc_desc].id} AND msl_gcc_desc.string_value <> ''
+            INNER JOIN custom_values non_textile on non_textile.customizable_id = products.id AND non_textile.customizable_type = 'Product' AND non_textile.custom_definition_id = #{cdefs[:non_textile].id} AND non_textile.string_value <> ''
+        SQL
     if self.custom_where.blank?
       q << " #{Product.join_clause_for_need_sync(sync_code)}
 WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24.hours)}
@@ -269,7 +275,13 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
       q << self.custom_where
     end
 
-    q << "AND (ax_export.string_value = 'Exported' OR ax_export_manual.string_value = 'Exported') ORDER BY products.id ASC LIMIT #{max_results}"
+    q << " AND (ax_export.string_value = 'Exported' OR ax_export_manual.string_value = 'Exported')"
+    if self.custom_where.blank?
+      # For updated_without_change results, ignore sync records 
+      q << " OR (ax_updated_without_change.boolean_value = true AND (ax_export.string_value = 'Exported' OR ax_export_manual.string_value = 'Exported'))"
+    end
+    q << " ORDER BY products.id ASC LIMIT #{max_results}"
+
   end
 
   def cdefs
@@ -283,7 +295,7 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
       :fabric_percent_14, :fabric_percent_15, :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1,
       :scientific_name_2, :scientific_name_3, :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, 
       :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :origin_wildlife, :semi_precious, :semi_precious_type,
-      :cites, :fish_wildlife, :meets_down_requirments, :non_textile, :set_type, :ax_export_status, :ax_export_status_manual
+      :cites, :fish_wildlife, :meets_down_requirments, :non_textile, :set_type, :ax_export_status, :ax_export_status_manual, :ax_updated_without_change
     ])
   end
 

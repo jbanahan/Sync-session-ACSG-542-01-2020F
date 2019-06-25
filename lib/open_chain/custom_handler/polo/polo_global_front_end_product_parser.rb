@@ -64,6 +64,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
       product.create_snapshot user, nil, file
       return product
     else
+      # AX product generator will resend this record. Each additional generator
+      # requiring this behavior will need its own flag
+      product.update_custom_value! cdefs[:ax_updated_without_change], true
       return nil
     end
   end
@@ -72,7 +75,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions([:digit_style_6, :season, :msl_board_number, :sap_brand_name, :rl_merchandise_division_description, 
       :gender_desc, :product_category, :product_class_description, :ax_subclass, :rl_short_description, :rl_long_description, 
-      :merchandising_fabrication, :heel_height, :material_status, :ax_export_status
+      :merchandising_fabrication, :heel_height, :material_status, :ax_export_status, :ax_updated_without_change
     ])
   end
 

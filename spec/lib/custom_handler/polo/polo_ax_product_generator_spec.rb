@@ -44,14 +44,18 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
       expect(rows[1][12]).to eq ""
 
       exported_product.reload
+      expect(exported_product.custom_value(cdefs[:ax_updated_without_change])).to eq false
       r = exported_product.sync_records.first
       expect(r).not_to be_nil
       expect(r.trading_partner).to eq 'AX'
     end
 
-    it "does not sync a product already synced" do
+    it "does not sync a product already synced unless ax_updated_without_change flag has been set" do
       exported_product.sync_records.create! trading_partner: "AX", sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
       expect(subject.sync_csv).to be_nil
+
+      product.update_custom_value! cdefs[:ax_updated_without_change], true
+      expect(subject.sync_csv).to_not be_nil
     end
 
     it "does not sync a product sent less than 24 hours ago" do
