@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   include ActionView::Helpers::NumberHelper
 
   def self.can_view? user
-    MasterSetup.get.system_code == 'polo' || Rails.env.development?
+    MasterSetup.get.custom_feature?('Polo')
   end
 
   # Runs the parser via the scheduler so that any fiber fields updated since the previous run are anal
@@ -429,7 +429,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
     def cleanup_fiber fiber
       # Remove our newline stand-ins (and anything after them, fabrics shouldn't wrap past end of lines)
-      fiber = fiber.gsub /\x1E.*/, ""
+      fiber = fiber.strip.gsub /\x1E.*/, ""
 
       # We're going to do two passes on the xref lookups here...the raw fiber value passed in
       # and then later on the cleaned up one.  This is primarily because we want to give RL the chance
@@ -446,7 +446,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       return xref unless xref.blank?
 
       # Strip anything that comes after w/, with, and, /, ' - ', more than 3 spaces
-      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\(|\+|\s+-+\s+|\s{3,}).*$/i, ""
+      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\+|\s+-+\s+|\s{3,}).*$/i, ""
       xref = xref_value fiber
       return xref unless xref.blank?
 
@@ -464,8 +464,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def strip_punctuation s
-      # Strip any trailing whitespace and/or punctuation.
-      s = s[0..-2] while s =~ /[[[:punct:]]\s=`~$^+|<>]$/
+      # Strip any trailing whitespace and/or punctuation EXCEPT trailing parens.
+      s = s[0..-2] while s =~ /[[[:punct:]&&[^)]]\s=`~$^+|<>]$/
 
       # Strip any leading whitespace and/or punctuation
       s = s[1..-1] while s =~ /^[[[:punct:]]\s=`~$^+|<>]/

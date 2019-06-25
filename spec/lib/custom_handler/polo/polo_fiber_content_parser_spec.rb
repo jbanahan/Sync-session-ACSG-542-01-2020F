@@ -154,8 +154,8 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
         expect(@p.parse_fiber_content "100% mulberry silk / Woven Cami: 100% Silk").to eq proxy_result({fiber_1: "mulberry silk", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
       end
 
-      it "strips anything after a (" do
-        expect(@p.parse_fiber_content "100% WOOL (side knitted by 1END)").to eq proxy_result({fiber_1: "WOOL", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
+      it "leaves all parens intact" do
+        expect(@p.parse_fiber_content "100% WOOL (virgin)").to eq proxy_result({fiber_1: "WOOL (virgin)", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
       end
 
       it "strips anything after an &" do
