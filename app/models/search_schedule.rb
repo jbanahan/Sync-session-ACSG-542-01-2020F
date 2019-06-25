@@ -191,14 +191,22 @@ class SearchSchedule < ActiveRecord::Base
   def run_custom_report rpt
     User.run_with_user_settings(rpt.user) do
       t = nil
-      extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+      extension = if self.download_format.nil? || self.download_format == 'csv'
+                    'csv'
+                  elsif self.download_format == 'xls'
+                    'xls'
+                  else
+                    'xlsx'
+                  end
       attachment_name = self.class.report_name rpt, extension, include_timestamp: !exclude_file_timestamp
 
-      begin      
+      begin
         if extension=='csv'
           t = rpt.csv_file rpt.user
-        else
+        elsif extension=='xls'
           t = rpt.xls_file rpt.user
+        else
+          t = rpt.xlsx_file rpt.user
         end
 
         if send_if_empty? || !report_blank?(t)

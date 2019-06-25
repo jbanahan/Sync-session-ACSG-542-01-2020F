@@ -170,7 +170,7 @@ hrs_opts = {"midnight"=>"0"}
         <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Vandegrift employees are able to view these passwords."}) %>
         <%=field_row "FTP Subfolder", text_field_tag("ftpfldr","",{:id=>"sd_ftpfldr",:class=>"dialogtip",:title=>"Subfolder on FTP server (optional)"}) %>
       <% end %>
-      <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls"]),{:id=>"sd_frmt"}) %>
+      <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls", "xlsx"]),{:id=>"sd_frmt"}) %>
       <%=field_row "Hour of Day (Your Timezone)", select_tag("hr",options_for_select(hrs_opts),{:id=>"sd_hr"}) %>
       <%days_opts = {"Any"=>""}%>
       <%(1..31).each {|x| days_opts[x]=x}%>

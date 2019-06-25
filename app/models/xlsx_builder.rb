@@ -38,7 +38,7 @@ class XlsxBuilder
   # 
   # Returns an XlsSheet wrapper object.
   def create_sheet sheet_name, headers: []
-    sheet = XlsxSheet.new(@workbook.add_worksheet(name: sheet_name))
+    sheet = XlsxSheet.new(@workbook.add_worksheet(name: sheet_name.truncate(31)))
     if headers && headers.length > 0
       add_header_row(sheet, headers) 
     end

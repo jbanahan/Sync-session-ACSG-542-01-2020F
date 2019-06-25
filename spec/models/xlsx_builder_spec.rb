@@ -25,6 +25,13 @@ describe XlsxBuilder do
       expect(sheet.raw_sheet).to be_a Axlsx::Worksheet
     end
 
+    it "handles sheet names longer than 31 characters" do
+      sheet = subject.create_sheet "Unmatched 03-23-19 thru 06-21-19"
+      expect(sheet).to be_a XlsxBuilder::XlsxSheet
+      expect(sheet.name).to eq "Unmatched 03-23-19 thru 06-2..."
+      expect(sheet.raw_sheet).to be_a Axlsx::Worksheet
+    end
+
     it "creates a new worksheet with headers" do
       sheet = subject.create_sheet "Test", headers: ["Testing"]
       expect(reader.raw_data(sheet)[0]).to eq ["Testing"]

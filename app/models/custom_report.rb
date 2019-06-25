@@ -71,6 +71,14 @@ class CustomReport < ActiveRecord::Base
     fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
+  def xlsx_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xlsx"] )
+    @listener = XlsxListener.new self.no_time?
+    run run_by
+    workbook = @listener.build_xlsx
+    workbook.write(file)
+    file
+  end
+
   def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
     @listener = XlsListener.new self.no_time?
     run run_by
@@ -80,7 +88,7 @@ class CustomReport < ActiveRecord::Base
   
   #runs the resport in xls format.  This method gives duck type compatibility with the reports in open_chain/reports so ReportResult.execute_report can call htem
   def run_report run_by, *p
-    xls_file run_by
+    xlsx_file run_by
   end
 
   def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".csv"])
@@ -192,7 +200,162 @@ class CustomReport < ActiveRecord::Base
     nil
   end
 
-  class ArraysListener
+  class ReportListener
+    def write row, column, content
+      raise NotImplementedError
+    end
+
+    def write_hyperlink row, column, url, alt_text
+      raise NotImplementedError
+    end
+
+    def heading_row(row)
+      raise NotImplementedError
+    end
+
+    def add_tab(tab_name)
+      raise NotImplementedError
+    end
+  end
+
+  class XlsxListener < ReportListener
+    attr_accessor :data
+
+    def initialize(no_time = false)
+      @sheets = []
+      @no_time = no_time
+      @sheet = Worksheet.new
+      @sheets << @sheet
+      @wb = XlsxBuilder.new
+    end
+
+    class Cell
+      attr_accessor :type, :content, :url
+
+      def initialize(type = 'normal')
+        @type = type
+      end
+
+      def to_xlsx
+        type == 'normal' ? content : {location: url, link_text: content, type: :hyperlink}
+      end
+    end
+
+    class Row
+      attr_accessor :type, :cells
+
+      def initialize(type = 'normal')
+        @type = type
+        @cells = []
+      end
+
+      def to_xlsx
+        return [] if cells.blank?
+        cells.map { |cell| cell.try(:to_xlsx) }
+      end
+
+      def insert_link_cell_value column, url, alt_text
+        cell = get_cell_by_column(column)
+
+        content = alt_text.blank? ? url : alt_text
+        content = content.to_s.to_f if content.is_a?(BigDecimal)
+
+        cell.url = url
+        cell.content = content
+        cell.type = 'hyperlink'
+      end
+
+      def create_cell column
+        cell = Cell.new
+        @cells[column] = cell
+
+        cell
+      end
+
+      def get_cell_by_column column
+        cell = if @cells[column].blank?
+                 create_cell column
+               else
+                 @cells[column]
+               end
+        cell
+      end
+
+      def insert_cell_value column, content
+        cell = get_cell_by_column column
+
+        cell.content = content
+      end
+    end
+
+    class Worksheet
+      attr_accessor :sheets, :name, :rows
+
+      def initialize(name = "Sheet 1")
+        @name = name
+        @rows = []
+      end
+
+      def get_or_create_row_at_index(row)
+        if rows[row].blank?
+          rows[row] = Row.new
+        end
+
+        rows[row]
+      end
+    end
+
+    def add_tab tab_name
+      # if current @sheet contains no rows we assume we are naming the first sheet
+      if @sheet.rows.length > 0
+        @sheet = Worksheet.new(tab_name)
+        @sheets << @sheet
+      else
+        @sheet.name = tab_name
+      end
+    end
+
+    def write row, column, content
+      @row = @sheet.get_or_create_row_at_index row
+
+      if content.respond_to?(:strftime)
+        content = content.strftime(@no_time ? "%Y-%m-%d" : "%Y-%m-%d %H:%M")
+      end
+
+      @row.insert_cell_value column, content
+      @row
+    end
+
+    def write_hyperlink row, column, url, alt_text
+      @row = @sheet.get_or_create_row_at_index row
+      @row.insert_link_cell_value column, url, alt_text
+    end
+
+    def heading_row row_number
+      # A row with `type` 'header' is a header row.
+      row = @sheet.get_or_create_row_at_index(row_number)
+      row.type = 'header'
+    end
+
+    def build_xlsx
+      @sheets.each do |sheet|
+        xlsx_sheet = @wb.create_sheet(sheet.name)
+        sheet.rows.each do |row|
+          if row.blank?
+            @wb.add_body_row(xlsx_sheet, [])
+          elsif row.type == 'header'
+            @wb.add_header_row(xlsx_sheet, row.to_xlsx)
+          else
+            @wb.add_body_row(xlsx_sheet, row.to_xlsx)
+          end
+        end
+      end
+
+      @wb
+    end
+  end
+
+  class ArraysListener < ReportListener
     attr_accessor :data
     def initialize no_time = false, csv_output = true
       self.data = {}
@@ -234,7 +397,7 @@ class CustomReport < ActiveRecord::Base
       r_val
     end
   end
-  class XlsListener
+  class XlsListener < ReportListener
     attr_accessor :workbook
     def initialize no_time = false
       @workbook = Spreadsheet::Workbook.new
