@@ -127,7 +127,7 @@ module ApplicationHelper
       inner_opts[:filter] = opts.delete :filter
     end
 
-    select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current, inner_opts),selected,"Select a Field"), opts
+    select_tag name, grouped_options_for_select(CoreModule.grouped_options(User.current, inner_opts), selected, {prompt: "Select a Field"}), opts
   end
 
   def model_text_field_tag field_name, model_field_uid, value, opts={}
