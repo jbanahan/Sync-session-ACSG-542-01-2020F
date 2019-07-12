@@ -127,8 +127,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
   }
   let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
 
-  describe "process_command", :disable_delayed_jobs do
-
+  describe "process_remote_file" do
     it "handles raised errors by returning an error response" do
       # This is just the first method call that's easy to mock out and raise something in the method, could be
       # replaced by anything else.
@@ -136,7 +135,9 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(cmd).to receive(:[]).and_raise "Error"
       expect(subject.process_remote_file(cmd)).to eq({'response_type'=>'error','message'=>"Error"})
     end
+  end
 
+  describe "process_command", :disable_delayed_jobs do
     it 'should create linkable attachment if linkable attachment rule match' do
       LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','original_path'=>'/path/to/this.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
@@ -197,6 +198,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(OpenChain::CustomHandler::Hm::HmI2ShipmentParser).to receive(:process_from_s3).with("bucket", '12345')
         cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i2/a.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
+      end
+
+      it "handles H&M I2 drawbacks" do
+        do_parser_test('H&M I2 Interface', OpenChain::CustomHandler::Hm::HmI2DrawbackParser, '/hm_i2_drawback/file.csv')
+      end
+
+      it "handles H&M Purolator drawbacks" do
+        do_parser_test('H&M Purolator Interface', OpenChain::CustomHandler::Hm::HmPurolatorDrawbackParser, '/hm_purolator_drawback/file.csv')
       end
 
       it "should send data to H&M i977 parser if feature enabled and path contains _hm_i977" do

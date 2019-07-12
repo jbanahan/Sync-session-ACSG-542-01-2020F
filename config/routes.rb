@@ -671,6 +671,14 @@ OpenChain::Application.routes.draw do
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get
 
+  get "/custom_features/hm_product_xref" => "custom_features#hm_product_xref_index"
+  post "/custom_features/hm_product_xref/upload" => "custom_features#hm_product_xref_upload"
+  get "/custom_features/hm_product_xref/:id/download" => "custom_features#hm_product_xref_download"
+
+  get "/custom_features/hm_receipt_file" => "custom_features#hm_receipt_file_index"
+  post "/custom_features/hm_receipt_file/upload" => "custom_features#hm_receipt_file_upload"
+  get "/custom_features/hm_receipt_file/:id/download" => "custom_features#hm_receipt_file_download"
+
   #reports
   match "/reports" => "reports#index", :via => :get
   match "/reports/show_tariff_comparison" =>"reports#show_tariff_comparison", :via => :get

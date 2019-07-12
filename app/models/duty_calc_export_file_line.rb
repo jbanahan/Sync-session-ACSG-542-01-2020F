@@ -4,6 +4,7 @@
 #
 #  action_code              :string(255)
 #  carrier                  :string(255)
+#  color_description        :string(255)
 #  created_at               :datetime         not null
 #  customs_line_number      :integer
 #  description              :string(255)
@@ -23,9 +24,13 @@
 #  ref_2                    :string(255)
 #  ref_3                    :string(255)
 #  ref_4                    :string(255)
+#  ref_5                    :string(255)
+#  ref_6                    :string(255)
 #  schedule_b_code          :string(255)
 #  ship_date                :date
+#  size_description         :string(255)
 #  status                   :string(255)
+#  style                    :string(255)
 #  uom                      :string(255)
 #  updated_at               :datetime         not null
 #
@@ -41,7 +46,11 @@
 #
 
 class DutyCalcExportFileLine < ActiveRecord::Base
-  attr_accessible :action_code, :carrier, :customs_line_number, :description, :destination_country, :duty_calc_export_file_id, :export_date, :exporter, :hts_code, :importer_id, :nafta_duty, :nafta_duty_rate, :nafta_us_equiv_duty, :part_number, :quantity, :ref_1, :ref_2, :ref_3, :ref_4, :schedule_b_code, :ship_date, :status, :uom
+  attr_accessible :action_code, :carrier, :customs_line_number, :description, :destination_country,
+                  :duty_calc_export_file_id, :export_date, :exporter, :hts_code, :importer_id, :nafta_duty,
+                  :nafta_duty_rate, :nafta_us_equiv_duty, :part_number, :quantity, :ref_1, :ref_2, :ref_3,
+                  :ref_4, :schedule_b_code, :ship_date, :status, :uom, :color_description, :size_description,
+                  :style, :ref_5, :ref_6
   
   belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines
@@ -75,22 +84,35 @@ class DutyCalcExportFileLine < ActiveRecord::Base
   end
 
   # returns an array of strings that can be used to make the duty calc csv file
-  def make_line_array
+  def make_line_array duty_calc_format: :legacy
     r = []
-    [:export_date,:ship_date,:part_number,:carrier,:ref_1,:ref_2,:ref_3,
-    :ref_4,:destination_country,:quantity,:schedule_b_code,:description,
-    :uom,:exporter,:status,:action_code,:nafta_duty,:nafta_us_equiv_duty,:nafta_duty_rate
-    ].each do |v|
-      r << val(self[v])
+    get_fields(duty_calc_format).each do |v|
+      line_val = val(self[v])
+      # Substitute HTS Code for Schedule B Code if there's no Schedule B and there is an HTS.
+      if v == :schedule_b_code && line_val.blank? && !self.hts_code.blank?
+        line_val = val(self.hts_code)
+      end
+      r << line_val
     end
-    r[10] = val(self.hts_code) if r[10].blank? && !self.hts_code.blank?
     r
   end
 
   private 
-  def val v
-    return "" if v.blank?
-    return v.strftime("%m/%d/%Y") if v.respond_to?(:strftime)
-    v.to_s
-  end
+    def val v
+      return "" if v.blank?
+      return v.strftime("%m/%d/%Y") if v.respond_to?(:strftime)
+      v.to_s
+    end
+
+    def get_fields duty_calc_format
+      get_legacy_format_fields
+    end
+
+    def get_legacy_format_fields
+      [:export_date,:ship_date,:part_number,:carrier,:ref_1,:ref_2,:ref_3,
+       :ref_4,:destination_country,:quantity,:schedule_b_code,:description,
+       :uom,:exporter,:status,:action_code,:nafta_duty,:nafta_us_equiv_duty,:nafta_duty_rate
+      ]
+    end
+
 end

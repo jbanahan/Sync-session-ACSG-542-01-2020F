@@ -72,6 +72,10 @@ class DataCrossReference < ActiveRecord::Base
   VFI_DIVISION ||= "vfi_division"
   OTA_REFERENCE_FIELDS ||= "ota_reference_fields"
   ASCE_BRAND ||= "asce_brand_xref"
+  HM_I2_SHIPMENT_EXPORT_INVOICE_NUMBER = "hm_i2_shipment_export_invoice_number"
+  HM_I2_SHIPMENT_RETURNS_INVOICE_NUMBER = "hm_i2_shipment_returns_invoice_number"
+  HM_I2_DRAWBACK_EXPORT_INVOICE_NUMBER = "hm_i2_drawback_export_invoice_number"
+  HM_I2_DRAWBACK_RETURNS_INVOICE_NUMBER = "hm_i2_drawback_returns_invoice_number"
   LL_CARB_STATEMENTS ||= "ll_carb_statement"
   LL_PATENT_STATEMENTS ||= "ll_patent_statement"
 

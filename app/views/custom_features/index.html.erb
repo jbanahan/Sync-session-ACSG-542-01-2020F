@@ -300,6 +300,20 @@
       </div>
     </div>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::Hm::HmProductXrefParser.new(nil).can_view?(current_user)-%>
+    <div class='row'>
+      <div class='col-md-6 offset-md-3'>
+        <%=link_to "H&M Product Cross Reference Upload", '/custom_features/hm_product_xref', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
+  <%-if OpenChain::CustomHandler::Hm::HmReceiptFileParser.new(nil).can_view?(current_user)-%>
+    <div class='row'>
+      <div class='col-md-6 offset-md-3'>
+        <%=link_to "H&M Receipt File Upload", '/custom_features/hm_receipt_file', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
   <%-if enabled_features.include?('Special Tariff Cross References') %>
     <div class='row'>
       <div class='col-md-6 offset-md-3'>

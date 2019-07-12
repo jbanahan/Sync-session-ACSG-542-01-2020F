@@ -53,6 +53,9 @@ require 'open_chain/custom_handler/talbots/talbots_856_parser'
 require 'open_chain/custom_handler/kewill_entry_parser'
 require 'open_chain/custom_handler/ellery/ellery_order_parser'
 require 'open_chain/custom_handler/ellery/ellery_856_parser'
+require 'open_chain/custom_handler/hm/hm_i2_drawback_parser'
+require 'open_chain/custom_handler/hm/hm_purolator_drawback_parser'
+require 'open_chain/custom_handler/hm/hm_receipt_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
 require 'open_chain/custom_handler/vandegrift/kewill_tariff_classifications_parser'
@@ -293,6 +296,10 @@ module OpenChain
         OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "advan_prep_7501") && custom_features.include?("Advance 7501")
         OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_i2_drawback") && custom_features.include?("H&M I2 Interface")
+        OpenChain::CustomHandler::Hm::HmI2DrawbackParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "hm_purolator_drawback") && custom_features.include?("H&M Purolator Interface")
+        OpenChain::CustomHandler::Hm::HmPurolatorDrawbackParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ecellerate_shipment") && custom_features.include?("eCellerate")
         OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "pvh_gtn_order_xml") && custom_features.include?("PVH Feeds")

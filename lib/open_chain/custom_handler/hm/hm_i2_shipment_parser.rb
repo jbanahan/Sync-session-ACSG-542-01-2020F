@@ -25,7 +25,38 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     log.company = product_importer
     log.error_and_raise "No importer record found with system code HENNE." if @product_importer.nil?
 
-    # If this parser is no longer the parser of record for the i2 file, then we can just stop at this point 
+    lock_cr = nil
+    invoice_number = text_value(rows[0][0])
+    cross_reference_lock_type = determine_cross_reference_lock_type rows[0]
+    Lock.acquire("Invoice-#{invoice_number}-#{cross_reference_lock_type}") do
+      lock_cr = DataCrossReference.where(cross_reference_type: cross_reference_lock_type, key: invoice_number).first_or_create!
+    end
+
+    if lock_cr
+      # The intention of this check is to prevent two dupe files from being processed near-simultaneously (H&M dupes
+      # are a regular problem).  The way we're doing this, we're also effectively eliminating updates at an invoice
+      # number level.  Updates are said not to happen.
+      Lock.with_lock_retry(lock_cr) do
+        # Checking value here ensures that another process didn't already start to lock processing for this invoice
+        # number.  A value (current date) will be present only if a file for this invoice number has already been
+        # processed.
+        if lock_cr.value.nil?
+          parse_with_locked_invoice rows, system, forward_to_entry_system, log
+
+          lock_cr.value = Time.zone.now
+          lock_cr.save!
+        else
+          # Sends an email announcing the rejection.  This seems like it'll be annoying, but was specifically requested.
+          send_dupe_rejection_email invoice_number, file_contents
+        end
+      end
+    end
+
+    nil
+  end
+
+  def parse_with_locked_invoice rows, system, forward_to_entry_system, log
+    # If this parser is no longer the parser of record for the i2 file, then we can just stop at this point
     # since no data is actually saved to the system for these files.
     if skip_file?(system)
       log.add_info_message("File skipped because i978 files are set up to take precendence.")
@@ -50,8 +81,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
       end
     end
-
-    nil
   end
 
   def skip_file? system
@@ -199,6 +228,20 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       :kewill
     else
       log.reject_and_raise "Invalid Order Type value found: '#{order_type}'.  Unable to determine what system to forward shipment data to."
+    end
+  end
+
+  def determine_cross_reference_lock_type first_line
+    order_type = first_line[8].to_s
+
+    case order_type.upcase
+      when "ZSTO"
+        DataCrossReference::HM_I2_SHIPMENT_EXPORT_INVOICE_NUMBER
+      when "ZRET"
+        DataCrossReference::HM_I2_SHIPMENT_RETURNS_INVOICE_NUMBER
+      else
+        # An exception can't be raised here since determine_system, a similarly-structured method, is called first.
+        nil
     end
   end
 
@@ -610,7 +653,18 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
-  # There is a period of time when this i2 parser and then new i978 are running in parallel.  The i2 needs to take precedence in 
+  def send_dupe_rejection_email invoice_number, file_contents
+    subject = "Duplicate H&M I2 File Received"
+    body = "A duplicate H&M I2 file was received for invoice number #{invoice_number}."
+    Tempfile.open(["HM-Dupe-I2-", ".csv"]) do |tempfile|
+      tempfile.write(file_contents)
+      tempfile.flush
+      Attachment.add_original_filename_method tempfile, "HM-Dupe-I2-#{Attachment.get_sanitized_filename(invoice_number)}.csv"
+      OpenMailer.send_simple_html(['support@vandegriftinc.com'], subject, body, [tempfile]).deliver_now
+    end
+  end
+
+  # There is a period of time when this i2 parser and then new i978 are running in parallel.  The i2 needs to take precedence in
   # that situation and should generate all files.  When the i978 goes live, this parser must no longer generate any files / emails
   # and allow the i978 one to do all the work (essentially ignoring the i2 files).
   def primary_ca_import_parser?

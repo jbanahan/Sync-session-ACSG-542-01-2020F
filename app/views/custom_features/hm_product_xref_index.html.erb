@@ -1,0 +1,5 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY .csv, .xls or .xlsx H&M Product Cross Reference files</h2>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "H&M Product Cross Reference Upload", custom_feature: "hm_product_xref"} %>

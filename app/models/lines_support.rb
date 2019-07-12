@@ -16,6 +16,16 @@ module LinesSupport
     unless ["CommercialInvoiceLine","SecurityFilingLine"].include?(self.name)
       belongs_to :product
       before_validation :default_quantity
+
+      unless self.name == "DrawbackImportLine"
+        validates :product, :presence => true
+        before_validation :default_line_number
+      end
+    end
+
+    unless ["CommercialInvoiceLine","SecurityFilingLine","DrawbackImportLine"].include?(self.name)
+      belongs_to :product
+      before_validation :default_quantity
       validates :product, :presence => true
 
       unless self.name == "DrawbackImportLine"

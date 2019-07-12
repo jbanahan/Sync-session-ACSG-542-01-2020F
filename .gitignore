@@ -42,3 +42,4 @@ config/recaptcha.yml
 .idea
 dump.rdb
 .byebug_history
+.rake_tasks~

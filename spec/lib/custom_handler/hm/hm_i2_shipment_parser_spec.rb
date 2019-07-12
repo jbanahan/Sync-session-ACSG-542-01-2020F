@@ -59,11 +59,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
     context "with canadian shipment" do 
 
-      let!(:data_cross_reference) {
-        DataCrossReference.add_hm_pars_number "PARS"
-      }
-
-      before :each do 
+      before :each do
         # Turn off pars notifications for now
         allow_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
       end
@@ -81,6 +77,12 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           file << "testing"
           file.flush
         end
+
+        expect(DataCrossReference).to receive(:find_and_mark_next_unused_hm_pars_number).and_return('PARSley')
+
+        expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_export_invoice_number').and_yield
+        expect(Lock).to receive(:with_lock_retry).and_yield
+
         described_class.parse_file ca_file, log
 
         expect(invoice).not_to be_nil
@@ -133,11 +135,9 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         expect(invoice_data.length).to eq 1
         expect(invoice_data.first.invoice_number).to eq "INV#-01"
-        expect(invoice_data.first.pars_number).to eq "PARS"
+        expect(invoice_data.first.pars_number).to eq "PARSley"
         expect(invoice_data.first.cartons).to eq 1
         expect(invoice_data.first.weight).to eq 4
-
-        expect(data_cross_reference.reload.value).to eq "1"
 
         expect(log.company).to eq hm
         expect(log.identifiers.length).to eq 0
@@ -291,6 +291,26 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(log).to have_info_message("File skipped because i978 files are set up to take precendence.")
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
+
+      it "rejects dupe file and sends email" do
+        # Seeding this with a cross ref that contains a value for "value"  indicates that we're dealing with a dupe.
+        DataCrossReference.where(cross_reference_type: DataCrossReference::HM_I2_SHIPMENT_EXPORT_INVOICE_NUMBER, key: 'INV#', value: Time.now).create!
+        expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_export_invoice_number').and_yield
+        expect(Lock).to receive(:with_lock_retry).and_yield
+
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
+
+        described_class.parse_file ca_file, log
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq ['support@vandegriftinc.com']
+        expect(mail.subject).to eq "Duplicate H&M I2 File Received"
+        expect(mail.body).to include ERB::Util.html_escape("A duplicate H&M I2 file was received for invoice number INV#.")
+        expect(mail.attachments.length).to eq(1)
+        att = mail.attachments[0]
+        expect(att.filename).to eq("HM-Dupe-I2-INV#.csv")
+        expect(att.body).to eq(ca_file)
+      end
     end
 
     context "with us shipment" do
@@ -313,6 +333,11 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           expect(file_number).to eq "INV#"
           invoice = inv
         end
+
+        expect(DataCrossReference).to receive(:find_and_mark_next_unused_hm_pars_number).and_return('PARSley')
+
+        expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_returns_invoice_number').and_yield
+        expect(Lock).to receive(:with_lock_retry).and_yield
 
         described_class.parse_file us_file, log
         expect(invoice).not_to be_nil
@@ -453,6 +478,26 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         expect(invoice).not_to be_nil
         expect(invoice.commercial_invoice_lines.first.country_origin_code).to eq "BU"
+      end
+
+      it "rejects dupe file and sends email" do
+        # Seeding this with a cross ref that contains a value for "value"  indicates that we're dealing with a dupe.
+        DataCrossReference.where(cross_reference_type: DataCrossReference::HM_I2_SHIPMENT_RETURNS_INVOICE_NUMBER, key: 'INV#', value: Time.now).create!
+        expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_returns_invoice_number').and_yield
+        expect(Lock).to receive(:with_lock_retry).and_yield
+
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).not_to receive(:generate_and_send_invoices)
+
+        described_class.parse_file us_file, log
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq ['support@vandegriftinc.com']
+        expect(mail.subject).to eq "Duplicate H&M I2 File Received"
+        expect(mail.body).to include ERB::Util.html_escape("A duplicate H&M I2 file was received for invoice number INV#.")
+        expect(mail.attachments.length).to eq(1)
+        att = mail.attachments[0]
+        expect(att.filename).to eq("HM-Dupe-I2-INV#.csv")
+        expect(att.body).to eq(us_file)
       end
 
       it "skips file if not the primary parser for US" do

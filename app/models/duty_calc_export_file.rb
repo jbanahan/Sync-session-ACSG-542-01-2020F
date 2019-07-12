@@ -24,7 +24,7 @@ class DutyCalcExportFile < ActiveRecord::Base
 
   # Make a new DutyCalcExportFile with an excel zip attached including all unused export lines for the 
   # given importer
-  def self.generate_for_importer importer, run_by=nil, file_path=nil, extra_where=nil, max_lines_per_file = 65000, max_files_per_zip = 3
+  def self.generate_for_importer importer, run_by=nil, file_path=nil, extra_where=nil, max_lines_per_file = 65000, max_files_per_zip = 3, duty_calc_format: :legacy
     importer = Company.find(importer) if importer.is_a?(Numeric) || importer.is_a?(String)
     r = []
     begin
@@ -36,7 +36,7 @@ class DutyCalcExportFile < ActiveRecord::Base
             fn = File.basename(file_path)
             fp = file_path
           end
-          f, z = generate_excel_zip importer, fp, max_lines_per_file, extra_where, max_files_per_zip
+          f, z = generate_excel_zip importer, fp, max_lines_per_file, extra_where, max_files_per_zip, duty_calc_format: duty_calc_format
           Attachment.add_original_filename_method z
           z.original_filename = fn 
           att = f.build_attachment
@@ -67,26 +67,33 @@ class DutyCalcExportFile < ActiveRecord::Base
   #
   # Usage:
   #     duty_calc_export_file_object, real_output_file = DutyCalcExportFile.generate_file importer_id
-  def self.generate_csv importer, file=Tempfile.new(["dcef",".csv"]), extra_where = nil
+  def self.generate_csv importer, file=Tempfile.new(["dcef",".csv"]), extra_where = nil, duty_calc_format: :legacy
     d = generate_output_file(importer,extra_where) do |line|
-      file << line.make_line_array.to_csv
+      file << line.make_line_array(duty_calc_format: duty_calc_format).to_csv
     end
     file.flush
     [d,file]
   end
 
   # Generates a single zip file (in a Tempfile) with one or more excel files in it.  The total content is all available export lines for this importer
-  def self.generate_excel_zip importer, file_path, max_lines_per_file=65000, extra_where = nil, max_files = 3
+  def self.generate_excel_zip importer, file_path, max_lines_per_file=65000, extra_where = nil, max_files = 3, duty_calc_format: :legacy
     d = nil
     Zip::File.open(file_path,Zip::File::CREATE) do |zipfile|
       book = Spreadsheet::Workbook.new
       sheet = book.create_worksheet :name=>"SHEET1"
       row_count = 0
       file_count = 1
+      # Headers aren't included in all versions of this file.
+      headers = get_headers duty_calc_format
+      if headers.length > 0
+        r = sheet.row(row_count)
+        headers.each_with_index {|v,i| r[i] = v }
+        row_count += 1
+      end
       limit_size = max_lines_per_file*max_files
       d = generate_output_file(importer,extra_where,limit_size) do |line|
         r = sheet.row(row_count)
-        line.make_line_array.each_with_index {|v,i| r[i] = (v.is_a?(BigDecimal) ? v.to_s.to_f : v)}
+        line.make_line_array(duty_calc_format: duty_calc_format).each_with_index {|v,i| r[i] = (v.is_a?(BigDecimal) ? v.to_s.to_f : v)}
         row_count += 1
         if row_count >= max_lines_per_file
           zipfile.file.open("File #{file_count}.xls","w") {|f| book.write f}
@@ -106,19 +113,26 @@ class DutyCalcExportFile < ActiveRecord::Base
   def can_view? u
     u.edit_drawback?
   end
-  private
-  def self.generate_output_file importer, extra_where, limit_size = nil
-    DutyCalcExportFile.transaction do
-      d = DutyCalcExportFile.create!(:importer_id=>importer.id)
-      sql = "UPDATE duty_calc_export_file_lines SET duty_calc_export_file_id = #{d.id} WHERE duty_calc_export_file_id is null and importer_id = #{importer.id} AND (#{extra_where ? extra_where : '1=1'})"
-      sql << " LIMIT #{limit_size}" if limit_size
-      DutyCalcExportFile.connection.execute sql
-      d.reload
-      d.duty_calc_export_file_lines.each do |line|
-        yield line
-      end
-      d
-    end
-    
+
+  def self.get_headers duty_calc_format
+    arr = []
+    # No longer used for original case that needed them (H&M).  Optional, format-specific headers can go here.
+    arr
   end
+
+  private
+    def self.generate_output_file importer, extra_where, limit_size = nil
+      DutyCalcExportFile.transaction do
+        d = DutyCalcExportFile.create!(:importer_id=>importer.id)
+        sql = "UPDATE duty_calc_export_file_lines SET duty_calc_export_file_id = #{d.id} WHERE duty_calc_export_file_id is null and importer_id = #{importer.id} AND (#{extra_where ? extra_where : '1=1'})"
+        sql << " LIMIT #{limit_size}" if limit_size
+        DutyCalcExportFile.connection.execute sql
+        d.reload
+        d.duty_calc_export_file_lines.each do |line|
+          yield line
+        end
+        d
+      end
+
+    end
 end

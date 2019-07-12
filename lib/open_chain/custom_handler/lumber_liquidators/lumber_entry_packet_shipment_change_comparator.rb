@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEn
     def generate_malformed_pdf_email shp
       body_text = "Please fix and re-upload the PDF(s) associated with the following Lumber Liquidators shipment:<br><ul><li>VFI Shipment Number: #{shp.reference}</li><li>Shipment Plan: #{shp.importer_reference}</li></ul><br><a href='#{shp.view_url}' target='_blank'>Go to Shipment</a>"
       pdf_group = MailingList.where(system_code:"allport_pdf_errors").first
-      OpenMailer.send_simple_html(pdf_group, "Bad Lumber Liquidators PDFs - Action Required", body_text.html_safe).deliver!
+      OpenMailer.send_simple_html(pdf_group, "Bad Lumber Liquidators PDFs - Action Required", body_text.html_safe).deliver_now
     end
 
 end; end; end; end

@@ -30,6 +30,8 @@ require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
+require 'open_chain/custom_handler/hm/hm_product_xref_parser'
+require 'open_chain/custom_handler/hm/hm_receipt_file_parser'
 require 'open_chain/custom_handler/ascena/ascena_product_upload_parser'
 require 'open_chain/custom_handler/pvh/pvh_ca_workflow_parser'
 require 'open_chain/custom_handler/under_armour/ua_sites_subs_product_generator'
@@ -76,6 +78,8 @@ class CustomFeaturesController < ApplicationController
   LUMBER_ALLPORT_BILLING_FILE_PARSER ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFileParser'
   LE_CHAPTER_98_PARSER ||= 'OpenChain::CustomHandler::LandsEnd::LeChapter98Parser'
   CUSTOMER_INVOICE_HANDLER ||= 'OpenChain::CustomHandler::CustomerInvoiceHandler'
+  HM_PRODUCT_XREF_PARSER ||= 'OpenChain::CustomHandler::Hm::HmProductXrefParser'
+  HM_RECEIPT_FILE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmReceiptFileParser'
   LL_CARB_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorCarbStatementUploader'
   LL_PATENT_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentStatementUploader'
 
@@ -694,6 +698,38 @@ class CustomFeaturesController < ApplicationController
 
   def customer_invoice_download
     generic_download 'Customer Invoice Upload (810)'
+  end
+
+  def hm_product_xref_index
+    generic_index OpenChain::CustomHandler::Hm::HmProductXrefParser.new(nil), HM_PRODUCT_XREF_PARSER, 'H&M Product Cross Reference'
+  end
+
+  def hm_product_xref_upload
+    generic_upload(HM_PRODUCT_XREF_PARSER, 'H&M Product Cross Reference', 'hm_product_xref') do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Hm::HmProductXrefParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+
+  def hm_product_xref_download
+    generic_download 'H&M Product Cross Reference'
+  end
+
+  def hm_receipt_file_index
+    generic_index OpenChain::CustomHandler::Hm::HmReceiptFileParser.new(nil), HM_RECEIPT_FILE_PARSER, 'H&M Receipt File'
+  end
+
+  def hm_receipt_file_upload
+    generic_upload(HM_RECEIPT_FILE_PARSER, 'H&M Receipt File', 'hm_receipt_file') do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Hm::HmReceiptFileParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+
+  def hm_receipt_file_download
+    generic_download 'H&M Receipt File'
   end
 
   def lumber_carb_index
