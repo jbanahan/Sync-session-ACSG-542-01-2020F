@@ -33,20 +33,25 @@ class UserTemplate < ActiveRecord::Base
 dtemp
   attr_accessible :name, :template_json
 
+  def template_default_merged_hash
+    default_template = JSON.parse(UserTemplate::DEFAULT_TEMPLATE_JSON)
+    template_hash = default_template.merge(JSON.parse(self.template_json))
+    template_hash
+  end
+
   def create_user! company, first_name, last_name, username, email, time_zone, notify_user, current_user
-    ActiveRecord::Base.transaction do 
-      default_template = JSON.parse(UserTemplate::DEFAULT_TEMPLATE_JSON)
-      template_hash = default_template.merge(JSON.parse(self.template_json))
+    ActiveRecord::Base.transaction do
       u = company.users.build
 
+      template_hash = template_default_merged_hash
       if template_hash['permissions']
-        p_hash = {}      
+        p_hash = {}
         template_hash['permissions'].each do |p|
           p_hash[p] = true
         end
         u.attributes = p_hash
       end
-      
+
       u.first_name = first_name
       u.last_name = last_name
       u.username = username.blank? ? email : username

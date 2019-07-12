@@ -103,13 +103,15 @@ describe UsersController do
 
   describe "create_from_template" do
     let! (:t) { Factory(:user_template) }
+    let (:c) { Factory(:company) }
 
     it "should only allow admins" do
-      expect_any_instance_of(UserTemplate).not_to receive(:create_user!)
+      expect(OpenChain::UserSupport::CreateUserFromTemplate).not_to receive(:transactional_user_creation)
+      expect(OpenChain::UserSupport::CreateUserFromTemplate).not_to receive(:build_user)
       u = Factory(:user)
       sign_in_as u
       post :create_from_template, {
-        company_id: u.company_id, 
+        company_id: c.id,
         user_template_id: t.id,
         first_name: 'Joe', last_name: 'Smith',
         email: 'jsmith@sample.com',
@@ -121,19 +123,21 @@ describe UsersController do
     it "should create user based on template" do
       u = Factory(:admin_user)
       sign_in_as u
-      expect_any_instance_of(UserTemplate).to receive(:create_user!).with(
-        u.company,
-        'Joe', 'Smith', 'jsmith@sample.com', 'jsmith@sample.com', 
-        'Eastern Time (US & Canada)', 'true', u
-      )
+
+      expect(OpenChain::UserSupport::CreateUserFromTemplate).to receive(:build_user).with( t, c, 'Joe', 'Smith',
+        'jsmith@sample.com', 'jsmith@sample.com', 'Eastern Time (US & Canada)'
+      ).and_call_original
+      expect(OpenChain::UserSupport::CreateUserFromTemplate).to receive(:transactional_user_creation).and_call_original
+
       post :create_from_template, {
-        company_id: u.company_id, 
+        company_id: c.id,
         user_template_id: t.id,
         first_name: 'Joe', last_name: 'Smith',
         email: 'jsmith@sample.com',
         time_zone: 'Eastern Time (US & Canada)',
         notify_user: 'true'}
       expect(response).to be_redirect
+      expect(flash[:notices].first).to eq("User created successfully.")
     end
   end
 

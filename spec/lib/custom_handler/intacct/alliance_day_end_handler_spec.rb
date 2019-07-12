@@ -335,10 +335,11 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
   describe "wait_for_export_updates" do
     let(:u) { Factory(:user, email: "tufnel@stonehenge.biz") }
+    let(:u2) { Factory(:user, email: "tufnel@stonehenge.xyz") }
 
     it 'waits for alliance exports to all get updated' do
       export = IntacctAllianceExport.create! data_received_date: Time.zone.now
-      export2 = IntacctAllianceExport.create! 
+      export2 = IntacctAllianceExport.create!
 
       h = described_class.new(nil, nil)
       allow(h).to receive(:unfinished_exports).with([export.id, export2.id]).and_return [export2]
@@ -364,14 +365,14 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       export3 = IntacctAllianceExport.create! export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE, ap_total: 2, ar_total: 3, check_number: "cnum 2", file_number: "fnum 2", suffix: "ABC"
       h = described_class.new(nil, nil)
       allow(h).to receive(:unfinished_exports).with([export.id, export2.id, export3.id]).and_return [export2, export3]
-      t = Thread.new { h.wait_for_export_updates [u], [export, export2, export3], 1, 2 }
+      t = Thread.new { h.wait_for_export_updates [u2], [export, export2, export3], 1, 2 }
       t.join(3)
-      
+
       expect(t).not_to be_alive
 
       expect(ActionMailer::Base.deliveries.count).to eq 1
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ["tufnel@stonehenge.biz", described_class::ERROR_EMAIL]
+      expect(mail.to).to eq ["tufnel@stonehenge.xyz", described_class::ERROR_EMAIL]
       expect(mail.subject).to eq "Intacct-Alliance data not received"
       expect(mail.body.raw_source).to match(/\$1.00 for check cnum 1 \/ file fnum 1 could not be retrieved\./)
       expect(mail.body.raw_source).to match(/\$3.00 AR \/ 2.00 AP for Invoice fnum 2ABC could not be retrieved\./)

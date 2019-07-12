@@ -66,4 +66,33 @@ describe UserTemplate do
         true, @current_user) # <-- this last attribute is what we're testing
     end
   end
+  describe 'template_default_merged_hash' do
+    it "should fill default values into a template and return a hash" do
+      override_template = {
+        homepage:'/something',
+        department:'blah',
+        permissions: ['order_view','classification_edit'],
+        groups: ['SYSG'],
+        event_subscriptions: [
+          {event_type:'ORDER_UPDATE',email:true}
+        ]
+      }
+      ut = UserTemplate.new(name:'myt',template_json:override_template.to_json)
+      expect(ut.template_default_merged_hash).to include({
+          "disallow_password" => false,
+          "department" => 'blah',
+          "email_format" => "html",
+          "email_new_messages" => false,
+          "homepage" => '/something',
+          "password_reset" => true,
+          "portal_mode" => nil,
+          "tariff_subscribed" => false,
+          "event_subscriptions" => [
+            {"event_type" => 'ORDER_UPDATE',"email" => true}
+          ],
+          "groups" => ['SYSG'],
+          "permissions" => ['order_view','classification_edit']
+        })
+    end
+  end
 end

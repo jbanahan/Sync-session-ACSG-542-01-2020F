@@ -1,3 +1,5 @@
+require 'open_chain/user_support/create_user_from_template'
+
 class UsersController < ApplicationController
   skip_before_filter :require_user, only: [:disable_run_as]
     def root_class
@@ -128,7 +130,6 @@ class UsersController < ApplicationController
       }
     end
 
-
     def show_create_from_template
       admin_secure do
         @company_id = params[:company_id]
@@ -139,15 +140,26 @@ class UsersController < ApplicationController
     # POST
     def create_from_template
       admin_secure do
-        company = Company.find params[:company_id]
+        @company = Company.find params[:company_id]
         user_template = UserTemplate.find params[:user_template_id]
         username = params[:username]
         username = params[:email] if username.blank?
-        user_template.create_user! company, params[:first_name], 
-          params[:last_name], username, params[:email], params[:time_zone],
-          params[:notify_user], current_user
-        add_flash :notices, 'User created.'
-        redirect_to company_users_path(company)
+
+        custom_reports = params[:assigned_custom_report_ids]
+        search_setups = params[:assigned_search_setup_ids]
+
+        @user = OpenChain::UserSupport::CreateUserFromTemplate.build_user user_template, @company,
+          params[:first_name], params[:last_name], username, params[:email], params[:time_zone]
+
+        if OpenChain::UserSupport::CreateUserFromTemplate.transactional_user_creation @user, current_user, search_setups, custom_reports
+          User.delay.send_invite_emails @user.id if params[:notify_user]
+          add_flash :notices, "User created successfully."
+          redirect_to(company_users_path(@company))
+        else
+          errors_to_flash @user, :now => true
+          add_user_groups_to_page @user
+          render :action => "new"
+        end
       end
     end
 

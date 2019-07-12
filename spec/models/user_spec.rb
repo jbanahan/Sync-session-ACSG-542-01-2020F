@@ -996,6 +996,18 @@ describe User do
       expect(u.errors.full_messages).to eq ["Email invalid"]
     end
 
+    it "should prevent duplicate emails without case sensitivity" do
+      c = Factory(:company)
+      u1 = User.new(email: "example@example.com", username: "username")
+      u1.password = "password"
+      u1.company = c
+      u1.save!
+
+      u2 = User.new(email: "example@example.com", username: "somethingelse")
+      u2.password = "password"
+      u2.company = c
+      expect{ u2.save! }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Email has already been taken")
+    end
   end
 
   describe "portal_redirect_path" do

@@ -115,6 +115,7 @@
 #
 # Indexes
 #
+#  index_users_on_email           (email) UNIQUE
 #  index_users_on_remember_token  (remember_token)
 #  index_users_on_username        (username)
 #
@@ -179,6 +180,7 @@ class User < ActiveRecord::Base
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
+  validates  :email, uniqueness: { case_sensitive: false }
   validate :valid_email
   scope :enabled, lambda { where(disabled: [false, nil]) }
   scope :non_system_user, lambda { where(system_user: [false, nil]) }
@@ -458,7 +460,7 @@ class User < ActiveRecord::Base
   def locked?
     active? && ( password_expired? || password_locked? )
   end
-  
+
   # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)
   def admin?
