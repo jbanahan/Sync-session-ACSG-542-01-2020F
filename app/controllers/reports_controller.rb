@@ -1007,7 +1007,24 @@ class ReportsController < ApplicationController
     else
       error_redirect "You do not have permission to view this report"
     end
-  end      
+  end
+
+  def show_hm_canada_drawback_report
+    if OpenChain::Report::HmCanadaDrawbackReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_hm_canada_drawback_report
+    klass = OpenChain::Report::HmCanadaDrawbackReport
+    if klass.permission? current_user
+      run_report "H&M Canada Drawback Report", klass, {start_date: params[:start_date], end_date: params[:end_date]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
 
   private
     def run_report name, klass, settings, friendly_settings

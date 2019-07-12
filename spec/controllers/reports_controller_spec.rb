@@ -1058,4 +1058,45 @@ describe ReportsController do
     end
   end
 
+  describe "H&M Canada Drawback Report" do
+    let(:report_class) { OpenChain::Report::HmCanadaDrawbackReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_hm_canada_drawback_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_hm_canada_drawback_report
+        expect(response).to be_success
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_hm_canada_drawback_report, {}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("H&M Canada Drawback Report", user,
+                                                           OpenChain::Report::HmCanadaDrawbackReport,
+                                                           :settings=>{start_date:'2018-08-08', end_date:'2019-09-09'}, :friendly_settings=>[])
+        post :run_hm_canada_drawback_report, {start_date:'2018-08-08', end_date:'2019-09-09'}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
 end

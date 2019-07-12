@@ -1,6 +1,6 @@
 require 'axlsx'
 
-# Simple interface for building a chart within an .xslx Excel file.
+# Simple interface for building a chart within an .xlsx Excel file.
 class XlsxChartBuilder
 
   # This is a simple wrapper class that is here as a means to track raw access to any chart functionality

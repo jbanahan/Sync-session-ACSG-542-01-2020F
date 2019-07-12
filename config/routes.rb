@@ -788,6 +788,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_us_billing_summary" => "reports#run_us_billing_summary"
   get "/reports/show_puma_division_quarter_breakdown", to: "reports#show_puma_division_quarter_breakdown"
   post "/reports/run_puma_division_quarter_breakdown", to: "reports#run_puma_division_quarter_breakdown"
+  get "/reports/show_hm_canada_drawback_report" => "reports#show_hm_canada_drawback_report"
+  post "/reports/run_hm_canada_drawback_report" => "reports#run_hm_canada_drawback_report"
 
   resources :report_results, :only => [:index,:show] do
     get 'download', on: :member

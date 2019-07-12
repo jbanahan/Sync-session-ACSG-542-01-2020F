@@ -1,0 +1,15 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>H&M Canada Drawback Report</h2><br>
+<%=form_tag reports_run_hm_canada_drawback_report_path, :id=>'frm_run' do -%>
+  <div class="container">
+    <div>
+      <div class="col-md-2"><label class="control-label" for="start_date">Release Date</label></div>
+      <div class="col-md-2"><%=text_field_tag :start_date, params[:start_date], :class=>'form-control isdate'%></div>
+      <div class="col-md-1"><label class="control-label" for="end_date">to</label></div>
+      <div class="col-md-2"><%=text_field_tag :end_date, params[:end_date], :class=>'form-control isdate' %></div>
+    </div>
+  </div>
+<%end%>

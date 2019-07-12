@@ -1,6 +1,6 @@
 require 'axlsx'
 
-# Simple interface for building an .xslx Excel file
+# Simple interface for building an .xlsx Excel file
 # 
 # This class has absolutely no read functionality (since axlsx doesn't read xlsx files)
 # Any reading should be done via the OpenChain::XlClient interfaces.
