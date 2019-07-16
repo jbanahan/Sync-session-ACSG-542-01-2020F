@@ -94,7 +94,8 @@ module OpenChain; module ModelFieldDefinition; module ShipmentLineFieldDefinitio
         qualified_field_name: "(SELECT seal_number FROM containers WHERE containers.id = shipment_lines.container_id)",
         history_ignore: true,
         read_only:true
-        }]
+        }],
+      [17, :shpln_invoice_number, :invoice_number, "Invoice Number", {data_type: :string}],
     ]
     add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
     add_fields CoreModule::SHIPMENT_LINE, make_address_arrays(200,'shpln','shipment_lines','manufacturer')

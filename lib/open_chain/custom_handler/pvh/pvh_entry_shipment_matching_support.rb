@@ -19,7 +19,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
       house_bills_of_lading = Array.wrap(house_bills_of_lading).reject &:blank?
 
       if master_bills_of_lading.length > 0 && house_bills_of_lading.length > 0
-        shipments_query = shipments_query.where("master_bill_of_lading in (?) OR house_bill_of_lading IN (?)", master_bills_of_lading, house_bills_of_lading)
+        # In some movements (LCL's particularly), the house bill of lading on the entry show as the master on the shipment.
+        shipments_query = shipments_query.where("master_bill_of_lading in (?) OR master_bill_of_lading IN (?) OR house_bill_of_lading IN (?)", master_bills_of_lading, house_bills_of_lading, house_bills_of_lading)
       elsif master_bills_of_lading.length > 0
         shipments_query = shipments_query.where(master_bill_of_lading: master_bills_of_lading)
       elsif house_bills_of_lading.length > 0
@@ -46,7 +47,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     Entry.get_transport_mode_codes_us_ca("TRUCK").include?(transport_mode_code.to_i)
   end
 
-  def find_shipment_line shipments, container_number, order_number, part_number, units
+  def ocean_lcl_entry? transport_mode_code, fcl_lcl
+    ocean_mode_entry?(transport_mode_code) && (fcl_lcl.to_s =~ /LCL/i).present?
+  end
+
+  def find_shipment_line shipments, container_number, order_number, part_number, units, invoice_number: nil
     units = 0 if units.nil?
 
     # Narrow down the shipment_lines to search over if we have a container number
@@ -69,29 +74,35 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     translated_part_number = "PVH-#{part_number}"
 
     # Find all the shipment lines that might match this part / order number...there's potentially more than one
-    order_matched_lines = shipment_lines.select do |line|
+    matched_lines = shipment_lines.select do |line|
       # Skip any shipment lines we've already returned
       next if found_shipment_lines.include?(line)
 
       line.product&.unique_identifier == translated_part_number && line.order_line&.order&.customer_order_number == order_number
     end
 
-    if order_matched_lines.length == 0
+    if matched_lines.length == 0
       # If no order lines matched, see if we can match split tariffs
-      order_matched_lines = find_potential_split_tariff_line(shipment_lines, order_number, translated_part_number)
+      matched_lines = find_potential_split_tariff_line(shipment_lines, order_number, translated_part_number)
+    end
+
+    if !invoice_number.blank? && matched_lines.length > 0
+      # There's certain situations where the commercial invoice number is important to the matching process.  When the value is given
+      # we should use it and ensure the shipment line matches on invoice number.
+      matched_lines = matched_lines.find_all {|l| invoice_number == l.invoice_number.to_s.strip}
     end
 
     # If there's only one line on the shipment that matches, then just return it
-    line = order_matched_lines[0] if order_matched_lines.length == 1
+    line = matched_lines[0] if matched_lines.length == 1
 
-    if line.nil? && order_matched_lines.length > 0
+    if line.nil? && matched_lines.length > 0
       # At this point we need to try and use other factors to determine which shipment line to match to as there's multiple lines
       # that have the same part number / order number (which is possible if they're shipping multiple colors/sizes on different lines)
 
       # First try finding an exact match based on the # of units.  If there isn't an exact match, just use the shipment line that has the closest
       # unit count.
       unit_differences = []
-      order_matched_lines.each do |line|
+      matched_lines.each do |line|
         difference = (line.quantity.abs - units.abs).abs
         unit_differences << {line: line, difference: difference}
       end

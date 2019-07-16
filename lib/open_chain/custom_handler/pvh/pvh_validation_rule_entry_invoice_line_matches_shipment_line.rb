@@ -24,7 +24,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhValidationRuleEntry
   end
 
   def invoice_line_matches? shipments, entry, line
-    find_shipment_line(shipments, line.container&.container_number, line.po_number, line.part_number, line.quantity).present?
+    # We only need to worry about matching on the invoice number for Ocean LCL entries, as that's the only billing path where that can make
+    # a difference to how the data is pulled from the ASN (due to split container billing)
+    #
+    # This might be something we should turn on at all times, but I'm hesitant given that I know there are issues with the invoice number
+    # on the ASN not being 100% accurate - thus we may raise validation errors and extra work for cases where an invoice number exact match isn't 
+    # that important
+    invoice_number = (ocean_lcl_entry?(entry.transport_mode_code, entry.fcl_lcl) ? line.commercial_invoice.invoice_number : nil)
+
+    find_shipment_line(shipments, line.container&.container_number, line.po_number, line.part_number, line.quantity, invoice_number: invoice_number).present?
   end
 
   def preload_entry entry

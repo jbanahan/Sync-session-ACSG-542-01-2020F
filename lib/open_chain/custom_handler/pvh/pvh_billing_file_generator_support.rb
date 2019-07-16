@@ -162,7 +162,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # When we have an non-ocean entry, we use the House Bills as the container numbers.
       # PVH enters the House Bills in GTNexus like Containers, so they appear on our Shipment as containers
       # so this works out real well, as all we have to do to accommodate.
-      if ocean_mode?(entry_snapshot) || truck_mode?(entry_snapshot)
+      ocean_lcl = false
+      if ocean_lcl_mode?(entry_snapshot)
+        containers = find_house_container_keys(entry_snapshot)
+        ocean_lcl = true
+      elsif ocean_mode?(entry_snapshot) || truck_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_container_numbers(entry_snapshot))
       elsif air_mode?(entry_snapshot)
         containers = Entry.split_newline_values(entry_house_bills(entry_snapshot))
@@ -171,16 +175,29 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       prorations = {}
       # Generate the prorations for each amount
       charges.each_pair do |code, amount|
-        prorate_charge_across_all_containers(entry_snapshot, containers, code, amount, prorations)
+        if ocean_lcl
+          prorate_charge_across_house_bill_containers(entry_snapshot, containers, code, amount, prorations)
+        else
+          prorate_charge_across_all_containers(entry_snapshot, containers, code, amount, prorations)
+        end
+        
       end
 
       if charges.size > 0
         line_counter = 1
-        containers.each do |container_number|
-          line_prorations = prorations[container_number]
+        containers.each do |container_key|
+          line_prorations = prorations[container_key]
 
           line_prorations.each_pair do |charge_code, charge_amount|
-            added = add_container_line(details, entry_snapshot, container_number, invoice_date, charge_amount, charge_code, currency, line_counter)
+            bill_of_lading = nil
+            if container_key.respond_to?(:container_number)
+              container_number = container_key.container_number
+              bill_of_lading = container_key.house_bill
+            else
+              container_number = container_key
+            end
+
+            added = add_container_line(details, entry_snapshot, container_number, invoice_date, charge_amount, charge_code, currency, line_counter, bill_number: bill_of_lading)
             line_counter += 1 if added
           end
         end
@@ -198,6 +215,49 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def truck_mode? entry_snapshot
     truck_mode_entry?(mf(entry_snapshot, :ent_transport_mode_code))
+  end
+
+  def ocean_lcl_mode? entry_snapshot
+    ocean_mode?(entry_snapshot) && (mf(entry_snapshot, :ent_fcl_lcl).to_s =~ /LCL/i).present?
+  end
+
+  HouseContainerKey ||= Struct.new(:house_bill, :container_number)
+
+  def find_house_container_keys entry_snapshot
+    shipments = find_shipments_by_entry_snapshot(entry_snapshot)
+    keys = Set.new
+
+    # The most reliable way across US/Canada systems to find out which container / house bills from the matched 
+    # shipments are on the entry is probably via the invoice number, which is present on the shipment lines.
+    containers = []
+    json_child_entities(entry_snapshot, "CommercialInvoice") do |invoice_snapshot|
+      containers.push(*find_containers_by_invoice_number(shipments, mf(invoice_snapshot, :ci_invoice_number)))
+    end
+
+    containers.each do |container|
+      if container.shipment.house_bill_of_lading.present?
+        keys << HouseContainerKey.new(container.shipment.house_bill_of_lading, container.container_number)
+      else
+        keys << HouseContainerKey.new(container.shipment.master_bill_of_lading, container.container_number)
+      end
+    end
+
+    keys
+  end
+
+  def find_containers_by_invoice_number shipments, invoice_number
+    return [] if invoice_number.blank?
+
+    containers = Set.new
+    shipments.each do |s|
+      s.shipment_lines.each do |line|
+        if line.invoice_number == invoice_number
+          containers << line.container
+        end
+      end
+    end
+
+    containers.to_a.compact
   end
 
   def unsent_invoices entry, broker_invoice_snapshots
@@ -291,13 +351,17 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     generate_charge_field parent_element, "Manifest Line Item", code, invoice_date, amount, currency
   end
 
-  def add_container_line parent_element, entry_snapshot, container_number, invoice_date, amount, code, currency, line_counter
+  def add_container_line parent_element, entry_snapshot, container_number, invoice_date, amount, code, currency, line_counter, bill_number: nil
     return false unless amount && amount.nonzero?
 
-    container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
-    raise "Failed to find matching PVH ASN Container for Container # '#{container_number}' on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if container.nil?
+    if bill_number.nil?
+      container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
+      raise "Failed to find matching PVH ASN Container for Container # '#{container_number}' on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if container.nil?
 
-    cont_number, bill_number = container_and_bill_number(entry_snapshot, container, nil)
+      cont_number, bill_number = container_and_bill_number(entry_snapshot, container, nil)
+    else
+      cont_number = container_number
+    end
 
     line_item = generate_invoice_line_item(parent_element, "Container", line_counter, master_bill: bill_number, container_number: cont_number)
     generate_charge_field(line_item, "Container", code, invoice_date, amount, currency)
@@ -545,6 +609,10 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     "942"
   end
 
+  def sum_container_weight container
+    container.shipment_lines.map {|line| line.gross_kgs }.compact.sum
+  end
+
   def prorate_charge_across_all_containers entry_snapshot, container_numbers, charge_code, charge_amount, existing_prorations
     total_container_weight = BigDecimal("0")
     container_weights = {}
@@ -552,7 +620,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     Set.new(container_numbers.to_a).each do |container_number|
       container = find_shipment_container_by_entry_snapshot(entry_snapshot, container_number)
       container_weight = BigDecimal("0")
-      container_weight = container.shipment_lines.map {|line| line.gross_kgs }.compact.sum if container
+      container_weight = sum_container_weight(container) if container
       container_weights[container_number] = container_weight
 
       total_container_weight += container_weight if container_weight && container_weight.nonzero?
@@ -579,34 +647,38 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       end
     end
 
+    prorate_values(container_weights, total_container_weight, charge_code, charge_amount, existing_prorations)
+  end
+
+  def prorate_values proration_sums, total_proration_value, charge_code, charge_amount, existing_prorations
     total_amount = charge_amount.abs
     proration_left = total_amount.dup
     negative_charge = charge_amount < 0
 
     prorations = {}
 
-    container_weights.each_pair do |container_number, weight|
+    proration_sums.each_pair do |proration_key, value|
       prorated_amount = BigDecimal("0")
 
-      # If the container has no weight, then we don't calculate it into the proration valuation
-      if weight && weight.nonzero?
+      # If the proration object has no value, then we don't calculate it into the proration valuation
+      if value && value.nonzero?
         # Truncate the amount at 2 decimal places (essentially to prevent fractional pennies - we'll add them back in below)
-        proration_percentage = (weight / total_container_weight).round(5, BigDecimal::ROUND_DOWN)
+        proration_percentage = (value / total_proration_value).round(5, BigDecimal::ROUND_DOWN)
 
         prorated_amount = (total_amount * proration_percentage).round(2, BigDecimal::ROUND_DOWN)
       end
 
-      prorations[container_number] = prorated_amount
+      prorations[proration_key] = prorated_amount
       proration_left -= prorated_amount
     end
 
     # At this point, just equally distribute the proration amounts left one penny at a time
     while(proration_left > 0)
-      prorations.each_pair do |container_number, amount|
+      prorations.each_pair do |proration_key, amount|
         # If the proration bucket is zero, it means the line had no value, so don't add leftovers back into it
         next if amount.zero? && total_amount.nonzero?
 
-        prorations[container_number] = (amount + BigDecimal("0.01"))
+        prorations[proration_key] = (amount + BigDecimal("0.01"))
         proration_left -= BigDecimal("0.01")
 
         break if proration_left <= 0
@@ -615,8 +687,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     # Now make sure to flip the sign if we had a negative charge
     if negative_charge
-      prorations.each_pair do |container_number, amount|
-        prorations[container_number] = amount * -1
+      prorations.each_pair do |proration_key, amount|
+        prorations[proration_key] = amount * -1
       end
     end
 
@@ -626,13 +698,63 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       raise "Invalid proration calculation for charge code #{charge_code}.  Should have been billed $#{charge_amount}, but was $#{total}."
     end
 
-    prorations.each_pair do |container_number, amount|
-      existing_prorations[container_number] ||= {}
-      existing_prorations[container_number][charge_code] ||= BigDecimal("0")
-      existing_prorations[container_number][charge_code] += amount
+    prorations.each_pair do |proration_key, amount|
+      existing_prorations[proration_key] ||= {}
+      existing_prorations[proration_key][charge_code] ||= BigDecimal("0")
+      existing_prorations[proration_key][charge_code] += amount
     end
 
     existing_prorations
+  end
+
+  def find_lcl_container_by_house_container shipments, house_bill, container_number
+    container = nil
+    shipments.each do |s|
+      next if s.house_bill_of_lading != house_bill && s.master_bill_of_lading != house_bill
+
+      container = s.containers.find {|c| c.container_number == container_number }
+      break if container.present?
+    end
+    container
+  end
+
+  def prorate_charge_across_house_bill_containers entry_snapshot, house_containers, charge_code, charge_amount, existing_prorations
+    total_weight = BigDecimal("0")
+    house_container_weights = {}
+
+    shipments = find_shipments_by_entry_snapshot(entry_snapshot)
+
+    house_containers.each do |house_container|
+      container = find_lcl_container_by_house_container(shipments, house_container.house_bill, house_container.container_number)
+      house_container_weight = BigDecimal("0")
+      house_container_weight = sum_container_weight(container) if container
+
+      house_container_weights[house_container] = house_container_weight
+      total_weight += house_container_weight
+    end
+
+    # We need to fail if any container didn't have weight information associated with it.
+    if house_container_weights.size == 0
+      raise "Failed to find any valid House Bill / Container weight data from a PVH ASN for Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'."
+    elsif house_container_weights.size == 1
+      # If we only have a single container then there's no need to prorate anything based on weight. Based on test docs received, truck
+      # entries/asns may not actually have gross weights, but since they're only ever going to have a single trailer (container), then we can just charge
+      # the full amount.
+
+      # Just set the container weight and total container weight to the same positive value.  That way we can still utilize the proration math below and just
+      # let it calculate out the full amount to the single container and not have a separate code branch just for this case.
+      total_weight = BigDecimal("1")
+      house_container_weights[house_container_weights.keys.first] = total_weight
+      
+    else
+      house_container_weights.each_pair do |house_container, weight|
+        if weight.nil? || weight.zero?
+          raise "Failed to find any valid container weight data on a PVH ASN for House Bill # '#{house_container.house_bill}' / Container # '#{house_container.container_number}' on Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
+        end
+      end
+    end
+
+    prorate_values(house_container_weights, total_weight, charge_code, charge_amount, existing_prorations)
   end
 
   def find_and_reverse_original_invoice_xml_lines entry_snapshot, invoice_snapshot, invoice_type

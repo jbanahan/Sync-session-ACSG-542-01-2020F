@@ -20,15 +20,15 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
     s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
-    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200)
-    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100)
+    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200, invoice_number: "INVOICE1")
+    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100, invoice_number: "INVOICE1")
 
     l.shipment.reload
   }
 
   let (:entry) {
     e = Factory(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: "10")
-    invoice = e.commercial_invoices.create! invoice_number: "1"
+    invoice = e.commercial_invoices.create! invoice_number: "INVOICE1"
     line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100"), prorated_mpf: BigDecimal("10"), hmf: BigDecimal("20"), cotton_fee: BigDecimal("30"), add_duty_amount: BigDecimal("40"), cvd_duty_amount: BigDecimal("50")
     tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50")
     tariff_2 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("25")
@@ -383,6 +383,49 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/BLNumber", "HBOL987654321")
       # Container number should be included here, since it's just LCL, not Air mode.
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "ABCD1234567890")
+    end
+
+    it "handles multiple house bills in a single container for ocean LCL shipments" do
+      entry.update_attributes! master_bills_of_lading: "MBOL1234567890", house_bills_of_lading: "HBOL987654321\n HBOL2", fcl_lcl: "LCL"
+      invoice_2 = entry.commercial_invoices.create! invoice_number: "INVOICE2"
+      line = invoice_2.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
+      tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50")
+
+      c = shipment.containers.first
+      c.fcl_lcl = "LCL"
+      c.save!
+
+      shipment_2 = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL2", mode: "OCEAN", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
+      container_2 = shipment_2.containers.create! container_number: "ABCD1234567890", fcl_lcl: "LCL"
+      shipment_line_2 = Factory(:shipment_line, shipment: shipment_2, container: container_2, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 200, invoice_number: "INVOICE2")
+      shipment_2.reload
+      
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      invoice_details = REXML::XPath.first(REXML::Document.new(captured_xml.first).root, "GenericInvoices/GenericInvoice/InvoiceDetails")
+      expect(invoice_details.length).to eq 4
+
+      expect(invoice_details[0]).to have_xpath_value("BLNumber", "HBOL987654321")
+      expect(invoice_details[0]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+      expect(invoice_details[0]).to have_xpath_value("ChargeField/Type/Code", "C080")
+      expect(invoice_details[0]).to have_xpath_value("ChargeField/Value", "120.0")
+
+      expect(invoice_details[1]).to have_xpath_value("BLNumber", "HBOL987654321")
+      expect(invoice_details[1]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+      expect(invoice_details[1]).to have_xpath_value("ChargeField/Type/Code", "974")
+      expect(invoice_details[1]).to have_xpath_value("ChargeField/Value", "60.0")
+
+      expect(invoice_details[2]).to have_xpath_value("BLNumber", "HBOL2")
+      expect(invoice_details[2]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+      expect(invoice_details[2]).to have_xpath_value("ChargeField/Type/Code", "C080")
+      expect(invoice_details[2]).to have_xpath_value("ChargeField/Value", "80.0")
+
+      expect(invoice_details[3]).to have_xpath_value("BLNumber", "HBOL2")
+      expect(invoice_details[3]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+      expect(invoice_details[3]).to have_xpath_value("ChargeField/Type/Code", "974")
+      expect(invoice_details[3]).to have_xpath_value("ChargeField/Value", "40.0")
     end
 
     it "falls back to master bill for LCL if house bill is blank" do 

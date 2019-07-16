@@ -64,6 +64,22 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
         shipment.update_attributes! master_bill_of_lading: "MBOL"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
+
+      context "with Ocean LCL shipment" do
+        before :each do 
+          entry.update! fcl_lcl: "LCL"
+          shipment.shipment_lines.last.update! invoice_number: "1"
+        end
+
+        it "uses invoice number as an extra match point" do
+          expect(subject.run_validation entry).to be_blank
+        end
+
+        it "errors if invoice does not match" do
+          shipment.shipment_lines.last.update! invoice_number: "NOTAMATCH"
+          expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
+        end
+      end
     end
 
     context "with air shipment" do

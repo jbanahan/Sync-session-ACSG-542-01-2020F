@@ -154,6 +154,7 @@
                         <th>Volume (CBMS)</th>
                         <th>Gross Weight (KGS)</th>
                         <th>Container</th>
+                        <th>Invoice #</th>
                         <th ng-show='shp.permissions.can_edit'></th>
                       </tr>
                     </thead>
@@ -161,26 +162,15 @@
                       <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
                         <td>{{ln.shpln_line_number}}</td>
                         <td>{{ln.shpln_puid}}</td>
-                        <td>
-                          <div ng-repeat='ol in ln.order_lines'>
+                        <td><div ng-repeat='ol in ln.order_lines'>
                             <a href='/orders/{{ol.order_id}}'>{{shipmentLineOrderNumber(ol)}} - {{ol.ordln_line_number}}</a>
-                          </div>
-                        </td>
-                        <td>
-                          {{ln.shpln_shipped_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_carton_qty}}
-                        </td>
-                        <td>
-                          {{ln.shpln_cbms}}
-                        </td>
-                        <td>
-                          {{ln.shpln_gross_kgs}}
-                        </td>
-                        <td>
-                          {{ln.shpln_container_number}}
-                        </td>
+                          </div></td>
+                        <td>{{ln.shpln_shipped_qty}}</td>
+                        <td>{{ln.shpln_carton_qty}}</td>
+                        <td>{{ln.shpln_cbms}}</td>
+                        <td>{{ln.shpln_gross_kgs}}</td>
+                        <td>{{ln.shpln_container_number}}</td>
+                        <td>{{ln.shpln_invoice_number}}</td>
                         <td ng-show='shp.permissions.can_edit' class='text-right'>
                           <button ng-show='shp.permissions.can_add_remove_shipment_lines' class="btn btn-sm btn-danger" title="Delete Line" ng-click="deleteShipmentLine(shp,ln)"><i class="fa fa-trash"></i></button>
                           <button class='btn btn-sm btn-outline-dark' title='Edit Line' ng-click='prepShipmentLineEditObject(ln)' data-toggle='modal' data-target='#mod_edit_line'><i class='fa fa-edit'></i></button>
@@ -248,6 +238,10 @@
                       <div class="form-group">
                         <label for="shpln_gross_kgs">Gross KGS</label>
                         <input type="number" class='form-control' id='shpln_gross_kgs' ng-model="lineToEdit.shpln_gross_kgs">
+                      </div>
+                      <div class="form-group">
+                        <label for="shpln_gross_kgs">Invoice Number</label>
+                        <input type="text" class='form-control' id='shpln_invoice_number' ng-model="lineToEdit.shpln_invoice_number">
                       </div>
                       <div class="form-group">
                         <label for="shpln_container_uid">Container</label>
