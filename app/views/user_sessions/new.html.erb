@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= app_internals(MasterSetup.get) %>
     <%= stylesheet_link_tag "login", :media => "all" -%>
+    <%= csrf_meta_tags %>
   </head>
   <body>
     <%= render "shared/flash_notice" %>
@@ -55,14 +56,15 @@
                     <% if Rails.configuration.use_google_auth %>
                       <span> or </span>
 
-                      <a href="/auth/google_oauth2">
+                      <%= link_to image_tag('btn_google_signin_light_normal_web.png', size: '169x42'), "/auth/google_oauth2", method: :post %>
+                    <% end %>
+                    <% if Rails.configuration.use_azure_auth %>
+                      <span> or </span>
 
                         <span>
-                          <%= image_tag "btn_google_signin_light_normal_web.png",
-                                        size: "169x42" %>
+                          <%= link_to raw('<button class="btn btn-maersk" type="button">Log In With Your Maersk ID</button>'), "/auth/azure_oauth2", method: :post %>
                         </span>
-
-                      </a>
+                        
                     <% end %>
                     <% if Rails.application.config.pepsi_sso_url %> or
                       <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_tag "mypepsico.png"%></a>
@@ -262,5 +264,6 @@
       </div>
     </div>
     <%= javascript_include_tag "login" -%>
+    <%= javascript_include_tag "jquery_ujs" -%>
   </body>
 </html>

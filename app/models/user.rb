@@ -136,7 +136,7 @@ class User < ActiveRecord::Base
 
   cattr_accessor :current
 
-  attr_accessible :username, :email, :time_zone,:email_format, :company_id,
+  attr_accessible :username, :email, :time_zone,:email_format, :company_id, 
     :first_name, :last_name, :search_open,:order_view, :order_edit, 
     :order_delete, :order_attach, :order_comment, :shipment_view, :shipment_edit,
     :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view, 
@@ -266,12 +266,20 @@ class User < ActiveRecord::Base
         user.oauth_expires_at = Time.at(auth_info.credentials.expires_at)
         user.save!
       else
-        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track." +
-                  " If you would like to request an account, please click the 'Need an account?' link below."
+        errors << oauth_error_msg("Google", auth_info[:info][:email])
+      end
+    elsif omniauth_provider == "azure_oauth2"
+      unless user = User.where(email: auth_info[:info][:email]).first
+        errors << oauth_error_msg("Maersk", auth_info[:info][:email])
       end
     end
 
     return {user: user, errors: errors}
+  end
+
+  def self.oauth_error_msg provider_name, email
+    "#{provider_name} email account #{email} has not been set up in VFI Track." +
+    " If you would like to request an account, please click the 'Need an account?' link below."
   end
 
   def self.generate_authtoken user

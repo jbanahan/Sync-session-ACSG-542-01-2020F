@@ -65,6 +65,8 @@ gem "google-api-client", "0.28.4"
 gem 'lru_redux', '~> 1.1.0'
 gem "omniauth-google-oauth2", '0.6.0'
 gem "omniauth-saml", '1.10.1'
+gem 'omniauth-azure-oauth2', '~> 0.0.10'
+gem 'omniauth-rails_csrf_protection', '~> 0.1.2'
 gem 'concurrent-ruby', '1.1.4'
 
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and

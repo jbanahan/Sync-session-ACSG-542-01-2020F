@@ -909,12 +909,12 @@ describe User do
 
   describe "from_omniauth" do
     before :each do
-      @user = Factory(:user, email: "condaleeza@rice.com")
+      @user = Factory(:user, email: "condoleeza@rice.com")
     end
 
     context "google oauth" do
       it "should return an updated user when a user is found" do
-        info = OpenStruct.new({"email" => "condaleeza@rice.com", "name" => "Condaleeza R"})
+        info = OpenStruct.new({"email" => "condoleeza@rice.com", "name" => "Condoleeza R"})
         creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
         auth = OpenStruct.new({"info" => info, "provider" => "oauth", "uid" => "someuid123", "credentials" => creds})
 
@@ -923,17 +923,30 @@ describe User do
         @user.reload
         expect(@user.provider).to eq("oauth")
         expect(@user.uid).to eq("someuid123")
-        expect(@user.google_name).to eq("Condaleeza R")
+        expect(@user.google_name).to eq("Condoleeza R")
         expect(@user.oauth_token).to eq("123456789")
         expect(@user.oauth_expires_at > Time.now).to eq(true)
       end
 
       it "should return nil if the user is not found" do
-        info = OpenStruct.new({"email" => "susan@rice.com", "name" => "Condaleeza R"})
+        info = OpenStruct.new({"email" => "susan@rice.com", "name" => "Condoleeza R"})
         creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
         auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
 
         expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
+      end
+    end
+
+    context "azure oauth" do
+      let(:auth) { {"info" => {"email" => "susan@maersk.com"}}.with_indifferent_access }
+      
+      it "returns user when found" do
+        @user.update_attributes! email: "susan@maersk.com"
+        expect(User.from_omniauth("azure_oauth2", auth)).to eq ({user: @user, errors: []})
+      end
+
+      it "returns nil if user not found" do
+        expect(User.from_omniauth("azure_oauth2", auth)).to eq ({user: nil, errors: ["Maersk email account susan@maersk.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
       end
     end
 
