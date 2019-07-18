@@ -145,7 +145,16 @@ FILE
 
       export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
       expect(export).to be_nil
-      expect(errors).to eq ["An invoice and/or bill has already been filed in Intacct for File # 123."]
+      expect(errors).to eq ["An invoice has already been filed in Intacct for File # 123."]
+    end
+
+     it "errors if a payable associated w/ the export that only has AR lines has been uploaded to intacct" do
+      @invoice_data[:lines].first[:a_r] = "Y"
+      IntacctPayable.create! bill_number: "123", company: 'lmd', intacct_upload_date: Time.zone.now, intacct_key: "KEY", payable_type: IntacctPayable::PAYABLE_TYPE_BILL
+
+      export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
+      expect(export).to be_nil
+      expect(errors).to eq ["A bill has already been filed in Intacct for File # 123."]
     end
 
     it "errors if a payable invoice associated w/ the export has been uploaded to intacct" do
@@ -155,7 +164,17 @@ FILE
 
       export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
       expect(export).to be_nil
-      expect(errors).to eq ["An invoice and/or bill has already been filed in Intacct for File # 123A."]
+      expect(errors).to eq ["A bill has already been filed in Intacct for File # 123A."]
+    end
+
+    it "errors if a receivable associated w/ the export that only has AP lines has been uploaded to intacct" do
+      @invoice_data[:lines].first[:suffix] = "A"
+      @invoice_data[:lines].first[:a_p] = "Y"
+      IntacctReceivable.create! invoice_number: "123A", company: 'vfc', intacct_upload_date: Time.zone.now, intacct_key: "KEY"
+
+      export, errors = described_class.new.create_and_request_invoice @invoice_data, @client
+      expect(export).to be_nil
+      expect(errors).to eq ["An invoice has already been filed in Intacct for File # 123A."]
     end
   end
 

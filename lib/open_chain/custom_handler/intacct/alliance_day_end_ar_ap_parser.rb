@@ -156,17 +156,30 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
     first_line = invoice_data[:lines].first
 
     invoice_number =  first_line[:invoice_number].to_s.strip + first_line[:suffix].to_s.strip
-    existing_invoices = has_ar_lines?(invoice_data) ? (IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count) : 0
 
-    invoice_count = IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
+    # Previous iterations of the code only did the receivable invoice lookup based on if the current invoice has AR lines (likewise for payables with AP lines)
+    # We actually need to block creation of any invoice data if a receivable or payable was previously found with the same invoice number....this happens
+    # when operations re-uses file numbers they shouldn't be re-using and it needs to get bounced.
+    existing_invoices = IntacctReceivable.where(company: ['lmd', 'vfc'], invoice_number: invoice_number).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
+
     bill_count = 0
-
     if existing_invoices == 0
-      bill_count = has_ap_lines?(invoice_data) ? (IntacctPayable.where(company: ['lmd', 'vfc'], bill_number: invoice_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count) : 0
+      bill_count = IntacctPayable.where(company: ['lmd', 'vfc'], bill_number: invoice_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).where("intacct_upload_date IS NOT NULL").where("intacct_key IS NOT NULL").count
     end
 
     if existing_invoices > 0 || bill_count > 0
-      errors << "An invoice and/or bill has already been filed in Intacct for File # #{invoice_number}."
+      if existing_invoices > 0
+        error = "An invoice"
+        if bill_count > 0
+          error += " and bill have"
+        else
+          error += " has"
+        end
+      else
+        error = "A bill has"
+      end
+      error += " already been filed in Intacct for File # #{invoice_number}."
+      errors << error
     else
       Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do 
         suffix = first_line[:suffix].blank? ? nil : first_line[:suffix].strip

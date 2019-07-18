@@ -58,8 +58,10 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
 
       check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)], errors: ["Check # 1234 for $500.00"]}
+      invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
 
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
       @h.process user
 
@@ -70,6 +72,37 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(mail.subject).to eq "Error creating Intacct-Alliance check(s)"
       expect(mail.body.raw_source).to match(/The following checks have already been sent to Intacct/)
       expect(mail.body.raw_source).to match(/Check # 1234 for \$500.00/)      
+      
+      @check_file.reload
+      @invoice_file.reload
+      expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@check_file.finish_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "reports errors for invoices that have already been sent" do
+      user = Factory(:user, email: "st-hubbins@hellhole.co.uk")
+      check_info = {checks: ""}
+      invoice_info = {invoices: ""}
+      expect(@h).to receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
+      expect(@h).to receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
+
+      check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
+      invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)], errors: ["An invoice error for File # 123"]}
+
+      expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
+
+      @h.process user
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+      
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["st-hubbins@hellhole.co.uk", described_class::ERROR_EMAIL]
+      expect(mail.subject).to eq "Error creating Intacct-Alliance invoice(s)"
+      expect(mail.body.raw_source).to match(/The following invoices have already been sent to Intacct/)
+      expect(mail.body.raw_source).to match(/An invoice error for File # 123/)      
       
       @check_file.reload
       @invoice_file.reload

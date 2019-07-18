@@ -66,9 +66,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       proxy_client = OpenChain::KewillSqlProxyClient
       check_results = create_checks(check_info, check_parser, proxy_client)
 
+      stop_processing = false
       if check_results[:errors].present?
         handle_check_errors(users.map(&:email), check_results[:errors]) 
-        return nil
+        stop_processing = true
       end
 
       check_sum = BigDecimal.new "0"
@@ -84,6 +85,13 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         ar_sum += ex.ar_total
       end
 
+      if invoice_results[:errors].present?
+        handle_invoice_errors(users.map(&:email), invoice_results[:errors]) 
+        stop_processing = true
+      end
+
+      return if stop_processing
+      
       wait_for_export_updates users, check_results[:exports] + invoice_results[:exports]
       wait_for_dimension_uploads
 
@@ -267,6 +275,14 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   def handle_check_errors users, errors
     subject = "Error creating Intacct-Alliance check(s)"
     body = "<p>The following checks have already been sent to Intacct and need to be manually removed from the Check Register report. The banks subtotals and report totals must also be manually recalculated and adjusted in the report to account for the removed checks. Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
+    errors.each { |err| body += "<li>#{CGI.escapeHTML err}</li>" }
+    body += "</ul></p>"
+    OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver_now
+  end
+
+  def handle_invoice_errors users, errors
+    subject = "Error creating Intacct-Alliance invoice(s)"
+    body = "<p>The following invoices have already been sent to Intacct and need to be manually removed from the Daily Billing list report. The report grand totals must also be manually recalculated and adjusted in the report to account for the removed invoices. Once removed, the Check Register and Daily Billing List reports need to be <a href='https://www.vfitrack.net/custom_features/alliance_day_end'>re-uploaded</a>.<br><ul>"
     errors.each { |err| body += "<li>#{CGI.escapeHTML err}</li>" }
     body += "</ul></p>"
     OpenMailer.send_simple_html(users << ERROR_EMAIL, subject, body.html_safe).deliver_now
