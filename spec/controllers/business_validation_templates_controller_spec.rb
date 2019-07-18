@@ -73,14 +73,10 @@ describe BusinessValidationTemplatesController do
 
   describe "create" do
 
-    before :each do
-      @t = Factory(:business_validation_template)
-    end
-
     it "should require admin" do
       u = Factory(:user)
       sign_in_as u
-      post :create, id: @t.id
+      expect{ post :create, business_validation_template: { module_type: "Entry"} }.to_not change(BusinessValidationTemplate, :count)
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
     end
@@ -88,9 +84,16 @@ describe BusinessValidationTemplatesController do
     it "should create the correct template" do
       u = Factory(:admin_user)
       sign_in_as u
-      post :create, id: @t.id
-      expect(response).to be_success
-      expect { BusinessValidationTemplate.find(@t.id) }.to_not raise_error
+      expect{ post :create, business_validation_template: { module_type: "Entry"} }.to change(BusinessValidationTemplate, :count).from(0).to(1)
+      expect(response).to be_redirect
+    end
+
+    it "errors if validation fails" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      expect{ post :create, business_validation_template: { module_type: nil } }.to_not change(BusinessValidationTemplate, :count)
+      expect(response).to be_redirect
+      expect(flash[:errors]).to eq ["Module type can't be blank"]
     end
 
   end
@@ -98,7 +101,7 @@ describe BusinessValidationTemplatesController do
   describe "update" do
 
     before :each do
-      @t = Factory(:business_validation_template)
+      @t = Factory(:business_validation_template, module_type: "Product")
     end
 
     it "should require admin" do
@@ -109,17 +112,51 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_template)).to be_nil
     end
 
-    it "should update criteria when search_criterions_only is set" do
+    it "updates only main attributes when search_criterions_only not set" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :update,
+          id: @t.id,
+          search_criterions_only: false,
+          business_validation_template: {module_type: "Entry", description: "description", disabled: true, 
+                                         name: "name", private: true, system_code: "SYS CODE",
+                                         search_criterions: [{"mfid" => "ent_cust_name", "datatype" => "string", "label" => "Customer Name", 
+                                                              "operator" => "eq", "value" => "Nigel Tufnel"}]}
+      expect(@t.reload.search_criterions.length).to eq(0)
+      expect(@t.module_type).to eq "Entry"
+      expect(@t.description).to eq "description"
+      expect(@t.disabled).to eq true
+      expect(@t.name).to eq "name"
+      expect(@t.private).to eq true
+      expect(@t.system_code).to eq "SYS CODE"
+    end
+
+    it "should only update criteria when search_criterions_only is set" do
       u = Factory(:admin_user)
       sign_in_as u
       post :update,
           id: @t.id,
           search_criterions_only: true,
-          business_validation_template: {search_criterions: [{"mfid" => "ent_cust_name", 
+          business_validation_template: {module_type: "Entry", search_criterions: [{"mfid" => "ent_cust_name", 
               "datatype" => "string", "label" => "Customer Name", 
-              "operator" => "eq", "value" => "Monica Lewinsky"}]}
-      expect(@t.search_criterions.length).to eq(1)
-      expect(@t.search_criterions.first.value).to eq("Monica Lewinsky")
+              "operator" => "eq", "value" => "Nigel Tufnel"}]}
+      expect(@t.reload.search_criterions.length).to eq(1)
+      expect(@t.search_criterions.first.value).to eq("Nigel Tufnel")
+      expect(@t.module_type).to eq "Product"
+    end
+
+    it "errors if validation fails" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :update,
+          id: @t.id,
+          search_criterions_only: false,
+          business_validation_template: {module_type: nil, search_criterions: [{"mfid" => "ent_cust_name", 
+              "datatype" => "string", "label" => "Customer Name", 
+              "operator" => "eq", "value" => "Nigel Tufnel"}]}
+      expect(@t.reload.search_criterions.length).to eq(0)
+      expect(flash[:errors]).to eq ["Module type can't be blank"]
+      expect(response).to be_redirect
     end
 
   end
@@ -247,7 +284,7 @@ describe BusinessValidationTemplatesController do
       temp = r["business_template"]["business_validation_template"]
       temp.delete("updated_at")
       temp.delete("created_at")
-      expect(temp).to eq({"delete_pending"=>nil, "disabled"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", "name"=>nil, "private"=>nil,
+      expect(temp).to eq({"delete_pending"=>nil, "disabled"=>nil, "description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", "name"=>nil, "private"=>nil, "system_code"=>nil,
                           "search_criterions"=>[{"operator"=>"eq", "value"=>"x", "datatype"=>"string", "label"=>"Unique Identifier", "mfid"=>"prod_uid", "include_empty" => false}]})
     end
   end

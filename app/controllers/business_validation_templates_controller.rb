@@ -11,11 +11,11 @@ class BusinessValidationTemplatesController < ApplicationController
   def create
     admin_secure {
       @bvt = BusinessValidationTemplate.new(params[:business_validation_template])
-
       if @bvt.save
         redirect_to edit_business_validation_template_path(@bvt), notice: "Template successfully created."
       else
-        render action: "new"
+        errors_to_flash @bvt
+        redirect_to new_business_validation_template_path
       end
     }
   end
@@ -49,7 +49,8 @@ class BusinessValidationTemplatesController < ApplicationController
           flash[:success] = "Template successfully saved."
           redirect_to @bvt
         else
-          render 'edit'
+          errors_to_flash @bvt
+          redirect_to edit_business_validation_template_path(@bvt)
         end
 
       end

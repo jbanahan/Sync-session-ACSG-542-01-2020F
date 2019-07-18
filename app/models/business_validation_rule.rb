@@ -134,7 +134,32 @@ class BusinessValidationRule < ActiveRecord::Base
                  'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
                  ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"},
                  ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
-                 ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"}
+                 ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"},
+                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet'.to_sym =>
+                 {
+                    label: 'Ann Classification Type Set',
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                 },
+                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet'.to_sym =>
+                 {
+                    label: 'Ann Product Tariff Percent of Value Set',
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                 },
+                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentsAddTo100'.to_sym =>
+                 {
+                    label: 'Ann Product Tariff Percentages Add To 100',
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                 },
+                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffKeyDescriptionSet'.to_sym =>
+                 {
+                    label: 'Ann Product Tariff Key Description Set',
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                 },
+                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductOneTariff'.to_sym =>
+                 {
+                    label: 'Ann Product Has One Tariff',
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                 }
               }
 
   def copy_attributes include_external:false
@@ -240,6 +265,11 @@ require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line
 require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_all_docs_validation_rule'
 require_dependency 'open_chain/custom_handler/ann_inc/ann_mp_type_upon_request_validation_rule'
 require_dependency 'open_chain/custom_handler/ann_inc/ann_first_sale_validation_rule'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_product_class_type_set'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_product_tariff_percent_of_value_set'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_product_tariff_percents_add_to_100'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_product_tariff_key_description_set'
+require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_product_one_tariff'
 
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'
 require_dependency 'open_chain/custom_handler/pvh/pvh_validation_rule_entry_invoice_line_matches_shipment_line'

@@ -20,6 +20,7 @@ coverage.data
 public/assets/*
 vendor/
 config/google_auth.json
+config/ann-integration-point.asc
 config/api_client.yml
 config/freshservice_client.yml
 config/pepsi.pem

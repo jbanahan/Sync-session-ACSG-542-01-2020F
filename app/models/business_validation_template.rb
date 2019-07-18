@@ -10,6 +10,7 @@
 #  module_type    :string(255)      not null
 #  name           :string(255)
 #  private        :boolean
+#  system_code    :string(255)
 #  updated_at     :datetime         not null
 #
 
@@ -24,15 +25,16 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_ent
 require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name, :delete_pending, :disabled, :private
+  attr_accessible :description, :module_type, :name, :delete_pending, :disabled, :private, :system_code
   validates :module_type, presence: true
+  validates :system_code, uniqueness: true, if: lambda { system_code.present? }
 
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
   has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
   def copy_attributes include_external:false
-    attrs = JSON.parse self.to_json(except: [:id, :created_at, :updated_at, :delete_pending, :disabled])
+    attrs = JSON.parse self.to_json(except: [:id, :system_code, :created_at, :updated_at, :delete_pending, :disabled])
     attrs["business_validation_template"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
     attrs["business_validation_template"]["business_validation_rules"] = self.business_validation_rules.map{ |r| r.copy_attributes(include_external: include_external) }
     attrs
