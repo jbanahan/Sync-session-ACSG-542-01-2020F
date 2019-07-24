@@ -163,7 +163,7 @@ describe DataCrossReferencesController do
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
 
       post :create, data_cross_reference: {key: "KEY", value: "CREATE", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC}
-      expect(response).to be_success
+      expect(response).to be_redirect
       expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
       expect(assigns(:xref)).not_to be_nil
     end

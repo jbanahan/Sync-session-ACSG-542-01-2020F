@@ -57,8 +57,8 @@ class DataCrossReferencesController < ApplicationController
       else
         @xref = xref
         @xref_info = xref_hash xref.cross_reference_type, current_user
-        errors_to_flash xref, now: true
-        render action: :new
+        errors_to_flash xref
+        redirect_to new_data_cross_reference_path(cross_reference_type: params[:data_cross_reference][:cross_reference_type])
       end
     end
     
