@@ -115,4 +115,41 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     []
   end
 
+  def extract_container_level_charges invoice_snapshot
+    # PVH "needs" us to split the GST/HST federal tax into it's component pieces
+    # GST = Federal VAT, HST = Provincial VAT
+    #
+    # At this time, the GST is 5% of the brokerage charge...the rest is HST
+    # (this may change in the future - it's remained at 5% for a while, if it changes
+    # this code will need to be updated)
+    charges = super
+
+    # G740 = Brokerage Services
+    # 0027 = GST on Brokerage Services
+    if !charges["0027"].nil? && !charges["G740"].nil?
+      gst, hst = calculate_gst_hst(mf(invoice_snapshot, :bi_invoice_date), charges["G740"], charges["0027"])
+      charges["0027"] = gst
+      charges["0025"] = hst unless hst.nil?
+    end
+
+    charges
+  end
+
+  # Invoice date is passed in, since at some point we'll likely need to add logic to 
+  # use it to determine the federal GST rate.
+  def calculate_gst_hst invoice_date, total_taxable_amount, original_gst_amount
+    # We can just take the brokerage amount and multiply by 5% - that gets us the
+    # "true" GST.  Then we can subtract that "new" GST amount from the original GST
+    # to get the calculated HST amount.
+    gst = (total_taxable_amount * BigDecimal("0.05")).round(2)
+    hst = original_gst_amount - gst
+    # Some provinces don't have an HST, if that's the case, the calculated HST above
+    # should equal zero after calculating the GST
+    if hst.nil? || hst <= 0
+      [original_gst_amount, nil]
+    else
+      [gst, hst]
+    end
+  end
+
 end; end; end; end;

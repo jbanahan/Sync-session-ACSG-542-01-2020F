@@ -371,5 +371,48 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(l).not_to be_nil
       expect(l).to have_xpath_value("ChargeField/Value", "200.0")
     end
+
+    it "splits GST into GST / HST charges" do
+      broker_invoice_line_container_charges.broker_invoice_lines.destroy_all
+      broker_invoice_line_container_charges.broker_invoice_lines.create! charge_code: "22", charge_amount: BigDecimal("85"), charge_description: "BROKERAGE"
+      broker_invoice_line_container_charges.broker_invoice_lines.create! charge_code: "255", charge_amount: BigDecimal("6"), charge_description: "GST (ON)"
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      x = REXML::Document.new(captured_xml.first).root
+      inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0027']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "4.25")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0025']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "1.75")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'G740']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "85.0")
+    end
+
+    it "doesn't send HST if the HST amount after calulating GST amounts is zero" do
+      broker_invoice_line_container_charges.broker_invoice_lines.destroy_all
+      broker_invoice_line_container_charges.broker_invoice_lines.create! charge_code: "22", charge_amount: BigDecimal("85"), charge_description: "BROKERAGE"
+      broker_invoice_line_container_charges.broker_invoice_lines.create! charge_code: "255", charge_amount: BigDecimal("4.25"), charge_description: "GST (ON)"
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+      expect(captured_xml.length).to eq 1
+      x = REXML::Document.new(captured_xml.first).root
+      inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0027']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "4.25")
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0025']")
+      expect(l).to be_nil
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'G740']")
+      expect(l).not_to be_nil
+      expect(l).to have_xpath_value("ChargeField/Value", "85.0")
+    end
   end
 end
