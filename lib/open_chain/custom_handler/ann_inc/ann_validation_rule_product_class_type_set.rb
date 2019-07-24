@@ -5,11 +5,10 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
   include OpenChain::CustomHandler::AnnInc::AnnFtzValidationHelper
     
   def run_validation product
-    product.classifications.each do |cl|
-      if cl.custom_value(cdefs[:manual_flag])
-        if !CLASSIFICATION_TYPES.include? cl.custom_value(cdefs[:classification_type])
-          return "If the Manual Entry Processing checkbox is checked, Classification Type is required."
-        end
+    cl = product.classifications.find_by country_id: us.id
+    if cl&.custom_value(cdefs[:manual_flag])
+      if !CLASSIFICATION_TYPES.include? cl.custom_value(cdefs[:classification_type])
+        return "If the Manual Entry Processing checkbox is checked, Classification Type is required."
       end
     end
     nil

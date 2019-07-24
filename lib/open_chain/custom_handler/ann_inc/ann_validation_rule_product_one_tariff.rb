@@ -5,11 +5,9 @@ module OpenChain; module CustomHandler; module AnnInc class AnnValidationRulePro
   include OpenChain::CustomHandler::AnnInc::AnnFtzValidationHelper
 
   def run_validation product
-    product.classifications.each do |cl|
-      next if CLASSIFICATION_TYPES.include? cl.custom_value(cdefs[:classification_type])
-      if cl.tariff_records.count > 1
-        return "If Classification Type has not been set, only one HTS Classification should exist."
-      end
+    cl = product.classifications.find_by country_id: us.id
+    if cl && cl.tariff_records.count > 1 && !CLASSIFICATION_TYPES.include?(cl.custom_value(cdefs[:classification_type]))
+      return "If Classification Type has not been set, only one HTS Classification should exist."
     end
     nil
   end

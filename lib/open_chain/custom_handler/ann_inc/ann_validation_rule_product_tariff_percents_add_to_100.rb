@@ -5,8 +5,9 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
   include OpenChain::CustomHandler::AnnInc::AnnFtzValidationHelper
 
   def run_validation product
-    product.classifications.each do |cl|
-      next unless cl.custom_value(cdefs[:classification_type]) == "Multi"
+    cl = product.classifications.find_by country_id: us.id
+    
+    if cl&.custom_value(cdefs[:classification_type]) == "Multi"
       total = 0
       cl.tariff_records.each do |tr|
         percent = tr.custom_value(cdefs[:percent_of_value])

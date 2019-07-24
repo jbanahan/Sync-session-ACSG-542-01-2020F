@@ -1,10 +1,11 @@
 describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffKeyDescriptionSet do
   let(:rule) { described_class.new }
   let(:cdefs) { rule.cdefs }
+  let!(:us) { Factory(:country, iso_code: "US") }
 
   let(:prod) { Factory(:product) }
   let(:classi) do
-    cl = Factory(:classification, product: prod)
+    cl = Factory(:classification, product: prod, country: us)
     co = cl.country; co.name = "United States"; co.save!
     cl.update_custom_value! cdefs[:classification_type], "Multi"
     cl

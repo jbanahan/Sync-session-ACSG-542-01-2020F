@@ -6,12 +6,14 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
 
   def run_validation product
     bad_tariffs = []
-    product.classifications.each do |cl|
-      next unless CLASSIFICATION_TYPES.include? cl.custom_value(cdefs[:classification_type])
+    cl = product.classifications.find_by country_id: us.id
+    
+    if CLASSIFICATION_TYPES.include? cl&.custom_value(cdefs[:classification_type])
       cl.tariff_records.each do |tr|
         bad_tariffs << {country: cl.country.name, line: tr.line_number} unless key_description_filled(tr)
       end
     end
+
     return nil if bad_tariffs.empty?
     tariff_str = bad_tariffs.map{ |t| "#{t[:country]}, line #{t[:line]}" }.join("\n")
     %Q(If Classification Type equals "Multi" or "Decision", Key Description is a required field.\n#{tariff_str})
