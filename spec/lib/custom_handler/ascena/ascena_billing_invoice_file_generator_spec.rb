@@ -74,6 +74,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
     it "generates an ascena billing file with duty data" do
       data = nil
       expect(subject).to receive(:ftp_file) do |file, opts|
+        expect(File.basename(file).split("_").first).to eq "ASC"
         data = file.read
       end
 
@@ -91,6 +92,18 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "00151", "30.0", "Duty", "PO 1", "7218"]
       expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "00151", "50.0", "Duty", "PO 2", "221"]
       expect(lines[3]).to eq ["L", "INVOICENUMBER", "3", "00151", "140.0", "Duty", "PO 3", "151"]
+    end
+
+    it "Prefixes file with 'MAUR' for Maurices entry" do
+      entry.update! customer_number: "MAUR"
+      data = nil
+      expect(subject).to receive(:ftp_file) do |file, opts|
+        expect(File.basename(file).split("_").first).to eq "MAUR"
+      end
+
+      expect(Lock).to receive(:with_lock_retry).with(entry).and_yield
+
+      subject.generate_and_send broker_invoice_with_brokerage_snapshot
     end
 
     it "sends brokerage file" do
