@@ -7,8 +7,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryBillingC
   extend OpenChain::EntityCompare::ComparatorHelper
 
   def self.accept? snapshot
-    accept = super
-    accept && snapshot.try(:recordable).try(:customer_number) == "ASCE" && snapshot.try(:recordable).try(:source_system) == Entry::KEWILL_SOURCE_SYSTEM
+    return false unless super
+    ent = snapshot.try(:recordable)
+    ent.source_system == Entry::KEWILL_SOURCE_SYSTEM &&
+      (ent.customer_number == "ASCE" || (ent.customer_number == "MAUR" && ent.entry_filed_date.try(:>=, "2019-05-07")))
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version

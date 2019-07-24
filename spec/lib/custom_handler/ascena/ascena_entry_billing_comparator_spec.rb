@@ -11,6 +11,16 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryBillingComparator do
       expect(subject.accept? snapshot).to be true
     end
 
+    it "accepts entry snapshots for MAUR account beginning 5/7/19" do
+      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019,5,7)
+      expect(subject.accept? snapshot).to be true
+    end
+
+    it "doesn't accept earlier MAUR snapshots" do
+      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019,5,1)
+      expect(subject.accept? snapshot).to be false
+    end
+
     it "doesn't accept non-ascena entries" do
       entry.update_attributes! customer_number: "NOT-ASCE"
       expect(subject.accept? snapshot).to be false
