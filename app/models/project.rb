@@ -8,7 +8,7 @@
 #  due          :date
 #  id           :integer          not null, primary key
 #  name         :string(255)
-#  objective    :text
+#  objective    :text(65535)
 #  on_hold      :boolean
 #  updated_at   :datetime         not null
 #

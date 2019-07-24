@@ -5,7 +5,7 @@
 #  assigned_to_id  :integer
 #  complete        :boolean
 #  created_at      :datetime         not null
-#  description     :text
+#  description     :text(65535)
 #  due_date        :date
 #  end_date        :date
 #  estimated_hours :integer

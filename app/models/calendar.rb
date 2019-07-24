@@ -4,9 +4,9 @@
 #
 #  calendar_type :string(255)
 #  company_id    :integer
-#  created_at    :datetime         not null
+#  created_at    :datetime
 #  id            :integer          not null, primary key
-#  updated_at    :datetime         not null
+#  updated_at    :datetime
 #  year          :integer
 #
 

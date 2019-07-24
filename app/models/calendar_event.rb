@@ -3,11 +3,11 @@
 # Table name: calendar_events
 #
 #  calendar_id :integer
-#  created_at  :datetime         not null
+#  created_at  :datetime
 #  event_date  :date
 #  id          :integer          not null, primary key
 #  label       :string(255)
-#  updated_at  :datetime         not null
+#  updated_at  :datetime
 #
 
 class CalendarEvent < ActiveRecord::Base

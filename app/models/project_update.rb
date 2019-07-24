@@ -2,7 +2,7 @@
 #
 # Table name: project_updates
 #
-#  body          :text
+#  body          :text(65535)
 #  created_at    :datetime         not null
 #  created_by_id :integer
 #  id            :integer          not null, primary key
