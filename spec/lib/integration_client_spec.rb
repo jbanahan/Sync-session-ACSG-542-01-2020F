@@ -9,13 +9,30 @@ describe OpenChain::IntegrationClient do
 
   describe "process_queue" do
 
-    it 'creates specified queue, processes messages from it and then stops' do
+    it 'queries specified queue, processes messages from it and then stops' do
       response1 = instance_double("Aws::Sqs::Types::ReceiveMessageResult")
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
       allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
       allow(response1).to receive(:messages).and_return [parser_message]
 
+      expect(OpenChain::SQS).to receive(:get_queue_url).with(system_code).and_return "queue.url"
+      expect(OpenChain::SQS).to receive(:poll).with("queue.url", max_message_count: 3, visibility_timeout: 5, yield_raw: true).and_yield(parser_message)
+
+      remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
+      expect(OpenChain::IntegrationClientCommandProcessor).to receive(:process_remote_file).and_return(remote_file_response)
+
+      expect(subject.process_queue system_code, max_message_count: 3, visibility_timeout: 5).to eq 1
+    end
+
+    it 'queries specified queue, creates it if not found, then processes messages from it and then stops' do
+      response1 = instance_double("Aws::Sqs::Types::ReceiveMessageResult")
+
+      parser_message = instance_double("Aws::Sqs::Types::Message")
+      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
+      allow(response1).to receive(:messages).and_return [parser_message]
+
+      expect(OpenChain::SQS).to receive(:get_queue_url).with(system_code).and_return nil
       expect(OpenChain::SQS).to receive(:create_queue).with(system_code).and_return "queue.url"
       expect(OpenChain::SQS).to receive(:poll).with("queue.url", max_message_count: 3, visibility_timeout: 5, yield_raw: true).and_yield(parser_message)
 
@@ -26,7 +43,7 @@ describe OpenChain::IntegrationClient do
     end
 
     it 'does not rescue errors from process command' do
-      expect(OpenChain::SQS).to receive(:create_queue).and_return "queue.url"
+      expect(OpenChain::SQS).to receive(:get_queue_url).and_return "queue.url"
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
       allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
@@ -43,7 +60,7 @@ describe OpenChain::IntegrationClient do
     end
 
     it "catches and handles bad json" do
-      expect(OpenChain::SQS).to receive(:create_queue).and_return "queue.url"
+      expect(OpenChain::SQS).to receive(:get_queue_url).and_return "queue.url"
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
       allow(parser_message).to receive(:body).and_return("{badjson}")

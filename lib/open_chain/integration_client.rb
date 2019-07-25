@@ -81,7 +81,13 @@ module OpenChain
 
     def self.process_queue queue_name, max_message_count: 500, visibility_timeout: 300
       raise "Queue Name must be provided." if queue_name.blank?
-      queue_url = OpenChain::SQS.create_queue queue_name
+
+      queue_url = OpenChain::SQS.get_queue_url(queue_name)
+      # queue_url will be nil if the queue doesn't exist yet.
+      if queue_url.blank?
+        # Create the queue
+        queue_url = OpenChain::SQS.create_queue queue_name
+      end
 
       messages_processed = 0
       OpenChain::SQS.poll(queue_url, max_message_count: max_message_count, visibility_timeout: visibility_timeout, yield_raw: true) do |m|
