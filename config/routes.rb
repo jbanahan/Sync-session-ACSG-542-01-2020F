@@ -19,7 +19,7 @@ OpenChain::Application.routes.draw do
   get '/hts/:iso', to: 'hts#country'
   get '/hts', to: 'hts#index'
 
-  get "auth/:provider/callback", to: "user_sessions#create_from_omniauth"
+  match "auth/:provider/callback", to: "user_sessions#create_from_omniauth", via: [:get, :post]
   get 'auth/failure', to: redirect("/login")
 
   namespace :api do
