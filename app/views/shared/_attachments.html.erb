@@ -1,37 +1,4 @@
 <% if !local_assigns.has_key?(:view_only) || !view_only%>
-  <% content_for :javascript do %>
-    $(document).ready(function() {
-      $('.attachment_icon').popover({html: true});
-      $("#mod_compare").draggable({
-          handle: ".modal-header"
-      });
-
-      checkFileSelection();
-
-      $('#file1').on('change', function() {
-        checkFileSelection();
-      });
-      $('#file2').on('change', function() {
-        checkFileSelection();
-      });
-    });
-
-    function checkFileSelection() {
-      if ($('#file2').find(":selected").val() !== "nil" &&
-        $('#file1').find(":selected").val() !== "nil"){
-        $('#compare_btn').prop("disabled", false);
-      } else {
-        $('#compare_btn').prop("disabled", true);
-      }
-    }
-
-    function comparePDF() {
-      file1 = encodeURIComponent($('#file1').val());
-      file2 = encodeURIComponent($('#file2').val());
-      url = "/comparepdf?file1=" + file1 + "&file2=" + file2;
-      window.open(url, '_blank');
-    }
-  <% end %>
   <% can_attach = !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user) %>
   <% if can_attach%>
     <% content_for :action_bar do %>
@@ -94,45 +61,81 @@
       <button class="btn btn-secondary" id="file_compare_button" href="#mod_compare" data-toggle="modal">Compare PDF Files</button>
     </div>
   </div>
-<%end-%>
-<div class="modal fade" role="dialog" id="mod_compare">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header" style="cursor: move;">
-        <h4 class="modal-title text-center">PDF Attachment Comparison Selection</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <% if attachments.blank? %>
-            <div class="well">
-              There aren't any attachments.
-              <% if can_attach %>
-                Create one with the <i class='fa fa-paperclip'></i> button below.
-              <% end %>
-            </div>
-          <% else %>
-            <div class="col-md-6">
-              <%= select_tag "file1", options_for_select( attachable.options_for_attachments_select("application/pdf")), class: "form-control" %>
-            </div> 
-            <div class="col-md-6">
-              <%= select_tag "file2", options_for_select( attachable.options_for_attachments_select("application/pdf")), class: "form-control" %>
-            </div>
-          <% end -%>
+
+  <div class="modal fade" role="dialog" id="mod_compare">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header" style="cursor: move;">
+          <h4 class="modal-title text-center">PDF Attachment Comparison Selection</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         </div>
-        <div class="row">
-          <div class="col-md-12">
-            <p>Note: Comparing PDF documents will send you to another page. Only PDF attachments are available for side by side comparison.</p>
+        <div class="modal-body">
+          <div class="row">
+            <% if attachments.blank? %>
+              <div class="well">
+                There aren't any attachments.
+                <% if can_attach %>
+                  Create one with the <i class='fa fa-paperclip'></i> button below.
+                <% end %>
+              </div>
+            <% else %>
+              <div class="col-md-6">
+                <%= select_tag "file1", options_for_select( attachable.options_for_attachments_select("application/pdf")), class: "form-control" %>
+              </div> 
+              <div class="col-md-6">
+                <%= select_tag "file2", options_for_select( attachable.options_for_attachments_select("application/pdf")), class: "form-control" %>
+              </div>
+            <% end -%>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <p>Note: Comparing PDF documents will send you to another page. Only PDF attachments are available for side by side comparison.</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button id="compare_btn" class="btn btn-primary" onclick="comparePDF()" disabled="disabled">Compare</button>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button id="compare_btn" class="btn btn-primary" onclick="comparePDF()" disabled="disabled">Compare</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('.attachment_icon').popover({html: true});
+      $("#mod_compare").draggable({
+          handle: ".modal-header"
+      });
+
+      checkFileSelection();
+
+      $('#file1').on('change', function() {
+        checkFileSelection();
+      });
+      $('#file2').on('change', function() {
+        checkFileSelection();
+      });
+    });
+
+    function checkFileSelection() {
+      if ($('#file2').find(":selected").val() !== "nil" &&
+        $('#file1').find(":selected").val() !== "nil"){
+        $('#compare_btn').prop("disabled", false);
+      } else {
+        $('#compare_btn').prop("disabled", true);
+      }
+    }
+
+    function comparePDF() {
+      file1 = encodeURIComponent($('#file1').val());
+      file2 = encodeURIComponent($('#file2').val());
+      url = "/comparepdf?file1=" + file1 + "&file2=" + file2;
+      window.open(url, '_blank');
+    }
+  </script>
+<%end-%>
+
 <%content_for :modal_container do %>
 <div class="modal fade" role="dialog" id="mod_attach_bs">
   <div class="modal-dialog">
