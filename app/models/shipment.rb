@@ -461,11 +461,41 @@ class Shipment < ActiveRecord::Base
     user.company==self.carrier
   end
   private :can_cancel_as_carrier?
+  def can_cancel_as_agent? user   
+    return false unless user.company.agent?
+    agent_results = ActiveRecord::Base.connection.execute agent_qry
+    agent_results.each{ |ar| return false unless ar[0] == user.company.id  }
+    true
+  end
+  private :can_cancel_as_agent?
+
+  def agent_qry
+    <<-SQL
+      SELECT o.agent_id
+      FROM shipments s
+        INNER JOIN shipment_lines sl ON s.id = sl.shipment_id
+        INNER JOIN piece_sets ps ON sl.id = ps.shipment_line_id
+        INNER JOIN order_lines ol ON ol.id = ps.order_line_id
+        INNER JOIN orders o ON o.id = ol.order_id
+      WHERE s.id = #{self.id}
+      UNION DISTINCT
+      SELECT o.agent_id
+      FROM shipments s
+        INNER JOIN booking_lines bl ON s.id = bl.shipment_id
+        INNER JOIN order_lines ol ON ol.id = bl.order_line_id
+        INNER JOIN orders o ON o.id = ol.order_id
+      WHERE s.id = #{self.id}
+    SQL
+  end
+  private :agent_qry
+
   def can_cancel_by_role? user
     return true if user.company.master?
     return true if can_cancel_as_vendor?(user)
     return true if can_cancel_as_importer?(user)
     return true if can_cancel_as_carrier?(user)
+    return true if can_cancel_as_agent?(user)
+    false
   end
 
   # This method is here to just provide API consistency across module for determining if something is closed/cancel'ed
