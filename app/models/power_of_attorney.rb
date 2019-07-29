@@ -18,7 +18,7 @@
 require 'open_chain/s3'
 
 class PowerOfAttorney < ActiveRecord::Base
-  attr_accessible :attachment_content_type, :attachment_file_name, :attachment_file_size, :attachment_updated_at, :company_id, :expiration_date, :start_date, :uploaded_by
+  attr_accessible :attachment, :attachment_content_type, :attachment_file_name, :attachment_file_size, :attachment_updated_at, :company_id, :expiration_date, :start_date, :uploaded_by
   
   belongs_to :company
   belongs_to :user, :foreign_key => :uploaded_by, :class_name => "User"
