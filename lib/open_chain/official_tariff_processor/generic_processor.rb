@@ -1,4 +1,5 @@
 module OpenChain; module OfficialTariffProcessor; class GenericProcessor
+
   def self.process official_tariff
     country = official_tariff.country
     cid = country.id
@@ -45,7 +46,6 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
 
         next if skip
         rate_decimal = parse_rate(rate_text)
-        raise "Invalid parse expression: #{spi}.  Each matched SPI expression should return exactly 2 non-blank match values." if rate_text.blank?
 
         # Run through any expressions designed to clean up the SPI program code text.
         if parse_data[:spi_cleanup]
@@ -79,23 +79,23 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
   def self.parse_data_for country
     iso_code = country.european_union? ? 'EU' : country.iso_code
     case iso_code.upcase
-    when "US"
-      return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e'}}
-    when "CA"
-      # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
-      return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""], [/.*/, :upcase]], skip_spi: [/^\s*General\s*$/i]}
-    when "IT", "GB", "IE", "EU", "FR"
-      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ERGA OMNES - Import/, "ERGA OMNES IMPORT"], [/ERGA OMNES - Veterin/, "ERGA OMNES VETERIN"], [/\s?-\s.*\z/, ""], [/.*/, :upcase]], exceptions: [], skip_spi: []}
-    when "CL"
-      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2'], [/Chile - Canada FTA/, "CA"], [/Colombia tariff trea/, "CO"], [/Costa Rica tariff tr/, "CR"], [/Ecuador Tariff Treat/, "EC"], [/El Salvador tariff T/, "SV"], [/Honduras/, "HN"], [/India/, "IN"], [/Japan/, "JP"], [/Mercosur - /, ""], [/Mexico Tariff Treatm/, "MX"], [/Venezuela tariff tre/, "VE"], [/us - In Quota/, "US - In Quota"], [/p\s*a\s*n\s*a\s*m\s*a/i, "PA"], [/Mexico/, "MX"], [/.*/, :upcase]], exceptions: [], skip_spi: []}
-    when "CN"
-      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/MFN tariff treatment/, "MFN"], [/I S FTA/, "IS FTA"], [/LDC 2/, "LDC2"], [/LD C/, "LDC"], [/PA C/, "PAC"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
-    when "MX"
-      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/R 38 - PY/, "R38 - PY"], [/R 29 - EC/, "R29 - EC"], [/C E55 - BR/, "CE55 - BR"], [/C E55 - AR/, "CE55 - AR"], [/C E41 - CL/, "CE41 - CL"], [/C E33 - CO/, "CE33 - CO"], [/C 55 - UY/, "C55 - UY"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
-    when "SG"
-      return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ASEA N-CN/, "ASEAN-CN"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
-    else
-      raise "No Special Program parser configured for #{iso_code}"
+      when "US"
+        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/CHINA PENALTY:\s*\+\d+\s*/=>''}}
+      when "CA"
+        # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
+        return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""], [/.*/, :upcase]], skip_spi: [/^\s*General\s*$/i]}
+      when "EU"
+        return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ERGA OMNES - Import/, "ERGA OMNES IMPORT"], [/ERGA OMNES - Veterin/, "ERGA OMNES VETERIN"], [/\s?-\s.*\z/, ""], [/.*/, :upcase]], exceptions: [], skip_spi: []}
+      when "CL"
+        return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2'], [/Chile - Canada FTA/, "CA"], [/Colombia tariff trea/, "CO"], [/Costa Rica tariff tr/, "CR"], [/Ecuador Tariff Treat/, "EC"], [/El Salvador tariff T/, "SV"], [/Honduras/, "HN"], [/India/, "IN"], [/Japan/, "JP"], [/Mercosur - /, ""], [/Mexico Tariff Treatm/, "MX"], [/Venezuela tariff tre/, "VE"], [/us - In Quota/, "US - In Quota"], [/p\s*a\s*n\s*a\s*m\s*a/i, "PA"], [/Mexico/, "MX"], [/.*/, :upcase]], exceptions: [], skip_spi: []}
+      when "CN"
+        return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/MFN tariff treatment/, "MFN"], [/I S FTA/, "IS FTA"], [/LDC 2/, "LDC2"], [/LD C/, "LDC"], [/PA C/, "PAC"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
+      when "MX"
+        return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/R 38 - PY/, "R38 - PY"], [/R 29 - EC/, "R29 - EC"], [/C E55 - BR/, "CE55 - BR"], [/C E55 - AR/, "CE55 - AR"], [/C E41 - CL/, "CE41 - CL"], [/C E33 - CO/, "CE33 - CO"], [/C 55 - UY/, "C55 - UY"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
+      when "SG"
+        return {parser: /((?:Free)|(?:\.?\d+(?:\.\d+)?%))\s*:\s*\((.*?)\)/, spi_split: /,\s*/, spi_cleanup: [[/ASEA N-CN/, "ASEAN-CN"], [/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [], skip_spi: []}
+      else
+        raise "No Special Program parser configured for #{iso_code}"
     end
   end
 end; end; end
