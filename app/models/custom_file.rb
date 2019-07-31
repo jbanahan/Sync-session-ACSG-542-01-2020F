@@ -46,13 +46,14 @@ require 'open_chain/custom_handler/advance/advance_po_origin_report_parser'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_upload_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_7501_handler'
 require 'open_chain/custom_handler/hm/hm_po_line_parser'
+require 'open_chain/custom_handler/kirklands/kirklands_product_upload_parser'
 require 'open_chain/data_cross_reference_uploader'
 require 'open_chain/special_tariff_cross_reference_handler'
 require 'open_chain/business_rules_copier'
 
 class CustomFile < ActiveRecord::Base
   attr_accessible :attached_content_type, :attached_file_name, :attached,
-    :attached_file_size, :attached_updated_at, :error_at, :error_message, 
+    :attached_file_size, :attached_updated_at, :error_at, :error_message,
     :file_type, :finish_at, :module_type, :start_at, :uploaded_by_id,
     :uploaded_by
 

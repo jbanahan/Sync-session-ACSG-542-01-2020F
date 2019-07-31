@@ -615,6 +615,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/pvh_workflow/upload", to: "custom_features#pvh_workflow_upload"
   get "/custom_features/pvh_workflow/:id/download", to: "custom_features#pvh_workflow_download"
 
+  get "/custom_features/kirklands_product", to: "custom_features#kirklands_product_index"
+  post "/custom_features/kirklands_product/upload", to: "custom_features#kirklands_product_upload"
+  get "/custom_features/kirklands_product/:id/download", to: "custom_features#kirklands_product_download"
+
   get "/custom_features/pvh_ca_workflow", to: "custom_features#pvh_ca_workflow_index"
   post "/custom_features/pvh_ca_workflow/upload", to: "custom_features#pvh_ca_workflow_upload"
   get "/custom_features/pvh_ca_workflow/:id/download", to: "custom_features#pvh_ca_workflow_download"
@@ -739,7 +743,7 @@ OpenChain::Application.routes.draw do
   match "/reports/show_ll_prod_risk_report" => "reports#show_ll_prod_risk_report", :via => :get
   match "/reports/run_ll_prod_risk_report" => "reports#run_ll_prod_risk_report", :via => :post
   match "/reports/show_special_programs_savings_report" => "reports#show_special_programs_savings_report", :via => :get
-  match "/reports/run_special_programs_savings_report" => "reports#run_special_programs_savings_report", :via => :post  
+  match "/reports/run_special_programs_savings_report" => "reports#run_special_programs_savings_report", :via => :post
   get "/reports/show_pvh_container_log", to: "reports#show_pvh_container_log"
   post "/reports/run_pvh_container_log", to: "reports#run_pvh_container_log"
   get "/reports/show_pvh_air_shipment_log", to: "reports#show_pvh_air_shipment_log"

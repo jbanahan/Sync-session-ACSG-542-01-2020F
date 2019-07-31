@@ -41,6 +41,7 @@ require 'open_chain/custom_handler/lands_end/le_chapter_98_parser'
 require 'open_chain/custom_handler/customer_invoice_handler'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_patent_statement_uploader'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_carb_statement_uploader'
+require 'open_chain/custom_handler/kirklands/kirklands_product_upload_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -82,6 +83,7 @@ class CustomFeaturesController < ApplicationController
   HM_RECEIPT_FILE_PARSER ||= 'OpenChain::CustomHandler::Hm::HmReceiptFileParser'
   LL_CARB_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorCarbStatementUploader'
   LL_PATENT_UPLOAD ||= 'OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentStatementUploader'
+  KIRKLANDS_PRODUCT ||= 'OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser'
 
   SEARCH_PARAMS = {
     'filename' => {:field => 'attached_file_name', :label => 'Filename'},
@@ -762,6 +764,22 @@ class CustomFeaturesController < ApplicationController
 
   def lumber_patent_download
     generic_download 'Vendor Patent Statement Upload'
+  end
+
+  def kirklands_product_index
+    generic_index OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser, KIRKLANDS_PRODUCT, "Kirklands Products"
+  end
+
+  def kirklands_product_upload
+    generic_upload(KIRKLANDS_PRODUCT, "Kirklands Product", "kirklands_product") do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file or csv file."
+      end
+    end
+  end
+
+  def kirklands_product_download
+    generic_download "Kirklands Products"
   end
 
   private

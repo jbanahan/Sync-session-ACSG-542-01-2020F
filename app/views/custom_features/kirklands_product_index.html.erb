@@ -1,0 +1,50 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY Products in Excel or CSV format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
+<table id="layout" class="table table-sm table-bordered my-3">
+  <thead class="text-center">
+    <tr>
+      <th>A</th>
+      <th>B</th>
+      <th>C</th>
+      <th>D</th>
+      <th>E</th>
+      <th>F</th>
+      <th>G</th>
+      <th>H</th>
+      <th>I</th>
+      <th>J</th>
+      <th>K</th>
+      <th>L</th>
+      <th>M</th>
+      <th>N</th>
+      <th>O</th>
+      <th>P</th>
+      <th>Q</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Kirklands item number</td>
+      <td>Vendor Item number</td>
+      <td>Product Description</td>
+      <td>Material</td>
+      <td>Country of Origin</td>
+      <td>Additional Docs Required (y/n)</td>
+      <td>FOB Price</td>
+      <td>HTS code 1</td>
+      <td>MTB HTS</td>
+      <td>FDA (y/n)</td>
+      <td>FDA Product Code</td>
+      <td>TSCA (y/n)</td>
+      <td>Lacey (y/n)</td>
+      <td>ADD (y/n)</td>
+      <td>ADD Case Number</td>
+      <td>CVD (y/n)</td>
+      <td>CVD Case Number</td>
+    </tr>
+  </tbody>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Kirklands Product Upload", custom_feature: "kirklands_product"} %>
