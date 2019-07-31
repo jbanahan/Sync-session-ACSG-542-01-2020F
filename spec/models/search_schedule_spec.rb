@@ -179,8 +179,7 @@ describe SearchSchedule do
         search_schedule.send_if_empty = false
         search_schedule.download_format = "csv"
 
-        expect(report).to receive(:csv_file).with(user).and_return tempfile
-        expect(subject).to receive(:report_blank?).with(tempfile).and_return true
+        expect(report).to receive(:csv_file).with(user).and_return [tempfile, true]
         expect(subject).not_to receive(:send_email)
         expect(subject).not_to receive(:send_ftp)
 
@@ -269,40 +268,6 @@ describe SearchSchedule do
           "Account: #{@s.ftp_username}<br>"+
           "Subfolder: #{@s.ftp_subfolder}<br>"+
           "Error Message: Error!"
-      end
-    end
-  end
-
-  describe "report_blank?" do
-    before(:each) { @ss = SearchSchedule.new }
-
-    it "returns true when an xls report is blank" do
-      File.open("spec/fixtures/files/blank_report_1.xls", "r") do |xls_file|
-        expect(@ss.send(:report_blank?, xls_file)).to be true
-      end
-      File.open("spec/fixtures/files/blank_report_2.xls", "r") do |xls_file|
-        expect(@ss.send(:report_blank?, xls_file)).to be true
-      end
-    end
-
-    it "returns true when a cvs report is blank" do
-      File.open("spec/fixtures/files/blank_report_1.csv", "r") do |xls_file|
-        expect(@ss.send(:report_blank?, xls_file)).to be true
-      end
-      File.open("spec/fixtures/files/blank_report_2.csv", "r") do |csv_file|
-        expect(@ss.send(:report_blank?, csv_file)).to be true
-      end
-    end
-
-    it "returns false when an xls report isn't blank" do
-      File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
-        expect(@ss.send(:report_blank?, xls_file)).to be false
-      end
-    end
-
-    it "returns false when a csv report isn't blank" do
-      File.open("spec/fixtures/files/test_sheet_3.csv", "r") do |csv_file|
-        expect(@ss.send(:report_blank?, csv_file)).to be false
       end
     end
   end

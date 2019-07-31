@@ -85,7 +85,7 @@ describe CustomReport do
     it 'should output xls to tmp file' do
       user= Factory(:user)
       @rpt.name = "my&report.xls"
-      @tmp = @rpt.xls_file user
+      @tmp, * = @rpt.xls_file user
       expect(@tmp.path).to match(/my_report.xls/) # swaps out illegal characters
       sheet = Spreadsheet.open(@tmp.path).worksheet(0)
       expect(sheet.row(0).default_format.name).to eq(XlsMaker::HEADER_FORMAT.name)
@@ -101,7 +101,7 @@ describe CustomReport do
     end
     it 'should output to given xls file' do
       Tempfile.open('custom_report_spec') do |f|
-        t = @rpt.xls_file Factory(:user), f
+        t, * = @rpt.xls_file Factory(:user), f
         expect(t.path).to eq(f.path)
         sheet = Spreadsheet.open(f.path).worksheet(0)
         expect(sheet.row(0)[0]).to eq("MY HEADING")
@@ -124,7 +124,7 @@ describe CustomReport do
 
     it 'should output csv' do
       @rpt.name = "my/report.csv"
-      @tmp = @rpt.csv_file Factory(:user)
+      @tmp, * = @rpt.csv_file Factory(:user)
       expect(@tmp.path).to match(/my_report.csv/) # swaps out illegal characters
       r = CSV.read @tmp.path
       expect(r[0][0]).to eq("MY HEADING")
@@ -151,14 +151,14 @@ describe CustomReport do
 
       it "truncates time from datetime in xls-based output" do
         @tmp = Tempfile.new('custom_report_spec')
-        t = @rpt.xls_file Factory(:user), @tmp
+        t, * = @rpt.xls_file Factory(:user), @tmp
         expect(t.path).to eq(@tmp.path)
         sheet = Spreadsheet.open(@tmp.path).worksheet(0)
         expect(sheet.row(1).format(3).number_format).to eq "YYYY-MM-DD"
       end
 
       it "truncates time from datetime in csv output" do
-        @tmp = @rpt.csv_file Factory(:user)
+        @tmp, * = @rpt.csv_file Factory(:user)
         expect(@tmp.path).to match(/csv/)
         r = CSV.read @tmp.path
         expect(r[1][3]).to eq(Time.new(2014, 1, 1).strftime("%Y-%m-%d"))

@@ -191,6 +191,8 @@ class SearchSchedule < ActiveRecord::Base
   def run_custom_report rpt
     User.run_with_user_settings(rpt.user) do
       t = nil
+      blank_report = false
+
       extension = if self.download_format.nil? || self.download_format == 'csv'
                     'csv'
                   elsif self.download_format == 'xls'
@@ -202,14 +204,14 @@ class SearchSchedule < ActiveRecord::Base
 
       begin
         if extension=='csv'
-          t = rpt.csv_file rpt.user
+          t, blank_report = rpt.csv_file rpt.user
         elsif extension=='xls'
-          t = rpt.xls_file rpt.user
+          t, blank_report = rpt.xls_file rpt.user
         else
-          t = rpt.xlsx_file rpt.user
+          t, blank_report = rpt.xlsx_file rpt.user
         end
 
-        if send_if_empty? || !report_blank?(t)
+        if send_if_empty? || !blank_report
           send_email rpt.name, t, attachment_name, rpt.user
           send_ftp rpt.name, t, attachment_name
         end
@@ -217,29 +219,6 @@ class SearchSchedule < ActiveRecord::Base
       ensure
         t.close! unless t.nil? || t.closed?
       end
-    end
-  end
-
-  #For custom reports. Searches can use return value of #write_csv, #write_xls
-  def report_blank? report_file
-    File.extname(report_file) == '.csv' ? csv_report_blank?(report_file) : xls_report_blank?(report_file)
-  end
-
-  def csv_report_blank? report_file
-    csv_report = CSV.read(report_file)
-    return true if csv_report.count == 1
-    if csv_report.count == 2   
-      (csv_report[1][0] =~ /No data was returned/).nil?  ? false : true
-    else false
-    end
-  end
-
-  def xls_report_blank? report_file
-    xls_report = Spreadsheet.open(report_file).worksheet 0
-    return true if xls_report.count == 1
-    if xls_report.count == 2
-      (xls_report.row(1)[0] =~ /No data was returned/).nil? ? false : true
-    else false
     end
   end
 

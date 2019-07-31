@@ -76,14 +76,14 @@ class CustomReport < ActiveRecord::Base
     run run_by
     workbook = @listener.build_xlsx
     workbook.write(file)
-    file
+    [file, @listener.blank_file?]
   end
 
   def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
     @listener = XlsListener.new self.no_time?
     run run_by
     @listener.workbook.write file.path
-    file
+    [file, @listener.blank_file?]
   end
   
   #runs the resport in xls format.  This method gives duck type compatibility with the reports in open_chain/reports so ReportResult.execute_report can call htem
@@ -99,7 +99,7 @@ class CustomReport < ActiveRecord::Base
       file.write line.to_csv
     end
     file.flush
-    file
+    [file, @listener.blank_file?]
   end
 
   def clean_filename str
@@ -229,6 +229,11 @@ class CustomReport < ActiveRecord::Base
       @wb = XlsxBuilder.new
     end
 
+    def blank_file?
+      return true if @sheets[0].rows.blank? || @sheets[0].rows.length == 1
+      @sheets[0].rows[1].cells[0].content.include?("No data was returned")
+    end
+
     class Cell
       attr_accessor :type, :content, :url
 
@@ -251,7 +256,8 @@ class CustomReport < ActiveRecord::Base
 
       def to_xlsx
         return [] if cells.blank?
-        cells.map { |cell| cell.try(:to_xlsx) }
+        cells.map {|cell| cell.nil? ? Cell.new : cell}
+            .map(&:to_xlsx)
       end
 
       def insert_link_cell_value column, url, alt_text
@@ -361,8 +367,16 @@ class CustomReport < ActiveRecord::Base
       self.data = {}
       @no_time = no_time
       @csv_output = csv_output
+      @blank_file = false
     end
+
+    def blank_file?
+      return true if self.data.nil? || self.data.length == 1
+      @blank_file
+    end
+
     def write row, column, content
+      @blank_file = true if content.to_s.include?("No data was returned")
       # For array based output, don't bother truncating times.  This is only
       # used on the front-end for previews, and it handles the truncation directly.
       if @csv_output && content.respond_to?(:strftime)
@@ -404,6 +418,15 @@ class CustomReport < ActiveRecord::Base
       @sheet = @workbook.create_worksheet
       @column_widths = []
       @xls_options = {no_time: no_time}
+    end
+
+    def blank_file?
+      xls_report = @workbook.worksheet 0
+      return true if xls_report.count == 1
+      if xls_report.count == 2
+        (xls_report.row(1)[0] =~ /No data was returned/).nil? ? false : true
+      else false
+      end
     end
 
     def write row, column, content

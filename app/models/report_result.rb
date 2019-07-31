@@ -122,7 +122,7 @@ class ReportResult < ActiveRecord::Base
             complete_report(tempfile)
           end
         else
-          local_file = self.custom_report.run_report(run_by) do |tempfile|
+          local_file, * = self.custom_report.run_report(run_by) do |tempfile|
             block_utilized = true
             complete_report(tempfile)
           end
