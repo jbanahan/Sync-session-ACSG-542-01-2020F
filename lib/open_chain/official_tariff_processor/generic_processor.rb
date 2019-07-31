@@ -80,7 +80,7 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     iso_code = country.european_union? ? 'EU' : country.iso_code
     case iso_code.upcase
       when "US"
-        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/CHINA PENALTY:\s*\+\d+\s*/=>''}}
+        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/\w+\s+PENALTY:\s*\+\d+\s*/=>''}}
       when "CA"
         # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
         return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""], [/.*/, :upcase]], skip_spi: [/^\s*General\s*$/i]}

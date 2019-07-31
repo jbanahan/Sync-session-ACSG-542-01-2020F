@@ -58,10 +58,14 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
       let(:parse_data) { described_class.parse_data_for country }
 
       # None of these should raise exceptions.
-      it "handles CHINA PENALTY" do
+      it "handles assorted penalties" do
         expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25 Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
         expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25").to be_nil
         expect(described_class.parse_spi parse_data, "CHINA PENALTY:  +100 ").to be_nil
+        expect(described_class.parse_spi parse_data, "Steel PENALTY: +25 Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
+        expect(described_class.parse_spi parse_data, "Steel PENALTY: +25").to be_nil
+        expect(described_class.parse_spi parse_data, "Alum PENALTY: +10 10% (A)").to eq [{:program_code=>"A", :amount=>BigDecimal.new(".1"), :text=>"10%"}]
+        expect(described_class.parse_spi parse_data, "Alum PENALTY: +10").to be_nil
       end
     end
   end
