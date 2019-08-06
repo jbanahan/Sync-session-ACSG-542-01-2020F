@@ -76,4 +76,10 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
     Country.where(iso_code: "US").first
   end
 
+  # Second gsub covers edge case where \r\n gets truncated
+  def clean_description descr
+    return nil unless descr.present?
+    descr.gsub(/\r?\n/, " ").gsub(/\r/, "")
+  end
+
 end; end; end; end

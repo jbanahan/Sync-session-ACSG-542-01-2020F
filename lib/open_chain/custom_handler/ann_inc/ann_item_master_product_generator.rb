@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
        1 => timestamp,
        2 => nil,
        3 => nil,
-       4 => (row[1].presence || row[2])&.gsub(/\r?\n/, " "), # long_desc_override, approved_long
+       4 => clean_description(row[1].presence || row[2]), # long_desc_override, approved_long
        5 => nil,
        6 => 0,
        7 => nil,

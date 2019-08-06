@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
       6 => nil,
       7 => row[3], # hts_1
       8 => 'Y',
-      9 => row[7]&.gsub(/\r?\n/, " "), # key_description
+      9 => clean_description(row[7]), # key_description
      10 => nil,
      11 => 0,
      12 => (row[5] > 1) ? row[5] : 1, # set_qty

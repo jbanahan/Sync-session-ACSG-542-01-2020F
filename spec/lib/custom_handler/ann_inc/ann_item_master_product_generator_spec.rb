@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   let(:ca) { Factory(:country, iso_code: "CA") }
   let(:product_1) do 
     prod = Factory(:product, unique_identifier: "uid 1")
-    prod.find_and_set_custom_value cdefs[:approved_long], "approved long 1"
+    prod.find_and_set_custom_value cdefs[:approved_long], "approved\r\nlong 1\r"
     prod.find_and_set_custom_value cdefs[:related_styles], "uid 3\nuid 4"
     prod.save!
     prod
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   let(:classi_1_1) do 
     cl = Factory(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
-    cl.find_and_set_custom_value cdefs[:long_desc_override], "long\ndescr 1 1"
+    cl.find_and_set_custom_value cdefs[:long_desc_override], "long\r\ndescr 1 1\r"
     cl.save!
     t = Factory(:tariff_record, classification: cl, hts_1: "123456789", line_number: 1)
     t.update_custom_value! cdefs[:set_qty], 5
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       res = []
       results.each{ |r| res << r }
       row_1, row_2 = res
-      expect(row_1).to eq [product_1.id, "uid 1", "long\ndescr 1 1", "approved long 1", "123456789", "Multi", "uid 3\nuid 4", 5]
+      expect(row_1).to eq [product_1.id, "uid 1", "long\r\ndescr 1 1\r", "approved\r\nlong 1\r", "123456789", "Multi", "uid 3\nuid 4", 5]
       expect(row_2).to eq [product_2.id, "uid 2", "long descr 2 1", "approved long 2", "24681012", "Decision", nil, 0]
     end
 

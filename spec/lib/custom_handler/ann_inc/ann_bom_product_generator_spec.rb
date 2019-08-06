@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr = Factory(:tariff_record, classification: classi_1_1, hts_1: "123456789", line_number: 1)
     tr.find_and_set_custom_value cdefs[:set_qty], 10
     tr.find_and_set_custom_value cdefs[:percent_of_value], 15
-    tr.find_and_set_custom_value cdefs[:key_description], "key descr\n1 1 1"
+    tr.find_and_set_custom_value cdefs[:key_description], "key descr\r\n1 1 1\r"
     tr.save!
     tr
   end
@@ -172,7 +172,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       res = []
       results.each{ |r| res << r }
       row_1, row_2 = res
-      expect(row_1).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "123456789", 1, 10, 15, "key descr\n1 1 1" ]
+      expect(row_1).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "123456789", 1, 10, 15, "key descr\r\n1 1 1\r" ]
       expect(row_2).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "912345678", 2, 0, 30, "key descr 1 1 2"]
     end
 
