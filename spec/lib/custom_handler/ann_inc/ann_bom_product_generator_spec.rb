@@ -139,8 +139,16 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
 
       file.close
     end
-  end
 
+    it "collapses empty strings" do
+      tariff_1_1_1.update! hts_1: ""
+      now = DateTime.new(2019,3,15,6,30)
+      file = Timecop.freeze(now) { subject.sync_csv }
+      file.rewind     
+      lines = file.read.split("\n")
+      expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00|||Y|key descr "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
+    end
+  end
 
   describe "sync_code" do
     it "returns correct sync code" do

@@ -32,7 +32,9 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
     # What we're doing here is buffering the outer_row values
     # until we see a new product id (or we're processing the last line).
     # This allows us to keep related styles on consecutive rows.
-    outer_row = remap(outer_row)
+    
+    # map replaces empty strings with nil
+    outer_row = remap(outer_row.map{ |k,v| [k, v.presence] }.to_h)
     rows = nil
     if opts[:last_result] || @row_buffer.empty? || @row_buffer.first[-1] == outer_row[-1]
       @row_buffer << outer_row

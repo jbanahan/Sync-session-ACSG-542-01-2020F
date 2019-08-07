@@ -121,6 +121,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       lines = file.read.split("\n")
       expect(lines[0]).to eq %Q(118340|20190315T023000|||approved /"long 1"||0||0|||||||5|||123456789|||||0|0||0|0||0|0||||0||0||Multi|uid 1|LADIES)
     end
+
+    it "collapses empty strings" do
+      classi_1_1.reload
+      tr = classi_1_1.tariff_records.first
+      tr.update! hts_1: ""
+      now = DateTime.new(2019,3,15,6,30)
+      file = Timecop.freeze(now) { subject.sync_csv }
+      file.rewind     
+      lines = file.read.split("\n")
+      expect(lines[0]).to eq "118340|20190315T023000|||long descr 1 1||0||0|||||||5||||||||0|0||0|0||0|0||||0||0||Multi|uid 1|LADIES"
+    end
   end
 
   describe "sync_code" do
