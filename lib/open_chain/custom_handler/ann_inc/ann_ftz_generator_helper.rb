@@ -7,8 +7,10 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
     @gpg = OpenChain::GPG.new settings["public_key_path"]
   end
 
+  # Since Integration Point isn't doing any CSV parsing, we have to prevent quotes from being escaped.
+  # \007 is unlikely to appear in the data
   def sync_csv
-    super(include_headers: false, use_raw_values: true, csv_opts: {col_sep: "|"})
+    super(include_headers: false, use_raw_values: true, csv_opts: {col_sep: "|", quote_char: "\007"})
   end
 
   def generate file_stem
@@ -79,7 +81,7 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
   # Second gsub covers edge case where \r\n gets truncated
   def clean_description descr
     return nil unless descr.present?
-    descr.gsub(/\r?\n/, " ").gsub(/\r/, "")
+    descr.gsub(/\r?\n/, " ").gsub(/\r/, "").gsub("|", "/")
   end
 
 end; end; end; end
